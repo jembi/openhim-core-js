@@ -1,0 +1,18 @@
+{
+  "name": "openhim-core-js",
+  "description": "The OpenHIM core application that provides logging and routing of http requests",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "express": "3.4.8",
+    "passport": "0.2.0",
+    "passport-http": "0.2.2"
+  },
+  "devDependencies": {
+    "coffee-script": "1.7.1",
+    "mocha": "1.17.1",
+    "should": "3.1.2",
+    "sinon": "1.8.1"
+  },
+  "scripts": { "prepublish": "coffee -o lib/ -c src/*.coffee" }
+}
