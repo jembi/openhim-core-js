@@ -28,6 +28,12 @@ init = ->
 	# Send response middleware
 	app.use (req, res, next) ->
 		res.end();
+
+	# Error middleware
+	app.use (err, req, res, next) ->
+		console.error err.stack
+		res.send 500, 'Something broke!'
+	
 	return app;
 
 exports.start = (httpPort = null, httpsPort = null) ->
