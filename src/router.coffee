@@ -4,17 +4,19 @@ MongoClient = require('mongodb').MongoClient;
 
 channelsCollection = null
 
-connectToDB = (done) ->
+getCollection = (done) ->
 	if channelsCollection
-		done channelsCollection
+		console.log "returning existing connection"
+		return done channelsCollection
 	else
+		console.log "Connecting to Mongodb"
 		MongoClient.connect 'mongodb://127.0.0.1:27017/test', (err, db) ->
 			if err
 				return done err
 
 			db.createCollection 'channels', (err, collection) ->
 				channelsCollection = collection
-				done collection
+				return done collection
 
 exports.Channel = (name, urlPattern, routes, allow, deny) ->
 	this.name = name
@@ -28,7 +30,7 @@ exports.Channel.prototype.toString = ->
 	return "<Channel: " + this.name + ">"
 	
 exports.setChannels = (channels, done) ->
-	connectToDB (collection) ->
+	getCollection (collection) ->
 
 		updateChannel = (channel, callback) ->
 			collection.update {name: channel.name}, channel, {upsert: true}, (err, result) ->
@@ -41,15 +43,16 @@ exports.setChannels = (channels, done) ->
 				return done()
 
 exports.getChannels = (done) ->
-	connectToDB (collection) ->
+	getCollection (collection) ->
+		console.log "About to search for channels"
 		collection.find().toArray (err, items) ->
 			if err
-				done err
+				return done err
 			else
-				done null, items
+				return done null, items
 
 exports.addChannel = (channel, done) ->
-	connectToDB (collection) ->
+	getCollection (collection) ->
 		collection.find {name: channel.name}, {limit: 1}, (err, results) ->
 			if err
 				return done err
@@ -57,14 +60,14 @@ exports.addChannel = (channel, done) ->
 				if count == 0
 					collection.insert channel, {safe: true}, (err, result) ->
 						if err
-							done err
+							return done err
 						else
-							done()
+							return done()
 				else
-					done new Error "Cannot add a channel with a name that is alreay in use"
+					return done new Error "Cannot add a channel with a name that is alreay in use"
 
 exports.getChannel = (channelName, done) ->
-	connectToDB (collection) ->
+	getCollection (collection) ->
 		collection.findOne {name: channelName}, (err, item) ->
 			if err
 				done(err)
@@ -72,27 +75,28 @@ exports.getChannel = (channelName, done) ->
 				done null, item
 
 exports.updateChannel = (channel, done) ->
-	connectToDB (collection) ->
+	getCollection (collection) ->
 		collection.update {name: channel.name}, channel, (err, result) ->
 			if err
 				done err
 			else
 				done()
 
-exports.removeChannel = (channelName, somethingelse) ->
-	connectToDB (collection) ->
+exports.removeChannel = (channelName, done) ->
+	getCollection (collection) ->
 		collection.remove {name: channelName}, (err, numberOfRemoveDocs) ->
 			if err
-				somethingelse err
-				return
+				return done err
 			else
-				somethingelse()
-				return
+				return done()
 
-sendRequestToRoutes = (req, res, channel, next) ->
+sendRequestToRoutes = (req, res, routes, next) ->
 	primaryRouteReturned = false
 
+	console.log "Routes length: " + routes.length
+
 	for route in routes
+		console.log "Route: " + route.host + ", " + route.port + ", " + req.url + ", " + req.method
 		options =
 			hostname: route.host
 			port: route.port
@@ -100,22 +104,34 @@ sendRequestToRoutes = (req, res, channel, next) ->
 			method: req.method
 
 		routeReq = http.request options, (routeRes) ->
-			if route.primary is true
+			console.log "Recieved response"
+			if route.primary
 				if primaryRouteReturned
 					next new Error "A primary route has already been returned, only a single primary route is allowed"
 				else
 					routeRes.pipe res
+					#routeRes.end()
+					res.statusCode = routeRes.statusCode
+					console.log "resCode: " + res.statusCode
 					next()
 
+		console.log "Making request"
 		routeReq.end()
 
 exports.route = (req, res, next) ->
+	console.log "In route"
+
 	routes = []
 
-	for channel in exports.getChannels()
-		pat = new RegExp channel.urlPattern
-		if pat.test req.url
-			routes.concat channel.routes
+	exports.getChannels (err, items) ->
+		console.log "fetched channels"
+		if err
+			return next err
+		for channel in items
+			pat = new RegExp channel.urlPattern
+			if pat.test req.url
+				console.log "Route matched!"
+				routes = routes.concat channel.routes
 
-	sendRequestToRoutes req, res, routes, next
+		sendRequestToRoutes req, res, routes, next
 

@@ -4,7 +4,7 @@ express = require 'express'
 router = require './router'
 messageStore = require './messageStore'
 
-init = ->
+init = (done) ->
 	app = express()
 
 	# Auth middleware
@@ -31,33 +31,34 @@ init = ->
 
 	# Error middleware
 	app.use (err, req, res, next) ->
+		console.log "ERROR: " + JSON.stringify err
 		console.error err.stack
 		res.send 500, 'Something broke!'
-	
-	return app;
 
+	done(app)
+	
 exports.start = (httpPort = null, httpsPort = null) ->
-	app = init()
+	init (app) ->
 
-	if httpPort
-		httpServer = http.createServer app
-		httpServer.listen httpPort
-		httpServer.on "listening", ->
-			console.log "HTTP listenting on port " + httpPort
+		if httpPort
+			httpServer = http.createServer app
+			httpServer.listen httpPort
+			httpServer.on "listening", ->
+				console.log "HTTP listenting on port " + httpPort
 	
-	###
-	if httpsPort
-		var options =
-		    key:			    fs.readFileSync('ssl/server.key')
-		    cert:   			fs.readFileSync('ssl/server.crt')
-		    ca:     			fs.readFileSync('ssl/ca.crt')
-		    requestCert:        true
-		    rejectUnauthorized: false
+		###
+		if httpsPort
+			var options =
+			    key:			    fs.readFileSync('ssl/server.key')
+			    cert:   			fs.readFileSync('ssl/server.crt')
+			    ca:     			fs.readFileSync('ssl/ca.crt')
+			    requestCert:        true
+			    rejectUnauthorized: false
 
-		httpsServer = https.createServer options, app
-		httpsServer.listen httpsPort
-		httpServer.on "listening", ->
-			console.log "HTTPS listenting on port " + httpPort
-	###
+			httpsServer = https.createServer options, app
+			httpsServer.listen httpsPort
+			httpServer.on "listening", ->
+				console.log "HTTPS listenting on port " + httpPort
+		###
 
 exports.start(8080)

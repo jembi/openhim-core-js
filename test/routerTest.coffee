@@ -1,17 +1,28 @@
 should = require "should"
 sinon = require "sinon"
+http = require "http"
 
 router = require "../lib/router"
 
 describe "HTTP Router", ->
 
-	describe "Channel", ->
+	addedChannelNames = []
+
+	afterEach ->
+		# remove any remaining channels
+		for channelName in addedChannelNames
+			console.log "removing " + channelName
+			router.removeChannel channelName, (err) ->
+
+			addedChannelNames = []			
+
+	describe.skip "Channel", ->
 		describe ".toString()", ->
 			it "should return a string representation of the channel object", ->
 				routes = [
-		 				 	host: "localhost"
-		 				 	port: "8080"
-		 				 ]
+							host: "localhost"
+							port: "8080"
+						 ]
 				channel = new router.Channel "Test Channel", "test/sample/.+", routes
 				channelStr = channel.toString()
 
@@ -19,32 +30,82 @@ describe "HTTP Router", ->
 
 
 	describe ".route", ->
-		it "should route an incomming request to the endpoints specific by the channel config"
+		it "should route an incomming request to the endpoints specific by the channel config", (done) ->
+			mockServerCalled = false
 
-		it "should return the response from the primary channel"
+			# Create mock endpoint to forward requests to
+			mockServer = http.createServer (req, res) ->
+				res.writeHead 201, {"Content-Type": "text/plain"}
+				res.end "Mock response body\n"
+				mockServerCalled = true
 
-		it "should be able to multicast to multiple endpoints"
+			mockServer.listen 9876, ->
+				console.log "Mock server listening"
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+								host: "localhost"
+								port: 9876
+								primary: true
+							]
+				addedChannelNames.push channel.name
+				router.addChannel channel, (err) ->
+					console.log "added channel"
+					if err
+						console.log "error adding channel"
+						return done err
+
+					# Build the request
+					options =
+						hostname: "localhost"
+						port: 8080
+						path: "test"
+						method: "GET"
+					req = http.request options
+					req.url = "/test"
+
+					# route the request
+					res = new http.ServerResponse(req)
+
+					router.route req, res, (err) ->
+						if err
+							console.log "routing error"
+							return done err
+						res.end()
+						res.should.be.ok;
+						res.statusCode.should.be.exactly 201
+						mockServerCalled.should.be.true
+
+						# Clean-up
+						#router.removeChannel "Mock endpoint", ->
+
+						done()
+
+		it "should be able to multicast to multiple endpoints but return only the response from the primary route"
 
 		it "should throw an error if there are multiple primary routes"
 
-	describe ".setChannels(channels) and .getChannels()", ->
+	describe.skip ".setChannels(channels) and .getChannels()", ->
 		it "should save the channels config to the db and be able to fetch them again", (done) ->
 			channels =  [
-					 		name: "Test Channel 1"
-					 		urlPattern: "test/sample/.+"
-					 		routes: [
-					 					host: "localhost"
-					 					port: "8080"
-					 				]
-					 	,
-					 		name: "Test Channel 2"
-					 		urlPattern: "test/sample2/.+"
-					 		routes: [
-					 					host: "localhost"
-					 					port: "8081"
-					 				]
-					 	]
-			console.log "Length: " + channels.length
+							name: "Test Channel 1"
+							urlPattern: "test/sample/.+"
+							routes: [
+										host: "localhost"
+										port: "8080"
+									]
+						,
+							name: "Test Channel 2"
+							urlPattern: "test/sample2/.+"
+							routes: [
+										host: "localhost"
+										port: "8081"
+									]
+						]
+			addedChannelNames.push channels[0].name
+			addedChannelNames.push channels[1].name
 			router.setChannels channels, ->
 				router.getChannels (err, returnedChannels) ->
 					returnedChannels.should.have.length 2
@@ -56,15 +117,16 @@ describe "HTTP Router", ->
 
 
 
-	describe ".getChannel(channelName)", ->
+	describe.skip ".getChannel(channelName)", ->
 		it "should return the channel with the specified name", (done) ->
 			channel =
-		 		name: "Unique Test Channel"
-		 		urlPattern: "test/sample/.+"
-		 		routes: [
-		 					host: "localhost"
-		 					port: "8080"
-		 				]
+				name: "Unique Test Channel"
+				urlPattern: "test/sample/.+"
+				routes: [
+							host: "localhost"
+							port: "8080"
+						]
+			addedChannelNames.push channel.name
 			router.addChannel channel, ->
 				router.getChannel "Unique Test Channel", (err, returnedChannel) ->
 					returnedChannel.should.be.ok
@@ -79,7 +141,7 @@ describe "HTTP Router", ->
 				(returnedChannel == null).should.be.true
 				done()
 
-	describe ".addChannel(channel)", ->
+	describe.skip ".addChannel(channel)", ->
 		it "should add a new channel to the list of channels", (done) ->
 			channel =
 				name: "Added Channel"
@@ -88,6 +150,7 @@ describe "HTTP Router", ->
 							host: "localhost"
 							port: "8080"
 						]
+			addedChannelNames.push channel.name
 			router.addChannel channel, ->
 				router.getChannel "Added Channel", (err, returnedChannel) ->
 					returnedChannel.should.be.ok
@@ -105,6 +168,7 @@ describe "HTTP Router", ->
 							host: "localhost"
 							port: "8080"
 						]
+			addedChannelNames.push channel.name
 			router.addChannel channel, ->
 				router.addChannel channel, (err) ->
 					err.should.be.ok
@@ -113,7 +177,7 @@ describe "HTTP Router", ->
 					router.removeChannel channel.name, ->
 						done()
 
-	describe ".updateChannel(channel)", ->
+	describe.skip ".updateChannel(channel)", ->
 		it "should update the supplied channel, keying on the channel name", (done) ->
 			channel =
 				name: "Channel to update"
@@ -122,6 +186,7 @@ describe "HTTP Router", ->
 							host: "localhost"
 							port: "8080"
 						]
+			addedChannelNames.push channel.name
 			router.addChannel channel, ->
 				channel.urlPattern = "test/sample2/.+"
 				channel.routes[0].port = 8081
@@ -136,7 +201,7 @@ describe "HTTP Router", ->
 						router.removeChannel channel.name, ->
 							done()
 
-	describe ".removeChannel(channelName)", ->
+	describe.skip ".removeChannel(channelName)", ->
 		it "should remove the supplied channel, keying on the channel name", (done) ->
 			channel =
 				name: "Channel to remove"
@@ -145,6 +210,7 @@ describe "HTTP Router", ->
 							host: "localhost"
 							port: "8080"
 						]
+			addedChannelNames.push channel.name
 			router.addChannel channel, ->
 				router.removeChannel channel.name, (err) ->
 					router.getChannel "Channel to remove", (err, returnedChannel) ->
