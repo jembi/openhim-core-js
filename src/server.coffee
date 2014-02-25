@@ -1,18 +1,17 @@
 http = require 'http'
 https = require 'https'
-openhimMiddleware = require "../lib/openhimMiddleware"
+koaMiddleware = require "../lib/koaMiddleware"
 	
 console.log "Starting OpenHIM server..."
 
 httpPort = 5001
 httpsPort = 5000
 
-openhimMiddleware.setupApp (app) ->
+koaMiddleware.setupApp (app) ->
 
 	if httpPort
-		httpServer = http.createServer app
-		httpServer.listen httpPort
-		httpServer.on "listening", ->
+		app.listen(httpPort)
+		app.on "listening", ->
 			console.log "HTTP listenting on port " + httpPort
 
 	###

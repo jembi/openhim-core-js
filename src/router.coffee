@@ -1,6 +1,7 @@
 http = require 'http'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
+Q = require "q"
 
 channelsCollection = null
 
@@ -87,30 +88,32 @@ exports.removeChannel = (channelName, done) ->
 			else
 				return done()
 
-sendRequestToRoutes = (req, res, routes, next) ->
+sendRequestToRoutes = (ctx, routes, next) ->
 	primaryRouteReturned = false
 
 	for route in routes
 		options =
 			hostname: route.host
 			port: route.port
-			path: req.url
-			method: req.method
+			path: ctx.request.url
+			method: ctx.request.method
 
 		routeReq = http.request options, (routeRes) ->
 			if route.primary
 				if primaryRouteReturned
 					next new Error "A primary route has already been returned, only a single primary route is allowed"
 				else
-					res.writeHead routeRes.statusCode, routeRes.headers
+					ctx.response.status = routeRes.statusCode
+					ctx.response.header = routeRes.headers
 					routeRes.on "data", (chunk) ->
-						res.write chunk
+						ctx.response.body = chunk
 					routeRes.on "end", ->
+						console.log "done routing"
 						next()
 
 		routeReq.end()
 
-exports.route = (req, res, next) ->
+exports.route = (ctx, next) ->
 	routes = []
 
 	exports.getChannels (err, items) ->
@@ -118,8 +121,14 @@ exports.route = (req, res, next) ->
 			return next err
 		for channel in items
 			pat = new RegExp channel.urlPattern
-			if pat.test req.url
+			if pat.test ctx.request.url
 				routes = routes.concat channel.routes
 
-		sendRequestToRoutes req, res, routes, next
+		sendRequestToRoutes ctx, routes, next
 
+exports.koaMiddleware = `function *routeMiddleware(next) {
+		console.log("Starting routing");
+		var route = Q.denodeify(exports.route);
+		yield route(this);
+		yield next;
+	}`

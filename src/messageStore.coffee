@@ -1,10 +1,8 @@
 MongoClient = require('mongodb').MongoClient;
 
-exports.storeRequest = (req, res, next) ->
-	console.log "store request"
-	next()
-
-exports.storeResponse = (req, res, next) ->
-	console.log "store response"
-	next()
+exports.store = `function *store(next) {
+		console.log("Store request");
+		yield next;
+		console.log("Store response");
+	}`
 

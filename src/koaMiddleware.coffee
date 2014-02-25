@@ -1,40 +1,36 @@
-express = require 'express'
+koa = require 'koa'
 router = require './router'
 messageStore = require './messageStore'
 
 exports.setupApp = (done) ->
-	app = express()
+	app = koa()
 
 	# Auth middleware
-	app.use(express.basicAuth('testuser', 'testpass'));
+	#app.use(express.basicAuth('testuser', 'testpass'));
 
 	# Logger middleware
-	app.use express.logger()
+	#app.use express.logger()
 
 	# Persit message middleware
-	app.use messageStore.storeRequest
+	app.use messageStore.store
 
 	# Call router
-	app.use router.route
-
-	# Logger response middleware
-	app.use express.logger()
-
-	# Persit mongo middleware
-	app.use messageStore.storeResponse
+	app.use router.koaMiddleware
 
 	# Send response middleware
-	app.all "*", (req, res, next) ->
-		res.end()
+	#app.all "*", (req, res, next) ->
+	#	res.end()
 
 	# Error middleware
+	###
 	app.use (err, req, res, next) ->
 		if err
 			console.log "ERROR: " + JSON.stringify err
 			console.error err.stack
 			res.send 500, 'Something broke!'
+	###
 
-	#Stepup some test data
+	#Setpup some test data
 	channel =
 		name: "TEST DATA - Mock endpoint"
 		urlPattern: ".+"
