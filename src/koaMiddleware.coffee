@@ -33,7 +33,7 @@ exports.setupApp = (done) ->
 	#Setpup some test data
 	channel =
 		name: "TEST DATA - Mock endpoint"
-		urlPattern: ".+"
+		urlPattern: "test/mock"
 		routes: [
 					host: "localhost"
 					port: 9876

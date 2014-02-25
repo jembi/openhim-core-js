@@ -27,7 +27,7 @@ describe "HTTP Router", ->
 				channelStr.should.be.exactly "<Channel: Test Channel>"
 
 
-	describe.skip ".route", ->
+	describe ".route", ->
 		it "should route an incomming request to the endpoints specific by the channel config", (done) ->
 			mockServerCalled = false
 
@@ -53,24 +53,21 @@ describe "HTTP Router", ->
 					if err
 						return done err
 
-					# Build the request
-					options =
-						hostname: "localhost"
-						port: 8080
-						path: "test"
-						method: "GET"
-					req = http.request options
-					req.url = "/test"
+					ctx = new Object()
+					ctx.request = new Object()
+					ctx.response = new Object()
+					ctx.request.url = "/test"
+					ctx.request.method = "GET"
 
-					# route the request
-					res = new http.ServerResponse(req)
-
-					router.route req, res, (err) ->
+					console.log "Routing..."
+					router.route ctx, (err) ->
 						if err
 							return done err
-						res.end()
-						res.should.be.ok;
-						res.statusCode.should.be.exactly 201
+
+						ctx.response.status.should.be.exactly 201
+						ctx.response.body.toString().should.be.eql "Mock response body\n"
+						ctx.response.header.should.be.ok
+
 						mockServerCalled.should.be.true
 
 						# Clean-up
@@ -102,7 +99,7 @@ describe "HTTP Router", ->
 			addedChannelNames.push channels[1].name
 			router.setChannels channels, ->
 				router.getChannels (err, returnedChannels) ->
-					returnedChannels.should.have.length 2
+					returnedChannels.length.should.be.above 1
 
 					# Clean-up
 					router.removeChannel "Test Channel 1", ->
