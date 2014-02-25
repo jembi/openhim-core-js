@@ -27,7 +27,7 @@ describe "HTTP Router", ->
 				channelStr.should.be.exactly "<Channel: Test Channel>"
 
 
-	describe ".route", ->
+	describe.skip ".route", ->
 		it "should route an incomming request to the endpoints specific by the channel config", (done) ->
 			mockServerCalled = false
 
