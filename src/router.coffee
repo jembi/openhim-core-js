@@ -6,10 +6,8 @@ channelsCollection = null
 
 getCollection = (done) ->
 	if channelsCollection
-		console.log "returning existing connection"
 		return done channelsCollection
 	else
-		console.log "Connecting to Mongodb"
 		MongoClient.connect 'mongodb://127.0.0.1:27017/test', (err, db) ->
 			if err
 				return done err
@@ -44,7 +42,6 @@ exports.setChannels = (channels, done) ->
 
 exports.getChannels = (done) ->
 	getCollection (collection) ->
-		console.log "About to search for channels"
 		collection.find().toArray (err, items) ->
 			if err
 				return done err
@@ -93,10 +90,7 @@ exports.removeChannel = (channelName, done) ->
 sendRequestToRoutes = (req, res, routes, next) ->
 	primaryRouteReturned = false
 
-	console.log "Routes length: " + routes.length
-
 	for route in routes
-		console.log "Route: " + route.host + ", " + route.port + ", " + req.url + ", " + req.method
 		options =
 			hostname: route.host
 			port: route.port
@@ -104,33 +98,27 @@ sendRequestToRoutes = (req, res, routes, next) ->
 			method: req.method
 
 		routeReq = http.request options, (routeRes) ->
-			console.log "Recieved response"
 			if route.primary
 				if primaryRouteReturned
 					next new Error "A primary route has already been returned, only a single primary route is allowed"
 				else
-					routeRes.pipe res
-					#routeRes.end()
-					res.statusCode = routeRes.statusCode
-					console.log "resCode: " + res.statusCode
-					next()
+					res.writeHead routeRes.statusCode, routeRes.headers
+					routeRes.on "data", (chunk) ->
+						res.write chunk
+					routeRes.on "end", ->
+						next()
 
-		console.log "Making request"
 		routeReq.end()
 
 exports.route = (req, res, next) ->
-	console.log "In route"
-
 	routes = []
 
 	exports.getChannels (err, items) ->
-		console.log "fetched channels"
 		if err
 			return next err
 		for channel in items
 			pat = new RegExp channel.urlPattern
 			if pat.test req.url
-				console.log "Route matched!"
 				routes = routes.concat channel.routes
 
 		sendRequestToRoutes req, res, routes, next

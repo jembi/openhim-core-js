@@ -1,7 +1,6 @@
 should = require "should"
 sinon = require "sinon"
 http = require "http"
-
 router = require "../lib/router"
 
 describe "HTTP Router", ->
@@ -11,12 +10,11 @@ describe "HTTP Router", ->
 	afterEach ->
 		# remove any remaining channels
 		for channelName in addedChannelNames
-			console.log "removing " + channelName
 			router.removeChannel channelName, (err) ->
 
 			addedChannelNames = []			
 
-	describe.skip "Channel", ->
+	describe "Channel", ->
 		describe ".toString()", ->
 			it "should return a string representation of the channel object", ->
 				routes = [
@@ -52,9 +50,7 @@ describe "HTTP Router", ->
 							]
 				addedChannelNames.push channel.name
 				router.addChannel channel, (err) ->
-					console.log "added channel"
 					if err
-						console.log "error adding channel"
 						return done err
 
 					# Build the request
@@ -71,7 +67,6 @@ describe "HTTP Router", ->
 
 					router.route req, res, (err) ->
 						if err
-							console.log "routing error"
 							return done err
 						res.end()
 						res.should.be.ok;
@@ -79,15 +74,14 @@ describe "HTTP Router", ->
 						mockServerCalled.should.be.true
 
 						# Clean-up
-						#router.removeChannel "Mock endpoint", ->
-
-						done()
+						router.removeChannel "Mock endpoint", ->
+							done()
 
 		it "should be able to multicast to multiple endpoints but return only the response from the primary route"
 
 		it "should throw an error if there are multiple primary routes"
 
-	describe.skip ".setChannels(channels) and .getChannels()", ->
+	describe ".setChannels(channels) and .getChannels()", ->
 		it "should save the channels config to the db and be able to fetch them again", (done) ->
 			channels =  [
 							name: "Test Channel 1"
@@ -117,7 +111,7 @@ describe "HTTP Router", ->
 
 
 
-	describe.skip ".getChannel(channelName)", ->
+	describe ".getChannel(channelName)", ->
 		it "should return the channel with the specified name", (done) ->
 			channel =
 				name: "Unique Test Channel"
@@ -141,7 +135,7 @@ describe "HTTP Router", ->
 				(returnedChannel == null).should.be.true
 				done()
 
-	describe.skip ".addChannel(channel)", ->
+	describe ".addChannel(channel)", ->
 		it "should add a new channel to the list of channels", (done) ->
 			channel =
 				name: "Added Channel"
@@ -177,7 +171,7 @@ describe "HTTP Router", ->
 					router.removeChannel channel.name, ->
 						done()
 
-	describe.skip ".updateChannel(channel)", ->
+	describe ".updateChannel(channel)", ->
 		it "should update the supplied channel, keying on the channel name", (done) ->
 			channel =
 				name: "Channel to update"
@@ -201,7 +195,7 @@ describe "HTTP Router", ->
 						router.removeChannel channel.name, ->
 							done()
 
-	describe.skip ".removeChannel(channelName)", ->
+	describe ".removeChannel(channelName)", ->
 		it "should remove the supplied channel, keying on the channel name", (done) ->
 			channel =
 				name: "Channel to remove"
