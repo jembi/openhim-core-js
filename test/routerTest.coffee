@@ -8,11 +8,11 @@ describe "HTTP Router", ->
 	addedChannelNames = []
 
 	afterEach ->
-		# remove any remaining channels
+		# remove test channels
 		for channelName in addedChannelNames
 			router.removeChannel channelName, (err) ->
 
-			addedChannelNames = []			
+		addedChannelNames = []			
 
 	describe "Channel", ->
 		describe ".toString()", ->
@@ -67,12 +67,8 @@ describe "HTTP Router", ->
 						ctx.response.status.should.be.exactly 201
 						ctx.response.body.toString().should.be.eql "Mock response body\n"
 						ctx.response.header.should.be.ok
-
 						mockServerCalled.should.be.true
-
-						# Clean-up
-						router.removeChannel "Mock endpoint", ->
-							done()
+						done()
 
 		it "should be able to multicast to multiple endpoints but return only the response from the primary route"
 
@@ -100,13 +96,7 @@ describe "HTTP Router", ->
 			router.setChannels channels, ->
 				router.getChannels (err, returnedChannels) ->
 					returnedChannels.length.should.be.above 1
-
-					# Clean-up
-					router.removeChannel "Test Channel 1", ->
-						router.removeChannel "Test Channel 2", ->
-							done()
-
-
+					done()
 
 	describe ".getChannel(channelName)", ->
 		it "should return the channel with the specified name", (done) ->
@@ -122,10 +112,7 @@ describe "HTTP Router", ->
 				router.getChannel "Unique Test Channel", (err, returnedChannel) ->
 					returnedChannel.should.be.ok
 					returnedChannel.should.have.property("name", "Unique Test Channel")
-
-					# Clean-up
-					router.removeChannel "Unique Test Channel", ->
-						done()
+					done()
 
 		it "should return null if the channel does not exist", (done) ->
 			router.getChannel "A Channel that doesn't exist", (err, returnedChannel) ->
@@ -146,10 +133,7 @@ describe "HTTP Router", ->
 				router.getChannel "Added Channel", (err, returnedChannel) ->
 					returnedChannel.should.be.ok
 					returnedChannel.should.have.property "name", "Added Channel"
-
-					# Clean-up
-					router.removeChannel channel.name, ->
-						done()
+					done()
 
 		it "should not allow additional channels with the same name to be added", (done) ->
 			channel =
@@ -163,10 +147,7 @@ describe "HTTP Router", ->
 			router.addChannel channel, ->
 				router.addChannel channel, (err) ->
 					err.should.be.ok
-
-					# Clean-up
-					router.removeChannel channel.name, ->
-						done()
+					done()
 
 	describe ".updateChannel(channel)", ->
 		it "should update the supplied channel, keying on the channel name", (done) ->
@@ -187,10 +168,7 @@ describe "HTTP Router", ->
 						returnedChannel.should.have.property "name", "Channel to update"
 						returnedChannel.routes[0].should.have.property "host", "localhost"
 						returnedChannel.routes[0].should.have.property "port", 8081
-
-						# Clean-up
-						router.removeChannel channel.name, ->
-							done()
+						done()
 
 	describe ".removeChannel(channelName)", ->
 		it "should remove the supplied channel, keying on the channel name", (done) ->
