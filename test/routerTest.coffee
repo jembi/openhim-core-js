@@ -103,7 +103,41 @@ describe "HTTP Router", ->
 								done()
 
 
-		it "should pass an error to next if there are multiple primary routes"
+		it "should pass an error to next if there are multiple primary routes", (done) ->
+			createMockServer 200, "Mock response body 1\n", 4444, ->
+				createMockServer 201, "Mock response body 2\n", 5555, ->
+					createMockServer 400, "Mock response body 3\n", 6666, ->
+						# Setup channels for the mock endpoints
+						channel =
+							name: "Multi-primary"
+							urlPattern: "test/multi-primary"
+							routes: [
+										host: "localhost"
+										port: 4444
+									,
+										host: "localhost"
+										port: 5555
+										primary: true
+									,
+										host: "localhost"
+										port: 6666
+										primary: true
+									]
+						addedChannelNames.push channel.name
+
+						router.addChannel channel, (err) ->
+							ctx = new Object()
+							ctx.request = new Object()
+							ctx.response = new Object()
+							ctx.request.url = "/test/multi-primary"
+							ctx.request.method = "GET"
+
+							router.route ctx, (err) ->
+								if err
+									err.message.should.be.exactly "A primary route has already been returned, only a single primary route is allowed"
+									done()
+					
+
 
 	describe ".setChannels(channels) and .getChannels()", ->
 		it "should save the channels config to the db and be able to fetch them again", (done) ->

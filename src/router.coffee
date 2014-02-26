@@ -90,7 +90,7 @@ exports.removeChannel = (channelName, done) ->
 
 sendRequestToRoutes = (ctx, routes, next) ->
 	primaryRouteReturned = false
-
+	
 	for route in routes
 		options =
 			hostname: route.host
@@ -103,6 +103,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 				if primaryRouteReturned
 					next new Error "A primary route has already been returned, only a single primary route is allowed"
 				else
+					primaryRouteReturned = true
 					ctx.response.status = routeRes.statusCode
 					ctx.response.header = routeRes.headers
 					routeRes.on "data", (chunk) ->
