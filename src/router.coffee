@@ -98,8 +98,8 @@ sendRequestToRoutes = (ctx, routes, next) ->
 			path: ctx.request.url
 			method: ctx.request.method
 
-		routeReq = http.request options, (routeRes) ->
-			if route.primary
+		if route.primary
+			routeReq = http.request options, (routeRes) ->
 				if primaryRouteReturned
 					next new Error "A primary route has already been returned, only a single primary route is allowed"
 				else
@@ -108,8 +108,9 @@ sendRequestToRoutes = (ctx, routes, next) ->
 					routeRes.on "data", (chunk) ->
 						ctx.response.body = chunk
 					routeRes.on "end", ->
-						console.log "done routing"
 						next()
+		else 
+			routeReq = http.request options
 
 		routeReq.end()
 

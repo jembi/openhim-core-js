@@ -26,19 +26,17 @@ describe "HTTP Router", ->
 
 				channelStr.should.be.exactly "<Channel: Test Channel>"
 
+	createMockServer = (resStatusCode, resBody, port, callback) ->
+		# Create mock endpoint to forward requests to
+		mockServer = http.createServer (req, res) ->
+			res.writeHead resStatusCode, {"Content-Type": "text/plain"}
+			res.end resBody
+
+		mockServer.listen port, callback
 
 	describe ".route", ->
 		it "should route an incomming request to the endpoints specific by the channel config", (done) ->
-			mockServerCalled = false
-
-			# Create mock endpoint to forward requests to
-			mockServer = http.createServer (req, res) ->
-				res.writeHead 201, {"Content-Type": "text/plain"}
-				res.end "Mock response body\n"
-				mockServerCalled = true
-
-			mockServer.listen 9876, ->
-				console.log "Mock server listening"
+			createMockServer 201, "Mock response body\n", 9876, ->
 				# Setup a channel for the mock endpoint
 				channel =
 					name: "Mock endpoint"
@@ -59,7 +57,6 @@ describe "HTTP Router", ->
 					ctx.request.url = "/test"
 					ctx.request.method = "GET"
 
-					console.log "Routing..."
 					router.route ctx, (err) ->
 						if err
 							return done err
@@ -67,12 +64,46 @@ describe "HTTP Router", ->
 						ctx.response.status.should.be.exactly 201
 						ctx.response.body.toString().should.be.eql "Mock response body\n"
 						ctx.response.header.should.be.ok
-						mockServerCalled.should.be.true
 						done()
 
-		it "should be able to multicast to multiple endpoints but return only the response from the primary route"
+		it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
+			createMockServer 200, "Mock response body 1\n", 7777, ->
+				createMockServer 201, "Mock response body 2\n", 8888, ->
+					createMockServer 400, "Mock response body 3\n", 9999, ->
+						# Setup channels for the mock endpoints
+						channel =
+							name: "Multicast 1"
+							urlPattern: "test/multicast.+"
+							routes: [
+										host: "localhost"
+										port: 7777
+									,
+										host: "localhost"
+										port: 8888
+										primary: true
+									,
+										host: "localhost"
+										port: 9999
+									]
+						addedChannelNames.push channel.name
 
-		it "should throw an error if there are multiple primary routes"
+						router.addChannel channel, (err) ->
+							ctx = new Object()
+							ctx.request = new Object()
+							ctx.response = new Object()
+							ctx.request.url = "/test/multicasting"
+							ctx.request.method = "GET"
+
+							router.route ctx, (err) ->
+								if err
+									return done err
+								ctx.response.status.should.be.exactly 201
+								ctx.response.body.toString().should.be.eql "Mock response body 2\n"
+								ctx.response.header.should.be.ok
+								done()
+
+
+		it "should pass an error to next if there are multiple primary routes"
 
 	describe ".setChannels(channels) and .getChannels()", ->
 		it "should save the channels config to the db and be able to fetch them again", (done) ->
