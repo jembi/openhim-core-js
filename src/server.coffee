@@ -1,44 +1,19 @@
 http = require 'http'
 https = require 'https'
-express = require 'express'
-router = require './router'
-messageStore = require './messageStore'
+koaMiddleware = require "../lib/koaMiddleware"
+	
+console.log "Starting OpenHIM server..."
 
-init = ->
-	app = express()
+httpPort = 5001
+httpsPort = 5000
 
-	# Auth middleware
-	app.use(express.basicAuth('testuser', 'testpass'));
-
-	# Logger middleware
-	app.use express.logger()
-
-	# Persit message middleware
-	app.use messageStore.storeRequest
-
-	# Call router
-	app.all '*', router.route
-
-	# Logger response middleware
-	app.use express.logger()
-
-	# Persit mongo middleware
-	app.use messageStore.storeResponse
-
-	# Send response middleware
-	app.use (req, res, next) ->
-		res.end();
-	return app;
-
-exports.start = (httpPort = null, httpsPort = null) ->
-	app = init()
+koaMiddleware.setupApp (app) ->
 
 	if httpPort
-		httpServer = http.createServer app
-		httpServer.listen httpPort
-		httpServer.on "listening", ->
+		app.listen(httpPort)
+		app.on "listening", ->
 			console.log "HTTP listenting on port " + httpPort
-	
+
 	###
 	if httpsPort
 		var options =
@@ -53,5 +28,3 @@ exports.start = (httpPort = null, httpsPort = null) ->
 		httpServer.on "listening", ->
 			console.log "HTTPS listenting on port " + httpPort
 	###
-
-exports.start(8080)
