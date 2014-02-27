@@ -137,7 +137,46 @@ describe "HTTP Router", ->
 									err.message.should.be.exactly "A primary route has already been returned, only a single primary route is allowed"
 									done()
 					
+		it "should forward PUT and POST requests correctly", (done) ->
+			# Create mock endpoint to forward requests to
+			mockServer = http.createServer (req, res) ->
+				req.on "data", (chunk) ->
+					if chunk.toString() == "TestBody"
+						res.writeHead 200, {"Content-Type": "text/plain"}
+						res.end()
+					else
+						res.writeHead 400, {"Content-Type": "text/plain"}
+						res.end()
 
+			mockServer.listen 3333, ->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "POST channel"
+					urlPattern: ".+"
+					routes: [
+								host: "localhost"
+								port: 3333
+								primary: true
+							]
+				addedChannelNames.push channel.name
+				router.addChannel channel, (err) ->
+					if err
+						return done err
+
+					ctx = new Object()
+					ctx.request = new Object()
+					ctx.response = new Object()
+					ctx.request.url = "/test"
+					ctx.request.method = "POST"
+					ctx.request.body = "TestBody"
+
+					router.route ctx, (err) ->
+						if err
+							return done err
+
+						ctx.response.status.should.be.exactly 200
+						ctx.response.header.should.be.ok
+						done()
 
 	describe ".setChannels(channels) and .getChannels()", ->
 		it "should save the channels config to the db and be able to fetch them again", (done) ->

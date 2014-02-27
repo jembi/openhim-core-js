@@ -97,6 +97,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 			port: route.port
 			path: ctx.request.url
 			method: ctx.request.method
+			headers: ctx.request.header
 
 		if route.primary
 			routeReq = http.request options, (routeRes) ->
@@ -113,6 +114,8 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		else 
 			routeReq = http.request options
 
+		if ctx.request.method == "POST" || ctx.request.method == "PUT"
+			routeReq.write ctx.request.body
 		routeReq.end()
 
 exports.route = (ctx, next) ->
