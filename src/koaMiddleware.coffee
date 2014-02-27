@@ -30,7 +30,7 @@ exports.setupApp = (done) ->
 			res.send 500, 'Something broke!'
 	###
 
-	#Setpup some test data
+	#Setup some test data
 	channel =
 		name: "TEST DATA - Mock endpoint"
 		urlPattern: "test/mock"
