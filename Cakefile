@@ -146,7 +146,11 @@ launch = (cmd, options=[], callback) ->
   app = spawn cmd, options
   app.stdout.pipe(process.stdout)
   app.stderr.pipe(process.stderr)
-  app.on 'exit', (status) -> callback?() if status is 0
+  app.on 'exit', (status) ->
+    if status is 0
+      callback()
+    else
+      process.exit(status);
 
 # ## *build*
 #
