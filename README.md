@@ -32,7 +32,7 @@ This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing
 
 To run the unit tests:
 
-`cake test`
+`cake test` or `npm test`
 
 You can have the CoffeeScript files in src/ auto compile as you save them by running:
 
