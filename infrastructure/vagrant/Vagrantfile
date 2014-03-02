@@ -1,0 +1,24 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant::Config.run do |config|
+	config.vm.box = "precise32"
+	config.vm.box_url = "http://files.vagrantup.com/precise32.box"
+
+	config.vm.network :bridged
+	config.vm.forward_port 5000, 5000
+	config.vm.forward_port 5001, 5001
+
+	config.vm.share_folder "openhim-core-js", "/openhim-core-js", "../../"
+
+	config.vm.provision :shell do |shell|
+		shell.inline = "mkdir -p /etc/puppet/modules;
+			puppet module install willdurand/nodejs;
+			puppet module install puppetlabs/mongodb"
+	end
+
+	config.vm.provision :puppet do |puppet|
+		puppet.manifests_path = "../manifests"
+		puppet.manifest_file  = "openhim-core-js.pp"
+	end
+end
