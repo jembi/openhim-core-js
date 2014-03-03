@@ -30,6 +30,10 @@ To get started with this repo you will need all the required dependancies. To ge
 
 `npm install`
 
+You will also need to install MongoDB, in Ubuntu run:
+
+`sudo apt-get install mongodb`
+
 This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks.
 
 To run the unit tests:
