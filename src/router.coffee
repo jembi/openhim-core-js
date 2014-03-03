@@ -163,7 +163,6 @@ sendRequestToRoutes = (ctx, routes, next) ->
 					ctx.response.header = routeRes.headers
 					routeRes.on "data", (chunk) ->
 						ctx.response.body = chunk
-						console.log chunk.toString()
 					routeRes.on "end", ->
 						next()
 		else 
