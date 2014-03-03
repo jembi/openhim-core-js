@@ -151,7 +151,8 @@ sendRequestToRoutes = (ctx, routes, next) ->
 			path: ctx.request.url
 			method: ctx.request.method
 			headers: ctx.request.header
-
+		if options.headers && options.headers.host
+			delete options.headers.host
 		if route.primary
 			routeReq = http.request options, (routeRes) ->
 				if primaryRouteReturned
@@ -162,6 +163,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 					ctx.response.header = routeRes.headers
 					routeRes.on "data", (chunk) ->
 						ctx.response.body = chunk
+						console.log chunk.toString()
 					routeRes.on "end", ->
 						next()
 		else 
