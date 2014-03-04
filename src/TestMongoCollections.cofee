@@ -1,0 +1,38 @@
+mongo = require "mongodb"
+mongoose = require "mongoose"
+Schema = mongoose.Schema
+
+server = new mongo.Server "127.0.0.1", 27017, {}
+
+mongoDbClient = new mongo.Db "openhimdb", server
+
+
+
+
+MONGO_DB_URL= 'mongodb://localhost:27017/openhimdb'
+
+mongoose.connect MONGO_DB_URL  
+ApplicationSchema = new Schema
+    "applicationID": {type: String, required: true}
+    "domain": {type: String, required: true}
+    "name": {type: String, required: true}
+    "roles": [ {type: String, required: true }]
+    "password-hash": {type: String, required: true}
+    "cert": {type: String, required: true}
+    
+#compile the Application Schema into a Model
+Application = mongoose.model 'Application', ApplicationSchema
+
+# save() updates existing application-object or inserts new ones as needed
+testApplicationDoc =
+	"applicationID": "Ishmael_OpenMRS"
+    "domain": "him.jembi.org"
+    "name": "OpenMRS Ishmael instance"
+    "roles": [ "OpenMRS_PoC", "PoC" ]
+    "password-hash": ""
+    "cert": ""
+newApplication  = new Application testApplicationDoc
+newApplication.save (err, saveResult) ->
+    console.log "Unable to save record: #{err}" if err
+    console.log "Application Collection Save #{saveResult}"      
+        
