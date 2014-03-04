@@ -2,6 +2,7 @@ should = require "should"
 sinon = require "sinon"
 http = require "http"
 router = require "../lib/router"
+appcollection = require "../lib/TestMongoCollections"
 
 describe "HTTP Router", ->
 
@@ -289,4 +290,27 @@ describe "HTTP Router", ->
 					router.getChannel "Channel to remove", (err, returnedChannel) ->
 						(returnedChannel == null).should.be.true
 						done()
+    
+	describe ".register(applicationDocument)", ->
+		it "should return the newly added Application as contained in the application-json-document", (done) ->			
+			testAppDoc =
+					applicationID: "Ishmael_OpenMRS"
+					domain: "him.jembi.org"
+					name: "OpenMRS Ishmael instance"
+					roles: [ 
+							"OpenMRS_PoC"
+							"PoC" 
+						]
+					passwordHash: ""
+					cert: ""					
+
+			appcollection.registerApplication testAppDoc, (error, newAppDoc)->
+					newAppDoc.should.be.ok
+					newAppDoc.should.have.property("applicationID", "Ishmael_OpenMRS")
+					done()
+
+	#	it "should return null if the channel does not exist", (done) ->
+	#		router.getChannel "A Channel that doesn't exist", (err, returnedChannel) ->
+	#			(returnedChannel == null).should.be.true
+	#			done()
 
