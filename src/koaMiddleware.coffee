@@ -1,4 +1,5 @@
 koa = require 'koa'
+auth = require 'koa-basic-auth'
 router = require './router'
 messageStore = require './messageStore'
 
@@ -10,6 +11,10 @@ exports.setupApp = (done) ->
 
 	# Logger middleware
 	#app.use express.logger()
+	app.use auth(
+		name: "user"
+		pass: "password"
+	)
 
 	# Persit message middleware
 	app.use messageStore.store
@@ -29,7 +34,7 @@ exports.setupApp = (done) ->
 			console.error err.stack
 			res.send 500, 'Something broke!'
 	###
-
+	
 	#Setup some test data
 	channel1 =
 		name: "TEST DATA - Mock endpoint"
