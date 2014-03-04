@@ -23,10 +23,25 @@ ApplicationSchema = new Schema
 #compile the Application Schema into a Model
 Application = mongoose.model 'Application', ApplicationSchema
 
+###
+# Gets all channel currently registered.
+# 
+# Accepts (done) where done is a callback that will be called with (err, items)
+# err will contain an error object if an error occurs otherwise items will
+# contain an array fo Channel objects.
+###
+
 # save() updates existing application-object or inserts new ones as needed
-testApplicationDoc ={applicationID: "Ishmael_OpenMRS",domain: "him.jembi.org",name: "OpenMRS Ishmael instance",roles: [ "OpenMRS_PoC", "PoC" ],passwordHash: "",cert: ""}
-newApplication  = new Application testApplicationDoc
-newApplication.save (err, saveResult) ->
-    console.log "Unable to save record: #{err}" if err
-    console.log "Application Collection Save #{saveResult}"      
+# testApplicationDoc ={applicationID: "Ishmael_OpenMRS",domain: "him.jembi.org",name: "OpenMRS Ishmael instance",roles: [ "OpenMRS_PoC", "PoC" ],passwordHash: "",cert: ""}
+
+
+exports.registerApplication = (insertValues, done) ->
+	newApplication  = new Application testApplicationDoc
+	newApplication.save (err, saveResult) ->     
+			if err
+				console.log "Unable to save record: #{err}"
+				return done err
+			else
+				console.log "Application Collection Save #{saveResult}"  
+				return done null, saveResult    
         
