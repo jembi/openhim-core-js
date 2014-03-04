@@ -1,6 +1,7 @@
 http = require 'http'
 https = require 'https'
 koaMiddleware = require "../lib/koaMiddleware"
+tlsAuth = require "../lib/tlsAuth"
 	
 console.log "Starting OpenHIM server..."
 
@@ -10,21 +11,13 @@ httpsPort = 5000
 koaMiddleware.setupApp (app) ->
 
 	if httpPort
-		app.listen(httpPort)
-		app.on "listening", ->
+		httpServer = http.createServer app.callback()
+		httpServer.listen httpPort
+		httpServer.on "listening", ->
 			console.log "HTTP listenting on port " + httpPort
 
-	###
 	if httpsPort
-		var options =
-		    key:			    fs.readFileSync('ssl/server.key')
-		    cert:   			fs.readFileSync('ssl/server.crt')
-		    ca:     			fs.readFileSync('ssl/ca.crt')
-		    requestCert:        true
-		    rejectUnauthorized: false
-
-		httpsServer = https.createServer options, app
+		httpsServer = https.createServer tlsAuth.getServerOptions(), app.callback()
 		httpsServer.listen httpsPort
 		httpServer.on "listening", ->
 			console.log "HTTPS listenting on port " + httpPort
-	###
