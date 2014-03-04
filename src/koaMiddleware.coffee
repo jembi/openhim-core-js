@@ -2,6 +2,7 @@ koa = require 'koa'
 auth = require 'koa-basic-auth'
 router = require './router'
 messageStore = require './messageStore'
+koaroute = require 'koa-route'
 
 exports.setupApp = (done) ->
 	app = koa()
@@ -16,9 +17,15 @@ exports.setupApp = (done) ->
 		pass: "password"
 	)
 
+
 	# Persit message middleware
 	app.use messageStore.store
 
+	#Default empty route
+	app.use koaroute.get("/", `function *(){
+		this.body = "";
+		}`)
+	
 	# Call router
 	app.use router.koaMiddleware
 
