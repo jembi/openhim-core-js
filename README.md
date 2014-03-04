@@ -51,7 +51,7 @@ _Skip this section if you have already installed mongo_
 * Installing on Ubuntu (Linux) [Linux Installation](http://docs.mongodb.org/manual/administration/install-on-linux/)
   * in Ubuntu run `sudo apt-get install mongodb`
 * Installing on OSX (Mac) [OSX installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/)
-  * using [Brew](http://www.brew.sh) `brew update` followed by `brew install mongodb`
+  * using [Brew](http://brew.sh) `brew update` followed by `brew install mongodb`
 * Installing on Windows [Windows Installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/)
 
 General install doc: [Mongo Install Docs](http://docs.mongodb.org/manual/installation/)
@@ -59,14 +59,14 @@ General install doc: [Mongo Install Docs](http://docs.mongodb.org/manual/install
 ### Starting MongoDB
 For more information please try the [MongoDB docs](http://docs.mongodb.org/manual/tutorial/getting-started/)
 * Running on Ubuntu (Linux) [Linux Running Mongo](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/#run-mongodb)
-..* in Ubuntu run `sudo service mongodb start`
+  * in Ubuntu run `sudo service mongodb start`
 * Running on OSX (Mac) [OSX Running Mongo](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/#run-mongodb)
-..* run `mongod` and alternatively `mongod --dbpath <some alternate directory>` if your data directory isn't set.
+  * run `mongod` and alternatively `mongod --dbpath <some alternate directory>` if your data directory isn't set.
 * Running on Windows [Windows Running Mongo](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/#start-mongodb)
 
 
 ### Testing
-This step is optional but recommended to ensure that all is running as expected. To execute tests see section on "Testing"
+This step is optional but recommended to ensure that all is running as expected. To execute tests see section on [Testing](https://github.com/carlsbox/openhim-core-js#testing-1)
 
 
 Running the server
@@ -83,9 +83,9 @@ Testing
 This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks.
 
 **To run the unit tests:**
-The project allows 2 options for running tests.
-1. NPM based tests
-2. Cake based tests
+The project allows 2 options for running tests:
+* NPM based tests
+* Cake based tests
 
 To run the npm based tests execute `npm test`.
 
