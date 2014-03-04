@@ -31,7 +31,7 @@ exports.setupApp = (done) ->
 	###
 
 	#Setup some test data
-	channel =
+	channel1 =
 		name: "TEST DATA - Mock endpoint"
 		urlPattern: "test/mock"
 		routes: [
@@ -39,5 +39,14 @@ exports.setupApp = (done) ->
 					port: 9876
 					primary: true
 				]
-	router.addChannel channel, (err) ->
-		done(app)
+	router.addChannel channel1, (err) ->
+		channel2 =
+			name: "Sample JsonStub Channel"
+			urlPattern: "sample/api"
+			routes: [
+						host: "jsonstub.com"
+						port: 80
+						primary: true
+					]
+		router.addChannel channel2, (err) ->
+			done(app)
