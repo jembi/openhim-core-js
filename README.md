@@ -49,9 +49,9 @@ For the successful setup and running of the OpenHIM please ensure that Mongo is 
 ### Installing MongoDB
 _Skip this section if you have already installed mongo_
 * Installing on Ubuntu (Linux) [Linux Installation](http://docs.mongodb.org/manual/administration/install-on-linux/)
-** in Ubuntu run `sudo apt-get install mongodb`
+  * in Ubuntu run `sudo apt-get install mongodb`
 * Installing on OSX (Mac) [OSX installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/)
-..* using [Brew](http://www.brew.sh) `brew update` followed by `brew install mongodb`
+  * using [Brew](http://www.brew.sh) `brew update` followed by `brew install mongodb`
 * Installing on Windows [Windows Installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/)
 
 General install doc: [Mongo Install Docs](http://docs.mongodb.org/manual/installation/)
