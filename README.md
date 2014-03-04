@@ -11,7 +11,7 @@ The OpenHIM core component is responcible for providing a single entrypoint into
 
 Note: The OpenHIM core component in this repository is currently in active and early development. It is not yet ready for production use.
 
-#H1 Quickstart Guide
+# Quickstart Guide
 
 1. Clone Repository `https://github.com/jembi/openhim-core-js.git` or Download code (https://github.com/jembi/openhim-core-js/archive/master.zip) to desired location
 2. Install and Start Mongo or start mongoDB if already installed
@@ -46,7 +46,7 @@ Navigate to the directory where the open-him-js source is located and run the fo
 
 For the successful setup and running of the OpenHIM please ensure that Mongo is installed started and running on your system.
 
-#H3 Installing MongoDB
+### Installing MongoDB
 _Skip this section if you have already installed mongo_
 * Installing on Ubuntu (Linux) [Linux Installation](http://docs.mongodb.org/manual/administration/install-on-linux/)
 ..* in Ubuntu run `sudo apt-get install mongodb`
@@ -56,7 +56,7 @@ _Skip this section if you have already installed mongo_
 
 General install doc: [Mongo Install Docs](http://docs.mongodb.org/manual/installation/)
 
-#H3 Starting MongoDB
+### Starting MongoDB
 For more information please try the [MongoDB docs](http://docs.mongodb.org/manual/tutorial/getting-started/)
 * Running on Ubuntu (Linux) [Linux Running Mongo](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/#run-mongodb)
 ..* in Ubuntu run `sudo service mongodb start`
@@ -65,7 +65,7 @@ For more information please try the [MongoDB docs](http://docs.mongodb.org/manua
 * Running on Windows [Windows Running Mongo](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/#start-mongodb)
 
 
-#H3 Testing
+### Testing
 This step is optional but recommended to ensure that all is running as expected. To execute tests see section on "Testing"
 
 
