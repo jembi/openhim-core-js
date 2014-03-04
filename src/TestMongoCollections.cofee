@@ -24,13 +24,7 @@ ApplicationSchema = new Schema
 Application = mongoose.model 'Application', ApplicationSchema
 
 # save() updates existing application-object or inserts new ones as needed
-testApplicationDoc =
-	"applicationID": "Ishmael_OpenMRS"
-    "domain": "him.jembi.org"
-    "name": "OpenMRS Ishmael instance"
-    "roles": [ "OpenMRS_PoC", "PoC" ]
-    "password-hash": ""
-    "cert": ""
+testApplicationDoc ={applicationID: "Ishmael_OpenMRS",domain: "him.jembi.org",name: "OpenMRS Ishmael instance",roles: [ "OpenMRS_PoC", "PoC" ],passwordHash: "",cert: ""}
 newApplication  = new Application testApplicationDoc
 newApplication.save (err, saveResult) ->
     console.log "Unable to save record: #{err}" if err
