@@ -17,7 +17,7 @@ ApplicationSchema = new Schema
     "domain": {type: String, required: true}
     "name": {type: String, required: true}
     "roles": [ {type: String, required: true }]
-    "password-hash": {type: String, required: true}
+    "passwordHash": {type: String, required: true}
     "cert": {type: String, required: true}
     
 #compile the Application Schema into a Model
