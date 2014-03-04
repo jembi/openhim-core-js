@@ -7,6 +7,7 @@ console.log "Starting OpenHIM server..."
 
 httpPort = 5001
 httpsPort = 5000
+mutualTLS = false
 
 koaMiddleware.setupApp (app) ->
 
@@ -17,7 +18,7 @@ koaMiddleware.setupApp (app) ->
 			console.log "HTTP listenting on port " + httpPort
 
 	if httpsPort
-		httpsServer = https.createServer tlsAuth.getServerOptions(), app.callback()
+		httpsServer = https.createServer tlsAuth.getServerOptions(mutualTLS), app.callback()
 		httpsServer.listen httpsPort
 		httpServer.on "listening", ->
 			console.log "HTTPS listenting on port " + httpPort
