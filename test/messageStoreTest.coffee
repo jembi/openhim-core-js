@@ -6,7 +6,7 @@ MongoClient = require('mongodb').MongoClient
 
 
 describe ".storeTransaction", ->
-	before (done)->
+	beforeEach (done)->
 		MongoClient.connect "mongodb://127.0.0.1:27017/test", {native_parser:true},(error,db) ->
 			if error
 				return done error
@@ -14,7 +14,7 @@ describe ".storeTransaction", ->
 	it "it should be able to save the transaction in the db", (done) ->
 		request = 
 			path: "/store/provider"
-			headers: {
+			header: {
 				"user-agent": "curl/7.32.0",
 				"host":"localhost:5001",
 				"accept": "*/*",
@@ -24,7 +24,7 @@ describe ".storeTransaction", ->
 				"action": "save"
 			}
 			body: {
-					"applicationId" : "9999999999TTTT",
+					"applicationId" : "",
 					"status" : "Processing",
 					"properties" : [
 						{
@@ -46,8 +46,8 @@ describe ".storeTransaction", ->
 		ctx = new Object()
 		ctx.request = request		
 		messageStore.storeTransaction ctx
-		
 		done()
-
+	
+	 
 
 

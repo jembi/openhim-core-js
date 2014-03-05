@@ -10,24 +10,23 @@ exports.Transaction = (status,applicationId,request,response,routes,orchestratio
 	this.orchestrations = orchestrations
 	this.properties = properties
 	return this
+exports.Transaction.prototype.toString = ->
+	return "status: "+this.status+"\napplicationId: "+this.applicationId+"\nrequest: "+JSON.stringify request+"\nresponse: "+this.response+"\nroutes: "+this.routes+"\norchestrations: "+this.orchestrations+"\nproperties: "+this.properties
 
 saveTransaction = (transaction,ctx) ->
 	MongoClient.connect 'mongodb://127.0.0.1:27017/test', {native_parser:true},(err,db) ->
 		if err
 			return done err
-		console.log "Connection to DB OK!"
-
 		collection = db.createCollection  "transaction", (err, collection) ->
 			collection.insert transaction, (error,doc) ->
 				throw error if error		
-				ctx.request.body._id = transaction._id
+				ctx.transactionID = transaction._id
 				return doc
 exports.storeTransaction = (ctx,next) ->
 	
-	status = ctx.request.body.status
-	applicationId = ctx.request.body.applicationId			
-	request = exports.Request ctx.request.path, ctx.request.header, ctx.request.query, ctx.request.body, ctx.request.method
-	request = JSON.stringify request
+	status = "Processing"
+	applicationId = ""
+	request = JSON.stringify(exports.Request ctx.request.path, ctx.request.header, ctx.request.query, ctx.request.body, ctx.request.method)	
 	response = {}
 	routes = {}
 	orchestrations = {}
@@ -45,7 +44,8 @@ exports.Request = (path,headers,requestParams,body,method) ->
 	this.timestamp = new Date().getTime()
 	return this
 exports.Request.prototype.toString = ->
-	return "path: "+this.path
+	return "path: "+this.path+"\nheaders: "+this.headers+"\nrequestParams: "+this.requestParams+"\nbody: "+this.body+"\nmethod: "+this.method+"\ntimestamp: "+this.timestamp
+		
 
 
 exports.store =  `function *storeMiddleware(next) {
