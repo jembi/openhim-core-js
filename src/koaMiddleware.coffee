@@ -1,34 +1,22 @@
 koa = require 'koa'
 router = require './router'
 messageStore = require './messageStore'
+tlsAuthentication = require "../lib/tlsAuthentication"
+
+# This should be read from the config file
+mutualTLS = true
 
 exports.setupApp = (done) ->
 	app = koa()
 
-	# Auth middleware
-	#app.use(express.basicAuth('testuser', 'testpass'));
-
-	# Logger middleware
-	#app.use express.logger()
+	if mutualTLS
+		app.use tlsAuthentication.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.store
 
 	# Call router
 	app.use router.koaMiddleware
-
-	# Send response middleware
-	#app.all "*", (req, res, next) ->
-	#	res.end()
-
-	# Error middleware
-	###
-	app.use (err, req, res, next) ->
-		if err
-			console.log "ERROR: " + JSON.stringify err
-			console.error err.stack
-			res.send 500, 'Something broke!'
-	###
 
 	#Setup some test data
 	channel1 =
