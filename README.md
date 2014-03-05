@@ -66,7 +66,7 @@ For more information please try the [MongoDB docs](http://docs.mongodb.org/manua
 
 
 ### Testing
-This step is optional but recommended to ensure that all is running as expected. To execute tests see section on [Testing](https://github.com/carlsbox/openhim-core-js#testing-1)
+This step is optional but recommended to ensure that all is running as expected. To execute tests see section on [Testing](https://github.com/jembi/openhim-core-js#testing-1)
 
 
 Running the server
