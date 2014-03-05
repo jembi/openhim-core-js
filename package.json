@@ -9,7 +9,8 @@
     "passport": "0.2.0",
     "passport-http": "0.2.2",
     "async": "0.2.10",
-    "q": "1.0.0"
+    "q": "1.0.0",
+    "request": "~2.34.0"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
