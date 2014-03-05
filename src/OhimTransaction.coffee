@@ -53,18 +53,18 @@
 ###
 
     #Validator Method for Status value
-    statusValidator = (status)->
+statusValidator = (status)->
         return status in ["Processing","Failed","Completed"]
 
     # Trasnaction schema 
-TransactionSchema = new Schema
-	"status": {type: String, required:true,validate: [statusValidator, 'Unknown Status Value']}
-    "applicationId": {type: String, required: true}
+TransactionSchema = new Schema	  
+    "applicationId": {type: String, required: true} 
     "request": RequestSchema
     "response": ResponseSchema
-    "routes": [RouteSchema]
+    "routes": [RouteSchema]    
     "orchestrations": [OrchestrationSchema]    
     "properties": [{property:{type:String, required: true}, value:{type:String, required: true}}]
+    "status": {type: String, required:true,validate: [statusValidator "Unknown Status Value"]} 
 
 
    RouteSchema = new Schema
@@ -96,7 +96,7 @@ ResponseSchema = new Schema
 
     #compile schema into Model
 
-    Transaction = mongoose.model 'Transaction', TransactionSchema
+Transaction = mongoose.model 'Transaction', TransactionSchema
 
 exports.addTransaction = (tx, done) ->
     newTransaction  = new Application tx
