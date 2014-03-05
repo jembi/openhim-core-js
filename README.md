@@ -40,7 +40,7 @@ Once nvm is isntalled, run the following:
 
 The latest version of node 0.11 should be installed and set as default. Continuing in the installation / setup the next step is to get all the required dependancies. Invoking the `npm` command from within the base directory of where the code is cloned too will update your environment with the correct dependancies.
 
-Navigate to the directory where the open-him-js source is located and run the following:
+Navigate to the directory where the openhim-core-js source is located and run the following:
 
 `npm install`
 
