@@ -56,7 +56,7 @@ exports.findApplicationById = (id, done) ->
 				return done null, application   
 
 #lookup the application by domain
-exports.findApplicationById = (domain, done) ->
+exports.findApplicationByDomain = (domain, done) ->
 	Application.findOne {"domain":domain},(err, application) ->     
 			if err
 				console.log "Unable to find application: #{err}"
@@ -66,14 +66,14 @@ exports.findApplicationById = (domain, done) ->
 				return done null, application  
 
 #update the specified application
-exports.updateApplication = (id, done) ->	
-	Application.findOneAndUpdate {"applicationID":id},(err) ->     
+exports.updateApplication = (id, updates, done) ->	
+	Application.findOneAndUpdate {"applicationID":id}, updates,(err) ->     
 			if err
-				console.log "Unable to Remove Application: #{err}"
+				console.log "Unable to Update Application: #{err}"
 				return done err
 			else
-				console.log "Removed Application #{result}"  
-				return done null, result   
+				console.log "Updated Application"  
+				return done null   
 
 #remove the specified application 
 exports.removeApplication = (id, done) ->	
@@ -82,5 +82,5 @@ exports.removeApplication = (id, done) ->
 				console.log "Unable to Remove Application: #{err}"
 				return done err
 			else
-				console.log "Removed Application #{result}"  
-				return done null, result   
+				console.log "Removed Application "  
+				return done null   

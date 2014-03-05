@@ -111,7 +111,7 @@ exports.addTransaction = (tx, done) ->
 
 #find an Transaction by id
 
-exports.findApplicationById = (id, done) ->
+exports.findTransactionById = (id, done) ->
     Transaction.findOne {"_id":id},(err, application) ->     
             if err
                 console.log "Unable to find application: #{err}"
@@ -121,7 +121,7 @@ exports.findApplicationById = (id, done) ->
                 return done null, application   
 
 # look up the transaction by applicationId
-exports.findApplicationById = (appId, done) ->
+exports.findTransactionByApplicationId = (appId, done) ->
     Transaction.findOne {"applicationID":appId},(err, application) ->     
             if err
                 console.log "Unable to find application: #{err}"
@@ -131,13 +131,13 @@ exports.findApplicationById = (appId, done) ->
                 return done null, application   
 
 #update the specified application
-exports.updateApplication = (id, done) ->   
-    Application.findOneAndUpdate {"applicationID":id},(err) ->     
+exports.updateTransaction = (id, updates, done) ->   
+    Transaction.findOneAndUpdate {"applicationID":id},updates,(err) ->     
             if err
-                console.log "Unable to Remove Application: #{err}"
+                console.log "Unable to Update Transaction: #{err}"
                 return done err
             else
-                console.log "Removed Application #{result}"  
+                console.log "Updated Transaction #{result}"  
                 return done null, result   
 
 #remove the specified application 
