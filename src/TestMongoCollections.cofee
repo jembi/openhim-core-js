@@ -9,7 +9,7 @@ mongoDbClient = new mongo.Db "openhimdb", server
 
 
 
-MONGO_DB_URL= 'mongodb://localhost:27017/openhimdb'
+MONGO_DB_URL= 'mongodb://localhost:27017/test'
 
 mongoose.connect MONGO_DB_URL  
 ApplicationSchema = new Schema

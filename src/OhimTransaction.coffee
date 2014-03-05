@@ -51,9 +51,12 @@
     ]
 }
 ###
+    # Trasnaction schema 
+TransactionSchema = new Schema
+	
 
 	#orchestrations Schema
-RequestSchema = new Schema
+OrchestrationSchema = new Schema
 	"name" :{type: String, required: true}
 	"request": RequestSchema
 	"response": ResponseSchema

@@ -305,7 +305,7 @@ describe "HTTP Router", ->
 					cert: ""					
 
 			appcollection.registerApplication testAppDoc, (error, newAppDoc)->
-					newAppDoc.should.be.ok
+					(newAppDoc != null).should.be.true
 					newAppDoc.should.have.property("applicationID", "Ishmael_OpenMRS")
 					done()
 
