@@ -83,13 +83,13 @@ Testing
 This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks.
 
 **To run the unit tests:**
-The project allows 2 options for running tests:
-* NPM based tests
-* Cake based tests
+The project allows for 2 options for running the same tests:
+* Using NPM to run the tests
+* Using Cake to run the tests
 
-To run the npm based tests execute `npm test`.
+To run the tests using *npm* execute `npm test`.
 
-Running the Cake based tests it is recommended that you ensure that you have CoffeeScript installed and active in your environment. In order to install CoffeeScript run the following:
+When running the tests using *cake* it is recommended that you ensure that you have CoffeeScript installed and active in your environment. In order to install CoffeeScript run the following:
 
 `npm install -g coffee-script` (Leave off the `-g` if you don't wish to install globally.) 
 See [website](http://coffeescript.org/) for more details.
