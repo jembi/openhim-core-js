@@ -35,7 +35,7 @@ Application = mongoose.model 'Application', ApplicationSchema
 # testApplicationDoc ={applicationID: "Ishmael_OpenMRS",domain: "him.jembi.org",name: "OpenMRS Ishmael instance",roles: [ "OpenMRS_PoC", "PoC" ],passwordHash: "",cert: ""}
 
 
-exports.registerApplication = (insertValues, done) ->
+exports.addApplication = (insertValues, done) ->
 	newApplication  = new Application insertValues
 	newApplication.save (err, saveResult) ->     
 			if err
@@ -44,4 +44,43 @@ exports.registerApplication = (insertValues, done) ->
 			else
 				console.log "Application Collection Save #{saveResult}"  
 				return done null, saveResult    
-        
+
+#find an application by applicationID
+exports.findApplicationById = (id, done) ->
+	Application.findOne {"applicationID":id},(err, application) ->     
+			if err
+				console.log "Unable to find application: #{err}"
+				return done err
+			else
+				console.log "Found Application #{application}"  
+				return done null, application   
+
+#lookup the application by domain
+exports.findApplicationById = (domain, done) ->
+	Application.findOne {"domain":domain},(err, application) ->     
+			if err
+				console.log "Unable to find application: #{err}"
+				return done err
+			else
+				console.log "Found Application #{application}"  
+				return done null, application  
+
+#update the specified application
+exports.updateApplication = (id, done) ->	
+	Application.findOneAndUpdate {"applicationID":id},(err) ->     
+			if err
+				console.log "Unable to Remove Application: #{err}"
+				return done err
+			else
+				console.log "Removed Application #{result}"  
+				return done null, result   
+
+#remove the specified application 
+exports.removeApplication = (id, done) ->	
+	Application.remove {"applicationID":id},(err) ->     
+			if err
+				console.log "Unable to Remove Application: #{err}"
+				return done err
+			else
+				console.log "Removed Application #{result}"  
+				return done null, result   

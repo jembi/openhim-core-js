@@ -51,9 +51,26 @@
     ]
 }
 ###
+
+    #Validator Method for Status value
+    statusValidator = (status)->
+        return status in ["Processing","Failed","Completed"]
+
     # Trasnaction schema 
 TransactionSchema = new Schema
-	
+	"status": {type: String, required:true,validate: [statusValidator, 'Unknown Status Value']}
+    "applicationId": {type: String, required: true}
+    "request": RequestSchema
+    "response": ResponseSchema
+    "routes": [RouteSchema]
+    "orchestrations": [OrchestrationSchema]    
+    "properties": [{property:{type:String, required: true}, value:{type:String, required: true}}]
+
+
+   RouteSchema = new Schema
+    "name" :{type: String, required: true}
+    "request": RequestSchema
+    "response": ResponseSchema
 
 	#orchestrations Schema
 OrchestrationSchema = new Schema
@@ -75,13 +92,61 @@ ResponseSchema = new Schema
 	"status" :{type: Number, required: true}
 	"headers": [{header:{type:String, required: true}, value:{type:String, required: true}}]
 	"body":{type: String, required: true}
-	"timestamp":{type: Date, required: true}
+	"timestamp":{type: Date, required: true, default: Date.now}
 
-	#Application Schema
-ApplicationSchema = new Schema
-    "applicationID": {type: String, required: true}
-    "domain": {type: String, required: true}
-    "name": {type: String, required: true}
-    "routes": [ {name, request, response}]
-    "orchestrations": [{name, request,response}]
-    "properties": [ {property}]
+    #compile schema into Model
+
+    Transaction = mongoose.model 'Transaction', TransactionSchema
+
+exports.addTransaction = (tx, done) ->
+    newTransaction  = new Application tx
+    newTransaction.save (err, saveResult) ->     
+            if err
+                console.log "Unable to save record: #{err}"
+                return done err
+            else
+                console.log "Application Collection Save #{saveResult}"  
+                return done null, saveResult 
+
+
+#find an Transaction by id
+
+exports.findApplicationById = (id, done) ->
+    Transaction.findOne {"_id":id},(err, application) ->     
+            if err
+                console.log "Unable to find application: #{err}"
+                return done err
+            else
+                console.log "Found Application #{application}"  
+                return done null, application   
+
+# look up the transaction by applicationId
+exports.findApplicationById = (appId, done) ->
+    Transaction.findOne {"applicationID":appId},(err, application) ->     
+            if err
+                console.log "Unable to find application: #{err}"
+                return done err
+            else
+                console.log "Found Application #{application}"  
+                return done null, application   
+
+#update the specified application
+exports.updateApplication = (id, done) ->   
+    Application.findOneAndUpdate {"applicationID":id},(err) ->     
+            if err
+                console.log "Unable to Remove Application: #{err}"
+                return done err
+            else
+                console.log "Removed Application #{result}"  
+                return done null, result   
+
+#remove the specified application 
+exports.removeApplication = (id, done) ->   
+    Application.remove {"applicationID":id},(err) ->     
+            if err
+                console.log "Unable to Remove Application: #{err}"
+                return done err
+            else
+                console.log "Removed Application #{result}"  
+                return done null, result   
+
