@@ -72,7 +72,7 @@ This step is optional but recommended to ensure that all is running as expected.
 Running the server
 ==================
 With all the pre-requisits up and running the next step is in running the application.
-Make sure you are running at least nodde version 0.11.9. To run the OpenHIM core component execute:
+Make sure you are running at least node version 0.11.9. To run the OpenHIM core component execute:
 
 `node --harmony lib/server.js`
 
