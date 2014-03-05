@@ -11,7 +11,7 @@ exports.Transaction = (status,applicationId,request,response,routes,orchestratio
 	this.properties = properties
 	return this
 
-saveTransaction = (transaction) ->
+saveTransaction = (transaction,ctx) ->
 	MongoClient.connect 'mongodb://127.0.0.1:27017/test', {native_parser:true},(err,db) ->
 		if err
 			return done err
@@ -19,22 +19,21 @@ saveTransaction = (transaction) ->
 
 		collection = db.createCollection  "transaction", (err, collection) ->
 			collection.insert transaction, (error,doc) ->
-				throw error if error
+				throw error if error		
+				ctx.request.body._id = transaction._id
 				return doc
-
 exports.storeTransaction = (ctx,next) ->
 	
 	status = ctx.request.body.status
 	applicationId = ctx.request.body.applicationId			
 	request = exports.Request ctx.request.path, ctx.request.header, ctx.request.query, ctx.request.body, ctx.request.method
-	console.log "headers="+JSON.stringify(ctx.request.header)
 	request = JSON.stringify request
 	response = {}
 	routes = {}
 	orchestrations = {}
 	properties = JSON.stringify(ctx.request.body.properties)
 	transaction = exports.Transaction status,applicationId,request,response,routes,orchestrations,properties
-	saveTransaction(transaction)
+	saveTransaction(transaction,ctx)
 
 
 exports.Request = (path,headers,requestParams,body,method) ->
@@ -51,7 +50,6 @@ exports.Request.prototype.toString = ->
 
 exports.store =  `function *storeMiddleware(next) {
 		console.log("messageStore store");
-		console.log("Context="+this.request);
 		exports.storeTransaction(this,next);
 		yield next
 		console.log ("Store response") ;

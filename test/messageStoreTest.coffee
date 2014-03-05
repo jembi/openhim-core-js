@@ -10,7 +10,6 @@ describe ".storeTransaction", ->
 		MongoClient.connect "mongodb://127.0.0.1:27017/test", {native_parser:true},(error,db) ->
 			if error
 				return done error
-			console.log "Connection to DB OK!"	
 			done()	
 	it "it should be able to save the transaction in the db", (done) ->
 		request = 
@@ -45,10 +44,9 @@ describe ".storeTransaction", ->
 				}
 			]
 		ctx = new Object()
-		ctx.request = request
+		ctx.request = request		
+		messageStore.storeTransaction ctx
 		
-		messageStore.storeTransaction ctx,this
-
 		done()
 
 
