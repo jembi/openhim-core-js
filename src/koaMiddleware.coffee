@@ -1,6 +1,7 @@
 koa = require 'koa'
 router = require './router'
 messageStore = require './messageStore'
+authorisation = require './authorisation'
 
 exports.setupApp = (done) ->
 	app = koa()
@@ -13,6 +14,9 @@ exports.setupApp = (done) ->
 
 	# Persit message middleware
 	app.use messageStore.store
+
+	# Authorisation middleware
+	#app.use authorisation.authorisationMiddleware
 
 	# Call router
 	app.use router.koaMiddleware
