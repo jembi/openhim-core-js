@@ -17,7 +17,6 @@ describe ".storeTransaction", ->
 	after (done)->
 		collection.remove (err, doc) ->
 			done()	
-
 	it "it should be able to save the transaction in the db", (done) ->
 		request = 
 			path: "/store/provider"
@@ -30,26 +29,9 @@ describe ".storeTransaction", ->
 			requestParams: {
 				"action": "save"
 			}
-			body: {
-					"applicationId" : "",
-					"status" : "Processing",
-					"properties" : [
-						{
-							"proper1" : "properValue"
-						},
-						{
-							"proper2" : "properValue2"
-						}
-					]
-			}
-			properties : [
-				{
-					"proper1" : "properValue"
-				},
-				{
-					"proper2" : "properValue2"
-				}
-			]
+			body: "<HTTP body>"
+			method: "POST"
+			properties : []
 		ctx = new Object()
 		ctx.request = request		
 		messageStore.storeTransaction ctx
