@@ -2,8 +2,6 @@ should = require "should"
 sinon = require "sinon"
 http = require "http"
 router = require "../lib/router"
-appcollection = require "../lib/TestMongoCollections"
-transaction = require "../lib/OhimTransaction"
 
 describe "HTTP Router", ->
 
@@ -291,78 +289,4 @@ describe "HTTP Router", ->
 					router.getChannel "Channel to remove", (err, returnedChannel) ->
 						(returnedChannel == null).should.be.true
 						done()
-    
-	describe ".register(applicationDocument)", ->
-		it "should return the newly added Application as contained in the application-json-document", (done) ->			
-			testAppDoc =
-					applicationID: "Ishmael_OpenMRS"
-					domain: "him.jembi.org"
-					name: "OpenMRS Ishmael instance"
-					roles: [ 
-							"OpenMRS_PoC"
-							"PoC" 
-						]
-					passwordHash: ""
-					cert: ""					
-
-			appcollection.addApplication testAppDoc, (error, newAppDoc)->
-					(newAppDoc != null).should.be.true
-					newAppDoc.should.have.property("applicationID", "Ishmael_OpenMRS")
-					done()
-
-	describe ".storeTransaction(transactionJson)", ->
-		it "should return the newly added Transaction Document as contained in the JSON document", (done) ->
-			testTxDoc =
-    			"status": "Processing|Failed|Completed"
-    			"applicationId": "Musha_OpenMRS"
-    			"request": {
-        			"path": "/api/test"
-        			"headers": [
-            						{ "header1": "value1" }
-            						{ "header2": "value2" }
-       							]
-        			"requestParams": [
-            						{ "param1": "value1" }
-            						{ "param2": "value2" }
-        						]
-        			"body": "<HTTP body>"
-        			"method": "POST"
-    			}
-    			"response": {
-        			"status": 201
-        			"body": "<HTTP body>"
-        			"headers": [
-            						{ "header1": "value1" }
-            						{ "header2": "value2" }
-        			]
-    			}
-    			"routes": [
-        					{
-            					"name": "dummy-route"
-            					"request": {}
-            					"response": {}
-        					}
-    					]
-    			"orchestrations": [
-        							{
-            							"name": "dummy-orchestration"            
-            							"request": {}
-            							"response": {}
-        							}
-    							]
-    			"properties": [ 
-        						{ "prop1": "value1" }
-        						{ "prop2": "value2" }
-    						]
-				
-
-			transaction.addTransaction testTxDoc, (error, doc)->
-					(doc != null).should.be.true
-					doc.should.have.property("applicationId", "testtx")
-					done()
-
-	#	it "should return null if the channel does not exist", (done) ->
-	#		router.getChannel "A Channel that doesn't exist", (err, returnedChannel) ->
-	#			(returnedChannel == null).should.be.true
-	#			done()
 
