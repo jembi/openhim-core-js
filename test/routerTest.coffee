@@ -339,15 +339,15 @@ describe "HTTP Router", ->
     			"routes": [
         					{
             					"name": "dummy-route"
-            					"request": { ... }
-            					"response": { ... }
+            					"request": {}
+            					"response": {}
         					}
     					]
     			"orchestrations": [
         							{
             							"name": "dummy-orchestration"            
-            							"request": { ... }
-            							"response": { ... }
+            							"request": {}
+            							"response": {}
         							}
     							]
     			"properties": [ 
