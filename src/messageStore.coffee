@@ -66,15 +66,9 @@ Response.prototype.toString = ->
 exports.storeResponse = (ctx) ->
     response = new Response(ctx.response)
 
-    console.log "storing response", response
-    console.log "storing response string ", response.toString()
-    console.log "storing response in transaction", ctx.transactionId 
-
     MongoClient.connect 'mongodb://127.0.0.1:27017/test', (err, db) ->
       if err
           return done err
       db.collection("transaction").update {_id: ctx.transactionId}, {$set: {"response":response, "status": "Completed"}}, { upsert: false}, (err, result) ->
         if err
-          console.log err
           return done err
-        console.log "done update", result

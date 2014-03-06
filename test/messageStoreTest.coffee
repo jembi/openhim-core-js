@@ -6,17 +6,17 @@ MongoClient = require('mongodb').MongoClient
 
 
 describe ".storeTransaction", ->
-	beforeEach (done)->
-		MongoClient.connect "mongodb://127.0.0.1:27017/test", {native_parser:true},(error,db) ->
-			if error
-				return done error
-		done()	
-	# after (done)->
+	# beforeEach (done)->
 	# 	MongoClient.connect "mongodb://127.0.0.1:27017/test", {native_parser:true},(error,db) ->
 	# 		if error
 	# 			return done error
-	# 		db.collection("transaction").remove (err, doc) ->
-	# 		done()	
+	# 	done()	
+	after (done)->
+		MongoClient.connect "mongodb://127.0.0.1:27017/test", {native_parser:true},(error,db) ->
+			if error
+				return done error
+			db.collection("transaction").remove (err, doc) ->
+			done()	
 	it "it should be able to save the transaction in the db", (done) ->
 		request = 
 			path: "/store/provider"
@@ -88,6 +88,14 @@ describe ".storeTransaction", ->
 		ctx.response = response 
 		ctx.transactionId = 123456789
 		messageStore.storeResponse ctx
+		
+		MongoClient.connect "mongodb://127.0.0.1:27017/test", (error,db) ->
+			if error
+				return done error
+			db.collection("transaction").findOne _id: 123456789, (err, doc) ->
+				throw err if err
+				doc.should.have.property "status", "Completed"
+				doc.response.should.be.ok
 		done()
 
 
