@@ -1,11 +1,15 @@
 http = require 'http'
 https = require 'https'
 koaMiddleware = require "../lib/koaMiddleware"
+koaApi = require "../lib/koaApi"
 	
 console.log "Starting OpenHIM server..."
 
 httpPort = 5001
 httpsPort = 5000
+
+apiPort = 9001
+apisPort = 9000
 
 koaMiddleware.setupApp (app) ->
 
@@ -13,6 +17,15 @@ koaMiddleware.setupApp (app) ->
 		app.listen(httpPort)
 		app.on "listening", ->
 			console.log "HTTP listenting on port " + httpPort
+
+koaApi.setupApp (app) ->
+
+	if apiPort
+		app.listen(apiPort)
+		app.on "listening", ->
+			console.log "API listenting on port " + apiPort
+
+
 
 	###
 	if httpsPort
