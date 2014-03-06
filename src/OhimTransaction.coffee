@@ -1,5 +1,13 @@
 #This script is used to save the Trasnaction Object/Message into Mongo
 
+mongo = require "mongodb"
+mongoose = require "mongoose"
+Schema = mongoose.Schema
+
+MONGO_DB_URL= 'mongodb://localhost:27017/test'
+
+mongoDBConn = mongoose.createConnection MONGO_DB_URL 
+
 #schema definition - 
 ###
 {
@@ -59,15 +67,15 @@ statusValidator = (status)->
     # Trasnaction schema 
 TransactionSchema = new Schema	  
     "applicationId": {type: String, required: true} 
-    "request": RequestSchema
-    "response": ResponseSchema
+    "request": {RequestSchema}
+    "response": {ResponseSchema}
     "routes": [RouteSchema]    
     "orchestrations": [OrchestrationSchema]    
     "properties": [{property:{type:String, required: true}, value:{type:String, required: true}}]
     "status": {type: String, required:true,validate: [statusValidator "Unknown Status Value"]} 
 
 
-   RouteSchema = new Schema
+RouteSchema = new Schema
     "name" :{type: String, required: true}
     "request": RequestSchema
     "response": ResponseSchema
