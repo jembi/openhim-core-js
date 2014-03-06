@@ -1,104 +1,99 @@
-[![Build Status](https://travis-ci.org/jembi/openhim-core-js.png?branch=master)](https://travis-ci.org/jembi/openhim-core-js)
+[![Build Status](https://travis-ci.org/jembi/openhim-core-js.png?branch=master)](https://travis-ci.org/jembi/openhim-core-js) [![Dependency Status](https://david-dm.org/jembi/openhim-core-js.png)](https://david-dm.org/jembi/openhim-core-js) [![devDependency Status](https://david-dm.org/jembi/openhim-core-js/dev-status.png)](https://david-dm.org/jembi/openhim-core-js#info=devDependencies)
 
 OpenHIM Core Component
 ======================
 
-The OpenHIM core component is responcible for providing a single entrypoint into a HIE as well as providing a number of key features:
+The OpenHIM core component is responsible for providing a single entry-point into an HIE as well as providing the following key features:
 
 * Point of service application authentication and authorization
-* Persistence and audit logging of all message that travel through the OpenHIM
-* Routing on messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
+* Persistence and audit logging of all messages that flow through the OpenHIM
+* Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
 
-Note: The OpenHIM core component in this repository is currently in active and early development. It is not yet ready for production use.
+:warning:  **The OpenHIM core is currently in early active development and is not yet ready for production use.**
 
 # Quickstart Guide
 
-1. Clone Repository `https://github.com/jembi/openhim-core-js.git` or Download code (https://github.com/jembi/openhim-core-js/archive/master.zip) to desired location
-2. Install and Start Mongo or start mongoDB if already installed
-3. run from a terminal/bash/command line `node --harmony lib/server.js`
+0. Install [Node.js](http://nodejs.org/) 0.11.9 or greater
+1. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location
+2. Install and start [MongoDB](http://www.mongodb.org/)
+3. Install the dependencies by running `npm install`
+4. Start the server by running `node --harmony lib/server.js`
 
-Installation and Developent
-===========================
+Installation and Development
+============================
 
-Clone Repository `https://github.com/jembi/openhim-core-js.git` or Download code (https://github.com/jembi/openhim-core-js/archive/master.zip)
+Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip).
 
-Prerequisits
-------------
-* Node 0.11.x
-* Koa framework
-* MongoDB
+Prerequisites
+-------------
+* [Node.js](http://nodejs.org/) 0.11.9 or greater
+* [Koa framework](http://koajs.com/)
+* [MongoDB](http://www.mongodb.org/)
 
-The OpenHIM-js require the [Koa framework](http://koajs.com/). Due to this node version 0.11.9+ is required. Node also has to be run with the `--harmony` flag for this allocation to work.
+The OpenHIM core makes use of the [Koa framework](http://koajs.com/), which requires node version 0.11.9 or greater. Node also has to be run with the `--harmony` flag for this allocation to work.
 
-The easiest way to use the latest version of node is to install [nvm](https://github.com/creationix/nvm). On Ubuntu, you can install using the install script but you have to add `[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh # This loads NVM` to the end of your `~/.bashrc` file as well.
+The easiest way to use the latest version of node is to install [`nvm`](https://github.com/creationix/nvm). On Ubuntu, you can install using the install script but you have to add `[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh # This loads NVM` to the end of your `~/.bashrc` file as well.
 
-Once nvm is isntalled, run the following:
+Once `nvm `is installed, run the following:
 
 `nvm install 0.11`
 
 `nvm alias default 0.11`
 
-The latest version of node 0.11 should be installed and set as default. Continuing in the installation / setup the next step is to get all the required dependancies. Invoking the `npm` command from within the base directory of where the code is cloned too will update your environment with the correct dependancies.
-
-Navigate to the directory where the openhim-core-js source is located and run the following:
+The latest version of node 0.11 should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
 
 `npm install`
 
-For the successful setup and running of the OpenHIM please ensure that Mongo is installed started and running on your system.
+In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must be installed and running.
 
 ### Installing MongoDB
-_Skip this section if you have already installed mongo_
-* Installing on Ubuntu (Linux) [Linux Installation](http://docs.mongodb.org/manual/administration/install-on-linux/)
+_Skip this section if you have already installed MongoDB_
+* [Linux install instructions](http://docs.mongodb.org/manual/administration/install-on-linux/):
   * in Ubuntu run `sudo apt-get install mongodb`
-* Installing on OSX (Mac) [OSX installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/)
-  * using [Brew](http://brew.sh) `brew update` followed by `brew install mongodb`
-* Installing on Windows [Windows Installation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/)
+* [OSX install instructions](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/):
+  * using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`
+* To install MongoDB on Windows, follow the [Windows install instructions](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/).
 
-General install doc: [Mongo Install Docs](http://docs.mongodb.org/manual/installation/)
+For further information see the [MongoDB installation documentation](http://docs.mongodb.org/manual/installation/).
 
 ### Starting MongoDB
-For more information please try the [MongoDB docs](http://docs.mongodb.org/manual/tutorial/getting-started/)
-* Running on Ubuntu (Linux) [Linux Running Mongo](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/#run-mongodb)
-  * in Ubuntu run `sudo service mongodb start`
-* Running on OSX (Mac) [OSX Running Mongo](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/#run-mongodb)
-  * run `mongod` and alternatively `mongod --dbpath <some alternate directory>` if your data directory isn't set.
-* Running on Windows [Windows Running Mongo](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/#start-mongodb)
 
+* [Starting MongoDB on Linux](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/#run-mongodb):
+  * in Ubuntu run `sudo service mongodb start`
+* [Starting MongoDB on OSX](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/#run-mongodb)
+  * run `mongod` (or `mongod --dbpath <some alternate directory>` to manually specify your data directory)
+* To run MongoDB on Windows, see the [Windows documentation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/#start-mongodb).
+
+For more information see the [MongoDB getting started guide](http://docs.mongodb.org/manual/tutorial/getting-started/).
 
 ### Testing
-This step is optional but recommended to ensure that all is running as expected. To execute tests see section on [Testing](https://github.com/jembi/openhim-core-js#testing-1)
+This step is optional but recommended to ensure that the system is running as expected. To run the tests see the [Testing](https://github.com/jembi/openhim-core-js#testing-1) section below.
 
 
 Running the server
 ==================
-With all the pre-requisits up and running the next step is in running the application.
-Make sure you are running at least node version 0.11.9. To run the OpenHIM core component execute:
+Once all the prerequisites have been installed, configured and started, run the OpenHIM core server by executing the following:
 
 `node --harmony lib/server.js`
-
 
 Testing
 =======
 
-This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks.
+This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using either `npm` or `cake`.
 
-**To run the unit tests:**
-The project allows for 2 options for running the same tests:
-* Using NPM to run the tests
-* Using Cake to run the tests
+To run the tests using `npm` execute `npm test`.
 
-To run the tests using *npm* execute `npm test`.
+When running the tests using `cake` you will need [CoffeeScript](http://coffeescript.org/). Install CoffeeScript by executing the following:
 
-When running the tests using *cake* it is recommended that you ensure that you have CoffeeScript installed and active in your environment. In order to install CoffeeScript run the following:
+`npm install -g coffee-script` (omit the `-g` if you don't wish to install globally) 
 
-`npm install -g coffee-script` (Leave off the `-g` if you don't wish to install globally.) 
-See [website](http://coffeescript.org/) for more details.
+See [the CoffeScript website](http://coffeescript.org/) for more further information.
 
-With a valid install of CoffeeScript continue to run:
+With a valid install of CoffeeScript, run the tests by executing the following:
 
-`cake test` or 
+`cake test`
 
-You can have the CoffeeScript files in src/ auto compile as you save them by running:
+You can have the CoffeeScript files in `src/` auto compile as you save them by running:
 
 `cake watch`
 

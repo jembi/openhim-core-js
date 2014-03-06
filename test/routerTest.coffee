@@ -26,14 +26,17 @@ describe "HTTP Router", ->
 
 				channelStr.should.be.exactly "<Channel: Test Channel>"
 
-	createMockServer = (resStatusCode, resBody, port, callback) ->
+	createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
+		requestCallback = requestCallback || ->
 		# Create mock endpoint to forward requests to
 		mockServer = http.createServer (req, res) ->
 			res.writeHead resStatusCode, {"Content-Type": "text/plain"}
 			res.end resBody
 
-		mockServer.listen port, callback
 
+		mockServer.listen port, callback
+		mockServer.on "request", requestCallback 
+	
 	describe ".route", ->
 		it "should route an incomming request to the endpoints specific by the channel config", (done) ->
 			createMockServer 201, "Mock response body\n", 9876, ->
@@ -289,4 +292,66 @@ describe "HTTP Router", ->
 					router.getChannel "Channel to remove", (err, returnedChannel) ->
 						(returnedChannel == null).should.be.true
 						done()
+
+	describe "Basic Auth", ->
+		it "should have valid authorization header if username and password is set in options", (done) ->
+			createMockServer 201, "Mock response body\n", 9875, (->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+								host: "localhost"
+								port: 9875
+								primary: true
+								username: "username"
+								password: "password"
+							]
+				addedChannelNames.push channel.name
+				router.addChannel channel, (err) ->
+					if err
+						return done err
+
+					ctx = new Object()
+					ctx.request = new Object()
+					ctx.response = new Object()
+					ctx.request.url = "/test"
+					ctx.request.method = "GET"
+
+					router.route ctx, (err) ->
+						if err
+							return done err
+			), (req, res) ->
+				# Base64("username:password") = "dXNlcm5hbWU6cGFzc3dvcmQ=""
+				req.headers.authorization.should.be.exactly "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+				done()
+		
+		it "should not have authorization header if username and password is absent from options", (done) ->
+			createMockServer 201, "Mock response body\n", 9874, (->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+								host: "localhost"
+								port: 9874
+								primary: true
+							]
+				addedChannelNames.push channel.name
+				router.addChannel channel, (err) ->
+					if err
+						return done err
+
+					ctx = new Object()
+					ctx.request = new Object()
+					ctx.response = new Object()
+					ctx.request.url = "/test"
+					ctx.request.method = "GET"
+
+					router.route ctx, (err) ->
+						if err
+							return done err
+			), (req, res) ->
+				(req.headers.authorization == undefined).should.be.true
+				done()
 
