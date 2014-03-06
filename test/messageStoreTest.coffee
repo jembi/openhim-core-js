@@ -3,20 +3,21 @@ sinon = require "sinon"
 http = require "http"
 messageStore = require "../lib/messageStore"
 MongoClient = require('mongodb').MongoClient
-
+collection = null
 
 describe ".storeTransaction", ->
-	# beforeEach (done)->
-	# 	MongoClient.connect "mongodb://127.0.0.1:27017/test", {native_parser:true},(error,db) ->
-	# 		if error
-	# 			return done error
-	# 	done()	
-	after (done)->
+	before (done) ->
 		MongoClient.connect "mongodb://127.0.0.1:27017/test", {native_parser:true},(error,db) ->
 			if error
 				return done error
-			db.collection("transaction").remove (err, doc) ->
+			root = exports ? that 
+			db.collection "transaction", (err, coll) ->
+				collection = coll
+				done()
+	after (done)->
+		collection.remove (err, doc) ->
 			done()	
+
 	it "it should be able to save the transaction in the db", (done) ->
 		request = 
 			path: "/store/provider"
@@ -72,10 +73,7 @@ describe ".storeTransaction", ->
 				body: "<HTTP body>"
 				method: "POST"
 				timestamp: "<ISO 8601>"
-		MongoClient.connect "mongodb://127.0.0.1:27017/test", (error,db) ->
-			if error
-				return done error
-			db.collection("transaction").insert transaction, (err, doc) ->
+		collection.insert transaction, (err, doc) ->
 				throw err if err
 		response =  
 			status: 201
@@ -96,7 +94,7 @@ describe ".storeTransaction", ->
 				throw err if err
 				doc.should.have.property "status", "Completed"
 				doc.response.should.be.ok
-		done()
+				done()
 
 
 
