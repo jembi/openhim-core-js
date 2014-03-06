@@ -13,56 +13,6 @@ MONGO_DB_URL= 'mongodb://localhost:27017/test2'
 mongoDBConn = mongoose.createConnection MONGO_DB_URL 
 
 #schema definition - 
-###
-{
-    "_id": "123",
-    "status": "Processing|Failed|Completed",
-    "applicationId": "Musha_OpenMRS",
-    "request": {
-        "path": "/api/test",
-        "headers": [
-            { "header1": "value1" },
-            { "header2": "value2" }
-        ],
-        "requestParams": [
-            { "param1": "value1" },
-            { "param2": "value2" }
-        ],
-        "body": "<HTTP body>",
-        "method": "POST",
-        "timestamp": "<ISO 8601>"
-    },
-    "response": {
-        "status": 201,
-        "body": "<HTTP body>",
-        "headers": [
-            { "header1": "value1" },
-            { "header2": "value2" }
-        ],
-        "timestamp": "<ISO 8601>"
-    },
-    "routes": [
-        {
-            "name": "<route name>"
-            // Same structure as above
-            "request": { ... },
-            "response": { ... }
-        }
-    ]
-    "orchestrations": [
-        {
-            "name": "<orchestration name>"
-            // Same structure as above
-            "request": { ... },
-            "response": { ... }
-        }
-    ]
-    "properties": [ // optional meta data about a transaction
-        { "prop1": "value1" },
-        { "prop2": "value2" }
-    ]
-}
-###
     
 	#Request Schema
 RequestSchema = new Schema
@@ -152,8 +102,8 @@ exports.updateTransaction = (id, updates, done) ->
                 return done null, result   
 
 #remove the specified application 
-exports.removeApplication = (id, done) ->   
-    Application.remove {"applicationID":id},(err) ->     
+exports.removeTransaction = (id, done) ->   
+    Transaction.remove {"_id":id},(err) ->     
             if err
                 console.log "Unable to Remove Application: #{err}"
                 return done err
