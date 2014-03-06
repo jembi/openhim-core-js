@@ -20,7 +20,7 @@ saveTransaction = (transaction,ctx) ->
 		collection = db.createCollection  "transaction", (err, collection) ->
 			collection.insert transaction, (error,doc) ->
 				throw error if error		
-				ctx.transactionID = transaction._id
+				ctx.transactionId = transaction._id
 				return doc
 exports.storeTransaction = (ctx,next) ->
 	
@@ -52,5 +52,29 @@ exports.store =  `function *storeMiddleware(next) {
 		console.log("messageStore store");
 		exports.storeTransaction(this,next);
 		yield next
-		console.log ("Store response") ;
+                yield storeResponse(this);
 	}`
+
+Response = (res) ->
+    this.status = res.status
+    this.headers = res.header
+    this.body = res.body
+    this.timestamp = new Date().getTime()
+Response.prototype.toString = ->
+  return JSON.stringify this
+
+exports.storeResponse = (ctx) ->
+    response = new Response(ctx.response)
+
+    console.log "storing response", response
+    console.log "storing response string ", response.toString()
+    console.log "storing response in transaction", ctx.transactionId 
+
+    MongoClient.connect 'mongodb://127.0.0.1:27017/test', (err, db) ->
+      if err
+          return done err
+      db.collection("transaction").update {_id: ctx.transactionId}, {$set: {"response":response, "status": "Completed"}}, { upsert: false}, (err, result) ->
+        if err
+          console.log err
+          return done err
+        console.log "done update", result
