@@ -1,3 +1,7 @@
+mongo = require "mongodb"
+mongoose = require "mongoose"
+Schema = mongoose.Schema
+
 #This script is used to save the Trasnaction Object/Message into Mongo
 
 #schema definition - 
