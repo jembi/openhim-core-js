@@ -26,11 +26,11 @@ exports.storeTransaction = (ctx,next) ->
 	
 	status = "Processing"
 	applicationId = ""
-	request = JSON.stringify(exports.Request ctx.request.path, ctx.request.header, ctx.request.query, ctx.request.body, ctx.request.method)	
+	request = JSON.stringify(exports.Request ctx.request.path, ctx.request.header, ctx.request.requestParams, ctx.request.body, ctx.request.method)	
 	response = {}
 	routes = {}
 	orchestrations = {}
-	properties = JSON.stringify(ctx.request.body.properties)
+	properties = {}
 	transaction = exports.Transaction status,applicationId,request,response,routes,orchestrations,properties
 	saveTransaction(transaction,ctx)
 
@@ -49,8 +49,6 @@ exports.Request.prototype.toString = ->
 
 
 exports.store =  `function *storeMiddleware(next) {
-		console.log("messageStore store");
 		exports.storeTransaction(this,next);
 		yield next
-		console.log ("Store response") ;
 	}`
