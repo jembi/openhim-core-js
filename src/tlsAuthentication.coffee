@@ -1,7 +1,8 @@
 fs = require "fs"
 
 getTrustedApplicationCerts = ->
-	## FIXME: this should read from all saved applications, the following is done for test purposes
+	# FIXME: this should read from all saved applications, the following is done for test purposes
+	# once #15 is complete we should be able to update this
 	return fs.readFileSync "tls/cert.pem"
 
 ###
@@ -30,7 +31,8 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 			var subject = this.req.connection.getPeerCertificate().subject;
 
 			// lookup application by subject.cn (cn = domain) and set them as the authenticated user
-			// Add test data in the mean time
+			// FIXME: Add test data in the mean time
+			// once #15 is complete we should be able to update this
 			this.authenticated = {
 				"applicationID": "Musha_OpenMRS",
 				"domain": "him.jembi.org",
