@@ -8,7 +8,7 @@ mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
 
-MONGO_DB_URL= 'mongodb://localhost:27017/test'
+MONGO_DB_URL= 'mongodb://localhost:27017/test2'
 
 mongoDBConn = mongoose.createConnection MONGO_DB_URL 
 
@@ -63,33 +63,7 @@ mongoDBConn = mongoose.createConnection MONGO_DB_URL
     ]
 }
 ###
-
-    #Validator Method for Status value
-statusValidator = (status)->
-        return status in ["Processing","Failed","Completed"]
-
-    # Trasnaction schema 
-TransactionSchema = new Schema	  
-    "applicationId": {type: String, required: true} 
-    "request": {RequestSchema}
-    "response": {ResponseSchema}
-    "routes": [RouteSchema]    
-    "orchestrations": [OrchestrationSchema]    
-    "properties": [{property:{type:String, required: true}, value:{type:String, required: true}}]
-    "status": {type: String, required:true,validate: [statusValidator "Unknown Status Value"]} 
-
-
-RouteSchema = new Schema
-    "name" :{type: String, required: true}
-    "request": RequestSchema
-    "response": ResponseSchema
-
-	#orchestrations Schema
-OrchestrationSchema = new Schema
-	"name" :{type: String, required: true}
-	"request": RequestSchema
-	"response": ResponseSchema
-
+    
 	#Request Schema
 RequestSchema = new Schema
 	"path" :{type: String, required: true}
@@ -106,18 +80,43 @@ ResponseSchema = new Schema
 	"body":{type: String, required: true}
 	"timestamp":{type: Date, required: true, default: Date.now}
 
-    #compile schema into Model
+RouteSchema = new Schema
+    "name" :{type: String, required: true}
+    "request": [RequestSchema]
+    "response": [ResponseSchema]
 
-Transaction = mongoose.model 'Transaction', TransactionSchema
+    #orchestrations Schema
+OrchestrationSchema = new Schema
+    "name" :{type: String, required: true}
+    "request": [RequestSchema]
+    "response": [ResponseSchema]
+
+#Validator Method for Status value - NOT USED
+statusValidator = (status)->
+        return status in ["Processing","Failed","Completed"]
+
+# Trasnaction schema 
+TransactionSchema = new Schema    
+    "applicationId": {type: String, required: true} 
+    "request": [RequestSchema]
+    "response": [ResponseSchema]
+    "routes": [RouteSchema]    
+    "orchestrations": [OrchestrationSchema]    
+    "properties": [{property:{type:String, required: true}, value:{type:String, required: true}}]
+    "status": {type: String, required:true,enum: ["Processing","Failed","Completed"]} 
+
+    #compile schema into Model    
+Transaction = mongoDBConn.model 'Transaction', TransactionSchema
+
 
 exports.addTransaction = (tx, done) ->
-    newTransaction  = new Application tx
+    newTransaction  = new Transaction tx
     newTransaction.save (err, saveResult) ->     
             if err
                 console.log "Unable to save record: #{err}"
                 return done err
             else
-                console.log "Application Collection Save #{saveResult}"  
+                console.log "Application Collection Saved #{saveResult}"  
                 return done null, saveResult 
 
 
@@ -161,4 +160,3 @@ exports.removeApplication = (id, done) ->
             else
                 console.log "Removed Application #{result}"  
                 return done null, result   
-

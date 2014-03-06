@@ -18,7 +18,7 @@ describe "Applications", ->
 					passwordHash: ""
 					cert: ""					
 
-			appcollection.addApplication testAppDoc, (error, newAppDoc)->
+			appcollection.addApplication testAppDoc, (error, newAppDoc) ->
 					(newAppDoc != null).should.be.true
 					newAppDoc.should.have.property("applicationID", "Ishmael_OpenMRS")
 					done()

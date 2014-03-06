@@ -2,14 +2,8 @@ mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
 
-server = new mongo.Server "127.0.0.1", 27017, {}
 
-mongoDbClient = new mongo.Db "openhimdb", server
-
-
-
-
-MONGO_DB_URL= 'mongodb://localhost:27017/test'
+MONGO_DB_URL= 'mongodb://localhost:27017/test2'
 
 mongoose.connect MONGO_DB_URL  
 ApplicationSchema = new Schema
