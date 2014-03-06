@@ -93,7 +93,7 @@ exports.findTransactionByApplicationId = (appId, done) ->
 
 #update the specified application
 exports.updateTransaction = (id, updates, done) ->   
-    Transaction.findOneAndUpdate {"applicationID":id},updates,(err) ->     
+    Transaction.findOneAndUpdate {"_id":id},updates,(err) ->     
             if err
                 console.log "Unable to Update Transaction: #{err}"
                 return done err
