@@ -73,7 +73,7 @@ exports.addTransaction = (tx, done) ->
 
 # find all TransactionSchema
 
-exports.findTransactionById = (id, done) ->
+exports.findAll = (id, done) ->
     Transaction.find (err, transactions) ->     
             if err
                 console.log "Unable to find transactions: #{err}"
