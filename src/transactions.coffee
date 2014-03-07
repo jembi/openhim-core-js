@@ -8,7 +8,7 @@ mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
 
-MONGO_DB_URL= 'mongodb://localhost:27017/test2'
+MONGO_DB_URL= 'mongodb://localhost:27017/test'
 
 mongoDBConn = mongoose.createConnection MONGO_DB_URL 
 
@@ -55,41 +55,53 @@ TransactionSchema = new Schema
     "properties": [{property:{type:String, required: true}, value:{type:String, required: true}}]
     "status": {type: String, required:true,enum: ["Processing","Failed","Completed"]} 
 
+    #CRUD Transaction
+
     #compile schema into Model    
-Transaction = mongoDBConn.model 'Transaction', TransactionSchema
+Transaction = mongoDBConn.model 'Transactions', TransactionSchema
 
 
 exports.addTransaction = (tx, done) ->
     newTransaction  = new Transaction tx
     newTransaction.save (err, saveResult) ->     
+        if err
+            console.log "Unable to save record: #{err}"
+            return done err
+        else
+            console.log "Application Collection Saved #{saveResult}"  
+            return done null,saveResult    
+
+# find all TransactionSchema
+
+exports.findTransactionById = (id, done) ->
+    Transaction.find (err, transactions) ->     
             if err
-                console.log "Unable to save record: #{err}"
+                console.log "Unable to find transactions: #{err}"
                 return done err
             else
-                console.log "Application Collection Saved #{saveResult}"  
-                return done null, saveResult 
-
+                console.log "Found Application #{transactions}"  
+                return done null, transactions 
 
 #find an Transaction by id
 
 exports.findTransactionById = (id, done) ->
-    Transaction.findOne {"_id":id},(err, application) ->     
+    Transaction.findOne {"_id":id},(err, transaction) ->     
             if err
-                console.log "Unable to find application: #{err}"
+                console.log "Unable to find transaction: #{err}"
                 return done err
             else
-                console.log "Found Application #{application}"  
-                return done null, application   
+                console.log "Found Transaction #{transaction}"  
+                return done null, transaction   
 
 # look up the transaction by applicationId
 exports.findTransactionByApplicationId = (appId, done) ->
-    Transaction.findOne {"applicationID":appId},(err, application) ->     
+    Transaction.find {"applicationId":appId},(err, transactions) ->     
             if err
                 console.log "Unable to find application: #{err}"
                 return done err
             else
-                console.log "Found Application #{application}"  
-                return done null, application   
+                console.log "Found Transactions #{transactions}"  
+                return done null, transactions   
 
 #update the specified application
 exports.updateTransaction = (id, updates, done) ->   
@@ -99,7 +111,7 @@ exports.updateTransaction = (id, updates, done) ->
                 return done err
             else
                 console.log "Updated Transaction #{result}"  
-                return done null, result   
+                return done null   
 
 #remove the specified application 
 exports.removeTransaction = (id, done) ->   
@@ -109,4 +121,12 @@ exports.removeTransaction = (id, done) ->
                 return done err
             else
                 console.log "Removed Application #{result}"  
-                return done null, result   
+                return done null  
+
+
+    #CRUD Orchestrations 
+
+    #CRUD Request
+
+
+    #CRUD Response

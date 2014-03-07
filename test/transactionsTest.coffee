@@ -56,4 +56,19 @@ describe "Transactions", ->
 			transaction.addTransaction testTxDoc, (error, doc) ->
 				(doc != null).should.be.true
 				doc.should.have.property("applicationId","Musha_OpenMRS")
-				done()  
+				#done() 
+			transaction.addTransaction testTxDoc, (error, doc) ->
+				(doc != null).should.be.true
+				doc.should.have.property("applicationId","Musha_OpenMRS")
+				done() 
+
+##
+	describe ".findTransactionByApplicationId(applicationId)", ->
+
+		it "should return the Transaction JSON specified by the ID", (done) ->  
+			id = "Musha_OpenMRS"      
+			transaction.findTransactionByApplicationId id, (error, doc) ->
+				(doc != null).should.be.true
+				doc.should.have.length(2)
+				done() 
+##
