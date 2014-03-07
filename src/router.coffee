@@ -206,7 +206,6 @@ exports.route = (ctx, next) ->
 ###
 exports.koaMiddleware = `function *routeMiddleware(next) {
 		var route = Q.denodeify(exports.route);
-		console.log(JSON.stringify(this.authorisedChannels));
 		yield route(this);
 		yield next;
 	}`

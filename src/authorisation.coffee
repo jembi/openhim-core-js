@@ -21,7 +21,6 @@ exports.koaMiddleware = `function *authorisationMiddleware(next) {
 		var authorise = Q.denodeify(exports.authorise);
 		yield authorise(this);
 		if (this.authorisedChannels.length > 0) {
-
 			yield next;
 		}
 	}`

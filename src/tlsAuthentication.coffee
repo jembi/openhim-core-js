@@ -29,21 +29,15 @@ exports.getServerOptions = (mutualTLS) ->
 ###
 exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 		if (this.req.client.authorized === true) {
-			console.log("Authenticated!");
 			var subject = this.req.connection.getPeerCertificate().subject;
 
-			console.log("Subject: " + JSON.stringify(subject));
-			console.log("Subject CN: " + subject.CN);
 			var findApplicationByDomain = Q.denodeify(applications.findApplicationByDomain);
 
 			// lookup application by subject.CN (CN = domain) and set them as the authenticated user
 			this.authenticated = yield findApplicationByDomain(subject.CN);
 
-			console.log(JSON.stringify(this.authenticated))
-
 			yield next;
 		} else {
-			console.log("NOT Authenticated!");
 			this.response.status = "unauthorized"
 		}
 	}`
