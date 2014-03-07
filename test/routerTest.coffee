@@ -49,25 +49,23 @@ describe "HTTP Router", ->
 								port: 9876
 								primary: true
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
 
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "GET"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
-
-						ctx.response.status.should.be.exactly 201
-						ctx.response.body.toString().should.be.eql "Mock response body\n"
-						ctx.response.header.should.be.ok
-						done()
+					ctx.response.status.should.be.exactly 201
+					ctx.response.body.toString().should.be.eql "Mock response body\n"
+					ctx.response.header.should.be.ok
+					done()
 
 		it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
 			createMockServer 200, "Mock response body 1\n", 7777, ->
@@ -88,22 +86,21 @@ describe "HTTP Router", ->
 										host: "localhost"
 										port: 9999
 									]
-						addedChannelNames.push channel.name
+						ctx = new Object()
+						ctx.authorisedChannels = []
+						ctx.authorisedChannels.push channel
+						ctx.request = new Object()
+						ctx.response = new Object()
+						ctx.request.url = "/test/multicasting"
+						ctx.request.method = "GET"
 
-						router.addChannel channel, (err) ->
-							ctx = new Object()
-							ctx.request = new Object()
-							ctx.response = new Object()
-							ctx.request.url = "/test/multicasting"
-							ctx.request.method = "GET"
-
-							router.route ctx, (err) ->
-								if err
-									return done err
-								ctx.response.status.should.be.exactly 201
-								ctx.response.body.toString().should.be.eql "Mock response body 2\n"
-								ctx.response.header.should.be.ok
-								done()
+						router.route ctx, (err) ->
+							if err
+								return done err
+							ctx.response.status.should.be.exactly 201
+							ctx.response.body.toString().should.be.eql "Mock response body 2\n"
+							ctx.response.header.should.be.ok
+							done()
 
 
 		it "should pass an error to next if there are multiple primary routes", (done) ->
@@ -126,19 +123,18 @@ describe "HTTP Router", ->
 										port: 6666
 										primary: true
 									]
-						addedChannelNames.push channel.name
+						ctx = new Object()
+						ctx.authorisedChannels = []
+						ctx.authorisedChannels.push channel
+						ctx.request = new Object()
+						ctx.response = new Object()
+						ctx.request.url = "/test/multi-primary"
+						ctx.request.method = "GET"
 
-						router.addChannel channel, (err) ->
-							ctx = new Object()
-							ctx.request = new Object()
-							ctx.response = new Object()
-							ctx.request.url = "/test/multi-primary"
-							ctx.request.method = "GET"
-
-							router.route ctx, (err) ->
-								if err
-									err.message.should.be.exactly "A primary route has already been returned, only a single primary route is allowed"
-									done()
+						router.route ctx, (err) ->
+							if err
+								err.message.should.be.exactly "A primary route has already been returned, only a single primary route is allowed"
+								done()
 					
 		it "should forward PUT and POST requests correctly", (done) ->
 			# Create mock endpoint to forward requests to
@@ -161,25 +157,23 @@ describe "HTTP Router", ->
 								port: 3333
 								primary: true
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "POST"
+				ctx.request.body = "TestBody"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
 
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "POST"
-					ctx.request.body = "TestBody"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
-
-						ctx.response.status.should.be.exactly 200
-						ctx.response.header.should.be.ok
-						done()
+					ctx.response.status.should.be.exactly 200
+					ctx.response.header.should.be.ok
+					done()
 
 	describe ".setChannels(channels) and .getChannels()", ->
 		it "should save the channels config to the db and be able to fetch them again", (done) ->
@@ -307,20 +301,18 @@ describe "HTTP Router", ->
 								username: "username"
 								password: "password"
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
-
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "GET"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
 			), (req, res) ->
 				# Base64("username:password") = "dXNlcm5hbWU6cGFzc3dvcmQ=""
 				req.headers.authorization.should.be.exactly "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
@@ -337,20 +329,17 @@ describe "HTTP Router", ->
 								port: 9874
 								primary: true
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
-
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "GET"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
 			), (req, res) ->
 				(req.headers.authorization == undefined).should.be.true
 				done()
