@@ -2,7 +2,8 @@ koa = require 'koa'
 bodyParser = require 'koa-body-parser'
 router = require './router'
 messageStore = require './messageStore'
-tlsAuthentication = require "../lib/tlsAuthentication"
+tlsAuthentication = require "./tlsAuthentication"
+applications = require "./applications"
 
 # This should be read from the config file
 mutualTLS = true
@@ -40,4 +41,17 @@ exports.setupApp = (done) ->
 						primary: true
 					]
 		router.addChannel channel2, (err) ->
-			done(app)
+			testAppDoc =
+				applicationID: "testApp"
+				domain: "openhim.jembi.org"
+				name: "TEST Application"
+				roles:
+					[ 
+						"OpenMRS_PoC"
+						"PoC" 
+					]
+				passwordHash: ""
+				cert: ""					
+
+			applications.addApplication testAppDoc, (error, newAppDoc) ->
+				done(app)

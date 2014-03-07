@@ -1,4 +1,6 @@
 fs = require "fs"
+Q = require "q"
+applications = require "./applications"
 
 getTrustedApplicationCerts = ->
 	# FIXME: this should read from all saved applications, the following is done for test purposes
@@ -30,17 +32,14 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 			console.log("Authenticated!");
 			var subject = this.req.connection.getPeerCertificate().subject;
 
-			// lookup application by subject.cn (cn = domain) and set them as the authenticated user
-			// FIXME: Add test data in the mean time
-			// once #15 is complete we should be able to update this
-			this.authenticated = {
-				"applicationID": "Musha_OpenMRS",
-				"domain": "him.jembi.org",
-				"name": "OpenMRS Musha instance",
-				"roles": [ "OpenMRS_PoC", "PoC" ],
-				"passwordHash": "",
-				"cert": ""
-			}
+			console.log("Subject: " + JSON.stringify(subject));
+			console.log("Subject CN: " + subject.CN);
+			var findApplicationByDomain = Q.denodeify(applications.findApplicationByDomain);
+
+			// lookup application by subject.CN (CN = domain) and set them as the authenticated user
+			this.authenticated = yield findApplicationByDomain(subject.CN);
+
+			console.log(JSON.stringify(this.authenticated))
 
 			yield next;
 		} else {

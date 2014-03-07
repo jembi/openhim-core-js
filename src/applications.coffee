@@ -3,7 +3,7 @@ mongoose = require "mongoose"
 Schema = mongoose.Schema
 
 
-MONGO_DB_URL= 'mongodb://localhost:27017/test2'
+MONGO_DB_URL= 'mongodb://localhost:27017/test'
 
 mongoose.connect MONGO_DB_URL  
 ApplicationSchema = new Schema
@@ -42,7 +42,7 @@ exports.findApplicationByDomain = (domain, done) ->
 			if err
 				return done err
 			else
-				return done null, application  
+				return done null, application
 
 #update the specified application
 exports.updateApplication = (id, updates, done) ->	
