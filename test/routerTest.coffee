@@ -301,20 +301,18 @@ describe "HTTP Router", ->
 								username: "username"
 								password: "password"
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
-
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "GET"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
 			), (req, res) ->
 				# Base64("username:password") = "dXNlcm5hbWU6cGFzc3dvcmQ=""
 				req.headers.authorization.should.be.exactly "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
@@ -331,20 +329,17 @@ describe "HTTP Router", ->
 								port: 9874
 								primary: true
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
-
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "GET"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
 			), (req, res) ->
 				(req.headers.authorization == undefined).should.be.true
 				done()
