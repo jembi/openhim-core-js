@@ -3,11 +3,11 @@ mongoose = require "mongoose"
 Schema = mongoose.Schema
 
 
-MONGO_DB_URL= 'mongodb://localhost:27017/test2'
+MONGO_DB_URL= 'mongodb://localhost:27017/test'
 
 mongoose.connect MONGO_DB_URL  
 ApplicationSchema = new Schema
-    "applicationID": {type: String, required: true}
+    "applicationId": {type: String, required: true}
     "domain": {type: String, required: true}
     "name": {type: String, required: true}
     "roles": [ {type: String, required: true }]
@@ -15,7 +15,7 @@ ApplicationSchema = new Schema
     "cert": {type: String, required: false}
     
 #compile the Application Schema into a Model
-Application = mongoose.model 'Application', ApplicationSchema
+Application = mongoose.model 'Applications', ApplicationSchema
 
 ###
 # Gets all channel currently registered.
@@ -38,6 +38,16 @@ exports.addApplication = (insertValues, done) ->
 			else
 				console.log "Application Collection Save #{saveResult}"  
 				return done null, saveResult    
+
+#find all applications
+exports.findAll = (done) ->
+	Application.find (err, applications) ->     
+			if err
+				console.log "Unable to find applications: #{err}"
+				return done err
+			else
+				console.log "Found Application #{applications}"  
+				return done null, applications  
 
 #find an application by applicationID
 exports.findApplicationById = (id, done) ->

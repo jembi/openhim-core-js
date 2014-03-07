@@ -68,7 +68,7 @@ exports.addTransaction = (tx, done) ->
             console.log "Unable to save record: #{err}"
             return done err
         else
-            console.log "Application Collection Saved #{saveResult}"  
+            console.log "Transaction Collection Saved #{saveResult}"  
             return done null,saveResult    
 
 # find all TransactionSchema
@@ -79,7 +79,7 @@ exports.findTransactionById = (id, done) ->
                 console.log "Unable to find transactions: #{err}"
                 return done err
             else
-                console.log "Found Application #{transactions}"  
+                console.log "Found Transactions #{transactions}"  
                 return done null, transactions 
 
 #find an Transaction by id
@@ -97,7 +97,7 @@ exports.findTransactionById = (id, done) ->
 exports.findTransactionByApplicationId = (appId, done) ->
     Transaction.find {"applicationId":appId},(err, transactions) ->     
             if err
-                console.log "Unable to find application: #{err}"
+                console.log "Unable to find Transaction: #{err}"
                 return done err
             else
                 console.log "Found Transactions #{transactions}"  
@@ -117,10 +117,10 @@ exports.updateTransaction = (id, updates, done) ->
 exports.removeTransaction = (id, done) ->   
     Transaction.remove {"_id":id},(err) ->     
             if err
-                console.log "Unable to Remove Application: #{err}"
+                console.log "Unable to Remove Transaction: #{err}"
                 return done err
             else
-                console.log "Removed Application #{result}"  
+                console.log "Removed Transaction #{result}"  
                 return done null  
 
 
