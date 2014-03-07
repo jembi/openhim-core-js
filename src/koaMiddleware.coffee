@@ -1,4 +1,5 @@
 koa = require 'koa'
+bodyParser = require 'koa-body-parser'
 router = require './router'
 messageStore = require './messageStore'
 tlsAuthentication = require "../lib/tlsAuthentication"
@@ -11,6 +12,8 @@ exports.setupApp = (done) ->
 
 	if mutualTLS
 		app.use tlsAuthentication.koaMiddleware
+
+	app.use bodyParser()
 
 	# Persit message middleware
 	app.use messageStore.store
