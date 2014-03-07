@@ -1,4 +1,5 @@
 koa = require 'koa'
+bodyParser = require 'koa-body-parser'
 router = require './router'
 messageStore = require './messageStore'
 
@@ -10,6 +11,8 @@ exports.setupApp = (done) ->
 
 	# Logger middleware
 	#app.use express.logger()
+
+	app.use bodyParser()
 
 	# Persit message middleware
 	app.use messageStore.store
