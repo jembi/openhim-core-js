@@ -21,7 +21,7 @@ exports.setupApp = (done) ->
 	app.use messageStore.store
 
 	# Authorisation middleware
-	#app.use authorisation.authorisationMiddleware
+	app.use authorisation.koaMiddleware
 
 	# Call router
 	app.use router.koaMiddleware
@@ -30,6 +30,7 @@ exports.setupApp = (done) ->
 	channel1 =
 		name: "TEST DATA - Mock endpoint"
 		urlPattern: "test/mock"
+		allow: [ "PoC" ]
 		routes: [
 					host: "localhost"
 					port: 9876
@@ -39,6 +40,7 @@ exports.setupApp = (done) ->
 		channel2 =
 			name: "Sample JsonStub Channel"
 			urlPattern: "sample/api"
+			allow: [ "PoC" ]
 			routes: [
 						host: "jsonstub.com"
 						port: 80

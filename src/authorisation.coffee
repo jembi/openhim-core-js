@@ -1,4 +1,5 @@
 router = require "../lib/router"
+Q = require "q"
 
 exports.authorise = (ctx, done) ->
 	ctx.authorisedChannels = []
@@ -20,6 +21,7 @@ exports.koaMiddleware = `function *authorisationMiddleware(next) {
 		var authorise = Q.denodeify(exports.authorise);
 		yield authorise(this);
 		if (this.authorisedChannels.length > 0) {
+
 			yield next;
 		}
 	}`
