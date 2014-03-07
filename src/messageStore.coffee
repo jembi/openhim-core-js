@@ -51,7 +51,7 @@ exports.Request.prototype.toString = ->
 exports.store =  `function *storeMiddleware(next) {
 		exports.storeTransaction(this,next);
 		yield next
-                yield storeResponse(this);
+        exports.storeResponse(this);
 	}`
 
 Response = (res) ->

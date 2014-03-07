@@ -2,15 +2,17 @@ koa = require 'koa'
 bodyParser = require 'koa-body-parser'
 router = require './router'
 messageStore = require './messageStore'
+tlsAuthentication = require "./tlsAuthentication"
+applications = require "./applications"
+
+# This should be read from the config file
+mutualTLS = true
 
 exports.setupApp = (done) ->
 	app = koa()
 
-	# Auth middleware
-	#app.use(express.basicAuth('testuser', 'testpass'));
-
-	# Logger middleware
-	#app.use express.logger()
+	if mutualTLS
+		app.use tlsAuthentication.koaMiddleware
 
 	app.use bodyParser()
 
@@ -19,19 +21,6 @@ exports.setupApp = (done) ->
 
 	# Call router
 	app.use router.koaMiddleware
-
-	# Send response middleware
-	#app.all "*", (req, res, next) ->
-	#	res.end()
-
-	# Error middleware
-	###
-	app.use (err, req, res, next) ->
-		if err
-			console.log "ERROR: " + JSON.stringify err
-			console.error err.stack
-			res.send 500, 'Something broke!'
-	###
 
 	#Setup some test data
 	channel1 =
@@ -52,4 +41,17 @@ exports.setupApp = (done) ->
 						primary: true
 					]
 		router.addChannel channel2, (err) ->
-			done(app)
+			testAppDoc =
+				applicationID: "testApp"
+				domain: "openhim.jembi.org"
+				name: "TEST Application"
+				roles:
+					[ 
+						"OpenMRS_PoC"
+						"PoC" 
+					]
+				passwordHash: ""
+				cert: ""					
+
+			applications.addApplication testAppDoc, (error, newAppDoc) ->
+				done(app)
