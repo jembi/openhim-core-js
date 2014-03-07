@@ -151,6 +151,10 @@ sendRequestToRoutes = (ctx, routes, next) ->
 			path: ctx.request.url
 			method: ctx.request.method
 			headers: ctx.request.header
+		
+		if route.username and route.password
+			options.auth = route.username+":"+route.password
+
 		if options.headers && options.headers.host
 			delete options.headers.host
 		if route.primary
