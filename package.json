@@ -12,7 +12,10 @@
     "q": "1.0.0",
     "koa-basic-auth": "~1.1.1",
     "koa-route": "~1.0.2",
-    "basic-auth": "0.0.1"
+    "basic-auth": "0.0.1",
+    "mongoose": "~3.8.8",
+    "koa-body-parser": "1.0.0",
+    "request": "~2.34.0"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
