@@ -22,7 +22,7 @@ exports.authenticateUser = (ctx, done) ->
 exports.koaMiddleware = `function *basicAuthMiddleware(next) {
 	
 	var authenticateUser = Q.denodeify(exports.authenticateUser);
-	yield authenticateUser(ctx);
+	yield authenticateUser(this);
 
 	if (this.authenticated) {
 		console.log("Authenticated!");

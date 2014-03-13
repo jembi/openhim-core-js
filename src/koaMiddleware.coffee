@@ -8,18 +8,18 @@ authorisation = require './authorisation'
 applications = require "./applications"
 
 # This should be read from the config file
-basicAuthenticationFlag = true
-mutualTLS = true
+exports.basicAuthenticationFlag = false
+exports.mutualTLSFlag = true
 
 exports.setupApp = (done) ->
 	app = koa()
 
 	app.use bodyParser()
 
-	if basicAuthenticationFlag
+	if exports.asicAuthenticationFlag
 		app.use basicAuthentication.koaMiddleware
 
-	if mutualTLS
+	if exports.mutualTLSFlag
 		app.use tlsAuthentication.koaMiddleware
 
 	# Persit message middleware
