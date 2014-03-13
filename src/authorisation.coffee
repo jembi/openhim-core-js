@@ -2,9 +2,11 @@ router = require "../lib/router"
 Q = require "q"
 
 exports.authorise = (ctx, done) ->
+	console.log "Authorising..."
 	ctx.authorisedChannels = []
 	router.getChannels (err, channels) ->
 		for channel in channels
+			console.log JSON.stringify channel
 			pat = new RegExp channel.urlPattern
 			if pat.test ctx.request.url
 				matchedRoles = channel.allow.filter (element) ->

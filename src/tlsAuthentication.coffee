@@ -38,6 +38,6 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 
 			yield next;
 		} else {
-			this.response.status = "unauthorized"
+			this.response.status = "unauthorized";
 		}
 	}`

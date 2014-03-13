@@ -1,48 +1,33 @@
 auth = require 'basic-auth'
+Q = require "q"
+applications = require "./applications"
 
-getTrustedApplicationCredentials = ->
-	# FIXME: this should read from all saved applications, the following is done for test purposes
-	# once #15 is complete we should be able to update this
-	return [{name:"user", pass:"password"}, {name:"user2", pass:"password2"}]
+exports.authenticateUser = (ctx, done) ->
+	user = auth ctx
+	console.log JSON.stringify user
+	if user
+		applications.findApplicationById user.name, (err, application) ->
+			if application && application.passwordHash == user.pass
+				console.log("Authenticated!");
+				ctx.authenticated = application;
+				done null, application
+			else
+				done null, null
+	else 
+		done null, null
 
 ###
-# Koa middleware for
+# Koa middleware for authentication by basic auth
 ###
 exports.koaMiddleware = `function *basicAuthMiddleware(next) {
-	var user = auth(this);
-	var credentialsList = getTrustedApplicationCredentials()
-
-	//var authenticated = false;
-
-	for (i = 0; i < credentialsList.length; ++i) {
-		var credentials = credentialsList[i];
-		console.log(user);
-
-		if(user && credentials.name === user.name) {
-			if(credentials.pass === user.pass) {
-				// lookup application by subject.cn (cn = domain) and set them as the authenticated user
-				// FIXME: Add test data in the mean time
-				// once #15 is complete we should be able to update this
-				this.authenticated = {
-					"applicationID": credentials.name,
-					"domain": "him.jembi.org",
-					"name": "OpenMRS Musha instance",
-					"roles": [ "OpenMRS_PoC", "PoC" ],
-				};
-
-				//Matches a username and password
-				break;//Don't resume this credential check loop when function resumes
-			} else {
-				//Username exists but doen't match password
-				this.throw(401);
-			}
-		}
-	}
 	
+	var authenticateUser = Q.denodeify(exports.authenticateUser);
+	yield authenticateUser(ctx);
+
 	if (this.authenticated) {
+		console.log("Authenticated!");
 		yield next;
 	} else {
-		//User not found in credential list
-		this.throw(401);
+		this.response.status = "unauthorized";
 	}
 }`

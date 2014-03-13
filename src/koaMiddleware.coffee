@@ -2,7 +2,6 @@ koa = require 'koa'
 bodyParser = require 'koa-body-parser'
 router = require './router'
 messageStore = require './messageStore'
-koaroute = require 'koa-route'
 basicAuthentication = require './basicAuthentication'
 tlsAuthentication = require "./tlsAuthentication"
 authorisation = require './authorisation'
@@ -23,11 +22,6 @@ exports.setupApp = (done) ->
 	if mutualTLS
 		app.use tlsAuthentication.koaMiddleware
 
-	#Default empty route
-	app.use koaroute.get("/", `function *(){
-		this.body = "";
-		}`)
-	
 	# Persit message middleware
 	app.use messageStore.store
 
@@ -67,7 +61,7 @@ exports.setupApp = (done) ->
 						"OpenMRS_PoC"
 						"PoC" 
 					]
-				passwordHash: ""
+				passwordHash: "password"
 				cert: ""					
 
 			applications.addApplication testAppDoc, (error, newAppDoc) ->
