@@ -2,6 +2,7 @@ http = require 'http'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
 Q = require "q"
+config = require "./config"
 
 channelsCollection = null
 
@@ -9,7 +10,7 @@ getCollection = (done) ->
 	if channelsCollection
 		return done channelsCollection
 	else
-		MongoClient.connect 'mongodb://127.0.0.1:27017/test', (err, db) ->
+		MongoClient.connect config.mongo.url, (err, db) ->
 			if err
 				return done err
 

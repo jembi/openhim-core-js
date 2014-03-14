@@ -3,11 +3,13 @@ sinon = require "sinon"
 http = require "http"
 messageStore = require "../lib/messageStore"
 MongoClient = require('mongodb').MongoClient
+config = require "../lib/config"
+
 collection = null
 
 describe ".storeTransaction", ->
 	before (done) ->
-		MongoClient.connect "mongodb://127.0.0.1:27017/test", {native_parser:true},(error,db) ->
+		MongoClient.connect config.mongo.url, {native_parser:true},(error,db) ->
 			if error
 				return done error
 			root = exports ? that 
@@ -69,7 +71,7 @@ describe ".storeTransaction", ->
 		ctx.transactionId = 123456789
 		messageStore.storeResponse ctx
 		
-		MongoClient.connect "mongodb://127.0.0.1:27017/test", (error,db) ->
+		MongoClient.connect config.mongo.url, (error,db) ->
 			if error
 				return done error
 			db.collection("transaction").findOne _id: 123456789, (err, doc) ->

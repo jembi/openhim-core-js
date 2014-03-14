@@ -1,4 +1,4 @@
-router = require "../lib/router"
+router = require "./router"
 Q = require "q"
 
 exports.authorise = (ctx, done) ->
