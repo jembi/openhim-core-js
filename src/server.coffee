@@ -2,12 +2,11 @@ http = require 'http'
 https = require 'https'
 koaMiddleware = require "../lib/koaMiddleware"
 tlsAuthentication = require "../lib/tlsAuthentication"
+config = require "./config"
 	
-httpPort = 5001
-httpsPort = 5000
-
 exports.start = (httpPort, httpsPort) ->
-	console.log "Starting OpenHIM-core server..."
+	console.log "Starting OpenHIM server..."
+
 	koaMiddleware.setupApp (app) ->
 
 		if httpPort
@@ -17,10 +16,11 @@ exports.start = (httpPort, httpsPort) ->
 				console.log "HTTP listenting on port " + httpPort
 
 		if httpsPort
-			httpsServer = https.createServer tlsAuthentication.getServerOptions(koaMiddleware.mutualTLSFlag), app.callback()
+			mutualTLS = config.authentication.enableMutualTLSAuthentication
+			httpsServer = https.createServer tlsAuthentication.getServerOptions(mutualTLS), app.callback()
 			httpsServer.listen httpsPort
 			httpServer.on "listening", ->
 				console.log "HTTPS listenting on port " + httpsPort
 
 if not module.parent
-	exports.start httpPort, httpsPort
+	exports.start config.router.httpPort, config.router.httpsPort

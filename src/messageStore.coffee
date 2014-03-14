@@ -1,5 +1,5 @@
 MongoClient = require('mongodb').MongoClient;
-
+config = require "./config"
 
 exports.Transaction = (status,applicationId,request,response,routes,orchestrations,properties) ->
 	this.status = status
@@ -14,7 +14,7 @@ exports.Transaction.prototype.toString = ->
 	return "status: "+this.status+"\napplicationId: "+this.applicationId+"\nrequest: "+JSON.stringify request+"\nresponse: "+this.response+"\nroutes: "+this.routes+"\norchestrations: "+this.orchestrations+"\nproperties: "+this.properties
 
 saveTransaction = (transaction,ctx) ->
-	MongoClient.connect 'mongodb://127.0.0.1:27017/test', {native_parser:true},(err,db) ->
+	MongoClient.connect config.mongo.url, {native_parser:true},(err,db) ->
 		if err
 			return done err
 		collection = db.createCollection  "transaction", (err, collection) ->
@@ -65,7 +65,7 @@ Response.prototype.toString = ->
 exports.storeResponse = (ctx) ->
     response = new Response(ctx.response)
 
-    MongoClient.connect 'mongodb://127.0.0.1:27017/test', (err, db) ->
+    MongoClient.connect config.mongo.url, (err, db) ->
       if err
           return done err
       db.collection("transaction").update {_id: ctx.transactionId}, {$set: {"response":response, "status": "Completed"}}, { upsert: false}, (err, result) ->
