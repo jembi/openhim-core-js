@@ -1,11 +1,10 @@
 mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
+config = require "./config"
 
+mongoose.connect config.mongo.url
 
-MONGO_DB_URL= 'mongodb://localhost:27017/test'
-
-mongoose.connect MONGO_DB_URL  
 ApplicationSchema = new Schema
     "applicationID": {type: String, required: true}
     "domain": {type: String, required: true}

@@ -5,14 +5,12 @@ messageStore = require './messageStore'
 tlsAuthentication = require "./tlsAuthentication"
 authorisation = require './authorisation'
 applications = require "./applications"
-
-# This should be read from the config file
-mutualTLS = true
+config = require "./config"
 
 exports.setupApp = (done) ->
 	app = koa()
 
-	if mutualTLS
+	if config.authentication.enableMutualTLSAuthentication
 		app.use tlsAuthentication.koaMiddleware
 
 	app.use bodyParser()
