@@ -3,6 +3,7 @@ sinon = require "sinon"
 https = require "https"
 fs = require "fs"
 request = require "supertest"
+config = require "../lib/config"
 
 server = require "../lib/server"
 
@@ -20,16 +21,18 @@ describe "Integration Tests", ->
 		https.request options, (req, res) ->
 			res.statusCode.should.be 201
 
-	describe.skip "Basic Auth", ->
+	describe "Basic Auth", ->
 		describe "with no credentials", ->
 			it "should `throw` 401", (done) ->
-				koaMiddleware.setupApp (app) ->
-					request(app.listen())
+				server.start 5001, null, ->
+					console.log "started server"
+					request("http://localhost:5001")
 						.get('/sample/api')
 						.expect(401)
-						.end done
+						.end (err, res) ->
+							server.stop done
 
-		describe "with incorrect credentials", ->
+		describe.skip "with incorrect credentials", ->
 			it "should `throw` 401", (done) ->
 				koaMiddleware.setupApp (app) ->
 					request(app.listen())
@@ -38,7 +41,7 @@ describe "Integration Tests", ->
 						.expect(401)
 						.end done
 		
-		describe "with correct credentials", ->
+		describe.skip "with correct credentials", ->
 			it "should return 200 OK", (done) ->
 				koaMiddleware.setupApp (app) ->
 					request(app.listen())
