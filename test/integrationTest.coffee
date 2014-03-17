@@ -30,22 +30,36 @@ describe "Integration Tests", ->
 						.get('/sample/api')
 						.expect(401)
 						.end (err, res) ->
-							server.stop done
+							server.stop ->
+								if err
+									done err
+								else
+									done()
 
-		describe.skip "with incorrect credentials", ->
+		describe "with incorrect credentials", ->
 			it "should `throw` 401", (done) ->
-				koaMiddleware.setupApp (app) ->
-					request(app.listen())
+				server.start 5001, null, ->
+					console.log "started server"
+					request("http://localhost:5001")
 						.get('/sample/api')
-						.auth('incorrect_user', 'incorrect_password')
 						.expect(401)
-						.end done
+						.end (err, res) ->
+							server.stop ->
+								if err
+									done err
+								else
+									done()
 		
-		describe.skip "with correct credentials", ->
+		describe "with correct credentials", ->
 			it "should return 200 OK", (done) ->
-				koaMiddleware.setupApp (app) ->
-					request(app.listen())
+				server.start 5001, null, ->
+					console.log "started server"
+					request("http://localhost:5001")
 						.get('/sample/api')
-						.auth('testApp', 'password')
 						.expect(200)
-						.end done
+						.end (err, res) ->
+							server.stop ->
+								if err
+									done err
+								else
+									done()
