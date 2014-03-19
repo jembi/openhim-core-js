@@ -4,6 +4,7 @@ koaMiddleware = require "../lib/koaMiddleware"
 tlsAuthentication = require "../lib/tlsAuthentication"
 config = require "./config"
 Q = require "q"
+logger = require "winston"
 
 httpServer = null;
 httpsServer = null;
@@ -20,7 +21,7 @@ exports.start = (httpPort, httpsPort, done) ->
 
 			httpServer = http.createServer app.callback()
 			httpServer.listen httpPort, ->
-				console.log "HTTP listenting on port " + httpPort
+				logger.info "HTTP listenting on port " + httpPort
 				deferredHttp.resolve()
 
 		if httpsPort
@@ -30,34 +31,31 @@ exports.start = (httpPort, httpsPort, done) ->
 			mutualTLS = config.authentication.enableMutualTLSAuthentication
 			httpsServer = https.createServer tlsAuthentication.getServerOptions(mutualTLS), app.callback()
 			httpsServer.listen httpsPort, ->
-				console.log "HTTPS listenting on port " + httpsPort
+				logger.info "HTTPS listenting on port " + httpsPort
 				deferredHttps.resolve()
 
 		(Q.all promises).then ->
 			done()
 
 exports.stop = (done) ->
-	console.log "Stopping OpenHIM server..."
 	promises = []
 
 	if httpServer
 		deferredHttp = Q.defer();
 		promises.push deferredHttp.promise
 
-		console.log "Stopping HTTP server"
 		httpServer.close ->
-			console.log "Stopped HTTP server"
+			logger.info "Stopped HTTP server"
 			deferredHttp.resolve()
 
 	if httpsServer
-		console.log "Stopping HTTPS server"
 		deferredHttps = Q.defer();
 		promises.push deferredHttps.promise
 
 		httpsServer.close ->
+			logger.info "Stopped HTTPS server"
 			deferredHttps.resolve()
 
-	console.log "Waiting on promises"
 	(Q.all promises).then ->
 		done()
 

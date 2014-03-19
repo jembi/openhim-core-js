@@ -20,7 +20,7 @@ saveTransaction = (transaction, ctx, done) ->
 		collection = db.createCollection  "transaction", (err, collection) ->
 			collection.insert transaction, (err, doc) ->
 				if err
-					done err		
+					return done err		
 				ctx.transactionId = transaction._id
 				done null, doc
 
@@ -33,8 +33,10 @@ exports.storeTransaction = (ctx, done) ->
 	orchestrations = {}
 	properties = {}
 	transaction = exports.Transaction status,applicationId,request,response,routes,orchestrations,properties
-	saveTransaction transaction, ctx, ->
+	saveTransaction transaction, ctx, (err, doc) ->
 		if done
+			if err
+				return done err
 			done()
 
 

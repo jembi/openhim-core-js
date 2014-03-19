@@ -1,19 +1,21 @@
 auth = require 'basic-auth'
 Q = require "q"
 applications = require "./applications"
+logger = require "winston"
 
 exports.authenticateUser = (ctx, done) ->
 	user = auth ctx
-	console.log JSON.stringify user
 	if user
 		applications.findApplicationById user.name, (err, application) ->
 			if application && application.passwordHash == user.pass
-				console.log("Authenticated!");
+				logger.info user.name + " is authenticated."
 				ctx.authenticated = application;
 				done null, application
 			else
+				logger.info user.name + " is NOT authenticated."
 				done null, null
-	else 
+	else
+		logger.error "No basic auth details supplied"
 		done null, null
 
 ###
