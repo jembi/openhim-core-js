@@ -29,10 +29,11 @@ exports.start = (httpPort, httpsPort, done) ->
 			promises.push deferredHttp.promise
 
 			mutualTLS = config.authentication.enableMutualTLSAuthentication
-			httpsServer = https.createServer tlsAuthentication.getServerOptions(mutualTLS), app.callback()
-			httpsServer.listen httpsPort, ->
-				logger.info "HTTPS listenting on port " + httpsPort
-				deferredHttps.resolve()
+			options = tlsAuthentication.getServerOptions mutualTLS, ->
+				httpsServer = https.createServer options, app.callback()
+				httpsServer.listen httpsPort, ->
+					logger.info "HTTPS listenting on port " + httpsPort
+					deferredHttps.resolve()
 
 		(Q.all promises).then ->
 			done()
