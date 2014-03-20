@@ -6,11 +6,11 @@ config = require "./config"
 Q = require "q"
 logger = require "winston"
 
-httpServer = null;
-httpsServer = null;
+httpServer = null
+httpsServer = null
 	
 exports.start = (httpPort, httpsPort, done) ->
-	console.log "Starting OpenHIM server..."
+	logger.info "Starting OpenHIM server..."
 
 	koaMiddleware.setupApp (app) ->
 		promises = []
@@ -26,10 +26,12 @@ exports.start = (httpPort, httpsPort, done) ->
 
 		if httpsPort
 			deferredHttps = Q.defer();
-			promises.push deferredHttp.promise
+			promises.push deferredHttps.promise
 
 			mutualTLS = config.authentication.enableMutualTLSAuthentication
-			options = tlsAuthentication.getServerOptions mutualTLS, ->
+			tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
+				if err
+					return done err
 				httpsServer = https.createServer options, app.callback()
 				httpsServer.listen httpsPort, ->
 					logger.info "HTTPS listenting on port " + httpsPort
@@ -58,6 +60,8 @@ exports.stop = (done) ->
 			deferredHttps.resolve()
 
 	(Q.all promises).then ->
+		httpServer = null
+		httpsServer = null
 		done()
 
 if not module.parent

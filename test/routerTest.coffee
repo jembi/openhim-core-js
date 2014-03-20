@@ -58,7 +58,6 @@ describe "HTTP Router", ->
 					done()
 
 		it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
-			console.log "I should only appear once"
 			testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
 				testUtils.createMockServer 201, "Mock response body 2\n", 8888, ->
 					testUtils.createMockServer 400, "Mock response body 3\n", 9999, ->

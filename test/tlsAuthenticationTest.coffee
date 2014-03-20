@@ -1,13 +1,35 @@
+fs = require "fs"
 should = require "should"
 sinon = require "sinon"
 tlsAuthentication = require "../lib/tlsAuthentication"
+applications = require "../lib/applications"
 
 describe "Setup mutual TLS", ->
 	it "should add all trusted certificates and enable mutual auth from all applications to server options if mutual auth is enabled", ->
-		tlsAuthentication.getServerOptions true, (err, options) ->
-			options.ca.should.be.ok
-			options.requestCert.should.be.true
-			options.rejectUnauthorized.should.be.false
+
+		cert = (fs.readFileSync "test/client-tls/cert.pem").toString()
+
+		testAppDoc =
+			applicationID: "testApp"
+			domain: "test-client.jembi.org"
+			name: "TEST Application"
+			roles:
+				[ 
+					"OpenMRS_PoC"
+					"PoC" 
+				]
+			passwordHash: ""
+			cert: cert
+
+		applications.addApplication testAppDoc, (error, newAppDoc) ->
+			tlsAuthentication.getServerOptions true, (err, options) ->
+				options.ca.should.be.ok
+				options.ca.should.be.an.Array
+				options.ca.should.containEql cert
+				options.requestCert.should.be.true
+				options.rejectUnauthorized.should.be.false
+
+
 	it "should NOT have mutual auth options set if mutual auth is disabled", ->
 		tlsAuthentication.getServerOptions false, (err, options) ->
 			options.should.not.have.property "ca"

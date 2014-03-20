@@ -8,8 +8,10 @@ getTrustedApplicationCerts = (done) ->
 			done err, null
 		certs = []
 		for app in applications
-			certs.push app.cert
-			return done null, certs
+			if app.cert
+				certs.push app.cert
+
+		return done null, certs
 
 ###
 # Gets server options object for use with a HTTPS node server

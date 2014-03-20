@@ -43,31 +43,7 @@ describe "Integration Tests", ->
 								"PoC" 
 							]
 						passwordHash: ""
-						cert:
-							"""-----BEGIN CERTIFICATE-----
-MIIEFTCCAv2gAwIBAgIJALAiF9OxCN0tMA0GCSqGSIb3DQEBBQUAMIGgMQswCQYD
-VQQGEwJaQTEMMAoGA1UECAwDS1pOMQ8wDQYDVQQHDAZEdXJiYW4xITAfBgNVBAoM
-GEplbWJpIEhlYWx0aCBTeXN0ZW1zIE5QQzEQMA4GA1UECwwHZUhlYWx0aDEeMBwG
-A1UEAwwVdGVzdC1jbGllbnQuamVtYmkub3JnMR0wGwYJKoZIhvcNAQkBFg5yeWFu
-QGplbWJpLm9yZzAeFw0xNDAzMTkxMzQ2NDhaFw0yNDAzMTYxMzQ2NDhaMIGgMQsw
-CQYDVQQGEwJaQTEMMAoGA1UECAwDS1pOMQ8wDQYDVQQHDAZEdXJiYW4xITAfBgNV
-BAoMGEplbWJpIEhlYWx0aCBTeXN0ZW1zIE5QQzEQMA4GA1UECwwHZUhlYWx0aDEe
-MBwGA1UEAwwVdGVzdC1jbGllbnQuamVtYmkub3JnMR0wGwYJKoZIhvcNAQkBFg5y
-eWFuQGplbWJpLm9yZzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKPB
-9eSU9vASw7a+Dk79T92PpkdWcOy7Tt4AQXoepKJRy/ip3QKxPHLekSqRRQ12maZo
-7axsctB5EoI3bGpD/a/GukaS5BE5rt5g74G6iAC24RygeOv7H86U03l06XrTyRgk
-2DGw5LZVajjaFX9630eoBnoTPxLHmNHCV94I4c1cEMZrcS6kNXH/4jtuLJGjWy9p
-p9A0D7Lf/egoMmQqBQ1RVc4f43OiCyhrCVMMb2WuDPctiXZrlXopB0OPLpQOv3WO
-EzeKhA88BLSH7+Iyj6BUPazCfVaKyfrqa6iSUiXYj8lJFBhN49Pd5oPHLb6YR2Ci
-bYZcgDhGmYryruofXBcCAwEAAaNQME4wHQYDVR0OBBYEFPmmVNZYuv2Ha3m1bRtk
-xfdkuCaMMB8GA1UdIwQYMBaAFPmmVNZYuv2Ha3m1bRtkxfdkuCaMMAwGA1UdEwQF
-MAMBAf8wDQYJKoZIhvcNAQEFBQADggEBAGqyp9cvxRtrzga0Z6+hY72Vk7nsQ5FP
-F7WZ7mT8FFbM4BhZb8lIdVx/BzA4tEpFuTrRqM1k5Rp9Nn90/4mz7XLacb6usq12
-MOv5TKCzt+rmvoQv/lgdIYU1167meHIUZMgRLSrd3/sT1+NgSisIrFROiRFNt2Th
-6+KOPVkU8zpbEX5pGoiIaunBcKnEyae/iqFJTKzHK9KSZAH7roJPnuc/m1ZuPyM1
-3s5k50m/dG1mBG8igRmtEWVIA14Qh1vWT2HMb1QtR4uiFHt6CSm7K4jfpDukLa+s
-VgFoA+CfqiFgWdK5xSJq89GA4xSBFUppMqcpNDNUgSfGt/U8TY/mfGE=
------END CERTIFICATE-----"""
+						cert: (fs.readFileSync "test/client-tls/cert.pem").toString()
 
 					applications.addApplication testAppDoc, (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 201, "Mock response body\n", 1232, ->
@@ -79,22 +55,21 @@ VgFoA+CfqiFgWdK5xSJq89GA4xSBFUppMqcpNDNUgSfGt/U8TY/mfGE=
 						mockServer.close ->
 							done()
 
-			it.skip "should forward a request to the configured routes if the application is authenticated and authorised", (done) ->
+			it "should forward a request to the configured routes if the application is authenticated and authorised", (done) ->
 				server.start 5001, 5000, ->
 					options =
 						host: "localhost"
-						path: "test/mock"
+						path: "/test/mock"
 						port: 5000
 						cert: fs.readFileSync "test/client-tls/cert.pem"
 						key:  fs.readFileSync "test/client-tls/key.pem"
+						ca: [ fs.readFileSync "tls/cert.pem" ]
 
-					https.request options, (req, res) ->
-						res.statusCode.should.be 201
-						server.stop (err) ->
-							if err
-								done err
-							else
-								done()
+					req = https.request options, (res) ->
+						res.statusCode.should.be.exactly 201
+						server.stop ->
+							done()
+					req.end()
 
 		describe "Basic Authentication", ->
 
