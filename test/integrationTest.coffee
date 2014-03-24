@@ -71,6 +71,22 @@ describe "Integration Tests", ->
 							done()
 					req.end()
 
+			it "should reject a request when usign an invalid cert", (done) ->
+				server.start 5001, 5000, ->
+					options =
+						host: "localhost"
+						path: "/test/mock"
+						port: 5000
+						cert: fs.readFileSync "test/client-tls/invalid-cert.pem"
+						key:  fs.readFileSync "test/client-tls/invalid-key.pem"
+						ca: [ fs.readFileSync "tls/cert.pem" ]
+
+					req = https.request options, (res) ->
+						res.statusCode.should.be.exactly 401
+						server.stop ->
+							done()
+					req.end()
+
 		describe "Basic Authentication", ->
 
 			mockServer = null
