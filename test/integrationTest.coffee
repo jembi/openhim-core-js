@@ -55,6 +55,10 @@ describe "Integration Tests", ->
 						mockServer.close ->
 							done()
 
+			afterEach (done) ->
+				server.stop ->
+					done()
+
 			it "should forward a request to the configured routes if the application is authenticated and authorised", (done) ->
 				server.start 5001, 5000, ->
 					options =
@@ -67,11 +71,10 @@ describe "Integration Tests", ->
 
 					req = https.request options, (res) ->
 						res.statusCode.should.be.exactly 201
-						server.stop ->
-							done()
+						done()
 					req.end()
 
-			it "should reject a request when usign an invalid cert", (done) ->
+			it "should reject a request when using an invalid cert", (done) ->
 				server.start 5001, 5000, ->
 					options =
 						host: "localhost"
@@ -83,8 +86,7 @@ describe "Integration Tests", ->
 
 					req = https.request options, (res) ->
 						res.statusCode.should.be.exactly 401
-						server.stop ->
-							done()
+						done()
 					req.end()
 
 		describe "Basic Authentication", ->
@@ -128,6 +130,10 @@ describe "Integration Tests", ->
 						mockServer.close ->
 							done()
 
+			afterEach (done) ->
+				server.stop ->
+					done()
+
 			describe "with no credentials", ->
 				it "should `throw` 401", (done) ->
 					server.start 5001, null, ->
@@ -135,11 +141,10 @@ describe "Integration Tests", ->
 							.get("/test/mock")
 							.expect(401)
 							.end (err, res) ->
-								server.stop ->
-									if err
-										done err
-									else
-										done()
+								if err
+									done err
+								else
+									done()
 
 			describe "with incorrect credentials", ->
 				it "should `throw` 401", (done) ->
@@ -149,11 +154,10 @@ describe "Integration Tests", ->
 							.auth("incorrect_user", "incorrect_password")
 							.expect(401)
 							.end (err, res) ->
-								server.stop ->
-									if err
-										done err
-									else
-										done()
+								if err
+									done err
+								else
+									done()
 			
 			describe "with correct credentials", ->
 				it "should return 200 OK", (done) ->
@@ -163,9 +167,8 @@ describe "Integration Tests", ->
 							.auth("testApp", "password")
 							.expect(200)
 							.end (err, res) ->
-								server.stop ->
-									if err
-										done err
-									else
-										done()
+								if err
+									done err
+								else
+									done()
 							
