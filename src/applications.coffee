@@ -57,4 +57,12 @@ exports.removeApplication = (id, done) ->
 			if err
 				return done err
 			else
-				return done null   
+				return done null
+
+#get all specified applications 
+exports.getApplications = (done) ->	
+	Application.find {}, (err, applications) ->     
+			if err
+				return done err, null
+			else
+				return done null, applications

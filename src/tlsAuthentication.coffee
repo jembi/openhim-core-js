@@ -2,27 +2,36 @@ fs = require "fs"
 Q = require "q"
 applications = require "./applications"
 
-getTrustedApplicationCerts = ->
-	# FIXME: this should read from all saved applications, the following is done for test purposes
-	# once #15 is complete we should be able to update this
-	return fs.readFileSync "tls/cert.pem"
+getTrustedApplicationCerts = (done) ->
+	applications.getApplications (err, applications) ->
+		if err
+			done err, null
+		certs = []
+		for app in applications
+			if app.cert
+				certs.push app.cert
+
+		return done null, certs
 
 ###
 # Gets server options object for use with a HTTPS node server
 #
-# mutualTLS is a boolean, when true mutual TLS is enabled
+# mutualTLS is a boolean, when true mutual TLS authentication is enabled
 ###
-exports.getServerOptions = (mutualTLS) ->
+exports.getServerOptions = (mutualTLS, done) ->
 	options =
 		key:	fs.readFileSync "tls/key.pem"
 		cert:	fs.readFileSync "tls/cert.pem"
 	
 	if mutualTLS
-		options.ca = getTrustedApplicationCerts()
-		options.requestCert = true
-		options.rejectUnauthorized = false
+		getTrustedApplicationCerts (err, certs) ->
+			options.ca = certs
+			options.requestCert = true
+			options.rejectUnauthorized = false
+			done null, options
+	else
+		done null, options
 
-	return options
 
 ###
 # Koa middleware for mutual TLS authentication
@@ -38,6 +47,6 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 
 			yield next;
 		} else {
-			this.response.status = "unauthorized"
+			this.response.status = "unauthorized";
 		}
 	}`
