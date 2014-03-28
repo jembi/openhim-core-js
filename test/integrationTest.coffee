@@ -60,7 +60,7 @@ describe "Integration Tests", ->
 					done()
 
 			it "should forward a request to the configured routes if the application is authenticated and authorised", (done) ->
-				server.start 5001, 5000, ->
+				server.start 5001, 5000, null, ->
 					options =
 						host: "localhost"
 						path: "/test/mock"
@@ -75,7 +75,7 @@ describe "Integration Tests", ->
 					req.end()
 
 			it "should reject a request when using an invalid cert", (done) ->
-				server.start 5001, 5000, ->
+				server.start 5001, 5000, null, ->
 					options =
 						host: "localhost"
 						path: "/test/mock"
@@ -136,7 +136,7 @@ describe "Integration Tests", ->
 
 			describe "with no credentials", ->
 				it "should `throw` 401", (done) ->
-					server.start 5001, null, ->
+					server.start 5001, null, null, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.expect(401)
@@ -148,7 +148,7 @@ describe "Integration Tests", ->
 
 			describe "with incorrect credentials", ->
 				it "should `throw` 401", (done) ->
-					server.start 5001, null, ->
+					server.start 5001, null, null, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.auth("incorrect_user", "incorrect_password")
@@ -161,7 +161,7 @@ describe "Integration Tests", ->
 			
 			describe "with correct credentials", ->
 				it "should return 200 OK", (done) ->
-					server.start 5001, null, ->
+					server.start 5001, null, null, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.auth("testApp", "password")
