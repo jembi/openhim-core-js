@@ -1,11 +1,10 @@
 mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
+config = require "./config"
 
+mongoose.connect config.mongo.url
 
-MONGO_DB_URL= 'mongodb://localhost:27017/test2'
-
-mongoose.connect MONGO_DB_URL  
 ApplicationSchema = new Schema
     "applicationID": {type: String, required: true}
     "domain": {type: String, required: true}
@@ -42,7 +41,7 @@ exports.findApplicationByDomain = (domain, done) ->
 			if err
 				return done err
 			else
-				return done null, application  
+				return done null, application
 
 #update the specified application
 exports.updateApplication = (id, updates, done) ->	
@@ -58,4 +57,12 @@ exports.removeApplication = (id, done) ->
 			if err
 				return done err
 			else
-				return done null   
+				return done null
+
+#get all specified applications 
+exports.getApplications = (done) ->	
+	Application.find {}, (err, applications) ->     
+			if err
+				return done err, null
+			else
+				return done null, applications

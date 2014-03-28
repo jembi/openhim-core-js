@@ -2,6 +2,7 @@ should = require "should"
 sinon = require "sinon"
 http = require "http"
 router = require "../lib/router"
+testUtils = require "./testUtils"
 
 describe "HTTP Router", ->
 
@@ -25,21 +26,10 @@ describe "HTTP Router", ->
 				channelStr = channel.toString()
 
 				channelStr.should.be.exactly "<Channel: Test Channel>"
-
-	createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
-		requestCallback = requestCallback || ->
-		# Create mock endpoint to forward requests to
-		mockServer = http.createServer (req, res) ->
-			res.writeHead resStatusCode, {"Content-Type": "text/plain"}
-			res.end resBody
-
-
-		mockServer.listen port, callback
-		mockServer.on "request", requestCallback 
 	
 	describe ".route", ->
 		it "should route an incomming request to the endpoints specific by the channel config", (done) ->
-			createMockServer 201, "Mock response body\n", 9876, ->
+			testUtils.createMockServer 201, "Mock response body\n", 9876, ->
 				# Setup a channel for the mock endpoint
 				channel =
 					name: "Mock endpoint"
@@ -49,30 +39,28 @@ describe "HTTP Router", ->
 								port: 9876
 								primary: true
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
 
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "GET"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
-
-						ctx.response.status.should.be.exactly 201
-						ctx.response.body.toString().should.be.eql "Mock response body\n"
-						ctx.response.header.should.be.ok
-						done()
+					ctx.response.status.should.be.exactly 201
+					ctx.response.body.toString().should.be.eql "Mock response body\n"
+					ctx.response.header.should.be.ok
+					done()
 
 		it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
-			createMockServer 200, "Mock response body 1\n", 7777, ->
-				createMockServer 201, "Mock response body 2\n", 8888, ->
-					createMockServer 400, "Mock response body 3\n", 9999, ->
+			testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
+				testUtils.createMockServer 201, "Mock response body 2\n", 8888, ->
+					testUtils.createMockServer 400, "Mock response body 3\n", 9999, ->
 						# Setup channels for the mock endpoints
 						channel =
 							name: "Multicast 1"
@@ -88,28 +76,27 @@ describe "HTTP Router", ->
 										host: "localhost"
 										port: 9999
 									]
-						addedChannelNames.push channel.name
+						ctx = new Object()
+						ctx.authorisedChannels = []
+						ctx.authorisedChannels.push channel
+						ctx.request = new Object()
+						ctx.response = new Object()
+						ctx.request.url = "/test/multicasting"
+						ctx.request.method = "GET"
 
-						router.addChannel channel, (err) ->
-							ctx = new Object()
-							ctx.request = new Object()
-							ctx.response = new Object()
-							ctx.request.url = "/test/multicasting"
-							ctx.request.method = "GET"
-
-							router.route ctx, (err) ->
-								if err
-									return done err
-								ctx.response.status.should.be.exactly 201
-								ctx.response.body.toString().should.be.eql "Mock response body 2\n"
-								ctx.response.header.should.be.ok
-								done()
+						router.route ctx, (err) ->
+							if err
+								return done err
+							ctx.response.status.should.be.exactly 201
+							ctx.response.body.toString().should.be.eql "Mock response body 2\n"
+							ctx.response.header.should.be.ok
+							done()
 
 
 		it "should pass an error to next if there are multiple primary routes", (done) ->
-			createMockServer 200, "Mock response body 1\n", 4444, ->
-				createMockServer 201, "Mock response body 2\n", 5555, ->
-					createMockServer 400, "Mock response body 3\n", 6666, ->
+			testUtils.createMockServer 200, "Mock response body 1\n", 4444, ->
+				testUtils.createMockServer 201, "Mock response body 2\n", 5555, ->
+					testUtils.createMockServer 400, "Mock response body 3\n", 6666, ->
 						# Setup channels for the mock endpoints
 						channel =
 							name: "Multi-primary"
@@ -126,19 +113,18 @@ describe "HTTP Router", ->
 										port: 6666
 										primary: true
 									]
-						addedChannelNames.push channel.name
+						ctx = new Object()
+						ctx.authorisedChannels = []
+						ctx.authorisedChannels.push channel
+						ctx.request = new Object()
+						ctx.response = new Object()
+						ctx.request.url = "/test/multi-primary"
+						ctx.request.method = "GET"
 
-						router.addChannel channel, (err) ->
-							ctx = new Object()
-							ctx.request = new Object()
-							ctx.response = new Object()
-							ctx.request.url = "/test/multi-primary"
-							ctx.request.method = "GET"
-
-							router.route ctx, (err) ->
-								if err
-									err.message.should.be.exactly "A primary route has already been returned, only a single primary route is allowed"
-									done()
+						router.route ctx, (err) ->
+							if err
+								err.message.should.be.exactly "A primary route has already been returned, only a single primary route is allowed"
+								done()
 					
 		it "should forward PUT and POST requests correctly", (done) ->
 			# Create mock endpoint to forward requests to
@@ -161,25 +147,23 @@ describe "HTTP Router", ->
 								port: 3333
 								primary: true
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "POST"
+				ctx.request.body = "TestBody"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
 
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "POST"
-					ctx.request.body = "TestBody"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
-
-						ctx.response.status.should.be.exactly 200
-						ctx.response.header.should.be.ok
-						done()
+					ctx.response.status.should.be.exactly 200
+					ctx.response.header.should.be.ok
+					done()
 
 	describe ".setChannels(channels) and .getChannels()", ->
 		it "should save the channels config to the db and be able to fetch them again", (done) ->
@@ -295,7 +279,7 @@ describe "HTTP Router", ->
 
 	describe "Basic Auth", ->
 		it "should have valid authorization header if username and password is set in options", (done) ->
-			createMockServer 201, "Mock response body\n", 9875, (->
+			testUtils.createMockServer 201, "Mock response body\n", 9875, (->
 				# Setup a channel for the mock endpoint
 				channel =
 					name: "Mock endpoint"
@@ -307,27 +291,25 @@ describe "HTTP Router", ->
 								username: "username"
 								password: "password"
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
-
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "GET"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
 			), (req, res) ->
 				# Base64("username:password") = "dXNlcm5hbWU6cGFzc3dvcmQ=""
 				req.headers.authorization.should.be.exactly "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
 				done()
 		
 		it "should not have authorization header if username and password is absent from options", (done) ->
-			createMockServer 201, "Mock response body\n", 9874, (->
+			testUtils.createMockServer 201, "Mock response body\n", 9874, (->
 				# Setup a channel for the mock endpoint
 				channel =
 					name: "Mock endpoint"
@@ -337,20 +319,17 @@ describe "HTTP Router", ->
 								port: 9874
 								primary: true
 							]
-				addedChannelNames.push channel.name
-				router.addChannel channel, (err) ->
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
 					if err
 						return done err
-
-					ctx = new Object()
-					ctx.request = new Object()
-					ctx.response = new Object()
-					ctx.request.url = "/test"
-					ctx.request.method = "GET"
-
-					router.route ctx, (err) ->
-						if err
-							return done err
 			), (req, res) ->
 				(req.headers.authorization == undefined).should.be.true
 				done()
