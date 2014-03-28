@@ -51,7 +51,7 @@ exports.findAll = (done) ->
 
 #find an application by applicationID
 exports.findApplicationById = (id, done) ->
-	Application.findOne {"applicationID":id},(err, application) ->     
+	Application.findOne {"applicationId":id},(err, application) ->     
 			if err
 				console.log "Unable to find application: #{err}"
 				return done err
@@ -71,7 +71,7 @@ exports.findApplicationByDomain = (domain, done) ->
 
 #update the specified application
 exports.updateApplication = (id, updates, done) ->	
-	Application.findOneAndUpdate {"applicationID":id}, updates,(err) ->     
+	Application.findOneAndUpdate {"applicationId":id}, updates,(err) ->     
 			if err
 				console.log "Unable to Update Application: #{err}"
 				return done err
@@ -81,7 +81,7 @@ exports.updateApplication = (id, updates, done) ->
 
 #remove the specified application 
 exports.removeApplication = (id, done) ->	
-	Application.remove {"applicationID":id},(err) ->     
+	Application.remove {"applicationId":id},(err) ->     
 			if err
 				console.log "Unable to Remove Application: #{err}"
 				return done err

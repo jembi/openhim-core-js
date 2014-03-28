@@ -4,13 +4,13 @@ mongoose = require "mongoose"
 appcollection = require "../lib/applications"
 
 describe "Applications", ->
-
 	before (done)->
 		for i of mongoose.connection.collections
 			mongoose.connection.collections[i].remove ->
 		done()
 	after (done)->
-		mongoose.disconnect ->
+		for i of mongoose.connection.collections
+			mongoose.connection.collections[i].remove ->
 		done()
 
 	describe ".register(applicationDocument)", ->
@@ -93,4 +93,3 @@ describe "Applications", ->
 				appcollection.findApplicationById applicationId, (err, doc) ->
 					(doc == null).should.be.true
 			done()
-	
