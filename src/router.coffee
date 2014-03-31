@@ -2,6 +2,7 @@ http = require 'http'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
 Q = require "q"
+config = require "./config"
 
 channelsCollection = null
 
@@ -9,7 +10,7 @@ getCollection = (done) ->
 	if channelsCollection
 		return done channelsCollection
 	else
-		MongoClient.connect 'mongodb://127.0.0.1:27017/test', (err, db) ->
+		MongoClient.connect config.mongo.url, (err, db) ->
 			if err
 				return done err
 
@@ -151,6 +152,10 @@ sendRequestToRoutes = (ctx, routes, next) ->
 			path: ctx.request.url
 			method: ctx.request.method
 			headers: ctx.request.header
+		
+		if route.username and route.password
+			options.auth = route.username+":"+route.password
+
 		if options.headers && options.headers.host
 			delete options.headers.host
 		if route.primary
@@ -185,16 +190,12 @@ sendRequestToRoutes = (ctx, routes, next) ->
 ###
 exports.route = (ctx, next) ->
 	routes = []
+	for channel in ctx.authorisedChannels
+		pat = new RegExp channel.urlPattern
+		if pat.test ctx.request.url
+			routes = routes.concat channel.routes
 
-	exports.getChannels (err, items) ->
-		if err
-			return next err
-		for channel in items
-			pat = new RegExp channel.urlPattern
-			if pat.test ctx.request.url
-				routes = routes.concat channel.routes
-
-		sendRequestToRoutes ctx, routes, next
+	sendRequestToRoutes ctx, routes, next
 
 ###
 # The [Koa](http://koajs.com/) middleware function that enables the

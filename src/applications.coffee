@@ -1,11 +1,10 @@
 mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
+config = require "./config"
 
+mongoose.connect config.mongo.url
 
-MONGO_DB_URL= 'mongodb://localhost:27017/test'
-
-mongoose.connect MONGO_DB_URL  
 ApplicationSchema = new Schema
     "applicationId": {type: String, required: true}
     "domain": {type: String, required: true}
@@ -17,26 +16,15 @@ ApplicationSchema = new Schema
 #compile the Application Schema into a Model
 Application = mongoose.model 'Applications', ApplicationSchema
 
-###
-# Gets all channel currently registered.
-# 
-# Accepts (done) where done is a callback that will be called with (err, items)
-# err will contain an error object if an error occurs otherwise items will
-# contain an array fo Channel objects.
-###
-
 # save() updates existing application-object or inserts new ones as needed
 # testApplicationDoc ={applicationID: "Ishmael_OpenMRS",domain: "him.jembi.org",name: "OpenMRS Ishmael instance",roles: [ "OpenMRS_PoC", "PoC" ],passwordHash: "",cert: ""}
-
 
 exports.addApplication = (insertValues, done) ->
 	newApplication  = new Application insertValues
 	newApplication.save (err, saveResult) ->     
 			if err
-				console.log "Unable to save record: #{err}"
 				return done err
 			else
-				console.log "Application Collection Save #{saveResult}"  
 				return done null, saveResult    
 
 #find all applications
@@ -53,38 +41,38 @@ exports.findAll = (done) ->
 exports.findApplicationById = (id, done) ->
 	Application.findOne {"applicationId":id},(err, application) ->     
 			if err
-				console.log "Unable to find application: #{err}"
 				return done err
 			else
-				console.log "Found Application #{application}"  
 				return done null, application   
 
 #lookup the application by domain
 exports.findApplicationByDomain = (domain, done) ->
 	Application.findOne {"domain":domain},(err, application) ->     
 			if err
-				console.log "Unable to find application: #{err}"
 				return done err
 			else
-				console.log "Found Application #{application}"  
-				return done null, application  
+				return done null, application
 
 #update the specified application
 exports.updateApplication = (id, updates, done) ->	
 	Application.findOneAndUpdate {"applicationId":id}, updates,(err) ->     
 			if err
-				console.log "Unable to Update Application: #{err}"
 				return done err
 			else
-				console.log "Updated Application"  
 				return done null   
 
 #remove the specified application 
 exports.removeApplication = (id, done) ->	
 	Application.remove {"applicationId":id},(err) ->     
 			if err
-				console.log "Unable to Remove Application: #{err}"
 				return done err
 			else
-				console.log "Removed Application "  
-				return done null   
+				return done null
+
+#get all specified applications 
+exports.getApplications = (done) ->	
+	Application.find {}, (err, applications) ->     
+			if err
+				return done err, null
+			else
+				return done null, applications
