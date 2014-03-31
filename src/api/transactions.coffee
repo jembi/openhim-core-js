@@ -4,38 +4,137 @@ Q = require 'q'
 ###
 # Retrieves the list of transactions
 ###
-exports.getTransactions = `function *getTransactions() {
+exports.getTransactions = `function *findAll() {
 
-	// Get the request query-parameters
-	var query = this.request.query;
-	var applicationId = query.applicationId;
-	var fromDate = query.fromDate;
-	var status = query.status;
-	var toDate = query.toDate;
-	var uriPattern = query.uriPattern;
+	var transactions = Q.denodeify(router.findAll);
 
-	// TODO! Use 'applicationId': (The user ID to filter transactions by)
-	console.log("TODO! [api.transactions.getTransactions] Implement '" + applicationId + "': (The user ID to filter transactions by)");
+	try{
+			this.body = yield findAll();
+		}catch (e){
+			this.message = "Ngonidzashe";
+			this.status = 500;
+		}
+
+}`
+
+###
+#Adds an application 
+###
+exports.addTransaction = `function *addTransaction() {
+	// Get the values to use
+	var transaction = this.request.body;
 	
-	// TODO! Use 'fromDate': (The date to filter results from in ISO8601 format)
-	console.log("TODO! [api.transactions.getTransactions] Implement '" + fromDate + "': (The date to filter results from in ISO8601 format)");
+	// Create a reusable wrapper to convert a function that use Node.js callback pattern
+	var addTransaction = Q.denodeify(router.addTransaction);
 
-	// TODO! Use 'status': (The processing status of the transaction)
-	console.log("TODO! [api.transactions.getTransactions] Implement '" + status + "': (The processing status of the transaction)");
+	try{
 
-	// TODO! Use 'toDate': (The date to filter results to in ISO8601 format)
-	console.log("TODO! [api.transactions.getTransactions] Implement '" + toDate + "': (The date to filter results to in ISO8601 format)");
+		// Try to add the new channel (Call the function that emits a promise and Koa will wait for the function to complete)
+		var result = yield addTransaction(transaction);
 
-	// TODO! Use 'uriPattern': (A regex pattern to filter the transaction URI by)
-	console.log("TODO! [api.transactions.getTransactions] Implement '" + uriPattern + "': (A regex pattern to filter the transaction URI by)");
+		// All ok! So set the result
+		this.body = 'Transaction successfully created';
+		this.status = 201;
+	}
+	catch (e) {
+		// Error! So inform the user
+		this.body = e.message;
+		this.status = 400;
+	}
+
+}`
+
+
+###
+# Retrieves the details for a specific transaction
+###
+exports.getTransactionById = `function *getTransactionById(transactionId) {
+
+	// Get the values to use
+	var transactionId = this.request.transactionId
 
 	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	//var getTransactions = Q.denodeify(router.getTransactions);
+	var getTransactionById = Q.denodeify(router.getTransactionById);
 
-	// Call the function that emits a promise and Koa will wait for the function to complete
-	//this.body = yield getTransactions(query);
+	try {
+		var result = yield getTransactionById(transactionId);
 
-	// Return the result
-	this.body = 'TODO!!! Return a JSON list of Transactions';
+		// Test if the result if valid
+		if (result === null) {
+			this.body = "We could not find transaction with ID:'" + transactionId + "'.";
+			this.status = 404;
+		}
+		else { this.body = result; } // All ok! So set the result
+	}
+	catch (e) {
+		// Error! So inform the user
+		this.body = e.message;
+		this.status = 500;
+	}
+}`
 
+###
+# Retrieves all transactions specified by applicationId
+###
+exports.findTransactionByApplicationId = `function *findTransactionByApplicationId(applicationId){
+	var applicationId = this.request.applicationId
+
+	var findTransactionByApplicationId = Q.denodeify(router.findTransactionByApplicationId);
+
+	try{
+			var result = yield findTransactionByApplicationId(applicationId)
+
+			if(result === null){
+				this.body = "No transactions with applicationId: "+applicationId+" could be found."
+				this.status = 404
+			}else {
+				this.body = result;
+			}
+		}catch(e){
+						this.body = e.message;
+			this.status = 500;
+
+		}
+}`
+
+###
+# Updates a transaction record specified by transactionId
+###
+exports.updateTransaction = `function *updateTransaction(transactionId){
+	var transactionId = unescape(transactionId);
+	var transaction = this.request.body
+
+	var updateTransaction = Q.denodeify(router.updateTransaction);
+
+	try{
+			yield updateTransaction(transactionId);
+			this.body = "Transaction with ID:"+transactionId+" successfully updated.";
+
+		}catch(e){
+			this.body = e.message;
+			this.status = 500;
+		}
+}`
+
+
+###
+#Removes a transaction
+###
+exports.removeTransaction = `function *removeTransaction(transactionId) {
+
+	// Get the values to use
+	var transactionId = this.request.transactionId;
+
+	// Create a reusable wrapper to convert a function that use Node.js callback pattern
+	var removeTransaction = Q.denodeify(router.removeTransaction);
+
+	try {
+		yield removeTransaction(transactionId);
+
+		this.body = 'Transaction successfully deleted';
+	}
+	catch (e) {
+		this.body = e.message;
+		this.status = 500;
+	}
 }`

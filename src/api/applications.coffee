@@ -1,43 +1,112 @@
-router = require '../router'
+application = require '../applications'
 Q = require 'q'
 
+
 ###
-# Retrieves a list of applications registered with the HIM
+Adds an application 
 ###
-exports.getApplications = `function *getApplications() {
 
-	// Get the request query-parameters
-	var role = this.request.query.role;
+exports.addApplication = `function *addApplication(){
+	var application = this.request.body
 
-	// TODO! Use 'role': (The role an application must have to be retrieved)
-	console.log("TODO! [api.applications.getApplications] Implement '" + role + "': (The role an application must have to be retrieved)");
-	
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	//var getApplications = Q.denodeify(router.getApplications);
+	var addApplication = Q.denodeify(application.addApplication);
 
-	// Call the function that emits a promise and Koa will wait for the function to complete
-	//this.body = yield getApplications(role);
+	try  {
+			var result = yield addApplication(application);
+			if (result == null){
+				this.body = "Application successfully added";
+				this.status = 201;
+			}
+		}catch(e){
+			// Error! So inform the user
+			this.body = e.message;
+			this.status = 400;
 
-	// Return the result
-	this.body = 'TODO!!! Return a JSON list of Applications';
-
+		}
 }`
 
 ###
-# Retrieves the details for a specific application
+# Retrieves the details of a specific application
 ###
-exports.getApplication = `function *getApplication(applicationId) {
+exports.getApplication = `function *findApplicationById(applicationId) {
+	var applicationId = unescape(applicationId);
+	var findApplicationById = Q.denodeify(application.findApplicationById);
 
-	// TODO! Use 'role': (Retrieves the details for a specific application)
-	console.log("TODO! [api.applications.getApplication] Implement '" + applicationId + "': (Retrieves the details for a specific application)");
-	
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	//var getApplication = Q.denodeify(router.getApplication);
+	try{
+			var result = yield findApplicationById(applicationId);
+			if(result === null){
+				this.body = "Application with id '"+applicationId+"' could not be found.";
+				this.status = 404;
+			}else{
+				this.body = result;
+			}
+	}catch(e){
+			this.body = e.message;
+			this.status = 500;
 
-	// Call the function that emits a promise and Koa will wait for the function to complete
-	//this.body = yield getApplication(applicationId);
+	}
+}`
 
-	// Return the result
-	this.body = 'TODO!!! Return a JSON string of Application';
+
+exports.findApplicationByDomain = `function *findApplicationByDomain(domain){
+
+	var applicationId = unescape(domain);
+
+	var findApplicationByDomain = Q.denodeify(router.findApplicationByDomain);
+
+	try{
+		var result = yield findApplicationByDomain(domain);
+		if(result === null){
+			this.body = "Could not find application with domain '"+domain+"'";
+			this.status = 404;
+		}else{
+			this.body = result;
+		}
+	}catch(e){
+		this.body = e.message;
+		this.status = 500;
+	}
+}`
+
+exports.updateApplication = `function *updateApplication(applicationId) {
+	var applicationId = unescape(applicationId);
+	var application = this.request.body;
+
+	var updateApplication = Q.denodeify(router.updateApplication);
+
+	try{
+		yield updateApplication(application);
+		this.body = "Successfully updated application."
+	}catch(e){
+			this.body = e.message;
+			this.status = 500;		
+	}
+}`
+
+exports.removeApplication = `function *removeApplication(applicationId){
+	var applicationId = unescape (applicationId);
+
+	var removeApplication = Q.denodeify(router.removeApplication);
+
+	try{
+		yield removeApplication(applicationId);
+		this.body = "Successfully removed application with ID '"+applicationId+"'";
+	}catch(e){
+			this.body = e.message;
+			this.status = 500;		
+	}
+
+}`
+
+exports.getApplications = `function *getApplications(){
+
+	var getApplications = Q.denodeify(router.getApplications);
+
+	try{
+			this.body = yield getApplications;
+		}catch (e){
+			this.message = e.message;
+			this.status = 500;
+		}
 
 }`
