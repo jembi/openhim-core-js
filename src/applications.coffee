@@ -3,10 +3,12 @@ mongoose = require "mongoose"
 Schema = mongoose.Schema
 config = require "./config"
 
+mongoose.connection.on "open", (err) ->
+mongoose.connection.on "error", (err) ->
 mongoose.connect config.mongo.url
 
 ApplicationSchema = new Schema
-    "applicationId": {type: String, required: true}
+    "applicationID": {type: String, required: true}
     "domain": {type: String, required: true}
     "name": {type: String, required: true}
     "roles": [ {type: String, required: true }]
@@ -27,19 +29,9 @@ exports.addApplication = (insertValues, done) ->
 			else
 				return done null, saveResult    
 
-#find all applications
-exports.findAll = (done) ->
-	Application.find (err, applications) ->     
-			if err
-				console.log "Unable to find applications: #{err}"
-				return done err
-			else
-				console.log "Found Application #{applications}"  
-				return done null, applications  
-
 #find an application by applicationID
 exports.findApplicationById = (id, done) ->
-	Application.findOne {"applicationId":id},(err, application) ->     
+	Application.findOne {"applicationID":id},(err, application) ->     
 			if err
 				return done err
 			else
@@ -55,7 +47,7 @@ exports.findApplicationByDomain = (domain, done) ->
 
 #update the specified application
 exports.updateApplication = (id, updates, done) ->	
-	Application.findOneAndUpdate {"applicationId":id}, updates,(err) ->     
+	Application.findOneAndUpdate {"applicationID":id}, updates,(err) ->     
 			if err
 				return done err
 			else
@@ -63,7 +55,7 @@ exports.updateApplication = (id, updates, done) ->
 
 #remove the specified application 
 exports.removeApplication = (id, done) ->	
-	Application.remove {"applicationId":id},(err) ->     
+	Application.remove {"applicationID":id},(err) ->     
 			if err
 				return done err
 			else
