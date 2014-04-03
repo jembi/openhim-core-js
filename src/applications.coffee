@@ -21,7 +21,7 @@ Application = mongoose.model 'Application', ApplicationSchema
 
 exports.addApplication = (insertValues, done) ->
 	newApplication  = new Application insertValues
-	newApplication.save (err, saveResult) ->     
+	newApplication.save (err, saveResult) ->  
 			if err
 				return done err
 			else

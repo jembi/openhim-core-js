@@ -14,11 +14,22 @@ exports.setupApp = (done) ->
 	app = koa()
 	app.use bodyParser()
 
+	
 	# Define the api routes
 	app.use route.get '/applications', applications.getApplications
-	app.use route.get '/applications/:applicationId', applications.getApplication
+	app.use route.get '/applications/:applicationId', applications.findApplicationById
+	app.use route.post '/applications', applications.addApplication
+	app.use route.get '/applications/domain/:domain', applications.findApplicationByDomain
+	app.use route.put '/applications/:applicationId', applications.updateApplication
+	app.use route.delete '/applications/:applicationId', applications.removeApplication
 
 	app.use route.get '/transactions', transactions.getTransactions
+	app.use route.post '/transactions', transactions.addTransaction
+	app.use route.get '/transactions/:transactionId', transactions.getTransactionById	 
+	app.use route.get '/transactions/apps/:applicationId', transactions.findTransactionByApplicationId
+
+	app.use route.put '/transactions/:transactionId', transactions.updateTransaction
+	app.use route.delete '/transactions/:transactionId', transactions.removeTransaction
 
 	app.use route.get '/channels', channels.getChannels
 	app.use route.post '/channels', channels.addChannel
@@ -28,5 +39,7 @@ exports.setupApp = (done) ->
 	
 	app.use route.get '/monitor', monitor.getMonitor
 
+
 	# Return the result
 	done(app)
+

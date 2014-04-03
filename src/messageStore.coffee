@@ -37,7 +37,7 @@ exports.storeTransaction = (ctx, done) ->
 		if done
 			if err
 				return done err
-			done()
+			done null,doc
 
 
 exports.Request = (path,headers,requestParams,body,method) ->

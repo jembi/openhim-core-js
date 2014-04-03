@@ -7,16 +7,15 @@ Adds an application
 ###
 
 exports.addApplication = `function *addApplication(){
-	var application = this.request.body
-
+	var applicationData = this.request.body
 	var addApplication = Q.denodeify(application.addApplication);
 
 	try  {
-			var result = yield addApplication(application);
-			if (result == null){
-				this.body = "Application successfully added";
-				this.status = 201;
-			}
+			var result = yield addApplication(applicationData);
+			
+			this.body = result;
+			this.status = 201;
+			
 		}catch(e){
 			// Error! So inform the user
 			this.body = e.message;
@@ -50,9 +49,8 @@ exports.getApplication = `function *findApplicationById(applicationId) {
 
 exports.findApplicationByDomain = `function *findApplicationByDomain(domain){
 
-	var applicationId = unescape(domain);
-
-	var findApplicationByDomain = Q.denodeify(router.findApplicationByDomain);
+	var domain = unescape(domain);
+	var findApplicationByDomain = Q.denodeify(application.findApplicationByDomain);
 
 	try{
 		var result = yield findApplicationByDomain(domain);
@@ -70,12 +68,12 @@ exports.findApplicationByDomain = `function *findApplicationByDomain(domain){
 
 exports.updateApplication = `function *updateApplication(applicationId) {
 	var applicationId = unescape(applicationId);
-	var application = this.request.body;
+	var applicationData = this.request.body;
 
-	var updateApplication = Q.denodeify(router.updateApplication);
+	var updateApplication = Q.denodeify(application.updateApplication);
 
 	try{
-		yield updateApplication(application);
+		yield updateApplication(applicationId, applicationData);
 		this.body = "Successfully updated application."
 	}catch(e){
 			this.body = e.message;
@@ -86,7 +84,7 @@ exports.updateApplication = `function *updateApplication(applicationId) {
 exports.removeApplication = `function *removeApplication(applicationId){
 	var applicationId = unescape (applicationId);
 
-	var removeApplication = Q.denodeify(router.removeApplication);
+	var removeApplication = Q.denodeify(application.removeApplication);
 
 	try{
 		yield removeApplication(applicationId);
@@ -100,7 +98,7 @@ exports.removeApplication = `function *removeApplication(applicationId){
 
 exports.getApplications = `function *getApplications(){
 
-	var getApplications = Q.denodeify(router.getApplications);
+	var getApplications = Q.denodeify(application.getApplications);
 
 	try{
 			this.body = yield getApplications;
