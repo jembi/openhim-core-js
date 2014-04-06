@@ -232,7 +232,6 @@ describe "Integration Tests", ->
 						.expect(201)
 						.end (err, res) ->
 							transactionId = JSON.parse(res.text)._id
-							console.log "transactionToBeRemove="+transactionId
 							if err
 								done err
 							else
@@ -274,7 +273,6 @@ describe "Integration Tests", ->
 		describe ".getTransactionById (transactionId)", ->
 
 			it "should call getTransactionById", (done) ->
-				console.log "transactionID=#{transactionId}"
 				server.start null, null, 8080,  ->
 					request("http://localhost:8080")
 						.get("/transactions/#{transactionId}")
@@ -361,7 +359,6 @@ describe "Integration Tests", ->
 						.get("/applications/domain/#{domain}")
 						.expect(200)
 						.end (err, res) ->
-							console.log "err="+err
 							if err
 								done err
 							else
