@@ -3,12 +3,10 @@ mongoose = require "mongoose"
 Schema = mongoose.Schema
 config = require "./config"
 
+
 mongoose.connection.on "open", (err) ->
 mongoose.connection.on "error", (err) ->
 mongoose.connect config.mongo.url
-
-
-#schema definition - 
     
 #Request Schema
 RequestSchema = new Schema
@@ -54,7 +52,6 @@ TransactionSchema = new Schema
 #compile schema into Model    
 Transaction = mongoose.model 'Transactions', TransactionSchema
 
-
 #save transaction to db
 exports.addTransaction = (tx, done) ->
     newTransaction  = new Transaction tx
@@ -66,7 +63,7 @@ exports.addTransaction = (tx, done) ->
 
 # find all Transactions
 exports.getTransactions = (done) ->
-    Transaction.find (err, transactions) ->     
+    Transaction.find (err, transactions) ->    
             if err
                 return done err
             else
@@ -89,8 +86,8 @@ exports.findTransactionByApplicationId = (appId, done) ->
                 return done null, transactions   
 
 #update the specified transaction
-exports.updateTransaction = (id, updates, done) ->   
-    Transaction.findOneAndUpdate {"_id":id},updates,(err) ->     
+exports.updateTransaction = (id, updates, done) ->
+    Transaction.findOneAndUpdate {"_id":id},updates,(err) -> 
             if err
                 return done err
             else
@@ -102,4 +99,25 @@ exports.removeTransaction = (id, done) ->
             if err
                 return done err
             else
-                return done null  
+                return done null
+exports.Request = (path, headers, requestParams, body, method, done) ->
+    newRequest = new Object()
+    newRequest.path = path
+    newRequest.headers = headers   
+    newRequest.requestParams = requestParams
+    newRequest.body = body
+    newRequest.method = method
+    newRequest.timestamp = new Date()
+    done null, newRequest
+
+exports.Transaction = (status,applicationID,request,response,routes,orchestrations,properties, done) ->
+    newTransaction = new Object()
+    newTransaction.status = status
+    newTransaction.applicationID = applicationID
+    newTransaction.request = [request]
+    newTransaction.response = response
+    newTransaction.routes = routes
+    newTransaction.orchestrations = orchestrations
+    newTransaction.properties = properties
+    done null, newTransaction
+

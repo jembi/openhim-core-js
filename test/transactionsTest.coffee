@@ -11,6 +11,7 @@ transactionId = null
 applicationID = "Musha_OpenMRS_testNewDoc"
 transactionIdToRemove = null
 
+
 beforeEach (done)->
 	db = mongoose.createConnection config.mongo.url
 	collection = db.collection "transactions"
@@ -118,7 +119,7 @@ describe "Transactions", ->
 				properties: 
 							[ 
 								{ property: "prop1", value: "prop1-value1" }
-								{ property:"prop2", value: "prop-value1" }
+								{ property: "prop2", value: "prop-value1" }
 							]
 			
 			req = new Object() 
@@ -170,10 +171,12 @@ describe "Transactions", ->
 		it "should return all transactions", (done) ->
 			transaction.addTransaction testNewDoc, (error, newTrans) ->
 				transaction.addTransaction testNewDoc, (error, newTrans) ->
-					transaction.getTransactions (error, transactions) ->
-						(transactions != null).should.be.true
-						transactions.should.have.length 2
-						done()
+					transaction.addTransaction testNewDoc, (error, newTrans) ->
+						transaction.addTransaction testNewDoc, (error, newTrans) ->
+							transaction.getTransactions (error, transactions) ->
+								(transactions != null).should.be.true
+								transactions.should.have.length 4
+								done()
 
 	describe ".findTransactionByApplicationId (applicationID)", ->
 		docTest=
