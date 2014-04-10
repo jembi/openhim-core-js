@@ -8,18 +8,18 @@ transaction = require "../lib/transactions"
 
 collection = null
 transactionId = null
+db = null
 
-before (done) ->
+beforeEach (done) ->
 	MongoClient.connect config.mongo.url, {native_parser:true}, (error,db) ->
 		if error
 			return done error
 		root = exports ? that 
 		db.collection "transactions", (err, coll) ->
+			coll.remove (err, doc) ->
 			collection = coll
-			collection.remove (err, doc) ->
 			done()
-
-after (done)->
+afterEach (done)->
 	collection.remove (err, doc) ->
 		done()
 
@@ -122,7 +122,6 @@ describe "MessageStore", ->
 					trans.request[0].headers[1].value.should.equal "application/json"	
 					trans.properties[0].property.should.equal "prop1"
 					trans.properties[0].value.should.equal "prop1-value1"
-					transactionId = trans._id			
 					done()
 
 	describe ".storeResponse", ->
@@ -139,14 +138,16 @@ describe "MessageStore", ->
 								timestamp: new Date()
 							]
 				status: 	"Completed"
-			messageStore.storeResponse transactionId, updates, (error, result) ->
-				should.not.exist(error)				
-				transaction.findTransactionById transactionId, (error, trans) ->
-					should.not.exist(error)
-					(trans != null).should.true
-					trans.response[0].status.should.equal 404
-					trans.response[0].headers[0].header.should.equal "Corrupt-document"
-					trans.response[0].headers[0].value.should.equal "None"
-					trans.response[0].body.should.equal "<HTTP response body>"
-					trans.status.should.equal "Completed"										
-					done()
+			messageStore.storeTransaction ctx, (error, result) ->
+				transactionId = result._id			
+				messageStore.storeResponse transactionId, updates, (error, result) ->
+					should.not.exist(error)		
+					transaction.findTransactionById transactionId, (error, trans) ->
+						should.not.exist(error)
+						(trans != null).should.true
+						trans.response[0].status.should.equal 404
+						trans.response[0].headers[0].header.should.equal "Corrupt-document"
+						trans.response[0].headers[0].value.should.equal "None"
+						trans.response[0].body.should.equal "<HTTP response body>"
+						trans.status.should.equal "Completed"										
+						done()
