@@ -3,7 +3,9 @@ sinon = require "sinon"
 https = require "https"
 fs = require "fs"
 request = require "supertest"
+mongoose = require "mongoose"
 config = require "../lib/config"
+config.authentication = config.get('authentication')
 router = require "../lib/router"
 applications = require "../lib/applications"
 testUtils = require "./testUtils"
@@ -171,4 +173,59 @@ describe "Integration Tests", ->
 									done err
 								else
 									done()
-							
+	
+	describe "REST API", ->
+
+		before (done) ->
+
+			#Setup some test data
+			channel1 =
+				name: "Some Registry Channel"
+				urlPattern: "test/sample/.+"
+				allow: "*"
+				routes: [
+					name: "Some Registry"
+					path: "some/other/path"
+					host: "localhost"
+					port: 8080
+				]
+				properties: [
+					{ prop1: "value1" }
+					{ prop2: "value2" }
+				]
+
+			channel2 =
+				name: "Some Registry Channel"
+				urlPattern: "test/sample2/.+/test2"
+				allow: [
+					"Alice"
+					"Bob"
+					"PoC"
+				]
+				routes: [
+					{
+						name: "Some Registry"
+						host: "localhost"
+						port: 8080
+						primary: true
+					}
+					{
+						name: "Logger"
+						host: "log-host"
+						port: 4789
+					}
+				]
+				properties: [
+					{ prop1: "value1" }
+					{ prop2: "value2" }
+				]
+
+		beforeEach (done) ->
+
+			# mongoose.connection.collections['channels'].drop
+
+		describe "GET /channels", ->
+
+			
+
+			describe ".addChannel", ->

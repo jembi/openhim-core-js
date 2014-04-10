@@ -3,9 +3,10 @@ bodyParser = require 'koa-body-parser'
 router = require './router'
 messageStore = require './messageStore'
 basicAuthentication = require './basicAuthentication'
-tlsAuthentication = require "./tlsAuthentication"
+tlsAuthentication = require './tlsAuthentication'
 authorisation = require './authorisation'
-config = require "./config"
+config = require './config'
+config.authentication = config.get('authentication')
 
 exports.setupApp = (done) ->
 	app = koa()

@@ -4,8 +4,13 @@ koaMiddleware = require "../lib/koaMiddleware"
 koaApi = require "../lib/koaApi"
 tlsAuthentication = require "../lib/tlsAuthentication"
 config = require "./config"
+config.authentication = config.get('authentication')
+config.router = config.get('router')
+config.api = config.get('api')
+config.logger = config.get('logger')
 Q = require "q"
 logger = require "winston"
+logger.level = config.logger.level
 
 httpServer = null
 httpsServer = null
