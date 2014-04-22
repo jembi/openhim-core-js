@@ -171,4 +171,19 @@ describe "Integration Tests", ->
 									done err
 								else
 									done()
+
+		describe 'API tests', ->
+
+			it 'should set the cross-origin resource sharing headers', (done) ->
+				server.start 5001, null, 8080, ->
+					request("http://localhost:8080")
+						.get("/channels")
+						.expect(200)
+						.expect('Access-Control-Allow-Origin', '*')
+						.expect('Access-Control-Allow-Methods', 'GET,HEAD,PUT,POST,DELETE')
+						.end (err, res) ->
+							if err
+								done err
+							else
+								done()
 							
