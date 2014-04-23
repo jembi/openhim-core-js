@@ -46,7 +46,6 @@ exports.addTransaction = `function *addTransaction() {
 ###
 exports.getTransactionById = `function *getTransactionById(transactionId) {
 	// Get the values to use
-	//var transactionId = this.request.transactionId
 	var transactionId = unescape(transactionId);
 
 	// Create a reusable wrapper to convert a function that use Node.js callback pattern
@@ -125,8 +124,8 @@ exports.removeTransaction = `function *removeTransaction(transactionId) {
 
 	try {
 		yield removeTransaction(transactionId);
-
 		this.body = 'Transaction successfully deleted';
+		this.status = 200;
 	}
 	catch (e) {
 		this.body = e.message;

@@ -66,3 +66,9 @@ exports.getApplications = (done) ->
 				return done err, null
 			else
 				return done null, applications
+exports.numApps = (done) ->
+	Application.count {}, (err, count) ->
+		if err
+			return done err
+		else
+			return done null, count

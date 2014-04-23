@@ -57,7 +57,6 @@ Transaction = mongoose.model 'Transactions', TransactionSchema
 
 #save transaction to db
 exports.addTransaction = (tx, done) ->
-   #console.log("JSON transaction: "+JSON.stringify(tx))
     newTransaction  = new Transaction tx
     newTransaction.save (err, saveResult) -> 
         if err
@@ -104,3 +103,11 @@ exports.removeTransaction = (id, done) ->
                 return done err
             else
                 return done null  
+#count the number of transactions in db
+exports.numTrans = (done) ->
+    Transaction.count {}, (err, count) ->
+        if err
+            return done err
+        else
+            return done null, count
+
