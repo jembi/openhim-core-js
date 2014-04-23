@@ -8,8 +8,9 @@ Vagrant::Config.run do |config|
 	config.vm.network :bridged
 	config.vm.forward_port 5000, 5000
 	config.vm.forward_port 5001, 5001
+	config.vm.forward_port 8080, 8080
 
-	config.vm.share_folder "openhim-core-js", "/openhim-core-js", "../../"
+	config.vm.share_folder "openhim-core-js", "/openhim-core-js", "../../../"
 
 	config.vm.provision :shell do |shell|
 		shell.inline = "mkdir -p /etc/puppet/modules;
@@ -18,7 +19,7 @@ Vagrant::Config.run do |config|
 	end
 
 	config.vm.provision :puppet do |puppet|
-		puppet.manifests_path = "../manifests"
+		puppet.manifests_path = "./"
 		puppet.manifest_file  = "openhim-core-js.pp"
 	end
 end

@@ -1,0 +1,20 @@
+# Jembi customized script; original by kvz - http://kevin.vanzonneveld.net
+
+description "OpenHIM-core Node.js Server"
+author      "(original by) kvz - http://kevin.vanzonneveld.net"
+
+# used to be: start on startup
+# until we found some mounts weren't ready yet while booting:
+start on started mountall
+stop on shutdown
+
+# Automatically Respawn:
+respawn
+respawn limit 99 5
+
+script
+    #export NODE_ENV="<%= @node_env %>"
+
+    cd <%= @source_dir %>
+    exec <%= @node_exec %> --harmony <%= @source_dir %>/lib/server.js >> /openhim-core-js/openhim.log  2>&1
+end script
