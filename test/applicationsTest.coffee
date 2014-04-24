@@ -69,11 +69,11 @@ describe "Applications", ->
 
 	describe ".getApplications()", ->
 		it  "should return all the applications in the collection", (done) -> 
-			appcollection.addApplication chickenAppDoc, (error, doc) ->
-				 appcollection.addApplication chickenAppDoc, (error, doc) ->
+			appcollection.addApplication chickenAppDoc, (error, doc1) ->
+				appcollection.addApplication testAppDoc, (error, doc2) ->
 					appcollection.getApplications (error, apps) ->
 						(apps != null).should.be.true
-						apps.should.have.length(1)
+						apps.should.have.length(2)
 						apps[0].applicationID.should.equal "chicken_openmrs"
 						apps[0].domain.should.equal "chicken.org"
 						apps[0].name.should.equal "big meat chicken"

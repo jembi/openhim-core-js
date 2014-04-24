@@ -3,9 +3,6 @@ mongoose = require "mongoose"
 Schema = mongoose.Schema
 config = require "./config"
 
-
-mongoose.connection.on "open", (err) ->
-mongoose.connection.on "error", (err) ->
 mongoose.connect config.mongo.url
     
 #Request Schema
