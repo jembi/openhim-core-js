@@ -16,5 +16,5 @@ script
     #export NODE_ENV="<%= @node_env %>"
 
     cd <%= @source_dir %>
-    exec <%= @node_exec %> --harmony <%= @source_dir %>/lib/server.js >> /openhim-core-js/openhim.log  2>&1
+    exec <%= @node_exec %> --harmony <%= @source_dir %>/lib/server.js >> /var/log/openhim.log  2>&1
 end script

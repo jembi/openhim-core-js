@@ -9,7 +9,9 @@
 $home="/home/vagrant"
 $source_dir="/openhim-core-js"
 $node_env="production"
-$node_exec="/usr/local/node/node-default/bin/node"
+$node_bin="/usr/local/node/node-v0.11.11/bin"
+$node_exec="$node_bin/node"
+$npm_exec="$node_bin/npm"
 
 # defaults for Exec
 Exec {
@@ -30,18 +32,22 @@ class { "mongodb":
 }
 
 class { "nodejs":
-	version => "latest",
+	version => "stable",
+}
+
+nodejs::install { "node-v0.11.11":
+	version => "v0.11.11",
 }
 
 exec { "npm-install":
 	cwd => "/openhim-core-js",
-	command => "npm install",
-	require => Class["nodejs"],
+	command => "$npm_exec install",
+	require => Nodejs::Install["node-v0.11.11"],
 }
 
 exec { "coffeescript":
 	command => "npm install -g coffee-script",
-	require => Class["nodejs"],
+	require => Nodejs::Install["node-v0.11.11"],
 }
 
 exec { "build":
@@ -62,7 +68,8 @@ service { "openhim-core-js":
 	require => [ Exec["npm-install"], Exec["build"], File["/etc/init/openhim-core-js.conf"] ],
 }
 
-file { "${home}/deploy.sh":
+file { "${home}/deploy-openhim-core.sh":
 	ensure  => file,
+	mode    => 770,
 	content => template("$source_dir/infrastructure/deployment/update/deploy.sh"),
 }
