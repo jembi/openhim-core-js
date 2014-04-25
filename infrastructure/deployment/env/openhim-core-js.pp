@@ -6,8 +6,8 @@
 #
 
 # Set home and change source_dir to the openhim-core-js source location
-$home="/home/vagrant"
-$source_dir="/openhim-core-js"
+$home="/root"
+$source_dir="$home/openhim-core-js"
 $node_env="production"
 $node_bin="/usr/local/node/node-v0.11.11/bin"
 $node_exec="$node_bin/node"
@@ -40,7 +40,7 @@ nodejs::install { "node-v0.11.11":
 }
 
 exec { "npm-install":
-	cwd => "/openhim-core-js",
+	cwd => "$source_dir",
 	command => "$npm_exec install",
 	require => Nodejs::Install["node-v0.11.11"],
 }
