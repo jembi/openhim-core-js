@@ -1,5 +1,6 @@
 koa = require 'koa'
 route = require 'koa-route'
+cors = require 'koa-cors'
 router = require './router'
 bodyParser = require 'koa-body-parser'
 applications = require './api/applications'
@@ -12,6 +13,7 @@ exports.setupApp = (done) ->
 	
 	# Create an instance of the koa-server and add a body-parser
 	app = koa()
+	app.use cors()
 	app.use bodyParser()
 
 	# Define the api routes
