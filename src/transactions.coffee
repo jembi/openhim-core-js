@@ -54,7 +54,6 @@ TransactionSchema = new Schema
 #compile schema into Model    
 Transaction = mongoose.model 'Transactions', TransactionSchema
 
-
 #save transaction to db
 exports.addTransaction = (tx, done) ->
     newTransaction  = new Transaction tx
@@ -102,7 +101,8 @@ exports.removeTransaction = (id, done) ->
             if err
                 return done err
             else
-                return done null  
+                return done null
+
 #count the number of transactions in db
 exports.numTrans = (done) ->
     Transaction.count {}, (err, count) ->
@@ -111,3 +111,23 @@ exports.numTrans = (done) ->
         else
             return done null, count
 
+exports.Request = (path, headers, requestParams, body, method, done) ->
+    newRequest = new Object()
+    newRequest.path = path
+    newRequest.headers = headers   
+    newRequest.requestParams = requestParams
+    newRequest.body = body
+    newRequest.method = method
+    newRequest.timestamp = new Date()
+    done null, newRequest
+
+exports.Transaction = (status,applicationID,request,response,routes,orchestrations,properties, done) ->
+    newTransaction = new Object()
+    newTransaction.status = status
+    newTransaction.applicationID = applicationID
+    newTransaction.request = [request]
+    newTransaction.response = response
+    newTransaction.routes = routes
+    newTransaction.orchestrations = orchestrations
+    newTransaction.properties = properties
+    done null, newTransaction

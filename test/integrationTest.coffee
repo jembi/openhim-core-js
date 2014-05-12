@@ -172,6 +172,26 @@ describe "Integration Tests", ->
 									done err
 								else
 									done()
+
+	describe 'General API tests', ->
+
+		it 'should set the cross-origin resource sharing headers', (done) ->
+			server.start 5001, null, 8080, ->
+				request("http://localhost:8080")
+					.get("/channels")
+					.expect(200)
+					.expect('Access-Control-Allow-Origin', '*')
+					.expect('Access-Control-Allow-Methods', 'GET,HEAD,PUT,POST,DELETE')
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		afterEach (done) ->
+				server.stop ->
+					done()
+
 	describe "Transactions REST Api testing", ->
 		transactionId = null
 		requ = new Object()
@@ -259,6 +279,7 @@ describe "Integration Tests", ->
 			afterEach (done) ->
 				server.stop ->
 					done()
+
 		describe ".updateTransaction", ->
 			
 			it  "should call /updateTransaction ", (done) ->
@@ -312,6 +333,7 @@ describe "Integration Tests", ->
 			afterEach (done) ->
 				server.stop ->
 					done()
+
 		describe ".getTransactions", ->
 
 			it "should call getTransactions ", (done) ->
@@ -337,6 +359,7 @@ describe "Integration Tests", ->
 			afterEach (done) ->
 				server.stop ->
 					done()
+
 		describe ".getTransactionById (transactionId)", ->
 
 			it "should call getTransactionById", (done) ->
@@ -388,6 +411,7 @@ describe "Integration Tests", ->
 			afterEach (done) ->
 				server.stop ->
 					done()
+
 		describe ".removeTransaction (transactionId)", ->
 			it "should call removeTransaction", (done) ->
 				transactionData.applicationID = "transaction_to_remove"
@@ -409,6 +433,7 @@ describe "Integration Tests", ->
 			afterEach (done) ->
 				server.stop ->
 					done()
+
 	describe "Applications REST Api Testing", ->
 		applicationID = "YUIAIIIICIIAIA"
 		domain = "him.jembi.org"
@@ -524,6 +549,7 @@ describe "Integration Tests", ->
 			afterEach (done) ->
 				server.stop ->
 					done()
+
 		describe  ".updateApplication", ->
 			it 	"should update the specified application ", (done) ->
 				applicationID = "Botswana_OpenHIE_Instance"
@@ -598,8 +624,3 @@ describe "Integration Tests", ->
 			afterEach (done) ->
 				server.stop ->
 					done()
-
-
-
-
-			

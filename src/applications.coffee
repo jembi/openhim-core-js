@@ -3,6 +3,8 @@ mongoose = require "mongoose"
 Schema = mongoose.Schema
 config = require "./config"
 
+mongoose.connection.on "open", (err) ->
+mongoose.connection.on "error", (err) ->
 mongoose.connect config.mongo.url
 
 ApplicationSchema = new Schema
@@ -14,7 +16,7 @@ ApplicationSchema = new Schema
     "cert": {type: String, required: false}
     
 #compile the Application Schema into a Model
-Application = mongoose.model 'Application', ApplicationSchema
+Application = mongoose.model 'Applications', ApplicationSchema
 
 # save() updates existing application-object or inserts new ones as needed
 # testApplicationDoc ={applicationID: "Ishmael_OpenMRS",domain: "him.jembi.org",name: "OpenMRS Ishmael instance",roles: [ "OpenMRS_PoC", "PoC" ],passwordHash: "",cert: ""}
@@ -66,6 +68,7 @@ exports.getApplications = (done) ->
 				return done err, null
 			else
 				return done null, applications
+
 exports.numApps = (done) ->
 	Application.count {}, (err, count) ->
 		if err
