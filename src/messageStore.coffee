@@ -1,27 +1,58 @@
 MongoClient = require('mongodb').MongoClient;
 config = require "./config"
-transaction = require "../lib/transactions"
+transactions = require "../lib/transactions"
+logger = require "winston"
 
 transactionStatus = 
-					PROCESSING: 'Processing'
-					COMPLETED: 'Completed'
-					FAILED: 'Failed'
+	PROCESSING: 'Processing'
+	COMPLETED: 'Completed'
+	FAILED: 'Failed'
 
 exports.storeTransaction = (ctx, done) -> 
-	transaction.Request ctx.path, ctx.headers, ctx.requestParams, ctx.body, ctx.method, (err, request) ->
-		transaction.Transaction transactionStatus.PROCESSING, ctx.applicationID, request, ctx.response, ctx.routes, ctx.orchestrations, ctx.properties, (err, tx) ->
-			transaction.addTransaction tx, (err, saveResult) ->			
-				if err
-					done err
-				else					
-					done null, saveResult
+	logger.info 'Storing request metadata for inbound transaction'
 
-exports.storeResponse = (transactidId, updates, done) ->
-	transaction.updateTransaction transactidId, updates, ->		
-		done()
+	tx = new transactions.Transaction
+		status: transactionStatus.PROCESSING
+		applicationID: ctx.authenticated.applicationID
+		request: 
+			path: ctx.path
+			headers: ctx.header
+			requestParams: ctx.requestParams
+			body: ctx.body
+			method: ctx.method
+			timestamp: new Date()
+
+	tx.save (err, tx) ->         
+		if err
+			logger.error 'Could not save transaction metadata: ' + err
+			return done err
+		else
+			ctx.transactionId = tx._id
+			return done null, tx
+
+exports.storeResponse = (ctx, done) ->
+	logger.info 'Storing response for transaction: ' + ctx.transactionId
+
+	status = transactionStatus.FAILED
+	if 200 <= ctx.res.status <= 299
+		status = transactionStatus.COMPLETED
+
+	res =
+		status: ctx.res.status
+		headers: ctx.res.header
+		body: ctx.res.body
+
+	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status }, (err, tx) ->
+		if err
+			logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
+			return done err
+		if tx is undefined or tx is null
+			logger.error 'Could not find transaction: ' + ctx.transactionId
+			return done err
+		return done()
 
 exports.store =  `function *storeMiddleware(next) {
-		exports.storeTransaction(this);
+		exports.storeTransaction(this, function(){});
 		yield next
-		exports.storeResponse(this);
+		exports.storeResponse(this, function(){});
 	}`

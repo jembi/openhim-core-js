@@ -26,90 +26,65 @@ afterEach (done)->
 describe "MessageStore", ->
 	req = new Object()
 	req.path = "/api/test/request"
-	req.headers = 	[	
-							header: "headerName"
-							value: "headerValue"
-						,
-							header: "Content-Type"
-							value: "application/json"
-						,
-							header: "Content-Length"
-							value: "9313219921"
-						]	
-
-	req.requestParams = [
-							parameter: "parameterName" 
-							value: "parameterValue" 			
-						]
+	req.headers = 	
+		headerName: "headerValue"
+		"Content-Type": "application/json"						
+		"Content-Length": "9313219921"
+	req.querystring = "param1=value1&param2=value2"
 	req.body = "<HTTP body>"
 	req.method = "POST"
 	req.timestamp = new Date()
 
 	res = new Object()
 	res.status = "200"
-	res.headers= 	[
-						header:"header1"
-						value:"value2"
-					]
+	res.headers =
+		header: "value"
+		header2: "value2"
 	res.body = "<HTTP response>"
 	res.timestamp = new Date()
 
-	routes= [							
+	routes = [							
 				name: "jembi.org"
-				request: [req]
-				response: [res]
+				request: req
+				response: res
 			,
 				name: "green.brown"
-				request: [req]
-				response: [res]							
-					
+				request: req
+				response: res						
 			]
-	orchestrations= [
-						{
-							name: "validate provider"            
-							request: [req]
-							response: [res]
-						}
-
-						{
-							name: "validate provider"            
-							request: [req]
-							response: [res]
-						}
-
+			
+	orchestrations = [
+						name: "validate provider"            
+						request: req
+						response: res
+					,
+						name: "validate provider"            
+						request: req
+						response: res
 					]
-	properties=
-				[ 
-					{ property: "prop1", value: "prop1-value1" }
-					{ property:"prop2", value: "prop-value1" }
-				] 
+	properties = 
+		property: "prop1", value: "prop1-value1"
+		property:"prop2", value: "prop-value1"
+	 
 	ctx = new Object()
 	ctx.path = "/api/test/request"
-	ctx.headers = 	[	
-						{header: "headerName",value: "headerValue"}						
-						{header: "Content-Type",value: "application/json"}						
-						{header: "Content-Length",value: "9313219921"}
-					]	
+	ctx.header =
+		headerName: "headerValue"
+		"Content-Type": "application/json"						
+		"Content-Length": "9313219921"
 
-	ctx.requestParams = [
-							parameter: "parameterName" 
-							value: "parameterValue" 			
-						]
+	ctx.querystring = "param1=value1&param2=value2"
 	ctx.body = "<HTTP body>"
 	ctx.method = "POST"
 
 	ctx.status = "Processing"
-	ctx.applicationID = "Master_OpenMRS_Instance"
-	ctx.routes = routes
-	ctx.orchestrations = orchestrations
-	ctx.response = [res]
-	ctx.properties = properties
-
+	ctx.authenticated = new Object()
+	ctx.authenticated.applicationID = "Master_OpenMRS_Instance"
 
 	describe ".storeTransaction", ->
 
 		it "should be able to save the transaction in the db", (done) ->
-			messageStore.storeTransaction ctx, (error, result)->
+			messageStore.storeTransaction ctx, (error, result) ->
 				should.not.exist(error)
 				transaction.findTransactionById result._id, (error, trans) ->
 					should.not.exist(error)
@@ -117,37 +92,30 @@ describe "MessageStore", ->
 					trans.applicationID.should.equal "Master_OpenMRS_Instance"
 					trans.status.should.equal "Processing"
 					trans.status.should.not.equal "None"
-					trans.request[0].path.should.equal "/api/test/request"
-					trans.request[0].headers[1].header.should.equal "Content-Type"
-					trans.request[0].headers[1].value.should.equal "application/json"	
-					trans.properties[0].property.should.equal "prop1"
-					trans.properties[0].value.should.equal "prop1-value1"
+					trans.request.path.should.equal "/api/test/request"
+					trans.request.headers['Content-Type'].should.equal "application/json"
 					done()
 
 	describe ".storeResponse", ->
 		it "should update the transaction with the response", (done) ->
-			updates =
-				response: 	[
-
-								status: "404"
-								headers: 	[
-
-												{header:"Corrupt-document",value:"None"}			
-											]
-								body: 	"<HTTP response body>"
-								timestamp: new Date()
+			setRes = new Object()
+			setRes.status = "201"
+			setRes.header = [
+								testHeader: "value"
 							]
-				status: 	"Completed"
-			messageStore.storeTransaction ctx, (error, result) ->
-				transactionId = result._id			
-				messageStore.storeResponse transactionId, updates, (error, result) ->
-					should.not.exist(error)		
-					transaction.findTransactionById transactionId, (error, trans) ->
-						should.not.exist(error)
+			setRes.body = "<HTTP response body>"
+			
+			ctx.res = setRes
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)		
+					transaction.findTransactionById storedTrans._id, (err3, trans) ->
+						should.not.exist(err3)
 						(trans != null).should.true
-						trans.response[0].status.should.equal 404
-						trans.response[0].headers[0].header.should.equal "Corrupt-document"
-						trans.response[0].headers[0].value.should.equal "None"
-						trans.response[0].body.should.equal "<HTTP response body>"
+						trans.response.status.should.equal 201
+						trans.response.headers[0].testHeader.should.equal "value"
+						trans.response.body.should.equal "<HTTP response body>"
 						trans.status.should.equal "Completed"										
 						done()

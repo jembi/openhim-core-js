@@ -44,7 +44,6 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 
 			// lookup application by subject.CN (CN = domain) and set them as the authenticated user
 			this.authenticated = yield findApplicationByDomain(subject.CN);
-
 			yield next;
 		} else {
 			this.response.status = "unauthorized";
