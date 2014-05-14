@@ -235,9 +235,9 @@ describe "Integration Tests", ->
 				property: "prop1", value: "prop1-value1"
 				property:"prop2", value: "prop-value1"
 
-		describe ".addTransaction", ->
+		describe "Adding a transaction", ->
 
-			it  "should call /transactions/addTransaction and return status 201 - transaction created", (done) -> 
+			it  "should add a transaction and return status 201 - transaction created", (done) -> 
 				server.start null, null, 8080,  ->
 					request("http://localhost:8080")
 						.post("/transactions")
@@ -248,7 +248,9 @@ describe "Integration Tests", ->
 								done err
 							else
 								transactionId = res.body._id
-								transactions.findTransactionById transactionId, (error, newTransaction) ->
+								transactions.Transaction.findOne { applicationID: "OpenHIE_bla_bla_WRTWTTATSA" }, (error, newTransaction) ->
+									console.log 'TX ID = ' + transactionId
+									console.log 'Looked up TX = ' + newTransaction
 									should.not.exist (error)
 									(newTransaction != null).should.be.true
 									newTransaction.status.should.equal "Processing"
@@ -267,8 +269,9 @@ describe "Integration Tests", ->
 
 		describe ".updateTransaction", ->
 			
-			it  "should call /updateTransaction ", (done) ->
-				transactions.addTransaction transactionData, (err, result) ->
+			it "should call /updateTransaction ", (done) ->
+				tx = new transactions.Transaction transactionData
+				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
 					reqUp = new Object()
@@ -292,7 +295,7 @@ describe "Integration Tests", ->
 								if err
 									done err
 								else
-									transactions.findTransactionById transactionId, (error, updatedTrans) ->
+									transactions.Transaction.findOne { "_id": transactionId }, (error, updatedTrans) ->
 										should.not.exist(error)
 										(updatedTrans != null).should.be.true
 										updatedTrans.status.should.equal "Completed"
@@ -311,14 +314,18 @@ describe "Integration Tests", ->
 		describe ".getTransactions", ->
 
 			it "should call getTransactions ", (done) ->
-				transactions.numTrans (err, countBefore)->
-					transactions.addTransaction transactionData, (error, result) ->
+				transactions.Transaction.count {}, (err, countBefore) ->
+					tx1 = new transactions.Transaction transactionData
+					tx1.save (error, result) ->
 						should.not.exist (error)
-						transactions.addTransaction transactionData, (error, result) ->
+						tx2 = new transactions.Transaction transactionData
+						tx2.save (error, result) ->
 							should.not.exist(error)
-							transactions.addTransaction transactionData, (error, result) ->
+							tx3 = new transactions.Transaction transactionData
+							tx3.save (error, result) ->
 								should.not.exist(error)
-								transactions.addTransaction transactionData, (error, result) ->
+								tx4 = new transactions.Transaction transactionData
+								tx4.save (error, result) ->
 									should.not.exist (error)
 									server.start null, null, 8080,  ->
 										request("http://localhost:8080")
@@ -337,7 +344,8 @@ describe "Integration Tests", ->
 		describe ".getTransactionById (transactionId)", ->
 
 			it "should call getTransactionById", (done) ->
-				transactions.addTransaction transactionData, (err, result)->
+				tx = new transactions.Transaction transactionData
+				tx.save (err, result)->
 					should.not.exist(err)
 					transactionId = result._id
 					server.start null, null, 8080,  ->
@@ -367,7 +375,8 @@ describe "Integration Tests", ->
 			it "should call findTransactionByApplicationId", (done) ->
 				appId = "Unique_never_existent_application_id"
 				transactionData.applicationID = appId
-				transactions.addTransaction transactionData, (err, result)->
+				tx = new transactions.Transaction transactionData
+				tx.save (err, result) ->
 					should.not.exist(err)
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
@@ -386,7 +395,8 @@ describe "Integration Tests", ->
 		describe ".removeTransaction (transactionId)", ->
 			it "should call removeTransaction", (done) ->
 				transactionData.applicationID = "transaction_to_remove"
-				transactions.addTransaction transactionData, (err, result)->
+				tx = new transactions.Transaction transactionData
+				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
 					server.start null, null, 8080,  ->
@@ -397,7 +407,7 @@ describe "Integration Tests", ->
 								if err
 									done err
 								else
-									transactions.findTransactionById transactionId, (err, transDoc) ->
+									transactions.Transaction.findOne { "_id": transactionId }, (err, transDoc) ->
 										should.not.exist(err)
 										(transDoc == null).should.be.true
 										done()

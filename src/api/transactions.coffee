@@ -1,19 +1,17 @@
-transaction = require '../transactions'
+transactions = require '../transactions'
 Q = require 'q'
+logger = require 'winston'
 
-
+###
 # Retrieves the list of transactions
-
+###
 exports.getTransactions = `function *getTransactions() {
-	var getTransactions = Q.denodeify(transaction.getTransactions);
-
-	try{
-			this.body = yield getTransactions();
-		}catch (e){
-			this.message = e.message;
-			this.status = 500;
-		}
-
+	try {
+		this.body = yield transactions.Transaction.find().exec();
+	}catch (e){
+		this.message = e.message;
+		this.status = 500;
+	}
 }`
 
 ###
@@ -22,20 +20,17 @@ exports.getTransactions = `function *getTransactions() {
 exports.addTransaction = `function *addTransaction() {
 	// Get the values to use
 	var transactionData = this.request.body;
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	var addTransaction = Q.denodeify(transaction.addTransaction);
-	try{
+	var tx = new transactions.Transaction(transactionData);
 
+	try {
 		// Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
-		var result = yield addTransaction(transactionData);
-		this.body = result;
+		console.log('The TX = ' + tx);
+		var result = yield Q.ninvoke(tx, "save");
 		this.status = 201;
-		
-	}
-	catch (e) {
-		// Error! So inform the user
+	} catch (e) {
+		logger.error('Could not add a transaction via the API: ' + e);
 		this.body = e.message;
-		this.status = 400;
+		this.status = 500;
 	}
 
 }`
@@ -48,11 +43,8 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 	// Get the values to use
 	var transactionId = unescape(transactionId);
 
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	var getTransactionById = Q.denodeify(transaction.findTransactionById);
-
 	try {
-		var result = yield getTransactionById(transactionId);
+		var result = yield transactions.Transaction.findById(transactionId).exec();
 
 		// Test if the result if valid
 		if (result === null || result.length === 0) {
@@ -60,9 +52,9 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 			this.status = 404;
 		}
 		else { this.body = result; } // All ok! So set the result
-	}
-	catch (e) {
+	} catch (e) {
 		// Error! So inform the user
+		logger.error('Could not get transaction by ID via the API: ' + e);
 		this.body = e.message;
 		this.status = 500;
 	}
@@ -73,42 +65,39 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 ###
 exports.findTransactionByApplicationId = `function *findTransactionByApplicationId(applicationId){
 	var applicationId = unescape(applicationId)
-	var findTransactionByApplicationId = Q.denodeify(transaction.findTransactionByApplicationId);
 
-	try{
-			var result = yield findTransactionByApplicationId(applicationId)
-			if(result.length === 0){
-				this.body = "No transactions with applicationId: "+applicationId+" could be found."
-				this.status = 404
-				
-			}else {
-				this.body = result;
-			}
-		}catch(e){
-						this.body = e.message;
-			this.status = 500;
-
+	try {
+		var result = yield transactions.Transaction.find({ "applicationID": applicationId }).exec();
+		if (result.length === 0) {
+			this.body = "No transactions with applicationId: "+applicationId+" could be found."
+			this.status = 404
+		} else {
+			this.body = result;
 		}
+	} catch(e) {
+		logger.error('Could not find a transaction by application by via the API: ' + e);
+		this.body = e.message;
+		this.status = 500;
+	}
 }`
 
 ###
 # Updates a transaction record specified by transactionId
 ###
-exports.updateTransaction = `function *updateTransaction(transactionId){
+exports.updateTransaction = `function *updateTransaction(transactionId) {
 	var transactionId = unescape(transactionId);
 	var updates = this.request.body;
 
-	var updateTransaction = Q.denodeify(transaction.updateTransaction);
-
-	try{
-			yield updateTransaction(transactionId, updates);
-			this.body = "Transaction with ID:"+transactionId+" successfully updated.";
-			this.status = 200;
-
-		}catch(e){
-			this.body = e.message;
-			this.status = 500;
-		}
+	try {
+		yield transactions.Transaction.findByIdAndUpdate(transactionId, updates).exec();
+		this.body = "Transaction with ID:"+transactionId+" successfully updated.";
+		this.status = 200;
+	} catch(e) {
+		logger.error('Could not update a transaction via the API: ' + e);
+		console.log(e.stack);
+		this.body = e.message;
+		this.status = 500;
+	}
 }`
 
 
@@ -116,18 +105,16 @@ exports.updateTransaction = `function *updateTransaction(transactionId){
 #Removes a transaction
 ###
 exports.removeTransaction = `function *removeTransaction(transactionId) {
-
 	// Get the values to use
 	var transactionId = unescape(transactionId);
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	var removeTransaction = Q.denodeify(transaction.removeTransaction);
 
 	try {
-		yield removeTransaction(transactionId);
+		yield transactions.Transaction.findByIdAndRemove(transactionId).exec();
 		this.body = 'Transaction successfully deleted';
 		this.status = 200;
 	}
 	catch (e) {
+		logger.error('Could not remove a transaction via the API: ' + e);
 		this.body = e.message;
 		this.status = 500;
 	}

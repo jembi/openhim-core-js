@@ -4,7 +4,7 @@ http = require "http"
 messageStore = require "../lib/messageStore"
 MongoClient = require('mongodb').MongoClient
 config = require "../lib/config"
-transaction = require "../lib/transactions"
+transactions = require "../lib/transactions"
 
 collection = null
 transactionId = null
@@ -86,7 +86,7 @@ describe "MessageStore", ->
 		it "should be able to save the transaction in the db", (done) ->
 			messageStore.storeTransaction ctx, (error, result) ->
 				should.not.exist(error)
-				transaction.findTransactionById result._id, (error, trans) ->
+				transactions.Transaction.findOne { '_id': result._id }, (error, trans) ->
 					should.not.exist(error)
 					(trans != null).should.be.true
 					trans.applicationID.should.equal "Master_OpenMRS_Instance"
@@ -110,8 +110,8 @@ describe "MessageStore", ->
 			messageStore.storeTransaction ctx, (err, storedTrans) ->
 				ctx.transactionId = storedTrans._id
 				messageStore.storeResponse ctx, (err2) ->
-					should.not.exist(err2)		
-					transaction.findTransactionById storedTrans._id, (err3, trans) ->
+					should.not.exist(err2)
+					transactions.Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
 						should.not.exist(err3)
 						(trans != null).should.true
 						trans.response.status.should.equal 201
