@@ -1,4 +1,4 @@
-Application = require('../applications').Application
+Application = require('../model/applications').Application
 Q = require 'q'
 logger = require 'winston'
 

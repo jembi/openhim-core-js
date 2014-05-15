@@ -4,9 +4,9 @@ https = require "https"
 fs = require "fs"
 request = require "supertest"
 config = require "../lib/config"
-router = require "../lib/router"
-Application = require("../lib/applications").Application
-Transaction = require("../lib/transactions").Transaction
+router = require "../lib/middleware/router"
+Application = require("../lib/model/applications").Application
+Transaction = require("../lib/model/transactions").Transaction
 testUtils = require "./testUtils"
 
 server = require "../lib/server"

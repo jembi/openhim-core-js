@@ -1,7 +1,7 @@
 mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
-config = require "./config"
+config = require "../config"
 
 ApplicationSchema = new Schema
     "applicationID":	{ type: String, required: true }

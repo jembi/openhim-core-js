@@ -1,4 +1,4 @@
-transactions = require '../transactions'
+transactions = require '../model/transactions'
 Q = require 'q'
 logger = require 'winston'
 

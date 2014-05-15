@@ -2,7 +2,7 @@ http = require 'http'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
 Q = require "q"
-config = require "./config"
+config = require "../config"
 
 channelsCollection = null
 

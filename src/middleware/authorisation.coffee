@@ -1,4 +1,4 @@
-router = require "./router"
+router = require "../middleware/router"
 Q = require "q"
 logger = require "winston"
 

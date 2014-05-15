@@ -1,7 +1,7 @@
 should = require "should"
 sinon = require "sinon"
 http = require "http"
-router = require "../lib/router"
+router = require "../lib/middleware/router"
 testUtils = require "./testUtils"
 
 describe "HTTP Router", ->
