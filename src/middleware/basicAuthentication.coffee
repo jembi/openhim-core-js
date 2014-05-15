@@ -1,6 +1,6 @@
 auth = require 'basic-auth'
 Q = require "q"
-Application = require("./applications").Application
+Application = require("../model/applications").Application
 logger = require "winston"
 
 exports.authenticateUser = (ctx, done) ->

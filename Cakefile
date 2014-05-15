@@ -227,6 +227,7 @@ mocha = (options, callback) ->
   options.push '--reporter'
   options.push 'spec'
   options.push '--harmony'
+  options.push '--recursive'
   
   launch 'mocha', options, callback
 

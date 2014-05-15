@@ -1,7 +1,7 @@
 should = require "should"
 request = require "supertest"
-basicAuthentication = require '../lib/basicAuthentication'
-Application = require("../lib/applications").Application
+basicAuthentication = require '../../lib/middleware/basicAuthentication'
+Application = require("../../lib/model/applications").Application
 
 describe "Basic Auth", ->
 	describe "with no credentials", ->
