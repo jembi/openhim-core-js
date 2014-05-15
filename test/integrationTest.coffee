@@ -5,8 +5,8 @@ fs = require "fs"
 request = require "supertest"
 config = require "../lib/config"
 router = require "../lib/router"
-applications = require "../lib/applications"
-transactions = require "../lib/transactions"
+Application = require("../lib/applications").Application
+Transaction = require("../lib/transactions").Transaction
 testUtils = require "./testUtils"
 
 server = require "../lib/server"
@@ -46,13 +46,14 @@ describe "Integration Tests", ->
 						passwordHash: ""
 						cert: (fs.readFileSync "test/client-tls/cert.pem").toString()
 
-					applications.addApplication testAppDoc, (error, newAppDoc) ->
+					app = new Application testAppDoc
+					app.save (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 201, "Mock response body\n", 1232, ->
 							done()
 
 			after (done) ->
 				router.removeChannel "TEST DATA - Mock endpoint", ->
-					applications.removeApplication "testApp", ->
+					Application.remove { applicationID: "testApp" }, ->
 						mockServer.close ->
 							done()
 
@@ -121,13 +122,14 @@ describe "Integration Tests", ->
 						passwordHash: "password"
 						cert: ""					
 
-					applications.addApplication testAppDoc, (error, newAppDoc) ->
+					app = new Application testAppDoc
+					app.save (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 200, "Mock response body 1\n", 1232, ->
 							done()
 
 			after (done) ->
 				router.removeChannel "TEST DATA - Mock endpoint", ->
-					applications.removeApplication "testApp", ->
+					Application.remove { applicationID: "testApp" }, ->
 						mockServer.close ->
 							done()
 
@@ -247,10 +249,7 @@ describe "Integration Tests", ->
 							if err
 								done err
 							else
-								transactionId = res.body._id
-								transactions.Transaction.findOne { applicationID: "OpenHIE_bla_bla_WRTWTTATSA" }, (error, newTransaction) ->
-									console.log 'TX ID = ' + transactionId
-									console.log 'Looked up TX = ' + newTransaction
+								Transaction.findOne { applicationID: "OpenHIE_bla_bla_WRTWTTATSA" }, (error, newTransaction) ->
 									should.not.exist (error)
 									(newTransaction != null).should.be.true
 									newTransaction.status.should.equal "Processing"
@@ -270,7 +269,7 @@ describe "Integration Tests", ->
 		describe ".updateTransaction", ->
 			
 			it "should call /updateTransaction ", (done) ->
-				tx = new transactions.Transaction transactionData
+				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
@@ -295,7 +294,7 @@ describe "Integration Tests", ->
 								if err
 									done err
 								else
-									transactions.Transaction.findOne { "_id": transactionId }, (error, updatedTrans) ->
+									Transaction.findOne { "_id": transactionId }, (error, updatedTrans) ->
 										should.not.exist(error)
 										(updatedTrans != null).should.be.true
 										updatedTrans.status.should.equal "Completed"
@@ -314,17 +313,17 @@ describe "Integration Tests", ->
 		describe ".getTransactions", ->
 
 			it "should call getTransactions ", (done) ->
-				transactions.Transaction.count {}, (err, countBefore) ->
-					tx1 = new transactions.Transaction transactionData
+				Transaction.count {}, (err, countBefore) ->
+					tx1 = new Transaction transactionData
 					tx1.save (error, result) ->
 						should.not.exist (error)
-						tx2 = new transactions.Transaction transactionData
+						tx2 = new Transaction transactionData
 						tx2.save (error, result) ->
 							should.not.exist(error)
-							tx3 = new transactions.Transaction transactionData
+							tx3 = new Transaction transactionData
 							tx3.save (error, result) ->
 								should.not.exist(error)
-								tx4 = new transactions.Transaction transactionData
+								tx4 = new Transaction transactionData
 								tx4.save (error, result) ->
 									should.not.exist (error)
 									server.start null, null, 8080,  ->
@@ -344,7 +343,7 @@ describe "Integration Tests", ->
 		describe ".getTransactionById (transactionId)", ->
 
 			it "should call getTransactionById", (done) ->
-				tx = new transactions.Transaction transactionData
+				tx = new Transaction transactionData
 				tx.save (err, result)->
 					should.not.exist(err)
 					transactionId = result._id
@@ -375,7 +374,7 @@ describe "Integration Tests", ->
 			it "should call findTransactionByApplicationId", (done) ->
 				appId = "Unique_never_existent_application_id"
 				transactionData.applicationID = appId
-				tx = new transactions.Transaction transactionData
+				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)
 					server.start null, null, 8080,  ->
@@ -395,7 +394,7 @@ describe "Integration Tests", ->
 		describe ".removeTransaction (transactionId)", ->
 			it "should call removeTransaction", (done) ->
 				transactionData.applicationID = "transaction_to_remove"
-				tx = new transactions.Transaction transactionData
+				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
@@ -407,7 +406,7 @@ describe "Integration Tests", ->
 								if err
 									done err
 								else
-									transactions.Transaction.findOne { "_id": transactionId }, (err, transDoc) ->
+									Transaction.findOne { "_id": transactionId }, (err, transDoc) ->
 										should.not.exist(err)
 										(transDoc == null).should.be.true
 										done()
@@ -416,19 +415,21 @@ describe "Integration Tests", ->
 					done()
 
 	describe "Applications REST Api Testing", ->
-		applicationID = "YUIAIIIICIIAIA"
-		domain = "him.jembi.org"
-		_id = null
 		testAppDoc =
-			applicationID: applicationID
-			domain: domain
+			applicationID: "YUIAIIIICIIAIA"
+			domain: "him.jembi.org"
 			name: "OpenMRS Ishmael instance"
 			roles: [ 
 					"OpenMRS_PoC"
 					"PoC" 
 				]
 			passwordHash: "842j3j8m232n28u32"
-			cert: "8fajd89ada"					
+			cert: "8fajd89ada"
+
+		afterEach (done) ->
+			server.stop ->
+				Application.remove ->
+					done()				
 
 		describe ".addApplication", ->
 
@@ -440,29 +441,24 @@ describe "Integration Tests", ->
 						.send(testAppDoc)
 						.expect(201)
 						.end (err, res) ->
-							_id = JSON.parse(res.text)._id
 							if err
 								done err
 							else
-								res.body.applicationID.should.equal "YUIAIIIICIIAIA"
-								res.body.domain.should.equal "him.jembi.org"
-								res.body.name.should.equal "OpenMRS Ishmael instance"
-								res.body.roles[0].should.equal "OpenMRS_PoC"
-								res.body.roles[1].should.equal "PoC"
-								res.body.passwordHash.should.equal "842j3j8m232n28u32"
-								res.body.cert.should.equal "8fajd89ada"
-								done()
-			afterEach (done) ->
-				server.stop ->
-					done()
+								Application.findOne { applicationID: "YUIAIIIICIIAIA" }, (err, application) ->
+									application.applicationID.should.equal "YUIAIIIICIIAIA"
+									application.domain.should.equal "him.jembi.org"
+									application.name.should.equal "OpenMRS Ishmael instance"
+									application.roles[0].should.equal "OpenMRS_PoC"
+									application.roles[1].should.equal "PoC"
+									application.passwordHash.should.equal "842j3j8m232n28u32"
+									application.cert.should.equal "8fajd89ada"
+									done()
+			
 
-		describe ".findApplicationByDomain (domain)", ->
-			applicationID = "Zambia_OpenHIE_Instance"
-			domain = "www.zedmusic.co.zw"
-			_id = null
+		describe ".findApplicationByDomain(domain)", ->
 			appTest =
-				applicationID: applicationID
-				domain: domain
+				applicationID: "Zambia_OpenHIE_Instance"
+				domain: "www.zedmusic-unique.co.zw"
 				name: "OpenHIE NodeJs"
 				roles: [ 
 						"test_role_PoC"
@@ -472,34 +468,30 @@ describe "Integration Tests", ->
 				cert: ""					
 
 			it "should return application with specified domain", (done) ->
-				applications.addApplication appTest, (error, newApp) ->
+				app = new Application appTest
+				app.save (error, newApp) ->
 					should.not.exist (error)
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
-							.get("/applications/domain/#{domain}")
+							.get("/applications/domain/www.zedmusic-unique.co.zw")
 							.expect(200)
 							.end (err, res) ->
 								if err
 									done err
 								else
 									res.body.applicationID.should.equal "Zambia_OpenHIE_Instance"
-									res.body.domain.should.equal "www.zedmusic.co.zw"
+									res.body.domain.should.equal "www.zedmusic-unique.co.zw"
 									res.body.name.should.equal "OpenHIE NodeJs"
 									res.body.roles[0].should.equal "test_role_PoC"
 									res.body.roles[1].should.equal "monitoring"
 									res.body.passwordHash.should.equal "67278372732jhfhshs"
 									res.body.cert.should.equal ""
 									done()
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 		describe  ".getApplications", ->
-			applicationID = "Botswana_OpenHIE_Instance"
-			domain = "www.zedmusic.co.zw"
 			testDocument =
-				applicationID: applicationID
-				domain: domain
+				applicationID: "Botswana_OpenHIE_Instance"
+				domain: "www.zedmusic.co.zw"
 				name: "OpenHIE NodeJs"
 				roles: [ 
 						"test_role_PoC"
@@ -508,14 +500,18 @@ describe "Integration Tests", ->
 				passwordHash: "njdjasjajjudq98892"
 				cert: "12345"
 			it  "should return all applications ", (done) ->
-				applications.numApps (err, countBefore)->
-					applications.addApplication testDocument, (error, testDoc) ->
+				Application.count (err, countBefore)->
+					app = new Application testDocument
+					app.save (error, testDoc) ->
 						should.not.exist (error)
-						applications.addApplication testDocument, (error, testDoc) ->
+						app = new Application testDocument
+						app.save (error, testDoc) ->
 							should.not.exist(error)
-							applications.addApplication testDocument, (error, testDoc) ->
+							app = new Application testDocument
+							app.save (error, testDoc) ->
 								should.not.exist(error)
-								applications.addApplication testDocument, (error, testDoc) ->
+								app = new Application testDocument
+								app.save (error, testDoc) ->
 									should.not.exist (error)
 									server.start null, null, 8080,  ->
 										request("http://localhost:8080")
@@ -527,17 +523,13 @@ describe "Integration Tests", ->
 												else
 													res.body.length.should.equal countBefore + 4
 													done()
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 		describe  ".updateApplication", ->
 			it 	"should update the specified application ", (done) ->
 				applicationID = "Botswana_OpenHIE_Instance"
-				domain = "www.zedmusic.co.zw"
 				testDocument =
 					applicationID: applicationID
-					domain: domain
+					domain: "www.zedmusic.co.zw"
 					name: "OpenHIE NodeJs"
 					roles: [ 
 							"test_role_PoC"
@@ -545,7 +537,8 @@ describe "Integration Tests", ->
 						]
 					passwordHash: "njdjasjajjudq98892"
 					cert: "12345"
-				applications.addApplication testDocument, (error, testDocument) ->
+				app = new Application testDocument
+				app.save (error, testDoc) ->
 					should.not.exist (error)
 
 					updates =
@@ -563,22 +556,17 @@ describe "Integration Tests", ->
 								if err
 									done err
 								else
-									applications.findApplicationById applicationID, (error, appDoc)->
+									Application.findOne { applicationID: applicationID }, (error, appDoc) ->
 										appDoc.roles[0].should.equal "appTest_update"
 										appDoc.passwordHash.should.equal "kakakakakaka"
 										appDoc.name.should.equal "Devil_may_Cry"
 									done()
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 		describe ".removeApplication", ->
 			it  "should remove an application with specified applicationID", (done) ->
-				applicationID = "Jembi_OpenHIE_Instance"
-				domain = "www.jembi.org"
 				docTestRemove =
-					applicationID: applicationID
-					domain: domain
+					applicationID: "Jembi_OpenHIE_Instance"
+					domain: "www.jembi.org"
 					name: "OpenHIE NodeJs"
 					roles: [ 
 							"test_role_PoC"
@@ -586,22 +574,20 @@ describe "Integration Tests", ->
 						]
 					passwordHash: "njdjasjajjudq98892"
 					cert: "1098765"
-				applications.addApplication docTestRemove, (error, delDoc) ->
+				app = new Application docTestRemove
+				app.save (error, testDoc) ->
 					should.not.exist(error)	
-					applications.numApps (err, countBefore)->				
+					Application.count (err, countBefore) ->				
 						server.start null, null, 8080,  ->
 							request("http://localhost:8080")
-								.del("/applications/#{applicationID}")
+								.del("/applications/Jembi_OpenHIE_Instance")
 								.expect(200)
 								.end (err, res) ->
 									if err
 										done err
 									else
-										applications.numApps (err, countAfter)->
-											applications.findApplicationById applicationID, (error, notFoundDoc) ->
+										Application.count (err, countAfter) ->
+											Application.findOne { applicationID: "Jembi_OpenHIE_Instance" }, (error, notFoundDoc) ->
 												(notFoundDoc == null).should.be.true
 												(countBefore - 1).should.equal countAfter
 												done()
-			afterEach (done) ->
-				server.stop ->
-					done()

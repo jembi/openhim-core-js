@@ -1,27 +1,24 @@
-application = require '../applications'
+Application = require('../applications').Application
 Q = require 'q'
-
+logger = require 'winston'
 
 ###
-Adds an application 
+# Adds an application 
 ###
-
 exports.addApplication = `function *addApplication(){
 	var applicationData = this.request.body
-	var addApplication = Q.denodeify(application.addApplication);
 
-	try  {
-			var result = yield addApplication(applicationData);
-			
-			this.body = result;
-			this.status = 201;
-			
-		}catch(e){
-			// Error! So inform the user
-			this.body = e.message;
-			this.status = 400;
-
-		}
+	try {
+		var app = new Application(applicationData);
+		var result = yield Q.ninvoke(app, 'save');
+		
+		this.body = result;
+		this.status = 201;
+	} catch(e) {
+		logger.error('Could not add a application via the API: ' + e);
+		this.body = e.message;
+		this.status = 400;
+	}
 }`
 
 ###
@@ -29,19 +26,19 @@ exports.addApplication = `function *addApplication(){
 ###
 exports.getApplication = `function *findApplicationById(applicationId) {
 	var applicationId = unescape(applicationId);
-	var findApplicationById = Q.denodeify(application.findApplicationById);
 
-	try{
-			var result = yield findApplicationById(applicationId);
-			if(result === null){
-				this.body = "Application with id '"+applicationId+"' could not be found.";
-				this.status = 404;
-			}else{
-				this.body = result;
-			}
-	}catch(e){
-			this.body = e.message;
-			this.status = 500;
+	try {
+		var result = yield Application.findOne({ applicationID: applicationId }).exec();
+		if (result === null) {
+			this.body = "Application with id '"+applicationId+"' could not be found.";
+			this.status = 404;
+		} else {
+			this.body = result;
+		}
+	} catch(e) {
+		logger.error('Could not find application by id '+applicationId+' via the API: ' + e);
+		this.body = e.message;
+		this.status = 500;
 
 	}
 }`
@@ -50,17 +47,17 @@ exports.getApplication = `function *findApplicationById(applicationId) {
 exports.findApplicationByDomain = `function *findApplicationByDomain(domain){
 
 	var domain = unescape(domain);
-	var findApplicationByDomain = Q.denodeify(application.findApplicationByDomain);
 
-	try{
-		var result = yield findApplicationByDomain(domain);
-		if(result === null){
+	try {
+		var result = yield Application.findOne({ domain: domain }).exec();
+		if (result === null) {
 			this.body = "Could not find application with domain '"+domain+"'";
 			this.status = 404;
 		}else{
 			this.body = result;
 		}
-	}catch(e){
+	} catch(e) {
+		logger.error('Could not find application by domain '+domain+' via the API: ' + e);
 		this.body = e.message;
 		this.status = 500;
 	}
@@ -70,41 +67,36 @@ exports.updateApplication = `function *updateApplication(applicationId) {
 	var applicationId = unescape(applicationId);
 	var applicationData = this.request.body;
 
-	var updateApplication = Q.denodeify(application.updateApplication);
-
-	try{
-		yield updateApplication(applicationId, applicationData);
+	try {
+		yield Application.findOneAndUpdate({ applicationID: applicationId }, applicationData).exec();
 		this.body = "Successfully updated application."
-	}catch(e){
-			this.body = e.message;
-			this.status = 500;		
+	} catch(e) {
+		logger.error('Could not update application by ID '+applicationId+' via the API: ' + e);
+		this.body = e.message;
+		this.status = 500;		
 	}
 }`
 
 exports.removeApplication = `function *removeApplication(applicationId){
 	var applicationId = unescape (applicationId);
 
-	var removeApplication = Q.denodeify(application.removeApplication);
-
-	try{
-		yield removeApplication(applicationId);
+	try {
+		yield Application.findOneAndRemove({ applicationID: applicationId }).exec();
 		this.body = "Successfully removed application with ID '"+applicationId+"'";
 	}catch(e){
-			this.body = e.message;
-			this.status = 500;		
+		logger.error('Could not remove application by ID '+applicationId+' via the API: ' + e);
+		this.body = e.message;
+		this.status = 500;		
 	}
 
 }`
 
 exports.getApplications = `function *getApplications(){
-
-	var getApplications = Q.denodeify(application.getApplications);
-
-	try{
-			this.body = yield getApplications;
-		}catch (e){
-			this.message = e.message;
-			this.status = 500;
-		}
-
+	try {
+		this.body = yield Application.find().exec();
+	}catch (e){
+		logger.error('Could not fetch all applications via the API: ' + e);
+		this.message = e.message;
+		this.status = 500;
+	}
 }`

@@ -2,7 +2,7 @@ fs = require "fs"
 should = require "should"
 sinon = require "sinon"
 tlsAuthentication = require "../lib/tlsAuthentication"
-applications = require "../lib/applications"
+Application = require("../lib/applications").Application
 
 describe "Setup mutual TLS", ->
 	it "should add all trusted certificates and enable mutual auth from all applications to server options if mutual auth is enabled", ->
@@ -21,7 +21,8 @@ describe "Setup mutual TLS", ->
 			passwordHash: ""
 			cert: cert
 
-		applications.addApplication testAppDoc, (error, newAppDoc) ->
+		app = new Application testAppDoc
+		app.save (error, newAppDoc) ->
 			tlsAuthentication.getServerOptions true, (err, options) ->
 				options.ca.should.be.ok
 				options.ca.should.be.an.Array

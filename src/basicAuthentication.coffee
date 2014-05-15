@@ -1,12 +1,13 @@
 auth = require 'basic-auth'
 Q = require "q"
-applications = require "./applications"
+Application = require("./applications").Application
 logger = require "winston"
 
 exports.authenticateUser = (ctx, done) ->
 	user = auth ctx
+
 	if user
-		applications.findApplicationById user.name, (err, application) ->
+		Application.findOne { applicationID: user.name }, (err, application) ->
 			if application && application.passwordHash == user.pass
 				logger.info user.name + " is authenticated."
 				ctx.authenticated = application;

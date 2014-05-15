@@ -1,9 +1,10 @@
 fs = require "fs"
 Q = require "q"
-applications = require "./applications"
+Application = require("./applications").Application
+logger = require "winston"
 
 getTrustedApplicationCerts = (done) ->
-	applications.getApplications (err, applications) ->
+	Application.find (err, applications) ->
 		if err
 			done err, null
 		certs = []
@@ -39,13 +40,13 @@ exports.getServerOptions = (mutualTLS, done) ->
 exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 		if (this.req.client.authorized === true) {
 			var subject = this.req.connection.getPeerCertificate().subject;
-
-			var findApplicationByDomain = Q.denodeify(applications.findApplicationByDomain);
+			logger.info(subject + " is authenticated via TLS.");
 
 			// lookup application by subject.CN (CN = domain) and set them as the authenticated user
-			this.authenticated = yield findApplicationByDomain(subject.CN);
+			this.authenticated = yield Application.findOne({ domain: subject.CN }).exec();
 			yield next;
 		} else {
 			this.response.status = "unauthorized";
+			logger.info("Request is NOT authenticated via TLS.");
 		}
 	}`

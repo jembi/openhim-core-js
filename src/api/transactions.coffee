@@ -15,7 +15,7 @@ exports.getTransactions = `function *getTransactions() {
 }`
 
 ###
-#Adds an transaction  
+# Adds an transaction  
 ###
 exports.addTransaction = `function *addTransaction() {
 	// Get the values to use
@@ -24,8 +24,7 @@ exports.addTransaction = `function *addTransaction() {
 
 	try {
 		// Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
-		console.log('The TX = ' + tx);
-		var result = yield Q.ninvoke(tx, "save");
+		yield Q.ninvoke(tx, "save");
 		this.status = 201;
 	} catch (e) {
 		logger.error('Could not add a transaction via the API: ' + e);
@@ -94,7 +93,6 @@ exports.updateTransaction = `function *updateTransaction(transactionId) {
 		this.status = 200;
 	} catch(e) {
 		logger.error('Could not update a transaction via the API: ' + e);
-		console.log(e.stack);
 		this.body = e.message;
 		this.status = 500;
 	}
