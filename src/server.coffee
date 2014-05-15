@@ -6,6 +6,10 @@ tlsAuthentication = require "../lib/tlsAuthentication"
 config = require "./config"
 Q = require "q"
 logger = require "winston"
+mongoose = require "mongoose"
+
+# Configure mongose to connect to mongo
+mongoose.connect config.mongo.url
 
 httpServer = null
 httpsServer = null

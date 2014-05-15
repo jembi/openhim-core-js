@@ -1,7 +1,7 @@
 should = require "should"
 request = require "supertest"
 basicAuthentication = require '../lib/basicAuthentication'
-applications = require "../lib/applications"
+Application = require("../lib/applications").Application
 
 describe "Basic Auth", ->
 	describe "with no credentials", ->
@@ -38,7 +38,8 @@ describe "Basic Auth", ->
 				passwordHash: "password"
 				cert: ""					
 
-			applications.addApplication testAppDoc, (error, newAppDoc) ->
+			app = new Application testAppDoc
+			app.save (error, newAppDoc) ->
 				authDetails = new Buffer("user:password").toString("base64")
 				ctx = {}
 				ctx.req = {}

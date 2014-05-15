@@ -4,86 +4,118 @@ http = require "http"
 messageStore = require "../lib/messageStore"
 MongoClient = require('mongodb').MongoClient
 config = require "../lib/config"
+transactions = require "../lib/transactions"
 
 collection = null
+transactionId = null
+db = null
 
-describe ".storeTransaction", ->
-
-	before (done) ->
-		MongoClient.connect config.mongo.url, {native_parser:true}, (error,db) ->
-			if error
-				return done error
-			root = exports ? that 
-			db.collection "transaction", (err, coll) ->
-				collection = coll
-				done()
-
-	after (done)->
-		collection.remove (err, doc) ->
+beforeEach (done) ->
+	MongoClient.connect config.mongo.url, {native_parser:true}, (error,db) ->
+		if error
+			return done error
+		root = exports ? that 
+		db.collection "transactions", (err, coll) ->
+			coll.remove (err, doc) ->
+			collection = coll
 			done()
+afterEach (done)->
+	collection.remove (err, doc) ->
+		done()
 
-	it "should be able to save the transaction in the db", (done) ->
-		request = 
-			path: "/store/provider"
-			header: {
-				"user-agent": "curl/7.32.0",
-				"host":"localhost:5001",
-				"accept": "*/*",
-				"content-length": "123"
-			}
-			requestParams: {
-				"action": "save"
-			}
-			body: "<HTTP body>"
-			method: "POST"
-			properties : []
-		ctx = new Object()
-		ctx.request = request		
-		messageStore.storeTransaction ctx, ->
-			done()
+describe "MessageStore", ->
+	req = new Object()
+	req.path = "/api/test/request"
+	req.headers = 	
+		headerName: "headerValue"
+		"Content-Type": "application/json"						
+		"Content-Length": "9313219921"
+	req.querystring = "param1=value1&param2=value2"
+	req.body = "<HTTP body>"
+	req.method = "POST"
+	req.timestamp = new Date()
 
-	it "should update the transaction with the response", (done) ->
-		transaction = 
-			_id: 123456789
-			status: "Processing"
-			applicationId: "Musha_OpenMRS"
-			request: 
-				path: "/api/test"
-				headers: [
-					header1: "value1" 
-					header2: "value2" 
-				]
-				requestParams: [
-					param1: "value1" 
-					param2: "value2"
-				]
-				body: "<HTTP body>"
-				method: "POST"
-				timestamp: "<ISO 8601>"
-		collection.insert transaction, (err, doc) ->
-			if err
-				done err
-			response =  
-				status: 201
-				body: "<HTTP body>"
-				header: 
-					header1: "value1"
-					header2: "value2"
-				 
-			ctx = new Object()
-			ctx.response = response 
-			ctx.transactionId = 123456789
-			messageStore.storeResponse ctx, ->
-				MongoClient.connect config.mongo.url, (err,db) ->
-					if err
-						return done err
-					db.collection("transaction").findOne _id: 123456789, (err, doc) ->
-						if err
-							return done err
-						doc.should.have.property "status", "Completed"
-						doc.response.should.be.ok
+	res = new Object()
+	res.status = "200"
+	res.headers =
+		header: "value"
+		header2: "value2"
+	res.body = "<HTTP response>"
+	res.timestamp = new Date()
+
+	routes = [							
+				name: "jembi.org"
+				request: req
+				response: res
+			,
+				name: "green.brown"
+				request: req
+				response: res						
+			]
+			
+	orchestrations = [
+						name: "validate provider"            
+						request: req
+						response: res
+					,
+						name: "validate provider"            
+						request: req
+						response: res
+					]
+	properties = 
+		property: "prop1", value: "prop1-value1"
+		property:"prop2", value: "prop-value1"
+	 
+	ctx = new Object()
+	ctx.path = "/api/test/request"
+	ctx.header =
+		headerName: "headerValue"
+		"Content-Type": "application/json"						
+		"Content-Length": "9313219921"
+
+	ctx.querystring = "param1=value1&param2=value2"
+	ctx.body = "<HTTP body>"
+	ctx.method = "POST"
+
+	ctx.status = "Processing"
+	ctx.authenticated = new Object()
+	ctx.authenticated.applicationID = "Master_OpenMRS_Instance"
+
+	describe ".storeTransaction", ->
+
+		it "should be able to save the transaction in the db", (done) ->
+			messageStore.storeTransaction ctx, (error, result) ->
+				should.not.exist(error)
+				transactions.Transaction.findOne { '_id': result._id }, (error, trans) ->
+					should.not.exist(error)
+					(trans != null).should.be.true
+					trans.applicationID.should.equal "Master_OpenMRS_Instance"
+					trans.status.should.equal "Processing"
+					trans.status.should.not.equal "None"
+					trans.request.path.should.equal "/api/test/request"
+					trans.request.headers['Content-Type'].should.equal "application/json"
+					done()
+
+	describe ".storeResponse", ->
+		it "should update the transaction with the response", (done) ->
+			setRes = new Object()
+			setRes.status = "201"
+			setRes.header = [
+								testHeader: "value"
+							]
+			setRes.body = "<HTTP response body>"
+			
+			ctx.res = setRes
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					transactions.Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						(trans != null).should.true
+						trans.response.status.should.equal 201
+						trans.response.headers[0].testHeader.should.equal "value"
+						trans.response.body.should.equal "<HTTP response body>"
+						trans.status.should.equal "Completed"										
 						done()
-
-
-
-
