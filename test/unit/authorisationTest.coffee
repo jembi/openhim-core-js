@@ -1,7 +1,7 @@
 should = require "should"
 sinon = require "sinon"
-authorisation = require "../lib/middleware/authorisation"
-router = require "../lib/middleware/router"
+authorisation = require "../../lib/middleware/authorisation"
+router = require "../../lib/middleware/router"
 
 describe "Authorisation middleware", ->
 

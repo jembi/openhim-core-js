@@ -3,13 +3,13 @@ sinon = require "sinon"
 https = require "https"
 fs = require "fs"
 request = require "supertest"
-config = require "../lib/config"
-router = require "../lib/middleware/router"
-Application = require("../lib/model/applications").Application
-Transaction = require("../lib/model/transactions").Transaction
-testUtils = require "./testUtils"
+config = require "../../lib/config"
+router = require "../../lib/middleware/router"
+Application = require("../../lib/model/applications").Application
+Transaction = require("../../lib/model/transactions").Transaction
+testUtils = require "../testUtils"
 
-server = require "../lib/server"
+server = require "../../lib/server"
 
 describe "Integration Tests", ->
 

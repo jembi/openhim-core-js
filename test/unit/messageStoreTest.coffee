@@ -1,10 +1,10 @@
 should = require "should"
 sinon = require "sinon"
 http = require "http"
-messageStore = require "../lib/middleware/messageStore"
+messageStore = require "../../lib/middleware/messageStore"
 MongoClient = require('mongodb').MongoClient
-config = require "../lib/config"
-transactions = require "../lib/model/transactions"
+config = require "../../lib/config"
+transactions = require "../../lib/model/transactions"
 
 collection = null
 transactionId = null

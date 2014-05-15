@@ -1,8 +1,8 @@
 fs = require "fs"
 should = require "should"
 sinon = require "sinon"
-tlsAuthentication = require "../lib/middleware/tlsAuthentication"
-Application = require("../lib/model/applications").Application
+tlsAuthentication = require "../../lib/middleware/tlsAuthentication"
+Application = require("../../lib/model/applications").Application
 
 describe "Setup mutual TLS", ->
 	it "should add all trusted certificates and enable mutual auth from all applications to server options if mutual auth is enabled", ->
