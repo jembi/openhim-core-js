@@ -2,9 +2,6 @@ mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
 config = require "./config"
-logger = require "winston"
-
-mongoose.connect config.mongo.url
 
 # Request Schema definition
 RequestDef = 
@@ -34,10 +31,6 @@ OrchestrationSchema = new Schema
     "request": RequestDef
     "response": ResponseDef
 
-# Validator Method for Status value - NOT USED
-statusValidator = (status)->
-        return status in ["Processing","Failed","Completed"]
-
 # Trasnaction schema 
 TransactionSchema = new Schema    
     "applicationID": { type: String, required: true } 
@@ -51,5 +44,4 @@ TransactionSchema = new Schema
 #compile schema into Model    
 exports.Route = mongoose.model 'Route', RouteSchema
 exports.Orchestration = mongoose.model 'Orchestration', OrchestrationSchema
-Transaction = mongoose.model 'Transaction', TransactionSchema
-exports.Transaction = Transaction
+exports.Transaction = mongoose.model 'Transaction', TransactionSchema

@@ -191,8 +191,8 @@ describe "Integration Tests", ->
 							done()
 
 		afterEach (done) ->
-				server.stop ->
-					done()
+			server.stop ->
+				done()
 
 	describe "Transactions REST Api testing", ->
 		transactionId = null
@@ -237,6 +237,10 @@ describe "Integration Tests", ->
 				property: "prop1", value: "prop1-value1"
 				property:"prop2", value: "prop-value1"
 
+		afterEach (done) ->
+			server.stop ->
+				done()
+
 		describe "Adding a transaction", ->
 
 			it  "should add a transaction and return status 201 - transaction created", (done) -> 
@@ -261,10 +265,6 @@ describe "Integration Tests", ->
 									newTransaction.request.body.should.equal "<HTTP body request>"
 									newTransaction.request.method.should.equal "POST"
 									done()
-
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 		describe ".updateTransaction", ->
 			
@@ -306,9 +306,6 @@ describe "Integration Tests", ->
 										updatedTrans.request.body.should.equal "<HTTP body update>"
 										updatedTrans.request.method.should.equal "PUT"
 										done()
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 		describe ".getTransactions", ->
 
@@ -336,9 +333,6 @@ describe "Integration Tests", ->
 												else
 													res.body.length.should.equal countBefore + 4
 													done()
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 		describe ".getTransactionById (transactionId)", ->
 
@@ -365,9 +359,6 @@ describe "Integration Tests", ->
 									res.body.request.body.should.equal "<HTTP body request>"
 									res.body.request.method.should.equal "POST"
 									done()
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 		describe ".findTransactionByApplicationId (applicationId)", ->
 
@@ -387,9 +378,6 @@ describe "Integration Tests", ->
 								else
 									res.body[0].applicationID.should.equal appId
 									done()
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 		describe ".removeTransaction (transactionId)", ->
 			it "should call removeTransaction", (done) ->
@@ -410,9 +398,6 @@ describe "Integration Tests", ->
 										should.not.exist(err)
 										(transDoc == null).should.be.true
 										done()
-			afterEach (done) ->
-				server.stop ->
-					done()
 
 	describe "Applications REST Api Testing", ->
 		testAppDoc =

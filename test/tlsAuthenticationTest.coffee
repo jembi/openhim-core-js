@@ -40,3 +40,7 @@ describe "Setup mutual TLS", ->
 		tlsAuthentication.getServerOptions false, (err, options) ->
 			options.cert.should.be.ok
 			options.key.should.be.ok
+
+	after (done) ->
+		Application.remove { applicationID: "testApp" }, ->
+			done()
