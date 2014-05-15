@@ -7,7 +7,7 @@ Application = require("../lib/model/applications").Application
 describe "Setup mutual TLS", ->
 	it "should add all trusted certificates and enable mutual auth from all applications to server options if mutual auth is enabled", ->
 
-		cert = (fs.readFileSync "test/client-tls/cert.pem").toString()
+		cert = (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 
 		testAppDoc =
 			applicationID: "testApp"

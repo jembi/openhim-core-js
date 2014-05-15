@@ -44,7 +44,7 @@ describe "Integration Tests", ->
 								"PoC" 
 							]
 						passwordHash: ""
-						cert: (fs.readFileSync "test/client-tls/cert.pem").toString()
+						cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 
 					app = new Application testAppDoc
 					app.save (error, newAppDoc) ->
@@ -67,8 +67,8 @@ describe "Integration Tests", ->
 						host: "localhost"
 						path: "/test/mock"
 						port: 5000
-						cert: fs.readFileSync "test/client-tls/cert.pem"
-						key:  fs.readFileSync "test/client-tls/key.pem"
+						cert: fs.readFileSync "test/resources/client-tls/cert.pem"
+						key:  fs.readFileSync "test/resources/client-tls/key.pem"
 						ca: [ fs.readFileSync "tls/cert.pem" ]
 
 					req = https.request options, (res) ->
@@ -82,8 +82,8 @@ describe "Integration Tests", ->
 						host: "localhost"
 						path: "/test/mock"
 						port: 5000
-						cert: fs.readFileSync "test/client-tls/invalid-cert.pem"
-						key:  fs.readFileSync "test/client-tls/invalid-key.pem"
+						cert: fs.readFileSync "test/resources/client-tls/invalid-cert.pem"
+						key:  fs.readFileSync "test/resources/client-tls/invalid-key.pem"
 						ca: [ fs.readFileSync "tls/cert.pem" ]
 
 					req = https.request options, (res) ->
