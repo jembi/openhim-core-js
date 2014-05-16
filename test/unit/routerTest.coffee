@@ -253,7 +253,7 @@ describe "HTTP Router", ->
 			router.addChannel channel, ->
 				channel.urlPattern = "test/sample2/.+"
 				channel.routes[0].port = 8081
-				router.updateChannel channel, ->
+				router.updateChannel channel.name, channel, ->
 					router.getChannel "Channel to update", (err, returnedChannel) ->
 						returnedChannel.should.be.ok
 						returnedChannel.should.have.property "name", "Channel to update"
