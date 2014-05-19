@@ -13,7 +13,7 @@ exports.storeTransaction = (ctx, done) ->
 
 	tx = new transactions.Transaction
 		status: transactionStatus.PROCESSING
-		applicationID: ctx.authenticated.applicationID
+		clientID: ctx.authenticated.clientID
 		request: 
 			path: ctx.path
 			headers: ctx.header

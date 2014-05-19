@@ -47,7 +47,7 @@ describe "API Integration Tests", ->
 			
 
 		describe ".findClientByDomain(domain)", ->
-			appTest =
+			clientTest =
 				clientID: "Zambia_OpenHIE_Instance"
 				domain: "www.zedmusic-unique.co.zw"
 				name: "OpenHIE NodeJs"
@@ -59,8 +59,8 @@ describe "API Integration Tests", ->
 				cert: ""					
 
 			it "should return client with specified domain", (done) ->
-				app = new Client appTest
-				app.save (error, newApp) ->
+				client = new Client clientTest
+				client.save (error, newApp) ->
 					should.not.exist (error)
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
@@ -92,17 +92,17 @@ describe "API Integration Tests", ->
 				cert: "12345"
 			it  "should return all clients ", (done) ->
 				Client.count (err, countBefore)->
-					app = new Client testDocument
-					app.save (error, testDoc) ->
+					client = new Client testDocument
+					client.save (error, testDoc) ->
 						should.not.exist (error)
-						app = new Client testDocument
-						app.save (error, testDoc) ->
+						client = new Client testDocument
+						client.save (error, testDoc) ->
 							should.not.exist(error)
-							app = new Client testDocument
-							app.save (error, testDoc) ->
+							client = new Client testDocument
+							client.save (error, testDoc) ->
 								should.not.exist(error)
-								app = new Client testDocument
-								app.save (error, testDoc) ->
+								client = new Client testDocument
+								client.save (error, testDoc) ->
 									should.not.exist (error)
 									server.start null, null, 8080,  ->
 										request("http://localhost:8080")
@@ -128,13 +128,13 @@ describe "API Integration Tests", ->
 						]
 					passwordHash: "njdjasjajjudq98892"
 					cert: "12345"
-				app = new Client testDocument
-				app.save (error, testDoc) ->
+				client = new Client testDocument
+				client.save (error, testDoc) ->
 					should.not.exist (error)
 
 					updates =
 						roles: 	[
-									"appTest_update"
+									"clientTest_update"
 								]
 						passwordHash: "kakakakakaka"
 						name: "Devil_may_Cry"
@@ -147,10 +147,10 @@ describe "API Integration Tests", ->
 								if err
 									done err
 								else
-									Client.findOne { clientID: clientID }, (error, appDoc) ->
-										appDoc.roles[0].should.equal "appTest_update"
-										appDoc.passwordHash.should.equal "kakakakakaka"
-										appDoc.name.should.equal "Devil_may_Cry"
+									Client.findOne { clientID: clientID }, (error, clientDoc) ->
+										clientDoc.roles[0].should.equal "clientTest_update"
+										clientDoc.passwordHash.should.equal "kakakakakaka"
+										clientDoc.name.should.equal "Devil_may_Cry"
 									done()
 
 		describe ".removeClient", ->
@@ -165,8 +165,8 @@ describe "API Integration Tests", ->
 						]
 					passwordHash: "njdjasjajjudq98892"
 					cert: "1098765"
-				app = new Client docTestRemove
-				app.save (error, testDoc) ->
+				client = new Client docTestRemove
+				client.save (error, testDoc) ->
 					should.not.exist(error)	
 					Client.count (err, countBefore) ->				
 						server.start null, null, 8080,  ->

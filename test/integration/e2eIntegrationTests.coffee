@@ -43,8 +43,8 @@ describe "e2e Integration Tests", ->
 						passwordHash: ""
 						cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 
-					app = new Client testAppDoc
-					app.save (error, newAppDoc) ->
+					client = new Client testAppDoc
+					client.save (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 201, "Mock response body\n", 1232, ->
 							done()
 
@@ -119,8 +119,8 @@ describe "e2e Integration Tests", ->
 						passwordHash: "password"
 						cert: ""					
 
-					app = new Client testAppDoc
-					app.save (error, newAppDoc) ->
+					client = new Client testAppDoc
+					client.save (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 200, "Mock response body 1\n", 1232, ->
 							done()
 

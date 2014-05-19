@@ -79,7 +79,7 @@ describe "MessageStore", ->
 
 	ctx.status = "Processing"
 	ctx.authenticated = new Object()
-	ctx.authenticated.applicationID = "Master_OpenMRS_Instance"
+	ctx.authenticated.clientID = "Master_OpenMRS_Instance"
 
 	describe ".storeTransaction", ->
 
@@ -89,7 +89,7 @@ describe "MessageStore", ->
 				transactions.Transaction.findOne { '_id': result._id }, (error, trans) ->
 					should.not.exist(error)
 					(trans != null).should.be.true
-					trans.applicationID.should.equal "Master_OpenMRS_Instance"
+					trans.clientID.should.equal "Master_OpenMRS_Instance"
 					trans.status.should.equal "Processing"
 					trans.status.should.not.equal "None"
 					trans.request.path.should.equal "/api/test/request"

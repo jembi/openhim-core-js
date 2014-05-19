@@ -27,7 +27,7 @@ describe "API Integration Tests", ->
 
 		transactionData =
 			status: "Processing"
-			applicationID: "OpenHIE_bla_bla_WRTWTTATSA"
+			clientID: "OpenHIE_bla_bla_WRTWTTATSA"
 			request: requ
 			response: respo
 				
@@ -64,11 +64,11 @@ describe "API Integration Tests", ->
 							if err
 								done err
 							else
-								Transaction.findOne { applicationID: "OpenHIE_bla_bla_WRTWTTATSA" }, (error, newTransaction) ->
+								Transaction.findOne { clientID: "OpenHIE_bla_bla_WRTWTTATSA" }, (error, newTransaction) ->
 									should.not.exist (error)
 									(newTransaction != null).should.be.true
 									newTransaction.status.should.equal "Processing"
-									newTransaction.applicationID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+									newTransaction.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
 									newTransaction.request.path.should.equal "/api/test"
 									newTransaction.request.headers['header-title'].should.equal "header1-value"
 									newTransaction.request.headers['another-header'].should.equal "another-header-value"
@@ -95,7 +95,7 @@ describe "API Integration Tests", ->
 					updates =
 						request: reqUp
 						status: "Completed"
-						applicationID: "OpenHIE_Air_version"
+						clientID: "OpenHIE_Air_version"
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
 							.put("/transactions/#{transactionId}")
@@ -109,7 +109,7 @@ describe "API Integration Tests", ->
 										should.not.exist(error)
 										(updatedTrans != null).should.be.true
 										updatedTrans.status.should.equal "Completed"
-										updatedTrans.applicationID.should.equal "OpenHIE_Air_version"
+										updatedTrans.clientID.should.equal "OpenHIE_Air_version"
 										updatedTrans.request.path.should.equal "/api/test/updated"
 										updatedTrans.request.headers['Content-Type'].should.equal "text/javascript"
 										updatedTrans.request.headers['Access-Control'].should.equal "authentication-required"
@@ -162,7 +162,7 @@ describe "API Integration Tests", ->
 								else
 									(res != null).should.be.true
 									res.body.status.should.equal "Processing"
-									res.body.applicationID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+									res.body.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
 									res.body.request.path.should.equal "/api/test"
 									res.body.request.headers['header-title'].should.equal "header1-value"
 									res.body.request.headers['another-header'].should.equal "another-header-value"
@@ -171,11 +171,11 @@ describe "API Integration Tests", ->
 									res.body.request.method.should.equal "POST"
 									done()
 
-		describe ".findTransactionByApplicationId (applicationId)", ->
+		describe ".findTransactionByClientId (clientId)", ->
 
-			it "should call findTransactionByApplicationId", (done) ->
-				appId = "Unique_never_existent_application_id"
-				transactionData.applicationID = appId
+			it "should call findTransactionByClientId", (done) ->
+				appId = "Unique_never_existent_client_id"
+				transactionData.clientID = appId
 				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)
@@ -187,12 +187,12 @@ describe "API Integration Tests", ->
 								if err
 									done err
 								else
-									res.body[0].applicationID.should.equal appId
+									res.body[0].clientID.should.equal appId
 									done()
 
 		describe ".removeTransaction (transactionId)", ->
 			it "should call removeTransaction", (done) ->
-				transactionData.applicationID = "transaction_to_remove"
+				transactionData.clientID = "transaction_to_remove"
 				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)

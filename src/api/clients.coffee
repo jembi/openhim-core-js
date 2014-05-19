@@ -9,8 +9,8 @@ exports.addClient = `function *addClient(){
 	var clientData = this.request.body
 
 	try {
-		var app = new Client(clientData);
-		var result = yield Q.ninvoke(app, 'save');
+		var client = new Client(clientData);
+		var result = yield Q.ninvoke(client, 'save');
 		
 		this.body = result;
 		this.status = 201;
