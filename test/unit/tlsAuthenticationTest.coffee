@@ -2,17 +2,17 @@ fs = require "fs"
 should = require "should"
 sinon = require "sinon"
 tlsAuthentication = require "../../lib/middleware/tlsAuthentication"
-Application = require("../../lib/model/applications").Application
+Client = require("../../lib/model/clients").Client
 
 describe "Setup mutual TLS", ->
-	it "should add all trusted certificates and enable mutual auth from all applications to server options if mutual auth is enabled", ->
+	it "should add all trusted certificates and enable mutual auth from all clients to server options if mutual auth is enabled", ->
 
 		cert = (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 
 		testAppDoc =
-			applicationID: "testApp"
+			clientID: "testApp"
 			domain: "test-client.jembi.org"
-			name: "TEST Application"
+			name: "TEST Client"
 			roles:
 				[ 
 					"OpenMRS_PoC"
@@ -21,7 +21,7 @@ describe "Setup mutual TLS", ->
 			passwordHash: ""
 			cert: cert
 
-		app = new Application testAppDoc
+		app = new Client testAppDoc
 		app.save (error, newAppDoc) ->
 			tlsAuthentication.getServerOptions true, (err, options) ->
 				options.ca.should.be.ok
@@ -42,5 +42,5 @@ describe "Setup mutual TLS", ->
 			options.key.should.be.ok
 
 	after (done) ->
-		Application.remove { applicationID: "testApp" }, ->
+		Client.remove { clientID: "testApp" }, ->
 			done()
