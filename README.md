@@ -5,7 +5,7 @@ OpenHIM Core Component
 
 The OpenHIM core component is responsible for providing a single entry-point into an HIE as well as providing the following key features:
 
-* Point of service application authentication and authorization
+* Point of service client authentication and authorization
 * Persistence and audit logging of all messages that flow through the OpenHIM
 * Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
 
