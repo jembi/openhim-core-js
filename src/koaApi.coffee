@@ -3,7 +3,7 @@ route = require 'koa-route'
 cors = require 'koa-cors'
 router = require './middleware/router'
 bodyParser = require 'koa-body-parser'
-applications = require './api/applications'
+clients = require './api/clients'
 transactions = require './api/transactions'
 channels = require './api/channels'
 monitor = require './api/monitor'
@@ -18,12 +18,12 @@ exports.setupApp = (done) ->
 
 	
 	# Define the api routes
-	app.use route.get '/applications', applications.getApplications
-	app.use route.get '/applications/:applicationId', applications.findApplicationById
-	app.use route.post '/applications', applications.addApplication
-	app.use route.get '/applications/domain/:domain', applications.findApplicationByDomain
-	app.use route.put '/applications/:applicationId', applications.updateApplication
-	app.use route.delete '/applications/:applicationId', applications.removeApplication
+	app.use route.get '/clients', clients.getClients
+	app.use route.get '/clients/:clientId', clients.findClientById
+	app.use route.post '/clients', clients.addClient
+	app.use route.get '/clients/domain/:domain', clients.findClientByDomain
+	app.use route.put '/clients/:clientId', clients.updateClient
+	app.use route.delete '/clients/:clientId', clients.removeClient
 
 	app.use route.get '/transactions', transactions.getTransactions
 	app.use route.post '/transactions', transactions.addTransaction
