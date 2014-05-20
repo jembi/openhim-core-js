@@ -4,7 +4,7 @@ fs = require "fs"
 request = require "supertest"
 config = require "../../lib/config"
 router = require "../../lib/middleware/router"
-Application = require("../../lib/model/applications").Application
+Client = require("../../lib/model/clients").Client
 testUtils = require "../testUtils"
 server = require "../../lib/server"
 
@@ -32,9 +32,9 @@ describe "e2e Integration Tests", ->
 							]
 				router.addChannel channel1, (err) ->
 					testAppDoc =
-						applicationID: "testApp"
+						clientID: "testApp"
 						domain: "test-client.jembi.org"
-						name: "TEST Application"
+						name: "TEST Client"
 						roles:
 							[ 
 								"OpenMRS_PoC"
@@ -43,14 +43,14 @@ describe "e2e Integration Tests", ->
 						passwordHash: ""
 						cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 
-					app = new Application testAppDoc
-					app.save (error, newAppDoc) ->
+					client = new Client testAppDoc
+					client.save (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 201, "Mock response body\n", 1232, ->
 							done()
 
 			after (done) ->
 				router.removeChannel "TEST DATA - Mock endpoint", ->
-					Application.remove { applicationID: "testApp" }, ->
+					Client.remove { clientID: "testApp" }, ->
 						mockServer.close ->
 							done()
 
@@ -58,7 +58,7 @@ describe "e2e Integration Tests", ->
 				server.stop ->
 					done()
 
-			it "should forward a request to the configured routes if the application is authenticated and authorised", (done) ->
+			it "should forward a request to the configured routes if the client is authenticated and authorised", (done) ->
 				server.start 5001, 5000, null, ->
 					options =
 						host: "localhost"
@@ -108,9 +108,9 @@ describe "e2e Integration Tests", ->
 							]
 				router.addChannel channel1, (err) ->
 					testAppDoc =
-						applicationID: "testApp"
+						clientID: "testApp"
 						domain: "openhim.jembi.org"
-						name: "TEST Application"
+						name: "TEST Client"
 						roles:
 							[ 
 								"OpenMRS_PoC"
@@ -119,14 +119,14 @@ describe "e2e Integration Tests", ->
 						passwordHash: "password"
 						cert: ""					
 
-					app = new Application testAppDoc
-					app.save (error, newAppDoc) ->
+					client = new Client testAppDoc
+					client.save (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 200, "Mock response body 1\n", 1232, ->
 							done()
 
 			after (done) ->
 				router.removeChannel "TEST DATA - Mock endpoint", ->
-					Application.remove { applicationID: "testApp" }, ->
+					Client.remove { clientID: "testApp" }, ->
 						mockServer.close ->
 							done()
 

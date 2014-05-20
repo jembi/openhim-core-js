@@ -33,7 +33,7 @@ OrchestrationSchema = new Schema
 
 # Trasnaction schema 
 TransactionSchema = new Schema    
-    "applicationID": { type: String, required: true } 
+    "clientID": { type: String, required: true } 
     "request": RequestDef
     "response": ResponseDef
     "routes": [ RouteSchema ]    

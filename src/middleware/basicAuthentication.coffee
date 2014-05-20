@@ -1,17 +1,17 @@
 auth = require 'basic-auth'
 Q = require "q"
-Application = require("../model/applications").Application
+Client = require("../model/clients").Client
 logger = require "winston"
 
 exports.authenticateUser = (ctx, done) ->
 	user = auth ctx
 
 	if user
-		Application.findOne { applicationID: user.name }, (err, application) ->
-			if application && application.passwordHash == user.pass
+		Client.findOne { clientID: user.name }, (err, client) ->
+			if client && client.passwordHash == user.pass
 				logger.info user.name + " is authenticated."
-				ctx.authenticated = application;
-				done null, application
+				ctx.authenticated = client;
+				done null, client
 			else
 				logger.info user.name + " is NOT authenticated."
 				done null, null

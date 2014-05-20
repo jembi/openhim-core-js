@@ -60,21 +60,21 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 }`
 
 ###
-# Retrieves all transactions specified by applicationId
+# Retrieves all transactions specified by clientId
 ###
-exports.findTransactionByApplicationId = `function *findTransactionByApplicationId(applicationId){
-	var applicationId = unescape(applicationId)
+exports.findTransactionByClientId = `function *findTransactionByClientId(clientId){
+	var clientId = unescape(clientId)
 
 	try {
-		var result = yield transactions.Transaction.find({ "applicationID": applicationId }).exec();
+		var result = yield transactions.Transaction.find({ "clientID": clientId }).exec();
 		if (result.length === 0) {
-			this.body = "No transactions with applicationId: "+applicationId+" could be found."
+			this.body = "No transactions with clientId: "+clientId+" could be found."
 			this.status = 404
 		} else {
 			this.body = result;
 		}
 	} catch(e) {
-		logger.error('Could not find a transaction by application by via the API: ' + e);
+		logger.error('Could not find a transaction by client by via the API: ' + e);
 		this.body = e.message;
 		this.status = 500;
 	}

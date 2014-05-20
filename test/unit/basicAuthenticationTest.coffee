@@ -1,7 +1,7 @@
 should = require "should"
 request = require "supertest"
 basicAuthentication = require '../../lib/middleware/basicAuthentication'
-Application = require("../../lib/model/applications").Application
+Client = require("../../lib/model/clients").Client
 
 describe "Basic Auth", ->
 	describe "with no credentials", ->
@@ -28,9 +28,9 @@ describe "Basic Auth", ->
 		it "should return 200 OK", (done) ->
 
 			testAppDoc =
-				applicationID: "user"
+				clientID: "user"
 				domain: "openhim.jembi.org"
-				name: "TEST basic auth Application"
+				name: "TEST basic auth client"
 				roles:
 					[ 
 						"PoC" 
@@ -38,7 +38,7 @@ describe "Basic Auth", ->
 				passwordHash: "password"
 				cert: ""					
 
-			app = new Application testAppDoc
+			app = new Client testAppDoc
 			app.save (error, newAppDoc) ->
 				authDetails = new Buffer("user:password").toString("base64")
 				ctx = {}
