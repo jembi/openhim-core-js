@@ -1,0 +1,8 @@
+{
+  "mongo": {
+    "url": "mongodb://localhost/openhim-test"
+  },
+  "logger": {
+    "level": "warning"
+  }
+}

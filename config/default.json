@@ -1,0 +1,13 @@
+{
+  "router": {
+    "httpPort": 5001,
+    "httpsPort": 5000
+  },
+  "api": {
+    "httpPort": 8080
+  },
+  "authentication": {
+    "enableMutualTLSAuthentication": true,
+    "enableBasicAuthentication": true
+  }
+}
