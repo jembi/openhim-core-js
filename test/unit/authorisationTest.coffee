@@ -1,7 +1,7 @@
 should = require "should"
 sinon = require "sinon"
-authorisation = require "../lib/authorisation"
-router = require "../lib/router"
+authorisation = require "../../lib/middleware/authorisation"
+router = require "../../lib/middleware/router"
 
 describe "Authorisation middleware", ->
 
@@ -16,7 +16,7 @@ describe "Authorisation middleware", ->
 
 			addedChannelNames = []
 
-		it "should allow a request if the application is authorised to use the channel by role", (done) ->
+		it "should allow a request if the client is authorised to use the channel by role", (done) ->
 			# Setup a channel for the mock endpoint
 			channel =
 				name: "Authorisation mock channel 1"
@@ -35,7 +35,7 @@ describe "Authorisation middleware", ->
 				# Setup test data, will need authentication mechanisms to set ctx.authenticated
 				ctx = {}
 				ctx.authenticated =
-					applicationID: "Musha_OpenMRS"
+					clientID: "Musha_OpenMRS"
 					domain: "poc1.jembi.org"
 					name: "OpenMRS Musha instance"
 					roles: [ "OpenMRS_PoC", "PoC" ]
@@ -48,7 +48,7 @@ describe "Authorisation middleware", ->
 					ctx.authorisedChannels.should.have.length 1
 					done()
 
-		it "should deny a request if the application is NOT authorised to use the channel by role", (done) ->
+		it "should deny a request if the client is NOT authorised to use the channel by role", (done) ->
 			# Setup a channel for the mock endpoint
 			channel =
 				name: "Authorisation mock channel 2"
@@ -67,7 +67,7 @@ describe "Authorisation middleware", ->
 				# Setup test data, will need authentication mechanisms to set ctx.authenticated
 				ctx = {}
 				ctx.authenticated =
-					applicationID: "Musha_OpenMRS"
+					clientID: "Musha_OpenMRS"
 					domain: "poc1.jembi.org"
 					name: "OpenMRS Musha instance"
 					roles: [ "OpenMRS_PoC", "PoC" ]
@@ -81,7 +81,7 @@ describe "Authorisation middleware", ->
 					ctx.response.status.should.be.exactly "unauthorized"
 					done()
 
-		it "should allow a request if the application is authorised to use the channel by applicationID", (done) ->
+		it "should allow a request if the client is authorised to use the channel by clientID", (done) ->
 			# Setup a channel for the mock endpoint
 			channel =
 				name: "Authorisation mock channel 3"
@@ -100,7 +100,7 @@ describe "Authorisation middleware", ->
 				# Setup test data, will need authentication mechanisms to set ctx.authenticated
 				ctx = {}
 				ctx.authenticated =
-					applicationID: "Musha_OpenMRS"
+					clientID: "Musha_OpenMRS"
 					domain: "poc1.jembi.org"
 					name: "OpenMRS Musha instance"
 					roles: [ "OpenMRS_PoC", "PoC" ]

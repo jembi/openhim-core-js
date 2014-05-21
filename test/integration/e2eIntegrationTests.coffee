@@ -1,18 +1,15 @@
 should = require "should"
-sinon = require "sinon"
 https = require "https"
 fs = require "fs"
 request = require "supertest"
-mongoose = require "mongoose"
-config = require "../lib/config/config"
+config = require "../../lib/config/config"
 config.authentication = config.get('authentication')
-router = require "../lib/router"
-applications = require "../lib/applications"
-testUtils = require "./testUtils"
+router = require "../../lib/middleware/router"
+Client = require("../../lib/model/clients").Client
+testUtils = require "../testUtils"
+server = require "../../lib/server"
 
-server = require "../lib/server"
-
-describe "Integration Tests", ->
+describe "e2e Integration Tests", ->
 
 	describe "Auhentication and authorisation tests", ->
 
@@ -36,24 +33,25 @@ describe "Integration Tests", ->
 							]
 				router.addChannel channel1, (err) ->
 					testAppDoc =
-						applicationID: "testApp"
+						clientID: "testApp"
 						domain: "test-client.jembi.org"
-						name: "TEST Application"
+						name: "TEST Client"
 						roles:
 							[ 
 								"OpenMRS_PoC"
 								"PoC" 
 							]
 						passwordHash: ""
-						cert: (fs.readFileSync "test/client-tls/cert.pem").toString()
+						cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 
-					applications.addApplication testAppDoc, (error, newAppDoc) ->
+					client = new Client testAppDoc
+					client.save (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 201, "Mock response body\n", 1232, ->
 							done()
 
 			after (done) ->
 				router.removeChannel "TEST DATA - Mock endpoint", ->
-					applications.removeApplication "testApp", ->
+					Client.remove { clientID: "testApp" }, ->
 						mockServer.close ->
 							done()
 
@@ -61,14 +59,14 @@ describe "Integration Tests", ->
 				server.stop ->
 					done()
 
-			it "should forward a request to the configured routes if the application is authenticated and authorised", (done) ->
+			it "should forward a request to the configured routes if the client is authenticated and authorised", (done) ->
 				server.start 5001, 5000, null, ->
 					options =
 						host: "localhost"
 						path: "/test/mock"
 						port: 5000
-						cert: fs.readFileSync "test/client-tls/cert.pem"
-						key:  fs.readFileSync "test/client-tls/key.pem"
+						cert: fs.readFileSync "test/resources/client-tls/cert.pem"
+						key:  fs.readFileSync "test/resources/client-tls/key.pem"
 						ca: [ fs.readFileSync "tls/cert.pem" ]
 
 					req = https.request options, (res) ->
@@ -82,8 +80,8 @@ describe "Integration Tests", ->
 						host: "localhost"
 						path: "/test/mock"
 						port: 5000
-						cert: fs.readFileSync "test/client-tls/invalid-cert.pem"
-						key:  fs.readFileSync "test/client-tls/invalid-key.pem"
+						cert: fs.readFileSync "test/resources/client-tls/invalid-cert.pem"
+						key:  fs.readFileSync "test/resources/client-tls/invalid-key.pem"
 						ca: [ fs.readFileSync "tls/cert.pem" ]
 
 					req = https.request options, (res) ->
@@ -111,9 +109,9 @@ describe "Integration Tests", ->
 							]
 				router.addChannel channel1, (err) ->
 					testAppDoc =
-						applicationID: "testApp"
+						clientID: "testApp"
 						domain: "openhim.jembi.org"
-						name: "TEST Application"
+						name: "TEST Client"
 						roles:
 							[ 
 								"OpenMRS_PoC"
@@ -122,13 +120,14 @@ describe "Integration Tests", ->
 						passwordHash: "password"
 						cert: ""					
 
-					applications.addApplication testAppDoc, (error, newAppDoc) ->
+					client = new Client testAppDoc
+					client.save (error, newAppDoc) ->
 						mockServer = testUtils.createMockServer 200, "Mock response body 1\n", 1232, ->
 							done()
 
 			after (done) ->
 				router.removeChannel "TEST DATA - Mock endpoint", ->
-					applications.removeApplication "testApp", ->
+					Client.remove { clientID: "testApp" }, ->
 						mockServer.close ->
 							done()
 
@@ -173,59 +172,3 @@ describe "Integration Tests", ->
 									done err
 								else
 									done()
-	
-	describe "REST API", ->
-
-		before (done) ->
-
-			#Setup some test data
-			channel1 =
-				name: "Some Registry Channel"
-				urlPattern: "test/sample/.+"
-				allow: "*"
-				routes: [
-					name: "Some Registry"
-					path: "some/other/path"
-					host: "localhost"
-					port: 8080
-				]
-				properties: [
-					{ prop1: "value1" }
-					{ prop2: "value2" }
-				]
-
-			channel2 =
-				name: "Some Registry Channel"
-				urlPattern: "test/sample2/.+/test2"
-				allow: [
-					"Alice"
-					"Bob"
-					"PoC"
-				]
-				routes: [
-					{
-						name: "Some Registry"
-						host: "localhost"
-						port: 8080
-						primary: true
-					}
-					{
-						name: "Logger"
-						host: "log-host"
-						port: 4789
-					}
-				]
-				properties: [
-					{ prop1: "value1" }
-					{ prop2: "value2" }
-				]
-
-		beforeEach (done) ->
-
-			# mongoose.connection.collections['channels'].drop
-
-		describe "GET /channels", ->
-
-			
-
-			describe ".addChannel", ->

@@ -1,8 +1,9 @@
 koa = require 'koa'
 route = require 'koa-route'
-router = require './router'
+cors = require 'koa-cors'
+router = require './middleware/router'
 bodyParser = require 'koa-body-parser'
-applications = require './api/applications'
+clients = require './api/clients'
 transactions = require './api/transactions'
 channels = require './api/channels'
 monitor = require './api/monitor'
@@ -12,13 +13,25 @@ exports.setupApp = (done) ->
 	
 	# Create an instance of the koa-server and add a body-parser
 	app = koa()
+	app.use cors()
 	app.use bodyParser()
 
+	
 	# Define the api routes
-	app.use route.get '/applications', applications.getApplications
-	app.use route.get '/applications/:applicationId', applications.getApplication
+	app.use route.get '/clients', clients.getClients
+	app.use route.get '/clients/:clientId', clients.findClientById
+	app.use route.post '/clients', clients.addClient
+	app.use route.get '/clients/domain/:domain', clients.findClientByDomain
+	app.use route.put '/clients/:clientId', clients.updateClient
+	app.use route.delete '/clients/:clientId', clients.removeClient
 
 	app.use route.get '/transactions', transactions.getTransactions
+	app.use route.post '/transactions', transactions.addTransaction
+	app.use route.get '/transactions/:transactionId', transactions.getTransactionById	 
+	app.use route.get '/transactions/apps/:clientId', transactions.findTransactionByClientId
+
+	app.use route.put '/transactions/:transactionId', transactions.updateTransaction
+	app.use route.delete '/transactions/:transactionId', transactions.removeTransaction
 
 	app.use route.get '/channels', channels.getChannels
 	app.use route.post '/channels', channels.addChannel
@@ -28,5 +41,7 @@ exports.setupApp = (done) ->
 	
 	app.use route.get '/monitor', monitor.getMonitor
 
+
 	# Return the result
 	done(app)
+

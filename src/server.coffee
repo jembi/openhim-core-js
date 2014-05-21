@@ -1,8 +1,8 @@
 http = require 'http'
 https = require 'https'
-koaMiddleware = require "../lib/koaMiddleware"
-koaApi = require "../lib/koaApi"
-tlsAuthentication = require "../lib/tlsAuthentication"
+koaMiddleware = require "./koaMiddleware"
+koaApi = require "./koaApi"
+tlsAuthentication = require "./middleware/tlsAuthentication"
 config = require "./config/config"
 config.authentication = config.get('authentication')
 config.router = config.get('router')
@@ -11,6 +11,10 @@ config.logger = config.get('logger')
 Q = require "q"
 logger = require "winston"
 logger.level = config.logger.level
+mongoose = require "mongoose"
+
+# Configure mongose to connect to mongo
+mongoose.connect config.mongo.url
 
 httpServer = null
 httpsServer = null

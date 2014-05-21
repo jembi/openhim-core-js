@@ -1,4 +1,4 @@
-router = require "./router"
+router = require "../middleware/router"
 Q = require "q"
 logger = require "winston"
 
@@ -10,7 +10,7 @@ exports.authorise = (ctx, done) ->
 			if pat.test ctx.request.url
 				matchedRoles = channel.allow.filter (element) ->
 					return (ctx.authenticated.roles.indexOf element) isnt -1
-				if matchedRoles.length > 0 or (channel.allow.indexOf ctx.authenticated.applicationID) isnt -1
+				if matchedRoles.length > 0 or (channel.allow.indexOf ctx.authenticated.clientID) isnt -1
 					# authorisation success
 					ctx.authorisedChannels.push channel
 					logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannels.length + " channels.", ctx.authorisedChannels

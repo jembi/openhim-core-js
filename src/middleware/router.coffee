@@ -2,7 +2,7 @@ http = require 'http'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
 Q = require 'q'
-config = require './config/config'
+config = require '../config/config'
 config.mongo = config.get('mongo')
 
 channelsCollection = null
@@ -119,9 +119,10 @@ exports.getChannel = (channelName, done) ->
 # Channel object and done is a callback. The callback will be called with
 # an Error object is an error occurred.
 ###
-exports.updateChannel = (channel, done) ->
+exports.updateChannel = (channelName, channel, done) ->
+	delete channel._id
 	getCollection (collection) ->
-		collection.update {name: channel.name}, channel, (err, result) ->
+		collection.update {name: channelName}, channel, (err, result) ->
 			if err
 				done err
 			else

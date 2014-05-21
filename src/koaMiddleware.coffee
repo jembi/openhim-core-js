@@ -1,10 +1,10 @@
 koa = require 'koa'
 bodyParser = require 'koa-body-parser'
-router = require './router'
-messageStore = require './messageStore'
-basicAuthentication = require './basicAuthentication'
-tlsAuthentication = require './tlsAuthentication'
-authorisation = require './authorisation'
+router = require './middleware/router'
+messageStore = require './middleware/messageStore'
+basicAuthentication = require './middleware/basicAuthentication'
+tlsAuthentication = require "./middleware/tlsAuthentication"
+authorisation = require './middleware/authorisation'
 config = require './config/config'
 config.authentication = config.get('authentication')
 

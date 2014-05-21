@@ -1,4 +1,4 @@
-router = require '../router'
+router = require '../middleware/router'
 Q = require 'q'
 
 ###
@@ -100,7 +100,7 @@ exports.updateChannel = `function *updateChannel(channelName) {
 
 	try {
 		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		yield updateChannel(channel);
+		yield updateChannel(channel_name, channel);
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully updated';

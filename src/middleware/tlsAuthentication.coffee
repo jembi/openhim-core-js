@@ -1,15 +1,16 @@
 fs = require "fs"
 Q = require "q"
-applications = require "./applications"
+Client = require("../model/clients").Client
+logger = require "winston"
 
-getTrustedApplicationCerts = (done) ->
-	applications.getApplications (err, applications) ->
+getTrustedClientCerts = (done) ->
+	Client.find (err, clients) ->
 		if err
 			done err, null
 		certs = []
-		for app in applications
-			if app.cert
-				certs.push app.cert
+		for client in clients
+			if client.cert
+				certs.push client.cert
 
 		return done null, certs
 
@@ -24,7 +25,7 @@ exports.getServerOptions = (mutualTLS, done) ->
 		cert:	fs.readFileSync "tls/cert.pem"
 	
 	if mutualTLS
-		getTrustedApplicationCerts (err, certs) ->
+		getTrustedClientCerts (err, certs) ->
 			options.ca = certs
 			options.requestCert = true
 			options.rejectUnauthorized = false
@@ -39,14 +40,13 @@ exports.getServerOptions = (mutualTLS, done) ->
 exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 		if (this.req.client.authorized === true) {
 			var subject = this.req.connection.getPeerCertificate().subject;
+			logger.info(subject + " is authenticated via TLS.");
 
-			var findApplicationByDomain = Q.denodeify(applications.findApplicationByDomain);
-
-			// lookup application by subject.CN (CN = domain) and set them as the authenticated user
-			this.authenticated = yield findApplicationByDomain(subject.CN);
-
+			// lookup client by subject.CN (CN = domain) and set them as the authenticated user
+			this.authenticated = yield Client.findOne({ domain: subject.CN }).exec();
 			yield next;
 		} else {
 			this.response.status = "unauthorized";
+			logger.info("Request is NOT authenticated via TLS.");
 		}
 	}`
