@@ -1,7 +1,5 @@
-mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
-config = require "../config"
 
 # Request Schema definition
 RequestDef = 
@@ -39,7 +37,7 @@ TransactionSchema = new Schema
     "routes": [ RouteSchema ]    
     "orchestrations": [ OrchestrationSchema ]    
     "properties": { type: Object }
-    "status": { type: String, required:true, enum: ["Processing","Failed","Completed"]} 
+    "status": { type: String, required:true, enum: ["Processing","Failed","Completed"] } 
 
 #compile schema into Model    
 exports.Route = mongoose.model 'Route', RouteSchema

@@ -5,7 +5,8 @@ messageStore = require './middleware/messageStore'
 basicAuthentication = require './middleware/basicAuthentication'
 tlsAuthentication = require "./middleware/tlsAuthentication"
 authorisation = require './middleware/authorisation'
-config = require "./config"
+config = require './config/config'
+config.authentication = config.get('authentication')
 
 exports.setupApp = (done) ->
 	app = koa()

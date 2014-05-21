@@ -76,6 +76,12 @@ Once all the prerequisites have been installed, configured and started, run the 
 
 `node --harmony lib/server.js`
 
+The server will by default start in development mode using the mongodb database 'openhim-development'. To start the serve in production mode use the following:
+
+`NODE_ENV=production node --harmony lib/server.js`
+
+This starts the server with production defaults, including the use of the production mongodb database called 'openhim'.
+
 Testing
 =======
 
@@ -83,15 +89,11 @@ This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing
 
 To run the tests using `npm` execute `npm test`.
 
-When running the tests using `cake` you will need [CoffeeScript](http://coffeescript.org/). Install CoffeeScript by executing the following:
+The project is build and tested using `cake`, if you want to run cake directly, you will need [CoffeeScript](http://coffeescript.org/). Install CoffeeScript by executing the following:
 
 `npm install -g coffee-script` (omit the `-g` if you don't wish to install globally) 
 
 See [the CoffeScript website](http://coffeescript.org/) for more further information.
-
-With a valid install of CoffeeScript, run the tests by executing the following:
-
-`cake test`
 
 You can have the CoffeeScript files in `src/` auto compile as you save them by running:
 

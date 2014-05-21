@@ -1,7 +1,5 @@
-mongo = require "mongodb"
 mongoose = require "mongoose"
 Schema = mongoose.Schema
-config = require "../config"
 
 ClientSchema = new Schema
     "clientID":	{ type: String, required: true }
