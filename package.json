@@ -13,7 +13,7 @@
     "q": "1.0.1",
     "koa-basic-auth": "~1.1.1",
     "basic-auth": "0.0.1",
-    "mongoose": "~3.8.8",
+    "mongoose": "3.8.8",
     "koa-body-parser": "1.0.0",
     "request": "~2.34.0",
     "winston": "0.7.3",
