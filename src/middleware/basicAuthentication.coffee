@@ -2,7 +2,6 @@ auth = require 'basic-auth'
 Q = require "q"
 Client = require("../model/clients").Client
 logger = require "winston"
-config = require "../config"
 crypto = require "crypto"
 
 # Note that it would be far better to use the node.bcrypt.js lib
