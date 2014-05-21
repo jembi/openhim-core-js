@@ -1,5 +1,3 @@
-MongoClient = require('mongodb').MongoClient;
-config = require "../config"
 transactions = require "../model/transactions"
 logger = require "winston"
 
