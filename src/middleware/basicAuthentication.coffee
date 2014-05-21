@@ -3,11 +3,30 @@ Q = require "q"
 Client = require("../model/clients").Client
 logger = require "winston"
 config = require "../config"
+crypto = require "crypto"
 
 # Note that it would be far better to use the node.bcrypt.js lib
 # https://github.com/ncb000gt/node.bcrypt.js/
 # Unfortunately it hasn't been ported to node 0.11.x yet
 bcrypt = require "bcrypt-nodejs"
+
+
+bcryptCompare = (pass, client, callback) -> bcrypt.compare pass, client.passwordHash, callback
+
+cryptoCompare = (pass, client, callback) ->
+	hash = crypto.createHash client.passwordAlgorithm
+	hash.update pass
+	hash.update client.passwordSalt
+	if hash.digest('hex') == client.hash
+		callback null, true
+	else
+		callback null, false
+
+comparePasswordWithClientHash = (pass, client, callback) ->
+	if client.passwordAlgorithm in crypto.getHashes()
+		cryptoCompare pass, client, callback
+	else
+		bcryptCompare pass, client, callback
 
 
 exports.authenticateUser = (ctx, done) ->
@@ -18,7 +37,7 @@ exports.authenticateUser = (ctx, done) ->
 			return done err if err
 
 			if client
-				bcrypt.compare user.pass, client.passwordHash, (err, res) ->
+				comparePasswordWithClientHash user.pass, client, (err, res) ->
 					return done err if err
 
 					if res
