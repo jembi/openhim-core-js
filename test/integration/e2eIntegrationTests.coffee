@@ -37,9 +37,9 @@ describe "e2e Integration Tests", ->
 						domain: "test-client.jembi.org"
 						name: "TEST Client"
 						roles:
-							[ 
+							[
 								"OpenMRS_PoC"
-								"PoC" 
+								"PoC"
 							]
 						passwordHash: ""
 						cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
@@ -117,8 +117,8 @@ describe "e2e Integration Tests", ->
 								"OpenMRS_PoC"
 								"PoC" 
 							]
-						passwordHash: "password"
-						cert: ""					
+						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+						cert: ""
 
 					client = new Client testAppDoc
 					client.save (error, newAppDoc) ->

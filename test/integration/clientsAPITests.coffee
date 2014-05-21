@@ -10,17 +10,17 @@ describe "API Integration Tests", ->
 			clientID: "YUIAIIIICIIAIA"
 			domain: "him.jembi.org"
 			name: "OpenMRS Ishmael instance"
-			roles: [ 
+			roles: [
 					"OpenMRS_PoC"
-					"PoC" 
+					"PoC"
 				]
-			passwordHash: "842j3j8m232n28u32"
+			passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 			cert: "8fajd89ada"
 
 		afterEach (done) ->
 			server.stop ->
 				Client.remove ->
-					done()				
+					done()
 
 		describe ".addClient", ->
 
@@ -41,7 +41,7 @@ describe "API Integration Tests", ->
 									client.name.should.equal "OpenMRS Ishmael instance"
 									client.roles[0].should.equal "OpenMRS_PoC"
 									client.roles[1].should.equal "PoC"
-									client.passwordHash.should.equal "842j3j8m232n28u32"
+									client.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 									client.cert.should.equal "8fajd89ada"
 									done()
 			
@@ -51,12 +51,12 @@ describe "API Integration Tests", ->
 				clientID: "Zambia_OpenHIE_Instance"
 				domain: "www.zedmusic-unique.co.zw"
 				name: "OpenHIE NodeJs"
-				roles: [ 
+				roles: [
 						"test_role_PoC"
-						"monitoring" 
+						"monitoring"
 					]
-				passwordHash: "67278372732jhfhshs"
-				cert: ""					
+				passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+				cert: ""
 
 			it "should return client with specified domain", (done) ->
 				client = new Client clientTest
@@ -75,7 +75,7 @@ describe "API Integration Tests", ->
 									res.body.name.should.equal "OpenHIE NodeJs"
 									res.body.roles[0].should.equal "test_role_PoC"
 									res.body.roles[1].should.equal "monitoring"
-									res.body.passwordHash.should.equal "67278372732jhfhshs"
+									res.body.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 									res.body.cert.should.equal ""
 									done()
 
@@ -84,11 +84,11 @@ describe "API Integration Tests", ->
 				clientID: "Botswana_OpenHIE_Instance"
 				domain: "www.zedmusic.co.zw"
 				name: "OpenHIE NodeJs"
-				roles: [ 
+				roles: [
 						"test_role_PoC"
-						"analysis_POC" 
+						"analysis_POC"
 					]
-				passwordHash: "njdjasjajjudq98892"
+				passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 				cert: "12345"
 			it  "should return all clients ", (done) ->
 				Client.count (err, countBefore)->
@@ -122,11 +122,11 @@ describe "API Integration Tests", ->
 					clientID: clientID
 					domain: "www.zedmusic.co.zw"
 					name: "OpenHIE NodeJs"
-					roles: [ 
+					roles: [
 							"test_role_PoC"
-							"analysis_POC" 
+							"analysis_POC"
 						]
-					passwordHash: "njdjasjajjudq98892"
+					passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 					cert: "12345"
 				client = new Client testDocument
 				client.save (error, testDoc) ->
@@ -136,7 +136,7 @@ describe "API Integration Tests", ->
 						roles: 	[
 									"clientTest_update"
 								]
-						passwordHash: "kakakakakaka"
+						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 						name: "Devil_may_Cry"
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
@@ -149,7 +149,7 @@ describe "API Integration Tests", ->
 								else
 									Client.findOne { clientID: clientID }, (error, clientDoc) ->
 										clientDoc.roles[0].should.equal "clientTest_update"
-										clientDoc.passwordHash.should.equal "kakakakakaka"
+										clientDoc.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 										clientDoc.name.should.equal "Devil_may_Cry"
 									done()
 
@@ -159,16 +159,16 @@ describe "API Integration Tests", ->
 					clientID: "Jembi_OpenHIE_Instance"
 					domain: "www.jembi.org"
 					name: "OpenHIE NodeJs"
-					roles: [ 
+					roles: [
 							"test_role_PoC"
-							"analysis_POC" 
+							"analysis_POC"
 						]
-					passwordHash: "njdjasjajjudq98892"
+					passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 					cert: "1098765"
 				client = new Client docTestRemove
 				client.save (error, testDoc) ->
 					should.not.exist(error)	
-					Client.count (err, countBefore) ->				
+					Client.count (err, countBefore) ->
 						server.start null, null, 8080,  ->
 							request("http://localhost:8080")
 								.del("/clients/Jembi_OpenHIE_Instance")
