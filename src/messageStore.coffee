@@ -1,5 +1,5 @@
 MongoClient = require('mongodb').MongoClient;
-config = require './config'
+config = require './config/config'
 config.mongo = config.get('mongo')
 
 exports.Transaction = (status,applicationId,request,response,routes,orchestrations,properties) ->

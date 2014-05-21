@@ -5,7 +5,7 @@ messageStore = require './messageStore'
 basicAuthentication = require './basicAuthentication'
 tlsAuthentication = require './tlsAuthentication'
 authorisation = require './authorisation'
-config = require './config'
+config = require './config/config'
 config.authentication = config.get('authentication')
 
 exports.setupApp = (done) ->

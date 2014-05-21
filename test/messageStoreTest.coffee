@@ -3,7 +3,7 @@ sinon = require "sinon"
 http = require "http"
 messageStore = require "../lib/messageStore"
 MongoClient = require('mongodb').MongoClient
-config = require '../lib/config'
+config = require '../lib/config/config'
 config.mongo = config.get('mongo')
 
 collection = null

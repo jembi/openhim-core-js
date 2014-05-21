@@ -1,7 +1,7 @@
 mongo = require 'mongodb'
 mongoose = require 'mongoose'
 Schema = mongoose.Schema
-config = require './config'
+config = require './config/config'
 config.mongo = config.get('mongo')
 
 mongoose.connect config.mongo.url

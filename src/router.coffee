@@ -1,8 +1,8 @@
 http = require 'http'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
-Q = require "q"
-config = require "./config"
+Q = require 'q'
+config = require './config/config'
 config.mongo = config.get('mongo')
 
 channelsCollection = null
