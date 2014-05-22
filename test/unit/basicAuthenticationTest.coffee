@@ -41,6 +41,12 @@ shaClient =
 
 
 describe "Basic Auth", ->
+	before (done) ->
+		Client.remove({}, done)
+
+	afterEach (done) ->
+		Client.remove({}, done)
+
 	describe "with no credentials", ->
 		it "ctx.authenticated should not exist", (done) ->
 			ctx = buildEmptyCtx()
