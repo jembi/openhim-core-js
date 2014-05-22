@@ -67,6 +67,11 @@ exports.updateClient = `function *updateClient(clientId) {
 	var clientId = unescape(clientId);
 	var clientData = this.request.body;
 
+	//Ignore _id if it exists (update is by clientID)
+	if (typeof clientData._id !== "undefined" && clientData._id !== null) {
+		delete clientData._id;
+	}
+
 	try {
 		yield Client.findOneAndUpdate({ clientID: clientId }, clientData).exec();
 		this.body = "Successfully updated client."

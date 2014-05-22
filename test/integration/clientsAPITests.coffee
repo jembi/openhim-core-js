@@ -163,18 +163,19 @@ describe "API Integration Tests", ->
 													done()
 
 		describe  ".updateClient", ->
-			it 	"should update the specified client ", (done) ->
-				clientID = "Botswana_OpenHIE_Instance"
-				testDocument =
-					clientID: clientID
-					domain: "www.zedmusic.co.zw"
-					name: "OpenHIE NodeJs"
-					roles: [
-							"test_role_PoC"
-							"analysis_POC"
-						]
-					passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-					cert: "12345"
+			clientID = "Botswana_OpenHIE_Instance"
+			testDocument =
+				clientID: clientID
+				domain: "www.zedmusic.co.zw"
+				name: "OpenHIE NodeJs"
+				roles: [
+						"test_role_PoC"
+						"analysis_POC"
+					]
+				passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+				cert: "12345"
+
+			it "should update the specified client ", (done) ->
 				client = new Client testDocument
 				client.save (error, testDoc) ->
 					should.not.exist (error)
@@ -190,7 +191,34 @@ describe "API Integration Tests", ->
 							.put("/clients/#{clientID}")
 							.send(updates)
 							.expect(200)
-							.end (err, res) ->													
+							.end (err, res) ->
+								if err
+									done err
+								else
+									Client.findOne { clientID: clientID }, (error, clientDoc) ->
+										clientDoc.roles[0].should.equal "clientTest_update"
+										clientDoc.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+										clientDoc.name.should.equal "Devil_may_Cry"
+									done()
+
+			it "should update successfully if the _id field is present in update, ignoring it", (done) ->
+				client = new Client testDocument
+				client.save (error, testDoc) ->
+					should.not.exist (error)
+
+					updates =
+						_id: "not_a_real_id"
+						roles: 	[
+									"clientTest_update"
+								]
+						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+						name: "Devil_may_Cry"
+					server.start null, null, 8080,  ->
+						request("http://localhost:8080")
+							.put("/clients/#{clientID}")
+							.send(updates)
+							.expect(200)
+							.end (err, res) ->
 								if err
 									done err
 								else
