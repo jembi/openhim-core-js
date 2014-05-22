@@ -44,7 +44,54 @@ describe "API Integration Tests", ->
 									client.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 									client.cert.should.equal "8fajd89ada"
 									done()
-			
+
+		describe ".getClient", ->
+			clientTest =
+				clientID: "testClient"
+				domain: "www.zedmusic-unique.co.zw"
+				name: "OpenHIE NodeJs"
+				roles: [
+						"test_role_PoC"
+						"monitoring"
+					]
+				passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+				cert: ""
+
+			beforeEach (done) ->
+				client = new Client clientTest
+				client.save (err, client) ->
+					done err if err
+					done()
+
+			it "should get client by clientId and return status 200", (done) ->
+				server.start null, null, 8080,  ->
+					request("http://localhost:8080")
+						.get("/clients/testClient")
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								res.body.clientID.should.equal "testClient"
+								res.body.domain.should.equal "www.zedmusic-unique.co.zw"
+								res.body.name.should.equal "OpenHIE NodeJs"
+								res.body.roles[0].should.equal "test_role_PoC"
+								res.body.roles[1].should.equal "monitoring"
+								res.body.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+								res.body.cert.should.equal ""
+								done()
+
+			it "should return status 404 if not found", (done) ->
+				server.start null, null, 8080,  ->
+					request("http://localhost:8080")
+						.get("/clients/nonexistent")
+						.expect(404)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								done()
+
 
 		describe ".findClientByDomain(domain)", ->
 			clientTest =

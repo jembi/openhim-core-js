@@ -19,7 +19,7 @@ exports.setupApp = (done) ->
 	
 	# Define the api routes
 	app.use route.get '/clients', clients.getClients
-	app.use route.get '/clients/:clientId', clients.findClientById
+	app.use route.get '/clients/:clientId', clients.getClient
 	app.use route.post '/clients', clients.addClient
 	app.use route.get '/clients/domain/:domain', clients.findClientByDomain
 	app.use route.put '/clients/:clientId', clients.updateClient
