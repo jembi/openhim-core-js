@@ -16,7 +16,7 @@ cryptoCompare = (pass, client, callback) ->
 	hash = crypto.createHash client.passwordAlgorithm
 	hash.update pass
 	hash.update client.passwordSalt
-	if hash.digest('hex') == client.hash
+	if hash.digest('hex') == client.passwordHash
 		callback null, true
 	else
 		callback null, false
