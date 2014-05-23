@@ -8,6 +8,6 @@
   },
   "authentication": {
     "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": true
+    "enableBasicAuthentication": false
   }
 }
