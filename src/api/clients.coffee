@@ -12,7 +12,7 @@ exports.addClient = `function *addClient(){
 		var client = new Client(clientData);
 		var result = yield Q.ninvoke(client, 'save');
 		
-		this.body = result;
+		this.body = 'Client successfully created';
 		this.status = 201;
 	} catch(e) {
 		logger.error('Could not add a client via the API: ' + e);
