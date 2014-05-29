@@ -103,9 +103,9 @@ describe "MessageStore", ->
 			setRes.header = [
 								testHeader: "value"
 							]
-			setRes.body = "<HTTP response body>"
+			setRes.body = new Buffer "<HTTP response body>"
 			
-			ctx.res = setRes
+			ctx.response = setRes
 
 			messageStore.storeTransaction ctx, (err, storedTrans) ->
 				ctx.transactionId = storedTrans._id
