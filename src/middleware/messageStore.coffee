@@ -38,7 +38,7 @@ exports.storeResponse = (ctx, done) ->
 	res =
 		status: ctx.response.status
 		headers: ctx.response.header
-		body: if ctx.response.body is undefined then "" else ctx.response.body.toString()
+		body: if not ctx.response.body then "" else ctx.response.body.toString()
 
 	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status }, (err, tx) ->
 		if err
