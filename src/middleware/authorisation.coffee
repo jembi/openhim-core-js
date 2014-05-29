@@ -1,10 +1,10 @@
-router = require "../middleware/router"
+Channel = require("../model/channels").Channel
 Q = require "q"
 logger = require "winston"
 
 exports.authorise = (ctx, done) ->
 	ctx.authorisedChannels = []
-	router.getChannels (err, channels) ->
+	Channel.find {}, (err, channels) ->
 		for channel in channels
 			pat = new RegExp channel.urlPattern
 			if pat.test ctx.request.url

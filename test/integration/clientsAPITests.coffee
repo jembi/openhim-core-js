@@ -226,7 +226,7 @@ describe "API Integration Tests", ->
 										clientDoc.roles[0].should.equal "clientTest_update"
 										clientDoc.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 										clientDoc.name.should.equal "Devil_may_Cry"
-									done()
+										done()
 
 		describe ".removeClient", ->
 			it  "should remove an client with specified clientID", (done) ->

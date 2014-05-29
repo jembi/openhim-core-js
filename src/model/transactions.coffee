@@ -18,13 +18,13 @@ ResponseDef =
 	"timestamp":{ type: Date }
 
 # Route Schema
-RouteSchema = new Schema
+RouteMetadataSchema = new Schema
     "name" :{ type: String, required: true }
     "request": RequestDef
     "response": ResponseDef
 
-# Orchestrations Schema
-OrchestrationSchema = new Schema
+# OrchestrationMetadata Schema
+OrchestrationMetadataSchema = new Schema
     "name" :{ type: String, required: true }
     "request": RequestDef
     "response": ResponseDef
@@ -34,12 +34,12 @@ TransactionSchema = new Schema
     "clientID": { type: String, required: true } 
     "request": RequestDef
     "response": ResponseDef
-    "routes": [ RouteSchema ]    
-    "orchestrations": [ OrchestrationSchema ]    
+    "routes": [ RouteMetadataSchema ]    
+    "orchestrations": [ OrchestrationMetadataSchema ]    
     "properties": { type: Object }
     "status": { type: String, required:true, enum: ["Processing","Failed","Completed"] } 
 
 #compile schema into Model    
-exports.Route = mongoose.model 'Route', RouteSchema
-exports.Orchestration = mongoose.model 'Orchestration', OrchestrationSchema
+exports.RouteMetadata = mongoose.model 'RouteMetadata', RouteMetadataSchema
+exports.OrchestrationMetadata = mongoose.model 'OrchestrationMetadata', OrchestrationMetadataSchema
 exports.Transaction = mongoose.model 'Transaction', TransactionSchema
