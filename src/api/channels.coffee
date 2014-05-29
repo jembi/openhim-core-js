@@ -1,4 +1,4 @@
-router = require '../middleware/router'
+Channel = require('../model/channels').Channel
 Q = require 'q'
 
 ###
@@ -9,16 +9,8 @@ exports.getChannels = `function *getChannels() {
 	// Get the request query-parameters
 	var uriPattern = this.request.query.uriPattern;
 
-	// TODO! Use 'uriPattern': (A regex pattern to filter the channel URI by)
-	console.log("TODO! [api.channels.getChannels] Implement '" + uriPattern + "': (A regex pattern to filter the channel URI by)");
-	
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	var getChannels = Q.denodeify(router.getChannels);
-
 	try {
-		// Try to get all the channels and set the result (Call the function that emits a promise and Koa will wait for the function to complete)
-		//this.body = yield getChannels(uriPattern); //TODO! Use the uri-pattern
-		this.body = yield getChannels();
+		this.body = yield Channel.find({}).exec();
 	}
 	catch (e) {
 		// Error! So inform the user
@@ -33,14 +25,11 @@ exports.getChannels = `function *getChannels() {
 exports.addChannel = `function *addChannel() {
 
 	// Get the values to use
-	var channel = this.request.body;
-	
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	var addChannel = Q.denodeify(router.addChannel);
+	var channelData = this.request.body;
 
 	try {
-		// Try to add the new channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		var result = yield addChannel(channel);
+		var channel = new Channel(channelData);
+		var result = yield Q.ninvoke(client, 'save');
 
 		// All ok! So set the result
 		this.body = 'Channel successfully created';
@@ -61,12 +50,9 @@ exports.getChannel = `function *getChannel(channelName) {
 	// Get the values to use
 	var channel_name = unescape(channelName);
 
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	var getChannel = Q.denodeify(router.getChannel);
-
 	try {
 		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		var result = yield getChannel(channel_name);
+		var result = yield Channel.find({ name: channel_name }).exec();
 
 		// Test if the result if valid
 		if (result === null) {
@@ -90,17 +76,12 @@ exports.updateChannel = `function *updateChannel(channelName) {
 
 	// Get the values to use
 	var channel_name = unescape(channelName);
-	var channel = this.request.body;
-
-	// TODO! Use 'channel_name' or 'channel_id'
-	console.log("TODO! [api.channels.updateChannel] Improve! Channel name '" + channel_name + "' is not currently used.)");
-
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	var updateChannel = Q.denodeify(router.updateChannel);
+	var channelData = this.request.body;
 
 	try {
-		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		yield updateChannel(channel_name, channel);
+		var channel = new Channel(channelData);
+
+		yield Channel.findOneAndUpdate({ name: channel_name }, channel).exec();
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully updated';
@@ -120,12 +101,9 @@ exports.removeChannel = `function *removeChannel(channelName) {
 	// Get the values to use
 	var channel_name = unescape(channelName);
 
-	// Create a reusable wrapper to convert a function that use Node.js callback pattern
-	var removeChannel = Q.denodeify(router.removeChannel);
-
 	try {
 		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		yield removeChannel(channel_name);
+		yield Channel.remove({ name: channel_name }).exec();
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully deleted';

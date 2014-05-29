@@ -4,7 +4,7 @@ fs = require "fs"
 request = require "supertest"
 config = require "../../lib/config/config"
 config.authentication = config.get('authentication')
-router = require "../../lib/middleware/router"
+Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
 testUtils = require "../testUtils"
 server = require "../../lib/server"
@@ -22,16 +22,17 @@ describe "e2e Integration Tests", ->
 				config.authentication.enableBasicAuthentication = false
 
 				#Setup some test data
-				channel1 =
+				channel1 = new Channel
 					name: "TEST DATA - Mock endpoint"
 					urlPattern: "test/mock"
 					allow: [ "PoC" ]
 					routes: [
+								name: "test route"
 								host: "localhost"
 								port: 1232
 								primary: true
 							]
-				router.addChannel channel1, (err) ->
+				channel1.save (err) ->
 					testAppDoc =
 						clientID: "testApp"
 						domain: "test-client.jembi.org"
@@ -50,7 +51,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 			after (done) ->
-				router.removeChannel "TEST DATA - Mock endpoint", ->
+				Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
 					Client.remove { clientID: "testApp" }, ->
 						mockServer.close ->
 							done()
@@ -98,16 +99,17 @@ describe "e2e Integration Tests", ->
 				config.authentication.enableBasicAuthentication = true
 
 				#Setup some test data
-				channel1 =
+				channel1 = new Channel
 					name: "TEST DATA - Mock endpoint"
 					urlPattern: "test/mock"
 					allow: [ "PoC" ]
 					routes: [
+								name: "test route"
 								host: "localhost"
 								port: 1232
 								primary: true
 							]
-				router.addChannel channel1, (err) ->
+				channel1.save (err) ->
 					testAppDoc =
 						clientID: "testApp"
 						domain: "openhim.jembi.org"
@@ -126,7 +128,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 			after (done) ->
-				router.removeChannel "TEST DATA - Mock endpoint", ->
+				Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
 					Client.remove { clientID: "testApp" }, ->
 						mockServer.close ->
 							done()
