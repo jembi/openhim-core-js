@@ -1,5 +1,6 @@
 Channel = require('../model/channels').Channel
 Q = require 'q'
+logger = require 'winston'
 
 ###
 # Retrieves the list of active channels
@@ -14,6 +15,7 @@ exports.getChannels = `function *getChannels() {
 	}
 	catch (e) {
 		// Error! So inform the user
+		logger.error('Could not fetch all channels via the API: ' + e);
 		this.body = e.message;
 		this.status = 500;
 	}
@@ -29,7 +31,7 @@ exports.addChannel = `function *addChannel() {
 
 	try {
 		var channel = new Channel(channelData);
-		var result = yield Q.ninvoke(client, 'save');
+		var result = yield Q.ninvoke(channel, 'save');
 
 		// All ok! So set the result
 		this.body = 'Channel successfully created';
@@ -37,6 +39,7 @@ exports.addChannel = `function *addChannel() {
 	}
 	catch (e) {
 		// Error! So inform the user
+		logger.error('Could not add channel via the API: ' + e);
 		this.body = e.message;
 		this.status = 400;
 	}
@@ -52,7 +55,7 @@ exports.getChannel = `function *getChannel(channelName) {
 
 	try {
 		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		var result = yield Channel.find({ name: channel_name }).exec();
+		var result = yield Channel.findOne({ name: channel_name }).exec();
 
 		// Test if the result if valid
 		if (result === null) {
@@ -64,6 +67,7 @@ exports.getChannel = `function *getChannel(channelName) {
 	}
 	catch (e) {
 		// Error! So inform the user
+		logger.error('Could not fetch channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
 		this.status = 500;
 	}
@@ -79,15 +83,14 @@ exports.updateChannel = `function *updateChannel(channelName) {
 	var channelData = this.request.body;
 
 	try {
-		var channel = new Channel(channelData);
-
-		yield Channel.findOneAndUpdate({ name: channel_name }, channel).exec();
+		yield Channel.findOneAndUpdate({ name: channel_name }, channelData).exec();
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully updated';
 	}
 	catch (e) {
 		// Error! So inform the user
+		logger.error('Could not update channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
 		this.status = 500;
 	}
@@ -110,6 +113,7 @@ exports.removeChannel = `function *removeChannel(channelName) {
 	}
 	catch (e) {
 		// Error! So inform the user
+		logger.error('Could not remove channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
 		this.status = 500;
 	}
