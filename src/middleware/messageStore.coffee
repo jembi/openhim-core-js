@@ -32,13 +32,13 @@ exports.storeResponse = (ctx, done) ->
 	logger.info 'Storing response for transaction: ' + ctx.transactionId
 
 	status = transactionStatus.FAILED
-	if 200 <= ctx.res.status <= 299
+	if 200 <= ctx.response.status <= 299
 		status = transactionStatus.COMPLETED
 
 	res =
-		status: ctx.res.status
-		headers: ctx.res.header
-		body: ctx.res.body
+		status: ctx.response.status
+		headers: ctx.response.header
+		body: if not ctx.response.body then "" else ctx.response.body.toString()
 
 	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status }, (err, tx) ->
 		if err
