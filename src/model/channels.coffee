@@ -6,7 +6,7 @@ RouteSchema = new Schema
 	"host": 	{ type: String, required: true }
 	"port": 	{ type: String, required: true }
 	"path": 	{ type: String, required: false }
-	"primary": 	{ type: String, required: false }
+	"primary": 	{ type: Boolean, required: false }
 	"username": { type: String, required: false }
 	"password": { type: String, required: false }
 
