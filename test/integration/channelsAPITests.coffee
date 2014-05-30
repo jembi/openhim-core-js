@@ -28,12 +28,11 @@ describe "API Integration Tests", ->
 						primary: true
 					]
 
-		channel1.save ->
-		channel2.save ->
-
 		before (done) ->
-			server.start null, null, 8080, ->
-				done()
+			channel1.save ->
+				channel2.save ->
+					server.start null, null, 8080, ->
+						done()
 
 		it 'should fetch all channels', (done) ->
 			request("http://localhost:8080")
