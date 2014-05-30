@@ -82,6 +82,11 @@ exports.updateChannel = `function *updateChannel(channelName) {
 	var channel_name = unescape(channelName);
 	var channelData = this.request.body;
 
+	//Ignore _id if it exists (update is by channel_name)
+	if (channelData._id) {
+		delete channelData._id;
+	}
+
 	try {
 		yield Channel.findOneAndUpdate({ name: channel_name }, channelData).exec();
 

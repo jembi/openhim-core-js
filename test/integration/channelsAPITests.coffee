@@ -87,6 +87,7 @@ describe "API Integration Tests", ->
 		it 'should update a specific channel by name', (done) ->
 
 			updates =
+				_id: "thisShouldBeIgnored"
 				urlPattern: "test/changed"
 				allow: [ "PoC", "Test1", "Test2", "another" ]
 				routes: [
