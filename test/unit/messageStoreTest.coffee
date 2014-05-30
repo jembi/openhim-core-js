@@ -2,26 +2,17 @@ should = require "should"
 sinon = require "sinon"
 http = require "http"
 messageStore = require "../../lib/middleware/messageStore"
-MongoClient = require('mongodb').MongoClient
-config = require "../../lib/config/config"
-transactions = require "../../lib/model/transactions"
+Transaction = require("../../lib/model/transactions").Transaction
 
-collection = null
 transactionId = null
-db = null
 
 beforeEach (done) ->
-	MongoClient.connect config.mongo.url, {native_parser:true}, (error,db) ->
-		if error
-			return done error
-		root = exports ? that 
-		db.collection "transactions", (err, coll) ->
-			coll.remove (err, doc) ->
-			collection = coll
-			done()
+	Transaction.remove {}, ->
+		done();
+
 afterEach (done)->
-	collection.remove (err, doc) ->
-		done()
+	Transaction.remove {}, ->
+		done();
 
 describe "MessageStore", ->
 	req = new Object()
@@ -86,7 +77,7 @@ describe "MessageStore", ->
 		it "should be able to save the transaction in the db", (done) ->
 			messageStore.storeTransaction ctx, (error, result) ->
 				should.not.exist(error)
-				transactions.Transaction.findOne { '_id': result._id }, (error, trans) ->
+				Transaction.findOne { '_id': result._id }, (error, trans) ->
 					should.not.exist(error)
 					(trans != null).should.be.true
 					trans.clientID.should.equal "Master_OpenMRS_Instance"
@@ -111,7 +102,7 @@ describe "MessageStore", ->
 				ctx.transactionId = storedTrans._id
 				messageStore.storeResponse ctx, (err2) ->
 					should.not.exist(err2)
-					transactions.Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
 						should.not.exist(err3)
 						(trans != null).should.true
 						trans.response.status.should.equal 201
