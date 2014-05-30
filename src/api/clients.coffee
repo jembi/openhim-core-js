@@ -68,7 +68,7 @@ exports.updateClient = `function *updateClient(clientId) {
 	var clientData = this.request.body;
 
 	//Ignore _id if it exists (update is by clientID)
-	if (typeof clientData._id !== "undefined" && clientData._id !== null) {
+	if (clientData._id) {
 		delete clientData._id;
 	}
 

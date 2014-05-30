@@ -181,6 +181,7 @@ describe "API Integration Tests", ->
 					should.not.exist (error)
 
 					updates =
+						_id: "thisShouldBeIgnored"
 						roles: 	[
 									"clientTest_update"
 								]
