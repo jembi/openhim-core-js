@@ -51,6 +51,6 @@ exports.storeResponse = (ctx, done) ->
 
 exports.store =  `function *storeMiddleware(next) {
 		exports.storeTransaction(this, function(){});
-		yield next
+		yield next;
 		exports.storeResponse(this, function(){});
 	}`

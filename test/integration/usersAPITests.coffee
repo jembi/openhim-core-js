@@ -2,6 +2,7 @@ should = require 'should'
 request = require 'supertest'
 server = require '../../lib/server'
 User = require('../../lib/model/users').User
+auth = require("../testUtils").auth
 
 describe 'API Integration Tests', ->
 
@@ -11,7 +12,7 @@ describe 'API Integration Tests', ->
 			firstname: 'Ryan'
 			surname: 'Chrichton'
 			email: 'r..@jembi.org'
-			passwordAlgorithm: 'sha256'
+			passwordAlgorithm: 'sha512'
 			passwordHash: '796a5a8e-4e44-4d9f-9e04-c27ec6374ffa'
 			passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7'
 			groups: [ 'admin', 'RHIE' ]
@@ -20,20 +21,32 @@ describe 'API Integration Tests', ->
 			firstname: 'Bill'
 			surname: 'Murray'
 			email: 'bfm@crazy.net'
-			passwordAlgorithm: 'sha256'
+			passwordAlgorithm: 'sha512'
 			passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e'
 			passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 			groups: [ 'HISP' ]
 
+		authDetails = auth.getAuthDetails()
+
 		before (done) ->
 			user1.save ->
 				user2.save ->
-					server.start null, null, 8080, ->
-						done()
+					auth.setupTestUser (err) ->
+						server.start null, null, 8080, ->
+							done()
+
+		after (done) ->
+			User.remove {}, ->
+				server.stop ->
+					done()
 
 		it 'should return the requested users salt', (done) ->
 			request("http://localhost:8080")
 				.get("/authenticate/bfm@crazy.net")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.expect(200)
 				.end (err, res) ->
 					if err
@@ -46,12 +59,16 @@ describe 'API Integration Tests', ->
 		it 'should fetch all users', (done) ->
 			request("http://localhost:8080")
 				.get("/users")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.expect(200)
 				.end (err, res) ->
 					if err
 						done err
 					else
-						res.body.length.should.be.eql(2);
+						res.body.length.should.be.eql(3);
 						done()
 
 		it 'should add a new user', (done) ->
@@ -66,6 +83,10 @@ describe 'API Integration Tests', ->
 
 			request("http://localhost:8080")
 				.post("/users")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.send(newUser)
 				.expect(201)
 				.end (err, res) ->
@@ -88,6 +109,10 @@ describe 'API Integration Tests', ->
 
 			request("http://localhost:8080")
 				.put("/users/r..@jembi.org")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.send(updates)
 				.expect(200)
 				.end (err, res) ->
@@ -104,6 +129,10 @@ describe 'API Integration Tests', ->
 
 			request("http://localhost:8080")
 				.del("/users/bfm@crazy.net")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.expect(200)
 				.end (err, res) ->
 					if err
@@ -112,8 +141,3 @@ describe 'API Integration Tests', ->
 						User.find { name: "bfm@crazy.net" }, (err, users) ->
 							users.should.have.length 0
 							done();
-
-		after (done) ->
-			server.stop ->
-				User.remove {}, ->
-					done();

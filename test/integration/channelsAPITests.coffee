@@ -2,6 +2,7 @@ should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
 Channel = require("../../lib/model/channels").Channel
+auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
 
@@ -28,15 +29,25 @@ describe "API Integration Tests", ->
 						primary: true
 					]
 
+		authDetails = auth.getAuthDetails()
+
 		before (done) ->
 			channel1.save ->
 				channel2.save ->
-					server.start null, null, 8080, ->
-						done()
+					auth.setupTestUser ->
+						server.start null, null, 8080, ->
+							done()
 
 		it 'should fetch all channels', (done) ->
+
+			#console.log authDetails
+
 			request("http://localhost:8080")
 				.get("/channels")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.expect(200)
 				.end (err, res) ->
 					if err
@@ -59,6 +70,10 @@ describe "API Integration Tests", ->
 
 			request("http://localhost:8080")
 				.post("/channels")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.send(newChannel)
 				.expect(201)
 				.end (err, res) ->
@@ -74,6 +89,10 @@ describe "API Integration Tests", ->
 
 			request("http://localhost:8080")
 				.get("/channels/TestChannel1")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.expect(200)
 				.end (err, res) ->
 					if err
@@ -104,6 +123,10 @@ describe "API Integration Tests", ->
 
 			request("http://localhost:8080")
 				.put("/channels/TestChannel1")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.send(updates)
 				.expect(200)
 				.end (err, res) ->
@@ -121,6 +144,10 @@ describe "API Integration Tests", ->
 
 			request("http://localhost:8080")
 				.del("/channels/TestChannel1")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
 				.expect(200)
 				.end (err, res) ->
 					if err
@@ -132,5 +159,6 @@ describe "API Integration Tests", ->
 
 		after (done) ->
 			server.stop ->
-				Channel.remove {}, ->
-					done();
+				auth.cleanupTestUser ->
+					Channel.remove {}, ->
+						done();

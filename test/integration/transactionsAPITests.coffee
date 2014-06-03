@@ -2,6 +2,7 @@ should = require "should"
 request = require "supertest"
 Transaction = require("../../lib/model/transactions").Transaction
 server = require "../../lib/server"
+auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
 
@@ -48,6 +49,16 @@ describe "API Integration Tests", ->
 				property: "prop1", value: "prop1-value1"
 				property:"prop2", value: "prop-value1"
 
+		authDetails = auth.getAuthDetails()
+
+		before (done) ->
+			auth.setupTestUser (err) ->
+				done()
+
+		after (done) ->
+			auth.cleanupTestUser (err) ->
+				done()
+
 		afterEach (done) ->
 			server.stop ->
 				done()
@@ -58,6 +69,10 @@ describe "API Integration Tests", ->
 				server.start null, null, 8080,  ->
 					request("http://localhost:8080")
 						.post("/transactions")
+						.set("auth-username", authDetails.authUsername)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
 						.send(transactionData)
 						.expect(201)
 						.end (err, res) ->
@@ -99,6 +114,10 @@ describe "API Integration Tests", ->
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
 							.put("/transactions/#{transactionId}")
+							.set("auth-username", authDetails.authUsername)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
 							.send(updates)
 							.expect(200)
 							.end (err, res) ->													
@@ -137,6 +156,10 @@ describe "API Integration Tests", ->
 									server.start null, null, 8080,  ->
 										request("http://localhost:8080")
 											.get("/transactions")
+											.set("auth-username", authDetails.authUsername)
+											.set("auth-ts", authDetails.authTS)
+											.set("auth-salt", authDetails.authSalt)
+											.set("auth-token", authDetails.authToken)
 											.expect(200)
 											.end (err, res) ->
 												if err
@@ -155,6 +178,10 @@ describe "API Integration Tests", ->
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
 							.get("/transactions/#{transactionId}")
+							.set("auth-username", authDetails.authUsername)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
 							.expect(200)
 							.end (err, res) ->
 								if err
@@ -182,6 +209,10 @@ describe "API Integration Tests", ->
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
 							.get("/transactions/apps/#{appId}")
+							.set("auth-username", authDetails.authUsername)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
 							.expect(200)
 							.end (err, res) ->
 								if err
@@ -200,6 +231,10 @@ describe "API Integration Tests", ->
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
 							.del("/transactions/#{transactionId}")
+							.set("auth-username", authDetails.authUsername)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
 							.expect(200)
 							.end (err, res) ->
 								if err

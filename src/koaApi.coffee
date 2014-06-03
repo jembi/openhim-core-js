@@ -3,6 +3,7 @@ route = require 'koa-route'
 cors = require 'koa-cors'
 router = require './middleware/router'
 bodyParser = require 'koa-body-parser'
+authentication = require './api/authentication'
 users = require './api/users'
 clients = require './api/clients'
 transactions = require './api/transactions'
@@ -17,12 +18,13 @@ exports.setupApp = (done) ->
 	app.use cors()
 	app.use bodyParser()
 
-	# Authenticate the API request
-	#app.use authentication.authenticate
-	
-	# Define the api routes
+	# Expose the authenticate route before the auth middleware so that it is publically accessible
 	app.use route.get '/authenticate/:username', users.authenticate
 
+	# Authenticate the API request
+	app.use authentication.authenticate
+	
+	# Define the api routes
 	app.use route.get '/users', users.getUsers
 	app.use route.get '/users/:email', users.getUser
 	app.use route.post '/users', users.addUser

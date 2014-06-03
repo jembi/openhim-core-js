@@ -2,10 +2,13 @@ should = require "should"
 request = require "supertest"
 Client = require("../../lib/model/clients").Client
 server = require "../../lib/server"
+auth = require("../testUtils").auth
+testUtils = require "../testUtils"
 
 describe "API Integration Tests", ->
 
 	describe "Clients REST Api Testing", ->
+
 		testAppDoc =
 			clientID: "YUIAIIIICIIAIA"
 			domain: "him.jembi.org"
@@ -16,6 +19,16 @@ describe "API Integration Tests", ->
 				]
 			passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 			cert: "8fajd89ada"
+
+		authDetails = auth.getAuthDetails()
+
+		before (done) ->
+			auth.setupTestUser (err) ->
+				done()
+
+		after (done) ->
+			auth.cleanupTestUser (err) ->
+				done()
 
 		afterEach (done) ->
 			server.stop ->
@@ -29,6 +42,10 @@ describe "API Integration Tests", ->
 				server.start null, null, 8080,  ->
 					request("http://localhost:8080")
 						.post("/clients")
+						.set("auth-username", authDetails.authUsername)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
 						.send(testAppDoc)
 						.expect(201)
 						.end (err, res) ->
@@ -67,6 +84,10 @@ describe "API Integration Tests", ->
 				server.start null, null, 8080,  ->
 					request("http://localhost:8080")
 						.get("/clients/testClient")
+						.set("auth-username", authDetails.authUsername)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
 						.expect(200)
 						.end (err, res) ->
 							if err
@@ -85,6 +106,10 @@ describe "API Integration Tests", ->
 				server.start null, null, 8080,  ->
 					request("http://localhost:8080")
 						.get("/clients/nonexistent")
+						.set("auth-username", authDetails.authUsername)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
 						.expect(404)
 						.end (err, res) ->
 							if err
@@ -112,6 +137,10 @@ describe "API Integration Tests", ->
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
 							.get("/clients/domain/www.zedmusic-unique.co.zw")
+							.set("auth-username", authDetails.authUsername)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
 							.expect(200)
 							.end (err, res) ->
 								if err
@@ -154,6 +183,10 @@ describe "API Integration Tests", ->
 									server.start null, null, 8080,  ->
 										request("http://localhost:8080")
 											.get("/clients")
+											.set("auth-username", authDetails.authUsername)
+											.set("auth-ts", authDetails.authTS)
+											.set("auth-salt", authDetails.authSalt)
+											.set("auth-token", authDetails.authToken)
 											.expect(200)
 											.end (err, res) ->
 												if err
@@ -190,6 +223,10 @@ describe "API Integration Tests", ->
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
 							.put("/clients/#{clientID}")
+							.set("auth-username", authDetails.authUsername)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
 							.send(updates)
 							.expect(200)
 							.end (err, res) ->
@@ -217,6 +254,10 @@ describe "API Integration Tests", ->
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
 							.put("/clients/#{clientID}")
+							.set("auth-username", authDetails.authUsername)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
 							.send(updates)
 							.expect(200)
 							.end (err, res) ->
@@ -248,6 +289,10 @@ describe "API Integration Tests", ->
 						server.start null, null, 8080,  ->
 							request("http://localhost:8080")
 								.del("/clients/Jembi_OpenHIE_Instance")
+								.set("auth-username", authDetails.authUsername)
+								.set("auth-ts", authDetails.authTS)
+								.set("auth-salt", authDetails.authSalt)
+								.set("auth-token", authDetails.authToken)
 								.expect(200)
 								.end (err, res) ->
 									if err
