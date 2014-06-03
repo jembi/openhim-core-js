@@ -17,7 +17,7 @@ exports.testUser =
 	surname: 'User'
 	email: 'test@jembi.org'
 	passwordAlgorithm: 'sha512'
-	passwordHash: 'b401e404f262b764272e202dd4daae70c10dacd4f4e52f223c663800ddb49d30cc490000fc8d109c4b398c9ecfa372170192ca48d36747e589b64d9c33cdbdcc'
+	passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
 	passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 	groups: [ 'HISP' ]
 	# password is 'password'
@@ -39,7 +39,7 @@ exports.auth.getAuthDetails = () ->
 	tokenhash = crypto.createHash('sha512');
 	tokenhash.update(exports.testUser.passwordHash);
 	tokenhash.update(requestsalt);
-	tokenhash.update(authTS.toString());
+	tokenhash.update(authTS);
 
 	auth = 
 		authUsername: exports.testUser.email

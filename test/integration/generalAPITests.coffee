@@ -13,7 +13,7 @@ describe "API Integration Tests", ->
 			surname: 'Murray'
 			email: 'bfm@crazy.net'
 			passwordAlgorithm: 'sha512'
-			passwordHash: 'b401e404f262b764272e202dd4daae70c10dacd4f4e52f223c663800ddb49d30cc490000fc8d109c4b398c9ecfa372170192ca48d36747e589b64d9c33cdbdcc'
+			passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
 			passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 			groups: [ 'HISP' ]
 			# password is 'password'
@@ -22,6 +22,11 @@ describe "API Integration Tests", ->
 			server.start null, null, 8080, ->
 				user.save ->
 					done()
+
+		after (done) ->
+			User.remove {}, ->
+				server.stop ->
+					done();
 
 		it 'should set the cross-origin resource sharing headers', (done) ->
 			request("http://localhost:8080")
@@ -62,12 +67,12 @@ describe "API Integration Tests", ->
 						passwordhash.update('password');
 
 						# create tokenhash
-						authTS = new Date().toDateString()
+						authTS = new Date().toISOString()
 						requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
 						tokenhash = crypto.createHash('sha512');
 						tokenhash.update(passwordhash.digest('hex'));
 						tokenhash.update(requestsalt);
-						tokenhash.update(authTS.toString());
+						tokenhash.update(authTS);
 
 						request("http://localhost:8080")
 							.get("/channels")
@@ -99,12 +104,52 @@ describe "API Integration Tests", ->
 						passwordhash.update('password');
 
 						# create tokenhash
-						authTS = new Date().toDateString()
+						authTS = new Date().toISOString()
+						requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
+						tokenhash = crypto.createHash('sha512');
+						hashStr = passwordhash.digest('hex')
+						tokenhash.update(hashStr);
+						tokenhash.update(requestsalt);
+						tokenhash.update(authTS);
+
+						request("http://localhost:8080")
+							.get("/channels")
+							.set("auth-username", "bfm@crazy.net")
+							.set("auth-ts", authTS)
+							.set("auth-salt", requestsalt)
+							.set("auth-token", tokenhash.digest('hex'))
+							.expect(200)
+							.end (err, res) ->
+								if err
+									done err
+								else
+									done()
+
+		it 'should disallow access if the request is too old', (done) ->
+
+			request("http://localhost:8080")
+				.get("/authenticate/bfm@crazy.net")
+				.expect(200)
+				.end (err, res) ->
+					if err
+						done err
+					else
+						passwordsalt = res.body.salt
+
+						# create passwordhash
+						passwordhash = crypto.createHash('sha512');
+						passwordhash.update(passwordsalt);
+						passwordhash.update('password');
+
+						# create tokenhash
+						authTS = new Date()
+						authTS.setSeconds(authTS.getSeconds() - 3);
+						authTS = authTS.toISOString()
 						requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
 						tokenhash = crypto.createHash('sha512');
 						tokenhash.update(passwordhash.digest('hex'));
 						tokenhash.update(requestsalt);
-						tokenhash.update(authTS.toString());
+						tokenhash.update(authTS);
 
 						request("http://localhost:8080")
 							.get("/channels")
@@ -118,8 +163,3 @@ describe "API Integration Tests", ->
 									done err
 								else
 									done()
-			
-		after (done) ->
-			User.remove {}, ->
-				server.stop ->
-					done();

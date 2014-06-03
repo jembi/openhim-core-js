@@ -17,7 +17,7 @@ exports.authenticate = `function *authenticate(next) {
 	to.setSeconds(to.getSeconds() + 2);
 	var from = new Date();
 	from.setSeconds(from.getSeconds() - 2);
-	
+
 	if (requestDate < from || requestDate > to) {
 		// request expired
 		this.status = 401;
