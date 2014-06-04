@@ -68,7 +68,8 @@ describe 'API Integration Tests', ->
 					if err
 						done err
 					else
-						res.body.length.should.be.eql(3);
+						# user1, user2, the API test user and the root user
+						res.body.length.should.be.eql(4);
 						done()
 
 		it 'should add a new user', (done) ->
