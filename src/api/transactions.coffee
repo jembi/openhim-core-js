@@ -8,10 +8,8 @@ logger = require 'winston'
 exports.getTransactions = `function *getTransactions() {
 
 	var filtersObject = {};
-	
 
 	/*------------ Manipulate Request Parameters into filter object --------------*/
-	var filterVariablesUrl = this.request.url;
 	var filterVariablesUrl = this.request.url.replace("/transactions?", "");
 	filterVariables = filterVariablesUrl.split('&');
 
