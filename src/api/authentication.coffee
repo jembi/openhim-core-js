@@ -1,5 +1,5 @@
 User = require('../model/users').User
-crypto = require "crypto"
+crypto = require 'crypto'
 logger = require 'winston'
 
 exports.authenticate = `function *authenticate(next) {
@@ -20,6 +20,7 @@ exports.authenticate = `function *authenticate(next) {
 
 	if (requestDate < from || requestDate > to) {
 		// request expired
+		logger.info('API request made by ' +email+ ' from ' +this.request.host+ ' has expired, denying access');
 		this.status = 401;
 		return;
 	}
@@ -28,6 +29,7 @@ exports.authenticate = `function *authenticate(next) {
 
 	if (!user) {
 		// not authenticated - user not found
+		logger.info('No user exists for ' +email+ ', denying access to API, request originated from ' +this.request.host);
 		this.status = 401;
 		return;
 	}
@@ -39,9 +41,11 @@ exports.authenticate = `function *authenticate(next) {
 
 	if (hash.digest('hex') === authToken) {
 		// authenticated
+		logger.info('User ' +email+ ' made an authenticated requets to the API from ' +this.request.host);
 		yield next;
 	} else {
 		// not authenticated - token mismatch
+		logger.info('API token did not match expected value, denying access to API, the request was made by ' +email+ ' from ' +this.request.host);
 		this.status = 401;
 	}
 
