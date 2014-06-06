@@ -6,8 +6,50 @@ logger = require 'winston'
 # Retrieves the list of transactions
 ###
 exports.getTransactions = `function *getTransactions() {
-	try {
-		this.body = yield transactions.Transaction.find().exec();
+
+	var filtersObject = {};
+	
+
+	/*------------ Manipulate Request Parameters into filter object --------------*/
+	var filterVariablesUrl = this.request.url;
+	var filterVariablesUrl = this.request.url.replace("/transactions?", "");
+	filterVariables = filterVariablesUrl.split('&');
+
+	var urlParams = {};
+	for (i=0; i<filterVariables.length; i++) {
+		filterVariable = filterVariables[i].split('=');
+
+		//filterVariable[0] is the key to filter
+		//filterVariable[1] is the value to filter by
+		urlParams[filterVariable[0]] = filterVariable[1];
+	}
+
+	if(urlParams.filterStatus){
+		filtersObject['status'] = urlParams.filterStatus;
+	}
+
+	if(urlParams.filterEndpoint){
+		filtersObject['endpoint'] = urlParams.filterEndpoint;
+	}
+
+	if(urlParams.filterDateStart && urlParams.filterDateEnd){
+		filtersObject['request.timestamp'] = { $gt: urlParams.filterDateStart, $lt: urlParams.filterDateEnd };
+	}
+
+	if(urlParams.filterShowPage){
+		filterPage = urlParams.filterShowPage;
+	}
+
+	if(urlParams.filterShowLimit){
+		filterLimit = urlParams.filterShowLimit;
+	}
+
+	filterSkip = filterPage*filterLimit;
+	/*------------ Manipulate Request Parameters into filter object --------------*/
+	
+
+	try {		
+		this.body = yield transactions.Transaction.find(filtersObject).skip(filterSkip).limit(filterLimit).sort({ 'request.timestamp': -1 }).exec();
 	}catch (e){
 		this.message = e.message;
 		this.status = 500;
@@ -34,7 +76,7 @@ exports.addTransaction = `function *addTransaction() {
 
 }`
 
-
+0
 ###
 # Retrieves the details for a specific transaction
 ###
