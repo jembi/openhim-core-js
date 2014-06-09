@@ -6,8 +6,11 @@ logger = require 'winston'
 # Retrieves the list of transactions
 ###
 exports.getTransactions = `function *getTransactions() {
-
 	var filtersObject = {};
+	filterSkip = 0;
+	filterPage = 0;
+	filterLimit = 10;
+
 
 	/*------------ Manipulate Request Parameters into filter object --------------*/
 	var filterVariablesUrl = this.request.url.replace("/transactions?", "");
@@ -31,7 +34,15 @@ exports.getTransactions = `function *getTransactions() {
 	}
 
 	if(urlParams.filterDateStart && urlParams.filterDateEnd){
-		filtersObject['request.timestamp'] = { $gt: urlParams.filterDateStart, $lt: urlParams.filterDateEnd };
+
+		startDate = new Date( urlParams.filterDateStart );
+		startDate = startDate.toISOString();
+
+		endDate = new Date( urlParams.filterDateEnd );
+		endDate.setDate(endDate.getDate() + 1);
+		endDate = endDate.toISOString();
+
+		filtersObject['request.timestamp'] = { $gte: startDate, $lt: endDate };
 	}
 
 	if(urlParams.filterShowPage){
@@ -44,7 +55,7 @@ exports.getTransactions = `function *getTransactions() {
 
 	filterSkip = filterPage*filterLimit;
 	/*------------ Manipulate Request Parameters into filter object --------------*/
-	
+
 
 	try {		
 		this.body = yield transactions.Transaction.find(filtersObject).skip(filterSkip).limit(filterLimit).sort({ 'request.timestamp': -1 }).exec();
@@ -74,7 +85,7 @@ exports.addTransaction = `function *addTransaction() {
 
 }`
 
-0
+
 ###
 # Retrieves the details for a specific transaction
 ###
