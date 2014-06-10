@@ -6,58 +6,29 @@ logger = require 'winston'
 # Retrieves the list of transactions
 ###
 exports.getTransactions = `function *getTransactions() {
-	var filtersObject = {};
-	filterSkip = 0;
-	filterPage = 0;
-	filterLimit = 10;
+	var filtersObject = this.request.query;
 
+	//construct date range filter option
+	if( filtersObject.startDate && filtersObject.endDate ){
+		filtersObject['request.timestamp'] = { $gte: filtersObject.startDate, $lt: filtersObject.endDate }
 
-	/*------------ Manipulate Request Parameters into filter object --------------*/
-	var filterVariablesUrl = this.request.url.replace("/transactions?", "");
-	filterVariables = filterVariablesUrl.split('&');
+		//remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+		delete filtersObject.startDate;
+		delete filtersObject.endDate;
+	}	
 
-	var urlParams = {};
-	for (i=0; i<filterVariables.length; i++) {
-		filterVariable = filterVariables[i].split('=');
+	//get limit and page values
+	var filterLimit = filtersObject.filterLimit;
+	var filterPage = filtersObject.filterPage;
 
-		//filterVariable[0] is the key to filter
-		//filterVariable[1] is the value to filter by
-		urlParams[filterVariable[0]] = filterVariable[1];
-	}
+	//remove limit/page values from filtersObject (Not apart of filtering and will break filter if present)
+	delete filtersObject.filterLimit;
+	delete filtersObject.filterPage;	
 
-	if(urlParams.filterStatus){
-		filtersObject['status'] = urlParams.filterStatus;
-	}
+	//determine skip amount
+	var filterSkip = filterPage*filterLimit;
 
-	if(urlParams.filterEndpoint){
-		filtersObject['endpoint'] = urlParams.filterEndpoint;
-	}
-
-	if(urlParams.filterDateStart && urlParams.filterDateEnd){
-
-		startDate = new Date( urlParams.filterDateStart );
-		startDate = startDate.toISOString();
-
-		endDate = new Date( urlParams.filterDateEnd );
-		endDate.setDate(endDate.getDate() + 1);
-		endDate = endDate.toISOString();
-
-		filtersObject['request.timestamp'] = { $gte: startDate, $lt: endDate };
-	}
-
-	if(urlParams.filterShowPage){
-		filterPage = urlParams.filterShowPage;
-	}
-
-	if(urlParams.filterShowLimit){
-		filterLimit = urlParams.filterShowLimit;
-	}
-
-	filterSkip = filterPage*filterLimit;
-	/*------------ Manipulate Request Parameters into filter object --------------*/
-
-
-	try {		
+	try {
 		this.body = yield transactions.Transaction.find(filtersObject).skip(filterSkip).limit(filterLimit).sort({ 'request.timestamp': -1 }).exec();
 	}catch (e){
 		this.message = e.message;
