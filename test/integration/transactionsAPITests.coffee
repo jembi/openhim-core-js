@@ -15,7 +15,7 @@ describe "API Integration Tests", ->
 		requ.querystring = "param1=value1&param2=value2"
 		requ.body = "<HTTP body request>"
 		requ.method = "POST"
-		requ.timestamp = new Date()
+		requ.timestamp = "2014-06-09T11:17:25.929Z"
 
 		respo = new Object()
 		respo.status = "200"
@@ -23,7 +23,7 @@ describe "API Integration Tests", ->
 			header: "value"
 			header2: "value2"
 		respo.body = "<HTTP response>"
-		respo.timestamp = new Date()
+		respo.timestamp = "2014-06-09T11:17:25.929Z"
 
 		transactionData =
 			status: "Processing"
@@ -122,28 +122,39 @@ describe "API Integration Tests", ->
 
 			it "should call getTransactions ", (done) ->
 				Transaction.count {}, (err, countBefore) ->
-					tx1 = new Transaction transactionData
-					tx1.save (error, result) ->
+					tx = new Transaction transactionData
+					tx.save (error, result) ->						
 						should.not.exist (error)
-						tx2 = new Transaction transactionData
-						tx2.save (error, result) ->
-							should.not.exist(error)
-							tx3 = new Transaction transactionData
-							tx3.save (error, result) ->
-								should.not.exist(error)
-								tx4 = new Transaction transactionData
-								tx4.save (error, result) ->
-									should.not.exist (error)
-									server.start null, null, 8080,  ->
-										request("http://localhost:8080")
-											.get("/transactions")
-											.expect(200)
-											.end (err, res) ->
-												if err
-													done err
-												else
-													res.body.length.should.equal countBefore + 4
-													done()
+						server.start null, null, 8080,  ->
+							request("http://localhost:8080")
+								.get("/transactions?filterPage=0&filterLimit=10")
+								.expect(200)
+								.end (err, res) ->
+									if err
+										done err
+									else
+										res.body.length.should.equal countBefore + 1
+										done()
+
+		describe ".getTransactions (With filter paramaters)", ->
+
+			startDate = "2014-06-09T00:00:00.000Z"
+			endDate = "2014-06-10T00:00:00.000Z"
+			it "should call getTransactions with filter paramaters ", (done) ->
+				Transaction.count {}, (err, countBefore) ->
+					tx = new Transaction transactionData
+					tx.save (error, result) ->						
+						should.not.exist (error)
+						server.start null, null, 8080,  ->
+							request("http://localhost:8080")
+								.get("/transactions?status=Processing&filterPage=0&filterLimit=10&startDate="+startDate+"&endDate="+endDate)
+								.expect(200)
+								.end (err, res) ->
+									if err
+										done err
+									else
+										res.body.length.should.equal countBefore + 1
+										done()
 
 		describe ".getTransactionById (transactionId)", ->
 
