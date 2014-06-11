@@ -13,7 +13,7 @@ exports.authorise = (ctx, done) ->
 				if matchedRoles.length > 0 or (channel.allow.indexOf ctx.authenticated.clientID) isnt -1
 					# authorisation success
 					ctx.authorisedChannels.push channel
-					logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannels.length + " channels.", ctx.authorisedChannels
+					logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannels.length + " channel(s)."
 		if ctx.authorisedChannels.length < 1
 			# authorisation failed
 			ctx.response.status = "unauthorized"
