@@ -140,7 +140,6 @@ describe "API Integration Tests", ->
 
 			startDate = "2014-06-09T00:00:00.000Z"
 			endDate = "2014-06-10T00:00:00.000Z"
-			console.log("/transactions?status=Processing&filterPage=0&filterLimit=10&startDate="+startDate+"&endDate="+endDate)
 			it "should call getTransactions with filter paramaters ", (done) ->
 				Transaction.count {}, (err, countBefore) ->
 					tx = new Transaction transactionData
