@@ -2,6 +2,10 @@ Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
 
+isPathValid = (channel) ->
+	# There cannot be both path and pathTranform. pathTransform must be valid
+	not (channel.path and channel.pathTransform) and (not channel.pathTranform or /s\/.*\/.*/.test channel.pathTransform)
+
 ###
 # Retrieves the list of active channels
 ###
@@ -31,6 +35,13 @@ exports.addChannel = `function *addChannel() {
 
 	try {
 		var channel = new Channel(channelData);
+
+		if (!isPathValid(channel)) {
+			this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]';
+			this.status = 400;
+			return;
+		}
+
 		var result = yield Q.ninvoke(channel, 'save');
 
 		// All ok! So set the result
@@ -85,6 +96,12 @@ exports.updateChannel = `function *updateChannel(channelName) {
 	//Ignore _id if it exists (update is by channel_name)
 	if (channelData._id) {
 		delete channelData._id;
+	}
+
+	if (!isPathValid(channelData)) {
+		this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]';
+		this.status = 400;
+		return;
 	}
 
 	try {
