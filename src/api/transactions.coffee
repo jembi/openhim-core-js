@@ -1,6 +1,7 @@
 transactions = require '../model/transactions'
 Q = require 'q'
 logger = require 'winston'
+authorisation = require './authorisation'
 
 ###
 # Retrieves the list of transactions
@@ -40,6 +41,14 @@ exports.getTransactions = `function *getTransactions() {
 # Adds an transaction  
 ###
 exports.addTransaction = `function *addTransaction() {
+
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
+		this.status = 401;
+		return;
+	}
+
 	// Get the values to use
 	var transactionData = this.request.body;
 	var tx = new transactions.Transaction(transactionData);
@@ -106,6 +115,14 @@ exports.findTransactionByClientId = `function *findTransactionByClientId(clientI
 # Updates a transaction record specified by transactionId
 ###
 exports.updateTransaction = `function *updateTransaction(transactionId) {
+
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
+		this.status = 401;
+		return;
+	}
+
 	var transactionId = unescape(transactionId);
 	var updates = this.request.body;
 
@@ -125,6 +142,14 @@ exports.updateTransaction = `function *updateTransaction(transactionId) {
 #Removes a transaction
 ###
 exports.removeTransaction = `function *removeTransaction(transactionId) {
+
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
+		this.status = 401;
+		return;
+	}
+
 	// Get the values to use
 	var transactionId = unescape(transactionId);
 

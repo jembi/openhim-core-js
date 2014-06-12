@@ -16,6 +16,8 @@ ChannelSchema = new Schema
     "allow": 		[ { type: String, required: true } ]
     "routes": 		[ RouteSchema ]
     "properties": 	[ { type: Object, required: false } ]
+    "txViewAcl":	[ { type: String, required: false } ]
+    "txRerunAcl":	[ { type: String, required: false } ]
     
 # compile the Channel and Route Schema into a Model
 exports.Route = mongoose.model 'Route', RouteSchema
