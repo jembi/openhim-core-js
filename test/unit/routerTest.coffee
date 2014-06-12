@@ -144,6 +144,34 @@ describe "HTTP Router", ->
 					ctx.response.header.should.be.ok
 					done()
 
+		it "should send request params if these where received from the incoming request", (done) ->
+			testUtils.createMockServer 201, "Mock response body\n", 9873, (->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+								host: "localhost"
+								port: 9873
+								primary: true
+							]
+
+				ctx = new Object()
+				ctx.authorisedChannels = []
+				ctx.authorisedChannels.push channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+				ctx.request.querystring = "parma1=val1&parma2=val2"
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+			), (req, res) ->
+				req.url.should.eql("/test?parma1=val1&parma2=val2");
+				done()
+
 	describe "Basic Auth", ->
 		it "should have valid authorization header if username and password is set in options", (done) ->
 			testUtils.createMockServer 201, "Mock response body\n", 9875, (->
