@@ -26,6 +26,7 @@ exports.authenticate = `function *authenticate(next) {
 	}
 
 	var user = yield User.findOne({ email: email }).exec();
+	this.authenticated = user;
 
 	if (!user) {
 		// not authenticated - user not found

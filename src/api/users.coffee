@@ -1,6 +1,7 @@
 User = require('../model/users').User
 Q = require 'q'
 logger = require 'winston'
+authorisation = require './authorisation'
 
 ###
 # Get authentication details
@@ -25,7 +26,15 @@ exports.authenticate = `function *authenticate(email) {
 ###
 # Adds a user 
 ###
-exports.addUser = `function *addUser(){
+exports.addUser = `function *addUser() {
+
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addUser denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addUser denied.'
+		this.status = 401;
+		return;
+	}
+
 	var userData = this.request.body
 
 	try {
@@ -45,6 +54,14 @@ exports.addUser = `function *addUser(){
 # Retrieves the details of a specific user
 ###
 exports.getUser = `function *findUserByUsername(email) {
+
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findUserByUsername denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findUserByUsername denied.'
+		this.status = 401;
+		return;
+	}
+
 	var email = unescape(email);
 
 	try {
@@ -64,6 +81,14 @@ exports.getUser = `function *findUserByUsername(email) {
 }`
 
 exports.updateUser = `function *updateUser(email) {
+
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateUser denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateUser denied.'
+		this.status = 401;
+		return;
+	}
+
 	var email = unescape(email);
 	var userData = this.request.body;
 
@@ -82,7 +107,15 @@ exports.updateUser = `function *updateUser(email) {
 	}
 }`
 
-exports.removeUser = `function *removeUser(email){
+exports.removeUser = `function *removeUser(email) {
+
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeUser denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeUser denied.'
+		this.status = 401;
+		return;
+	}
+
 	var email = unescape (email);
 
 	try {
@@ -96,7 +129,15 @@ exports.removeUser = `function *removeUser(email){
 
 }`
 
-exports.getUsers = `function *getUsers(){
+exports.getUsers = `function *getUsers() {
+
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getUsers denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getUsers denied.'
+		this.status = 401;
+		return;
+	}
+
 	try {
 		this.body = yield User.find().exec();
 	}catch (e){

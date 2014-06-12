@@ -51,6 +51,7 @@ describe "API Integration Tests", ->
 				.expect(200)
 				.end (err, res) ->
 					if err
+						console.log err
 						done err
 					else
 						res.body.length.should.be.eql(2);
