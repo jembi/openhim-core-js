@@ -3,7 +3,6 @@ Q = require "q"
 logger = require "winston"
 
 exports.authorise = (ctx, done) ->
-	ctx.authorisedChannels = []
 	Channel.find {}, (err, channels) ->
 		for channel in channels
 			pat = new RegExp channel.urlPattern
@@ -12,18 +11,19 @@ exports.authorise = (ctx, done) ->
 					return (ctx.authenticated.roles.indexOf element) isnt -1
 				if matchedRoles.length > 0 or (channel.allow.indexOf ctx.authenticated.clientID) isnt -1
 					# authorisation success
-					ctx.authorisedChannels.push channel
-					logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannels.length + " channel(s)."
-		if ctx.authorisedChannels.length < 1
-			# authorisation failed
-			ctx.response.status = "unauthorized"
-			logger.info "The request, '" + ctx.request.url + "', is not authorised to access any channels"
-		done()
+					ctx.authorisedChannel = channel
+					logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannel.name
+					return done()
+
+		# authorisation failed
+		ctx.response.status = "unauthorized"
+		logger.info "The request, '" + ctx.request.url + "', is not authorised to access any channels."
+		return done()
 
 exports.koaMiddleware = `function *authorisationMiddleware(next) {
 		var authorise = Q.denodeify(exports.authorise);
 		yield authorise(this);
-		if (this.authorisedChannels.length > 0) {
+		if (this.authorisedChannel) {
 			yield next;
 		}
 	}`

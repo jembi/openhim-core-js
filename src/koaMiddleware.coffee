@@ -22,7 +22,7 @@ exports.setupApp = (done) ->
 		app.use basicAuthentication.koaMiddleware
 
 	# Persit message middleware
-	app.use messageStore.store
+	app.use messageStore.koaMiddleware
 
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware

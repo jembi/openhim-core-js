@@ -46,7 +46,7 @@ describe "Authorisation middleware", ->
 				ctx.request.url = "test/authorisation"
 				ctx.response = {}
 				authorisation.authorise ctx, ->
-					ctx.authorisedChannels.should.have.length 1
+					ctx.authorisedChannel.should.exist
 					done()
 
 		it "should deny a request if the client is NOT authorised to use the channel by role", (done) ->
@@ -79,7 +79,7 @@ describe "Authorisation middleware", ->
 				ctx.request.url = "test/authorisation"
 				ctx.response = {}
 				authorisation.authorise ctx, ->
-					ctx.authorisedChannels.should.have.length 0
+					(ctx.authorisedChannel == undefined).should.be.true
 					ctx.response.status.should.be.exactly "unauthorized"
 					done()
 
@@ -113,5 +113,5 @@ describe "Authorisation middleware", ->
 				ctx.request.url = "test/authorisation"
 				ctx.response = {}
 				authorisation.authorise ctx, ->
-					ctx.authorisedChannels.should.have.length 1
+					ctx.authorisedChannel.should.exist
 					done()
