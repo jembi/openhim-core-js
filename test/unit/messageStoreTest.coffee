@@ -85,6 +85,7 @@ describe "MessageStore", ->
 					trans.status.should.not.equal "None"
 					trans.request.path.should.equal "/api/test/request"
 					trans.request.headers['Content-Type'].should.equal "application/json"
+					trans.request.querystring.should.equal "param1=value1&param2=value2"
 					done()
 
 	describe ".storeResponse", ->

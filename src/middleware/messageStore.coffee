@@ -15,7 +15,7 @@ exports.storeTransaction = (ctx, done) ->
 		request: 
 			path: ctx.path
 			headers: ctx.header
-			requestParams: ctx.requestParams
+			querystring: ctx.querystring
 			body: ctx.body
 			method: ctx.method
 			timestamp: new Date()
