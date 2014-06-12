@@ -157,6 +157,61 @@ describe "API Integration Tests", ->
 							channels.should.have.length 0
 							done();
 
+		it 'should reject invalid channels with invalid pathTransform', (done) ->
+			invalidChannel =
+				name: "InvalidChannel"
+				urlPattern: "test/sample"
+				allow: [ "PoC", "Test1", "Test2" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							pathTransform: "invalid"
+							port: 9876
+							primary: true
+						]
+
+			request("http://localhost:8080")
+				.post("/channels")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
+				.send(invalidChannel)
+				.expect(400)
+				.end (err, res) ->
+					if err
+						done err
+					else
+						done()
+
+		it 'should reject channels containing both path and pathTransform', (done) ->
+			invalidChannel =
+				name: "InvalidChannel"
+				urlPattern: "test/sample"
+				allow: [ "PoC", "Test1", "Test2" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							path: "/target"
+							pathTransform: "s/foo/bar"
+							port: 9876
+							primary: true
+						]
+
+			request("http://localhost:8080")
+				.post("/channels")
+				.set("auth-username", authDetails.authUsername)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
+				.send(invalidChannel)
+				.expect(400)
+				.end (err, res) ->
+					if err
+						done err
+					else
+						done()
+
 		after (done) ->
 			server.stop ->
 				auth.cleanupTestUser ->

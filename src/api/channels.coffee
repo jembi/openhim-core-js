@@ -3,8 +3,10 @@ Q = require 'q'
 logger = require 'winston'
 
 isPathValid = (channel) ->
-	# There cannot be both path and pathTranform. pathTransform must be valid
-	not (channel.path and channel.pathTransform) and (not channel.pathTranform or /s\/.*\/.*/.test channel.pathTransform)
+	(channel.routes.map (route) ->
+		# There cannot be both path and pathTranform. pathTransform must be valid
+		not (route.path and route.pathTransform) and (not route.pathTransform or /s\/.*\/.*/.test route.pathTransform))
+		.reduce (a, b) -> a and b
 
 ###
 # Retrieves the list of active channels
