@@ -9,13 +9,15 @@ transactionStatus =
 exports.storeTransaction = (ctx, done) -> 
 	logger.info 'Storing request metadata for inbound transaction'
 
+	console.log ctx.querystring
+
 	tx = new transactions.Transaction
 		status: transactionStatus.PROCESSING
 		clientID: ctx.authenticated.clientID
 		request: 
 			path: ctx.path
 			headers: ctx.header
-			requestParams: ctx.requestParams
+			querystring: ctx.querystring
 			body: ctx.body
 			method: ctx.method
 			timestamp: new Date()
