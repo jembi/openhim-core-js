@@ -60,20 +60,20 @@ getDestinationPath = (route, requestPath) ->
 #
 # Slashes can be escaped as \/
 ###
-transformPath = (path, expression) ->
+exports.transformPath = transformPath = (path, expression) ->
 	# replace all \/'s with a temporary ':' char so that we don't split on those
 	# (':' is safe for substitution since it cannot be part of the path)
-	sExpression = expression.replace /\\\//, ':'
+	sExpression = expression.replace /\\\//g, ':'
 	sub = sExpression.split '/'
 
-	from = sub[1].replace /:/g, '/'
+	from = sub[1].replace /:/g, '\/'
 	to = if sub.length>2 then sub[2] else ""
-	to = to.replace /:/g, '/'
+	to = to.replace /:/g, '\/'
 
 	if sub.length>3 and sub[3] is 'g'
-		fromRegex = new Regex from, 'g'
+		fromRegex = new RegExp from, 'g'
 	else
-		fromRegex = new Regex from
+		fromRegex = new RegExp from
 
 	path.replace fromRegex, to
 
