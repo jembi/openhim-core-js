@@ -1,4 +1,5 @@
 Channel = require("../model/channels").Channel
+Transaction = require("../model/transactions").Transaction
 Q = require "q"
 logger = require "winston"
 
@@ -13,6 +14,10 @@ exports.authorise = (ctx, done) ->
 					# authorisation success
 					ctx.authorisedChannel = channel
 					logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannel.name
+
+					# update transaction with the authroised channel - async
+					Transaction.findOneAndUpdate { _id: ctx.transactionId }, { channelID: channel._id }, ->
+
 					return done()
 
 		# authorisation failed
