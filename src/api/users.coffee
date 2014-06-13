@@ -28,6 +28,7 @@ exports.authenticate = `function *authenticate(email) {
 ###
 exports.addUser = `function *addUser() {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addUser denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addUser denied.'
@@ -55,6 +56,7 @@ exports.addUser = `function *addUser() {
 ###
 exports.getUser = `function *findUserByUsername(email) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findUserByUsername denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findUserByUsername denied.'
@@ -82,6 +84,7 @@ exports.getUser = `function *findUserByUsername(email) {
 
 exports.updateUser = `function *updateUser(email) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateUser denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateUser denied.'
@@ -109,6 +112,7 @@ exports.updateUser = `function *updateUser(email) {
 
 exports.removeUser = `function *removeUser(email) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeUser denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeUser denied.'
@@ -131,6 +135,7 @@ exports.removeUser = `function *removeUser(email) {
 
 exports.getUsers = `function *getUsers() {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getUsers denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getUsers denied.'

@@ -7,9 +7,8 @@ authorisation = require './authorisation'
 # Retrieves the list of active channels
 ###
 exports.getChannels = `function *getChannels() {
-	console.log('here');
-	console.log(this.authenticated);
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		console.log('failed auth');
 		logger.info('User ' +user.email+ ' is not an admin, API access to getChannels denied.')
@@ -37,6 +36,7 @@ exports.getChannels = `function *getChannels() {
 ###
 exports.addChannel = `function *addChannel() {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +user.email+ ' is not an admin, API access to addChannel denied.')
 		this.body = 'User ' +user.email+ ' is not an admin, API access to addChannel denied.'
@@ -68,6 +68,7 @@ exports.addChannel = `function *addChannel() {
 ###
 exports.getChannel = `function *getChannel(channelName) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +user.email+ ' is not an admin, API access to getChannel denied.')
 		this.body = 'User ' +user.email+ ' is not an admin, API access to getChannel denied.'
@@ -103,6 +104,7 @@ exports.getChannel = `function *getChannel(channelName) {
 ###
 exports.updateChannel = `function *updateChannel(channelName) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +user.email+ ' is not an admin, API access to updateChannel denied.')
 		this.body = 'User ' +user.email+ ' is not an admin, API access to updateChannel denied.'
@@ -138,6 +140,7 @@ exports.updateChannel = `function *updateChannel(channelName) {
 ###
 exports.removeChannel = `function *removeChannel(channelName) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +user.email+ ' is not an admin, API access to removeChannel denied.')
 		this.body = 'User ' +user.email+ ' is not an admin, API access to removeChannel denied.'

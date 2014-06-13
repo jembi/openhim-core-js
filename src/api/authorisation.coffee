@@ -1,39 +1,34 @@
 Channel = require("../model/channels").Channel
 logger = require 'winston'
+Q = require "q"
 
 exports.inGroup = (group, user) ->
 	return user.groups.indexOf(group) >= 0
 
-exports.getUserViewableChannels = (user, done) ->
+##
+# A promise returning function that returns the list
+# of viewable channels for a user.
+##
+exports.getUserViewableChannels = (user) ->
 
 	# if admin allow all channel
 	if exports.inGroup 'admin', user
-		console.log "User is admin"
-		Channel.find {}, (err, channels) ->
-			if err
-				done err
-			done(null, channels)
+		return Channel.find({}).exec()
 	else		
 		# otherwise figure out what this user can view
 		groups = user.groups
-		Channel.find { txViewAcl: { $in: user.groups } }, (err, channels) ->
-			if err
-				done err
-			done null, channels
+		return Channel.find({ txViewAcl: { $in: user.groups } }).exec()
 
-exports.getUserRerunableChannels = (user, done) ->
+##
+# A promise returning function that returns the list
+# of rerunnable channels for a user.
+##
+exports.getUserRerunableChannels = (user) ->
 
 	# if admin allow all channel
 	if exports.inGroup 'admin', user
-		Channel.find {}, (err, channels) ->
-			if err
-				done err
-			done null, channels
+		return Channel.find({}).exec()
 	else
 		# otherwise figure out what this use can rerun
 		groups = user.groups
-		Channel.find { txRerunAcl: { $in: user.groups } }, (err, channels) ->
-			if err
-				done err
-			done null, channels
-
+		return Channel.find({ txRerunAcl: { $in: user.groups } }).exec()

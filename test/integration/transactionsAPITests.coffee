@@ -159,11 +159,9 @@ describe "API Integration Tests", ->
 										res.body.length.should.equal countBefore + 1
 										done()
 
-		describe ".getTransactions (With filter paramaters)", ->
-
-			startDate = "2014-06-09T00:00:00.000Z"
-			endDate = "2014-06-10T00:00:00.000Z"
 			it "should call getTransactions with filter paramaters ", (done) ->
+				startDate = "2014-06-09T00:00:00.000Z"
+				endDate = "2014-06-10T00:00:00.000Z"
 				Transaction.count {}, (err, countBefore) ->
 					tx = new Transaction transactionData
 					tx.save (error, result) ->						

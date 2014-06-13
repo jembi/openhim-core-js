@@ -8,6 +8,7 @@ authorisation = require './authorisation'
 ###
 exports.addClient = `function *addClient() {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addClient denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addClient denied.'
@@ -35,6 +36,7 @@ exports.addClient = `function *addClient() {
 ###
 exports.getClient = `function *findClientById(clientId) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
@@ -63,6 +65,7 @@ exports.getClient = `function *findClientById(clientId) {
 
 exports.findClientByDomain = `function *findClientByDomain(domain) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientByDomain denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientByDomain denied.'
@@ -89,6 +92,7 @@ exports.findClientByDomain = `function *findClientByDomain(domain) {
 
 exports.updateClient = `function *updateClient(clientId) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateClient denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateClient denied.'
@@ -116,6 +120,7 @@ exports.updateClient = `function *updateClient(clientId) {
 
 exports.removeClient = `function *removeClient(clientId) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeClient denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeClient denied.'
@@ -138,6 +143,7 @@ exports.removeClient = `function *removeClient(clientId) {
 
 exports.getClients = `function *getClients() {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getClients denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getClients denied.'

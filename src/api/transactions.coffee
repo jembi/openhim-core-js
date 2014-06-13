@@ -3,33 +3,49 @@ Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
 
+getChannelIDsArray = (channels) ->
+	channelIDs = []
+	for channel in channels
+		channelIDs[i] = channel._id;
+	return channelIDs
+
 ###
 # Retrieves the list of transactions
 ###
 exports.getTransactions = `function *getTransactions() {
-	var filtersObject = this.request.query;
-
-	//construct date range filter option
-	if( filtersObject.startDate && filtersObject.endDate ){
-		filtersObject['request.timestamp'] = { $gte: filtersObject.startDate, $lt: filtersObject.endDate }
-
-		//remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-		delete filtersObject.startDate;
-		delete filtersObject.endDate;
-	}	
-
-	//get limit and page values
-	var filterLimit = filtersObject.filterLimit;
-	var filterPage = filtersObject.filterPage;
-
-	//remove limit/page values from filtersObject (Not apart of filtering and will break filter if present)
-	delete filtersObject.filterLimit;
-	delete filtersObject.filterPage;	
-
-	//determine skip amount
-	var filterSkip = filterPage*filterLimit;
 
 	try {
+
+		var filtersObject = this.request.query;
+
+		//construct date range filter option
+		if( filtersObject.startDate && filtersObject.endDate ){
+			filtersObject['request.timestamp'] = { $gte: filtersObject.startDate, $lt: filtersObject.endDate }
+
+			//remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+			delete filtersObject.startDate;
+			delete filtersObject.endDate;
+		}	
+
+		//get limit and page values
+		var filterLimit = filtersObject.filterLimit;
+		var filterPage = filtersObject.filterPage;
+
+		//remove limit/page values from filtersObject (Not apart of filtering and will break filter if present)
+		delete filtersObject.filterLimit;
+		delete filtersObject.filterPage;	
+
+		//determine skip amount
+		var filterSkip = filterPage*filterLimit;
+
+		// Test if the user is authorised
+		if (authorisation.inGroup('admin', this.authenticated) === false) {
+			// if not an admin, restrict by transactions that this user can view
+			var channels = yield authorisation.getUserViewableChannels(this.authenticated);
+
+			filtersObject.channelID = { $in: getChannelIDsArray(channels) };
+		}
+
 		this.body = yield transactions.Transaction.find(filtersObject).skip(filterSkip).limit(filterLimit).sort({ 'request.timestamp': -1 }).exec();
 	}catch (e){
 		this.message = e.message;
@@ -42,6 +58,7 @@ exports.getTransactions = `function *getTransactions() {
 ###
 exports.addTransaction = `function *addTransaction() {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
@@ -80,8 +97,18 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 		if (result === null || result.length === 0) {
 			this.body = "We could not find transaction with ID:'" + transactionId + "'.";
 			this.status = 404;
+		// Test if the user is authorised
+		} else if (authorisation.inGroup('admin', this.authenticated) === false) {
+			var channels = yield authorisation.getUserViewableChannels(this.authenticated);
+			if (getChannelIDsArray(channels).indexOf(result.channelID) >= 0) {
+				this.body = result
+			} else {
+				this.body = "The user " + this.authenticated.email + " is not authorised to access this transaction.";
+				this.status = 401;
+			}
+		} else {
+			this.body = result;
 		}
-		else { this.body = result; } // All ok! So set the result
 	} catch (e) {
 		// Error! So inform the user
 		logger.error('Could not get transaction by ID via the API: ' + e);
@@ -101,6 +128,15 @@ exports.findTransactionByClientId = `function *findTransactionByClientId(clientI
 		if (result.length === 0) {
 			this.body = "No transactions with clientId: "+clientId+" could be found."
 			this.status = 404
+		// Test if the user is authorised
+		} else if (authorisation.inGroup('admin', this.authenticated) === false) {
+			var channels = yield authorisation.getUserViewableChannels(this.authenticated);
+			if (getChannelIDsArray(channels).indexOf(result.channelID) >= 0) {
+				this.body = result
+			} else {
+				this.body = "The user " + this.authenticated.email + " is not authorised to access this transaction.";
+				this.status = 401;
+			}
 		} else {
 			this.body = result;
 		}
@@ -116,6 +152,7 @@ exports.findTransactionByClientId = `function *findTransactionByClientId(clientI
 ###
 exports.updateTransaction = `function *updateTransaction(transactionId) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
@@ -143,6 +180,7 @@ exports.updateTransaction = `function *updateTransaction(transactionId) {
 ###
 exports.removeTransaction = `function *removeTransaction(transactionId) {
 
+	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
