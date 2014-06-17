@@ -1,6 +1,8 @@
 should = require "should"
 request = require "supertest"
 Transaction = require("../../lib/model/transactions").Transaction
+Channel = require("../../lib/model/channels").Channel
+User = require('../../lib/model/users').User
 server = require "../../lib/server"
 auth = require("../testUtils").auth
 
@@ -29,6 +31,7 @@ describe "API Integration Tests", ->
 		transactionData =
 			status: "Processing"
 			clientID: "OpenHIE_bla_bla_WRTWTTATSA"
+			channelID: "123"
 			request: requ
 			response: respo
 				
@@ -139,6 +142,11 @@ describe "API Integration Tests", ->
 
 		describe ".getTransactions", ->
 
+			after ->
+				Channel.remove { _id: "321" }, ->
+					Transaction.remove { channelID: "321" }, ->
+						User.remove { email: 'nonroot@jembi.org' }, ->
+
 			it "should call getTransactions ", (done) ->
 				Transaction.count {}, (err, countBefore) ->
 					tx = new Transaction transactionData
@@ -180,6 +188,56 @@ describe "API Integration Tests", ->
 									else
 										res.body.length.should.equal countBefore + 1
 										done()
+
+			it "should only return the transactions that a user can view", (done) ->
+				channel1 = new Channel
+					name: "TestChannel1"
+					urlPattern: "test/sample"
+					allow: [ "PoC", "Test1", "Test2" ]
+					routes: [
+								name: "test route"
+								host: "localhost"
+								port: 9876
+								primary: true
+							]
+					txViewAcl: [ "group1" ]
+
+				tx = new Transaction transactionData
+
+				nonRootUser = new User
+					firstname: 'Non'
+					surname: 'Root'
+					email: 'nonroot@jembi.org'
+					passwordAlgorithm: 'sha512'
+					passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
+					passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
+					groups: [ "group1", "group2" ]
+					# password is 'password'
+
+				channel1.save (err, channel) ->
+					if err
+						return done err
+					tx.channelID = channel._id
+					tx.save (err) ->
+						if err
+							return done err
+						nonRootUser.save (err) ->
+							if err
+								return done err
+							server.start null, null, 8080,  ->
+							request("http://localhost:8080")
+								.get("/transactions")
+								.set("auth-username", nonRootUser.email)
+								.set("auth-ts", authDetails.authTS)
+								.set("auth-salt", authDetails.authSalt)
+								.set("auth-token", authDetails.authToken)
+								.expect(200)
+								.end (err, res) ->
+									res.body.should.have.length(1);
+									# cleanup
+									channel1.remove ->
+										tx.remove ->
+											done();
 
 		describe ".getTransactionById (transactionId)", ->
 

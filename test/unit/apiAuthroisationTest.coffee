@@ -25,9 +25,9 @@ describe "API authorisation test", ->
 		groups: [ 'nothing', 'here' ]
 
 	user3 = new User
-		firstname: 'Root'
+		firstname: 'Random'
 		surname: 'User'
-		email: 'root@meh.net'
+		email: 'someguy@meh.net'
 		passwordAlgorithm: 'sha512'
 		passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e'
 		passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
@@ -59,7 +59,7 @@ describe "API authorisation test", ->
 					]
 			txViewAcl: [ "group2", "group3" ]
 			txRerunAcl: [ "group1", "group3" ]
-			
+
 		channel3 = new Channel
 			name: "TestChannel3 - api authorisation"
 			urlPattern: "test/sample"
@@ -97,40 +97,69 @@ describe "API authorisation test", ->
 		it "should return channels that a user can view", (done) ->
 			promise = authorisation.getUserViewableChannels user
 			promise.then (channels) ->
-				channels.should.have.length(2)
+				try
+					channels.should.have.length(2)
+				catch err
+					return done err
 				done()
+			, (err) ->
+				done err
 
 		it "should return an empty array when there are no channel that a user can view", (done) ->
 			promise = authorisation.getUserViewableChannels user2
 			promise.then (channels) ->
-				channels.should.have.length(0)
+				try
+					channels.should.have.length(0)
+				catch err
+					return done err
 				done()
+			, (err) ->
+				done err
 
 		it "should return all channels for viewing if a user is in the admin group", (done) ->
 			promise = authorisation.getUserViewableChannels user3
 			promise.then (channels) ->
-				channels.should.have.length(3)
-				console.log channels.length
+				console.log channels
+				try
+					channels.should.have.length(3)
+				catch err
+					return done err
 				done()
+			, (err) ->
+				done err
 			
 	describe ".getUserRerunableChannels", ->
 
 		it "should return channels that a user can rerun", (done) ->
 			promise = authorisation.getUserRerunableChannels user
 			promise.then (channels) ->
-				channels.should.have.length(1)
+				try
+					channels.should.have.length(1)
+				catch err
+					return done err
 				done()
+			, (err) ->
+				done err
 
 		it "should return an empty array when there are no channel that a user can rerun", (done) ->
 			promise = authorisation.getUserRerunableChannels user2
 			promise.then (channels) ->
-				channels.should.have.length(0)
+				try
+					channels.should.have.length(0)
+				catch err
+					return done err
 				done()
+			, (err) ->
+				done err
 
 		it "should return all channels for rerunning if a user is in the admin group", (done) ->
 			promise = authorisation.getUserRerunableChannels user3
 			promise.then (channels) ->
-				channels.should.have.length(3)
-				console.log channels.length
+				try
+					channels.should.have.length(3)
+				catch err
+					return done err
 				done()
+			, (err) ->
+				done err
 			

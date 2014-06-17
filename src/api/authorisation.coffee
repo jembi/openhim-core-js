@@ -16,7 +16,6 @@ exports.getUserViewableChannels = (user) ->
 		return Channel.find({}).exec()
 	else		
 		# otherwise figure out what this user can view
-		groups = user.groups
 		return Channel.find({ txViewAcl: { $in: user.groups } }).exec()
 
 ##
@@ -29,6 +28,5 @@ exports.getUserRerunableChannels = (user) ->
 	if exports.inGroup 'admin', user
 		return Channel.find({}).exec()
 	else
-		# otherwise figure out what this use can rerun
-		groups = user.groups
+		# otherwise figure out what this user can rerun
 		return Channel.find({ txRerunAcl: { $in: user.groups } }).exec()

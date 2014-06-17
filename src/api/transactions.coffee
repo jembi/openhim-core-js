@@ -6,7 +6,7 @@ authorisation = require './authorisation'
 getChannelIDsArray = (channels) ->
 	channelIDs = []
 	for channel in channels
-		channelIDs[i] = channel._id;
+		channelIDs.push channel._id
 	return channelIDs
 
 ###
@@ -25,7 +25,7 @@ exports.getTransactions = `function *getTransactions() {
 			//remove startDate/endDate from objects filter (Not part of filtering and will break filter)
 			delete filtersObject.startDate;
 			delete filtersObject.endDate;
-		}	
+		}
 
 		//get limit and page values
 		var filterLimit = filtersObject.filterLimit;
