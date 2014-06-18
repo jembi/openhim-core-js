@@ -6,7 +6,7 @@ authorisation = require './authorisation'
 getChannelIDsArray = (channels) ->
 	channelIDs = []
 	for channel in channels
-		channelIDs.push channel._id
+		channelIDs.push channel._id.toString()
 	return channelIDs
 
 ###
@@ -124,22 +124,20 @@ exports.findTransactionByClientId = `function *findTransactionByClientId(clientI
 	var clientId = unescape(clientId)
 
 	try {
-		var result = yield transactions.Transaction.find({ "clientID": clientId }).exec();
-		if (result.length === 0) {
-			this.body = "No transactions with clientId: "+clientId+" could be found."
-			this.status = 404
+		filtersObject = {};
+
+		filtersObject.clientID = clientId;
+
 		// Test if the user is authorised
-		} else if (authorisation.inGroup('admin', this.authenticated) === false) {
+		if (authorisation.inGroup('admin', this.authenticated) === false) {
+			// if not an admin, restrict by transactions that this user can view
 			var channels = yield authorisation.getUserViewableChannels(this.authenticated);
-			if (getChannelIDsArray(channels).indexOf(result.channelID) >= 0) {
-				this.body = result
-			} else {
-				this.body = "The user " + this.authenticated.email + " is not authorised to access this transaction.";
-				this.status = 401;
-			}
-		} else {
-			this.body = result;
+
+			filtersObject.channelID = { $in: getChannelIDsArray(channels) };
 		}
+
+		this.body = yield transactions.Transaction.find(filtersObject).sort({ 'request.timestamp': -1 }).exec();
+		
 	} catch(e) {
 		logger.error('Could not find a transaction by client by via the API: ' + e);
 		this.body = e.message;

@@ -64,16 +64,37 @@ describe "API Integration Tests", ->
 			groups: [ "group1", "group2" ]
 			# password is 'password'
 
+		channel = new Channel
+			name: "TestChannel1"
+			urlPattern: "test/sample"
+			allow: [ "PoC", "Test1", "Test2" ]
+			routes: [
+						name: "test route"
+						host: "localhost"
+						port: 9876
+						primary: true
+					]
+			txViewAcl: [ "group1" ]
+
 		before (done) ->
 			auth.setupTestUser (err) ->
 				nonRootUser.save (err) ->
 					if err
 						return done err
-					done()
+					channel.save (err) ->
+						if err
+							return done err
+						done()
 
 		after (done) ->
 			auth.cleanupTestUser (err) ->
-				done()
+				nonRootUser.remove (err) ->
+					if err
+						return done err
+					channel.remove (err) ->
+						if err
+							return done err
+						done()
 
 		afterEach (done) ->
 			server.stop ->
@@ -155,11 +176,6 @@ describe "API Integration Tests", ->
 
 		describe ".getTransactions", ->
 
-			after ->
-				Channel.remove { _id: "321" }, ->
-					Transaction.remove { channelID: "321" }, ->
-						User.remove { email: 'nonroot@jembi.org' }, ->
-
 			it "should call getTransactions ", (done) ->
 				Transaction.count {}, (err, countBefore) ->
 					tx = new Transaction transactionData
@@ -203,46 +219,27 @@ describe "API Integration Tests", ->
 										done()
 
 			it "should only return the transactions that a user can view", (done) ->
-				channel1 = new Channel
-					name: "TestChannel1"
-					urlPattern: "test/sample"
-					allow: [ "PoC", "Test1", "Test2" ]
-					routes: [
-								name: "test route"
-								host: "localhost"
-								port: 9876
-								primary: true
-							]
-					txViewAcl: [ "group1" ]
-
 				tx = new Transaction transactionData
-
-				channel1.save (err, channel) ->
+				tx.channelID = channel._id
+				tx.save (err) ->
 					if err
 						return done err
-					tx.channelID = channel._id
-					tx.save (err) ->
-						if err
-							return done err
-						
-						server.start null, null, 8080,  ->
-						request("http://localhost:8080")
-							.get("/transactions")
-							.set("auth-username", nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end (err, res) ->
-								res.body.should.have.length(1);
-								# cleanup
-								channel1.remove ->
-									tx.remove ->
-										done();
+					
+					server.start null, null, 8080,  ->
+					request("http://localhost:8080")
+						.get("/transactions")
+						.set("auth-username", nonRootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(200)
+						.end (err, res) ->
+							res.body.should.have.length(1)
+							done()
 
 		describe ".getTransactionById (transactionId)", ->
 
-			it "should fetch a transaction by ID", (done) ->
+			it "should fetch a transaction by ID - admin user", (done) ->
 				tx = new Transaction transactionData
 				tx.save (err, result)->
 					should.not.exist(err)
@@ -270,7 +267,7 @@ describe "API Integration Tests", ->
 									res.body.request.method.should.equal "POST"
 									done()
 
-			it "should not return a transaction that a user is not allowed to view", (done) ->
+			it "should NOT return a transaction that a user is not allowed to view", (done) ->
 				tx = new Transaction transactionData
 				tx.save (err, result)->
 					should.not.exist(err)
@@ -289,17 +286,49 @@ describe "API Integration Tests", ->
 								else
 									done()
 
+			it "should return a transaction that a user is allowed to view", (done) ->
+				tx = new Transaction transactionData
+				tx.channelID = channel._id
+				tx.save (err, tx) ->
+					if err
+						return done err
+
+					should.not.exist(err)
+					transactionId = tx._id
+					server.start null, null, 8080, ->
+						request("http://localhost:8080")
+							.get("/transactions/#{transactionId}")
+							.set("auth-username", nonRootUser.email)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
+							.expect(200)
+							.end (err, res) ->
+								if err
+									done err
+								else
+									(res != null).should.be.true
+									res.body.status.should.equal "Processing"
+									res.body.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+									res.body.request.path.should.equal "/api/test"
+									res.body.request.headers['header-title'].should.equal "header1-value"
+									res.body.request.headers['another-header'].should.equal "another-header-value"
+									res.body.request.querystring.should.equal "param1=value1&param2=value2"
+									res.body.request.body.should.equal "<HTTP body request>"
+									res.body.request.method.should.equal "POST"
+									done()
+
 		describe ".findTransactionByClientId (clientId)", ->
 
 			it "should call findTransactionByClientId", (done) ->
-				appId = "Unique_never_existent_client_id"
-				transactionData.clientID = appId
+				clientId = "Unique_never_existent_client_id"
+				transactionData.clientID = clientId
 				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)
 					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
-							.get("/transactions/apps/#{appId}")
+							.get("/transactions/apps/#{clientId}")
 							.set("auth-username", authDetails.authUsername)
 							.set("auth-ts", authDetails.authTS)
 							.set("auth-salt", authDetails.authSalt)
@@ -309,7 +338,55 @@ describe "API Integration Tests", ->
 								if err
 									done err
 								else
-									res.body[0].clientID.should.equal appId
+									res.body[0].clientID.should.equal clientId
+									done()
+
+			it "should NOT return transactions that a user is not allowed to view", (done) ->
+				clientId = "testID1"
+				transactionData.clientID = clientId
+				tx = new Transaction transactionData
+				tx.save (err, result)->
+					should.not.exist(err)
+					transactionId = result._id
+					server.start null, null, 8080, ->
+						request("http://localhost:8080")
+							.get("/transactions/apps/#{clientId}")
+							.set("auth-username", nonRootUser.email)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
+							.expect(200)
+							.end (err, res) ->
+								if err
+									done err
+								else
+									res.body.should.have.length(0);
+									done()
+
+			it "should return transactions that a user is allowed to view", (done) ->
+				clientId = "testID2"
+				transactionData.clientID = clientId
+				tx = new Transaction transactionData
+				tx.channelID = channel._id
+				tx.save (err, tx) ->
+					if err
+						return done err
+
+					should.not.exist(err)
+					transactionId = tx._id
+					server.start null, null, 8080, ->
+						request("http://localhost:8080")
+							.get("/transactions/apps/#{clientId}")
+							.set("auth-username", nonRootUser.email)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
+							.expect(200)
+							.end (err, res) ->
+								if err
+									done err
+								else
+									res.body[0].clientID.should.equal clientId
 									done()
 
 		describe ".removeTransaction (transactionId)", ->
@@ -319,7 +396,7 @@ describe "API Integration Tests", ->
 				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
-					server.start null, null, 8080,  ->
+					server.start null, null, 8080, ->
 						request("http://localhost:8080")
 							.del("/transactions/#{transactionId}")
 							.set("auth-username", authDetails.authUsername)

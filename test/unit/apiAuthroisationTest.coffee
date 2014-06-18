@@ -119,7 +119,6 @@ describe "API authorisation test", ->
 		it "should return all channels for viewing if a user is in the admin group", (done) ->
 			promise = authorisation.getUserViewableChannels user3
 			promise.then (channels) ->
-				console.log channels
 				try
 					channels.should.have.length(3)
 				catch err
