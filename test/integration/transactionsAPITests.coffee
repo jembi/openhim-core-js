@@ -129,6 +129,22 @@ describe "API Integration Tests", ->
 									newTransaction.request.method.should.equal "POST"
 									done()
 
+			it  "should only allow admin users to add transactions", (done) -> 
+				server.start null, null, 8080,  ->
+					request("http://localhost:8080")
+						.post("/transactions")
+						.set("auth-username", nonRootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.send(transactionData)
+						.expect(401)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								done()
+
 		describe ".updateTransaction", ->
 			
 			it "should call /updateTransaction ", (done) ->
@@ -173,6 +189,27 @@ describe "API Integration Tests", ->
 										updatedTrans.request.body.should.equal "<HTTP body update>"
 										updatedTrans.request.method.should.equal "PUT"
 										done()
+
+			it "should only allow admin user to update a transaction", (done) ->
+				tx = new Transaction transactionData
+				tx.save (err, result) ->
+					should.not.exist(err)
+					transactionId = result._id
+					updates = {}
+					server.start null, null, 8080,  ->
+						request("http://localhost:8080")
+							.put("/transactions/#{transactionId}")
+							.set("auth-username", nonRootUser.email)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
+							.send(updates)
+							.expect(401)
+							.end (err, res) ->													
+								if err
+									done err
+								else
+									done()
 
 		describe ".getTransactions", ->
 
@@ -390,6 +427,7 @@ describe "API Integration Tests", ->
 									done()
 
 		describe ".removeTransaction (transactionId)", ->
+
 			it "should call removeTransaction", (done) ->
 				transactionData.clientID = "transaction_to_remove"
 				tx = new Transaction transactionData
@@ -412,3 +450,23 @@ describe "API Integration Tests", ->
 										should.not.exist(err)
 										(transDoc == null).should.be.true
 										done()
+
+			it "should only allow admin users to remove transactions", (done) ->
+				transactionData.clientID = "transaction_to_remove"
+				tx = new Transaction transactionData
+				tx.save (err, result) ->
+					should.not.exist(err)
+					transactionId = result._id
+					server.start null, null, 8080, ->
+						request("http://localhost:8080")
+							.del("/transactions/#{transactionId}")
+							.set("auth-username", nonRootUser.email)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
+							.expect(401)
+							.end (err, res) ->
+								if err
+									done err
+								else
+									done()
