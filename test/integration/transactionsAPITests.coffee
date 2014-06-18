@@ -10,23 +10,23 @@ describe "API Integration Tests", ->
 
 	describe "Transactions REST Api testing", ->
 		transactionId = null
-		requ = new Object()
-		requ.path = "/api/test"
-		requ.headers =
-			"header-title": "header1-value"
-			"another-header": "another-header-value" 
-		requ.querystring = "param1=value1&param2=value2"
-		requ.body = "<HTTP body request>"
-		requ.method = "POST"
-		requ.timestamp = "2014-06-09T11:17:25.929Z"
+		requ =
+			path: "/api/test"
+			headers:
+				"header-title": "header1-value"
+				"another-header": "another-header-value" 
+			querystring: "param1=value1&param2=value2"
+			body: "<HTTP body request>"
+			method: "POST"
+			timestamp: "2014-06-09T11:17:25.929Z"
 
-		respo = new Object()
-		respo.status = "200"
-		respo.headers = 
-			header: "value"
-			header2: "value2"
-		respo.body = "<HTTP response>"
-		respo.timestamp = "2014-06-09T11:17:25.929Z"
+		respo =
+			status: "200"
+			headers: 
+				header: "value"
+				header2: "value2"
+			body: "<HTTP response>"
+			timestamp: "2014-06-09T11:17:25.929Z"
 
 		transactionData =
 			status: "Processing"
