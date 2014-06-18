@@ -7,9 +7,6 @@ logger = require 'winston'
 ###
 exports.getTasks = `function *getTasks() {
 
-	// Get the request query-parameters
-	//var uriPattern = this.request.query.uriPattern;
-
 	try {
 		this.body = yield Task.find({}).exec();
 	}
