@@ -4,6 +4,7 @@ Transaction = require("../../lib/model/transactions").Transaction
 Channel = require("../../lib/model/channels").Channel
 User = require('../../lib/model/users').User
 server = require "../../lib/server"
+testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
@@ -54,16 +55,6 @@ describe "API Integration Tests", ->
 
 		authDetails = auth.getAuthDetails()
 
-		nonRootUser = new User
-			firstname: 'Non'
-			surname: 'Root'
-			email: 'nonroot@jembi.org'
-			passwordAlgorithm: 'sha512'
-			passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
-			passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
-			groups: [ "group1", "group2" ]
-			# password is 'password'
-
 		channel = new Channel
 			name: "TestChannel1"
 			urlPattern: "test/sample"
@@ -77,33 +68,23 @@ describe "API Integration Tests", ->
 			txViewAcl: [ "group1" ]
 
 		before (done) ->
-			auth.setupTestUser (err) ->
-				nonRootUser.save (err) ->
-					if err
-						return done err
-					channel.save (err) ->
-						if err
-							return done err
-						server.start null, null, 8080,  ->
-							done()
+			auth.setupTestUsers (err) ->
+				channel.save (err) ->
+					server.start null, null, 8080,  ->
+						done()
 
 		after (done) ->
-			auth.cleanupTestUser (err) ->
-				nonRootUser.remove (err) ->
-					if err
-						return done err
-					channel.remove (err) ->
-						if err
-							return done err
-						server.stop ->
-							done()
+			auth.cleanupTestUsers (err) ->
+				channel.remove (err) ->
+					server.stop ->
+						done()
 
 		describe "Adding a transaction", ->
 
 			it  "should add a transaction and return status 201 - transaction created", (done) -> 
 				request("http://localhost:8080")
 					.post("/transactions")
-					.set("auth-username", authDetails.authUsername)
+					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
@@ -129,7 +110,7 @@ describe "API Integration Tests", ->
 			it  "should only allow admin users to add transactions", (done) -> 
 				request("http://localhost:8080")
 					.post("/transactions")
-					.set("auth-username", nonRootUser.email)
+					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
@@ -162,7 +143,7 @@ describe "API Integration Tests", ->
 						clientID: "OpenHIE_Air_version"
 					request("http://localhost:8080")
 						.put("/transactions/#{transactionId}")
-						.set("auth-username", authDetails.authUsername)
+						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -193,7 +174,7 @@ describe "API Integration Tests", ->
 					updates = {}
 					request("http://localhost:8080")
 						.put("/transactions/#{transactionId}")
-						.set("auth-username", nonRootUser.email)
+						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -214,7 +195,7 @@ describe "API Integration Tests", ->
 						should.not.exist (error)
 						request("http://localhost:8080")
 							.get("/transactions?filterPage=0&filterLimit=10")
-							.set("auth-username", authDetails.authUsername)
+							.set("auth-username", testUtils.rootUser.email)
 							.set("auth-ts", authDetails.authTS)
 							.set("auth-salt", authDetails.authSalt)
 							.set("auth-token", authDetails.authToken)
@@ -235,7 +216,7 @@ describe "API Integration Tests", ->
 						should.not.exist (error)
 						request("http://localhost:8080")
 							.get("/transactions?status=Processing&filterPage=0&filterLimit=10&startDate="+startDate+"&endDate="+endDate)
-							.set("auth-username", authDetails.authUsername)
+							.set("auth-username", testUtils.rootUser.email)
 							.set("auth-ts", authDetails.authTS)
 							.set("auth-salt", authDetails.authSalt)
 							.set("auth-token", authDetails.authToken)
@@ -256,7 +237,7 @@ describe "API Integration Tests", ->
 					
 				request("http://localhost:8080")
 					.get("/transactions")
-					.set("auth-username", nonRootUser.email)
+					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
@@ -274,7 +255,7 @@ describe "API Integration Tests", ->
 					transactionId = result._id
 					request("http://localhost:8080")
 						.get("/transactions/#{transactionId}")
-						.set("auth-username", authDetails.authUsername)
+						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -301,7 +282,7 @@ describe "API Integration Tests", ->
 					transactionId = result._id
 					request("http://localhost:8080")
 						.get("/transactions/#{transactionId}")
-						.set("auth-username", nonRootUser.email)
+						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -323,7 +304,7 @@ describe "API Integration Tests", ->
 					transactionId = tx._id
 					request("http://localhost:8080")
 						.get("/transactions/#{transactionId}")
-						.set("auth-username", nonRootUser.email)
+						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -353,7 +334,7 @@ describe "API Integration Tests", ->
 					should.not.exist(err)
 					request("http://localhost:8080")
 						.get("/transactions/apps/#{clientId}")
-						.set("auth-username", authDetails.authUsername)
+						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -374,7 +355,7 @@ describe "API Integration Tests", ->
 					transactionId = result._id
 					request("http://localhost:8080")
 						.get("/transactions/apps/#{clientId}")
-						.set("auth-username", nonRootUser.email)
+						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -399,7 +380,7 @@ describe "API Integration Tests", ->
 					transactionId = tx._id
 					request("http://localhost:8080")
 						.get("/transactions/apps/#{clientId}")
-						.set("auth-username", nonRootUser.email)
+						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -421,7 +402,7 @@ describe "API Integration Tests", ->
 					transactionId = result._id
 					request("http://localhost:8080")
 						.del("/transactions/#{transactionId}")
-						.set("auth-username", authDetails.authUsername)
+						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)
@@ -443,7 +424,7 @@ describe "API Integration Tests", ->
 					transactionId = result._id
 					request("http://localhost:8080")
 						.del("/transactions/#{transactionId}")
-						.set("auth-username", nonRootUser.email)
+						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
 						.set("auth-token", authDetails.authToken)

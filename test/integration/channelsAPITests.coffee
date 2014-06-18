@@ -2,6 +2,7 @@ should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
 Channel = require("../../lib/model/channels").Channel
+testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
@@ -34,15 +35,21 @@ describe "API Integration Tests", ->
 		before (done) ->
 			channel1.save ->
 				channel2.save ->
-					auth.setupTestUser ->
+					auth.setupTestUsers ->
 						server.start null, null, 8080, ->
 							done()
+
+		after (done) ->
+			server.stop ->
+				auth.cleanupTestUsers ->
+					Channel.remove {}, ->
+						done();
 
 		it 'should fetch all channels', (done) ->
 
 			request("http://localhost:8080")
 				.get("/channels")
-				.set("auth-username", authDetails.authUsername)
+				.set("auth-username", testUtils.rootUser.email)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
 				.set("auth-token", authDetails.authToken)
@@ -69,7 +76,7 @@ describe "API Integration Tests", ->
 
 			request("http://localhost:8080")
 				.post("/channels")
-				.set("auth-username", authDetails.authUsername)
+				.set("auth-username", testUtils.rootUser.email)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
 				.set("auth-token", authDetails.authToken)
@@ -88,7 +95,7 @@ describe "API Integration Tests", ->
 
 			request("http://localhost:8080")
 				.get("/channels/TestChannel1")
-				.set("auth-username", authDetails.authUsername)
+				.set("auth-username", testUtils.rootUser.email)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
 				.set("auth-token", authDetails.authToken)
@@ -122,7 +129,7 @@ describe "API Integration Tests", ->
 
 			request("http://localhost:8080")
 				.put("/channels/TestChannel1")
-				.set("auth-username", authDetails.authUsername)
+				.set("auth-username", testUtils.rootUser.email)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
 				.set("auth-token", authDetails.authToken)
@@ -143,7 +150,7 @@ describe "API Integration Tests", ->
 
 			request("http://localhost:8080")
 				.del("/channels/TestChannel1")
-				.set("auth-username", authDetails.authUsername)
+				.set("auth-username", testUtils.rootUser.email)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
 				.set("auth-token", authDetails.authToken)
@@ -155,9 +162,3 @@ describe "API Integration Tests", ->
 						Channel.find { name: "TestChannel1" }, (err, channels) ->
 							channels.should.have.length 0
 							done();
-
-		after (done) ->
-			server.stop ->
-				auth.cleanupTestUser ->
-					Channel.remove {}, ->
-						done();
