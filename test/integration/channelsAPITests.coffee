@@ -40,8 +40,6 @@ describe "API Integration Tests", ->
 
 		it 'should fetch all channels', (done) ->
 
-			#console.log authDetails
-
 			request("http://localhost:8080")
 				.get("/channels")
 				.set("auth-username", authDetails.authUsername)

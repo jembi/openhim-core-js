@@ -54,9 +54,22 @@ describe "API Integration Tests", ->
 
 		authDetails = auth.getAuthDetails()
 
+		nonRootUser = new User
+			firstname: 'Non'
+			surname: 'Root'
+			email: 'nonroot@jembi.org'
+			passwordAlgorithm: 'sha512'
+			passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
+			passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
+			groups: [ "group1", "group2" ]
+			# password is 'password'
+
 		before (done) ->
 			auth.setupTestUser (err) ->
-				done()
+				nonRootUser.save (err) ->
+					if err
+						return done err
+					done()
 
 		after (done) ->
 			auth.cleanupTestUser (err) ->
@@ -204,16 +217,6 @@ describe "API Integration Tests", ->
 
 				tx = new Transaction transactionData
 
-				nonRootUser = new User
-					firstname: 'Non'
-					surname: 'Root'
-					email: 'nonroot@jembi.org'
-					passwordAlgorithm: 'sha512'
-					passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
-					passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
-					groups: [ "group1", "group2" ]
-					# password is 'password'
-
 				channel1.save (err, channel) ->
 					if err
 						return done err
@@ -221,27 +224,25 @@ describe "API Integration Tests", ->
 					tx.save (err) ->
 						if err
 							return done err
-						nonRootUser.save (err) ->
-							if err
-								return done err
-							server.start null, null, 8080,  ->
-							request("http://localhost:8080")
-								.get("/transactions")
-								.set("auth-username", nonRootUser.email)
-								.set("auth-ts", authDetails.authTS)
-								.set("auth-salt", authDetails.authSalt)
-								.set("auth-token", authDetails.authToken)
-								.expect(200)
-								.end (err, res) ->
-									res.body.should.have.length(1);
-									# cleanup
-									channel1.remove ->
-										tx.remove ->
-											done();
+						
+						server.start null, null, 8080,  ->
+						request("http://localhost:8080")
+							.get("/transactions")
+							.set("auth-username", nonRootUser.email)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
+							.expect(200)
+							.end (err, res) ->
+								res.body.should.have.length(1);
+								# cleanup
+								channel1.remove ->
+									tx.remove ->
+										done();
 
 		describe ".getTransactionById (transactionId)", ->
 
-			it "should call getTransactionById", (done) ->
+			it "should fetch a transaction by ID", (done) ->
 				tx = new Transaction transactionData
 				tx.save (err, result)->
 					should.not.exist(err)
@@ -267,6 +268,25 @@ describe "API Integration Tests", ->
 									res.body.request.querystring.should.equal "param1=value1&param2=value2"
 									res.body.request.body.should.equal "<HTTP body request>"
 									res.body.request.method.should.equal "POST"
+									done()
+
+			it "should not return a transaction that a user is not allowed to view", (done) ->
+				tx = new Transaction transactionData
+				tx.save (err, result)->
+					should.not.exist(err)
+					transactionId = result._id
+					server.start null, null, 8080, ->
+						request("http://localhost:8080")
+							.get("/transactions/#{transactionId}")
+							.set("auth-username", nonRootUser.email)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
+							.expect(401)
+							.end (err, res) ->
+								if err
+									done err
+								else
 									done()
 
 		describe ".findTransactionByClientId (clientId)", ->
