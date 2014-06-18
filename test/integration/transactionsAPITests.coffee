@@ -84,7 +84,8 @@ describe "API Integration Tests", ->
 					channel.save (err) ->
 						if err
 							return done err
-						done()
+						server.start null, null, 8080,  ->
+							done()
 
 		after (done) ->
 			auth.cleanupTestUser (err) ->
@@ -94,56 +95,51 @@ describe "API Integration Tests", ->
 					channel.remove (err) ->
 						if err
 							return done err
-						done()
-
-		afterEach (done) ->
-			server.stop ->
-				done()
+						server.stop ->
+							done()
 
 		describe "Adding a transaction", ->
 
 			it  "should add a transaction and return status 201 - transaction created", (done) -> 
-				server.start null, null, 8080,  ->
-					request("http://localhost:8080")
-						.post("/transactions")
-						.set("auth-username", authDetails.authUsername)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(transactionData)
-						.expect(201)
-						.end (err, res) ->
-							if err
-								done err
-							else
-								Transaction.findOne { clientID: "OpenHIE_bla_bla_WRTWTTATSA" }, (error, newTransaction) ->
-									should.not.exist (error)
-									(newTransaction != null).should.be.true
-									newTransaction.status.should.equal "Processing"
-									newTransaction.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
-									newTransaction.request.path.should.equal "/api/test"
-									newTransaction.request.headers['header-title'].should.equal "header1-value"
-									newTransaction.request.headers['another-header'].should.equal "another-header-value"
-									newTransaction.request.querystring.should.equal "param1=value1&param2=value2"
-									newTransaction.request.body.should.equal "<HTTP body request>"
-									newTransaction.request.method.should.equal "POST"
-									done()
+				request("http://localhost:8080")
+					.post("/transactions")
+					.set("auth-username", authDetails.authUsername)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(transactionData)
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							Transaction.findOne { clientID: "OpenHIE_bla_bla_WRTWTTATSA" }, (error, newTransaction) ->
+								should.not.exist (error)
+								(newTransaction != null).should.be.true
+								newTransaction.status.should.equal "Processing"
+								newTransaction.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+								newTransaction.request.path.should.equal "/api/test"
+								newTransaction.request.headers['header-title'].should.equal "header1-value"
+								newTransaction.request.headers['another-header'].should.equal "another-header-value"
+								newTransaction.request.querystring.should.equal "param1=value1&param2=value2"
+								newTransaction.request.body.should.equal "<HTTP body request>"
+								newTransaction.request.method.should.equal "POST"
+								done()
 
 			it  "should only allow admin users to add transactions", (done) -> 
-				server.start null, null, 8080,  ->
-					request("http://localhost:8080")
-						.post("/transactions")
-						.set("auth-username", nonRootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(transactionData)
-						.expect(401)
-						.end (err, res) ->
-							if err
-								done err
-							else
-								done()
+				request("http://localhost:8080")
+					.post("/transactions")
+					.set("auth-username", nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(transactionData)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
 
 		describe ".updateTransaction", ->
 			
@@ -164,31 +160,30 @@ describe "API Integration Tests", ->
 						request: reqUp
 						status: "Completed"
 						clientID: "OpenHIE_Air_version"
-					server.start null, null, 8080,  ->
-						request("http://localhost:8080")
-							.put("/transactions/#{transactionId}")
-							.set("auth-username", authDetails.authUsername)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.send(updates)
-							.expect(200)
-							.end (err, res) ->													
-								if err
-									done err
-								else
-									Transaction.findOne { "_id": transactionId }, (error, updatedTrans) ->
-										should.not.exist(error)
-										(updatedTrans != null).should.be.true
-										updatedTrans.status.should.equal "Completed"
-										updatedTrans.clientID.should.equal "OpenHIE_Air_version"
-										updatedTrans.request.path.should.equal "/api/test/updated"
-										updatedTrans.request.headers['Content-Type'].should.equal "text/javascript"
-										updatedTrans.request.headers['Access-Control'].should.equal "authentication-required"
-										updatedTrans.request.querystring.should.equal "updated=value"
-										updatedTrans.request.body.should.equal "<HTTP body update>"
-										updatedTrans.request.method.should.equal "PUT"
-										done()
+					request("http://localhost:8080")
+						.put("/transactions/#{transactionId}")
+						.set("auth-username", authDetails.authUsername)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.send(updates)
+						.expect(200)
+						.end (err, res) ->													
+							if err
+								done err
+							else
+								Transaction.findOne { "_id": transactionId }, (error, updatedTrans) ->
+									should.not.exist(error)
+									(updatedTrans != null).should.be.true
+									updatedTrans.status.should.equal "Completed"
+									updatedTrans.clientID.should.equal "OpenHIE_Air_version"
+									updatedTrans.request.path.should.equal "/api/test/updated"
+									updatedTrans.request.headers['Content-Type'].should.equal "text/javascript"
+									updatedTrans.request.headers['Access-Control'].should.equal "authentication-required"
+									updatedTrans.request.querystring.should.equal "updated=value"
+									updatedTrans.request.body.should.equal "<HTTP body update>"
+									updatedTrans.request.method.should.equal "PUT"
+									done()
 
 			it "should only allow admin user to update a transaction", (done) ->
 				tx = new Transaction transactionData
@@ -196,20 +191,19 @@ describe "API Integration Tests", ->
 					should.not.exist(err)
 					transactionId = result._id
 					updates = {}
-					server.start null, null, 8080,  ->
-						request("http://localhost:8080")
-							.put("/transactions/#{transactionId}")
-							.set("auth-username", nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.send(updates)
-							.expect(401)
-							.end (err, res) ->													
-								if err
-									done err
-								else
-									done()
+					request("http://localhost:8080")
+						.put("/transactions/#{transactionId}")
+						.set("auth-username", nonRootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.send(updates)
+						.expect(401)
+						.end (err, res) ->													
+							if err
+								done err
+							else
+								done()
 
 		describe ".getTransactions", ->
 
@@ -218,72 +212,8 @@ describe "API Integration Tests", ->
 					tx = new Transaction transactionData
 					tx.save (error, result) ->						
 						should.not.exist (error)
-						server.start null, null, 8080,  ->
-							request("http://localhost:8080")
-								.get("/transactions?filterPage=0&filterLimit=10")
-								.set("auth-username", authDetails.authUsername)
-								.set("auth-ts", authDetails.authTS)
-								.set("auth-salt", authDetails.authSalt)
-								.set("auth-token", authDetails.authToken)
-								.expect(200)
-								.end (err, res) ->
-									if err
-										done err
-									else
-										res.body.length.should.equal countBefore + 1
-										done()
-
-			it "should call getTransactions with filter paramaters ", (done) ->
-				startDate = "2014-06-09T00:00:00.000Z"
-				endDate = "2014-06-10T00:00:00.000Z"
-				Transaction.count {}, (err, countBefore) ->
-					tx = new Transaction transactionData
-					tx.save (error, result) ->						
-						should.not.exist (error)
-						server.start null, null, 8080,  ->
-							request("http://localhost:8080")
-								.get("/transactions?status=Processing&filterPage=0&filterLimit=10&startDate="+startDate+"&endDate="+endDate)
-								.set("auth-username", authDetails.authUsername)
-								.set("auth-ts", authDetails.authTS)
-								.set("auth-salt", authDetails.authSalt)
-								.set("auth-token", authDetails.authToken)
-								.expect(200)
-								.end (err, res) ->
-									if err
-										done err
-									else
-										res.body.length.should.equal countBefore + 1
-										done()
-
-			it "should only return the transactions that a user can view", (done) ->
-				tx = new Transaction transactionData
-				tx.channelID = channel._id
-				tx.save (err) ->
-					if err
-						return done err
-					
-					server.start null, null, 8080,  ->
-					request("http://localhost:8080")
-						.get("/transactions")
-						.set("auth-username", nonRootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(200)
-						.end (err, res) ->
-							res.body.should.have.length(1)
-							done()
-
-		describe ".getTransactionById (transactionId)", ->
-
-			it "should fetch a transaction by ID - admin user", (done) ->
-				tx = new Transaction transactionData
-				tx.save (err, result)->
-					should.not.exist(err)
-					transactionId = result._id
-					server.start null, null, 8080,  ->
 						request("http://localhost:8080")
-							.get("/transactions/#{transactionId}")
+							.get("/transactions?filterPage=0&filterLimit=10")
 							.set("auth-username", authDetails.authUsername)
 							.set("auth-ts", authDetails.authTS)
 							.set("auth-salt", authDetails.authSalt)
@@ -293,35 +223,94 @@ describe "API Integration Tests", ->
 								if err
 									done err
 								else
-									(res != null).should.be.true
-									res.body.status.should.equal "Processing"
-									res.body.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
-									res.body.request.path.should.equal "/api/test"
-									res.body.request.headers['header-title'].should.equal "header1-value"
-									res.body.request.headers['another-header'].should.equal "another-header-value"
-									res.body.request.querystring.should.equal "param1=value1&param2=value2"
-									res.body.request.body.should.equal "<HTTP body request>"
-									res.body.request.method.should.equal "POST"
+									res.body.length.should.equal countBefore + 1
 									done()
+
+			it "should call getTransactions with filter paramaters ", (done) ->
+				startDate = "2014-06-09T00:00:00.000Z"
+				endDate = "2014-06-10T00:00:00.000Z"
+				Transaction.count {}, (err, countBefore) ->
+					tx = new Transaction transactionData
+					tx.save (error, result) ->						
+						should.not.exist (error)
+						request("http://localhost:8080")
+							.get("/transactions?status=Processing&filterPage=0&filterLimit=10&startDate="+startDate+"&endDate="+endDate)
+							.set("auth-username", authDetails.authUsername)
+							.set("auth-ts", authDetails.authTS)
+							.set("auth-salt", authDetails.authSalt)
+							.set("auth-token", authDetails.authToken)
+							.expect(200)
+							.end (err, res) ->
+								if err
+									done err
+								else
+									res.body.length.should.equal countBefore + 1
+									done()
+
+			it "should only return the transactions that a user can view", (done) ->
+				tx = new Transaction transactionData
+				tx.channelID = channel._id
+				tx.save (err) ->
+					if err
+						return done err
+					
+				request("http://localhost:8080")
+					.get("/transactions")
+					.set("auth-username", nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						res.body.should.have.length(1)
+						done()
+
+		describe ".getTransactionById (transactionId)", ->
+
+			it "should fetch a transaction by ID - admin user", (done) ->
+				tx = new Transaction transactionData
+				tx.save (err, result)->
+					should.not.exist(err)
+					transactionId = result._id
+					request("http://localhost:8080")
+						.get("/transactions/#{transactionId}")
+						.set("auth-username", authDetails.authUsername)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								(res != null).should.be.true
+								res.body.status.should.equal "Processing"
+								res.body.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+								res.body.request.path.should.equal "/api/test"
+								res.body.request.headers['header-title'].should.equal "header1-value"
+								res.body.request.headers['another-header'].should.equal "another-header-value"
+								res.body.request.querystring.should.equal "param1=value1&param2=value2"
+								res.body.request.body.should.equal "<HTTP body request>"
+								res.body.request.method.should.equal "POST"
+								done()
 
 			it "should NOT return a transaction that a user is not allowed to view", (done) ->
 				tx = new Transaction transactionData
 				tx.save (err, result)->
 					should.not.exist(err)
 					transactionId = result._id
-					server.start null, null, 8080, ->
-						request("http://localhost:8080")
-							.get("/transactions/#{transactionId}")
-							.set("auth-username", nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(401)
-							.end (err, res) ->
-								if err
-									done err
-								else
-									done()
+					request("http://localhost:8080")
+						.get("/transactions/#{transactionId}")
+						.set("auth-username", nonRootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(401)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								done()
 
 			it "should return a transaction that a user is allowed to view", (done) ->
 				tx = new Transaction transactionData
@@ -332,28 +321,27 @@ describe "API Integration Tests", ->
 
 					should.not.exist(err)
 					transactionId = tx._id
-					server.start null, null, 8080, ->
-						request("http://localhost:8080")
-							.get("/transactions/#{transactionId}")
-							.set("auth-username", nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end (err, res) ->
-								if err
-									done err
-								else
-									(res != null).should.be.true
-									res.body.status.should.equal "Processing"
-									res.body.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
-									res.body.request.path.should.equal "/api/test"
-									res.body.request.headers['header-title'].should.equal "header1-value"
-									res.body.request.headers['another-header'].should.equal "another-header-value"
-									res.body.request.querystring.should.equal "param1=value1&param2=value2"
-									res.body.request.body.should.equal "<HTTP body request>"
-									res.body.request.method.should.equal "POST"
-									done()
+					request("http://localhost:8080")
+						.get("/transactions/#{transactionId}")
+						.set("auth-username", nonRootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								(res != null).should.be.true
+								res.body.status.should.equal "Processing"
+								res.body.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+								res.body.request.path.should.equal "/api/test"
+								res.body.request.headers['header-title'].should.equal "header1-value"
+								res.body.request.headers['another-header'].should.equal "another-header-value"
+								res.body.request.querystring.should.equal "param1=value1&param2=value2"
+								res.body.request.body.should.equal "<HTTP body request>"
+								res.body.request.method.should.equal "POST"
+								done()
 
 		describe ".findTransactionByClientId (clientId)", ->
 
@@ -363,20 +351,19 @@ describe "API Integration Tests", ->
 				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)
-					server.start null, null, 8080,  ->
-						request("http://localhost:8080")
-							.get("/transactions/apps/#{clientId}")
-							.set("auth-username", authDetails.authUsername)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end (err, res) ->
-								if err
-									done err
-								else
-									res.body[0].clientID.should.equal clientId
-									done()
+					request("http://localhost:8080")
+						.get("/transactions/apps/#{clientId}")
+						.set("auth-username", authDetails.authUsername)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								res.body[0].clientID.should.equal clientId
+								done()
 
 			it "should NOT return transactions that a user is not allowed to view", (done) ->
 				clientId = "testID1"
@@ -385,20 +372,19 @@ describe "API Integration Tests", ->
 				tx.save (err, result)->
 					should.not.exist(err)
 					transactionId = result._id
-					server.start null, null, 8080, ->
-						request("http://localhost:8080")
-							.get("/transactions/apps/#{clientId}")
-							.set("auth-username", nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end (err, res) ->
-								if err
-									done err
-								else
-									res.body.should.have.length(0);
-									done()
+					request("http://localhost:8080")
+						.get("/transactions/apps/#{clientId}")
+						.set("auth-username", nonRootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								res.body.should.have.length(0);
+								done()
 
 			it "should return transactions that a user is allowed to view", (done) ->
 				clientId = "testID2"
@@ -411,20 +397,19 @@ describe "API Integration Tests", ->
 
 					should.not.exist(err)
 					transactionId = tx._id
-					server.start null, null, 8080, ->
-						request("http://localhost:8080")
-							.get("/transactions/apps/#{clientId}")
-							.set("auth-username", nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end (err, res) ->
-								if err
-									done err
-								else
-									res.body[0].clientID.should.equal clientId
-									done()
+					request("http://localhost:8080")
+						.get("/transactions/apps/#{clientId}")
+						.set("auth-username", nonRootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								res.body[0].clientID.should.equal clientId
+								done()
 
 		describe ".removeTransaction (transactionId)", ->
 
@@ -434,22 +419,21 @@ describe "API Integration Tests", ->
 				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
-					server.start null, null, 8080, ->
-						request("http://localhost:8080")
-							.del("/transactions/#{transactionId}")
-							.set("auth-username", authDetails.authUsername)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end (err, res) ->
-								if err
-									done err
-								else
-									Transaction.findOne { "_id": transactionId }, (err, transDoc) ->
-										should.not.exist(err)
-										(transDoc == null).should.be.true
-										done()
+					request("http://localhost:8080")
+						.del("/transactions/#{transactionId}")
+						.set("auth-username", authDetails.authUsername)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								Transaction.findOne { "_id": transactionId }, (err, transDoc) ->
+									should.not.exist(err)
+									(transDoc == null).should.be.true
+									done()
 
 			it "should only allow admin users to remove transactions", (done) ->
 				transactionData.clientID = "transaction_to_remove"
@@ -457,16 +441,15 @@ describe "API Integration Tests", ->
 				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
-					server.start null, null, 8080, ->
-						request("http://localhost:8080")
-							.del("/transactions/#{transactionId}")
-							.set("auth-username", nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(401)
-							.end (err, res) ->
-								if err
-									done err
-								else
-									done()
+					request("http://localhost:8080")
+						.del("/transactions/#{transactionId}")
+						.set("auth-username", nonRootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(401)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								done()
