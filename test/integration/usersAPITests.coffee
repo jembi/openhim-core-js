@@ -42,105 +42,211 @@ describe 'API Integration Tests', ->
 					server.stop ->
 						done()
 
-		it 'should return the requested users salt', (done) ->
-			request("http://localhost:8080")
-				.get("/authenticate/bfm@crazy.net")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.expect(200)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						res.body.salt.should.eql '22a61686-66f6-483c-a524-185aac251fb0'
-						should.exist(res.body.ts)
-						done()
+		describe '*authenticate(email)', ->
 
-		it 'should fetch all users', (done) ->
-			request("http://localhost:8080")
-				.get("/users")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.expect(200)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						# user1, user2, + the 2 API test users and the root user
-						res.body.length.should.be.eql(5);
-						done()
-
-		it 'should add a new user', (done) ->
-			newUser =
-				firstname: 'Bill'
-				surname: 'Newman'
-				email: 'bill@newman.com'
-				passwordAlgorithm: 'sha256'
-				passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499'
-				passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
-				groups: [ 'HISP' ]
-
-			request("http://localhost:8080")
-				.post("/users")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.send(newUser)
-				.expect(201)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						User.findOne { email: 'bill@newman.com' }, (err, user) ->
-							user.should.have.property 'firstname', 'Bill'
-							user.should.have.property 'surname', 'Newman'
-							user.groups.should.have.length 1
+			it 'should return the requested users salt', (done) ->
+				request("http://localhost:8080")
+					.get("/authenticate/bfm@crazy.net")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							res.body.salt.should.eql '22a61686-66f6-483c-a524-185aac251fb0'
+							should.exist(res.body.ts)
 							done()
 
-		it 'should update a specific user by email', (done) ->
+		describe '*getUsers()', ->
 
-			updates =
-				_id: "thisShouldBeIgnored"
-				surname: 'Crichton'
-				email: 'rg..@jembi.org'
-				groups: [ 'admin', 'RHIE', 'HISP' ]
+			it 'should fetch all users', (done) ->
+				request("http://localhost:8080")
+					.get("/users")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							# user1, user2, + the 2 API test users and the root user
+							res.body.length.should.be.eql(5);
+							done()
 
-			request("http://localhost:8080")
-				.put("/users/r..@jembi.org")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.send(updates)
-				.expect(200)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						User.findOne { email: "rg..@jembi.org" }, (err, user) ->
-							user.should.have.property "surname", "Crichton"
-							user.should.have.property "email", "rg..@jembi.org"
-							user.groups.should.have.length 3
-							done();
+			it 'should not allow non admin user to fetch all users', (done) ->
+				request("http://localhost:8080")
+					.get("/users")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
 
-		it 'should remove a specific user by email', (done) ->
+		describe '*addUser()', ->
 
-			request("http://localhost:8080")
-				.del("/users/bfm@crazy.net")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.expect(200)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						User.find { name: "bfm@crazy.net" }, (err, users) ->
-							users.should.have.length 0
-							done();
+			it 'should add a new user', (done) ->
+				newUser =
+					firstname: 'Bill'
+					surname: 'Newman'
+					email: 'bill@newman.com'
+					passwordAlgorithm: 'sha256'
+					passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499'
+					passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
+					groups: [ 'HISP' ]
+
+				request("http://localhost:8080")
+					.post("/users")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(newUser)
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							User.findOne { email: 'bill@newman.com' }, (err, user) ->
+								user.should.have.property 'firstname', 'Bill'
+								user.should.have.property 'surname', 'Newman'
+								user.groups.should.have.length 1
+								done()
+
+			it 'should not allow a non admin user to add a user', (done) ->
+				newUser = {}
+
+				request("http://localhost:8080")
+					.post("/users")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(newUser)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		describe '*findUserByUsername(email)', ->
+
+			it 'should find a user by their email address', (done) ->
+				request("http://localhost:8080")
+					.get("/users/r..@jembi.org")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							User.findOne { email: "r..@jembi.org" }, (err, user) ->
+								user.should.have.property "surname", "Chrichton"
+								user.should.have.property "email", "r..@jembi.org"
+								user.groups.should.have.length 2
+								done()
+
+			it 'should not allow a non admin user to find a user to email', (done) ->
+				request("http://localhost:8080")
+					.get("/users/r..@jembi.org")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		describe '*updateUser(email)', ->
+
+			it 'should update a specific user by email', (done) ->
+
+				updates =
+					_id: "thisShouldBeIgnored"
+					surname: 'Crichton'
+					email: 'rg..@jembi.org'
+					groups: [ 'admin', 'RHIE', 'HISP' ]
+
+				request("http://localhost:8080")
+					.put("/users/r..@jembi.org")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							User.findOne { email: "rg..@jembi.org" }, (err, user) ->
+								user.should.have.property "surname", "Crichton"
+								user.should.have.property "email", "rg..@jembi.org"
+								user.groups.should.have.length 3
+								done()
+
+			it 'should not allow non admin users to update a user', (done) ->
+
+				updates = {}
+
+				request("http://localhost:8080")
+					.put("/users/r..@jembi.org")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		describe '*removeUser(email)', ->
+
+			it 'should remove a specific user by email', (done) ->
+				request("http://localhost:8080")
+					.del("/users/bfm@crazy.net")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							User.find { name: "bfm@crazy.net" }, (err, users) ->
+								users.should.have.length 0
+								done()
+
+			it 'should remove a specific user by email', (done) ->
+				request("http://localhost:8080")
+					.del("/users/bfm@crazy.net")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
