@@ -11,8 +11,8 @@ exports.getChannels = `function *getChannels() {
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		console.log('failed auth');
-		logger.info('User ' +user.email+ ' is not an admin, API access to getChannels denied.')
-		this.body = 'User ' +user.email+ ' is not an admin, API access to getChannels denied.'
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.'
 		this.status = 401;
 		return;
 	}
@@ -38,8 +38,8 @@ exports.addChannel = `function *addChannel() {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +user.email+ ' is not an admin, API access to addChannel denied.')
-		this.body = 'User ' +user.email+ ' is not an admin, API access to addChannel denied.'
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addChannel denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addChannel denied.'
 		this.status = 401;
 		return;
 	}
@@ -70,8 +70,8 @@ exports.getChannel = `function *getChannel(channelName) {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +user.email+ ' is not an admin, API access to getChannel denied.')
-		this.body = 'User ' +user.email+ ' is not an admin, API access to getChannel denied.'
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannel denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannel denied.'
 		this.status = 401;
 		return;
 	}
@@ -106,8 +106,8 @@ exports.updateChannel = `function *updateChannel(channelName) {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +user.email+ ' is not an admin, API access to updateChannel denied.')
-		this.body = 'User ' +user.email+ ' is not an admin, API access to updateChannel denied.'
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateChannel denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateChannel denied.'
 		this.status = 401;
 		return;
 	}
@@ -142,8 +142,8 @@ exports.removeChannel = `function *removeChannel(channelName) {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +user.email+ ' is not an admin, API access to removeChannel denied.')
-		this.body = 'User ' +user.email+ ' is not an admin, API access to removeChannel denied.'
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeChannel denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeChannel denied.'
 		this.status = 401;
 		return;
 	}
