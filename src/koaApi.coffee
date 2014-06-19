@@ -8,6 +8,7 @@ users = require './api/users'
 clients = require './api/clients'
 transactions = require './api/transactions'
 channels = require './api/channels'
+tasks = require './api/tasks'
 monitor = require './api/monitor'
 Q = require 'q'
 
@@ -50,6 +51,12 @@ exports.setupApp = (done) ->
 	app.use route.get '/channels/:channelName', channels.getChannel
 	app.use route.put '/channels/:channelName', channels.updateChannel
 	app.use route.delete '/channels/:channelName', channels.removeChannel
+
+	app.use route.get '/tasks', tasks.getTasks
+	app.use route.post '/tasks', tasks.addTask
+	app.use route.get '/tasks/:taskId', tasks.getTask
+	app.use route.put '/tasks/:taskId', tasks.updateTask
+	app.use route.delete '/tasks/:taskId', tasks.removeTask
 	
 	app.use route.get '/monitor', monitor.getMonitor
 

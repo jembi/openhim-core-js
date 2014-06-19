@@ -222,3 +222,63 @@ describe "HTTP Router", ->
 				(req.headers.authorization == undefined).should.be.true
 				done()
 
+	describe "Path Redirection", ->
+		describe ".transformPath", ->
+			it "must transform the path string correctly", (done) ->
+				test = (path, expr, res) -> router.transformPath(path, expr).should.be.exactly res
+				test("foo", "s/foo/bar", "bar")
+				test("foo", "s/foo/", "")
+				test("foo", "s/o/e/g", "fee")
+				test("foofoo", "s/foo//g", "")
+				test("foofoofoo", "s/foo/bar", "barfoofoo")
+				test("foofoofoo", "s/foo/bar/g", "barbarbar")
+				test("foo/bar", "s/foo/bar", "bar/bar")
+				test("foo/bar", "s/foo\\\/bar/", "")
+				test("foo/foo/bar/bar", "s/\\\/foo\\\/bar/", "foo/bar")
+				test("prefix/foo/bar", "s/prefix\\\//", "foo/bar")
+				done()
+
+		testPathRedirectionRouting = (mockServerPort, channel, expectedTargetPath, callback) ->
+			setup = () ->
+				ctx = new Object()
+				ctx.authorisedChannel = channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+
+					ctx.response.status.should.be.exactly 200
+					ctx.response.body.toString().should.be.eql "Mock response body\n"
+					ctx.response.header.should.be.ok
+
+			testUtils.createMockServer 200, "Mock response body\n", mockServerPort, setup, (req, res) ->
+				req.url.should.be.exactly expectedTargetPath
+				callback()
+
+		it "should redirect the request to a specific path", (done) ->
+			channel =
+				name: "Path test"
+				urlPattern: ".+"
+				routes: [
+							host: "localhost"
+							port: 9886
+							path: "/target"
+							primary: true
+						]
+			testPathRedirectionRouting 9886, channel, "/target", done
+
+		it "should redirect the request to the transformed path", (done) ->
+			channel =
+				name: "Path test"
+				urlPattern: ".+"
+				routes: [
+							host: "localhost"
+							port: 9887
+							pathTransform: "s/test/target"
+							primary: true
+						]
+			testPathRedirectionRouting 9887, channel, "/target", done

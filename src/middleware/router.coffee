@@ -12,7 +12,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		options =
 			hostname: route.host
 			port: route.port
-			path: ctx.request.url
+			path: getDestinationPath route, ctx.request.url
 			method: ctx.request.method
 			headers: ctx.request.header
 
@@ -24,6 +24,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 
 		if options.headers && options.headers.host
 			delete options.headers.host
+		
 		if route.primary
 			routeReq = http.request options, (routeRes) ->
 				if primaryRouteReturned
@@ -36,12 +37,47 @@ sendRequestToRoutes = (ctx, routes, next) ->
 						ctx.response.body = chunk
 					routeRes.on "end", ->
 						next()
-		else 
+		else
 			routeReq = http.request options
 
 		if ctx.request.method == "POST" || ctx.request.method == "PUT"
 			routeReq.write ctx.request.body
 		routeReq.end()
+
+getDestinationPath = (route, requestPath) ->
+	if route.path
+		route.path
+	else if route.pathTransform
+		transformPath requestPath, route.pathTransform
+	else
+		requestPath
+
+###
+# Applies a sed-like expression to the path string
+#
+# An expression takes the form s/from/to
+# Only the first 'from' match will be substituted
+# unless the global modifier as appended: s/from/to/g
+#
+# Slashes can be escaped as \/
+###
+exports.transformPath = transformPath = (path, expression) ->
+	# replace all \/'s with a temporary ':' char so that we don't split on those
+	# (':' is safe for substitution since it cannot be part of the path)
+	sExpression = expression.replace /\\\//g, ':'
+	sub = sExpression.split '/'
+
+	from = sub[1].replace /:/g, '\/'
+	to = if sub.length>2 then sub[2] else ""
+	to = to.replace /:/g, '\/'
+
+	if sub.length>3 and sub[3] is 'g'
+		fromRegex = new RegExp from, 'g'
+	else
+		fromRegex = new RegExp from
+
+	path.replace fromRegex, to
+
 
 ###
 # Gets the authorised channel and routes
