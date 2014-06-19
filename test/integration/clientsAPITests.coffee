@@ -61,6 +61,21 @@ describe "API Integration Tests", ->
 								client.cert.should.equal "8fajd89ada"
 								done()
 
+			it  "should only allow an admin user to add a client", (done) ->     
+				request("http://localhost:8080")
+					.post("/clients")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(testAppDoc)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
 		describe ".getClient", ->
 			clientTest =
 				clientID: "testClient"
@@ -114,6 +129,20 @@ describe "API Integration Tests", ->
 						else
 							done()
 
+			it "should not allow a non admin user to fetch a client", (done) ->
+				request("http://localhost:8080")
+					.get("/clients/testClient")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
 		describe ".findClientByDomain(domain)", ->
 			clientTest =
 				clientID: "Zambia_OpenHIE_Instance"
@@ -150,6 +179,20 @@ describe "API Integration Tests", ->
 								res.body.cert.should.equal ""
 								done()
 
+			it "should not allow a non admin user to fetch a client by domain", (done) ->
+				request("http://localhost:8080")
+					.get("/clients/domain/www.zedmusic-unique.co.zw")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
 		describe  ".getClients", ->
 			testDocument =
 				clientID: "Botswana_OpenHIE_Instance"
@@ -161,6 +204,7 @@ describe "API Integration Tests", ->
 					]
 				passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 				cert: "12345"
+
 			it  "should return all clients ", (done) ->
 				Client.count (err, countBefore)->
 					client = new Client testDocument
@@ -188,6 +232,20 @@ describe "API Integration Tests", ->
 											else
 												res.body.length.should.equal countBefore + 4
 												done()
+
+			it  "should not allow a non admin user to fetch all clients", (done) ->
+				request("http://localhost:8080")
+					.get("/clients")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
 
 		describe  ".updateClient", ->
 			clientID = "Botswana_OpenHIE_Instance"
@@ -230,7 +288,7 @@ describe "API Integration Tests", ->
 									clientDoc.roles[0].should.equal "clientTest_update"
 									clientDoc.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 									clientDoc.name.should.equal "Devil_may_Cry"
-								done()
+									done()
 
 			it "should update successfully if the _id field is present in update, ignoring it", (done) ->
 				client = new Client testDocument
@@ -261,6 +319,22 @@ describe "API Integration Tests", ->
 									clientDoc.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 									clientDoc.name.should.equal "Devil_may_Cry"
 									done()
+
+			it "should not allow a non admin user to update a client", (done) ->
+				updates = {}
+				request("http://localhost:8080")
+					.put("/clients/#{clientID}")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
 
 		describe ".removeClient", ->
 			it  "should remove an client with specified clientID", (done) ->
@@ -294,3 +368,18 @@ describe "API Integration Tests", ->
 											(notFoundDoc == null).should.be.true
 											(countBefore - 1).should.equal countAfter
 											done()
+
+			it  "should not allow a non admin user to remove a client", (done) ->
+				docTestRemove = {}
+				request("http://localhost:8080")
+					.del("/clients/Jembi_OpenHIE_Instance")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
