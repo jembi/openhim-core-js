@@ -39,101 +39,108 @@ describe "API Integration Tests", ->
 					Task.remove {}, ->
 						done();
 
-		it 'should fetch all tasks', (done) ->
+		describe '*getTasks()', ->
 
-			#console.log authDetails
+			it 'should fetch all tasks', (done) ->
 
-			request("http://localhost:8080")
-				.get("/tasks")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.expect(200)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						res.body.length.should.be.eql(2);
-						done()
-
-		it 'should add a new task', (done) ->
-			newTask =
-				status: "Processing"
-				transactionIds: [ "7777", "8888", "9999", "1010" ]
-				created: "2014-06-18T11:00:00.929Z"
-				user: "root@openhim.org"
-
-			request("http://localhost:8080")
-				.post("/tasks")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.send(newTask)
-				.expect(201)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						Task.findOne { transactionIds: [ "7777", "8888", "9999", "1010" ] }, (err, task) ->
-							task.should.have.property "status", "Processing"
-							task.transactionIds.should.have.length 4
+				request("http://localhost:8080")
+					.get("/tasks")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							res.body.length.should.be.eql(2);
 							done()
 
-		it 'should fetch a specific task by ID', (done) ->
-			request("http://localhost:8080")
-				.get("/tasks/aaa908908bbb98cc1d0809ee")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.expect(200)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						res.body.should.have.property "_id", "aaa908908bbb98cc1d0809ee"
-						res.body.should.have.property "status", "Completed"
-						res.body.transactionIds.should.have.length 3
-						done();
+		describe '*addTask()', ->
 
-		it 'should update a specific task by ID', (done) ->
-			updates =
-				status: "Completed"
-				completed: "2014-06-18T13:30:00.929Z"
+			it 'should add a new task', (done) ->
+				newTask =
+					status: "Processing"
+					transactionIds: [ "7777", "8888", "9999", "1010" ]
+					created: "2014-06-18T11:00:00.929Z"
+					user: "root@openhim.org"
 
-			request("http://localhost:8080")
-				.put("/tasks/890aaS0b93ccccc30dddddd0")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.send(updates)
-				.expect(200)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						Task.findOne { _id: "890aaS0b93ccccc30dddddd0" }, (err, task) ->
-							task.should.have.property "status", "Completed"
-							task.transactionIds.should.have.length 6
-							done();
+				request("http://localhost:8080")
+					.post("/tasks")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(newTask)
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							Task.findOne { transactionIds: [ "7777", "8888", "9999", "1010" ] }, (err, task) ->
+								task.should.have.property "status", "Processing"
+								task.transactionIds.should.have.length 4
+								done()
 
-		it 'should remove a specific task by ID', (done) ->
+		describe '*getTask(taskId)', ->
 
-			request("http://localhost:8080")
-				.del("/tasks/890aaS0b93ccccc30dddddd0")
-				.set("auth-username", testUtils.rootUser.email)
-				.set("auth-ts", authDetails.authTS)
-				.set("auth-salt", authDetails.authSalt)
-				.set("auth-token", authDetails.authToken)
-				.expect(200)
-				.end (err, res) ->
-					if err
-						done err
-					else
-						Task.find { _id: "890aaS0b93ccccc30dddddd0" }, (err, task) ->
-							task.should.have.length 0
-							done();
+			it 'should fetch a specific task by ID', (done) ->
+				request("http://localhost:8080")
+					.get("/tasks/aaa908908bbb98cc1d0809ee")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							res.body.should.have.property "_id", "aaa908908bbb98cc1d0809ee"
+							res.body.should.have.property "status", "Completed"
+							res.body.transactionIds.should.have.length 3
+							done()
 
+		describe '*updateTask(taskId)', ->
+
+			it 'should update a specific task by ID', (done) ->
+				updates =
+					status: "Completed"
+					completed: "2014-06-18T13:30:00.929Z"
+
+				request("http://localhost:8080")
+					.put("/tasks/890aaS0b93ccccc30dddddd0")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							Task.findOne { _id: "890aaS0b93ccccc30dddddd0" }, (err, task) ->
+								task.should.have.property "status", "Completed"
+								task.transactionIds.should.have.length 6
+								done()
+
+		describe '*removeTask(taskId)', ->
+
+			it 'should remove a specific task by ID', (done) ->
+
+				request("http://localhost:8080")
+					.del("/tasks/890aaS0b93ccccc30dddddd0")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							Task.find { _id: "890aaS0b93ccccc30dddddd0" }, (err, task) ->
+								task.should.have.length 0
+								done()
