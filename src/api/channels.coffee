@@ -10,7 +10,6 @@ exports.getChannels = `function *getChannels() {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		console.log('failed auth');
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.'
 		this.status = 401;

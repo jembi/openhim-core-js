@@ -36,7 +36,7 @@ describe "API Integration Tests", ->
 			Client.remove ->
 				done()
 
-		describe ".addClient", ->
+		describe "*addClient", ->
 
 			it  "should add client to db and return status 201 - client created", (done) ->     
 				request("http://localhost:8080")
@@ -76,7 +76,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe ".getClient", ->
+		describe "*getClient", ->
 			clientTest =
 				clientID: "testClient"
 				domain: "www.zedmusic-unique.co.zw"
@@ -143,7 +143,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe ".findClientByDomain(domain)", ->
+		describe "*findClientByDomain(domain)", ->
 			clientTest =
 				clientID: "Zambia_OpenHIE_Instance"
 				domain: "www.zedmusic-unique.co.zw"
@@ -193,7 +193,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe  ".getClients", ->
+		describe  "*getClients", ->
 			testDocument =
 				clientID: "Botswana_OpenHIE_Instance"
 				domain: "www.zedmusic.co.zw"
@@ -247,7 +247,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe  ".updateClient", ->
+		describe  "*updateClient", ->
 			clientID = "Botswana_OpenHIE_Instance"
 			testDocument =
 				clientID: clientID
@@ -336,7 +336,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe ".removeClient", ->
+		describe "*removeClient", ->
 			it  "should remove an client with specified clientID", (done) ->
 				docTestRemove =
 					clientID: "Jembi_OpenHIE_Instance"

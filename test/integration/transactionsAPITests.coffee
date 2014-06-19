@@ -79,7 +79,7 @@ describe "API Integration Tests", ->
 					server.stop ->
 						done()
 
-		describe "Adding a transaction", ->
+		describe "*addTransaction()", ->
 
 			it  "should add a transaction and return status 201 - transaction created", (done) -> 
 				request("http://localhost:8080")
@@ -122,7 +122,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe ".updateTransaction", ->
+		describe "*updateTransaction()", ->
 			
 			it "should call /updateTransaction ", (done) ->
 				tx = new Transaction transactionData
@@ -186,7 +186,7 @@ describe "API Integration Tests", ->
 							else
 								done()
 
-		describe ".getTransactions", ->
+		describe "*getTransactions()", ->
 
 			it "should call getTransactions ", (done) ->
 				Transaction.count {}, (err, countBefore) ->
@@ -246,7 +246,7 @@ describe "API Integration Tests", ->
 						res.body.should.have.length(1)
 						done()
 
-		describe ".getTransactionById (transactionId)", ->
+		describe "*getTransactionById (transactionId)", ->
 
 			it "should fetch a transaction by ID - admin user", (done) ->
 				tx = new Transaction transactionData
@@ -324,7 +324,7 @@ describe "API Integration Tests", ->
 								res.body.request.method.should.equal "POST"
 								done()
 
-		describe ".findTransactionByClientId (clientId)", ->
+		describe "*findTransactionByClientId (clientId)", ->
 
 			it "should call findTransactionByClientId", (done) ->
 				clientId = "Unique_never_existent_client_id"
@@ -392,7 +392,7 @@ describe "API Integration Tests", ->
 								res.body[0].clientID.should.equal clientId
 								done()
 
-		describe ".removeTransaction (transactionId)", ->
+		describe "*removeTransaction (transactionId)", ->
 
 			it "should call removeTransaction", (done) ->
 				transactionData.clientID = "transaction_to_remove"
