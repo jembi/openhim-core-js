@@ -126,6 +126,23 @@ describe "API Integration Tests", ->
 								task.transactionIds.should.have.length 6
 								done()
 
+			it 'should not allow a non admin user to update a task', (done) ->
+				updates = {}
+
+				request("http://localhost:8080")
+					.put("/tasks/890aaS0b93ccccc30dddddd0")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
 		describe '*removeTask(taskId)', ->
 
 			it 'should remove a specific task by ID', (done) ->
@@ -144,3 +161,18 @@ describe "API Integration Tests", ->
 							Task.find { _id: "890aaS0b93ccccc30dddddd0" }, (err, task) ->
 								task.should.have.length 0
 								done()
+
+			it 'should not only allow a non admin user to remove a task', (done) ->
+
+				request("http://localhost:8080")
+					.del("/tasks/890aaS0b93ccccc30dddddd0")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(401)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()

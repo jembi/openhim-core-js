@@ -1,6 +1,7 @@
 Task = require('../model/tasks').Task
 Q = require 'q'
 logger = require 'winston'
+authorisation = require './authorisation'
 
 ###
 # Retrieves the list of active tasks
@@ -75,6 +76,14 @@ exports.getTask = `function *getTask(taskId) {
 ###
 exports.updateTask = `function *updateTask(taskId) {
 
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateTask denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateTask denied.'
+		this.status = 401;
+		return;
+	}
+
 	// Get the values to use
 	var taskId = unescape(taskId);
 	var taskData = this.request.body;
@@ -97,6 +106,14 @@ exports.updateTask = `function *updateTask(taskId) {
 # Deletes a specific Tasks details
 ###
 exports.removeTask = `function *removeTask(taskId) {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeTask denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeTask denied.'
+		this.status = 401;
+		return;
+	}
 
 	// Get the values to use
 	var taskId = unescape(taskId);
