@@ -27,5 +27,6 @@ exec { "npm-install":
 
 exec { "coffeescript":
 	command => "npm install -g coffee-script",
+	unless => "npm list -g coffee-script",
 	require => Class["nodejs"],
 }
