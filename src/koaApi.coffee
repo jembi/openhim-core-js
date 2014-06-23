@@ -9,6 +9,7 @@ clients = require './api/clients'
 transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
+queues = require './api/queues'
 monitor = require './api/monitor'
 Q = require 'q'
 
@@ -57,6 +58,11 @@ exports.setupApp = (done) ->
 	app.use route.get '/tasks/:taskId', tasks.getTask
 	app.use route.put '/tasks/:taskId', tasks.updateTask
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
+
+	app.use route.get '/queues', queues.getQueues
+	app.use route.post '/queues', queues.addQueue
+	app.use route.get '/queues/:queueId', queues.getQueue
+	app.use route.delete '/queues/:queueId', queues.removeQueue
 	
 	app.use route.get '/monitor', monitor.getMonitor
 

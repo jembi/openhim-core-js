@@ -32,11 +32,12 @@ describe "API Integration Tests", ->
 		authDetails = auth.getAuthDetails()
 
 		before (done) ->
-			channel1.save ->
-				channel2.save ->
-					auth.setupTestUser ->
-						server.start null, null, 8080, ->
-							done()
+			Channel.remove {}, ->
+				channel1.save ->
+					channel2.save ->
+						auth.setupTestUser ->
+							server.start null, null, 8080, ->
+								done()
 
 		it 'should fetch all channels', (done) ->
 

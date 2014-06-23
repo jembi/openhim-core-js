@@ -1,4 +1,5 @@
 Task = require('../model/tasks').Task
+Queue = require('../model/queues').Queue
 Q = require 'q'
 logger = require 'winston'
 
@@ -20,6 +21,7 @@ exports.getTasks = `function *getTasks() {
 
 ###
 # Creates a new Task
+# Create the new queue objects for the created task
 ###
 exports.addTask = `function *addTask() {
 
@@ -29,6 +31,30 @@ exports.addTask = `function *addTask() {
 	try {
 		var task = new Task(taskData);
 		var result = yield Q.ninvoke(task, 'save');
+
+		var taskID = result[0]._id;
+		var transactions = taskData.transactions;
+		for(i=0; i<transactions.length; i++ ){
+
+			try{
+				var transactionID = transactions[i].tid;
+				var queueData = { transactionID: transactionID, taskID: taskID }
+
+				var queue = new Queue(queueData);
+				var result = yield Q.ninvoke(queue, 'save');
+
+				// All ok! So set the result
+				this.body = 'Queue item successfully created';
+				this.status = 201;
+			}
+			catch(e){
+				// Error! So inform the user
+				logger.error('Could not add Queue item via the API: ' + e);
+				this.body = e.message;
+				this.status = 400;
+			}
+
+		}
 
 		// All ok! So set the result
 		this.body = 'Task successfully created';
