@@ -29,7 +29,7 @@ exports.getTransactions = `function *getTransactions() {
 	var filterSkip = filterPage*filterLimit;
 
 	try {
-		this.body = yield transactions.Transaction.find(filtersObject).skip(filterSkip).limit(filterLimit).sort({ 'request.timestamp': -1 }).exec();
+		this.body = yield transactions.Transaction.find(filtersObject).sort({ 'request.timestamp': -1 }).skip(filterSkip).limit(filterLimit).exec();
 	}catch (e){
 		this.message = e.message;
 		this.status = 500;
