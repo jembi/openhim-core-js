@@ -42,7 +42,7 @@ exports.setupApp = (done) ->
 
 	app.use route.get '/transactions', transactions.getTransactions
 	app.use route.post '/transactions', transactions.addTransaction
-	app.use route.get '/transactions/:transactionId', transactions.getTransactionById	 
+	app.use route.get '/transactions/:transactionId', transactions.getTransactionById
 	app.use route.get '/transactions/apps/:clientId', transactions.findTransactionByClientId
 	app.use route.put '/transactions/:transactionId', transactions.updateTransaction
 	app.use route.delete '/transactions/:transactionId', transactions.removeTransaction
