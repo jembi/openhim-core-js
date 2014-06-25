@@ -68,4 +68,3 @@ exports.setupApp = (done) ->
 
 	# Return the result
 	done(app)
-
