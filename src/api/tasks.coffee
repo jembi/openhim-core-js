@@ -1,5 +1,5 @@
 Task = require('../model/tasks').Task
-Queue = require('../model/queues').Queue
+Queue = require('../model/queue').Queue
 Q = require 'q'
 logger = require 'winston'
 

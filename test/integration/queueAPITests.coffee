@@ -1,7 +1,7 @@
 should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
-Queue = require("../../lib/model/queues").Queue
+Queue = require("../../lib/model/queue").Queue
 auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
@@ -35,7 +35,7 @@ describe "API Integration Tests", ->
 		it 'should fetch all queue items', (done) ->
 
 			request("http://localhost:8080")
-				.get("/queues")
+				.get("/queue")
 				.set("auth-username", authDetails.authUsername)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
@@ -54,7 +54,7 @@ describe "API Integration Tests", ->
 						taskID: "78sdf88sdf98sdf98sdf"
 
 			request("http://localhost:8080")
-				.post("/queues")
+				.post("/queue")
 				.set("auth-username", authDetails.authUsername)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
@@ -72,7 +72,7 @@ describe "API Integration Tests", ->
 		
 		it 'should fetch a specific queue item by ID', (done) ->
 			request("http://localhost:8080")
-				.get("/queues/bbb908908ccc98dd1e0809aa")
+				.get("/queue/bbb908908ccc98dd1e0809aa")
 				.set("auth-username", authDetails.authUsername)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
@@ -90,7 +90,7 @@ describe "API Integration Tests", ->
 		it 'should remove a specific queue item by ID', (done) ->
 
 			request("http://localhost:8080")
-				.del("/queues/ccc908908ddd98ee1a0809bb")
+				.del("/queue/ccc908908ddd98ee1a0809bb")
 				.set("auth-username", authDetails.authUsername)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)

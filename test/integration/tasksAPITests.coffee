@@ -2,7 +2,7 @@ should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
 Task = require("../../lib/model/tasks").Task
-Queue = require("../../lib/model/queues").Queue
+Queue = require("../../lib/model/queue").Queue
 auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
