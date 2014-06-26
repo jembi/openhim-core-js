@@ -6,20 +6,16 @@ Transaction = require("../../lib/model/transactions").Transaction
 
 transactionId = null
 
-beforeEach (done) ->
-	Transaction.remove {}, ->
-		done();
+beforeEach (done) -> Transaction.remove {}, -> done()
 
-afterEach (done)->
-	Transaction.remove {}, ->
-		done();
+afterEach (done)-> Transaction.remove {}, -> done()
 
 describe "MessageStore", ->
 	req = new Object()
 	req.path = "/api/test/request"
-	req.headers = 	
+	req.headers =
 		headerName: "headerValue"
-		"Content-Type": "application/json"						
+		"Content-Type": "application/json"
 		"Content-Length": "9313219921"
 	req.querystring = "param1=value1&param2=value2"
 	req.body = "<HTTP body>"
@@ -34,22 +30,22 @@ describe "MessageStore", ->
 	res.body = "<HTTP response>"
 	res.timestamp = new Date()
 
-	routes = [							
+	routes = [
 				name: "jembi.org"
 				request: req
 				response: res
 			,
 				name: "green.brown"
 				request: req
-				response: res						
+				response: res
 			]
 			
 	orchestrations = [
-						name: "validate provider"            
+						name: "validate provider"
 						request: req
 						response: res
 					,
-						name: "validate provider"            
+						name: "validate provider"
 						request: req
 						response: res
 					]
@@ -61,7 +57,7 @@ describe "MessageStore", ->
 	ctx.path = "/api/test/request"
 	ctx.header =
 		headerName: "headerValue"
-		"Content-Type": "application/json"						
+		"Content-Type": "application/json"
 		"Content-Length": "9313219921"
 
 	ctx.querystring = "param1=value1&param2=value2"
@@ -110,5 +106,40 @@ describe "MessageStore", ->
 						trans.response.status.should.equal 201
 						trans.response.headers[0].testHeader.should.equal "value"
 						trans.response.body.should.equal "<HTTP response body>"
-						trans.status.should.equal "Completed"										
+						trans.status.should.equal "Completed"
+						done()
+
+		it "should update the transaction with the responses from non-primary routes", (done) ->
+			setRes = new Object()
+			setRes.status = "201"
+			setRes.headers = [
+								testHeader: "value"
+							]
+			setRes.body = new Buffer "<HTTP response body>"
+			setRes.timestamp = new Date()
+			
+			ctx.response = setRes
+			ctx.routes = []
+			ctx.routes.push {
+				name: "route1"
+				response: {
+					status: 200
+					headers: [ test: "test" ]
+					body: "route1"
+					timestamp: new Date()
+				}
+			}
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						(trans != null).should.true
+						trans.routes.length.should.be.exactly 1
+						trans.routes[0].name.should.equal "route1"
+						trans.routes[0].response.status.should.equal 200
+						trans.routes[0].response.headers[0].test.should.equal "test"
+						trans.routes[0].response.body.should.equal "route1"
 						done()
