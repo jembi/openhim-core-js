@@ -36,39 +36,61 @@ describe "HTTP Router", ->
 					ctx.response.headers.should.be.ok
 					done()
 
+		setupContextForMulticast = () ->
+			# Setup channels for the mock endpoints
+			channel =
+				name: "Multicast 1"
+				urlPattern: "test/multicast.+"
+				routes: [
+							host: "localhost"
+							port: 7777
+						,
+							host: "localhost"
+							port: 8888
+							primary: true
+						,
+							host: "localhost"
+							port: 9999
+						]
+			ctx = new Object()
+			ctx.authorisedChannels = []
+			ctx.authorisedChannels.push channel
+			ctx.request = new Object()
+			ctx.response = new Object()
+			ctx.request.url = "/test/multicasting"
+			ctx.request.method = "GET"
+			return ctx
+
 		it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
 			testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
 				testUtils.createMockServer 201, "Mock response body 2\n", 8888, ->
 					testUtils.createMockServer 400, "Mock response body 3\n", 9999, ->
-						# Setup channels for the mock endpoints
-						channel =
-							name: "Multicast 1"
-							urlPattern: "test/multicast.+"
-							routes: [
-										host: "localhost"
-										port: 7777
-									,
-										host: "localhost"
-										port: 8888
-										primary: true
-									,
-										host: "localhost"
-										port: 9999
-									]
-						ctx = new Object()
-						ctx.authorisedChannels = []
-						ctx.authorisedChannels.push channel
-						ctx.request = new Object()
-						ctx.response = new Object()
-						ctx.request.url = "/test/multicasting"
-						ctx.request.method = "GET"
-
+						ctx = setupContextForMulticast()
 						router.route ctx, (err) ->
 							if err
 								return done err
 							ctx.response.status.should.be.exactly 201
 							ctx.response.body.toString().should.be.eql "Mock response body 2\n"
 							ctx.response.headers.should.be.ok
+							done()
+
+		it "should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes", (done) ->
+			testUtils.createMockServer 200, "Mock response body 1\n", 7750, ->
+				testUtils.createMockServer 201, "Mock response body 2\n", 7751, ->
+					testUtils.createMockServer 400, "Mock response body 3\n", 7752, ->
+						ctx = setupContextForMulticast()
+						router.route ctx, (err) ->
+							if err
+								return done err
+
+							ctx.routes.length.should.be.exactly 2
+							ctx.routes[0].response.status.should.be.exactly 200
+							ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
+							ctx.routes[0].response.headers.should.be.ok
+							ctx.routes[1].response.status.should.be.exactly 400
+							ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
+							ctx.routes[1].response.headers.should.be.ok
+
 							done()
 
 
