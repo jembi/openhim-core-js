@@ -12,7 +12,7 @@ exports.storeTransaction = (ctx, done) ->
 	tx = new transactions.Transaction
 		status: transactionStatus.PROCESSING
 		clientID: ctx.authenticated.clientID
-		request: 
+		request:
 			path: ctx.path
 			headers: ctx.header
 			querystring: ctx.querystring
@@ -20,7 +20,7 @@ exports.storeTransaction = (ctx, done) ->
 			method: ctx.method
 			timestamp: new Date()
 
-	tx.save (err, tx) ->         
+	tx.save (err, tx) ->
 		if err
 			logger.error 'Could not save transaction metadata: ' + err
 			return done err
@@ -34,14 +34,14 @@ exports.storeResponse = (ctx, done) ->
 	status = transactionStatus.FAILED
 	if 200 <= ctx.response.status <= 299
 		status = transactionStatus.COMPLETED
-
+	
 	res =
 		status: ctx.response.status
-		headers: ctx.response.header
+		headers: ctx.response.headers
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
 		timestamp: ctx.response.timestamp
 
-	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status }, (err, tx) ->
+	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status, routes: ctx.routes }, (err, tx) ->
 		if err
 			logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
 			return done err

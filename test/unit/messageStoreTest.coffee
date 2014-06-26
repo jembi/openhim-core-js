@@ -92,7 +92,7 @@ describe "MessageStore", ->
 		it "should update the transaction with the response", (done) ->
 			setRes = new Object()
 			setRes.status = "201"
-			setRes.header = [
+			setRes.headers = [
 								testHeader: "value"
 							]
 			setRes.body = new Buffer "<HTTP response body>"

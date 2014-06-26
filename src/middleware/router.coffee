@@ -51,9 +51,11 @@ sendRequest = (ctx, responseDst, options) ->
 
 	routeReq = http.request options, (routeRes) ->
 		responseDst.status = routeRes.statusCode
-		responseDst.header = routeRes.headers
-		routeRes.on "data", (chunk) ->
-			responseDst.body = chunk
+		responseDst.headers = routeRes.headers
+
+		responseDst.body = ''
+		routeRes.on "data", (chunk) -> responseDst.body += chunk
+
 		routeRes.on "end", ->
 			responseDst.timestamp = new Date()
 			deferred.resolve()

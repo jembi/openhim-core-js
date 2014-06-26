@@ -33,7 +33,7 @@ describe "HTTP Router", ->
 
 					ctx.response.status.should.be.exactly 201
 					ctx.response.body.toString().should.be.eql "Mock response body\n"
-					ctx.response.header.should.be.ok
+					ctx.response.headers.should.be.ok
 					done()
 
 		it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
@@ -68,7 +68,7 @@ describe "HTTP Router", ->
 								return done err
 							ctx.response.status.should.be.exactly 201
 							ctx.response.body.toString().should.be.eql "Mock response body 2\n"
-							ctx.response.header.should.be.ok
+							ctx.response.headers.should.be.ok
 							done()
 
 
@@ -141,7 +141,7 @@ describe "HTTP Router", ->
 						return done err
 
 					ctx.response.status.should.be.exactly 200
-					ctx.response.header.should.be.ok
+					ctx.response.headers.should.be.ok
 					done()
 
 		it "should send request params if these where received from the incoming request", (done) ->
@@ -261,7 +261,7 @@ describe "HTTP Router", ->
 
 					ctx.response.status.should.be.exactly 200
 					ctx.response.body.toString().should.be.eql "Mock response body\n"
-					ctx.response.header.should.be.ok
+					ctx.response.headers.should.be.ok
 
 			testUtils.createMockServer 200, "Mock response body\n", mockServerPort, setup, (req, res) ->
 				req.url.should.be.exactly expectedTargetPath
