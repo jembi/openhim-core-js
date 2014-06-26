@@ -39,6 +39,7 @@ exports.storeResponse = (ctx, done) ->
 		status: ctx.response.status
 		headers: ctx.response.header
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
+		timestamp: ctx.response.timestamp
 
 	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status }, (err, tx) ->
 		if err

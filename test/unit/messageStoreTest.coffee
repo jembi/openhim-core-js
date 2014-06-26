@@ -96,6 +96,7 @@ describe "MessageStore", ->
 								testHeader: "value"
 							]
 			setRes.body = new Buffer "<HTTP response body>"
+			setRes.timestamp = new Date()
 			
 			ctx.response = setRes
 

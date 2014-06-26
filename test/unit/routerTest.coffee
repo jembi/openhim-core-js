@@ -102,7 +102,7 @@ describe "HTTP Router", ->
 
 						router.route ctx, (err) ->
 							if err
-								err.message.should.be.exactly "A primary route has already been returned, only a single primary route is allowed"
+								err.message.should.be.exactly "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
 								done()
 					
 		it "should forward PUT and POST requests correctly", (done) ->
