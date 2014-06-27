@@ -12,6 +12,7 @@ tasks = require './api/tasks'
 queue = require './api/queue'
 monitor = require './api/monitor'
 Q = require 'q'
+worker = require './api/worker'
 
 exports.setupApp = (done) ->
 	

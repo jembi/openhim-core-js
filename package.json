@@ -19,7 +19,8 @@
     "winston": "0.7.3",
     "nconf": "~0.6.9",
     "koa-cors": "0.0.8",
-    "bcrypt-nodejs": "0.0.3"
+    "bcrypt-nodejs": "0.0.3",
+    "monq": "0.3.0"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",

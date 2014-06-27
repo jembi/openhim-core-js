@@ -2,6 +2,15 @@ Task = require('../model/tasks').Task
 Queue = require('../model/queue').Queue
 Q = require 'q'
 logger = require 'winston'
+ObjectId = require('mongoose').Types.ObjectId
+
+
+monq = require("monq")
+
+client = monq("mongodb://localhost/openhim-development")
+# use more dynamic function get DB environment
+
+queue = client.queue("transactions")
 
 ###
 # Retrieves the list of active tasks
@@ -37,11 +46,15 @@ exports.addTask = `function *addTask() {
 		for(i=0; i<transactions.length; i++ ){
 
 			try{
-				var transactionID = transactions[i].tid;
-				var queueData = { transactionID: transactionID, taskID: taskID }
 
-				var queue = new Queue(queueData);
-				var result = yield Q.ninvoke(queue, 'save');
+				var transactionID = transactions[i].tid;
+
+				queue.enqueue("process_transactions", {
+					transactionID: transactionID,
+					taskID: taskID
+					}, function(e, job) {
+					//return console.log("enqueued:", job.data);
+				});
 
 				// All ok! So set the result
 				this.body = 'Queue item successfully created';
@@ -77,8 +90,9 @@ exports.getTask = `function *getTask(taskId) {
 	var taskId = unescape(taskId);
 
 	try {
+	
 		// Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-		var result = yield Task.findOne({ _id: taskId }).exec();
+		var result = yield Task.findOne({ _id: ObjectId.fromString(taskId) }).exec();
 
 		// Test if the result if valid
 		if (result === null) {
