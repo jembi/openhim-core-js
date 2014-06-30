@@ -1,5 +1,5 @@
 Task = require('../model/tasks').Task
-Queue = require('../model/queue').Queue
+#Queue = require('../model/queue').Queue
 Q = require 'q'
 logger = require 'winston'
 ObjectId = require('mongoose').Types.ObjectId
