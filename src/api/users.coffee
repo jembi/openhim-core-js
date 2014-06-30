@@ -106,7 +106,7 @@ exports.updateUser = `function *updateUser(email) {
 	} catch(e) {
 		logger.error('Could not update user by email '+email+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 'internal server error';		
+		this.status = 'internal server error';
 	}
 }`
 
@@ -128,7 +128,7 @@ exports.removeUser = `function *removeUser(email) {
 	}catch(e){
 		logger.error('Could not remove user by email '+email+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 'internal server error';		
+		this.status = 'internal server error';
 	}
 
 }`
