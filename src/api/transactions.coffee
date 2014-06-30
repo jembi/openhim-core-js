@@ -60,8 +60,8 @@ exports.addTransaction = `function *addTransaction() {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
-		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addTransaction denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addTransaction denied.'
 		this.status = 401;
 		return;
 	}
@@ -152,8 +152,8 @@ exports.updateTransaction = `function *updateTransaction(transactionId) {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
-		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateTransaction denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateTransaction denied.'
 		this.status = 401;
 		return;
 	}
@@ -180,8 +180,8 @@ exports.removeTransaction = `function *removeTransaction(transactionId) {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
-		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeTransaction denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeTransaction denied.'
 		this.status = 401;
 		return;
 	}
