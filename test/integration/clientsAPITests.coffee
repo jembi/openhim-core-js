@@ -69,7 +69,7 @@ describe "API Integration Tests", ->
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(testAppDoc)
-					.expect(401)
+					.expect(403)
 					.end (err, res) ->
 						if err
 							done err
@@ -136,7 +136,7 @@ describe "API Integration Tests", ->
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
-					.expect(401)
+					.expect(403)
 					.end (err, res) ->
 						if err
 							done err
@@ -186,7 +186,7 @@ describe "API Integration Tests", ->
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
-					.expect(401)
+					.expect(403)
 					.end (err, res) ->
 						if err
 							done err
@@ -240,7 +240,7 @@ describe "API Integration Tests", ->
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
-					.expect(401)
+					.expect(403)
 					.end (err, res) ->
 						if err
 							done err
@@ -329,7 +329,7 @@ describe "API Integration Tests", ->
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(updates)
-					.expect(401)
+					.expect(403)
 					.end (err, res) ->
 						if err
 							done err
@@ -377,7 +377,7 @@ describe "API Integration Tests", ->
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
-					.expect(401)
+					.expect(403)
 					.end (err, res) ->
 						if err
 							done err

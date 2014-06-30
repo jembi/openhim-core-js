@@ -18,7 +18,7 @@ exports.getChannels = `function *getChannels() {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -32,7 +32,7 @@ exports.getChannels = `function *getChannels() {
 		// Error! So inform the user
 		logger.error('Could not fetch all channels via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -45,7 +45,7 @@ exports.addChannel = `function *addChannel() {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addChannel denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addChannel denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -57,7 +57,7 @@ exports.addChannel = `function *addChannel() {
 
 		if (!isPathValid(channel)) {
 			this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]';
-			this.status = 400;
+			this.status = 'bad request';
 			return;
 		}
 
@@ -65,13 +65,13 @@ exports.addChannel = `function *addChannel() {
 
 		// All ok! So set the result
 		this.body = 'Channel successfully created';
-		this.status = 201;
+		this.status = 'created';
 	}
 	catch (e) {
 		// Error! So inform the user
 		logger.error('Could not add channel via the API: ' + e);
 		this.body = e.message;
-		this.status = 400;
+		this.status = 'bad request';
 	}
 }`
 
@@ -84,7 +84,7 @@ exports.getChannel = `function *getChannel(channelName) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannel denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannel denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -99,7 +99,7 @@ exports.getChannel = `function *getChannel(channelName) {
 		if (result === null) {
 			// Channel not foud! So inform the user
 			this.body = "We could not find a channel with this name:'" + channel_name + "'.";
-			this.status = 404;
+			this.status = 'not found';
 		}
 		else { this.body = result; } // All ok! So set the result
 	}
@@ -107,7 +107,7 @@ exports.getChannel = `function *getChannel(channelName) {
 		// Error! So inform the user
 		logger.error('Could not fetch channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -120,7 +120,7 @@ exports.updateChannel = `function *updateChannel(channelName) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateChannel denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateChannel denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -135,7 +135,7 @@ exports.updateChannel = `function *updateChannel(channelName) {
 
 	if (!isPathValid(channelData)) {
 		this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]';
-		this.status = 400;
+		this.status = 'bad request';
 		return;
 	}
 
@@ -149,7 +149,7 @@ exports.updateChannel = `function *updateChannel(channelName) {
 		// Error! So inform the user
 		logger.error('Could not update channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -162,7 +162,7 @@ exports.removeChannel = `function *removeChannel(channelName) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeChannel denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeChannel denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -180,6 +180,6 @@ exports.removeChannel = `function *removeChannel(channelName) {
 		// Error! So inform the user
 		logger.error('Could not remove channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`

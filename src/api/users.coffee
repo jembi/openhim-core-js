@@ -18,7 +18,7 @@ exports.authenticate = `function *authenticate(email) {
 		}
 	} catch(e) {
 		logger.error('Could not find user by email ' + email + ': ' + e);
-		this.status = 404;
+		this.status = 'not found';
 		this.body = 'Could not find user by email ' + email;
 	}
 }`
@@ -32,7 +32,7 @@ exports.addUser = `function *addUser() {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addUser denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addUser denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -43,11 +43,11 @@ exports.addUser = `function *addUser() {
 		var result = yield Q.ninvoke(user, 'save');
 		
 		this.body = 'User successfully created';
-		this.status = 201;
+		this.status = 'created';
 	} catch(e) {
 		logger.error('Could not add a user via the API: ' + e);
 		this.body = e.message;
-		this.status = 400;
+		this.status = 'bad request';
 	}
 }`
 
@@ -60,7 +60,7 @@ exports.getUser = `function *findUserByUsername(email) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findUserByUsername denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findUserByUsername denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -70,14 +70,14 @@ exports.getUser = `function *findUserByUsername(email) {
 		var result = yield User.findOne({ email: email }).exec();
 		if (result === null) {
 			this.body = "User with email '"+email+"' could not be found.";
-			this.status = 404;
+			this.status = 'not found';
 		} else {
 			this.body = result;
 		}
 	} catch(e) {
 		logger.error('Could not find user with email '+email+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 
 	}
 }`
@@ -88,7 +88,7 @@ exports.updateUser = `function *updateUser(email) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateUser denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateUser denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -106,7 +106,7 @@ exports.updateUser = `function *updateUser(email) {
 	} catch(e) {
 		logger.error('Could not update user by email '+email+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;		
+		this.status = 'internal server error';		
 	}
 }`
 
@@ -116,7 +116,7 @@ exports.removeUser = `function *removeUser(email) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeUser denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeUser denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -128,7 +128,7 @@ exports.removeUser = `function *removeUser(email) {
 	}catch(e){
 		logger.error('Could not remove user by email '+email+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;		
+		this.status = 'internal server error';		
 	}
 
 }`
@@ -139,7 +139,7 @@ exports.getUsers = `function *getUsers() {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getUsers denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getUsers denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -148,6 +148,6 @@ exports.getUsers = `function *getUsers() {
 	}catch (e){
 		logger.error('Could not fetch all users via the API: ' + e);
 		this.message = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`

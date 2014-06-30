@@ -49,7 +49,7 @@ exports.getTransactions = `function *getTransactions() {
 		this.body = yield transactions.Transaction.find(filtersObject).skip(filterSkip).limit(filterLimit).sort({ 'request.timestamp': -1 }).exec();
 	}catch (e){
 		this.message = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -62,7 +62,7 @@ exports.addTransaction = `function *addTransaction() {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addTransaction denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addTransaction denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -73,11 +73,11 @@ exports.addTransaction = `function *addTransaction() {
 	try {
 		// Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
 		yield Q.ninvoke(tx, "save");
-		this.status = 201;
+		this.status = 'created';
 	} catch (e) {
 		logger.error('Could not add a transaction via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 
 }`
@@ -96,7 +96,7 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 		// Test if the result if valid
 		if (result === null || result.length === 0) {
 			this.body = "We could not find transaction with ID:'" + transactionId + "'.";
-			this.status = 404;
+			this.status = 'not found';
 		// Test if the user is authorised
 		} else if (authorisation.inGroup('admin', this.authenticated) === false) {
 			var channels = yield authorisation.getUserViewableChannels(this.authenticated);
@@ -104,7 +104,7 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 				this.body = result
 			} else {
 				this.body = "The user " + this.authenticated.email + " is not authorised to access this transaction.";
-				this.status = 401;
+				this.status = 'forbidden';
 			}
 		} else {
 			this.body = result;
@@ -113,7 +113,7 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 		// Error! So inform the user
 		logger.error('Could not get transaction by ID via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -141,7 +141,7 @@ exports.findTransactionByClientId = `function *findTransactionByClientId(clientI
 	} catch(e) {
 		logger.error('Could not find a transaction by client by via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -154,7 +154,7 @@ exports.updateTransaction = `function *updateTransaction(transactionId) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateTransaction denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateTransaction denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -164,11 +164,11 @@ exports.updateTransaction = `function *updateTransaction(transactionId) {
 	try {
 		yield transactions.Transaction.findByIdAndUpdate(transactionId, updates).exec();
 		this.body = "Transaction with ID:"+transactionId+" successfully updated.";
-		this.status = 200;
+		this.status = 'ok';
 	} catch(e) {
 		logger.error('Could not update a transaction via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -182,7 +182,7 @@ exports.removeTransaction = `function *removeTransaction(transactionId) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeTransaction denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeTransaction denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -192,11 +192,11 @@ exports.removeTransaction = `function *removeTransaction(transactionId) {
 	try {
 		yield transactions.Transaction.findByIdAndRemove(transactionId).exec();
 		this.body = 'Transaction successfully deleted';
-		this.status = 200;
+		this.status = 'ok';
 	}
 	catch (e) {
 		logger.error('Could not remove a transaction via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`

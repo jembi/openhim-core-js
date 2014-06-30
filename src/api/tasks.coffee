@@ -15,7 +15,7 @@ exports.getTasks = `function *getTasks() {
 		// Error! So inform the user
 		logger.error('Could not fetch all tasks via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -33,13 +33,13 @@ exports.addTask = `function *addTask() {
 
 		// All ok! So set the result
 		this.body = 'Task successfully created';
-		this.status = 201;
+		this.status = 'created';
 	}
 	catch (e) {
 		// Error! So inform the user
 		logger.error('Could not add Task via the API: ' + e);
 		this.body = e.message;
-		this.status = 400;
+		this.status = 'bad request';
 	}
 }`
 
@@ -59,7 +59,7 @@ exports.getTask = `function *getTask(taskId) {
 		if (result === null) {
 			// Channel not foud! So inform the user
 			this.body = "We could not find a Task with this ID:'" + taskId + "'.";
-			this.status = 404;
+			this.status = 'not found';
 		}
 		else { this.body = result; } // All ok! So set the result
 	}
@@ -67,7 +67,7 @@ exports.getTask = `function *getTask(taskId) {
 		// Error! So inform the user
 		logger.error('Could not fetch Task by ID ' +taskId+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -80,7 +80,7 @@ exports.updateTask = `function *updateTask(taskId) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateTask denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateTask denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -98,7 +98,7 @@ exports.updateTask = `function *updateTask(taskId) {
 		// Error! So inform the user
 		logger.error('Could not update Task by ID ' +taskId+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -111,7 +111,7 @@ exports.removeTask = `function *removeTask(taskId) {
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeTask denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeTask denied.'
-		this.status = 401;
+		this.status = 'forbidden';
 		return;
 	}
 
@@ -129,6 +129,6 @@ exports.removeTask = `function *removeTask(taskId) {
 		// Error! So inform the user
 		logger.error('Could not remove Task by ID ' +taskId+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
