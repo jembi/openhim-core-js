@@ -53,7 +53,7 @@ describe "API Integration Tests", ->
 				property: "prop1", value: "prop1-value1"
 				property:"prop2", value: "prop-value1"
 
-		authDetails = auth.getAuthDetails()
+		authDetails = {}
 
 		channel = new Channel
 			name: "TestChannel1"
@@ -78,6 +78,9 @@ describe "API Integration Tests", ->
 				channel.remove (err) ->
 					server.stop ->
 						done()
+
+		beforeEach ->
+			authDetails = auth.getAuthDetails()
 
 		describe "*addTransaction()", ->
 

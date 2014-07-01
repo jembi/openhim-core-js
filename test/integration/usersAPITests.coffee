@@ -27,7 +27,7 @@ describe 'API Integration Tests', ->
 			passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 			groups: [ 'HISP' ]
 
-		authDetails = auth.getAuthDetails()
+		authDetails = {}
 
 		before (done) ->
 			user1.save ->
@@ -41,6 +41,9 @@ describe 'API Integration Tests', ->
 				auth.cleanupTestUsers (err) ->
 					server.stop ->
 						done()
+
+		beforeEach ->
+			authDetails = auth.getAuthDetails()
 
 		describe '*authenticate(email)', ->
 

@@ -20,7 +20,7 @@ describe "API Integration Tests", ->
 			passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 			cert: "8fajd89ada"
 
-		authDetails = auth.getAuthDetails()
+		authDetails = {}
 
 		before (done) ->
 			auth.setupTestUsers (err) ->
@@ -31,6 +31,9 @@ describe "API Integration Tests", ->
 			auth.cleanupTestUsers (err) ->
 				server.stop ->
 					done()
+
+		beforeEach ->
+			authDetails = auth.getAuthDetails()
 
 		afterEach (done) ->
 			Client.remove ->

@@ -22,7 +22,7 @@ describe "API Integration Tests", ->
 			transactionID: "sg9987sdg0960sg0sg878"
 			taskID: "78sdf88sdf98sdf98sdf"	
 
-		authDetails = auth.getAuthDetails()
+		authDetails = {}
 
 		before (done) ->
 			Queue.remove {}, ->
@@ -38,6 +38,9 @@ describe "API Integration Tests", ->
 				auth.cleanupTestUsers ->
 					Queue.remove {}, ->
 						done()
+
+		beforeEach ->
+			authDetails = auth.getAuthDetails()
 
 		describe '*getQueueItems()', ->
 

@@ -30,7 +30,7 @@ describe "API Integration Tests", ->
 						primary: true
 					]
 
-		authDetails = auth.getAuthDetails()
+		authDetails = {}
 
 		before (done) ->
 			channel1.save ->
@@ -43,7 +43,10 @@ describe "API Integration Tests", ->
 			server.stop ->
 				auth.cleanupTestUsers ->
 					Channel.remove {}, ->
-						done();
+						done()
+
+		beforeEach ->
+			authDetails = auth.getAuthDetails()
 
 		describe '*getChannels()', ->
 
