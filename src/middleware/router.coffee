@@ -4,15 +4,26 @@ MongoClient = require('mongodb').MongoClient;
 Q = require 'q'
 config = require '../config/config'
 config.mongo = config.get('mongo')
+logger = require "winston"
+
+containsMultiplePrimaries = (routes) ->
+	numPrimaries = 0
+	for route in routes
+		numPrimaries++ if route.primary
+	return numPrimaries > 1
 
 sendRequestToRoutes = (ctx, routes, next) ->
-	primaryRouteReturned = false
-	
+	promises = []
+
+	if containsMultiplePrimaries routes
+		return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
+
 	for route in routes
+		path = getDestinationPath route, ctx.request.url
 		options =
 			hostname: route.host
 			port: route.port
-			path: getDestinationPath route, ctx.request.url
+			path: path
 			method: ctx.request.method
 			headers: ctx.request.header
 
@@ -24,25 +35,47 @@ sendRequestToRoutes = (ctx, routes, next) ->
 
 		if options.headers && options.headers.host
 			delete options.headers.host
-		
-		if route.primary
-			routeReq = http.request options, (routeRes) ->
-				if primaryRouteReturned
-					next new Error "A primary route has already been returned, only a single primary route is allowed"
-				else
-					primaryRouteReturned = true
-					ctx.response.status = routeRes.statusCode
-					ctx.response.header = routeRes.headers
-					routeRes.on "data", (chunk) ->
-						ctx.response.body = chunk
-					routeRes.on "end", ->
-						next()
-		else
-			routeReq = http.request options
 
-		if ctx.request.method == "POST" || ctx.request.method == "PUT"
-			routeReq.write ctx.request.body
-		routeReq.end()
+		if route.primary
+			response = ctx.response
+		else
+			routeResponse = {}
+			routeResponse.name = route.name
+			routeResponse.request =
+				path: path
+				headers: ctx.request.header
+				querystring: ctx.request.querystring
+				method: ctx.request.method
+			routeResponse.response = {}
+			ctx.routes = [] if not ctx.routes
+			ctx.routes.push routeResponse
+			response = routeResponse.response
+
+		promises.push sendRequest ctx, response, options
+
+	(Q.all promises).then -> next()
+
+sendRequest = (ctx, responseDst, options) ->
+	deferred = Q.defer()
+
+	routeReq = http.request options, (routeRes) ->
+		responseDst.status = routeRes.statusCode
+		responseDst.header = routeRes.headers
+
+		responseDst.body = ''
+		routeRes.on "data", (chunk) -> responseDst.body += chunk
+
+		routeRes.on "end", ->
+			responseDst.timestamp = new Date()
+			deferred.resolve()
+
+	routeReq.on "error", (err) -> deferred.reject err
+
+	if ctx.request.method == "POST" || ctx.request.method == "PUT"
+		routeReq.write ctx.request.body
+	routeReq.end()
+
+	return deferred.promise
 
 getDestinationPath = (route, requestPath) ->
 	if route.path
