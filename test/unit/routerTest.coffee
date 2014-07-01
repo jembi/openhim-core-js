@@ -33,7 +33,7 @@ describe "HTTP Router", ->
 
 					ctx.response.status.should.be.exactly 201
 					ctx.response.body.toString().should.be.eql "Mock response body\n"
-					ctx.response.headers.should.be.ok
+					ctx.response.header.should.be.ok
 					done()
 
 		setupContextForMulticast = () ->
@@ -71,7 +71,7 @@ describe "HTTP Router", ->
 								return done err
 							ctx.response.status.should.be.exactly 201
 							ctx.response.body.toString().should.be.eql "Mock response body 2\n"
-							ctx.response.headers.should.be.ok
+							ctx.response.header.should.be.ok
 							done()
 
 		it "should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes", (done) ->
@@ -86,10 +86,10 @@ describe "HTTP Router", ->
 							ctx.routes.length.should.be.exactly 2
 							ctx.routes[0].response.status.should.be.exactly 200
 							ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
-							ctx.routes[0].response.headers.should.be.ok
+							ctx.routes[0].response.header.should.be.ok
 							ctx.routes[1].response.status.should.be.exactly 400
 							ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
-							ctx.routes[1].response.headers.should.be.ok
+							ctx.routes[1].response.header.should.be.ok
 
 							done()
 
@@ -163,7 +163,7 @@ describe "HTTP Router", ->
 						return done err
 
 					ctx.response.status.should.be.exactly 200
-					ctx.response.headers.should.be.ok
+					ctx.response.header.should.be.ok
 					done()
 
 		it "should send request params if these where received from the incoming request", (done) ->
@@ -283,7 +283,7 @@ describe "HTTP Router", ->
 
 					ctx.response.status.should.be.exactly 200
 					ctx.response.body.toString().should.be.eql "Mock response body\n"
-					ctx.response.headers.should.be.ok
+					ctx.response.header.should.be.ok
 
 			testUtils.createMockServer 200, "Mock response body\n", mockServerPort, setup, (req, res) ->
 				req.url.should.be.exactly expectedTargetPath

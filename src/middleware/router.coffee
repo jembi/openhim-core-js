@@ -7,7 +7,10 @@ config.mongo = config.get('mongo')
 logger = require "winston"
 
 containsMultiplePrimaries = (routes) ->
-	((routes.map (route) -> if route.primary then 1 else 0).reduce (a, b) -> a + b) > 1
+	numPrimaries = 0
+	for route in routes
+		numPrimaries++ if route.primary
+	return numPrimaries > 1
 
 sendRequestToRoutes = (ctx, routes, next) ->
 	promises = []
@@ -51,7 +54,7 @@ sendRequest = (ctx, responseDst, options) ->
 
 	routeReq = http.request options, (routeRes) ->
 		responseDst.status = routeRes.statusCode
-		responseDst.headers = routeRes.headers
+		responseDst.header = routeRes.headers
 
 		responseDst.body = ''
 		routeRes.on "data", (chunk) -> responseDst.body += chunk
@@ -59,6 +62,8 @@ sendRequest = (ctx, responseDst, options) ->
 		routeRes.on "end", ->
 			responseDst.timestamp = new Date()
 			deferred.resolve()
+
+	routeReq.on "error", (err) -> deferred.reject err
 
 	if ctx.request.method == "POST" || ctx.request.method == "PUT"
 		routeReq.write ctx.request.body

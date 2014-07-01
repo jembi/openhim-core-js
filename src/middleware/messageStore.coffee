@@ -37,9 +37,15 @@ exports.storeResponse = (ctx, done) ->
 	
 	res =
 		status: ctx.response.status
-		headers: ctx.response.headers
+		headers: ctx.response.header
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
 		timestamp: ctx.response.timestamp
+
+	# Rename header -> headers
+	if ctx.routes
+		for route in ctx.routes
+			route.response.headers = route.response.header
+			delete route.response.header
 
 	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status, routes: ctx.routes }, (err, tx) ->
 		if err

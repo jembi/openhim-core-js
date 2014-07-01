@@ -88,7 +88,7 @@ describe "MessageStore", ->
 		it "should update the transaction with the response", (done) ->
 			setRes = new Object()
 			setRes.status = "201"
-			setRes.headers = [
+			setRes.header = [
 								testHeader: "value"
 							]
 			setRes.body = new Buffer "<HTTP response body>"
@@ -112,7 +112,7 @@ describe "MessageStore", ->
 		it "should update the transaction with the responses from non-primary routes", (done) ->
 			setRes = new Object()
 			setRes.status = "201"
-			setRes.headers = [
+			setRes.header = [
 								testHeader: "value"
 							]
 			setRes.body = new Buffer "<HTTP response body>"
@@ -124,7 +124,7 @@ describe "MessageStore", ->
 				name: "route1"
 				response: {
 					status: 200
-					headers: [ test: "test" ]
+					header: [ test: "test" ]
 					body: "route1"
 					timestamp: new Date()
 				}
