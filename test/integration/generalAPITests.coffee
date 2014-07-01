@@ -15,7 +15,7 @@ describe "API Integration Tests", ->
 			passwordAlgorithm: 'sha512'
 			passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
 			passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
-			groups: [ 'HISP' ]
+			groups: [ 'HISP', 'admin' ]
 			# password is 'password'
 
 		before (done) ->

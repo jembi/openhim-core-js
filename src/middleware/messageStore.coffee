@@ -49,7 +49,7 @@ exports.storeResponse = (ctx, done) ->
 			return done err
 		return done()
 
-exports.store =  `function *storeMiddleware(next) {
+exports.koaMiddleware =  `function *storeMiddleware(next) {
 		exports.storeTransaction(this, function(){});
 		yield next;
 		exports.storeResponse(this, function(){});

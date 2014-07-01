@@ -20,8 +20,7 @@ describe "HTTP Router", ->
 							]
 
 				ctx = new Object()
-				ctx.authorisedChannels = []
-				ctx.authorisedChannels.push channel
+				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
 				ctx.request.url = "/test"
@@ -56,8 +55,7 @@ describe "HTTP Router", ->
 										port: 9999
 									]
 						ctx = new Object()
-						ctx.authorisedChannels = []
-						ctx.authorisedChannels.push channel
+						ctx.authorisedChannel = channel
 						ctx.request = new Object()
 						ctx.response = new Object()
 						ctx.request.url = "/test/multicasting"
@@ -93,8 +91,7 @@ describe "HTTP Router", ->
 										primary: true
 									]
 						ctx = new Object()
-						ctx.authorisedChannels = []
-						ctx.authorisedChannels.push channel
+						ctx.authorisedChannel = channel
 						ctx.request = new Object()
 						ctx.response = new Object()
 						ctx.request.url = "/test/multi-primary"
@@ -128,8 +125,7 @@ describe "HTTP Router", ->
 							]
 
 				ctx = new Object()
-				ctx.authorisedChannels = []
-				ctx.authorisedChannels.push channel
+				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
 				ctx.request.url = "/test"
@@ -157,8 +153,7 @@ describe "HTTP Router", ->
 							]
 
 				ctx = new Object()
-				ctx.authorisedChannels = []
-				ctx.authorisedChannels.push channel
+				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
 				ctx.request.url = "/test"
@@ -188,8 +183,7 @@ describe "HTTP Router", ->
 							]
 
 				ctx = new Object()
-				ctx.authorisedChannels = []
-				ctx.authorisedChannels.push channel
+				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
 				ctx.request.url = "/test"
@@ -215,8 +209,7 @@ describe "HTTP Router", ->
 								primary: true
 							]
 				ctx = new Object()
-				ctx.authorisedChannels = []
-				ctx.authorisedChannels.push channel
+				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
 				ctx.request.url = "/test"
@@ -248,8 +241,7 @@ describe "HTTP Router", ->
 		testPathRedirectionRouting = (mockServerPort, channel, expectedTargetPath, callback) ->
 			setup = () ->
 				ctx = new Object()
-				ctx.authorisedChannels = []
-				ctx.authorisedChannels.push channel
+				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
 				ctx.request.url = "/test"
