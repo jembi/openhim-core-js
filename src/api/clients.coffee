@@ -1,11 +1,21 @@
 Client = require('../model/clients').Client
 Q = require 'q'
 logger = require 'winston'
+authorisation = require './authorisation'
 
 ###
 # Adds a client 
 ###
-exports.addClient = `function *addClient(){
+exports.addClient = `function *addClient() {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addClient denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addClient denied.'
+		this.status = 'forbidden';
+		return;
+	}
+
 	var clientData = this.request.body
 
 	try {
@@ -13,11 +23,11 @@ exports.addClient = `function *addClient(){
 		var result = yield Q.ninvoke(client, 'save');
 		
 		this.body = 'Client successfully created';
-		this.status = 201;
+		this.status = 'created';
 	} catch(e) {
 		logger.error('Could not add a client via the API: ' + e);
 		this.body = e.message;
-		this.status = 400;
+		this.status = "bad request";
 	}
 }`
 
@@ -25,26 +35,43 @@ exports.addClient = `function *addClient(){
 # Retrieves the details of a specific client
 ###
 exports.getClient = `function *findClientById(clientId) {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
+		this.status = 'forbidden';
+		return;
+	}
+
 	var clientId = unescape(clientId);
 
 	try {
 		var result = yield Client.findOne({ clientID: clientId }).exec();
 		if (result === null) {
 			this.body = "Client with id '"+clientId+"' could not be found.";
-			this.status = 404;
+			this.status = 'not found';
 		} else {
 			this.body = result;
 		}
 	} catch(e) {
 		logger.error('Could not find client by id '+clientId+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 
 	}
 }`
 
 
-exports.findClientByDomain = `function *findClientByDomain(domain){
+exports.findClientByDomain = `function *findClientByDomain(domain) {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientByDomain denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientByDomain denied.'
+		this.status = 'forbidden';
+		return;
+	}
 
 	var domain = unescape(domain);
 
@@ -52,18 +79,27 @@ exports.findClientByDomain = `function *findClientByDomain(domain){
 		var result = yield Client.findOne({ domain: domain }).exec();
 		if (result === null) {
 			this.body = "Could not find client with domain '"+domain+"'";
-			this.status = 404;
+			this.status = 'not found';
 		}else{
 			this.body = result;
 		}
 	} catch(e) {
 		logger.error('Could not find client by domain '+domain+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
 exports.updateClient = `function *updateClient(clientId) {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateClient denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateClient denied.'
+		this.status = 'forbidden';
+		return;
+	}
+
 	var clientId = unescape(clientId);
 	var clientData = this.request.body;
 
@@ -78,11 +114,20 @@ exports.updateClient = `function *updateClient(clientId) {
 	} catch(e) {
 		logger.error('Could not update client by ID '+clientId+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;		
+		this.status = 'internal server error';
 	}
 }`
 
-exports.removeClient = `function *removeClient(clientId){
+exports.removeClient = `function *removeClient(clientId) {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeClient denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeClient denied.'
+		this.status = 'forbidden';
+		return;
+	}
+
 	var clientId = unescape (clientId);
 
 	try {
@@ -91,17 +136,26 @@ exports.removeClient = `function *removeClient(clientId){
 	}catch(e){
 		logger.error('Could not remove client by ID '+clientId+' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;		
+		this.status = 'internal server error';
 	}
 
 }`
 
-exports.getClients = `function *getClients(){
+exports.getClients = `function *getClients() {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getClients denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getClients denied.'
+		this.status = 'forbidden';
+		return;
+	}
+
 	try {
 		this.body = yield Client.find().exec();
 	}catch (e){
 		logger.error('Could not fetch all clients via the API: ' + e);
 		this.message = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`

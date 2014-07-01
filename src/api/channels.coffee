@@ -1,6 +1,7 @@
 Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
+authorisation = require './authorisation'
 
 isPathValid = (channel) ->
 	(channel.routes.map (route) ->
@@ -13,6 +14,14 @@ isPathValid = (channel) ->
 ###
 exports.getChannels = `function *getChannels() {
 
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.'
+		this.status = 'forbidden';
+		return;
+	}
+
 	// Get the request query-parameters
 	var uriPattern = this.request.query.uriPattern;
 
@@ -23,7 +32,7 @@ exports.getChannels = `function *getChannels() {
 		// Error! So inform the user
 		logger.error('Could not fetch all channels via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -31,6 +40,14 @@ exports.getChannels = `function *getChannels() {
 # Creates a new channel
 ###
 exports.addChannel = `function *addChannel() {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addChannel denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addChannel denied.'
+		this.status = 'forbidden';
+		return;
+	}
 
 	// Get the values to use
 	var channelData = this.request.body;
@@ -40,7 +57,7 @@ exports.addChannel = `function *addChannel() {
 
 		if (!isPathValid(channel)) {
 			this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]';
-			this.status = 400;
+			this.status = 'bad request';
 			return;
 		}
 
@@ -48,13 +65,13 @@ exports.addChannel = `function *addChannel() {
 
 		// All ok! So set the result
 		this.body = 'Channel successfully created';
-		this.status = 201;
+		this.status = 'created';
 	}
 	catch (e) {
 		// Error! So inform the user
 		logger.error('Could not add channel via the API: ' + e);
 		this.body = e.message;
-		this.status = 400;
+		this.status = 'bad request';
 	}
 }`
 
@@ -62,6 +79,14 @@ exports.addChannel = `function *addChannel() {
 # Retrieves the details for a specific channel
 ###
 exports.getChannel = `function *getChannel(channelName) {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannel denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannel denied.'
+		this.status = 'forbidden';
+		return;
+	}
 
 	// Get the values to use
 	var channel_name = unescape(channelName);
@@ -74,7 +99,7 @@ exports.getChannel = `function *getChannel(channelName) {
 		if (result === null) {
 			// Channel not foud! So inform the user
 			this.body = "We could not find a channel with this name:'" + channel_name + "'.";
-			this.status = 404;
+			this.status = 'not found';
 		}
 		else { this.body = result; } // All ok! So set the result
 	}
@@ -82,7 +107,7 @@ exports.getChannel = `function *getChannel(channelName) {
 		// Error! So inform the user
 		logger.error('Could not fetch channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -90,6 +115,14 @@ exports.getChannel = `function *getChannel(channelName) {
 # Updates the details for a specific channel
 ###
 exports.updateChannel = `function *updateChannel(channelName) {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateChannel denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateChannel denied.'
+		this.status = 'forbidden';
+		return;
+	}
 
 	// Get the values to use
 	var channel_name = unescape(channelName);
@@ -102,7 +135,7 @@ exports.updateChannel = `function *updateChannel(channelName) {
 
 	if (!isPathValid(channelData)) {
 		this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]';
-		this.status = 400;
+		this.status = 'bad request';
 		return;
 	}
 
@@ -116,7 +149,7 @@ exports.updateChannel = `function *updateChannel(channelName) {
 		// Error! So inform the user
 		logger.error('Could not update channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`
 
@@ -124,6 +157,14 @@ exports.updateChannel = `function *updateChannel(channelName) {
 # Deletes a specific channels details
 ###
 exports.removeChannel = `function *removeChannel(channelName) {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeChannel denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeChannel denied.'
+		this.status = 'forbidden';
+		return;
+	}
 
 	// Get the values to use
 	var channel_name = unescape(channelName);
@@ -139,6 +180,6 @@ exports.removeChannel = `function *removeChannel(channelName) {
 		// Error! So inform the user
 		logger.error('Could not remove channel by name ' +channel_name+ ' via the API: ' + e);
 		this.body = e.message;
-		this.status = 500;
+		this.status = 'internal server error';
 	}
 }`

@@ -113,8 +113,8 @@ exports.transformPath = transformPath = (path, expression) ->
 
 
 ###
-# Finds the channels that match the request in ctx.request and routes
-# the request to all routes within those channels. It updates the
+# Gets the authorised channel and routes
+# the request to all routes within that channel. It updates the
 # response of the context object to reflect the response recieved from the
 # route that is marked as 'primary'.
 #
@@ -124,13 +124,8 @@ exports.transformPath = transformPath = (path, expression) ->
 # reflect the response from that route.
 ###
 exports.route = (ctx, next) ->
-	routes = []
-	for channel in ctx.authorisedChannels
-		pat = new RegExp channel.urlPattern
-		if pat.test ctx.request.url
-			routes = routes.concat channel.routes
-
-	sendRequestToRoutes ctx, routes, next
+	channel = ctx.authorisedChannel
+	sendRequestToRoutes ctx, channel.routes, next
 
 ###
 # The [Koa](http://koajs.com/) middleware function that enables the
