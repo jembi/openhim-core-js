@@ -122,6 +122,9 @@ describe "MessageStore", ->
 			ctx.routes = []
 			ctx.routes.push {
 				name: "route1"
+				request: {
+					path: "/test"
+				}
 				response: {
 					status: 200
 					header: [ test: "test" ]
@@ -142,4 +145,5 @@ describe "MessageStore", ->
 						trans.routes[0].response.status.should.equal 200
 						trans.routes[0].response.headers[0].test.should.equal "test"
 						trans.routes[0].response.body.should.equal "route1"
+						trans.routes[0].request.path.should.equal "/test"
 						done()

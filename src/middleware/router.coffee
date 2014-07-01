@@ -19,10 +19,11 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
 
 	for route in routes
+		path = getDestinationPath route, ctx.request.url
 		options =
 			hostname: route.host
 			port: route.port
-			path: getDestinationPath route, ctx.request.url
+			path: path
 			method: ctx.request.method
 			headers: ctx.request.header
 
@@ -40,6 +41,11 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		else
 			routeResponse = {}
 			routeResponse.name = route.name
+			routeResponse.request =
+				path: path
+				headers: ctx.request.header
+				querystring: ctx.request.querystring
+				method: ctx.request.method
 			routeResponse.response = {}
 			ctx.routes = [] if not ctx.routes
 			ctx.routes.push routeResponse

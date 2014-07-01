@@ -87,9 +87,11 @@ describe "HTTP Router", ->
 							ctx.routes[0].response.status.should.be.exactly 200
 							ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
 							ctx.routes[0].response.header.should.be.ok
+							ctx.routes[0].request.path.should.be.exactly "/test/multicasting"
 							ctx.routes[1].response.status.should.be.exactly 400
 							ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
 							ctx.routes[1].response.header.should.be.ok
+							ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
 
 							done()
 
