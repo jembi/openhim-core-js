@@ -3,6 +3,7 @@ request = require "supertest"
 server = require "../../lib/server"
 Task = require("../../lib/model/tasks").Task
 testUtils = require "../testUtils"
+Queue = require("../../lib/model/queue").Queue
 auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
@@ -12,19 +13,23 @@ describe "API Integration Tests", ->
 		task1 = new Task
 			_id: "aaa908908bbb98cc1d0809ee"
 			status: "Completed"
-			transactionIds: [ "1111", "2222", "3333" ]
+			transactions: [ {tid: "11111", tstatus: "Completed"},
+							{tid: "22222", tstatus: "Completed"},
+							{tid: "33333", tstatus: "Processing"},
+							{tid: "44444", tstatus: "Completed"} ]
 			created: "2014-06-18T12:00:00.929Z"
 			completed: "2014-06-18T12:01:00.929Z"
 			user: "root@openhim.org"
 		task2 = new Task
-			_id: "890aaS0b93ccccc30dddddd0"
+			_id: "aaa777777bbb66cc5d4444ee"
 			status: "Processing"
-			transactionIds: [ "1111", "2222", "3333", "4444", "5555", "6666" ]
-			created: "2014-06-18T10:00:00.929Z"
-			completed: ""
+			transactions: [ {tid: "55555", tstatus: "Processing"},
+							{tid: "66666", tstatus: "Processing"},
+							{tid: "77777", tstatus: "Processing"} ]
+			created: "2014-06-18T12:00:00.929Z"
 			user: "root@openhim.org"
 
-		authDetails = auth.getAuthDetails()
+		authDetails = {}
 
 		before (done) ->
 			task1.save ->
@@ -37,7 +42,10 @@ describe "API Integration Tests", ->
 			server.stop ->
 				auth.cleanupTestUsers ->
 					Task.remove {}, ->
-						done();
+						done()
+
+		beforeEach ->
+			authDetails = auth.getAuthDetails()
 
 		describe '*getTasks()', ->
 
@@ -61,9 +69,11 @@ describe "API Integration Tests", ->
 
 			it 'should add a new task', (done) ->
 				newTask =
-					status: "Processing"
-					transactionIds: [ "7777", "8888", "9999", "1010" ]
-					created: "2014-06-18T11:00:00.929Z"
+					status: "NotStarted"
+					transactions: [ {tid: "88888", tstatus: "Processing"},
+									{tid: "99999", tstatus: "Processing"},
+									{tid: "10101", tstatus: "Processing"} ]
+					created: "2014-06-20T12:00:00.929Z"
 					user: "root@openhim.org"
 
 				request("http://localhost:8080")
@@ -78,10 +88,15 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							Task.findOne { transactionIds: [ "7777", "8888", "9999", "1010" ] }, (err, task) ->
-								task.should.have.property "status", "Processing"
-								task.transactionIds.should.have.length 4
-								done()
+							Task.findOne { created: "2014-06-20T12:00:00.929Z" }, (err, task) ->
+								task.should.have.property "status", "NotStarted"
+								task.transactions.should.have.length 3
+								Queue.find {}, (err, queue) ->
+									queue.should.have.length 3
+									Queue.findOne { transactionID: "99999" }, (err, queue) ->
+										queue.should.have.property "transactionID", "99999"
+										queue.should.have.property "taskID", ''+task._id+''
+										done()
 
 		describe '*getTask(taskId)', ->
 
@@ -99,7 +114,7 @@ describe "API Integration Tests", ->
 						else
 							res.body.should.have.property "_id", "aaa908908bbb98cc1d0809ee"
 							res.body.should.have.property "status", "Completed"
-							res.body.transactionIds.should.have.length 3
+							res.body.transactions.should.have.length 4
 							done()
 
 		describe '*updateTask(taskId)', ->
@@ -110,7 +125,7 @@ describe "API Integration Tests", ->
 					completed: "2014-06-18T13:30:00.929Z"
 
 				request("http://localhost:8080")
-					.put("/tasks/890aaS0b93ccccc30dddddd0")
+					.put("/tasks/aaa777777bbb66cc5d4444ee")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -121,9 +136,9 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							Task.findOne { _id: "890aaS0b93ccccc30dddddd0" }, (err, task) ->
+							Task.findOne { _id: "aaa777777bbb66cc5d4444ee" }, (err, task) ->
 								task.should.have.property "status", "Completed"
-								task.transactionIds.should.have.length 6
+								task.transactions.should.have.length 3
 								done()
 
 			it 'should not allow a non admin user to update a task', (done) ->
@@ -148,7 +163,7 @@ describe "API Integration Tests", ->
 			it 'should remove a specific task by ID', (done) ->
 
 				request("http://localhost:8080")
-					.del("/tasks/890aaS0b93ccccc30dddddd0")
+					.del("/tasks/aaa777777bbb66cc5d4444ee")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -158,7 +173,7 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							Task.find { _id: "890aaS0b93ccccc30dddddd0" }, (err, task) ->
+							Task.find { _id: "aaa777777bbb66cc5d4444ee" }, (err, task) ->
 								task.should.have.length 0
 								done()
 
