@@ -10,7 +10,9 @@ client = monq(config.mongo.url)
 
 messageStore = require "../middleware/messageStore"
 Transaction = require("../model/transactions").Transaction
-router = require "../middleware/router"
+Client = require("../model/clients").Client
+Authorisation = require "../middleware/authorisation"
+Router = require "../middleware/router"
 
 
 
@@ -48,51 +50,80 @@ worker.register process_transactions: (params, callback) ->
 
 
 
-          
 
 
-          Transaction.findOne
-            _id: transactionID
-          , (err, transaction) ->
-            console.log(transaction)
+          #retrieve the transaction to rerun
+          Transaction.findOne _id: transactionID, (err, transaction) ->
+            #console.log(transaction)
+
+            # construct the 'ctx' object to create a new transaction record with no response message
+            ctx = new Object()
+            ctx.path = transaction.request.path
+            ctx.header = transaction.request.headers
+            
+            ctx.querystring = transaction.request.querystring
+            ctx.body = transaction.request.body
+            ctx.method = transaction.request.method
+
+            ctx.request = new Object()
+            ctx.request.url = transaction.request.path
+            ctx.request.method = transaction.request.method
+            ctx.request.querystring = transaction.request.querystring
+
+            ctx.response = new Object()
+            ctx.status = "Processing"
+
+            #store the message without a response (before HTTP request is made)
+            messageStore.storeTransaction ctx, (error, saveTransaction) ->               
+              console.log(saveTransaction)
 
 
-          ###
-          ctx = new Object()
-          ctx.path = "/api/test/request"
-          ctx.header =
-            headerName: "headerValue"
-            "Content-Type": "application/json"            
-            "Content-Length": "9313219921"
 
-          ctx.querystring = "param1=value1&param2=value2"
-          ctx.body = "<HTTP body>"
-          ctx.method = "POST"
 
-          ctx.status = "Processing"
-          ctx.authenticated = new Object()
-          ctx.authenticated.clientID = "Master_OpenMRS_Instance"
-
-          messageStore.storeTransaction ctx, (error, result) ->
-            router.route ctx ->
-
-              res = new Object()
-              res.status = "200"
-              res.headers =
-                header: "value"
-                header2: "value2"
-              res.body = "<HTTP response>"
-              res.timestamp = new Date()
-
-              messageStore.storeTransaction ctx ->
-            ###
+              ###
+              # An HTTP request needs to made here and the response captured
+              ###
 
 
 
 
 
+              # The response received from the HTTP request needs to be updated in the transaction
+              messageStore.storeTransaction ctx, (error, updateTransaction) ->               
+                console.log(updateTransaction)  
 
 
+
+
+
+
+
+
+
+
+
+
+              ###
+              # This is code we had originally for the router call and the transaction update save
+              Client.findOne clientID: transaction.clientID, (err, client) ->
+                #console.log(client)
+
+                ctx.authenticated = new Object()
+                ctx.authenticated = client
+
+                Q.denodeify ->
+                  Authorisation.authorise ctx, (error, authorise) -> 
+                    console.log(authorise);
+                    
+                    Router.route ctx, (error, router) ->
+
+                      console.log(router);
+
+                      
+                      messageStore.storeTransaction ctx, (error, updateMessage) ->
+                      
+                        console.log(updateMessage);  
+              ### 
 
 
 
@@ -125,7 +156,7 @@ worker.register process_transactions: (params, callback) ->
       #inform Mongoose of changes made to the tasks object and save it
       record.markModified "transactions"
       record.save()      
-      console.log  "Task Status: " + record.status
+      #console.log  "Task Status: " + record.status
       #console.log "Result: " + record
 
 
