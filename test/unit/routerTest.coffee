@@ -154,7 +154,7 @@ describe "HTTP Router", ->
 				ctx.response = new Object()
 				ctx.request.url = "/test"
 				ctx.request.method = "POST"
-				ctx.request.body = "TestBody"
+				ctx.body = "TestBody"
 
 				router.route ctx, (err) ->
 					if err

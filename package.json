@@ -14,12 +14,13 @@
     "koa-basic-auth": "~1.1.1",
     "basic-auth": "0.0.1",
     "mongoose": "3.8.8",
-    "koa-body-parser": "1.0.0",
     "request": "~2.34.0",
     "winston": "0.7.3",
     "nconf": "~0.6.9",
     "koa-cors": "0.0.8",
-    "bcrypt-nodejs": "0.0.3"
+    "bcrypt-nodejs": "0.0.3",
+    "http-status": "0.1.7",
+    "raw-body": "1.2.2"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
