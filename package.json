@@ -21,7 +21,9 @@
     "koa-cors": "0.0.8",
     "bcrypt-nodejs": "0.0.3",
     "xpath": "0.0.6",
-    "xmldom": "~0.1.19"
+    "xmldom": "~0.1.19",
+    "http-status": "0.1.7",
+    "raw-body": "1.2.2"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
