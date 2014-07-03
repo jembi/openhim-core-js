@@ -22,17 +22,17 @@ matchContent = (channel, body) ->
 
 matchRegex = (regexPat, body) ->
 	regex = new RegExp regexPat
-	return regex.test body
+	return regex.test body.toString()
 
 matchXpath = (xpathStr, val, xml) ->
-	doc = new dom().parseFromString(xml)
+	doc = new dom().parseFromString(xml.toString())
 	xpathVal = xpath.select(xpathStr, doc).toString()
 	return val == xpathVal
 
 matchJsonPath = (jsonPath, val, json) ->
-	jsonObj = JSON.parse json
+	jsonObj = JSON.parse json.toString()
 	jsonVal = getJSONValByString jsonObj, jsonPath
-	return val == jsonVal
+	return val == jsonVal.toString()
 
 # taken from http://stackoverflow.com/a/6491621/588776
 # readbility improved from the stackoverflow answer

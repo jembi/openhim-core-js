@@ -219,28 +219,28 @@ describe "Authorisation middleware", ->
 	describe '.matchReg(regexPat, body)', ->
 
 		it 'should return true if the regex pattern finds a match in the body', ->
-			(authorisation.matchRegex '123', 'aaa123aaa').should.be.true
-			(authorisation.matchRegex 'functionId:\\s[a-z]{3}\\d{3}\\s', 'data: xyz\\nfunctionId: abc123\n').should.be.true
+			(authorisation.matchRegex '123', new Buffer('aaa123aaa')).should.be.true
+			(authorisation.matchRegex 'functionId:\\s[a-z]{3}\\d{3}\\s', new Buffer('data: xyz\\nfunctionId: abc123\n')).should.be.true
 
 		it 'should return false if the regex pattern DOES NOT find a match in the body', ->
-			(authorisation.matchRegex '123', 'aaa124aaa').should.be.false
-			(authorisation.matchRegex 'functionId:\\s[a-z]{3}\\d{3}\\s', 'data: xyz\\nfunctionId: somethingelse\n').should.be.false
+			(authorisation.matchRegex '123', new Buffer('aaa124aaa')).should.be.false
+			(authorisation.matchRegex 'functionId:\\s[a-z]{3}\\d{3}\\s', new Buffer('data: xyz\\nfunctionId: somethingelse\n')).should.be.false
 
 	describe '.matchXpath(xpath, val, xml)', ->
 
 		it 'should return true if the xpath value matches', ->
-			(authorisation.matchXpath 'string(/root/function/@uuid)', 'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', '<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>').should.be.true
+			(authorisation.matchXpath 'string(/root/function/@uuid)', 'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', new Buffer('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>')).should.be.true
 
 		it 'should return false if the xpath value DOES NOT match', ->
-			(authorisation.matchXpath 'string(/root/function/@uuid)', 'not-correct', '<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>').should.be.false
+			(authorisation.matchXpath 'string(/root/function/@uuid)', 'not-correct', new Buffer('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>')).should.be.false
 
 	describe '.matchJsonPath(xpath, val, xml)', ->
 
 		it 'should return true if the json path value matches', ->
-			(authorisation.matchJsonPath 'metadata.function.id', 'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', '{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}').should.be.true
+			(authorisation.matchJsonPath 'metadata.function.id', 'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', new Buffer('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}')).should.be.true
 
 		it 'should return false if the json path value DOES NOT match', ->
-			(authorisation.matchJsonPath 'metadata.function.id', 'not-correct', '{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}').should.be.false
+			(authorisation.matchJsonPath 'metadata.function.id', 'not-correct', new Buffer('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}')).should.be.false
 	
 	describe '.matchContent(channel, body)', ->
 
@@ -261,16 +261,16 @@ describe "Authorisation middleware", ->
 			matchContentJson: 'function.uuid'
 
 		it 'should call the correct matcher', ->
-			authorisation.matchContent(channelRegex, '--------123456------').should.be.true
-			authorisation.matchContent(channelXpath, '<function><uuid>123456789</uuid></function>').should.be.true
-			authorisation.matchContent(channelJson, '{"function": {"uuid": "123456789"}}').should.be.true
+			authorisation.matchContent(channelRegex, new Buffer('--------123456------')).should.be.true
+			authorisation.matchContent(channelXpath, new Buffer('<function><uuid>123456789</uuid></function>')).should.be.true
+			authorisation.matchContent(channelJson, new Buffer('{"function": {"uuid": "123456789"}}')).should.be.true
 
-			authorisation.matchContent(channelRegex, '--------1234aaa56------').should.be.false
-			authorisation.matchContent(channelXpath, '<function><uuid>1234aaa56789</uuid></function>').should.be.false
-			authorisation.matchContent(channelJson, '{"function": {"uuid": "1234aaa56789"}}').should.be.false
+			authorisation.matchContent(channelRegex, new Buffer('--------1234aaa56------')).should.be.false
+			authorisation.matchContent(channelXpath, new Buffer('<function><uuid>1234aaa56789</uuid></function>')).should.be.false
+			authorisation.matchContent(channelJson, new Buffer('{"function": {"uuid": "1234aaa56789"}}')).should.be.false
 
 		it 'should return true if no matching properties are present', ->
-			authorisation.matchContent(noMatchChannel, 'someBody').should.be.true
+			authorisation.matchContent(noMatchChannel, new Buffer('someBody')).should.be.true
 
 		it 'should return false for invalid channel configs', ->
-			authorisation.matchContent(channelInvalid, 'someBody').should.be.false
+			authorisation.matchContent(channelInvalid, new Buffer('someBody')).should.be.false

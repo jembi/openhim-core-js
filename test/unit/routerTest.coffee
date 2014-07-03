@@ -128,14 +128,7 @@ describe "HTTP Router", ->
 					
 		it "should forward PUT and POST requests correctly", (done) ->
 			# Create mock endpoint to forward requests to
-			mockServer = http.createServer (req, res) ->
-				req.on "data", (chunk) ->
-					if chunk.toString() == "TestBody"
-						res.writeHead 200, {"Content-Type": "text/plain"}
-						res.end()
-					else
-						res.writeHead 400, {"Content-Type": "text/plain"}
-						res.end()
+			mockServer = testUtils.createMockServerForPost(200, 400, "TestBody")
 
 			mockServer.listen 3333, ->
 				# Setup a channel for the mock endpoint
