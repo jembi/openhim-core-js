@@ -67,7 +67,7 @@ worker.register process_transactions: (params, callback) ->
                 parentID: transaction._id
 
             if transaction.request.querystring
-              options.path += transaction.request.querystring
+              options.path += "?"+transaction.request.querystring
 
             if transaction.request.body
               options.headers.body = transaction.request.body
