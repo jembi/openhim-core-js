@@ -7,7 +7,7 @@ config = require("../config/config")
 client = monq(config.mongo.url)
 
 
-
+http = require 'http'
 messageStore = require "../middleware/messageStore"
 Transaction = require("../model/transactions").Transaction
 Client = require("../model/clients").Client
@@ -42,11 +42,6 @@ worker.register process_transactions: (params, callback) ->
         #check if transactionID matches the one in the transaction object
         if item.tid == transactionID
 
-          ###
-          #In here we need to do the actual transaction rerun script
-          ###
-          #Remove Queue item
-
 
 
 
@@ -56,86 +51,41 @@ worker.register process_transactions: (params, callback) ->
           Transaction.findOne _id: transactionID, (err, transaction) ->
             #console.log(transaction)
 
-            # construct the 'ctx' object to create a new transaction record with no response message
-            ctx = new Object()
-            ctx.path = transaction.request.path
-            ctx.header = transaction.request.headers
-            
-            ctx.querystring = transaction.request.querystring
-            ctx.body = transaction.request.body
-            ctx.method = transaction.request.method
 
-            ctx.request = new Object()
-            ctx.request.url = transaction.request.path
-            ctx.request.method = transaction.request.method
-            ctx.request.querystring = transaction.request.querystring
-
-            ctx.response = new Object()
-            ctx.status = "Processing"
-
-            #store the message without a response (before HTTP request is made)
-            messageStore.storeTransaction ctx, (error, saveTransaction) ->               
-              console.log(saveTransaction)
+            ################################################################
+            # An HTTP request needs to made here and the response captured #
+            ################################################################
 
 
+            options =
+              hostname: "localhost"
+              port: 7786
+              path: transaction.request.path
+              method: transaction.request.method
+              headers:
+                clientID: transaction.clientID
+                parentID: transaction._id
 
+            if transaction.request.querystring
+              options.path += transaction.request.querystring
 
-              ###
-              # An HTTP request needs to made here and the response captured
-              ###
+            if transaction.request.body
+              options.headers.body = transaction.request.body
 
+            req = http.request(options, (res) ->
+              res.setEncoding "utf8"
+              res.on "data", (chunk) ->
+                #data has been created
+            )
+            req.on "error", (e) ->
+              console.log "problem with request: " + e.message
 
+            # write data to request body
+            req.end()
 
-
-
-              # The response received from the HTTP request needs to be updated in the transaction
-              messageStore.storeTransaction ctx, (error, updateTransaction) ->               
-                console.log(updateTransaction)  
-
-
-
-
-
-
-
-
-
-
-
-
-              ###
-              # This is code we had originally for the router call and the transaction update save
-              Client.findOne clientID: transaction.clientID, (err, client) ->
-                #console.log(client)
-
-                ctx.authenticated = new Object()
-                ctx.authenticated = client
-
-                Q.denodeify ->
-                  Authorisation.authorise ctx, (error, authorise) -> 
-                    console.log(authorise);
-                    
-                    Router.route ctx, (error, router) ->
-
-                      console.log(router);
-
-                      
-                      messageStore.storeTransaction ctx, (error, updateMessage) ->
-                      
-                        console.log(updateMessage);  
-              ### 
-
-
-
-
-
-
-
-
-
-
-
-
+            ################################################################
+            # An HTTP request needs to made here and the response captured #
+            ################################################################
 
 
 

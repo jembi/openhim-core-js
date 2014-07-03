@@ -69,3 +69,17 @@ exports.setupApp = (done) ->
 
 	# Return the result
 	done(app)
+
+exports.rerunApp = (done) ->
+	
+	# Create an instance of the koa-server and add a body-parser
+	app = koa()
+	app.use cors()
+	app.use bodyParser()
+	
+	# Define the api routes
+	
+	app.use route.post '/transactions', transactions.addTransaction
+	
+	# Return the result
+	done(app)

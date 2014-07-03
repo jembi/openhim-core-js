@@ -20,6 +20,9 @@ exports.storeTransaction = (ctx, done) ->
 			method: ctx.method
 			timestamp: new Date()
 
+	if ctx.parentID
+		tx.parentID = ctx.parentID
+
 	tx.save (err, tx) ->         
 		if err
 			logger.error 'Could not save transaction metadata: ' + err

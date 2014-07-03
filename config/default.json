@@ -6,8 +6,11 @@
   "api": {
     "httpPort": 8080
   },
+  "rerun": {
+    "httpPort": 7786
+  },
   "authentication": {
-    "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": false
+    "enableMutualTLSAuthentication": false,
+    "enableBasicAuthentication": true
   }
 }
