@@ -5,6 +5,7 @@ Q = require 'q'
 config = require '../config/config'
 config.mongo = config.get('mongo')
 logger = require "winston"
+status = require "http-status"
 
 containsMultiplePrimaries = (routes) ->
 	numPrimaries = 0
@@ -69,10 +70,15 @@ sendRequest = (ctx, responseDst, options) ->
 			responseDst.timestamp = new Date()
 			deferred.resolve()
 
-	routeReq.on "error", (err) -> deferred.reject err
+	routeReq.on "error", (err) ->
+		responseDst.status = status.INTERNAL_SERVER_ERROR
+		responseDst.timestamp = new Date()
+
+		logger.error err
+		deferred.resolve()
 
 	if ctx.request.method == "POST" || ctx.request.method == "PUT"
-		routeReq.write ctx.request.body
+		routeReq.write ctx.body
 	routeReq.end()
 
 	return deferred.promise
