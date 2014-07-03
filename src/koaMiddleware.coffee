@@ -52,13 +52,13 @@ exports.setupApp = (done) ->
 exports.rerunApp = (done) ->
 	app = koa()
 
-	#app.use bodyParser()
+	app.use rawBodyReader
 	
 	# Rerun bypass authentication middlware
 	app.use rerunBypassAuthentication.koaMiddleware
 
 	# Persit message middleware
-	app.use messageStore.store
+	app.use messageStore.koaMiddleware
 
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware

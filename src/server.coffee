@@ -96,11 +96,12 @@ exports.start = (httpPort, httpsPort, apiPort, done) ->
 ### function to start the transactions rerun server ###
 #######################################################
 exports.startRerun = (httpPort, done) ->
+	
 	logger.info "Starting OpenHIM Transaction Rerun server..."
 
 	koaMiddleware.rerunApp (app) ->
 		promises = []
-
+		
 		if httpPort
 			deferredHttp = Q.defer();
 			promises.push deferredHttp.promise
@@ -112,6 +113,7 @@ exports.startRerun = (httpPort, done) ->
 
 		(Q.all promises).then ->
 			done()
+	
 #######################################################
 ### function to start the transactions rerun server ###
 #######################################################
