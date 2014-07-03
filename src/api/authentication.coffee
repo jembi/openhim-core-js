@@ -21,16 +21,17 @@ exports.authenticate = `function *authenticate(next) {
 	if (requestDate < from || requestDate > to) {
 		// request expired
 		logger.info('API request made by ' +email+ ' from ' +this.request.host+ ' has expired, denying access');
-		this.status = 401;
+		this.status = 'unauthorized';
 		return;
 	}
 
 	var user = yield User.findOne({ email: email }).exec();
+	this.authenticated = user;
 
 	if (!user) {
 		// not authenticated - user not found
 		logger.info('No user exists for ' +email+ ', denying access to API, request originated from ' +this.request.host);
-		this.status = 401;
+		this.status = 'unauthorized';
 		return;
 	}
 
@@ -46,7 +47,7 @@ exports.authenticate = `function *authenticate(next) {
 	} else {
 		// not authenticated - token mismatch
 		logger.info('API token did not match expected value, denying access to API, the request was made by ' +email+ ' from ' +this.request.host);
-		this.status = 401;
+		this.status = 'unauthorized';
 	}
 
 }`

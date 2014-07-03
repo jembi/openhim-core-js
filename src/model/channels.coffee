@@ -12,12 +12,14 @@ RouteSchema = new Schema
 	"password": { type: String, required: false }
 
 ChannelSchema = new Schema
-	"name":			{ type: String, required: true }
-	"urlPattern": 	{ type: String, required: true }
-	"allow": 		[ { type: String, required: true } ]
-	"routes": 		[ RouteSchema ]
-	"properties": 	[ { type: Object, required: false } ]
- 
+    "name":			{ type: String, required: true }
+    "urlPattern": 	{ type: String, required: true }
+    "allow": 		[ { type: String, required: true } ]
+    "routes": 		[ RouteSchema ]
+    "properties": 	[ { type: Object, required: false } ]
+    "txViewAcl":	[ { type: String, required: false } ]
+    "txRerunAcl":	[ { type: String, required: false } ]
+    
 # compile the Channel and Route Schema into a Model
 exports.Route = mongoose.model 'Route', RouteSchema
 

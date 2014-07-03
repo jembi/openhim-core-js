@@ -20,7 +20,9 @@
     "nconf": "~0.6.9",
     "koa-cors": "0.0.8",
     "bcrypt-nodejs": "0.0.3",
-    "monq": "0.3.0"
+    "monq": "0.3.0",
+    "http-status": "0.1.7",
+    "raw-body": "1.2.2"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
