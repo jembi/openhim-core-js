@@ -7,7 +7,25 @@
     "httpPort": 8080
   },
   "authentication": {
-    "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": false
+    "enableMutualTLSAuthentication": false,
+    "enableBasicAuthentication": true
+  },
+  "nodemailer": {
+    "service": "Gmail",
+    "auth": {
+        "user": "gmail.user@gmail.com",
+        "pass": "userpass"
+    }
+  },
+  "smsGateway": {
+    "provider": "clickatell",
+	"config": {
+      "user": "user",
+      "pass": "pass",
+      "apiId": "apiId"
+    }
+  },
+  "alerts": {
+    "enableAlerts": true
   }
 }

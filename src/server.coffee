@@ -8,11 +8,14 @@ config.authentication = config.get('authentication')
 config.router = config.get('router')
 config.api = config.get('api')
 config.logger = config.get('logger')
+config.alerts = config.get('alerts')
 Q = require "q"
 logger = require "winston"
 logger.level = config.logger.level
 mongoose = require "mongoose"
 User = require('./model/users').User
+Agenda = require 'agenda'
+alerts = require './alerts'
 
 # Configure mongose to connect to mongo
 mongoose.connect config.mongo.url
@@ -21,7 +24,7 @@ httpServer = null
 httpsServer = null
 apiHttpServer = null
 
-rootUser = 
+rootUser =
 	firstname: 'Super'
 	surname: 'User'
 	email: 'root@openhim.org'
@@ -31,7 +34,24 @@ rootUser =
 	groups: [ 'admin' ]
 	# password = 'openhim-password'
 
-exports.start = (httpPort, httpsPort, apiPort, done) ->
+# Job scheduler
+agenda = null
+
+startAgenda = ->
+	agenda = new Agenda db: { address: config.mongo.url}
+	alerts.setupAgenda agenda
+	agenda.start()
+	logger.info "Started agenda job scheduler"
+
+stopAgenda = ->
+	defer = Q.defer()
+	agenda.stop () ->
+		defer.resolve()
+		logger.info "Stopped agenda job scheduler"
+	return defer
+
+
+exports.start = (httpPort, httpsPort, apiPort, enableAlerts, done) ->
 	logger.info "Starting OpenHIM server..."
 
 	koaMiddleware.setupApp (app) ->
@@ -91,6 +111,8 @@ exports.start = (httpPort, httpsPort, apiPort, done) ->
 		(Q.all promises).then ->
 			done()
 
+	startAgenda()
+
 exports.stop = (done) ->
 	promises = []
 
@@ -117,12 +139,15 @@ exports.stop = (done) ->
 		apiHttpServer.close ->
 			logger.info "Stopped API server"
 			deferredAPIHttp.resolve()
+	
+	promises.push stopAgenda().promise if agenda
 
 	(Q.all promises).then ->
 		httpServer = null
 		httpsServer = null
 		apiHttpServer = null
+		agenda = null
 		done()
 
 if not module.parent
-	exports.start config.router.httpPort, config.router.httpsPort, config.api.httpPort
+	exports.start config.router.httpPort, config.router.httpsPort, config.api.httpPort, config.alerts.enableAlerts, ->

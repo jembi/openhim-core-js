@@ -21,7 +21,8 @@
     "koa-cors": "0.0.8",
     "bcrypt-nodejs": "0.0.3",
     "http-status": "0.1.7",
-    "raw-body": "1.2.2"
+    "raw-body": "1.2.2",
+    "agenda": "~0.6.16"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
