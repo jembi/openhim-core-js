@@ -62,9 +62,11 @@ worker.register process_transactions: (params, callback) ->
               port: 7786
               path: transaction.request.path
               method: transaction.request.method
-              headers:
+              headers: transaction.request.headers
                 clientID: transaction.clientID
                 parentID: transaction._id
+
+              console.log(options)
 
             if transaction.request.querystring
               options.path += "?"+transaction.request.querystring
@@ -81,6 +83,9 @@ worker.register process_transactions: (params, callback) ->
               console.log "problem with request: " + e.message
 
             # write data to request body
+
+            if transaction.request.method == "POST" || transaction.request.method == "PUT"
+              req.write transaction.request.body
             req.end()
 
             ################################################################
