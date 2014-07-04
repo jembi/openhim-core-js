@@ -36,7 +36,7 @@ describe "API Integration Tests", ->
 			channel1.save ->
 				channel2.save ->
 					auth.setupTestUsers ->
-						server.start null, null, 8080, ->
+						server.start null, null, 8080, false, ->
 							done()
 
 		after (done) ->

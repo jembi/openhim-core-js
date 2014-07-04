@@ -30,7 +30,7 @@ describe "API Integration Tests", ->
 					queue2.save ->
 						queue3.save ->
 							auth.setupTestUsers ->
-								server.start null, null, 8080, ->
+								server.start null, null, 8080, false, ->
 									done()
 
 		after (done) ->

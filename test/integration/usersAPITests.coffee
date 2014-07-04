@@ -33,7 +33,7 @@ describe 'API Integration Tests', ->
 			user1.save ->
 				user2.save ->
 					auth.setupTestUsers (err) ->
-						server.start null, null, 8080, ->
+						server.start null, null, 8080, false, ->
 							done()
 
 		after (done) ->

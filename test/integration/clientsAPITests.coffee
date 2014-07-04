@@ -24,7 +24,7 @@ describe "API Integration Tests", ->
 
 		before (done) ->
 			auth.setupTestUsers (err) ->
-				server.start null, null, 8080,  ->
+				server.start null, null, 8080, false,  ->
 					done()
 
 		after (done) ->

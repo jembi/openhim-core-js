@@ -109,15 +109,14 @@ exports.start = (httpPort, httpsPort, apiPort, enableAlerts, done) ->
 
 
 		(Q.all promises).then ->
+			startAgenda() if enableAlerts
 			done()
 
-	startAgenda()
-
-exports.stop = (done) ->
+exports.stop = stop = (done) ->
 	promises = []
 
 	if httpServer
-		deferredHttp = Q.defer();
+		deferredHttp = Q.defer()
 		promises.push deferredHttp.promise
 
 		httpServer.close ->
@@ -125,7 +124,7 @@ exports.stop = (done) ->
 			deferredHttp.resolve()
 
 	if httpsServer
-		deferredHttps = Q.defer();
+		deferredHttps = Q.defer()
 		promises.push deferredHttps.promise
 
 		httpsServer.close ->
@@ -133,7 +132,7 @@ exports.stop = (done) ->
 			deferredHttps.resolve()
 
 	if apiHttpServer
-		deferredAPIHttp = Q.defer();
+		deferredAPIHttp = Q.defer()
 		promises.push deferredAPIHttp.promise
 
 		apiHttpServer.close ->
@@ -150,4 +149,13 @@ exports.stop = (done) ->
 		done()
 
 if not module.parent
+	# start the server
 	exports.start config.router.httpPort, config.router.httpsPort, config.api.httpPort, config.alerts.enableAlerts, ->
+
+	# setup shutdown listeners
+	process.on 'exit', stop
+	process.on 'uncaughtException', -> stop process.exit
+	# interrupt signal, e.g. ctrl-c
+	process.on 'SIGINT', -> stop process.exit
+	# terminate signal
+	process.on 'SIGTERM', -> stop process.exit
