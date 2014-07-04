@@ -48,6 +48,13 @@ getJSONValByString = (jsonObj, jsonPath) ->
             return
     return jsonObj
 
+extractContentType = (ctHeader) ->
+	index = ctHeader.indexOf ';'
+	if index isnt -1
+		return ctHeader.substring(0, index).trim()
+	else
+		return ctHeader.trim()
+
 # export private functions for unit testing
 # note: you can't spy on these method because of this :(
 if process.env.NODE_ENV == "test"
@@ -55,7 +62,7 @@ if process.env.NODE_ENV == "test"
    exports.matchRegex = matchRegex
    exports.matchXpath = matchXpath
    exports.matchJsonPath = matchJsonPath
-
+   exports.extractContentType = extractContentType
 
 exports.authorise = (ctx, done) ->
 	Channel.find {}, (err, channels) ->
@@ -67,7 +74,18 @@ exports.authorise = (ctx, done) ->
 					return (ctx.authenticated.roles.indexOf element) isnt -1
 				# if the user has a role that is allowed or their username is allowed specifically
 				if matchedRoles.length > 0 or (channel.allow.indexOf ctx.authenticated.clientID) isnt -1
-					# authorisation success, now check if message content matches
+					# authorisation success, now check if content type matches
+					if channel.matchContentTypes and channel.matchContentTypes.length > 0
+						if ctx.request.header and ctx.request.header['content-type']
+							ct = extractContentType ctx.request.header['content-type']
+							if (channel.matchContentTypes.indexOf ct) is -1
+								# deny access to channel if the content type doesn't match
+								continue
+						else
+							# deny access to channel if the content type isn't set
+							continue
+
+					# now check if message content matches
 					if matchContent(channel, ctx.body) is true
 						ctx.authorisedChannel = channel
 						logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannel.name

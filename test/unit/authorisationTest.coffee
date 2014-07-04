@@ -8,28 +8,28 @@ describe "Authorisation middleware", ->
 	describe ".authorise(ctx, done)", ->
 
 		validTestBody =  """
-					<careServicesRequest>
-						<function uuid='4e8bbeb9-f5f5-11e2-b778-0800200c9a66'>
-							<codedType code="2221" codingScheme="ISCO-08" />
-								<address>
-									<addressLine component='city'>Kigali</addressLine>
-								</address>
-							<max>5</max>	
-						</function>
-					</careServicesRequest>
-					"""
+			<careServicesRequest>
+				<function uuid='4e8bbeb9-f5f5-11e2-b778-0800200c9a66'>
+					<codedType code="2221" codingScheme="ISCO-08" />
+						<address>
+							<addressLine component='city'>Kigali</addressLine>
+						</address>
+					<max>5</max>
+				</function>
+			</careServicesRequest>
+			"""
 
 		invalidTestBody =  """
-					<careServicesRequest>
-						<function uuid='invalid'>
-							<codedType code="2221" codingScheme="ISCO-08" />
-								<address>
-									<addressLine component='city'>Kigali</addressLine>
-								</address>
-							<max>5</max>	
-						</function>
-					</careServicesRequest>
-					"""
+			<careServicesRequest>
+				<function uuid='invalid'>
+					<codedType code="2221" codingScheme="ISCO-08" />
+						<address>
+							<addressLine component='city'>Kigali</addressLine>
+						</address>
+					<max>5</max>
+				</function>
+			</careServicesRequest>
+			"""
 
 		addedChannelNames = []
 
@@ -216,6 +216,88 @@ describe "Authorisation middleware", ->
 					(ctx.authorisedChannel == undefined).should.be.true
 					done()
 
+		it 'should authorise if message content matches the content-type', (done) ->
+			# Setup a channel for the mock endpoint
+			channel = new Channel
+				name: "Authorisation mock channel 4"
+				urlPattern: "test/authorisation"
+				allow: [ "Test1", "Musha_OpenMRS", "Test2" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							port: 9876
+							primary: true
+						]
+				matchContentTypes: [ "text/xml" ]
+				matchContentXpath: "string(/careServicesRequest/function/@uuid)"
+				matchContentValue: "4e8bbeb9-f5f5-11e2-b778-0800200c9a66"
+
+			addedChannelNames.push channel.name
+
+			channel.save (err) ->
+				if err
+					return done err
+
+				# Setup test data, will need authentication mechanisms to set ctx.authenticated
+				ctx = {}
+				ctx.body = validTestBody
+				ctx.authenticated =
+					clientID: "Musha_OpenMRS"
+					domain: "poc1.jembi.org"
+					name: "OpenMRS Musha instance"
+					roles: [ "OpenMRS_PoC", "PoC" ]
+					passwordHash: ""
+					cert: ""
+				ctx.request = {}
+				ctx.request.url = "test/authorisation"
+				ctx.request.header = {}
+				ctx.request.header['content-type'] = "text/xml; charset=utf-8"
+				ctx.response = {}
+				authorisation.authorise ctx, ->
+					ctx.authorisedChannel.should.exist
+					done()
+
+		it 'should NOT authorise if message content DOES NOT matches the channel rules', (done) ->
+			# Setup a channel for the mock endpoint
+			channel = new Channel
+				name: "Authorisation mock channel 4"
+				urlPattern: "test/authorisation"
+				allow: [ "Test1", "Musha_OpenMRS", "Test2" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							port: 9876
+							primary: true
+						]
+				matchContentTypes: [ "text/xml" ]
+				matchContentXpath: "string(/careServicesRequest/function/@uuid)"
+				matchContentValue: "4e8bbeb9-f5f5-11e2-b778-0800200c9a66"
+
+			addedChannelNames.push channel.name
+
+			channel.save (err) ->
+				if err
+					return done err
+
+				# Setup test data, will need authentication mechanisms to set ctx.authenticated
+				ctx = {}
+				ctx.body = invalidTestBody
+				ctx.authenticated =
+					clientID: "Musha_OpenMRS"
+					domain: "poc1.jembi.org"
+					name: "OpenMRS Musha instance"
+					roles: [ "OpenMRS_PoC", "PoC" ]
+					passwordHash: ""
+					cert: ""
+				ctx.request = {}
+				ctx.request.url = "test/authorisation"
+				ctx.request.header = {}
+				ctx.request.header['content-type'] = "text/dodgy-xml; charset=utf-8"
+				ctx.response = {}
+				authorisation.authorise ctx, ->
+					(ctx.authorisedChannel == undefined).should.be.true
+					done()
+
 	describe '.matchReg(regexPat, body)', ->
 
 		it 'should return true if the regex pattern finds a match in the body', ->
@@ -274,3 +356,12 @@ describe "Authorisation middleware", ->
 
 		it 'should return false for invalid channel configs', ->
 			authorisation.matchContent(channelInvalid, new Buffer('someBody')).should.be.false
+
+
+	describe '.extractContentType', ->
+
+		it 'should extract a correct content-type', ->
+			authorisation.extractContentType('text/xml; charset=utf-8').should.be.exactly 'text/xml'
+			authorisation.extractContentType('text/xml').should.be.exactly 'text/xml'
+			authorisation.extractContentType('   text/xml ').should.be.exactly 'text/xml'
+			authorisation.extractContentType('text/xml;').should.be.exactly 'text/xml'

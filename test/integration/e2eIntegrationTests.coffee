@@ -284,6 +284,7 @@ describe "e2e Integration Tests", ->
 							port: 1232
 							primary: true
 						]
+				matchContentTypes: [ "text/xml" ]
 				matchContentXpath: "string(/careServicesRequest/function/@uuid)"
 				matchContentValue: "4e8bbeb9-f5f5-11e2-b778-0800200c9a66"
 			channel1.save (err) ->
@@ -322,6 +323,7 @@ describe "e2e Integration Tests", ->
 			server.start 5001, null, null, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
+					.set("Content-Type", "text/xml")
 					.send(testXMLDoc)
 					.auth("testApp", "password")
 					.expect(201)
@@ -335,6 +337,7 @@ describe "e2e Integration Tests", ->
 			server.start 5001, null, null, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
+					.set("Content-Type", "text/xml")
 					.send(testXMLDoc)
 					.auth("testApp", "password")
 					.expect(201)
@@ -370,6 +373,7 @@ describe "e2e Integration Tests", ->
 							port: 1232
 							primary: true
 						]
+				matchContentTypes: [ "text/x-json", "application/json" ]
 				matchContentJson: "functionId"
 				matchContentValue: "1234"
 			channel1.save (err) ->
@@ -408,6 +412,7 @@ describe "e2e Integration Tests", ->
 			server.start 5001, null, null, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
+					.set("Content-Type", "application/json")
 					.send(testJSONDoc)
 					.auth("testApp", "password")
 					.expect(201)
@@ -421,6 +426,7 @@ describe "e2e Integration Tests", ->
 			server.start 5001, null, null, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
+					.set("Content-Type", "application/json")
 					.send(testJSONDoc)
 					.auth("testApp", "password")
 					.expect(201)
