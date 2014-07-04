@@ -66,7 +66,7 @@ worker.register process_transactions: (params, callback) ->
                 clientID: transaction.clientID
                 parentID: transaction._id
 
-              console.log(options)
+            console.log(options)
 
             if transaction.request.querystring
               options.path += "?"+transaction.request.querystring
