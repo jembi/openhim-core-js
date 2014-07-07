@@ -16,6 +16,11 @@ ChannelSchema = new Schema
     "urlPattern": 	{ type: String, required: true }
     "allow": 		[ { type: String, required: true } ]
     "routes": 		[ RouteSchema ]
+    "matchContentTypes": [ { type: String, required: false } ]
+    "matchContentRegex": { type: String, required: false }
+    "matchContentXpath": { type: String, required: false }
+    "matchContentJson": { type: String, required: false }
+    "matchContentValue": { type: String, required: false }
     "properties": 	[ { type: Object, required: false } ]
     "txViewAcl":	[ { type: String, required: false } ]
     "txRerunAcl":	[ { type: String, required: false } ]

@@ -10,7 +10,17 @@ exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallb
 		res.end resBody
 
 	mockServer.listen port, callback
-	mockServer.on "request", requestCallback 
+	mockServer.on "request", requestCallback
+
+exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch) ->
+	return http.createServer (req, res) ->
+		req.on "data", (chunk) ->
+			if chunk.toString() == bodyToMatch
+				res.writeHead successStatusCode, {"Content-Type": "text/plain"}
+				res.end()
+			else
+				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
+				res.end()
 
 exports.rootUser =
 	firstname: 'Admin'
