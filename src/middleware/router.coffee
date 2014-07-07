@@ -79,6 +79,7 @@ sendRequest = (ctx, responseDst, options) ->
 
 	if ctx.request.method == "POST" || ctx.request.method == "PUT"
 		routeReq.write ctx.body
+
 	routeReq.end()
 
 	return deferred.promise
