@@ -31,8 +31,6 @@ comparePasswordWithClientHash = (pass, client, callback) ->
 exports.authenticateUser = (ctx, done) ->
 	user = auth ctx
 
-	console.log(ctx)
-
 	if user
 		Client.findOne { clientID: user.name }, (err, client) ->
 			return done err if err

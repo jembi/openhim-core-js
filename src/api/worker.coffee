@@ -1,5 +1,4 @@
 TasksModel = require('../model/tasks').Task
-tasks = require './tasks'
 Q = require("q")
 logger = require("winston")
 monq = require("monq")
@@ -8,26 +7,17 @@ client = monq(config.mongo.url)
 
 
 http = require 'http'
-messageStore = require "../middleware/messageStore"
 Transaction = require("../model/transactions").Transaction
-Client = require("../model/clients").Client
-Authorisation = require "../middleware/authorisation"
-Router = require "../middleware/router"
-
-
 
 worker = client.worker([ "transactions" ])
 worker.register process_transactions: (params, callback) ->
   try
-
     transactionID = params.transactionID;
     taskID = params.taskID;
-
+    
     # find the tasks object for the transaction being processed
-    TasksModel.findOne
-      _id: taskID
-    , (err, record) ->
-      
+    TasksModel.findById taskID, (err, record) ->
+      console.log "info: Worker started processing task"
       #don't just ignore this, log or bubble forward via callbacks
       return  if err
       
@@ -41,15 +31,8 @@ worker.register process_transactions: (params, callback) ->
       record.transactions.forEach (item) ->
         #check if transactionID matches the one in the transaction object
         if item.tid == transactionID
-
-
-
-
-
-
           #retrieve the transaction to rerun
           Transaction.findOne _id: transactionID, (err, transaction) ->
-            #console.log(transaction)
 
 
             ################################################################
@@ -63,10 +46,9 @@ worker.register process_transactions: (params, callback) ->
               path: transaction.request.path
               method: transaction.request.method
               headers: transaction.request.headers
-                clientID: transaction.clientID
-                parentID: transaction._id
 
-            console.log(options)
+            options.headers.clientID = transaction.clientID
+            options.headers.parentID = transaction._id
 
             if transaction.request.querystring
               options.path += "?"+transaction.request.querystring
@@ -93,14 +75,12 @@ worker.register process_transactions: (params, callback) ->
             ################################################################
 
 
-
-
           # update the status of the transaction that was processed
           item.tstatus = 'Completed'
           #increment the completed transactions amount
           record.completedTransactions++
 
-          console.log "Successfully processed transaction " + record.completedTransactions + " of " + record.transactions.length + ". Transaction status == " + item.tstatus
+          console.log "info: Started processing rerun transaction: #" + transactionID
   
 
       # set tasks status to 'Completed' if all transactions processed successfully
@@ -114,14 +94,12 @@ worker.register process_transactions: (params, callback) ->
       #console.log  "Task Status: " + record.status
       #console.log "Result: " + record
 
-
-
       callback null, transactionID
 
 
   catch err
     callback err
 
-console.log "info: Starting the workers"
 
+console.log "info: Starting the workers"
 worker.start()

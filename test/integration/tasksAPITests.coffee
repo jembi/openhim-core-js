@@ -3,8 +3,10 @@ request = require "supertest"
 server = require "../../lib/server"
 Task = require("../../lib/model/tasks").Task
 testUtils = require "../testUtils"
-Queue = require("../../lib/model/queue").Queue
 auth = require("../testUtils").auth
+
+config = require("../../lib/config/config")
+MongoClient = require("mongodb").MongoClient
 
 describe "API Integration Tests", ->
 
@@ -42,7 +44,10 @@ describe "API Integration Tests", ->
 			server.stop ->
 				auth.cleanupTestUsers ->
 					Task.remove {}, ->
-						done()
+						MongoClient.connect config.mongo.url, (err, db) ->
+						    mongoCollection = db?.collection "jobs"
+						    mongoCollection.drop()
+							done()
 
 		beforeEach ->
 			authDetails = auth.getAuthDetails()
@@ -91,12 +96,7 @@ describe "API Integration Tests", ->
 							Task.findOne { created: "2014-06-20T12:00:00.929Z" }, (err, task) ->
 								task.should.have.property "status", "NotStarted"
 								task.transactions.should.have.length 3
-								Queue.find {}, (err, queue) ->
-									queue.should.have.length 3
-									Queue.findOne { transactionID: "99999" }, (err, queue) ->
-										queue.should.have.property "transactionID", "99999"
-										queue.should.have.property "taskID", ''+task._id+''
-										done()
+								done()
 
 		describe '*getTask(taskId)', ->
 
