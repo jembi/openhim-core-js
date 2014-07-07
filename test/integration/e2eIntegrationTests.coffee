@@ -242,7 +242,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, ->
+			server.start 5001, null, null, false, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.send(testDoc)
@@ -320,7 +320,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, ->
+			server.start 5001, null, null, false, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.set("Content-Type", "text/xml")
@@ -334,7 +334,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, ->
+			server.start 5001, null, null, false, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.set("Content-Type", "text/xml")
@@ -409,7 +409,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, ->
+			server.start 5001, null, null, false, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.set("Content-Type", "application/json")
@@ -423,7 +423,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, ->
+			server.start 5001, null, null, false, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.set("Content-Type", "application/json")
@@ -490,7 +490,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, ->
+			server.start 5001, null, null, false, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.send(testRegExDoc)
@@ -503,7 +503,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, ->
+			server.start 5001, null, null, false, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.send(testRegExDoc)
