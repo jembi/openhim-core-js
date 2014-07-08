@@ -176,8 +176,7 @@ describe "e2e Integration Tests", ->
 								else
 									done()
 
-
-	describe "POST tests", ->
+	describe "POST and PUT tests", ->
 
 		mockServer = null
 		testDoc = "<test>test message</test>"
@@ -214,11 +213,8 @@ describe "e2e Integration Tests", ->
 
 				client = new Client testAppDoc
 				client.save (error, newAppDoc) ->
-					mockServer = http.createServer (req, res) ->
-						req.on 'data', (data) ->
-							data.toString().should.be.equal testDoc
-						res.writeHead 201
-						res.end "Created"
+					# Create mock endpoint to forward requests to
+					mockServer = testUtils.createMockServerForPost(201, 400, testDoc)
 
 					mockServer.listen 1232, done
 
@@ -232,11 +228,285 @@ describe "e2e Integration Tests", ->
 			server.stop ->
 				done()
 
-		it "should return 201 CREATED", (done) ->
+		it "should return 201 CREATED on POST", (done) ->
 			server.start 5001, null, null, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.send(testDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		it "should return 201 CREATED on PUT", (done) ->
+			server.start 5001, null, null, ->
+				request("http://localhost:5001")
+					.put("/test/mock")
+					.send(testDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+	describe "HTTP body content matching - XML", ->
+
+		mockServer = null
+		testXMLDoc =	"""
+						<careServicesRequest>
+							<function uuid='4e8bbeb9-f5f5-11e2-b778-0800200c9a66'>
+								<codedType code="2221" codingScheme="ISCO-08" />
+									<address>
+										<addressLine component='city'>Kigali</addressLine>
+									</address>
+								<max>5</max>
+							</function>
+						</careServicesRequest>
+						"""
+
+		before (done) ->
+			config.authentication.enableMutualTLSAuthentication = false
+			config.authentication.enableBasicAuthentication = true
+
+			#Setup some test data
+			channel1 = new Channel
+				name: "TEST DATA - Mock endpoint"
+				urlPattern: "test/mock"
+				allow: [ "PoC" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							port: 1232
+							primary: true
+						]
+				matchContentTypes: [ "text/xml" ]
+				matchContentXpath: "string(/careServicesRequest/function/@uuid)"
+				matchContentValue: "4e8bbeb9-f5f5-11e2-b778-0800200c9a66"
+			channel1.save (err) ->
+				testAppDoc =
+					clientID: "testApp"
+					domain: "test-client.jembi.org"
+					name: "TEST Client"
+					roles:
+						[
+							"OpenMRS_PoC"
+							"PoC"
+						]
+					passwordAlgorithm: "sha512"
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+					passwordSalt: "1234567890"
+					cert: ""
+
+				client = new Client testAppDoc
+				client.save (error, newAppDoc) ->
+					# Create mock endpoint to forward requests to
+					mockServer = testUtils.createMockServerForPost(201, 400, testXMLDoc)
+
+					mockServer.listen 1232, done
+
+		after (done) ->
+			Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
+				Client.remove { clientID: "testApp" }, ->
+					mockServer.close ->
+						done()
+
+		afterEach (done) ->
+			server.stop ->
+				done()
+
+		it "should return 201 CREATED on POST", (done) ->
+			server.start 5001, null, null, ->
+				request("http://localhost:5001")
+					.post("/test/mock")
+					.set("Content-Type", "text/xml")
+					.send(testXMLDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		it "should return 201 CREATED on PUT", (done) ->
+			server.start 5001, null, null, ->
+				request("http://localhost:5001")
+					.put("/test/mock")
+					.set("Content-Type", "text/xml")
+					.send(testXMLDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+	describe "HTTP body content matching - JSON", ->
+
+		mockServer = null
+		testJSONDoc =	'''
+						{
+							"functionId": 1234,
+							"personId": "987",
+							"name": "John Smith"
+						}
+						'''
+
+		before (done) ->
+			config.authentication.enableMutualTLSAuthentication = false
+			config.authentication.enableBasicAuthentication = true
+
+			#Setup some test data
+			channel1 = new Channel
+				name: "TEST DATA - Mock endpoint"
+				urlPattern: "test/mock"
+				allow: [ "PoC" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							port: 1232
+							primary: true
+						]
+				matchContentTypes: [ "text/x-json", "application/json" ]
+				matchContentJson: "functionId"
+				matchContentValue: "1234"
+			channel1.save (err) ->
+				testAppDoc =
+					clientID: "testApp"
+					domain: "test-client.jembi.org"
+					name: "TEST Client"
+					roles:
+						[
+							"OpenMRS_PoC"
+							"PoC"
+						]
+					passwordAlgorithm: "sha512"
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+					passwordSalt: "1234567890"
+					cert: ""
+
+				client = new Client testAppDoc
+				client.save (error, newAppDoc) ->
+					# Create mock endpoint to forward requests to
+					mockServer = testUtils.createMockServerForPost(201, 400, testJSONDoc)
+
+					mockServer.listen 1232, done
+
+		after (done) ->
+			Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
+				Client.remove { clientID: "testApp" }, ->
+					mockServer.close ->
+						done()
+
+		afterEach (done) ->
+			server.stop ->
+				done()
+
+		it "should return 201 CREATED on POST", (done) ->
+			server.start 5001, null, null, ->
+				request("http://localhost:5001")
+					.post("/test/mock")
+					.set("Content-Type", "application/json")
+					.send(testJSONDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		it "should return 201 CREATED on PUT", (done) ->
+			server.start 5001, null, null, ->
+				request("http://localhost:5001")
+					.put("/test/mock")
+					.set("Content-Type", "application/json")
+					.send(testJSONDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+	describe "HTTP body content matching - RegEx", ->
+
+		mockServer = null
+		testRegExDoc = "facility: OMRS123"
+
+		before (done) ->
+			config.authentication.enableMutualTLSAuthentication = false
+			config.authentication.enableBasicAuthentication = true
+
+			#Setup some test data
+			channel1 = new Channel
+				name: "TEST DATA - Mock endpoint"
+				urlPattern: "test/mock"
+				allow: [ "PoC" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							port: 1232
+							primary: true
+						]
+				matchContentRegex: "\\s[A-Z]{4}\\d{3}"
+			channel1.save (err) ->
+				testAppDoc =
+					clientID: "testApp"
+					domain: "test-client.jembi.org"
+					name: "TEST Client"
+					roles:
+						[
+							"OpenMRS_PoC"
+							"PoC"
+						]
+					passwordAlgorithm: "sha512"
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+					passwordSalt: "1234567890"
+					cert: ""
+
+				client = new Client testAppDoc
+				client.save (error, newAppDoc) ->
+					# Create mock endpoint to forward requests to
+					mockServer = testUtils.createMockServerForPost(201, 400, testRegExDoc)
+
+					mockServer.listen 1232, done
+
+		after (done) ->
+			Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
+				Client.remove { clientID: "testApp" }, ->
+					mockServer.close ->
+						done()
+
+		afterEach (done) ->
+			server.stop ->
+				done()
+
+		it "should return 201 CREATED on POST", (done) ->
+			server.start 5001, null, null, ->
+				request("http://localhost:5001")
+					.post("/test/mock")
+					.send(testRegExDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		it "should return 201 CREATED on PUT", (done) ->
+			server.start 5001, null, null, ->
+				request("http://localhost:5001")
+					.put("/test/mock")
+					.send(testRegExDoc)
 					.auth("testApp", "password")
 					.expect(201)
 					.end (err, res) ->
