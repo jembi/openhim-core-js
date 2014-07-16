@@ -15,19 +15,21 @@ describe "API Integration Tests", ->
 		task1 = new Task
 			_id: "aaa908908bbb98cc1d0809ee"
 			status: "Completed"
+			remainingTransactions: 0
 			transactions: [ {tid: "11111", tstatus: "Completed"},
 							{tid: "22222", tstatus: "Completed"},
-							{tid: "33333", tstatus: "Processing"},
+							{tid: "33333", tstatus: "Failed"},
 							{tid: "44444", tstatus: "Completed"} ]
 			created: "2014-06-18T12:00:00.929Z"
-			completed: "2014-06-18T12:01:00.929Z"
+			completed: "12014-06-18T12:01:00.929Z"
 			user: "root@openhim.org"
 		task2 = new Task
 			_id: "aaa777777bbb66cc5d4444ee"
-			status: "Processing"
-			transactions: [ {tid: "55555", tstatus: "Processing"},
-							{tid: "66666", tstatus: "Processing"},
-							{tid: "77777", tstatus: "Processing"} ]
+			status: "NotStarted"
+			remainingTransactions: 3
+			transactions: [ {tid: "55555", tstatus: "NotStarted"},
+							{tid: "66666", tstatus: "NotStarted"},
+							{tid: "77777", tstatus: "NotStarted"} ]
 			created: "2014-06-18T12:00:00.929Z"
 			user: "root@openhim.org"
 
@@ -74,12 +76,7 @@ describe "API Integration Tests", ->
 
 			it 'should add a new task', (done) ->
 				newTask =
-					status: "NotStarted"
-					transactions: [ {tid: "88888", tstatus: "Processing"},
-									{tid: "99999", tstatus: "Processing"},
-									{tid: "10101", tstatus: "Processing"} ]
-					created: "2014-06-20T12:00:00.929Z"
-					user: "root@openhim.org"
+					tids: [ "88888", "99999", "10101" ]
 
 				request("http://localhost:8080")
 					.post("/tasks")
@@ -93,9 +90,10 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							Task.findOne { created: "2014-06-20T12:00:00.929Z" }, (err, task) ->
+							Task.findOne { $and: [ transactions: { $elemMatch: { tid: "88888" } }, { transactions: $elemMatch: { tid: "99999" } }, { transactions: $elemMatch: { tid: "10101" } } ] }, (err, task) ->
 								task.should.have.property "status", "NotStarted"
 								task.transactions.should.have.length 3
+								task.should.have.property "remainingTransactions", 3
 								done()
 
 		describe '*getTask(taskId)', ->

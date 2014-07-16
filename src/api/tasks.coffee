@@ -1,5 +1,4 @@
 Task = require('../model/tasks').Task
-#Queue = require('../model/queue').Queue
 Q = require 'q'
 logger = require 'winston'
 
@@ -36,23 +35,34 @@ exports.getTasks = `function *getTasks() {
 exports.addTask = `function *addTask() {
 
 	// Get the values to use
-	var taskData = this.request.body;
+	var transactions = this.request.body;
 	try {
-		var task = new Task(taskData);
+
+		var taskObject = {};
+		var transactionsObject = [];
+		taskObject.remainingTransactions = transactions.tids.length;
+		taskObject.user = this.authenticated.email;
+
+		for (var t=0; t<transactions.tids.length; t++ ){
+			transaction = {tid: transactions.tids[t]};
+			transactionsObject.push( transaction );
+		}
+		taskObject.transactions = transactionsObject;
+
+		var task = new Task(taskObject);
 		var result = yield Q.ninvoke(task, 'save');
 
 		var taskID = result[0]._id;
-		var transactions = taskData.transactions;
+		var transactions = taskObject.transactions;
 		for (var i = 0; i < transactions.length; i++ ){
 
 			try{
-
 				var transactionID = transactions[i].tid;
-				queue.enqueue("process_transactions", {
+				queue.enqueue("rerun_transaction", {
 					transactionID: transactionID,
 					taskID: taskID
 					}, function(e, job) {
-					logger.info("enqueued transaction:", job.data.params.transactionID);
+					logger.info("Enqueued transaction:", job.data.params.transactionID);
 				});
 
 				// All ok! So set the result
@@ -71,6 +81,7 @@ exports.addTask = `function *addTask() {
 		// All ok! So set the result
 		this.body = 'Task successfully created';
 		this.status = 'created';
+		
 	}
 	catch (e) {
 		// Error! So inform the user
@@ -91,7 +102,6 @@ exports.getTask = `function *getTask(taskId) {
 	try {
 	
 		// Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-		//var result = yield Task.findOne({ _id: ObjectId.fromString(taskId) }).exec();
 		var result = yield Task.findById(taskId).exec();
 
 		// Test if the result if valid

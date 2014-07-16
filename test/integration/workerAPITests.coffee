@@ -1,133 +1,98 @@
 should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
+Transaction = require("../../lib/model/transactions").Transaction
 Task = require("../../lib/model/tasks").Task
+#worker = require "../../lib/api/worker"
 testUtils = require "../testUtils"
-logger = require "winston"
+auth = require("../testUtils").auth
 
 config = require("../../lib/config/config")
 MongoClient = require("mongodb").MongoClient
 
-monq = require("monq")
-client = monq(config.mongo.url)
-queue = client.queue("transactions")
+describe "API Integration Tests", ->
 
-http = require 'http'
+	describe 'Transaction Rerun Worker Api testing', ->
 
-describe "Rerun Server Worker Tests", ->
+		transaction1 = new Transaction
+			_id: "53bfbccc6a2b417f6cd14871"
+			channelID: "53bbe25485e66d8e5daad4a2"
+			clientID: "test"
+			request: {
+				path: "/sample/api",
+				headers: { authorization: "Basic dGVzdDp0ZXN0", "user-agent": "curl/7.35.0", host: "localhost:5001" },
+				querystring: "param=hello",
+				body: "",
+				method: "GET",
+				timestamp: "2014-07-15T08:10:45.109Z"
+			}
+			status: "Completed"
+		
+		transaction2 = new Transaction
+			_id: "53bfbcd06a2b417f6cd14872"
+			channelID: "53bbe25485e66d8e5daad4a2"
+			clientID: "test"
+			request: {
+				path: "/sample/api",
+				headers: { authorization: "Basic dGVzdDp0ZXN0", "user-agent": "curl/7.35.0", host: "localhost:5001" },
+				querystring: "param=hello?param2=World",
+				body: "",
+				method: "GET",
+				timestamp: "2014-07-15T08:10:45.109Z"
+			}
+			status: "Failed"
 
-	describe 'Worker transactions processing test', ->		
-
-		task = new Task
-			_id: "aaa908908bbb98cc1d0809ee"
+		task1 = new Task
+			_id: "53c4dd063b8cb04d2acf0adc"
+			created: "2014-07-15T07:49:26.238Z"
+			remainingTransactions: 2
 			status: "NotStarted"
-			transactions: [ {tid: "11111", tstatus: "Processing"},
-							{tid: "22222", tstatus: "Processing"},
-							{tid: "33333", tstatus: "Processing"} ]
-			created: "2014-06-18T12:00:00.929Z"
-			completed: "2014-06-18T12:01:00.929Z"
-			completedTransactions: 0
+			transactions: [ {tid: "53bfbccc6a2b417f6cd14871", tstatus: "NotStarted"},
+							{tid: "53bfbcd06a2b417f6cd14872", tstatus: "NotStarted"} ]
 			user: "root@openhim.org"
 
-		
-		
+		authDetails = {}
+
 		before (done) ->
-			task.save ->
-				transactions = task.transactions
-				taskID = task._id
-				i = 0
-
-				while i < transactions.length
-				  try
-				    transactionID = transactions[i].tid
-				    queue.enqueue "process_transactions",
-				      transactionID: transactionID
-				      taskID: taskID
-				    , (e, job) ->
-				      logger.info "enqueued transaction:", job.data.params.transactionID
-
-				    
-				    # All ok! So set the result
-				    @body = "info: Queue item successfully created"
-				    @status = "created"
-				  catch e
-				    
-				    # Error! So inform the user
-				    logger.error "Could not add Queue item via the API: " + e
-				    @body = e.message
-				    @status = "bad request"
-				  i++
-				server.start null, null, 7786, ->
-					done()
-
+			transaction1.save ->
+				transaction2.save ->
+					task1.save ->
+						auth.setupTestUsers ->
+							server.start null, null, 8080, ->
+								done()
 		after (done) ->
 			server.stop ->
-				Task.remove {}, ->
-					MongoClient.connect config.mongo.url, (err, db) ->
-					    mongoCollection = db?.collection "jobs"
-					    mongoCollection.drop()
-						done()
+				auth.cleanupTestUsers ->
+					Task.remove {}, ->
+						MongoClient.connect config.mongo.url, (err, db) ->
+						    mongoCollection = db?.collection "jobs"
+						    mongoCollection.drop()
+							done()
 
+		beforeEach ->
+			authDetails = auth.getAuthDetails()
 
-		describe '*Worker busy processing', ->
+		describe '*Test 1 failing', ->
 
-			it 'Should have 1 Task record with 3 transaction IDs', (done) ->
-				MongoClient.connect config.mongo.url, (err, db) ->
-					mongoCollectionTasks = db?.collection "tasks"
-					tasks = mongoCollectionTasks.find {}
-					tasks.toArray (err, results) ->
-					    results.should.have.length 1
-					    results[0].transactions.should.have.length 3
-						done()
+			it 'should fetch the task and all transactions', (done) ->
 
-			it 'Should have 3 records in the jobs collection queue', (done) ->
-				MongoClient.connect config.mongo.url, (err, db) ->
-					mongoCollectionJobs = db?.collection "jobs"
-					jobs = mongoCollectionJobs.find {}
-					jobs.toArray (err, results) ->
-						results.should.have.length 3
-						done()
+				Task.find {}, (err, task) ->
+					task.should.have.length 1
 
-			it 'Should register the worker and process the queue items/update tasks status', (done) ->
-				worker = client.worker([ "transactions" ])
-				worker.register process_transactions: (params, callback) ->
-					transactionID = params.transactionID;
-					taskID = params.taskID;
+				Transaction.find {}, (err, transaction) ->
+					transaction.should.have.length 2
+					done()
 
+		describe '*Test 2 failing', ->
 
-					Task.findById taskID, (err, task) ->
-						#set tasks object status to processing
-						task.status = 'Processing'
-						transactions = task.transactions
-						i = 0
+			it 'should fetch all tasks', (done) ->
 
-						while i < transactions.length
-							if transactions[i].tid is transactionID
+				Task.find {}, (err, task) ->
+					task.should.have.length 1
 
-								#########################################
-					            # An HTTP request needs to be made here #
-					            #########################################
+				Transaction.find {}, (err, transaction) ->
+					transaction.should.have.length 2
+					done()
 
-								# update the status of the transaction that was processed
-								transactions[i].tstatus = 'Completed'
-								
-								#increment the completed transactions amount
-								task.completedTransactions++
-
-							i++
-
-						# set tasks status to 'Completed' if all transactions processed successfully
-						if task.completedTransactions == task.transactions.length
-							task.status = 'Completed'
-
-						task.markModified "task"
-						task.save()
-						
-						if transactionID is "33333"
-							task.should.have.property "status", "Completed"	
-							done() 						
-
-						callback null, transactionID						
-					
-				worker.start()			
-					
+		
+		
