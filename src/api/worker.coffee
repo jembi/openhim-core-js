@@ -1,38 +1,53 @@
-TasksModel = require('../model/tasks').Task
+TaskModel = require('../model/tasks').Task
 Q = require("q")
 logger = require("winston")
 monq = require("monq")
 config = require("../config/config")
 client = monq(config.mongo.url)
 http = require 'http'
-Transaction = require("../model/transactions").Transaction
+TransactionModel = require("../model/transactions").Transaction
 
 worker = client.worker([ "transactions" ])
 worker.register rerun_transaction: (params, callback) ->
   try
     transactionID = params.transactionID;
     taskID = params.taskID;
-    
 
     # Get the task object and update
     # ensure transactionID is within task object
     # pull and respond with transaction object
-    rerunGetTaskTransactionsData taskID, transactionID, (transaction) ->
+    rerunGetTaskTransactionsData taskID, transactionID, (err, transaction) ->
+
+      if err
+        logger.error(err)
+        return callback err, null
 
       # setup the option object for the HTTP Request
-      rerunSetHTTPRequestOptions transaction, (options) ->
+      rerunSetHTTPRequestOptions transaction, (err, options) ->
 
+        if err
+          logger.error(err)
+          return callback err, null
+        
         # Run the HTTP Request with details supplied in options object
-        rerunHttpRequestSend options, transaction, (HTTPResponse) ->
+        rerunHttpRequestSend options, transaction, (err, HTTPResponse) ->
+
+          if err
+            logger.error(err)
+            return callback err, null
 
           # Update the task object with the response details
-          rerunUpdateTaskObject taskID, transactionID, HTTPResponse, (updatedTask) ->
+          rerunUpdateTaskObject taskID, transactionID, HTTPResponse, (err, updatedTask) ->
 
-            # Return when rerun has completed
+            if err
+              logger.error(err)
+              return callback err, null
+
+            # Return and process next job when rerun has completed
             callback null, transactionID
 
   catch err
-    callback err
+    callback err, null
 
 logger.info('Starting the workers')
 worker.start()
@@ -44,14 +59,14 @@ worker.start()
 ###############################################################################
 
 rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
-  response = {}
-  response.transaction = {}
-
   # find the tasks object for the transaction being processed
-  TasksModel.findById taskID, (err, task) ->
+  TaskModel.findById taskID, (err, task) ->
+    if err
+      return callback(err, null)
 
-    if err 
-      callback(err)
+    if task == null
+      err = "Could not find the task for ID #" + taskID + ". The job has failed to process..."
+      return callback err, null
 
     # set task status to Processing
     task.status = 'Processing'
@@ -64,21 +79,22 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
         tx.tstatus = 'Processing'
         task.save (err, tx, numberAffected) ->
           if err
-            callback(err)
+            return callback err, null
           else
             logger.info('Rerun Transaction #' + transactionID + ' - Busy processing to be rerun...')
 
         #retrieve the transaction to rerun
-        Transaction.findById transactionID, (err, transaction) ->
-          if err
-            callback(err)
-
-            response.transaction.status = "Failed"
+        TransactionModel.findById transactionID, (err, transaction) ->
+          if transaction == null
+            response = 
+              transaction:
+                status: "Failed"
             rerunUpdateTaskObject taskID, transactionID, response, (updatedTask) ->
-            logger.info('Rerun Transaction #' + transactionID + ' - could not be found!')
+            err = "'Rerun Transaction #' + transactionID + ' - could not be found!'"
+            return callback err, null
 
           # send the transactions data in callback
-          callback(transaction)
+          return callback null, transaction
 
 ###############################################################################
 # Function for getting the Task object and the approriate Transaction records #
@@ -91,6 +107,10 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
 #####################################
 
 rerunSetHTTPRequestOptions = (transaction, callback) ->
+
+  if transaction == null
+    err = "An empty Transaction object was supplied. Aborting HTTP options configuration"
+    return callback err, null
 
   logger.info('Rerun Transaction #' + transaction._id + ' - HTTP Request options being configured')
   options =
@@ -106,7 +126,7 @@ rerunSetHTTPRequestOptions = (transaction, callback) ->
   if transaction.request.querystring
     options.path += "?"+transaction.request.querystring
 
-  callback(options)
+  return callback null, options
 
 #####################################
 # Construct HTTP options to be sent #
@@ -119,8 +139,17 @@ rerunSetHTTPRequestOptions = (transaction, callback) ->
 #####################################
 
 rerunHttpRequestSend = (options, transaction, callback) ->
-  response = {}
-  response.transaction = {}
+
+  if options == null || options == ''
+    err = "An empty options object was supplied. Aborting HTTP send request"
+    return callback err, null
+
+  if transaction == null
+    err = "An empty Transaction object was supplied. Aborting HTTP Send Request"
+    return callback err, null
+
+  response = 
+    transaction: {}
 
   logger.info('Rerun Transaction #' + transaction._id + ' - HTTP Request is being sent...')
   req = http.request options, (res) ->
@@ -142,7 +171,7 @@ rerunHttpRequestSend = (options, transaction, callback) ->
       response.timestamp = new Date
       
       logger.info('Rerun Transaction #' + transaction._id + ' - HTTP Response has been captured')
-      callback(response)
+      callback null, response
   
   req.on "error", (err) ->
     logger.info('problem with request: ' + err.message)
@@ -153,7 +182,7 @@ rerunHttpRequestSend = (options, transaction, callback) ->
     response.message = "Internal Server Error"
     response.timestamp = new Date
 
-    callback(response)
+    callback null, response
 
   # write data to request body
   if transaction.request.method == "POST" || transaction.request.method == "PUT"
@@ -173,7 +202,7 @@ rerunHttpRequestSend = (options, transaction, callback) ->
 rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
 
   # decrement the remainingTransactions property
-  TasksModel.update 
+  TaskModel.update 
     _id: taskID
   , $inc:
     remainingTransactions: -1
@@ -184,7 +213,7 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
       logger.info('Rerun Task #' + taskID + ' - Remaining Transactions successfully decremented')
 
   # get fresh updated version of the task object
-  TasksModel.findOne
+  TaskModel.findOne
     _id: taskID
   , (err, task) ->
 
@@ -208,7 +237,7 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
         if task.remainingTransactions == 0
           logger.info('Rerun Task #' + taskID + ' - Completed successfully')
 
-      callback(task)
+      callback null, task
 
 ###############################################################
 # Function for updating the task object with response details #
