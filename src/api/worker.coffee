@@ -82,10 +82,13 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
     # set task status to Processing
     task.status = 'Processing'
 
-    #foreach transaction object in the transaction property
+    transactionMatchFound = false
+    #foreach transaction object in the transaction property    
     task.transactions.forEach (tx) ->
       #check if transactionID matches the one in the transaction object
       if tx.tid == transactionID
+
+        transactionMatchFound = true
 
         tx.tstatus = 'Processing'
         task.save (err, tx, numberAffected) ->
@@ -101,11 +104,16 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
               transaction:
                 status: "Failed"
             rerunUpdateTaskObject taskID, transactionID, response, (updatedTask) ->
-            err = "'Rerun Transaction #' + transactionID + ' - could not be found!'"
+            err = "Rerun Transaction #" + transactionID + " - could not be found!"
             return callback err, null
 
           # send the transactions data in callback
           return callback null, transaction
+
+    if transactionMatchFound == false
+      err = "Rerun Transaction #" + transactionID + " - Not found in Task object!"
+      return callback err, null
+
 
 ###############################################################################
 # Function for getting the Task object and the approriate Transaction records #
@@ -151,12 +159,12 @@ rerunSetHTTPRequestOptions = (transaction, callback) ->
 
 rerunHttpRequestSend = (options, transaction, callback) ->
 
-  if options == null || options == ''
-    err = "An empty options object was supplied. Aborting HTTP send request"
+  if options == null
+    err = "An empty 'Options' object was supplied. Aborting HTTP Send Request"
     return callback err, null
 
   if transaction == null
-    err = "An empty Transaction object was supplied. Aborting HTTP Send Request"
+    err = "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
     return callback err, null
 
   response = 
@@ -171,10 +179,10 @@ rerunHttpRequestSend = (options, transaction, callback) ->
       response.body += chunk
 
     res.on "end", (err) ->
+
+      response.transaction.status = "Completed"
       if err 
         response.transaction.status = "Failed"
-      else
-        response.transaction.status = "Completed"
       
       response.status = res.statusCode
       response.message = res.statusMessage
@@ -212,8 +220,17 @@ rerunHttpRequestSend = (options, transaction, callback) ->
 
 rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
 
-  console.log(JSON.parse(JSON.stringify(response)))
-  
+  if taskID == null
+    err = "No taskID supplied. Task cannot be updated"
+    return callback err, null
+
+  if transactionID == null
+    err = "No transactionID supplied. Task cannot be updated"
+    return callback err, null
+
+  if response == null || response.transaction == null
+    err = "No response supplied. Task cannot be updated"
+    return callback err, null
 
   # decrement the remainingTransactions property
   TaskModel.update 
