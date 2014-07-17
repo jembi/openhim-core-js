@@ -7,50 +7,60 @@ client = monq(config.mongo.url)
 http = require 'http'
 TransactionModel = require("../model/transactions").Transaction
 
+
+#####################################################################################################
+# Worker Process - Register the worker - Start the worker - Consume 'jobs' awaiting to be processed #
+#####################################################################################################
+
 worker = client.worker([ "transactions" ])
 worker.register rerun_transaction: (params, callback) ->
-  try
-    transactionID = params.transactionID;
-    taskID = params.taskID;
 
-    # Get the task object and update
-    # ensure transactionID is within task object
-    # pull and respond with transaction object
-    rerunGetTaskTransactionsData taskID, transactionID, (err, transaction) ->
+  transactionID = params.transactionID;
+  taskID = params.taskID;
+
+  # Get the task object and update
+  # ensure transactionID is within task object
+  # pull and respond with transaction object
+  rerunGetTaskTransactionsData taskID, transactionID, (err, transaction) ->
+
+    if err
+      logger.error(err)
+      return callback err, null
+
+    # setup the option object for the HTTP Request
+    rerunSetHTTPRequestOptions transaction, (err, options) ->
 
       if err
         logger.error(err)
         return callback err, null
 
-      # setup the option object for the HTTP Request
-      rerunSetHTTPRequestOptions transaction, (err, options) ->
+      #############################################################################
+      ### The job has processed correctly and is preparing to send HTTP Request ###
+      ### Move on to another job while this one waits for HTTPResponse to save  ###
+      ###     the result - "callback null, trasnactionID" completes the job     ###
+      #############################################################################
+      callback null, transactionID
+      
+      # Run the HTTP Request with details supplied in options object
+      rerunHttpRequestSend options, transaction, (err, HTTPResponse) ->
 
         if err
           logger.error(err)
           return callback err, null
-        
-        # Run the HTTP Request with details supplied in options object
-        rerunHttpRequestSend options, transaction, (err, HTTPResponse) ->
+
+        # Update the task object with the response details
+        rerunUpdateTaskObject taskID, transactionID, HTTPResponse, (err, updatedTask) ->
 
           if err
             logger.error(err)
             return callback err, null
 
-          # Update the task object with the response details
-          rerunUpdateTaskObject taskID, transactionID, HTTPResponse, (err, updatedTask) ->
-
-            if err
-              logger.error(err)
-              return callback err, null
-
-            # Return and process next job when rerun has completed
-            callback null, transactionID
-
-  catch err
-    callback err, null
-
 logger.info('Starting the workers')
 worker.start()
+
+#####################################################################################################
+# Worker Process - Register the worker - Start the worker - Consume 'jobs' awaiting to be processed #
+#####################################################################################################
 
 
 
@@ -59,6 +69,7 @@ worker.start()
 ###############################################################################
 
 rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
+
   # find the tasks object for the transaction being processed
   TaskModel.findById taskID, (err, task) ->
     if err
@@ -201,6 +212,9 @@ rerunHttpRequestSend = (options, transaction, callback) ->
 
 rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
 
+  console.log(JSON.parse(JSON.stringify(response)))
+  
+
   # decrement the remainingTransactions property
   TaskModel.update 
     _id: taskID
@@ -216,9 +230,6 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
   TaskModel.findOne
     _id: taskID
   , (err, task) ->
-
-    if task.status == 'NotStarted'
-      task.status = 'Processing'
     
     task.transactions.forEach (tx) ->
       if tx.tid == transactionID
@@ -244,6 +255,9 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
 ###############################################################
 
 
+#########################################################
+# Export these functions when in the "test" environment #
+#########################################################
 
 if process.env.NODE_ENV == "test"
   exports.rerunGetTaskTransactionsData = rerunGetTaskTransactionsData
