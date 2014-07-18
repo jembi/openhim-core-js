@@ -229,7 +229,7 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
     return callback err, null
 
   if response == null || response.transaction == null
-    err = "No taskID supplied. Task cannot be updated"
+    err = "No response supplied. Task cannot be updated"
     return callback err, null
 
   # decrement the remainingTransactions property
