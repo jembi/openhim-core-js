@@ -7,6 +7,7 @@ config = require "./config/config"
 config.authentication = config.get('authentication')
 config.router = config.get('router')
 config.api = config.get('api')
+config.rerun = config.get('rerun')
 config.logger = config.get('logger')
 Q = require "q"
 logger = require "winston"
@@ -43,7 +44,7 @@ exports.start = (httpPort, httpsPort, apiPort, done) ->
 
 			httpServer = http.createServer app.callback()
 			httpServer.listen httpPort, ->
-				logger.info "HTTP listenting on port " + httpPort
+				logger.info "HTTP listening on port " + httpPort
 				deferredHttp.resolve()
 
 		if httpsPort
@@ -56,7 +57,7 @@ exports.start = (httpPort, httpsPort, apiPort, done) ->
 					return done err
 				httpsServer = https.createServer options, app.callback()
 				httpsServer.listen httpsPort, ->
-					logger.info "HTTPS listenting on port " + httpsPort
+					logger.info "HTTPS listening on port " + httpsPort
 					deferredHttps.resolve()
 
 		if apiPort
@@ -84,12 +85,38 @@ exports.start = (httpPort, httpsPort, apiPort, done) ->
 			koaApi.setupApp (apiApp) ->
 				apiHttpServer = http.createServer apiApp.callback()
 				apiHttpServer.listen apiPort, ->
-					logger.info "API listenting on port " + apiPort
+					logger.info "API listening on port " + apiPort
 					deferredAPIHttp.resolve()
 
 
 		(Q.all promises).then ->
 			done()
+
+#######################################################
+### function to start the transactions rerun server ###
+#######################################################
+exports.startRerun = (httpPort, done) ->
+	
+	logger.info "Starting OpenHIM Transaction Rerun server..."
+
+	koaMiddleware.rerunApp (app) ->
+		promises = []
+		
+		if httpPort
+			deferredHttp = Q.defer();
+			promises.push deferredHttp.promise
+
+			httpServer = http.createServer app.callback()
+			httpServer.listen httpPort, ->
+				logger.info "Transaction Rerun HTTP listening on port " + httpPort
+				deferredHttp.resolve()
+
+		(Q.all promises).then ->
+			done()
+	
+#######################################################
+### function to start the transactions rerun server ###
+#######################################################
 
 exports.stop = (done) ->
 	promises = []
@@ -124,5 +151,7 @@ exports.stop = (done) ->
 		apiHttpServer = null
 		done()
 
-if not module.parent
+if not module.parent	
 	exports.start config.router.httpPort, config.router.httpsPort, config.api.httpPort
+	exports.startRerun config.rerun.httpPort
+	
