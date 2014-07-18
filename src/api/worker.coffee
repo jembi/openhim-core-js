@@ -91,7 +91,7 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
         transactionMatchFound = true
 
         tx.tstatus = 'Processing'
-        task.save (err, tx, numberAffected) ->
+        task.save (err, tx) ->
           if err
             return callback err, null
           else

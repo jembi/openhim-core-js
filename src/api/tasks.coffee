@@ -8,7 +8,6 @@ monq = require("monq")
 config = require("../config/config")
 client = monq(config.mongo.url)
 
-# use more dynamic function get DB environment
 queue = client.queue("transactions")
 authorisation = require './authorisation'
 
