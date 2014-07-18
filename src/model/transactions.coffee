@@ -32,6 +32,7 @@ OrchestrationMetadataSchema = new Schema
 # Trasnaction schema 
 TransactionSchema = new Schema    
     "clientID": { type: String, required: true } 
+    "parentID": { type: String, required: false } 
     "channelID": { type: String, required: false } 
     "request": RequestDef
     "response": ResponseDef

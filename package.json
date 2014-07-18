@@ -20,6 +20,7 @@
     "nconf": "~0.6.9",
     "koa-cors": "0.0.8",
     "bcrypt-nodejs": "0.0.3",
+    "monq": "0.3.0",
     "xpath": "0.0.6",
     "xmldom": "~0.1.19",
     "http-status": "0.1.7",

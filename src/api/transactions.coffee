@@ -47,6 +47,7 @@ exports.getTransactions = `function *getTransactions() {
 		}
 
 		this.body = yield transactions.Transaction.find(filtersObject).skip(filterSkip).limit(filterLimit).sort({ 'request.timestamp': -1 }).exec();
+
 	}catch (e){
 		this.message = e.message;
 		this.status = 'internal server error';
