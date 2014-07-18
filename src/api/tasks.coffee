@@ -39,15 +39,15 @@ exports.addTask = `function *addTask() {
 	try {
 
 		var taskObject = {};
-		var transactionsObject = [];
+		var transactionsArr = [];
 		taskObject.remainingTransactions = transactions.tids.length;
 		taskObject.user = this.authenticated.email;
 
 		for (var t=0; t<transactions.tids.length; t++ ){
 			transaction = {tid: transactions.tids[t]};
-			transactionsObject.push( transaction );
+			transactionsArr.push( transaction );
 		}
-		taskObject.transactions = transactionsObject;
+		taskObject.transactions = transactionsArr;
 
 		var task = new Task(taskObject);
 		var result = yield Q.ninvoke(task, 'save');

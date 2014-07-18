@@ -179,10 +179,10 @@ rerunHttpRequestSend = (options, transaction, callback) ->
       response.body += chunk
 
     res.on "end", (err) ->
-
-      response.transaction.status = "Completed"
       if err 
         response.transaction.status = "Failed"
+      else
+        response.transaction.status = "Completed"
       
       response.status = res.statusCode
       response.message = res.statusMessage
@@ -229,7 +229,7 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
     return callback err, null
 
   if response == null || response.transaction == null
-    err = "No response supplied. Task cannot be updated"
+    err = "No taskID supplied. Task cannot be updated"
     return callback err, null
 
   # decrement the remainingTransactions property
@@ -256,7 +256,7 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
       task.status = 'Completed'
       task.completedDate = new Date().toISOString()
     
-    task.save (err, task, numberAffected) ->
+    task.save (err, task) ->
       if err
         logger.info('Rerun Task #' + taskID + ' could not be updated: ' + err)
       else
