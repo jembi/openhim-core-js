@@ -6,10 +6,6 @@ Transaction = require("../../lib/model/transactions").Transaction
 
 transactionId = null
 
-beforeEach (done) -> Transaction.remove {}, -> done()
-
-afterEach (done)-> Transaction.remove {}, -> done()
-
 describe "MessageStore", ->
 	req = new Object()
 	req.path = "/api/test/request"
@@ -67,6 +63,11 @@ describe "MessageStore", ->
 	ctx.status = "Processing"
 	ctx.authenticated = new Object()
 	ctx.authenticated.clientID = "Master_OpenMRS_Instance"
+
+
+	beforeEach (done) -> Transaction.remove {}, -> done()
+
+	afterEach (done)-> Transaction.remove {}, -> done()
 
 	describe ".storeTransaction", ->
 
