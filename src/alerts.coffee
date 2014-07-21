@@ -7,23 +7,33 @@ Transaction = require('./model/transactions').Transaction
 
 getAllChannels = (callback) -> Channel.find({}).exec callback
 
-findTransactionsMatchingStatus = (status, dateFrom, callback) ->
-	pat = /\dxx/.exec status
-	statusMatch = if pat then pat[0] else status
+findTransactionsMatchingStatus = (channelId, status, dateFrom, callback) ->
+	pat = /(\d)xx/.exec status
+	statusMatch = if pat then new RegExp("#{pat[0]}\d\d") else status
+	console.log "channeId: #{channelId}"
+	console.log "statusMatch: #{statusMatch}"
+	console.log "dateFrom: #{dateFrom}"
 
 	Transaction.find({
-		request: timestamp: $gte: dateFrom
-		"$or": [
-			{ response: status: statusMatch }
-			{ routes: "$elemMatch": response: status: statusMatch }
-		]
-	}, ['_id']).exec callback
+	#	request: timestamp: $gte: dateFrom
+	#	"$or": [
+	#		{ response: status: statusMatch }
+	#		{ routes: "$elemMatch": response: status: statusMatch }
+	#	]
+	}, '_id').exec callback
 
 alertingTask = (job, done) ->
 	logger.info "Running transaction alerts task"
 	job.attrs.data = {} if not job.attrs.data
 
 	lastAlertDate = job.attrs.data.lastAlertDate ? new Date()
+
+	getAllChannels (err, results) ->
+		for channel in results
+			for alert in channel.alerts
+				status = ""
+				findTransactionsMatchingStatus channel._id, status, lastAlertDate, (err, trx) ->
+					console.log "do stuff"
 
 	job.attrs.data.lastAlertDate = new Date()
 	done()
