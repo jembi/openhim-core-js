@@ -35,11 +35,11 @@ exports.setupApp = (done) ->
 	if config.authentication.enableBasicAuthentication
 		app.use basicAuthentication.koaMiddleware
 
-	# Persit message middleware
-	app.use messageStore.koaMiddleware
-
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware
+
+	# Persit message middleware
+	app.use messageStore.koaMiddleware
 
 	# Call router
 	app.use router.koaMiddleware

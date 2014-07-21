@@ -68,6 +68,9 @@ describe "MessageStore", ->
 	ctx.authenticated = new Object()
 	ctx.authenticated.clientID = "Master_OpenMRS_Instance"
 
+	ctx.authorisedChannel = new Object()
+	ctx.authorisedChannel._id = "123456"
+
 	describe ".storeTransaction", ->
 
 		it "should be able to save the transaction in the db", (done) ->
@@ -82,6 +85,7 @@ describe "MessageStore", ->
 					trans.request.path.should.equal "/api/test/request"
 					trans.request.headers['Content-Type'].should.equal "application/json"
 					trans.request.querystring.should.equal "param1=value1&param2=value2"
+					trans.channelID.should.equal "123456"
 					done()
 
 	describe ".storeResponse", ->
