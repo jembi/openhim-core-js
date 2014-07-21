@@ -7,10 +7,6 @@ ObjectId = require('mongoose').Types.ObjectId
 
 transactionId = null
 
-beforeEach (done) -> Transaction.remove {}, -> done()
-
-afterEach (done)-> Transaction.remove {}, -> done()
-
 describe "MessageStore", ->
 	req = new Object()
 	req.path = "/api/test/request"
@@ -71,6 +67,11 @@ describe "MessageStore", ->
 
 	ctx.authorisedChannel = new Object()
 	ctx.authorisedChannel._id = new ObjectId "313233343536373839313030"
+
+
+	beforeEach (done) -> Transaction.remove {}, -> done()
+
+	afterEach (done)-> Transaction.remove {}, -> done()
 
 	describe ".storeTransaction", ->
 
