@@ -9,6 +9,11 @@ auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
 
+	beforeEach (done) -> Transaction.remove {}, -> done()
+
+	afterEach (done)-> Transaction.remove {}, -> done()
+
+
 	describe "Transactions REST Api testing", ->
 		transactionId = null
 		requ =

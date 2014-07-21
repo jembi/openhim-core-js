@@ -3,12 +3,9 @@ sinon = require "sinon"
 http = require "http"
 messageStore = require "../../lib/middleware/messageStore"
 Transaction = require("../../lib/model/transactions").Transaction
+ObjectId = require('mongoose').Types.ObjectId
 
 transactionId = null
-
-beforeEach (done) -> Transaction.remove {}, -> done()
-
-afterEach (done)-> Transaction.remove {}, -> done()
 
 describe "MessageStore", ->
 	req = new Object()
@@ -68,6 +65,14 @@ describe "MessageStore", ->
 	ctx.authenticated = new Object()
 	ctx.authenticated.clientID = "Master_OpenMRS_Instance"
 
+	ctx.authorisedChannel = new Object()
+	ctx.authorisedChannel._id = new ObjectId "313233343536373839313030"
+
+
+	beforeEach (done) -> Transaction.remove {}, -> done()
+
+	afterEach (done)-> Transaction.remove {}, -> done()
+
 	describe ".storeTransaction", ->
 
 		it "should be able to save the transaction in the db", (done) ->
@@ -82,6 +87,7 @@ describe "MessageStore", ->
 					trans.request.path.should.equal "/api/test/request"
 					trans.request.headers['Content-Type'].should.equal "application/json"
 					trans.request.querystring.should.equal "param1=value1&param2=value2"
+					trans.channelID.should.equal "313233343536373839313030"
 					done()
 
 	describe ".storeResponse", ->
