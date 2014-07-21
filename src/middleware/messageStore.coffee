@@ -12,6 +12,7 @@ exports.storeTransaction = (ctx, done) ->
 	tx = new transactions.Transaction
 		status: transactionStatus.PROCESSING
 		clientID: ctx.authenticated.clientID
+		channelID: ctx.authorisedChannel._id
 		request:
 			path: ctx.path
 			headers: ctx.header
@@ -19,6 +20,7 @@ exports.storeTransaction = (ctx, done) ->
 			body: ctx.body
 			method: ctx.method
 			timestamp: new Date()
+
 
 	if ctx.parentID
 		tx.parentID = ctx.parentID
