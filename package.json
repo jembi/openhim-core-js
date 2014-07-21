@@ -25,7 +25,8 @@
     "xmldom": "~0.1.19",
     "http-status": "0.1.7",
     "raw-body": "1.2.2",
-    "agenda": "~0.6.16"
+    "agenda": "~0.6.16",
+    "moment": "~2.7.0"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
