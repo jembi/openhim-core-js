@@ -91,16 +91,33 @@ describe "MessageStore", ->
 					done()
 
 	describe ".storeResponse", ->
+
+		createResponse = (status) ->
+			return {
+				status: status
+				header: [
+							testHeader: "value"
+						]
+				body: new Buffer "<HTTP response body>"
+				timestamp: new Date()
+			}
+
+		createRoute = (name, status) ->
+			return {
+				name: name
+				request: {
+					path: "/test"
+				}
+				response: {
+					status: status
+					header: [ test: "test" ]
+					body: "route body"
+					timestamp: new Date()
+				}
+			}
+
 		it "should update the transaction with the response", (done) ->
-			setRes = new Object()
-			setRes.status = "201"
-			setRes.header = [
-								testHeader: "value"
-							]
-			setRes.body = new Buffer "<HTTP response body>"
-			setRes.timestamp = new Date()
-			
-			ctx.response = setRes
+			ctx.response = createResponse 201
 
 			messageStore.storeTransaction ctx, (err, storedTrans) ->
 				ctx.transactionId = storedTrans._id
@@ -112,32 +129,13 @@ describe "MessageStore", ->
 						trans.response.status.should.equal 201
 						trans.response.headers[0].testHeader.should.equal "value"
 						trans.response.body.should.equal "<HTTP response body>"
-						trans.status.should.equal "Completed"
+						trans.status.should.equal "Successful"
 						done()
 
 		it "should update the transaction with the responses from non-primary routes", (done) ->
-			setRes = new Object()
-			setRes.status = "201"
-			setRes.header = [
-								testHeader: "value"
-							]
-			setRes.body = new Buffer "<HTTP response body>"
-			setRes.timestamp = new Date()
-			
-			ctx.response = setRes
+			ctx.response = createResponse 201
 			ctx.routes = []
-			ctx.routes.push {
-				name: "route1"
-				request: {
-					path: "/test"
-				}
-				response: {
-					status: 200
-					header: [ test: "test" ]
-					body: "route1"
-					timestamp: new Date()
-				}
-			}
+			ctx.routes.push createRoute "route1", 200
 
 			messageStore.storeTransaction ctx, (err, storedTrans) ->
 				ctx.transactionId = storedTrans._id
@@ -150,6 +148,86 @@ describe "MessageStore", ->
 						trans.routes[0].name.should.equal "route1"
 						trans.routes[0].response.status.should.equal 200
 						trans.routes[0].response.headers[0].test.should.equal "test"
-						trans.routes[0].response.body.should.equal "route1"
+						trans.routes[0].response.body.should.equal "route body"
 						trans.routes[0].request.path.should.equal "/test"
+						done()
+
+		it "should set the status to successful if all route return a status in 2xx", (done) ->
+			ctx.response = createResponse 201
+			ctx.routes = []
+			ctx.routes.push createRoute "route1", 200
+			ctx.routes.push createRoute "route2", 201
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						(trans != null).should.true
+						trans.status.should.be.exactly "Successful"
+						done()
+
+		it "should set the status to failed if the primary route return a status in 5xx", (done) ->
+			ctx.response = createResponse 500
+			ctx.routes = []
+			ctx.routes.push createRoute "route1", 200
+			ctx.routes.push createRoute "route2", 201
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						(trans != null).should.true
+						trans.status.should.be.exactly "Failed"
+						done()
+
+		it "should set the status to completed with errors if the primary route return a status in 2xx or 4xx but one or more routes return 5xx", (done) ->
+			ctx.response = createResponse 404
+			ctx.routes = []
+			ctx.routes.push createRoute "route1", 201
+			ctx.routes.push createRoute "route2", 501
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						(trans != null).should.true
+						trans.status.should.be.exactly "Completed with error(s)"
+						done()
+
+		it "should set the status to completed if any route returns a status in 4xx (test 1)", (done) ->
+			ctx.response = createResponse 201
+			ctx.routes = []
+			ctx.routes.push createRoute "route1", 201
+			ctx.routes.push createRoute "route2", 404
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						(trans != null).should.true
+						trans.status.should.be.exactly "Completed"
+						done()
+
+		it "should set the status to completed if any route returns a status in 4xx (test 2)", (done) ->
+			ctx.response = createResponse 404
+			ctx.routes = []
+			ctx.routes.push createRoute "route1", 201
+			ctx.routes.push createRoute "route2", 404
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						(trans != null).should.true
+						trans.status.should.be.exactly "Completed"
 						done()
