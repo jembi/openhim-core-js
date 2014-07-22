@@ -2,6 +2,7 @@ config = require "./config/config"
 config.alerts = config.get('alerts')
 logger = require "winston"
 contact = require './contact'
+moment = require 'moment'
 Q = require 'q'
 Channel = require('./model/channels').Channel
 Transaction = require('./model/transactions').Transaction
@@ -74,21 +75,27 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 sendAlert = (user, transactions, contactHandler, done) ->
 	logger.info "Sending alert for user '#{user.user}' using method '#{user.method}'"
 
-	User.findOne {email: user.user}, (err, dbUser) ->
+	User.findOne { email: user.user }, (err, dbUser) ->
 		return done err if err
 		return done "Cannot send alert: Unknown user '#{user.user}'" if not dbUser
 
-		if user.method is 'email'
-			plainMsg = plainTemplate transactions
-			htmlMsg = htmlTemplate transactions
-			contactHandler 'email', user.user, plainMsg, htmlMsg, done
-		else if user.method is 'sms'
-			return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
+		todayStart = moment().startOf('day').toDate()
+		Alert.findOne { timestamp: { "$gte": todayStart }, user: user.user, status: 'Completed'}, (err, alert) ->
+			return done err if err
+			# user already received an alert today, skip
+			return done null if alert
 
-			smsMsg = smsTemplate transactions
-			contactHandler 'sms', dbUser.msisdn, smsMsg, null, done
-		else
-			return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
+			if user.method is 'email'
+				plainMsg = plainTemplate transactions
+				htmlMsg = htmlTemplate transactions
+				contactHandler 'email', user.user, plainMsg, htmlMsg, done
+			else if user.method is 'sms'
+				return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
+
+				smsMsg = smsTemplate transactions
+				contactHandler 'sms', dbUser.msisdn, smsMsg, null, done
+			else
+				return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
 
 sendAlerts = (alert, transactions, contactHandler, done) ->
 	storeAlert = (err, user, done) ->

@@ -286,9 +286,9 @@ describe "Transaction Alerts", ->
 				jobStub.attrs.data.lastAlertDate = date
 			return jobStub
 
-		mockContactHandler = (spy) -> (method, contactAddress, messagePlain, messageHTML, callback) ->
+		mockContactHandler = (spy, err=null) -> (method, contactAddress, messagePlain, messageHTML, callback) ->
 			spy method, contactAddress, messagePlain, messageHTML
-			callback null
+			callback err
 
 		it "should not contact users if there no matching transactions", (done) ->
 			contactSpy = sinon.spy()
@@ -330,4 +330,26 @@ describe "Transaction Alerts", ->
 						smsMsg = alerts.smsTemplate transactions
 						contactSpy.withArgs('email', testUser1.email, plainMsg, htmlMsg).calledOnce.should.be.true
 						contactSpy.withArgs('sms', testUser2.msisdn, smsMsg, null).calledOnce.should.be.true
+						done()
+
+		it "should not send alerts to users if they've already received an alert for the same day", (done) ->
+			contactSpy = sinon.spy()
+			testTransactions[0].save (err) ->
+				return done err if err
+				alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
+					contactSpy.calledTwice.should.be.true
+					secondSpy = sinon.spy()
+					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
+						secondSpy.called.should.be.false
+						done()
+
+		it "should send alerts to users if an alert for the same day was already attempted but it failed", (done) ->
+			contactSpy = sinon.spy()
+			testTransactions[0].save (err) ->
+				return done err if err
+				alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy, "Test Failure"), ->
+					contactSpy.calledTwice.should.be.true
+					secondSpy = sinon.spy()
+					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
+						secondSpy.called.should.be.true
 						done()
