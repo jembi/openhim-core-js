@@ -1,11 +1,54 @@
 config = require "./config/config"
 config.alerts = config.get('alerts')
 logger = require "winston"
+contact = require './contact'
+Q = require 'q'
 Channel = require('./model/channels').Channel
 Transaction = require('./model/transactions').Transaction
+ContactGroup = require('./model/contactGroups').ContactGroup
+Alert = require('./model/alerts').Alert
+User = require('./model/users').User
+
+
+trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
+
+plainTemplate = (transactions) -> "
+ERROR Alert - Transaction Failures\n
+\n
+The following transaction(s) have failed on the OpenHIM instance running on #{config.alerts.himInstance}:\n
+#{(transactions.map (trx) -> trxURL trx).join '\n'}\n
+"
+
+htmlTemplate = (transactions) -> "
+<html>
+<head></head>
+<body>
+<h1>ERROR Alert - Transaction Failures</h1>
+<div>
+<p>The following transaction(s) have failed on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
+<table>
+#{(transactions.map (trx) -> "<tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'}
+</table>
+</div>
+</body>
+</html>
+"
+
+smsTemplate = (transactions) -> "
+ERROR Alert - #{
+	if transactions.length > 1
+		"#{transactions.length} transactions have failed"
+	else if transactions.length is 1
+		"1 transaction has failed"
+	else
+		"no transactions have failed"
+}
+ on the OpenHIM instance running on #{config.alerts.himInstance}
+"
 
 
 getAllChannels = (callback) -> Channel.find({}).exec callback
+findGroup = (name, callback) -> ContactGroup.findOne(group: name).exec callback
 
 findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, callback) ->
 	pat = /\dxx/.exec status
@@ -27,23 +70,113 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 		else
 			callback err, results
 
-alertingTask = (job, done) ->
+
+sendAlert = (user, transactions, contactHandler, done) ->
+	logger.info "Sending alert for user '#{user.user}' using method '#{user.method}'"
+
+	User.findOne {email: user.user}, (err, dbUser) ->
+		return done err if err
+		return done "Cannot send alert: Unknown user '#{user.user}'" if not dbUser
+
+		if user.method is 'email'
+			plainMsg = plainTemplate transactions
+			htmlMsg = htmlTemplate transactions
+			contactHandler 'email', user.user, plainMsg, htmlMsg, done
+		else if user.method is 'sms'
+			return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
+
+			smsMsg = smsTemplate transactions
+			contactHandler 'sms', dbUser.msisdn, smsMsg, null, done
+		else
+			return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
+
+sendAlerts = (alert, transactions, contactHandler, done) ->
+	storeAlert = (err, user, done) ->
+		alert = new Alert
+			user: user.user
+			method: user.method
+			status: if err then 'Failed' else 'Completed'
+			transactions: transactions.map (trx) -> trx._id
+			error: err
+
+		alert.save (err) ->
+			logger.error err if err
+			done()
+
+	alertCallback = (err, user, done) ->
+		logger.error err if err
+		storeAlert err, user, done
+
+	# Crazy tangled nest of async calls and promises
+	#
+	# Each group check creates one promise that needs to be resolved.
+	# For each group, the promise is only resolved when an alert is sent and stored
+	# for each user in that group. This resolution is managed by a promise set for that group.
+	#
+	# For individual users in the alert object (not part of a group),
+	# a promise is resolved per user when the alert is both sent and stored.
+	promises = []
+
+	if alert.groups
+		for group in alert.groups
+			groupDefer = Q.defer()
+			findGroup group, (err, result) ->
+				if err
+					logger.error err
+					groupDefer.resolve()
+				else
+					groupUserPromises = []
+
+					for user in result.users
+						do (user) ->
+							groupUserDefer = Q.defer()
+							sendAlert user, transactions, contactHandler, (err) -> alertCallback err, user, -> groupUserDefer.resolve()
+							groupUserPromises.push groupUserDefer.promise
+
+					(Q.all groupUserPromises).then -> groupDefer.resolve()
+			promises.push groupDefer.promise
+
+	if alert.users
+		for user in alert.users
+			do (user) ->
+				userDefer = Q.defer()
+				sendAlert user, transactions, contactHandler, (err) -> alertCallback err, user, -> userDefer.resolve()
+				promises.push userDefer.promise
+
+	(Q.all promises).then -> done()
+
+
+alertingTask = (job, contactHandler, done) ->
 	logger.info "Running transaction alerts task"
 	job.attrs.data = {} if not job.attrs.data
 
 	lastAlertDate = job.attrs.data.lastAlertDate ? new Date()
 
 	getAllChannels (err, results) ->
+		promises = []
+
 		for channel in results
 			for alert in channel.alerts
-				findTransactionsMatchingStatus channelID, alert.status, lastAlertDate, alert.failureRate, (err, trx) ->
-					console.log "do stuff"
+				do (alert) ->
+					deferred = Q.defer()
 
-	job.attrs.data.lastAlertDate = new Date()
-	done()
+					findTransactionsMatchingStatus channel._id, alert.status, lastAlertDate, alert.failureRate, (err, results) ->
+						if err
+							logger.error err
+							deferred.resolve()
+						else if results? and results.length>0
+							sendAlerts alert, results, contactHandler, -> deferred.resolve()
+						else
+							deferred.resolve()
+
+					promises.push deferred.promise
+
+		(Q.all promises).then ->
+			job.attrs.data.lastAlertDate = new Date()
+			done()
 
 setupAgenda = (agenda) ->
-	agenda.define 'generate transaction alerts', (job, done) -> alertingTask job, done
+	agenda.define 'generate transaction alerts', (job, done) -> alertingTask job, contact.contactUser, done
 	agenda.every "#{config.alerts.pollPeriodMinutes} minutes", 'generate transaction alerts'
 
 
@@ -51,3 +184,7 @@ exports.setupAgenda = setupAgenda
 
 if process.env.NODE_ENV == "test"
 	exports.findTransactionsMatchingStatus = findTransactionsMatchingStatus
+	exports.alertingTask = alertingTask
+	exports.plainTemplate = plainTemplate
+	exports.htmlTemplate = htmlTemplate
+	exports.smsTemplate = smsTemplate

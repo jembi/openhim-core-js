@@ -4,11 +4,14 @@ http = require "http"
 moment = require "moment"
 alerts = require "../../lib/alerts"
 testUtils = require "../testUtils"
+config = require "../../lib/config/config"
+config.alerts = config.get('alerts')
 Channel = require("../../lib/model/channels").Channel
 User = require("../../lib/model/users").User
 ContactGroup = require("../../lib/model/contactGroups").ContactGroup
 ContactUser = require("../../lib/model/contactGroups").ContactUser
 Transaction = require("../../lib/model/transactions").Transaction
+Alert = require("../../lib/model/alerts").Alert
 
 testUser1 = new User
 	firstname: 'User'
@@ -22,17 +25,27 @@ testUser2 = new User
 	firstname: 'User'
 	surname: 'Two'
 	email: 'two@openhim.org'
+	msisdn: '27721234567'
 	passwordAlgorithm: 'sha512'
 	passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e'
 	passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 
 testGroup1 = new ContactGroup
 	group: 'group1'
-	users: ['one@openhim.org', 'two@openhim.org']
+	users: [
+		{
+			user: 'one@openhim.org'
+			method: 'email'
+		}
+		{
+			user: 'two@openhim.org'
+			method: 'email'
+		}
+	]
 
 testGroup2 = new ContactGroup
 	group: 'group2'
-	users: ['one@openhim.org']
+	users: [ { user: 'one@openhim.org', method: 'email' } ]
 
 testFailureRate = 2
 
@@ -48,7 +61,7 @@ testChannel = new Channel
 		{
 			status: '5xx'
 			groups: ['group2']
-			users: ['two@openhim.org']
+			users: [ { user: 'two@openhim.org', method: 'sms' } ]
 			failureRate: testFailureRate
 		}
 	]
@@ -156,10 +169,20 @@ describe "Transaction Alerts", ->
 		User.remove {}, -> ContactGroup.remove {}, -> Channel.remove {}, -> done()
 
 	afterEach (done) ->
-		Transaction.remove {}, ->
-			for testTransaction in testTransactions
-				testTransaction.isNew = true
-				delete testTransaction._id
+		Alert.remove {}, ->
+			Transaction.remove {}, ->
+				for testTransaction in testTransactions
+					testTransaction.isNew = true
+					delete testTransaction._id
+				done()
+
+	describe "config", ->
+		it "default config should contain alerting config fields", (done) ->
+			config.alerts.should.exist
+			config.alerts.enableAlerts.should.exist
+			config.alerts.pollPeriodMinutes.should.exist
+			config.alerts.himInstance.should.exist
+			config.alerts.consoleURL.should.exist
 			done()
 
 	describe ".findTransactionsMatchingStatus", ->
@@ -211,7 +234,6 @@ describe "Transaction Alerts", ->
 							testTransactions[6].save (err) ->
 								return done err if err
 								alerts.findTransactionsMatchingStatus testChannel._id, "4xx", dateFrom, null, (err, results) ->
-									console.log err
 									results.length.should.be.exactly 3
 									resultIDs = results.map (result) -> result._id
 									resultIDs.should.containEql testTransactions[0]._id
@@ -254,3 +276,58 @@ describe "Transaction Alerts", ->
 							resultIDs.should.containEql testTransactions[4]._id
 							resultIDs.should.containEql testTransactions[5]._id
 							done()
+
+	describe ".alertingTask", ->
+		buildJobStub = (date) ->
+			jobStub = {}
+			jobStub.attrs = {}
+			if date
+				jobStub.attrs.data = {}
+				jobStub.attrs.data.lastAlertDate = date
+			return jobStub
+
+		mockContactHandler = (spy) -> (method, contactAddress, messagePlain, messageHTML, callback) ->
+			spy method, contactAddress, messagePlain, messageHTML
+			callback null
+
+		it "should not contact users if there no matching transactions", (done) ->
+			contactSpy = sinon.spy()
+			alerts.alertingTask buildJobStub(null), mockContactHandler(contactSpy), ->
+				contactSpy.called.should.be.false
+				done()
+
+		it "should set the last run date as a job attribute", (done) ->
+			jobStub = buildJobStub null
+			contactSpy = sinon.spy()
+			alerts.alertingTask jobStub, mockContactHandler(contactSpy), ->
+				jobStub.attrs.data.should.exist
+				jobStub.attrs.data.lastAlertDate.should.exist
+				jobStub.attrs.data.lastAlertDate.should.be.instanceof(Date)
+				done()
+
+		it "should contact users when there are matching transactions", (done) ->
+			contactSpy = sinon.spy()
+			testTransactions[0].save (err) ->
+				return done err if err
+				alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
+					transactions = [ _id: testTransactions[0]._id ]
+					plainTemplate = alerts.plainTemplate transactions
+					htmlTemplate = alerts.htmlTemplate transactions
+					contactSpy.withArgs('email', 'one@openhim.org', plainTemplate, htmlTemplate).calledOnce.should.be.true
+					contactSpy.withArgs('email', 'two@openhim.org', plainTemplate, htmlTemplate).calledOnce.should.be.true
+					done()
+
+		it "should contact users using their specified method", (done) ->
+			contactSpy = sinon.spy()
+			testTransactions[3].save (err) ->
+				return done err if err
+				testTransactions[4].save (err) ->
+					return done err if err
+					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
+						transactions = [ { _id: testTransactions[3]._id }, { _id: testTransactions[4]._id } ]
+						plainMsg = alerts.plainTemplate transactions
+						htmlMsg = alerts.htmlTemplate transactions
+						smsMsg = alerts.smsTemplate transactions
+						contactSpy.withArgs('email', testUser1.email, plainMsg, htmlMsg).calledOnce.should.be.true
+						contactSpy.withArgs('sms', testUser2.msisdn, smsMsg, null).calledOnce.should.be.true
+						done()

@@ -31,6 +31,8 @@
   },
   "alerts": {
     "enableAlerts": true,
-    "pollPeriodMinutes": 60
+    "pollPeriodMinutes": 60,
+    "himInstance": "openhim.jembi.org",
+    "consoleURL": "http://openhim.jembi.org"
   }
 }
