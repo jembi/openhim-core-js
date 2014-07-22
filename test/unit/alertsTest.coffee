@@ -317,6 +317,20 @@ describe "Transaction Alerts", ->
 					contactSpy.withArgs('email', 'two@openhim.org', plainTemplate, htmlTemplate).calledOnce.should.be.true
 					done()
 
+		it "should store an alert log item in mongo for each alert generated", (done) ->
+			contactSpy = sinon.spy()
+			testTransactions[0].save (err) ->
+				return done err if err
+				alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
+					contactSpy.called.should.be.true
+					Alert.find {}, (err, results) ->
+						return done err if err
+						results.length.should.be.exactly 2
+						resultUsers = results.map (result) -> result.user
+						resultUsers.should.containEql testUser1.email
+						resultUsers.should.containEql testUser2.email
+						done()
+
 		it "should contact users using their specified method", (done) ->
 			contactSpy = sinon.spy()
 			testTransactions[3].save (err) ->
