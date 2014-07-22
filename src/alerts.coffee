@@ -81,9 +81,9 @@ sendAlert = (user, transactions, contactHandler, done) ->
 
 		todayStart = moment().startOf('day').toDate()
 		Alert.findOne { timestamp: { "$gte": todayStart }, user: user.user, status: 'Completed'}, (err, alert) ->
-			return done err if err
+			return done err, true if err
 			# user already received an alert today, skip
-			return done null if alert
+			return done null, true if alert
 
 			if user.method is 'email'
 				plainMsg = plainTemplate transactions
@@ -110,9 +110,12 @@ sendAlerts = (alert, transactions, contactHandler, done) ->
 			logger.error err if err
 			done()
 
-	alertCallback = (err, user, done) ->
+	alertCallback = (err, user, skipSave, done) ->
 		logger.error err if err
-		storeAlert err, user, done
+		if not skipSave
+			storeAlert err, user, done
+		else
+			done()
 
 	# Crazy tangled nest of async calls and promises
 	#
@@ -137,7 +140,8 @@ sendAlerts = (alert, transactions, contactHandler, done) ->
 					for user in result.users
 						do (user) ->
 							groupUserDefer = Q.defer()
-							sendAlert user, transactions, contactHandler, (err) -> alertCallback err, user, -> groupUserDefer.resolve()
+							sendAlert user, transactions, contactHandler, (err, skipSave) ->
+								alertCallback err, user, skipSave, -> groupUserDefer.resolve()
 							groupUserPromises.push groupUserDefer.promise
 
 					(Q.all groupUserPromises).then -> groupDefer.resolve()
@@ -147,7 +151,8 @@ sendAlerts = (alert, transactions, contactHandler, done) ->
 		for user in alert.users
 			do (user) ->
 				userDefer = Q.defer()
-				sendAlert user, transactions, contactHandler, (err) -> alertCallback err, user, -> userDefer.resolve()
+				sendAlert user, transactions, contactHandler, (err, skipSave) ->
+					alertCallback err, user, skipSave, -> userDefer.resolve()
 				promises.push userDefer.promise
 
 	(Q.all promises).then -> done()
