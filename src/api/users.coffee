@@ -56,15 +56,15 @@ exports.addUser = `function *addUser() {
 ###
 exports.getUser = `function *findUserByUsername(email) {
 
-	// Test if the user is authorised
-	if (authorisation.inGroup('admin', this.authenticated) === false) {
+	var email = unescape(email);
+
+	// Test if the user is authorised, allow a user to fetch their own details
+	if (authorisation.inGroup('admin', this.authenticated) === false && this.authenticated.email !== email) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findUserByUsername denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findUserByUsername denied.'
 		this.status = 'forbidden';
 		return;
 	}
-
-	var email = unescape(email);
 
 	try {
 		var result = yield User.findOne({ email: email }).exec();
@@ -84,15 +84,16 @@ exports.getUser = `function *findUserByUsername(email) {
 
 exports.updateUser = `function *updateUser(email) {
 
-	// Test if the user is authorised
-	if (authorisation.inGroup('admin', this.authenticated) === false) {
+	var email = unescape(email);
+
+	// Test if the user is authorised, allow a user to update their own details
+	if (authorisation.inGroup('admin', this.authenticated) === false && this.authenticated.email !== email) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateUser denied.')
 		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateUser denied.'
 		this.status = 'forbidden';
 		return;
 	}
 
-	var email = unescape(email);
 	var userData = this.request.body;
 
 	//Ignore _id if it exists (update is by email)
