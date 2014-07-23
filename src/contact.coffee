@@ -27,8 +27,8 @@ sendSMS_Clickatell = (contactAddress, message, callback) ->
 	request "http://api.clickatell.com/http/sendmsg?api_id=#{config.smsGateway.config.apiID}&" +
 		"user=#{config.smsGateway.config.user}&password=#{config.smsGateway.config.pass}&" +
 		"to=#{contactAddress}&text=#{escapeSpaces message}", (err, response, body) ->
-		logger.info "Received response from Clickatell: #{body}" if body?
-		callback err ? null
+			logger.info "Received response from Clickatell: #{body}" if body?
+			callback err ? null
 
 
 escapeSpaces = (str) -> str.replace ' ', '+'
