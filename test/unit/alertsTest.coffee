@@ -40,6 +40,7 @@ testGroup1 = new ContactGroup
 		{
 			user: 'two@openhim.org'
 			method: 'email'
+			maxAlerts: '1 per day'
 		}
 	]
 
@@ -345,6 +346,7 @@ describe "Transaction Alerts", ->
 					transactions = [ _id: testTransactions[0]._id ]
 					plainTemplate = alerts.plainTemplate transactions
 					htmlTemplate = alerts.htmlTemplate transactions
+					contactSpy.calledTwice.should.be.true
 					contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
 					contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
 					done()
@@ -374,11 +376,12 @@ describe "Transaction Alerts", ->
 						plainMsg = alerts.plainTemplate transactions
 						htmlMsg = alerts.htmlTemplate transactions
 						smsMsg = alerts.smsTemplate transactions
+						contactSpy.calledTwice.should.be.true
 						contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', plainMsg, htmlMsg).calledOnce.should.be.true
 						contactSpy.withArgs('sms', testUser2.msisdn, 'OpenHIM Alert', smsMsg, null).calledOnce.should.be.true
 						done()
 
-		it "should not send alerts to users if they've already received an alert for the same day", (done) ->
+		it "should not send alerts to users with a maxAlerts restriction if they've already received an alert for the same day", (done) ->
 			contactSpy = sinon.spy()
 			testTransactions[0].save (err) ->
 				return done err if err
@@ -386,7 +389,11 @@ describe "Transaction Alerts", ->
 					contactSpy.calledTwice.should.be.true
 					secondSpy = sinon.spy()
 					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
-						secondSpy.called.should.be.false
+						transactions = [ { _id: testTransactions[0]._id } ]
+						plainMsg = alerts.plainTemplate transactions
+						htmlMsg = alerts.htmlTemplate transactions
+						secondSpy.calledOnce.should.be.true
+						secondSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', plainMsg, htmlMsg).calledOnce.should.be.true
 						done()
 
 		it "should send alerts to users if an alert for the same day was already attempted but it failed", (done) ->
@@ -397,5 +404,10 @@ describe "Transaction Alerts", ->
 					contactSpy.calledTwice.should.be.true
 					secondSpy = sinon.spy()
 					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
-						secondSpy.called.should.be.true
+						transactions = [ _id: testTransactions[0]._id ]
+						plainTemplate = alerts.plainTemplate transactions
+						htmlTemplate = alerts.htmlTemplate transactions
+						secondSpy.calledTwice.should.be.true
+						secondSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
+						secondSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
 						done()

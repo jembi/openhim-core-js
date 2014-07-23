@@ -110,19 +110,31 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 		else
 			callback err, results
 
+userAlreadyReceivedAlert = (channelID, status, user, callback) ->
+	if not user.maxAlerts or user.maxAlerts is 'no max'
+		# user gets all alerts
+		callback null, false
+	else
+		if user.maxAlerts is '1 per hour'
+			dateFrom = moment().subtract('hours', 1).toDate()
+		else if user.maxAlerts is '1 per day'
+			dateFrom = moment().startOf('day').toDate()
+		else
+			callback "Unsupported option 'maxAlerts=#{user.maxAlerts}'"
+
+		findOneAlert channelID, status, dateFrom, user.user, 'Completed', (err, alert) ->
+			callback err ? null, if alert then true else false
 
 sendAlert = (channelID, status, user, transactions, contactHandler, done) ->
-	logger.info "Sending alert for user '#{user.user}' using method '#{user.method}'"
-
 	User.findOne { email: user.user }, (err, dbUser) ->
 		return done err if err
 		return done "Cannot send alert: Unknown user '#{user.user}'" if not dbUser
 
-		todayStart = moment().startOf('day').toDate()
-		findOneAlert channelID, status, todayStart, user.user, 'Completed', (err, alert) ->
+		userAlreadyReceivedAlert channelID, status, user, (err, received) ->
 			return done err, true if err
-			# user already received an alert today, skip
-			return done null, true if alert
+			return done null, true if received
+
+			logger.info "Sending alert for user '#{user.user}' using method '#{user.method}'"
 
 			if user.method is 'email'
 				plainMsg = plainTemplate transactions
@@ -136,8 +148,11 @@ sendAlert = (channelID, status, user, transactions, contactHandler, done) ->
 			else
 				return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
 
-sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
-	storeAlert = (err, user, done) ->
+# Actions to take after sending an alert
+afterSendAlert = (err, channelID, alert, user, transactions, skipSave, done) ->
+	logger.error err if err
+
+	if not skipSave
 		alert = new Alert
 			user: user.user
 			method: user.method
@@ -150,14 +165,10 @@ sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
 		alert.save (err) ->
 			logger.error err if err
 			done()
+	else
+		done()
 
-	alertCallback = (err, user, skipSave, done) ->
-		logger.error err if err
-		if not skipSave
-			storeAlert err, user, done
-		else
-			done()
-
+sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
 	# Crazy tangled nest of async calls and promises
 	#
 	# Each group check creates one promise that needs to be resolved.
@@ -182,7 +193,7 @@ sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
 						do (user) ->
 							groupUserDefer = Q.defer()
 							sendAlert channelID, alert.status, user, transactions, contactHandler, (err, skipSave) ->
-								alertCallback err, user, skipSave, -> groupUserDefer.resolve()
+								afterSendAlert err, channelID, alert, user, transactions, skipSave, -> groupUserDefer.resolve()
 							groupUserPromises.push groupUserDefer.promise
 
 					(Q.all groupUserPromises).then -> groupDefer.resolve()
@@ -193,7 +204,7 @@ sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
 			do (user) ->
 				userDefer = Q.defer()
 				sendAlert channelID, alert.status, user, transactions, contactHandler, (err, skipSave) ->
-					alertCallback err, user, skipSave, -> userDefer.resolve()
+					afterSendAlert err, channelID, alert, user, transactions, skipSave, -> userDefer.resolve()
 				promises.push userDefer.promise
 
 	(Q.all promises).then -> done()
