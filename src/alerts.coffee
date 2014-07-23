@@ -49,7 +49,25 @@ ERROR Alert - #{
 
 
 getAllChannels = (callback) -> Channel.find({}).exec callback
+
 findGroup = (name, callback) -> ContactGroup.findOne(group: name).exec callback
+
+findTransactions = (channelID, dateFrom, status, callback) ->
+	Transaction.find({
+		"request.timestamp": $gte: dateFrom
+		channelID: channelID
+		"$or": [
+			{ "response.status": status }
+			{ routes: "$elemMatch": "response.status": status }
+		]
+	}, '_id').exec callback
+
+countTotalTransactionsForChannel = (channelID, dateFrom, callback) ->
+	Transaction.count({
+		"request.timestamp": $gte: dateFrom
+		channelID: channelID
+	}).exec callback
+
 
 findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, callback) ->
 	pat = /\dxx/.exec status
@@ -62,20 +80,10 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 	# check last hour when using failureRate
 	dateToCheck = moment().subtract('hours', 1).toDate() if failureRate?
 
-	Transaction.find({
-		"request.timestamp": $gte: dateToCheck
-		channelID: channelID
-		"$or": [
-			{ "response.status": statusMatch }
-			{ routes: "$elemMatch": "response.status": statusMatch }
-		]
-	}, '_id').exec (err, results) ->
+	findTransactions channelID, dateToCheck, statusMatch, (err, results) ->
 		if not err and results? and failureRate?
 			# Get count of total transactions and work out failure ratio
-			Transaction.count({
-				"request.timestamp": $gte: dateToCheck
-				channelID: channelID
-			}).exec (err, count) ->
+			countTotalTransactionsForChannel channelID, dateToCheck, (err, count) ->
 				return callback err, null if err
 
 				failureRatio = results.length/count*100.0
