@@ -68,6 +68,16 @@ countTotalTransactionsForChannel = (channelID, dateFrom, callback) ->
 		channelID: channelID
 	}).exec callback
 
+findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
+	criteria = {
+		timestamp: { "$gte": dateFrom }
+		channelID: channelID
+		status: status
+		alertStatus: 'Completed'
+	}
+	criteria.user = user if user
+	Alert.findOne criteria, callback
+
 
 findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, callback) ->
 	pat = /\dxx/.exec status
@@ -88,14 +98,20 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 
 				failureRatio = results.length/count*100.0
 				if failureRatio >= failureRate
-					callback err, results
+					findOneAlert channelID, status, dateToCheck, null, 'Completed', (err, alert) ->
+						return callback err, null if err
+						# Has an alert already been sent this last hour?
+						if alert?
+							callback err, []
+						else
+							callback err, results
 				else
 					callback err, []
 		else
 			callback err, results
 
 
-sendAlert = (user, transactions, contactHandler, done) ->
+sendAlert = (channelID, status, user, transactions, contactHandler, done) ->
 	logger.info "Sending alert for user '#{user.user}' using method '#{user.method}'"
 
 	User.findOne { email: user.user }, (err, dbUser) ->
@@ -103,7 +119,7 @@ sendAlert = (user, transactions, contactHandler, done) ->
 		return done "Cannot send alert: Unknown user '#{user.user}'" if not dbUser
 
 		todayStart = moment().startOf('day').toDate()
-		Alert.findOne { timestamp: { "$gte": todayStart }, user: user.user, status: 'Completed'}, (err, alert) ->
+		findOneAlert channelID, status, todayStart, user.user, 'Completed', (err, alert) ->
 			return done err, true if err
 			# user already received an alert today, skip
 			return done null, true if alert
@@ -120,14 +136,16 @@ sendAlert = (user, transactions, contactHandler, done) ->
 			else
 				return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
 
-sendAlerts = (alert, transactions, contactHandler, done) ->
+sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
 	storeAlert = (err, user, done) ->
 		alert = new Alert
 			user: user.user
 			method: user.method
-			status: if err then 'Failed' else 'Completed'
+			channelID: channelID
+			status: alert.status
 			transactions: transactions.map (trx) -> trx._id
 			error: err
+			alertStatus: if err then 'Failed' else 'Completed'
 
 		alert.save (err) ->
 			logger.error err if err
@@ -163,7 +181,7 @@ sendAlerts = (alert, transactions, contactHandler, done) ->
 					for user in result.users
 						do (user) ->
 							groupUserDefer = Q.defer()
-							sendAlert user, transactions, contactHandler, (err, skipSave) ->
+							sendAlert channelID, alert.status, user, transactions, contactHandler, (err, skipSave) ->
 								alertCallback err, user, skipSave, -> groupUserDefer.resolve()
 							groupUserPromises.push groupUserDefer.promise
 
@@ -174,7 +192,7 @@ sendAlerts = (alert, transactions, contactHandler, done) ->
 		for user in alert.users
 			do (user) ->
 				userDefer = Q.defer()
-				sendAlert user, transactions, contactHandler, (err, skipSave) ->
+				sendAlert channelID, alert.status, user, transactions, contactHandler, (err, skipSave) ->
 					alertCallback err, user, skipSave, -> userDefer.resolve()
 				promises.push userDefer.promise
 
@@ -200,7 +218,7 @@ alertingTask = (job, contactHandler, done) ->
 							logger.error err
 							deferred.resolve()
 						else if results? and results.length>0
-							sendAlerts alert, results, contactHandler, -> deferred.resolve()
+							sendAlerts channel._id, alert, results, contactHandler, -> deferred.resolve()
 						else
 							deferred.resolve()
 

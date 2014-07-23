@@ -289,6 +289,26 @@ describe "Transaction Alerts", ->
 									resultIDs.should.containEql testTransactions[5]._id
 									done()
 
+		it "should not return any transactions when the count is equal/above the failure rate, but an alert has already been sent", (done) ->
+			alert = new Alert
+				user: 'one@openhim.org'
+				method: 'email'
+				channelID: testChannel._id
+				status: '500'
+				alertStatus: 'Completed'
+			alert.save (err) ->
+				testTransactions[0].save (err) ->
+					return done err if err
+					testTransactions[1].save (err) ->
+						return done err if err
+						testTransactions[3].save (err) ->
+							return done err if err
+							testTransactions[4].save (err) ->
+								return done err if err
+								alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+									results.length.should.be.exactly 0
+									done()
+
 	describe ".alertingTask", ->
 		buildJobStub = (date) ->
 			jobStub = {}
