@@ -344,8 +344,8 @@ describe "Transaction Alerts", ->
 				return done err if err
 				alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
 					transactions = [ _id: testTransactions[0]._id ]
-					plainTemplate = alerts.plainTemplate transactions
-					htmlTemplate = alerts.htmlTemplate transactions
+					plainTemplate = alerts.plainTemplate transactions, testChannel.name, '404'
+					htmlTemplate = alerts.htmlTemplate transactions, testChannel.name, '404'
 					contactSpy.calledTwice.should.be.true
 					contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
 					contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
@@ -373,8 +373,8 @@ describe "Transaction Alerts", ->
 					return done err if err
 					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
 						transactions = [ { _id: testTransactions[3]._id }, { _id: testTransactions[4]._id } ]
-						plainMsg = alerts.plainTemplate transactions
-						htmlMsg = alerts.htmlTemplate transactions
+						plainMsg = alerts.plainTemplate transactions, testChannel.name, '5xx'
+						htmlMsg = alerts.htmlTemplate transactions, testChannel.name, '5xx'
 						smsMsg = alerts.smsTemplate transactions
 						contactSpy.calledTwice.should.be.true
 						contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', plainMsg, htmlMsg).calledOnce.should.be.true
@@ -390,8 +390,8 @@ describe "Transaction Alerts", ->
 					secondSpy = sinon.spy()
 					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
 						transactions = [ { _id: testTransactions[0]._id } ]
-						plainMsg = alerts.plainTemplate transactions
-						htmlMsg = alerts.htmlTemplate transactions
+						plainMsg = alerts.plainTemplate transactions, testChannel.name, '404'
+						htmlMsg = alerts.htmlTemplate transactions, testChannel.name, '404'
 						secondSpy.calledOnce.should.be.true
 						secondSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', plainMsg, htmlMsg).calledOnce.should.be.true
 						done()
@@ -405,8 +405,8 @@ describe "Transaction Alerts", ->
 					secondSpy = sinon.spy()
 					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
 						transactions = [ _id: testTransactions[0]._id ]
-						plainTemplate = alerts.plainTemplate transactions
-						htmlTemplate = alerts.htmlTemplate transactions
+						plainTemplate = alerts.plainTemplate transactions, testChannel.name, '404'
+						htmlTemplate = alerts.htmlTemplate transactions, testChannel.name, '404'
 						secondSpy.calledTwice.should.be.true
 						secondSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
 						secondSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true

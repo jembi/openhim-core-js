@@ -13,21 +13,23 @@ User = require('./model/users').User
 
 trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
 
-plainTemplate = (transactions) -> "
-ERROR Alert - Transaction Failures\n
+plainTemplate = (transactions, channelName, status) -> "
+OpenHIM Transactions Alert\n
 \n
-The following transaction(s) have failed on the OpenHIM instance running on #{config.alerts.himInstance}:\n
+The following transaction(s) have completed with status #{status} on the OpenHIM instance running on #{config.alerts.himInstance}:\n
+#{channelName}\n
 #{(transactions.map (trx) -> trxURL trx).join '\n'}\n
 "
 
-htmlTemplate = (transactions) -> "
+htmlTemplate = (transactions, channelName, status) -> "
 <html>
 <head></head>
 <body>
-<h1>ERROR Alert - Transaction Failures</h1>
+<h1>OpenHIM Transactions Alert</h1>
 <div>
-<p>The following transaction(s) have failed on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
+<p>The following transaction(s) have completed with status <b>#{status}</b> on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
 <table>
+<tr><td><b>#{channelName}</b></td></td>
 #{(transactions.map (trx) -> "<tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'}
 </table>
 </div>
@@ -144,21 +146,21 @@ getTransactionsForAlert = (channelID, status, user, transactions, callback) ->
 
 		findTransactionsMatchingStatus channelID, status, dateFrom, null, callback
 
-sendAlert = (channelID, status, user, transactions, contactHandler, done) ->
+sendAlert = (channel, status, user, transactions, contactHandler, done) ->
 	User.findOne { email: user.user }, (err, dbUser) ->
 		return done err if err
 		return done "Cannot send alert: Unknown user '#{user.user}'" if not dbUser
 
-		userAlreadyReceivedAlert channelID, status, user, (err, received) ->
+		userAlreadyReceivedAlert channel._id, status, user, (err, received) ->
 			return done err, true if err
 			return done null, true if received
 
 			logger.info "Sending alert for user '#{user.user}' using method '#{user.method}'"
 
-			getTransactionsForAlert channelID, status, user, transactions, (err, transactionsForAlert) ->
+			getTransactionsForAlert channel._id, status, user, transactions, (err, transactionsForAlert) ->
 				if user.method is 'email'
-					plainMsg = plainTemplate transactionsForAlert
-					htmlMsg = htmlTemplate transactionsForAlert
+					plainMsg = plainTemplate transactionsForAlert, channel.name, status
+					htmlMsg = htmlTemplate transactionsForAlert, channel.name, status
 					contactHandler 'email', user.user, 'OpenHIM Alert', plainMsg, htmlMsg, done
 				else if user.method is 'sms'
 					return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
@@ -188,7 +190,7 @@ afterSendAlert = (err, channelID, alert, user, transactions, skipSave, done) ->
 	else
 		done()
 
-sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
+sendAlerts = (channel, alert, transactions, contactHandler, done) ->
 	# Crazy tangled nest of async calls and promises
 	#
 	# Each group check creates one promise that needs to be resolved.
@@ -212,8 +214,8 @@ sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
 					for user in result.users
 						do (user) ->
 							groupUserDefer = Q.defer()
-							sendAlert channelID, alert.status, user, transactions, contactHandler, (err, skipSave) ->
-								afterSendAlert err, channelID, alert, user, transactions, skipSave, -> groupUserDefer.resolve()
+							sendAlert channel, alert.status, user, transactions, contactHandler, (err, skipSave) ->
+								afterSendAlert err, channel._id, alert, user, transactions, skipSave, -> groupUserDefer.resolve()
 							groupUserPromises.push groupUserDefer.promise
 
 					(Q.all groupUserPromises).then -> groupDefer.resolve()
@@ -223,8 +225,8 @@ sendAlerts = (channelID, alert, transactions, contactHandler, done) ->
 		for user in alert.users
 			do (user) ->
 				userDefer = Q.defer()
-				sendAlert channelID, alert.status, user, transactions, contactHandler, (err, skipSave) ->
-					afterSendAlert err, channelID, alert, user, transactions, skipSave, -> userDefer.resolve()
+				sendAlert channel, alert.status, user, transactions, contactHandler, (err, skipSave) ->
+					afterSendAlert err, channel._id, alert, user, transactions, skipSave, -> userDefer.resolve()
 				promises.push userDefer.promise
 
 	(Q.all promises).then -> done()
@@ -249,7 +251,7 @@ alertingTask = (job, contactHandler, done) ->
 							logger.error err
 							deferred.resolve()
 						else if results? and results.length>0
-							sendAlerts channel._id, alert, results, contactHandler, -> deferred.resolve()
+							sendAlerts channel, alert, results, contactHandler, -> deferred.resolve()
 						else
 							deferred.resolve()
 
