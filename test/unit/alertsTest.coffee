@@ -47,7 +47,7 @@ testGroup2 = new ContactGroup
 	group: 'group2'
 	users: [ { user: 'one@openhim.org', method: 'email' } ]
 
-testFailureRate = 2
+testFailureRate = 50
 
 testChannel = new Channel
 	name: 'test'
@@ -243,39 +243,51 @@ describe "Transaction Alerts", ->
 									done()
 
 		it "should not return any transactions when their count is below the failure rate", (done) ->
-			testTransactions[3].save (err) ->
+			testTransactions[0].save (err) ->
 				return done err if err
-				alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
-					# only one 500 transaction, but failureRate is 2
-					results.length.should.be.exactly 0
-					done()
-
-		it "should return transactions when their count is equal to the failure rate", (done) ->
-			testTransactions[3].save (err) ->
-				return done err if err
-				testTransactions[4].save (err) ->
+				testTransactions[1].save (err) ->
 					return done err if err
-					alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
-						results.length.should.be.exactly 2
-						resultIDs = results.map (result) -> result._id
-						resultIDs.should.containEql testTransactions[3]._id
-						resultIDs.should.containEql testTransactions[4]._id
-						done()
-
-		it "should return transactions when their count is above the failure rate", (done) ->
-			testTransactions[3].save (err) ->
-				return done err if err
-				testTransactions[4].save (err) ->
-					return done err if err
-					testTransactions[5].save (err) ->
+					testTransactions[3].save (err) ->
 						return done err if err
 						alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
-							results.length.should.be.exactly 3
-							resultIDs = results.map (result) -> result._id
-							resultIDs.should.containEql testTransactions[3]._id
-							resultIDs.should.containEql testTransactions[4]._id
-							resultIDs.should.containEql testTransactions[5]._id
+							# only one 500 transaction, but failureRate is 50%
+							results.length.should.be.exactly 0
 							done()
+
+		it "should return transactions when their count is equal to the failure rate", (done) ->
+			testTransactions[0].save (err) ->
+				return done err if err
+				testTransactions[1].save (err) ->
+					return done err if err
+					testTransactions[3].save (err) ->
+						return done err if err
+						testTransactions[4].save (err) ->
+							return done err if err
+							alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+								results.length.should.be.exactly 2
+								resultIDs = results.map (result) -> result._id
+								resultIDs.should.containEql testTransactions[3]._id
+								resultIDs.should.containEql testTransactions[4]._id
+								done()
+
+		it "should return transactions when their count is above the failure rate", (done) ->
+			testTransactions[0].save (err) ->
+				return done err if err
+				testTransactions[1].save (err) ->
+					return done err if err
+					testTransactions[3].save (err) ->
+						return done err if err
+						testTransactions[4].save (err) ->
+							return done err if err
+							testTransactions[5].save (err) ->
+								return done err if err
+								alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+									results.length.should.be.exactly 3
+									resultIDs = results.map (result) -> result._id
+									resultIDs.should.containEql testTransactions[3]._id
+									resultIDs.should.containEql testTransactions[4]._id
+									resultIDs.should.containEql testTransactions[5]._id
+									done()
 
 	describe ".alertingTask", ->
 		buildJobStub = (date) ->

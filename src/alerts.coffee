@@ -58,16 +58,31 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 	else
 		statusMatch = status
 
+	dateToCheck = dateFrom
+	# check last hour when using failureRate
+	dateToCheck = moment().subtract('hours', 1).toDate() if failureRate?
+
 	Transaction.find({
-		"request.timestamp": $gte: dateFrom
+		"request.timestamp": $gte: dateToCheck
 		channelID: channelID
 		"$or": [
 			{ "response.status": statusMatch }
 			{ routes: "$elemMatch": "response.status": statusMatch }
 		]
 	}, '_id').exec (err, results) ->
-		if not err and results? and failureRate? and results.length < failureRate
-			callback err, []
+		if not err and results? and failureRate?
+			# Get count of total transactions and work out failure ratio
+			Transaction.count({
+				"request.timestamp": $gte: dateToCheck
+				channelID: channelID
+			}).exec (err, count) ->
+				return callback err, null if err
+
+				failureRatio = results.length/count*100.0
+				if failureRatio >= failureRate
+					callback err, results
+				else
+					callback err, []
 		else
 			callback err, results
 
