@@ -110,20 +110,39 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 		else
 			callback err, results
 
+calcDateFromForUser = (user) ->
+	if user.maxAlerts is '1 per hour'
+		dateFrom = moment().subtract('hours', 1).toDate()
+	else if user.maxAlerts is '1 per day'
+		dateFrom = moment().startOf('day').toDate()
+	else
+		null
+
 userAlreadyReceivedAlert = (channelID, status, user, callback) ->
 	if not user.maxAlerts or user.maxAlerts is 'no max'
 		# user gets all alerts
 		callback null, false
 	else
-		if user.maxAlerts is '1 per hour'
-			dateFrom = moment().subtract('hours', 1).toDate()
-		else if user.maxAlerts is '1 per day'
-			dateFrom = moment().startOf('day').toDate()
-		else
-			callback "Unsupported option 'maxAlerts=#{user.maxAlerts}'"
+		dateFrom = calcDateFromForUser user
+		return callback "Unsupported option 'maxAlerts=#{user.maxAlerts}'" if not dateFrom
 
 		findOneAlert channelID, status, dateFrom, user.user, 'Completed', (err, alert) ->
 			callback err ? null, if alert then true else false
+
+# Setup the list of transactions for alerting.
+#
+# If a user is setup with maxAlerts, all transactions will be fetched
+# since the last time they received an alert.
+#
+# If the user ahs no maxAlerts limit, then the transactions object is returned as is.
+getTransactionsForAlert = (channelID, status, user, transactions, callback) ->
+	if not user.maxAlerts or user.maxAlerts is 'no max'
+		callback null, transactions
+	else
+		dateFrom = calcDateFromForUser user
+		return callback "Unsupported option 'maxAlerts=#{user.maxAlerts}'" if not dateFrom
+
+		findTransactionsMatchingStatus channelID, status, dateFrom, null, callback
 
 sendAlert = (channelID, status, user, transactions, contactHandler, done) ->
 	User.findOne { email: user.user }, (err, dbUser) ->
@@ -136,17 +155,18 @@ sendAlert = (channelID, status, user, transactions, contactHandler, done) ->
 
 			logger.info "Sending alert for user '#{user.user}' using method '#{user.method}'"
 
-			if user.method is 'email'
-				plainMsg = plainTemplate transactions
-				htmlMsg = htmlTemplate transactions
-				contactHandler 'email', user.user, 'OpenHIM Alert', plainMsg, htmlMsg, done
-			else if user.method is 'sms'
-				return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
+			getTransactionsForAlert channelID, status, user, transactions, (err, transactionsForAlert) ->
+				if user.method is 'email'
+					plainMsg = plainTemplate transactionsForAlert
+					htmlMsg = htmlTemplate transactionsForAlert
+					contactHandler 'email', user.user, 'OpenHIM Alert', plainMsg, htmlMsg, done
+				else if user.method is 'sms'
+					return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
 
-				smsMsg = smsTemplate transactions
-				contactHandler 'sms', dbUser.msisdn, 'OpenHIM Alert', smsMsg, null, done
-			else
-				return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
+					smsMsg = smsTemplate transactionsForAlert
+					contactHandler 'sms', dbUser.msisdn, 'OpenHIM Alert', smsMsg, null, done
+				else
+					return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
 
 # Actions to take after sending an alert
 afterSendAlert = (err, channelID, alert, user, transactions, skipSave, done) ->
