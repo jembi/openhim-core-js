@@ -88,12 +88,12 @@ sendAlert = (user, transactions, contactHandler, done) ->
 			if user.method is 'email'
 				plainMsg = plainTemplate transactions
 				htmlMsg = htmlTemplate transactions
-				contactHandler 'email', user.user, plainMsg, htmlMsg, done
+				contactHandler 'email', user.user, 'OpenHIM Alert', plainMsg, htmlMsg, done
 			else if user.method is 'sms'
 				return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
 
 				smsMsg = smsTemplate transactions
-				contactHandler 'sms', dbUser.msisdn, smsMsg, null, done
+				contactHandler 'sms', dbUser.msisdn, 'OpenHIM Alert', smsMsg, null, done
 			else
 				return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
 

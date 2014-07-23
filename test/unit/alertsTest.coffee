@@ -286,8 +286,8 @@ describe "Transaction Alerts", ->
 				jobStub.attrs.data.lastAlertDate = date
 			return jobStub
 
-		mockContactHandler = (spy, err=null) -> (method, contactAddress, messagePlain, messageHTML, callback) ->
-			spy method, contactAddress, messagePlain, messageHTML
+		mockContactHandler = (spy, err=null) -> (method, contactAddress, title, messagePlain, messageHTML, callback) ->
+			spy method, contactAddress, title, messagePlain, messageHTML
 			callback err
 
 		it "should not contact users if there no matching transactions", (done) ->
@@ -313,8 +313,8 @@ describe "Transaction Alerts", ->
 					transactions = [ _id: testTransactions[0]._id ]
 					plainTemplate = alerts.plainTemplate transactions
 					htmlTemplate = alerts.htmlTemplate transactions
-					contactSpy.withArgs('email', 'one@openhim.org', plainTemplate, htmlTemplate).calledOnce.should.be.true
-					contactSpy.withArgs('email', 'two@openhim.org', plainTemplate, htmlTemplate).calledOnce.should.be.true
+					contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
+					contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', plainTemplate, htmlTemplate).calledOnce.should.be.true
 					done()
 
 		it "should store an alert log item in mongo for each alert generated", (done) ->
@@ -342,8 +342,8 @@ describe "Transaction Alerts", ->
 						plainMsg = alerts.plainTemplate transactions
 						htmlMsg = alerts.htmlTemplate transactions
 						smsMsg = alerts.smsTemplate transactions
-						contactSpy.withArgs('email', testUser1.email, plainMsg, htmlMsg).calledOnce.should.be.true
-						contactSpy.withArgs('sms', testUser2.msisdn, smsMsg, null).calledOnce.should.be.true
+						contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', plainMsg, htmlMsg).calledOnce.should.be.true
+						contactSpy.withArgs('sms', testUser2.msisdn, 'OpenHIM Alert', smsMsg, null).calledOnce.should.be.true
 						done()
 
 		it "should not send alerts to users if they've already received an alert for the same day", (done) ->
