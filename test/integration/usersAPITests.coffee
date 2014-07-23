@@ -156,11 +156,10 @@ describe 'API Integration Tests', ->
 						if err
 							done err
 						else
-							User.findOne { email: "r..@jembi.org" }, (err, user) ->
-								user.should.have.property "surname", "Chrichton"
-								user.should.have.property "email", "r..@jembi.org"
-								user.groups.should.have.length 2
-								done()
+							res.body.should.have.property "surname", "Chrichton"
+							res.body.should.have.property "email", "r..@jembi.org"
+							res.body.groups.should.have.length 2
+							done()
 
 			it 'should not allow a non admin user to find a user to email', (done) ->
 				request("http://localhost:8080")
@@ -174,6 +173,24 @@ describe 'API Integration Tests', ->
 						if err
 							done err
 						else
+							done()
+
+			it 'should always allow a user to fetch their own details', (done) ->
+				request("http://localhost:8080")
+					.get("/users/" + testUtils.nonRootUser.email)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							res.body.should.have.property "firstname", "Non"
+							res.body.should.have.property "surname", "Root"
+							res.body.should.have.property "email", "nonroot@jembi.org"
+							res.body.groups.should.have.length 2
 							done()
 
 		describe '*updateUser(email)', ->
@@ -222,6 +239,30 @@ describe 'API Integration Tests', ->
 						else
 							done()
 
+			it 'should always allow a user to update their own details', (done) ->
+
+				updates =
+					_id: "thisShouldBeIgnored"
+					surname: 'Root-updated'
+					groups: [ 'PoC', 'RHIE', 'HISP' ]
+
+				request("http://localhost:8080")
+					.put("/users/" + testUtils.nonRootUser.email)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							User.findOne { email: testUtils.nonRootUser.email }, (err, user) ->
+								user.should.have.property "surname", "Root-updated"
+								user.groups.should.have.length 3
+								done()
+
 		describe '*removeUser(email)', ->
 
 			it 'should remove a specific user by email', (done) ->
@@ -240,7 +281,7 @@ describe 'API Integration Tests', ->
 								users.should.have.length 0
 								done()
 
-			it 'should not allow a non admin user to removve a user', (done) ->
+			it 'should not allow a non admin user to remove a user', (done) ->
 				request("http://localhost:8080")
 					.del("/users/bfm@crazy.net")
 					.set("auth-username", testUtils.nonRootUser.email)
