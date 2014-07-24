@@ -96,6 +96,11 @@ exports.updateUser = `function *updateUser(email) {
 
 	var userData = this.request.body;
 
+	// Don't allow a non-admin user to change their groups
+	if (this.authenticated.email === email && authorisation.inGroup('admin', this.authenticated) === false) {
+		delete userData.groups
+	}
+
 	//Ignore _id if it exists (update is by email)
 	if (userData._id) {
 		delete userData._id;
