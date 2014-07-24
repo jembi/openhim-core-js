@@ -40,43 +40,43 @@ htmlTemplate = (transactions, channelName, status) -> "
 smsTemplate = (transactions, channelName, status) -> "
 Alert - #{
 	if transactions.length > 1
-		"#{transactions.length} transactions have "
+		"#{transactions.length} transactions have"
 	else if transactions.length is 1
-		"1 transaction has "
+		"1 transaction has"
 	else
-		"no transactions have "
+		"no transactions have"
 }
 completed with status #{status} on the OpenHIM running on #{config.alerts.himInstance}
 (#{channelName})
 "
 
 
-getAllChannels = (callback) -> Channel.find({}).exec callback
+getAllChannels = (callback) -> Channel.find {}, callback
 
-findGroup = (name, callback) -> ContactGroup.findOne(group: name).exec callback
+findGroup = (name, callback) -> ContactGroup.findOne group: name, callback
 
 findTransactions = (channelID, dateFrom, status, callback) ->
-	Transaction.find({
+	Transaction.find {
 		"request.timestamp": $gte: dateFrom
 		channelID: channelID
 		"$or": [
 			{ "response.status": status }
 			{ routes: "$elemMatch": "response.status": status }
 		]
-	}, '_id').exec callback
+	}, { '_id' }, callback
 
 countTotalTransactionsForChannel = (channelID, dateFrom, callback) ->
-	Transaction.count({
+	Transaction.count {
 		"request.timestamp": $gte: dateFrom
 		channelID: channelID
-	}).exec callback
+	}, callback
 
 findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
 	criteria = {
 		timestamp: { "$gte": dateFrom }
 		channelID: channelID
 		status: status
-		alertStatus: 'Completed'
+		alertStatus: alertStatus
 	}
 	criteria.user = user if user
 	Alert.findOne criteria, callback
@@ -135,7 +135,7 @@ userAlreadyReceivedAlert = (channelID, status, user, callback) ->
 # Setup the list of transactions for alerting.
 #
 # Fetch earlier transactions if a user is setup with maxAlerts.
-# If the user ahs no maxAlerts limit, then the transactions object is returned as is.
+# If the user has no maxAlerts limit, then the transactions object is returned as is.
 getTransactionsForAlert = (channelID, status, user, transactions, callback) ->
 	if not user.maxAlerts or user.maxAlerts is 'no max'
 		callback null, transactions
