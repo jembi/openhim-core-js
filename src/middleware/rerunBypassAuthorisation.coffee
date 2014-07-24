@@ -5,7 +5,7 @@ logger = require "winston"
 
 exports.authoriseUser = (ctx, done) ->
 	# Use the original transaction's channel to setup the authorised channel
-	Transaction.findOne(_id: ctx.parentID).exec (err, originalTransaction) ->
+	Transaction.findOne _id: ctx.parentID, (err, originalTransaction) ->
 		ctx.authorisedChannel = { _id: originalTransaction.channelID }
 		done()
 	
