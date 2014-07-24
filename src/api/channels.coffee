@@ -92,7 +92,7 @@ exports.getChannel = `function *getChannel(channelName) {
 				this.body = "Access denied to:'" + channel_name + "'.";
 				this.status = 'forbidden';
 			} else {
-				// Channel not foud! So inform the user
+				// Channel not found! So inform the user
 				this.body = "We could not find a channel with this name:'" + channel_name + "'.";
 				this.status = 'not found';
 			}
