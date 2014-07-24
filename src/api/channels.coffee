@@ -13,20 +13,8 @@ isPathValid = (channel) ->
 # Retrieves the list of active channels
 ###
 exports.getChannels = `function *getChannels() {
-
-	// Test if the user is authorised
-	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.')
-		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannels denied.'
-		this.status = 'forbidden';
-		return;
-	}
-
-	// Get the request query-parameters
-	var uriPattern = this.request.query.uriPattern;
-
 	try {
-		this.body = yield Channel.find({}).exec();
+		this.body = yield authorisation.getUserViewableChannels(this.authenticated);
 	}
 	catch (e) {
 		// Error! So inform the user
@@ -79,27 +67,35 @@ exports.addChannel = `function *addChannel() {
 # Retrieves the details for a specific channel
 ###
 exports.getChannel = `function *getChannel(channelName) {
-
-	// Test if the user is authorised
-	if (authorisation.inGroup('admin', this.authenticated) === false) {
-		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getChannel denied.')
-		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getChannel denied.'
-		this.status = 'forbidden';
-		return;
-	}
-
 	// Get the values to use
 	var channel_name = unescape(channelName);
 
 	try {
-		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		var result = yield Channel.findOne({ name: channel_name }).exec();
+		// Try to get the channel
+		var result = null;
+		var accessDenied = false;
+		// if admin allow acces to all channels otherwise restrict result set
+		if (authorisation.inGroup('admin', this.authenticated) === false) {
+			result = yield Channel.findOne({ name: channel_name, txViewAcl: { $in: this.authenticated.groups } }).exec();
+			var adminResult = yield Channel.findOne({ name: channel_name }).exec();
+			if (!!adminResult) {
+				accessDenied = true;
+			}
+		} else {
+			result = yield Channel.findOne({ name: channel_name }).exec();
+		}
 
 		// Test if the result if valid
 		if (result === null) {
-			// Channel not foud! So inform the user
-			this.body = "We could not find a channel with this name:'" + channel_name + "'.";
-			this.status = 'not found';
+			if (accessDenied) {
+				// Channel exists but this user doesn't have access
+				this.body = "Access denied to:'" + channel_name + "'.";
+				this.status = 'forbidden';
+			} else {
+				// Channel not foud! So inform the user
+				this.body = "We could not find a channel with this name:'" + channel_name + "'.";
+				this.status = 'not found';
+			}
 		}
 		else { this.body = result; } // All ok! So set the result
 	}
