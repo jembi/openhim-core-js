@@ -17,7 +17,7 @@ plainTemplate = (transactions, channelName, status) -> "
 OpenHIM Transactions Alert\n
 \n
 The following transaction(s) have completed with status #{status} on the OpenHIM instance running on #{config.alerts.himInstance}:\n
-#{channelName}\n
+Channel - #{channelName}\n
 #{(transactions.map (trx) -> trxURL trx).join '\n'}\n
 "
 
@@ -29,7 +29,7 @@ htmlTemplate = (transactions, channelName, status) -> "
 <div>
 <p>The following transaction(s) have completed with status <b>#{status}</b> on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
 <table>
-<tr><td><b>#{channelName}</b></td></td>
+<tr><td>Channel - <b>#{channelName}</b></td></td>
 #{(transactions.map (trx) -> "<tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'}
 </table>
 </div>
@@ -37,16 +37,17 @@ htmlTemplate = (transactions, channelName, status) -> "
 </html>
 "
 
-smsTemplate = (transactions) -> "
-ERROR Alert - #{
+smsTemplate = (transactions, channelName, status) -> "
+Alert - #{
 	if transactions.length > 1
-		"#{transactions.length} transactions have failed"
+		"#{transactions.length} transactions have "
 	else if transactions.length is 1
-		"1 transaction has failed"
+		"1 transaction has "
 	else
-		"no transactions have failed"
+		"no transactions have "
 }
- on the OpenHIM instance running on #{config.alerts.himInstance}
+completed with status #{status} on the OpenHIM running on #{config.alerts.himInstance}
+(#{channelName})
 "
 
 
@@ -133,9 +134,7 @@ userAlreadyReceivedAlert = (channelID, status, user, callback) ->
 
 # Setup the list of transactions for alerting.
 #
-# If a user is setup with maxAlerts, all transactions will be fetched
-# since the last time they received an alert.
-#
+# Fetch earlier transactions if a user is setup with maxAlerts.
 # If the user ahs no maxAlerts limit, then the transactions object is returned as is.
 getTransactionsForAlert = (channelID, status, user, transactions, callback) ->
 	if not user.maxAlerts or user.maxAlerts is 'no max'
@@ -165,7 +164,7 @@ sendAlert = (channel, status, user, transactions, contactHandler, done) ->
 				else if user.method is 'sms'
 					return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
 
-					smsMsg = smsTemplate transactionsForAlert
+					smsMsg = smsTemplate transactionsForAlert, channel.name, status
 					contactHandler 'sms', dbUser.msisdn, 'OpenHIM Alert', smsMsg, null, done
 				else
 					return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
@@ -191,8 +190,6 @@ afterSendAlert = (err, channelID, alert, user, transactions, skipSave, done) ->
 		done()
 
 sendAlerts = (channel, alert, transactions, contactHandler, done) ->
-	# Crazy tangled nest of async calls and promises
-	#
 	# Each group check creates one promise that needs to be resolved.
 	# For each group, the promise is only resolved when an alert is sent and stored
 	# for each user in that group. This resolution is managed by a promise set for that group.
@@ -233,7 +230,6 @@ sendAlerts = (channel, alert, transactions, contactHandler, done) ->
 
 
 alertingTask = (job, contactHandler, done) ->
-	logger.info "Running transaction alerts task"
 	job.attrs.data = {} if not job.attrs.data
 
 	lastAlertDate = job.attrs.data.lastAlertDate ? new Date()

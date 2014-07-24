@@ -375,7 +375,7 @@ describe "Transaction Alerts", ->
 						transactions = [ { _id: testTransactions[3]._id }, { _id: testTransactions[4]._id } ]
 						plainMsg = alerts.plainTemplate transactions, testChannel.name, '5xx'
 						htmlMsg = alerts.htmlTemplate transactions, testChannel.name, '5xx'
-						smsMsg = alerts.smsTemplate transactions
+						smsMsg = alerts.smsTemplate transactions, testChannel.name, '5xx'
 						contactSpy.calledTwice.should.be.true
 						contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', plainMsg, htmlMsg).calledOnce.should.be.true
 						contactSpy.withArgs('sms', testUser2.msisdn, 'OpenHIM Alert', smsMsg, null).calledOnce.should.be.true

@@ -6,6 +6,8 @@ config.nodemailer = config.get('nodemailer')
 config.smsGateway = config.get('smsGateway')
 
 sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
+	logger.info "Sending email to '#{contactAddress}' using service " +
+		"#{config.nodemailer.service} - #{config.nodemailer.auth.user}"
   smtpTransport = nodemailer.createTransport "SMTP", config.nodemailer
 
   smtpTransport.sendMail {
@@ -24,6 +26,7 @@ sendSMS = (contactAddress, message, callback) ->
 		callback "Unknown SMS gateway provider '#{config.smsGateway.provider}'"
 
 sendSMS_Clickatell = (contactAddress, message, callback) ->
+	logger.info "Sending SMS to '#{contactAddress}' using Clickatell"
 	request "http://api.clickatell.com/http/sendmsg?api_id=#{config.smsGateway.config.apiID}&" +
 		"user=#{config.smsGateway.config.user}&password=#{config.smsGateway.config.pass}&" +
 		"to=#{contactAddress}&text=#{escapeSpaces message}", (err, response, body) ->
