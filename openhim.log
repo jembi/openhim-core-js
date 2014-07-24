@@ -1,0 +1,110 @@
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+events.js:82
+      throw er; // Unhandled 'error' event
+            ^
+Error: listen EADDRINUSE
+    at exports._errnoException (util.js:745:11)
+    at Server._listen2 (net.js:1146:14)
+    at listen (net.js:1168:10)
+    at Server.listen (net.js:1243:5)
+    at /openhim-core-js/lib/server.js:35:18
+    at Object.exports.setupApp (/openhim-core-js/lib/koaMiddleware.js:33:10)
+    at Object.exports.start (/openhim-core-js/lib/server.js:28:24)
+    at Object.<anonymous> (/openhim-core-js/lib/server.js:109:11)
+    at Module._compile (module.js:449:26)
+    at Object.Module._extensions..js (module.js:467:10)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+TODO! [api.channels.getChannels] Implement 'undefined': (A regex pattern to filter the channel URI by)
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000
+Failed to load c++ bson extension, using pure JS version
+info: Starting OpenHIM server...
+info: HTTP listenting on port 5001
+info: API listenting on port 8080
+info: HTTPS listenting on port 5000

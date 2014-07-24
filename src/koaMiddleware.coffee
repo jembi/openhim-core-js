@@ -25,8 +25,6 @@ rawBodyReader = `function *(next) {
 exports.setupApp = (done) ->
 	app = koa()
 
-	app.use rawBodyReader
-
 	# TLS authentication middleware
 	if config.authentication.enableMutualTLSAuthentication
 		app.use tlsAuthentication.koaMiddleware
@@ -34,6 +32,8 @@ exports.setupApp = (done) ->
 	# Basic authentication middlware
 	if config.authentication.enableBasicAuthentication
 		app.use basicAuthentication.koaMiddleware
+
+	app.use rawBodyReader
 
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware
