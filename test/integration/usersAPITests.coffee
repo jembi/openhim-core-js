@@ -244,7 +244,6 @@ describe 'API Integration Tests', ->
 				updates =
 					_id: "thisShouldBeIgnored"
 					surname: 'Root-updated'
-					groups: [ 'PoC', 'RHIE', 'HISP' ]
 
 				request("http://localhost:8080")
 					.put("/users/" + testUtils.nonRootUser.email)
@@ -260,7 +259,29 @@ describe 'API Integration Tests', ->
 						else
 							User.findOne { email: testUtils.nonRootUser.email }, (err, user) ->
 								user.should.have.property "surname", "Root-updated"
-								user.groups.should.have.length 3
+								done()
+
+			it 'should NOT allow a non-admin user to update their groups', (done) ->
+
+				updates =
+					_id: "thisShouldBeIgnored"
+					groups: [ "admin" ]
+
+				request("http://localhost:8080")
+					.put("/users/" + testUtils.nonRootUser.email)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							User.findOne { email: testUtils.nonRootUser.email }, (err, user) ->
+								user.groups.should.be.length 2
+								user.groups.should.not.containEql "admin"
 								done()
 
 		describe '*removeUser(email)', ->
