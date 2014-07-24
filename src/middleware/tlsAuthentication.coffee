@@ -40,13 +40,13 @@ exports.getServerOptions = (mutualTLS, done) ->
 exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 		if (this.req.client.authorized === true) {
 			var subject = this.req.connection.getPeerCertificate().subject;
-			logger.info(subject + " is authenticated via TLS.");
+			logger.info(subject.CN + " is authenticated via TLS.");
 
 			// lookup client by subject.CN (CN = domain) and set them as the authenticated user
 			this.authenticated = yield Client.findOne({ domain: subject.CN }).exec();
 			yield next;
 		} else {
 			this.response.status = "unauthorized";
-			logger.info("Request is NOT authenticated via TLS.");
+			logger.info("Request is NOT authenticated via TLS: " + this.req.client.authorizationError);
 		}
 	}`

@@ -19,6 +19,8 @@ describe "API Integration Tests", ->
 						port: 9876
 						primary: true
 					]
+			txViewAcl: "aGroup"
+
 		channel2 = new Channel
 			name: "TestChannel2"
 			urlPattern: "test/sample"
@@ -29,6 +31,7 @@ describe "API Integration Tests", ->
 						port: 9876
 						primary: true
 					]
+			txViewAcl: "group1"
 
 		authDetails = {}
 
@@ -63,21 +66,23 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							res.body.length.should.be.eql(2);
+							res.body.length.should.be.eql 2
 							done()
 
-			it 'should not allow non admin users to fetch channels', (done) ->
+			it 'should only allow non root user to fetch channel that they are allowed to view', (done) ->
 				request("http://localhost:8080")
 					.get("/channels")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
-					.expect(403)
+					.expect(200)
 					.end (err, res) ->
 						if err
 							done err
 						else
+							res.body.length.should.be.eql 1
+							res.body[0].name.should.be.eql 'TestChannel2'
 							done()
 
 		describe '*addChannel()', ->
@@ -203,7 +208,7 @@ describe "API Integration Tests", ->
 							res.body.allow.should.have.length 3
 							done()
 
-			it 'should not allow a non admin user from fetching a channel by name', (done) ->
+			it 'should not allow a non admin user from fetching a channel they dont have access to by name', (done) ->
 
 				request("http://localhost:8080")
 					.get("/channels/TestChannel1")
@@ -212,6 +217,39 @@ describe "API Integration Tests", ->
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.expect(403)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+			it 'should allow a non admin user to fetch a channel they have access to by name', (done) ->
+
+				request("http://localhost:8080")
+					.get("/channels/TestChannel2")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							res.body.should.have.property "name", "TestChannel2"
+							res.body.should.have.property "urlPattern", "test/sample"
+							res.body.allow.should.have.length 3
+							done()
+
+			it 'should return a 404 if that channel doesnt exist', (done) ->
+
+				request("http://localhost:8080")
+					.get("/channels/nonExistantChannel")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(404)
 					.end (err, res) ->
 						if err
 							done err

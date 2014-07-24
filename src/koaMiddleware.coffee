@@ -4,6 +4,7 @@ messageStore = require './middleware/messageStore'
 basicAuthentication = require './middleware/basicAuthentication'
 tlsAuthentication = require "./middleware/tlsAuthentication"
 rerunBypassAuthentication = require "./middleware/rerunBypassAuthentication"
+rerunBypassAuthorisation = require "./middleware/rerunBypassAuthorisation"
 authorisation = require './middleware/authorisation'
 config = require './config/config'
 config.authentication = config.get('authentication')
@@ -25,8 +26,6 @@ rawBodyReader = `function *(next) {
 exports.setupApp = (done) ->
 	app = koa()
 
-	app.use rawBodyReader
-
 	# TLS authentication middleware
 	if config.authentication.enableMutualTLSAuthentication
 		app.use tlsAuthentication.koaMiddleware
@@ -34,6 +33,8 @@ exports.setupApp = (done) ->
 	# Basic authentication middlware
 	if config.authentication.enableBasicAuthentication
 		app.use basicAuthentication.koaMiddleware
+
+	app.use rawBodyReader
 
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware
@@ -56,6 +57,9 @@ exports.rerunApp = (done) ->
 	
 	# Rerun bypass authentication middlware
 	app.use rerunBypassAuthentication.koaMiddleware
+
+	# Rerun bypass authorisation middlware
+	app.use rerunBypassAuthorisation.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware
