@@ -3,7 +3,9 @@ logger = require "winston"
 
 transactionStatus = 
 	PROCESSING: 'Processing'
+	SUCCESSFUL: 'Successful'
 	COMPLETED: 'Completed'
+	COMPLETED_W_ERR: 'Completed with error(s)'
 	FAILED: 'Failed'
 
 exports.storeTransaction = (ctx, done) -> 
@@ -36,8 +38,25 @@ exports.storeTransaction = (ctx, done) ->
 exports.storeResponse = (ctx, done) ->
 	logger.info 'Storing response for transaction: ' + ctx.transactionId
 
-	status = transactionStatus.FAILED
-	if 200 <= ctx.response.status <= 299
+	routeFailures = false
+	routeSuccess = true
+	if ctx.routes
+		for route in ctx.routes
+			if 500 <= route.response.status <= 599
+				routeFailures = true
+			if not (200 <= route.response.status <= 299)
+				routeSuccess = false
+
+	if (500 <= ctx.response.status <= 599)
+		status = transactionStatus.FAILED
+	else
+		if routeFailures
+			status = transactionStatus.COMPLETED_W_ERR
+		if (200 <= ctx.response.status <= 299) && routeSuccess
+			status = transactionStatus.SUCCESSFUL
+
+	# In all other cases mark as completed
+	if status is null or status is undefined
 		status = transactionStatus.COMPLETED
 	
 	res =
