@@ -1,5 +1,6 @@
 mongoose = require "mongoose"
 Schema = mongoose.Schema
+ContactUserSchema = require('./contactGroups').ContactUserSchema
 
 RouteSchema = new Schema
 	"name": 	{ type: String, required: true }
@@ -10,6 +11,12 @@ RouteSchema = new Schema
 	"primary": 	{ type: Boolean, required: false }
 	"username": { type: String, required: false }
 	"password": { type: String, required: false }
+
+AlertsSchema = new Schema
+	"status": { type: String, required: true }
+	"groups": [ String ]
+	"users":  [ ContactUserSchema ]
+	"failureRate": { type: Number, required: false }
 
 ChannelSchema = new Schema
     "name":			{ type: String, required: true }
@@ -24,6 +31,7 @@ ChannelSchema = new Schema
     "properties": 	[ { type: Object, required: false } ]
     "txViewAcl":	[ { type: String, required: false } ]
     "txRerunAcl":	[ { type: String, required: false } ]
+    "alerts": 		[ AlertsSchema ]
     
 # compile the Channel and Route Schema into a Model
 exports.Route = mongoose.model 'Route', RouteSchema

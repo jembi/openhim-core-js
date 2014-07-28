@@ -9,6 +9,7 @@ UserSchema = new Schema
     "passwordHash": 	{ type: String, required: true }
     "passwordSalt": 	{ type: String, required: true }
     "groups": 			[ { type: String, required: false } ]
+    "msisdn": 		 	{ type: String, required: false }
     
 #compile the User Schema into a Model
 exports.User = mongoose.model 'User', UserSchema

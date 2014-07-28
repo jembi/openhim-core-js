@@ -9,11 +9,14 @@ config.router = config.get('router')
 config.api = config.get('api')
 config.rerun = config.get('rerun')
 config.logger = config.get('logger')
+config.alerts = config.get('alerts')
 Q = require "q"
 logger = require "winston"
 logger.level = config.logger.level
 mongoose = require "mongoose"
 User = require('./model/users').User
+Agenda = require 'agenda'
+alerts = require './alerts'
 
 # Configure mongose to connect to mongo
 mongoose.connect config.mongo.url
@@ -22,7 +25,7 @@ httpServer = null
 httpsServer = null
 apiHttpServer = null
 
-rootUser = 
+rootUser =
 	firstname: 'Super'
 	surname: 'User'
 	email: 'root@openhim.org'
@@ -32,7 +35,24 @@ rootUser =
 	groups: [ 'admin' ]
 	# password = 'openhim-password'
 
-exports.start = (httpPort, httpsPort, apiPort, done) ->
+# Job scheduler
+agenda = null
+
+startAgenda = ->
+	agenda = new Agenda db: { address: config.mongo.url}
+	alerts.setupAgenda agenda
+	agenda.start()
+	logger.info "Started agenda job scheduler"
+
+stopAgenda = ->
+	defer = Q.defer()
+	agenda.stop () ->
+		defer.resolve()
+		logger.info "Stopped agenda job scheduler"
+	return defer
+
+
+exports.start = (httpPort, httpsPort, apiPort, enableAlerts, done) ->
 	logger.info "Starting OpenHIM server..."
 
 	koaMiddleware.setupApp (app) ->
@@ -90,6 +110,7 @@ exports.start = (httpPort, httpsPort, apiPort, done) ->
 
 
 		(Q.all promises).then ->
+			startAgenda() if enableAlerts
 			done()
 
 #######################################################
@@ -103,7 +124,7 @@ exports.startRerun = (httpPort, done) ->
 		promises = []
 		
 		if httpPort
-			deferredHttp = Q.defer();
+			deferredHttp = Q.defer()
 			promises.push deferredHttp.promise
 
 			httpServer = http.createServer app.callback()
@@ -114,15 +135,12 @@ exports.startRerun = (httpPort, done) ->
 		(Q.all promises).then ->
 			done()
 	
-#######################################################
-### function to start the transactions rerun server ###
-#######################################################
 
-exports.stop = (done) ->
+exports.stop = stop = (done) ->
 	promises = []
 
 	if httpServer
-		deferredHttp = Q.defer();
+		deferredHttp = Q.defer()
 		promises.push deferredHttp.promise
 
 		httpServer.close ->
@@ -130,7 +148,7 @@ exports.stop = (done) ->
 			deferredHttp.resolve()
 
 	if httpsServer
-		deferredHttps = Q.defer();
+		deferredHttps = Q.defer()
 		promises.push deferredHttps.promise
 
 		httpsServer.close ->
@@ -138,20 +156,30 @@ exports.stop = (done) ->
 			deferredHttps.resolve()
 
 	if apiHttpServer
-		deferredAPIHttp = Q.defer();
+		deferredAPIHttp = Q.defer()
 		promises.push deferredAPIHttp.promise
 
 		apiHttpServer.close ->
 			logger.info "Stopped API server"
 			deferredAPIHttp.resolve()
+	
+	promises.push stopAgenda().promise if agenda
 
 	(Q.all promises).then ->
 		httpServer = null
 		httpsServer = null
 		apiHttpServer = null
+		agenda = null
 		done()
 
-if not module.parent	
-	exports.start config.router.httpPort, config.router.httpsPort, config.api.httpPort
+if not module.parent
+	# start the server
+	exports.start config.router.httpPort, config.router.httpsPort, config.api.httpPort, config.alerts.enableAlerts, ->
 	exports.startRerun config.rerun.httpPort
-	
+
+	# setup shutdown listeners
+	process.on 'exit', stop
+	# interrupt signal, e.g. ctrl-c
+	process.on 'SIGINT', -> stop process.exit
+	# terminate signal
+	process.on 'SIGTERM', -> stop process.exit
