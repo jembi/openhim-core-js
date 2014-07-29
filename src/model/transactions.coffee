@@ -19,27 +19,29 @@ ResponseDef =
 
 # Route Schema
 RouteMetadataSchema = new Schema
-    "name" :{ type: String, required: true }
-    "request": RequestDef
-    "response": ResponseDef
+	"name" :{ type: String, required: true }
+	"request": RequestDef
+	"response": ResponseDef
 
 # OrchestrationMetadata Schema
 OrchestrationMetadataSchema = new Schema
-    "name" :{ type: String, required: true }
-    "request": RequestDef
-    "response": ResponseDef
+	"name" :{ type: String, required: true }
+	"request": RequestDef
+	"response": ResponseDef
 
 # Trasnaction schema 
-TransactionSchema = new Schema    
-    "clientID": { type: String, required: true } 
-    "parentID": { type: String, required: false } 
-    "channelID": { type: String, required: false } 
-    "request": RequestDef
-    "response": ResponseDef
-    "routes": [ RouteMetadataSchema ]    
-    "orchestrations": [ OrchestrationMetadataSchema ]    
-    "properties": { type: Object }
-    "status": { type: String, required:true, enum: ["Processing","Failed","Completed"] } 
+TransactionSchema = new Schema
+	"clientID": { type: String, required: true }
+	"parentID": { type: String, required: false }
+	"channelID": { type: String, required: false, index: true }
+	"request": RequestDef
+	"response": ResponseDef
+	"routes": [ RouteMetadataSchema ]
+	"orchestrations": [ OrchestrationMetadataSchema ]
+	"properties": { type: Object }
+	"status": { type: String, required: true, index: true, enum: ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)'] }
+
+TransactionSchema.index "request.timestamp"
 
 #compile schema into Model    
 exports.RouteMetadata = mongoose.model 'RouteMetadata', RouteMetadataSchema
