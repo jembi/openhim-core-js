@@ -23,6 +23,10 @@ package { "git":
 	ensure => "installed",
 }
 
+package { "build-essential":
+	ensure => "installed",
+}
+
 class { "mongodb::globals":
 	manage_package_repo => true
 }
@@ -42,7 +46,7 @@ nodejs::install { "node-v0.11.11":
 exec { "npm-install":
 	cwd => "$source_dir",
 	command => "$npm_exec install",
-	require => Nodejs::Install["node-v0.11.11"],
+	require => [ Nodejs::Install["node-v0.11.11"], Package["build-essential"] ],
 }
 
 exec { "coffeescript":
