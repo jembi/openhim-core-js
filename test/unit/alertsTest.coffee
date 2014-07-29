@@ -377,8 +377,8 @@ describe "Transaction Alerts", ->
 						htmlMsg = alerts.htmlTemplate transactions, testChannel.name, '5xx'
 						smsMsg = alerts.smsTemplate transactions, testChannel.name, '5xx'
 						contactSpy.calledTwice.should.be.true
-						contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', plainMsg, htmlMsg).calledOnce.should.be.true
 						contactSpy.withArgs('sms', testUser2.msisdn, 'OpenHIM Alert', smsMsg, null).calledOnce.should.be.true
+						contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', plainMsg, htmlMsg).calledOnce.should.be.true
 						done()
 
 		it "should not send alerts to users with a maxAlerts restriction if they've already received an alert for the same day", (done) ->
