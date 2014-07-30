@@ -11,6 +11,10 @@ Exec {
 	user => "root",
 }
 
+package { "build-essential":
+	ensure => "installed",
+}
+
 class { 'mongodb::globals':
 	manage_package_repo => true
 }
@@ -26,7 +30,7 @@ class { "nodejs":
 exec { "npm-install":
 	cwd => "/openhim-core-js",
 	command => "npm install",
-	require => Class["nodejs"],
+	require => [ Class["nodejs"], Package["build-essential"] ],
 }
 
 exec { "coffeescript":
