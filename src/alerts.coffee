@@ -267,6 +267,3 @@ exports.setupAgenda = setupAgenda
 if process.env.NODE_ENV == "test"
 	exports.findTransactionsMatchingStatus = findTransactionsMatchingStatus
 	exports.alertingTask = alertingTask
-	exports.plainTemplate = plainTemplate
-	exports.htmlTemplate = htmlTemplate
-	exports.smsTemplate = smsTemplate
