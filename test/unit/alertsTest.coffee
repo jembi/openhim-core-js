@@ -343,7 +343,6 @@ describe "Transaction Alerts", ->
 			testTransactions[0].save (err) ->
 				return done err if err
 				alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
-					transactions = [ _id: testTransactions[0]._id ]
 					contactSpy.calledTwice.should.be.true
 					contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
 					contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
@@ -370,7 +369,6 @@ describe "Transaction Alerts", ->
 				testTransactions[4].save (err) ->
 					return done err if err
 					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
-						transactions = [ { _id: testTransactions[3]._id }, { _id: testTransactions[4]._id } ]
 						contactSpy.calledTwice.should.be.true
 						contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
 						contactSpy.withArgs('sms', testUser2.msisdn, 'OpenHIM Alert', sinon.match.string, null).calledOnce.should.be.true
@@ -384,7 +382,6 @@ describe "Transaction Alerts", ->
 					contactSpy.calledTwice.should.be.true
 					secondSpy = sinon.spy()
 					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
-						transactions = [ { _id: testTransactions[0]._id } ]
 						secondSpy.calledOnce.should.be.true
 						secondSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
 						done()
@@ -397,7 +394,6 @@ describe "Transaction Alerts", ->
 					contactSpy.calledTwice.should.be.true
 					secondSpy = sinon.spy()
 					alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
-						transactions = [ _id: testTransactions[0]._id ]
 						secondSpy.calledTwice.should.be.true
 						secondSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
 						secondSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
