@@ -63,7 +63,7 @@ describe "MessageStore", ->
 
 	ctx.status = "Processing"
 	ctx.authenticated = new Object()
-	ctx.authenticated.clientID = "Master_OpenMRS_Instance"
+	ctx.authenticated._id = new ObjectId "313233343536373839319999"
 
 	ctx.authorisedChannel = new Object()
 	ctx.authorisedChannel._id = new ObjectId "313233343536373839313030"
@@ -81,13 +81,13 @@ describe "MessageStore", ->
 				Transaction.findOne { '_id': result._id }, (error, trans) ->
 					should.not.exist(error)
 					(trans != null).should.be.true
-					trans.clientID.should.equal "Master_OpenMRS_Instance"
+					trans.clientID.toString().should.equal "313233343536373839319999"
 					trans.status.should.equal "Processing"
 					trans.status.should.not.equal "None"
 					trans.request.path.should.equal "/api/test/request"
 					trans.request.headers['Content-Type'].should.equal "application/json"
 					trans.request.querystring.should.equal "param1=value1&param2=value2"
-					trans.channelID.should.equal "313233343536373839313030"
+					trans.channelID.toString().should.equal "313233343536373839313030"
 					done()
 
 	describe ".storeResponse", ->

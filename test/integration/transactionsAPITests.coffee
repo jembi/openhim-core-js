@@ -36,8 +36,8 @@ describe "API Integration Tests", ->
 
 		transactionData =
 			status: "Processing"
-			clientID: "OpenHIE_bla_bla_WRTWTTATSA"
-			channelID: "123"
+			clientID: "999999999999999999999999"
+			channelID: "888888888888888888888888"
 			request: requ
 			response: respo
 				
@@ -102,11 +102,11 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							Transaction.findOne { clientID: "OpenHIE_bla_bla_WRTWTTATSA" }, (error, newTransaction) ->
+							Transaction.findOne { clientID: "999999999999999999999999" }, (error, newTransaction) ->
 								should.not.exist (error)
 								(newTransaction != null).should.be.true
 								newTransaction.status.should.equal "Processing"
-								newTransaction.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+								newTransaction.clientID.toString().should.equal "999999999999999999999999"
 								newTransaction.request.path.should.equal "/api/test"
 								newTransaction.request.headers['header-title'].should.equal "header1-value"
 								newTransaction.request.headers['another-header'].should.equal "another-header-value"
@@ -148,7 +148,7 @@ describe "API Integration Tests", ->
 					updates =
 						request: reqUp
 						status: "Completed"
-						clientID: "OpenHIE_Air_version"
+						clientID: "777777777777777777777777"
 					request("http://localhost:8080")
 						.put("/transactions/#{transactionId}")
 						.set("auth-username", testUtils.rootUser.email)
@@ -165,7 +165,7 @@ describe "API Integration Tests", ->
 									should.not.exist(error)
 									(updatedTrans != null).should.be.true
 									updatedTrans.status.should.equal "Completed"
-									updatedTrans.clientID.should.equal "OpenHIE_Air_version"
+									updatedTrans.clientID.toString().should.equal "777777777777777777777777"
 									updatedTrans.request.path.should.equal "/api/test/updated"
 									updatedTrans.request.headers['Content-Type'].should.equal "text/javascript"
 									updatedTrans.request.headers['Access-Control'].should.equal "authentication-required"
@@ -274,7 +274,7 @@ describe "API Integration Tests", ->
 							else
 								(res != null).should.be.true
 								res.body.status.should.equal "Processing"
-								res.body.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+								res.body.clientID.toString().should.eql "999999999999999999999999"
 								res.body.request.path.should.equal "/api/test"
 								res.body.request.headers['header-title'].should.equal "header1-value"
 								res.body.request.headers['another-header'].should.equal "another-header-value"
@@ -323,7 +323,7 @@ describe "API Integration Tests", ->
 							else
 								(res != null).should.be.true
 								res.body.status.should.equal "Processing"
-								res.body.clientID.should.equal "OpenHIE_bla_bla_WRTWTTATSA"
+								res.body.clientID.toString().should.eql "999999999999999999999999"
 								res.body.request.path.should.equal "/api/test"
 								res.body.request.headers['header-title'].should.equal "header1-value"
 								res.body.request.headers['another-header'].should.equal "another-header-value"
@@ -335,7 +335,7 @@ describe "API Integration Tests", ->
 		describe "*findTransactionByClientId (clientId)", ->
 
 			it "should call findTransactionByClientId", (done) ->
-				clientId = "Unique_never_existent_client_id"
+				clientId = "555555555555555555555555"
 				transactionData.clientID = clientId
 				tx = new Transaction transactionData
 				tx.save (err, result) ->
@@ -355,7 +355,7 @@ describe "API Integration Tests", ->
 								done()
 
 			it "should NOT return transactions that a user is not allowed to view", (done) ->
-				clientId = "testID1"
+				clientId = "444444444444444444444444"
 				transactionData.clientID = clientId
 				tx = new Transaction transactionData
 				tx.save (err, result)->
@@ -376,7 +376,7 @@ describe "API Integration Tests", ->
 								done()
 
 			it "should return transactions that a user is allowed to view", (done) ->
-				clientId = "testID2"
+				clientId = "333333333333333333333333"
 				transactionData.clientID = clientId
 				tx = new Transaction transactionData
 				tx.channelID = channel._id
@@ -403,7 +403,7 @@ describe "API Integration Tests", ->
 		describe "*removeTransaction (transactionId)", ->
 
 			it "should call removeTransaction", (done) ->
-				transactionData.clientID = "transaction_to_remove"
+				transactionData.clientID = "222222222222222222222222"
 				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)
@@ -425,7 +425,7 @@ describe "API Integration Tests", ->
 									done()
 
 			it "should only allow admin users to remove transactions", (done) ->
-				transactionData.clientID = "transaction_to_remove"
+				transactionData.clientID = "222222222222222222222222"
 				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)

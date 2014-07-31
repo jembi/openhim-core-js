@@ -13,7 +13,7 @@ exports.storeTransaction = (ctx, done) ->
 
 	tx = new transactions.Transaction
 		status: transactionStatus.PROCESSING
-		clientID: ctx.authenticated.clientID
+		clientID: ctx.authenticated._id
 		channelID: ctx.authorisedChannel._id
 		request:
 			path: ctx.path

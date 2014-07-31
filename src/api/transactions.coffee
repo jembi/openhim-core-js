@@ -101,7 +101,7 @@ exports.getTransactionById = `function *getTransactionById(transactionId) {
 		// Test if the user is authorised
 		} else if (authorisation.inGroup('admin', this.authenticated) === false) {
 			var channels = yield authorisation.getUserViewableChannels(this.authenticated);
-			if (getChannelIDsArray(channels).indexOf(result.channelID) >= 0) {
+			if (getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0) {
 				this.body = result
 			} else {
 				this.body = "The user " + this.authenticated.email + " is not authorised to access this transaction.";
