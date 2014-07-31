@@ -66,9 +66,9 @@ exports.addChannel = `function *addChannel() {
 ###
 # Retrieves the details for a specific channel
 ###
-exports.getChannel = `function *getChannel(channelName) {
+exports.getChannel = `function *getChannel(channelId) {
 	// Get the values to use
-	var channel_name = unescape(channelName);
+	var id = unescape(channelId);
 
 	try {
 		// Try to get the channel
@@ -76,24 +76,24 @@ exports.getChannel = `function *getChannel(channelName) {
 		var accessDenied = false;
 		// if admin allow acces to all channels otherwise restrict result set
 		if (authorisation.inGroup('admin', this.authenticated) === false) {
-			result = yield Channel.findOne({ name: channel_name, txViewAcl: { $in: this.authenticated.groups } }).exec();
-			var adminResult = yield Channel.findOne({ name: channel_name }).exec();
+			result = yield Channel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec();
+			var adminResult = yield Channel.findById(id).exec();
 			if (!!adminResult) {
 				accessDenied = true;
 			}
 		} else {
-			result = yield Channel.findOne({ name: channel_name }).exec();
+			result = yield Channel.findById(id).exec();
 		}
 
 		// Test if the result if valid
 		if (result === null) {
 			if (accessDenied) {
 				// Channel exists but this user doesn't have access
-				this.body = "Access denied to:'" + channel_name + "'.";
+				this.body = "Access denied to channel with Id: '" + id + "'.";
 				this.status = 'forbidden';
 			} else {
 				// Channel not found! So inform the user
-				this.body = "We could not find a channel with this name:'" + channel_name + "'.";
+				this.body = "We could not find a channel with Id:'" + id + "'.";
 				this.status = 'not found';
 			}
 		}
@@ -101,7 +101,7 @@ exports.getChannel = `function *getChannel(channelName) {
 	}
 	catch (e) {
 		// Error! So inform the user
-		logger.error('Could not fetch channel by name ' +channel_name+ ' via the API: ' + e);
+		logger.error('Could not fetch channel by Id ' +id+ ' via the API: ' + e);
 		this.body = e.message;
 		this.status = 'internal server error';
 	}
@@ -110,7 +110,7 @@ exports.getChannel = `function *getChannel(channelName) {
 ###
 # Updates the details for a specific channel
 ###
-exports.updateChannel = `function *updateChannel(channelName) {
+exports.updateChannel = `function *updateChannel(channelId) {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
@@ -121,10 +121,10 @@ exports.updateChannel = `function *updateChannel(channelName) {
 	}
 
 	// Get the values to use
-	var channel_name = unescape(channelName);
+	var id = unescape(channelId);
 	var channelData = this.request.body;
 
-	//Ignore _id if it exists (update is by channel_name)
+	//Ignore _id if it exists, user cannot change the internal id
 	if (channelData._id) {
 		delete channelData._id;
 	}
@@ -136,14 +136,14 @@ exports.updateChannel = `function *updateChannel(channelName) {
 	}
 
 	try {
-		yield Channel.findOneAndUpdate({ name: channel_name }, channelData).exec();
+		yield Channel.findByIdAndUpdate(id, channelData).exec();
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully updated';
 	}
 	catch (e) {
 		// Error! So inform the user
-		logger.error('Could not update channel by name ' +channel_name+ ' via the API: ' + e);
+		logger.error('Could not update channel by id: ' +id+ ' via the API: ' + e);
 		this.body = e.message;
 		this.status = 'internal server error';
 	}
@@ -152,7 +152,7 @@ exports.updateChannel = `function *updateChannel(channelName) {
 ###
 # Deletes a specific channels details
 ###
-exports.removeChannel = `function *removeChannel(channelName) {
+exports.removeChannel = `function *removeChannel(channelId) {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
@@ -163,18 +163,18 @@ exports.removeChannel = `function *removeChannel(channelName) {
 	}
 
 	// Get the values to use
-	var channel_name = unescape(channelName);
+	var id = unescape(channelId);
 
 	try {
 		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		yield Channel.remove({ name: channel_name }).exec();
+		yield Channel.findByIdAndRemove(id).exec();
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully deleted';
 	}
 	catch (e) {
 		// Error! So inform the user
-		logger.error('Could not remove channel by name ' +channel_name+ ' via the API: ' + e);
+		logger.error('Could not remove channel by id: ' +id+ ' via the API: ' + e);
 		this.body = e.message;
 		this.status = 'internal server error';
 	}

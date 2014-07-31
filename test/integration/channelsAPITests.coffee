@@ -188,12 +188,12 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe '*getChannel(channelName)', ->
+		describe '*getChannel(channelId)', ->
 
-			it 'should fetch a specific channel by name', (done) ->
+			it 'should fetch a specific channel by id', (done) ->
 
 				request("http://localhost:8080")
-					.get("/channels/TestChannel1")
+					.get("/channels/" + channel1._id)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -211,7 +211,7 @@ describe "API Integration Tests", ->
 			it 'should not allow a non admin user from fetching a channel they dont have access to by name', (done) ->
 
 				request("http://localhost:8080")
-					.get("/channels/TestChannel1")
+					.get("/channels/" + channel1._id)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -226,7 +226,7 @@ describe "API Integration Tests", ->
 			it 'should allow a non admin user to fetch a channel they have access to by name', (done) ->
 
 				request("http://localhost:8080")
-					.get("/channels/TestChannel2")
+					.get("/channels/" + channel2._id)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -244,7 +244,7 @@ describe "API Integration Tests", ->
 			it 'should return a 404 if that channel doesnt exist', (done) ->
 
 				request("http://localhost:8080")
-					.get("/channels/nonExistantChannel")
+					.get("/channels/999999999999999999999999")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -256,9 +256,9 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe '*updateChannel(channelName)', ->
+		describe '*updateChannel(channelId)', ->
 
-			it 'should update a specific channel by name', (done) ->
+			it 'should update a specific channel by id', (done) ->
 
 				updates =
 					_id: "thisShouldBeIgnored"
@@ -277,7 +277,7 @@ describe "API Integration Tests", ->
 							]
 
 				request("http://localhost:8080")
-					.put("/channels/TestChannel1")
+					.put("/channels/" + channel1._id)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -300,7 +300,7 @@ describe "API Integration Tests", ->
 				updates = {}
 
 				request("http://localhost:8080")
-					.put("/channels/TestChannel1")
+					.put("/channels/" + channel1._id)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -313,12 +313,12 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe '*removeChannel(channelName)', ->
+		describe '*removeChannel(channelId)', ->
 
 			it 'should remove a specific channel by name', (done) ->
 
 				request("http://localhost:8080")
-					.del("/channels/TestChannel1")
+					.del("/channels/" + channel1._id)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -335,7 +335,7 @@ describe "API Integration Tests", ->
 			it 'should only allow an admin user to remove a channel', (done) ->
 
 				request("http://localhost:8080")
-					.del("/channels/TestChannel1")
+					.del("/channels/" + channel1._id)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
