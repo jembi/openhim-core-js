@@ -2,11 +2,11 @@ mongoose = require "mongoose"
 Schema = mongoose.Schema
 
 ClientSchema = new Schema
-    "clientID":	{ type: String, required: true }
-    "domain": 		 	{ type: String, required: true }
+    "clientID":			{ type: String, required: true, unique: true }
+    "domain": 		 	{ type: String, required: true, unqiue: true }
     "name": 		 	{ type: String, required: true }
     "roles": 			[ { type: String, required: true } ]
-    "passwordAlgorithm": 	{ type: String, required: false }
+    "passwordAlgorithm":{ type: String, required: false }
     "passwordHash": 	{ type: String, required: false }
     "passwordSalt": 	{ type: String, required: false }
     "cert": 			{ type: String, required: false }

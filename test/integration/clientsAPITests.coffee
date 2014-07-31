@@ -79,7 +79,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe "*getClient", ->
+		describe "*getClient(_id)", ->
 			clientTest =
 				clientID: "testClient"
 				domain: "www.zedmusic-unique.co.zw"
@@ -91,15 +91,18 @@ describe "API Integration Tests", ->
 				passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 				cert: ""
 
+			clientId = null
+
 			beforeEach (done) ->
 				client = new Client clientTest
 				client.save (err, client) ->
+					clientId = client._id
 					done err if err
 					done()
 
 			it "should get client by clientId and return status 200", (done) ->
 				request("http://localhost:8080")
-					.get("/clients/testClient")
+					.get("/clients/" + clientId)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -120,7 +123,7 @@ describe "API Integration Tests", ->
 
 			it "should return status 404 if not found", (done) ->
 				request("http://localhost:8080")
-					.get("/clients/nonexistent")
+					.get("/clients/000000000000000000000000")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -134,7 +137,7 @@ describe "API Integration Tests", ->
 
 			it "should not allow a non admin user to fetch a client", (done) ->
 				request("http://localhost:8080")
-					.get("/clients/testClient")
+					.get("/clients/" + clientId)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -196,7 +199,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe  "*getClients", ->
+		describe  "*getClients()", ->
 			testDocument =
 				clientID: "Botswana_OpenHIE_Instance"
 				domain: "www.zedmusic.co.zw"
@@ -211,15 +214,19 @@ describe "API Integration Tests", ->
 			it  "should return all clients ", (done) ->
 				Client.count (err, countBefore)->
 					client = new Client testDocument
+					client.clientID += "1"
 					client.save (error, testDoc) ->
 						should.not.exist (error)
 						client = new Client testDocument
+						client.clientID += "2"
 						client.save (error, testDoc) ->
 							should.not.exist(error)
 							client = new Client testDocument
+							client.clientID += "3"
 							client.save (error, testDoc) ->
 								should.not.exist(error)
 								client = new Client testDocument
+								client.clientID += "4"
 								client.save (error, testDoc) ->
 									should.not.exist (error)
 									request("http://localhost:8080")
@@ -251,9 +258,8 @@ describe "API Integration Tests", ->
 							done()
 
 		describe  "*updateClient", ->
-			clientID = "Botswana_OpenHIE_Instance"
 			testDocument =
-				clientID: clientID
+				clientID: "Botswana_OpenHIE_Instance"
 				domain: "www.zedmusic.co.zw"
 				name: "OpenHIE NodeJs"
 				roles: [
@@ -276,7 +282,7 @@ describe "API Integration Tests", ->
 						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 						name: "Devil_may_Cry"
 					request("http://localhost:8080")
-						.put("/clients/#{clientID}")
+						.put("/clients/" + client._id)
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
@@ -287,7 +293,7 @@ describe "API Integration Tests", ->
 							if err
 								done err
 							else
-								Client.findOne { clientID: clientID }, (error, clientDoc) ->
+								Client.findById client._id, (error, clientDoc) ->
 									clientDoc.roles[0].should.equal "clientTest_update"
 									clientDoc.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 									clientDoc.name.should.equal "Devil_may_Cry"
@@ -306,7 +312,7 @@ describe "API Integration Tests", ->
 						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 						name: "Devil_may_Cry"
 					request("http://localhost:8080")
-						.put("/clients/#{clientID}")
+						.put("/clients/" + client._id)
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
@@ -317,7 +323,7 @@ describe "API Integration Tests", ->
 							if err
 								done err
 							else
-								Client.findOne { clientID: clientID }, (error, clientDoc) ->
+								Client.findById client._id, (error, clientDoc) ->
 									clientDoc.roles[0].should.equal "clientTest_update"
 									clientDoc.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 									clientDoc.name.should.equal "Devil_may_Cry"
@@ -326,7 +332,7 @@ describe "API Integration Tests", ->
 			it "should not allow a non admin user to update a client", (done) ->
 				updates = {}
 				request("http://localhost:8080")
-					.put("/clients/#{clientID}")
+					.put("/clients/000000000000000000000000")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -356,7 +362,7 @@ describe "API Integration Tests", ->
 					should.not.exist(error)	
 					Client.count (err, countBefore) ->
 						request("http://localhost:8080")
-							.del("/clients/Jembi_OpenHIE_Instance")
+							.del("/clients/" + client._id)
 							.set("auth-username", testUtils.rootUser.email)
 							.set("auth-ts", authDetails.authTS)
 							.set("auth-salt", authDetails.authSalt)
@@ -375,7 +381,7 @@ describe "API Integration Tests", ->
 			it  "should not allow a non admin user to remove a client", (done) ->
 				docTestRemove = {}
 				request("http://localhost:8080")
-					.del("/clients/Jembi_OpenHIE_Instance")
+					.del("/clients/000000000000000000000000")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)

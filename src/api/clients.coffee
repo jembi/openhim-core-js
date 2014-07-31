@@ -47,7 +47,7 @@ exports.getClient = `function *findClientById(clientId) {
 	var clientId = unescape(clientId);
 
 	try {
-		var result = yield Client.findOne({ clientID: clientId }).exec();
+		var result = yield Client.findById(clientId).exec();
 		if (result === null) {
 			this.body = "Client with id '"+clientId+"' could not be found.";
 			this.status = 'not found';
@@ -103,13 +103,13 @@ exports.updateClient = `function *updateClient(clientId) {
 	var clientId = unescape(clientId);
 	var clientData = this.request.body;
 
-	//Ignore _id if it exists (update is by clientID)
+	// Ignore _id if it exists, a user shouldn't be able to update the internal id
 	if (clientData._id) {
 		delete clientData._id;
 	}
 
 	try {
-		yield Client.findOneAndUpdate({ clientID: clientId }, clientData).exec();
+		yield Client.findByIdAndUpdate(clientId, clientData).exec();
 		this.body = "Successfully updated client."
 	} catch(e) {
 		logger.error('Could not update client by ID '+clientId+' via the API: ' + e);
@@ -131,7 +131,7 @@ exports.removeClient = `function *removeClient(clientId) {
 	var clientId = unescape (clientId);
 
 	try {
-		yield Client.findOneAndRemove({ clientID: clientId }).exec();
+		yield Client.findByIdAndRemove(clientId).exec();
 		this.body = "Successfully removed client with ID '"+clientId+"'";
 	}catch(e){
 		logger.error('Could not remove client by ID '+clientId+' via the API: ' + e);
