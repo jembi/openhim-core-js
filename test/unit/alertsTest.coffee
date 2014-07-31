@@ -70,7 +70,7 @@ testChannel = new Channel
 testTransactions = [
 	# 0
 	new Transaction
-		clientID: "testClient"
+		clientID: "111111111111111111111111"
 		request:
 			timestamp: new Date()
 			path: "/path"
@@ -81,7 +81,7 @@ testTransactions = [
 
 	# 1
 	new Transaction
-		clientID: "testClient"
+		clientID: "111111111111111111111111"
 		request:
 			timestamp: new Date()
 			path: "/path"
@@ -100,7 +100,7 @@ testTransactions = [
 
 	# 2
 	new Transaction
-		clientID: "testClient"
+		clientID: "111111111111111111111111"
 		request:
 			timestamp: new Date()
 			path: "/path"
@@ -111,7 +111,7 @@ testTransactions = [
 
 	# 3
 	new Transaction
-		clientID: "testClient"
+		clientID: "111111111111111111111111"
 		request:
 			timestamp: new Date()
 			path: "/path"
@@ -122,7 +122,7 @@ testTransactions = [
 
 	# 4
 	new Transaction
-		clientID: "testClient"
+		clientID: "111111111111111111111111"
 		request:
 			timestamp: new Date()
 			path: "/path"
@@ -133,7 +133,7 @@ testTransactions = [
 
 	# 5
 	new Transaction
-		clientID: "testClient"
+		clientID: "111111111111111111111111"
 		request:
 			timestamp: new Date()
 			path: "/path"
@@ -144,7 +144,7 @@ testTransactions = [
 
 	# 6
 	new Transaction
-		clientID: "testClient"
+		clientID: "111111111111111111111111"
 		request:
 			timestamp: new Date()
 			path: "/path"
@@ -163,7 +163,7 @@ describe "Transaction Alerts", ->
 		testUser1.save -> testUser2.save -> testGroup1.save -> testGroup2.save -> testChannel.save ->
 			for testTransaction in testTransactions
 				testTransaction.channelID = testChannel._id
-			testTransactions[6].channelID = "nonexistentChannel"
+			testTransactions[6].channelID = "000000000000000000000000" # a channel id that doesn't exist
 			done()
 
 	after (done) ->

@@ -31,9 +31,9 @@ OrchestrationMetadataSchema = new Schema
 
 # Trasnaction schema 
 TransactionSchema = new Schema
-	"clientID": { type: String, required: true }
-	"parentID": { type: String, required: false }
-	"channelID": { type: String, required: false, index: true }
+	"clientID": { type: Schema.Types.ObjectId, required: true }
+	"parentID": { type: Schema.Types.ObjectId, required: false }
+	"channelID": { type: Schema.Types.ObjectId, required: false, index: true }
 	"request": RequestDef
 	"response": ResponseDef
 	"routes": [ RouteMetadataSchema ]

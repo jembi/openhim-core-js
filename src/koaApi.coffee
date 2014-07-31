@@ -49,9 +49,9 @@ exports.setupApp = (done) ->
 
 	app.use route.get '/channels', channels.getChannels
 	app.use route.post '/channels', channels.addChannel
-	app.use route.get '/channels/:channelName', channels.getChannel
-	app.use route.put '/channels/:channelName', channels.updateChannel
-	app.use route.delete '/channels/:channelName', channels.removeChannel
+	app.use route.get '/channels/:channelId', channels.getChannel
+	app.use route.put '/channels/:channelId', channels.updateChannel
+	app.use route.delete '/channels/:channelId', channels.removeChannel
 
 	app.use route.get '/tasks', tasks.getTasks
 	app.use route.post '/tasks', tasks.addTask

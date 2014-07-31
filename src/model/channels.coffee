@@ -19,7 +19,7 @@ AlertsSchema = new Schema
 	"failureRate": { type: Number, required: false }
 
 ChannelSchema = new Schema
-    "name":			{ type: String, required: true }
+    "name":			{ type: String, required: true, unique: true }
     "urlPattern": 	{ type: String, required: true }
     "allow": 		[ { type: String, required: true } ]
     "routes": 		[ RouteSchema ]
