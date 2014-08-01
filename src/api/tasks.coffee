@@ -6,7 +6,7 @@ ObjectId = require('mongoose').Types.ObjectId
 monq = require("monq")
 
 config = require("../config/config")
-client = monq(config.mongo.url)
+client = monq(config.mongo.url, safe: true)
 
 queue = client.queue("transactions")
 authorisation = require './authorisation'
