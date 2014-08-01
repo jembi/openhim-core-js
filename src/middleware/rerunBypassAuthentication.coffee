@@ -6,7 +6,7 @@ crypto = require "crypto"
 
 exports.authenticateUser = (ctx, done) ->
 
-	Client.findOne { clientID: ctx.request.header.clientid }, (err, client) ->
+	Client.findOne { _id: ctx.request.header.clientid }, (err, client) ->
 		ctx.authenticated = client
 		ctx.parentID = ctx.request.header.parentid
 		done null, client
