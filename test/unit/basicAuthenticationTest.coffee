@@ -17,7 +17,7 @@ buildCtx = (user, pass) ->
 
 bcryptClient =
 	clientID: "user"
-	domain: "openhim.jembi.org"
+	clientDomain: "openhim.jembi.org"
 	name: "TEST basic auth client"
 	roles:
 		[
@@ -28,7 +28,7 @@ bcryptClient =
 
 shaClient =
 	clientID: "user"
-	domain: "openhim.jembi.org"
+	clientDomain: "openhim.jembi.org"
 	name: "TEST basic auth client"
 	roles:
 		[

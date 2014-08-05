@@ -11,7 +11,7 @@ describe "Setup mutual TLS", ->
 
 		testAppDoc =
 			clientID: "testApp"
-			domain: "test-client.jembi.org"
+			clientDomain: "test-client.jembi.org"
 			name: "TEST Client"
 			roles:
 				[ 
