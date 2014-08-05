@@ -84,7 +84,7 @@ exports.findClientByDomain = `function *findClientByDomain(clientDomain) {
 			this.body = result;
 		}
 	} catch(e) {
-		logger.error('Could not find client by clientDomain '+clientDomain+' via the API: ' + e);
+		logger.error('Could not find client by client Domain '+clientDomain+' via the API: ' + e);
 		this.body = e.message;
 		this.status = 'internal server error';
 	}
