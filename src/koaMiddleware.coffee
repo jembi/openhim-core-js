@@ -5,6 +5,7 @@ basicAuthentication = require './middleware/basicAuthentication'
 tlsAuthentication = require "./middleware/tlsAuthentication"
 rerunBypassAuthentication = require "./middleware/rerunBypassAuthentication"
 rerunBypassAuthorisation = require "./middleware/rerunBypassAuthorisation"
+rerunUpdateTransaction = require "./middleware/rerunUpdateTransaction"
 authorisation = require './middleware/authorisation'
 config = require './config/config'
 config.authentication = config.get('authentication')
@@ -69,6 +70,9 @@ exports.rerunApp = (done) ->
 
 	# Call router
 	app.use router.koaMiddleware
+
+	# Update original transaction with reruned transaction ID
+	app.use rerunUpdateTransaction.koaMiddleware
 
 	done(app)
 ##################################################
