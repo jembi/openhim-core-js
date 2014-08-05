@@ -11,7 +11,7 @@ describe "API Integration Tests", ->
 
 		testAppDoc =
 			clientID: "YUIAIIIICIIAIA"
-			domain: "him.jembi.org"
+			clientDomain: "him.jembi.org"
 			name: "OpenMRS Ishmael instance"
 			roles: [
 					"OpenMRS_PoC"
@@ -56,7 +56,7 @@ describe "API Integration Tests", ->
 						else
 							Client.findOne { clientID: "YUIAIIIICIIAIA" }, (err, client) ->
 								client.clientID.should.equal "YUIAIIIICIIAIA"
-								client.domain.should.equal "him.jembi.org"
+								client.clientDomain.should.equal "him.jembi.org"
 								client.name.should.equal "OpenMRS Ishmael instance"
 								client.roles[0].should.equal "OpenMRS_PoC"
 								client.roles[1].should.equal "PoC"
@@ -82,7 +82,7 @@ describe "API Integration Tests", ->
 		describe "*getClient(_id)", ->
 			clientTest =
 				clientID: "testClient"
-				domain: "www.zedmusic-unique.co.zw"
+				clientDomain: "www.zedmusic-unique.co.zw"
 				name: "OpenHIE NodeJs"
 				roles: [
 						"test_role_PoC"
@@ -113,7 +113,7 @@ describe "API Integration Tests", ->
 							done err
 						else
 							res.body.clientID.should.equal "testClient"
-							res.body.domain.should.equal "www.zedmusic-unique.co.zw"
+							res.body.clientDomain.should.equal "www.zedmusic-unique.co.zw"
 							res.body.name.should.equal "OpenHIE NodeJs"
 							res.body.roles[0].should.equal "test_role_PoC"
 							res.body.roles[1].should.equal "monitoring"
@@ -149,10 +149,10 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe "*findClientByDomain(domain)", ->
+		describe "*findClientByDomain(clientDomain)", ->
 			clientTest =
 				clientID: "Zambia_OpenHIE_Instance"
-				domain: "www.zedmusic-unique.co.zw"
+				clientDomain: "www.zedmusic-unique.co.zw"
 				name: "OpenHIE NodeJs"
 				roles: [
 						"test_role_PoC"
@@ -161,7 +161,7 @@ describe "API Integration Tests", ->
 				passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 				cert: ""
 
-			it "should return client with specified domain", (done) ->
+			it "should return client with specified clientDomain", (done) ->
 				client = new Client clientTest
 				client.save (error, newApp) ->
 					should.not.exist (error)
@@ -177,7 +177,7 @@ describe "API Integration Tests", ->
 								done err
 							else
 								res.body.clientID.should.equal "Zambia_OpenHIE_Instance"
-								res.body.domain.should.equal "www.zedmusic-unique.co.zw"
+								res.body.clientDomain.should.equal "www.zedmusic-unique.co.zw"
 								res.body.name.should.equal "OpenHIE NodeJs"
 								res.body.roles[0].should.equal "test_role_PoC"
 								res.body.roles[1].should.equal "monitoring"
@@ -202,7 +202,7 @@ describe "API Integration Tests", ->
 		describe  "*getClients()", ->
 			testDocument =
 				clientID: "Botswana_OpenHIE_Instance"
-				domain: "www.zedmusic.co.zw"
+				clientDomain: "www.zedmusic.co.zw"
 				name: "OpenHIE NodeJs"
 				roles: [
 						"test_role_PoC"
@@ -260,7 +260,7 @@ describe "API Integration Tests", ->
 		describe  "*updateClient", ->
 			testDocument =
 				clientID: "Botswana_OpenHIE_Instance"
-				domain: "www.zedmusic.co.zw"
+				clientDomain: "www.zedmusic.co.zw"
 				name: "OpenHIE NodeJs"
 				roles: [
 						"test_role_PoC"
@@ -349,7 +349,7 @@ describe "API Integration Tests", ->
 			it  "should remove an client with specified clientID", (done) ->
 				docTestRemove =
 					clientID: "Jembi_OpenHIE_Instance"
-					domain: "www.jembi.org"
+					clientDomain: "www.jembi.org"
 					name: "OpenHIE NodeJs"
 					roles: [
 							"test_role_PoC"
