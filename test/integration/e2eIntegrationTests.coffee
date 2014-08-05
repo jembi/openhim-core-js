@@ -36,7 +36,7 @@ describe "e2e Integration Tests", ->
 				channel1.save (err) ->
 					testAppDoc =
 						clientID: "testApp"
-						domain: "test-client.jembi.org"
+						clientDomain: "test-client.jembi.org"
 						name: "TEST Client"
 						roles:
 							[
@@ -113,7 +113,7 @@ describe "e2e Integration Tests", ->
 				channel1.save (err) ->
 					testAppDoc =
 						clientID: "testApp"
-						domain: "openhim.jembi.org"
+						clientDomain: "openhim.jembi.org"
 						name: "TEST Client"
 						roles:
 							[ 
@@ -199,7 +199,7 @@ describe "e2e Integration Tests", ->
 			channel1.save (err) ->
 				testAppDoc =
 					clientID: "testApp"
-					domain: "test-client.jembi.org"
+					clientDomain: "test-client.jembi.org"
 					name: "TEST Client"
 					roles:
 						[
@@ -290,7 +290,7 @@ describe "e2e Integration Tests", ->
 			channel1.save (err) ->
 				testAppDoc =
 					clientID: "testApp"
-					domain: "test-client.jembi.org"
+					clientDomain: "test-client.jembi.org"
 					name: "TEST Client"
 					roles:
 						[
@@ -379,7 +379,7 @@ describe "e2e Integration Tests", ->
 			channel1.save (err) ->
 				testAppDoc =
 					clientID: "testApp"
-					domain: "test-client.jembi.org"
+					clientDomain: "test-client.jembi.org"
 					name: "TEST Client"
 					roles:
 						[
@@ -460,7 +460,7 @@ describe "e2e Integration Tests", ->
 			channel1.save (err) ->
 				testAppDoc =
 					clientID: "testApp"
-					domain: "test-client.jembi.org"
+					clientDomain: "test-client.jembi.org"
 					name: "TEST Client"
 					roles:
 						[

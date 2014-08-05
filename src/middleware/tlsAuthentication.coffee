@@ -42,8 +42,8 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 			var subject = this.req.connection.getPeerCertificate().subject;
 			logger.info(subject.CN + " is authenticated via TLS.");
 
-			// lookup client by subject.CN (CN = domain) and set them as the authenticated user
-			this.authenticated = yield Client.findOne({ domain: subject.CN }).exec();
+			// lookup client by subject.CN (CN = clientDomain) and set them as the authenticated user
+			this.authenticated = yield Client.findOne({ clientDomain: subject.CN }).exec();
 			yield next;
 		} else {
 			this.response.status = "unauthorized";

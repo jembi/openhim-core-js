@@ -3,7 +3,7 @@ Schema = mongoose.Schema
 
 ClientSchema = new Schema
     "clientID":			{ type: String, required: true, unique: true }
-    "domain": 		 	{ type: String, required: true, unqiue: true }
+    "clientDomain": 		 	{ type: String, required: true, unqiue: true }
     "name": 		 	{ type: String, required: true }
     "roles": 			[ { type: String, required: true } ]
     "passwordAlgorithm":{ type: String, required: false }

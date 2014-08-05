@@ -166,7 +166,7 @@ describe "Authorisation middleware", ->
 				ctx.body = validTestBody
 				ctx.authenticated =
 					clientID: "Musha_OpenMRS"
-					domain: "poc1.jembi.org"
+					clientDomain: "poc1.jembi.org"
 					name: "OpenMRS Musha instance"
 					roles: [ "OpenMRS_PoC", "PoC" ]
 					passwordHash: ""
@@ -204,7 +204,7 @@ describe "Authorisation middleware", ->
 				ctx.body = invalidTestBody
 				ctx.authenticated =
 					clientID: "Musha_OpenMRS"
-					domain: "poc1.jembi.org"
+					clientDomain: "poc1.jembi.org"
 					name: "OpenMRS Musha instance"
 					roles: [ "OpenMRS_PoC", "PoC" ]
 					passwordHash: ""
@@ -243,7 +243,7 @@ describe "Authorisation middleware", ->
 				ctx.body = validTestBody
 				ctx.authenticated =
 					clientID: "Musha_OpenMRS"
-					domain: "poc1.jembi.org"
+					clientDomain: "poc1.jembi.org"
 					name: "OpenMRS Musha instance"
 					roles: [ "OpenMRS_PoC", "PoC" ]
 					passwordHash: ""
@@ -284,7 +284,7 @@ describe "Authorisation middleware", ->
 				ctx.body = invalidTestBody
 				ctx.authenticated =
 					clientID: "Musha_OpenMRS"
-					domain: "poc1.jembi.org"
+					clientDomain: "poc1.jembi.org"
 					name: "OpenMRS Musha instance"
 					roles: [ "OpenMRS_PoC", "PoC" ]
 					passwordHash: ""
