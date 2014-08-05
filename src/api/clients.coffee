@@ -63,7 +63,7 @@ exports.getClient = `function *findClientById(clientId) {
 }`
 
 
-exports.findClientByDomain = `function *findClientByDomain(domain) {
+exports.findClientByDomain = `function *findClientByDomain(clientDomain) {
 
 	// Test if the user is authorised
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
@@ -73,18 +73,18 @@ exports.findClientByDomain = `function *findClientByDomain(domain) {
 		return;
 	}
 
-	var domain = unescape(domain);
+	var clientDomain = unescape(clientDomain);
 
 	try {
-		var result = yield Client.findOne({ domain: domain }).exec();
+		var result = yield Client.findOne({ clientDomain: clientDomain }).exec();
 		if (result === null) {
-			this.body = "Could not find client with domain '"+domain+"'";
+			this.body = "Could not find client with clientDomain '"+clientDomain+"'";
 			this.status = 'not found';
 		}else{
 			this.body = result;
 		}
 	} catch(e) {
-		logger.error('Could not find client by domain '+domain+' via the API: ' + e);
+		logger.error('Could not find client by clientDomain '+clientDomain+' via the API: ' + e);
 		this.body = e.message;
 		this.status = 'internal server error';
 	}
