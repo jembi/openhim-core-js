@@ -23,9 +23,9 @@ exports.storeTransaction = (ctx, done) ->
 			method: ctx.method
 			timestamp: new Date()
 
-
-	if ctx.parentID
+	if ctx.parentID && ctx.taskID
 		tx.parentID = ctx.parentID
+		tx.taskID = ctx.taskID
 
 	tx.save (err, tx) ->
 		if err
@@ -64,6 +64,9 @@ exports.storeResponse = (ctx, done) ->
 		headers: ctx.response.header
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
 		timestamp: ctx.response.timestamp
+
+	# assign new transactions status to ctx object
+	ctx.transactionStatus = status
 
 	# Rename header -> headers
 	if ctx.routes

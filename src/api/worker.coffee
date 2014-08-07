@@ -28,7 +28,7 @@ worker.register rerun_transaction: (params, callback) ->
       return callback err, null
 
     # setup the option object for the HTTP Request
-    rerunSetHTTPRequestOptions transaction, (err, options) ->
+    rerunSetHTTPRequestOptions transaction, taskID, (err, options) ->
 
       if err
         logger.error(err)
@@ -125,7 +125,7 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
 # Construct HTTP options to be sent #
 #####################################
 
-rerunSetHTTPRequestOptions = (transaction, callback) ->
+rerunSetHTTPRequestOptions = (transaction, taskID, callback) ->
 
   if transaction == null
     err = "An empty Transaction object was supplied. Aborting HTTP options configuration"
@@ -141,6 +141,7 @@ rerunSetHTTPRequestOptions = (transaction, callback) ->
 
   options.headers.clientID = transaction.clientID
   options.headers.parentID = transaction._id
+  options.headers.taskID = taskID
 
   if transaction.request.querystring
     options.path += "?"+transaction.request.querystring
