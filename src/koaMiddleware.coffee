@@ -5,6 +5,7 @@ basicAuthentication = require './middleware/basicAuthentication'
 tlsAuthentication = require "./middleware/tlsAuthentication"
 rerunBypassAuthentication = require "./middleware/rerunBypassAuthentication"
 rerunBypassAuthorisation = require "./middleware/rerunBypassAuthorisation"
+rerunUpdateTransactionTask = require "./middleware/rerunUpdateTransactionTask"
 authorisation = require './middleware/authorisation'
 config = require './config/config'
 config.authentication = config.get('authentication')
@@ -60,6 +61,9 @@ exports.rerunApp = (done) ->
 
 	# Rerun bypass authorisation middlware
 	app.use rerunBypassAuthorisation.koaMiddleware
+
+	# Update original transaction with reruned transaction ID
+	app.use rerunUpdateTransactionTask.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware

@@ -18,7 +18,7 @@ describe "API Integration Tests", ->
 		transaction1 = new Transaction
 			_id: "53bfbccc6a2b417f6cd14871"
 			channelID: "53bbe25485e66d8e5daad4a2"
-			clientID: "test"
+			clientID: "42bbe25485e77d8e5daad4b4"
 			request: {
 				path: "/sample/api",
 				headers: { authorization: "Basic dGVzdDp0ZXN0", "user-agent": "curl/7.35.0", host: "localhost:5001" },
@@ -28,20 +28,6 @@ describe "API Integration Tests", ->
 				timestamp: "2014-07-15T08:10:45.109Z"
 			}
 			status: "Completed"
-		
-		transaction2 = new Transaction
-			_id: "53bfbcd06a2b417f6cd14872"
-			channelID: "53bbe25485e66d8e5daad4a2"
-			clientID: "test"
-			request: {
-				path: "/sample/api",
-				headers: { authorization: "Basic dGVzdDp0ZXN0", "user-agent": "curl/7.35.0", host: "localhost:5001" },
-				querystring: "param=hello?param2=World",
-				body: "",
-				method: "GET",
-				timestamp: "2014-07-15T08:10:45.109Z"
-			}
-			status: "Failed"
 
 		task1 = new Task
 			_id: "53c4dd063b8cb04d2acf0adc"
@@ -57,26 +43,22 @@ describe "API Integration Tests", ->
 
 		before (done) ->
 			Transaction.remove {}, -> 
-				transaction1.save ->
-					transaction2.save ->
-						task1.save ->
-							auth.setupTestUsers ->
-								server.start null, null, 8080, ->
-									done()
+				transaction1.save (err) ->
+					task1.save ->
+						Transaction.find {}, (err, transaction) ->
+							done()
 
 		after (done) ->
-			server.stop ->
-				auth.cleanupTestUsers ->
-					Task.remove {}, ->
-						MongoClient.connect config.mongo.url, (err, db) ->
-						    mongoCollection = db?.collection "jobs"
-						    mongoCollection.drop()
-							done()
+			Transaction.remove {}, ->
+				Task.remove {}, ->
+					MongoClient.connect config.mongo.url, (err, db) ->
+					    mongoCollection = db?.collection "jobs"
+					    mongoCollection.drop()
+						done()
 
 		beforeEach ->
 			authDetails = auth.getAuthDetails()
 
-		###
 		describe '*rerunGetTaskTransactionsData()', ->
 
 			it 'should run rerunGetTaskTransactionsData() and return Transaction object successfully', (done) ->
@@ -91,7 +73,7 @@ describe "API Integration Tests", ->
 
 				# run the worker function and check results
 				worker.rerunGetTaskTransactionsData taskID, transactionID, (err, transaction) ->
-					transaction.clientID.should.equal "test"
+					transaction.clientID.toString().should.equal "42bbe25485e77d8e5daad4b4"
 					transaction.status.should.equal "Completed"
 					transaction.request.path.should.equal "/sample/api"
 					transaction.request.querystring.should.equal "param=hello"
@@ -102,7 +84,6 @@ describe "API Integration Tests", ->
 						task.status.should.equal "Processing"
 						task.remainingTransactions.should.equal 2
 						done()
-
 
 			it 'should run rerunGetTaskTransactionsData() and return Task not found error', (done) ->
 
@@ -145,23 +126,25 @@ describe "API Integration Tests", ->
 
 			it 'should run rerunSetHTTPRequestOptions() and return HTTP options object successfully', (done) ->
 
+				taskID = '53c4dd063b8cb04d2acf0adc'
 				transactionID = "53bfbccc6a2b417f6cd14871"
 				Transaction.findOne { _id: transactionID }, (err, transaction) ->
 					# run the worker function and check results
-					worker.rerunSetHTTPRequestOptions transaction, (err, options) ->
+					worker.rerunSetHTTPRequestOptions transaction, taskID, (err, options) ->
 						options.should.have.property "hostname", "localhost"
 						options.should.have.property "port", 7786
 						options.should.have.property "path", "/sample/api?param=hello"
 						options.should.have.property "method", "GET"
-						options.headers.should.have.property "clientID", "test"
+						options.headers.should.have.property "clientID", ObjectId("42bbe25485e77d8e5daad4b4")
 						options.headers.should.have.property "parentID", ObjectId("53bfbccc6a2b417f6cd14871")
 						done()
 
 
 			it 'should run rerunSetHTTPRequestOptions() and return error if no Transaction object supplied', (done) ->
 			
+				taskID = '53c4dd063b8cb04d2acf0adc'
 				transaction = null
-				worker.rerunSetHTTPRequestOptions transaction, (err, options) ->
+				worker.rerunSetHTTPRequestOptions transaction, taskID, (err, options) ->
 					err.should.equal "An empty Transaction object was supplied. Aborting HTTP options configuration"
 					done()
 
@@ -172,11 +155,12 @@ describe "API Integration Tests", ->
 
 				testUtils.createMockServer 200, "Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871", 7786, ->
 
+					taskID = '53c4dd063b8cb04d2acf0adc'
 					transactionID = "53bfbccc6a2b417f6cd14871"
 					Transaction.findOne { _id: transactionID }, (err, transaction) ->
 
 						# run the worker function and check results
-						worker.rerunSetHTTPRequestOptions transaction, (err, options) ->
+						worker.rerunSetHTTPRequestOptions transaction, taskID, (err, options) ->
 
 							# transaction object retrieved from fineOne
 							# options generated from 'rerunSetHTTPRequestOptions' function
@@ -283,4 +267,3 @@ describe "API Integration Tests", ->
 				worker.rerunUpdateTaskObject taskID, transactionID, HTTPResponse, (err, task) ->
 					err.should.equal "No response supplied. Task cannot be updated"
 					done()
-		###

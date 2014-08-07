@@ -33,6 +33,7 @@ OrchestrationMetadataSchema = new Schema
 TransactionSchema = new Schema
 	"clientID": { type: Schema.Types.ObjectId, required: true }
 	"parentID": { type: Schema.Types.ObjectId, required: false }
+	"childIDs": [ { type: Schema.Types.ObjectId, required: false } ]
 	"channelID": { type: Schema.Types.ObjectId, required: false, index: true }
 	"request": RequestDef
 	"response": ResponseDef

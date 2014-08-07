@@ -9,6 +9,7 @@ exports.authenticateUser = (ctx, done) ->
 	Client.findOne { _id: ctx.request.header.clientid }, (err, client) ->
 		ctx.authenticated = client
 		ctx.parentID = ctx.request.header.parentid
+		ctx.taskID = ctx.request.header.taskid
 		done null, client
 	
 
