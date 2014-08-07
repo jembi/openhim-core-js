@@ -63,7 +63,7 @@ exports.rerunApp = (done) ->
 	app.use rerunBypassAuthorisation.koaMiddleware
 
 	# Update original transaction with reruned transaction ID
-	app.use rerunUpdateTransaction.koaMiddleware
+	app.use rerunUpdateTransactionTask.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware

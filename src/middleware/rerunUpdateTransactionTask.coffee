@@ -34,7 +34,7 @@ exports.updateTask = (ctx, done) ->
 ###
 # Koa middleware for updating original transaction with childID
 ###
-exports.koaMiddleware = `function *rerunUpdateTransaction(next) {
+exports.koaMiddleware = `function *rerunUpdateTransactionTask(next) {
 	
 	// do intial yield for koa to come back to this function with updated ctx object
 	yield next;
