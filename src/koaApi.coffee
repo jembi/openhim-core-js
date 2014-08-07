@@ -12,6 +12,7 @@ tasks = require './api/tasks'
 monitor = require './api/monitor'
 Q = require 'q'
 worker = require './api/worker'
+metrics = require './api/metrics'
 
 exports.setupApp = (done) ->
 	
@@ -58,7 +59,9 @@ exports.setupApp = (done) ->
 	app.use route.get '/tasks/:taskId', tasks.getTask
 	app.use route.put '/tasks/:taskId', tasks.updateTask
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
-	
+
+	app.use route.get '/metrics/:time', metrics.getTransactionsPerUnitOfTime
+
 	app.use route.get '/monitor', monitor.getMonitor
 
 	# Return the result
