@@ -47,6 +47,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 				headers: ctx.request.header
 				querystring: ctx.request.querystring
 				method: ctx.request.method
+				timestamp: new Date()
 			routeResponse.response = {}
 			ctx.routes = [] if not ctx.routes
 			ctx.routes.push routeResponse
