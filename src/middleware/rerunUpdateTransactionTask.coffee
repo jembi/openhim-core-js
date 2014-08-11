@@ -44,6 +44,5 @@ exports.koaMiddleware = `function *rerunUpdateTransactionTask(next) {
 
 	var updateTask = Q.denodeify(exports.updateTask);
 	yield updateTask(this);
-	yield next;
 	
 }`
