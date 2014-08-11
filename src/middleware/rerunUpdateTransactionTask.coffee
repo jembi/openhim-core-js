@@ -9,7 +9,7 @@ exports.updateOriginalTransaction = (ctx, done) ->
 		
 		transaction.save (err, tx) ->
 			if err
-				logger.info('Original transaction #' + tx._id + ' could not be updated: ' + err)
+				logger.info('Original transaction #' + transaction._id + ' could not be updated: ' + err)
 			else
 				logger.info('Original transaction #' + tx._id + ' - Updated successfully with childID')
 
