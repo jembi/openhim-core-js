@@ -84,7 +84,6 @@ describe "rerunUpdateTransactionTask middleware", ->
 				should.not.exist (task.transactions[2].rerunID)
 
 			rerunUpdateTransactionTask.updateTask ctx, (err, task) ->
-				console.log task
 				task.should.have.property "_id", ObjectId("53e34b915d0180cf6eef2d01")
 				task.should.have.property "remainingTransactions", 2
 				task.transactions[0].tid.should.be.eql "53e096fea0af3105689acd6a"
