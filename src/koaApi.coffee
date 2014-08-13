@@ -60,7 +60,7 @@ exports.setupApp = (done) ->
 	app.use route.put '/tasks/:taskId', tasks.updateTask
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
 
-	app.use route.get '/metrics/:time', metrics.getTransactionsPerUnitOfTime
+	app.use route.get '/metrics/:time/:channelId', metrics.getTransactionsPerUnitOfTime
 
 	app.use route.get '/monitor', monitor.getMonitor
 
