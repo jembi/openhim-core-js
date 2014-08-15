@@ -27,23 +27,21 @@ exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time,
 
   switch (time) {
     case 'minute':
-      try {
+     try {
         this.body = yield Transaction.aggregate([
           {
-            $match: {
-              "request.timestamp": {
-                $gt: moment().subtract('hours', 1).toDate()
-              }
-            }
-          },
-          {
+            $match: filtersObject
+          }
+          ,{
             $group: {
               _id: {
-                minute_of_hour: {
-                  $minute: "$request.timestamp"
-                }
+                year: {$year: "$request.timestamp"},
+                month: {$month: "$request.timestamp"},
+                day: {$dayOfMonth: "$request.timestamp"},
+                hour: {$hour: "$request.timestamp"},
+                minute: {$minute: "$request.timestamp"}
               },
-              numTransactions: {$sum: 1}
+              load: {$sum: 1}
             }
           }
         ]).exec();
@@ -56,21 +54,26 @@ exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time,
       }
       break;
     case 'hour':
-      try {
+       try {
         this.body = yield Transaction.aggregate([
           {
-            $match: {
-              "request.timestamp": {
-                $gt: moment().subtract('days', 1).toDate()
-              }
-            }
-          },
-          {
+            $match: filtersObject
+          }
+          ,{
             $group: {
               _id: {
-                $hour: "$request.timestamp"
+                year: {$year: "$request.timestamp"},
+                month: {$month: "$request.timestamp"},
+                day: {$dayOfMonth: "$request.timestamp"},
+                hour: {$hour: "$request.timestamp"}
               },
-              numTransactions: {$sum: 1}
+              load: {$sum: 1},
+              avgResp: {
+                $avg: {
+                    $subtract : ["$request.timestamp","$response.timestamp"]
+                }
+              }
+
             }
           }
         ]).exec();
@@ -84,8 +87,136 @@ exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time,
       break;
     case 'day':
 
-      logger.info(JSON.stringify(filtersObject));
       try {
+        this.body = yield Transaction.aggregate([
+          {
+            $match: filtersObject
+          }
+          ,{
+            $group: {
+              _id: {
+                year: {$year: "$request.timestamp"},
+                month: {$month: "$request.timestamp"},
+                day: {$dayOfMonth: "$request.timestamp"}
+
+              },
+              load: {
+                $sum: 1
+              },
+              avgResp: {
+                $avg: {
+                    $subtract : ["$request.timestamp","$response.timestamp"]
+                }
+              }
+            }
+          }
+        ]).exec();
+      }
+      catch (e) {
+
+        logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
+        this.body = e.message;
+        this.status = 'internal server error';
+      }
+      break;
+    case 'week':
+       try {
+        this.body = yield Transaction.aggregate([
+          {
+            $match: filtersObject
+          }
+          ,{
+            $group: {
+              _id: {
+                year: {$year: "$request.timestamp"},
+                month: {$month: "$request.timestamp"},
+                week: {$week: "$request.timestamp"}
+
+              },
+              load: {$sum: 1}
+            }
+          }
+        ]).exec();
+      }
+      catch (e) {
+
+        logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
+        this.body = e.message;
+        this.status = 'internal server error';
+      }
+      break;
+    case 'month':
+       try {
+        this.body = yield Transaction.aggregate([
+          {
+            $match: filtersObject
+          }
+          ,{
+            $group: {
+              _id: {
+                year: {$year: "$request.timestamp"},
+                month: {$month: "$request.timestamp"}
+
+              },
+              load: {$sum: 1}
+            }
+          }
+        ]).exec();
+      }
+      catch (e) {
+
+        logger.error('Could not get metrics channel by id: ' + ' via the API: ' + e);
+        this.body = e.message;
+        this.status = 'internal server error';
+      }
+      break;
+    default:
+    try {
+        this.body = yield Transaction.aggregate([
+          {
+            $match: filtersObject
+          }
+          ,{
+            $group: {
+              _id: {
+                status: "$status"
+              },
+              load: {$sum: 1}
+            }
+          }
+        ]).exec();
+      }
+      catch (e) {
+
+        logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
+        this.body = e.message;
+        this.status = 'internal server error';
+      }
+  }
+
+};`
+
+exports.getAverageResponseTime = `function *getAverageResponseTime(channelId){
+
+var channelID = mongoose.Types.ObjectId(channelId);
+  var filtersObject = this.request.query;
+	var from, tot
+  from = new Date(JSON.parse(filtersObject.startDate));
+  to = new Date(JSON.parse(filtersObject.endDate));
+
+  filtersObject.channelID = channelID;
+  if (filtersObject.startDate && filtersObject.endDate) {
+    filtersObject['request.timestamp'] = {
+      $lt: to,
+      $gt: from
+    }
+
+    //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+    delete filtersObject.startDate;
+    delete filtersObject.endDate;
+  }
+
+   try {
         this.body = yield Transaction.aggregate([
           {
             $match: filtersObject
@@ -109,64 +240,4 @@ exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time,
         this.body = e.message;
         this.status = 'internal server error';
       }
-      break;
-    case 'week':
-      try {
-        this.body = yield Transaction.aggregate([
-          {
-            $match: {
-              "request.timestamp": {
-                $gt: moment().subtract('months', 1).toDate()
-              }
-            }
-          },
-          {
-            $group: {
-              _id: {
-                "date": "$request.timestamp"
-              },
-              numTransactions: {$sum: 1}
-            }
-          }
-        ]).exec();
-      }
-      catch (e) {
-
-        logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
-        this.body = e.message;
-        this.status = 'internal server error';
-      }
-      break;
-    case 'month':
-      try {
-        this.body = yield Transaction.aggregate([
-          {
-            $match: {
-              "request.timestamp": {
-                $gt: moment().subtract('years', 1).toDate()
-              }
-            }
-          },
-          {
-            $group: {
-              _id: {
-                $month: "$request.timestamp"
-              },
-              numTransactions: {$sum: 1}
-            }
-          }
-        ]).exec();
-      }
-      catch (e) {
-
-        logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
-        this.body = e.message;
-        this.status = 'internal server error';
-      }
-      break;
-    default:
-    //do nothing
-  }
-
-}
-;`
+};`
