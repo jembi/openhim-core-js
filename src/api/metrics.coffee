@@ -170,7 +170,7 @@ exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time,
         this.status = 'internal server error';
       }
       break;
-    default:
+    case 'status':
     try {
         this.body = yield Transaction.aggregate([
           {
@@ -192,6 +192,10 @@ exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time,
         this.body = e.message;
         this.status = 'internal server error';
       }
+
+      break;
+      default :
+      //do nothing
   }
 
 };`
