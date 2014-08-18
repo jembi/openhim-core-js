@@ -3,7 +3,7 @@ moment = require 'moment'
 logger = require 'winston'
 mongoose = require 'mongoose'
 
-exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time, channelId) {
+exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
 
 
   var channelID = mongoose.Types.ObjectId(channelId);
@@ -105,7 +105,7 @@ exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time,
               },
               avgResp: {
                 $avg: {
-                    $subtract : ["$request.timestamp","$response.timestamp"]
+                    $subtract : ["$response.timestamp","$request.timestamp"]
                 }
               }
             }
@@ -198,17 +198,57 @@ exports.getTransactionsPerUnitOfTime = `function *getTransactionsPerMinute(time,
       //do nothing
   }
 
-};`
+}`;
 
-exports.getAverageResponseTime = `function *getAverageResponseTime(channelId){
+exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics() {
+    try {
+      var filtersObject = this.request.query;
+      var from, to
+      from = new Date(JSON.parse(filtersObject.startDate));
+      to = new Date(JSON.parse(filtersObject.endDate));
 
-var channelID = mongoose.Types.ObjectId(channelId);
-  var filtersObject = this.request.query;
-	var from, tot
+
+      if (filtersObject.startDate && filtersObject.endDate) {
+        filtersObject['request.timestamp'] = {
+          $lt: to,
+          $gt: from
+      }
+
+      //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+      delete filtersObject.startDate;
+      delete filtersObject.endDate;
+    }
+    this.body = yield Transaction.aggregate([
+      {
+        $match: filtersObject
+      }
+      ,{
+        $group: {
+          _id: {
+            status: "$status",
+            channelId : "$channelID"
+          },
+          transaction_count: {$sum: 1}
+        }
+      }
+    ]).exec();
+  }
+  catch (e) {
+
+  logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
+  this.body = e.message;
+  this.status = 'internal server error';
+  }
+}
+`
+
+exports.getGlobalMetrics = `function *getGlobalMetrics() {
+var filtersObject = this.request.query;
+	var from, to
   from = new Date(JSON.parse(filtersObject.startDate));
   to = new Date(JSON.parse(filtersObject.endDate));
 
-  filtersObject.channelID = channelID;
+
   if (filtersObject.startDate && filtersObject.endDate) {
     filtersObject['request.timestamp'] = {
       $lt: to,
@@ -220,7 +260,7 @@ var channelID = mongoose.Types.ObjectId(channelId);
     delete filtersObject.endDate;
   }
 
-   try {
+  try {
         this.body = yield Transaction.aggregate([
           {
             $match: filtersObject
@@ -232,16 +272,23 @@ var channelID = mongoose.Types.ObjectId(channelId);
                 month: {$month: "$request.timestamp"},
                 day: {$dayOfMonth: "$request.timestamp"},
                 hour: {$hour: "$request.timestamp"}
+
+
               },
-              load: {$sum: 1}
+              load: {
+                $sum: 1
+              },
+              avgResp: {
+                $avg: {
+                    $subtract : ["$response.timestamp","$request.timestamp"]
+                }
+              }
             }
           }
         ]).exec();
-      }
-      catch (e) {
-
-        logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
+  } catch (e) {
+        logger.error('Could not get Transactions global metrics: ' + ' via the API: ' + e);
         this.body = e.message;
         this.status = 'internal server error';
-      }
-};`
+  }
+}`;
