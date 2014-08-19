@@ -50,11 +50,12 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
             }
           }
         ]).exec();
+        this.body = []
          for (var i = 0; i < results.length; i++) {
           this.body.push({
             load: results[i].load,
             avgResp: results[i].avgResp,
-            timestamp : new Date(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':' + results[i]._id.minute +':00')
+            timestamp : results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':' + results[i]._id.minute +':00+00:00'
           });
         }
       }
@@ -89,11 +90,12 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
             }
           }
         ]).exec();
+        this.body = []
          for (var i = 0; i < results.length; i++) {
           this.body.push({
             load: results[i].load,
             avgResp: results[i].avgResp,
-            timestamp : new Date(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00')
+            timestamp : results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00+00:00'
           });
         }
       }
@@ -130,12 +132,12 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
             }
           }
         ]).exec();
-
+         this.body = []
          for (var i = 0; i < results.length; i++) {
           this.body.push({
             load: results[i].load,
             avgResp: results[i].avgResp,
-            timestamp : new Date(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day + ' ' + '00:00:00')
+            timestamp : results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day + ' ' + '00:00:00+00:00'
           });
         }
       }
@@ -169,6 +171,7 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
             }
           }
         ]).exec();
+        this.body = []
          for (var i = 0; i < results.length; i++) {
           this.body.push({
             load: results[i].load,
@@ -201,11 +204,12 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
             }
           }
         ]).exec();
+        this.body = []
          for (var i = 0; i < results.length; i++) {
           this.body.push({
             load: results[i].load,
             avgResp: results[i].avgResp,
-            timestamp : new Date(results[i]._id.year + '-' + results[i]._id.month + '-'+ '1 00:00:00')
+            timestamp : results[i]._id.year + '-' + results[i]._id.month + '-'+ '1 00:00:00+00:00'
           });
         }
       }
@@ -337,10 +341,12 @@ var filtersObject = this.request.query;
         this.body = []
 
         for (var i = 0; i < results.length; i++) {
+        logger.info(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00');
+        logger.info(new Date(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00+00:00'));
           this.body.push({
             load: results[i].load,
             avgResp: results[i].avgResp,
-            timestamp : new Date(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00')
+            timestamp : results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00+00:00'
           });
         }
   } catch (e) {
