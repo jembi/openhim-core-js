@@ -2,9 +2,9 @@ Transaction = require('../model/transactions').Transaction
 moment = require 'moment'
 logger = require 'winston'
 mongoose = require 'mongoose'
+authorisation = require './authorisation'
 
 exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
-
 
   var channelID = mongoose.Types.ObjectId(channelId);
   var filtersObject = this.request.query;
@@ -251,7 +251,20 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
 }`;
 
 exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics() {
-    try {
+
+  var filtersObject = {};
+  var allowedChannels = yield authorisation.getUserViewableChannels(this.authenticated);
+
+  var allowedChannelIDs = [];
+
+  for (var i = 0; i < allowedChannels.length; i++) {
+    allowedChannelIDs.push(mongoose.Types.ObjectId(allowedChannels[i]._id));
+  }
+
+  filtersObject['channelID'] = {
+    $in : allowedChannelIDs
+  }
+  try {
       var filtersObject = this.request.query;
       var from, to
       from = new Date(JSON.parse(filtersObject.startDate));
@@ -268,20 +281,24 @@ exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics()
       delete filtersObject.startDate;
       delete filtersObject.endDate;
     }
-    this.body = yield Transaction.aggregate([
+    var result = yield Transaction.aggregate([
       {
         $match: filtersObject
       }
-      ,{
+      ,
+      {
         $group: {
           _id: {
             status: "$status",
-            channelId : "$channelID"
+            channelID: "$channelID"
           },
           transaction_count: {$sum: 1}
         }
       }
     ]).exec();
+    logger.info(JSON.stringify(result));
+    this.body = result;
+
 
   }
   catch (e) {
@@ -294,6 +311,7 @@ exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics()
 `
 
 exports.getGlobalMetrics = `function *getGlobalMetrics() {
+
 var filtersObject = this.request.query;
 	var from, to
   from = new Date(JSON.parse(filtersObject.startDate));
@@ -310,6 +328,20 @@ var filtersObject = this.request.query;
     delete filtersObject.startDate;
     delete filtersObject.endDate;
   }
+
+  var allowedChannels = yield authorisation.getUserViewableChannels(this.authenticated);
+
+  var allowedChannelIDs = [];
+
+  for (var i = 0; i < allowedChannels.length; i++) {
+    allowedChannelIDs.push(mongoose.Types.ObjectId(allowedChannels[i]._id));
+  }
+
+  filtersObject['channelID'] = {
+    $in : allowedChannelIDs
+  }
+
+logger.info(JSON.stringify(filtersObject));
 
   try {
         var results = yield Transaction.aggregate([
@@ -341,8 +373,7 @@ var filtersObject = this.request.query;
         this.body = []
 
         for (var i = 0; i < results.length; i++) {
-        logger.info(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00');
-        logger.info(new Date(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00+00:00'));
+
           this.body.push({
             load: results[i].load,
             avgResp: results[i].avgResp,
