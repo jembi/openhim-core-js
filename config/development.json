@@ -1,6 +1,6 @@
 {
   "mongo": {
-    "url": "mongodb://localhost/openhim-development"
+    "url": "mongodb://localhost/openhim"
   },
   "logger": {
     "level": "info"
