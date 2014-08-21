@@ -292,7 +292,7 @@ exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics()
             status: "$status",
             channelID: "$channelID"
           },
-          transaction_count: {$sum: 1}
+          transactionCount: {$sum: 1}
         }
       }
     ]).exec();
