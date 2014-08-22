@@ -10,6 +10,7 @@ transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
 monitor = require './api/monitor'
+visualizer = require './api/visualizer'
 Q = require 'q'
 worker = require './api/worker'
 
@@ -60,6 +61,9 @@ exports.setupApp = (done) ->
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
 	
 	app.use route.get '/monitor', monitor.getMonitor
+
+	app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
+	app.use route.get '/visualizer/sync', visualizer.sync
 
 	# Return the result
 	done(app)

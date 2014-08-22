@@ -1,7 +1,8 @@
 transactions = require "../model/transactions"
+visualizer = require "../api/visualizer"
 logger = require "winston"
 
-transactionStatus = 
+exports.transactionStatus = transactionStatus = 
 	PROCESSING: 'Processing'
 	SUCCESSFUL: 'Successful'
 	COMPLETED: 'Completed'
@@ -11,6 +12,7 @@ transactionStatus =
 exports.storeTransaction = (ctx, done) -> 
 	logger.info 'Storing request metadata for inbound transaction'
 
+	ctx.requestTimestamp = new Date()
 	tx = new transactions.Transaction
 		status: transactionStatus.PROCESSING
 		clientID: ctx.authenticated._id
@@ -21,7 +23,7 @@ exports.storeTransaction = (ctx, done) ->
 			querystring: ctx.querystring
 			body: ctx.body
 			method: ctx.method
-			timestamp: new Date()
+			timestamp: ctx.requestTimestamp
 
 	if ctx.parentID && ctx.taskID
 		tx.parentID = ctx.parentID
@@ -87,4 +89,5 @@ exports.koaMiddleware =  `function *storeMiddleware(next) {
 		exports.storeTransaction(this, function(){});
 		yield next;
 		exports.storeResponse(this, function(){});
+		visualizer.storeVisualizerEvents(this, function(){});
 	}`
