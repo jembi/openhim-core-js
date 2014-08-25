@@ -1,4 +1,6 @@
 http = require "http"
+https = require "https"
+fs = require "fs"
 User = require('../lib/model/users').User
 crypto = require "crypto"
 
@@ -21,6 +23,20 @@ exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch
 			else
 				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
 				res.end()
+
+exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, requestCallback) ->
+    options =
+        key: fs.readFileSync("tls/key.pem")
+        cert: fs.readFileSync("tls/cert.pem")
+
+    requestCallback = requestCallback || ->
+        # Create mock endpoint to forward requests to
+    mockServer = https.createServer options, (req, res) ->
+        res.writeHead resStatusCode, {"Content-Type": "text/plain"}
+        res.end resBody
+
+    mockServer.listen port, callback
+    mockServer.on "request", requestCallback
 
 exports.rootUser =
 	firstname: 'Admin'
