@@ -28,6 +28,8 @@ sendRequestToRoutes = (ctx, routes, next) ->
             path: path
             method: ctx.request.method
             headers: ctx.request.header
+            agent: false
+            rejectUnauthorized: false
 
         if ctx.request.querystring
             options.path += '?' + ctx.request.querystring

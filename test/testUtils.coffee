@@ -6,7 +6,7 @@ crypto = require "crypto"
 
 exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
 	requestCallback = requestCallback || ->
-	# Create mock endpoint to forward requests to
+		# Create mock endpoint to forward requests to
 	mockServer = http.createServer (req, res) ->
 		res.writeHead resStatusCode, {"Content-Type": "text/plain"}
 		res.end resBody
@@ -25,18 +25,19 @@ exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch
 				res.end()
 
 exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, requestCallback) ->
-    options =
-        key: fs.readFileSync("tls/key.pem")
-        cert: fs.readFileSync("tls/cert.pem")
+	options =
+		key: fs.readFileSync("tls/key.pem").toString()
+		cert: fs.readFileSync("tls/cert.pem").toString()
 
-    requestCallback = requestCallback || ->
-        # Create mock endpoint to forward requests to
-    mockServer = https.createServer options, (req, res) ->
-        res.writeHead resStatusCode, {"Content-Type": "text/plain"}
-        res.end resBody
 
-    mockServer.listen port, callback
-    mockServer.on "request", requestCallback
+	requestCallback = requestCallback || ->
+		# Create mock endpoint to forward requests to
+	mockServer = https.createServer options, (req, res) ->
+		res.writeHead resStatusCode, {"Content-Type": "text/plain"}
+		res.end "Secured " + resBody
+
+	mockServer.listen port, callback
+	mockServer.on "request", requestCallback
 
 exports.rootUser =
 	firstname: 'Admin'
@@ -46,7 +47,7 @@ exports.rootUser =
 	passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
 	passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 	groups: [ 'HISP', 'admin' ]
-	# password is 'password'
+# password is 'password'
 
 exports.nonRootUser =
 	firstname: 'Non'
@@ -56,7 +57,7 @@ exports.nonRootUser =
 	passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e'
 	passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 	groups: [ "group1", "group2" ]
-	# password is 'password'
+# password is 'password'
 
 exports.auth = {}
 
@@ -80,7 +81,7 @@ exports.auth.getAuthDetails = () ->
 	tokenhash.update(requestsalt);
 	tokenhash.update(authTS);
 
-	auth = 
+	auth =
 		authTS: authTS
 		authSalt: requestsalt
 		authToken: tokenhash.digest('hex')
