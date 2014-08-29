@@ -153,12 +153,44 @@ exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics()
       }
       ,
       {
+
         $group: {
           _id: {
-            status: "$status",
             channelID: "$channelID"
           },
-          transactionCount: {$sum: 1}
+          Failed: {
+                $sum: {
+                        $cond: [
+                            {
+                                $eq: ["$status", 'Failed']
+                            },
+                            1,
+                            0
+                        ]
+                 }
+          },
+           Successful: {
+                $sum: {
+                        $cond: [
+                            {
+                                $eq: ["$status", 'Successful']
+                            },
+                            1,
+                            0
+                        ]
+                 }
+          },
+           Processing: {
+                $sum: {
+                        $cond: [
+                            {
+                                $eq: ["$status", 'Processing']
+                            },
+                            1,
+                            0
+                        ]
+                 }
+          }
         }
       }
     ]).exec();
