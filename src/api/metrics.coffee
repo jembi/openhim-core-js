@@ -158,7 +158,7 @@ exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics()
           _id: {
             channelID: "$channelID"
           },
-          Failed: {
+          failed: {
                 $sum: {
                         $cond: [
                             {
@@ -169,7 +169,7 @@ exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics()
                         ]
                  }
           },
-           Successful: {
+           successful: {
                 $sum: {
                         $cond: [
                             {
@@ -180,11 +180,33 @@ exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics()
                         ]
                  }
           },
-           Processing: {
+           processing: {
                 $sum: {
                         $cond: [
                             {
                                 $eq: ["$status", 'Processing']
+                            },
+                            1,
+                            0
+                        ]
+                 }
+          },
+           completed: {
+                $sum: {
+                        $cond: [
+                            {
+                                $eq: ["$status", 'Completed']
+                            },
+                            1,
+                            0
+                        ]
+                 }
+          },
+           completedWErrors: {
+                $sum: {
+                        $cond: [
+                            {
+                                $eq: ["$status", 'Completed with error(s)']
                             },
                             1,
                             0
