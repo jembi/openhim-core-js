@@ -72,6 +72,18 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
 
 try {
 
+		var id = unescape(channelId);
+		var result = null;
+		var accessDenied = false;
+		// if admin allow acces to all channels otherwise restrict result set
+		if (authorisation.inGroup('admin', this.authenticated) === false) {
+			result = yield Channel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec();
+			var adminResult = yield Channel.findById(id).exec();
+			if (!!adminResult) {
+				accessDenied = true;
+			}
+		} else {
+
         var results = yield Transaction.aggregate([
             {
                 $match: filtersObject
@@ -81,8 +93,20 @@ try {
                 $group: groupObject
             }
         ]).exec();
-
+		}
         this.body = []
+        if (result === null) {
+			if (accessDenied) {
+				// Channel exists but this user doesn't have access
+				this.body = "Access denied to channel with Id: '" + id + "'.";
+				this.status = 'forbidden';
+			} else {
+				// Channel not found! So inform the user
+				this.body = "We could not find a channel with Id:'" + id + "'.";
+				this.status = 'not found';
+			}
+		}
+		else {
 
         if (time == 'status') {
             this.body = results;
@@ -106,6 +130,7 @@ try {
                 });
             }
         }
+     }
     }
     catch (e) {
 
