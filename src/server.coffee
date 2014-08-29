@@ -1,5 +1,6 @@
 http = require 'http'
 https = require 'https'
+net = require 'net'
 koaMiddleware = require "./koaMiddleware"
 koaApi = require "./koaApi"
 tlsAuthentication = require "./middleware/tlsAuthentication"
@@ -8,6 +9,7 @@ config.authentication = config.get('authentication')
 config.router = config.get('router')
 config.api = config.get('api')
 config.rerun = config.get('rerun')
+config.tcpAdapter = config.get('tcpAdapter')
 config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 Q = require "q"
@@ -17,6 +19,7 @@ mongoose = require "mongoose"
 User = require('./model/users').User
 Agenda = require 'agenda'
 alerts = require './alerts'
+tcpAdapter = require './tcpAdapter'
 
 # Configure mongose to connect to mongo
 mongoose.connect config.mongo.url
@@ -24,6 +27,8 @@ mongoose.connect config.mongo.url
 httpServer = null
 httpsServer = null
 apiHttpServer = null
+tcpServer = null
+tcpHttpReceiver = null
 
 rootUser =
 	firstname: 'Super'
@@ -49,6 +54,20 @@ stopAgenda = ->
 	agenda.stop () ->
 		defer.resolve()
 		logger.info "Stopped agenda job scheduler"
+	return defer
+
+# TCP server
+startTCPServer = ->
+	defer = Q.defer()
+	koaMiddleware.tcpApp (app) ->
+		tcpHttpReceiver = http.createServer app.callback()
+		tcpHttpReceiver.listen config.tcpAdapter.httpReceiver.httpPort, ->
+			logger.info "HTTP receiver for Socket adapter listening on port #{config.tcpAdapter.httpReceiver.httpPort}"
+			tcpAdapter.createServer (server) ->
+				tcpServer = server
+				tcpServer.listen config.tcpAdapter.port, config.tcpAdapter.host
+				logger.info "TCP socket adapter listening on port #{config.tcpAdapter.port}"
+				defer.resolve()
 	return defer
 
 
@@ -108,6 +127,7 @@ exports.start = (httpPort, httpsPort, apiPort, enableAlerts, done) ->
 					logger.info "API listening on port " + apiPort
 					deferredAPIHttp.resolve()
 
+		promises.push startTCPServer().promise
 
 		(Q.all promises).then ->
 			startAgenda() if enableAlerts

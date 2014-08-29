@@ -10,6 +10,14 @@
     "httpPort": 7786,
     "host": "localhost"
   },
+  "tcpAdapter": {
+    "port": 5003,
+    "host": "0.0.0.0",
+    "httpReceiver": {
+        "httpPort": 7787,
+        "host": "localhost"
+    }
+  },
   "authentication": {
     "enableMutualTLSAuthentication": true,
     "enableBasicAuthentication": false
