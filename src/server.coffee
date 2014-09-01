@@ -159,36 +159,28 @@ exports.startRerun = (httpPort, done) ->
 exports.stop = stop = (done) ->
 	promises = []
 
-	if httpServer
-		deferredHttp = Q.defer()
-		promises.push deferredHttp.promise
+	stopServer = (server, serverType) ->
+		deferred = Q.defer()
 
-		httpServer.close ->
-			logger.info "Stopped HTTP server"
-			deferredHttp.resolve()
+		server.close ->
+			logger.info "Stopped #{serverType} server"
+			deferred.resolve()
 
-	if httpsServer
-		deferredHttps = Q.defer()
-		promises.push deferredHttps.promise
+		return deferred.promise
 
-		httpsServer.close ->
-			logger.info "Stopped HTTPS server"
-			deferredHttps.resolve()
-
-	if apiHttpServer
-		deferredAPIHttp = Q.defer()
-		promises.push deferredAPIHttp.promise
-
-		apiHttpServer.close ->
-			logger.info "Stopped API server"
-			deferredAPIHttp.resolve()
-	
+	promises.push stopServer(httpServer, 'HTTP') if httpServer
+	promises.push stopServer(httpsServer, 'HTTPS') if httpsServer
+	promises.push stopServer(apiHttpServer, 'API HTTP') if apiHttpServer
+	promises.push stopServer(tcpServer, 'TCP Socket') if tcpServer
+	promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver') if tcpHttpReceiver
 	promises.push stopAgenda().promise if agenda
 
 	(Q.all promises).then ->
 		httpServer = null
 		httpsServer = null
 		apiHttpServer = null
+		tcpServer = null
+		tcpHttpReceiver = null
 		agenda = null
 		done()
 
