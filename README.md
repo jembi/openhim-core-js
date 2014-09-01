@@ -17,7 +17,8 @@ The OpenHIM core component is responsible for providing a single entry-point int
 1. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location
 2. Install and start [MongoDB](http://www.mongodb.org/)
 3. Install the dependencies by running `npm install`
-4. Start the server by running `node --harmony lib/server.js`
+4. Build the project by running `cake build` (you may have to install coffescript first by running `npm install -g coffee-script`)
+5. Start the server by running `node --harmony lib/server.js`
 
 Installation and Development
 ============================
@@ -72,6 +73,9 @@ This step is optional but recommended to ensure that the system is running as ex
 
 Running the server
 ==================
+
+First make sure the project is build by running `cake build`.
+
 Once all the prerequisites have been installed, configured and started, run the OpenHIM core server by executing the following:
 
 `node --harmony lib/server.js`
