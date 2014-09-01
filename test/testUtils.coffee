@@ -63,8 +63,8 @@ exports.auth = {}
 
 exports.auth.setupTestUsers = (done) ->
 	(new User exports.rootUser).save (err) ->
-		if err
-			done err
+		return done err if err
+
 		(new User exports.nonRootUser).save (err) ->
 			if err
 				done err
@@ -90,8 +90,8 @@ exports.auth.getAuthDetails = () ->
 
 exports.auth.cleanupTestUsers = (done) ->
 	User.remove { email: 'root@jembi.org' }, (err) ->
-		if err
-			done err
+		return done err if err
+
 		User.remove { email: 'nonroot@jembi.org' }, (err) ->
 			if err
 				done err
