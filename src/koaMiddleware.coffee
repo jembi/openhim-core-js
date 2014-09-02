@@ -7,7 +7,6 @@ rerunBypassAuthentication = require "./middleware/rerunBypassAuthentication"
 rerunBypassAuthorisation = require "./middleware/rerunBypassAuthorisation"
 rerunUpdateTransactionTask = require "./middleware/rerunUpdateTransactionTask"
 tcpBypassAuthentication = require "./middleware/tcpBypassAuthentication"
-tcpBypassAuthorisation = require "./middleware/tcpBypassAuthorisation"
 authorisation = require './middleware/authorisation'
 config = require './config/config'
 config.authentication = config.get('authentication')
@@ -100,9 +99,6 @@ exports.tcpApp = (done) ->
 
 	# TCP bypass authentication middlware
 	app.use tcpBypassAuthentication.koaMiddleware
-
-	# TCP bypass authorisation middlware
-	app.use tcpBypassAuthorisation.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware
