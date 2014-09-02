@@ -17,6 +17,24 @@ exports.popTransaction = (key) ->
 	delete datastore["#{key}"]
 	return res
 
+
+exports.startupTCPServer = startupTCPServer = (channel, callback) ->
+	host = channel.tcpHost
+	host = '0.0.0.0' if not host
+	port = channel.tcpPort
+
+	return callback "Channel #{channel.name}: TCP port not defined" if not port
+
+	tcpServer = net.createServer (sock) ->
+		sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
+		sock.on 'close', ->
+
+	tcpServer.listen port, host, ->
+		logger.info "Channel #{channel.name}: TCP server listening on port #{port}"
+		callback null
+
+	tcpServers.push { channel: channel.name, server: tcpServer }
+
 # Startup a TCP server for each TCP channel
 exports.startupServers = (callback) ->
 	Channel.find type: 'tcp', (err, channels) ->
@@ -27,24 +45,14 @@ exports.startupServers = (callback) ->
 		for channel in channels
 			defer = Q.defer()
 
-			host = channel.tcpHost
-			host = '0.0.0.0' if not host
-			port = channel.tcpPort
-
-			return callback "Channel #{channel.name}: TCP port not defined" if not port
-
-			tcpServer = net.createServer (sock) ->
-				sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
-				sock.on 'close', ->
-
-			tcpServer.listen port, host, ->
-				logger.info "Channel #{channel.name}: TCP server listening on port #{port}"
+			startupTCPServer channel, (err) ->
+				return callback err if err
 				defer.resolve()
 
-			tcpServers.push { channel: channel.name, server: tcpServer }
 			promises.push defer.promise
 
 		(Q.all promises).then -> callback null
+
 
 adaptSocketRequest = (channel, sock, socketData) ->
 	options =

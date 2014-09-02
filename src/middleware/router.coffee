@@ -70,7 +70,7 @@ sendRequest = (ctx, routeType, responseDst, options, secured) ->
 	deferred = Q.defer()
 
 	if routeType is 'tcp'
-		logger.info 'Routing socket request'
+		logger.info 'Routing tcp request'
 		sendSocketRequest ctx, responseDst, options, secured, deferred.resolve
 	else
 		logger.info 'Routing http(s) request'
@@ -114,7 +114,7 @@ sendSocketRequest = (ctx, responseDst, options, secured, callback) ->
 	responseDst.body = ''
 
 	client.connect options.port, options.hostname, ->
-		logger.info "Opened socket connection to #{options.hostname}:#{options.port}"
+		logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
 		client.write requestBody
 
 	client.on 'data', (chunk) ->

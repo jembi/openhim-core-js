@@ -31,6 +31,8 @@ apiHttpServer = null
 rerunServer = null
 tcpHttpReceiver = null
 
+exports.isTcpHttpReceiverRunning = -> tcpHttpReceiver?
+
 rootUser =
 	firstname: 'Super'
 	surname: 'User'

@@ -2,6 +2,8 @@ Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
+tcpAdapter = require '../tcpAdapter'
+server = require "../server"
 
 isPathValid = (channel) ->
 	(channel.routes.map (route) ->
@@ -54,6 +56,12 @@ exports.addChannel = `function *addChannel() {
 		// All ok! So set the result
 		this.body = 'Channel successfully created';
 		this.status = 'created';
+
+		if (channel.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
+			tcpAdapter.startupTCPServer(channel, function(err){
+				logger.error('Failed to startup TCP server: ' + err);
+			});
+		}
 	}
 	catch (e) {
 		// Error! So inform the user
@@ -140,6 +148,12 @@ exports.updateChannel = `function *updateChannel(channelId) {
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully updated';
+
+		if (channelData.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
+			tcpAdapter.startupTCPServer(channelData, function(err){
+				logger.error('Failed to startup TCP server: ' + err);
+			});
+		}
 	}
 	catch (e) {
 		// Error! So inform the user
