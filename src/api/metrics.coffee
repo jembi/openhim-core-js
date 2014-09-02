@@ -126,7 +126,7 @@ try {
                 this.body.push({
                     load: results[i].load,
                     avgResp: results[i].avgResp,
-                    timestamp: results[i]._id.year + '-' + results[i]._id.month + '-' + results[i]._id.day + ' ' + results[i]._id.hour + ':' + results[i]._id.minute + ':00+00:00'
+                    timestamp: moment(results[i]._id.year + '-' + results[i]._id.month + '-' + results[i]._id.day + ' ' + results[i]._id.hour + ':' + results[i]._id.minute + ':00+00:00').format()
                 });
             }
         }
@@ -322,7 +322,7 @@ var filtersObject = this.request.query;
           this.body.push({
             load: results[i].load,
             avgResp: results[i].avgResp,
-            timestamp : results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00+00:00'
+            timestamp : moment(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour + ':00:00+00:00').format()
           });
         }
   } catch (e) {
