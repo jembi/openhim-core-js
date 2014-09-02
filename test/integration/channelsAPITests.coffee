@@ -41,7 +41,7 @@ describe "API Integration Tests", ->
 					channel2.save ->
 						auth.setupTestUsers (err) ->
 							return done err if err
-							server.start null, null, 8080, false, ->
+							server.start null, null, 8080, null, null, false, ->
 								done()
 
 		after (done) ->

@@ -20,6 +20,7 @@ User = require('./model/users').User
 Agenda = require 'agenda'
 alerts = require './alerts'
 tcpAdapter = require './tcpAdapter'
+workerAPI = require "./api/worker"
 
 # Configure mongose to connect to mongo
 mongoose.connect config.mongo.url
@@ -27,6 +28,7 @@ mongoose.connect config.mongo.url
 httpServer = null
 httpsServer = null
 apiHttpServer = null
+rerunServer = null
 tcpServer = null
 tcpHttpReceiver = null
 
@@ -56,105 +58,106 @@ stopAgenda = ->
 		logger.info "Stopped agenda job scheduler"
 	return defer
 
-# TCP server
-startTCPServer = ->
+startHttpServer = (httpPort, app) ->
+	deferred = Q.defer()
+
+	httpServer = http.createServer app.callback()
+	httpServer.listen httpPort, ->
+		logger.info "HTTP listening on port " + httpPort
+		deferred.resolve()
+
+	return deferred
+
+startHttpsServer = (httpsPort, app) ->
+	deferred = Q.defer()
+
+	mutualTLS = config.authentication.enableMutualTLSAuthentication
+	tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
+		return done err if err
+
+		httpsServer = https.createServer options, app.callback()
+		httpsServer.listen httpsPort, ->
+			logger.info "HTTPS listening on port " + httpsPort
+			deferred.resolve()
+
+	return deferred
+
+# Ensure that a root user always exists
+ensureRootUser = (callback) ->
+	User.findOne { email: 'root@openhim.org' }, (err, user) ->
+		if !user
+			user = new User rootUser
+			user.save (err) ->
+				if err
+					logger.error "Could not save root user: " + err
+					return callback err
+
+				logger.info "Root user created."
+				callback()
+		else
+			callback()
+
+startApiServer = (apiPort, app) ->
+	deferred = Q.defer()
+
+	apiHttpServer = http.createServer app.callback()
+	apiHttpServer.listen apiPort, ->
+		logger.info "API listening on port " + apiPort
+
+		ensureRootUser -> deferred.resolve()
+
+	return deferred
+
+startTCPServer = (tcpHttpReceiverPort, app) ->
 	defer = Q.defer()
-	koaMiddleware.tcpApp (app) ->
-		tcpHttpReceiver = http.createServer app.callback()
-		tcpHttpReceiver.listen config.tcpAdapter.httpReceiver.httpPort, ->
-			logger.info "HTTP receiver for Socket adapter listening on port #{config.tcpAdapter.httpReceiver.httpPort}"
-			tcpAdapter.createServer (server) ->
-				tcpServer = server
-				tcpServer.listen config.tcpAdapter.port, config.tcpAdapter.host
-				logger.info "TCP socket adapter listening on port #{config.tcpAdapter.port}"
-				defer.resolve()
+
+	tcpHttpReceiver = http.createServer app.callback()
+	tcpHttpReceiver.listen tcpHttpReceiverPort, ->
+		logger.info "HTTP receiver for Socket adapter listening on port #{tcpHttpReceiverPort}"
+		tcpAdapter.createServer (server) ->
+			tcpServer = server
+			tcpServer.listen config.tcpAdapter.port, config.tcpAdapter.host
+			logger.info "TCP socket adapter listening on port #{config.tcpAdapter.port}"
+			defer.resolve()
+
 	return defer
 
+startRerunServer = (httpPort, app) ->
+	deferredHttp = Q.defer()
 
-exports.start = (httpPort, httpsPort, apiPort, enableAlerts, done) ->
+	rerunServer = http.createServer app.callback()
+	rerunServer.listen httpPort, ->
+		logger.info "Transaction Rerun HTTP listening on port " + httpPort
+		deferredHttp.resolve()
+
+	return deferredHttp
+
+exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPort, enableAlerts, done) ->
 	logger.info "Starting OpenHIM server..."
+	promises = []
 
-	koaMiddleware.setupApp (app) ->
-		promises = []
+	if httpPort or httpsPort
+		koaMiddleware.setupApp (app) ->
+			promises.push startHttpServer(httpPort, app).promise if httpPort
+			promises.push startHttpsServer(httpsPort, app).promise if httpsPort
 
-		if httpPort
-			deferredHttp = Q.defer();
-			promises.push deferredHttp.promise
+	if apiPort
+		koaApi.setupApp (app) ->
+			promises.push startApiServer(apiPort, app).promise
 
-			httpServer = http.createServer app.callback()
-			httpServer.listen httpPort, ->
-				logger.info "HTTP listening on port " + httpPort
-				deferredHttp.resolve()
+	if rerunHttpPort
+		koaMiddleware.rerunApp (app) ->
+			promises.push startRerunServer(rerunHttpPort, app).promise
 
-		if httpsPort
-			deferredHttps = Q.defer();
-			promises.push deferredHttps.promise
+	if tcpHttpReceiverPort
+		koaMiddleware.tcpApp (app) ->
+			promises.push startTCPServer(tcpHttpReceiverPort, app).promise
 
-			mutualTLS = config.authentication.enableMutualTLSAuthentication
-			tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
-				if err
-					return done err
-				httpsServer = https.createServer options, app.callback()
-				httpsServer.listen httpsPort, ->
-					logger.info "HTTPS listening on port " + httpsPort
-					deferredHttps.resolve()
+	(Q.all promises).then ->
+		workerAPI.startupWorker() if rerunHttpPort
+		startAgenda() if enableAlerts
+		done()
 
-		if apiPort
-			deferredRootUserCreation = Q.defer();
-			promises.push deferredRootUserCreation.promise
-
-			deferredAPIHttp = Q.defer();
-			promises.push deferredAPIHttp.promise
-
-			# Ensure that a root user always exists
-			User.findOne { email: 'root@openhim.org' }, (err, user) ->
-				if !user
-					user = new User rootUser
-					user.save (err) ->
-						if err
-							logger.error "Could not save root user: " + err
-							return done err
-
-						logger.info "Root user created."
-						deferredRootUserCreation.resolve()
-				else
-					logger.info "Root user already exists."
-					deferredRootUserCreation.resolve()
-
-			koaApi.setupApp (apiApp) ->
-				apiHttpServer = http.createServer apiApp.callback()
-				apiHttpServer.listen apiPort, ->
-					logger.info "API listening on port " + apiPort
-					deferredAPIHttp.resolve()
-
-		promises.push startTCPServer().promise
-
-		(Q.all promises).then ->
-			startAgenda() if enableAlerts
-			done()
-
-#######################################################
-### function to start the transactions rerun server ###
-#######################################################
-exports.startRerun = (httpPort, done) ->
-	
-	logger.info "Starting OpenHIM Transaction Rerun server..."
-
-	koaMiddleware.rerunApp (app) ->
-		promises = []
-		
-		if httpPort
-			deferredHttp = Q.defer()
-			promises.push deferredHttp.promise
-
-			httpServer = http.createServer app.callback()
-			httpServer.listen httpPort, ->
-				logger.info "Transaction Rerun HTTP listening on port " + httpPort
-				deferredHttp.resolve()
-
-		(Q.all promises).then ->
-			done()
-	
 
 exports.stop = stop = (done) ->
 	promises = []
@@ -171,6 +174,7 @@ exports.stop = stop = (done) ->
 	promises.push stopServer(httpServer, 'HTTP') if httpServer
 	promises.push stopServer(httpsServer, 'HTTPS') if httpsServer
 	promises.push stopServer(apiHttpServer, 'API HTTP') if apiHttpServer
+	promises.push stopServer(rerunServer, 'Rerun HTTP') if rerunServer
 	promises.push stopServer(tcpServer, 'TCP Socket') if tcpServer
 	promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver') if tcpHttpReceiver
 	promises.push stopAgenda().promise if agenda
@@ -179,6 +183,7 @@ exports.stop = stop = (done) ->
 		httpServer = null
 		httpsServer = null
 		apiHttpServer = null
+		rerunHttpServer = null
 		tcpServer = null
 		tcpHttpReceiver = null
 		agenda = null
@@ -186,12 +191,17 @@ exports.stop = stop = (done) ->
 
 if not module.parent
 	# start the server
-	exports.start config.router.httpPort, config.router.httpsPort, config.api.httpPort, config.alerts.enableAlerts, ->
-	exports.startRerun config.rerun.httpPort
+	httpPort = config.router.httpPort
+	httpsPort = config.router.httpsPort
+	apiPort = config.api.httpPort
+	rerunPort = config.rerun.httpPort
+	tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort
+	enableAlerts = config.alerts.enableAlerts
 
-	# setup shutdown listeners
-	process.on 'exit', stop
-	# interrupt signal, e.g. ctrl-c
-	process.on 'SIGINT', -> stop process.exit
-	# terminate signal
-	process.on 'SIGTERM', -> stop process.exit
+	exports.start httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, enableAlerts, ->
+		# setup shutdown listeners
+		process.on 'exit', stop
+		# interrupt signal, e.g. ctrl-c
+		process.on 'SIGINT', -> stop process.exit
+		# terminate signal
+		process.on 'SIGTERM', -> stop process.exit
