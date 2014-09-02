@@ -12,9 +12,10 @@ tasks = require './api/tasks'
 monitor = require './api/monitor'
 Q = require 'q'
 worker = require './api/worker'
+metrics = require './api/metrics'
 
 exports.setupApp = (done) ->
-	
+
 	# Create an instance of the koa-server and add a body-parser
 	app = koa()
 	app.use cors()
@@ -25,7 +26,7 @@ exports.setupApp = (done) ->
 
 	# Authenticate the API request
 	app.use authentication.authenticate
-	
+
 	# Define the api routes
 	app.use route.get '/users', users.getUsers
 	app.use route.get '/users/:email', users.getUser
@@ -58,7 +59,11 @@ exports.setupApp = (done) ->
 	app.use route.get '/tasks/:taskId', tasks.getTask
 	app.use route.put '/tasks/:taskId', tasks.updateTask
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
-	
+
+	app.use route.get '/metrics', metrics.getGlobalMetrics
+	app.use route.get '/metrics/status', metrics.getTranstactionStatusMetrics
+	app.use route.get '/metrics/:time/:channelId', metrics.getChannelMetrics
+
 	app.use route.get '/monitor', monitor.getMonitor
 
 	# Return the result
