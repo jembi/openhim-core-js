@@ -4,11 +4,8 @@ Transaction = require("../model/transactions").Transaction
 Channel = require("../model/channels").Channel
 logger = require "winston"
 
-exports.authoriseUser = (ctx, done) ->
-	Channel.findOne allow: 'tcp', (err, channel) ->
-		logger.info "Authorized adapted socket transaction for #{channel.name}"
-		ctx.authorisedChannel = channel
-		done()
+# nothing to do
+exports.authoriseUser = (ctx, done) -> done()
 	
 
 ###

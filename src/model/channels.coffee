@@ -24,6 +24,8 @@ ChannelSchema = new Schema
     "name": { type: String, required: true, unique: true }
     "urlPattern": { type: String, required: true }
     "type": { type: String, default: 'http', enum: ['http', 'tcp'] }
+    "tcpPort": { type: String, required: false }
+    "tcpHost": { type: String, required: false }
     "allow": [
         { type: String, required: true }
     ]

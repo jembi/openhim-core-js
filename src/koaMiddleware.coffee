@@ -29,7 +29,11 @@ rawBodyReader = `function *(next) {
 
 retrieveTCPTransaction = `function *(next) {
 	//the body contains the key
-	this.body = tcpAdapter.popTransaction(this.body);
+	var transaction = tcpAdapter.popTransaction(this.body);
+
+	this.body = transaction.data;
+	this.authorisedChannel = transaction.channel;
+
 	yield next;
 }`
 

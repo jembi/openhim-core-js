@@ -29,7 +29,6 @@ httpServer = null
 httpsServer = null
 apiHttpServer = null
 rerunServer = null
-tcpServer = null
 tcpHttpReceiver = null
 
 rootUser =
@@ -114,10 +113,8 @@ startTCPServer = (tcpHttpReceiverPort, app) ->
 	tcpHttpReceiver = http.createServer app.callback()
 	tcpHttpReceiver.listen tcpHttpReceiverPort, ->
 		logger.info "HTTP receiver for Socket adapter listening on port #{tcpHttpReceiverPort}"
-		tcpAdapter.createServer (server) ->
-			tcpServer = server
-			tcpServer.listen config.tcpAdapter.port, config.tcpAdapter.host
-			logger.info "TCP socket adapter listening on port #{config.tcpAdapter.port}"
+		tcpAdapter.startupServers (err) ->
+			logger.error err if err
 			defer.resolve()
 
 	return defer
@@ -175,16 +172,20 @@ exports.stop = stop = (done) ->
 	promises.push stopServer(httpsServer, 'HTTPS') if httpsServer
 	promises.push stopServer(apiHttpServer, 'API HTTP') if apiHttpServer
 	promises.push stopServer(rerunServer, 'Rerun HTTP') if rerunServer
-	promises.push stopServer(tcpServer, 'TCP Socket') if tcpServer
-	promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver') if tcpHttpReceiver
 	promises.push stopAgenda().promise if agenda
+
+	if tcpHttpReceiver
+		promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver')
+
+		defer = Q.defer()
+		tcpAdapter.stopServers -> defer.resolve()
+		promises.push defer.promise
 
 	(Q.all promises).then ->
 		httpServer = null
 		httpsServer = null
 		apiHttpServer = null
 		rerunHttpServer = null
-		tcpServer = null
 		tcpHttpReceiver = null
 		agenda = null
 		done()
