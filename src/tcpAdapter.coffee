@@ -20,9 +20,10 @@ exports.popTransaction = (key) ->
 	return res
 
 
-startListening = (channel, tcpServer, host, port, callback) -> tcpServer.listen port, host, ->
-	tcpServers.push { channel: channel.name, server: tcpServer }
-	callback null
+startListening = (channel, tcpServer, host, port, callback) ->
+	tcpServer.listen port, host, ->
+		tcpServers.push { channel: channel.name, server: tcpServer }
+		callback null
 
 exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 	for existingServer in tcpServers
@@ -116,7 +117,7 @@ exports.stopServers = (callback) ->
 		do (server) ->
 			defer = Q.defer()
 
-			server.server.close ->
+			server.server.close (err) ->
 				logger.info "Channel #{server.channel}: Stopped TCP server"
 				defer.resolve()
 

@@ -121,6 +121,7 @@ sendSocketRequest = (ctx, responseDst, options, secured, callback) ->
 		responseDst.status = status.OK
 		responseDst.body += chunk
 		responseDst.timestamp = new Date()
+		client.end()
 		callback()
 
 	client.on 'error', (err) ->
