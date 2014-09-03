@@ -75,7 +75,12 @@ sendRequest = (ctx, responseDst, options, secured) ->
 
     routeReq = method.request options, (routeRes) ->
         responseDst.status = routeRes.statusCode
-        responseDst.header = routeRes.headers
+
+        # copy across http headers
+        if not responseDst.header
+            responseDst.header = {}
+        for key, value of routeRes.headers
+            responseDst.header[key] = value
 
         responseDst.body = ''
         routeRes.on "data", (chunk) ->
