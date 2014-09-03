@@ -1,10 +1,12 @@
 http = require 'http'
 net = require 'net'
+tls = require 'tls'
 config = require "./config/config"
 config.tcpAdapter = config.get('tcpAdapter')
 logger = require "winston"
 Channel = require("./model/channels").Channel
 Q = require "q"
+tlsAuthentication = require "./middleware/tlsAuthentication"
 
 
 tcpServers = []
@@ -18,6 +20,10 @@ exports.popTransaction = (key) ->
 	return res
 
 
+startListening = (channel, tcpServer, host, port, callback) -> tcpServer.listen port, host, ->
+	tcpServers.push { channel: channel.name, server: tcpServer }
+	callback null
+
 exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 	for existingServer in tcpServers
 		# server already running for channel
@@ -29,19 +35,36 @@ exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 
 	return callback "Channel #{channel.name}: TCP port not defined" if not port
 
-	tcpServer = net.createServer (sock) ->
+	handler = (sock) ->
 		sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
 		sock.on 'close', ->
 
-	tcpServer.listen port, host, ->
-		logger.info "Channel #{channel.name}: TCP server listening on port #{port}"
-		callback null
+	if channel.type is 'tls'
+		tlsAuthentication.getServerOptions true, (err, options) ->
+			return callback err if err
 
-	tcpServers.push { channel: channel.name, server: tcpServer }
+			tcpServer = tls.createServer options, handler
+			startListening channel, tcpServer, host, port, (err) ->
+				if err
+					callback err
+				else
+					logger.info "Channel #{channel.name}: TLS server listening on port #{port}"
+					callback null
+	else if channel.type is 'tcp'
+		tcpServer = net.createServer handler
+		startListening channel, tcpServer, host, port, (err) ->
+			if err
+				callback err
+			else
+				logger.info "Channel #{channel.name}: TCP server listening on port #{port}"
+				callback null
+	else
+		return callback "Cannot handle #{channel.type} channels"
+
 
 # Startup a TCP server for each TCP channel
 exports.startupServers = (callback) ->
-	Channel.find type: 'tcp', (err, channels) ->
+	Channel.find { $or: [ {type: 'tcp'}, {type: 'tls'} ] }, (err, channels) ->
 		return callback err if err
 
 		promises = []
