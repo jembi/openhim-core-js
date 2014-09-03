@@ -144,6 +144,7 @@ describe "e2e Integration Tests", ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.expect(401)
+							.expect('WWW-Authenticate', 'Basic')
 							.end (err, res) ->
 								if err
 									done err
@@ -157,6 +158,7 @@ describe "e2e Integration Tests", ->
 							.get("/test/mock")
 							.auth("incorrect_user", "incorrect_password")
 							.expect(401)
+							.expect('WWW-Authenticate', 'Basic')
 							.end (err, res) ->
 								if err
 									done err
