@@ -1,5 +1,6 @@
 should = require "should"
 net = require 'net'
+tls = require 'tls'
 Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
@@ -54,6 +55,14 @@ describe "TCP/TLS Integration Tests", ->
 			type: 'http'
 			primary: true
 		]
+
+	secureClient = new Client
+		clientID: "TlsIntegrationClient"
+		clientDomain: "test-client.jembi.org"
+		name: "TEST Client"
+		roles: [ "test" ]
+		passwordHash: ""
+		cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 	
 	sendTCPTestMessage = (port, callback) ->
 		client = new net.Socket()
@@ -62,15 +71,29 @@ describe "TCP/TLS Integration Tests", ->
 			client.end()
 			callback "#{data}"
 
+	sendTLSTestMessage = (port, callback) ->
+		options =
+			cert: fs.readFileSync "test/resources/client-tls/cert.pem"
+			key:  fs.readFileSync "test/resources/client-tls/key.pem"
+			ca: [ fs.readFileSync "tls/cert.pem" ]
+
+		client = tls.connect port, 'localhost', options, -> client.write testMessage
+		client.on 'data', (data) ->
+			client.end()
+			callback "#{data}"
+
 	before (done) ->
-		channel1.save -> channel2.save -> channel3.save ->
+		channel1.save -> channel2.save -> channel3.save -> secureClient.save ->
 			testUtils.createMockTCPServer 6000, testMessage, 'OK', 'Not OK', (server) ->
 				mockTCPServer = server
-				mockHTTPServer = testUtils.createMockServerForPost 200, 400, testMessage
-				mockHTTPServer.listen 6001, done
+				testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'OK', 'Not OK', (server) ->
+					mockHTTPServer = server
+					done()
+
+	beforeEach (done) -> Transaction.remove {}, done
 
 	after (done) ->
-		Channel.remove {}, -> Transaction.remove {}, -> mockTCPServer.close -> mockHTTPServer.close done
+		Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, -> mockTCPServer.close -> mockHTTPServer.close done
 
 	afterEach (done) -> server.stop done
 
@@ -79,3 +102,25 @@ describe "TCP/TLS Integration Tests", ->
 			sendTCPTestMessage 4000, (data) ->
 				data.should.be.exactly 'OK'
 				done()
+
+	it "should route TLS messages", (done) ->
+		server.start null, null, null, null, 7787, false, ->
+			sendTLSTestMessage 4001, (data) ->
+				data.should.be.exactly 'OK'
+				done()
+
+	it "should route TCP messages to HTTP routes", (done) ->
+		server.start null, null, null, null, 7787, false, ->
+			sendTCPTestMessage 4002, (data) ->
+				data.should.be.exactly 'OK'
+				done()
+
+	it "should persist messages", (done) ->
+		server.start null, null, null, null, 7787, false, ->
+			sendTCPTestMessage 4000, (data) ->
+				Transaction.find {}, (err, trx) ->
+					trx.length.should.be.exactly 1
+					trx[0].channelID.toString().should.be.exactly channel1._id.toString()
+					trx[0].request.body.should.be.exactly testMessage
+					trx[0].response.body.should.be.exactly 'OK'
+					done()

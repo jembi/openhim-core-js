@@ -48,6 +48,19 @@ exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, 
 
 	server.listen port, 'localhost', -> callback server
 
+exports.createMockHTTPRespondingPostServer = (port, expected, matchResponse, nonMatchResponse, callback) ->
+	server = http.createServer (req, res) ->
+		req.on 'data', (data) ->
+			if "#{data}" is expected
+				res.writeHead 200, {"Content-Type": "text/plain"}
+				res.write matchResponse
+			else
+				res.writeHead 500, {"Content-Type": "text/plain"}
+				res.write nonMatchResponse
+			res.end()
+
+	server.listen port, 'localhost', -> callback server
+
 exports.rootUser =
 	firstname: 'Admin'
 	surname: 'User'
