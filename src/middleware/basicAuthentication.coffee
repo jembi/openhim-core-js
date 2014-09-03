@@ -65,5 +65,6 @@ exports.koaMiddleware = `function *basicAuthMiddleware(next) {
 		yield next;
 	} else {
 		this.response.status = "unauthorized";
+		this.set("WWW-Authenticate", "Basic");
 	}
 }`
