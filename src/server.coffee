@@ -187,7 +187,7 @@ exports.stop = stop = (done) ->
 		httpServer = null
 		httpsServer = null
 		apiHttpServer = null
-		rerunHttpServer = null
+		rerunServer = null
 		tcpHttpReceiver = null
 		agenda = null
 		done()

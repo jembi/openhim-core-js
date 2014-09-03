@@ -6,10 +6,12 @@ tcpAdapter = require '../tcpAdapter'
 server = require "../server"
 
 isPathValid = (channel) ->
-	(channel.routes.map (route) ->
-		# There cannot be both path and pathTranform. pathTransform must be valid
-		not (route.path and route.pathTransform) and (not route.pathTransform or /s\/.*\/.*/.test route.pathTransform))
-		.reduce (a, b) -> a and b
+	if channel.routes?
+		for route in channel.routes
+			# There cannot be both path and pathTranform. pathTransform must be valid
+			if (route.path and route.pathTransform) or (route.pathTransform and not /s\/.*\/.*/.test route.pathTransform)
+				return false
+	return true
 
 ###
 # Retrieves the list of active channels
@@ -59,7 +61,9 @@ exports.addChannel = `function *addChannel() {
 
 		if (channel.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
 			tcpAdapter.startupTCPServer(channel, function(err){
-				logger.error('Failed to startup TCP server: ' + err);
+				if (err) {
+					logger.error('Failed to startup TCP server: ' + err);
+				}
 			});
 		}
 	}
@@ -150,8 +154,11 @@ exports.updateChannel = `function *updateChannel(channelId) {
 		this.body = 'The channel was successfully updated';
 
 		if (channelData.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
-			tcpAdapter.startupTCPServer(channelData, function(err){
-				logger.error('Failed to startup TCP server: ' + err);
+			var channel = yield Channel.findOne({ _id: id }).exec();
+			tcpAdapter.startupTCPServer(channel, function(err){
+				if (err) {
+					logger.error('Failed to startup TCP server: ' + err);
+				}
 			});
 		}
 	}

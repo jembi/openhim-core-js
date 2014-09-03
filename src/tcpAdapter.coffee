@@ -19,6 +19,10 @@ exports.popTransaction = (key) ->
 
 
 exports.startupTCPServer = startupTCPServer = (channel, callback) ->
+	for existingServer in tcpServers
+		# server already running for channel
+		return callback null if existingServer.channel is channel.name
+
 	host = channel.tcpHost
 	host = '0.0.0.0' if not host
 	port = channel.tcpPort
@@ -43,13 +47,14 @@ exports.startupServers = (callback) ->
 		promises = []
 
 		for channel in channels
-			defer = Q.defer()
+			do (channel) ->
+				defer = Q.defer()
 
-			startupTCPServer channel, (err) ->
-				return callback err if err
-				defer.resolve()
+				startupTCPServer channel, (err) ->
+					return callback err if err
+					defer.resolve()
 
-			promises.push defer.promise
+				promises.push defer.promise
 
 		(Q.all promises).then -> callback null
 
@@ -85,14 +90,19 @@ exports.stopServers = (callback) ->
 	promises = []
 
 	for server in tcpServers
-		defer = Q.defer()
+		do (server) ->
+			defer = Q.defer()
 
-		server.server.close ->
-			logger.info "Channel #{server.channel}: Stopped TCP server"
-			defer.resolve()
+			server.server.close ->
+				logger.info "Channel #{server.channel}: Stopped TCP server"
+				defer.resolve()
 
-		promises.push defer.promise
+			promises.push defer.promise
 
 	(Q.all promises).then ->
 		tcpServers = []
 		callback()
+
+
+if process.env.NODE_ENV == "test"
+	exports.tcpServers = tcpServers
