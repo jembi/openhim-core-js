@@ -23,7 +23,7 @@ describe "HTTP Router", ->
 				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
-				ctx.request.url = "/test"
+				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
 
 				router.route ctx, (err) ->
@@ -55,7 +55,7 @@ describe "HTTP Router", ->
 			ctx.authorisedChannel = channel
 			ctx.request = new Object()
 			ctx.response = new Object()
-			ctx.request.url = "/test/multicasting"
+			ctx.path = ctx.request.url = "/test/multicasting"
 			ctx.request.method = "GET"
 			return ctx
 
@@ -76,7 +76,7 @@ describe "HTTP Router", ->
 				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
-				ctx.request.url = "/test"
+				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
 
 				router.route ctx, (err) ->
@@ -202,7 +202,8 @@ describe "HTTP Router", ->
 				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
-				ctx.request.url = "/test"
+				ctx.path = "/test"
+				ctx.request.url = "/test?parma1=val1&parma2=val2"
 				ctx.request.method = "GET"
 				ctx.request.querystring = "parma1=val1&parma2=val2"
 
@@ -210,7 +211,7 @@ describe "HTTP Router", ->
 					if err
 						return done err
 			), (req, res) ->
-				req.url.should.eql("/test?parma1=val1&parma2=val2");
+				req.url.should.eql("/test?parma1=val1&parma2=val2")
 				done()
 
 	describe "Basic Auth", ->
@@ -290,7 +291,7 @@ describe "HTTP Router", ->
 				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
-				ctx.request.url = "/test"
+				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
 
 				router.route ctx, (err) ->
