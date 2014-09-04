@@ -12,6 +12,7 @@ RouteSchema = new Schema
     "primary": { type: Boolean, required: false }
     "username": { type: String, required: false }
     "password": { type: String, required: false }
+    "type": { type: String, default: 'http', enum: ['http', 'tcp'] }
 
 AlertsSchema = new Schema
     "status": { type: String, required: true }
@@ -22,6 +23,9 @@ AlertsSchema = new Schema
 ChannelSchema = new Schema
     "name": { type: String, required: true, unique: true }
     "urlPattern": { type: String, required: true }
+    "type": { type: String, default: 'http', enum: ['http', 'tcp', 'tls'] }
+    "tcpPort": { type: String, required: false }
+    "tcpHost": { type: String, required: false }
     "allow": [
         { type: String, required: true }
     ]

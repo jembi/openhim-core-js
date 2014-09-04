@@ -1,5 +1,6 @@
 http = require 'http'
 https = require 'https'
+net = require 'net'
 koaMiddleware = require "./koaMiddleware"
 koaApi = require "./koaApi"
 tlsAuthentication = require "./middleware/tlsAuthentication"
@@ -8,6 +9,7 @@ config.authentication = config.get('authentication')
 config.router = config.get('router')
 config.api = config.get('api')
 config.rerun = config.get('rerun')
+config.tcpAdapter = config.get('tcpAdapter')
 config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 Q = require "q"
@@ -17,6 +19,8 @@ mongoose = require "mongoose"
 User = require('./model/users').User
 Agenda = require 'agenda'
 alerts = require './alerts'
+tcpAdapter = require './tcpAdapter'
+workerAPI = require "./api/worker"
 
 # Configure mongose to connect to mongo
 mongoose.connect config.mongo.url
@@ -24,6 +28,10 @@ mongoose.connect config.mongo.url
 httpServer = null
 httpsServer = null
 apiHttpServer = null
+rerunServer = null
+tcpHttpReceiver = null
+
+exports.isTcpHttpReceiverRunning = -> tcpHttpReceiver?
 
 rootUser =
 	firstname: 'Super'
@@ -51,135 +59,152 @@ stopAgenda = ->
 		logger.info "Stopped agenda job scheduler"
 	return defer
 
+startHttpServer = (httpPort, app) ->
+	deferred = Q.defer()
 
-exports.start = (httpPort, httpsPort, apiPort, enableAlerts, done) ->
-	logger.info "Starting OpenHIM server..."
+	httpServer = http.createServer app.callback()
+	httpServer.listen httpPort, ->
+		logger.info "HTTP listening on port " + httpPort
+		deferred.resolve()
 
-	koaMiddleware.setupApp (app) ->
-		promises = []
+	return deferred
 
-		if httpPort
-			deferredHttp = Q.defer();
-			promises.push deferredHttp.promise
+startHttpsServer = (httpsPort, app) ->
+	deferred = Q.defer()
 
-			httpServer = http.createServer app.callback()
-			httpServer.listen httpPort, ->
-				logger.info "HTTP listening on port " + httpPort
-				deferredHttp.resolve()
+	mutualTLS = config.authentication.enableMutualTLSAuthentication
+	tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
+		return done err if err
 
-		if httpsPort
-			deferredHttps = Q.defer();
-			promises.push deferredHttps.promise
+		httpsServer = https.createServer options, app.callback()
+		httpsServer.listen httpsPort, ->
+			logger.info "HTTPS listening on port " + httpsPort
+			deferred.resolve()
 
-			mutualTLS = config.authentication.enableMutualTLSAuthentication
-			tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
+	return deferred
+
+# Ensure that a root user always exists
+ensureRootUser = (callback) ->
+	User.findOne { email: 'root@openhim.org' }, (err, user) ->
+		if !user
+			user = new User rootUser
+			user.save (err) ->
 				if err
-					return done err
-				httpsServer = https.createServer options, app.callback()
-				httpsServer.listen httpsPort, ->
-					logger.info "HTTPS listening on port " + httpsPort
-					deferredHttps.resolve()
+					logger.error "Could not save root user: " + err
+					return callback err
 
-		if apiPort
-			deferredRootUserCreation = Q.defer();
-			promises.push deferredRootUserCreation.promise
+				logger.info "Root user created."
+				callback()
+		else
+			callback()
 
-			deferredAPIHttp = Q.defer();
-			promises.push deferredAPIHttp.promise
+startApiServer = (apiPort, app) ->
+	deferred = Q.defer()
 
-			# Ensure that a root user always exists
-			User.findOne { email: 'root@openhim.org' }, (err, user) ->
-				if !user
-					user = new User rootUser
-					user.save (err) ->
-						if err
-							logger.error "Could not save root user: " + err
-							return done err
+	apiHttpServer = http.createServer app.callback()
+	apiHttpServer.listen apiPort, ->
+		logger.info "API listening on port " + apiPort
 
-						logger.info "Root user created."
-						deferredRootUserCreation.resolve()
-				else
-					logger.info "Root user already exists."
-					deferredRootUserCreation.resolve()
+		ensureRootUser -> deferred.resolve()
 
-			koaApi.setupApp (apiApp) ->
-				apiHttpServer = http.createServer apiApp.callback()
-				apiHttpServer.listen apiPort, ->
-					logger.info "API listening on port " + apiPort
-					deferredAPIHttp.resolve()
+	return deferred
 
+startTCPServersAndHttpReceiver = (tcpHttpReceiverPort, app) ->
+	defer = Q.defer()
 
-		(Q.all promises).then ->
-			startAgenda() if enableAlerts
-			done()
+	tcpHttpReceiver = http.createServer app.callback()
+	tcpHttpReceiver.listen tcpHttpReceiverPort, ->
+		logger.info "HTTP receiver for Socket adapter listening on port #{tcpHttpReceiverPort}"
+		tcpAdapter.startupServers (err) ->
+			logger.error err if err
+			defer.resolve()
 
-#######################################################
-### function to start the transactions rerun server ###
-#######################################################
-exports.startRerun = (httpPort, done) ->
-	
-	logger.info "Starting OpenHIM Transaction Rerun server..."
+	return defer
 
-	koaMiddleware.rerunApp (app) ->
-		promises = []
-		
-		if httpPort
-			deferredHttp = Q.defer()
-			promises.push deferredHttp.promise
+startRerunServer = (httpPort, app) ->
+	deferredHttp = Q.defer()
 
-			httpServer = http.createServer app.callback()
-			httpServer.listen httpPort, ->
-				logger.info "Transaction Rerun HTTP listening on port " + httpPort
-				deferredHttp.resolve()
+	rerunServer = http.createServer app.callback()
+	rerunServer.listen httpPort, ->
+		logger.info "Transaction Rerun HTTP listening on port " + httpPort
+		deferredHttp.resolve()
 
-		(Q.all promises).then ->
-			done()
-	
+	return deferredHttp
+
+exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPort, enableAlerts, done) ->
+	logger.info "Starting OpenHIM server..."
+	promises = []
+
+	if httpPort or httpsPort
+		koaMiddleware.setupApp (app) ->
+			promises.push startHttpServer(httpPort, app).promise if httpPort
+			promises.push startHttpsServer(httpsPort, app).promise if httpsPort
+
+	if apiPort
+		koaApi.setupApp (app) ->
+			promises.push startApiServer(apiPort, app).promise
+
+	if rerunHttpPort
+		koaMiddleware.rerunApp (app) ->
+			promises.push startRerunServer(rerunHttpPort, app).promise
+
+	if tcpHttpReceiverPort
+		koaMiddleware.tcpApp (app) ->
+			promises.push startTCPServersAndHttpReceiver(tcpHttpReceiverPort, app).promise
+
+	(Q.all promises).then ->
+		workerAPI.startupWorker() if rerunHttpPort
+		startAgenda() if enableAlerts
+		done()
+
 
 exports.stop = stop = (done) ->
 	promises = []
 
-	if httpServer
-		deferredHttp = Q.defer()
-		promises.push deferredHttp.promise
+	stopServer = (server, serverType) ->
+		deferred = Q.defer()
 
-		httpServer.close ->
-			logger.info "Stopped HTTP server"
-			deferredHttp.resolve()
+		server.close ->
+			logger.info "Stopped #{serverType} server"
+			deferred.resolve()
 
-	if httpsServer
-		deferredHttps = Q.defer()
-		promises.push deferredHttps.promise
+		return deferred.promise
 
-		httpsServer.close ->
-			logger.info "Stopped HTTPS server"
-			deferredHttps.resolve()
-
-	if apiHttpServer
-		deferredAPIHttp = Q.defer()
-		promises.push deferredAPIHttp.promise
-
-		apiHttpServer.close ->
-			logger.info "Stopped API server"
-			deferredAPIHttp.resolve()
-	
+	promises.push stopServer(httpServer, 'HTTP') if httpServer
+	promises.push stopServer(httpsServer, 'HTTPS') if httpsServer
+	promises.push stopServer(apiHttpServer, 'API HTTP') if apiHttpServer
+	promises.push stopServer(rerunServer, 'Rerun HTTP') if rerunServer
 	promises.push stopAgenda().promise if agenda
+
+	if tcpHttpReceiver
+		promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver')
+
+		defer = Q.defer()
+		tcpAdapter.stopServers -> defer.resolve()
+		promises.push defer.promise
 
 	(Q.all promises).then ->
 		httpServer = null
 		httpsServer = null
 		apiHttpServer = null
+		rerunServer = null
+		tcpHttpReceiver = null
 		agenda = null
 		done()
 
 if not module.parent
 	# start the server
-	exports.start config.router.httpPort, config.router.httpsPort, config.api.httpPort, config.alerts.enableAlerts, ->
-	exports.startRerun config.rerun.httpPort
+	httpPort = config.router.httpPort
+	httpsPort = config.router.httpsPort
+	apiPort = config.api.httpPort
+	rerunPort = config.rerun.httpPort
+	tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort
+	enableAlerts = config.alerts.enableAlerts
 
-	# setup shutdown listeners
-	process.on 'exit', stop
-	# interrupt signal, e.g. ctrl-c
-	process.on 'SIGINT', -> stop process.exit
-	# terminate signal
-	process.on 'SIGTERM', -> stop process.exit
+	exports.start httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, enableAlerts, ->
+		# setup shutdown listeners
+		process.on 'exit', stop
+		# interrupt signal, e.g. ctrl-c
+		process.on 'SIGINT', -> stop process.exit
+		# terminate signal
+		process.on 'SIGTERM', -> stop process.exit
