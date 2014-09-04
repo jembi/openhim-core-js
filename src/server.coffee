@@ -109,7 +109,7 @@ startApiServer = (apiPort, app) ->
 
 	return deferred
 
-startTCPServer = (tcpHttpReceiverPort, app) ->
+startTCPServersAndHttpReceiver = (tcpHttpReceiverPort, app) ->
 	defer = Q.defer()
 
 	tcpHttpReceiver = http.createServer app.callback()
@@ -150,7 +150,7 @@ exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPor
 
 	if tcpHttpReceiverPort
 		koaMiddleware.tcpApp (app) ->
-			promises.push startTCPServer(tcpHttpReceiverPort, app).promise
+			promises.push startTCPServersAndHttpReceiver(tcpHttpReceiverPort, app).promise
 
 	(Q.all promises).then ->
 		workerAPI.startupWorker() if rerunHttpPort

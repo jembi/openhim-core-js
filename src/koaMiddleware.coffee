@@ -7,6 +7,7 @@ rerunBypassAuthentication = require "./middleware/rerunBypassAuthentication"
 rerunBypassAuthorisation = require "./middleware/rerunBypassAuthorisation"
 rerunUpdateTransactionTask = require "./middleware/rerunUpdateTransactionTask"
 tcpBypassAuthentication = require "./middleware/tcpBypassAuthentication"
+retrieveTCPTransaction = require "./middleware/retrieveTCPTransaction"
 authorisation = require './middleware/authorisation'
 config = require './config/config'
 config.authentication = config.get('authentication')
@@ -26,15 +27,6 @@ rawBodyReader = `function *(next) {
 	yield next;
 }`
 
-retrieveTCPTransaction = `function *(next) {
-	//the body contains the key
-	var transaction = tcpAdapter.popTransaction(this.body);
-
-	this.body = transaction.data;
-	this.authorisedChannel = transaction.channel;
-
-	yield next;
-}`
 
 exports.setupApp = (done) ->
 	app = koa()
@@ -95,7 +87,7 @@ exports.tcpApp = (done) ->
 	app = koa()
 
 	app.use rawBodyReader
-	app.use retrieveTCPTransaction
+	app.use retrieveTCPTransaction.koaMiddleware
 
 	# TCP bypass authentication middlware
 	app.use tcpBypassAuthentication.koaMiddleware
