@@ -219,11 +219,12 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							seenChannelName = false
-							for s in tcpAdapter.tcpServers
-								seenChannelName = true if s.channel is tcpChannel.name
-							seenChannelName.should.be.true
-							done()
+							Channel.findOne { name: tcpChannel.name }, (err, channel) ->
+								seenChannelName = false
+								for s in tcpAdapter.tcpServers
+									seenChannelName = true if s.channelID.equals channel._id
+								seenChannelName.should.be.true
+								done()
 
 		describe '*getChannel(channelId)', ->
 
@@ -384,7 +385,7 @@ describe "API Integration Tests", ->
 							else
 								seenChannelName = false
 								for s in tcpAdapter.tcpServers
-									seenChannelName = true if s.channel is httpChannel.name
+									seenChannelName = true if s.channelID.equals httpChannel._id
 								seenChannelName.should.be.true
 								done()
 

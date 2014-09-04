@@ -22,19 +22,19 @@ exports.popTransaction = (key) ->
 
 startListening = (channel, tcpServer, host, port, callback) ->
 	tcpServer.listen port, host, ->
-		tcpServers.push { channel: channel.name, server: tcpServer }
+		tcpServers.push { channelID: channel._id, server: tcpServer }
 		callback null
 
 exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 	for existingServer in tcpServers
 		# server already running for channel
-		return callback null if existingServer.channel is channel.name
+		return callback null if existingServer.channelID.equals channel._id
 
 	host = channel.tcpHost
 	host = '0.0.0.0' if not host
 	port = channel.tcpPort
 
-	return callback "Channel #{channel.name}: TCP port not defined" if not port
+	return callback "Channel #{channel.name} (#{channel._id}): TCP port not defined" if not port
 
 	handler = (sock) ->
 		sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
@@ -49,7 +49,7 @@ exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 				if err
 					callback err
 				else
-					logger.info "Channel #{channel.name}: TLS server listening on port #{port}"
+					logger.info "Channel #{channel.name} (#{channel._id}): TLS server listening on port #{port}"
 					callback null
 	else if channel.type is 'tcp'
 		tcpServer = net.createServer handler
@@ -57,7 +57,7 @@ exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 			if err
 				callback err
 			else
-				logger.info "Channel #{channel.name}: TCP server listening on port #{port}"
+				logger.info "Channel #{channel.name} (#{channel._id}): TCP server listening on port #{port}"
 				callback null
 	else
 		return callback "Cannot handle #{channel.type} channels"
@@ -118,7 +118,7 @@ exports.stopServers = (callback) ->
 			defer = Q.defer()
 
 			server.server.close (err) ->
-				logger.info "Channel #{server.channel}: Stopped TCP server"
+				logger.info "Channel #{server.channelID}: Stopped TCP server"
 				defer.resolve()
 
 			promises.push defer.promise
