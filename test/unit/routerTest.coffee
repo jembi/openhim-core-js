@@ -268,7 +268,7 @@ describe "HTTP Router", ->
 				(req.headers.authorization == undefined).should.be.true
 				done()
 
-		it "should not probagate the authorization header present in the request headers", (done) ->
+		it "should not propagate the authorization header present in the request headers", (done) ->
 			testUtils.createMockServer 201, "Mock response body\n", 9872, (->
 				# Setup a channel for the mock endpoint
 				channel =
@@ -294,7 +294,7 @@ describe "HTTP Router", ->
 				(req.headers.authorization == undefined).should.be.true
 				done()
 
-		it "should not probagate the authorization header present in the request headers and must set the correct header if enabled on route", (done) ->
+		it "should not propagate the authorization header present in the request headers and must set the correct header if enabled on route", (done) ->
 			testUtils.createMockServer 201, "Mock response body\n", 9871, (->
 				# Setup a channel for the mock endpoint
 				channel =
