@@ -35,6 +35,9 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		if ctx.request.querystring
 			options.path += '?' + ctx.request.querystring
 
+		if options.headers && options.headers.authorization
+			delete options.headers.authorization
+
 		if route.username and route.password
 			options.auth = route.username + ":" + route.password
 
