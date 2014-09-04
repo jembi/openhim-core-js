@@ -22,7 +22,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
 
 	for route in routes
-		path = getDestinationPath route, ctx.request.url
+		path = getDestinationPath route, ctx.path
 		options =
 			hostname: route.host
 			port: route.port
