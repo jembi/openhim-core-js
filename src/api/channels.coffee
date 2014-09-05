@@ -2,12 +2,16 @@ Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
+tcpAdapter = require '../tcpAdapter'
+server = require "../server"
 
 isPathValid = (channel) ->
-	(channel.routes.map (route) ->
-		# There cannot be both path and pathTranform. pathTransform must be valid
-		not (route.path and route.pathTransform) and (not route.pathTransform or /s\/.*\/.*/.test route.pathTransform))
-		.reduce (a, b) -> a and b
+	if channel.routes?
+		for route in channel.routes
+			# There cannot be both path and pathTranform. pathTransform must be valid
+			if (route.path and route.pathTransform) or (route.pathTransform and not /s\/.*\/.*/.test route.pathTransform)
+				return false
+	return true
 
 ###
 # Retrieves the list of active channels
@@ -54,6 +58,14 @@ exports.addChannel = `function *addChannel() {
 		// All ok! So set the result
 		this.body = 'Channel successfully created';
 		this.status = 'created';
+
+		if (channel.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
+			tcpAdapter.startupTCPServer(channel, function(err){
+				if (err) {
+					logger.error('Failed to startup TCP server: ' + err);
+				}
+			});
+		}
 	}
 	catch (e) {
 		// Error! So inform the user
@@ -140,6 +152,15 @@ exports.updateChannel = `function *updateChannel(channelId) {
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully updated';
+
+		if (channelData.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
+			var channel = yield Channel.findOne({ _id: id }).exec();
+			tcpAdapter.startupTCPServer(channel, function(err){
+				if (err) {
+					logger.error('Failed to startup TCP server: ' + err);
+				}
+			});
+		}
 	}
 	catch (e) {
 		// Error! So inform the user

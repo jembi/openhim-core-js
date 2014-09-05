@@ -24,7 +24,7 @@ describe "API Integration Tests", ->
 
 		before (done) ->
 			auth.setupTestUsers (err) ->
-				server.start null, null, 8080, false,  ->
+				server.start null, null, 8080, null, null, false,  ->
 					done()
 
 		after (done) ->
@@ -41,7 +41,7 @@ describe "API Integration Tests", ->
 
 		describe "*addClient", ->
 
-			it  "should add client to db and return status 201 - client created", (done) ->     
+			it  "should add client to db and return status 201 - client created", (done) ->
 				request("http://localhost:8080")
 					.post("/clients")
 					.set("auth-username", testUtils.rootUser.email)

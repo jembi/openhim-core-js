@@ -1,6 +1,7 @@
 should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
+tcpAdapter = require "../../lib/tcpAdapter"
 Channel = require("../../lib/model/channels").Channel
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
@@ -41,7 +42,7 @@ describe "API Integration Tests", ->
 					channel2.save ->
 						auth.setupTestUsers (err) ->
 							return done err if err
-							server.start null, null, 8080, false, ->
+							server.start null, null, 8080, null, 7787, false, ->
 								done()
 
 		after (done) ->
@@ -190,6 +191,41 @@ describe "API Integration Tests", ->
 						else
 							done()
 
+			it 'should startup TCP server if the new channel is of type "tcp"', (done) ->
+				tcpChannel =
+					name: "TCPTestChannel-Add"
+					urlPattern: "/"
+					allow: [ 'tcp' ]
+					type: 'tcp'
+					tcpHost: '0.0.0.0'
+					tcpPort: 3600
+					routes: [
+								name: "TcpRoute"
+								host: "localhost"
+								port: 9876
+								primary: true
+								type: "tcp"
+							]
+
+				request("http://localhost:8080")
+					.post("/channels")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(tcpChannel)
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							Channel.findOne { name: tcpChannel.name }, (err, channel) ->
+								seenChannelName = false
+								for s in tcpAdapter.tcpServers
+									seenChannelName = true if s.channelID.equals channel._id
+								seenChannelName.should.be.true
+								done()
+
 		describe '*getChannel(channelId)', ->
 
 			it 'should fetch a specific channel by id', (done) ->
@@ -295,7 +331,7 @@ describe "API Integration Tests", ->
 								channel.should.have.property "urlPattern", "test/changed"
 								channel.allow.should.have.length 4
 								channel.routes.should.have.length 2
-								done();
+								done()
 
 			it 'should not allow a non admin user to update a channel', (done) ->
 
@@ -315,6 +351,44 @@ describe "API Integration Tests", ->
 						else
 							done()
 
+			it 'should startup a TCP server if the type is set to "tcp"', (done) ->
+				httpChannel = new Channel
+					name: "TestChannelForTCPUpdate"
+					urlPattern: "/"
+					allow: [ "test" ]
+					routes: [
+								name: "test route"
+								host: "localhost"
+								port: 9876
+								primary: true
+							]
+					txViewAcl: "group1"
+
+				changeToTCP = {
+					type: 'tcp'
+					tcpHost: '0.0.0.0'
+					tcpPort: 3601
+				}
+
+				httpChannel.save ->
+					request("http://localhost:8080")
+						.put("/channels/" + httpChannel._id)
+						.set("auth-username", testUtils.rootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.send(changeToTCP)
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								seenChannelName = false
+								for s in tcpAdapter.tcpServers
+									seenChannelName = true if s.channelID.equals httpChannel._id
+								seenChannelName.should.be.true
+								done()
+
 		describe '*removeChannel(channelId)', ->
 
 			it 'should remove a specific channel by name', (done) ->
@@ -332,7 +406,7 @@ describe "API Integration Tests", ->
 						else
 							Channel.find { name: "TestChannel1" }, (err, channels) ->
 								channels.should.have.length 0
-								done();
+								done()
 
 			it 'should only allow an admin user to remove a channel', (done) ->
 

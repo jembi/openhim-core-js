@@ -1,5 +1,6 @@
 http = require "http"
 https = require "https"
+net = require "net"
 fs = require "fs"
 User = require('../lib/model/users').User
 crypto = require "crypto"
@@ -38,6 +39,27 @@ exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, request
 
 	mockServer.listen port, callback
 	mockServer.on "request", requestCallback
+
+exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, callback) ->
+	server = net.createServer (sock) ->
+		sock.on 'data', (data) ->
+			response = if "#{data}" is expected then matchResponse else nonMatchResponse
+			sock.write response
+
+	server.listen port, 'localhost', -> callback server
+
+exports.createMockHTTPRespondingPostServer = (port, expected, matchResponse, nonMatchResponse, callback) ->
+	server = http.createServer (req, res) ->
+		req.on 'data', (data) ->
+			if "#{data}" is expected
+				res.writeHead 200, {"Content-Type": "text/plain"}
+				res.write matchResponse
+			else
+				res.writeHead 500, {"Content-Type": "text/plain"}
+				res.write nonMatchResponse
+			res.end()
+
+	server.listen port, 'localhost', -> callback server
 
 exports.rootUser =
 	firstname: 'Admin'
