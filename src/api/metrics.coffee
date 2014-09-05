@@ -5,6 +5,151 @@ mongoose = require 'mongoose'
 authorisation = require './authorisation'
 
 
+########################################################################
+# getGlobalLoadTimeMetrics() function for generating aggregated global Metrics #
+########################################################################
+exports.getGlobalLoadTimeMetrics = `function *getGlobalLoadTimeMetrics() {
+
+  var filtersObject = this.request.query;
+  var from, to
+  from = new Date(JSON.parse(filtersObject.startDate));
+  to = new Date(JSON.parse(filtersObject.endDate));
+
+  if (filtersObject.startDate && filtersObject.endDate) {
+    filtersObject['request.timestamp'] = { $lt: to, $gt: from }
+
+    //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+    delete filtersObject.startDate;
+    delete filtersObject.endDate;
+  }
+
+  var allowedChannels = yield authorisation.getUserViewableChannels(this.authenticated);
+  var allowedChannelIDs = [];
+
+  for (var i = 0; i < allowedChannels.length; i++) {
+    allowedChannelIDs.push(mongoose.Types.ObjectId(allowedChannels[i]._id));
+  }
+
+  filtersObject['channelID'] = { $in : allowedChannelIDs }
+
+  try {
+    var results = yield Transaction.aggregate([
+      { $match: filtersObject },
+      { $group: 
+        {
+          _id: {
+            year: {$year: "$request.timestamp"},
+            month: {$month: "$request.timestamp"},
+            day: {$dayOfMonth: "$request.timestamp"},
+            hour: {$hour: "$request.timestamp"}
+          },
+          load: { $sum: 1 },
+          avgResp: { 
+            $avg: {
+              $subtract : ["$response.timestamp","$request.timestamp"]
+            }
+          }
+        }
+      }
+    ]).exec();
+
+    this.body = []
+
+    for (var i = 0; i < results.length; i++) {
+      this.body.push({
+        load: results[i].load,
+        avgResp: results[i].avgResp,
+        timestamp : moment(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour, 'YYYY-MM-DD H').format()
+      });
+    }
+  } catch (e) {
+    logger.error('Could not get Transactions global metrics: ' + ' via the API: ' + e);
+    this.body = e.message;
+    this.status = 'internal server error';
+  }
+
+}`
+
+
+
+
+################################################################################################
+# getGlobalStatusMetrics() function for generating aggregated Transaction Status Metrics #
+################################################################################################
+exports.getGlobalStatusMetrics = `function *getGlobalStatusMetrics() {
+
+  var filtersObject = {};
+  var allowedChannels = yield authorisation.getUserViewableChannels(this.authenticated);
+  var allowedChannelIDs = [];
+
+  for (var i = 0; i < allowedChannels.length; i++) {
+    allowedChannelIDs.push(mongoose.Types.ObjectId(allowedChannels[i]._id));
+  }
+
+  filtersObject['channelID'] = { $in : allowedChannelIDs }
+  try {
+    var filtersObject = this.request.query;
+    var from, to
+    from = new Date(JSON.parse(filtersObject.startDate));
+    to = new Date(JSON.parse(filtersObject.endDate));
+
+    if (filtersObject.startDate && filtersObject.endDate) {
+      filtersObject['request.timestamp'] = { $lt: to, $gt: from }
+
+      //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+      delete filtersObject.startDate;
+      delete filtersObject.endDate;
+    }
+
+    var result = yield Transaction.aggregate([
+      { $match: filtersObject },
+      {
+        $group: {
+          _id: {
+            channelID: "$channelID"
+          },
+          failed: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Failed']}, 1, 0]
+            }
+          },
+          successful: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Successful']}, 1, 0]
+            }
+          },
+          processing: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Processing']}, 1, 0]
+            }
+          },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Completed']}, 1, 0]
+            }
+          },
+          completedWErrors: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Completed with error(s)']}, 1, 0]
+            }
+          }
+        }
+      }
+    ]).exec();
+
+    this.body = result;
+  }
+  catch (e) {
+    logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
+    this.body = e.message;
+    this.status = 'internal server error';
+  }
+
+}`
+
+
+
+
 ##########################################################################
 # getChannelMetrics() function for generating aggregated channel Metrics #
 ##########################################################################
@@ -126,147 +271,6 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
   }
   catch (e) {
     logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-
-}`
-
-
-################################################################################################
-# getTranstactionStatusMetrics() function for generating aggregated Transaction Status Metrics #
-################################################################################################
-exports.getTranstactionStatusMetrics = `function *getTranstactionStatusMetrics() {
-
-  var filtersObject = {};
-  var allowedChannels = yield authorisation.getUserViewableChannels(this.authenticated);
-  var allowedChannelIDs = [];
-
-  for (var i = 0; i < allowedChannels.length; i++) {
-    allowedChannelIDs.push(mongoose.Types.ObjectId(allowedChannels[i]._id));
-  }
-
-  filtersObject['channelID'] = { $in : allowedChannelIDs }
-  try {
-    var filtersObject = this.request.query;
-    var from, to
-    from = new Date(JSON.parse(filtersObject.startDate));
-    to = new Date(JSON.parse(filtersObject.endDate));
-
-    if (filtersObject.startDate && filtersObject.endDate) {
-      filtersObject['request.timestamp'] = { $lt: to, $gt: from }
-
-      //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-      delete filtersObject.startDate;
-      delete filtersObject.endDate;
-    }
-
-    var result = yield Transaction.aggregate([
-      { $match: filtersObject	},
-      {
-        $group: {
-          _id: {
-            channelID: "$channelID"
-          },
-          failed: {
-            $sum: {
-              $cond: [{	$eq: ["$status", 'Failed']}, 1, 0]
-            }
-          },
-          successful: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Successful']}, 1, 0]
-            }
-          },
-          processing: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Processing']}, 1, 0]
-            }
-          },
-          completed: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Completed']}, 1, 0]
-            }
-          },
-          completedWErrors: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Completed with error(s)']}, 1, 0]
-            }
-          }
-        }
-      }
-    ]).exec();
-
-    this.body = result;
-  }
-  catch (e) {
-    logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-
-}`
-
-
-########################################################################
-# getGlobalMetrics() function for generating aggregated global Metrics #
-########################################################################
-exports.getGlobalMetrics = `function *getGlobalMetrics() {
-
-  var filtersObject = this.request.query;
-  var from, to
-  from = new Date(JSON.parse(filtersObject.startDate));
-  to = new Date(JSON.parse(filtersObject.endDate));
-
-  if (filtersObject.startDate && filtersObject.endDate) {
-    filtersObject['request.timestamp'] = { $lt: to, $gt: from }
-
-    //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-    delete filtersObject.startDate;
-    delete filtersObject.endDate;
-  }
-
-  var allowedChannels = yield authorisation.getUserViewableChannels(this.authenticated);
-  var allowedChannelIDs = [];
-
-  for (var i = 0; i < allowedChannels.length; i++) {
-    allowedChannelIDs.push(mongoose.Types.ObjectId(allowedChannels[i]._id));
-  }
-
-  filtersObject['channelID'] = { $in : allowedChannelIDs }
-
-  try {
-    var results = yield Transaction.aggregate([
-      { $match: filtersObject	},
-      { $group: 
-        {
-          _id: {
-            year: {$year: "$request.timestamp"},
-            month: {$month: "$request.timestamp"},
-            day: {$dayOfMonth: "$request.timestamp"},
-            hour: {$hour: "$request.timestamp"}
-          },
-          load: { $sum: 1 },
-          avgResp: { 
-            $avg: {
-              $subtract : ["$response.timestamp","$request.timestamp"]
-            }
-          }
-        }
-      }
-    ]).exec();
-
-    this.body = []
-
-    for (var i = 0; i < results.length; i++) {
-      this.body.push({
-        load: results[i].load,
-        avgResp: results[i].avgResp,
-        timestamp : moment(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour, 'YYYY-MM-DD H').format()
-      });
-    }
-  } catch (e) {
-    logger.error('Could not get Transactions global metrics: ' + ' via the API: ' + e);
     this.body = e.message;
     this.status = 'internal server error';
   }

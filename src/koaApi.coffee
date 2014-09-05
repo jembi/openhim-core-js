@@ -60,9 +60,9 @@ exports.setupApp = (done) ->
 	app.use route.put '/tasks/:taskId', tasks.updateTask
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
 
-	app.use route.get '/metrics', metrics.getGlobalMetrics
-	app.use route.get '/metrics/status', metrics.getTranstactionStatusMetrics
-	app.use route.get '/metrics/:time/:channelId', metrics.getChannelMetrics
+	app.use route.get '/metrics', metrics.getGlobalLoadTimeMetrics
+	app.use route.get '/metrics/status', metrics.getGlobalStatusMetrics
+	app.use route.get '/metrics/:type/:channelId', metrics.getChannelMetrics
 
 	app.use route.get '/monitor', monitor.getMonitor
 
