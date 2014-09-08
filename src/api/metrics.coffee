@@ -3,6 +3,9 @@ moment = require 'moment'
 logger = require 'winston'
 mongoose = require 'mongoose'
 authorisation = require './authorisation'
+Subscriber = require('../model/subscribers').Subscriber
+Q = require 'q'
+
 
 exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
 
@@ -331,3 +334,49 @@ var filtersObject = this.request.query;
         this.status = 'internal server error';
   }
 }`;
+
+exports.subscribeToMetrics = `function *() {
+
+	var subscriptionObject = this.request.query;
+
+	var subscriberData = {
+		 channelID : subscriptionObject.channelID,
+		 subscriberEmail : subscriptionObject.email,
+		 type : subscriptionObject.type,
+		 period : subscriptionObject.period
+	}
+
+	var id = unescape(subscriberData.channelID);
+	var result = null;
+	var accessDenied = false;
+	// if admin allow acces to all channels otherwise restrict result set
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		result = yield Channel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec();
+		var adminResult = yield Channel.findById(id).exec();
+		if (!!adminResult) {
+			accessDenied = true;
+		}
+	} else {
+
+	}
+
+	if (accessDenied) {
+		// Channel exists but this user doesn't have access
+		this.body = "Not allowed to subscribe to channel with Id: '" + id + "'.";
+		this.status = 'forbidden';
+
+	} else {
+		try {
+			var subscriber = new Subscriber(subscriberData);
+			var result = yield Q.ninvoke(subscriber, 'save');
+
+			this.body = 'Subscriber successfully created';
+			this.status = 'created';
+		} catch(e) {
+			logger.error('Could not add a subscriber via the API: ' + e);
+			this.body = e.message;
+			this.status = "bad request";
+		}
+	}
+
+}`
