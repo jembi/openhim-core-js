@@ -177,8 +177,13 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
   var channelID = mongoose.Types.ObjectId(channelId);
   var filtersObject = this.request.query;
   var from, to
-  from = new Date(JSON.parse(filtersObject.startDate));
-  to = new Date(JSON.parse(filtersObject.endDate));
+  if (filtersObject.startDate && filtersObject.endDate){
+    from = new Date(JSON.parse(filtersObject.startDate));
+    to = new Date(JSON.parse(filtersObject.endDate));
+  } else {
+    from =  moment().subtract(1,'days').toDate();
+    to =  moment().toDate();
+  }
 
   filtersObject.channelID = channelID;
   if (filtersObject.startDate && filtersObject.endDate) {

@@ -173,7 +173,7 @@ describe "API Metrics Tests", ->
 		
 		describe '*getGlobalLoadTimeMetrics()', ->
 
-			it 'should fetch channel metrics based by ID', (done) ->
+			it 'should fetch dashbord channel metrics based on the currently logged in user permissions', (done) ->
 
 				request("http://localhost:8080")
 					.get("/metrics")
@@ -195,7 +195,7 @@ describe "API Metrics Tests", ->
 
 		describe '*getGlobalStatusMetrics()', ->
 
-			it 'should fetch global status metrics', (done) ->
+			it 'should fetch global status metrics based on the currently logged in user permissions', (done) ->
 
 				request "http://localhost:8080"
 					.get "/metrics/status"
@@ -218,7 +218,7 @@ describe "API Metrics Tests", ->
 			it 'should fetch channel metrics based by ID', (done) ->
 
 				request("http://localhost:8080")
-				.get("/metrics/")
+				.get("/metrics/day/222222222222222222222222")
 				.set("auth-username", testUtils.rootUser.email)
 				.set("auth-ts", authDetails.authTS)
 				.set("auth-salt", authDetails.authSalt)
@@ -229,7 +229,7 @@ describe "API Metrics Tests", ->
 						console.log(err)
 						done err
 					else
-						res.body.should.have.length 10
+						res.body.should.have.length 4
 						res.body[0].should.have.property 'load'
 						res.body[0].should.have.property 'avgResp'
 						res.body[0].should.have.property 'timestamp'
