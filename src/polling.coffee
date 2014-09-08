@@ -4,6 +4,7 @@ config = require './config/config'
 config.polling = config.get('polling')
 logger = require 'winston'
 Q = require 'q'
+logger = require 'winston'
 
 exports.agendaGlobal = null
 
@@ -13,7 +14,13 @@ exports.registerPollingChannel = (channel, callback) ->
 	exports.agendaGlobal.cancel { name: "polling-job-#{channel._id}" }, (err) ->
 		return callback err if err
 		exports.agendaGlobal.define "polling-job-#{channel._id}", (job, done) ->
-			request "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger", ->
+			logger.info "Polling channel #{channel._id}"
+
+			options =
+				url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
+				headers: { 'channel-id': channel._id }
+
+			request options, ->
 				done()
 
 		exports.agendaGlobal.every channel.pollingSchedule, "polling-job-#{channel._id}"

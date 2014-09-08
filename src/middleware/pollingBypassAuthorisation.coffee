@@ -4,7 +4,7 @@ logger = require "winston"
 
 exports.authoriseUser = (ctx, done) ->
 
-	Channel.findOne { _id: ctx.request.header.channelid }, (err, channel) ->
+	Channel.findOne { _id: ctx.request.header['channel-id'] }, (err, channel) ->
 		ctx.authorisedChannel = channel
 		done null, channel
 
