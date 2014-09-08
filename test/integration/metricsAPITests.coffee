@@ -156,8 +156,9 @@ describe "API Metrics Tests", ->
 														transaction8.save (err) ->
 															transaction9.save (err) ->
 																transaction10.save (err) ->
-																	auth.setupTestUsers ->
-																		server.start null, null, 8080, false, ->
+																	auth.setupTestUsers (err) ->
+																		return done err if err
+																		server.start null, null, 8080, null, 7787, false, ->
 																			done()
 
 		after (done) ->
@@ -170,7 +171,7 @@ describe "API Metrics Tests", ->
 		beforeEach ->
 			authDetails = auth.getAuthDetails()
 		
-		describe '*getChannelMetrics()', ->
+		describe '*getGlobalLoadTimeMetrics()', ->
 
 			it 'should fetch channel metrics based by ID', (done) ->
 
@@ -186,7 +187,52 @@ describe "API Metrics Tests", ->
 							console.log(err)
 							done err
 						else
-							res.body.should.have.property "_id", "aaa908908bbb98cc1d0809ee"
-							res.body.should.have.property "status", "Completed"
-							res.body.transactions.should.have.length 4
+							res.body.should.have.length 10
+							res.body[0].should.have.property 'load'
+							res.body[0].should.have.property 'avgResp'
+							res.body[0].should.have.property 'timestamp'
 							done()
+
+		describe '*getGlobalStatusMetrics()', ->
+
+			it 'should fetch global status metrics', (done) ->
+
+				request "http://localhost:8080"
+					.get "/metrics/status"
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							console.log(err)
+							done err
+						else
+							res.body.should.have.length 2
+							res.body[0].should.have.properties 'failed','successful','processing','completed','completedWErrors'
+							done()
+
+		describe '*getLoadTimeMetrics()', ->
+
+			it 'should fetch channel metrics based by ID', (done) ->
+
+				request("http://localhost:8080")
+				.get("/metrics/")
+				.set("auth-username", testUtils.rootUser.email)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
+				.expect(200)
+				.end (err, res) ->
+					if err
+						console.log(err)
+						done err
+					else
+						res.body.should.have.length 10
+						res.body[0].should.have.property 'load'
+						res.body[0].should.have.property 'avgResp'
+						res.body[0].should.have.property 'timestamp'
+						done()
+
+

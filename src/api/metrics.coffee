@@ -15,8 +15,15 @@ exports.getGlobalLoadTimeMetrics = `function *getGlobalLoadTimeMetrics() {
 
   var filtersObject = this.request.query;
   var from, to
-  from = new Date(JSON.parse(filtersObject.startDate));
-  to = new Date(JSON.parse(filtersObject.endDate));
+
+  if (filtersObject.startDate && filtersObject.endDate){
+    from = new Date(JSON.parse(filtersObject.startDate));
+    to = new Date(JSON.parse(filtersObject.endDate));
+  } else {
+    from =  moment().subtract(1,'weeks').toDate();
+    to =  moment().toDate();
+  }
+
 
   if (filtersObject.startDate && filtersObject.endDate) {
     filtersObject['request.timestamp'] = { $lt: to, $gt: from }
@@ -82,6 +89,8 @@ exports.getGlobalLoadTimeMetrics = `function *getGlobalLoadTimeMetrics() {
 exports.getGlobalStatusMetrics = `function *getGlobalStatusMetrics() {
 
   var filtersObject = {};
+  filtersObject = this.request.query;
+  var from, to
   var allowedChannels = yield authorisation.getUserViewableChannels(this.authenticated);
   var allowedChannelIDs = [];
 
@@ -90,11 +99,18 @@ exports.getGlobalStatusMetrics = `function *getGlobalStatusMetrics() {
   }
 
   filtersObject['channelID'] = { $in : allowedChannelIDs }
-  try {
-    var filtersObject = this.request.query;
-    var from, to
+
+   if (filtersObject.startDate && filtersObject.endDate){
     from = new Date(JSON.parse(filtersObject.startDate));
     to = new Date(JSON.parse(filtersObject.endDate));
+  } else {
+    from =  moment().subtract(1,'weeks').toDate();
+    to =  moment().toDate();
+  }
+
+  try {
+
+
 
     if (filtersObject.startDate && filtersObject.endDate) {
       filtersObject['request.timestamp'] = { $lt: to, $gt: from }
@@ -306,7 +322,7 @@ exports.subscribeToMetrics = `function *() {
 
 	if (accessDenied) {
 		// Channel exists but this user doesn't have access
-		this.body = "Not allowed to subscribe to channel with Id: '" + id + "'.";
+		this.body = "Not allowed to subscribe to channel with Id: '" + id + "'."
 		this.status = 'forbidden';
 
 	} else {
