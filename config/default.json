@@ -10,9 +10,15 @@
     "httpPort": 7786,
     "host": "localhost"
   },
+  "tcpAdapter": {
+    "httpReceiver": {
+        "httpPort": 7787,
+        "host": "localhost"
+    }
+  },
   "authentication": {
-    "enableMutualTLSAuthentication": false,
-    "enableBasicAuthentication": true
+    "enableMutualTLSAuthentication": true,
+    "enableBasicAuthentication": false
   },
   "nodemailer": {
     "service": "Gmail",

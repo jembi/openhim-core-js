@@ -23,7 +23,7 @@ describe "HTTP Router", ->
 				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
-				ctx.request.url = "/test"
+				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
 
 				router.route ctx, (err) ->
@@ -55,9 +55,38 @@ describe "HTTP Router", ->
 			ctx.authorisedChannel = channel
 			ctx.request = new Object()
 			ctx.response = new Object()
-			ctx.request.url = "/test/multicasting"
+			ctx.path = ctx.request.url = "/test/multicasting"
 			ctx.request.method = "GET"
 			return ctx
+
+		it "should route an incomming https request to the endpoints specific by the channel config", (done) ->
+			testUtils.createMockHTTPSServer 201, "Mock response body\n", 9877, ->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+						secured: true
+						host: "localhost"
+						port: 9877
+						primary: true
+					]
+
+				ctx = new Object()
+				ctx.authorisedChannel = channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.path = ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+
+					ctx.response.status.should.be.exactly 201
+					ctx.response.body.toString().should.be.eql "Secured Mock response body\n"
+					ctx.response.header.should.be.ok
+					done()
 
 		it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
 			testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
@@ -173,7 +202,8 @@ describe "HTTP Router", ->
 				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
-				ctx.request.url = "/test"
+				ctx.path = "/test"
+				ctx.request.url = "/test?parma1=val1&parma2=val2"
 				ctx.request.method = "GET"
 				ctx.request.querystring = "parma1=val1&parma2=val2"
 
@@ -181,7 +211,7 @@ describe "HTTP Router", ->
 					if err
 						return done err
 			), (req, res) ->
-				req.url.should.eql("/test?parma1=val1&parma2=val2");
+				req.url.should.eql("/test?parma1=val1&parma2=val2")
 				done()
 
 	describe "Basic Auth", ->
@@ -239,6 +269,62 @@ describe "HTTP Router", ->
 				(req.headers.authorization == undefined).should.be.true
 				done()
 
+		it "should not propagate the authorization header present in the request headers", (done) ->
+			testUtils.createMockServer 201, "Mock response body\n", 9872, (->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+								host: "localhost"
+								port: 9872
+								primary: true
+							]
+				ctx = new Object()
+				ctx.authorisedChannel = channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+				ctx.request.header = { authorization: "Basic bWU6bWU=" }
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+			), (req, res) ->
+				(req.headers.authorization == undefined).should.be.true
+				done()
+
+		it "should not propagate the authorization header present in the request headers and must set the correct header if enabled on route", (done) ->
+			testUtils.createMockServer 201, "Mock response body\n", 9871, (->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+								host: "localhost"
+								port: 9871
+								primary: true
+								username: "username"
+								password: "password"
+							]
+
+				ctx = new Object()
+				ctx.authorisedChannel = channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.request.url = "/test"
+				ctx.request.method = "GET"
+				ctx.request.header = { authorization: "Basic bWU6bWU=" }
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+			), (req, res) ->
+				# Base64("username:password") = "dXNlcm5hbWU6cGFzc3dvcmQ=""
+				req.headers.authorization.should.be.exactly "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
+				done()
+
 	describe "Path Redirection", ->
 		describe ".transformPath", ->
 			it "must transform the path string correctly", (done) ->
@@ -261,7 +347,7 @@ describe "HTTP Router", ->
 				ctx.authorisedChannel = channel
 				ctx.request = new Object()
 				ctx.response = new Object()
-				ctx.request.url = "/test"
+				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
 
 				router.route ctx, (err) ->

@@ -55,8 +55,9 @@ worker.register rerun_transaction: (params, callback) ->
             logger.error(err)
             return callback err, null
 
-logger.info('Starting the workers')
-worker.start()
+exports.startupWorker = ->
+	worker.start()
+	logger.info('Started up rerun queue worker')
 
 #####################################################################################################
 # Worker Process - Register the worker - Start the worker - Consume 'jobs' awaiting to be processed #

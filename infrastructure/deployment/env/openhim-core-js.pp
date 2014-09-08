@@ -27,12 +27,14 @@ package { "build-essential":
 	ensure => "installed",
 }
 
-class { "mongodb::globals":
-	manage_package_repo => true
-}
+if $environment != 'deployment' {
+    class { "mongodb::globals":
+        manage_package_repo => true
+    }
 
-class { "mongodb":
-	init => "upstart",
+    class { "mongodb":
+        init => "upstart",
+    }
 }
 
 class { "nodejs":

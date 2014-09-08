@@ -62,7 +62,7 @@ describe "e2e Integration Tests", ->
 					done()
 
 			it "should forward a request to the configured routes if the client is authenticated and authorised", (done) ->
-				server.start 5001, 5000, null, false, ->
+				server.start 5001, 5000, null, null, null, false, ->
 					options =
 						host: "localhost"
 						path: "/test/mock"
@@ -77,7 +77,7 @@ describe "e2e Integration Tests", ->
 					req.end()
 
 			it "should reject a request when using an invalid cert", (done) ->
-				server.start 5001, 5000, null, false, ->
+				server.start 5001, 5000, null, null, null, false, ->
 					options =
 						host: "localhost"
 						path: "/test/mock"
@@ -140,10 +140,11 @@ describe "e2e Integration Tests", ->
 
 			describe "with no credentials", ->
 				it "should `throw` 401", (done) ->
-					server.start 5001, null, null, false, ->
+					server.start 5001, null, null, null, null, false, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.expect(401)
+							.expect('WWW-Authenticate', 'Basic')
 							.end (err, res) ->
 								if err
 									done err
@@ -152,11 +153,12 @@ describe "e2e Integration Tests", ->
 
 			describe "with incorrect credentials", ->
 				it "should `throw` 401", (done) ->
-					server.start 5001, null, null, false, ->
+					server.start 5001, null, null, null, null, false, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.auth("incorrect_user", "incorrect_password")
 							.expect(401)
+							.expect('WWW-Authenticate', 'Basic')
 							.end (err, res) ->
 								if err
 									done err
@@ -165,7 +167,7 @@ describe "e2e Integration Tests", ->
 			
 			describe "with correct credentials", ->
 				it "should return 200 OK", (done) ->
-					server.start 5001, null, null, false, ->
+					server.start 5001, null, null, null, null, false, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.auth("testApp", "password")
@@ -229,7 +231,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, false, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.send(testDoc)
@@ -242,12 +244,77 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, false, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.send(testDoc)
 					.auth("testApp", "password")
 					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+	describe "HTTP header tests", ->
+
+		mockServer = null
+		testDoc = "<test>test message</test>"
+
+		before (done) ->
+			config.authentication.enableMutualTLSAuthentication = false
+			config.authentication.enableBasicAuthentication = true
+
+			#Setup some test data
+			channel1 = new Channel
+				name: "TEST DATA - Mock endpoint"
+				urlPattern: "test/mock"
+				allow: [ "PoC" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							port: 6262
+							primary: true
+						]
+			channel1.save (err) ->
+				testAppDoc =
+					clientID: "testApp"
+					clientDomain: "test-client.jembi.org"
+					name: "TEST Client"
+					roles:
+						[
+							"OpenMRS_PoC"
+							"PoC"
+						]
+					passwordAlgorithm: "sha512"
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+					passwordSalt: "1234567890"
+					cert: ""
+
+				client = new Client testAppDoc
+				client.save (error, newAppDoc) ->
+					# Create mock endpoint to forward requests to
+					mockServer = testUtils.createMockServer 201, testDoc, 6262, ->
+						done()
+
+		after (done) ->
+			Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
+				Client.remove { clientID: "testApp" }, ->
+					mockServer.close ->
+						done()
+
+		afterEach (done) ->
+			server.stop ->
+				done()
+
+		it "should keep HTTP headers of the response intact", (done) ->
+			server.start 5001, null, null, null, null, false, ->
+				request("http://localhost:5001")
+					.get("/test/mock")
+					.send(testDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.expect('Content-Type', 'text/plain')
 					.end (err, res) ->
 						if err
 							done err
@@ -320,7 +387,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, false, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.set("Content-Type", "text/xml")
@@ -334,7 +401,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, false, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.set("Content-Type", "text/xml")
@@ -409,7 +476,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, false, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.set("Content-Type", "application/json")
@@ -423,7 +490,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, false, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.set("Content-Type", "application/json")
@@ -490,7 +557,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, false, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.send(testRegExDoc)
@@ -503,7 +570,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, false, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.send(testRegExDoc)

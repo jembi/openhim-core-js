@@ -1,4 +1,6 @@
 http = require 'http'
+https = require 'https'
+net = require 'net'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
 Q = require 'q'
@@ -20,19 +22,24 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
 
 	for route in routes
-		path = getDestinationPath route, ctx.request.url
+		path = getDestinationPath route, ctx.path
 		options =
 			hostname: route.host
 			port: route.port
 			path: path
 			method: ctx.request.method
 			headers: ctx.request.header
+			agent: false
+			rejectUnauthorized: false
 
 		if ctx.request.querystring
 			options.path += '?' + ctx.request.querystring
-		
+
+		if options.headers && options.headers.authorization
+			delete options.headers.authorization
+
 		if route.username and route.password
-			options.auth = route.username+":"+route.password
+			options.auth = route.username + ":" + route.password
 
 		if options.headers && options.headers.host
 			delete options.headers.host
@@ -47,43 +54,91 @@ sendRequestToRoutes = (ctx, routes, next) ->
 				headers: ctx.request.header
 				querystring: ctx.request.querystring
 				method: ctx.request.method
-				timestamp: new Date()
 			routeResponse.response = {}
 			ctx.routes = [] if not ctx.routes
 			ctx.routes.push routeResponse
 			response = routeResponse.response
 
-		promises.push sendRequest ctx, response, options
+		secured = false #default to unsecured route
 
-	(Q.all promises).then -> next()
+		if route.secured
+			secured = true
 
-sendRequest = (ctx, responseDst, options) ->
+		promises.push sendRequest ctx, route.type, response, options, secured
+
+	(Q.all promises).then ->
+		next()
+
+sendRequest = (ctx, routeType, responseDst, options, secured) ->
 	deferred = Q.defer()
 
-	routeReq = http.request options, (routeRes) ->
+	if routeType is 'tcp'
+		logger.info 'Routing tcp request'
+		sendSocketRequest ctx, responseDst, options, secured, deferred.resolve
+	else
+		logger.info 'Routing http(s) request'
+		sendHttpRequest ctx, responseDst, options, secured, deferred.resolve
+
+	return deferred.promise
+
+sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
+	method = http
+
+	if secured
+		method = https
+
+	routeReq = method.request options, (routeRes) ->
 		responseDst.status = routeRes.statusCode
-		responseDst.header = routeRes.headers
+
+		# copy across http headers
+		if not responseDst.header
+			responseDst.header = {}
+		for key, value of routeRes.headers
+			responseDst.header[key] = value
 
 		responseDst.body = ''
-		routeRes.on "data", (chunk) -> responseDst.body += chunk
+		routeRes.on "data", (chunk) ->
+			responseDst.body += chunk
 
 		routeRes.on "end", ->
 			responseDst.timestamp = new Date()
-			deferred.resolve()
+			callback()
 
 	routeReq.on "error", (err) ->
 		responseDst.status = status.INTERNAL_SERVER_ERROR
 		responseDst.timestamp = new Date()
 
 		logger.error err
-		deferred.resolve()
+		callback()
 
 	if ctx.request.method == "POST" || ctx.request.method == "PUT"
 		routeReq.write ctx.body
 
 	routeReq.end()
 
-	return deferred.promise
+sendSocketRequest = (ctx, responseDst, options, secured, callback) ->
+	requestBody = ctx.body
+	client = new net.Socket()
+	responseDst.body = ''
+
+	client.connect options.port, options.hostname, ->
+		logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
+		client.write requestBody
+
+	client.on 'data', (chunk) ->
+		responseDst.status = status.OK
+		responseDst.body += chunk
+		responseDst.timestamp = new Date()
+		client.end()
+		callback()
+
+	client.on 'error', (err) ->
+		responseDst.status = status.INTERNAL_SERVER_ERROR
+		responseDst.timestamp = new Date()
+
+		logger.error err
+		callback()
+
 
 getDestinationPath = (route, requestPath) ->
 	if route.path
@@ -109,10 +164,10 @@ exports.transformPath = transformPath = (path, expression) ->
 	sub = sExpression.split '/'
 
 	from = sub[1].replace /:/g, '\/'
-	to = if sub.length>2 then sub[2] else ""
+	to = if sub.length > 2 then sub[2] else ""
 	to = to.replace /:/g, '\/'
 
-	if sub.length>3 and sub[3] is 'g'
+	if sub.length > 3 and sub[3] is 'g'
 		fromRegex = new RegExp from, 'g'
 	else
 		fromRegex = new RegExp from
@@ -144,7 +199,7 @@ exports.route = (ctx, next) ->
 # Use with: app.use(router.koaMiddleware)
 ###
 exports.koaMiddleware = `function *routeMiddleware(next) {
-		var route = Q.denodeify(exports.route);
-		yield route(this);
-		yield next;
-	}`
+	var route = Q.denodeify(exports.route);
+	yield route(this);
+	yield next;
+}`
