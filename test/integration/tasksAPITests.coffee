@@ -39,7 +39,7 @@ describe "API Integration Tests", ->
 			task1.save ->
 				task2.save ->
 					auth.setupTestUsers ->
-						server.start null, null, 8080, null, null, false, ->
+						server.start null, null, 8080, null, null, null, ->
 							done()
 
 		after (done) ->

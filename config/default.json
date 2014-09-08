@@ -16,6 +16,10 @@
         "host": "localhost"
     }
   },
+  "polling": {
+    "pollingPort": 7788,
+    "host": "localhost"
+  },
   "authentication": {
     "enableMutualTLSAuthentication": true,
     "enableBasicAuthentication": false

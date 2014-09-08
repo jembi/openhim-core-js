@@ -98,25 +98,25 @@ describe "TCP/TLS Integration Tests", ->
 	afterEach (done) -> server.stop done
 
 	it "should route TCP messages", (done) ->
-		server.start null, null, null, null, 7787, false, ->
+		server.start null, null, null, null, 7787, null, ->
 			sendTCPTestMessage 4000, (data) ->
 				data.should.be.exactly 'OK'
 				done()
 
 	it "should route TLS messages", (done) ->
-		server.start null, null, null, null, 7787, false, ->
+		server.start null, null, null, null, 7787, null, ->
 			sendTLSTestMessage 4001, (data) ->
 				data.should.be.exactly 'OK'
 				done()
 
 	it "should route TCP messages to HTTP routes", (done) ->
-		server.start null, null, null, null, 7787, false, ->
+		server.start null, null, null, null, 7787, null, ->
 			sendTCPTestMessage 4002, (data) ->
 				data.should.be.exactly 'OK'
 				done()
 
 	it "should persist messages", (done) ->
-		server.start null, null, null, null, 7787, false, ->
+		server.start null, null, null, null, 7787, null, ->
 			sendTCPTestMessage 4000, (data) ->
 				Transaction.find {}, (err, trx) ->
 					trx.length.should.be.exactly 1

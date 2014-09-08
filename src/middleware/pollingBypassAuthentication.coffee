@@ -3,10 +3,10 @@ Client = require("../model/clients").Client
 logger = require "winston"
 
 dummyClient = new Client
-	clientID: 'DUMMY-TCP-USER'
+	clientID: 'DUMMY-POLLING-USER'
 	clientDomain: 'openhim.org'
-	name: 'DUMMY-TCP-USER'
-	roles: ['tcp']
+	name: 'DUMMY-POLLING-USER'
+	roles: ['polling']
 
 exports.authenticateUser = (ctx, done) ->
 	ctx.authenticated = dummyClient
@@ -14,9 +14,9 @@ exports.authenticateUser = (ctx, done) ->
 	
 
 ###
-# Koa middleware for bypassing authentication for tcp requests
+# Koa middleware for bypassing authentication for polling requests
 ###
-exports.koaMiddleware = `function *tcpBypassAuthMiddleware(next) {
+exports.koaMiddleware = `function *pollingBypassAuthMiddleware(next) {
 	
 	var authenticateUser = Q.denodeify(exports.authenticateUser);
 	yield authenticateUser(this);

@@ -12,6 +12,7 @@ config.rerun = config.get('rerun')
 config.tcpAdapter = config.get('tcpAdapter')
 config.logger = config.get('logger')
 config.alerts = config.get('alerts')
+config.polling = config.get('polling')
 Q = require "q"
 logger = require "winston"
 logger.level = config.logger.level
@@ -19,6 +20,7 @@ mongoose = require "mongoose"
 User = require('./model/users').User
 Agenda = require 'agenda'
 alerts = require './alerts'
+polling = require './polling'
 tcpAdapter = require './tcpAdapter'
 workerAPI = require "./api/worker"
 
@@ -30,6 +32,7 @@ httpsServer = null
 apiHttpServer = null
 rerunServer = null
 tcpHttpReceiver = null
+pollingServer = null
 
 exports.isTcpHttpReceiverRunning = -> tcpHttpReceiver?
 
@@ -48,9 +51,10 @@ agenda = null
 
 startAgenda = ->
 	agenda = new Agenda db: { address: config.mongo.url}
-	alerts.setupAgenda agenda
-	agenda.start()
-	logger.info "Started agenda job scheduler"
+	alerts.setupAgenda agenda if config.alerts.enableAlerts
+	polling.setupAgenda agenda, ->
+		agenda.start()
+		logger.info "Started agenda job scheduler"
 
 stopAgenda = ->
 	defer = Q.defer()
@@ -131,7 +135,18 @@ startRerunServer = (httpPort, app) ->
 
 	return deferredHttp
 
-exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPort, enableAlerts, done) ->
+startPollingServer = (pollingPort, app) ->
+	defer = Q.defer()
+
+	pollingServer = http.createServer app.callback()
+	pollingServer.listen pollingPort, (err) ->
+		logger.error err if err
+		logger.info 'Polling port listenting on port ' + pollingPort
+		defer.resolve()
+
+	return defer
+
+exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPort, pollingPort, done) ->
 	logger.info "Starting OpenHIM server..."
 	promises = []
 
@@ -152,9 +167,13 @@ exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPor
 		koaMiddleware.tcpApp (app) ->
 			promises.push startTCPServer(tcpHttpReceiverPort, app).promise
 
+	if pollingPort
+		koaMiddleware.pollingApp (app) ->
+			promises.push startPollingServer(pollingPort, app).promise
+
 	(Q.all promises).then ->
 		workerAPI.startupWorker() if rerunHttpPort
-		startAgenda() if enableAlerts
+		startAgenda()
 		done()
 
 
@@ -189,6 +208,7 @@ exports.stop = stop = (done) ->
 		apiHttpServer = null
 		rerunServer = null
 		tcpHttpReceiver = null
+		pollingServer = null
 		agenda = null
 		done()
 
@@ -199,9 +219,9 @@ if not module.parent
 	apiPort = config.api.httpPort
 	rerunPort = config.rerun.httpPort
 	tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort
-	enableAlerts = config.alerts.enableAlerts
+	pollingPort = config.polling.pollingPort
 
-	exports.start httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, enableAlerts, ->
+	exports.start httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, pollingPort, ->
 		# setup shutdown listeners
 		process.on 'exit', stop
 		# interrupt signal, e.g. ctrl-c
