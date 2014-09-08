@@ -249,7 +249,7 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
         accessDenied = true;
       }
     } else {
-      var results = yield Transaction.aggregate([{ $match: filtersObject }, { $group: groupObject }]).exec();
+       results = yield Transaction.aggregate([{ $match: filtersObject }, { $group: groupObject }]).exec();
     }
 
     this.body = []
