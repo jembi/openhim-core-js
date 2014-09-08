@@ -232,9 +232,37 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
       delete groupObject._id.month;
       break;
     case 'status':
-      groupObject._id = {};
-      groupObject._id = { status : "$status" }
-      delete groupObject.avgResp;
+      groupObject = {
+          _id: {
+            channelID: "$channelID"
+          },
+          failed: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Failed']}, 1, 0]
+            }
+          },
+          successful: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Successful']}, 1, 0]
+            }
+          },
+          processing: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Processing']}, 1, 0]
+            }
+          },
+          completed: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Completed']}, 1, 0]
+            }
+          },
+          completedWErrors: {
+            $sum: {
+              $cond: [{ $eq: ["$status", 'Completed with error(s)']}, 1, 0]
+            }
+          }
+        }
+
       break;
     default :
       //do nothng

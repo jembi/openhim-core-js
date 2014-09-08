@@ -235,4 +235,22 @@ describe "API Metrics Tests", ->
 						res.body[0].should.have.property 'timestamp'
 						done()
 
+		describe '*getStatusMetrics()', ->
+
+			it 'should fetch global status metrics based on the currently logged in user permissions', (done) ->
+
+				request "http://localhost:8080"
+				.get "/metrics/status/222222222222222222222222"
+				.set("auth-username", testUtils.rootUser.email)
+				.set("auth-ts", authDetails.authTS)
+				.set("auth-salt", authDetails.authSalt)
+				.set("auth-token", authDetails.authToken)
+				.expect(200)
+				.end (err, res) ->
+					if err
+						console.log(err)
+						done err
+					else
+						res.body[0].should.have.properties 'failed','successful','processing','completed','completedWErrors'
+						done()
 
