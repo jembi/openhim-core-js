@@ -42,7 +42,6 @@ describe 'Polling tests', ->
 			polling.registerPollingChannel testChannel, ->
 				agendaSpy.define.calledOnce.should.be.true
 				agendaSpy.define.getCall(0).args[0].should.eql('polling-job-' + testChannel._id)
-
 				done()
 
 		it 'should cancel a job if it already exists', (done) ->
@@ -51,7 +50,6 @@ describe 'Polling tests', ->
 			polling.registerPollingChannel testChannel, ->
 				agendaSpy.cancel.calledOnce.should.be.true
 				agendaSpy.cancel.getCall(0).args[0].should.eql({ name: 'polling-job-' + testChannel._id })
-
 				done()
 
 		it 'should set the polling job', (done) ->
@@ -61,7 +59,6 @@ describe 'Polling tests', ->
 				agendaSpy.every.calledOnce.should.be.true
 				agendaSpy.every.getCall(0).args[0].should.eql testChannel.pollingSchedule
 				agendaSpy.every.getCall(0).args[1].should.eql "polling-job-#{testChannel._id}"
-
 				done()
 
 		it 'should return an error if a the polling schedule is not set', (done) ->
@@ -69,7 +66,6 @@ describe 'Polling tests', ->
 			polling.setupAgenda agendaSpy
 			polling.registerPollingChannel testChannel2, (err) ->
 				err.should.exist
-
 				done()
 
 	describe 'removePollingChannel', ->
@@ -80,7 +76,6 @@ describe 'Polling tests', ->
 			polling.removePollingChannel testChannel, (err) ->
 				agendaSpy.cancel.calledOnce.should.be.true
 				agendaSpy.cancel.getCall(0).args[0].should.eql { name: 'polling-job-' + testChannel._id }
-
 				done()
 
 	describe 'setupAgenda', ->
