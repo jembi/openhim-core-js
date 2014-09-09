@@ -9,6 +9,8 @@ rerunUpdateTransactionTask = require "./middleware/rerunUpdateTransactionTask"
 tcpBypassAuthentication = require "./middleware/tcpBypassAuthentication"
 retrieveTCPTransaction = require "./middleware/retrieveTCPTransaction"
 authorisation = require './middleware/authorisation'
+pollingBypassAuthorisation = require './middleware/pollingBypassAuthorisation'
+pollingBypassAuthentication = require './middleware/pollingBypassAuthentication'
 config = require './config/config'
 config.authentication = config.get('authentication')
 getRawBody = require 'raw-body'
@@ -91,6 +93,25 @@ exports.tcpApp = (done) ->
 
 	# TCP bypass authentication middlware
 	app.use tcpBypassAuthentication.koaMiddleware
+
+	# Persit message middleware
+	app.use messageStore.koaMiddleware
+
+	# Call router
+	app.use router.koaMiddleware
+
+	done(app)
+
+exports.pollingApp = (done) ->
+	app = koa()
+
+	app.use rawBodyReader
+
+	# Polling bypass authentication middlware
+	app.use pollingBypassAuthentication.koaMiddleware
+
+	# Polling bypass authorisation middleware
+	app.use pollingBypassAuthorisation.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware

@@ -4,6 +4,7 @@ logger = require 'winston'
 authorisation = require './authorisation'
 tcpAdapter = require '../tcpAdapter'
 server = require "../server"
+polling = require "../polling"
 
 isPathValid = (channel) ->
 	if channel.routes?
@@ -63,6 +64,14 @@ exports.addChannel = `function *addChannel() {
 			tcpAdapter.startupTCPServer(channel, function(err){
 				if (err) {
 					logger.error('Failed to startup TCP server: ' + err);
+				}
+			});
+		}
+
+		if (channel.type && channel.type === 'polling') {
+			polling.registerPollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
 				}
 			});
 		}
@@ -153,11 +162,20 @@ exports.updateChannel = `function *updateChannel(channelId) {
 		// All ok! So set the result
 		this.body = 'The channel was successfully updated';
 
+		var channel = yield Channel.findOne({ _id: id }).exec();
+
 		if (channelData.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
-			var channel = yield Channel.findOne({ _id: id }).exec();
 			tcpAdapter.startupTCPServer(channel, function(err){
 				if (err) {
 					logger.error('Failed to startup TCP server: ' + err);
+				}
+			});
+		}
+
+		if (channel.type && channel.type === 'polling') {
+			polling.registerPollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
 				}
 			});
 		}
@@ -188,10 +206,18 @@ exports.removeChannel = `function *removeChannel(channelId) {
 
 	try {
 		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		yield Channel.findByIdAndRemove(id).exec();
+		var channel = yield Channel.findByIdAndRemove(id).exec();
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully deleted';
+
+		if (channel.type && channel.type === 'polling') {
+			polling.removePollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
+				}
+			});
+		}
 	}
 	catch (e) {
 		// Error! So inform the user
