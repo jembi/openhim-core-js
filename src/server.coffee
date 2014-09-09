@@ -193,6 +193,7 @@ exports.stop = stop = (done) ->
 	promises.push stopServer(httpsServer, 'HTTPS') if httpsServer
 	promises.push stopServer(apiHttpServer, 'API HTTP') if apiHttpServer
 	promises.push stopServer(rerunServer, 'Rerun HTTP') if rerunServer
+	promises.push stopServer(pollingServer, 'Polling HTTP') if pollingServer
 	promises.push stopAgenda().promise if agenda
 
 	if tcpHttpReceiver
