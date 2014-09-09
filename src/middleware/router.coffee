@@ -94,7 +94,9 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 		if not responseDst.header
 			responseDst.header = {}
 		for key, value of routeRes.headers
-			responseDst.header[key] = value
+			switch key
+				when 'location' then responseDst.redirect(value)
+				else responseDst.header[key] = value
 
 		responseDst.body = ''
 		routeRes.on "data", (chunk) ->
