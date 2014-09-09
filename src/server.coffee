@@ -117,7 +117,7 @@ startTCPServer = (tcpHttpReceiverPort, app) ->
 	defer = Q.defer()
 
 	tcpHttpReceiver = http.createServer app.callback()
-	tcpHttpReceiver.listen tcpHttpReceiverPort, ->
+	tcpHttpReceiver.listen tcpHttpReceiverPort, config.tcpAdapter.httpReceiver.host, ->
 		logger.info "HTTP receiver for Socket adapter listening on port #{tcpHttpReceiverPort}"
 		tcpAdapter.startupServers (err) ->
 			logger.error err if err
@@ -129,7 +129,7 @@ startRerunServer = (httpPort, app) ->
 	deferredHttp = Q.defer()
 
 	rerunServer = http.createServer app.callback()
-	rerunServer.listen httpPort, ->
+	rerunServer.listen httpPort, config.rerun.host, ->
 		logger.info "Transaction Rerun HTTP listening on port " + httpPort
 		deferredHttp.resolve()
 
@@ -139,7 +139,7 @@ startPollingServer = (pollingPort, app) ->
 	defer = Q.defer()
 
 	pollingServer = http.createServer app.callback()
-	pollingServer.listen pollingPort, (err) ->
+	pollingServer.listen pollingPort, config.polling.host, (err) ->
 		logger.error err if err
 		logger.info 'Polling port listenting on port ' + pollingPort
 		defer.resolve()
