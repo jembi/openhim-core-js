@@ -9,6 +9,7 @@ logger = require 'winston'
 exports.agendaGlobal = null
 
 exports.registerPollingChannel = (channel, callback) ->
+	logger.info "Registering polling channel: #{channel._id}"
 	return callback new Error 'no polling schedule set on this channel' if not channel.pollingSchedule
 
 	exports.agendaGlobal.cancel { name: "polling-job-#{channel._id}" }, (err) ->
@@ -28,6 +29,7 @@ exports.registerPollingChannel = (channel, callback) ->
 		callback null
 
 exports.removePollingChannel = removePollingChannel = (channel, callback) ->
+	logger.info "Removing polling schedule for channel: #{channel._id}"
 	exports.agendaGlobal.cancel { name: "polling-job-#{channel._id}" }, (err) ->
 		return callback err if err
 		callback null
