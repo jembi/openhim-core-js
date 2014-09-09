@@ -69,7 +69,11 @@ exports.addChannel = `function *addChannel() {
 		}
 
 		if (channel.type && channel.type === 'polling') {
-			polling.registerPollingChanne(channel);
+			polling.registerPollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
+				}
+			});
 		}
 	}
 	catch (e) {
@@ -169,7 +173,11 @@ exports.updateChannel = `function *updateChannel(channelId) {
 		}
 
 		if (channel.type && channel.type === 'polling') {
-			polling.registerPollingChannel(channel);
+			polling.registerPollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
+				}
+			});
 		}
 	}
 	catch (e) {
@@ -204,7 +212,11 @@ exports.removeChannel = `function *removeChannel(channelId) {
 		this.body = 'The channel was successfully deleted';
 
 		if (channel.type && channel.type === 'polling') {
-			polling.removePollingChannel(channel);
+			polling.removePollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
+				}
+			});
 		}
 	}
 	catch (e) {
