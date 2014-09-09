@@ -328,6 +328,13 @@ exports.getChannelMetrics = `function *getChannelMetrics(time, channelId) {
   }
 }`;
 
+exports.fetchChannelMetrics = `function *(channelID,user){
+
+
+
+}`
+
+
 exports.subscribeToMetrics = `function *() {
 
 	var subscriptionObject = this.request.query;
