@@ -109,34 +109,33 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 				when 'location' then responseDst.redirect(value)
 				else responseDst.header[key] = value
 
-		responseDst.body = new Buffer(0)
 		bufs = []
 		routeRes.on "data", (chunk) ->
-                        bufs.push chunk
+			bufs.push chunk
 
 
                 #See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
 		routeRes.on "end", ->
-                        responseDst.timestamp = new Date()
-                        charset = obtainCharset(routeRes.headers)
-                        if (routeRes.headers['content-encoding'] == 'gzip')
-                                console.log('gzip')
-                                zlib.gunzip(
-                                        Buffer.concat(bufs),
-                                        (gunzipError, buf)->
-                                                if (gunzipError) then console.log(gunzipError)
-                                                else responseDst.body = buf.toString(charset)
-                                )
-                        else if (routeRes.headers['content-encoding'] == 'deflate')
-                                console.log('deflate')
-                                zlib.inflate(
-                                        Buffer.concat(bufs),
-                                        (inflateError, buf)->
-                                                if (inflateError) then console.log(inflateError)
-                                                else responseDst.body = buf.toString(charset)
-                                )
-                        else
-                                responseDst.body = Buffer.concat(bufs)
+			responseDst.timestamp = new Date()
+			charset = obtainCharset(routeRes.headers)
+			if (routeRes.headers['content-encoding'] == 'gzip')
+				console.log('gzip')
+				zlib.gunzip(
+					Buffer.concat(bufs),
+					(gunzipError, buf)->
+						if (gunzipError) then console.log(gunzipError)
+						else responseDst.body=buf.toString(charset)			
+				)
+			else if (routeRes.headers['content-encoding'] == 'deflate')
+				console.log('deflate')
+				zlib.inflate(
+					Buffer.concat(bufs),
+					(inflateError, buf)->
+						if (inflateError) then console.log(inflateError)
+						else responseDst.body = buf.toString(charset)
+				)
+			else
+				responseDst.body = Buffer.concat(bufs).toString(charset)
 			callback()
 
 	routeReq.on "error", (err) ->
