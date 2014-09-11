@@ -74,7 +74,7 @@ describe "API Integration Tests", ->
 							done()
 
 		
-		describe "*getClient(_id)", ->
+		describe "*getContactGroup(_id)", ->
 			contactGroupData =
 				group: "Group 1"
 				users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'}, 
@@ -141,7 +141,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe  "*getClients()", ->
+		describe  "*getContactGroups()", ->
 			contactGroupData1 =
 				group: "Group 1"
 				users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'}, 
@@ -207,7 +207,7 @@ describe "API Integration Tests", ->
 						else
 							done()
 
-		describe  "*updateClient", ->
+		describe  "*updateContactGroup", ->
 			contactGroupData =
 				group: "Group 1"
 				users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'}, 
