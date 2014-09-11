@@ -1,3 +1,5 @@
+util = require('util');
+zlib = require('zlib');
 http = require 'http'
 https = require 'https'
 net = require 'net'
@@ -81,11 +83,20 @@ sendRequest = (ctx, routeType, responseDst, options, secured) ->
 
 	return deferred.promise
 
+
+obtainCharset = (headers) ->
+        contentType = headers['content-type'] || ''
+        matches =  contentType.match(/charset=([^;,\r\n]+)/i)
+        if (matches && matches[1]) 
+                return matches[1]
+        return  'utf-8'
+
+
 sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 	method = http
 
 	if secured
-		method = https
+                method = https
 
 	routeReq = method.request options, (routeRes) ->
 		responseDst.status = routeRes.statusCode
@@ -103,9 +114,29 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 		routeRes.on "data", (chunk) ->
                         bufs.push chunk
 
+
+                #See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
 		routeRes.on "end", ->
                         responseDst.timestamp = new Date()
-                        responseDst.body = Buffer.concat(bufs)
+                        charset = obtainCharset(routeRes.headers)
+                        if (routeRes.headers['content-encoding'] == 'gzip')
+                                console.log('gzip')
+                                zlib.gunzip(
+                                        Buffer.concat(bufs),
+                                        (gunzipError, buf)->
+                                                if (gunzipError) then console.log(gunzipError)
+                                                else responseDst.body = buf.toString(charset)
+                                )
+                        else if (routeRes.headers['content-encoding'] == 'deflate')
+                                console.log('deflate')
+                                zlib.inflate(
+                                        Buffer.concat(bufs),
+                                        (inflateError, buf)->
+                                                if (inflateError) then console.log(inflateError)
+                                                else responseDst.body = buf.toString(charset)
+                                )
+                        else
+                                responseDst.body = Buffer.concat(bufs)
 			callback()
 
 	routeReq.on "error", (err) ->
