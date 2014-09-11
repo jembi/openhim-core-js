@@ -96,7 +96,7 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 	method = http
 
 	if secured
-                method = https
+        method = https
 
 	routeReq = method.request options, (routeRes) ->
 		responseDst.status = routeRes.statusCode
@@ -114,29 +114,29 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 			bufs.push chunk
 
 
-                #See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+		#See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
 		routeRes.on "end", ->
 			responseDst.timestamp = new Date()
 			charset = obtainCharset(routeRes.headers)
-			if (routeRes.headers['content-encoding'] == 'gzip')
-				console.log('gzip')
+			if routeRes.headers['content-encoding'] == 'gzip'
 				zlib.gunzip(
-					Buffer.concat(bufs),
-					(gunzipError, buf)->
-						if (gunzipError) then console.log(gunzipError)
-						else responseDst.body=buf.toString(charset)			
+					Buffer.concat bufs,
+					(gunzipError, buf) ->
+						if gunzipError then logger.error gunzipError
+						else responseDst.body = buf.toString charset
+						callback()	
 				)
-			else if (routeRes.headers['content-encoding'] == 'deflate')
-				console.log('deflate')
+			else if routeRes.headers['content-encoding'] == 'deflate'
 				zlib.inflate(
-					Buffer.concat(bufs),
-					(inflateError, buf)->
-						if (inflateError) then console.log(inflateError)
-						else responseDst.body = buf.toString(charset)
+					Buffer.concat bufs,
+					(inflateError, buf) ->
+						if inflateError then logger.error inflateError
+						else responseDst.body = buf.toString charset
+						callback()
 				)
 			else
-				responseDst.body = Buffer.concat(bufs).toString(charset)
-			callback()
+				responseDst.body = Buffer.concat(bufs).toString charset
+				callback()
 
 	routeReq.on "error", (err) ->
 		responseDst.status = status.INTERNAL_SERVER_ERROR
