@@ -135,7 +135,7 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 						callback()
 				)
 			else
-				responseDst.body = Buffer.concat(bufs).toString charset
+				responseDst.body = Buffer.concat(bufs)
 				callback()
 
 	routeReq.on "error", (err) ->
