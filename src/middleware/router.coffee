@@ -98,12 +98,14 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 				when 'location' then responseDst.redirect(value)
 				else responseDst.header[key] = value
 
-		responseDst.body = ''
+		responseDst.body = new Buffer(0)
+		bufs = []
 		routeRes.on "data", (chunk) ->
-			responseDst.body += chunk
+                        bufs.push chunk
 
 		routeRes.on "end", ->
-			responseDst.timestamp = new Date()
+                        responseDst.timestamp = new Date()
+                        responseDst.body = Buffer.concat(bufs)
 			callback()
 
 	routeReq.on "error", (err) ->
