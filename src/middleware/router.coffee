@@ -1,3 +1,5 @@
+util = require('util');
+zlib = require('zlib');
 http = require 'http'
 https = require 'https'
 net = require 'net'
@@ -8,6 +10,9 @@ config = require '../config/config'
 config.mongo = config.get('mongo')
 logger = require "winston"
 status = require "http-status"
+cookie = require 'cookie'
+
+
 
 containsMultiplePrimaries = (routes) ->
 	numPrimaries = 0
@@ -59,33 +64,37 @@ sendRequestToRoutes = (ctx, routes, next) ->
 			ctx.routes.push routeResponse
 			response = routeResponse.response
 
-		secured = false #default to unsecured route
-
-		if route.secured
-			secured = true
-
-		promises.push sendRequest ctx, route.type, response, options, secured
+		promises.push sendRequest ctx, route, response, options
 
 	(Q.all promises).then ->
 		next()
 
-sendRequest = (ctx, routeType, responseDst, options, secured) ->
+sendRequest = (ctx, route, responseDst, options) ->
 	deferred = Q.defer()
 
-	if routeType is 'tcp'
+	if route.type is 'tcp'
 		logger.info 'Routing tcp request'
-		sendSocketRequest ctx, responseDst, options, secured, deferred.resolve
+		sendSocketRequest ctx, route, responseDst, options, deferred.resolve
 	else
 		logger.info 'Routing http(s) request'
-		sendHttpRequest ctx, responseDst, options, secured, deferred.resolve
+		sendHttpRequest ctx, route, responseDst, options , deferred.resolve
 
 	return deferred.promise
 
-sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
+
+obtainCharset = (headers) ->
+        contentType = headers['content-type'] || ''
+        matches =  contentType.match(/charset=([^;,\r\n]+)/i)
+        if (matches && matches[1]) 
+                return matches[1]
+        return  'utf-8'
+
+
+sendHttpRequest = (ctx, route, responseDst, options,  callback) ->
 	method = http
 
-	if secured
-		method = https
+	if route.secured
+        method = https
 
 	routeReq = method.request options, (routeRes) ->
 		responseDst.status = routeRes.statusCode
@@ -95,16 +104,39 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 			responseDst.header = {}
 		for key, value of routeRes.headers
 			switch key
+				when 'set-cookie'
+					if route.primary then setCookiesOnContext ctx, value
 				when 'location' then responseDst.redirect(value)
 				else responseDst.header[key] = value
 
-		responseDst.body = ''
+		bufs = []
 		routeRes.on "data", (chunk) ->
-			responseDst.body += chunk
+			bufs.push chunk
 
+
+		#See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
 		routeRes.on "end", ->
 			responseDst.timestamp = new Date()
-			callback()
+			charset = obtainCharset(routeRes.headers)
+			if routeRes.headers['content-encoding'] == 'gzip'
+				zlib.gunzip(
+					Buffer.concat bufs,
+					(gunzipError, buf) ->
+						if gunzipError then logger.error gunzipError
+						else responseDst.body = buf.toString charset
+						callback()	
+				)
+			else if routeRes.headers['content-encoding'] == 'deflate'
+				zlib.inflate(
+					Buffer.concat bufs,
+					(inflateError, buf) ->
+						if inflateError then logger.error inflateError
+						else responseDst.body = buf.toString charset
+						callback()
+				)
+			else
+				responseDst.body = Buffer.concat(bufs)
+				callback()
 
 	routeReq.on "error", (err) ->
 		responseDst.status = status.INTERNAL_SERVER_ERROR
@@ -118,7 +150,24 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 
 	routeReq.end()
 
-sendSocketRequest = (ctx, responseDst, options, secured, callback) ->
+
+
+setCookiesOnContext = (ctx,value) ->
+	for c_key,c_value in value
+		c_opts = {path:false,httpOnly:false} #clear out default values in cookie module
+		c_vals = {}
+		for p_key,p_val of cookie.parse c_key
+			p_key_l = p_key.toLowerCase()
+			switch p_key_l
+				when 'max-age' then c_opts['maxage'] = parseInt p_val, 10
+				when 'expires' then c_opts['expires'] = new Date p_val
+				when 'path','domain','secure','signed','overwrite' then c_opts[p_key_l] = p_val
+				when 'httponly' then c_opts['httpOnly'] = p_val
+				else c_vals[p_key] = p_val
+		for p_key,p_val of c_vals
+			ctx.cookies.set p_key,p_val,c_opts
+
+sendSocketRequest = (ctx, route,responseDst, options, callback) ->
 	requestBody = ctx.body
 	client = new net.Socket()
 	responseDst.body = ''
