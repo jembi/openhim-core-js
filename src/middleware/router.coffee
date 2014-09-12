@@ -64,25 +64,20 @@ sendRequestToRoutes = (ctx, routes, next) ->
 			ctx.routes.push routeResponse
 			response = routeResponse.response
 
-		secured = false #default to unsecured route
-
-		if route.secured
-			secured = true
-
-		promises.push sendRequest ctx, route.type, response, options, secured
+		promises.push sendRequest ctx, route, response, options
 
 	(Q.all promises).then ->
 		next()
 
-sendRequest = (ctx, routeType, responseDst, options, secured) ->
+sendRequest = (ctx, route, responseDst, options) ->
 	deferred = Q.defer()
 
-	if routeType is 'tcp'
+	if route.type is 'tcp'
 		logger.info 'Routing tcp request'
-		sendSocketRequest ctx, responseDst, options, secured, deferred.resolve
+		sendSocketRequest ctx, route, responseDst, options, deferred.resolve
 	else
 		logger.info 'Routing http(s) request'
-		sendHttpRequest ctx, responseDst, options, secured, deferred.resolve
+		sendHttpRequest ctx, route, responseDst, options , deferred.resolve
 
 	return deferred.promise
 
@@ -95,10 +90,10 @@ obtainCharset = (headers) ->
         return  'utf-8'
 
 
-sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
+sendHttpRequest = (ctx, route, responseDst, options,  callback) ->
 	method = http
 
-	if secured
+	if route.secured
         method = https
 
 	routeReq = method.request options, (routeRes) ->
@@ -110,7 +105,7 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 		for key, value of routeRes.headers
 			switch key
 				when 'set-cookie'
-					setCookiesOnContext ctx, value
+					if route.primary then setCookiesOnContext ctx, value
 				when 'location' then responseDst.redirect(value)
 				else responseDst.header[key] = value
 
@@ -172,7 +167,7 @@ setCookiesOnContext = (ctx,value) ->
 		for p_key,p_val of c_vals
 			ctx.cookies.set p_key,p_val,c_opts
 
-sendSocketRequest = (ctx, responseDst, options, secured, callback) ->
+sendSocketRequest = (ctx, route,responseDst, options, callback) ->
 	requestBody = ctx.body
 	client = new net.Socket()
 	responseDst.body = ''
