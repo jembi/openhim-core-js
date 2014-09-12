@@ -10,6 +10,9 @@ config = require '../config/config'
 config.mongo = config.get('mongo')
 logger = require "winston"
 status = require "http-status"
+cookie = require 'cookie'
+
+
 
 containsMultiplePrimaries = (routes) ->
 	numPrimaries = 0
@@ -106,6 +109,8 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 			responseDst.header = {}
 		for key, value of routeRes.headers
 			switch key
+				when 'set-cookie'
+					setCookiesOnContext ctx, value
 				when 'location' then responseDst.redirect(value)
 				else responseDst.header[key] = value
 
@@ -149,6 +154,23 @@ sendHttpRequest = (ctx, responseDst, options, secured, callback) ->
 		routeReq.write ctx.body
 
 	routeReq.end()
+
+
+
+setCookiesOnContext = (ctx,value) ->
+	for c_key,c_value in value
+		c_opts = {path:false,httpOnly:false} #clear out default values in cookie module
+		c_vals = {}
+		for p_key,p_val of cookie.parse c_key
+			p_key_l = p_key.toLowerCase()
+			switch p_key_l
+				when 'max-age' then c_opts['maxage'] = parseInt p_val, 10
+				when 'expires' then c_opts['expires'] = new Date p_val
+				when 'path','domain','secure','signed','overwrite' then c_opts[p_key_l] = p_val
+				when 'httponly' then c_opts['httpOnly'] = p_val
+				else c_vals[p_key] = p_val
+		for p_key,p_val of c_vals
+			ctx.cookies.set p_key,p_val,c_opts
 
 sendSocketRequest = (ctx, responseDst, options, secured, callback) ->
 	requestBody = ctx.body

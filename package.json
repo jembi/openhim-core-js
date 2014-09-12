@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "cookie" : "0.1.2",
     "mongodb": "1.4.7",
     "koa": "0.5.2",
     "koa-route": "~1.0.2",
