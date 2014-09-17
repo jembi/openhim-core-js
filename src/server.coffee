@@ -13,6 +13,7 @@ config.tcpAdapter = config.get('tcpAdapter')
 config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
+config.reports = config.get('reports')
 Q = require "q"
 logger = require "winston"
 logger.level = config.logger.level
@@ -20,6 +21,7 @@ mongoose = require "mongoose"
 User = require('./model/users').User
 Agenda = require 'agenda'
 alerts = require './alerts'
+reports = require './reports'
 polling = require './polling'
 tcpAdapter = require './tcpAdapter'
 workerAPI = require "./api/worker"
@@ -52,6 +54,7 @@ agenda = null
 startAgenda = ->
 	agenda = new Agenda db: { address: config.mongo.url}
 	alerts.setupAgenda agenda if config.alerts.enableAlerts
+	reports.setupAgenda agenda if config.reports.enableReports
 	polling.setupAgenda agenda, ->
 		agenda.start()
 		logger.info "Started agenda job scheduler"

@@ -156,7 +156,7 @@ exports.fetchGlobalStatusMetrics = `function *fetchGlobalStatusMetrics(requestin
   return data;
 }`
 
-exports.fetchChannelMetrics = `function *fetchChannelMetrics(time, channelId,userRequesting,filtersObject) {
+exports.fetchChannelMetrics = `function fetchChannelMetrics(time, channelId,userRequesting,filtersObject) {
 
 	var from, to ;
 	var data = {};
@@ -259,64 +259,31 @@ exports.fetchChannelMetrics = `function *fetchChannelMetrics(time, channelId,use
       //do nothng
       break;
   }
-
-  try {
-    var id = unescape(channelId);
-    var results = null;
-    var accessDenied = false;
-
-    // if admin allow access to all channels otherwise restrict result set
-    if (authorisation.inGroup('admin', userRequesting) === false) {
-      results = yield Channel.findOne({ _id: id, txViewAcl: { $in: userRequesting.groups } }).exec();
-      var adminResult = yield Channel.findById(id).exec();
-      if (!!adminResult) {
-        accessDenied = true;
-      }
-    } else {
-       results = yield Transaction.aggregate([{ $match: filtersObject }, { $group: groupObject }]).exec();
-    }
-
-
-    if (results === null) {
-      if (accessDenied) {
-        // Channel exists but this user doesn\'t have access
-        data.body = "Access denied to channel with Id: '" + id + "'.";
-        data.status = 'forbidden';
-      } else {
-        // Channel not found! So inform the user
-        data,body = "We could not find a channel with Id:'" + id + "'.";
-        data.status = 'not found';
-      }
-    } else {
-      if (time == 'status') {
-        data.body = results;
-      } else {
-        for (var i = 0; i < results.length; i++) {
-          if (!results[i]._id.minute) {
-            results[i]._id.minute = '00'
-          }
-          if (!results[i]._id.hour) {
-            results[i]._id.hour = '00'
-          }
-          if (!results[i]._id.day) {
-            results[i]._id.day = '1'
-          }
-
-          data.body.push({
-            load: results[i].load,
-            avgResp: results[i].avgResp,
-            timestamp: moment(results[i]._id.year + '-' + results[i]._id.month + '-' + results[i]._id.day + ' ' + results[i]._id.hour + ':' + results[i]._id.minute, 'YYYY-MM-DD H:mm').format()
-          });
-        }
-      }
-    }
-  }
-  catch (e) {
-    logger.error('Could not get '+ time +' metrics by id: ' + ' via the API: ' + e);
-    data.body = e.message;
-    data.status = 'internal server error';
-  }
-
-  return data;
-
+  return Transaction.aggregate([
+      { $match: filtersObject },
+      { $group: groupObject }
+      ]).exec()
 }`
+
+allowedChannels = (requestingUser) ->
+  authorisation.getUserViewableChannels requestingUser
+    .then (allowedChannelsArray)->
+      # logger.info JSON.stringify allowedChannelsArray
+      allowedChannelIDs = [];
+      promises = []
+      for channel in allowedChannelsArray
+        do (channel) ->
+          deferred = Q.defer()
+          allowedChannelIDs.push
+            id : mongoose.Types.ObjectId channel._id
+            name : channel.name
+          #logger.info "sending reports to :" + requestingUser.email + " channel : " + channel._id
+
+          deferred.resolve()
+          promises.push deferred.promise
+
+      (Q.all promises).then ->
+        allowedChannelIDs
+
+
+exports.allowedChannels = allowedChannels
