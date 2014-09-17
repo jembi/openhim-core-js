@@ -11,6 +11,8 @@ The OpenHIM core component is responsible for providing a single entry-point int
 
 :warning:  **The OpenHIM core is currently in early active development and is not yet ready for production use.**
 
+See the [development roadmap](https://github.com/jembi/openhim-core-js/wiki/OpenHIM-core-Development-Roadmap) for more details on what is to come!
+
 # Quickstart Guide
 
 0. Install [Node.js](http://nodejs.org/) 0.11.9 or greater
