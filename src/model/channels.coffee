@@ -16,7 +16,7 @@ RouteSchema = new Schema
 
 AlertsSchema = new Schema
     "status": { type: String, required: true }
-    "groups": [ String ]
+    "groups": [ { type: Schema.Types.ObjectId, required: false } ]
     "users": [ ContactUserSchema ]
     "failureRate": { type: Number, required: false }
 
