@@ -34,18 +34,21 @@ fetchChannelReport = (channel,user,done) ->
   logger.info 'fetching channel report for #' + channel.id + ' ' + user.email
   metrics.fetchChannelMetrics 'day',channel.id,user,{}
     .then (data) ->
-        contact.contactUser 'email', user.email, 'Report for ' + channel.name , plainTemplate(channel,data), plainTemplate(channel,data) , afterEmail
+        contact.contactUser 'email', user.email, 'Report for ' + channel.name , plainTemplate(channel,data), htmlTemplate(channel,data) , afterEmail
 
 fetchUsers = (callback) ->
   User.find {}, callback
 
 plainTemplate = (channel,data) ->"
+  Channel Name : #{ channel.name } \r\n
+  Channel Load : #{ data[0].load } transactions \r\n
+  Transaction Average Response : #{ data[0].avgResp } \r\n 
+"
+htmlTemplate = (channel,data) ->"
   Channel Name : #{ channel.name } \r\n <br />
   Channel Load : #{ data[0].load } transactions \r\n <br />
   Transaction Average Response : #{ data[0].avgResp } \r\n <br />
 "
-
-
 afterEmail = (callback) ->
   logger.info callback
 
