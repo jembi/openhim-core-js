@@ -6,46 +6,34 @@ mongoose = require 'mongoose'
 authorisation = require './api/authorisation'
 Q = require 'q'
 
-exports.fetchGlobalLoadTimeMetrics = `function *fetchGlobalLoadTimeMetrics(requestingUser, filtersObject){
+exports.fetchGlobalLoadTimeMetrics = `function fetchGlobalLoadTimeMetrics(requestingUser, filtersObject){
 
-  var from, to, body
-	var data = {};
+  var from, to
 
   if (filtersObject.startDate && filtersObject.endDate){
     from = new Date(JSON.parse(filtersObject.startDate));
     to = new Date(JSON.parse(filtersObject.endDate));
+    delete filtersObject.startDate;
+    delete filtersObject.endDate;
   } else {
     from =  moment().subtract(1,'weeks').toDate();
     to =  moment().toDate();
   }
 
-  if (filtersObject.startDate && filtersObject.endDate) {
-    filtersObject['request.timestamp'] = { $lt: to, $gt: from }
 
-    //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-    delete filtersObject.startDate;
-    delete filtersObject.endDate;
-  }
+  filtersObject['request.timestamp'] = { $lt: to, $gt: from };
 
-  var allowedChannels =  yield authorisation.getUserViewableChannels(requestingUser);
-  var allowedChannelIDs = [];
-
-  for (var i = 0; i < allowedChannels.length; i++) {
-    allowedChannelIDs.push(mongoose.Types.ObjectId(allowedChannels[i]._id));
-  }
-
-  filtersObject['channelID'] = { $in : allowedChannelIDs }
-
-  try {
-    var results = yield Transaction.aggregate([
+  return getAllowedChannelIDs(requestingUser).then(function(allowedChannelIDs){
+    filtersObject['channelID'] = { $in : allowedChannelIDs };
+    return Transaction.aggregate([
       { $match: filtersObject },
       { $group:
         {
           _id: {
-            year: {$year: "$request.timestamp"},
-            month: {$month: "$request.timestamp"},
-            day: {$dayOfMonth: "$request.timestamp"},
-            hour: {$hour: "$request.timestamp"}
+            year:  { $year: "$request.timestamp"},
+            month: { $month: "$request.timestamp"},
+            day:   { $dayOfMonth: "$request.timestamp"},
+            hour:  { $hour: "$request.timestamp"}
           },
           load: { $sum: 1 },
           avgResp: {
@@ -56,104 +44,63 @@ exports.fetchGlobalLoadTimeMetrics = `function *fetchGlobalLoadTimeMetrics(reque
         }
       }
     ]).exec();
-
-
-
-    data.body = []
-
-    for (var i = 0; i < results.length; i++) {
-        data.body.push({
-          load: results[i].load,
-          avgResp: results[i].avgResp,
-          timestamp : moment(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour, 'YYYY-MM-DD H').format()
-      });
-    }
-  } catch (e) {
-    logger.error('Could not get Transactions global metrics: ' + ' via the API: ' + e);
-    data.body = e.message;
-    data.status = 'internal server error';
-  }
-
-  return data;
+  });
 }`
 
-exports.fetchGlobalStatusMetrics = `function *fetchGlobalStatusMetrics(requestingUser, filtersObject){
+exports.fetchGlobalStatusMetrics = `function fetchGlobalStatusMetrics(requestingUser, filtersObject){
 
   var from, to;
-  var data = {};
-
-  var allowedChannels = yield authorisation.getUserViewableChannels(requestingUser);
-  var allowedChannelIDs = [];
-
-  for (var i = 0; i < allowedChannels.length; i++) {
-    allowedChannelIDs.push(mongoose.Types.ObjectId(allowedChannels[i]._id));
-  }
-
-  filtersObject['channelID'] = { $in : allowedChannelIDs }
 
    if (filtersObject.startDate && filtersObject.endDate){
     from = new Date(JSON.parse(filtersObject.startDate));
     to = new Date(JSON.parse(filtersObject.endDate));
+    //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+      delete filtersObject.startDate;
+      delete filtersObject.endDate;
   } else {
     from =  moment().subtract(1,'weeks').toDate();
     to =  moment().toDate();
   }
-
-  try {
-
-    if (filtersObject.startDate && filtersObject.endDate) {
       filtersObject['request.timestamp'] = { $lt: to, $gt: from }
 
-      //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-      delete filtersObject.startDate;
-      delete filtersObject.endDate;
-    }
-
-    var result = yield Transaction.aggregate([
-      { $match: filtersObject },
-      {
-        $group: {
-          _id: {
-            channelID: "$channelID"
-          },
-          failed: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Failed']}, 1, 0]
-            }
-          },
-          successful: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Successful']}, 1, 0]
-            }
-          },
-          processing: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Processing']}, 1, 0]
-            }
-          },
-          completed: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Completed']}, 1, 0]
-            }
-          },
-          completedWErrors: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Completed with error(s)']}, 1, 0]
-            }
+      return getAllowedChannelIDs(requestingUser).then(function(allowedChannelIDs){
+          filtersObject['channelID'] = { $in : allowedChannelIDs };
+          return Transaction.aggregate([
+            { $match: filtersObject },
+            {
+              $group: {
+                _id: {
+                  channelID: "$channelID"
+                },
+                failed: {
+                  $sum: {
+                    $cond: [{ $eq: ["$status", 'Failed']}, 1, 0]
+                  }
+                },
+                successful: {
+                  $sum: {
+                    $cond: [{ $eq: ["$status", 'Successful']}, 1, 0]
+                  }
+                },
+                processing: {
+                  $sum: {
+                    $cond: [{ $eq: ["$status", 'Processing']}, 1, 0]
+                  }
+                },
+                completed: {
+                  $sum: {
+                    $cond: [{ $eq: ["$status", 'Completed']}, 1, 0]
+                  }
+                },
+                completedWErrors: {
+                  $sum: {
+                    $cond: [{ $eq: ["$status", 'Completed with error(s)']}, 1, 0]
+                  }
+                }
+              }
           }
-        }
-      }
-    ]).exec();
-
-    data.body = result;
-  }
-  catch (e) {
-    logger.error('Could not get Transactions channel by id: ' + ' via the API: ' + e);
-    data.body = e.message;
-    data.status = 'internal server error';
-  }
-
-  return data;
+      ]).exec();
+    });
 }`
 
 exports.fetchChannelMetrics = `function fetchChannelMetrics(time, channelId,userRequesting,filtersObject) {
@@ -265,25 +212,44 @@ exports.fetchChannelMetrics = `function fetchChannelMetrics(time, channelId,user
       ]).exec()
 }`
 
-allowedChannels = (requestingUser) ->
+getAllowedChannels = (requestingUser) ->
   authorisation.getUserViewableChannels requestingUser
-    .then (allowedChannelsArray)->
-      # logger.info JSON.stringify allowedChannelsArray
-      allowedChannelIDs = [];
-      promises = []
-      for channel in allowedChannelsArray
-        do (channel) ->
-          deferred = Q.defer()
-          allowedChannelIDs.push
-            id : mongoose.Types.ObjectId channel._id
-            name : channel.name
-          #logger.info "sending reports to :" + requestingUser.email + " channel : " + channel._id
+  .then (allowedChannelsArray)->
 
-          deferred.resolve()
-          promises.push deferred.promise
+    allowedChannelIDs = [];
+    promises = []
 
-      (Q.all promises).then ->
-        allowedChannelIDs
+    for channel in allowedChannelsArray
+      do (channel) ->
+        deferred = Q.defer()
+        allowedChannelIDs.push
+          id: channel._id
+          name: channel.name
+
+        deferred.resolve()
+        promises.push deferred.promise
+
+    (Q.all promises).then ->
+      allowedChannelIDs
+
+getAllowedChannelIDs = (requestingUser) ->
+  authorisation.getUserViewableChannels requestingUser
+  .then (allowedChannelsArray)->
+
+    allowedChannelIDs = [];
+    promises = []
+
+    for channel in allowedChannelsArray
+      do (channel) ->
+        deferred = Q.defer()
+        allowedChannelIDs.push channel._id
+
+        deferred.resolve()
+        promises.push deferred.promise
+
+    (Q.all promises).then ->
+      allowedChannelIDs
 
 
-exports.allowedChannels = allowedChannels
+exports.getAllowedChannels = getAllowedChannels
+exports.getAllowedChannelIDs = getAllowedChannelIDs

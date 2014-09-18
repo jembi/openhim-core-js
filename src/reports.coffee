@@ -17,7 +17,7 @@ sendReports = (job, done) ->
       do (user) ->
         deferred = Q.defer()
         #Fetch user authorized channels
-        metrics.allowedChannels user
+        metrics.getAllowedChannels user
           .then (result) ->
             for channel in result
               do (channel) ->

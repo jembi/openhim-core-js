@@ -46,6 +46,6 @@
     "consoleURL": "http://openhim.jembi.org"
   },
   "reports":{
-      "enableReports": true
+      "enableReports": false
     }
 }

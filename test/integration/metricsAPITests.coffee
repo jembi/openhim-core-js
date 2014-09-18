@@ -176,7 +176,7 @@ describe "API Metrics Tests", ->
       it 'should fetch dashbord channel metrics based on the currently logged in user permissions', (done) ->
 
         request("http://localhost:8080")
-        .get("/metrics")
+        .get("/metrics?startDate=%222014-07-18T00:00:00.000Z%22&endDate=%222014-07-19T00:00:00.000Z%22")
         .set("auth-username", testUtils.rootUser.email)
         .set("auth-ts", authDetails.authTS)
         .set("auth-salt", authDetails.authSalt)
@@ -187,7 +187,7 @@ describe "API Metrics Tests", ->
             console.log(err)
             done err
           else
-            res.body.should.have.length 10
+            res.body.should.have.length 2
             res.body[0].should.have.property 'load'
             res.body[0].should.have.property 'avgResp'
             res.body[0].should.have.property 'timestamp'
@@ -198,7 +198,7 @@ describe "API Metrics Tests", ->
       it 'should fetch global status metrics based on the currently logged in user permissions', (done) ->
 
         request "http://localhost:8080"
-        .get "/metrics/status"
+        .get "/metrics/status?startDate=%222014-07-18T00:00:00.000Z%22&endDate=%222014-07-19T00:00:00.000Z%22"
         .set("auth-username", testUtils.rootUser.email)
         .set("auth-ts", authDetails.authTS)
         .set("auth-salt", authDetails.authSalt)
