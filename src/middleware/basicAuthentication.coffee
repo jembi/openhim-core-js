@@ -36,6 +36,10 @@ exports.authenticateUser = (ctx, done) ->
 			return done err if err
 
 			if client
+				if not (client.passwordAlgorithm or client.passwordHash)
+					logger.warn "#{user.name} does not have a basic auth password set"
+					return done null, null
+
 				comparePasswordWithClientHash user.pass, client, (err, res) ->
 					return done err if err
 
