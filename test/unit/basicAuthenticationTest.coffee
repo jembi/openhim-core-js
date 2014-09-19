@@ -23,6 +23,7 @@ bcryptClient =
 		[
 			"PoC"
 		]
+	passwordAlgorithm: "bcrypt"
 	passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 	cert: ""
 
