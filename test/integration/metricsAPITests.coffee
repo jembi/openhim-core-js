@@ -230,9 +230,9 @@ describe "API Metrics Tests", ->
             done err
           else
             res.body.should.have.length 1
-            res.body[0].should.have.property 'load'
-            res.body[0].should.have.property 'avgResp'
-            res.body[0].should.have.property 'timestamp'
+            res.body[0].load.should.have.equal 1
+            res.body[0].avgResp.should.have.equal 149
+            res.body[0].timestamp.should.have.equal '2014-07-18T00:00:00+02:00'
             done()
 
     describe '*getStatusMetrics()', ->
@@ -252,5 +252,10 @@ describe "API Metrics Tests", ->
             done err
           else
             res.body[0].should.have.properties 'failed','successful','processing','completed','completedWErrors'
+            res.body[0].failed.should.equal 0
+            res.body[0].successful.should.equal 0
+            res.body[0].processing.should.equal 0
+            res.body[0].completed.should.equal 1
+            res.body[0].completedWErrors.should.equal 0
             done()
 

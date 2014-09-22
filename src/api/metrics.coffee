@@ -18,7 +18,7 @@ exports.getGlobalLoadTimeMetrics = `function *() {
 
   results = yield metrics.fetchGlobalLoadTimeMetrics(userRequesting, filtersObject);
   this.body = []
-  logger.info(JSON.stringify(results))
+
   for (var i = 0; i < results.length; i++) {
         this.body.push({
           load: results[i].load,
