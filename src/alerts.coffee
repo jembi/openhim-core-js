@@ -53,7 +53,7 @@ completed with status #{status} on the OpenHIM running on #{config.alerts.himIns
 
 getAllChannels = (callback) -> Channel.find {}, callback
 
-findGroup = (name, callback) -> ContactGroup.findOne group: name, callback
+findGroup = (groupID, callback) -> ContactGroup.findOne _id: groupID, callback
 
 findTransactions = (channelID, dateFrom, status, callback) ->
 	Transaction.find {

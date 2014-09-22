@@ -9,6 +9,7 @@ clients = require './api/clients'
 transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
+contactGroups = require './api/contactGroups'
 monitor = require './api/monitor'
 Q = require 'q'
 worker = require './api/worker'
@@ -59,6 +60,12 @@ exports.setupApp = (done) ->
   app.use route.get '/tasks/:taskId', tasks.getTask
   app.use route.put '/tasks/:taskId', tasks.updateTask
   app.use route.delete '/tasks/:taskId', tasks.removeTask
+
+  app.use route.get '/groups', contactGroups.getContactGroups
+  app.use route.get '/groups/:contactGroupId', contactGroups.getContactGroup
+  app.use route.post '/groups', contactGroups.addContactGroup
+  app.use route.put '/groups/:contactGroupId', contactGroups.updateContactGroup
+  app.use route.delete '/groups/:contactGroupId', contactGroups.removeContactGroup
 
   app.use route.get '/monitor', monitor.getMonitor
 

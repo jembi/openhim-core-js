@@ -12,7 +12,7 @@ server = require "../../lib/server"
 
 describe "e2e Integration Tests", ->
 
-	describe "Auhentication and authorisation tests", ->
+	describe "Authentication and authorisation tests", ->
 
 		describe "Mutual TLS", ->
 
@@ -116,10 +116,11 @@ describe "e2e Integration Tests", ->
 						clientDomain: "openhim.jembi.org"
 						name: "TEST Client"
 						roles:
-							[ 
+							[
 								"OpenMRS_PoC"
-								"PoC" 
+								"PoC"
 							]
+						passwordAlgorithm: "bcrypt"
 						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 						cert: ""
 
