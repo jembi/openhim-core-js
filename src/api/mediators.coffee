@@ -50,6 +50,7 @@ exports.getMediator = `function *getMediator(mediatorUUID) {
 
 exports.addMediator = `function *addMediator() {
 	try {
+		this.status = 'created'
 	} catch (e) {
 		logger.error('Could not add mediator via the API: ' + e);
 		this.body = e.message;
