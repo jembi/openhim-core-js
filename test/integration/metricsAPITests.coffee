@@ -188,9 +188,9 @@ describe "API Metrics Tests", ->
             done err
           else
             res.body.should.have.length 2
-            res.body[0].load.should.have.equal 1
-            res.body[0].avgResp.should.have.equal 149
-            res.body[0].timestamp.should.have.equal '2014-07-18T13:00:00+02:00'
+            res.body[0].load.should.equal 1
+            res.body[0].avgResp.should.equal 149
+            moment(res.body[0].timestamp).utc().format().should.equal '2014-07-18T11:00:00+00:00'
             done()
 
     describe '*getGlobalStatusMetrics()', ->
@@ -235,9 +235,9 @@ describe "API Metrics Tests", ->
             done err
           else
             res.body.should.have.length 1
-            res.body[0].load.should.have.equal 1
-            res.body[0].avgResp.should.have.equal 149
-            res.body[0].timestamp.should.have.equal '2014-07-18T00:00:00+02:00'
+            res.body[0].load.should.equal 1
+            res.body[0].avgResp.should.equal 149
+            moment(res.body[0].timestamp).utc().format().should.equal '2014-07-17T22:00:00+00:00'
             done()
 
     describe '*getStatusMetrics()', ->
