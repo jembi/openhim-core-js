@@ -6,211 +6,299 @@ mongoose = require 'mongoose'
 authorisation = require './api/authorisation'
 Q = require 'q'
 
-exports.fetchGlobalLoadTimeMetrics = `function fetchGlobalLoadTimeMetrics(requestingUser, filtersObject){
+#################################################
+# Fetches allowed Global Load Time Metrics      #
+################################################
+exports.fetchGlobalLoadTimeMetrics = fetchGlobalLoadTimeMetrics = (requestingUser, filtersObject) ->
 
-  var from, to
+  if filtersObject.startDate and filtersObject.endDate
+    from = new Date(JSON.parse(filtersObject.startDate))
+    to = new Date(JSON.parse(filtersObject.endDate))
+    delete filtersObject.startDate
 
-  if (filtersObject.startDate && filtersObject.endDate){
-    from = new Date(JSON.parse(filtersObject.startDate));
-    to = new Date(JSON.parse(filtersObject.endDate));
-    delete filtersObject.startDate;
-    delete filtersObject.endDate;
-  } else {
-    from =  moment().subtract(1,'weeks').toDate();
-    to =  moment().toDate();
-  }
+    delete filtersObject.endDate
+  else
+    from = moment().subtract(1, "weeks").toDate()
+    to = moment().toDate()
+  filtersObject["request.timestamp"] =
+    $lt: to
+    $gt: from
 
-
-  filtersObject['request.timestamp'] = { $lt: to, $gt: from };
-
-  return getAllowedChannelIDs(requestingUser).then(function(allowedChannelIDs){
-    filtersObject['channelID'] = { $in : allowedChannelIDs };
-    return Transaction.aggregate([
-      { $match: filtersObject },
-      { $group:
-        {
-          _id: {
-            year:  { $year: "$request.timestamp"},
-            month: { $month: "$request.timestamp"},
-            day:   { $dayOfMonth: "$request.timestamp"},
-            hour:  { $hour: "$request.timestamp"}
-          },
-          load: { $sum: 1 },
-          avgResp: {
-            $avg: {
-              $subtract : ["$response.timestamp","$request.timestamp"]
-            }
-          }
-        }
+  getAllowedChannelIDs(requestingUser).then (allowedChannelIDs) ->
+    filtersObject["channelID"] = $in: allowedChannelIDs
+    Transaction.aggregate([
+      {
+        $match: filtersObject
       }
-    ]).exec();
-  });
-}`
+      {
+        $group:
+          _id:
+            year:
+              $year: "$request.timestamp"
 
-exports.fetchGlobalStatusMetrics = `function fetchGlobalStatusMetrics(requestingUser, filtersObject){
+            month:
+              $month: "$request.timestamp"
 
-  var from, to;
+            day:
+              $dayOfMonth: "$request.timestamp"
 
-   if (filtersObject.startDate && filtersObject.endDate){
-    from = new Date(JSON.parse(filtersObject.startDate));
-    to = new Date(JSON.parse(filtersObject.endDate));
-    //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-      delete filtersObject.startDate;
-      delete filtersObject.endDate;
-  } else {
-    from =  moment().subtract(1,'weeks').toDate();
-    to =  moment().toDate();
-  }
-      filtersObject['request.timestamp'] = { $lt: to, $gt: from }
+            hour:
+              $hour: "$request.timestamp"
 
-      return getAllowedChannelIDs(requestingUser).then(function(allowedChannelIDs){
-          filtersObject['channelID'] = { $in : allowedChannelIDs };
-          return Transaction.aggregate([
-            { $match: filtersObject },
-            {
-              $group: {
-                _id: {
-                  channelID: "$channelID"
-                },
-                failed: {
-                  $sum: {
-                    $cond: [{ $eq: ["$status", 'Failed']}, 1, 0]
-                  }
-                },
-                successful: {
-                  $sum: {
-                    $cond: [{ $eq: ["$status", 'Successful']}, 1, 0]
-                  }
-                },
-                processing: {
-                  $sum: {
-                    $cond: [{ $eq: ["$status", 'Processing']}, 1, 0]
-                  }
-                },
-                completed: {
-                  $sum: {
-                    $cond: [{ $eq: ["$status", 'Completed']}, 1, 0]
-                  }
-                },
-                completedWErrors: {
-                  $sum: {
-                    $cond: [{ $eq: ["$status", 'Completed with error(s)']}, 1, 0]
-                  }
-                }
-              }
-          }
-      ]).exec();
-    });
-}`
+          load:
+            $sum: 1
 
-exports.fetchChannelMetrics = `function fetchChannelMetrics(time, channelId,userRequesting,filtersObject) {
-
-	var from, to ;
-	var data = {};
-	    data.body = [];
-
-	var channelID = mongoose.Types.ObjectId(channelId);
-
-  if (filtersObject.startDate && filtersObject.endDate){
-    from = new Date(JSON.parse(filtersObject.startDate));
-    to = new Date(JSON.parse(filtersObject.endDate));
-  } else {
-    from =  moment().subtract(1,'days').toDate();
-    to =  moment().toDate();
-  }
-
-
-
-  filtersObject.channelID = channelID;
-
-  if (filtersObject.startDate && filtersObject.endDate) {
-    filtersObject['request.timestamp'] = { $lt: to, $gt: from }
-
-    //remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-    delete filtersObject.startDate;
-    delete filtersObject.endDate;
-   }
-
-
-  var groupObject = {};
-  groupObject._id = {};
-  groupObject = {
-    _id: {
-      year: { $year: "$request.timestamp" },
-      month: { $month: "$request.timestamp"}
-    },
-    load: { $sum: 1},
-    avgResp: {
-      $avg: {
-        $subtract: ["$response.timestamp", "$request.timestamp"]
+          avgResp:
+            $avg:
+              $subtract: [
+                "$response.timestamp"
+                "$request.timestamp"
+              ]
       }
-    }
-  };
+    ]).exec()
 
-  switch (time){
-    case 'minute':
-      groupObject._id.day = { $dayOfMonth :  "$request.timestamp"};
-      groupObject._id.hour = { $hour : "$request.timestamp" };
-      groupObject._id.minute = { $minute : "$request.timestamp"};
-      break;
-    case 'hour':
-      groupObject._id.day = { $dayOfMonth :  "$request.timestamp"};
-      groupObject._id.hour = { $hour : "$request.timestamp" };
-      break;
-    case 'day':
-      groupObject._id.day = { $dayOfMonth :  "$request.timestamp"};
-      break;
-    case 'week':
-      groupObject._id.week ={ $week : "$request.timestamp"};
-      break;
-    case 'month':
 
-      break;
-    case 'year':
-      delete groupObject._id.month;
-      break;
-    case 'status':
-      groupObject = {
-          _id: {
+#################################################
+# Fetches allowed Global Status Metrics         #
+################################################
+exports.fetchGlobalStatusMetrics = fetchGlobalStatusMetrics = (requestingUser, filtersObject) ->
+
+  if filtersObject.startDate and filtersObject.endDate
+    from = new Date(JSON.parse(filtersObject.startDate))
+    to = new Date(JSON.parse(filtersObject.endDate))
+
+    #remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+    delete filtersObject.startDate
+
+    delete filtersObject.endDate
+  else
+    from = moment().subtract(1, "weeks").toDate()
+    to = moment().toDate()
+  filtersObject["request.timestamp"] =
+    $lt: to
+    $gt: from
+
+  getAllowedChannelIDs(requestingUser).then (allowedChannelIDs) ->
+    filtersObject["channelID"] = $in: allowedChannelIDs
+    Transaction.aggregate([
+      {
+        $match: filtersObject
+      }
+      {
+        $group:
+          _id:
             channelID: "$channelID"
-          },
-          failed: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Failed']}, 1, 0]
-            }
-          },
-          successful: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Successful']}, 1, 0]
-            }
-          },
-          processing: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Processing']}, 1, 0]
-            }
-          },
-          completed: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Completed']}, 1, 0]
-            }
-          },
-          completedWErrors: {
-            $sum: {
-              $cond: [{ $eq: ["$status", 'Completed with error(s)']}, 1, 0]
-            }
-          }
-        }
 
-      break;
-    default :
-      //do nothng
-      break;
-  }
-  return Transaction.aggregate([
-      { $match: filtersObject },
-      { $group: groupObject }
-      ]).exec()
-}`
+          failed:
+            $sum:
+              $cond: [
+                {
+                  $eq: [
+                    "$status"
+                    "Failed"
+                  ]
+                }
+                1
+                0
+              ]
+
+          successful:
+            $sum:
+              $cond: [
+                {
+                  $eq: [
+                    "$status"
+                    "Successful"
+                  ]
+                }
+                1
+                0
+              ]
+
+          processing:
+            $sum:
+              $cond: [
+                {
+                  $eq: [
+                    "$status"
+                    "Processing"
+                  ]
+                }
+                1
+                0
+              ]
+
+          completed:
+            $sum:
+              $cond: [
+                {
+                  $eq: [
+                    "$status"
+                    "Completed"
+                  ]
+                }
+                1
+                0
+              ]
+
+          completedWErrors:
+            $sum:
+              $cond: [
+                {
+                  $eq: [
+                    "$status"
+                    "Completed with error(s)"
+                  ]
+                }
+                1
+                0
+              ]
+      }
+    ]).exec()
+
+#################################################
+# Fetches allowed Channel Metrics               #
+################################################
+exports.fetchChannelMetrics = fetchChannelMetrics = (time, channelId, userRequesting, filtersObject) ->
+
+  channelID = mongoose.Types.ObjectId(channelId)
+  if filtersObject.startDate and filtersObject.endDate
+    from = new Date(JSON.parse(filtersObject.startDate))
+    to = new Date(JSON.parse(filtersObject.endDate))
+  else
+    from = moment().subtract(1, "days").toDate()
+    to = moment().toDate()
+
+  filtersObject.channelID = channelID
+
+  if filtersObject.startDate and filtersObject.endDate
+    filtersObject["request.timestamp"] =
+      $lt: to
+      $gt: from
+
+
+    #remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+    delete filtersObject.startDate
+    delete filtersObject.endDate
+
+  groupObject = {}
+  groupObject._id = {}
+  groupObject =
+    _id:
+      year:
+        $year: "$request.timestamp"
+
+      month:
+        $month: "$request.timestamp"
+
+    load:
+      $sum: 1
+
+    avgResp:
+      $avg:
+        $subtract: [
+          "$response.timestamp"
+          "$request.timestamp"
+        ]
+
+  switch time
+    when "minute"
+      groupObject._id.day = $dayOfMonth: "$request.timestamp"
+      groupObject._id.hour = $hour: "$request.timestamp"
+      groupObject._id.minute = $minute: "$request.timestamp"
+    when "hour"
+      groupObject._id.day = $dayOfMonth: "$request.timestamp"
+      groupObject._id.hour = $hour: "$request.timestamp"
+    when "day"
+      groupObject._id.day = $dayOfMonth: "$request.timestamp"
+    when "week"
+      groupObject._id.week = $week: "$request.timestamp"
+    when "month", "year"
+      delete groupObject._id.month
+    when "status"
+      groupObject =
+        _id:
+          channelID: "$channelID"
+
+        failed:
+          $sum:
+            $cond: [
+              {
+                $eq: [
+                  "$status"
+                  "Failed"
+                ]
+              }
+              1
+              0
+            ]
+
+        successful:
+          $sum:
+            $cond: [
+              {
+                $eq: [
+                  "$status"
+                  "Successful"
+                ]
+              }
+              1
+              0
+            ]
+
+        processing:
+          $sum:
+            $cond: [
+              {
+                $eq: [
+                  "$status"
+                  "Processing"
+                ]
+              }
+              1
+              0
+            ]
+
+        completed:
+          $sum:
+            $cond: [
+              {
+                $eq: [
+                  "$status"
+                  "Completed"
+                ]
+              }
+              1
+              0
+            ]
+
+        completedWErrors:
+          $sum:
+            $cond: [
+              {
+                $eq: [
+                  "$status"
+                  "Completed with error(s)"
+                ]
+              }
+              1
+              0
+            ]
+    else
+
+    #do nothng
+  Transaction.aggregate([
+    {
+      $match: filtersObject
+    }
+    {
+      $group: groupObject
+    }
+  ]).exec()
+
+#################################################
+# Fetches allowed Channels                      #
+################################################
 
 getAllowedChannels = (requestingUser) ->
   authorisation.getUserViewableChannels requestingUser
@@ -231,6 +319,10 @@ getAllowedChannels = (requestingUser) ->
 
     (Q.all promises).then ->
       allowedChannelIDs
+
+#################################################
+# Fetches allowed Channel IDs                   #
+################################################
 
 getAllowedChannelIDs = (requestingUser) ->
   authorisation.getUserViewableChannels requestingUser

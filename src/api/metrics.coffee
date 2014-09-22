@@ -36,9 +36,9 @@ exports.getGlobalLoadTimeMetrics = `function *() {
 exports.getGlobalStatusMetrics = `function *() {
 
   var filtersObject = this.request.query;
-	var userRequesting = this.authenticated;
+  var userRequesting = this.authenticated;
 
-	results = yield metrics.fetchGlobalStatusMetrics(userRequesting, filtersObject);
+  results = yield metrics.fetchGlobalStatusMetrics(userRequesting, filtersObject);
   this.body = results
 
 }`
@@ -52,7 +52,7 @@ exports.getChannelMetrics = `function *(time, channelId) {
   var filtersObject = this.request.query;
   var userRequesting = this.authenticated;
 
-	results = yield metrics.fetchChannelMetrics(time, channelId,userRequesting,filtersObject);
+  results = yield metrics.fetchChannelMetrics(time, channelId,userRequesting,filtersObject);
 
   if (time == 'status') {
     this.body = results;
