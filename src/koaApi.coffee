@@ -13,6 +13,7 @@ contactGroups = require './api/contactGroups'
 monitor = require './api/monitor'
 Q = require 'q'
 worker = require './api/worker'
+mediators = require './api/mediators'
 
 exports.setupApp = (done) ->
 	
@@ -62,11 +63,15 @@ exports.setupApp = (done) ->
 
 	app.use route.get '/groups', contactGroups.getContactGroups
 	app.use route.get '/groups/:contactGroupId', contactGroups.getContactGroup
-	app.use route.post '/groups', contactGroups.addContactGroup 
+	app.use route.post '/groups', contactGroups.addContactGroup
 	app.use route.put '/groups/:contactGroupId', contactGroups.updateContactGroup
 	app.use route.delete '/groups/:contactGroupId', contactGroups.removeContactGroup
 	
 	app.use route.get '/monitor', monitor.getMonitor
+
+	app.use route.get '/mediators', mediators.getAllMediators
+	app.use route.get '/mediators/:uuid', mediators.getMediator
+	app.use route.post '/mediators', mediators.addMediator
 
 	# Return the result
 	done(app)

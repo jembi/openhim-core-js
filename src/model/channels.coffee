@@ -51,6 +51,7 @@ ChannelSchema = new Schema
 
 # compile the Channel and Route Schema into a Model
 exports.Route = mongoose.model 'Route', RouteSchema
+exports.RouteSchema = RouteSchema
 
 ###
 # The Channel object that describes a specific channel within the OpenHIM.
@@ -62,3 +63,4 @@ exports.Route = mongoose.model 'Route', RouteSchema
 # of users or group that are authroised to send messages to this channel.
 ###
 exports.Channel = mongoose.model 'Channel', ChannelSchema
+exports.ChannelSchema = ChannelSchema
