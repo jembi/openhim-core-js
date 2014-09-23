@@ -7,7 +7,7 @@ crypto = require "crypto"
 
 exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
 	requestCallback = requestCallback || ->
-		# Create mock endpoint to forward requests to
+	# Create mock endpoint to forward requests to
 	mockServer = http.createServer (req, res) ->
 		res.writeHead resStatusCode, {"Content-Type": "text/plain"}
 		res.end resBody
@@ -32,7 +32,7 @@ exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, request
 
 
 	requestCallback = requestCallback || ->
-		# Create mock endpoint to forward requests to
+	# Create mock endpoint to forward requests to
 	mockServer = https.createServer options, (req, res) ->
 		res.writeHead resStatusCode, {"Content-Type": "text/plain"}
 		res.end "Secured " + resBody
@@ -60,6 +60,15 @@ exports.createMockHTTPRespondingPostServer = (port, expected, matchResponse, non
 			res.end()
 
 	server.listen port, 'localhost', -> callback server
+
+exports.createMockMediatorServer = (resStatusCode, mediatorResponse, port, callback) ->
+	requestCallback = requestCallback || ->
+	# Create mock endpoint to forward requests to
+	mockServer = http.createServer (req, res) ->
+		res.writeHead resStatusCode, {"Content-Type": "application/json+openhim"}
+		res.end JSON.stringify mediatorResponse
+
+	mockServer.listen port, -> callback mockServer
 
 exports.rootUser =
 	firstname: 'Admin'

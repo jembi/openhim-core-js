@@ -214,6 +214,156 @@ describe "HTTP Router", ->
 				req.url.should.eql("/test?parma1=val1&parma2=val2")
 				done()
 
+		it "should set mediator response object on ctx", (done) ->
+			mediatorResponse =
+				status: 'Successful'
+				response:
+					status: 201
+					headers: {}
+					body: 'Mock response body\n'
+				orchestrations:
+					name: 'Mock mediator orchestration'
+					request: 
+						path: '/some/path'
+						method: 'GET'
+						timestamp: (new Date()).toString()
+					response: 
+						status: 200
+						body: 'Orchestrated response'
+						timestamp: (new Date()).toString()
+				properties:
+					prop1: 'val1'
+					prop2: 'val2'
+
+			testUtils.createMockMediatorServer 201, mediatorResponse, 9878, ->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+						host: "localhost"
+						port: 9878
+						primary: true
+					]
+
+				ctx = new Object()
+				ctx.authorisedChannel = channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.path = ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+
+					ctx.response.status.should.be.exactly 201
+					ctx.mediatorResponse.should.exist
+					ctx.mediatorResponse.should.eql mediatorResponse
+					done()
+
+		it "should set mediator response data as response to client", (done) ->
+			mediatorResponse =
+				status: 'Failed'
+				response:
+					status: 400
+					headers: {}
+					body: 'Mock response body from mediator\n'
+				orchestrations:
+					name: 'Mock mediator orchestration'
+					request: 
+						path: '/some/path'
+						method: 'GET'
+						timestamp: (new Date()).toString()
+					response: 
+						status: 200
+						body: 'Orchestrated response'
+						timestamp: (new Date()).toString()
+				properties:
+					prop1: 'val1'
+					prop2: 'val2'
+
+			testUtils.createMockMediatorServer 201, mediatorResponse, 9879, ->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+						host: "localhost"
+						port: 9879
+						primary: true
+					]
+
+				ctx = new Object()
+				ctx.authorisedChannel = channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.path = ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+
+					ctx.response.status.should.be.exactly 400
+					ctx.response.body.should.be.exactly 'Mock response body from mediator\n'
+					done()
+
+		it "should set mediator response data for non-primary routes", (done) ->
+			mediatorResponse =
+				status: 'Failed'
+				response:
+					status: 400
+					headers: {}
+					body: 'Mock response body from mediator\n'
+				orchestrations:
+					name: 'Mock mediator orchestration'
+					request: 
+						path: '/some/path'
+						method: 'GET'
+						timestamp: (new Date()).toString()
+					response: 
+						status: 200
+						body: 'Orchestrated response'
+						timestamp: (new Date()).toString()
+				properties:
+					prop1: 'val1'
+					prop2: 'val2'
+
+			testUtils.createMockMediatorServer 201, mediatorResponse, 9888, ->
+				testUtils.createMockMediatorServer 201, mediatorResponse, 9889, ->
+					# Setup a channel for the mock endpoint
+					channel =
+						name: "Mock endpoint"
+						urlPattern: ".+"
+						routes: [
+									host: "localhost"
+									port: 9888
+									primary: true
+								,
+									host: "localhost"
+									port: 9889
+								]
+
+					ctx = new Object()
+					ctx.authorisedChannel = channel
+					ctx.request = new Object()
+					ctx.response = new Object()
+					ctx.path = ctx.request.url = "/test"
+					ctx.request.method = "GET"
+
+					router.route ctx, (err) ->
+						if err
+							return done err
+
+						try
+							ctx.routes[0].response.should.be.eql mediatorResponse.response
+							ctx.routes[0].orchestrations.should.be.eql mediatorResponse.orchestrations
+							ctx.routes[0].properties.should.be.eql mediatorResponse.properties
+							done()
+						catch err
+							done err
+
 	describe "Basic Auth", ->
 		it "should have valid authorization header if username and password is set in options", (done) ->
 			testUtils.createMockServer 201, "Mock response body\n", 9875, (->
