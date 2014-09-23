@@ -190,7 +190,7 @@ describe "API Metrics Tests", ->
             res.body.should.have.length 2
             res.body[0].load.should.equal 1
             res.body[0].avgResp.should.equal 149
-            res.body[0].timestamp.should.equal moment('2014-07-18T13:00:00').format()
+            res.body[0].timestamp.should.equal '2014-07-18T11:00:00+00:00'
             done()
 
     describe '*getGlobalStatusMetrics()', ->
@@ -237,7 +237,7 @@ describe "API Metrics Tests", ->
             res.body.should.have.length 1
             res.body[0].load.should.equal 1
             res.body[0].avgResp.should.equal 149
-            res.body[0].timestamp.should.equal moment('2014-07-18T00:00:00').format()
+            res.body[0].timestamp.should.equal '2014-07-17T22:00:00+00:00'
             done()
 
     describe '*getStatusMetrics()', ->
