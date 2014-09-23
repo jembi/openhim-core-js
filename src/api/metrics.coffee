@@ -23,7 +23,7 @@ exports.getGlobalLoadTimeMetrics = `function *() {
         this.body.push({
           load: results[i].load,
           avgResp: results[i].avgResp,
-          timestamp : moment(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour, 'YYYY-MM-DD H').format()
+          timestamp : moment(results[i]._id.year + '-' + results[i]._id.month + '-'+ results[i]._id.day +' '+ results[i]._id.hour, 'YYYY-MM-DD H').utc().format()
       });
     }
 
@@ -73,7 +73,7 @@ exports.getChannelMetrics = `function *(time, channelId) {
     this.body.push({
       load: results[i].load,
       avgResp: results[i].avgResp,
-      timestamp: moment(results[i]._id.year + '-' + results[i]._id.month + '-' + results[i]._id.day + ' ' + results[i]._id.hour + ':' + results[i]._id.minute, 'YYYY-MM-DD H:mm').format()
+      timestamp: moment(results[i]._id.year + '-' + results[i]._id.month + '-' + results[i]._id.day + ' ' + results[i]._id.hour + ':' + results[i]._id.minute, 'YYYY-MM-DD H:mm').utc().format()
     });
   }
   }
