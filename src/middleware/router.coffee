@@ -12,13 +12,41 @@ logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
 
-
-
 containsMultiplePrimaries = (routes) ->
 	numPrimaries = 0
 	for route in routes
 		numPrimaries++ if route.primary
 	return numPrimaries > 1
+
+setKoaResponse = (ctx, response) ->
+	ctx.response.status = response.status
+	ctx.response.timestamp = response.timestamp
+	ctx.response.body = response.body
+
+	if not ctx.response.header
+		ctx.response.header = {}
+
+	for key, value of response.header
+		switch key
+			when 'set-cookie' then setCookiesOnContext ctx, value
+			when 'location' then ctx.response.redirect value
+			else ctx.response.header[key] = value
+
+setCookiesOnContext = (ctx, value) ->
+	logger.info 'Setting cookies on context'
+	for c_key,c_value in value
+		c_opts = {path:false,httpOnly:false} #clear out default values in cookie module
+		c_vals = {}
+		for p_key,p_val of cookie.parse c_key
+			p_key_l = p_key.toLowerCase()
+			switch p_key_l
+				when 'max-age' then c_opts['maxage'] = parseInt p_val, 10
+				when 'expires' then c_opts['expires'] = new Date p_val
+				when 'path','domain','secure','signed','overwrite' then c_opts[p_key_l] = p_val
+				when 'httponly' then c_opts['httpOnly'] = p_val
+				else c_vals[p_key] = p_val
+		for p_key,p_val of c_vals
+			ctx.cookies.set p_key,p_val,c_opts
 
 sendRequestToRoutes = (ctx, routes, next) ->
 	promises = []
@@ -50,37 +78,57 @@ sendRequestToRoutes = (ctx, routes, next) ->
 			delete options.headers.host
 
 		if route.primary
-			response = ctx.response
+			promise = sendRequest(ctx, route, options)
+			.then (response) ->
+				if response.header['content-type'] is 'application/json+openhim'
+					# handle mediator reponse
+					responseObj = JSON.parse response.body
+					ctx.mediatorResponse = responseObj
+					# then set koa response from responseObj.response
+					setKoaResponse ctx, responseObj.response
+				else
+					setKoaResponse ctx, response
+			.fail (reason) ->
+				# on failure
+				logger.error reason
 		else
-			routeResponse = {}
-			routeResponse.name = route.name
-			routeResponse.request =
-				path: path
-				headers: ctx.request.header
-				querystring: ctx.request.querystring
-				method: ctx.request.method
-			routeResponse.response = {}
-			ctx.routes = [] if not ctx.routes
-			ctx.routes.push routeResponse
-			response = routeResponse.response
+			promise = sendRequest ctx, route, options
+			.then (response) ->
+				routeObj = {}
+				routeObj.name = route.name
+				routeObj.request =
+					path: path
+					headers: ctx.request.header
+					querystring: ctx.request.querystring
+					method: ctx.request.method
+				
+				if response.header['content-type'] is 'application/json+openhim'
+					# handle mediator reponse
+					responseObj = JSON.parse response.body
+					routeObj.orchestrations = responseObj.orchestrations
+					routeObj.properties = responseObj.properties
+					routeObj.response = responseObj.response
+				else
+					routeObj.response = response					
 
-		promises.push sendRequest ctx, route, response, options
+				ctx.routes = [] if not ctx.routes
+				ctx.routes.push routeObj
+			.fail (reason) ->
+				# on failure
+				logger.error reason
+
+		promises.push promise
 
 	(Q.all promises).then ->
 		next()
 
-sendRequest = (ctx, route, responseDst, options) ->
-	deferred = Q.defer()
-
+sendRequest = (ctx, route, options) ->
 	if route.type is 'tcp'
 		logger.info 'Routing tcp request'
-		sendSocketRequest ctx, route, responseDst, options, deferred.resolve
+		return sendSocketRequest ctx, route, options
 	else
 		logger.info 'Routing http(s) request'
-		sendHttpRequest ctx, route, responseDst, options , deferred.resolve
-
-	return deferred.promise
-
+		return sendHttpRequest ctx, route, options
 
 obtainCharset = (headers) ->
         contentType = headers['content-type'] || ''
@@ -90,105 +138,95 @@ obtainCharset = (headers) ->
         return  'utf-8'
 
 
-sendHttpRequest = (ctx, route, responseDst, options,  callback) ->
+sendHttpRequest = (ctx, route, options) ->
+	defered = Q.defer();
+	response = {}
+
 	method = http
 
 	if route.secured
         method = https
 
 	routeReq = method.request options, (routeRes) ->
-		responseDst.status = routeRes.statusCode
+		response.status = routeRes.statusCode
 
-		# copy across http headers
-		if not responseDst.header
-			responseDst.header = {}
-		for key, value of routeRes.headers
-			switch key
-				when 'set-cookie'
-					if route.primary then setCookiesOnContext ctx, value
-				when 'location' then responseDst.redirect(value)
-				else responseDst.header[key] = value
+		response.header = {}
+		response.header = routeRes.headers
 
 		bufs = []
 		routeRes.on "data", (chunk) ->
 			bufs.push chunk
 
-
-		#See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+		# See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
 		routeRes.on "end", ->
-			responseDst.timestamp = new Date()
+			response.timestamp = new Date()
 			charset = obtainCharset(routeRes.headers)
 			if routeRes.headers['content-encoding'] == 'gzip'
 				zlib.gunzip(
 					Buffer.concat bufs,
 					(gunzipError, buf) ->
 						if gunzipError then logger.error gunzipError
-						else responseDst.body = buf.toString charset
-						callback()	
+						else response.body = buf.toString charset
+						if not defered.promise.isRejected()
+							defered.resolve response
 				)
 			else if routeRes.headers['content-encoding'] == 'deflate'
 				zlib.inflate(
 					Buffer.concat bufs,
 					(inflateError, buf) ->
 						if inflateError then logger.error inflateError
-						else responseDst.body = buf.toString charset
-						callback()
+						else response.body = buf.toString charset
+						if not defered.promise.isRejected()
+							defered.resolve response
 				)
 			else
-				responseDst.body = Buffer.concat(bufs)
-				callback()
+				response.body = Buffer.concat bufs
+				if not defered.promise.isRejected()
+					defered.resolve response
 
 	routeReq.on "error", (err) ->
-		responseDst.status = status.INTERNAL_SERVER_ERROR
-		responseDst.timestamp = new Date()
-
+		response.status = status.INTERNAL_SERVER_ERROR
+		response.timestamp = new Date()
 		logger.error err
-		callback()
+		defered.reject err
 
 	if ctx.request.method == "POST" || ctx.request.method == "PUT"
 		routeReq.write ctx.body
 
 	routeReq.end()
 
+	return defered.promise
 
-
-setCookiesOnContext = (ctx,value) ->
-	for c_key,c_value in value
-		c_opts = {path:false,httpOnly:false} #clear out default values in cookie module
-		c_vals = {}
-		for p_key,p_val of cookie.parse c_key
-			p_key_l = p_key.toLowerCase()
-			switch p_key_l
-				when 'max-age' then c_opts['maxage'] = parseInt p_val, 10
-				when 'expires' then c_opts['expires'] = new Date p_val
-				when 'path','domain','secure','signed','overwrite' then c_opts[p_key_l] = p_val
-				when 'httponly' then c_opts['httpOnly'] = p_val
-				else c_vals[p_key] = p_val
-		for p_key,p_val of c_vals
-			ctx.cookies.set p_key,p_val,c_opts
-
-sendSocketRequest = (ctx, route,responseDst, options, callback) ->
+sendSocketRequest = (ctx, route, options) ->
+	defered = Q.defer()
 	requestBody = ctx.body
 	client = new net.Socket()
-	responseDst.body = ''
+	response = {}
+	response.header = {}
+	response.body = ''
 
 	client.connect options.port, options.hostname, ->
 		logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
-		client.write requestBody
+		client.end requestBody
 
+	bufs = []
 	client.on 'data', (chunk) ->
-		responseDst.status = status.OK
-		responseDst.body += chunk
-		responseDst.timestamp = new Date()
-		client.end()
-		callback()
-
+		bufs.push chunk
+		
 	client.on 'error', (err) ->
-		responseDst.status = status.INTERNAL_SERVER_ERROR
-		responseDst.timestamp = new Date()
-
+		response.status = status.INTERNAL_SERVER_ERROR
+		response.timestamp = new Date()
 		logger.error err
-		callback()
+		defered.reject err
+
+	client.on 'end', ->
+		response.body = Buffer.concat bufs
+		response.status = status.OK
+		response.timestamp = new Date()
+		if not defered.promise.isRejected()
+			defered.resolve response
+
+	return defered.promise
 
 
 getDestinationPath = (route, requestPath) ->
