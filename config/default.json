@@ -27,8 +27,8 @@
   "nodemailer": {
     "service": "Gmail",
     "auth": {
-        "user": "gmail.user@gmail.com",
-        "pass": "userpass"
+        "user": "sender@gmail.com",
+        "pass": "password"
     }
   },
   "smsGateway": {
@@ -44,5 +44,8 @@
     "pollPeriodMinutes": 1,
     "himInstance": "openhim.jembi.org",
     "consoleURL": "http://openhim.jembi.org"
-  }
+  },
+  "reports":{
+      "enableReports": true
+    }
 }
