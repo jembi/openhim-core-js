@@ -3,6 +3,7 @@ Mediator = require('../model/mediators').Mediator
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
+semver = require 'semver'
 
 
 exports.getAllMediators = `function *getAllMediators() {
@@ -48,12 +49,53 @@ exports.getMediator = `function *getMediator(mediatorUUID) {
 	}
 }`
 
+saveDefaultChannelConfig = (config) -> new Channel(channel).save() for channel in config
+
 exports.addMediator = `function *addMediator() {
 	try {
+		var mediator = this.request.body;
+		if (!mediator.uuid) {
+			throw {
+				name: 'ValidationError',
+				message: 'UUID is required'
+			}
+		}
+
+		if (!mediator.version || !semver.valid(mediator.version)) {
+			throw {
+				name: 'ValidationError',
+				message: 'Version is required. Must be in SemVer form x.y.z'
+			}
+		}
+
+		var existing = yield Mediator.findOne({uuid: mediator.uuid}).exec()
+		if (typeof existing !== "undefined" && existing !== null) {
+			if (semver.gt(mediator.version, existing.version)) {
+				yield Mediator.findByIdAndUpdate(existing._id, mediator).exec();
+			}
+		} else {
+			if (!mediator.endpoints || mediator.endpoints.length<1) {
+				throw {
+					name: 'ValidationError',
+					message: 'At least 1 endpoint is required'
+				}
+			}
+
+			yield Q.ninvoke(new Mediator(mediator), 'save');
+			if (mediator.defaultChannelConfig) {
+				yield saveDefaultChannelConfig(mediator.defaultChannelConfig);
+			}
+		}
+
 		this.status = 'created'
 	} catch (e) {
-		logger.error('Could not add mediator via the API: ' + e);
-		this.body = e.message;
-		this.status = 'internal server error';
+		if (e.name == 'ValidationError') {
+			this.body = e.message;
+			this.status = 'bad request';
+		} else {
+			logger.error('Could not add mediator via the API: ' + e);
+			this.body = e.message;
+			this.status = 'internal server error';
+		}
 	}
 }`
