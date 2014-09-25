@@ -309,7 +309,6 @@ describe "HTTP Router", ->
 					try
 						ctx.response.status.should.be.exactly 400
 						ctx.response.body.should.be.exactly 'Mock response body from mediator\n'
-						console.log JSON.stringify ctx.response.header
 						ctx.response.header.should.have.property 'content-type', 'text/xml'
 						done()
 					catch err
@@ -541,3 +540,84 @@ describe "HTTP Router", ->
 							primary: true
 						]
 			testPathRedirectionRouting 9887, channel, "/target", done
+
+	describe 'setKoaResponse', ->
+
+		createCtx = ->
+			ctx = {}
+			ctx.response = {}
+			return ctx
+
+		createResponse = ->
+			return response =
+				status: 201
+				headers:
+					'content-type': 'text/xml'
+					'x-header': 'anotherValue'
+				timestamp: new Date()
+				body: 'Mock response body'
+
+		it 'should set the ctx.response object', ->
+			# given
+			ctx = createCtx()
+			response = createResponse()
+
+			# when
+			router.setKoaResponse ctx, response
+
+			# then
+			ctx.response.status.should.be.exactly response.status
+			ctx.response.body.should.be.exactly response.body
+			ctx.response.timestamp.should.be.exactly response.timestamp
+
+		it 'should copy response headers to the ctx.response object', ->
+			# given
+			ctx = createCtx()
+			response = createResponse()
+
+			# when
+			router.setKoaResponse ctx, response
+
+			# then
+			ctx.response.header.should.have.property 'content-type', 'text/xml'
+			ctx.response.header.should.have.property 'x-header', 'anotherValue'
+
+		it 'should redirect the context if needed', ->
+			# given
+			ctx = createCtx()
+			ctx.response.redirect = sinon.spy()
+
+			response =
+				status: 301
+				headers:
+					'content-type': 'text/xml'
+					'x-header': 'anotherValue'
+					'location': 'http://some.other.place.org'
+				timestamp: new Date()
+				body: 'Mock response body'
+
+			# when
+			router.setKoaResponse ctx, response
+
+			# then
+			(ctx.response.redirect.calledWith 'http://some.other.place.org').should.be.true
+
+		it 'should not redirect if a non-redirect status is recieved', ->
+			# given
+			ctx = createCtx()
+			ctx.response.redirect = sinon.spy()
+
+			response =
+				status: 201
+				headers:
+					'content-type': 'text/xml'
+					'x-header': 'anotherValue'
+					'location': 'http://some.other.place.org'
+				timestamp: new Date()
+				body: 'Mock response body'
+
+			# when
+			router.setKoaResponse ctx, response
+
+			# then
+			(ctx.response.redirect.calledWith 'http://some.other.place.org').should.be.false

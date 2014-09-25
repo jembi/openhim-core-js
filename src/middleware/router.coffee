@@ -29,9 +29,11 @@ setKoaResponse = (ctx, response) ->
 	for key, value of response.headers
 		switch key
 			when 'set-cookie' then setCookiesOnContext ctx, value
-			when 'location' then ctx.response.redirect value
+			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
 			else ctx.response.header[key] = value
-	console.log 'set koa response'
+
+if process.env.NODE_ENV == "test"
+	exports.setKoaResponse = setKoaResponse
 
 setCookiesOnContext = (ctx, value) ->
 	logger.info 'Setting cookies on context'
