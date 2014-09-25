@@ -52,6 +52,14 @@ exports.getMediator = `function *getMediator(mediatorUUID) {
 saveDefaultChannelConfig = (config) -> new Channel(channel).save() for channel in config
 
 exports.addMediator = `function *addMediator() {
+	//Must be admin
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addMediator denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addMediator denied.'
+		this.status = 'forbidden';
+		return;
+	}
+
 	try {
 		var mediator = this.request.body;
 		if (!mediator.uuid) {

@@ -159,6 +159,21 @@ describe "API Integration Tests", ->
 						else
 							done()
 
+			it 'should not allow non root user to add mediator', (done) ->
+				request("http://localhost:8080")
+					.post("/mediators")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(mediator1)
+					.expect(403)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
 			it 'should add the mediator to the mediators collection', (done) ->
 				request("http://localhost:8080")
 					.post("/mediators")
