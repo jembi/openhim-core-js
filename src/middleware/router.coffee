@@ -26,11 +26,12 @@ setKoaResponse = (ctx, response) ->
 	if not ctx.response.header
 		ctx.response.header = {}
 
-	for key, value of response.header
+	for key, value of response.headers
 		switch key
 			when 'set-cookie' then setCookiesOnContext ctx, value
 			when 'location' then ctx.response.redirect value
 			else ctx.response.header[key] = value
+	console.log 'set koa response'
 
 setCookiesOnContext = (ctx, value) ->
 	logger.info 'Setting cookies on context'
@@ -80,7 +81,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		if route.primary
 			promise = sendRequest(ctx, route, options)
 			.then (response) ->
-				if response.header['content-type'] is 'application/json+openhim'
+				if response.headers and response.headers['content-type'] is 'application/json+openhim'
 					# handle mediator reponse
 					responseObj = JSON.parse response.body
 					ctx.mediatorResponse = responseObj
@@ -102,7 +103,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 					querystring: ctx.request.querystring
 					method: ctx.request.method
 				
-				if response.header['content-type'] is 'application/json+openhim'
+				if response.headers and response.headers['content-type'] is 'application/json+openhim'
 					# handle mediator reponse
 					responseObj = JSON.parse response.body
 					routeObj.orchestrations = responseObj.orchestrations
@@ -137,7 +138,15 @@ obtainCharset = (headers) ->
                 return matches[1]
         return  'utf-8'
 
-
+###
+# A promise returning function that send a request to the given route and resolves
+# the returned promise with a response object of the following form:
+# 	response =
+#		status: <http_status code>
+#		body: <http body>
+#		headers: <http_headers_object>
+#		timestamp: <the time the response was recieved>
+###
 sendHttpRequest = (ctx, route, options) ->
 	defered = Q.defer();
 	response = {}
@@ -149,9 +158,7 @@ sendHttpRequest = (ctx, route, options) ->
 
 	routeReq = method.request options, (routeRes) ->
 		response.status = routeRes.statusCode
-
-		response.header = {}
-		response.header = routeRes.headers
+		response.headers = routeRes.headers
 
 		bufs = []
 		routeRes.on "data", (chunk) ->
@@ -197,13 +204,19 @@ sendHttpRequest = (ctx, route, options) ->
 
 	return defered.promise
 
+###
+# A promise returning function that send a request to the given route using sockets and resolves
+# the returned promise with a response object of the following form: ()
+# 	response =
+#		status: <200 if all work, else 500>
+#		body: <the received data from the socket>
+#		timestamp: <the time the response was recieved>
+###
 sendSocketRequest = (ctx, route, options) ->
 	defered = Q.defer()
 	requestBody = ctx.body
 	client = new net.Socket()
 	response = {}
-	response.header = {}
-	response.body = ''
 
 	client.connect options.port, options.hostname, ->
 		logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"

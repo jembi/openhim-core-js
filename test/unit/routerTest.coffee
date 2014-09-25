@@ -113,13 +113,12 @@ describe "HTTP Router", ->
 							ctx.routes.length.should.be.exactly 2
 							ctx.routes[0].response.status.should.be.exactly 200
 							ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
-							ctx.routes[0].response.header.should.be.ok
+							ctx.routes[0].response.headers.should.be.ok
 							ctx.routes[0].request.path.should.be.exactly "/test/multicasting"
 							ctx.routes[1].response.status.should.be.exactly 400
 							ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
-							ctx.routes[1].response.header.should.be.ok
+							ctx.routes[1].response.headers.should.be.ok
 							ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
-
 							done()
 
 
@@ -257,17 +256,20 @@ describe "HTTP Router", ->
 					if err
 						return done err
 
-					ctx.response.status.should.be.exactly 201
-					ctx.mediatorResponse.should.exist
-					ctx.mediatorResponse.should.eql mediatorResponse
-					done()
+					try
+						ctx.response.status.should.be.exactly 201
+						ctx.mediatorResponse.should.exist
+						ctx.mediatorResponse.should.eql mediatorResponse
+						done()
+					catch err
+						done err
 
 		it "should set mediator response data as response to client", (done) ->
 			mediatorResponse =
 				status: 'Failed'
 				response:
 					status: 400
-					headers: {}
+					headers: { 'content-type': 'text/xml' }
 					body: 'Mock response body from mediator\n'
 				orchestrations:
 					name: 'Mock mediator orchestration'
@@ -304,10 +306,14 @@ describe "HTTP Router", ->
 				router.route ctx, (err) ->
 					if err
 						return done err
-
-					ctx.response.status.should.be.exactly 400
-					ctx.response.body.should.be.exactly 'Mock response body from mediator\n'
-					done()
+					try
+						ctx.response.status.should.be.exactly 400
+						ctx.response.body.should.be.exactly 'Mock response body from mediator\n'
+						console.log JSON.stringify ctx.response.header
+						ctx.response.header.should.have.property 'content-type', 'text/xml'
+						done()
+					catch err
+						done err
 
 		it "should set mediator response data for non-primary routes", (done) ->
 			mediatorResponse =

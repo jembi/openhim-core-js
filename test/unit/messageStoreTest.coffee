@@ -110,7 +110,7 @@ describe "MessageStore", ->
 				}
 				response: {
 					status: status
-					header: [ test: "test" ]
+					headers: [ test: "test" ]
 					body: "route body"
 					timestamp: new Date()
 				}
