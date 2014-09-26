@@ -43,7 +43,9 @@ exports.getTransactions = `function *getTransactions() {
 			// if not an admin, restrict by transactions that this user can view
 			var channels = yield authorisation.getUserViewableChannels(this.authenticated);
 
-			filtersObject.channelID = { $in: getChannelIDsArray(channels) };
+			if (!filtersObject.channelID) {
+				filtersObject.channelID = { $in: getChannelIDsArray(channels) };
+			}
 		}
 
 		this.body = yield transactions.Transaction.find(filtersObject).skip(filterSkip).limit(filterLimit).sort({ 'request.timestamp': -1 }).exec();
