@@ -8,8 +8,12 @@ contact = require './contact'
 metrics = require './metrics'
 logger.cli
 
-sendReports = (job, done) ->
+sendReports = (job, flag, done) ->
   reportMap = []
+  if flag == 'dailyReport'
+    fetchUsers = fetchDailySubscribers
+  if flag == 'weeklyReport'
+    fetchUsers = fetchWeeklySubscribers
 
   fetchUsers (err, users) ->
     promises = []
@@ -60,7 +64,7 @@ sendUserEmail = (report) ->
   contact.contactUser 'email', report.email, 'Report for ' + report.email , plainTemplate(report), htmlTemplate(report) , afterEmail
 
 
-
+#TODO refactor function to include status metrics as well as to allow for weekly metrics
 fetchChannelReport = (channel,user,callback) ->
   logger.info 'fetching channel report for #' + channel.name + ' ' + user.email + channel.id
   metrics.fetchChannelMetrics 'day',channel.id,user,{}
@@ -70,8 +74,11 @@ fetchChannelReport = (channel,user,callback) ->
     item.data = data
     callback item
 
-fetchUsers = (callback) ->
-  User.find {}, callback
+fetchDailySubscribers = (callback) ->
+  User.find { dailyReport: true }, callback
+
+fetchWeeklySubscribers = (callback) ->
+  User.find { weeklyReport: true }, callback
 
 plainTemplate = (report) ->
   for data in report.data
@@ -116,9 +123,14 @@ afterEmail = (callback) ->
 
 
 setupAgenda = (agenda) ->
-  agenda.define 'send channel metrics', (job, done) ->
-    sendReports job, done
-  agenda.every "3 seconds", 'send channel metrics'
+  agenda.define 'send weekly channel metrics', (job, done) ->
+    sendReports job,'weeklyReport', done
+
+  agenda.define 'send daily channel metrics', (job, done) ->
+    sendReports job,'dailyReport', done
+
+  agenda.every "5 minutes", 'send weekly channel metrics'
+  agenda.every "5 seconds", 'send daily channel metrics'
 
 exports.setupAgenda = setupAgenda
 
