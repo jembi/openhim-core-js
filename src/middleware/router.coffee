@@ -51,6 +51,12 @@ setCookiesOnContext = (ctx, value) ->
 		for p_key,p_val of c_vals
 			ctx.cookies.set p_key,p_val,c_opts
 
+handleServerError = (ctx, err) ->
+	ctx.response.status = status.INTERNAL_SERVER_ERROR
+	ctx.response.timestamp = new Date()
+	ctx.response.body = "An internal server error occurred"
+	logger.error err
+
 sendRequestToRoutes = (ctx, routes, next) ->
 	promises = []
 
@@ -93,7 +99,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 					setKoaResponse ctx, response
 			.fail (reason) ->
 				# on failure
-				logger.error reason
+				handleServerError ctx, reason
 		else
 			promise = sendRequest ctx, route, options
 			.then (response) ->
@@ -112,13 +118,13 @@ sendRequestToRoutes = (ctx, routes, next) ->
 					routeObj.properties = responseObj.properties
 					routeObj.response = responseObj.response
 				else
-					routeObj.response = response					
+					routeObj.response = response
 
 				ctx.routes = [] if not ctx.routes
 				ctx.routes.push routeObj
 			.fail (reason) ->
 				# on failure
-				logger.error reason
+				handleServerError ctx, reason
 
 		promises.push promise
 
@@ -193,11 +199,7 @@ sendHttpRequest = (ctx, route, options) ->
 				if not defered.promise.isRejected()
 					defered.resolve response
 
-	routeReq.on "error", (err) ->
-		response.status = status.INTERNAL_SERVER_ERROR
-		response.timestamp = new Date()
-		logger.error err
-		defered.reject err
+	routeReq.on "error", (err) -> defered.reject err
 
 	if ctx.request.method == "POST" || ctx.request.method == "PUT"
 		routeReq.write ctx.body
@@ -228,11 +230,7 @@ sendSocketRequest = (ctx, route, options) ->
 	client.on 'data', (chunk) ->
 		bufs.push chunk
 		
-	client.on 'error', (err) ->
-		response.status = status.INTERNAL_SERVER_ERROR
-		response.timestamp = new Date()
-		logger.error err
-		defered.reject err
+	client.on 'error', (err) -> defered.reject err
 
 	client.on 'end', ->
 		response.body = Buffer.concat bufs
