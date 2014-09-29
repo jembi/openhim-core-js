@@ -113,13 +113,12 @@ describe "HTTP Router", ->
 							ctx.routes.length.should.be.exactly 2
 							ctx.routes[0].response.status.should.be.exactly 200
 							ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
-							ctx.routes[0].response.header.should.be.ok
+							ctx.routes[0].response.headers.should.be.ok
 							ctx.routes[0].request.path.should.be.exactly "/test/multicasting"
 							ctx.routes[1].response.status.should.be.exactly 400
 							ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
-							ctx.routes[1].response.header.should.be.ok
+							ctx.routes[1].response.headers.should.be.ok
 							ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
-
 							done()
 
 
@@ -213,6 +212,162 @@ describe "HTTP Router", ->
 			), (req, res) ->
 				req.url.should.eql("/test?parma1=val1&parma2=val2")
 				done()
+
+		it "should set mediator response object on ctx", (done) ->
+			mediatorResponse =
+				status: 'Successful'
+				response:
+					status: 201
+					headers: {}
+					body: 'Mock response body\n'
+				orchestrations:
+					name: 'Mock mediator orchestration'
+					request: 
+						path: '/some/path'
+						method: 'GET'
+						timestamp: (new Date()).toString()
+					response: 
+						status: 200
+						body: 'Orchestrated response'
+						timestamp: (new Date()).toString()
+				properties:
+					prop1: 'val1'
+					prop2: 'val2'
+
+			testUtils.createMockMediatorServer 201, mediatorResponse, 9878, ->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+						host: "localhost"
+						port: 9878
+						primary: true
+					]
+
+				ctx = new Object()
+				ctx.authorisedChannel = channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.path = ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+
+					try
+						ctx.response.status.should.be.exactly 201
+						ctx.mediatorResponse.should.exist
+						ctx.mediatorResponse.should.eql mediatorResponse
+						done()
+					catch err
+						done err
+
+		it "should set mediator response data as response to client", (done) ->
+			mediatorResponse =
+				status: 'Failed'
+				response:
+					status: 400
+					headers: { 'content-type': 'text/xml' }
+					body: 'Mock response body from mediator\n'
+				orchestrations:
+					name: 'Mock mediator orchestration'
+					request: 
+						path: '/some/path'
+						method: 'GET'
+						timestamp: (new Date()).toString()
+					response: 
+						status: 200
+						body: 'Orchestrated response'
+						timestamp: (new Date()).toString()
+				properties:
+					prop1: 'val1'
+					prop2: 'val2'
+
+			testUtils.createMockMediatorServer 201, mediatorResponse, 9879, ->
+				# Setup a channel for the mock endpoint
+				channel =
+					name: "Mock endpoint"
+					urlPattern: ".+"
+					routes: [
+						host: "localhost"
+						port: 9879
+						primary: true
+					]
+
+				ctx = new Object()
+				ctx.authorisedChannel = channel
+				ctx.request = new Object()
+				ctx.response = new Object()
+				ctx.path = ctx.request.url = "/test"
+				ctx.request.method = "GET"
+
+				router.route ctx, (err) ->
+					if err
+						return done err
+					try
+						ctx.response.status.should.be.exactly 400
+						ctx.response.body.should.be.exactly 'Mock response body from mediator\n'
+						ctx.response.header.should.have.property 'content-type', 'text/xml'
+						done()
+					catch err
+						done err
+
+		it "should set mediator response data for non-primary routes", (done) ->
+			mediatorResponse =
+				status: 'Failed'
+				response:
+					status: 400
+					headers: {}
+					body: 'Mock response body from mediator\n'
+				orchestrations:
+					name: 'Mock mediator orchestration'
+					request: 
+						path: '/some/path'
+						method: 'GET'
+						timestamp: (new Date()).toString()
+					response: 
+						status: 200
+						body: 'Orchestrated response'
+						timestamp: (new Date()).toString()
+				properties:
+					prop1: 'val1'
+					prop2: 'val2'
+
+			testUtils.createMockMediatorServer 201, mediatorResponse, 9888, ->
+				testUtils.createMockMediatorServer 201, mediatorResponse, 9889, ->
+					# Setup a channel for the mock endpoint
+					channel =
+						name: "Mock endpoint"
+						urlPattern: ".+"
+						routes: [
+									host: "localhost"
+									port: 9888
+									primary: true
+								,
+									host: "localhost"
+									port: 9889
+								]
+
+					ctx = new Object()
+					ctx.authorisedChannel = channel
+					ctx.request = new Object()
+					ctx.response = new Object()
+					ctx.path = ctx.request.url = "/test"
+					ctx.request.method = "GET"
+
+					router.route ctx, (err) ->
+						if err
+							return done err
+
+						try
+							ctx.routes[0].response.should.be.eql mediatorResponse.response
+							ctx.routes[0].orchestrations.should.be.eql mediatorResponse.orchestrations
+							ctx.routes[0].properties.should.be.eql mediatorResponse.properties
+							done()
+						catch err
+							done err
 
 	describe "Basic Auth", ->
 		it "should have valid authorization header if username and password is set in options", (done) ->
@@ -385,3 +540,84 @@ describe "HTTP Router", ->
 							primary: true
 						]
 			testPathRedirectionRouting 9887, channel, "/target", done
+
+	describe 'setKoaResponse', ->
+
+		createCtx = ->
+			ctx = {}
+			ctx.response = {}
+			return ctx
+
+		createResponse = ->
+			return response =
+				status: 201
+				headers:
+					'content-type': 'text/xml'
+					'x-header': 'anotherValue'
+				timestamp: new Date()
+				body: 'Mock response body'
+
+		it 'should set the ctx.response object', ->
+			# given
+			ctx = createCtx()
+			response = createResponse()
+
+			# when
+			router.setKoaResponse ctx, response
+
+			# then
+			ctx.response.status.should.be.exactly response.status
+			ctx.response.body.should.be.exactly response.body
+			ctx.response.timestamp.should.be.exactly response.timestamp
+
+		it 'should copy response headers to the ctx.response object', ->
+			# given
+			ctx = createCtx()
+			response = createResponse()
+
+			# when
+			router.setKoaResponse ctx, response
+
+			# then
+			ctx.response.header.should.have.property 'content-type', 'text/xml'
+			ctx.response.header.should.have.property 'x-header', 'anotherValue'
+
+		it 'should redirect the context if needed', ->
+			# given
+			ctx = createCtx()
+			ctx.response.redirect = sinon.spy()
+
+			response =
+				status: 301
+				headers:
+					'content-type': 'text/xml'
+					'x-header': 'anotherValue'
+					'location': 'http://some.other.place.org'
+				timestamp: new Date()
+				body: 'Mock response body'
+
+			# when
+			router.setKoaResponse ctx, response
+
+			# then
+			(ctx.response.redirect.calledWith 'http://some.other.place.org').should.be.true
+
+		it 'should not redirect if a non-redirect status is recieved', ->
+			# given
+			ctx = createCtx()
+			ctx.response.redirect = sinon.spy()
+
+			response =
+				status: 201
+				headers:
+					'content-type': 'text/xml'
+					'x-header': 'anotherValue'
+					'location': 'http://some.other.place.org'
+				timestamp: new Date()
+				body: 'Mock response body'
+
+			# when
+			router.setKoaResponse ctx, response
+
+			# then
+			(ctx.response.redirect.calledWith 'http://some.other.place.org').should.be.false

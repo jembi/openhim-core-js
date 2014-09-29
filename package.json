@@ -33,7 +33,7 @@
   "devDependencies": {
     "coffee-script": "1.7.1",
     "mocha": "1.18.2",
-    "should": "3.1.4",
+    "should": "4.x.x",
     "sinon": "1.9.0",
     "supertest": "0.10.0"
   },
