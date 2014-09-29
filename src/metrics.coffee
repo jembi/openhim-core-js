@@ -166,20 +166,22 @@ exports.fetchChannelMetrics = fetchChannelMetrics = (time, channelId, userReques
     from = new Date(JSON.parse(filtersObject.startDate))
     to = new Date(JSON.parse(filtersObject.endDate))
   else
-    from = moment().subtract(1, "days").toDate()
-    to = moment().toDate()
+    from = moment().startOf('day').toDate()
+    to = moment().endOf('day').toDate()
 
   filtersObject.channelID = channelID
 
-  if filtersObject.startDate and filtersObject.endDate
-    filtersObject["request.timestamp"] =
-      $lt: to
-      $gt: from
+
+#  if filtersObject.startDate and filtersObject.endDate
+  filtersObject["request.timestamp"] =
+    $lt: to
+    $gt: from
 
 
     #remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-    delete filtersObject.startDate
-    delete filtersObject.endDate
+  delete filtersObject.startDate
+  delete filtersObject.endDate
+
 
   groupObject = {}
   groupObject._id = {}

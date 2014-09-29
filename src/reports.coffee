@@ -6,51 +6,113 @@ config = require "./config/config"
 config.reports = config.get('reports')
 contact = require './contact'
 metrics = require './metrics'
+logger.cli
 
 sendReports = (job, done) ->
-  job.attrs.data = {} if not job.attrs.data
-  lastAlertDate = job.attrs.data.lastAlertDate ? new Date()
+  reportMap = []
 
-  promises = []
   fetchUsers (err, users) ->
+    promises = []
+    userCount = 0
     for user in users
       do (user) ->
         deferred = Q.defer()
-        #Fetch user authorized channels
+        logger.info reportMap
         metrics.getAllowedChannels user
         .then (result) ->
+          innerPromises = []
           for channel in result
             do (channel) ->
-              fetchChannelReport(channel,user,contact.contactUser)
-        deferred.resolve()
+              innerDeferred = Q.defer()
+              fetchChannelReport channel,user, (item) ->
+                if (reportMap[userCount])
+                  #do nothing
+                else
+                  #create the object
+                  reportMap[userCount] =
+                    email: user.email
+                    data: []
+
+                reportMap[userCount].data.push item
+
+                innerDeferred.resolve()
+              innerPromises.push innerDeferred.promise
+
+          (Q.all innerPromises).then ->
+            userCount++
+            deferred.resolve()
 
         promises.push deferred.promise
 
-  (Q.all promises).then ->
-    job.attrs.data.lastAlertDate = new Date()
-    done()
+    (Q.all promises).then ->
+#      logger.info JSON.stringify reportMap
+      for report in reportMap
+        sendUserEmail report
+      logger.info "sending user email "
+      done()
+
+
+
+
+
+
+sendUserEmail = (report) ->
+  contact.contactUser 'email', report.email, 'Report for ' + report.email , plainTemplate(report), htmlTemplate(report) , afterEmail
+
+
 
 fetchChannelReport = (channel,user,callback) ->
-  logger.info 'fetching channel report for #' + channel.id + ' ' + user.email
+  logger.info 'fetching channel report for #' + channel.name + ' ' + user.email + channel.id
   metrics.fetchChannelMetrics 'day',channel.id,user,{}
   .then (data) ->
-    callback 'email', user.email, 'Report for ' + channel.name , plainTemplate(channel,data), htmlTemplate(channel,data) , afterEmail
+    item = {}
+    item.channel = channel
+    item.data = data
+    callback item
 
 fetchUsers = (callback) ->
   User.find {}, callback
 
-plainTemplate = (channel,data) ->"
-  Channel Name : #{ channel.name } \r\n
-  Channel Load : #{ data[0].load } transactions \r\n
-  Transaction Average Response : #{ data[0].avgResp } \r\n
-"
-htmlTemplate = (channel,data) ->"
-  Channel Name : #{ channel.name } \r\n <br />
-  Channel Load : #{ data[0].load } transactions \r\n <br />
-  Transaction Average Response : #{ data[0].avgResp } \r\n <br />
-"
+plainTemplate = (report) ->
+  for data in report.data
+    do (data) ->
+      "Channel Name : #{ data.channel.name } \r\n
+        Channel Load : #{ data.data[0].load } transactions \r\n
+        Transaction Average Response : #{ data.data[0].avgResp } \r\n
+        \r\n
+        \r\n
+      "
+htmlTemplate = (report) ->
+  text = "
+  <html>
+  <head></head>
+  <body>
+  <h1>OpenHIM Transactions Summary</h1>
+  <div>
+  <p>on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
+  <table>
+  "
+  for data in report.data
+    do (data) ->
+      text +="<tr><td>Channel - <b>#{data.channel.name}</b></td></tr>"
+      text += "<tr><td>Channel Load - #{ data.data[0].load } transactions \r\n </td></tr>"
+      text +=  "<tr><td>Transaction Average Response - #{ data.data[0].avgResp } \r\n </td></tr>"
+  text += "
+  </table>
+  </div>
+  </body>
+  </html>
+  "
+  text
+
+
+
+
+
+
+
 afterEmail = (callback) ->
-  logger.info callback
+  logger.info 'email sent..'
 
 
 setupAgenda = (agenda) ->
@@ -64,4 +126,3 @@ if process.env.NODE_ENV == "test"
   exports.sendReports = sendReports
   exports.fetchUsers = fetchUsers
   exports.fetchChannelReport = fetchChannelReport
-
