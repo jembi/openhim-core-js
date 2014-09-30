@@ -6,7 +6,7 @@ reports = require "../../lib/reports"
 metrics = require "../../lib/metrics"
 testUtils = require "../testUtils"
 config = require "../../lib/config/config"
-config.reports = config.get('reports')
+#config.reports = config.get('reports')
 Channel = require("../../lib/model/channels").Channel
 User = require("../../lib/model/users").User
 ContactUser = require("../../lib/model/contactGroups").ContactUser
@@ -37,6 +37,7 @@ testUser1 = new User
   passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e'
   passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
   groups: [ 'admin' ]
+  weeklyAlerts: true
 
 testUser2 = new User
   firstname: 'User'
@@ -47,6 +48,7 @@ testUser2 = new User
   passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e'
   passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
   groups: [ 'test1', ]
+  dailyAlerts: true
 
 
 testTransactions = [

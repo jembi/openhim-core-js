@@ -12,11 +12,14 @@ Q = require 'q'
 exports.fetchGlobalLoadTimeMetrics = fetchGlobalLoadTimeMetrics = (requestingUser, filtersObject) ->
 
   if filtersObject.startDate and filtersObject.endDate
-    from = new Date(JSON.parse(filtersObject.startDate))
-    to = new Date(JSON.parse(filtersObject.endDate))
-    delete filtersObject.startDate
+    filtersObject.startDate = filtersObject.startDate.toString().replace(/"/g, '')
+    filtersObject.endDate = filtersObject.endDate.toString().replace(/"/g, '')
+    from = new Date(filtersObject.startDate)
+    to = new Date(filtersObject.endDate)
 
+    delete filtersObject.startDate
     delete filtersObject.endDate
+    
   else
     from = moment().subtract(1, "weeks").toDate()
     to = moment().toDate()
@@ -64,13 +67,15 @@ exports.fetchGlobalLoadTimeMetrics = fetchGlobalLoadTimeMetrics = (requestingUse
 exports.fetchGlobalStatusMetrics = fetchGlobalStatusMetrics = (requestingUser, filtersObject) ->
 
   if filtersObject.startDate and filtersObject.endDate
-    from = new Date(JSON.parse(filtersObject.startDate))
-    to = new Date(JSON.parse(filtersObject.endDate))
+    filtersObject.startDate = filtersObject.startDate.toString().replace(/"/g, '')
+    filtersObject.endDate = filtersObject.endDate.toString().replace(/"/g, '')
+    from = new Date(filtersObject.startDate)
+    to = new Date(filtersObject.endDate)
 
     #remove startDate/endDate from objects filter (Not part of filtering and will break filter)
     delete filtersObject.startDate
-
     delete filtersObject.endDate
+
   else
     from = moment().subtract(1, "weeks").toDate()
     to = moment().toDate()
@@ -163,8 +168,10 @@ exports.fetchChannelMetrics = fetchChannelMetrics = (time, channelId, userReques
 
   channelID = mongoose.Types.ObjectId(channelId)
   if filtersObject.startDate and filtersObject.endDate
-    from = new Date(JSON.parse(filtersObject.startDate))
-    to = new Date(JSON.parse(filtersObject.endDate))
+    filtersObject.startDate = filtersObject.startDate.toString().replace(/"/g, '')
+    filtersObject.endDate = filtersObject.endDate.toString().replace(/"/g, '')
+    from = new Date(filtersObject.startDate)
+    to = new Date(filtersObject.endDate)
   else
     from = moment().startOf('day').toDate()
     to = moment().endOf('day').toDate()

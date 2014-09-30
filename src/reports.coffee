@@ -6,7 +6,7 @@ config = require "./config/config"
 config.reports = config.get('reports')
 contact = require './contact'
 metrics = require './metrics'
-logger.cli
+moment = require "moment"
 
 sendReports = (job, flag, done) ->
   reportMap = []
@@ -28,7 +28,7 @@ sendReports = (job, flag, done) ->
           for channel in result
             do (channel) ->
               innerDeferred = Q.defer()
-              fetchChannelReport channel,user, (item) ->
+              fetchChannelReport channel,user,flag, (item) ->
                 if (reportMap[userCount])
                   #do nothing
                 else
@@ -70,16 +70,30 @@ sendUserEmail = (report) ->
   contact.contactUser 'email', report.email, report.type + ' report for ' + report.email , plainTemplate(report), htmlTemplate(report) , afterEmail
 
 
-#TODO refactor function to include status metrics as well as to allow for weekly metrics
-fetchChannelReport = (channel,user,callback) ->
+
+fetchChannelReport = (channel,user,flag,callback) ->
+  if flag == 'dailyReport'
+    from = moment().startOf('day').toDate()
+    to = moment().endOf('day').toDate()
+    period = 'day'
+  else
+    from = moment().startOf('week').toDate()
+    to = moment().endOf('week').toDate()
+    period = 'week'
+
   item = {}
   logger.info 'fetching channel report for #' + channel.name + ' ' + user.email + channel.id
-  metrics.fetchChannelMetrics 'day',channel.id,user,{}
+  metrics.fetchChannelMetrics period ,channel.id,user,
+    startDate:  from
+    endDate: to
   .then (data) ->
     item.channel = channel
     item.data = data
     #Then fetch status metrics
-    metrics.fetchChannelMetrics 'status',channel.id,user,{}
+    metrics.fetchChannelMetrics 'status',channel.id,user,
+      startDate:from
+      endDate: to
+
     .then (statusData) ->
       item.statusData = statusData
       callback item
