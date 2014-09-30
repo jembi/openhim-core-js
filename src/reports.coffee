@@ -67,7 +67,7 @@ sendReports = (job, flag, done) ->
 
 
 sendUserEmail = (report) ->
-  contact.contactUser 'email', 'duma@eworks.co.zw', report.type + ' report for ' + report.email , plainTemplate(report), htmlTemplate(report) , afterEmail
+  contact.contactUser 'email', report.email, report.type + ' report for ' + report.email , plainTemplate(report), htmlTemplate(report) , afterEmail
 
 
 #TODO refactor function to include status metrics as well as to allow for weekly metrics
