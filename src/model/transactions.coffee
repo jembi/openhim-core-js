@@ -22,6 +22,8 @@ RouteMetadataSchema = new Schema
 	"name" :{ type: String, required: true }
 	"request": RequestDef
 	"response": ResponseDef
+	"orchestrations": [ OrchestrationMetadataSchema ]
+	"properties": { type: Object }
 
 # OrchestrationMetadata Schema
 OrchestrationMetadataSchema = new Schema

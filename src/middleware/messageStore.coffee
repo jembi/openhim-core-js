@@ -68,12 +68,6 @@ exports.storeResponse = (ctx, done) ->
 	# assign new transactions status to ctx object
 	ctx.transactionStatus = status
 
-	# Rename header -> headers
-	if ctx.routes
-		for route in ctx.routes
-			route.response.headers = route.response.header
-			delete route.response.header
-
 	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status, routes: ctx.routes }, (err, tx) ->
 		if err
 			logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
