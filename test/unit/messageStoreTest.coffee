@@ -90,6 +90,22 @@ describe "MessageStore", ->
 					trans.channelID.toString().should.equal "313233343536373839313030"
 					done()
 
+		it "should be able to save the transaction if the headers contain Mongo reserved characters ($ or .)", (done) ->
+			ctx.header['dot.header'] = '123'
+			ctx.header['dollar$header'] = '124'
+			messageStore.storeTransaction ctx, (error, result) ->
+				#cleanup ctx before moving on in case there's a failure
+				delete ctx.header['dot.header']
+				delete ctx.header['dollar$header']
+
+				should.not.exist(error)
+				Transaction.findOne { '_id': result._id }, (error, trans) ->
+					should.not.exist(error)
+					(trans != null).should.be.true
+					trans.request.headers['dot.header'].should.equal '123'
+					trans.request.headers['dollar$header'].should.equal '124'
+					done()
+
 	describe ".storeResponse", ->
 
 		createResponse = (status) ->
@@ -230,4 +246,27 @@ describe "MessageStore", ->
 						should.not.exist(err3)
 						(trans != null).should.true
 						trans.status.should.be.exactly "Completed"
+						done()
+
+		createResponseWithReservedChars = (status) ->
+			return {
+				status: status
+				header: [
+							"dot.header": "123"
+							"dollar$header": "124"
+						]
+				body: new Buffer "<HTTP response body>"
+				timestamp: new Date()
+			}
+
+		it "should be able to save the response if the headers contain Mongo reserved characters ($ or .)", (done) ->
+			ctx.response = createResponseWithReservedChars 200
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						(trans != null).should.true
 						done()
