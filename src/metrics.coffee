@@ -19,7 +19,7 @@ exports.fetchGlobalLoadTimeMetrics = fetchGlobalLoadTimeMetrics = (requestingUse
 
     delete filtersObject.startDate
     delete filtersObject.endDate
-    
+
   else
     from = moment().subtract(1, "weeks").toDate()
     to = moment().toDate()

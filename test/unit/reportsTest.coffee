@@ -37,7 +37,7 @@ testUser1 = new User
   passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e'
   passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
   groups: [ 'admin' ]
-  weeklyAlerts: true
+  weeklyReport: true
 
 testUser2 = new User
   firstname: 'User'
@@ -48,7 +48,7 @@ testUser2 = new User
   passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e'
   passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
   groups: [ 'test1', ]
-  dailyAlerts: true
+  dailyReport: true
 
 
 testTransactions = [
@@ -194,9 +194,23 @@ describe "Transaction Reports", ->
       config.reports.enableReports.should.exist
       done()
 
-#  describe "Global Metrics", ->
-#    it "should return global load time metrics", (done) ->
-#      reports.fetchChannelReport(testChannel,testUser1, contact.contactUser) ()->
+  describe "Subscribers", ->
+    it "should fetch weekly subscribers", (done) ->
+      reports.fetchWeeklySubscribers (err, results) ->
+        results.length.should.be.exactly 1
+        results[0].email.should.eql(testUser1.email)
+        done()
+
+    it "should fetch daily subscribers", (done) ->
+      reports.fetchDailySubscribers (err, results) ->
+        results.length.should.be.exactly 1
+        results[0].email.should.eql(testUser2.email)
+        done()
+
+#  describe "Reports", ->
+#    it "should return a channel Report", (done) ->
+#      reports.fetchChannelReport
+
 
 
 

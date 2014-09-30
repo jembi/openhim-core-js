@@ -168,8 +168,8 @@ setupAgenda = (agenda) ->
   agenda.define 'send daily channel metrics', (job, done) ->
     sendReports job,'dailyReport', done
 
-  agenda.every "5 minutes", 'send weekly channel metrics'
-  agenda.every "5 seconds", 'send daily channel metrics'
+  agenda.every "1 weeks", 'send weekly channel metrics'
+  agenda.every "1 days", 'send daily channel metrics'
 
 exports.setupAgenda = setupAgenda
 
