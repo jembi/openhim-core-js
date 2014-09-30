@@ -8,8 +8,18 @@ transactionStatus =
 	COMPLETED_W_ERR: 'Completed with error(s)'
 	FAILED: 'Failed'
 
-exports.storeTransaction = (ctx, done) -> 
+copyMapWithEscapedReservedCharacters = (map) ->
+	escapedMap = {}
+	for k, v of map
+		if k.indexOf('.')>-1 or k.indexOf('$')>-1
+			k = k.replace('.', '\uff0e').replace('$', '\uff04')
+		escapedMap[k] = v
+	return escapedMap
+
+exports.storeTransaction = (ctx, done) ->
 	logger.info 'Storing request metadata for inbound transaction'
+
+	headers = copyMapWithEscapedReservedCharacters ctx.header
 
 	tx = new transactions.Transaction
 		status: transactionStatus.PROCESSING
@@ -17,7 +27,7 @@ exports.storeTransaction = (ctx, done) ->
 		channelID: ctx.authorisedChannel._id
 		request:
 			path: ctx.path
-			headers: ctx.header
+			headers: headers
 			querystring: ctx.querystring
 			body: ctx.body
 			method: ctx.method
@@ -59,9 +69,11 @@ exports.storeResponse = (ctx, done) ->
 	if status is null or status is undefined
 		status = transactionStatus.COMPLETED
 	
+	headers = copyMapWithEscapedReservedCharacters ctx.response.header[0]
+
 	res =
 		status: ctx.response.status
-		headers: ctx.response.header
+		headers: [ headers ]
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
 		timestamp: ctx.response.timestamp
 

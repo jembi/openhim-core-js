@@ -102,8 +102,9 @@ describe "MessageStore", ->
 				Transaction.findOne { '_id': result._id }, (error, trans) ->
 					should.not.exist(error)
 					(trans != null).should.be.true
-					trans.request.headers['dot.header'].should.equal '123'
-					trans.request.headers['dollar$header'].should.equal '124'
+					console.log trans.request.headers
+					trans.request.headers['dot．header'].should.equal '123'
+					trans.request.headers['dollar＄header'].should.equal '124'
 					done()
 
 	describe ".storeResponse", ->
@@ -269,4 +270,6 @@ describe "MessageStore", ->
 					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
 						should.not.exist(err3)
 						(trans != null).should.true
+						trans.response.headers[0]['dot．header'].should.equal '123'
+						trans.response.headers[0]['dollar＄header'].should.equal '124'
 						done()
