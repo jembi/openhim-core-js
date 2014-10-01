@@ -14,15 +14,16 @@ getChannelIDsArray = (channels) ->
 # function to construct projection object
 getProjectionObject = (filterRepresentation) ->
 	switch filterRepresentation
-	  when "simple"
-	    # view minimum required data for transactions listings view
-	    return { "request.body": 0, "request.headers": 0, "response.body": 0, "response.headers": 0, orchestrations: 0, routes: 0 };
 	  when "simpledetails"
 	    # view minimum required data for transaction details view
 	    return { "request.body": 0, "response.body": 0, "routes.request.body": 0, "routes.response.body": 0, "orchestrations.request.body": 0, "orchestrations.response.body": 0 };
 	  when "full"	    
 	    # view all transaction data
 	    return {};
+	  else    
+	  	# no filterRepresentation supplied - simple view
+	    # view minimum required data for transactions
+	    return { "request.body": 0, "request.headers": 0, "response.body": 0, "response.headers": 0, orchestrations: 0, routes: 0 };
 	
 
 
@@ -66,11 +67,9 @@ exports.getTransactions = `function *getTransactions() {
 			if (!filtersObject.channelID) {
 				filtersObject.channelID = { $in: getChannelIDsArray(channels) };
 			}
-		}
 
-		// set filterRepresentation to 'simple' if not supplied
-		if ( !filterRepresentation ){
-			filterRepresentation = 'simple';
+			// set 'filterRepresentation' to default if user isnt admin
+			filterRepresentation = '';
 		}
 
 		// get projection object
@@ -203,11 +202,6 @@ exports.findTransactionByClientId = `function *findTransactionByClientId(clientI
 		var filtersObject = this.request.query;
 		var filterRepresentation = filtersObject.filterRepresentation;
 
-		// set filterRepresentation to 'simple' if not supplied
-		if ( !filterRepresentation ){
-			filterRepresentation = 'simple';
-		}
-
 		// get projection object
 		projectionFiltersObject = getProjectionObject( filterRepresentation );
 
@@ -220,6 +214,9 @@ exports.findTransactionByClientId = `function *findTransactionByClientId(clientI
 			var channels = yield authorisation.getUserViewableChannels(this.authenticated);
 
 			filtersObject.channelID = { $in: getChannelIDsArray(channels) };
+
+			// set 'filterRepresentation' to default if user isnt admin
+			filterRepresentation = '';
 		}
 
 		// execute the query
