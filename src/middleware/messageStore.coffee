@@ -69,11 +69,11 @@ exports.storeResponse = (ctx, done) ->
 	if status is null or status is undefined
 		status = transactionStatus.COMPLETED
 	
-	headers = copyMapWithEscapedReservedCharacters ctx.response.header[0]
+	headers = copyMapWithEscapedReservedCharacters ctx.response.header
 
 	res =
 		status: ctx.response.status
-		headers: [ headers ]
+		headers: headers
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
 		timestamp: ctx.response.timestamp
 

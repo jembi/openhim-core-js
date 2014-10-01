@@ -112,9 +112,8 @@ describe "MessageStore", ->
 		createResponse = (status) ->
 			return {
 				status: status
-				header: [
-							testHeader: "value"
-						]
+				header:
+					testHeader: "value"
 				body: new Buffer "<HTTP response body>"
 				timestamp: new Date()
 			}
@@ -127,7 +126,8 @@ describe "MessageStore", ->
 				}
 				response: {
 					status: status
-					headers: [ test: "test" ]
+					headers:
+						test: "test"
 					body: "route body"
 					timestamp: new Date()
 				}
@@ -144,7 +144,7 @@ describe "MessageStore", ->
 						should.not.exist(err3)
 						(trans != null).should.true
 						trans.response.status.should.equal 201
-						trans.response.headers[0].testHeader.should.equal "value"
+						trans.response.headers.testHeader.should.equal "value"
 						trans.response.body.should.equal "<HTTP response body>"
 						trans.status.should.equal "Successful"
 						done()
@@ -164,7 +164,7 @@ describe "MessageStore", ->
 						trans.routes.length.should.be.exactly 1
 						trans.routes[0].name.should.equal "route1"
 						trans.routes[0].response.status.should.equal 200
-						trans.routes[0].response.headers[0].test.should.equal "test"
+						trans.routes[0].response.headers.test.should.equal "test"
 						trans.routes[0].response.body.should.equal "route body"
 						trans.routes[0].request.path.should.equal "/test"
 						done()
@@ -252,10 +252,9 @@ describe "MessageStore", ->
 		createResponseWithReservedChars = (status) ->
 			return {
 				status: status
-				header: [
-							"dot.header": "123"
-							"dollar$header": "124"
-						]
+				header:
+					"dot.header": "123"
+					"dollar$header": "124"
 				body: new Buffer "<HTTP response body>"
 				timestamp: new Date()
 			}
@@ -270,6 +269,6 @@ describe "MessageStore", ->
 					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
 						should.not.exist(err3)
 						(trans != null).should.true
-						trans.response.headers[0]['dot．header'].should.equal '123'
-						trans.response.headers[0]['dollar＄header'].should.equal '124'
+						trans.response.headers['dot．header'].should.equal '123'
+						trans.response.headers['dollar＄header'].should.equal '124'
 						done()
