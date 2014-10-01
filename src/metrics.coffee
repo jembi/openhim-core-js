@@ -320,7 +320,7 @@ getAllowedChannels = (requestingUser) ->
       do (channel) ->
         deferred = Q.defer()
         allowedChannelIDs.push
-          id: channel._id
+          _id: channel._id
           name: channel.name
 
         deferred.resolve()

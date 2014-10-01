@@ -82,20 +82,22 @@ fetchChannelReport = (channel,user,flag,callback) ->
     period = 'week'
 
   item = {}
-  logger.info 'fetching channel report for #' + channel.name + ' ' + user.email + channel.id
-  metrics.fetchChannelMetrics period ,channel.id,user,
+  console.log 'fetching channel report for #' + channel.name + ' ' + user.email + channel.id
+  metrics.fetchChannelMetrics period ,channel._id,user,
     startDate:  from
     endDate: to
   .then (data) ->
     item.channel = channel
     item.data = data
     #Then fetch status metrics
-    metrics.fetchChannelMetrics 'status',channel.id,user,
+    console.log channel._id
+    metrics.fetchChannelMetrics 'status',channel._id,user,
       startDate:from
       endDate: to
 
     .then (statusData) ->
       item.statusData = statusData
+      console.log statusData
       callback item
 
 fetchDailySubscribers = (callback) ->
