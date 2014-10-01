@@ -44,6 +44,9 @@ ChannelSchema = new Schema
     "txViewAcl": [
         { type: String, required: false }
     ]
+    "txViewFullAcl": [
+        { type: String, required: false }
+    ]
     "txRerunAcl": [
         { type: String, required: false }
     ]
