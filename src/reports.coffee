@@ -21,7 +21,7 @@ sendReports = (job, flag, done) ->
     for user in users
       do (user) ->
         deferred = Q.defer()
-        logger.info reportMap
+
         metrics.getAllowedChannels user
         .then (result) ->
           innerPromises = []
@@ -49,9 +49,9 @@ sendReports = (job, flag, done) ->
         promises.push deferred.promise
 
     (Q.all promises).then ->
-#      logger.info JSON.stringify reportMap
+
       for report in reportMap
-        if fetchUsers == fetchDailySubscribers
+        if flag == 'dailyReport'
           report.type = 'Daily'
         else
           report.type = 'Weekly'
