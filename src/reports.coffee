@@ -8,8 +8,13 @@ contact = require './contact'
 metrics = require './metrics'
 moment = require "moment"
 
+# Function Sends the reports
+
 sendReports = (job, flag, done) ->
-  reportMap = []
+  reportArray = []
+  channelReportMap = {}
+
+  #Select the right subscribers for the report
   if flag == 'dailyReport'
     fetchUsers = fetchDailySubscribers
   if flag == 'weeklyReport'
@@ -26,20 +31,26 @@ sendReports = (job, flag, done) ->
         .then (result) ->
           innerPromises = []
           for channel in result
-            do (channel) ->
+            do (channel,channelReportMap) ->
               innerDeferred = Q.defer()
-              fetchChannelReport channel,user,flag, (item) ->
-                if (reportMap[userCount])
-                  #do nothing
-                else
-                  #create the object
-                  reportMap[userCount] =
-                    email: user.email
-                    data: []
+              if (reportArray[userCount])
+                # Do nothing since object already exists
+              else
+                # Create the object
+                reportArray[userCount] =
+                  email: user.email
+                  data: []
 
-                reportMap[userCount].data.push item
-
-                innerDeferred.resolve()
+              # If report has been fetched get it from the map
+              if channelReportMap[channel._id]
+                reportArray[userCount].data.push channelReportMap[channel._id]
+              else
+              # Fetch the report and add it to the map
+                fetchChannelReport channel,user,flag, (item) ->
+                  reportArray[userCount].data.push item
+                  channelReportMap[channel._id] = item
+                  logger.info item
+                  innerDeferred.resolve()
               innerPromises.push innerDeferred.promise
 
           (Q.all innerPromises).then ->
@@ -49,8 +60,7 @@ sendReports = (job, flag, done) ->
         promises.push deferred.promise
 
     (Q.all promises).then ->
-
-      for report in reportMap
+      for report in reportArray
         if flag == 'dailyReport'
           report.type = 'Daily'
         else
@@ -58,7 +68,6 @@ sendReports = (job, flag, done) ->
 
         sendUserEmail report
 
-      logger.info "sending user email "
       done()
 
 
@@ -82,22 +91,23 @@ fetchChannelReport = (channel,user,flag,callback) ->
     period = 'week'
 
   item = {}
-  console.log 'fetching channel report for #' + channel.name + ' ' + user.email + channel.id
+
+  logger.info 'fetching ' + flag + ' for #' + channel.name + ' ' + user.email + ' ' + channel._id
   metrics.fetchChannelMetrics period ,channel._id,user,
     startDate:  from
     endDate: to
+
   .then (data) ->
     item.channel = channel
     item.data = data
     #Then fetch status metrics
-    console.log channel._id
+
     metrics.fetchChannelMetrics 'status',channel._id,user,
       startDate:from
       endDate: to
 
     .then (statusData) ->
       item.statusData = statusData
-      console.log statusData
       callback item
 
 fetchDailySubscribers = (callback) ->

@@ -27,8 +27,8 @@
   "nodemailer": {
     "service": "Gmail",
     "auth": {
-        "user": "jembi.tester@gmail.com",
-        "pass": "Jembi#123"
+        "user": "user@gmail.com",
+        "pass": "password"
     }
   },
   "smsGateway": {
