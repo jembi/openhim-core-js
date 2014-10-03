@@ -80,7 +80,13 @@ exports.storeResponse = (ctx, done) ->
 	# assign new transactions status to ctx object
 	ctx.transactionStatus = status
 
-	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status, routes: ctx.routes }, (err, tx) ->
+	update = { response: res, status: status, routes: ctx.routes }
+
+	if ctx.mediatorResponse
+		update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
+		update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
+
+	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update, (err, tx) ->
 		if err
 			logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
 			return done err
