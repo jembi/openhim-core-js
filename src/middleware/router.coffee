@@ -89,7 +89,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		if route.primary
 			promise = sendRequest(ctx, route, options)
 			.then (response) ->
-				if response.headers and response.headers['content-type'] is 'application/json+openhim'
+				if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
 					# handle mediator reponse
 					responseObj = JSON.parse response.body
 					ctx.mediatorResponse = responseObj
@@ -111,7 +111,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
 					querystring: ctx.request.querystring
 					method: ctx.request.method
 				
-				if response.headers and response.headers['content-type'] is 'application/json+openhim'
+				if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
 					# handle mediator reponse
 					responseObj = JSON.parse response.body
 					routeObj.orchestrations = responseObj.orchestrations
