@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "cookie" : "0.1.2",
     "mongodb": "1.4.7",
     "koa": "0.5.2",
     "koa-route": "~1.0.2",
@@ -27,16 +28,17 @@
     "raw-body": "1.2.2",
     "agenda": "~0.6.16",
     "moment": "~2.7.0",
-    "nodemailer": "0.7.0"
+    "nodemailer": "0.7.0",
+    "semver": "4.0.0"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
     "mocha": "1.18.2",
-    "should": "3.1.4",
+    "should": "4.x.x",
     "sinon": "1.9.0",
     "supertest": "0.10.0"
   },
   "scripts": {
-    "test": "NODE_ENV=test ./node_modules/.bin/cake test"
+    "test": "export NODE_ENV=test && ./node_modules/.bin/cake test"
   }
 }

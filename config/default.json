@@ -10,6 +10,16 @@
     "httpPort": 7786,
     "host": "localhost"
   },
+  "tcpAdapter": {
+    "httpReceiver": {
+        "httpPort": 7787,
+        "host": "localhost"
+    }
+  },
+  "polling": {
+    "pollingPort": 7788,
+    "host": "localhost"
+  },
   "authentication": {
     "enableMutualTLSAuthentication": true,
     "enableBasicAuthentication": false
@@ -17,8 +27,8 @@
   "nodemailer": {
     "service": "Gmail",
     "auth": {
-        "user": "gmail.user@gmail.com",
-        "pass": "userpass"
+        "user": "sender@gmail.com",
+        "pass": "password"
     }
   },
   "smsGateway": {
@@ -34,5 +44,8 @@
     "pollPeriodMinutes": 1,
     "himInstance": "openhim.jembi.org",
     "consoleURL": "http://openhim.jembi.org"
-  }
+  },
+  "reports":{
+      "enableReports": true
+    }
 }

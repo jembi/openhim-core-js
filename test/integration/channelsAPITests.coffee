@@ -1,9 +1,12 @@
 should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
+tcpAdapter = require "../../lib/tcpAdapter"
+polling = require "../../lib/polling"
 Channel = require("../../lib/model/channels").Channel
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
+sinon = require "sinon"
 
 describe "API Integration Tests", ->
 
@@ -39,8 +42,9 @@ describe "API Integration Tests", ->
 			Channel.remove {}, ->
 				channel1.save ->
 					channel2.save ->
-						auth.setupTestUsers ->
-							server.start null, null, 8080, false, ->
+						auth.setupTestUsers (err) ->
+							return done err if err
+							server.start null, null, 8080, null, 7787, null, ->
 								done()
 
 		after (done) ->
@@ -189,6 +193,76 @@ describe "API Integration Tests", ->
 						else
 							done()
 
+			it 'should startup TCP server if the new channel is of type "tcp"', (done) ->
+				tcpChannel =
+					name: "TCPTestChannel-Add"
+					urlPattern: "/"
+					allow: [ 'tcp' ]
+					type: 'tcp'
+					tcpHost: '0.0.0.0'
+					tcpPort: 3600
+					routes: [
+								name: "TcpRoute"
+								host: "localhost"
+								port: 9876
+								primary: true
+								type: "tcp"
+							]
+
+				request("http://localhost:8080")
+					.post("/channels")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(tcpChannel)
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							Channel.findOne { name: tcpChannel.name }, (err, channel) ->
+								seenChannelName = false
+								for s in tcpAdapter.tcpServers
+									seenChannelName = true if s.channelID.equals channel._id
+								seenChannelName.should.be.true
+								done()
+
+			it 'should register the channel with the polling service if of type "polling"', (done) ->
+				pollChannel =
+					name: "POLLINGTestChannel-Add"
+					urlPattern: "/trigger"
+					allow: [ 'polling' ]
+					type: 'polling'
+					pollingSchedule: '5 * * * *'
+					routes: [
+								name: "PollRoute"
+								host: "localhost"
+								port: 9876
+								primary: true
+							]
+
+				spy = sinon.spy polling, 'registerPollingChannel'
+
+				request("http://localhost:8080")
+					.post("/channels")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(pollChannel)
+					.expect(201)
+					.end (err, res) ->
+						spy.restore()
+						if err
+							done err
+						else
+							spy.calledOnce.should.be.true
+							spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Add'
+							spy.getCall(0).args[0].should.have.property 'urlPattern', '/trigger'
+							spy.getCall(0).args[0].should.have.property 'type', 'polling'
+							done()
+
 		describe '*getChannel(channelId)', ->
 
 			it 'should fetch a specific channel by id', (done) ->
@@ -294,7 +368,7 @@ describe "API Integration Tests", ->
 								channel.should.have.property "urlPattern", "test/changed"
 								channel.allow.should.have.length 4
 								channel.routes.should.have.length 2
-								done();
+								done()
 
 			it 'should not allow a non admin user to update a channel', (done) ->
 
@@ -314,6 +388,81 @@ describe "API Integration Tests", ->
 						else
 							done()
 
+			it 'should startup a TCP server if the type is set to "tcp"', (done) ->
+				httpChannel = new Channel
+					name: "TestChannelForTCPUpdate"
+					urlPattern: "/"
+					allow: [ "test" ]
+					routes: [
+								name: "test route"
+								host: "localhost"
+								port: 9876
+								primary: true
+							]
+					txViewAcl: "group1"
+
+				changeToTCP = {
+					type: 'tcp'
+					tcpHost: '0.0.0.0'
+					tcpPort: 3601
+				}
+
+				httpChannel.save ->
+					request("http://localhost:8080")
+						.put("/channels/" + httpChannel._id)
+						.set("auth-username", testUtils.rootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.send(changeToTCP)
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								seenChannelName = false
+								for s in tcpAdapter.tcpServers
+									seenChannelName = true if s.channelID.equals httpChannel._id
+								seenChannelName.should.be.true
+								done()
+
+			it 'should register the updated channel with the polling service if of type "polling"', (done) ->
+				pollChannel = new Channel
+					name: "POLLINGTestChannel-Update"
+					urlPattern: "/trigger"
+					allow: [ 'polling' ]
+					type: 'polling'
+					pollingSchedule: '5 * * * *'
+					routes: [
+								name: "PollRoute"
+								host: "localhost"
+								port: 9876
+								primary: true
+							]
+
+				spy = sinon.spy polling, 'registerPollingChannel'
+
+				pollChannel.save ->
+					request("http://localhost:8080")
+						.put("/channels/" + pollChannel._id)
+						.set("auth-username", testUtils.rootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.send(pollChannel)
+						.expect(200)
+						.end (err, res) ->
+							spy.restore()
+							if err
+								done err
+							else
+								spy.calledOnce.should.be.true
+								spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Update'
+								spy.getCall(0).args[0].should.have.property 'urlPattern', '/trigger'
+								spy.getCall(0).args[0].should.have.property 'type', 'polling'
+								spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
+								done()
+
 		describe '*removeChannel(channelId)', ->
 
 			it 'should remove a specific channel by name', (done) ->
@@ -331,7 +480,7 @@ describe "API Integration Tests", ->
 						else
 							Channel.find { name: "TestChannel1" }, (err, channels) ->
 								channels.should.have.length 0
-								done();
+								done()
 
 			it 'should only allow an admin user to remove a channel', (done) ->
 
@@ -347,3 +496,38 @@ describe "API Integration Tests", ->
 							done err
 						else
 							done()
+
+			it 'should remove polling schedule if the channel is of type "polling"', (done) ->
+
+				pollChannel = new Channel
+					name: "POLLINGTestChannel-Remove"
+					urlPattern: "/trigger"
+					allow: [ 'polling' ]
+					type: 'polling'
+					pollingSchedule: '5 * * * *'
+					routes: [
+								name: "PollRoute"
+								host: "localhost"
+								port: 9876
+								primary: true
+							]
+
+				spy = sinon.spy polling, 'removePollingChannel'
+
+				pollChannel.save ->
+					request("http://localhost:8080")
+						.del("/channels/" + pollChannel._id)
+						.set("auth-username", testUtils.rootUser.email)
+						.set("auth-ts", authDetails.authTS)
+						.set("auth-salt", authDetails.authSalt)
+						.set("auth-token", authDetails.authToken)
+						.expect(200)
+						.end (err, res) ->
+							spy.restore()
+							if err
+								done err
+							else
+								spy.calledOnce.should.be.true
+								spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Remove'
+								spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
+								done()

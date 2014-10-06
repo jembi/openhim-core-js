@@ -7,12 +7,13 @@ config = require "../../lib/config/config"
 config.authentication = config.get('authentication')
 Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
+Transaction = require("../../lib/model/transactions").Transaction
 testUtils = require "../testUtils"
 server = require "../../lib/server"
 
 describe "e2e Integration Tests", ->
 
-	describe "Auhentication and authorisation tests", ->
+	describe "Authentication and authorisation tests", ->
 
 		describe "Mutual TLS", ->
 
@@ -62,7 +63,7 @@ describe "e2e Integration Tests", ->
 					done()
 
 			it "should forward a request to the configured routes if the client is authenticated and authorised", (done) ->
-				server.start 5001, 5000, null, false, ->
+				server.start 5001, 5000, null, null, null, null, ->
 					options =
 						host: "localhost"
 						path: "/test/mock"
@@ -77,7 +78,7 @@ describe "e2e Integration Tests", ->
 					req.end()
 
 			it "should reject a request when using an invalid cert", (done) ->
-				server.start 5001, 5000, null, false, ->
+				server.start 5001, 5000, null, null, null, null, ->
 					options =
 						host: "localhost"
 						path: "/test/mock"
@@ -116,10 +117,11 @@ describe "e2e Integration Tests", ->
 						clientDomain: "openhim.jembi.org"
 						name: "TEST Client"
 						roles:
-							[ 
+							[
 								"OpenMRS_PoC"
-								"PoC" 
+								"PoC"
 							]
+						passwordAlgorithm: "bcrypt"
 						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 						cert: ""
 
@@ -140,10 +142,11 @@ describe "e2e Integration Tests", ->
 
 			describe "with no credentials", ->
 				it "should `throw` 401", (done) ->
-					server.start 5001, null, null, false, ->
+					server.start 5001, null, null, null, null, null, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.expect(401)
+							.expect('WWW-Authenticate', 'Basic')
 							.end (err, res) ->
 								if err
 									done err
@@ -152,11 +155,12 @@ describe "e2e Integration Tests", ->
 
 			describe "with incorrect credentials", ->
 				it "should `throw` 401", (done) ->
-					server.start 5001, null, null, false, ->
+					server.start 5001, null, null, null, null, null, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.auth("incorrect_user", "incorrect_password")
 							.expect(401)
+							.expect('WWW-Authenticate', 'Basic')
 							.end (err, res) ->
 								if err
 									done err
@@ -165,7 +169,7 @@ describe "e2e Integration Tests", ->
 			
 			describe "with correct credentials", ->
 				it "should return 200 OK", (done) ->
-					server.start 5001, null, null, false, ->
+					server.start 5001, null, null, null, null, null, ->
 						request("http://localhost:5001")
 							.get("/test/mock")
 							.auth("testApp", "password")
@@ -229,7 +233,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.send(testDoc)
@@ -242,12 +246,77 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.send(testDoc)
 					.auth("testApp", "password")
 					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+	describe "HTTP header tests", ->
+
+		mockServer = null
+		testDoc = "<test>test message</test>"
+
+		before (done) ->
+			config.authentication.enableMutualTLSAuthentication = false
+			config.authentication.enableBasicAuthentication = true
+
+			#Setup some test data
+			channel1 = new Channel
+				name: "TEST DATA - Mock endpoint"
+				urlPattern: "test/mock"
+				allow: [ "PoC" ]
+				routes: [
+							name: "test route"
+							host: "localhost"
+							port: 6262
+							primary: true
+						]
+			channel1.save (err) ->
+				testAppDoc =
+					clientID: "testApp"
+					clientDomain: "test-client.jembi.org"
+					name: "TEST Client"
+					roles:
+						[
+							"OpenMRS_PoC"
+							"PoC"
+						]
+					passwordAlgorithm: "sha512"
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+					passwordSalt: "1234567890"
+					cert: ""
+
+				client = new Client testAppDoc
+				client.save (error, newAppDoc) ->
+					# Create mock endpoint to forward requests to
+					mockServer = testUtils.createMockServer 201, testDoc, 6262, ->
+						done()
+
+		after (done) ->
+			Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
+				Client.remove { clientID: "testApp" }, ->
+					mockServer.close ->
+						done()
+
+		afterEach (done) ->
+			server.stop ->
+				done()
+
+		it "should keep HTTP headers of the response intact", (done) ->
+			server.start 5001, null, null, null, null, null, ->
+				request("http://localhost:5001")
+					.get("/test/mock")
+					.send(testDoc)
+					.auth("testApp", "password")
+					.expect(201)
+					.expect('Content-Type', 'text/plain')
 					.end (err, res) ->
 						if err
 							done err
@@ -320,7 +389,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.set("Content-Type", "text/xml")
@@ -334,7 +403,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.set("Content-Type", "text/xml")
@@ -409,7 +478,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.set("Content-Type", "application/json")
@@ -423,7 +492,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.set("Content-Type", "application/json")
@@ -490,7 +559,7 @@ describe "e2e Integration Tests", ->
 				done()
 
 		it "should return 201 CREATED on POST", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 					.post("/test/mock")
 					.send(testRegExDoc)
@@ -503,7 +572,7 @@ describe "e2e Integration Tests", ->
 							done()
 
 		it "should return 201 CREATED on PUT", (done) ->
-			server.start 5001, null, null, false, ->
+			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 					.put("/test/mock")
 					.send(testRegExDoc)
@@ -514,3 +583,104 @@ describe "e2e Integration Tests", ->
 							done err
 						else
 							done()
+
+	describe "mediator tests", ->
+		mockServer = null
+
+		mediatorResponse =
+			status: "Successful"
+			response:
+				status: "200"
+				headers: {}
+				body: "<transaction response>"
+				timestamp: 1412257881909
+			orchestrations: [
+				name: "Lab API"
+				request:
+					path: "api/patient/lab"
+					headers:
+						"Content-Type": "text/plain"
+					body: "<route request>"
+					method: "POST"
+					timestamp: 1412257881904
+				response:
+					status: "200"
+					headers: {}
+					body: "<route response>"
+					timestamp: 1412257881909
+			]
+			properties:
+				orderId: "TEST00001"
+				documentId: "1f49c3e0-3cec-4292-b495-5bd41433a048"
+
+		before (done) ->
+			config.authentication.enableMutualTLSAuthentication = false
+			config.authentication.enableBasicAuthentication = true
+
+			mediatorChannel = new Channel
+				name: "TEST DATA - Mock mediator endpoint"
+				urlPattern: "test/mediator"
+				allow: [ "PoC" ]
+				routes: [
+							name: "mediator route"
+							host: "localhost"
+							port: 1244
+							primary: true
+						]
+			mediatorChannel.save (err) ->
+				testAppDoc =
+					clientID: "mediatorTestApp"
+					clientDomain: "test-client.jembi.org"
+					name: "TEST Client"
+					roles:
+						[
+							"OpenMRS_PoC"
+							"PoC"
+						]
+					passwordAlgorithm: "sha512"
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+					passwordSalt: "1234567890"
+					cert: ""
+
+				client = new Client testAppDoc
+				client.save (error, newAppDoc) ->
+					mockServer = testUtils.createMockMediatorServer 200, mediatorResponse, 1244, -> done()
+
+		beforeEach (done) -> Transaction.remove {}, done
+
+		after (done) ->
+			Channel.remove { name: "TEST DATA - Mock mediator endpoint" }, ->
+				Client.remove { clientID: "mediatorTestApp" }, ->
+					mockServer.close ->
+						done()
+
+		afterEach (done) ->
+			server.stop ->
+				done()
+
+		describe "mediator response processing", ->
+			it "should return the specified mediator response element as the actual response", (done) ->
+				server.start 5001, null, null, null, null, null, ->
+					request("http://localhost:5001")
+						.get("/test/mediator")
+						.auth("mediatorTestApp", "password")
+						.expect(200)
+						.expect(mediatorResponse.response.body, done)
+
+			it "should setup the correct metadata on the transaction as specified by the mediator response", (done) ->
+				server.start 5001, null, null, null, null, null, ->
+					request("http://localhost:5001")
+						.get("/test/mediator")
+						.auth("mediatorTestApp", "password")
+						.expect(200)
+						.end (err, res) ->
+							if err
+								done err
+							else
+								Transaction.findOne {}, (err, res) ->
+									res.status.should.be.equal mediatorResponse.status
+									res.orchestrations.length.should.be.exactly 1
+									res.orchestrations[0].name.should.be.equal mediatorResponse.orchestrations[0].name
+									should.exist res.properties
+									res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
+									done()

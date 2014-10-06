@@ -3,38 +3,58 @@ Schema = mongoose.Schema
 ContactUserSchema = require('./contactGroups').ContactUserSchema
 
 RouteSchema = new Schema
-	"name": 	{ type: String, required: true }
-	"host": 	{ type: String, required: true }
-	"port": 	{ type: String, required: true }
-	"path": 	{ type: String, required: false }
-	"pathTransform": 	{ type: String, required: false }
-	"primary": 	{ type: Boolean, required: false }
-	"username": { type: String, required: false }
-	"password": { type: String, required: false }
+    "name": { type: String, required: true }
+    "secured": { type: Boolean, required: false }
+    "host": { type: String, required: true }
+    "port": { type: String, required: true }
+    "path": { type: String, required: false }
+    "pathTransform": { type: String, required: false }
+    "primary": { type: Boolean, required: false }
+    "username": { type: String, required: false }
+    "password": { type: String, required: false }
+    "type": { type: String, default: 'http', enum: ['http', 'tcp'] }
 
 AlertsSchema = new Schema
-	"status": { type: String, required: true }
-	"groups": [ String ]
-	"users":  [ ContactUserSchema ]
-	"failureRate": { type: Number, required: false }
+    "status": { type: String, required: true }
+    "groups": [ { type: Schema.Types.ObjectId, required: false } ]
+    "users": [ ContactUserSchema ]
+    "failureRate": { type: Number, required: false }
 
 ChannelSchema = new Schema
-    "name":			{ type: String, required: true, unique: true }
-    "urlPattern": 	{ type: String, required: true }
-    "allow": 		[ { type: String, required: true } ]
-    "routes": 		[ RouteSchema ]
-    "matchContentTypes": [ { type: String, required: false } ]
+    "name": { type: String, required: true, unique: true }
+    "urlPattern": { type: String, required: true }
+    "type": { type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling'] }
+    "tcpPort": { type: String, required: false }
+    "tcpHost": { type: String, required: false }
+    "pollingSchedule": { type: String, required: false }
+    "allow": [
+        { type: String, required: true }
+    ]
+    "routes": [ RouteSchema ]
+    "matchContentTypes": [
+        { type: String, required: false }
+    ]
     "matchContentRegex": { type: String, required: false }
     "matchContentXpath": { type: String, required: false }
     "matchContentJson": { type: String, required: false }
     "matchContentValue": { type: String, required: false }
-    "properties": 	[ { type: Object, required: false } ]
-    "txViewAcl":	[ { type: String, required: false } ]
-    "txRerunAcl":	[ { type: String, required: false } ]
-    "alerts": 		[ AlertsSchema ]
-    
+    "properties": [
+        { type: Object, required: false }
+    ]
+    "txViewAcl": [
+        { type: String, required: false }
+    ]
+    "txViewFullAcl": [
+        { type: String, required: false }
+    ]
+    "txRerunAcl": [
+        { type: String, required: false }
+    ]
+    "alerts": [ AlertsSchema ]
+
 # compile the Channel and Route Schema into a Model
 exports.Route = mongoose.model 'Route', RouteSchema
+exports.RouteSchema = RouteSchema
 
 ###
 # The Channel object that describes a specific channel within the OpenHIM.
@@ -46,3 +66,4 @@ exports.Route = mongoose.model 'Route', RouteSchema
 # of users or group that are authroised to send messages to this channel.
 ###
 exports.Channel = mongoose.model 'Channel', ChannelSchema
+exports.ChannelSchema = ChannelSchema

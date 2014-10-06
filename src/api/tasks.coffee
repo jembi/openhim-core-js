@@ -1,4 +1,6 @@
 Task = require('../model/tasks').Task
+Transaction = require('../model/transactions').Transaction
+Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
 
@@ -11,9 +13,38 @@ client = monq(config.mongo.url, safe: true)
 queue = client.queue("transactions")
 authorisation = require './authorisation'
 
-###
-# Retrieves the list of active tasks
-###
+
+#####################################################
+# Function to check if rerun task creation is valid #
+#####################################################
+isRerunPermissionsValid = (user, transactions, callback) ->
+
+	# if 'admin' - set rerun permissions to true
+	if authorisation.inGroup("admin", user) is true
+
+		# admin user allowed to rerun any transactions
+		callback null, true
+	else
+
+		Transaction.distinct "channelID", { _id: $in: transactions.tids } , (err, transChannels) ->
+			Channel.distinct "_id", { txRerunAcl: $in: user.groups } , (err, allowedChannels) ->
+				# for each transaction channel found to be rerun
+				for trx in transChannels
+					# assume transaction channnel is not allowed at first
+					matchFound = false
+
+					# for each user allowed channel to be rerun
+					for chan in allowedChannels
+						if trx.equals(chan) then matchFound = true
+
+					# if one channel not allowed then rerun NOT allowed
+					return callback null, false if not matchFound
+				callback null, true
+
+
+######################################
+# Retrieves the list of active tasks #
+######################################
 exports.getTasks = `function *getTasks() {
 
 	try {
@@ -27,10 +58,11 @@ exports.getTasks = `function *getTasks() {
 	}
 }`
 
-###
+
+#####################################################
 # Creates a new Task
-# Create the new queue objects for the created task
-###
+# Create the new queue objects for the created task #
+#####################################################
 exports.addTask = `function *addTask() {
 
 	// Get the values to use
@@ -42,44 +74,56 @@ exports.addTask = `function *addTask() {
 		taskObject.remainingTransactions = transactions.tids.length;
 		taskObject.user = this.authenticated.email;
 
-		for (var t=0; t<transactions.tids.length; t++ ){
-			transaction = {tid: transactions.tids[t]};
-			transactionsArr.push( transaction );
-		}
-		taskObject.transactions = transactionsArr;
+		// check rerun permission and whether to create the rerun task
+		var isRerunPermsValid = Q.denodeify(isRerunPermissionsValid);
+		var allowRerunTaskCreation = yield isRerunPermsValid( this.authenticated, transactions );
+		
+		// the rerun task may be created
+		if ( allowRerunTaskCreation === true ){
 
-		var task = new Task(taskObject);
-		var result = yield Q.ninvoke(task, 'save');
-
-		var taskID = result[0]._id;
-		var transactions = taskObject.transactions;
-		for (var i = 0; i < transactions.length; i++ ){
-
-			try{
-				var transactionID = transactions[i].tid;
-				queue.enqueue("rerun_transaction", {
-					transactionID: transactionID,
-					taskID: taskID
-					}, function(e, job) {
-					logger.info("Enqueued transaction:", job.data.params.transactionID);
-				});
-
-				// All ok! So set the result
-				this.body = 'info: Queue item successfully created';
-				this.status = 'created';
+			for (var t=0; t<transactions.tids.length; t++ ){
+				transaction = {tid: transactions.tids[t]};
+				transactionsArr.push( transaction );
 			}
-			catch(e){
-				// Error! So inform the user
-				logger.error('Could not add Queue item via the API: ' + e);
-				this.body = e.message;
-				this.status = 'bad request';
+			taskObject.transactions = transactionsArr;
+
+			var task = new Task(taskObject);
+			var result = yield Q.ninvoke(task, 'save');
+
+			var taskID = result[0]._id;
+			var transactions = taskObject.transactions;
+			for (var i = 0; i < transactions.length; i++ ){
+
+				try{
+					var transactionID = transactions[i].tid;
+					queue.enqueue("rerun_transaction", {
+						transactionID: transactionID,
+						taskID: taskID
+						}, function(e, job) {
+						logger.info("Enqueued transaction:", job.data.params.transactionID);
+					});
+
+					// All ok! So set the result
+					this.body = 'info: Queue item successfully created';
+					this.status = 'created';
+				}
+				catch(e){
+					// Error! So inform the user
+					logger.error('Could not add Queue item via the API: ' + e);
+					this.body = e.message;
+					this.status = 'bad request';
+				}
+
 			}
 
+			// All ok! So set the result
+			this.body = 'Task successfully created';
+			this.status = 'created';
+		} else {
+			// rerun task creation not allowed
+			this.body = 'Insufficient permissions prevents this rerun task from being created';
+			this.status = 'forbidden';
 		}
-
-		// All ok! So set the result
-		this.body = 'Task successfully created';
-		this.status = 'created';
 		
 	}
 	catch (e) {
@@ -90,9 +134,10 @@ exports.addTask = `function *addTask() {
 	}
 }`
 
-###
-# Retrieves the details for a specific Task
-###
+
+#############################################
+# Retrieves the details for a specific Task #
+#############################################
 exports.getTask = `function *getTask(taskId) {
 
 	// Get the values to use
@@ -119,9 +164,10 @@ exports.getTask = `function *getTask(taskId) {
 	}
 }`
 
-###
-# Updates the details for a specific Task
-###
+
+###########################################
+# Updates the details for a specific Task #
+###########################################
 exports.updateTask = `function *updateTask(taskId) {
 
 	// Test if the user is authorised
@@ -150,9 +196,10 @@ exports.updateTask = `function *updateTask(taskId) {
 	}
 }`
 
-###
-# Deletes a specific Tasks details
-###
+
+####################################
+# Deletes a specific Tasks details #
+####################################
 exports.removeTask = `function *removeTask(taskId) {
 
 	// Test if the user is authorised

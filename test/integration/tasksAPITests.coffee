@@ -2,6 +2,8 @@ should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
 Task = require("../../lib/model/tasks").Task
+Transaction = require("../../lib/model/transactions").Transaction
+Channel = require("../../lib/model/channels").Channel
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 
@@ -33,23 +35,99 @@ describe "API Integration Tests", ->
 			created: "2014-06-18T12:00:00.929Z"
 			user: "root@openhim.org"
 
+
+		requ =
+			path: "/api/test"
+			headers:
+				"header-title": "header1-value"
+				"another-header": "another-header-value" 
+			querystring: "param1=value1&param2=value2"
+			body: "<HTTP body request>"
+			method: "POST"
+			timestamp: "2014-06-09T11:17:25.929Z"
+
+		transaction1 = new Transaction
+			_id: "888888888888888888888888"
+			status: "Successful"
+			clientID: "000000000000000000000000"
+			channelID: "aaaa11111111111111111111"
+			request: requ
+
+		transaction2 = new Transaction
+			_id: "999999999999999999999999"
+			status: "Successful"
+			clientID: "000000000000000000000000"
+			channelID: "aaaa11111111111111111111"
+			request: requ
+
+		transaction3 = new Transaction
+			_id: "101010101010101010101010"
+			status: "Successful"
+			clientID: "000000000000000000000000"
+			channelID: "aaaa11111111111111111111"
+			request: requ
+
+		transaction4 = new Transaction
+			_id: "112233445566778899101122"
+			status: "Successful"
+			clientID: "000000000000000000000000"
+			channelID: "bbbb22222222222222222222"
+			request: requ
+
+
+		channel = new Channel
+			_id: "aaaa11111111111111111111"
+			name: "TestChannel1"
+			urlPattern: "test/sample"
+			allow: [ "PoC", "Test1", "Test2" ]
+			routes: [
+						name: "test route"
+						host: "localhost"
+						port: 9876
+						primary: true
+					]
+			txViewAcl: [ "group1" ]
+			txRerunAcl: [ "group2" ]
+
+		channel2 = new Channel
+			_id: "bbbb22222222222222222222"
+			name: "TestChannel2"
+			urlPattern: "test/sample2"
+			allow: [ "PoC", "Test1", "Test2" ]
+			routes: [
+						name: "test route"
+						host: "localhost"
+						port: 9876
+						primary: true
+					]
+			txViewAcl: [ "group1" ]
+			txRerunAcl: [ "group222222222" ]
+
 		authDetails = {}
 
 		before (done) ->
 			task1.save ->
 				task2.save ->
-					auth.setupTestUsers ->
-						server.start null, null, 8080, false, ->
-							done()
+					transaction1.save ->
+						transaction2.save ->
+							transaction3.save ->
+								transaction4.save ->
+									channel.save ->
+										channel2.save ->
+											auth.setupTestUsers ->
+												server.start null, null, 8080, null, null, null, ->
+													done()
 
 		after (done) ->
 			server.stop ->
 				auth.cleanupTestUsers ->
 					Task.remove {}, ->
-						MongoClient.connect config.mongo.url, (err, db) ->
-						    mongoCollection = db?.collection "jobs"
-						    mongoCollection.drop()
-							done()
+						Transaction.remove {}, ->
+							Channel.remove {}, ->
+								MongoClient.connect config.mongo.url, (err, db) ->
+								    mongoCollection = db?.collection "jobs"
+								    mongoCollection.drop()
+									done()
 
 		beforeEach ->
 			authDetails = auth.getAuthDetails()
@@ -76,7 +154,7 @@ describe "API Integration Tests", ->
 
 			it 'should add a new task', (done) ->
 				newTask =
-					tids: [ "88888", "99999", "10101" ]
+					tids: [ "888888888888888888888888", "999999999999999999999999", "101010101010101010101010" ]
 
 				request("http://localhost:8080")
 					.post("/tasks")
@@ -90,11 +168,53 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							Task.findOne { $and: [ transactions: { $elemMatch: { tid: "88888" } }, { transactions: $elemMatch: { tid: "99999" } }, { transactions: $elemMatch: { tid: "10101" } } ] }, (err, task) ->
+							Task.findOne { $and: [ transactions: { $elemMatch: { tid: "888888888888888888888888" } }, { transactions: $elemMatch: { tid: "999999999999999999999999" } }, { transactions: $elemMatch: { tid: "101010101010101010101010" } } ] }, (err, task) ->
 								task.should.have.property "status", "NotStarted"
 								task.transactions.should.have.length 3
 								task.should.have.property "remainingTransactions", 3
 								done()
+
+			it 'should add a new task (non Admin user)', (done) ->
+				newTask =
+					tids: [ "888888888888888888888888", "999999999999999999999999", "101010101010101010101010" ]
+
+				request("http://localhost:8080")
+					.post("/tasks")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(newTask)
+					.expect(201)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							Task.findOne { $and: [ transactions: { $elemMatch: { tid: "888888888888888888888888" } }, { transactions: $elemMatch: { tid: "999999999999999999999999" } }, { transactions: $elemMatch: { tid: "101010101010101010101010" } } ] }, (err, task) ->
+								task.should.have.property "status", "NotStarted"
+								task.transactions.should.have.length 3
+								task.should.have.property "remainingTransactions", 3
+								done()
+
+
+
+			it 'should NOT add a new task (non Admin user - No permission for one transaction)', (done) ->
+				newTask =
+					tids: [ "112233445566778899101122", "888888888888888888888888", "999999999999999999999999", "101010101010101010101010" ]
+
+				request("http://localhost:8080")
+					.post("/tasks")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(newTask)
+					.expect(403)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
 
 		describe '*getTask(taskId)', ->
 

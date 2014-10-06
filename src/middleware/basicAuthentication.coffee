@@ -36,6 +36,10 @@ exports.authenticateUser = (ctx, done) ->
 			return done err if err
 
 			if client
+				if not (client.passwordAlgorithm and client.passwordHash)
+					logger.warn "#{user.name} does not have a basic auth password set"
+					return done null, null
+
 				comparePasswordWithClientHash user.pass, client, (err, res) ->
 					return done err if err
 
@@ -65,5 +69,6 @@ exports.koaMiddleware = `function *basicAuthMiddleware(next) {
 		yield next;
 	} else {
 		this.response.status = "unauthorized";
+		this.set("WWW-Authenticate", "Basic");
 	}
 }`

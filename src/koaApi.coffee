@@ -9,13 +9,16 @@ clients = require './api/clients'
 transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
+contactGroups = require './api/contactGroups'
 monitor = require './api/monitor'
 visualizer = require './api/visualizer'
 Q = require 'q'
 worker = require './api/worker'
+mediators = require './api/mediators'
+metrics = require './api/metrics'
 
 exports.setupApp = (done) ->
-	
+
 	# Create an instance of the koa-server and add a body-parser
 	app = koa()
 	app.use cors()
@@ -26,7 +29,7 @@ exports.setupApp = (done) ->
 
 	# Authenticate the API request
 	app.use authentication.authenticate
-	
+
 	# Define the api routes
 	app.use route.get '/users', users.getUsers
 	app.use route.get '/users/:email', users.getUser
@@ -48,6 +51,12 @@ exports.setupApp = (done) ->
 	app.use route.put '/transactions/:transactionId', transactions.updateTransaction
 	app.use route.delete '/transactions/:transactionId', transactions.removeTransaction
 
+	app.use route.get '/groups', contactGroups.getContactGroups
+	app.use route.get '/groups/:contactGroupId', contactGroups.getContactGroup
+	app.use route.post '/groups', contactGroups.addContactGroup
+	app.use route.put '/groups/:contactGroupId', contactGroups.updateContactGroup
+	app.use route.delete '/groups/:contactGroupId', contactGroups.removeContactGroup
+
 	app.use route.get '/channels', channels.getChannels
 	app.use route.post '/channels', channels.addChannel
 	app.use route.get '/channels/:channelId', channels.getChannel
@@ -59,11 +68,19 @@ exports.setupApp = (done) ->
 	app.use route.get '/tasks/:taskId', tasks.getTask
 	app.use route.put '/tasks/:taskId', tasks.updateTask
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
-	
+
 	app.use route.get '/monitor', monitor.getMonitor
 
 	app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
 	app.use route.get '/visualizer/sync', visualizer.sync
+
+	app.use route.get '/metrics', metrics.getGlobalLoadTimeMetrics
+	app.use route.get '/metrics/status', metrics.getGlobalStatusMetrics
+	app.use route.get '/metrics/:type/:channelId', metrics.getChannelMetrics
+	
+	app.use route.get '/mediators', mediators.getAllMediators
+	app.use route.get '/mediators/:uuid', mediators.getMediator
+	app.use route.post '/mediators', mediators.addMediator
 
 	# Return the result
 	done(app)

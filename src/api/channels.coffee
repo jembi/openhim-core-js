@@ -2,12 +2,17 @@ Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
+tcpAdapter = require '../tcpAdapter'
+server = require "../server"
+polling = require "../polling"
 
 isPathValid = (channel) ->
-	(channel.routes.map (route) ->
-		# There cannot be both path and pathTranform. pathTransform must be valid
-		not (route.path and route.pathTransform) and (not route.pathTransform or /s\/.*\/.*/.test route.pathTransform))
-		.reduce (a, b) -> a and b
+	if channel.routes?
+		for route in channel.routes
+			# There cannot be both path and pathTranform. pathTransform must be valid
+			if (route.path and route.pathTransform) or (route.pathTransform and not /s\/.*\/.*/.test route.pathTransform)
+				return false
+	return true
 
 ###
 # Retrieves the list of active channels
@@ -54,6 +59,22 @@ exports.addChannel = `function *addChannel() {
 		// All ok! So set the result
 		this.body = 'Channel successfully created';
 		this.status = 'created';
+
+		if (channel.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
+			tcpAdapter.startupTCPServer(channel, function(err){
+				if (err) {
+					logger.error('Failed to startup TCP server: ' + err);
+				}
+			});
+		}
+
+		if (channel.type && channel.type === 'polling') {
+			polling.registerPollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
+				}
+			});
+		}
 	}
 	catch (e) {
 		// Error! So inform the user
@@ -140,6 +161,24 @@ exports.updateChannel = `function *updateChannel(channelId) {
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully updated';
+
+		var channel = yield Channel.findOne({ _id: id }).exec();
+
+		if (channelData.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
+			tcpAdapter.startupTCPServer(channel, function(err){
+				if (err) {
+					logger.error('Failed to startup TCP server: ' + err);
+				}
+			});
+		}
+
+		if (channel.type && channel.type === 'polling') {
+			polling.registerPollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
+				}
+			});
+		}
 	}
 	catch (e) {
 		// Error! So inform the user
@@ -167,10 +206,18 @@ exports.removeChannel = `function *removeChannel(channelId) {
 
 	try {
 		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-		yield Channel.findByIdAndRemove(id).exec();
+		var channel = yield Channel.findByIdAndRemove(id).exec();
 
 		// All ok! So set the result
 		this.body = 'The channel was successfully deleted';
+
+		if (channel.type && channel.type === 'polling') {
+			polling.removePollingChannel(channel, function(err) {
+				if (err) {
+					logger.error(err);
+				}
+			});
+		}
 	}
 	catch (e) {
 		// Error! So inform the user

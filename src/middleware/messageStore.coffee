@@ -9,17 +9,27 @@ exports.transactionStatus = transactionStatus =
 	COMPLETED_W_ERR: 'Completed with error(s)'
 	FAILED: 'Failed'
 
-exports.storeTransaction = (ctx, done) -> 
+copyMapWithEscapedReservedCharacters = (map) ->
+	escapedMap = {}
+	for k, v of map
+		if k.indexOf('.')>-1 or k.indexOf('$')>-1
+			k = k.replace('.', '\uff0e').replace('$', '\uff04')
+		escapedMap[k] = v
+	return escapedMap
+
+exports.storeTransaction = (ctx, done) ->
 	logger.info 'Storing request metadata for inbound transaction'
 
 	ctx.requestTimestamp = new Date()
+	headers = copyMapWithEscapedReservedCharacters ctx.header
+
 	tx = new transactions.Transaction
 		status: transactionStatus.PROCESSING
 		clientID: ctx.authenticated._id
 		channelID: ctx.authorisedChannel._id
 		request:
 			path: ctx.path
-			headers: ctx.header
+			headers: headers
 			querystring: ctx.querystring
 			body: ctx.body
 			method: ctx.method
@@ -61,22 +71,24 @@ exports.storeResponse = (ctx, done) ->
 	if status is null or status is undefined
 		status = transactionStatus.COMPLETED
 	
+	headers = copyMapWithEscapedReservedCharacters ctx.response.header
+
 	res =
 		status: ctx.response.status
-		headers: ctx.response.header
+		headers: headers
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
 		timestamp: ctx.response.timestamp
 
 	# assign new transactions status to ctx object
 	ctx.transactionStatus = status
 
-	# Rename header -> headers
-	if ctx.routes
-		for route in ctx.routes
-			route.response.headers = route.response.header
-			delete route.response.header
+	update = { response: res, status: status, routes: ctx.routes }
 
-	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, { response: res, status: status, routes: ctx.routes }, (err, tx) ->
+	if ctx.mediatorResponse
+		update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
+		update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
+
+	transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update, (err, tx) ->
 		if err
 			logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
 			return done err

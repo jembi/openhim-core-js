@@ -1,4 +1,8 @@
+util = require('util');
+zlib = require('zlib');
 http = require 'http'
+https = require 'https'
+net = require 'net'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
 Q = require 'q'
@@ -6,12 +10,52 @@ config = require '../config/config'
 config.mongo = config.get('mongo')
 logger = require "winston"
 status = require "http-status"
+cookie = require 'cookie'
 
 containsMultiplePrimaries = (routes) ->
 	numPrimaries = 0
 	for route in routes
 		numPrimaries++ if route.primary
 	return numPrimaries > 1
+
+setKoaResponse = (ctx, response) ->
+	ctx.response.status = response.status
+	ctx.response.timestamp = response.timestamp
+	ctx.response.body = response.body
+
+	if not ctx.response.header
+		ctx.response.header = {}
+
+	for key, value of response.headers
+		switch key
+			when 'set-cookie' then setCookiesOnContext ctx, value
+			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
+			else ctx.response.header[key] = value
+
+if process.env.NODE_ENV == "test"
+	exports.setKoaResponse = setKoaResponse
+
+setCookiesOnContext = (ctx, value) ->
+	logger.info 'Setting cookies on context'
+	for c_key,c_value in value
+		c_opts = {path:false,httpOnly:false} #clear out default values in cookie module
+		c_vals = {}
+		for p_key,p_val of cookie.parse c_key
+			p_key_l = p_key.toLowerCase()
+			switch p_key_l
+				when 'max-age' then c_opts['maxage'] = parseInt p_val, 10
+				when 'expires' then c_opts['expires'] = new Date p_val
+				when 'path','domain','secure','signed','overwrite' then c_opts[p_key_l] = p_val
+				when 'httponly' then c_opts['httpOnly'] = p_val
+				else c_vals[p_key] = p_val
+		for p_key,p_val of c_vals
+			ctx.cookies.set p_key,p_val,c_opts
+
+handleServerError = (ctx, err) ->
+	ctx.response.status = status.INTERNAL_SERVER_ERROR
+	ctx.response.timestamp = new Date()
+	ctx.response.body = "An internal server error occurred"
+	logger.error err
 
 sendRequestToRoutes = (ctx, routes, next) ->
 	promises = []
@@ -20,70 +64,183 @@ sendRequestToRoutes = (ctx, routes, next) ->
 		return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
 
 	for route in routes
-		path = getDestinationPath route, ctx.request.url
+		path = getDestinationPath route, ctx.path
 		options =
 			hostname: route.host
 			port: route.port
 			path: path
 			method: ctx.request.method
 			headers: ctx.request.header
+			agent: false
+			rejectUnauthorized: false
 
 		if ctx.request.querystring
 			options.path += '?' + ctx.request.querystring
-		
+
+		if options.headers && options.headers.authorization
+			delete options.headers.authorization
+
 		if route.username and route.password
-			options.auth = route.username+":"+route.password
+			options.auth = route.username + ":" + route.password
 
 		if options.headers && options.headers.host
 			delete options.headers.host
 
 		if route.primary
-			response = ctx.response
+			promise = sendRequest(ctx, route, options)
+			.then (response) ->
+				if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
+					# handle mediator reponse
+					responseObj = JSON.parse response.body
+					ctx.mediatorResponse = responseObj
+					# then set koa response from responseObj.response
+					setKoaResponse ctx, responseObj.response
+				else
+					setKoaResponse ctx, response
+			.fail (reason) ->
+				# on failure
+				handleServerError ctx, reason
 		else
-			routeResponse = {}
-			routeResponse.name = route.name
-			routeResponse.request =
-				path: path
-				headers: ctx.request.header
-				querystring: ctx.request.querystring
-				method: ctx.request.method
-				timestamp: new Date()
-			routeResponse.response = {}
-			ctx.routes = [] if not ctx.routes
-			ctx.routes.push routeResponse
-			response = routeResponse.response
+			promise = sendRequest ctx, route, options
+			.then (response) ->
+				routeObj = {}
+				routeObj.name = route.name
+				routeObj.request =
+					path: path
+					headers: ctx.request.header
+					querystring: ctx.request.querystring
+					method: ctx.request.method
+				
+				if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
+					# handle mediator reponse
+					responseObj = JSON.parse response.body
+					routeObj.orchestrations = responseObj.orchestrations
+					routeObj.properties = responseObj.properties
+					routeObj.response = responseObj.response
+				else
+					routeObj.response = response
 
-		promises.push sendRequest ctx, response, options
+				ctx.routes = [] if not ctx.routes
+				ctx.routes.push routeObj
+			.fail (reason) ->
+				# on failure
+				handleServerError ctx, reason
 
-	(Q.all promises).then -> next()
+		promises.push promise
 
-sendRequest = (ctx, responseDst, options) ->
-	deferred = Q.defer()
+	(Q.all promises).then ->
+		next()
 
-	routeReq = http.request options, (routeRes) ->
-		responseDst.status = routeRes.statusCode
-		responseDst.header = routeRes.headers
+sendRequest = (ctx, route, options) ->
+	if route.type is 'tcp'
+		logger.info 'Routing tcp request'
+		return sendSocketRequest ctx, route, options
+	else
+		logger.info 'Routing http(s) request'
+		return sendHttpRequest ctx, route, options
 
-		responseDst.body = ''
-		routeRes.on "data", (chunk) -> responseDst.body += chunk
+obtainCharset = (headers) ->
+        contentType = headers['content-type'] || ''
+        matches =  contentType.match(/charset=([^;,\r\n]+)/i)
+        if (matches && matches[1]) 
+                return matches[1]
+        return  'utf-8'
 
+###
+# A promise returning function that send a request to the given route and resolves
+# the returned promise with a response object of the following form:
+# 	response =
+#		status: <http_status code>
+#		body: <http body>
+#		headers: <http_headers_object>
+#		timestamp: <the time the response was recieved>
+###
+sendHttpRequest = (ctx, route, options) ->
+	defered = Q.defer();
+	response = {}
+
+	method = http
+
+	if route.secured
+        method = https
+
+	routeReq = method.request options, (routeRes) ->
+		response.status = routeRes.statusCode
+		response.headers = routeRes.headers
+
+		bufs = []
+		routeRes.on "data", (chunk) ->
+			bufs.push chunk
+
+		# See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
 		routeRes.on "end", ->
-			responseDst.timestamp = new Date()
-			deferred.resolve()
+			response.timestamp = new Date()
+			charset = obtainCharset(routeRes.headers)
+			if routeRes.headers['content-encoding'] == 'gzip'
+				zlib.gunzip(
+					Buffer.concat bufs,
+					(gunzipError, buf) ->
+						if gunzipError then logger.error gunzipError
+						else response.body = buf.toString charset
+						if not defered.promise.isRejected()
+							defered.resolve response
+				)
+			else if routeRes.headers['content-encoding'] == 'deflate'
+				zlib.inflate(
+					Buffer.concat bufs,
+					(inflateError, buf) ->
+						if inflateError then logger.error inflateError
+						else response.body = buf.toString charset
+						if not defered.promise.isRejected()
+							defered.resolve response
+				)
+			else
+				response.body = Buffer.concat bufs
+				if not defered.promise.isRejected()
+					defered.resolve response
 
-	routeReq.on "error", (err) ->
-		responseDst.status = status.INTERNAL_SERVER_ERROR
-		responseDst.timestamp = new Date()
-
-		logger.error err
-		deferred.resolve()
+	routeReq.on "error", (err) -> defered.reject err
 
 	if ctx.request.method == "POST" || ctx.request.method == "PUT"
 		routeReq.write ctx.body
 
 	routeReq.end()
 
-	return deferred.promise
+	return defered.promise
+
+###
+# A promise returning function that send a request to the given route using sockets and resolves
+# the returned promise with a response object of the following form: ()
+# 	response =
+#		status: <200 if all work, else 500>
+#		body: <the received data from the socket>
+#		timestamp: <the time the response was recieved>
+###
+sendSocketRequest = (ctx, route, options) ->
+	defered = Q.defer()
+	requestBody = ctx.body
+	client = new net.Socket()
+	response = {}
+
+	client.connect options.port, options.hostname, ->
+		logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
+		client.end requestBody
+
+	bufs = []
+	client.on 'data', (chunk) ->
+		bufs.push chunk
+		
+	client.on 'error', (err) -> defered.reject err
+
+	client.on 'end', ->
+		response.body = Buffer.concat bufs
+		response.status = status.OK
+		response.timestamp = new Date()
+		if not defered.promise.isRejected()
+			defered.resolve response
+
+	return defered.promise
+
 
 getDestinationPath = (route, requestPath) ->
 	if route.path
@@ -109,10 +266,10 @@ exports.transformPath = transformPath = (path, expression) ->
 	sub = sExpression.split '/'
 
 	from = sub[1].replace /:/g, '\/'
-	to = if sub.length>2 then sub[2] else ""
+	to = if sub.length > 2 then sub[2] else ""
 	to = to.replace /:/g, '\/'
 
-	if sub.length>3 and sub[3] is 'g'
+	if sub.length > 3 and sub[3] is 'g'
 		fromRegex = new RegExp from, 'g'
 	else
 		fromRegex = new RegExp from
@@ -144,7 +301,7 @@ exports.route = (ctx, next) ->
 # Use with: app.use(router.koaMiddleware)
 ###
 exports.koaMiddleware = `function *routeMiddleware(next) {
-		var route = Q.denodeify(exports.route);
-		yield route(this);
-		yield next;
-	}`
+	var route = Q.denodeify(exports.route);
+	yield route(this);
+	yield next;
+}`

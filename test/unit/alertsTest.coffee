@@ -31,6 +31,7 @@ testUser2 = new User
 	passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 
 testGroup1 = new ContactGroup
+	_id: "aaa908908bbb98cc1d0809ee"
 	group: 'group1'
 	users: [
 		{
@@ -45,6 +46,7 @@ testGroup1 = new ContactGroup
 	]
 
 testGroup2 = new ContactGroup
+	_id: "bbb908908ccc98cc1d0888aa"
 	group: 'group2'
 	users: [ { user: 'one@openhim.org', method: 'email' } ]
 
@@ -57,11 +59,11 @@ testChannel = new Channel
 	alerts: [
 		{
 			status: "404"
-			groups: ['group1']
+			groups: ['aaa908908bbb98cc1d0809ee']
 		}
 		{
 			status: '5xx'
-			groups: ['group2']
+			groups: ['bbb908908ccc98cc1d0888aa']
 			users: [ { user: 'two@openhim.org', method: 'sms' } ]
 			failureRate: testFailureRate
 		}

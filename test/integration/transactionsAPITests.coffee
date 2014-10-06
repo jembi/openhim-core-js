@@ -35,6 +35,7 @@ describe "API Integration Tests", ->
 			timestamp: "2014-06-09T11:17:25.929Z"
 
 		transactionData =
+			_id: "111111111111111111111111"
 			status: "Processing"
 			clientID: "999999999999999999999999"
 			channelID: "888888888888888888888888"
@@ -71,16 +72,31 @@ describe "API Integration Tests", ->
 						primary: true
 					]
 			txViewAcl: [ "group1" ]
+			txViewFullAcl: []
+
+		channel2 = new Channel
+			name: "TestChannel2"
+			urlPattern: "test/sample"
+			allow: [ "PoC", "Test1", "Test2" ]
+			routes: [
+						name: "test route"
+						host: "localhost"
+						port: 9876
+						primary: true
+					]
+			txViewAcl: []
+			txViewFullAcl: []
 
 		before (done) ->
 			auth.setupTestUsers (err) ->
 				channel.save (err) ->
-					server.start null, null, 8080, false,  ->
-						done()
+					channel2.save (err) ->
+						server.start null, null, 8080, null, null, null,  ->
+							done()
 
 		after (done) ->
 			auth.cleanupTestUsers (err) ->
-				channel.remove (err) ->
+				Channel.remove (err) ->
 					server.stop ->
 						done()
 
@@ -285,6 +301,7 @@ describe "API Integration Tests", ->
 
 			it "should NOT return a transaction that a user is not allowed to view", (done) ->
 				tx = new Transaction transactionData
+				tx.channelID = channel2._id
 				tx.save (err, result)->
 					should.not.exist(err)
 					transactionId = result._id
@@ -328,7 +345,7 @@ describe "API Integration Tests", ->
 								res.body.request.headers['header-title'].should.equal "header1-value"
 								res.body.request.headers['another-header'].should.equal "another-header-value"
 								res.body.request.querystring.should.equal "param1=value1&param2=value2"
-								res.body.request.body.should.equal "<HTTP body request>"
+								should.not.exist(res.body.request.body)
 								res.body.request.method.should.equal "POST"
 								done()
 
