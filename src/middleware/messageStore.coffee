@@ -1,5 +1,4 @@
 transactions = require "../model/transactions"
-visualizer = require "../api/visualizer"
 logger = require "winston"
 
 exports.transactionStatus = transactionStatus = 
@@ -101,5 +100,4 @@ exports.koaMiddleware =  `function *storeMiddleware(next) {
 		exports.storeTransaction(this, function(){});
 		yield next;
 		exports.storeResponse(this, function(){});
-		visualizer.storeVisualizerEvents(this, function(){});
 	}`

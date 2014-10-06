@@ -1,0 +1,83 @@
+moment = require 'moment'
+logger = require 'winston'
+events = require '../model/events'
+messageStore = require '../middleware/messageStore'
+
+
+formatTS = (ts) -> moment(ts).valueOf()
+
+addRouteEvents = (dst, route, prefix) ->
+	startTS = formatTS route.request.timestamp
+	endTS = formatTS route.response.timestamp
+	if startTS > endTS then startTS = endTS
+	# round a sub 100 ms response to 100 ms
+	if endTS-startTS<100 then endTS = startTS+100
+
+	# Transaction start for route
+	dst.push new events.VisualizerEvent
+		ts: startTS
+		comp: "#{prefix}-#{route.name}"
+		ev: 'start'
+
+	#TODO more comprehensive status
+	routeStatus = 'ok'
+	if 500 <= route.response.status <= 599
+		routeStatus = 'error'
+	# Transaction end for route
+	dst.push new events.VisualizerEvent
+		ts: endTS
+		comp: "#{prefix}-#{route.name}"
+		ev: 'end'
+		status: routeStatus
+
+storeVisualizerEvents = (ctx, done) ->
+	logger.info "Storing visualizer events for transaction: #{ctx.transactionId}"
+	trxEvents = []
+
+	startTS = formatTS ctx.requestTimestamp
+	endTS = formatTS ctx.response.timestamp
+	if startTS > endTS then startTS = endTS
+	# round a sub 100 ms response to 100 ms
+	if endTS-startTS<100 then endTS = startTS+100
+
+	# Transaction start for channal
+	trxEvents.push new events.VisualizerEvent
+		ts: startTS
+		comp: "channel-#{ctx.authorisedChannel.name}"
+		ev: 'start'
+	# Transaction start for primary route
+	trxEvents.push new events.VisualizerEvent
+		ts: startTS
+		comp: ctx.authorisedChannel.name
+		ev: 'start'
+
+	if ctx.routes
+		addRouteEvents trxEvents, route, 'route' for route in ctx.routes
+
+	if ctx.mediatorResponse?.orchestrations?
+		addRouteEvents trxEvents, orch, 'orch' for orch in ctx.mediatorResponse.orchestrations
+
+	#TODO more comprehensive status
+	status = 'ok'
+	if ctx.transactionStatus is messageStore.transactionStatus.FAILED
+		status = 'error'
+
+	# Transaction end for primary route
+	trxEvents.push new events.VisualizerEvent
+		ts: endTS
+		comp: ctx.authorisedChannel.name
+		ev: 'end'
+		status: status
+	# Transaction end for channal
+	trxEvents.push new events.VisualizerEvent
+		ts: endTS
+		comp: "channel-#{ctx.authorisedChannel.name}"
+		ev: 'end'
+		status: status
+
+	events.VisualizerEvent.create trxEvents, (err) -> return if err then done err else done()
+
+exports.koaMiddleware =  `function *visualizerMiddleware(next) {
+	yield next;
+	storeVisualizerEvents(this, function(){});
+}`
