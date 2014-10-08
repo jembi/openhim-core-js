@@ -4,7 +4,7 @@
     "httpsPort": 5000
   },
   "api": {
-    "httpPort": 8080
+    "httpsPort": 8080
   },
   "rerun": {
     "httpPort": 7786,

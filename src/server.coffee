@@ -29,7 +29,7 @@ mongoose.connect config.mongo.url
 
 httpServer = null
 httpsServer = null
-apiHttpServer = null
+apiHttpsServer = null
 rerunServer = null
 tcpHttpReceiver = null
 pollingServer = null
@@ -105,11 +105,14 @@ ensureRootUser = (callback) ->
 startApiServer = (apiPort, app) ->
 	deferred = Q.defer()
 
-	apiHttpServer = http.createServer app.callback()
-	apiHttpServer.listen apiPort, ->
-		logger.info "API listening on port " + apiPort
+	mutualTLS = config.authentication.enableMutualTLSAuthentication
+	tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
+		return done err if err
 
-		ensureRootUser -> deferred.resolve()
+		apiHttpsServer = https.createServer options, app.callback()
+		apiHttpsServer.listen apiPort, ->
+			logger.info "API HTTPS listening on port " + apiPort
+			ensureRootUser -> deferred.resolve()
 
 	return deferred
 
@@ -191,7 +194,7 @@ exports.stop = stop = (done) ->
 
 	promises.push stopServer(httpServer, 'HTTP') if httpServer
 	promises.push stopServer(httpsServer, 'HTTPS') if httpsServer
-	promises.push stopServer(apiHttpServer, 'API HTTP') if apiHttpServer
+	promises.push stopServer(apiHttpsServer, 'API HTTP') if apiHttpsServer
 	promises.push stopServer(rerunServer, 'Rerun HTTP') if rerunServer
 	promises.push stopServer(pollingServer, 'Polling HTTP') if pollingServer
 	promises.push stopAgenda().promise if agenda
@@ -206,7 +209,7 @@ exports.stop = stop = (done) ->
 	(Q.all promises).then ->
 		httpServer = null
 		httpsServer = null
-		apiHttpServer = null
+		apiHttpsServer = null
 		rerunServer = null
 		tcpHttpReceiver = null
 		pollingServer = null
@@ -217,7 +220,7 @@ if not module.parent
 	# start the server
 	httpPort = config.router.httpPort
 	httpsPort = config.router.httpsPort
-	apiPort = config.api.httpPort
+	apiPort = config.api.httpsPort
 	rerunPort = config.rerun.httpPort
 	tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort
 	pollingPort = config.polling.pollingPort
