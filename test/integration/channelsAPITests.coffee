@@ -60,7 +60,6 @@ describe "API Integration Tests", ->
 
 			it 'should fetch all channels', (done) ->
 
-				#request("https://localhost:8080")
 				request("https://localhost:8080")
 					.get("/channels")
 					.set("auth-username", testUtils.rootUser.email)
