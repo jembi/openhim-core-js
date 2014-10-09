@@ -40,7 +40,7 @@ describe "API Integration Tests", ->
 		describe "*addContactGroup", ->
 
 			it  "should add contact group to db and return status 201 - group created", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/groups")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -59,7 +59,7 @@ describe "API Integration Tests", ->
 								done()
 
 			it  "should only allow an admin user to add a contacGroup", (done) ->     
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/groups")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -94,7 +94,7 @@ describe "API Integration Tests", ->
 					done()
 
 			it "should get contactGroup by contactGroupId and return status 200", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/groups/" + contactGroupId)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -114,7 +114,7 @@ describe "API Integration Tests", ->
 							done()
 
 			it "should return status 404 if not found", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/groups/000000000000000000000000")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -128,7 +128,7 @@ describe "API Integration Tests", ->
 							done()
 
 			it "should not allow a non admin user to fetch a contactGroups", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/groups/" + contactGroupId)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -179,7 +179,7 @@ describe "API Integration Tests", ->
 							group4 = new ContactGroup contactGroupData4
 							group4.save (error, group) ->
 								should.not.exist (error)
-								request("http://localhost:8080")
+								request("https://localhost:8080")
 									.get("/groups")
 									.set("auth-username", testUtils.rootUser.email)
 									.set("auth-ts", authDetails.authTS)
@@ -194,7 +194,7 @@ describe "API Integration Tests", ->
 											done()
 
 			it  "should not allow a non admin user to fetch all contact groups", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/groups")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -227,7 +227,7 @@ describe "API Integration Tests", ->
 						users: [{user: 'User 11111', method: 'sms', maxAlerts: 'no max'}, 
 							{user: 'User 222222', method: 'email', maxAlerts: '1 per hour'}]
 
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.put("/groups/" + contactGroup._id)
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -250,7 +250,7 @@ describe "API Integration Tests", ->
 
 			it "should not allow a non admin user to update a contactGroup", (done) ->
 				updates = {}
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/groups/000000000000000000000000")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -279,7 +279,7 @@ describe "API Integration Tests", ->
 				contactGroup.save (error, group) ->
 					should.not.exist(error)	
 					ContactGroup.count (err, countBefore) ->
-						request("http://localhost:8080")
+						request("https://localhost:8080")
 							.del("/groups/" + contactGroup._id)
 							.set("auth-username", testUtils.rootUser.email)
 							.set("auth-ts", authDetails.authTS)
@@ -298,7 +298,7 @@ describe "API Integration Tests", ->
 
 			it  "should not allow a non admin user to remove a contactGroup", (done) ->
 				contactGroupData = {}
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.del("/groups/000000000000000000000000")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)

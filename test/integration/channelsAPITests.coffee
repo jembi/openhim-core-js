@@ -60,7 +60,8 @@ describe "API Integration Tests", ->
 
 			it 'should fetch all channels', (done) ->
 
-				request("http://localhost:8080")
+				#request("https://localhost:8080")
+				request("https://localhost:8080")
 					.get("/channels")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -69,13 +70,14 @@ describe "API Integration Tests", ->
 					.expect(200)
 					.end (err, res) ->
 						if err
+							console.log( err )
 							done err
 						else
 							res.body.length.should.be.eql 2
 							done()
 
 			it 'should only allow non root user to fetch channel that they are allowed to view', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/channels")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -104,7 +106,7 @@ describe "API Integration Tests", ->
 								primary: true
 							]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/channels")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -134,7 +136,7 @@ describe "API Integration Tests", ->
 								primary: true
 							]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/channels")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -162,7 +164,7 @@ describe "API Integration Tests", ->
 								primary: true
 							]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/channels")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -179,7 +181,7 @@ describe "API Integration Tests", ->
 			it 'should not allow a non admin user to add a channel', (done) ->
 				newChannel = {}
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/channels")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -209,7 +211,7 @@ describe "API Integration Tests", ->
 								type: "tcp"
 							]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/channels")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -244,7 +246,7 @@ describe "API Integration Tests", ->
 
 				spy = sinon.spy polling, 'registerPollingChannel'
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/channels")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -267,7 +269,7 @@ describe "API Integration Tests", ->
 
 			it 'should fetch a specific channel by id', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/channels/" + channel1._id)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -285,7 +287,7 @@ describe "API Integration Tests", ->
 
 			it 'should not allow a non admin user from fetching a channel they dont have access to by name', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/channels/" + channel1._id)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -300,7 +302,7 @@ describe "API Integration Tests", ->
 
 			it 'should allow a non admin user to fetch a channel they have access to by name', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/channels/" + channel2._id)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -318,7 +320,7 @@ describe "API Integration Tests", ->
 
 			it 'should return a 404 if that channel doesnt exist', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/channels/999999999999999999999999")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -351,7 +353,7 @@ describe "API Integration Tests", ->
 								primary: true
 							]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/channels/" + channel1._id)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -374,7 +376,7 @@ describe "API Integration Tests", ->
 
 				updates = {}
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/channels/" + channel1._id)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -408,7 +410,7 @@ describe "API Integration Tests", ->
 				}
 
 				httpChannel.save ->
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.put("/channels/" + httpChannel._id)
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -443,7 +445,7 @@ describe "API Integration Tests", ->
 				spy = sinon.spy polling, 'registerPollingChannel'
 
 				pollChannel.save ->
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.put("/channels/" + pollChannel._id)
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -467,7 +469,7 @@ describe "API Integration Tests", ->
 
 			it 'should remove a specific channel by name', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.del("/channels/" + channel1._id)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -484,7 +486,7 @@ describe "API Integration Tests", ->
 
 			it 'should only allow an admin user to remove a channel', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.del("/channels/" + channel1._id)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -515,7 +517,7 @@ describe "API Integration Tests", ->
 				spy = sinon.spy polling, 'removePollingChannel'
 
 				pollChannel.save ->
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.del("/channels/" + pollChannel._id)
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)

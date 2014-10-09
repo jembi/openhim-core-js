@@ -42,7 +42,7 @@ describe "API Integration Tests", ->
 		describe "*addClient", ->
 
 			it  "should add client to db and return status 201 - client created", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/clients")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -65,7 +65,7 @@ describe "API Integration Tests", ->
 								done()
 
 			it  "should only allow an admin user to add a client", (done) ->     
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/clients")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -101,7 +101,7 @@ describe "API Integration Tests", ->
 					done()
 
 			it "should get client by clientId and return status 200", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/clients/" + clientId)
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -122,7 +122,7 @@ describe "API Integration Tests", ->
 							done()
 
 			it "should return status 404 if not found", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/clients/000000000000000000000000")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -136,7 +136,7 @@ describe "API Integration Tests", ->
 							done()
 
 			it "should not allow a non admin user to fetch a client", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/clients/" + clientId)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -165,7 +165,7 @@ describe "API Integration Tests", ->
 				client = new Client clientTest
 				client.save (error, newApp) ->
 					should.not.exist (error)
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.get("/clients/domain/www.zedmusic-unique.co.zw")
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -186,7 +186,7 @@ describe "API Integration Tests", ->
 								done()
 
 			it "should not allow a non admin user to fetch a client by domain", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/clients/domain/www.zedmusic-unique.co.zw")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -229,7 +229,7 @@ describe "API Integration Tests", ->
 								client.clientID += "4"
 								client.save (error, testDoc) ->
 									should.not.exist (error)
-									request("http://localhost:8080")
+									request("https://localhost:8080")
 										.get("/clients")
 										.set("auth-username", testUtils.rootUser.email)
 										.set("auth-ts", authDetails.authTS)
@@ -244,7 +244,7 @@ describe "API Integration Tests", ->
 												done()
 
 			it  "should not allow a non admin user to fetch all clients", (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/clients")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -281,7 +281,7 @@ describe "API Integration Tests", ->
 								]
 						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 						name: "Devil_may_Cry"
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.put("/clients/" + client._id)
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -311,7 +311,7 @@ describe "API Integration Tests", ->
 								]
 						passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
 						name: "Devil_may_Cry"
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.put("/clients/" + client._id)
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -331,7 +331,7 @@ describe "API Integration Tests", ->
 
 			it "should not allow a non admin user to update a client", (done) ->
 				updates = {}
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/clients/000000000000000000000000")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -361,7 +361,7 @@ describe "API Integration Tests", ->
 				client.save (error, testDoc) ->
 					should.not.exist(error)	
 					Client.count (err, countBefore) ->
-						request("http://localhost:8080")
+						request("https://localhost:8080")
 							.del("/clients/" + client._id)
 							.set("auth-username", testUtils.rootUser.email)
 							.set("auth-ts", authDetails.authTS)
@@ -380,7 +380,7 @@ describe "API Integration Tests", ->
 
 			it  "should not allow a non admin user to remove a client", (done) ->
 				docTestRemove = {}
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.del("/clients/000000000000000000000000")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
