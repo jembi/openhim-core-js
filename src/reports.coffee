@@ -134,9 +134,16 @@ fetchWeeklySubscribers = (callback) ->
 plainTemplate = (report) ->
   for data in report.data
     do (data) ->
-      "Channel Name : #{ data.channel.name } \r\n
-        Channel Load : #{ data.data[0].load } transactions \r\n
-        Transaction Average Response : #{ data.data[0].avgResp } \r\n
+      " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
+          Channel Name: #{data.channel.name} \r\n
+          Channel Load: #{ data.data[0].load } transactions  \r\n
+          Ave response time: #{ data.data[0].avgResp } \r\n
+          Failed:  #{ data.statusData[0].failed }  \r\n
+          Successful:  #{ data.statusData[0].successful }  \r\n
+          Processing: #{ data.statusData[0].processing }  \r\n
+          Completed:  #{ data.statusData[0].completed }  \r\n
+          Completed with errors: #{ data.statusData[0].completedWErrors } \r\n \r\n
+          <---------- End Channel -------------------------------------------------> \r\n \r\n
         \r\n
         \r\n
       "
