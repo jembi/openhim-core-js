@@ -11,7 +11,7 @@ moment = require "moment"
 # Function Sends the reports
 
 sendReports = (job, flag, done) ->
-  reportArray = []
+  reportMap = {}
   channelReportMap = {}
 
   #Select the right subscribers for the report
@@ -22,45 +22,44 @@ sendReports = (job, flag, done) ->
 
   fetchUsers (err, users) ->
     promises = []
-    userCount = 0
+    userCount = ''
     for user in users
       do (user) ->
         deferred = Q.defer()
-
+        userCount = user.email
         metrics.getAllowedChannels user
         .then (result) ->
           innerPromises = []
           for channel in result
             do (channel,channelReportMap) ->
               innerDeferred = Q.defer()
-              if (reportArray[userCount])
+              if (reportMap[userCount])
                 # Do nothing since object already exists
               else
                 # Create the object
-                reportArray[userCount] =
+                reportMap[userCount] =
                   email: user.email
                   data: []
 
               # If report has been fetched get it from the map
               if channelReportMap[channel._id]
-                reportArray[userCount].data.push channelReportMap[channel._id]
+                reportMap[userCount].data.push channelReportMap[channel._id]
               else
               # Fetch the report and add it to the map
                 fetchChannelReport channel,user,flag, (item) ->
-                  reportArray[userCount].data.push item
+                  reportMap[userCount].data.push item
                   channelReportMap[channel._id] = item
                   logger.info item
                   innerDeferred.resolve()
               innerPromises.push innerDeferred.promise
 
           (Q.all innerPromises).then ->
-            userCount++
             deferred.resolve()
 
         promises.push deferred.promise
 
     (Q.all promises).then ->
-      for report in reportArray
+      for report in reportMap
         if flag == 'dailyReport'
           report.type = 'Daily'
         else
