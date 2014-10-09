@@ -13,6 +13,7 @@ moment = require "moment"
 sendReports = (job, flag, done) ->
   reportMap = {}
   channelReportMap = {}
+  channelMap = {}
 
   #Select the right subscribers for the report
   if flag == 'dailyReport'
@@ -22,53 +23,65 @@ sendReports = (job, flag, done) ->
 
   fetchUsers (err, users) ->
     promises = []
-    userCount = ''
+    userKey = ''
+    userIndex = 0
+    usersArray = []
     for user in users
       do (user) ->
         deferred = Q.defer()
-        userCount = user.email
+        userKey = user.email
         metrics.getAllowedChannels user
         .then (result) ->
-          innerPromises = []
-          for channel in result
-            do (channel,channelReportMap) ->
-              innerDeferred = Q.defer()
-              if (reportMap[userCount])
+          usersArray[userIndex] = user
+          usersArray[userIndex].allowedChannels = result
+          for channel in usersArray[userIndex].allowedChannels
+            channelMap[channel._id] =
+              user: user
+              channel: channel
+
+          userIndex++
+          deferred.resolve()
+
+        promises.push deferred.promise
+
+#   Loop through the enriched user array
+    innerPromises = []
+    (Q.all promises).then ->
+#     Pre-Fetch report data into Channel Map
+      for key , obj of channelMap
+        innerDeferred = Q.defer()
+        fetchChannelReport obj.channel,obj.user,flag, (item) ->
+          channelReportMap[key] = item
+          innerDeferred.resolve()
+        innerPromises.push innerDeferred.promise
+
+      (Q.all innerPromises).then ->
+        for user in usersArray
+          userKey = user.email
+          for channel in user.allowedChannels
+            do (channel) ->
+              if (reportMap[userKey])
                 # Do nothing since object already exists
               else
                 # Create the object
-                reportMap[userCount] =
+                reportMap[userKey] =
                   email: user.email
                   data: []
 
               # If report has been fetched get it from the map
               if channelReportMap[channel._id]
-                reportMap[userCount].data.push channelReportMap[channel._id]
+                reportMap[userKey].data.push channelReportMap[channel._id]
               else
-              # Fetch the report and add it to the map
-                fetchChannelReport channel,user,flag, (item) ->
-                  reportMap[userCount].data.push item
-                  channelReportMap[channel._id] = item
-#                  logger.info item
-                  innerDeferred.resolve()
-              innerPromises.push innerDeferred.promise
+                logger.info 'should never be here since channels have been pre-fetched'
 
-          (Q.all innerPromises).then ->
-            deferred.resolve()
-
-        promises.push deferred.promise
-
-    (Q.all promises).then ->
-      for key, report of reportMap
-        if flag == 'dailyReport'
-          report.type = 'Daily'
-        else
-          report.type = 'Weekly'
-
-        logger.info channelReportMap
-        logger.info report.email
-
-        sendUserEmail report
+#       Iterate over reports and send the emails
+        for key, report of reportMap
+          if flag == 'dailyReport'
+            report.type = 'Daily'
+          else
+            report.type = 'Weekly'
+            
+          sendUserEmail report
 
       done()
 
