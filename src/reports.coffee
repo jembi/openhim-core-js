@@ -49,7 +49,7 @@ sendReports = (job, flag, done) ->
                 fetchChannelReport channel,user,flag, (item) ->
                   reportMap[userCount].data.push item
                   channelReportMap[channel._id] = item
-                  logger.info item
+#                  logger.info item
                   innerDeferred.resolve()
               innerPromises.push innerDeferred.promise
 
@@ -59,11 +59,14 @@ sendReports = (job, flag, done) ->
         promises.push deferred.promise
 
     (Q.all promises).then ->
-      for report in reportMap
+      for key, report of reportMap
         if flag == 'dailyReport'
           report.type = 'Daily'
         else
           report.type = 'Weekly'
+
+        logger.info channelReportMap
+        logger.info report.email
 
         sendUserEmail report
 
