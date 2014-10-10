@@ -1,16 +1,6 @@
 mongoose = require "mongoose"
 Schema = mongoose.Schema
 
-
-ConfigSchema = new Schema
-    "firstname":    { type: String, required: true }
-    "surname":      { type: String, required: true }
-    "email":      { type: String, required: true, unique: true }
-    
-#compile the Config Schema into a Model
-exports.Config = mongoose.model 'Config', ConfigSchema
-
-
 UserSchema = new Schema
     "firstname":		{ type: String, required: true }
     "surname": 		 	{ type: String, required: true }
