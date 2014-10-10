@@ -118,6 +118,7 @@ fetchChannelReport = (channel, user, flag, callback) ->
 
 		.then (statusData) ->
 			item.statusData = statusData
+#			console.log item
 			callback item
 
 fetchDailySubscribers = (callback) ->
