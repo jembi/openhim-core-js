@@ -159,6 +159,7 @@ dateFrom.setHours 0, 0, 0, 0
 
 describe "Transaction Reports", ->
 	before (done) ->
+
 		testUser1.save ->
 			testUser2.save ->
 #      Channel.remove {}, ->
@@ -204,16 +205,30 @@ describe "Transaction Reports", ->
 				done()
 
 	describe "Reports", ->
-#		this.timeout(15000);
 		it "should return a channel Report", (done) ->
 			reports.fetchChannelReport channel2, testUser1, 'dailyReport', (item) ->
-				console.log item
 				item.data[0].should.have.property 'load', 1
 				item.data[0].should.have.property 'avgResp', 1000
 				item.statusData[0].should.have.property 'completed', 1
 				done()
 
+		it "should send a  weekly channel report", (done) ->
+			sinon.spy(reports, 'fetchWeeklySubscribers');
+			reports.sendReports {}, 'weeklyReport', () ->
+				reports.fetchWeeklySubscribers.should.be.called
+				reports.fetchChannelReport.should.be.called
+				reports.sendUserEmail.should.be.called
 
+			done()
+
+		it "should send a  daily channel report", (done) ->
+			sinon.spy(reports, 'fetchDailySubscribers');
+			reports.sendReports {}, 'weeklyReport', () ->
+				reports.fetchDailySubscribers.should.be.called
+				reports.fetchChannelReport.should.be.called
+				reports.sendUserEmail.should.be.called
+
+			done()
 
 
 

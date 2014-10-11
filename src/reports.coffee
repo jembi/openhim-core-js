@@ -203,3 +203,4 @@ if process.env.NODE_ENV == "test"
 	exports.fetchDailySubscribers = fetchDailySubscribers
 	exports.fetchWeeklySubscribers = fetchWeeklySubscribers
 	exports.fetchChannelReport = fetchChannelReport
+	exports.sendUserEmail = sendUserEmail
