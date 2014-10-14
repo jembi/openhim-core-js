@@ -44,7 +44,7 @@ sendReports = (job, flag, done) ->
 
 				promises.push deferred.promise
 
-		#   Loop through the enriched user array
+#		Loop through the enriched user array
 		innerPromises = []
 		(Q.all promises).then ->
 #     Pre-Fetch report data into Channel Map
@@ -74,7 +74,7 @@ sendReports = (job, flag, done) ->
 							else
 								logger.info 'should never be here since channels have been pre-fetched'
 
-				#       Iterate over reports and send the emails
+#				Iterate over reports and send the emails
 				for key, report of reportMap
 					if flag == 'dailyReport'
 						report.type = 'Daily'

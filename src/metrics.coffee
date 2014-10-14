@@ -179,13 +179,12 @@ exports.fetchChannelMetrics = fetchChannelMetrics = (time, channelId, userReques
   filtersObject.channelID = channelID
 
 
-#  if filtersObject.startDate and filtersObject.endDate
   filtersObject["request.timestamp"] =
     $lt: to
     $gt: from
 
 
-    #remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+#	remove startDate/endDate from objects filter (Not part of filtering and will break filter)
   delete filtersObject.startDate
   delete filtersObject.endDate
 
