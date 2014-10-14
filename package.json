@@ -26,7 +26,7 @@
     "xmldom": "~0.1.19",
     "http-status": "0.1.7",
     "raw-body": "1.2.2",
-    "agenda": "~0.6.16",
+    "agenda": "~0.6.19",
     "moment": "~2.7.0",
     "nodemailer": "0.7.0",
     "semver": "4.0.0"
