@@ -43,6 +43,7 @@ exports.storeTransaction = (ctx, done) ->
 			return done err
 		else
 			ctx.transactionId = tx._id
+			ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
 			return done null, tx
 
 exports.storeResponse = (ctx, done) ->
