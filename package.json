@@ -39,6 +39,6 @@
     "supertest": "0.10.0"
   },
   "scripts": {
-    "test": "export NODE_ENV=test && ./node_modules/.bin/cake test"
+    "test": "export NODE_ENV=test && export NODE_TLS_REJECT_UNAUTHORIZED=0 && ./node_modules/.bin/cake test"
   }
 }
