@@ -136,7 +136,7 @@ describe "API Integration Tests", ->
 
 			it 'should fetch all tasks', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/tasks")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -156,7 +156,7 @@ describe "API Integration Tests", ->
 				newTask =
 					tids: [ "888888888888888888888888", "999999999999999999999999", "101010101010101010101010" ]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/tasks")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -178,7 +178,7 @@ describe "API Integration Tests", ->
 				newTask =
 					tids: [ "888888888888888888888888", "999999999999999999999999", "101010101010101010101010" ]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/tasks")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -202,7 +202,7 @@ describe "API Integration Tests", ->
 				newTask =
 					tids: [ "112233445566778899101122", "888888888888888888888888", "999999999999999999999999", "101010101010101010101010" ]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/tasks")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -219,7 +219,7 @@ describe "API Integration Tests", ->
 		describe '*getTask(taskId)', ->
 
 			it 'should fetch a specific task by ID', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/tasks/aaa908908bbb98cc1d0809ee")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -242,7 +242,7 @@ describe "API Integration Tests", ->
 					status: "Completed"
 					completed: "2014-06-18T13:30:00.929Z"
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/tasks/aaa777777bbb66cc5d4444ee")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -262,7 +262,7 @@ describe "API Integration Tests", ->
 			it 'should not allow a non admin user to update a task', (done) ->
 				updates = {}
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/tasks/890aaS0b93ccccc30dddddd0")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -280,7 +280,7 @@ describe "API Integration Tests", ->
 
 			it 'should remove a specific task by ID', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.del("/tasks/aaa777777bbb66cc5d4444ee")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -297,7 +297,7 @@ describe "API Integration Tests", ->
 
 			it 'should not only allow a non admin user to remove a task', (done) ->
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.del("/tasks/890aaS0b93ccccc30dddddd0")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)

@@ -29,7 +29,7 @@ describe "API Integration Tests", ->
 					done();
 
 		it 'should set the cross-origin resource sharing headers', (done) ->
-			request("http://localhost:8080")
+			request("https://localhost:8080")
 				.get("/authenticate/bfm@crazy.net")
 				.expect(200)
 				.expect('Access-Control-Allow-Origin', '*')
@@ -41,7 +41,7 @@ describe "API Integration Tests", ->
 						done()
 
 		it 'should disallow access if no API authentication details are provided', (done) ->
-			request("http://localhost:8080")
+			request("https://localhost:8080")
 				.get("/channels")
 				.expect(401)
 				.end (err, res) ->
@@ -52,7 +52,7 @@ describe "API Integration Tests", ->
 
 		it 'should disallow access if token does not match', (done) ->
 
-			request("http://localhost:8080")
+			request("https://localhost:8080")
 				.get("/authenticate/bfm@crazy.net")
 				.expect(200)
 				.end (err, res) ->
@@ -74,7 +74,7 @@ describe "API Integration Tests", ->
 						tokenhash.update(requestsalt);
 						tokenhash.update(authTS);
 
-						request("http://localhost:8080")
+						request("https://localhost:8080")
 							.get("/channels")
 							.set("auth-username", "bfm@crazy.net")
 							.set("auth-ts", authTS)
@@ -89,7 +89,7 @@ describe "API Integration Tests", ->
 
 		it 'should allow access if correct API authentication details are provided', (done) ->
 
-			request("http://localhost:8080")
+			request("https://localhost:8080")
 				.get("/authenticate/bfm@crazy.net")
 				.expect(200)
 				.end (err, res) ->
@@ -112,7 +112,7 @@ describe "API Integration Tests", ->
 						tokenhash.update(requestsalt);
 						tokenhash.update(authTS);
 
-						request("http://localhost:8080")
+						request("https://localhost:8080")
 							.get("/channels")
 							.set("auth-username", "bfm@crazy.net")
 							.set("auth-ts", authTS)
@@ -127,7 +127,7 @@ describe "API Integration Tests", ->
 
 		it 'should disallow access if the request is too old', (done) ->
 
-			request("http://localhost:8080")
+			request("https://localhost:8080")
 				.get("/authenticate/bfm@crazy.net")
 				.expect(200)
 				.end (err, res) ->
@@ -151,7 +151,7 @@ describe "API Integration Tests", ->
 						tokenhash.update(requestsalt);
 						tokenhash.update(authTS);
 
-						request("http://localhost:8080")
+						request("https://localhost:8080")
 							.get("/channels")
 							.set("auth-username", "bfm@crazy.net")
 							.set("auth-ts", authTS)
