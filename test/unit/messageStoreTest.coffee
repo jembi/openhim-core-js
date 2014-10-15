@@ -104,6 +104,7 @@ describe "MessageStore", ->
 					(trans != null).should.be.true
 					trans.request.headers['dot．header'].should.equal '123'
 					trans.request.headers['dollar＄header'].should.equal '124'
+					ctx.header['X-OpenHIM-TransactionID'].should.equal result._id.toString()
 					done()
 
 	describe ".storeResponse", ->
