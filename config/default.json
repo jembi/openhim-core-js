@@ -27,7 +27,7 @@
   "nodemailer": {
     "service": "Gmail",
     "auth": {
-        "user": "sender@gmail.com",
+        "user": "user@gmail.com",
         "pass": "password"
     }
   },
