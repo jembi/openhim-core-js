@@ -109,7 +109,7 @@ ensureRootUser = (callback) ->
 startApiServer = (apiPort, app) ->
 	deferred = Q.defer()
 
-  # mutualTLS not applicable for the API - set false
+	# mutualTLS not applicable for the API - set false
 	mutualTLS = false
 	tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
 		return done err if err
