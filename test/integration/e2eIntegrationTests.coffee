@@ -684,3 +684,84 @@ describe "e2e Integration Tests", ->
 									should.exist res.properties
 									res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
 									done()
+
+describe "Multipart form data tests", ->
+
+	mockServer = null
+	testRegExDoc = "facility: OMRS123"
+
+	before (done) ->
+		config.authentication.enableMutualTLSAuthentication = false
+		config.authentication.enableBasicAuthentication = true
+
+		#Setup some test data
+		channel1 = new Channel
+			name: "TEST DATA - Mock endpoint"
+			urlPattern: "test/mock"
+			allow: [ "PoC" ]
+			routes: [
+				name: "test route"
+				host: "localhost"
+				port: 1232
+				primary: true
+			]
+			matchContentRegex: "\\s[A-Z]{4}\\d{3}"
+		channel1.save (err) ->
+			testAppDoc =
+				clientID: "testApp"
+				clientDomain: "test-client.jembi.org"
+				name: "TEST Client"
+				roles:
+					[
+						"OpenMRS_PoC"
+						"PoC"
+					]
+				passwordAlgorithm: "sha512"
+				passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+				passwordSalt: "1234567890"
+				cert: ""
+
+			client = new Client testAppDoc
+			client.save (error, newAppDoc) ->
+				# Create mock endpoint to forward requests to
+				mockServer = testUtils.createMockServerForPost(201, 400, testRegExDoc)
+
+				mockServer.listen 1232, done
+
+	after (done) ->
+		Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
+			Client.remove { clientID: "testApp" }, ->
+				mockServer.close ->
+					done()
+
+	afterEach (done) ->
+		server.stop ->
+			done()
+
+	it "should return 201 CREATED on POST", (done) ->
+		server.start 5001, null, null, null, null, null, ->
+			request("http://localhost:5001")
+			.post("/test/mock")
+			.auth("testApp", "password")
+#			.attach('cert', 'test/resources/client-tls/cert.pem', 'cert.png')
+#			.attach('image', 'test/resources/client-tls/cert.pem')
+#			.attach('file', 'test/resources/client-tls/cert.pem')
+			.part()
+			.set('Content-Type', 'image/png')
+			.set('Content-Disposition', 'attachment; filename="myimage.png"')
+			.write('some image data')
+			.write('some more image data')
+			.part()
+			.set('Content-Disposition', 'form-data; name="name"')
+			.set('Content-Type', 'text/plain')
+			.write('tobi')
+#			.auth("testApp", "password")
+#			.send("facility: OMRS123")
+			.expect(201)
+
+			.end (err, res) ->
+				if err
+					done err
+				else
+					done()
+
