@@ -1,4 +1,5 @@
 User = require('../model/users').User
+Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
@@ -151,6 +152,57 @@ exports.getUsers = `function *getUsers() {
 
 	try {
 		this.body = yield User.find().exec();
+	}catch (e){
+		logger.error('Could not fetch all users via the API: ' + e);
+		this.message = e.message;
+		this.status = 'internal server error';
+	}
+}`
+
+
+exports.getUsersChannelsMatrix = `function *getUsersChannelsMatrix() {
+
+	// Test if the user is authorised
+	if (authorisation.inGroup('admin', this.authenticated) === false) {
+		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getUsers denied.')
+		this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to getUsers denied.'
+		this.status = 'forbidden';
+		return;
+	}
+
+	try {
+		
+		var usersChannelsMatrix = {};
+
+		// get all channels for matrix heading and reference
+		usersChannelsMatrix.channels = yield Channel.find({}, { _id:1, name:1 }).exec();
+		// initialize matrix users' array
+		usersChannelsMatrix.users = [];
+
+		// find all the users
+		var users = yield User.find().exec();
+		for (u=0; u<users.length; u++) { 
+
+			// if admin allow all channel
+			if (authorisation.inGroup('admin', users[u]) === true) {
+				channels = yield Channel.find({}).exec()
+			} else {
+				// otherwise figure out what this user can view
+				channels = yield Channel.find({ txViewAcl: { $in: users[u].groups } }).exec()
+			}
+
+			// construct array with allowed channel IDs
+			var channelsArray = [];
+			for (c=0; c<channels.length; c++) { 
+				channelsArray.push(channels[c]._id);
+			}
+
+			// push allowed channels array into matrix object
+			usersChannelsMatrix.users.push({ user: users[u].email, allowedChannels: channelsArray });
+		}
+
+		this.body = usersChannelsMatrix;
+
 	}catch (e){
 		logger.error('Could not fetch all users via the API: ' + e);
 		this.message = e.message;
