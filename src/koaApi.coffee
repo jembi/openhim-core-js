@@ -30,11 +30,12 @@ exports.setupApp = (done) ->
 	app.use authentication.authenticate
 
 	# Define the api routes
-	app.use route.get '/users', users.getUsers
+	app.use route.get '/users', users.getUsers	
 	app.use route.get '/users/:email', users.getUser
 	app.use route.post '/users', users.addUser
 	app.use route.put '/users/:email', users.updateUser
 	app.use route.delete '/users/:email', users.removeUser
+	app.use route.get '/usersChannelsMatrix', users.getUsersChannelsMatrix
 
 	app.use route.get '/clients', clients.getClients
 	app.use route.get '/clients/:clientId', clients.getClient

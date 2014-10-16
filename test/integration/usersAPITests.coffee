@@ -2,6 +2,7 @@ should = require 'should'
 request = require 'supertest'
 server = require '../../lib/server'
 User = require('../../lib/model/users').User
+Channel = require('../../lib/model/channels').Channel
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 
@@ -27,20 +28,47 @@ describe 'API Integration Tests', ->
 			passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 			groups: [ 'HISP' ]
 
+		channel1 = new Channel
+			name: "TestChannel1"
+			urlPattern: "test/sample"
+			allow: [ "PoC", "Test1", "Test2" ]
+			routes: [
+						name: "test route"
+						host: "localhost"
+						port: 9876
+						primary: true
+					]
+			txViewAcl: "HISP, RHIE"
+
+		channel2 = new Channel
+			name: "TestChannel2"
+			urlPattern: "test/sample"
+			allow: [ "PoC", "Test1", "Test2" ]
+			routes: [
+						name: "test route"
+						host: "localhost"
+						port: 9876
+						primary: true
+					]
+			txViewAcl: "HISP"
+
 		authDetails = {}
 
 		before (done) ->
 			user1.save ->
 				user2.save ->
-					auth.setupTestUsers (err) ->
-						server.start null, null, 8080, null, null, null, ->
-							done()
+					channel1.save ->
+						channel2.save ->
+							auth.setupTestUsers (err) ->
+								server.start null, null, 8080, null, null, null, ->
+									done()
 
 		after (done) ->
 			User.remove {}, ->
-				auth.cleanupTestUsers (err) ->
-					server.stop ->
-						done()
+				Channel.remove {}, ->
+					auth.cleanupTestUsers (err) ->
+						server.stop ->
+							done()
 
 		beforeEach ->
 			authDetails = auth.getAuthDetails()
@@ -305,6 +333,60 @@ describe 'API Integration Tests', ->
 			it 'should not allow a non admin user to remove a user', (done) ->
 				request("https://localhost:8080")
 					.del("/users/bfm@crazy.net")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(403)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							done()
+
+		describe '*getUsersChannelsMatrix()', ->
+
+			it 'should fetch and construct Users-Channels Matrix object', (done) ->
+				request("https://localhost:8080")
+					.get("/usersChannelsMatrix")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end (err, res) ->
+						if err
+							done err
+						else
+							res.body.should.have.property "channels"
+							res.body.channels.should.have.length 2
+							res.body.should.have.property "users"
+							res.body.users.should.have.length 5
+							
+							res.body.users[0].should.have.property "user", "root@openhim.org"
+							res.body.users[0].should.have.property "allowedChannels"
+							res.body.users[0].allowedChannels.should.have.length 2
+
+							res.body.users[1].should.have.property "user", "rg..@jembi.org"
+							res.body.users[1].should.have.property "allowedChannels"
+							res.body.users[1].allowedChannels.should.have.length 2
+
+							res.body.users[2].should.have.property "user", "root@jembi.org"
+							res.body.users[2].should.have.property "allowedChannels"
+							res.body.users[2].allowedChannels.should.have.length 2
+
+							res.body.users[3].should.have.property "user", "nonroot@jembi.org"
+							res.body.users[3].should.have.property "allowedChannels"
+							res.body.users[3].allowedChannels.should.have.length 0
+
+							res.body.users[4].should.have.property "user", "bill@newman.com"
+							res.body.users[4].should.have.property "allowedChannels"
+							res.body.users[4].allowedChannels.should.have.length 1
+							done()
+
+			it 'should not allow non admin to fetch Users-Channels Matrix object', (done) ->
+				request("https://localhost:8080")
+					.get("/usersChannelsMatrix")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
