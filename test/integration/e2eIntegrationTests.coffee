@@ -686,118 +686,73 @@ describe "e2e Integration Tests", ->
 									res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
 									done()
 
-describe "Multipart form data tests", ->
+  describe "Multipart form data tests", ->
+    mockServer = null
 
-	mockServer = null
-	testRegExDoc = '----------------------------024389226734722206726960
-  Content-Disposition: form-data; name="my_field"
-
-my value
-----------------------------024389226734722206726960
-Content-Disposition: form-data; name="my_file"
-
------BEGIN PRIVATE KEY-----
-  MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDU45hLCEK+92lv
-5CPyaLEaOo1qkoI2hCLIh6SLcY6rrWQVXGAWGx7cg75NZ6ZPozTrpu51K4k00Bn9
-I54t/+4xmg9ZMcUXpLsvqMRinL2dMkd68aEGYz4JhKruvLOWRwUZS2tZdADNEBF6
-WaFl5nuNamqAsPdnhH2VzchWmoVjxogQxJVdzWt7ajkfk+zgcdTsmozxcpSyl8nv
-u/TLNjJK2U974HI4iV3+jsAS/USAB2I676vuPr+yfB8HcsrsA+6Co2BchPWArlxg
-hvOTQBczNM/YTfOXjB5I8zZY1OIxqbkun6WAoEN5H8pEP6VZggMU/BlbzLpiKJbz
-lZXYCvkZAgMBAAECggEBAIxXzdoJBBdoezWsLJZttfMYjomnM/hEe7m+0harMeaz
-U7tRPnbUQjAVGatlnRn6+bQwRBsyLC2I0tkyVeD1S02fxmaCjO/dRRlSJMTtl4K9
-1qmSCRlw60DTGOxxseJrx0y5j3dVJgIJibwiwmeu3dyIPtW/1BmGGlRbaKrPCwiO
-b+bV/s4OyceXxHmlSiTY9wMN3mygwtRHKjkIzOmPuivEtQxOokNhMiyueW9NKgvh
-XuMwEWaOQVsc95DzaU4dyjTO+fK5GWA5gDT9PK9Haj3pfzJ0PDlS4j1laURyA+Oa
-JNRvucsuZlF/YqCiI/X1SZyXNZDwzMa/xKLQMIhyIdECgYEA/WNrsk7iyAKm1mNP
-CBi/r2UpFKGejox3q57GRq+w+6CGnSy+KecpO4tQYjQZUVYbyUmnNWdvmeuuS8yG
-TudZw/Vzm2g1CiaFIKxqhIW1yT4lVbtBid4uJYOti/qIa6syZMX64qdhorP7I/qt
-NeTMYe/X/kuEH56+92oeAocVnJcCgYEA1xVQgrYY+dmA7R7DGv8Xcps0gDyupmOA
-JGH1nwTz5rMNRRw5luyBTralmREHBSWiP6HFS5x/gtISePalUbO0qgC5dXMMv6mX
-a0H60K0lR5jvKk+PTPDz0LagbS8KyLx4RnT9IX7GW4/yZtCMLLY8nLOnQdCPV+dv
-h0x6bGsV3c8CgYAhgHinzahMW5VleSHk5yjI7u4cjTXikQ3tggOjKu2Sh2nk9Bp8
-fdTEy6moIk1KpMDtvzA9blyiFDgqS3NikVIcB6LuZDvHCMrHRCSdOvSLFA1ppWWH
-7flZ+mwCuvA4lB0Il+iQ+SJ+mZ9V5XnrS0H+nPCI7cEdUSbcnYo0OVoRJwKBgGHV
-DiQGlGHBb4VsAq8a7R1yP3U9JOwGQllKPaExbYe4VgbjicZ+mWqmZbi0KA9NSPnM
-qaN08gMdbs2a0yPQrBLP9YvY4ymjCH7/KgkVWOmyRMdoHPSQfTaoe1xuk2cvYz4Z
-JLLBqZQoa8gcgEYuNm/IwAGNzkXbvb07Kkx6gR29AoGBAN3xS22WThM0EZ5DFkiN
-ZqI9F9vQ8HZF7JXx/PCCf61+1Cqqkcivg1CWOPUgHm/36q0YNit2pEaDeMm3d+EX
-oIlV5vD5aiQWsFucdYJ8RsXnxObCuFAPmNtm+iaQKe9pwc0+Hb2GHDb+21Wsj8Ip
-k2FfqiC47H8RFt+8Ahx1lBtO
------END PRIVATE KEY-----
-
-  ----------------------------024389226734722206726960--'
-
-	before (done) ->
-		config.authentication.enableMutualTLSAuthentication = false
-		config.authentication.enableBasicAuthentication = true
+		before (done) ->
+			config.authentication.enableMutualTLSAuthentication = false
+			config.authentication.enableBasicAuthentication = true
 
 		#Setup some test data
-		channel1 = new Channel
-			name: "TEST DATA - Mock endpoint"
-			urlPattern: "/test/mock"
-			allow: [ "PoC" ]
-			routes: [
-				name: "test route"
-				host: "localhost"
-				port: 1232
-				primary: true
-			]
-			matchContentRegex: "\\s[A-Z]{4}\\d{3}"
-		channel1.save (err) ->
-			testAppDoc =
-				clientID: "testApp"
-				clientDomain: "test-client.jembi.org"
-				name: "TEST Client"
-				roles:
-					[
+			channel1 = new Channel
+				name: "TEST DATA - Mock endpoint - multipart"
+				urlPattern: "/test/multipart"
+				allow: [ "PoC" ]
+				routes: [
+					name: "test route"
+					host: "localhost"
+					port: 1276
+					primary: true
+				]
+
+			channel1.save (err) ->
+				testAppDoc =
+					clientID: "testAppMultipart"
+					clientDomain: "test-client.jembi.org"
+					name: "TEST Client"
+					roles: [
 						"OpenMRS_PoC"
 						"PoC"
 					]
-				passwordAlgorithm: "sha512"
-				passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
-				passwordSalt: "1234567890"
-				cert: ""
+					passwordAlgorithm: "sha512"
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+					passwordSalt: "1234567890"
+					cert: ""
 
-			client = new Client testAppDoc
-			client.save (error, newAppDoc) ->
+				client = new Client testAppDoc
+				client.save (error, newAppDoc) ->
 				# Create mock endpoint to forward requests to
-				mockServer = testUtils.createMockServerForPost(201, 400, testRegExDoc)
+					# mockServer = testUtils.createMockServerForPost(201, 400, "testRegExDoc")
+					mockServer = testUtils.createMockMediatorServer 200, mediatorResponse, 1276, ->
+						console.log 'mock server started'
+						done()
 
-				mockServer.listen 1232, done
-
-	after (done) ->
-		Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
-			Client.remove { clientID: "testApp" }, ->
-				mockServer.close ->
+		after (done) ->
+			Channel.remove { name: "TEST DATA - Mock endpoint - multipart" }, ->
+				Client.remove { clientID: "testAppMultipart" }, ->
 					done()
 
-	afterEach (done) ->
-		server.stop ->
-			done()
+		afterEach (done) ->
+			server.stop ->
+				done()
 
 
-	it "should return 201 CREATED on POST", (done) ->
-		server.start 5001, null, null, null, null, null, ->
-      form = new FormData()
-      form.append('my_field', 'my value');
-      form.append('my_file', fs.readFileSync "test/resources/client-tls/invalid-key.pem");
-      form.submit
-        host: "192.168.1.139"
-        port: 5001
-        path: "/test/multipart"
-        auth: "test:test"
-        method: "post"
-      , (err, res) ->
-          res.statusCode.should.equal 200
-          res.on "data", (chunk) ->
-           chunk.should.be.ok
-          if err
-            done err
-          else
-            done()
-
-
-
-
-
-
+		it "should return 201 CREATED on POST", (done) ->
+			server.start 5001, null, null, null, null, null, ->
+      	form = new FormData()
+      	form.append('my_field', 'my value');
+      	form.append('my_file', fs.readFileSync "test/resources/client-tls/invalid-key.pem");
+      	form.submit
+        	host: "localhost"
+        	port: 5001
+        	path: "/test/multipart"
+        	auth: "testAppMultipart:password"
+        	method: "post"
+      	, (err, res) ->
+          	res.statusCode.should.equal 200
+          	res.on "data", (chunk) ->
+           	# 	chunk.should.be.ok
+          	if err
+            	done err
+          	else
+            	done()
