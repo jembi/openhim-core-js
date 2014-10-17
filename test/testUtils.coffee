@@ -7,7 +7,7 @@ crypto = require "crypto"
 
 exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
 	requestCallback = requestCallback || ->
-	# Create mock endpoint to forward requests to
+		# Create mock endpoint to forward requests to
 	mockServer = http.createServer (req, res) ->
 		res.writeHead resStatusCode, {"Content-Type": "text/plain"}
 		res.end resBody
@@ -18,12 +18,10 @@ exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallb
 exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch) ->
 	return http.createServer (req, res) ->
 		req.on "data", (chunk) ->
-
 			if chunk.toString() == bodyToMatch
 				res.writeHead successStatusCode, {"Content-Type": "text/plain"}
 				res.end()
 			else
-				console.log 'wong'
 				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
 				res.end()
 
@@ -34,7 +32,7 @@ exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, request
 
 
 	requestCallback = requestCallback || ->
-	# Create mock endpoint to forward requests to
+		# Create mock endpoint to forward requests to
 	mockServer = https.createServer options, (req, res) ->
 		res.writeHead resStatusCode, {"Content-Type": "text/plain"}
 		res.end "Secured " + resBody
