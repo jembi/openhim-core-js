@@ -9,6 +9,7 @@
     "basic-auth": "0.0.1",
     "bcrypt-nodejs": "0.0.3",
     "cookie": "0.1.2",
+    "form-data": "^0.1.4",
     "http-status": "0.1.7",
     "koa": "0.5.2",
     "koa-basic-auth": "~1.1.1",

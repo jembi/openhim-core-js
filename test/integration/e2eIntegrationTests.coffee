@@ -10,6 +10,7 @@ Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
 testUtils = require "../testUtils"
 server = require "../../lib/server"
+FormData = require('form-data');
 
 describe "e2e Integration Tests", ->
 
@@ -166,7 +167,7 @@ describe "e2e Integration Tests", ->
 									done err
 								else
 									done()
-			
+
 			describe "with correct credentials", ->
 				it "should return 200 OK", (done) ->
 					server.start 5001, null, null, null, null, null, ->
@@ -688,7 +689,43 @@ describe "e2e Integration Tests", ->
 describe "Multipart form data tests", ->
 
 	mockServer = null
-	testRegExDoc = "facility: OMRS123"
+	testRegExDoc = '----------------------------024389226734722206726960
+  Content-Disposition: form-data; name="my_field"
+
+my value
+----------------------------024389226734722206726960
+Content-Disposition: form-data; name="my_file"
+
+-----BEGIN PRIVATE KEY-----
+  MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDU45hLCEK+92lv
+5CPyaLEaOo1qkoI2hCLIh6SLcY6rrWQVXGAWGx7cg75NZ6ZPozTrpu51K4k00Bn9
+I54t/+4xmg9ZMcUXpLsvqMRinL2dMkd68aEGYz4JhKruvLOWRwUZS2tZdADNEBF6
+WaFl5nuNamqAsPdnhH2VzchWmoVjxogQxJVdzWt7ajkfk+zgcdTsmozxcpSyl8nv
+u/TLNjJK2U974HI4iV3+jsAS/USAB2I676vuPr+yfB8HcsrsA+6Co2BchPWArlxg
+hvOTQBczNM/YTfOXjB5I8zZY1OIxqbkun6WAoEN5H8pEP6VZggMU/BlbzLpiKJbz
+lZXYCvkZAgMBAAECggEBAIxXzdoJBBdoezWsLJZttfMYjomnM/hEe7m+0harMeaz
+U7tRPnbUQjAVGatlnRn6+bQwRBsyLC2I0tkyVeD1S02fxmaCjO/dRRlSJMTtl4K9
+1qmSCRlw60DTGOxxseJrx0y5j3dVJgIJibwiwmeu3dyIPtW/1BmGGlRbaKrPCwiO
+b+bV/s4OyceXxHmlSiTY9wMN3mygwtRHKjkIzOmPuivEtQxOokNhMiyueW9NKgvh
+XuMwEWaOQVsc95DzaU4dyjTO+fK5GWA5gDT9PK9Haj3pfzJ0PDlS4j1laURyA+Oa
+JNRvucsuZlF/YqCiI/X1SZyXNZDwzMa/xKLQMIhyIdECgYEA/WNrsk7iyAKm1mNP
+CBi/r2UpFKGejox3q57GRq+w+6CGnSy+KecpO4tQYjQZUVYbyUmnNWdvmeuuS8yG
+TudZw/Vzm2g1CiaFIKxqhIW1yT4lVbtBid4uJYOti/qIa6syZMX64qdhorP7I/qt
+NeTMYe/X/kuEH56+92oeAocVnJcCgYEA1xVQgrYY+dmA7R7DGv8Xcps0gDyupmOA
+JGH1nwTz5rMNRRw5luyBTralmREHBSWiP6HFS5x/gtISePalUbO0qgC5dXMMv6mX
+a0H60K0lR5jvKk+PTPDz0LagbS8KyLx4RnT9IX7GW4/yZtCMLLY8nLOnQdCPV+dv
+h0x6bGsV3c8CgYAhgHinzahMW5VleSHk5yjI7u4cjTXikQ3tggOjKu2Sh2nk9Bp8
+fdTEy6moIk1KpMDtvzA9blyiFDgqS3NikVIcB6LuZDvHCMrHRCSdOvSLFA1ppWWH
+7flZ+mwCuvA4lB0Il+iQ+SJ+mZ9V5XnrS0H+nPCI7cEdUSbcnYo0OVoRJwKBgGHV
+DiQGlGHBb4VsAq8a7R1yP3U9JOwGQllKPaExbYe4VgbjicZ+mWqmZbi0KA9NSPnM
+qaN08gMdbs2a0yPQrBLP9YvY4ymjCH7/KgkVWOmyRMdoHPSQfTaoe1xuk2cvYz4Z
+JLLBqZQoa8gcgEYuNm/IwAGNzkXbvb07Kkx6gR29AoGBAN3xS22WThM0EZ5DFkiN
+ZqI9F9vQ8HZF7JXx/PCCf61+1Cqqkcivg1CWOPUgHm/36q0YNit2pEaDeMm3d+EX
+oIlV5vD5aiQWsFucdYJ8RsXnxObCuFAPmNtm+iaQKe9pwc0+Hb2GHDb+21Wsj8Ip
+k2FfqiC47H8RFt+8Ahx1lBtO
+-----END PRIVATE KEY-----
+
+  ----------------------------024389226734722206726960--'
 
 	before (done) ->
 		config.authentication.enableMutualTLSAuthentication = false
@@ -697,7 +734,7 @@ describe "Multipart form data tests", ->
 		#Setup some test data
 		channel1 = new Channel
 			name: "TEST DATA - Mock endpoint"
-			urlPattern: "test/mock"
+			urlPattern: "/test/mock"
 			allow: [ "PoC" ]
 			routes: [
 				name: "test route"
@@ -738,30 +775,29 @@ describe "Multipart form data tests", ->
 		server.stop ->
 			done()
 
+
 	it "should return 201 CREATED on POST", (done) ->
 		server.start 5001, null, null, null, null, null, ->
-			request("http://localhost:5001")
-			.post("/test/mock")
-			.auth("testApp", "password")
-#			.attach('cert', 'test/resources/client-tls/cert.pem', 'cert.png')
-#			.attach('image', 'test/resources/client-tls/cert.pem')
-#			.attach('file', 'test/resources/client-tls/cert.pem')
-			.part()
-			.set('Content-Type', 'image/png')
-			.set('Content-Disposition', 'attachment; filename="myimage.png"')
-			.write('some image data')
-			.write('some more image data')
-			.part()
-			.set('Content-Disposition', 'form-data; name="name"')
-			.set('Content-Type', 'text/plain')
-			.write('tobi')
-#			.auth("testApp", "password")
-#			.send("facility: OMRS123")
-			.expect(201)
+      form = new FormData()
+      form.append('my_field', 'my value');
+      form.append('my_file', fs.readFileSync "test/resources/client-tls/invalid-key.pem");
+      form.submit
+        host: "192.168.1.139"
+        port: 5001
+        path: "/test/multipart"
+        auth: "test:test"
+        method: "post"
+      , (err, res) ->
+          res.statusCode.should.equal 200
+          res.on "data", (chunk) ->
+           chunk.should.be.ok
+          if err
+            done err
+          else
+            done()
 
-			.end (err, res) ->
-				if err
-					done err
-				else
-					done()
+
+
+
+
 
