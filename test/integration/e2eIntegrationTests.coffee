@@ -70,7 +70,7 @@ describe "e2e Integration Tests", ->
 						path: "/test/mock"
 						port: 5000
 						cert: fs.readFileSync "test/resources/client-tls/cert.pem"
-						key:  fs.readFileSync "test/resources/client-tls/key.pem"
+						key:	fs.readFileSync "test/resources/client-tls/key.pem"
 						ca: [ fs.readFileSync "tls/cert.pem" ]
 
 					req = https.request options, (res) ->
@@ -85,7 +85,7 @@ describe "e2e Integration Tests", ->
 						path: "/test/mock"
 						port: 5000
 						cert: fs.readFileSync "test/resources/client-tls/invalid-cert.pem"
-						key:  fs.readFileSync "test/resources/client-tls/invalid-key.pem"
+						key:	fs.readFileSync "test/resources/client-tls/invalid-key.pem"
 						ca: [ fs.readFileSync "tls/cert.pem" ]
 
 					req = https.request options, (res) ->
@@ -686,12 +686,35 @@ describe "e2e Integration Tests", ->
 									res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
 									done()
 
-  describe "Multipart form data tests", ->
-    mockServer = null
+	describe "Multipart form data tests", ->
+		mockServer = null
 
 		before (done) ->
 			config.authentication.enableMutualTLSAuthentication = false
 			config.authentication.enableBasicAuthentication = true
+
+			mediatorResponse =
+				status: "Successful"
+				response:
+					status: "200"
+					headers: {}
+					body: "<transaction response>"
+					timestamp: 1412257881909
+				orchestrations: [
+					name: "Lab API"
+					request:
+						path: "api/patient/lab"
+						headers:
+							"Content-Type": "text/plain"
+						body: "<route request>"
+						method: "POST"
+						timestamp: 1412257881904
+					response:
+						status: "200"
+						headers: {}
+						body: "<route response>"
+						timestamp: 1412257881909
+				]
 
 		#Setup some test data
 			channel1 = new Channel
@@ -720,9 +743,7 @@ describe "e2e Integration Tests", ->
 					cert: ""
 
 				client = new Client testAppDoc
-				client.save (error, newAppDoc) ->
-				# Create mock endpoint to forward requests to
-					# mockServer = testUtils.createMockServerForPost(201, 400, "testRegExDoc")
+				client.save (error, newAppDoc) ->				
 					mockServer = testUtils.createMockMediatorServer 200, mediatorResponse, 1276, ->
 						console.log 'mock server started'
 						done()
@@ -739,20 +760,22 @@ describe "e2e Integration Tests", ->
 
 		it "should return 201 CREATED on POST", (done) ->
 			server.start 5001, null, null, null, null, null, ->
-      	form = new FormData()
-      	form.append('my_field', 'my value');
-      	form.append('my_file', fs.readFileSync "test/resources/client-tls/invalid-key.pem");
-      	form.submit
-        	host: "localhost"
-        	port: 5001
-        	path: "/test/multipart"
-        	auth: "testAppMultipart:password"
-        	method: "post"
-      	, (err, res) ->
-          	res.statusCode.should.equal 200
-          	res.on "data", (chunk) ->
-           	# 	chunk.should.be.ok
-          	if err
-            	done err
-          	else
-            	done()
+				form = new FormData()
+				form.append('my_field', 'my value')
+				form.append('unix', fs.readFileSync "test/resources/files/unix.txt")
+				form.append('mac', fs.readFileSync "test/resources/files/mac.txt")
+				form.append('msdos', fs.readFileSync "test/resources/files/msdos.txt")
+				form.submit
+					host: "localhost"
+					port: 5001
+					path: "/test/multipart"
+					auth: "testAppMultipart:password"
+					method: "post"
+					, (err, res) ->
+						res.statusCode.should.equal 200
+						res.on "data", (chunk) ->
+					 	# 	chunk.should.be.ok
+						if err
+							done err
+						else
+							done()
