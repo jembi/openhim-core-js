@@ -80,7 +80,7 @@ exports.setupApp = (done) ->
 	app.use route.post '/mediators', mediators.addMediator
 
 	# server restart endpoint
-	app.use route.get '/restart', serverRestart.restart
+	app.use route.post '/restart', serverRestart.restart
 
 	# Return the result
 	done(app)

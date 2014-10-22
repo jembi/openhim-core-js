@@ -45,7 +45,7 @@ exports.restart = `function *restart() {
 	}
 	catch (e) {
 		// Error! So inform the user
-		logger.error('Could not add channel via the API: ' + e);
+		logger.error('Could not restart the servers via the API: ' + e);
 		this.body = e.message;
 		this.status = 'bad request';
 	}
