@@ -14,7 +14,7 @@
     "koa": "0.5.2",
     "koa-basic-auth": "~1.1.1",
     "koa-body-parser": "1.0.0",
-    "koa-cors": "0.0.13",
+    "koa-cors": "0.0.11",
     "koa-route": "~1.0.2",
     "moment": "~2.7.0",
     "mongodb": "1.4.7",
