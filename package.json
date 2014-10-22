@@ -28,6 +28,7 @@
     "q": "1.0.1",
     "raw-body": "1.2.2",
     "request": "~2.34.0",
+    "segfault-handler": "^0.2.2",
     "semver": "4.0.0",
     "winston": "0.7.3",
     "xmldom": "~0.1.19",

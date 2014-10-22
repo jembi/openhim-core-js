@@ -14,6 +14,7 @@ config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
+segfaultHandler = require 'segfault-handler'
 
 Q = require "q"
 logger = require "winston"
@@ -36,6 +37,33 @@ apiHttpsServer = null
 rerunServer = null
 tcpHttpReceiver = null
 pollingServer = null
+
+segfaultHandler.registerHandler();
+
+connectionNum = 1
+activeHttpConnections = {}
+activeHttpsConnections = {}
+activeApiConnections = {}
+activeRerunConnections = {}
+activeTcpConnections = {}
+activePollingConnections = {}
+
+trackConnection = (map, socket) ->
+	# save active socket
+	id = connectionNum
+	map[id.toString()] = socket
+
+	# remove socket once it closes
+	socket.on 'close', ->
+		map[id.toString()] = null
+		delete map[id.toString()]
+
+	# reset connection number eventually
+	if connectionNum > 1000000
+		connectionNum = 1
+	else
+		connectionNum++
+
 
 exports.isTcpHttpReceiverRunning = -> tcpHttpReceiver?
 
@@ -75,6 +103,8 @@ startHttpServer = (httpPort, app) ->
 		logger.info "HTTP listening on port " + httpPort
 		deferred.resolve()
 
+	httpServer.on 'connection', (socket) -> trackConnection activeHttpConnections, socket
+
 	return deferred
 
 startHttpsServer = (httpsPort, app) ->
@@ -88,6 +118,8 @@ startHttpsServer = (httpsPort, app) ->
 		httpsServer.listen httpsPort, ->
 			logger.info "HTTPS listening on port " + httpsPort
 			deferred.resolve()
+
+		httpsServer.on 'connection', (socket) -> trackConnection activeHttpsConnections, socket
 
 	return deferred
 
@@ -119,6 +151,9 @@ startApiServer = (apiPort, app) ->
 			logger.info "API HTTPS listening on port " + apiPort
 			ensureRootUser -> deferred.resolve()
 
+
+		apiHttpsServer.on 'connection', (socket) -> trackConnection activeApiConnections, socket
+
 	return deferred
 
 startTCPServersAndHttpReceiver = (tcpHttpReceiverPort, app) ->
@@ -131,6 +166,8 @@ startTCPServersAndHttpReceiver = (tcpHttpReceiverPort, app) ->
 			logger.error err if err
 			defer.resolve()
 
+	tcpHttpReceiver.on 'connection', (socket) -> trackConnection activeTcpConnections, socket
+
 	return defer
 
 startRerunServer = (httpPort, app) ->
@@ -140,6 +177,8 @@ startRerunServer = (httpPort, app) ->
 	rerunServer.listen httpPort, config.rerun.host, ->
 		logger.info "Transaction Rerun HTTP listening on port " + httpPort
 		deferredHttp.resolve()
+
+	rerunServer.on 'connection', (socket) -> trackConnection activeRerunConnections, socket
 
 	return deferredHttp
 
@@ -151,6 +190,8 @@ startPollingServer = (pollingPort, app) ->
 		logger.error err if err
 		logger.info 'Polling port listenting on port ' + pollingPort
 		defer.resolve()
+
+	pollingServer.on 'connection', (socket) -> trackConnection activePollingConnections, socket
 
 	return defer
 
@@ -210,6 +251,20 @@ exports.stop = stop = (done) ->
 		defer = Q.defer()
 		tcpAdapter.stopServers -> defer.resolve()
 		promises.push defer.promise
+
+	# close active connection so that servers can stop
+	for key, socket of activeHttpConnections
+		socket.destroy()
+	for key, socket of activeHttpsConnections
+		socket.destroy()
+	for key, socket of activeApiConnections
+		socket.destroy()
+	for key, socket of activeRerunConnections
+		socket.destroy()
+	for key, socket of activeTcpConnections
+		socket.destroy()
+	for key, socket of activePollingConnections
+		socket.destroy()
 
 	(Q.all promises).then ->
 		httpServer = null
