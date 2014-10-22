@@ -10,6 +10,7 @@ Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
 testUtils = require "../testUtils"
 server = require "../../lib/server"
+FormData = require('form-data');
 
 describe "e2e Integration Tests", ->
 
@@ -69,7 +70,7 @@ describe "e2e Integration Tests", ->
 						path: "/test/mock"
 						port: 5000
 						cert: fs.readFileSync "test/resources/client-tls/cert.pem"
-						key:  fs.readFileSync "test/resources/client-tls/key.pem"
+						key:	fs.readFileSync "test/resources/client-tls/key.pem"
 						ca: [ fs.readFileSync "tls/cert.pem" ]
 
 					req = https.request options, (res) ->
@@ -84,7 +85,7 @@ describe "e2e Integration Tests", ->
 						path: "/test/mock"
 						port: 5000
 						cert: fs.readFileSync "test/resources/client-tls/invalid-cert.pem"
-						key:  fs.readFileSync "test/resources/client-tls/invalid-key.pem"
+						key:	fs.readFileSync "test/resources/client-tls/invalid-key.pem"
 						ca: [ fs.readFileSync "tls/cert.pem" ]
 
 					req = https.request options, (res) ->
@@ -166,7 +167,7 @@ describe "e2e Integration Tests", ->
 									done err
 								else
 									done()
-			
+
 			describe "with correct credentials", ->
 				it "should return 200 OK", (done) ->
 					server.start 5001, null, null, null, null, null, ->
@@ -684,3 +685,97 @@ describe "e2e Integration Tests", ->
 									should.exist res.properties
 									res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
 									done()
+
+	describe "Multipart form data tests", ->
+		mockServer = null
+
+		before (done) ->
+			config.authentication.enableMutualTLSAuthentication = false
+			config.authentication.enableBasicAuthentication = true
+
+			mediatorResponse =
+				status: "Successful"
+				response:
+					status: "200"
+					headers: {}
+					body: "<transaction response>"
+					timestamp: 1412257881909
+				orchestrations: [
+					name: "Lab API"
+					request:
+						path: "api/patient/lab"
+						headers:
+							"Content-Type": "text/plain"
+						body: "<route request>"
+						method: "POST"
+						timestamp: 1412257881904
+					response:
+						status: "200"
+						headers: {}
+						body: "<route response>"
+						timestamp: 1412257881909
+				]
+
+		#Setup some test data
+			channel1 = new Channel
+				name: "TEST DATA - Mock endpoint - multipart"
+				urlPattern: "/test/multipart"
+				allow: [ "PoC" ]
+				routes: [
+					name: "test route"
+					host: "localhost"
+					port: 1276
+					primary: true
+				]
+
+			channel1.save (err) ->
+				testAppDoc =
+					clientID: "testAppMultipart"
+					clientDomain: "test-client.jembi.org"
+					name: "TEST Client"
+					roles: [
+						"OpenMRS_PoC"
+						"PoC"
+					]
+					passwordAlgorithm: "sha512"
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+					passwordSalt: "1234567890"
+					cert: ""
+
+				client = new Client testAppDoc
+				client.save (error, newAppDoc) ->				
+					mockServer = testUtils.createMockMediatorServer 200, mediatorResponse, 1276, ->
+						console.log 'mock server started'
+						done()
+
+		after (done) ->
+			Channel.remove { name: "TEST DATA - Mock endpoint - multipart" }, ->
+				Client.remove { clientID: "testAppMultipart" }, ->
+					done()
+
+		afterEach (done) ->
+			server.stop ->
+				done()
+
+
+		it "should return 201 CREATED on POST", (done) ->
+			server.start 5001, null, null, null, null, null, ->
+				form = new FormData()
+				form.append('my_field', 'my value')
+				form.append('unix', fs.readFileSync "test/resources/files/unix.txt")
+				form.append('mac', fs.readFileSync "test/resources/files/mac.txt")
+				form.append('msdos', fs.readFileSync "test/resources/files/msdos.txt")
+				form.submit
+					host: "localhost"
+					port: 5001
+					path: "/test/multipart"
+					auth: "testAppMultipart:password"
+					method: "post"
+					, (err, res) ->
+						res.statusCode.should.equal 200
+						res.on "data", (chunk) ->
+					 	# 	chunk.should.be.ok
+						if err
+							done err
+						else
+							done()
