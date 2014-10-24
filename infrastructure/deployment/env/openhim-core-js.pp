@@ -52,6 +52,7 @@ exec { "npm-install":
 }
 
 exec { "coffeescript":
+  cwd => "$source_dir",
 	command => "npm install -g coffee-script",
 	unless => "npm list -g coffee-script",
 	require => Nodejs::Install["node-v0.11.11"],
