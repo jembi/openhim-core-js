@@ -100,8 +100,6 @@ exports.storeResponse = (ctx, done) ->
 exports.koaMiddleware =  `function *storeMiddleware(next) {
 		var saveTransaction = Q.denodeify(exports.storeTransaction);
 		yield saveTransaction(this);
-		if (this.transactionId){
-			yield next;
-		}
+		yield next;
 		exports.storeResponse(this, function(){});
 	}`
