@@ -14,7 +14,7 @@ config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
-segfaultHandler = require 'segfault-handler'
+var uuid = require('node-uuid');
 
 Q = require "q"
 logger = require "winston"
@@ -38,9 +38,6 @@ rerunServer = null
 tcpHttpReceiver = null
 pollingServer = null
 
-segfaultHandler.registerHandler();
-
-connectionNum = 1
 activeHttpConnections = {}
 activeHttpsConnections = {}
 activeApiConnections = {}
@@ -50,20 +47,17 @@ activePollingConnections = {}
 
 trackConnection = (map, socket) ->
 	# save active socket
-	id = connectionNum
-	map[id.toString()] = socket
+	id = uuid.v4()
+	map[id] = socket
 
 	# remove socket once it closes
 	socket.on 'close', ->
-		map[id.toString()] = null
-		delete map[id.toString()]
+		map[id] = null
+		delete map[id]
 
-	# reset connection number eventually
-	if connectionNum > 1000000
-		connectionNum = 1
-	else
-		connectionNum++
-
+	# log any socket errors
+	socket.on 'error', (err) ->
+		logger.error err
 
 exports.isTcpHttpReceiverRunning = -> tcpHttpReceiver?
 
