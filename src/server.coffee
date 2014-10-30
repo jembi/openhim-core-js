@@ -14,7 +14,7 @@ config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
-var uuid = require('node-uuid');
+uuid = require 'node-uuid';
 
 Q = require "q"
 logger = require "winston"
