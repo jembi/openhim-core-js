@@ -101,35 +101,39 @@ sendRequestToRoutes = (ctx, routes, next) ->
 				# on failure
 				handleServerError ctx, reason
 		else
-			promise = sendRequest ctx, route, options
-			.then (response) ->
-				routeObj = {}
-				routeObj.name = route.name
-				routeObj.request =
-					path: path
-					headers: ctx.request.header
-					querystring: ctx.request.querystring
-					method: ctx.request.method
-				
-				if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
-					# handle mediator reponse
-					responseObj = JSON.parse response.body
-					routeObj.orchestrations = responseObj.orchestrations
-					routeObj.properties = responseObj.properties
-					routeObj.response = responseObj.response
-				else
-					routeObj.response = response
-
-				ctx.routes = [] if not ctx.routes
-				ctx.routes.push routeObj
-			.fail (reason) ->
-				# on failure
-				handleServerError ctx, reason
+			promise = buildNonPrimarySendRequestPromise ctx, route, options, path
 
 		promises.push promise
 
 	(Q.all promises).then ->
 		next()
+
+# function to build fresh promise for transactions routes
+buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
+	sendRequest ctx, route, options
+	.then (response) ->
+		routeObj = {}
+		routeObj.name = route.name
+		routeObj.request =
+			path: path
+			headers: ctx.request.header
+			querystring: ctx.request.querystring
+			method: ctx.request.method
+		
+		if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
+			# handle mediator reponse
+			responseObj = JSON.parse response.body
+			routeObj.orchestrations = responseObj.orchestrations
+			routeObj.properties = responseObj.properties
+			routeObj.response = responseObj.response
+		else
+			routeObj.response = response
+
+		ctx.routes = [] if not ctx.routes
+		ctx.routes.push routeObj
+	.fail (reason) ->
+		# on failure
+		handleServerError ctx, reason
 
 sendRequest = (ctx, route, options) ->
 	if route.type is 'tcp'
