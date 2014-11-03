@@ -20,6 +20,7 @@ copyMapWithEscapedReservedCharacters = (map) ->
 exports.storeTransaction = (ctx, done) ->
 	logger.info 'Storing request metadata for inbound transaction'
 
+	ctx.requestTimestamp = new Date()
 	headers = copyMapWithEscapedReservedCharacters ctx.header
 
 	tx = new transactions.Transaction
@@ -32,7 +33,7 @@ exports.storeTransaction = (ctx, done) ->
 			querystring: ctx.querystring
 			body: ctx.body
 			method: ctx.method
-			timestamp: new Date()
+			timestamp: ctx.requestTimestamp
 
 	if ctx.parentID && ctx.taskID
 		tx.parentID = ctx.parentID
