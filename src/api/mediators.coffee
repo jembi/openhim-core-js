@@ -24,7 +24,7 @@ exports.getAllMediators = `function *getAllMediators() {
 	}
 }`
 
-exports.getMediator = `function *getMediator(mediatorUUID) {
+exports.getMediator = `function *getMediator(mediatorURN) {
 	//Must be admin
 	if (authorisation.inGroup('admin', this.authenticated) === false) {
 		logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to getMediator denied.')
@@ -33,17 +33,17 @@ exports.getMediator = `function *getMediator(mediatorUUID) {
 		return;
 	}
 
-	var uuid = unescape(mediatorUUID);
+	var urn = unescape(mediatorURN);
 
 	try {
-		var result = yield Mediator.findOne({ "uuid": uuid }).exec();
+		var result = yield Mediator.findOne({ "urn": urn }).exec();
 		if (result == null) {
 			this.status = 'not found';
 		} else {
 			this.body = result;
 		}
 	} catch (e) {
-		logger.error('Could not fetch mediator using UUID ' + uuid + ' via the API: ' + e);
+		logger.error('Could not fetch mediator using UUID ' + urn + ' via the API: ' + e);
 		this.body = e.message;
 		this.status = 'internal server error';
 	}
@@ -62,10 +62,10 @@ exports.addMediator = `function *addMediator() {
 
 	try {
 		var mediator = this.request.body;
-		if (!mediator.uuid) {
+		if (!mediator.urn) {
 			throw {
 				name: 'ValidationError',
-				message: 'UUID is required'
+				message: 'URN is required'
 			}
 		}
 
@@ -76,7 +76,7 @@ exports.addMediator = `function *addMediator() {
 			}
 		}
 
-		var existing = yield Mediator.findOne({uuid: mediator.uuid}).exec()
+		var existing = yield Mediator.findOne({urn: mediator.urn}).exec()
 		if (typeof existing !== "undefined" && existing !== null) {
 			if (semver.gt(mediator.version, existing.version)) {
 				yield Mediator.findByIdAndUpdate(existing._id, mediator).exec();
