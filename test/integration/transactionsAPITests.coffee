@@ -358,7 +358,7 @@ describe "API Integration Tests", ->
 				tx.save (err, result) ->
 					should.not.exist(err)
 					request("https://localhost:8080")
-						.get("/transactions/apps/#{clientId}")
+						.get("/transactions/clients/#{clientId}")
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
@@ -379,7 +379,7 @@ describe "API Integration Tests", ->
 					should.not.exist(err)
 					transactionId = result._id
 					request("https://localhost:8080")
-						.get("/transactions/apps/#{clientId}")
+						.get("/transactions/clients/#{clientId}")
 						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
@@ -404,7 +404,7 @@ describe "API Integration Tests", ->
 					should.not.exist(err)
 					transactionId = tx._id
 					request("https://localhost:8080")
-						.get("/transactions/apps/#{clientId}")
+						.get("/transactions/clients/#{clientId}")
 						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
