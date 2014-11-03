@@ -10,7 +10,6 @@ transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
 contactGroups = require './api/contactGroups'
-monitor = require './api/monitor'
 Q = require 'q'
 worker = require './api/worker'
 mediators = require './api/mediators'
@@ -47,7 +46,7 @@ exports.setupApp = (done) ->
 	app.use route.get '/transactions', transactions.getTransactions
 	app.use route.post '/transactions', transactions.addTransaction
 	app.use route.get '/transactions/:transactionId', transactions.getTransactionById
-	app.use route.get '/transactions/apps/:clientId', transactions.findTransactionByClientId
+	app.use route.get '/transactions/clients/:clientId', transactions.findTransactionByClientId
 	app.use route.put '/transactions/:transactionId', transactions.updateTransaction
 	app.use route.delete '/transactions/:transactionId', transactions.removeTransaction
 
@@ -68,8 +67,6 @@ exports.setupApp = (done) ->
 	app.use route.get '/tasks/:taskId', tasks.getTask
 	app.use route.put '/tasks/:taskId', tasks.updateTask
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
-
-	app.use route.get '/monitor', monitor.getMonitor
 
 	app.use route.get '/metrics', metrics.getGlobalLoadTimeMetrics
 	app.use route.get '/metrics/status', metrics.getGlobalStatusMetrics
