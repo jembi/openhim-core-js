@@ -22,6 +22,7 @@ AlertsSchema = new Schema
 
 ChannelSchema = new Schema
     "name": { type: String, required: true, unique: true }
+    "description": { type: String, required: false }
     "urlPattern": { type: String, required: true }
     "type": { type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling'] }
     "tcpPort": { type: Number, required: false }
