@@ -4,7 +4,7 @@ RouteSchema = require('./channels').RouteSchema
 ChannelSchema = require('./channels').ChannelSchema
 
 MediatorSchema = new Schema
-	"uuid": { type: String, required: true }
+	"urn": { type: String, required: true, unique: true }
 	"version": { type: String, required: true }
 	"name": { type: String, required: true }
 	"description": { type: String, required: false }

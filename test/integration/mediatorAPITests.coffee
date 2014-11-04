@@ -10,7 +10,7 @@ describe "API Integration Tests", ->
 	describe 'Mediators REST API testing', ->
 
 		mediator1 =
-			uuid: "EEA84E13-1C92-467C-B0BD-7C480462D1ED"
+			urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED"
 			version: "1.0.0"
 			name: "Save Encounter Mediator"
 			description: "A mediator for testing"
@@ -38,7 +38,7 @@ describe "API Integration Tests", ->
 			]
 
 		mediator2 =
-			uuid: "25ABAB99-23BF-4AAB-8832-7E07E4EA5902"
+			urn: "urn:uuid:25ABAB99-23BF-4AAB-8832-7E07E4EA5902"
 			version: "0.8.2"
 			name: "Patient Mediator"
 			description: "Another mediator for testing"
@@ -102,7 +102,7 @@ describe "API Integration Tests", ->
 			it 'should fetch mediator', (done) ->
 				new Mediator(mediator1).save ->
 					request("https://localhost:8080")
-						.get("/mediators/#{mediator1.uuid}")
+						.get("/mediators/#{mediator1.urn}")
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
@@ -112,12 +112,12 @@ describe "API Integration Tests", ->
 							if err
 								done err
 							else
-								res.body.uuid.should.be.exactly mediator1.uuid
+								res.body.urn.should.be.exactly mediator1.urn
 								done()
 
 			it 'should return status 404 if not found', (done) ->
 				request("https://localhost:8080")
-					.get("/mediators/#{mediator1.uuid}")
+					.get("/mediators/#{mediator1.urn}")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -131,7 +131,7 @@ describe "API Integration Tests", ->
 
 			it 'should not allow non root user to fetch mediator', (done) ->
 				request("https://localhost:8080")
-					.get("/mediators/#{mediator1.uuid}")
+					.get("/mediators/#{mediator1.urn}")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
@@ -187,7 +187,7 @@ describe "API Integration Tests", ->
 						if err
 							done err
 						else
-							Mediator.findOne { uuid: mediator1.uuid }, (err, res) ->
+							Mediator.findOne { urn: mediator1.urn }, (err, res) ->
 								return done err if err
 								should.exist(res)
 								done()
@@ -212,7 +212,7 @@ describe "API Integration Tests", ->
 
 			it 'should not do anything if the mediator already exists and the version number is equal', (done) ->
 				updatedMediator =
-					uuid: "EEA84E13-1C92-467C-B0BD-7C480462D1ED"
+					urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED"
 					version: "1.0.0"
 					name: "Updated Encounter Mediator"
 				new Mediator(mediator1).save ->
@@ -228,7 +228,7 @@ describe "API Integration Tests", ->
 							if err
 								done err
 							else
-								Mediator.find { uuid: mediator1.uuid }, (err, res) ->
+								Mediator.find { urn: mediator1.urn }, (err, res) ->
 									return done err if err
 									res.length.should.be.exactly 1
 									res[0].name.should.be.exactly mediator1.name
@@ -236,7 +236,7 @@ describe "API Integration Tests", ->
 
 			it 'should not do anything if the mediator already exists and the version number is less-than', (done) ->
 				updatedMediator =
-					uuid: "EEA84E13-1C92-467C-B0BD-7C480462D1ED"
+					urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED"
 					version: "0.9.5"
 					name: "Updated Encounter Mediator"
 				new Mediator(mediator1).save ->
@@ -252,7 +252,7 @@ describe "API Integration Tests", ->
 							if err
 								done err
 							else
-								Mediator.find { uuid: mediator1.uuid }, (err, res) ->
+								Mediator.find { urn: mediator1.urn }, (err, res) ->
 									return done err if err
 									res.length.should.be.exactly 1
 									res[0].name.should.be.exactly mediator1.name
@@ -260,7 +260,7 @@ describe "API Integration Tests", ->
 
 			it 'should update the mediator if the mediator already exists and the version number is greater-than', (done) ->
 				updatedMediator =
-					uuid: "EEA84E13-1C92-467C-B0BD-7C480462D1ED"
+					urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED"
 					version: "1.0.1"
 					name: "Updated Encounter Mediator"
 				new Mediator(mediator1).save ->
@@ -276,7 +276,7 @@ describe "API Integration Tests", ->
 							if err
 								done err
 							else
-								Mediator.find { uuid: mediator1.uuid }, (err, res) ->
+								Mediator.find { urn: mediator1.urn }, (err, res) ->
 									return done err if err
 									res.length.should.be.exactly 1
 									res[0].name.should.be.exactly updatedMediator.name
@@ -311,7 +311,7 @@ describe "API Integration Tests", ->
 
 			it 'should reject mediators without a name', (done) ->
 				invalidMediator =
-					uuid: "CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
+					urn: "urn:uuid:CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
 					version: "0.8.2"
 					description: "Invalid mediator for testing"
 					endpoints: [
@@ -338,7 +338,7 @@ describe "API Integration Tests", ->
 
 			it 'should reject mediators without a version number', (done) ->
 				invalidMediator =
-					uuid: "CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
+					urn: "urn:uuid:CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
 					name: "Patient Mediator"
 					description: "Invalid mediator for testing"
 					endpoints: [
@@ -365,7 +365,7 @@ describe "API Integration Tests", ->
 
 			it 'should reject mediators with an invalid SemVer version number (x.y.z)', (done) ->
 				invalidMediator =
-					uuid: "CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
+					urn: "urn:uuid:CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
 					name: "Patient Mediator"
 					version: "0.8"
 					description: "Invalid mediator for testing"
@@ -393,7 +393,7 @@ describe "API Integration Tests", ->
 
 			it 'should reject mediators with no endpoints specified', (done) ->
 				invalidMediator =
-					uuid: "CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
+					urn: "urn:uuid:CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
 					name: "Patient Mediator"
 					version: "0.8.2"
 					description: "Invalid mediator for testing"
@@ -413,7 +413,7 @@ describe "API Integration Tests", ->
 
 			it 'should reject mediators with an empty endpoints array specified', (done) ->
 				invalidMediator =
-					uuid: "CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
+					urn: "urn:uuid:CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
 					name: "Patient Mediator"
 					version: "0.8.2"
 					description: "Invalid mediator for testing"
