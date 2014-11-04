@@ -25,6 +25,7 @@ describe "HTTP Router", ->
 				ctx.response = new Object()
 				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
@@ -57,6 +58,7 @@ describe "HTTP Router", ->
 			ctx.response = new Object()
 			ctx.path = ctx.request.url = "/test/multicasting"
 			ctx.request.method = "GET"
+			ctx.requestTimestamp = (new Date()).toString()
 			return ctx
 
 		it "should route an incomming https request to the endpoints specific by the channel config", (done) ->
@@ -115,10 +117,12 @@ describe "HTTP Router", ->
 							ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
 							ctx.routes[0].response.headers.should.be.ok
 							ctx.routes[0].request.path.should.be.exactly "/test/multicasting"
+							ctx.routes[0].request.timestamp.should.be.exactly (new Date()).toString()
 							ctx.routes[1].response.status.should.be.exactly 400
 							ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
 							ctx.routes[1].response.headers.should.be.ok
 							ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
+							ctx.routes[1].request.timestamp.should.be.exactly (new Date()).toString()
 							done()
 
 
@@ -148,6 +152,7 @@ describe "HTTP Router", ->
 						ctx.response = new Object()
 						ctx.request.url = "/test/multi-primary"
 						ctx.request.method = "GET"
+						ctx.requestTimestamp = (new Date()).toString()
 
 						router.route ctx, (err) ->
 							if err
@@ -175,6 +180,7 @@ describe "HTTP Router", ->
 				ctx.response = new Object()
 				ctx.request.url = "/test"
 				ctx.request.method = "POST"
+				ctx.requestTimestamp = (new Date()).toString()
 				ctx.body = "TestBody"
 
 				router.route ctx, (err) ->
@@ -205,6 +211,7 @@ describe "HTTP Router", ->
 				ctx.request.url = "/test?parma1=val1&parma2=val2"
 				ctx.request.method = "GET"
 				ctx.request.querystring = "parma1=val1&parma2=val2"
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
@@ -251,6 +258,7 @@ describe "HTTP Router", ->
 				ctx.response = new Object()
 				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
@@ -302,6 +310,7 @@ describe "HTTP Router", ->
 				ctx.response = new Object()
 				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
@@ -356,6 +365,7 @@ describe "HTTP Router", ->
 					ctx.response = new Object()
 					ctx.path = ctx.request.url = "/test"
 					ctx.request.method = "GET"
+					ctx.requestTimestamp = (new Date()).toString()
 
 					router.route ctx, (err) ->
 						if err
@@ -390,6 +400,7 @@ describe "HTTP Router", ->
 				ctx.response = new Object()
 				ctx.request.url = "/test"
 				ctx.request.method = "GET"
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
@@ -416,6 +427,7 @@ describe "HTTP Router", ->
 				ctx.response = new Object()
 				ctx.request.url = "/test"
 				ctx.request.method = "GET"
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
@@ -442,6 +454,7 @@ describe "HTTP Router", ->
 				ctx.request.url = "/test"
 				ctx.request.method = "GET"
 				ctx.request.header = { authorization: "Basic bWU6bWU=" }
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
@@ -471,6 +484,7 @@ describe "HTTP Router", ->
 				ctx.request.url = "/test"
 				ctx.request.method = "GET"
 				ctx.request.header = { authorization: "Basic bWU6bWU=" }
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
@@ -504,6 +518,7 @@ describe "HTTP Router", ->
 				ctx.response = new Object()
 				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
+				ctx.requestTimestamp = (new Date()).toString()
 
 				router.route ctx, (err) ->
 					if err
