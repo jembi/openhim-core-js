@@ -1,5 +1,6 @@
 util = require('util');
 zlib = require('zlib');
+gunzip = require('zlib').createGunzip()
 http = require 'http'
 https = require 'https'
 net = require 'net'
@@ -173,6 +174,14 @@ sendHttpRequest = (ctx, route, options) ->
 		response.status = routeRes.statusCode
 		response.headers = routeRes.headers
 
+		uncompressedBody = ''
+		if routeRes.headers['content-encoding'] == 'gzip' #attempt to gunzip
+			routeRes.pipe(gunzip);
+
+		gunzip.on "data", (data) ->
+			uncompressedBody += data
+			return
+
 		bufs = []
 		routeRes.on "data", (chunk) ->
 			bufs.push chunk
@@ -182,14 +191,11 @@ sendHttpRequest = (ctx, route, options) ->
 			response.timestamp = new Date()
 			charset = obtainCharset(routeRes.headers)
 			if routeRes.headers['content-encoding'] == 'gzip'
-				zlib.gunzip(
-					Buffer.concat bufs,
-					(gunzipError, buf) ->
-						if gunzipError then logger.error gunzipError
-						else response.body = buf.toString charset
-						if not defered.promise.isRejected()
-							defered.resolve response
-				)
+				gunzip.on "end", ->
+					response.body = uncompressedBody
+					if not defered.promise.isRejected()
+						defered.resolve response
+					return
 			else if routeRes.headers['content-encoding'] == 'deflate'
 				zlib.inflate(
 					Buffer.concat bufs,
