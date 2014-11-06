@@ -119,7 +119,8 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
 			headers: ctx.request.header
 			querystring: ctx.request.querystring
 			method: ctx.request.method
-		
+			timestamp: ctx.requestTimestamp
+
 		if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
 			# handle mediator reponse
 			responseObj = JSON.parse response.body
