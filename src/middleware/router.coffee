@@ -174,13 +174,13 @@ sendHttpRequest = (ctx, route, options) ->
 		response.status = routeRes.statusCode
 		response.headers = routeRes.headers
 
-		uncompressedBody = ''
+		uncompressedBodyBufs = []
 		if routeRes.headers['content-encoding'] == 'gzip' #attempt to gunzip
 			routeRes.pipe(gunzip);
 
-		gunzip.on "data", (data) ->
-			uncompressedBody += data
-			return
+			gunzip.on "data", (data) ->
+				uncompressedBodyBufs.push data
+				return
 
 		bufs = []
 		routeRes.on "data", (chunk) ->
@@ -192,7 +192,8 @@ sendHttpRequest = (ctx, route, options) ->
 			charset = obtainCharset(routeRes.headers)
 			if routeRes.headers['content-encoding'] == 'gzip'
 				gunzip.on "end", ->
-					response.body = uncompressedBody
+					uncompressedBody =	Buffer.concat uncompressedBodyBufs
+					response.body = uncompressedBody.toString charset
 					if not defered.promise.isRejected()
 						defered.resolve response
 					return
