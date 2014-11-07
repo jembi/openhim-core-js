@@ -205,6 +205,7 @@ sendHttpRequest = (ctx, route, options) ->
 					if not defered.promise.isRejected()
 						defered.resolve response
 					return
+
 			else if routeRes.headers['content-encoding'] == 'deflate'
 				inflate.on "end", ->
 					uncompressedBody =	Buffer.concat uncompressedBodyBufs
@@ -212,6 +213,7 @@ sendHttpRequest = (ctx, route, options) ->
 					if not defered.promise.isRejected()
 						defered.resolve response
 					return
+
 			else
 				response.body = Buffer.concat bufs
 				if not defered.promise.isRejected()

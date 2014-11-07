@@ -4,6 +4,7 @@ net = require "net"
 fs = require "fs"
 User = require('../lib/model/users').User
 crypto = require "crypto"
+zlib = require "zlib"
 
 exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
 	requestCallback = requestCallback || ->
@@ -17,10 +18,19 @@ exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallb
 
 exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch) ->
 	return http.createServer (req, res) ->
+		acceptEncoding = req.headers['accept-encoding']
+
+		if (!acceptEncoding)
+			acceptEncoding = ''
+
 		req.on "data", (chunk) ->
 			if chunk.toString() == bodyToMatch
-				res.writeHead successStatusCode, {"Content-Type": "text/plain"}
-				res.end()
+				if acceptEncoding.match /gzip/g #the him always  sets the accept-encoding headers to accept gzip it then decompresses the response and sends it to the client
+					res.writeHead successStatusCode, {"Content-Type": "gzip"}
+					req.pipe(zlib.createDeflate()).pipe(res)
+				else
+					res.writeHead successStatusCode, {"Content-Type": "text/plain"}
+					res.end()
 			else
 				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
 				res.end()
