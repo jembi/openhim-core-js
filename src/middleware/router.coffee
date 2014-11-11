@@ -177,7 +177,6 @@ sendHttpRequest = (ctx, route, options) ->
 
 		uncompressedBodyBufs = []
 		if routeRes.headers['content-encoding'] == 'gzip' #attempt to gunzip
-			console.log 'in here'
 			routeRes.pipe(gunzip);
 
 			gunzip.on "data", (data) ->
@@ -200,10 +199,8 @@ sendHttpRequest = (ctx, route, options) ->
 			response.timestamp = new Date()
 			charset = obtainCharset(routeRes.headers)
 			if routeRes.headers['content-encoding'] == 'gzip'
-				console.log charset
 				gunzip.on "end", ->
 					uncompressedBody =	Buffer.concat uncompressedBodyBufs
-					console.log uncompressedBody.toString charset
 					response.body = uncompressedBody.toString charset
 					if not defered.promise.isRejected()
 						defered.resolve response
