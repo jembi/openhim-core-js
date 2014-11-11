@@ -18,19 +18,10 @@ exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallb
 
 exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch) ->
 	return http.createServer (req, res) ->
-		acceptEncoding = req.headers['accept-encoding']
-
-		if (!acceptEncoding)
-			acceptEncoding = ''
-
 		req.on "data", (chunk) ->
 			if chunk.toString() == bodyToMatch
-				if acceptEncoding.match /gzip/g #the him always  sets the accept-encoding headers to accept gzip it then decompresses the response and sends it to the client
-					res.writeHead successStatusCode, {"Content-Type": "gzip"}
-					req.pipe(zlib.createDeflate()).pipe(res)
-				else
-					res.writeHead successStatusCode, {"Content-Type": "text/plain"}
-					res.end()
+				res.writeHead successStatusCode, {"Content-Type": "text/plain"}
+				res.end()
 			else
 				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
 				res.end()
@@ -138,3 +129,29 @@ exports.auth.cleanupTestUsers = (done) ->
 				done err
 			else
 				done()
+
+exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, bodyToMatch) ->
+	return http.createServer (req, res) ->
+		acceptEncoding = req.headers['accept-encoding']
+
+		if (!acceptEncoding)
+			acceptEncoding = ''
+
+		req.on "data", (chunk) ->
+			if chunk.toString() == bodyToMatch
+				if acceptEncoding.match /gzip/g #the him always  sets the accept-encoding headers to accept gzip it then decompresses the response and sends it to the client
+					headers =
+						"Content-Type": "text/plain"
+						"content-encoding": "gzip"
+
+					res.writeHead successStatusCode,  headers
+
+					buf = new Buffer(bodyToMatch, 'utf-8')
+					zlib.gzip buf, (_, result) ->
+						res.end result
+				else
+					res.writeHead successStatusCode, {"Content-Type": "text/plain"}
+					res.end()
+			else
+				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
+				res.end()

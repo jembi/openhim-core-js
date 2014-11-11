@@ -21,8 +21,8 @@
     "host": "localhost"
   },
   "authentication": {
-    "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": false
+    "enableMutualTLSAuthentication": false,
+    "enableBasicAuthentication": true
   },
   "nodemailer": {
     "service": "Gmail",
