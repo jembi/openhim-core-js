@@ -25,7 +25,7 @@ ChannelSchema = new Schema
     "description": { type: String, required: false }
     "urlPattern": { type: String, required: true }
     "type": { type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling'] }
-    "tcpPort": { type: Number, required: false, unique: true, min: 0, max: 65536 }
+    "tcpPort": { type: Number, required: false, min: 0, max: 65536 }
     "tcpHost": { type: String, required: false }
     "pollingSchedule": { type: String, required: false }
     "allow": [
