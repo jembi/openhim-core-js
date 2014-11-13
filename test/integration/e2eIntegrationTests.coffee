@@ -184,6 +184,7 @@ describe "e2e Integration Tests", ->
 	describe "POST and PUT tests", ->
 
 		mockServer = null
+		mockServerWithReturn = null
 		testDoc = "<test>test message</test>"
 
 		before (done) ->
@@ -201,33 +202,50 @@ describe "e2e Integration Tests", ->
 							port: 1232
 							primary: true
 						]
+
+			channel2 = new Channel
+				name: "TEST DATA - Mock WIth Return endpoint"
+				urlPattern: "test/return"
+				allow: [ "PoC" ]
+				routes: [
+					name: "test route return"
+					host: "localhost"
+					port: 1499
+					primary: true
+				]
+
+
 			channel1.save (err) ->
-				testAppDoc =
-					clientID: "testApp"
-					clientDomain: "test-client.jembi.org"
-					name: "TEST Client"
-					roles:
-						[
-							"OpenMRS_PoC"
-							"PoC"
-						]
-					passwordAlgorithm: "sha512"
-					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
-					passwordSalt: "1234567890"
-					cert: ""
+				channel2.save (err)->
+					testAppDoc =
+						clientID: "testApp"
+						clientDomain: "test-client.jembi.org"
+						name: "TEST Client"
+						roles:
+							[
+								"OpenMRS_PoC"
+								"PoC"
+							]
+						passwordAlgorithm: "sha512"
+						passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+						passwordSalt: "1234567890"
+						cert: ""
 
-				client = new Client testAppDoc
-				client.save (error, newAppDoc) ->
-					# Create mock endpoint to forward requests to
-					mockServer = testUtils.createMockServerForPost(201, 400, testDoc)
+					client = new Client testAppDoc
+					client.save (error, newAppDoc) ->
+						# Create mock endpoint to forward requests to
+						mockServer = testUtils.createMockServerForPost(201, 400, testDoc)
+						mockServerWithReturn = testUtils.createMockServerForPostWithReturn(201, 400, testDoc)
 
-					mockServer.listen 1232, done
+						mockServer.listen 1232, () ->
+							mockServerWithReturn.listen 1499, done
 
 		after (done) ->
 			Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
 				Client.remove { clientID: "testApp" }, ->
 					mockServer.close ->
-						done()
+						mockServerWithReturn.close ->
+							done()
 
 		afterEach (done) ->
 			server.stop ->
@@ -258,6 +276,15 @@ describe "e2e Integration Tests", ->
 							done err
 						else
 							done()
+
+		it "should decompress gzip", (done) ->
+			server.start 5001, null, null, null, null, null, ->
+				request("http://localhost:5001")
+				.put("/test/return")
+				.send(testDoc)
+				.auth("testApp", "password")
+				.expect(201)
+				.expect(testDoc, done)
 
 	describe "HTTP header tests", ->
 
