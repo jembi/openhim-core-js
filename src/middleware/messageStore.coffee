@@ -39,11 +39,13 @@ exports.storeTransaction = (ctx, done) ->
 		tx.parentID = ctx.parentID
 		tx.taskID = ctx.taskID
 
-
-	# check if channel request body is false and remove
-	if ctx.authorisedChannel.requestBody == false
+	# check if channel request body is false and remove - or if request body is empty
+	if ctx.authorisedChannel.requestBody == false || tx.request.body == ''
 		# reset request body
 		tx.request.body = ''
+		# check if method is POST - rerun not possible without request body
+		if ctx.method == 'POST'
+			tx.canRerun = false
 
 	tx.save (err, tx) ->
 		if err

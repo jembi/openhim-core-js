@@ -291,6 +291,7 @@ describe "MessageStore", ->
 					trans.channelID.toString().should.equal "313233343536373839313030"
 					trans.status.should.equal "Processing"
 					trans.request.body.should.equal ""					
+					trans.canRerun.should.equal false
 					done()
 
 
@@ -305,6 +306,7 @@ describe "MessageStore", ->
 					should.not.exist(err2)
 					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
 						should.not.exist(err3)
+						console.log( trans )
 						(trans != null).should.true
 						trans.response.status.should.equal 201
 						trans.response.body.should.equal ""
