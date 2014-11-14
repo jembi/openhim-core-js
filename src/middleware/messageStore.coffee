@@ -40,7 +40,7 @@ exports.storeTransaction = (ctx, done) ->
 		tx.taskID = ctx.taskID
 
 
-	# check if transaction request body is false and remove
+	# check if channel request body is false and remove
 	if ctx.authorisedChannel.requestBody == false
 		# reset request body
 		tx.request.body = ''
