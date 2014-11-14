@@ -39,6 +39,12 @@ exports.storeTransaction = (ctx, done) ->
 		tx.parentID = ctx.parentID
 		tx.taskID = ctx.taskID
 
+
+	# check if transaction request body is false and remove
+	if ctx.authorisedChannel.requestBody == false
+		# reset request body
+		tx.request.body = ''
+
 	tx.save (err, tx) ->
 		if err
 			logger.error 'Could not save transaction metadata: ' + err
@@ -79,6 +85,17 @@ exports.storeResponse = (ctx, done) ->
 		headers: headers
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
 		timestamp: ctx.response.timestamp
+
+
+	# check if channel response body is false and remove
+	if ctx.authorisedChannel.responseBody == false
+		# reset request body - primary route
+		res.body = ''
+
+		# reset request body - routes
+		for route in ctx.routes
+			route.response.body = ''
+
 
 	# assign new transactions status to ctx object
 	ctx.transactionStatus = status
