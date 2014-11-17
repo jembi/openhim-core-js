@@ -194,7 +194,7 @@ describe "e2e Integration Tests", ->
 			#Setup some test data
 			channel1 = new Channel
 				name: "TEST DATA - Mock endpoint"
-				urlPattern: "test/mock"
+				urlPattern: "/test/mock"
 				allow: [ "PoC" ]
 				routes: [
 							name: "test route"
@@ -205,7 +205,7 @@ describe "e2e Integration Tests", ->
 
 			channel2 = new Channel
 				name: "TEST DATA - Mock WIth Return endpoint"
-				urlPattern: "test/return"
+				urlPattern: "/gmo"
 				allow: [ "PoC" ]
 				routes: [
 					name: "test route return"
@@ -280,11 +280,22 @@ describe "e2e Integration Tests", ->
 		it "should decompress gzip", (done) ->
 			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
-				.put("/test/return")
+				.put("/gmo")
+				.set('Accept-Encoding', '') #Unset encoding, because supertest defaults to gzip,deflate
 				.send(testDoc)
 				.auth("testApp", "password")
 				.expect(201)
 				.expect(testDoc, done)
+
+		it "should returned gzipped reposnse", (done) ->
+			server.start 5001, null, null, null, null, null, ->
+				request("http://localhost:5001")
+				.put("/gmo")
+				.set('Accept-Encoding', 'gzip')
+				.send(testDoc)
+				.auth("testApp", "password")
+				.expect(201)
+				.expect("\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000\u0003�)I-.�\u0003\u0011\n���ŉ��6�`!\u0000\u000b^qn\u0019\u0000\u0000\u0000", done)
 
 	describe "HTTP header tests", ->
 

@@ -151,7 +151,7 @@ exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, b
 						res.end result
 				else
 					res.writeHead successStatusCode, {"Content-Type": "text/plain"}
-					res.end()
+					res.end bodyToMatch
 			else
 				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
 				res.end()
