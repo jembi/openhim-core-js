@@ -95,8 +95,9 @@ exports.storeResponse = (ctx, done) ->
 		res.body = ''
 
 		# reset request body - routes
-		for route in ctx.routes
-			route.response.body = ''
+		if ctx.routes
+			for route in ctx.routes
+				route.response.body = ''
 
 
 	# assign new transactions status to ctx object
