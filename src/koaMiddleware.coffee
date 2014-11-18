@@ -16,6 +16,8 @@ config.authentication = config.get('authentication')
 getRawBody = require 'raw-body'
 tcpAdapter = require './tcpAdapter'
 
+compress = require 'koa-compress'
+
 rawBodyReader = `function *(next) {
 	var body = yield getRawBody(this.req, {
 		length: this.length,
@@ -28,6 +30,8 @@ rawBodyReader = `function *(next) {
 
 	yield next;
 }`
+
+
 
 
 exports.setupApp = (done) ->
@@ -45,6 +49,14 @@ exports.setupApp = (done) ->
 
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware
+
+	app.use compress(
+		filter: (content_type) ->
+			/text/i.test content_type
+
+		threshold: 2048
+		flush: require("zlib").Z_SYNC_FLUSH
+	)
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware

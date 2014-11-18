@@ -35,7 +35,7 @@ setKoaResponse = (ctx, response) ->
 		switch key
 			when 'set-cookie' then setCookiesOnContext ctx, value
 			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
-			else ctx.response.header[key] = value
+			else ctx.response.set key, value
 
 if process.env.NODE_ENV == "test"
 	exports.setKoaResponse = setKoaResponse
@@ -196,7 +196,6 @@ sendHttpRequest = (ctx, route, options) ->
 
 		uncompressedBodyBufs = []
 		if routeRes.headers['content-encoding'] == 'gzip' and unzipBody #attempt to gunzip
-			console.log  encoding
 			routeRes.pipe(gunzip);
 
 			gunzip.on "data", (data) ->
