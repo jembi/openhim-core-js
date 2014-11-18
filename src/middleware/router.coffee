@@ -1,5 +1,7 @@
 util = require('util');
 zlib = require('zlib');
+gunzip = require('zlib').createGunzip()
+inflate = require('zlib').createInflate()
 http = require 'http'
 https = require 'https'
 net = require 'net'
@@ -101,35 +103,40 @@ sendRequestToRoutes = (ctx, routes, next) ->
 				# on failure
 				handleServerError ctx, reason
 		else
-			promise = sendRequest ctx, route, options
-			.then (response) ->
-				routeObj = {}
-				routeObj.name = route.name
-				routeObj.request =
-					path: path
-					headers: ctx.request.header
-					querystring: ctx.request.querystring
-					method: ctx.request.method
-				
-				if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
-					# handle mediator reponse
-					responseObj = JSON.parse response.body
-					routeObj.orchestrations = responseObj.orchestrations
-					routeObj.properties = responseObj.properties
-					routeObj.response = responseObj.response
-				else
-					routeObj.response = response
-
-				ctx.routes = [] if not ctx.routes
-				ctx.routes.push routeObj
-			.fail (reason) ->
-				# on failure
-				handleServerError ctx, reason
+			promise = buildNonPrimarySendRequestPromise ctx, route, options, path
 
 		promises.push promise
 
 	(Q.all promises).then ->
 		next()
+
+# function to build fresh promise for transactions routes
+buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
+	sendRequest ctx, route, options
+	.then (response) ->
+		routeObj = {}
+		routeObj.name = route.name
+		routeObj.request =
+			path: path
+			headers: ctx.request.header
+			querystring: ctx.request.querystring
+			method: ctx.request.method
+			timestamp: ctx.requestTimestamp
+
+		if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
+			# handle mediator reponse
+			responseObj = JSON.parse response.body
+			routeObj.orchestrations = responseObj.orchestrations
+			routeObj.properties = responseObj.properties
+			routeObj.response = responseObj.response
+		else
+			routeObj.response = response
+
+		ctx.routes = [] if not ctx.routes
+		ctx.routes.push routeObj
+	.fail (reason) ->
+		# on failure
+		handleServerError ctx, reason
 
 sendRequest = (ctx, route, options) ->
 	if route.type is 'tcp'
@@ -168,6 +175,21 @@ sendHttpRequest = (ctx, route, options) ->
 		response.status = routeRes.statusCode
 		response.headers = routeRes.headers
 
+		uncompressedBodyBufs = []
+		if routeRes.headers['content-encoding'] == 'gzip' #attempt to gunzip
+			routeRes.pipe(gunzip);
+
+			gunzip.on "data", (data) ->
+				uncompressedBodyBufs.push data
+				return
+
+		if routeRes.headers['content-encoding'] == 'deflate' #attempt to inflate
+			routeRes.pipe(inflate);
+
+			inflate.on "data", (data) ->
+				uncompressedBodyBufs.push data
+				return
+
 		bufs = []
 		routeRes.on "data", (chunk) ->
 			bufs.push chunk
@@ -177,23 +199,21 @@ sendHttpRequest = (ctx, route, options) ->
 			response.timestamp = new Date()
 			charset = obtainCharset(routeRes.headers)
 			if routeRes.headers['content-encoding'] == 'gzip'
-				zlib.gunzip(
-					Buffer.concat bufs,
-					(gunzipError, buf) ->
-						if gunzipError then logger.error gunzipError
-						else response.body = buf.toString charset
-						if not defered.promise.isRejected()
-							defered.resolve response
-				)
+				gunzip.on "end", ->
+					uncompressedBody =	Buffer.concat uncompressedBodyBufs
+					response.body = uncompressedBody.toString charset
+					if not defered.promise.isRejected()
+						defered.resolve response
+					return
+
 			else if routeRes.headers['content-encoding'] == 'deflate'
-				zlib.inflate(
-					Buffer.concat bufs,
-					(inflateError, buf) ->
-						if inflateError then logger.error inflateError
-						else response.body = buf.toString charset
-						if not defered.promise.isRejected()
-							defered.resolve response
-				)
+				inflate.on "end", ->
+					uncompressedBody =	Buffer.concat uncompressedBodyBufs
+					response.body = uncompressedBody.toString charset
+					if not defered.promise.isRejected()
+						defered.resolve response
+					return
+
 			else
 				response.body = Buffer.concat bufs
 				if not defered.promise.isRejected()

@@ -1,5 +1,6 @@
 transactions = require "../model/transactions"
 logger = require "winston"
+Q = require "q"
 
 exports.transactionStatus = transactionStatus = 
 	PROCESSING: 'Processing'
@@ -44,6 +45,7 @@ exports.storeTransaction = (ctx, done) ->
 			return done err
 		else
 			ctx.transactionId = tx._id
+			ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
 			return done null, tx
 
 exports.storeResponse = (ctx, done) ->
@@ -97,7 +99,8 @@ exports.storeResponse = (ctx, done) ->
 		return done()
 
 exports.koaMiddleware =  `function *storeMiddleware(next) {
-		exports.storeTransaction(this, function(){});
+		var saveTransaction = Q.denodeify(exports.storeTransaction);
+		yield saveTransaction(this);
 		yield next;
 		exports.storeResponse(this, function(){});
 	}`

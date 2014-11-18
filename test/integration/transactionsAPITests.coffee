@@ -106,7 +106,7 @@ describe "API Integration Tests", ->
 		describe "*addTransaction()", ->
 
 			it  "should add a transaction and return status 201 - transaction created", (done) -> 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -132,7 +132,7 @@ describe "API Integration Tests", ->
 								done()
 
 			it  "should only allow admin users to add transactions", (done) -> 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -165,7 +165,7 @@ describe "API Integration Tests", ->
 						request: reqUp
 						status: "Completed"
 						clientID: "777777777777777777777777"
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.put("/transactions/#{transactionId}")
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -196,7 +196,7 @@ describe "API Integration Tests", ->
 					should.not.exist(err)
 					transactionId = result._id
 					updates = {}
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.put("/transactions/#{transactionId}")
 						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -217,7 +217,7 @@ describe "API Integration Tests", ->
 					tx = new Transaction transactionData
 					tx.save (error, result) ->						
 						should.not.exist (error)
-						request("http://localhost:8080")
+						request("https://localhost:8080")
 							.get("/transactions?filterPage=0&filterLimit=10")
 							.set("auth-username", testUtils.rootUser.email)
 							.set("auth-ts", authDetails.authTS)
@@ -238,7 +238,7 @@ describe "API Integration Tests", ->
 					tx = new Transaction transactionData
 					tx.save (error, result) ->						
 						should.not.exist (error)
-						request("http://localhost:8080")
+						request("https://localhost:8080")
 							.get("/transactions?status=Processing&filterPage=0&filterLimit=10&startDate="+startDate+"&endDate="+endDate)
 							.set("auth-username", testUtils.rootUser.email)
 							.set("auth-ts", authDetails.authTS)
@@ -259,7 +259,7 @@ describe "API Integration Tests", ->
 					if err
 						return done err
 					
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/transactions")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -277,7 +277,7 @@ describe "API Integration Tests", ->
 				tx.save (err, result)->
 					should.not.exist(err)
 					transactionId = result._id
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.get("/transactions/#{transactionId}")
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -305,7 +305,7 @@ describe "API Integration Tests", ->
 				tx.save (err, result)->
 					should.not.exist(err)
 					transactionId = result._id
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.get("/transactions/#{transactionId}")
 						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -327,7 +327,7 @@ describe "API Integration Tests", ->
 
 					should.not.exist(err)
 					transactionId = tx._id
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.get("/transactions/#{transactionId}")
 						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -357,8 +357,8 @@ describe "API Integration Tests", ->
 				tx = new Transaction transactionData
 				tx.save (err, result) ->
 					should.not.exist(err)
-					request("http://localhost:8080")
-						.get("/transactions/apps/#{clientId}")
+					request("https://localhost:8080")
+						.get("/transactions/clients/#{clientId}")
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
@@ -378,8 +378,8 @@ describe "API Integration Tests", ->
 				tx.save (err, result)->
 					should.not.exist(err)
 					transactionId = result._id
-					request("http://localhost:8080")
-						.get("/transactions/apps/#{clientId}")
+					request("https://localhost:8080")
+						.get("/transactions/clients/#{clientId}")
 						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
@@ -403,8 +403,8 @@ describe "API Integration Tests", ->
 
 					should.not.exist(err)
 					transactionId = tx._id
-					request("http://localhost:8080")
-						.get("/transactions/apps/#{clientId}")
+					request("https://localhost:8080")
+						.get("/transactions/clients/#{clientId}")
 						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)
 						.set("auth-salt", authDetails.authSalt)
@@ -425,7 +425,7 @@ describe "API Integration Tests", ->
 				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.del("/transactions/#{transactionId}")
 						.set("auth-username", testUtils.rootUser.email)
 						.set("auth-ts", authDetails.authTS)
@@ -447,7 +447,7 @@ describe "API Integration Tests", ->
 				tx.save (err, result) ->
 					should.not.exist(err)
 					transactionId = result._id
-					request("http://localhost:8080")
+					request("https://localhost:8080")
 						.del("/transactions/#{transactionId}")
 						.set("auth-username", testUtils.nonRootUser.email)
 						.set("auth-ts", authDetails.authTS)

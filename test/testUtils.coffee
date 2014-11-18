@@ -4,10 +4,11 @@ net = require "net"
 fs = require "fs"
 User = require('../lib/model/users').User
 crypto = require "crypto"
+zlib = require "zlib"
 
 exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
 	requestCallback = requestCallback || ->
-	# Create mock endpoint to forward requests to
+		# Create mock endpoint to forward requests to
 	mockServer = http.createServer (req, res) ->
 		res.writeHead resStatusCode, {"Content-Type": "text/plain"}
 		res.end resBody
@@ -32,7 +33,7 @@ exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, request
 
 
 	requestCallback = requestCallback || ->
-	# Create mock endpoint to forward requests to
+		# Create mock endpoint to forward requests to
 	mockServer = https.createServer options, (req, res) ->
 		res.writeHead resStatusCode, {"Content-Type": "text/plain"}
 		res.end "Secured " + resBody
@@ -128,3 +129,29 @@ exports.auth.cleanupTestUsers = (done) ->
 				done err
 			else
 				done()
+
+exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, bodyToMatch) ->
+	return http.createServer (req, res) ->
+		acceptEncoding = req.headers['accept-encoding']
+
+		if (!acceptEncoding)
+			acceptEncoding = ''
+
+		req.on "data", (chunk) ->
+			if chunk.toString() == bodyToMatch
+				if acceptEncoding.match /gzip/g #the him always  sets the accept-encoding headers to accept gzip it then decompresses the response and sends it to the client
+					headers =
+						"Content-Type": "text/plain"
+						"content-encoding": "gzip"
+
+					res.writeHead successStatusCode,  headers
+
+					buf = new Buffer(bodyToMatch, 'utf-8')
+					zlib.gzip buf, (_, result) ->
+						res.end result
+				else
+					res.writeHead successStatusCode, {"Content-Type": "text/plain"}
+					res.end()
+			else
+				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
+				res.end()

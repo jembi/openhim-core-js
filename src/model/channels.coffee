@@ -6,7 +6,7 @@ RouteSchema = new Schema
     "name": { type: String, required: true }
     "secured": { type: Boolean, required: false }
     "host": { type: String, required: true }
-    "port": { type: String, required: true }
+    "port": { type: Number, required: true }
     "path": { type: String, required: false }
     "pathTransform": { type: String, required: false }
     "primary": { type: Boolean, required: false }
@@ -22,9 +22,10 @@ AlertsSchema = new Schema
 
 ChannelSchema = new Schema
     "name": { type: String, required: true, unique: true }
+    "description": { type: String, required: false }
     "urlPattern": { type: String, required: true }
     "type": { type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling'] }
-    "tcpPort": { type: String, required: false }
+    "tcpPort": { type: Number, required: false }
     "tcpHost": { type: String, required: false }
     "pollingSchedule": { type: String, required: false }
     "allow": [

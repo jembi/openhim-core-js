@@ -175,7 +175,7 @@ describe "API Metrics Tests", ->
 
       it 'should fetch dashbord channel metrics based on the currently logged in user permissions', (done) ->
 
-        request("http://localhost:8080")
+        request("https://localhost:8080")
         .get("/metrics?startDate=%222014-07-18T00:00:00.000Z%22&endDate=%222014-07-19T00:00:00.000Z%22")
         .set("auth-username", testUtils.rootUser.email)
         .set("auth-ts", authDetails.authTS)
@@ -197,7 +197,7 @@ describe "API Metrics Tests", ->
 
       it 'should fetch global status metrics based on the currently logged in user permissions', (done) ->
 
-        request "http://localhost:8080"
+        request "https://localhost:8080"
         .get "/metrics/status?startDate=%222014-07-18T00:00:00.000Z%22&endDate=%222014-07-19T00:00:00.000Z%22"
         .set("auth-username", testUtils.rootUser.email)
         .set("auth-ts", authDetails.authTS)
@@ -222,7 +222,7 @@ describe "API Metrics Tests", ->
 
       it 'should fetch channel metrics based by ID', (done) ->
 
-        request "http://localhost:8080"
+        request "https://localhost:8080"
         .get "/metrics/day/222222222222222222222222?startDate=%222014-07-18T00:00:00.000Z%22&endDate=%222014-07-19T00:00:00.000Z%22"
         .set("auth-username", testUtils.rootUser.email)
         .set("auth-ts", authDetails.authTS)
@@ -244,7 +244,7 @@ describe "API Metrics Tests", ->
 
       it 'should fetch global status metrics based on the currently logged in user permissions', (done) ->
 
-        request "http://localhost:8080"
+        request "https://localhost:8080"
         .get "/metrics/status/222222222222222222222222?startDate=%222014-07-18T00:00:00.000Z%22&endDate=%222014-07-19T00:00:00.000Z%22"
         .set("auth-username", testUtils.rootUser.email)
         .set("auth-ts", authDetails.authTS)

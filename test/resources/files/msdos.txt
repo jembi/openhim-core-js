@@ -1,0 +1,5 @@
+this
+has
+msdos
+line
+endings

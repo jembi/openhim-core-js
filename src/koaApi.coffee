@@ -16,6 +16,7 @@ Q = require 'q'
 worker = require './api/worker'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
+serverRestart = require './restart'
 
 exports.setupApp = (done) ->
 
@@ -47,7 +48,7 @@ exports.setupApp = (done) ->
 	app.use route.get '/transactions', transactions.getTransactions
 	app.use route.post '/transactions', transactions.addTransaction
 	app.use route.get '/transactions/:transactionId', transactions.getTransactionById
-	app.use route.get '/transactions/apps/:clientId', transactions.findTransactionByClientId
+	app.use route.get '/transactions/clients/:clientId', transactions.findTransactionByClientId
 	app.use route.put '/transactions/:transactionId', transactions.updateTransaction
 	app.use route.delete '/transactions/:transactionId', transactions.removeTransaction
 
@@ -81,6 +82,9 @@ exports.setupApp = (done) ->
 	app.use route.get '/mediators', mediators.getAllMediators
 	app.use route.get '/mediators/:uuid', mediators.getMediator
 	app.use route.post '/mediators', mediators.addMediator
+
+	# server restart endpoint
+	app.use route.post '/restart', serverRestart.restart
 
 	# Return the result
 	done(app)

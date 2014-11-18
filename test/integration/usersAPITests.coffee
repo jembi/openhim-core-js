@@ -48,7 +48,7 @@ describe 'API Integration Tests', ->
 		describe '*authenticate(email)', ->
 
 			it 'should return the requested users salt', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/authenticate/bfm@crazy.net")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -66,7 +66,7 @@ describe 'API Integration Tests', ->
 		describe '*getUsers()', ->
 
 			it 'should fetch all users', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/users")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -82,7 +82,7 @@ describe 'API Integration Tests', ->
 							done()
 
 			it 'should not allow non admin user to fetch all users', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/users")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -107,7 +107,7 @@ describe 'API Integration Tests', ->
 					passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
 					groups: [ 'HISP' ]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/users")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -128,7 +128,7 @@ describe 'API Integration Tests', ->
 			it 'should not allow a non admin user to add a user', (done) ->
 				newUser = {}
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.post("/users")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -145,7 +145,7 @@ describe 'API Integration Tests', ->
 		describe '*findUserByUsername(email)', ->
 
 			it 'should find a user by their email address', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/users/r..@jembi.org")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -162,7 +162,7 @@ describe 'API Integration Tests', ->
 							done()
 
 			it 'should not allow a non admin user to find a user to email', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/users/r..@jembi.org")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -176,7 +176,7 @@ describe 'API Integration Tests', ->
 							done()
 
 			it 'should always allow a user to fetch their own details', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.get("/users/" + testUtils.nonRootUser.email)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -203,7 +203,7 @@ describe 'API Integration Tests', ->
 					email: 'rg..@jembi.org'
 					groups: [ 'admin', 'RHIE', 'HISP' ]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/users/r..@jembi.org")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -225,7 +225,7 @@ describe 'API Integration Tests', ->
 
 				updates = {}
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/users/r..@jembi.org")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -245,7 +245,7 @@ describe 'API Integration Tests', ->
 					_id: "thisShouldBeIgnored"
 					surname: 'Root-updated'
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/users/" + testUtils.nonRootUser.email)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -267,7 +267,7 @@ describe 'API Integration Tests', ->
 					_id: "thisShouldBeIgnored"
 					groups: [ "admin" ]
 
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.put("/users/" + testUtils.nonRootUser.email)
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -287,7 +287,7 @@ describe 'API Integration Tests', ->
 		describe '*removeUser(email)', ->
 
 			it 'should remove a specific user by email', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.del("/users/bfm@crazy.net")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
@@ -303,7 +303,7 @@ describe 'API Integration Tests', ->
 								done()
 
 			it 'should not allow a non admin user to remove a user', (done) ->
-				request("http://localhost:8080")
+				request("https://localhost:8080")
 					.del("/users/bfm@crazy.net")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
