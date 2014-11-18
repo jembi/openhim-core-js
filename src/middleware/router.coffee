@@ -35,7 +35,11 @@ setKoaResponse = (ctx, response) ->
 		switch key
 			when 'set-cookie' then setCookiesOnContext ctx, value
 			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
-			else ctx.response.set key, value
+			else
+				try
+					ctx.response.set key, value
+				catch err
+					logger.error err
 
 if process.env.NODE_ENV == "test"
 	exports.setKoaResponse = setKoaResponse

@@ -287,7 +287,7 @@ describe "e2e Integration Tests", ->
 				.expect(201)
 				.expect(testDoc, done)
 
-		it "should returned gzipped reposnse", (done) ->
+		it "should returned gzipped response", (done) ->
 			server.start 5001, null, null, null, null, null, ->
 				request("http://localhost:5001")
 				.put("/gmo")
@@ -295,7 +295,14 @@ describe "e2e Integration Tests", ->
 				.send(testDoc)
 				.auth("testApp", "password")
 				.expect(201)
-				.expect("\u001f�\b\u0000\u0000\u0000\u0000\u0000\u0000\u0003�)I-.�\u0003\u0011\n���ŉ��6�`!\u0000\u000b^qn\u0019\u0000\u0000\u0000", done)
+				.expect("content-encoding", "gzip")
+				.expect(testDoc)
+				.end (err, res) ->
+					if err
+						done err
+					else
+						done()
+
 
 	describe "HTTP header tests", ->
 
