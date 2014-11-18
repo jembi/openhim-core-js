@@ -45,7 +45,11 @@
     "himInstance": "openhim.jembi.org",
     "consoleURL": "http://openhim.jembi.org"
   },
-  "reports":{
-      "enableReports": true
-    }
+  "reports": {
+    "enableReports": true
+  },
+  "visualizer": {
+    "enableVisualizer": true,
+    "minimumEventPeriodMillis": 100
+  }
 }
