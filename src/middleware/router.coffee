@@ -142,10 +142,10 @@ sendRequest = (ctx, route, options) ->
 	if route.type is 'tcp'
 		logger.info 'Routing tcp request'
 		return sendSocketRequest ctx, route, options
-	if route.type is 'mllp'
-    logger.info 'Routing mllp request'
-    return sendMLLPSocketRequest ctx, route, options
-	if route.type is 'http'
+	else if route.type is 'mllp'
+		logger.info 'Routing mllp request'
+		return sendMLLPSocketRequest ctx, route, options
+	else
 		logger.info 'Routing http(s) request'
 		return sendHttpRequest ctx, route, options
 
