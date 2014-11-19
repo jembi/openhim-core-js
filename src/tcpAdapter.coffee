@@ -24,6 +24,8 @@ startListening = (channel, tcpServer, host, port, callback) ->
 	tcpServer.listen port, host, ->
 		tcpServers.push { channelID: channel._id, server: tcpServer }
 		callback null
+	tcpServer.on 'error', (err) ->
+		logger.error err + ' Host: ' + host + ' Port: ' + port
 
 exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 	for existingServer in tcpServers

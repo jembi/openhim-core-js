@@ -2,7 +2,7 @@ transactions = require "../model/transactions"
 logger = require "winston"
 Q = require "q"
 
-transactionStatus = 
+exports.transactionStatus = transactionStatus = 
 	PROCESSING: 'Processing'
 	SUCCESSFUL: 'Successful'
 	COMPLETED: 'Completed'
