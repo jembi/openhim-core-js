@@ -274,7 +274,7 @@ sendSocketRequest = (ctx, route, options) ->
 ###
 sendMLLPSocketRequest = (ctx, route, options) ->
 
-  endChar = String.fromCharCode(034) + '\r'
+  endChar = String.fromCharCode('034') + '\r'
   defered = Q.defer()
   requestBody = ctx.body
   client = new net.Socket()
