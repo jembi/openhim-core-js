@@ -43,8 +43,8 @@ exports.storeTransaction = (ctx, done) ->
 	if ctx.authorisedChannel.requestBody == false || tx.request.body == ''
 		# reset request body
 		tx.request.body = ''
-		# check if method is POST - rerun not possible without request body
-		if ctx.method == 'POST'
+		# check if method is POST|PUT|PATCH - rerun not possible without request body
+		if ctx.method == 'POST' or ctx.method == 'PUT' or ctx.method == 'PATCH'
 			tx.canRerun = false
 
 	tx.save (err, tx) ->

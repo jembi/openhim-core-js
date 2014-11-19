@@ -114,7 +114,7 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
               transaction:
                 status: "Failed"
             rerunUpdateTaskObject taskID, transactionID, response, (updatedTask) ->
-            err = "Rerun Transaction #" + transactionID + " - is not allowed to be rerun due to 'canRerun' property"
+            err = "Rerun Transaction #" + transactionID + " - is not allowed to be rerun as we don't have enough information about the request."
             return callback err, null
 
           # send the transactions data in callback
