@@ -9,7 +9,6 @@ The OpenHIM core component is responsible for providing a single entry-point int
 * Persistence and audit logging of all messages that flow through the OpenHIM
 * Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
 
-:warning:  **The OpenHIM core is currently in early active development and is not yet ready for production use.**
 
 See the [development roadmap](https://github.com/jembi/openhim-core-js/wiki/OpenHIM-core-Development-Roadmap) for more details on what is to come!
 

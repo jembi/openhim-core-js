@@ -25,12 +25,12 @@ if [ ! "$server" ]; then
     exit 0;
 fi
 
-auth=`curl -s $server/authenticate/$username`;
+auth=`curl -k -s $server/authenticate/$username`;
 salt=`echo $auth | perl -pe 's|.*"salt":"(.*?)".*|\1|'`;
 ts=`echo $auth | perl -pe 's|.*"ts":"(.*?)".*|\1|'`;
 
 passhash=`echo -n "$salt$pass" | shasum -a 512 | awk '{print $1}'`;
 token=`echo -n "$passhash$salt$ts" | shasum -a 512 | awk '{print $1}'`;
 
-curl -H "auth-username: $username" -H "auth-ts: $ts" -H "auth-salt: $salt" -H "auth-token: $token" $@;
+curl -k -H "auth-username: $username" -H "auth-ts: $ts" -H "auth-salt: $salt" -H "auth-token: $token" $@;
 echo "";
