@@ -39,8 +39,19 @@ exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 	return callback "Channel #{channel.name} (#{channel._id}): TCP port not defined" if not port
 
 	handler = (sock) ->
-		sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
-		sock.on 'close', ->
+    bufs = []
+    endChar = `String.fromCharCode(034)`
+    sock.on 'data', (chunk) ->
+      bufs.push chunk
+      n = chunk.toString().indexOf(endChar);
+      if n > -1
+        logger.info "Received Request end character"
+        adaptSocketRequest channel, sock, Buffer.concat bufs
+        #reset bufs
+        bufs = []
+
+    sock.on 'end', -> # adaptSocketRequest channel, sock, "#{Buffer.concat bufs}"
+    sock.on 'close', ->
 
 	if channel.type is 'tls'
 		tlsAuthentication.getServerOptions true, (err, options) ->

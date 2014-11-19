@@ -274,7 +274,7 @@ sendSocketRequest = (ctx, route, options) ->
 ###
 sendMLLPSocketRequest = (ctx, route, options) ->
 
-  endChar = String.fromCharCode('034') + '\r'
+  endChar = `String.fromCharCode(034)`
   defered = Q.defer()
   requestBody = ctx.body
   client = new net.Socket()
@@ -282,23 +282,28 @@ sendMLLPSocketRequest = (ctx, route, options) ->
 
   client.connect options.port, options.hostname, ->
     logger.info "Opened mllp connection to #{options.hostname}:#{options.port}"
-    client.end requestBody
+
+  client.on 'connect', ()->
+    client.write requestBody
 
   bufs = []
   client.on 'data', (chunk) ->
-    n = chunk.indexOf(endChar);
-    if n > -1
-      client.close()
     bufs.push chunk
+    n = chunk.toString().indexOf(endChar);
+    if n > -1
+      logger.info 'Received response end character'
+      response.body = Buffer.concat bufs
+      response.status = status.OK
+      response.timestamp = new Date()
+      if not defered.promise.isRejected()
+        defered.resolve response
+        client.end()
+
 
   client.on 'error', (err) -> defered.reject err
 
   client.on 'end', ->
-    response.body = Buffer.concat bufs
-    response.status = status.OK
-    response.timestamp = new Date()
-    if not defered.promise.isRejected()
-      defered.resolve response
+    logger.info "Closed mllp connection to #{options.hostname}:#{options.port}"
 
   return defered.promise
 
