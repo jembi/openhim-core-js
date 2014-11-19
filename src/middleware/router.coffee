@@ -142,17 +142,17 @@ sendRequest = (ctx, route, options) ->
 	if route.type is 'tcp'
 		logger.info 'Routing tcp request'
 		return sendSocketRequest ctx, route, options
-	else if route.type is 'mllp'
+	if route.type is 'mllp'
     logger.info 'Routing mllp request'
     return sendMLLPSocketRequest ctx, route, options
-  else
+	if route.type is 'http'
 		logger.info 'Routing http(s) request'
 		return sendHttpRequest ctx, route, options
 
 obtainCharset = (headers) ->
         contentType = headers['content-type'] || ''
         matches =  contentType.match(/charset=([^;,\r\n]+)/i)
-        if (matches && matches[1]) 
+        if (matches && matches[1])
                 return matches[1]
         return  'utf-8'
 
@@ -252,7 +252,7 @@ sendSocketRequest = (ctx, route, options) ->
 	bufs = []
 	client.on 'data', (chunk) ->
 		bufs.push chunk
-		
+
 	client.on 'error', (err) -> defered.reject err
 
 	client.on 'end', ->
