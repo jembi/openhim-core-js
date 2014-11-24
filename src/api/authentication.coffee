@@ -42,7 +42,6 @@ exports.authenticate = `function *authenticate(next) {
 
 	if (hash.digest('hex') === authToken) {
 		// authenticated
-		logger.info('User ' +email+ ' made an authenticated requets to the API from ' +this.request.host);
 		yield next;
 	} else {
 		// not authenticated - token mismatch

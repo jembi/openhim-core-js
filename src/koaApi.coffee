@@ -10,6 +10,7 @@ transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
 contactGroups = require './api/contactGroups'
+visualizer = require './api/visualizer'
 Q = require 'q'
 worker = require './api/worker'
 mediators = require './api/mediators'
@@ -67,6 +68,9 @@ exports.setupApp = (done) ->
 	app.use route.get '/tasks/:taskId', tasks.getTask
 	app.use route.put '/tasks/:taskId', tasks.updateTask
 	app.use route.delete '/tasks/:taskId', tasks.removeTask
+
+	app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
+	app.use route.get '/visualizer/sync', visualizer.sync
 
 	app.use route.get '/metrics', metrics.getGlobalLoadTimeMetrics
 	app.use route.get '/metrics/status', metrics.getGlobalStatusMetrics

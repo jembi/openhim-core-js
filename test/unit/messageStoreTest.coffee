@@ -68,6 +68,9 @@ describe "MessageStore", ->
 	ctx.authorisedChannel = new Object()
 	ctx.authorisedChannel._id = new ObjectId "313233343536373839313030"
 
+	ctx.authorisedChannel.requestBody = true
+	ctx.authorisedChannel.responseBody = true
+
 
 	beforeEach (done) -> Transaction.remove {}, -> done()
 
@@ -271,4 +274,40 @@ describe "MessageStore", ->
 						(trans != null).should.true
 						trans.response.headers['dot．header'].should.equal '123'
 						trans.response.headers['dollar＄header'].should.equal '124'
+						done()
+
+
+			
+		it "should remove the request body if set in channel settings and save to the DB", (done) ->
+
+			ctx.authorisedChannel.requestBody = false
+
+			messageStore.storeTransaction ctx, (error, result) ->
+				should.not.exist(error)
+				Transaction.findOne { '_id': result._id }, (error, trans) ->
+					should.not.exist(error)
+					(trans != null).should.be.true
+					trans.clientID.toString().should.equal "313233343536373839319999"
+					trans.channelID.toString().should.equal "313233343536373839313030"
+					trans.status.should.equal "Processing"
+					trans.request.body.should.equal ""					
+					trans.canRerun.should.equal false
+					done()
+
+
+		it "should update the transaction with the response and remove the response body", (done) ->
+			ctx.response = createResponse 201
+
+			ctx.authorisedChannel.responseBody = false
+
+			messageStore.storeTransaction ctx, (err, storedTrans) ->
+				ctx.transactionId = storedTrans._id
+				messageStore.storeResponse ctx, (err2) ->
+					should.not.exist(err2)
+					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+						should.not.exist(err3)
+						console.log( trans )
+						(trans != null).should.true
+						trans.response.status.should.equal 201
+						trans.response.body.should.equal ""
 						done()

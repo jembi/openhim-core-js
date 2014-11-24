@@ -11,6 +11,7 @@ retrieveTCPTransaction = require "./middleware/retrieveTCPTransaction"
 authorisation = require './middleware/authorisation'
 pollingBypassAuthorisation = require './middleware/pollingBypassAuthorisation'
 pollingBypassAuthentication = require './middleware/pollingBypassAuthentication'
+visualizer = require './middleware/visualizer'
 config = require './config/config'
 config.authentication = config.get('authentication')
 getRawBody = require 'raw-body'
@@ -50,6 +51,7 @@ exports.setupApp = (done) ->
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware
 
+  # Commpress response on exit
 	app.use compress(
 		filter: (content_type) ->
 			/text/i.test content_type
@@ -57,6 +59,8 @@ exports.setupApp = (done) ->
 		threshold: 2048
 		flush: require("zlib").Z_SYNC_FLUSH
 	)
+	# Visualizer
+	app.use visualizer.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware
@@ -83,6 +87,9 @@ exports.rerunApp = (done) ->
 	# Update original transaction with reruned transaction ID
 	app.use rerunUpdateTransactionTask.koaMiddleware
 
+	# Visualizer
+	app.use visualizer.koaMiddleware
+
 	# Persit message middleware
 	app.use messageStore.koaMiddleware
 
@@ -106,6 +113,9 @@ exports.tcpApp = (done) ->
 	# TCP bypass authentication middlware
 	app.use tcpBypassAuthentication.koaMiddleware
 
+	# Visualizer
+	app.use visualizer.koaMiddleware
+
 	# Persit message middleware
 	app.use messageStore.koaMiddleware
 
@@ -124,6 +134,9 @@ exports.pollingApp = (done) ->
 
 	# Polling bypass authorisation middleware
 	app.use pollingBypassAuthorisation.koaMiddleware
+
+	# Visualizer
+	app.use visualizer.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware

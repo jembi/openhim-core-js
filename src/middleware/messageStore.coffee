@@ -2,7 +2,7 @@ transactions = require "../model/transactions"
 logger = require "winston"
 Q = require "q"
 
-transactionStatus = 
+exports.transactionStatus = transactionStatus = 
 	PROCESSING: 'Processing'
 	SUCCESSFUL: 'Successful'
 	COMPLETED: 'Completed'
@@ -38,6 +38,14 @@ exports.storeTransaction = (ctx, done) ->
 	if ctx.parentID && ctx.taskID
 		tx.parentID = ctx.parentID
 		tx.taskID = ctx.taskID
+
+	# check if channel request body is false and remove - or if request body is empty
+	if ctx.authorisedChannel.requestBody == false || tx.request.body == ''
+		# reset request body
+		tx.request.body = ''
+		# check if method is POST|PUT|PATCH - rerun not possible without request body
+		if ctx.method == 'POST' or ctx.method == 'PUT' or ctx.method == 'PATCH'
+			tx.canRerun = false
 
 	tx.save (err, tx) ->
 		if err
@@ -79,6 +87,18 @@ exports.storeResponse = (ctx, done) ->
 		headers: headers
 		body: if not ctx.response.body then "" else ctx.response.body.toString()
 		timestamp: ctx.response.timestamp
+
+
+	# check if channel response body is false and remove
+	if ctx.authorisedChannel.responseBody == false
+		# reset request body - primary route
+		res.body = ''
+
+		# reset request body - routes
+		if ctx.routes
+			for route in ctx.routes
+				route.response.body = ''
+
 
 	# assign new transactions status to ctx object
 	ctx.transactionStatus = status
