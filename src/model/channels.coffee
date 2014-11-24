@@ -28,6 +28,8 @@ ChannelSchema = new Schema
     "tcpPort": { type: Number, required: false, min: 0, max: 65536 }
     "tcpHost": { type: String, required: false }
     "pollingSchedule": { type: String, required: false }
+    "requestBody": { type: Boolean, required: false }
+    "responseBody": { type: Boolean, required: false }
     "allow": [
         { type: String, required: true }
     ]

@@ -65,9 +65,9 @@ exports.startupWorker = ->
 
 
 
-###############################################################################
-# Function for getting the Task object and the approriate Transaction records #
-###############################################################################
+################################################################################
+# Function for getting the Task object and the appropriate Transaction records #
+################################################################################
 
 rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
 
@@ -106,6 +106,15 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
                 status: "Failed"
             rerunUpdateTaskObject taskID, transactionID, response, (updatedTask) ->
             err = "Rerun Transaction #" + transactionID + " - could not be found!"
+            return callback err, null
+
+          # check if 'canRerun' property is false - reject the rerun
+          if transaction.canRerun == false
+            response = 
+              transaction:
+                status: "Failed"
+            rerunUpdateTaskObject taskID, transactionID, response, (updatedTask) ->
+            err = "Rerun Transaction #" + transactionID + " - is not allowed to be rerun as we don't have enough information about the request."
             return callback err, null
 
           # send the transactions data in callback
