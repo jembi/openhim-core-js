@@ -140,18 +140,25 @@ exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, b
 		req.on "data", (chunk) ->
 			if chunk.toString() == bodyToMatch
 				if acceptEncoding.match /gzip/g #the him always  sets the accept-encoding headers to accept gzip it then decompresses the response and sends it to the client
-					headers =
-						"Content-Type": "text/plain"
-						"content-encoding": "gzip"
-
-					res.writeHead successStatusCode,  headers
-
 					buf = new Buffer(bodyToMatch, 'utf-8')
-					zlib.gzip buf, (_, result) ->
-						res.end result
+					zlib.gzip bodyToMatch, (_, result) ->
+            headers =
+              "date": (new Date()).toString()
+              "vary": "Accept-Encoding"
+              "server": "Apache"
+              "allow": "GET,HEAD,POST,PUT,OPTIONS"
+              "content-type": "text/html"
+              "content-encoding": "gzip"
+              "content-length": result.length
+              "connection": "close"
+
+
+            res.writeHead successStatusCode,  headers
+            res.end result
 				else
 					res.writeHead successStatusCode, {"Content-Type": "text/plain"}
 					res.end bodyToMatch
 			else
 				res.writeHead errStatusCode, {"Content-Type": "text/plain"}
 				res.end()
+

@@ -14,9 +14,6 @@ logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
 
-unzipBody = true
-deflateBody = true
-
 containsMultiplePrimaries = (routes) ->
 	numPrimaries = 0
 	for route in routes
@@ -37,7 +34,8 @@ setKoaResponse = (ctx, response) ->
 			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
 			else
 				try
-					ctx.response.set key, value
+          if key != 'content-encoding' # Strip the content encoding header
+            ctx.response.set key, value
 				catch err
 					logger.error err
 
@@ -176,14 +174,6 @@ sendHttpRequest = (ctx, route, options) ->
 	defered = Q.defer();
 	response = {}
 
-	unzipBody = true
-	encoding
-
-	try
-		encoding = ctx.acceptsEncodings('gzip', 'deflate', 'identity')
-	catch error
-		logger.info error
-
 	method = http
 
 	if route.secured
@@ -193,24 +183,16 @@ sendHttpRequest = (ctx, route, options) ->
 		response.status = routeRes.statusCode
 		response.headers = routeRes.headers
 
-
-		if 'gzip' == encoding
-			unzipBody = false
-
-
-		if 'deflate' == encoding
-			deflateBody = false
-
 		uncompressedBodyBufs = []
-		if routeRes.headers['content-encoding'] == 'gzip' and unzipBody #attempt to gunzip
-			routeRes.pipe(gunzip);
+		if routeRes.headers['content-encoding'] == 'gzip' #attempt to gunzip
+			routeRes.pipe gunzip
 
 			gunzip.on "data", (data) ->
-				uncompressedBodyBufs.push data
-				return
+        uncompressedBodyBufs.push data
+        return
 
-		if routeRes.headers['content-encoding'] == 'deflate' and deflateBody #attempt to inflate
-			routeRes.pipe(inflate);
+		if routeRes.headers['content-encoding'] == 'deflate' #attempt to inflate
+			routeRes.pipe inflate
 
 			inflate.on "data", (data) ->
 				uncompressedBodyBufs.push data
@@ -224,8 +206,7 @@ sendHttpRequest = (ctx, route, options) ->
 		routeRes.on "end", ->
 			response.timestamp = new Date()
 			charset = obtainCharset(routeRes.headers)
-
-			if routeRes.headers['content-encoding'] == 'gzip' and unzipBody
+			if routeRes.headers['content-encoding'] == 'gzip'
 				gunzip.on "end", ->
 					uncompressedBody =	Buffer.concat uncompressedBodyBufs
 					response.body = uncompressedBody.toString charset
@@ -233,7 +214,7 @@ sendHttpRequest = (ctx, route, options) ->
 						defered.resolve response
 					return
 
-			else if routeRes.headers['content-encoding'] == 'deflate' and deflateBody
+			else if routeRes.headers['content-encoding'] == 'deflate'
 				inflate.on "end", ->
 					uncompressedBody =	Buffer.concat uncompressedBodyBufs
 					response.body = uncompressedBody.toString charset

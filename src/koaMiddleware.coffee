@@ -33,8 +33,6 @@ rawBodyReader = `function *(next) {
 }`
 
 
-
-
 exports.setupApp = (done) ->
 	app = koa()
 
@@ -51,12 +49,9 @@ exports.setupApp = (done) ->
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware
 
-  # Commpress response on exit
+  # Compress response on exit
 	app.use compress(
-		filter: (content_type) ->
-			/text/i.test content_type
-
-		threshold: 2048
+		threshold: 8
 		flush: require("zlib").Z_SYNC_FLUSH
 	)
 	# Visualizer
