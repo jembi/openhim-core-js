@@ -151,10 +151,9 @@ exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, b
 						  "content-encoding": "gzip"
 						  "content-length": result.length
 						  "connection": "close"
-
-
-            res.writeHead successStatusCode,  headers
-            res.end result
+							
+						res.writeHead successStatusCode,  headers
+						res.end result
 				else
 					res.writeHead successStatusCode, {"Content-Type": "text/plain"}
 					res.end bodyToMatch
