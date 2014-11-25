@@ -2,7 +2,7 @@ transactions = require "../model/transactions"
 logger = require "winston"
 Q = require "q"
 
-exports.transactionStatus = transactionStatus = 
+exports.transactionStatus = transactionStatus =
 	PROCESSING: 'Processing'
 	SUCCESSFUL: 'Successful'
 	COMPLETED: 'Completed'
@@ -21,6 +21,17 @@ exports.storeTransaction = (ctx, done) ->
 	logger.info 'Storing request metadata for inbound transaction'
 
 	ctx.requestTimestamp = new Date()
+
+	# Headers
+	setOrAppendHeader = (ctx, header, value) ->
+		return if not value
+		if ctx.header[header]
+			ctx.header[header] = "#{ctx.header[header]}, #{value}"
+		else
+			ctx.header[header] = "#{value}"
+	setOrAppendHeader ctx, 'X-Forwarded-For', ctx.request.ip
+	setOrAppendHeader ctx, 'X-Forwarded-Host', ctx.request.host
+
 	headers = copyMapWithEscapedReservedCharacters ctx.header
 
 	tx = new transactions.Transaction
