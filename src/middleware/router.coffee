@@ -34,8 +34,8 @@ setKoaResponse = (ctx, response) ->
 			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
 			else
 				try
-          if key != 'content-encoding' # Strip the content encoding header
-            ctx.response.set key, value
+					if key != 'content-encoding' # Strip the content encoding header
+						ctx.response.set key, value
 				catch err
 					logger.error err
 
@@ -188,8 +188,8 @@ sendHttpRequest = (ctx, route, options) ->
 			routeRes.pipe gunzip
 
 			gunzip.on "data", (data) ->
-        uncompressedBodyBufs.push data
-        return
+				uncompressedBodyBufs.push data
+				return
 
 		if routeRes.headers['content-encoding'] == 'deflate' #attempt to inflate
 			routeRes.pipe inflate
