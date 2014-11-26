@@ -7,7 +7,7 @@ TaskSchema = new Schema
 	"created": { type: Date, required: true, default: Date.now }
 	"completedDate": { type: Date, required: false }
 	"user": { type: String, required: true } 
-	"remainingTransactions": { type: Number, required: true; } 
+	"remainingTransactions": { type: Number, required: true }
 
 ###
 # The task object that describes a specific task within the OpenHIM.

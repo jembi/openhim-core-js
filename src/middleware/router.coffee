@@ -32,7 +32,12 @@ setKoaResponse = (ctx, response) ->
 		switch key
 			when 'set-cookie' then setCookiesOnContext ctx, value
 			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
-			else ctx.response.header[key] = value
+			else
+				try
+					if key != 'content-encoding' # Strip the content encoding header
+						ctx.response.set key, value
+				catch err
+					logger.error err
 
 if process.env.NODE_ENV == "test"
 	exports.setKoaResponse = setKoaResponse
@@ -180,14 +185,14 @@ sendHttpRequest = (ctx, route, options) ->
 
 		uncompressedBodyBufs = []
 		if routeRes.headers['content-encoding'] == 'gzip' #attempt to gunzip
-			routeRes.pipe(gunzip);
+			routeRes.pipe gunzip
 
 			gunzip.on "data", (data) ->
 				uncompressedBodyBufs.push data
 				return
 
 		if routeRes.headers['content-encoding'] == 'deflate' #attempt to inflate
-			routeRes.pipe(inflate);
+			routeRes.pipe inflate
 
 			inflate.on "data", (data) ->
 				uncompressedBodyBufs.push data
