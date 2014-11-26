@@ -22,16 +22,6 @@ exports.storeTransaction = (ctx, done) ->
 
 	ctx.requestTimestamp = new Date()
 
-	# Headers
-	setOrAppendHeader = (ctx, header, value) ->
-		return if not value
-		if ctx.header[header]
-			ctx.header[header] = "#{ctx.header[header]}, #{value}"
-		else
-			ctx.header[header] = "#{value}"
-	setOrAppendHeader ctx, 'X-Forwarded-For', ctx.request.ip
-	setOrAppendHeader ctx, 'X-Forwarded-Host', ctx.request.host
-
 	headers = copyMapWithEscapedReservedCharacters ctx.header
 
 	tx = new transactions.Transaction

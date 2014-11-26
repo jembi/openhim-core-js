@@ -70,11 +70,6 @@ describe "MessageStore", ->
 	ctx.authorisedChannel.requestBody = true
 	ctx.authorisedChannel.responseBody = true
 
-	ctx.request = new Object()
-	ctx.request.ip = '192.168.1.42'
-	ctx.request.host = 'localhost:5000'
-	ctx.request.protocol = 'https'
-
 
 	beforeEach (done) -> Transaction.remove {}, -> done()
 
@@ -112,26 +107,6 @@ describe "MessageStore", ->
 					trans.request.headers['dot．header'].should.equal '123'
 					trans.request.headers['dollar＄header'].should.equal '124'
 					ctx.header['X-OpenHIM-TransactionID'].should.equal result._id.toString()
-					done()
-
-		it "should set the X-Forwarded-* headers if not present", (done) ->
-			delete ctx.header['X-Forwarded-For']
-			delete ctx.header['X-Forwarded-Host']
-			messageStore.storeTransaction ctx, (error, result) ->
-				should.not.exist(error)
-				Transaction.findOne { '_id': result._id }, (error, trans) ->
-					trans.request.headers['X-Forwarded-For'].should.equal '192.168.1.42'
-					trans.request.headers['X-Forwarded-Host'].should.equal 'localhost:5000'
-					done()
-
-		it "should append values to the X-Forwarded-* headers if already present", (done) ->
-			ctx.header['X-Forwarded-For'] = '192.168.2.34'
-			ctx.header['X-Forwarded-Host'] = 'someserver.com'
-			messageStore.storeTransaction ctx, (error, result) ->
-				should.not.exist(error)
-				Transaction.findOne { '_id': result._id }, (error, trans) ->
-					trans.request.headers['X-Forwarded-For'].should.equal '192.168.2.34, 192.168.1.42'
-					trans.request.headers['X-Forwarded-Host'].should.equal 'someserver.com, localhost:5000'
 					done()
 
 	describe ".storeResponse", ->
@@ -314,7 +289,7 @@ describe "MessageStore", ->
 					trans.clientID.toString().should.equal "313233343536373839319999"
 					trans.channelID.toString().should.equal "313233343536373839313030"
 					trans.status.should.equal "Processing"
-					trans.request.body.should.equal ""					
+					trans.request.body.should.equal ""
 					trans.canRerun.should.equal false
 					done()
 
@@ -330,7 +305,6 @@ describe "MessageStore", ->
 					should.not.exist(err2)
 					Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
 						should.not.exist(err3)
-						console.log( trans )
 						(trans != null).should.true
 						trans.response.status.should.equal 201
 						trans.response.body.should.equal ""
