@@ -29,9 +29,10 @@ setKoaResponse = (ctx, response) ->
 		ctx.response.header = {}
 
 	for key, value of response.headers
-		switch key
+		switch key.toLowerCase()
 			when 'set-cookie' then setCookiesOnContext ctx, value
 			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
+			when 'content-type' then ctx.response.type = value
 			else ctx.response.header[key] = value
 
 if process.env.NODE_ENV == "test"
@@ -57,7 +58,7 @@ handleServerError = (ctx, err) ->
 	ctx.response.status = status.INTERNAL_SERVER_ERROR
 	ctx.response.timestamp = new Date()
 	ctx.response.body = "An internal server error occurred"
-	logger.error err
+	logger.error "Internal server error occured: #{err} \n #{err.stack}"
 
 sendRequestToRoutes = (ctx, routes, next) ->
 	promises = []
