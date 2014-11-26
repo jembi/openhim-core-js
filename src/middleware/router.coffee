@@ -1,7 +1,5 @@
-util = require('util');
-zlib = require('zlib');
-gunzip = require('zlib').createGunzip()
-inflate = require('zlib').createInflate()
+util = require 'util'
+zlib = require 'zlib'
 http = require 'http'
 https = require 'https'
 net = require 'net'
@@ -173,6 +171,9 @@ obtainCharset = (headers) ->
 sendHttpRequest = (ctx, route, options) ->
 	defered = Q.defer();
 	response = {}
+
+	gunzip = zlib.createGunzip()
+	inflate = zlib.createInflate()
 
 	method = http
 
