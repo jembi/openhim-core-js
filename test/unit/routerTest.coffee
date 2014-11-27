@@ -306,10 +306,12 @@ describe "HTTP Router", ->
 						primary: true
 					]
 
+
 				ctx = new Object()
 				ctx.authorisedChannel = channel
 				ctx.request = new Object()
-				ctx.response = new Object()
+				ctx.response  = new Object()
+				ctx.response.set = sinon.spy()
 				ctx.path = ctx.request.url = "/test"
 				ctx.request.method = "GET"
 				ctx.requestTimestamp = requestTimestamp
@@ -321,7 +323,7 @@ describe "HTTP Router", ->
 						ctx.response.status.should.be.exactly 400
 						ctx.response.body.should.be.exactly 'Mock response body from mediator\n'
 						ctx.response.type.should.be.exactly 'text/xml'
-						ctx.response.header.should.have.property 'another-header', 'xyz'
+						(ctx.response.set.calledWith 'another-header', 'xyz').should.be.true	
 						done()
 					catch err
 						done err
@@ -564,6 +566,7 @@ describe "HTTP Router", ->
 		createCtx = ->
 			ctx = {}
 			ctx.response = {}
+			ctx.response.set = sinon.spy()
 			return ctx
 
 		createResponse = ->
@@ -597,7 +600,7 @@ describe "HTTP Router", ->
 			router.setKoaResponse ctx, response
 
 			# then
-			ctx.response.header.should.have.property 'x-header', 'anotherValue'
+			(ctx.response.set.calledWith 'x-header', 'anotherValue').should.be.true	
 
 		it 'should redirect the context if needed', ->
 			# given

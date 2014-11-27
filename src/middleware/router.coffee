@@ -1,7 +1,5 @@
-util = require('util');
-zlib = require('zlib');
-gunzip = require('zlib').createGunzip()
-inflate = require('zlib').createInflate()
+util = require 'util'
+zlib = require 'zlib'
 http = require 'http'
 https = require 'https'
 net = require 'net'
@@ -33,7 +31,12 @@ setKoaResponse = (ctx, response) ->
 			when 'set-cookie' then setCookiesOnContext ctx, value
 			when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
 			when 'content-type' then ctx.response.type = value
-			else ctx.response.header[key] = value
+			else
+				try
+					if key != 'content-encoding' # Strip the content encoding header
+						ctx.response.set key, value
+				catch err
+					logger.error err
 
 if process.env.NODE_ENV == "test"
 	exports.setKoaResponse = setKoaResponse
@@ -143,6 +146,9 @@ sendRequest = (ctx, route, options) ->
 	if route.type is 'tcp'
 		logger.info 'Routing tcp request'
 		return sendSocketRequest ctx, route, options
+	else if route.type is 'mllp'
+		logger.info 'Routing mllp request'
+		return sendMLLPSocketRequest ctx, route, options
 	else
 		logger.info 'Routing http(s) request'
 		return sendHttpRequest ctx, route, options
@@ -150,7 +156,7 @@ sendRequest = (ctx, route, options) ->
 obtainCharset = (headers) ->
         contentType = headers['content-type'] || ''
         matches =  contentType.match(/charset=([^;,\r\n]+)/i)
-        if (matches && matches[1]) 
+        if (matches && matches[1])
                 return matches[1]
         return  'utf-8'
 
@@ -167,6 +173,9 @@ sendHttpRequest = (ctx, route, options) ->
 	defered = Q.defer();
 	response = {}
 
+	gunzip = zlib.createGunzip()
+	inflate = zlib.createInflate()
+
 	method = http
 
 	if route.secured
@@ -178,14 +187,14 @@ sendHttpRequest = (ctx, route, options) ->
 
 		uncompressedBodyBufs = []
 		if routeRes.headers['content-encoding'] == 'gzip' #attempt to gunzip
-			routeRes.pipe(gunzip);
+			routeRes.pipe gunzip
 
 			gunzip.on "data", (data) ->
 				uncompressedBodyBufs.push data
 				return
 
 		if routeRes.headers['content-encoding'] == 'deflate' #attempt to inflate
-			routeRes.pipe(inflate);
+			routeRes.pipe inflate
 
 			inflate.on "data", (data) ->
 				uncompressedBodyBufs.push data
@@ -250,7 +259,7 @@ sendSocketRequest = (ctx, route, options) ->
 	bufs = []
 	client.on 'data', (chunk) ->
 		bufs.push chunk
-		
+
 	client.on 'error', (err) -> defered.reject err
 
 	client.on 'end', ->
@@ -261,6 +270,49 @@ sendSocketRequest = (ctx, route, options) ->
 			defered.resolve response
 
 	return defered.promise
+
+###
+# A promise returning function that send a request to the given route using sockets and resolves
+# the returned promise with a response object of the following form: ()
+# 	response =
+#		status: <200 if all work, else 500>
+#		body: <the received data from the socket>
+#		timestamp: <the time the response was recieved>
+###
+sendMLLPSocketRequest = (ctx, route, options) ->
+
+  endChar = `String.fromCharCode(034)`
+  defered = Q.defer()
+  requestBody = ctx.body
+  client = new net.Socket()
+  response = {}
+
+  client.connect options.port, options.hostname, ->
+    logger.info "Opened mllp connection to #{options.hostname}:#{options.port}"
+
+  client.on 'connect', ()->
+    client.write requestBody
+
+  bufs = []
+  client.on 'data', (chunk) ->
+    bufs.push chunk
+    n = chunk.toString().indexOf(endChar);
+    if n > -1
+      logger.info 'Received response end character'
+      response.body = Buffer.concat bufs
+      response.status = status.OK
+      response.timestamp = new Date()
+      if not defered.promise.isRejected()
+        defered.resolve response
+        client.end()
+
+
+  client.on 'error', (err) -> defered.reject err
+
+  client.on 'end', ->
+    logger.info "Closed mllp connection to #{options.hostname}:#{options.port}"
+
+  return defered.promise
 
 
 getDestinationPath = (route, requestPath) ->
