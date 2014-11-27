@@ -2,7 +2,7 @@ transactions = require "../model/transactions"
 logger = require "winston"
 Q = require "q"
 
-exports.transactionStatus = transactionStatus = 
+exports.transactionStatus = transactionStatus =
 	PROCESSING: 'Processing'
 	SUCCESSFUL: 'Successful'
 	COMPLETED: 'Completed'
@@ -21,6 +21,7 @@ exports.storeTransaction = (ctx, done) ->
 	logger.info 'Storing request metadata for inbound transaction'
 
 	ctx.requestTimestamp = new Date()
+
 	headers = copyMapWithEscapedReservedCharacters ctx.header
 
 	tx = new transactions.Transaction

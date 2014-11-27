@@ -12,6 +12,7 @@ authorisation = require './middleware/authorisation'
 pollingBypassAuthorisation = require './middleware/pollingBypassAuthorisation'
 pollingBypassAuthentication = require './middleware/pollingBypassAuthentication'
 visualizer = require './middleware/visualizer'
+proxy = require './middleware/proxy'
 config = require './config/config'
 config.authentication = config.get('authentication')
 getRawBody = require 'raw-body'
@@ -33,6 +34,7 @@ rawBodyReader = `function *(next) {
 }`
 
 
+# Primary app
 exports.setupApp = (done) ->
 	app = koa()
 
@@ -57,7 +59,10 @@ exports.setupApp = (done) ->
 	# Visualizer
 	app.use visualizer.koaMiddleware
 
-	# Persit message middleware
+	# Proxy
+	app.use proxy.koaMiddleware
+
+	# Persist message middleware
 	app.use messageStore.koaMiddleware
 
 	# Call router
@@ -65,9 +70,8 @@ exports.setupApp = (done) ->
 
 	done(app)
 
-##################################################
-### rerunApp server for the rerun transactions ###
-##################################################
+
+# Rerun app that bypasses auth
 exports.rerunApp = (done) ->
 	app = koa()
 
@@ -85,7 +89,7 @@ exports.rerunApp = (done) ->
 	# Visualizer
 	app.use visualizer.koaMiddleware
 
-	# Persit message middleware
+	# Persist message middleware
 	app.use messageStore.koaMiddleware
 
 	# Authorisation middleware
@@ -95,10 +99,8 @@ exports.rerunApp = (done) ->
 	app.use router.koaMiddleware
 
 	done(app)
-##################################################
-### rerunApp server for the rerun transactions ###
-##################################################
 
+# App for TCP/TLS sockets
 exports.tcpApp = (done) ->
 	app = koa()
 
@@ -111,7 +113,10 @@ exports.tcpApp = (done) ->
 	# Visualizer
 	app.use visualizer.koaMiddleware
 
-	# Persit message middleware
+	# Proxy
+	app.use proxy.koaMiddleware
+
+	# Persist message middleware
 	app.use messageStore.koaMiddleware
 
 	# Call router
@@ -119,6 +124,7 @@ exports.tcpApp = (done) ->
 
 	done(app)
 
+# App used by scheduled polling
 exports.pollingApp = (done) ->
 	app = koa()
 
@@ -133,7 +139,7 @@ exports.pollingApp = (done) ->
 	# Visualizer
 	app.use visualizer.koaMiddleware
 
-	# Persit message middleware
+	# Persist message middleware
 	app.use messageStore.koaMiddleware
 
 	# Call router
