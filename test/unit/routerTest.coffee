@@ -279,7 +279,7 @@ describe "HTTP Router", ->
 				status: 'Failed'
 				response:
 					status: 400
-					headers: { 'content-type': 'text/xml' }
+					headers: { 'content-type': 'text/xml', 'another-header': 'xyz' }
 					body: 'Mock response body from mediator\n'
 				orchestrations:
 					name: 'Mock mediator orchestration'
@@ -322,7 +322,8 @@ describe "HTTP Router", ->
 					try
 						ctx.response.status.should.be.exactly 400
 						ctx.response.body.should.be.exactly 'Mock response body from mediator\n'
-						(ctx.response.set.calledWith 'content-type', 'text/xml').should.be.true
+						ctx.response.type.should.be.exactly 'text/xml'
+						(ctx.response.set.calledWith 'another-header', 'xyz').should.be.true	
 						done()
 					catch err
 						done err
@@ -599,7 +600,6 @@ describe "HTTP Router", ->
 			router.setKoaResponse ctx, response
 
 			# then
-			(ctx.response.set.calledWith 'content-type', 'text/xml').should.be.true
 			(ctx.response.set.calledWith 'x-header', 'anotherValue').should.be.true	
 
 		it 'should redirect the context if needed', ->
