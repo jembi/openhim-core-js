@@ -42,6 +42,7 @@ TransactionSchema = new Schema
 	"routes": [ RouteMetadataSchema ]
 	"orchestrations": [ OrchestrationMetadataSchema ]
 	"properties": { type: Object }
+	"canRerun": { type: Boolean, default: true }
 	"status": { type: String, required: true, index: true, enum: ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)'] }
 
 TransactionSchema.index "request.timestamp"
