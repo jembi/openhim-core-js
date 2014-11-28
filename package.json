@@ -17,6 +17,7 @@
     "koa-compress": "^1.0.8",
     "koa-cors": "0.0.11",
     "koa-route": "~1.0.2",
+    "koa-statsd": "0.0.2",
     "moment": "~2.7.0",
     "mongodb": "1.4.7",
     "mongoose": "3.8.14",
@@ -30,6 +31,8 @@
     "raw-body": "1.2.2",
     "request": "~2.34.0",
     "semver": "4.0.0",
+    "statsd-client": "0.0.17",
+    "statsy": "^0.2.0",
     "winston": "0.7.3",
     "xmldom": "~0.1.19",
     "xpath": "0.0.6"

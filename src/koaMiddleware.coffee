@@ -9,6 +9,7 @@ rerunUpdateTransactionTask = require "./middleware/rerunUpdateTransactionTask"
 tcpBypassAuthentication = require "./middleware/tcpBypassAuthentication"
 retrieveTCPTransaction = require "./middleware/retrieveTCPTransaction"
 authorisation = require './middleware/authorisation'
+stats = require './middleware/stats'
 pollingBypassAuthorisation = require './middleware/pollingBypassAuthorisation'
 pollingBypassAuthentication = require './middleware/pollingBypassAuthentication'
 visualizer = require './middleware/visualizer'
@@ -16,6 +17,11 @@ config = require './config/config'
 config.authentication = config.get('authentication')
 getRawBody = require 'raw-body'
 tcpAdapter = require './tcpAdapter'
+Client = require "statsy"
+Q = require "q"
+
+
+
 
 compress = require 'koa-compress'
 
@@ -31,6 +37,9 @@ rawBodyReader = `function *(next) {
 
 	yield next;
 }`
+
+
+
 
 
 exports.setupApp = (done) ->
@@ -57,7 +66,10 @@ exports.setupApp = (done) ->
 	# Visualizer
 	app.use visualizer.koaMiddleware
 
+	# Send stats to StatsD
+	app.use stats.koaMiddleware
 	# Persit message middleware
+
 	app.use messageStore.koaMiddleware
 
 	# Call router
@@ -72,7 +84,7 @@ exports.rerunApp = (done) ->
 	app = koa()
 
 	app.use rawBodyReader
-	
+
 	# Rerun bypass authentication middlware
 	app.use rerunBypassAuthentication.koaMiddleware
 
@@ -85,11 +97,16 @@ exports.rerunApp = (done) ->
 	# Visualizer
 	app.use visualizer.koaMiddleware
 
+	# Send stats to StatsD
+	app.use stats.koaMiddleware
+
 	# Persit message middleware
 	app.use messageStore.koaMiddleware
 
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware
+
+
 
 	# Call router
 	app.use router.koaMiddleware
@@ -110,6 +127,9 @@ exports.tcpApp = (done) ->
 
 	# Visualizer
 	app.use visualizer.koaMiddleware
+
+	# Send stats to StatsD
+	app.use stats.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware
@@ -132,6 +152,9 @@ exports.pollingApp = (done) ->
 
 	# Visualizer
 	app.use visualizer.koaMiddleware
+
+	# Send stats to StatsD
+	app.use stats.koaMiddleware
 
 	# Persit message middleware
 	app.use messageStore.koaMiddleware
