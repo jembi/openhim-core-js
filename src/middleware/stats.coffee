@@ -1,12 +1,27 @@
-SDC = require "statsd-client"
-sdc = new SDC { host: '104.236.15.32' }
+config = require '../config/config'
+statsd_client = require "statsd-client"
+statsd_server = config.get 'statsd'
+application = config.get 'application'
+sdc = new statsd_client statsd_server
+timer = new Date()
+logger = require "winston"
+os = require "os"
+domain = os.hostname() + '.' + application.name
+
+
+exports.incrementTransactionCount = (ctx, done) ->
+  logger.info 'sending count to statsd for ' + domain + '.' + ctx.authorisedChannel._id
+  sdc.increment application.name + '.' + ctx.authorisedChannel._id
+
+
+exports.measureTransactionDuration = (ctx, done) ->
+  logger.info 'sending durations to statsd for ' + domain + '.' + ctx.authorisedChannel._id
+  sdc.timing application.name + '.' + ctx.authorisedChannel._id, timer
 
 exports.koaMiddleware = `function *statsMiddleware(next) {
 
-      var timer = new Date();
       yield next;
-      sdc.increment('some.counter'); // Increment by one.
-      sdc.gauge('some.gauge', 10); // Set gauge to 10
-      sdc.timing('some.timer', timer); // Calculates time diff
+      exports.incrementTransactionCount(this)
+      exports.measureTransactionDuration(this)
       sdc.close();
 }`
