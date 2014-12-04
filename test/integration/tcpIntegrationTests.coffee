@@ -9,6 +9,8 @@ server = require "../../lib/server"
 fs = require "fs"
 sinon = require "sinon"
 stats = require "../../lib/middleware/stats"
+mockudp = require "mock-udp"
+scope = mockudp "127.0.0.1:8125"
 
 describe "TCP/TLS Integration Tests", ->
 	testMessage = "This is an awesome test message!"

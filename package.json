@@ -18,6 +18,7 @@
     "koa-cors": "0.0.11",
     "koa-route": "~1.0.2",
     "koa-statsd": "0.0.2",
+    "mock-udp": "^0.1.1",
     "moment": "~2.7.0",
     "mongodb": "1.4.7",
     "mongoose": "3.8.14",
