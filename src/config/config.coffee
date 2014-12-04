@@ -18,7 +18,7 @@ Config = ->
 		nconf.file 'customConfigOverride', nconf.get('path')
 
 	# development environment override
-	if environment is "development"
+	if environment
 		nconf.file 'developmentOverride', 'config/' + environment + '.json'
 
 	# load the default config file
