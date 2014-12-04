@@ -27,6 +27,7 @@ exports.incrementTransactionStatusCount = (ctx, done) ->
 exports.koaMiddleware = `function *statsMiddleware(next) {
 
       yield next;
+      console.log('In stats middleware');
       exports.incrementTransactionCount(this)
       exports.incrementTransactionStatusCount(this)
       exports.measureTransactionDuration(this)
