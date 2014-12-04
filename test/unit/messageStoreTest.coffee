@@ -67,7 +67,6 @@ describe "MessageStore", ->
 
 	ctx.authorisedChannel = new Object()
 	ctx.authorisedChannel._id = new ObjectId "313233343536373839313030"
-
 	ctx.authorisedChannel.requestBody = true
 	ctx.authorisedChannel.responseBody = true
 
@@ -290,7 +289,7 @@ describe "MessageStore", ->
 					trans.clientID.toString().should.equal "313233343536373839319999"
 					trans.channelID.toString().should.equal "313233343536373839313030"
 					trans.status.should.equal "Processing"
-					trans.request.body.should.equal ""					
+					trans.request.body.should.equal ""
 					trans.canRerun.should.equal false
 					done()
 
