@@ -9,7 +9,7 @@ server = require "../../lib/server"
 fs = require "fs"
 sinon = require "sinon"
 stats = require "../../lib/middleware/stats"
-mockudp = require "mock-udp"
+
 
 
 describe "TCP/TLS Integration Tests", ->
@@ -102,7 +102,6 @@ describe "TCP/TLS Integration Tests", ->
 	afterEach (done) -> server.stop done
 
 	it "should route TCP messages", (done) ->
-    scope = mockudp "127.0.0.1:8125"
     incrementTransactionCountSpy = sinon.spy stats, 'incrementTransactionCount' # check if the method was called
     incrementTransactionStatusCountSpy = sinon.spy stats, 'incrementTransactionStatusCount' # check if the method was called
     measureTransactionDurationSpy = sinon.spy stats, 'measureTransactionDuration' # check if the method was called
@@ -115,8 +114,6 @@ describe "TCP/TLS Integration Tests", ->
         incrementTransactionStatusCountSpy.calledOnce.should.be.true
         incrementTransactionStatusCountSpy.getCall(0).args[0].should.have.property 'transactionStatus', 'Successful'
         measureTransactionDurationSpy.calledOnce.should.be.true
-        scope.buffer
-        scope.done()
 				done()
 
 	it "should route TLS messages", (done) ->
