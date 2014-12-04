@@ -11,17 +11,26 @@ domain = os.hostname() + '.' + application.name
 
 exports.incrementTransactionCount = (ctx, done) ->
   logger.info 'sending count to statsd for ' + domain + '.' + ctx.authorisedChannel._id
-  sdc.increment domain + '.' + ctx.authorisedChannel._id
+  try
+    sdc.increment domain + '.' + ctx.authorisedChannel._id
+  catch error
+    logger.error error
 
 
 exports.measureTransactionDuration = (ctx, done) ->
   logger.info 'sending durations to statsd for ' + domain + '.' + ctx.authorisedChannel._id
-  sdc.timing domain + '.' + ctx.authorisedChannel._id, timer
+  try
+    sdc.timing domain + '.' + ctx.authorisedChannel._id, timer
+  catch error
+    logger.error error
 
 exports.incrementTransactionStatusCount = (ctx, done) ->
   logger.info 'sending status count to statsd for ' + domain + '.' + ctx.authorisedChannel._id
   transactionStatus = ctx.transactionStatus
-  sdc.increment domain + '.' + ctx.authorisedChannel._id + '.' + transactionStatus
+  try
+    sdc.increment domain + '.' + ctx.authorisedChannel._id + '.' + transactionStatus
+  catch error
+    logger.error error
 
 
 exports.koaMiddleware = `function *statsMiddleware(next) {
