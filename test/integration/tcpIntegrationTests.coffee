@@ -103,7 +103,6 @@ describe "TCP/TLS Integration Tests", ->
 
 	it "should route TCP messages", (done) ->
     incrementTransactionCountSpy = sinon.spy stats, 'incrementTransactionCount' # check if the method was called
-    incrementTransactionStatusCountSpy = sinon.spy stats, 'incrementTransactionStatusCount' # check if the method was called
     measureTransactionDurationSpy = sinon.spy stats, 'measureTransactionDuration' # check if the method was called
 
     server.start null, null, null, null, 7787, null, ->
@@ -111,8 +110,6 @@ describe "TCP/TLS Integration Tests", ->
         data.should.be.exactly 'OK'
         incrementTransactionCountSpy.calledOnce.should.be.true
         incrementTransactionCountSpy.getCall(0).args[0].authorisedChannel.should.have.property 'name', 'TCPIntegrationChannel1'
-        incrementTransactionStatusCountSpy.calledOnce.should.be.true
-        incrementTransactionStatusCountSpy.getCall(0).args[0].should.have.property 'transactionStatus', 'Successful'
         measureTransactionDurationSpy.calledOnce.should.be.true
 				done()
 
