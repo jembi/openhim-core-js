@@ -9,10 +9,8 @@ domain = os.hostname() + '.' + application.name
 
 sdc = new statsd_client statsd_server
 
-
-
 exports.incrementTransactionCount = (ctx, done) ->
-  logger.info 'sending count to statsd for ' + domain + '.' + ctx.authorisedChannel._id
+  logger.info 'sending counts to statsd for ' + domain + '.' + ctx.authorisedChannel._id
   transactionStatus = ctx.transactionStatus
   try
     sdc.increment domain # Overall Counter
@@ -33,8 +31,6 @@ exports.measureTransactionDuration = (ctx, done) ->
     sdc.timing domain + '.' + ctx.authorisedChannel._id + '.' + transactionStatus, timer #Per Channel Status
   catch error
     logger.error error
-
-
 
 exports.koaMiddleware = `function *statsMiddleware(next) {
 
