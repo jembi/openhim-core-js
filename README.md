@@ -24,7 +24,7 @@ See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more 
 5. Start the server by running `node --harmony lib/server.js`
 
 Alternatively you can also use one of the following options:
-* use [Vagrant](https://github.com/jembi/openhim-core-js/wiki/Running-the-OpenHIM-as-a-developer) to fire up an instance if you're a developer, or just want a quick instance to test with, or
+* use [Vagrant](https://github.com/jembi/openhim-core-js/wiki/Running-the-OpenHIM-using-Vagrant) to fire up an instance if you're a developer, or just want a quick instance to test with, or
 * use [Puppet](https://github.com/jembi/openhim-core-js/wiki/OpenHIM-Installation-using-Puppet) to deploy an instance on a server.
 
 Installation and Development
