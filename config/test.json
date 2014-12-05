@@ -6,7 +6,7 @@
         "level": "error"
     },
     "statsd": {
-        "host": "104.236.15.32"
+        "host": "192.168.1.213"
     },
     "application": {
         "name": "Test"
