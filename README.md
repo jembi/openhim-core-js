@@ -89,7 +89,7 @@ The server will by default start in development mode using the mongodb database 
 
 This starts the server with production defaults, including the use of the production mongodb database called 'openhim'.
 
-To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config script and keep the property settings you wish to override. You can then override the default configuration settings with the following command:
+To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config script and keep the settings you wish to override. You can then override the default configuration settings with the following command:
 
 `--conf=path/to/customConfig.json`
 
