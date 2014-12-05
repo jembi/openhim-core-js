@@ -13,9 +13,17 @@ Config = ->
 	environment = nconf.get("NODE:ENV") or "development"
 
 	# Load the configuration-values
-	nconf.file environment, 'config/' + environment + '.json'
-	nconf.file 'default', 'config/default.json'
+	# user specified config override
+	if nconf.get("conf")
+		nconf.file 'customConfigOverride', nconf.get('conf')
 
+	# environment override
+	if environment
+		nconf.file 'environmentOverride', 'config/' + environment + '.json'
+
+	# load the default config file
+	nconf.file 'default', 'config/default.json'
+	
 	# Return the result
 	return
 

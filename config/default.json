@@ -1,4 +1,10 @@
 {
+  "mongo": {
+    "url": "mongodb://localhost/openhim"
+  },
+  "logger": {
+    "level": "info"
+  },
   "router": {
     "httpPort": 5001,
     "httpsPort": 5000

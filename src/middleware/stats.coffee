@@ -2,11 +2,13 @@ config = require '../config/config'
 statsd_client = require "statsd-client"
 statsd_server = config.get 'statsd'
 application = config.get 'application'
-sdc = new statsd_client statsd_server
-timer = new Date()
 logger = require "winston"
 os = require "os"
+timer = new Date()
 domain = os.hostname() + '.' + application.name
+
+sdc = new statsd_client statsd_server
+
 
 
 exports.incrementTransactionCount = (ctx, done) ->
@@ -36,7 +38,6 @@ exports.incrementTransactionStatusCount = (ctx, done) ->
 exports.koaMiddleware = `function *statsMiddleware(next) {
 
       yield next;
-      console.log('In stats middleware');
       exports.incrementTransactionCount(this)
       exports.incrementTransactionStatusCount(this)
       exports.measureTransactionDuration(this)
