@@ -71,6 +71,11 @@ startHttpServer = (httpPort, app) ->
 	deferred = Q.defer()
 
 	httpServer = http.createServer app.callback()
+
+	# set the socket timeout
+	httpServer.setTimeout config.router.timeout, ->
+		logger.info "HTTP socket timeout reached"
+
 	httpServer.listen httpPort, ->
 		logger.info "HTTP listening on port " + httpPort
 		deferred.resolve()
@@ -85,6 +90,11 @@ startHttpsServer = (httpsPort, app) ->
 		return done err if err
 
 		httpsServer = https.createServer options, app.callback()
+
+		# set the socket timeout
+		httpsServer.setTimeout config.router.timeout, ->
+			logger.info "HTTP socket timeout reached"
+
 		httpsServer.listen httpsPort, ->
 			logger.info "HTTPS listening on port " + httpsPort
 			deferred.resolve()

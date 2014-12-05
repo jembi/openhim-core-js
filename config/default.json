@@ -7,7 +7,8 @@
   },
   "router": {
     "httpPort": 5001,
-    "httpsPort": 5000
+    "httpsPort": 5000,
+    "timeout": 60000
   },
   "api": {
     "httpsPort": 8080

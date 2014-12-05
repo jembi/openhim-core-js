@@ -8,6 +8,7 @@ MongoClient = require('mongodb').MongoClient;
 Q = require 'q'
 config = require '../config/config'
 config.mongo = config.get('mongo')
+config.router = config.get('router')
 logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
@@ -61,7 +62,9 @@ handleServerError = (ctx, err) ->
 	ctx.response.status = status.INTERNAL_SERVER_ERROR
 	ctx.response.timestamp = new Date()
 	ctx.response.body = "An internal server error occurred"
-	logger.error "Internal server error occured: #{err} \n #{err.stack}"
+	logger.error "Internal server error occured: #{err} "
+	logger.error "#{err.stack}" if err.stack
+
 
 sendRequestToRoutes = (ctx, routes, next) ->
 	promises = []
@@ -230,6 +233,8 @@ sendHttpRequest = (ctx, route, options) ->
 					defered.resolve response
 
 	routeReq.on "error", (err) -> defered.reject err
+
+	routeReq.setTimeout config.router.timeout, -> defered.reject "Request Timed Out"	
 
 	if ctx.request.method == "POST" || ctx.request.method == "PUT"
 		routeReq.write ctx.body
