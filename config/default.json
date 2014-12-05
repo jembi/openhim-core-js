@@ -57,5 +57,11 @@
   "visualizer": {
     "enableVisualizer": true,
     "minimumEventPeriodMillis": 100
-  }
+  },
+   "statsd": {
+       "host": "127.0.0.1"
+   },
+   "application": {
+       "name": "Development"
+   }
 }
