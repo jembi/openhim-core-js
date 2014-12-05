@@ -13,10 +13,10 @@ exports.incrementTransactionCount = (ctx, done) ->
   logger.info 'sending counts to statsd for ' + domain + '.' + ctx.authorisedChannel._id
   transactionStatus = ctx.transactionStatus
   try
-    sdc.increment domain # Overall Counter
-    sdc.increment domain + '.' + transactionStatus #Overall Transaction Status
-    sdc.increment domain + '.' + ctx.authorisedChannel._id # Per channel
-    sdc.increment domain + '.' + ctx.authorisedChannel._id + '.' + transactionStatus # Per Channel Status
+    sdc.increment domain + '.Channels' # Overall Counter
+    sdc.increment domain + '.Channels.' + transactionStatus #Overall Transaction Status
+    sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id # Per channel
+    sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.' + transactionStatus # Per Channel Status
   catch error
     logger.error error
 
@@ -25,10 +25,10 @@ exports.measureTransactionDuration = (ctx, done) ->
   logger.info 'sending durations to statsd for ' + domain + '.' + ctx.authorisedChannel._id
   transactionStatus = ctx.transactionStatus
   try
-    sdc.timing domain , timer # Overall Timer
-    sdc.timing domain + '.' + transactionStatus, timer # Overall Transaction Status
-    sdc.timing domain + '.' + ctx.authorisedChannel._id, timer # Per Channel
-    sdc.timing domain + '.' + ctx.authorisedChannel._id + '.' + transactionStatus, timer #Per Channel Status
+    sdc.timing domain + '.Channels'  , timer # Overall Timer
+    sdc.timing domain + '.Channels.' + transactionStatus, timer # Overall Transaction Status
+    sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id, timer # Per Channel
+    sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + transactionStatus, timer #Per Channel Status
   catch error
     logger.error error
 
