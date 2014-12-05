@@ -14,12 +14,12 @@ Config = ->
 
 	# Load the configuration-values
 	# user specified config override
-	if nconf.get("path")
-		nconf.file 'customConfigOverride', nconf.get('path')
+	if nconf.get("conf")
+		nconf.file 'customConfigOverride', nconf.get('conf')
 
-	# development environment override
+	# environment override
 	if environment
-		nconf.file 'developmentOverride', 'config/' + environment + '.json'
+		nconf.file 'environmentOverride', 'config/' + environment + '.json'
 
 	# load the default config file
 	nconf.file 'default', 'config/default.json'
