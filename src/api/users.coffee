@@ -126,6 +126,14 @@ exports.removeUser = `function *removeUser(email) {
 		return;
 	}
 
+	// Test if the user is root@openhim.org
+	if ( this.authenticated.email === 'root@openhim.org' ) {
+		logger.info('User ' +this.authenticated.email+ ' is OpenHIM root, User cannot be deleted through the API')
+		this.body = 'User ' +this.authenticated.email+ ' is OpenHIM root, User cannot be deleted through the API'
+		this.status = 'forbidden';
+		return;
+	}
+
 	var email = unescape (email);
 
 	try {
