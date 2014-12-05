@@ -44,7 +44,13 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
 
 			// lookup client by subject.CN (CN = clientDomain) and set them as the authenticated user
 			this.authenticated = yield Client.findOne({ clientDomain: subject.CN }).exec();
-			yield next;
+
+			if ( this.authenticated ){
+				yield next;
+			}else{
+				this.response.status = "unauthorized";
+				logger.info("Certificate Authentication Failed: Certificate Name did not match your Client Domain");
+			}
 		} else {
 			this.response.status = "unauthorized";
 			logger.info("Request is NOT authenticated via TLS: " + this.req.client.authorizationError);
