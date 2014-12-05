@@ -93,7 +93,7 @@ startHttpsServer = (httpsPort, app) ->
 
 		# set the socket timeout
 		httpsServer.setTimeout config.router.timeout, ->
-			logger.info "HTTP socket timeout reached"
+			logger.info "HTTPS socket timeout reached"
 
 		httpsServer.listen httpsPort, ->
 			logger.info "HTTPS listening on port " + httpsPort
