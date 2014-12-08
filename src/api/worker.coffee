@@ -56,8 +56,8 @@ worker.register rerun_transaction: (params, callback) ->
             return callback err, null
 
 exports.startupWorker = ->
-	worker.start()
-	logger.info('Started up rerun queue worker')
+  worker.start()
+  logger.info('Started up rerun queue worker')
 
 #####################################################################################################
 # Worker Process - Register the worker - Start the worker - Consume 'jobs' awaiting to be processed #
@@ -84,7 +84,7 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
     task.status = 'Processing'
 
     transactionMatchFound = false
-    #foreach transaction object in the transaction property    
+    #foreach transaction object in the transaction property
     task.transactions.forEach (tx) ->
       #check if transactionID matches the one in the transaction object
       if tx.tid == transactionID
@@ -101,7 +101,7 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
         #retrieve the transaction to rerun
         TransactionModel.findById transactionID, (err, transaction) ->
           if transaction == null
-            response = 
+            response =
               transaction:
                 status: "Failed"
             rerunUpdateTaskObject taskID, transactionID, response, (updatedTask) ->
@@ -110,7 +110,7 @@ rerunGetTaskTransactionsData = (taskID, transactionID, callback) ->
 
           # check if 'canRerun' property is false - reject the rerun
           if transaction.canRerun == false
-            response = 
+            response =
               transaction:
                 status: "Failed"
             rerunUpdateTaskObject taskID, transactionID, response, (updatedTask) ->
@@ -178,7 +178,7 @@ rerunHttpRequestSend = (options, transaction, callback) ->
     err = "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
     return callback err, null
 
-  response = 
+  response =
     transaction: {}
 
   logger.info('Rerun Transaction #' + transaction._id + ' - HTTP Request is being sent...')
@@ -190,7 +190,7 @@ rerunHttpRequestSend = (options, transaction, callback) ->
       response.body += chunk
 
     res.on "end", (err) ->
-      if err 
+      if err
         response.transaction.status = "Failed"
       else
         response.transaction.status = "Completed"
@@ -244,7 +244,7 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
     return callback err, null
 
   # decrement the remainingTransactions property
-  TaskModel.update 
+  TaskModel.update
     _id: taskID
   , $inc:
     remainingTransactions: -1
