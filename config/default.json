@@ -28,8 +28,8 @@
     "host": "localhost"
   },
   "authentication": {
-    "enableMutualTLSAuthentication": false,
-    "enableBasicAuthentication": true
+    "enableMutualTLSAuthentication": true,
+    "enableBasicAuthentication": false
   },
   "nodemailer": {
     "service": "Gmail",
