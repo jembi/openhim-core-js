@@ -27,140 +27,140 @@ Q = require "q"
 compress = require 'koa-compress'
 
 rawBodyReader = `function *(next) {
-	var body = yield getRawBody(this.req, {
-		length: this.length,
-		encoding: this.charset
-	});
+  var body = yield getRawBody(this.req, {
+    length: this.length,
+    encoding: this.charset
+  });
 
-	if (body) {
-		this.body = body;
-	}
+  if (body) {
+    this.body = body;
+  }
 
-	yield next;
+  yield next;
 }`
 
 # Primary app
 
 exports.setupApp = (done) ->
-	app = koa()
+  app = koa()
 
-	# TLS authentication middleware
-	if config.authentication.enableMutualTLSAuthentication
-		app.use tlsAuthentication.koaMiddleware
+  # TLS authentication middleware
+  if config.authentication.enableMutualTLSAuthentication
+    app.use tlsAuthentication.koaMiddleware
 
-	# Basic authentication middlware
-	if config.authentication.enableBasicAuthentication
-		app.use basicAuthentication.koaMiddleware
+  # Basic authentication middlware
+  if config.authentication.enableBasicAuthentication
+    app.use basicAuthentication.koaMiddleware
 
-	app.use rawBodyReader
+  app.use rawBodyReader
 
-	# Authorisation middleware
-	app.use authorisation.koaMiddleware
+  # Authorisation middleware
+  app.use authorisation.koaMiddleware
 
-	# Compress response on exit
-	app.use compress(
-		threshold: 8
-		flush: require("zlib").Z_SYNC_FLUSH
-	)
-	# Visualizer
-	app.use visualizer.koaMiddleware
+  # Compress response on exit
+  app.use compress(
+    threshold: 8
+    flush: require("zlib").Z_SYNC_FLUSH
+  )
+  # Visualizer
+  app.use visualizer.koaMiddleware
 
-	# Send stats to StatsD
-	app.use stats.koaMiddleware
+  # Send stats to StatsD
+  app.use stats.koaMiddleware
 
-	# Proxy
-	app.use proxy.koaMiddleware
+  # Proxy
+  app.use proxy.koaMiddleware
 
-	# Persist message middleware
-	app.use messageStore.koaMiddleware
+  # Persist message middleware
+  app.use messageStore.koaMiddleware
 
-	# Call router
-	app.use router.koaMiddleware
+  # Call router
+  app.use router.koaMiddleware
 
-	done(app)
+  done(app)
 
 
 # Rerun app that bypasses auth
 exports.rerunApp = (done) ->
-	app = koa()
+  app = koa()
 
-	app.use rawBodyReader
+  app.use rawBodyReader
 
-	# Rerun bypass authentication middlware
-	app.use rerunBypassAuthentication.koaMiddleware
+  # Rerun bypass authentication middlware
+  app.use rerunBypassAuthentication.koaMiddleware
 
-	# Rerun bypass authorisation middlware
-	app.use rerunBypassAuthorisation.koaMiddleware
+  # Rerun bypass authorisation middlware
+  app.use rerunBypassAuthorisation.koaMiddleware
 
-	# Update original transaction with reruned transaction ID
-	app.use rerunUpdateTransactionTask.koaMiddleware
+  # Update original transaction with reruned transaction ID
+  app.use rerunUpdateTransactionTask.koaMiddleware
 
-	# Visualizer
-	app.use visualizer.koaMiddleware
+  # Visualizer
+  app.use visualizer.koaMiddleware
 
-	# Send stats to StatsD
-	app.use stats.koaMiddleware
+  # Send stats to StatsD
+  app.use stats.koaMiddleware
 
-	# Persist message middleware
-	app.use messageStore.koaMiddleware
+  # Persist message middleware
+  app.use messageStore.koaMiddleware
 
-	# Authorisation middleware
-	app.use authorisation.koaMiddleware
+  # Authorisation middleware
+  app.use authorisation.koaMiddleware
 
-	# Call router
-	app.use router.koaMiddleware
+  # Call router
+  app.use router.koaMiddleware
 
-	done(app)
+  done(app)
 
 # App for TCP/TLS sockets
 exports.tcpApp = (done) ->
-	app = koa()
+  app = koa()
 
-	app.use rawBodyReader
-	app.use retrieveTCPTransaction.koaMiddleware
+  app.use rawBodyReader
+  app.use retrieveTCPTransaction.koaMiddleware
 
-	# TCP bypass authentication middlware
-	app.use tcpBypassAuthentication.koaMiddleware
+  # TCP bypass authentication middlware
+  app.use tcpBypassAuthentication.koaMiddleware
 
-	# Visualizer
-	app.use visualizer.koaMiddleware
+  # Visualizer
+  app.use visualizer.koaMiddleware
 
-	# Send stats to StatsD
-	app.use stats.koaMiddleware
+  # Send stats to StatsD
+  app.use stats.koaMiddleware
 
-	# Proxy
-	app.use proxy.koaMiddleware
+  # Proxy
+  app.use proxy.koaMiddleware
 
-	# Persist message middleware
-	app.use messageStore.koaMiddleware
+  # Persist message middleware
+  app.use messageStore.koaMiddleware
 
-	# Call router
-	app.use router.koaMiddleware
+  # Call router
+  app.use router.koaMiddleware
 
-	done(app)
+  done(app)
 
 # App used by scheduled polling
 exports.pollingApp = (done) ->
-	app = koa()
+  app = koa()
 
-	app.use rawBodyReader
+  app.use rawBodyReader
 
-	# Polling bypass authentication middlware
-	app.use pollingBypassAuthentication.koaMiddleware
+  # Polling bypass authentication middlware
+  app.use pollingBypassAuthentication.koaMiddleware
 
-	# Polling bypass authorisation middleware
-	app.use pollingBypassAuthorisation.koaMiddleware
+  # Polling bypass authorisation middleware
+  app.use pollingBypassAuthorisation.koaMiddleware
 
-	# Visualizer
-	app.use visualizer.koaMiddleware
+  # Visualizer
+  app.use visualizer.koaMiddleware
 
-	# Send stats to StatsD
-	app.use stats.koaMiddleware
+  # Send stats to StatsD
+  app.use stats.koaMiddleware
 
-	# Persist message middleware
-	app.use messageStore.koaMiddleware
+  # Persist message middleware
+  app.use messageStore.koaMiddleware
 
-	# Call router
-	app.use router.koaMiddleware
+  # Call router
+  app.use router.koaMiddleware
 
-	done(app)
+  done(app)

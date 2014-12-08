@@ -3,7 +3,7 @@
 # ######################################################################################
 #
 # ** Cakefile Template ** is a Template for a common Cakefile that you may use in a coffeescript nodejs project.
-# 
+#
 # It comes baked in with 5 tasks:
 #
 # * build - compiles your src directory to your lib directory
@@ -93,7 +93,7 @@ task 'clean', 'clean generated files', -> clean -> log ";)", green
 
 # Internal Functions
 #
-# ## *walk* 
+# ## *walk*
 #
 # **given** string as dir which represents a directory in relation to local directory
 # **and** callback as done in the form of (err, results)
@@ -124,13 +124,13 @@ walk = (dir, done) ->
         results.push file
         done(null, results) unless --pending
 
-# ## *log* 
-# 
+# ## *log*
+#
 # **given** string as a message
 # **and** string as a color
 # **and** optional string as an explanation
 # **then** builds a statement and logs to console.
-# 
+#
 log = (message, color, explanation) -> console.log color + message + reset + ' ' + (explanation or '')
 
 # ## *launch*
@@ -204,9 +204,9 @@ clean = (callback) ->
 # **then* print not found message with install helper in red
 # **and* return false if not found
 moduleExists = (name) ->
-  try 
-    require name 
-  catch err 
+  try
+    require name
+  catch err
     log "#{name} required: npm install #{name}", red
     false
 

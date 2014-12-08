@@ -5,27 +5,27 @@ nconf = require("nconf")
 ###
 Config = ->
 
-	# Define the variables to use
-	environment = undefined
+  # Define the variables to use
+  environment = undefined
 
-	# Get the argument-value to use
-	nconf.argv().env "_"
-	environment = nconf.get("NODE:ENV") or "development"
+  # Get the argument-value to use
+  nconf.argv().env "_"
+  environment = nconf.get("NODE:ENV") or "development"
 
-	# Load the configuration-values
-	# user specified config override
-	if nconf.get("conf")
-		nconf.file 'customConfigOverride', nconf.get('conf')
+  # Load the configuration-values
+  # user specified config override
+  if nconf.get("conf")
+    nconf.file 'customConfigOverride', nconf.get('conf')
 
-	# environment override
-	if environment
-		nconf.file 'environmentOverride', 'config/' + environment + '.json'
+  # environment override
+  if environment
+    nconf.file 'environmentOverride', 'config/' + environment + '.json'
 
-	# load the default config file
-	nconf.file 'default', 'config/default.json'
-	
-	# Return the result
-	return
+  # load the default config file
+  nconf.file 'default', 'config/default.json'
+  
+  # Return the result
+  return
 
 ###
 # This function return the value that was set in the key-value store

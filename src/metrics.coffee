@@ -184,7 +184,7 @@ exports.fetchChannelMetrics = fetchChannelMetrics = (time, channelId, userReques
     $gt: from
 
 
-#	remove startDate/endDate from objects filter (Not part of filtering and will break filter)
+#  remove startDate/endDate from objects filter (Not part of filtering and will break filter)
   delete filtersObject.startDate
   delete filtersObject.endDate
 
