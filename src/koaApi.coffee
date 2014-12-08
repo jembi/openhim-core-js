@@ -16,6 +16,7 @@ worker = require './api/worker'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
 serverRestart = require './restart'
+statsd = require './model/statsd'
 
 exports.setupApp = (done) ->
 
@@ -28,7 +29,7 @@ exports.setupApp = (done) ->
   app.use route.get '/authenticate/:username', users.authenticate
 
   # Authenticate the API request
-  app.use authentication.authenticate
+  #app.use authentication.authenticate
 
   # Define the api routes
   app.use route.get '/users', users.getUsers
@@ -75,7 +76,9 @@ exports.setupApp = (done) ->
   app.use route.get '/metrics', metrics.getGlobalLoadTimeMetrics
   app.use route.get '/metrics/status', metrics.getGlobalStatusMetrics
   app.use route.get '/metrics/:type/:channelId', metrics.getChannelMetrics
-  
+
+  app.use route.get '/statsd', statsd.retrieveTransactionCount
+
   app.use route.get '/mediators', mediators.getAllMediators
   app.use route.get '/mediators/:uuid', mediators.getMediator
   app.use route.post '/mediators', mediators.addMediator
