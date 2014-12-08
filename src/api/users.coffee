@@ -2,6 +2,7 @@ User = require('../model/users').User
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
+randtoken = require 'rand-token';
 
 ###
 # Get authentication details
@@ -37,6 +38,17 @@ exports.addUser = `function *addUser() {
   }
 
   var userData = this.request.body
+
+  /*
+  # Generate the new user token here
+  # set locked = true
+  */
+
+  userData.locked = true;
+  userData.locked = true;
+
+  token = randtoken.generate(16);
+  console.log( token )
 
   try {
     var user = new User(userData);
