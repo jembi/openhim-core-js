@@ -17,6 +17,12 @@ exports.incrementTransactionCount = (ctx, done) ->
     sdc.increment domain + '.Channels.' + transactionStatus #Overall Transaction Status
     sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id # Per channel
     sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.' + transactionStatus # Per Channel Status
+
+    #Collect stats for non-primary routes
+    for route in ctx.routes
+      sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.' + route.name # Per non-primary route
+      sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.' + route.name + '.' + route.response.status # Per route response status
+
   catch error
     logger.error error
 
@@ -29,6 +35,12 @@ exports.measureTransactionDuration = (ctx, done) ->
     sdc.timing domain + '.Channels.' + transactionStatus, timer # Overall Transaction Status
     sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id, timer # Per Channel
     sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + transactionStatus, timer #Per Channel Status
+
+    #Collect stats for non-primary routes
+    for route in ctx.routes
+      sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + route.name, timer # Per Channel
+      sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + route.name + '.' + route.response.status, timer # Per Channel
+
   catch error
     logger.error error
 
