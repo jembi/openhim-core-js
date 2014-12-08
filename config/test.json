@@ -1,8 +1,14 @@
 {
-  "mongo": {
-    "url": "mongodb://localhost/openhim-test"
-  },
-  "logger": {
-    "level": "error"
-  }
+    "mongo": {
+        "url": "mongodb://localhost/openhim-test"
+    },
+    "logger": {
+        "level": "error"
+    },
+    "statsd": {
+        "host": "127.0.0.1"
+    },
+    "application": {
+        "name": "Test"
+    }
 }

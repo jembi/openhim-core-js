@@ -7,6 +7,10 @@ Transaction = require("../../lib/model/transactions").Transaction
 testUtils = require "../testUtils"
 server = require "../../lib/server"
 fs = require "fs"
+sinon = require "sinon"
+stats = require "../../lib/middleware/stats"
+
+
 
 describe "TCP/TLS Integration Tests", ->
 	testMessage = "This is an awesome test message!"
@@ -63,7 +67,7 @@ describe "TCP/TLS Integration Tests", ->
 		roles: [ "test" ]
 		passwordHash: ""
 		cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
-	
+
 	sendTCPTestMessage = (port, callback) ->
 		client = new net.Socket()
 		client.connect port, 'localhost', -> client.write testMessage
@@ -74,7 +78,7 @@ describe "TCP/TLS Integration Tests", ->
 	sendTLSTestMessage = (port, callback) ->
 		options =
 			cert: fs.readFileSync "test/resources/client-tls/cert.pem"
-			key:  fs.readFileSync "test/resources/client-tls/key.pem"
+			key:	fs.readFileSync "test/resources/client-tls/key.pem"
 			ca: [ fs.readFileSync "tls/cert.pem" ]
 
 		client = tls.connect port, 'localhost', options, -> client.write testMessage
@@ -98,9 +102,15 @@ describe "TCP/TLS Integration Tests", ->
 	afterEach (done) -> server.stop done
 
 	it "should route TCP messages", (done) ->
+		incrementTransactionCountSpy = sinon.spy stats, 'incrementTransactionCount' # check if the method was called
+		measureTransactionDurationSpy = sinon.spy stats, 'measureTransactionDuration' # check if the method was called
+
 		server.start null, null, null, null, 7787, null, ->
 			sendTCPTestMessage 4000, (data) ->
 				data.should.be.exactly 'OK'
+				incrementTransactionCountSpy.calledOnce.should.be.true
+				incrementTransactionCountSpy.getCall(0).args[0].authorisedChannel.should.have.property 'name', 'TCPIntegrationChannel1'
+				measureTransactionDurationSpy.calledOnce.should.be.true
 				done()
 
 	it "should route TLS messages", (done) ->
