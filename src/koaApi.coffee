@@ -29,7 +29,7 @@ exports.setupApp = (done) ->
   app.use route.get '/authenticate/:username', users.authenticate
 
   # Authenticate the API request
-  #app.use authentication.authenticate
+  app.use authentication.authenticate
 
   # Define the api routes
   app.use route.get '/users', users.getUsers
