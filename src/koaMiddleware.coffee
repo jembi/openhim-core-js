@@ -57,7 +57,7 @@ exports.setupApp = (done) ->
 	# Authorisation middleware
 	app.use authorisation.koaMiddleware
 
-  # Compress response on exit
+	# Compress response on exit
 	app.use compress(
 		threshold: 8
 		flush: require("zlib").Z_SYNC_FLUSH
@@ -68,7 +68,7 @@ exports.setupApp = (done) ->
 	# Send stats to StatsD
 	app.use stats.koaMiddleware
 
-  # Proxy
+	# Proxy
 	app.use proxy.koaMiddleware
 
 	# Persist message middleware
@@ -98,7 +98,7 @@ exports.rerunApp = (done) ->
 	# Visualizer
 	app.use visualizer.koaMiddleware
 
-  # Send stats to StatsD
+	# Send stats to StatsD
 	app.use stats.koaMiddleware
 
 	# Persist message middleware
