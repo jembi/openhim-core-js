@@ -34,20 +34,26 @@ exports.addClient = `function *addClient() {
 ###
 # Retrieves the details of a specific client
 ###
-exports.getClient = `function *findClientById(clientId) {
+exports.getClient = `function *findClientById(clientId, limitedView) {
+  projectionRestriction = null;
 
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
-    this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
-    this.status = 'forbidden';
-    return;
+  // if limitedView = true - Setup client projection and bypass authorization
+  if ( limitedView === 'true' ){
+    projectionRestriction = { clientID: 1, name: 1, _id:0 };
+  }else{
+    // Test if the user is authorised
+    if (authorisation.inGroup('admin', this.authenticated) === false) {
+      logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.')
+      this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to findClientById denied.'
+      this.status = 'forbidden';
+      return;
+    }
   }
 
   var clientId = unescape(clientId);
 
   try {
-    var result = yield Client.findById(clientId).exec();
+    var result = yield Client.findById(clientId, projectionRestriction).exec();
     if (result === null) {
       this.body = "Client with id '"+clientId+"' could not be found.";
       this.status = 'not found';

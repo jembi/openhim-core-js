@@ -38,7 +38,7 @@ exports.setupApp = (done) ->
   app.use route.delete '/users/:email', users.removeUser
 
   app.use route.get '/clients', clients.getClients
-  app.use route.get '/clients/:clientId', clients.getClient
+  app.use route.get '/clients/:clientId/:limitedView', clients.getClient
   app.use route.post '/clients', clients.addClient
   app.use route.get '/clients/domain/:clientDomain', clients.findClientByDomain
   app.use route.put '/clients/:clientId', clients.updateClient
