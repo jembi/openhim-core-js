@@ -14,7 +14,8 @@ UserSchema = new Schema
   "weeklyReport":    { type: Boolean, required: false }
   "settings":      { type: Object }
   "token":      { type: String, required: false }
-  "locked":      { type: Boolean, required: false, default: true }
+  "expiry":      { type: Date, required: false }
+  "locked":      { type: Boolean, required: false }
   
 #compile the User Schema into a Model
 exports.User = mongoose.model 'User', UserSchema
