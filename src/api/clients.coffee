@@ -34,12 +34,12 @@ exports.addClient = `function *addClient() {
 ###
 # Retrieves the details of a specific client
 ###
-exports.getClient = `function *findClientById(clientId, limitedView) {
+exports.getClient = `function *findClientById(clientId, property) {
   projectionRestriction = null;
 
-  // if limitedView = true - Setup client projection and bypass authorization
-  if ( limitedView === 'true' ){
-    projectionRestriction = { clientID: 1, name: 1, _id:0 };
+  // if property - Setup client projection and bypass authorization
+  if ( property && property === 'clientName' ){
+    projectionRestriction = { name: 1, _id:0 };
   }else{
     // Test if the user is authorised
     if (authorisation.inGroup('admin', this.authenticated) === false) {
@@ -92,6 +92,7 @@ exports.findClientByDomain = `function *findClientByDomain(clientDomain) {
   } catch(e) {
     logger.error('Could not find client by client Domain '+clientDomain+' via the API: ' + e);
     this.body = e.message;
+    console.log( e.message )
     this.status = 'internal server error';
   }
 }`

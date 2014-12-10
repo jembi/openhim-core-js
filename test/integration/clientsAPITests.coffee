@@ -149,6 +149,29 @@ describe "API Integration Tests", ->
             else
               done()
 
+      ###
+      it "should allow a non admin user to fetch a limited view of a client", (done) ->
+        request("https://localhost:8080")
+          .get("/clients/" + clientId + "/clientName")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.clientID.should.equal "testClient"
+              res.body.name.should.equal "OpenHIE NodeJs"
+
+              should.not.exist(res.body.domainName)
+              should.not.exist(res.body.roles)
+              should.not.exist(res.body.passwordHash)
+              should.not.exist(res.body.cert)
+              done()
+      ###
+
     describe "*findClientByDomain(clientDomain)", ->
       clientTest =
         clientID: "Zambia_OpenHIE_Instance"
