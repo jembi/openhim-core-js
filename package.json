@@ -1,14 +1,19 @@
 {
-  "name": "openhim-core-js",
+  "name": "openhim-core",
   "description": "The OpenHIM core application that provides logging and routing of http requests",
-  "version": "0.1.0",
+  "version": "1.1.1",
   "private": true,
+  "main": "./lib/server.js",
+  "bin": "./bin/openhim-core.js",
+  "license": "MPL-2.0",
+  "engines": { "node" : ">=0.11" },
   "dependencies": {
     "agenda": "~0.6.19",
     "async": "0.2.10",
     "basic-auth": "0.0.1",
     "bcrypt-nodejs": "0.0.3",
     "cookie": "0.1.2",
+    "forever-monitor": "1.5.2",
     "form-data": "^0.1.4",
     "http-status": "0.1.7",
     "koa": "0.5.2",
@@ -42,6 +47,7 @@
     "supertest": "0.10.0"
   },
   "scripts": {
+    "prepublish": "./node_modules/coffee-script/bin/cake build",
     "test": "export NODE_ENV=test && export NODE_TLS_REJECT_UNAUTHORIZED=0 && ./node_modules/.bin/cake test"
   }
 }
