@@ -24,6 +24,10 @@ exports.setupApp = (done) ->
   app.use cors()
   app.use bodyParser()
 
+  # Expose the set-user-password route before the auth middleware so that it is publically accessible
+  app.use route.get '/new-user/:token', users.getNewUser
+  app.use route.put '/new-user/:token', users.updateNewUser
+
   # Expose the authenticate route before the auth middleware so that it is publically accessible
   app.use route.get '/authenticate/:username', users.authenticate
 

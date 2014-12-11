@@ -5,6 +5,8 @@ User = require('../../lib/model/users').User
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 
+moment = require 'moment'
+
 describe 'API Integration Tests', ->
 
   describe 'Users REST Api testing', ->
@@ -27,14 +29,34 @@ describe 'API Integration Tests', ->
       passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
       groups: [ 'HISP' ]
 
+    newUser = new User
+      firstname: 'Jane'
+      surname: 'Doe'
+      email: 'jane@doe.net'
+      token: 'l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM'
+      locked: true
+      expiry: moment().add(2, 'days').utc().format()
+      groups: [ 'HISP' ]
+
+    newUserExpired = new User
+      firstname: 'John'
+      surname: 'Smith'
+      email: 'john@smith.net'
+      token: 'hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg'
+      locked: true
+      expiry: moment().subtract(2, 'days').utc().format()
+      groups: [ 'HISP' ]
+
     authDetails = {}
 
     before (done) ->
       user1.save ->
         user2.save ->
-          auth.setupTestUsers (err) ->
-            server.start null, null, 8080, null, null, null, ->
-              done()
+          newUser.save ->
+            newUserExpired.save ->
+              auth.setupTestUsers (err) ->
+                server.start null, null, 8080, null, null, null, ->
+                  done()
 
     after (done) ->
       User.remove {}, ->
@@ -63,6 +85,100 @@ describe 'API Integration Tests', ->
               should.exist(res.body.ts)
               done()
 
+
+    describe '*getNewUser(token)', ->
+
+      it 'should return a new users details (basic details)', (done) ->
+        request("https://localhost:8080")
+          .get("/new-user/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM")
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.firstname.should.eql 'Jane'
+              res.body.surname.should.eql 'Doe'
+              res.body.token.should.eql 'l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM'
+              res.body.locked.should.eql true
+              should.exist(res.body.expiry)
+              should.not.exist(res.body.email)
+              should.not.exist(res.body.passwordAlgorithm)
+              should.not.exist(res.body.passwordHash)
+              should.not.exist(res.body.passwordSalt)
+              should.not.exist(res.body.groups)
+              done()
+
+      it 'should return a not found error', (done) ->
+        request("https://localhost:8080")
+          .get("/new-user/hSas987asdS7y9vqqKJHDSoARXtA098g")
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should return a expired token error', (done) ->
+        request("https://localhost:8080")
+          .get("/new-user/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg")
+          .expect(410)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+
+    describe '*updateNewUser(token)', ->
+
+      it 'should update a new user by token', (done) ->
+
+        updates =
+            firstname: 'Jane Sally'
+            surname: 'Doe'
+            msisdn: '27123456789'
+            passwordAlgorithm: 'sha256'
+            passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499'
+            passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
+
+          request("https://localhost:8080")
+            .put("/new-user/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM")
+            .send(updates)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                User.findOne { email: "jane@doe.net" }, (err, user) ->
+                  user.should.have.property "firstname", "Jane Sally"
+                  user.should.have.property "surname", "Doe"
+                  user.should.have.property "passwordHash", "af200ab5-4227-4840-97d1-92ba91206499"
+                  user.should.have.property "passwordSalt", "eca7205c-2129-4558-85da-45845d17bd5f"
+                  user.should.have.property "token", null
+                  user.should.have.property "locked", false
+                  user.should.have.property "expiry", null
+                  done()
+
+      it 'should prevent an update with an expired token (expired token)', (done) ->
+        updates =
+            firstname: 'Peter'
+            surname: 'smith'
+            msisdn: '27123456789'
+            passwordAlgorithm: 'sha256'
+            passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499'
+            passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
+
+          request("https://localhost:8080")
+            .put("/new-user/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg")
+            .send(updates)
+            .expect(410)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
+
+
     describe '*getUsers()', ->
 
       it 'should fetch all users', (done) ->
@@ -77,8 +193,8 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
-              # user1, user2, + the 2 API test users and the root user
-              res.body.length.should.be.eql(5);
+              # user1, user2, newUser, newUserExpired, + the 2 API test users and the root user
+              res.body.length.should.be.eql(7);
               done()
 
       it 'should not allow non admin user to fetch all users', (done) ->
@@ -123,6 +239,9 @@ describe 'API Integration Tests', ->
                 user.should.have.property 'firstname', 'Bill'
                 user.should.have.property 'surname', 'Newman'
                 user.groups.should.have.length 1
+                user.should.have.property 'token'
+                user.should.have.property 'locked', true
+                user.should.have.property 'expiry'
                 done()
 
       it 'should not allow a non admin user to add a user', (done) ->
