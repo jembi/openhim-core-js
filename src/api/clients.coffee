@@ -38,8 +38,15 @@ exports.getClient = `function *findClientById(clientId, property) {
   projectionRestriction = null;
 
   // if property - Setup client projection and bypass authorization
-  if ( property && property === 'clientName' ){
-    projectionRestriction = { name: 1, _id:0 };
+  if ( property ){
+    if ( property === 'clientName' ){
+      projectionRestriction = { name: 1, _id:0 };
+    }else{
+      logger.info('The property ('+property+') you are trying to retrieve is not found.')
+      this.body = 'The property ('+property+') you are trying to retrieve is not found.'
+      this.status = 'not found';
+      return;
+    }
   }else{
     // Test if the user is authorised
     if (authorisation.inGroup('admin', this.authenticated) === false) {
@@ -49,6 +56,10 @@ exports.getClient = `function *findClientById(clientId, property) {
       return;
     }
   }
+
+
+
+  
 
   var clientId = unescape(clientId);
 
@@ -92,7 +103,6 @@ exports.findClientByDomain = `function *findClientByDomain(clientDomain) {
   } catch(e) {
     logger.error('Could not find client by client Domain '+clientDomain+' via the API: ' + e);
     this.body = e.message;
-    console.log( e.message )
     this.status = 'internal server error';
   }
 }`
