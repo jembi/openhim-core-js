@@ -40,7 +40,7 @@ exports.getNewUser = `function *getNewUser(token) {
 
   try {
 
-    projectionRestriction = { "settings": 0, "email": 0, "passwordAlgorithm": 0, "passwordSalt": 0, "passwordHash": 0, "groups": 0 };
+    projectionRestriction = { "firstname": 1, "surname": 1, "msisdn": 1, "token": 1, "locked": 1, "expiry": 1, "_id": 0 };
 
     var result = yield User.findOne({ token: token }, projectionRestriction).exec();
     if (result === null) {
