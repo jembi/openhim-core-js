@@ -1,3 +1,4 @@
+fs = require 'fs'
 util = require 'util'
 zlib = require 'zlib'
 http = require 'http'
@@ -12,6 +13,14 @@ config.router = config.get('router')
 logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
+
+tlsKey = fs.readFileSync "tls/key.pem"
+tlsCert = fs.readFileSync "tls/cert.pem"
+tlsCa = null
+try
+  ca = fs.readFileSync "tls/ca.pem"
+catch err
+  logger.info "'tls/ca.pem' not found, not setting any custom CAs for outbound transactions."
 
 containsMultiplePrimaries = (routes) ->
   numPrimaries = 0
@@ -81,7 +90,11 @@ sendRequestToRoutes = (ctx, routes, next) ->
       method: ctx.request.method
       headers: ctx.request.header
       agent: false
-      rejectUnauthorized: false
+      key: tlsKey
+      cert: tlsCert
+
+    if ca
+      options.ca = tlsCa
 
     if ctx.request.querystring
       options.path += '?' + ctx.request.querystring
