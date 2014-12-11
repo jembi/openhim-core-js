@@ -171,14 +171,14 @@ exports.addUser = `function *addUser() {
 
     var plainMessage;
     plainMessage = '<---------- New User - Set Password ----------> \r\n \r\n';
-    plainMessage += 'Hi '+userData.firstname+', A profile has been created for you on OpenHIM ('+config.alerts.himInstance+') \r\n';
+    plainMessage += 'Hi '+userData.firstname+', A profile has been created for you on OpenHIM \r\n';
     plainMessage += 'Follow the below link to set your password and log into OpenHIM Console  \r\n';
     plainMessage += setPasswordLink + '\r\n';
     plainMessage += '<---------- New User - Set Password ----------> \r\n \r\n';
     plainMessage += '\r\n';
 
     var htmlMessage;
-    htmlMessage = '<h1>Hi '+userData.firstname+', A profile has been created for you on OpenHIM ('+config.alerts.himInstance+')</h1>';
+    htmlMessage = '<h1>Hi '+userData.firstname+', A profile has been created for you on OpenHIM</h1>';
     htmlMessage += '<p>Follow the below link to set your password and log into OpenHIM Console</p>';
     htmlMessage += '<p>'+setPasswordLink+'</p>';
 
