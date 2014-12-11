@@ -160,10 +160,6 @@ describe 'API Integration Tests', ->
                   done()
 
       it 'should prevent an update with an expired token (expired token)', (done) ->
-
-        User.findOne { token: "hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg" }, (err, user) ->
-          console.log( user )
-
         updates =
             firstname: 'Peter'
             surname: 'smith'
