@@ -47,6 +47,7 @@ exports.setupApp = (done) ->
   app.use route.get '/clients/domain/:clientDomain', clients.findClientByDomain
   app.use route.put '/clients/:clientId', clients.updateClient
   app.use route.delete '/clients/:clientId', clients.removeClient
+  app.use route.get '/clients/:clientId/:property', clients.getClient
 
   app.use route.get '/transactions', transactions.getTransactions
   app.use route.post '/transactions', transactions.addTransaction
