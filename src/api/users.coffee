@@ -47,7 +47,6 @@ exports.getNewUser = `function *getNewUser(token) {
       this.body = "User with token '"+token+"' could not be found.";
       this.status = 'not found';
     } else {
-
       // if expiry date has past
       if ( moment(result.expiry).utc().format() < moment().utc().format() ){
         // new user- set password - expired
@@ -70,14 +69,31 @@ exports.getNewUser = `function *getNewUser(token) {
 exports.updateNewUser = `function *updateNewUser(token) {
   token = unescape(token)
   var userData = this.request.body;
+  
+  try {
+    // first try get new user details to check expiry date
+    var newUserOldData = yield User.findOne({ token: token }).exec();
 
-  // if expiry date has past
-  if ( moment(userData.expiry).utc().format() < moment().utc().format() ){
-    // new user- set password - expired
-    this.body = "User with token '"+token+"' has expired to set their password.";
-    this.status = 'gone';
+    if (newUserOldData === null) {
+      this.body = "User with token '"+token+"' could not be found.";
+      this.status = 'not found';
+      return;
+    } else {
+      // if expiry date has past
+      if ( moment(newUserOldData.expiry).utc().format() < moment().utc().format() ){
+        // new user- set password - expired
+        this.body = "User with token '"+token+"' has expired to set their password.";
+        this.status = 'gone';
+        return;
+      }
+    }
+  } catch(e) {
+    logger.error('Could not find user with token '+token+' via the API: ' + e);
+    this.body = e.message;
+    this.status = 'internal server error';
     return;
   }
+
 
   // check to make sure 'msisdn' isnt 'undefined' when saving
   var msisdn = null;
