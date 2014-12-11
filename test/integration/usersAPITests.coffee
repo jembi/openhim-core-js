@@ -86,8 +86,6 @@ describe 'API Integration Tests', ->
               done()
 
 
-    ###########################################
-
     describe '*getNewUser(token)', ->
 
       it 'should return a new users details (basic details)', (done) ->
@@ -183,8 +181,6 @@ describe 'API Integration Tests', ->
                 done err
               else
                 done()
-
-    ###########################################
 
 
     describe '*getUsers()', ->
