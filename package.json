@@ -36,7 +36,8 @@
     "statsy": "^0.2.0",
     "winston": "0.7.3",
     "xmldom": "~0.1.19",
-    "xpath": "0.0.6"
+    "xpath": "0.0.6",
+    "rand-token": "^0.2.1"
   },
   "devDependencies": {
     "coffee-script": "1.7.1",
