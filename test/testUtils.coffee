@@ -1,6 +1,7 @@
 http = require "http"
 https = require "https"
 net = require "net"
+tls = require "tls"
 fs = require "fs"
 User = require('../lib/model/users').User
 crypto = require "crypto"
@@ -61,6 +62,24 @@ exports.createMockHTTPSServerWithMutualTLS = (resStatusCode, resBody, port, vali
 
 exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, callback) ->
   server = net.createServer (sock) ->
+    sock.on 'data', (data) ->
+      response = if "#{data}" is expected then matchResponse else nonMatchResponse
+      sock.write response
+
+  server.listen port, 'localhost', -> callback server
+
+exports.createMockTLSServer = (port, expected, matchResponse, nonMatchResponse, mutualAuth, callback) ->
+  options =
+    key: fs.readFileSync 'test/resources/server-tls/key.pem'
+    cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
+    secureProtocol: 'TLSv1_method'
+
+  if mutualAuth
+    options.ca = fs.readFileSync 'tls/cert.pem'
+    options.requestCert = true
+    options.rejectUnauthorized = true
+
+  server = tls.createServer (sock) ->
     sock.on 'data', (data) ->
       response = if "#{data}" is expected then matchResponse else nonMatchResponse
       sock.write response

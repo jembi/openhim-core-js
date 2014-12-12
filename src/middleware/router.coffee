@@ -4,6 +4,7 @@ zlib = require 'zlib'
 http = require 'http'
 https = require 'https'
 net = require 'net'
+tls = require 'tls'
 async = require 'async'
 MongoClient = require('mongodb').MongoClient;
 Q = require 'q'
@@ -18,7 +19,7 @@ tlsKey = fs.readFileSync "tls/key.pem"
 tlsCert = fs.readFileSync "tls/cert.pem"
 tlsCa = null
 try
-  ca = fs.readFileSync "tls/ca.pem"
+  tlsCa = [ fs.readFileSync "tls/ca.pem" ]
 catch err
   logger.info "'tls/ca.pem' not found, not setting any custom CAs for outbound transactions."
 
@@ -93,7 +94,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
       key: tlsKey
       cert: tlsCert
 
-    if ca
+    if tlsCa
       options.ca = tlsCa
 
     if ctx.request.querystring
@@ -267,20 +268,36 @@ sendHttpRequest = (ctx, route, options) ->
 sendSocketRequest = (ctx, route, options) ->
   defered = Q.defer()
   requestBody = ctx.body
-  client = new net.Socket()
   response = {}
 
-  client.connect options.port, options.hostname, ->
+  sockOptions =
+    host: options.hostname
+    port: options.port
+    key: options.key
+    cert: options.cert
+    ca: [ fs.readFileSync 'test/resources/server-tls/cert.pem' ]
+    secureProtocol: 'TLSv1_method'
+
+  if options.ca
+    sockOptions.ca = options.ca
+
+  client = net
+  if route.secured
+    client = tls
+
+  console.log "Socket options: " + JSON.stringify sockOptions
+
+  conn = client.connect sockOptions, ->
     logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
-    client.end requestBody
+    conn.end requestBody
 
   bufs = []
-  client.on 'data', (chunk) ->
+  conn.on 'data', (chunk) ->
     bufs.push chunk
 
-  client.on 'error', (err) -> defered.reject err
+  conn.on 'error', (err) -> defered.reject err
 
-  client.on 'end', ->
+  conn.on 'end', ->
     response.body = Buffer.concat bufs
     response.status = status.OK
     response.timestamp = new Date()
