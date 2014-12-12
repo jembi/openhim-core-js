@@ -1,12 +1,12 @@
 {
   "name": "openhim-core",
   "description": "The OpenHIM core application that provides logging and routing of http requests",
-  "version": "1.1.1",
+  "version": "1.1.0",
   "private": true,
   "main": "./lib/server.js",
   "bin": "./bin/openhim-core.js",
   "license": "MPL-2.0",
-  "engines": { "node" : ">=0.11" },
+  "engines": { "node" : ">=0.11.0" },
   "dependencies": {
     "agenda": "~0.6.19",
     "async": "0.2.10",
