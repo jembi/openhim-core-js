@@ -25,6 +25,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.path = ctx.request.url = "/test"
         ctx.request.method = "GET"
         ctx.requestTimestamp = requestTimestamp
@@ -58,6 +59,7 @@ describe "HTTP Router", ->
       ctx.authorisedChannel = channel
       ctx.request = new Object()
       ctx.response = new Object()
+      ctx.response.set = ->
       ctx.path = ctx.request.url = "/test/multicasting"
       ctx.request.method = "GET"
       ctx.requestTimestamp = requestTimestamp
@@ -80,6 +82,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.path = ctx.request.url = "/test"
         ctx.request.method = "GET"
 
@@ -180,6 +183,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.request.url = "/test"
         ctx.request.method = "POST"
         ctx.requestTimestamp = requestTimestamp
@@ -209,6 +213,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.path = "/test"
         ctx.request.url = "/test?parma1=val1&parma2=val2"
         ctx.request.method = "GET"
@@ -403,6 +408,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.request.url = "/test"
         ctx.request.method = "GET"
         ctx.requestTimestamp = requestTimestamp
@@ -430,6 +436,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.request.url = "/test"
         ctx.request.method = "GET"
         ctx.requestTimestamp = requestTimestamp
@@ -456,6 +463,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.request.url = "/test"
         ctx.request.method = "GET"
         ctx.request.header = { authorization: "Basic bWU6bWU=" }
@@ -486,6 +494,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.request.url = "/test"
         ctx.request.method = "GET"
         ctx.request.header = { authorization: "Basic bWU6bWU=" }
@@ -521,6 +530,7 @@ describe "HTTP Router", ->
         ctx.authorisedChannel = channel
         ctx.request = new Object()
         ctx.response = new Object()
+        ctx.response.set = ->
         ctx.path = ctx.request.url = "/test"
         ctx.request.method = "GET"
         ctx.requestTimestamp = requestTimestamp
