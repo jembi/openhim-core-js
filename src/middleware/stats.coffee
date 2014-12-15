@@ -14,8 +14,8 @@ exports.incrementTransactionCount = (ctx, done) ->
   transactionStatus = ctx.transactionStatus
   try
     sdc.increment domain + '.Channels' # Overall Counter
-    sdc.increment domain + '.Channels.' + transactionStatus #Overall Transaction Status
-    sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id # Per channel
+    sdc.increment domain + '.Channels.' + transactionStatus # Overall Transaction Status
+    sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id # Per Channel
     sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.' + transactionStatus # Per Channel Status
   catch error
     logger.error error
@@ -28,11 +28,12 @@ exports.measureTransactionDuration = (ctx, done) ->
     sdc.timing domain + '.Channels'  , timer # Overall Timer
     sdc.timing domain + '.Channels.' + transactionStatus, timer # Overall Transaction Status
     sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id, timer # Per Channel
-    sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + transactionStatus, timer #Per Channel Status
+    sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + transactionStatus, timer # Per Channel Status
   catch error
     logger.error error
 
 exports.koaMiddleware = `function *statsMiddleware(next) {
+    timer = new Date();    
     yield next;
     exports.incrementTransactionCount(this)
     exports.measureTransactionDuration(this)

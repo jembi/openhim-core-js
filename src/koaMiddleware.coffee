@@ -20,6 +20,7 @@ getRawBody = require 'raw-body'
 tcpAdapter = require './tcpAdapter'
 Client = require "statsy"
 Q = require "q"
+config.statsd = config.get 'statsd'
 
 
 
@@ -66,7 +67,8 @@ exports.setupApp = (done) ->
   app.use visualizer.koaMiddleware
 
   # Send stats to StatsD
-  app.use stats.koaMiddleware
+  if config.statsd.enabled
+    app.use stats.koaMiddleware
 
   # Proxy
   app.use proxy.koaMiddleware
@@ -99,7 +101,8 @@ exports.rerunApp = (done) ->
   app.use visualizer.koaMiddleware
 
   # Send stats to StatsD
-  app.use stats.koaMiddleware
+  if config.statsd.enabled
+    app.use stats.koaMiddleware
 
   # Persist message middleware
   app.use messageStore.koaMiddleware
@@ -126,7 +129,8 @@ exports.tcpApp = (done) ->
   app.use visualizer.koaMiddleware
 
   # Send stats to StatsD
-  app.use stats.koaMiddleware
+  if config.statsd.enabled
+    app.use stats.koaMiddleware
 
   # Proxy
   app.use proxy.koaMiddleware
@@ -155,7 +159,8 @@ exports.pollingApp = (done) ->
   app.use visualizer.koaMiddleware
 
   # Send stats to StatsD
-  app.use stats.koaMiddleware
+  if config.statsd.enabled
+    app.use stats.koaMiddleware
 
   # Persist message middleware
   app.use messageStore.koaMiddleware
