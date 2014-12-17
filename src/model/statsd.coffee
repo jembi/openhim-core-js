@@ -95,4 +95,3 @@ fetchData = `function *fetchData(path) {
   }
   return data;
 }`
-stats.timers.statsd-VirtualBox.Development.Channels.548efbf847212c61221d809d.mean
