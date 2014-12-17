@@ -44,12 +44,14 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".mean,'1day'))";
   var data = [];
   var raw = yield fetchData(path);
-
+  var i = 0;
   _.forEach(raw.data, function (item) {
     data.push({
       load: item[0],
+      avgResp: raw.data1[i][0],
       timestamp: moment.unix(item[1])
     });
+    i++;
   });
   this.body = data
 }`
