@@ -40,8 +40,8 @@ exports.retrieveAverageLoadTimePerHour = `function *() {
 }`
 
 exports.retrieveChannelMetrics = `function *(type, channelId) {
-  var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId + ".count,'1day'))&from=-1weeks&format=json";
-  path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".mean,'1day'))";
+  var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId + ".count,'1hour'))&from=-1days&format=json";
+  path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".mean,'1hour'))";
   var data = [];
   var raw = yield fetchData(path);
   var i = 0;
@@ -95,3 +95,4 @@ fetchData = `function *fetchData(path) {
   }
   return data;
 }`
+stats.timers.statsd-VirtualBox.Development.Channels.548efbf847212c61221d809d.mean
