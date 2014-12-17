@@ -1,5 +1,3 @@
-#http://104.236.15.32/render?target=stats.counters.duma-jembi.Development.Channels.54857a41b1a22d590d6bc7ce.zifm.404.count&format=json
-#http://104.236.15.32/
 http = require 'http'
 config = require '../config/config'
 application = config.get 'application'
@@ -15,7 +13,7 @@ moment = require "moment"
 
 exports.retrieveTransactionCountPerHour = `function *() {
     var path = "/render?target=summarize(stats.counters." + domain + ".Channels.count,'1hour')&from=-1days&format=json";
-    path = "/render?target=summarize(stats.counters.OpenHIM-core-js-preprod.Production.Channels.count,'1hour')&from=-1days&format=json";
+//    path = "/render?target=summarize(stats.counters.OpenHIM-core-js-preprod.Production.Channels.count,'1hour')&from=-1days&format=json";
     var data = [];
     var raw =  yield fetchData(path);
 
@@ -29,14 +27,14 @@ exports.retrieveTransactionCountPerHour = `function *() {
 }`
 
 exports.retrieveAverageLoadTimePerHour = `function *() {
-    var path = "/render?target=summarize(stats.timers." + domain + ".Channels.count,'1hour')&from=-1days&format=json";
-    path = "/render?target=summarize(stats.timers.OpenHIM-core-js-preprod.Production.Channels.sum,'1hour')&from=-1days&format=json";
+    var path = "/render?target=transformNull(summarize(stats.timers." + domain + ".Channels.mean,'1hour'))&from=-1days&format=json";
+//    path = "/render?target=summarize(stats.timers.OpenHIM-core-js-preprod.Production.Channels.sum,'1hour')&from=-1days&format=json";
     var data = [];
     var raw = yield fetchData(path);
 
     _.forEach(raw.data, function (item){
         data.push({
-          load: item[0],
+          avgResp: item[0],
           timestamp: moment.unix(item[1])
         });
     });
