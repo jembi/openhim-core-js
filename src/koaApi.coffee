@@ -35,6 +35,7 @@ exports.setupApp = (done) ->
   # Temporarily Expose stats endpoints TODO Secure these endpoints
   app.use route.get '/statsd', statsd.retrieveTransactionCountPerHour
   app.use route.get '/statsd/load-time', statsd.retrieveAverageLoadTimePerHour
+  app.use route.get '/statsd/:type/:channelId', statsd.retrieveChannelMetrics
 
   app.use route.get '/statsd/transactions/:channelId/:status', statsd.transactionsPerChannelPerHour
 
