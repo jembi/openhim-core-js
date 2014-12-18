@@ -16,14 +16,14 @@ getProjectionObject = (filterRepresentation) ->
   switch filterRepresentation
     when "simpledetails"
       # view minimum required data for transaction details view
-      return { "request.body": 0, "response.body": 0, "routes.request.body": 0, "routes.response.body": 0, "orchestrations.request.body": 0, "orchestrations.response.body": 0 };
+      return { "request.body": 0, "response.body": 0, "routes.request.body": 0, "routes.response.body": 0, "orchestrations.request.body": 0, "orchestrations.response.body": 0 }
     when "full"
       # view all transaction data
-      return {};
+      return {}
     else
       # no filterRepresentation supplied - simple view
       # view minimum required data for transactions
-      return { "request.body": 0, "request.headers": 0, "response.body": 0, "response.headers": 0, orchestrations: 0, routes: 0 };
+      return { "request.body": 0, "request.headers": 0, "response.body": 0, "response.headers": 0, orchestrations: 0, routes: 0 }
   
 
 
