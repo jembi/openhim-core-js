@@ -1,6 +1,7 @@
 http = require "http"
 https = require "https"
 net = require "net"
+tls = require "tls"
 fs = require "fs"
 User = require('../lib/model/users').User
 crypto = require "crypto"
@@ -28,9 +29,8 @@ exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch
 
 exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, requestCallback) ->
   options =
-    key: fs.readFileSync("tls/key.pem").toString()
-    cert: fs.readFileSync("tls/cert.pem").toString()
-
+    key: fs.readFileSync("test/resources/server-tls/key.pem").toString()
+    cert: fs.readFileSync("test/resources/server-tls/cert.pem").toString()
 
   requestCallback = requestCallback || ->
     # Create mock endpoint to forward requests to
@@ -38,11 +38,48 @@ exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, request
     res.writeHead resStatusCode, {"Content-Type": "text/plain"}
     res.end "Secured " + resBody
 
-  mockServer.listen port, callback
+  mockServer.listen port, -> callback mockServer
+  mockServer.on "request", requestCallback
+
+exports.createMockHTTPSServerWithMutualTLS = (resStatusCode, resBody, port, validCert, callback, requestCallback) ->
+  options =
+    key: fs.readFileSync("test/resources/server-tls/key.pem").toString()
+    cert: fs.readFileSync("test/resources/server-tls/cert.pem").toString()
+    requestCert: true
+    rejectUnauthorized: true
+
+  if validCert
+    options.ca = fs.readFileSync("tls/cert.pem").toString() # add OpenHIM cert directly as CA
+
+  requestCallback = requestCallback || ->
+    # Create mock endpoint to forward requests to
+  mockServer = https.createServer options, (req, res) ->
+    res.writeHead resStatusCode, {"Content-Type": "text/plain"}
+    res.end "Secured " + resBody
+
+  mockServer.listen port, -> callback mockServer
   mockServer.on "request", requestCallback
 
 exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, callback) ->
   server = net.createServer (sock) ->
+    sock.on 'data', (data) ->
+      response = if "#{data}" is expected then matchResponse else nonMatchResponse
+      sock.write response
+
+  server.listen port, 'localhost', -> callback server
+
+exports.createMockTLSServer = (port, expected, matchResponse, nonMatchResponse, mutualAuth, callback) ->
+  options =
+    key: fs.readFileSync 'test/resources/server-tls/key.pem'
+    cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
+    secureProtocol: 'TLSv1_method'
+
+  if mutualAuth
+    options.ca = fs.readFileSync 'tls/cert.pem'
+    options.requestCert = true
+    options.rejectUnauthorized = true
+
+  server = tls.createServer (sock) ->
     sock.on 'data', (data) ->
       response = if "#{data}" is expected then matchResponse else nonMatchResponse
       sock.write response

@@ -16,6 +16,8 @@ describe "TCP/TLS Integration Tests", ->
   testMessage = "This is an awesome test message!"
   mockTCPServer = null
   mockHTTPServer = null
+  mockTLSServer = null
+  mockTLSServerWithMutalAuth = null
 
   channel1 = new Channel
     name: 'TCPIntegrationChannel1'
@@ -59,6 +61,36 @@ describe "TCP/TLS Integration Tests", ->
       type: 'http'
       primary: true
     ]
+  channel4 = new Channel
+    name: 'TCPIntegrationChannel4'
+    urlPattern: '/'
+    allow: [ 'tcp' ]
+    type: 'tcp'
+    tcpPort: 4003
+    tcpHost: 'localhost'
+    routes: [
+      name: 'tcp route'
+      host: 'localhost'
+      port: 6002
+      type: 'tcp'
+      primary: true
+      secured: true
+    ]
+  channel5 = new Channel
+    name: 'TCPIntegrationChannel5'
+    urlPattern: '/'
+    allow: [ 'tcp' ]
+    type: 'tcp'
+    tcpPort: 4004
+    tcpHost: 'localhost'
+    routes: [
+      name: 'tcp route'
+      host: 'localhost'
+      port: 6003
+      type: 'tcp'
+      primary: true
+      secured: true
+    ]
 
   secureClient = new Client
     clientID: "TlsIntegrationClient"
@@ -87,12 +119,16 @@ describe "TCP/TLS Integration Tests", ->
       callback "#{data}"
 
   before (done) ->
-    channel1.save -> channel2.save -> channel3.save -> secureClient.save ->
+    channel1.save -> channel2.save -> channel3.save -> channel4.save -> channel5.save -> secureClient.save ->
       testUtils.createMockTCPServer 6000, testMessage, 'OK', 'Not OK', (server) ->
         mockTCPServer = server
         testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'OK', 'Not OK', (server) ->
           mockHTTPServer = server
-          done()
+          testUtils.createMockTLSServer 6002, testMessage, 'OK', 'Not OK', false, (server) ->
+            mockTLSServer = server
+            testUtils.createMockTLSServer 6003, testMessage, 'OK', 'Not OK', true, (server) ->
+              mockTLSServerWithMutalAuth = server
+              done()
 
   beforeEach (done) -> Transaction.remove {}, done
 
@@ -134,3 +170,16 @@ describe "TCP/TLS Integration Tests", ->
           trx[0].request.body.should.be.exactly testMessage
           trx[0].response.body.should.be.exactly 'OK'
           done()
+
+  it "should route TCP messages to TLS route", (done) ->
+    server.start null, null, null, null, 7787, null, ->
+      sendTCPTestMessage 4003, (data) ->
+        console.log 'returned'
+        data.should.be.exactly 'OK'
+        done()
+  
+  it "should route TCP messages to TLS route with mutual auth", (done) ->
+    server.start null, null, null, null, 7787, null, ->
+      sendTCPTestMessage 4004, (data) ->
+        data.should.be.exactly 'OK'
+        done()

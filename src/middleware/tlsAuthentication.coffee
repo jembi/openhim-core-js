@@ -26,6 +26,10 @@ exports.getServerOptions = (mutualTLS, done) ->
   
   if mutualTLS
     getTrustedClientCerts (err, certs) ->
+      try
+        certs.push fs.readFileSync "tls/ca.pem"
+      catch err
+        logger.info "'tls/ca.pem' not found, not setting any custom CAs for inbound transactions."
       options.ca = certs
       options.requestCert = true
       options.rejectUnauthorized = false
