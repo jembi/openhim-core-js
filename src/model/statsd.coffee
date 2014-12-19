@@ -40,19 +40,32 @@ exports.retrieveAverageLoadTimePerHour = `function *() {
 }`
 
 exports.retrieveChannelMetrics = `function *(type, channelId) {
-  var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId + ".count,'1day'))&from=-1weeks&format=json";
-  path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".mean,'1day'))";
   var data = [];
-  var raw = yield fetchData(path);
-  var i = 0;
-  _.forEach(raw.data, function (item) {
-    data.push({
-      load: item[0],
-      avgResp: raw.data1[i][0],
-      timestamp: moment.unix(item[1])
+  var status_array = ['Failed','Successful', 'Completed']
+  var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
+  if (type == 'status'){
+      var obj = {};
+    _.forEach(status_array, function (current_status) {
+      path = render_url + '.' + status + ".count,'1day'))&from=-1weeks&format=json";
+      obj[current_status] =  fetchData(path);
+      data.push(obj);
+    })
+
+  } else {
+
+    var path = render_url + ".count,'1day'))&from=-1weeks&format=json";
+        path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".mean,'1day'))";
+    var raw = yield fetchData(path);
+    var i = 0;
+    _.forEach(raw.data, function (item) {
+      data.push({
+        load: item[0],
+        avgResp: raw.data1[i][0],
+        timestamp: moment.unix(item[1])
+      });
+      i++;
     });
-    i++;
-  });
+  }
   this.body = data
 }`
 
@@ -78,7 +91,7 @@ exports.transactionsPerChannelPerHour = `function *(period) {
   this.body = data
 }`
 
-fetchData = `function *fetchData(path) {
+exports.fetchData = `function *(path) {
   var options = {
     url: 'http://' + statsd_server.host + path
   };
