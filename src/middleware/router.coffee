@@ -4,7 +4,6 @@ http = require 'http'
 https = require 'https'
 net = require 'net'
 async = require 'async'
-MongoClient = require('mongodb').MongoClient;
 Q = require 'q'
 config = require '../config/config'
 config.mongo = config.get('mongo')
@@ -173,7 +172,7 @@ obtainCharset = (headers) ->
 #    timestamp: <the time the response was recieved>
 ###
 sendHttpRequest = (ctx, route, options) ->
-  defered = Q.defer();
+  defered = Q.defer()
   response = {}
 
   gunzip = zlib.createGunzip()
@@ -301,7 +300,7 @@ sendMLLPSocketRequest = (ctx, route, options) ->
   bufs = []
   client.on 'data', (chunk) ->
     bufs.push chunk
-    n = chunk.toString().indexOf(endChar);
+    n = chunk.toString().indexOf(endChar)
     if n > -1
       logger.info 'Received response end character'
       response.body = Buffer.concat bufs

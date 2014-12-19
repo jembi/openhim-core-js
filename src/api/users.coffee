@@ -4,7 +4,7 @@ logger = require 'winston'
 authorisation = require './authorisation'
 
 moment = require 'moment'
-randtoken = require 'rand-token';
+randtoken = require 'rand-token'
 contact = require '../contact'
 config = require "../config/config"
 config.newUserExpiry = config.get('newUserExpiry')
@@ -102,7 +102,7 @@ exports.updateNewUser = `function *updateNewUser(token) {
   }
 
   // construct user object to prevent other properties from being updated
-  newUserUpdate = { 
+  newUserUpdate = {
     firstname: userData.firstname,
     surname: userData.surname,
     token: null,
@@ -111,7 +111,7 @@ exports.updateNewUser = `function *updateNewUser(token) {
     msisdn: msisdn,
     passwordAlgorithm: userData.passwordAlgorithm,
     passwordSalt: userData.passwordSalt,
-    passwordHash: userData.passwordHash 
+    passwordHash: userData.passwordHash
   }
 
   try {
@@ -165,7 +165,7 @@ exports.addUser = `function *addUser() {
     var user = new User(userData);
     var result = yield Q.ninvoke(user, 'save');
 
-    /* 
+    /*
     # Send email to new user to set password
     */
 

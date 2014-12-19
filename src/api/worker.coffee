@@ -15,8 +15,8 @@ TransactionModel = require("../model/transactions").Transaction
 worker = client.worker([ "transactions" ])
 worker.register rerun_transaction: (params, callback) ->
 
-  transactionID = params.transactionID;
-  taskID = params.taskID;
+  transactionID = params.transactionID
+  taskID = params.taskID
 
   # Get the task object and update
   # ensure transactionID is within task object
