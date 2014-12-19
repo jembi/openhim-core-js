@@ -91,7 +91,7 @@ exports.transactionsPerChannelPerHour = `function *(period) {
   this.body = data
 }`
 
-exports.fetchData = `function *(path) {
+exports.fetchData = fetchData = `function *(path) {
   var options = {
     url: 'http://' + statsd_server.host + path
   };
