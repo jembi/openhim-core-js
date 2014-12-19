@@ -117,6 +117,7 @@ exports.updateNewUser = `function *updateNewUser(token) {
   try {
     yield User.findOneAndUpdate({ token: token }, newUserUpdate).exec();
     this.body = "Successfully set new user password."
+    logger.info('New user updated by token %s', token);
   } catch(e) {
     logger.error('Could not update user by token '+token+' via the API: ' + e);
     this.body = e.message;
@@ -188,6 +189,7 @@ exports.addUser = `function *addUser() {
     
     this.body = 'User successfully created';
     this.status = 'created';
+    logger.info('User %s created user %s', this.authenticated.email, userData.email);
   } catch(e) {
     logger.error('Could not add a user via the API: ' + e);
     this.body = e.message;
@@ -259,6 +261,7 @@ exports.updateUser = `function *updateUser(email) {
   try {
     yield User.findOneAndUpdate({ email: email }, userData).exec();
     this.body = "Successfully updated user."
+    logger.info('User %s updated user %s', this.authenticated.email, userData.email);
   } catch(e) {
     logger.error('Could not update user by email '+email+' via the API: ' + e);
     this.body = e.message;
@@ -289,6 +292,7 @@ exports.removeUser = `function *removeUser(email) {
   try {
     yield User.findOneAndRemove({ email: email }).exec();
     this.body = "Successfully removed user with email '"+email+"'";
+    logger.info('User %s removed user %s', this.authenticated.email, email);
   }catch(e){
     logger.error('Could not remove user by email '+email+' via the API: ' + e);
     this.body = e.message;

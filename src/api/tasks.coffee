@@ -119,6 +119,7 @@ exports.addTask = `function *addTask() {
       // All ok! So set the result
       this.body = 'Task successfully created';
       this.status = 'created';
+      logger.info('User %s created task with id %s', this.authenticated.email, task.id);
     } else {
       // rerun task creation not allowed
       this.body = 'Insufficient permissions prevents this rerun task from being created';
@@ -187,6 +188,7 @@ exports.updateTask = `function *updateTask(taskId) {
 
     // All ok! So set the result
     this.body = 'The Task was successfully updated';
+    logger.info('User %s updated task with id %s', this.authenticated.email, taskId);
   }
   catch (e) {
     // Error! So inform the user
@@ -219,6 +221,7 @@ exports.removeTask = `function *removeTask(taskId) {
 
     // All ok! So set the result
     this.body = 'The Task was successfully deleted';
+    logger.info('User %s removed task with id %s', this.authenticated.email, taskId);
   }
   catch (e) {
     // Error! So inform the user
