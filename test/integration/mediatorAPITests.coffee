@@ -431,3 +431,70 @@ describe "API Integration Tests", ->
               done err
             else
               done()
+
+    describe "*removeMediator", ->
+      it  "should remove an mediator with specified urn", (done) ->
+
+        mediatorDelete =
+          urn: "urn:uuid:EEA84E13-2M74-467C-UD7F-7C480462D1DF"
+          version: "1.0.0"
+          name: "Test Mediator"
+          description: "A mediator for testing"
+          endpoints: [
+            {
+              name: 'Save Encounter'
+              host: 'localhost'
+              port: '6000'
+              type: 'http'
+            }
+          ]
+          defaultChannelConfig: [
+            name: "Test Mediator"
+            urlPattern: "/test"
+            type: 'http'
+            allow: []
+            routes: [
+              {
+                name: 'Test Route'
+                host: 'localhost'
+                port: '9000'
+                type: 'http'
+              }
+            ]
+          ]
+
+        mediator = new Mediator mediatorDelete
+        mediator.save (error, mediator) ->
+          should.not.exist(error)
+          Mediator.count (err, countBefore) ->
+            request("https://localhost:8080")
+              .del("/mediators/" + mediator.urn)
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .expect(200)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  Mediator.count (err, countAfter) ->
+                    Mediator.findOne { urn: mediator.urn }, (error, notFoundDoc) ->
+                      (notFoundDoc == null).should.be.true
+                      (countBefore - 1).should.equal countAfter
+                      done()
+
+      it  "should not allow a non admin user to remove a mediator", (done) ->
+
+        request("https://localhost:8080")
+          .del("/mediators/urn:uuid:EEA84E13-2M74-467C-UD7F-7C480462D1DF")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
