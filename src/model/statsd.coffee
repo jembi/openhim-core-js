@@ -34,7 +34,7 @@ exports.fetcGlobalStatusMetrics = `function *() {
   var data = []
 
   for (var i = 0; i < allowedIds.length; i++) {
-    var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[i] + ".*.count,'1week'))&from=-1weeks&format=json";
+    var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[i] + ".Statuses.*.count,'1week'))&from=-1weeks&format=json";
     var raw = yield fetchData(path);
     data.push({
       _id : {"channelID": allowedIds[i] },
