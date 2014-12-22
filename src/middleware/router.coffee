@@ -3,6 +3,7 @@ zlib = require 'zlib'
 http = require 'http'
 https = require 'https'
 net = require 'net'
+tls = require 'tls'
 async = require 'async'
 Q = require 'q'
 config = require '../config/config'
@@ -253,10 +254,18 @@ sendHttpRequest = (ctx, route, options) ->
 sendSocketRequest = (ctx, route, options) ->
   defered = Q.defer()
   requestBody = ctx.body
-  client = new net.Socket()
   response = {}
 
-  client.connect options.port, options.hostname, ->
+  method = net
+  if route.secured
+    method = tls
+
+  options =
+    hostname: options.hostname
+    port: options.port
+    rejectUnauthorized: options.rejectUnauthorized
+
+  client = method.connect options, ->
     logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
     client.end requestBody
 
