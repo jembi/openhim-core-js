@@ -21,8 +21,8 @@ exports.incrementTransactionCount = (ctx, done) ->
     #Collect stats for non-primary routes
     if ctx.routes?
       for route in ctx.routes
-        sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.' + route.name # Per non-primary route
-        sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.' + route.name + '.' + route.response.status # Per route response status
+        sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name # Per non-primary route
+        sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.' + route.response.status # Per route response status
 
   catch error
     logger.error error, done
@@ -40,8 +40,8 @@ exports.measureTransactionDuration = (ctx, done) ->
     #Collect stats for non-primary routes
     if ctx.routes?
       for route in ctx.routes
-        sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + route.name, timer # Per Channel
-        sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + route.name + '.' + route.response.status, timer # Per Channel
+        sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, timer # Per Channel
+        sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.' + route.response.status, timer # Per Channel
 
   catch error
     logger.error error, done

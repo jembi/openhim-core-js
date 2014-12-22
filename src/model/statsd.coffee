@@ -44,13 +44,19 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var data = [];
   var status_array = ['Failed','Successful', 'Completed']
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
+
   if (type == 'status'){
-      var obj = {};
-    _.forEach(status_array, function *(status) {
-      path = render_url + '.' + status + ".count,'1day'))&from=-7days&format=json";
-      obj[status] =  yield fetchData(path);
-    })
-    data.push(obj);
+    var path = render_url + ".*.count,'1day'))&from=-7days&format=json";
+    var raw = yield fetchData(path);
+    console.log(JSON.stringify(raw.data));
+    console.log(path);
+    _.forEach(raw.data, function *(item) {
+      data.push({
+        failed: raw.data[i][0],
+        successful: raw.data1[i][0],
+      });
+
+    });
 
   } else {
 
@@ -99,15 +105,16 @@ exports.fetchData = fetchData = `function *(path) {
   var response = yield request(options);
   var info = JSON.parse(response.body);
   var data = {};
+  var i = 0;
 
-  if (info[0]) {
-    data.data = info[0].datapoints
-  }
+  _.forEach(info, function (item) {
+    if (i == 0) {
+      data.data = item.datapoints
+    } else {
+      data['data' + i] = item.datapoints
+    }
+    i++;
+  });
 
-  if (info[1]) {
-    console.log(JSON.stringify(info[1]));
-    console.log(JSON.stringify(options));
-    data.data1 = info[1].datapoints
-  }
   return data;
 }`
