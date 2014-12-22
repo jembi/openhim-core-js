@@ -108,3 +108,28 @@ exports.addMediator = `function *addMediator() {
     }
   }
 }`
+
+
+exports.removeMediator = `function *removeMediator(urn) {
+
+  // Test if the user is authorised
+  if (authorisation.inGroup('admin', this.authenticated) === false) {
+    logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeMediator denied.')
+    this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeMediator denied.'
+    this.status = 'forbidden';
+    return;
+  }
+
+  var urn = unescape (urn);
+
+  try {
+    yield Mediator.findOneAndRemove({ urn: urn }).exec();
+    this.body = "Mediator with urn '+urn+' has been successfully removed by "+this.authenticated.email;
+    logger.info('Mediator with urn '+urn+' has been successfully removed by %s', this.authenticated.email);
+  }catch(e){
+    logger.error('Could not remove Mediator by urn '+urn+' via the API: ' + e);
+    this.body = e.message;
+    this.status = 'internal server error';
+  }
+
+}`
