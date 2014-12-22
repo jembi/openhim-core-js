@@ -27,11 +27,21 @@ exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch
         res.writeHead errStatusCode, {"Content-Type": "text/plain"}
         res.end()
 
-exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, requestCallback) ->
-  options =
-    key: fs.readFileSync("tls/key.pem").toString()
-    cert: fs.readFileSync("tls/cert.pem").toString()
+exports.createMockHTTPSServer = (resStatusCode, resBody, port, useClientCert, callback, requestCallback) ->
+  if typeof useClientCert is 'function'
+    requestCallback = callback
+    callback = useClientCert
+    useClientCert = true
 
+  options =
+    key: fs.readFileSync 'test/resources/server-tls/key.pem'
+    cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
+    requestCert: true
+    rejectUnauthorized: true
+    secureProtocol: 'TLSv1_method'
+
+  if useClientCert
+    options.ca = fs.readFileSync 'tls/cert.pem'
 
   requestCallback = requestCallback || ->
     # Create mock endpoint to forward requests to
@@ -39,7 +49,7 @@ exports.createMockHTTPSServer = (resStatusCode, resBody, port, callback, request
     res.writeHead resStatusCode, {"Content-Type": "text/plain"}
     res.end "Secured " + resBody
 
-  mockServer.listen port, callback
+  mockServer.listen port, -> callback mockServer
   mockServer.on "request", requestCallback
 
 exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, callback) ->
@@ -50,10 +60,20 @@ exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, 
 
   server.listen port, 'localhost', -> callback server
 
-exports.createMockTLSServer = (port, expected, matchResponse, nonMatchResponse, callback) ->
+exports.createMockTLSServer = (port, expected, matchResponse, nonMatchResponse, useClientCert, callback) ->
+  if typeof useClientCert is 'function'
+    callback = useClientCert
+    useClientCert = true
+
   options =
-    key: fs.readFileSync 'tls/key.pem'
-    cert: fs.readFileSync 'tls/cert.pem'
+    key: fs.readFileSync 'test/resources/server-tls/key.pem'
+    cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
+    requestCert: true
+    rejectUnauthorized: true
+    secureProtocol: 'TLSv1_method'
+
+  if useClientCert
+    options.ca = fs.readFileSync 'tls/cert.pem'
 
   server = tls.createServer options, (sock) ->
     sock.on 'data', (data) ->

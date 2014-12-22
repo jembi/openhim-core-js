@@ -67,17 +67,17 @@ describe "HTTP Router", ->
       return ctx
 
     it "should route an incomming https request to the endpoints specific by the channel config", (done) ->
-      testUtils.createMockHTTPSServer 201, "Mock response body\n", 9877, ->
+      testUtils.createMockHTTPSServer 201, "Mock response body\n", 9877, (server) ->
         # Setup a channel for the mock endpoint
         channel =
           name: "Mock endpoint"
           urlPattern: ".+"
           routes: [
             secured: true
-            host: "localhost"
+            host: 'localhost'
             port: 9877
             primary: true
-            cert: fs.readFileSync 'tls/cert.pem'
+            cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
           ]
 
         ctx = new Object()
@@ -90,12 +90,47 @@ describe "HTTP Router", ->
 
         router.route ctx, (err) ->
           if err
-            return done err
+            return server.close ->
+              done err
 
           ctx.response.status.should.be.exactly 201
           ctx.response.body.toString().should.be.eql "Secured Mock response body\n"
           ctx.response.header.should.be.ok
-          done()
+          server.close done
+
+    it "should be denied access if the server doesn't know the client cert when using mutual TLS authentication", (done) ->
+      testUtils.createMockHTTPSServer 201, "Mock response body\n", 9877, false, (server) ->
+        # Setup a channel for the mock endpoint
+        channel =
+          name: "Mock endpoint"
+          urlPattern: ".+"
+          routes: [
+            secured: true
+            host: "localhost"
+            port: 9877
+            primary: true
+          ]
+
+        ctx = new Object()
+        ctx.authorisedChannel = channel
+        ctx.request = new Object()
+        ctx.response = new Object()
+        ctx.response.set = ->
+        ctx.path = ctx.request.url = "/test"
+        ctx.request.method = "GET"
+
+        router.route ctx, (err) ->
+          if err
+            logger.error err
+            return server.close ->
+              done err
+
+          try
+            ctx.response.status.should.be.exactly 500
+            ctx.response.body.toString().should.be.eql "An internal server error occurred"
+            server.close done
+          catch err
+            server.close -> done err
 
     it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
       testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
