@@ -55,7 +55,10 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       data.push({
         _id : {"channelID": channelId },
         failed: raw.data[0][0],
-        successful: raw.data1[0][0]
+        successful: raw.data1[0][0],
+        processing:0,
+        completed:0,
+        completedWErrors:0
       });
     //  i++;
     //});
