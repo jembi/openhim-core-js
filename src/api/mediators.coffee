@@ -124,8 +124,8 @@ exports.removeMediator = `function *removeMediator(urn) {
 
   try {
     yield Mediator.findOneAndRemove({ urn: urn }).exec();
-    this.body = "Mediator successfully removed by "+this.authenticated.email;
-    logger.info('Mediator successfully removed by %s', this.authenticated.email);
+    this.body = "Mediator with urn '+urn+' has been successfully removed by "+this.authenticated.email;
+    logger.info('Mediator with urn '+urn+' has been successfully removed by %s', this.authenticated.email);
   }catch(e){
     logger.error('Could not remove Mediator by urn '+urn+' via the API: ' + e);
     this.body = e.message;
