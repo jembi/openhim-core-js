@@ -16,6 +16,7 @@ describe "TCP/TLS Integration Tests", ->
   testMessage = "This is an awesome test message!"
   mockTCPServer = null
   mockHTTPServer = null
+  mockTLSServer = null
 
   channel1 = new Channel
     name: 'TCPIntegrationChannel1'
@@ -59,6 +60,21 @@ describe "TCP/TLS Integration Tests", ->
       type: 'http'
       primary: true
     ]
+  channel4 = new Channel
+    name: 'TCPIntegrationChannel4'
+    urlPattern: '/'
+    allow: [ 'tcp' ]
+    type: 'tcp'
+    tcpPort: 4003
+    tcpHost: 'localhost'
+    routes: [
+      name: 'tls route'
+      host: 'localhost'
+      port: 6002
+      type: 'tcp'
+      secured: true
+      primary: true
+    ]
 
   secureClient = new Client
     clientID: "TlsIntegrationClient"
@@ -87,17 +103,19 @@ describe "TCP/TLS Integration Tests", ->
       callback "#{data}"
 
   before (done) ->
-    channel1.save -> channel2.save -> channel3.save -> secureClient.save ->
-      testUtils.createMockTCPServer 6000, testMessage, 'OK', 'Not OK', (server) ->
+    channel1.save -> channel2.save -> channel3.save -> channel4.save -> secureClient.save ->
+      testUtils.createMockTCPServer 6000, testMessage, 'TCP OK', 'TCP Not OK', (server) ->
         mockTCPServer = server
-        testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'OK', 'Not OK', (server) ->
+        testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) ->
           mockHTTPServer = server
-          done()
+          testUtils.createMockTLSServer 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
+            mockTLSServer = server
+            done()
 
   beforeEach (done) -> Transaction.remove {}, done
 
   after (done) ->
-    Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, -> mockTCPServer.close -> mockHTTPServer.close done
+    Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, -> mockTCPServer.close -> mockHTTPServer.close -> mockTLSServer.close done
 
   afterEach (done) -> server.stop done
 
@@ -107,7 +125,7 @@ describe "TCP/TLS Integration Tests", ->
 
     server.start null, null, null, null, 7787, null, ->
       sendTCPTestMessage 4000, (data) ->
-        data.should.be.exactly 'OK'
+        data.should.be.exactly 'TCP OK'
         incrementTransactionCountSpy.calledOnce.should.be.true
         incrementTransactionCountSpy.getCall(0).args[0].authorisedChannel.should.have.property 'name', 'TCPIntegrationChannel1'
         measureTransactionDurationSpy.calledOnce.should.be.true
@@ -116,13 +134,19 @@ describe "TCP/TLS Integration Tests", ->
   it "should route TLS messages", (done) ->
     server.start null, null, null, null, 7787, null, ->
       sendTLSTestMessage 4001, (data) ->
-        data.should.be.exactly 'OK'
+        data.should.be.exactly 'TCP OK'
         done()
 
   it "should route TCP messages to HTTP routes", (done) ->
     server.start null, null, null, null, 7787, null, ->
       sendTCPTestMessage 4002, (data) ->
-        data.should.be.exactly 'OK'
+        data.should.be.exactly 'HTTP OK'
+        done()
+
+  it "should route TCP messages to TLS routes", (done) ->
+    server.start null, null, null, null, 7787, null, ->
+      sendTCPTestMessage 4003, (data) ->
+        data.should.be.exactly 'TLS OK'
         done()
 
   it "should persist messages", (done) ->
@@ -132,5 +156,5 @@ describe "TCP/TLS Integration Tests", ->
           trx.length.should.be.exactly 1
           trx[0].channelID.toString().should.be.exactly channel1._id.toString()
           trx[0].request.body.should.be.exactly testMessage
-          trx[0].response.body.should.be.exactly 'OK'
+          trx[0].response.body.should.be.exactly 'TCP OK'
           done()
