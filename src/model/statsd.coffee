@@ -9,6 +9,7 @@ Q = require "q"
 request = require 'koa-request'
 _ = require "lodash"
 moment = require "moment"
+metrics = require "../metrics"
 
 # Overall Metrics
 
@@ -17,12 +18,29 @@ exports.retrieveTransactionCountPerHour = `function *() {
   var data = [];
   var raw = yield fetchData(path);
 
-  _.forEach(raw.data, function (item) {
+  _.forEach(raw, function (item) {
     data.push({
       load: item[0],
       timestamp: moment.unix(item[1])
     });
   });
+  this.body = data
+}`
+
+exports.fetcGlobalStatusMetrics = `function *() {
+  var filtersObject = this.request.query;
+  var userRequesting = this.authenticated;
+  var allowedIds = yield metrics.getAllowedChannelIDs(userRequesting)
+  var data = []
+
+  for (var i = 0; i < allowedIds.length; i++) {
+    console.log(allowedIds);
+    var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[i] + ".*.count,'1week'))&from=-1weeks&format=json";
+    var raw = yield fetchData(path);
+    console.log(path);
+    console.log(JSON.stringify(raw));
+  }
+
   this.body = data
 }`
 
@@ -46,22 +64,18 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
 
   if (type == 'status'){
-    var path = render_url + ".*.count,'1week'))&from=-1weeks&format=json";
+    var path = render_url + ".Statuses.*.count,'1week'))&from=-1weeks&format=json";
     var raw = yield fetchData(path);
-    console.log(JSON.stringify(raw));
-    console.log(path);
     var i = 0;
-    //_.forEach(raw, function *(item) {
-      data.push({
-        _id : {"channelID": channelId },
-        failed: raw.data[0][0],
-        successful: raw.data1[0][0],
-        processing:0,
-        completed:0,
-        completedWErrors:0
-      });
-    //  i++;
-    //});
+    data.push({
+      _id : {"channelID": channelId },
+      failed: raw.data[0][0],
+      successful: raw.data1[0][0],
+      processing:0,
+      completed:0,
+      completedWErrors:0
+    });
+
 
   } else {
 

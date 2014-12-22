@@ -91,6 +91,8 @@ exports.setupApp = (done) ->
   app.use route.get '/metrics/status', metrics.getGlobalStatusMetrics
   app.use route.get '/metrics/:type/:channelId', metrics.getChannelMetrics
 
+  app.use route.get '/statsd/status', statsd.fetcGlobalStatusMetrics
+
   # app.use route.get '/statsd', statsd.retrieveTransactionCount
 
   app.use route.get '/mediators', mediators.getAllMediators
