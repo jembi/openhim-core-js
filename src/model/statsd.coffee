@@ -46,17 +46,18 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
 
   if (type == 'status'){
-    var path = render_url + ".*.count,'1day'))&from=-7days&format=json";
+    var path = render_url + ".*.count,'1week'))&from=-1weeks&format=json";
     var raw = yield fetchData(path);
-    console.log(JSON.stringify(raw.data));
+    console.log(JSON.stringify(raw));
     console.log(path);
-    _.forEach(raw.data, function *(item) {
+    var i = 0;
+    //_.forEach(raw, function *(item) {
       data.push({
-        failed: raw.data[i][0],
-        successful: raw.data1[i][0],
+        failed: raw.data[0][0],
+        successful: raw.data1[0][0]
       });
-
-    });
+    //  i++;
+    //});
 
   } else {
 
