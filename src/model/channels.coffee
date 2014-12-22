@@ -13,6 +13,7 @@ RouteSchema = new Schema
   "username": { type: String, required: false }
   "password": { type: String, required: false }
   "type": { type: String, default: 'http', enum: ['http', 'tcp', 'mllp'] }
+  "cert": { type: String, required: false }
 
 AlertsSchema = new Schema
   "status": { type: String, required: true }

@@ -1,3 +1,4 @@
+fs = require "fs"
 should = require "should"
 sinon = require "sinon"
 http = require "http"
@@ -76,6 +77,7 @@ describe "HTTP Router", ->
             host: "localhost"
             port: 9877
             primary: true
+            cert: fs.readFileSync 'tls/cert.pem'
           ]
 
         ctx = new Object()

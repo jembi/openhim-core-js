@@ -74,6 +74,7 @@ describe "TCP/TLS Integration Tests", ->
       type: 'tcp'
       secured: true
       primary: true
+      cert: fs.readFileSync 'tls/cert.pem'
     ]
 
   secureClient = new Client
