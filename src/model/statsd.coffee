@@ -53,6 +53,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
     var i = 0;
     //_.forEach(raw, function *(item) {
       data.push({
+        _id : {"channelID": channelId },
         failed: raw.data[0][0],
         successful: raw.data1[0][0]
       });
