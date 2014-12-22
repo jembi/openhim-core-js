@@ -25,6 +25,7 @@ exports.addContactGroup = `function *addContactGroup() {
     
     this.body = 'Contact Group successfully created';
     this.status = 'created';
+    logger.info('User %s created contact group with id %s', this.authenticated.email, contactGroup.id);
   } catch(e) {
     logger.error('Could not add a contact group via the API: ' + e);
     this.body = e.message;
@@ -89,6 +90,7 @@ exports.updateContactGroup = `function *updateContactGroup(contactGroupId) {
   try {
     yield ContactGroup.findByIdAndUpdate(contactGroupId, contactGroupData).exec();
     this.body = "Successfully updated contact group."
+    logger.info('User %s updated contact group with id %s', this.authenticated.email, contactGroupId);
   } catch(e) {
     logger.error('Could not update contact group by ID '+contactGroupId+' via the API: ' + e);
     this.body = e.message;
@@ -115,6 +117,7 @@ exports.removeContactGroup = `function *removeContactGroup(contactGroupId) {
   try {
     yield ContactGroup.findByIdAndRemove(contactGroupId).exec();
     this.body = "Successfully removed contact group with ID '"+contactGroupId+"'";
+    logger.info('User %s removed contact group with id %s', this.authenticated.email, contactGroupId);
   }catch(e){
     logger.error('Could not remove contact group by ID '+contactGroupId+' via the API: ' + e);
     this.body = e.message;

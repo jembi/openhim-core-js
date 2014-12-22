@@ -96,6 +96,7 @@ exports.addMediator = `function *addMediator() {
     }
 
     this.status = 'created'
+    logger.info('User %s created mediator with urn %s', this.authenticated.email, mediator.urn);
   } catch (e) {
     if (e.name == 'ValidationError') {
       this.body = e.message;

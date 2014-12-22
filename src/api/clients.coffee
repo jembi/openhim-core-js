@@ -24,6 +24,7 @@ exports.addClient = `function *addClient() {
     
     this.body = 'Client successfully created';
     this.status = 'created';
+    logger.info('User %s created client with id %s', this.authenticated.email, client.id);
   } catch(e) {
     logger.error('Could not add a client via the API: ' + e);
     this.body = e.message;
@@ -128,6 +129,7 @@ exports.updateClient = `function *updateClient(clientId) {
   try {
     yield Client.findByIdAndUpdate(clientId, clientData).exec();
     this.body = "Successfully updated client."
+    logger.info('User %s updated client with id %s', this.authenticated.email, clientId);
   } catch(e) {
     logger.error('Could not update client by ID '+clientId+' via the API: ' + e);
     this.body = e.message;
@@ -150,6 +152,7 @@ exports.removeClient = `function *removeClient(clientId) {
   try {
     yield Client.findByIdAndRemove(clientId).exec();
     this.body = "Successfully removed client with ID '"+clientId+"'";
+    logger.info('User %s removed client with id %s', this.authenticated.email, clientId);
   }catch(e){
     logger.error('Could not remove client by ID '+clientId+' via the API: ' + e);
     this.body = e.message;

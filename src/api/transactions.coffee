@@ -105,6 +105,7 @@ exports.addTransaction = `function *addTransaction() {
     // Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Q.ninvoke(tx, "save");
     this.status = 'created';
+    logger.info('User %s created transaction with id %s', this.authenticated.email, tx.id);
   } catch (e) {
     logger.error('Could not add a transaction via the API: ' + e);
     this.body = e.message;
@@ -249,6 +250,7 @@ exports.updateTransaction = `function *updateTransaction(transactionId) {
     yield transactions.Transaction.findByIdAndUpdate(transactionId, updates).exec();
     this.body = "Transaction with ID:"+transactionId+" successfully updated.";
     this.status = 'ok';
+    logger.info('User %s updated transaction with id %s', this.authenticated.email, transactionId);
   } catch(e) {
     logger.error('Could not update a transaction via the API: ' + e);
     this.body = e.message;
@@ -277,6 +279,7 @@ exports.removeTransaction = `function *removeTransaction(transactionId) {
     yield transactions.Transaction.findByIdAndRemove(transactionId).exec();
     this.body = 'Transaction successfully deleted';
     this.status = 'ok';
+    logger.info('User %s removed transaction with id %s', this.authenticated.email, transactionId);
   }
   catch (e) {
     logger.error('Could not remove a transaction via the API: ' + e);
