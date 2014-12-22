@@ -3,6 +3,7 @@ config = require '../config/config'
 application = config.get 'application'
 os = require "os"
 domain = os.hostname() + '.' + application.name
+domain = "statsd-VirtualBox.Development"
 statsd_server = config.get 'statsd'
 Q = require "q"
 request = require 'koa-request'
@@ -45,18 +46,16 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
   if (type == 'status'){
       var obj = {};
-    _.forEach(status_array, function (status) {
-      path = render_url + '.' + status + ".count,'1day'))&from=-1weeks&format=json";
-      obj[status] =  function *() {
-       return yield fetchData(path);
-      }
-      data.push(obj);
+    _.forEach(status_array, function *(status) {
+      path = render_url + '.' + status + ".count,'1day'))&from=-7days&format=json";
+      obj[status] =  yield fetchData(path);
     })
+    data.push(obj);
 
   } else {
 
-    var path = render_url + ".count,'1day'))&from=-1weeks&format=json";
-        path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".mean,'1day'))";
+    var path = render_url + ".count,'1day'))&from=-7days&format=json";
+        path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".sum,'1day','avg'))";
     var raw = yield fetchData(path);
     var i = 0;
     _.forEach(raw.data, function (item) {
@@ -106,6 +105,8 @@ exports.fetchData = fetchData = `function *(path) {
   }
 
   if (info[1]) {
+    console.log(JSON.stringify(info[1]));
+    console.log(JSON.stringify(options));
     data.data1 = info[1].datapoints
   }
   return data;
