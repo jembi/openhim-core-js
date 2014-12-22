@@ -20,7 +20,7 @@ See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more 
 1. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location
 2. Install and start [MongoDB](http://www.mongodb.org/)
 3. Install the dependencies by running `npm install`
-4. Build the project by running `cake build` (you may have to install coffescript first by running `npm install -g coffee-script`)
+4. Build the project by running `grunt build`
 5. Start the server by running `node --harmony lib/server.js`
 
 Alternatively you can also use one of the following options:
@@ -103,19 +103,12 @@ So to start a production server with a custom config script it will look somethi
 Testing
 =======
 
-This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using either `npm` or `cake`.
+This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using `grunt`:
+```
+grunt test
+```
 
-To run the tests using `npm` execute `npm test`.
-
-The project is build and tested using `cake`, if you want to run cake directly, you will need [CoffeeScript](http://coffeescript.org/). Install CoffeeScript by executing the following:
-
-`npm install -g coffee-script` (omit the `-g` if you don't wish to install globally) 
-
-See [the CoffeScript website](http://coffeescript.org/) for more further information.
-
-You can have the CoffeeScript files in `src/` auto compile as you save them by running:
-
-`cake watch`
+Alternatively you can also run the tests using `npm test`.
 
 Design
 ------

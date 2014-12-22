@@ -312,7 +312,7 @@ getAllowedChannels = (requestingUser) ->
   authorisation.getUserViewableChannels requestingUser
   .then (allowedChannelsArray)->
 
-    allowedChannelIDs = [];
+    allowedChannelIDs = []
     promises = []
 
     for channel in allowedChannelsArray
@@ -336,7 +336,7 @@ getAllowedChannelIDs = (requestingUser) ->
   authorisation.getUserViewableChannels requestingUser
   .then (allowedChannelsArray)->
 
-    allowedChannelIDs = [];
+    allowedChannelIDs = []
     promises = []
 
     for channel in allowedChannelsArray

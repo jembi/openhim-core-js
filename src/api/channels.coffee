@@ -59,6 +59,7 @@ exports.addChannel = `function *addChannel() {
     // All ok! So set the result
     this.body = 'Channel successfully created';
     this.status = 'created';
+    logger.info('User %s created channel with id %s', this.authenticated.email, channel.id);
 
     if (channel.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
       tcpAdapter.startupTCPServer(channel, function(err){
@@ -161,6 +162,7 @@ exports.updateChannel = `function *updateChannel(channelId) {
 
     // All ok! So set the result
     this.body = 'The channel was successfully updated';
+    logger.info('User %s updated channel with id %s', this.authenticated.email, id);
 
     var channel = yield Channel.findOne({ _id: id }).exec();
 
@@ -210,6 +212,7 @@ exports.removeChannel = `function *removeChannel(channelId) {
 
     // All ok! So set the result
     this.body = 'The channel was successfully deleted';
+    logger.info('User %s removed channel with id %s', this.authenticated.email, id);
 
     if (channel.type && channel.type === 'polling') {
       polling.removePollingChannel(channel, function(err) {
