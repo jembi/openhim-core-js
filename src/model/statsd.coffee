@@ -37,14 +37,19 @@ exports.fetcGlobalStatusMetrics = `function *() {
     var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[i] + ".Statuses.*.count,'1week'))&from=-1weeks&format=json";
     var raw = yield fetchData(path);
     var failed = function () {
-      if (raw.data[0][0])
+      if (raw.data[0][0]){
         return raw.data[0][0]
-      return 0;    }
+      }else{
+        return 0;
+      }
+    }
 
     var successful = function () {
-      if (raw.data1[0][0])
+      if (raw.data1[0][0]){
         return raw.data1[0][0]
-      return 0;
+      } else{
+        return 0;
+      }
     }
 
     data.push({
@@ -84,14 +89,19 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
     var raw = yield fetchData(path);
     var i = 0;
     var failed = function () {
-      if (raw.data[0][0])
+      if (raw.data[0][0]){
         return raw.data[0][0]
-      return 0;    }
+      }else{
+        return 0;
+      }
+    }
 
     var successful = function () {
-      if (raw.data1[0][0])
+      if (raw.data1[0][0]) {
         return raw.data1[0][0]
-      return 0;
+      } else{
+        return 0;
+      }
     }
     data.push({
       _id : {"channelID": channelId },
