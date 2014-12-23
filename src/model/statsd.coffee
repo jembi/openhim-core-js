@@ -37,8 +37,8 @@ exports.fetcGlobalStatusMetrics = `function *() {
     var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[i] + ".Statuses.*.count,'1week'))&from=-1weeks&format=json";
     var raw = yield fetchData(path);
 
-    var failed = raw.data[0][0] !== undefined ? raw.data[0][0] : 0;
-    var successful = raw.data1[0][0] !== undefined ? raw.data1[0][0] : 0;
+    var failed = !raw.data.length  ? raw.data[0][0] : 0;
+    var successful = !raw.data1.length  ? raw.data1[0][0] : 0;
 
     data.push({
       _id : {"channelID": allowedIds[i] },
@@ -77,8 +77,8 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
     var raw = yield fetchData(path);
     var i = 0;
 
-    var failed = raw.data[0][0] !== undefined ? raw.data[0][0] : 0;
-    var successful = raw.data1[0][0] !== undefined ? raw.data1[0][0] : 0;
+    var failed = !raw.data.length ? raw.data[0][0] : 0;
+    var successful = !raw.data1.length  ? raw.data1[0][0] : 0;
 
     data.push({
       _id : {"channelID": channelId },
