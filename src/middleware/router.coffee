@@ -272,7 +272,7 @@ sendSocketRequest = (ctx, route, options) ->
     options.ca = route.cert
 
   client = method.connect options, ->
-    logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
+    logger.info "Opened tcp connection to #{options.host}:#{options.port}"
     client.end requestBody
 
   bufs = []
