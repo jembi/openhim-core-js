@@ -81,7 +81,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
       method: ctx.request.method
       headers: ctx.request.header
       agent: false
-      rejectUnauthorized: false
+      rejectUnauthorized: true
 
     if ctx.request.querystring
       options.path += '?' + ctx.request.querystring
@@ -184,6 +184,9 @@ sendHttpRequest = (ctx, route, options) ->
   if route.secured
     method = https
 
+  if route.cert?
+    options.ca = route.cert
+
   routeReq = method.request options, (routeRes) ->
     response.status = routeRes.statusCode
     response.headers = routeRes.headers
@@ -261,12 +264,15 @@ sendSocketRequest = (ctx, route, options) ->
     method = tls
 
   options =
-    hostname: options.hostname
+    host: options.hostname
     port: options.port
     rejectUnauthorized: options.rejectUnauthorized
 
+  if route.cert?
+    options.ca = route.cert
+
   client = method.connect options, ->
-    logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
+    logger.info "Opened tcp connection to #{options.host}:#{options.port}"
     client.end requestBody
 
   bufs = []
