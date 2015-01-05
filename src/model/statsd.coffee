@@ -86,7 +86,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
         processing = !results.Processing.length ? results.Processing.data[0][0] + results.Processing.data[0][1] : 0,
         completed = !results.Completed.length ? results.Completed.data[0][0] + results.Completed.data[0][1] : 0,
         successful = !results.Successful.length ? results.Successful.data[0][0] + results.Successful.data[0][1] : 0,
-        completedWErrors= !results.['Completed with error(s)'].length ? results.['Completed with error(s)'].data[0][0] + results.['Completed with error(s)'].data[0][1] : 0;
+        completedWErrors= !results['Completed with error(s)'].length ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[0][1] : 0;
 
 
     data.push({
