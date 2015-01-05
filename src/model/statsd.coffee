@@ -80,18 +80,18 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       results[item] = yield fetchData(path);
     });
 
-    var i = 0;
+    
 
 
     console.log(JSON.stringify(results));
 
-    var failed = !raw.data.length ? raw.data[0][0] : 0;
-    var successful = !raw.data1.length  ? raw.data1[0][0] : 0;
+    //var failed = !raw.data.length ? raw.data[0][0] : 0;
+    //var successful = !raw.data1.length  ? raw.data1[0][0] : 0;
 
     data.push({
       _id : {"channelID": channelId },
-      failed: failed,
-      successful: successful,
+      failed: 0,
+      successful: 0,
       processing:0,
       completed:0,
       completedWErrors:0
