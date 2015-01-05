@@ -19,7 +19,7 @@ exports.retrieveTransactionCountPerHour = `function *() {
   var data = [];
   var raw = yield fetchData(path);
 
-  _.forEach(raw, function (item) {
+  _.forEach(raw.data, function (item) {
     data.push({
       load: item[0],
       timestamp: moment.unix(item[1])
