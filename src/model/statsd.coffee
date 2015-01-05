@@ -15,6 +15,7 @@ metrics = require "../metrics"
 
 exports.retrieveTransactionCountPerHour = `function *() {
   var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels.count,'1hour'))&from=-1days&format=json";
+  console.log(path);
   var data = [];
   var raw = yield fetchData(path);
 

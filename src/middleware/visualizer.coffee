@@ -7,7 +7,7 @@ config.visualizer = config.get('visualizer')
 
 minEvPeriod = config.visualizer.minimumEventPeriodMillis ? 100
 
-formatTS = (ts) -> moment(ts).valueOf()
+formatTS = (ts) -> moment(new Date(ts)).valueOf()
 
 addRouteEvents = (dst, route, prefix) ->
   startTS = formatTS route.request.timestamp
