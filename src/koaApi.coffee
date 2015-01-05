@@ -98,6 +98,7 @@ exports.setupApp = (done) ->
   app.use route.get '/mediators', mediators.getAllMediators
   app.use route.get '/mediators/:uuid', mediators.getMediator
   app.use route.post '/mediators', mediators.addMediator
+  app.use route.delete '/mediators/:urn', mediators.removeMediator
 
   # server restart endpoint
   app.use route.post '/restart', serverRestart.restart

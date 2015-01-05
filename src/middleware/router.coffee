@@ -3,6 +3,7 @@ zlib = require 'zlib'
 http = require 'http'
 https = require 'https'
 net = require 'net'
+tls = require 'tls'
 async = require 'async'
 Q = require 'q'
 config = require '../config/config'
@@ -80,7 +81,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
       method: ctx.request.method
       headers: ctx.request.header
       agent: false
-      rejectUnauthorized: false
+      rejectUnauthorized: true
 
     if ctx.request.querystring
       options.path += '?' + ctx.request.querystring
@@ -183,6 +184,9 @@ sendHttpRequest = (ctx, route, options) ->
   if route.secured
     method = https
 
+  if route.cert?
+    options.ca = route.cert
+
   routeReq = method.request options, (routeRes) ->
     response.status = routeRes.statusCode
     response.headers = routeRes.headers
@@ -253,11 +257,22 @@ sendHttpRequest = (ctx, route, options) ->
 sendSocketRequest = (ctx, route, options) ->
   defered = Q.defer()
   requestBody = ctx.body
-  client = new net.Socket()
   response = {}
 
-  client.connect options.port, options.hostname, ->
-    logger.info "Opened tcp connection to #{options.hostname}:#{options.port}"
+  method = net
+  if route.secured
+    method = tls
+
+  options =
+    host: options.hostname
+    port: options.port
+    rejectUnauthorized: options.rejectUnauthorized
+
+  if route.cert?
+    options.ca = route.cert
+
+  client = method.connect options, ->
+    logger.info "Opened tcp connection to #{options.host}:#{options.port}"
     client.end requestBody
 
   bufs = []

@@ -81,7 +81,7 @@ This step is optional but recommended to ensure that the system is running as ex
 Running the server
 ==================
 
-First make sure the project is build by running `cake build`.
+First make sure the project is build by running `grunt build`.
 
 Once all the prerequisites have been installed, configured and started, run the OpenHIM core server by executing the following:
 
