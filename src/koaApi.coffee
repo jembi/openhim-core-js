@@ -31,16 +31,6 @@ exports.setupApp = (done) ->
 
   # Expose the authenticate route before the auth middleware so that it is publically accessible
   app.use route.get '/authenticate/:username', users.authenticate
-
-  # Temporarily Expose stats endpoints TODO Secure these endpoints
-  app.use route.get '/statsd', statsd.retrieveTransactionCountPerHour
-  app.use route.get '/statsd/load-time', statsd.retrieveAverageLoadTimePerHour
-  app.use route.get '/statsd/:type/:channelId', statsd.retrieveChannelMetrics
-
-  app.use route.get '/statsd/transactions/:channelId/:status', statsd.transactionsPerChannelPerHour
-
-
-
   # Authenticate the API request
   app.use authentication.authenticate
 
@@ -92,6 +82,10 @@ exports.setupApp = (done) ->
   app.use route.get '/metrics/:type/:channelId', metrics.getChannelMetrics
 
   app.use route.get '/statsd/status', statsd.fetcGlobalStatusMetrics
+  app.use route.get '/statsd', statsd.retrieveTransactionCountPerHour
+  app.use route.get '/statsd/load-time', statsd.retrieveAverageLoadTimePerHour
+  app.use route.get '/statsd/:type/:channelId', statsd.retrieveChannelMetrics
+  app.use route.get '/statsd/transactions/:channelId/:status', statsd.transactionsPerChannelPerHour
 
   # app.use route.get '/statsd', statsd.retrieveTransactionCount
 

@@ -29,25 +29,35 @@ exports.retrieveTransactionCountPerHour = `function *() {
 
 exports.fetcGlobalStatusMetrics = `function *() {
   var filtersObject = this.request.query;
-  var userRequesting = this.authenticated;
+  var userRequesting = this.authenticated,
+    path = '',
+    results = {};
   var allowedIds = yield metrics.getAllowedChannelIDs(userRequesting)
   var data = []
+  var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
 
-  for (var i = 0; i < allowedIds.length; i++) {
-    var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[i] + ".Statuses.*.count,'1week'))&from=-1weeks&format=json";
-    var raw = yield fetchData(path);
+  for (var j = 0; j < allowedIds.length; j++) {
+    var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[j]
+    for (i = 0; i < status_array.length; i++) {
+      path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
+      results[status_array[i]] = yield fetchData(path);
+    };
 
-    var failed = raw.data !== undefined  ? raw.data[1][0] : 0;
-    var successful = raw.data1 !== undefined  ? raw.data1[1][0] : 0;
+    var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
+      processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0,
+      completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0,
+      successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0,
+      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0;
+
 
     data.push({
-      _id : {"channelID": allowedIds[i] },
+      _id : {"channelID": allowedIds[j] },
       failed: failed,
       successful: successful,
-      processing:0,
-      completed:0,
-      completedWErrors:0
-    })
+      processing:processing,
+      completed:completed,
+      completedWErrors:completedWErrors
+    });
   }
 
   this.body = data
