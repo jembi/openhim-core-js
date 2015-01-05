@@ -70,15 +70,20 @@ exports.retrieveAverageLoadTimePerHour = `function *() {
 exports.retrieveChannelMetrics = `function *(type, channelId) {
   var data = [];
   var status_array = ['Failed','Successful', 'Completed']
+  var results = {}, path = ''
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
 
   if (type == 'status'){
-    var path = render_url + ".Statuses.*.count,'1week'))&from=-1weeks&format=json";
-    var raw = yield fetchData(path);
+    _.forEach(status_array, function *(item){
+      path = render_url + ".Statuses." + item + ".count,'1week'))&from=-1weeks&format=json";
+      console.log(path);
+      results[item] = yield fetchData(path);
+    });
+
     var i = 0;
 
-    console.log(path);
-    console.log(JSON.stringify(raw));
+
+    console.log(JSON.stringify(results));
 
     var failed = !raw.data.length ? raw.data[0][0] : 0;
     var successful = !raw.data1.length  ? raw.data1[0][0] : 0;
@@ -95,7 +100,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
 
   } else {
 
-    var path = render_url + ".count,'1day'))&from=-7days&format=json";
+        path = render_url + ".count,'1day'))&from=-7days&format=json";
         path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".sum,'1day','avg'))";
     var raw = yield fetchData(path);
     var i = 0;
