@@ -126,9 +126,9 @@ describe "TCP/TLS Integration Tests", ->
         mockTCPServer = server
         testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) ->
           mockHTTPServer = server
-          testUtils.createMockTLSServer 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
+          testUtils.createMockTLSServerWithMutualAuth 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
             mockTLSServer = server
-            testUtils.createMockTLSServer 6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) ->
+            testUtils.createMockTLSServerWithMutualAuth 6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) ->
               mockTLSServerWithoutClientCert = server
               done()
 

@@ -67,7 +67,7 @@ describe "HTTP Router", ->
       return ctx
 
     it "should route an incomming https request to the endpoints specific by the channel config", (done) ->
-      testUtils.createMockHTTPSServer 201, "Mock response body\n", 9877, (server) ->
+      testUtils.createMockHTTPSServerWithMutualAuth 201, "Mock response body\n", 9877, (server) ->
         # Setup a channel for the mock endpoint
         channel =
           name: "Mock endpoint"
@@ -99,7 +99,7 @@ describe "HTTP Router", ->
           server.close done
 
     it "should be denied access if the server doesn't know the client cert when using mutual TLS authentication", (done) ->
-      testUtils.createMockHTTPSServer 201, "Mock response body\n", 9877, false, (server) ->
+      testUtils.createMockHTTPSServerWithMutualAuth 201, "Mock response body\n", 9877, false, (server) ->
         # Setup a channel for the mock endpoint
         channel =
           name: "Mock endpoint"

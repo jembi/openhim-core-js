@@ -27,7 +27,7 @@ exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch
         res.writeHead errStatusCode, {"Content-Type": "text/plain"}
         res.end()
 
-exports.createMockHTTPSServer = (resStatusCode, resBody, port, useClientCert, callback, requestCallback) ->
+exports.createMockHTTPSServerWithMutualAuth = (resStatusCode, resBody, port, useClientCert, callback, requestCallback) ->
   if typeof useClientCert is 'function'
     requestCallback = callback
     callback = useClientCert
@@ -60,7 +60,7 @@ exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, 
 
   server.listen port, 'localhost', -> callback server
 
-exports.createMockTLSServer = (port, expected, matchResponse, nonMatchResponse, useClientCert, callback) ->
+exports.createMockTLSServerWithMutualAuth = (port, expected, matchResponse, nonMatchResponse, useClientCert, callback) ->
   if typeof useClientCert is 'function'
     callback = useClientCert
     useClientCert = true
