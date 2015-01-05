@@ -15,7 +15,6 @@ metrics = require "../metrics"
 
 exports.retrieveTransactionCountPerHour = `function *() {
   var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels.count,'1hour'))&from=-1days&format=json";
-  console.log(path);
   var data = [];
   var raw = yield fetchData(path);
 
@@ -77,6 +76,9 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
     var path = render_url + ".Statuses.*.count,'1week'))&from=-1weeks&format=json";
     var raw = yield fetchData(path);
     var i = 0;
+
+    console.log(path);
+    console.log(JSON.stringify(raw));
 
     var failed = !raw.data.length ? raw.data[0][0] : 0;
     var successful = !raw.data1.length  ? raw.data1[0][0] : 0;
