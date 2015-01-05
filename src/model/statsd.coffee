@@ -74,13 +74,13 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
 
   if (type == 'status'){
-    _.forEach(status_array, function *(item){
-      path = render_url + ".Statuses." + item + ".count,'1week'))&from=-1weeks&format=json";
+    for (i = 0; i < status_array.length; i++) {
+      path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
       console.log(path);
-      results[item] = yield fetchData(path);
-    });
+      results[status_array[i]] = yield fetchData(path);
+    };
 
-    
+
 
 
     console.log(JSON.stringify(results));
