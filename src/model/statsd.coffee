@@ -82,11 +82,11 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
 
     console.log(JSON.stringify(results));
 
-    var failed = !results.Failed.length ? results.Failed.data[0][0] + results.Failed.data[0][1] : 0,
-        processing = !results.Processing.length ? results.Processing.data[0][0] + results.Processing.data[0][1] : 0,
-        completed = !results.Completed.length ? results.Completed.data[0][0] + results.Completed.data[0][1] : 0,
-        successful = !results.Successful.length ? results.Successful.data[0][0] + results.Successful.data[0][1] : 0,
-        completedWErrors= !results['Completed with error(s)'].length ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[0][1] : 0;
+    var failed = results.Failed.length > 0 ? results.Failed.data[0][0] + results.Failed.data[0][1] : 0,
+      processing = results.Processing.length > 0 ? results.Processing.data[0][0] + results.Processing.data[0][1] : 0,
+      completed = results.Completed.length > 0 ? results.Completed.data[0][0] + results.Completed.data[0][1] : 0,
+      successful = results.Successful.length > 0 ? results.Successful.data[0][0] + results.Successful.data[0][1] : 0,
+      completedWErrors = results['Completed with error(s)'].length  > 0 ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[0][1] : 0;
 
 
     data.push({
