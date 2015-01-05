@@ -69,7 +69,7 @@ exports.retrieveAverageLoadTimePerHour = `function *() {
 
 exports.retrieveChannelMetrics = `function *(type, channelId) {
   var data = [];
-  var status_array = ['Failed','Successful', 'Completed']
+  var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
   var results = {}, path = ''
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
 
@@ -80,21 +80,22 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       results[status_array[i]] = yield fetchData(path);
     };
 
-
-
-
     console.log(JSON.stringify(results));
 
-    //var failed = !raw.data.length ? raw.data[0][0] : 0;
-    //var successful = !raw.data1.length  ? raw.data1[0][0] : 0;
+    var failed = !results.Failed.length ? results.Failed.data[0][0] + results.Failed.data[0][1] : 0,
+        processing = !results.Processing.length ? results.Processing.data[0][0] + results.Processing.data[0][1] : 0,
+        completed = !results.Completed.length ? results.Completed.data[0][0] + results.Completed.data[0][1] : 0,
+        successful = !results.Successful.length ? results.Successful.data[0][0] + results.Successful.data[0][1] : 0,
+        completedWErrors= !results.['Completed with error(s)'].length ? results.['Completed with error(s)'].data[0][0] + results.['Completed with error(s)'].data[0][1] : 0;
+
 
     data.push({
       _id : {"channelID": channelId },
-      failed: 0,
-      successful: 0,
-      processing:0,
-      completed:0,
-      completedWErrors:0
+      failed: failed,
+      successful: successful,
+      processing:processing,
+      completed:completed,
+      completedWErrors:completedWErrors
     });
 
 
