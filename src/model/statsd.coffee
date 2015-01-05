@@ -76,19 +76,14 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   if (type == 'status'){
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
-      console.log(path);
       results[status_array[i]] = yield fetchData(path);
     };
 
-    console.log(JSON.stringify(results));
-    console.log(results.Successful.length);
-    console.log(results.Successful.data[0][0]);
-
-    var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[0][1] : 0,
-      processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[0][1] : 0,
-      completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[0][1] : 0,
-      successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[0][1] : 0,
-      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[0][1] : 0;
+    var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
+      processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0,
+      completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0,
+      successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0,
+      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0;
 
 
     data.push({
