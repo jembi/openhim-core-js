@@ -81,7 +81,7 @@ exports.setupApp = (done) ->
 
   app.use route.get '/metrics', if statsd_instance.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
   app.use route.get '/metrics/status', if statsd_instance.enabled then statsd.fetcGlobalStatusMetrics else metrics.getGlobalStatusMetrics
-  app.use route.get '/metrics/:type/:channelId', if statsd_instance.enabled then statsd.retrieveChannelMetrics metrics.getChannelMetrics
+  app.use route.get '/metrics/:type/:channelId', if statsd_instance.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
   app.use route.get '/metrics/load-time', if statsd_instance.enabled then statsd.retrieveAverageLoadTimePerHour else metrics.getGlobalLoadTimeMetrics
 
   app.use route.get '/statsd/status', statsd.fetcGlobalStatusMetrics
