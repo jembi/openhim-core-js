@@ -15,6 +15,7 @@ authorisation = require "../../lib/api/authorisation"
 describe "API Metrics Tests", ->
 
   describe 'openHIM Metrics Api testing', ->
+    this.timeout(15000);
 
     transaction1 = new Transaction
       _id: "111111111111111111111111"
@@ -173,7 +174,7 @@ describe "API Metrics Tests", ->
 
     describe '*getGlobalLoadTimeMetrics()', ->
 
-      it 'should fetch dashbord channel metrics based on the currently logged in user permissions', (done) ->
+      it 'should fetch dashboard channel metrics based on the currently logged in user permissions', (done) ->
 
         request("https://localhost:8080")
         .get("/metrics?startDate=%222014-07-18T00:00:00.000Z%22&endDate=%222014-07-19T00:00:00.000Z%22")

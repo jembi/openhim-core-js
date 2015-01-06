@@ -79,10 +79,14 @@ exports.setupApp = (done) ->
   app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
   app.use route.get '/visualizer/sync', visualizer.sync
 
-  app.use route.get '/metrics', if statsd_instance.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
-  app.use route.get '/metrics/status', if statsd_instance.enabled then statsd.fetcGlobalStatusMetrics else metrics.getGlobalStatusMetrics
-  app.use route.get '/metrics/:type/:channelId', if statsd_instance.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
-  app.use route.get '/metrics/load-time', if statsd_instance.enabled then statsd.retrieveAverageLoadTimePerHour else metrics.getGlobalLoadTimeMetrics
+  app.use route.get '/metrics', metrics.getGlobalLoadTimeMetrics
+  app.use route.get '/metrics/status', metrics.getGlobalStatusMetrics
+  app.use route.get '/metrics/:type/:channelId', metrics.getChannelMetrics
+
+  app.use route.get '/stats', if statsd_instance.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
+  app.use route.get '/stats/status', if statsd_instance.enabled then statsd.fetcGlobalStatusMetrics else metrics.getGlobalStatusMetrics
+  app.use route.get '/stats/:type/:channelId', if statsd_instance.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
+  app.use route.get '/stats/load-time', if statsd_instance.enabled then statsd.retrieveAverageLoadTimePerHour else metrics.getGlobalLoadTimeMetrics
 
   app.use route.get '/statsd/status', statsd.fetcGlobalStatusMetrics
   app.use route.get '/statsd', statsd.retrieveTransactionCountPerHour
