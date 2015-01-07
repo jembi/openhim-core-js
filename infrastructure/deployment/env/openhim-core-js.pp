@@ -51,17 +51,18 @@ exec { "npm-install":
 	require => [ Nodejs::Install["node-v0.11.11"], Package["build-essential"] ],
 }
 
-exec { "coffeescript":
+
+exec { "install-grunt":
 	cwd => "$source_dir",
-	command => "npm install -g coffee-script",
-	unless => "npm list -g coffee-script",
+	command => "npm install -g grunt-cli",
+	unless => "npm list -g grunt-cli",
 	require => Nodejs::Install["node-v0.11.11"],
 }
 
 exec { "build":
 	cwd => "$source_dir",
-	command => "cake build",
-	require => [ Exec["coffeescript"], Exec["npm-install"] ],
+	command => "grunt build",
+	require => [ Exec["install-grunt"], Exec["npm-install"] ],
 	notify => Service["openhim-core-js"],
 }
 
