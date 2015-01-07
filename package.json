@@ -13,7 +13,7 @@
     "koa-basic-auth": "^1.1.2",
     "koa-body-parser": "^1.1.0",
     "koa-compress": "^1.0.8",
-    "koa-cors": "0.0.14",
+    "koa-cors": "0.0.11",
     "koa-route": "^2.4.0",
     "koa-statsd": "0.0.2",
     "moment": "^2.8.4",
