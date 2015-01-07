@@ -51,7 +51,6 @@ exec { "npm-install":
 	require => [ Nodejs::Install["node-v0.11.11"], Package["build-essential"] ],
 }
 
-
 exec { "install-grunt":
 	cwd => "$source_dir",
 	command => "npm install -g grunt-cli",
