@@ -219,7 +219,7 @@ describe "Transaction Alerts", ->
     it "should not return transactions that occur before dateFrom", (done) ->
       testTransactions[0].save (err) ->
         return done err if err
-        newFrom = moment().add('days', 1).toDate()
+        newFrom = moment().add(1, 'days').toDate()
         alerts.findTransactionsMatchingStatus testChannel._id, "404", newFrom, null, (err, results) ->
           results.length.should.be.exactly 0
           done()

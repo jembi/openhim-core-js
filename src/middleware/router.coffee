@@ -4,7 +4,6 @@ http = require 'http'
 https = require 'https'
 net = require 'net'
 tls = require 'tls'
-async = require 'async'
 Q = require 'q'
 config = require '../config/config'
 config.mongo = config.get('mongo')

@@ -91,7 +91,7 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 
   dateToCheck = dateFrom
   # check last hour when using failureRate
-  dateToCheck = moment().subtract('hours', 1).toDate() if failureRate?
+  dateToCheck = moment().subtract(1, 'hours').toDate() if failureRate?
 
   findTransactions channelID, dateToCheck, statusMatch, (err, results) ->
     if not err and results? and failureRate?
@@ -115,7 +115,7 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
 
 calcDateFromForUser = (user) ->
   if user.maxAlerts is '1 per hour'
-    dateFrom = moment().subtract('hours', 1).toDate()
+    dateFrom = moment().subtract(1, 'hours').toDate()
   else if user.maxAlerts is '1 per day'
     dateFrom = moment().startOf('day').toDate()
   else
