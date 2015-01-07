@@ -33,8 +33,8 @@ exec { "npm-install":
 	require => [ Class["nodejs"], Package["build-essential"] ],
 }
 
-exec { "coffeescript":
-	command => "npm install -g coffee-script",
-	unless => "npm list -g coffee-script",
+exec { "install-grunt":
+	command => "npm install -g grunt-cli",
+	unless => "npm list -g grunt-cli",
 	require => Class["nodejs"],
 }
