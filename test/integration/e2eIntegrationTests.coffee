@@ -362,7 +362,7 @@ describe "e2e Integration Tests", ->
           .send(testDoc)
           .auth("testApp", "password")
           .expect(201)
-          .expect('Content-Type', 'text/plain')
+          .expect('Content-Type', 'text/plain; charset=utf-8')
           .end (err, res) ->
             if err
               done err

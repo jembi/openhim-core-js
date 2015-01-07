@@ -39,7 +39,7 @@ exports.getClient = `function *findClientById(clientId, property) {
   projectionRestriction = null;
 
   // if property - Setup client projection and bypass authorization
-  if ( property ){
+  if ( typeof property == 'string' ){
     if ( property === 'clientName' ){
       projectionRestriction = { name: 1, _id:0 };
     }else{
