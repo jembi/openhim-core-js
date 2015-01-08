@@ -86,8 +86,7 @@ describe "TCP/TLS Integration Tests", ->
     cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 
   sendTCPTestMessage = (port, callback) ->
-    client = new net.Socket()
-    client.connect port, 'localhost', -> client.write testMessage
+    client = net.connect port, 'localhost', -> client.write testMessage
     client.on 'data', (data) ->
       client.end()
       callback "#{data}"
@@ -131,6 +130,12 @@ describe "TCP/TLS Integration Tests", ->
         incrementTransactionCountSpy.getCall(0).args[0].authorisedChannel.should.have.property 'name', 'TCPIntegrationChannel1'
         measureTransactionDurationSpy.calledOnce.should.be.true
         done()
+
+  it "should handle disconnected clients", (done) ->
+    server.start null, null, null, null, 7787, null, ->
+      client = net.connect 4000, 'localhost', ->
+        client.on 'close', -> server.stop done
+        client.end 'test'
 
   it "should route TLS messages", (done) ->
     server.start null, null, null, null, 7787, null, ->

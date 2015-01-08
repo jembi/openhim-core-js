@@ -4,11 +4,7 @@ Client = require("../model/clients").Client
 logger = require "winston"
 crypto = require "crypto"
 
-# Note that it would be far better to use the node.bcrypt.js lib
-# https://github.com/ncb000gt/node.bcrypt.js/
-# Unfortunately it hasn't been ported to node 0.11.x yet
-bcrypt = require "bcrypt-nodejs"
-
+bcrypt = require 'bcrypt'
 
 bcryptCompare = (pass, client, callback) -> bcrypt.compare pass, client.passwordHash, callback
 

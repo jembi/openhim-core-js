@@ -40,7 +40,7 @@ exports.startupTCPServer = startupTCPServer = (channel, callback) ->
 
   handler = (sock) ->
     sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
-    sock.on 'close', ->
+    sock.on 'error', (err) -> logger.error err
 
   if channel.type is 'tls'
     tlsAuthentication.getServerOptions true, (err, options) ->
@@ -94,7 +94,9 @@ adaptSocketRequest = (channel, sock, socketData) ->
   req = http.request options, (res) ->
     response = ''
     res.on 'data', (data) -> response += data
-    res.on 'end', -> sock.write response
+    res.on 'end', ->
+      if sock.writable
+        sock.write response
 
   req.on "error", (err) -> logger.error err
 
