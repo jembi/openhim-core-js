@@ -42,7 +42,7 @@ exports.fetcGlobalStatusMetrics = `function *() {
   for (var j = 0; j < allowedIds.length; j++) {
       var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[j]
       for (i = 0; i < status_array.length; i++) {
-        path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
+        path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
         results[status_array[i]] = yield fetchData(path);
       };
 
@@ -88,7 +88,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
 
   if (type == 'status'){
     for (i = 0; i < status_array.length; i++) {
-      path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
+      path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
       results[status_array[i]] = yield fetchData(path);
     };
 
