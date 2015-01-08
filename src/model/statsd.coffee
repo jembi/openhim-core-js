@@ -14,7 +14,7 @@ metrics = require "../metrics"
 # Overall Metrics
 
 exports.retrieveTransactionCountPerHour = `function *() {
-  console.log('hellow');
+
   var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels.count,'1hour'))&from=-1days&format=json";
   var data = [];
   var raw = yield fetchData(path);
@@ -88,7 +88,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
 
   if (type == 'status'){
     for (i = 0; i < status_array.length; i++) {
-      path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
+      path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
       results[status_array[i]] = yield fetchData(path);
     };
 
@@ -169,7 +169,3 @@ exports.fetchData = fetchData = `function *(path) {
 
   return data;
 }`
-
-exports.hello = `function (){
-    return 'hello world';
-  }`
