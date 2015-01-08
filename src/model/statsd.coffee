@@ -14,6 +14,7 @@ metrics = require "../metrics"
 # Overall Metrics
 
 exports.retrieveTransactionCountPerHour = `function *() {
+  console.log('hellow');
   var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels.count,'1hour'))&from=-1days&format=json";
   var data = [];
   var raw = yield fetchData(path);
@@ -27,27 +28,29 @@ exports.retrieveTransactionCountPerHour = `function *() {
   this.body = data
 }`
 
+# Retrives Global Status Metrics from the StatsD API
+
 exports.fetcGlobalStatusMetrics = `function *() {
   var filtersObject = this.request.query;
   var userRequesting = this.authenticated,
-    path = '',
-    results = {};
+      path = '',
+      results = {};
   var allowedIds = yield metrics.getAllowedChannelIDs(userRequesting)
   var data = []
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
 
   for (var j = 0; j < allowedIds.length; j++) {
-    var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[j]
-    for (i = 0; i < status_array.length; i++) {
-      path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
-      results[status_array[i]] = yield fetchData(path);
-    };
+      var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[j]
+      for (i = 0; i < status_array.length; i++) {
+        path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
+        results[status_array[i]] = yield fetchData(path);
+      };
 
-    var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
-      processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0,
-      completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0,
-      successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0,
-      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0;
+      var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
+          processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0,
+          completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0,
+          successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0,
+          completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0;
 
 
     data.push({
@@ -166,3 +169,7 @@ exports.fetchData = fetchData = `function *(path) {
 
   return data;
 }`
+
+exports.hello = `function (){
+    return 'hello world';
+  }`
