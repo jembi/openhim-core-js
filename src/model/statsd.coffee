@@ -47,23 +47,23 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
         results[status_array[i]] = yield exports.fetchData(path);
         console.log(results)
       };
-
-      var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
-          processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0,
-          completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0,
-          successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0,
-          completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0;
-
-
-    data.push({
-      _id : {"channelID": allowedIds[j] },
-      failed: failed,
-      successful: successful,
-      processing:processing,
-      completed:completed,
-      completedWErrors:completedWErrors
-    });
   }
+
+  var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
+      processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0,
+      completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0,
+      successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0,
+      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0;
+
+
+  data.push({
+    _id : {"channelID": allowedIds[j] },
+    failed: failed,
+    successful: successful,
+    processing:processing,
+    completed:completed,
+    completedWErrors:completedWErrors
+  });
 
   this.body = data
 }`
