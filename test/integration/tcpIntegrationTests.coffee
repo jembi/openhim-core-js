@@ -17,6 +17,7 @@ describe "TCP/TLS Integration Tests", ->
   mockTCPServer = null
   mockHTTPServer = null
   mockTLSServer = null
+  mockTLSServerWithoutClientCert = null
 
   channel1 = new Channel
     name: 'TCPIntegrationChannel1'
@@ -74,7 +75,23 @@ describe "TCP/TLS Integration Tests", ->
       type: 'tcp'
       secured: true
       primary: true
-      cert: fs.readFileSync 'tls/cert.pem'
+      cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
+    ]
+  channel5 = new Channel
+    name: 'TCPIntegrationChannel5'
+    urlPattern: '/'
+    allow: [ 'tcp' ]
+    type: 'tcp'
+    tcpPort: 4004
+    tcpHost: 'localhost'
+    routes: [
+      name: 'tls route without client cert'
+      host: 'localhost'
+      port: 6003
+      type: 'tcp'
+      secured: true
+      primary: true
+      cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
     ]
 
   secureClient = new Client
@@ -103,19 +120,22 @@ describe "TCP/TLS Integration Tests", ->
       callback "#{data}"
 
   before (done) ->
-    channel1.save -> channel2.save -> channel3.save -> channel4.save -> secureClient.save ->
+    channel1.save -> channel2.save -> channel3.save -> channel4.save -> channel5.save -> secureClient.save ->
       testUtils.createMockTCPServer 6000, testMessage, 'TCP OK', 'TCP Not OK', (server) ->
         mockTCPServer = server
         testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) ->
           mockHTTPServer = server
-          testUtils.createMockTLSServer 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
+          testUtils.createMockTLSServerWithMutualAuth 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
             mockTLSServer = server
-            done()
+            testUtils.createMockTLSServerWithMutualAuth 6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) ->
+              mockTLSServerWithoutClientCert = server
+              done()
 
   beforeEach (done) -> Transaction.remove {}, done
 
   after (done) ->
-    Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, -> mockTCPServer.close -> mockHTTPServer.close -> mockTLSServer.close done
+    Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, ->
+      mockTCPServer.close -> mockHTTPServer.close -> mockTLSServer.close -> mockTLSServerWithoutClientCert.close done
 
   afterEach (done) -> server.stop done
 
@@ -153,6 +173,12 @@ describe "TCP/TLS Integration Tests", ->
     server.start null, null, null, null, 7787, null, ->
       sendTCPTestMessage 4003, (data) ->
         data.should.be.exactly 'TLS OK'
+        done()
+
+  it "should return an error when the client cert is not known by the server", (done) ->
+    server.start null, null, null, null, 7787, null, ->
+      sendTCPTestMessage 4004, (data) ->
+        data.should.be.exactly 'An internal server error occurred'
         done()
 
   it "should persist messages", (done) ->

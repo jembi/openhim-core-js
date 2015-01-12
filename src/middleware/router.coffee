@@ -11,6 +11,10 @@ config.router = config.get('router')
 logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
+fs = require 'fs'
+
+tlsKey = fs.readFileSync 'tls/key.pem'
+tlsCert = fs.readFileSync 'tls/cert.pem'
 
 containsMultiplePrimaries = (routes) ->
   numPrimaries = 0
@@ -81,6 +85,9 @@ sendRequestToRoutes = (ctx, routes, next) ->
       headers: ctx.request.header
       agent: false
       rejectUnauthorized: true
+      key: tlsKey
+      cert: tlsCert
+      secureProtocol: 'TLSv1_method'
 
     if ctx.request.querystring
       options.path += '?' + ctx.request.querystring
@@ -266,6 +273,9 @@ sendSocketRequest = (ctx, route, options) ->
     host: options.hostname
     port: options.port
     rejectUnauthorized: options.rejectUnauthorized
+    key: options.key
+    cert: options.cert
+    secureProtocol: options.secureProtocol
 
   if route.cert?
     options.ca = route.cert
@@ -281,6 +291,8 @@ sendSocketRequest = (ctx, route, options) ->
   client.on 'error', (err) -> defered.reject err
 
   client.on 'end', ->
+    if route.secured and not client.authorized
+      return defered.reject new Error 'Client authorization failed'
     response.body = Buffer.concat bufs
     response.status = status.OK
     response.timestamp = new Date()
