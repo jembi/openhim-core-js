@@ -34,7 +34,8 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
   var filtersObject = this.request.query;
   var userRequesting = this.authenticated,
       path = '',
-      results = {};
+      results = {},
+      final = {};
   var allowedIds = allowedIds.length > 0 ? allowedIds : yield metrics.getAllowedChannelIDs(userRequesting)
   var data = []
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
@@ -45,25 +46,27 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
         path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
         console.log(path);
         results[status_array[i]] = yield exports.fetchData(path);
-        console.log(results)
+        final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] + results[status_array[i]].data[1][0] : 0,
+
+        console.log(final)
       };
+
+      //var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
+      //    processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0,
+      //    completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0,
+      //    successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0,
+      //    completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0;
+
+
+    data.push({
+      _id : {"channelID": allowedIds[j] },
+      failed: final.Failed,
+      successful: final.Successful,
+      processing:final.Processing,
+      completed:final.Completed,
+      completedWErrors:final['Completed with error(s)']
+    });
   }
-
-  var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
-      processing = 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0,
-      completed = 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0,
-      successful = 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0,
-      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0;
-
-
-  data.push({
-    _id : {"channelID": allowedIds[j] },
-    failed: failed,
-    successful: successful,
-    processing:processing,
-    completed:completed,
-    completedWErrors:completedWErrors
-  });
 
   this.body = data
 }`
