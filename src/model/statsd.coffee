@@ -37,7 +37,7 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
       results = {};
   var allowedIds = allowedIds.length > 0 ? allowedIds : yield metrics.getAllowedChannelIDs(userRequesting)
   var data = []
-  var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
+  var status_array = ['Successful', 'Failed', 'Completed', 'Processing', 'Completed with error(s)']
 
   for (var j = 0; j < allowedIds.length; j++) {
       var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[j]
