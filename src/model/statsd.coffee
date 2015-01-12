@@ -3,7 +3,6 @@ config = require '../config/config'
 application = config.get 'application'
 os = require "os"
 domain = os.hostname() + '.' + application.name
-domain = "statsd-VirtualBox.Development"
 statsd_server = config.get 'statsd'
 Q = require "q"
 request = require 'koa-request'
