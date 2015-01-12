@@ -50,6 +50,8 @@ describe "Stats Tests", ->
       `before(function(done){
         Statsd = require("../../lib/model/statsd")
         Statsd.authenticated = auth.getAuthDetails();
+        Statsd.request = {}
+        Statsd.request.query ={}
 
         done();
       })`

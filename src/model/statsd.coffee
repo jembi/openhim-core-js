@@ -35,7 +35,7 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
   var userRequesting = this.authenticated,
       path = '',
       results = {};
-  var allowedIds = allowedIds ? allowedIds : yield metrics.getAllowedChannelIDs(userRequesting)
+  var allowedIds = allowedIds.length ? allowedIds : yield metrics.getAllowedChannelIDs(userRequesting)
   var data = []
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
 
@@ -153,12 +153,9 @@ exports.transactionsPerChannelPerHour = `function *(period) {
   this.body = data
 }`
 
-exports.duma = `function () {
-    return 'hellow duma testing';
-  }`
 
 exports.fetchData  = fetchData = `function* (path) {
-    console.log('Now in fetchdata');
+
     var data = {};
     var options = {
       url: 'http://' + statsd_server.host + path
@@ -167,7 +164,7 @@ exports.fetchData  = fetchData = `function* (path) {
 
     var info = JSON.parse(response.body);
     if (info.length) {
-    console.log('Now has body: ' + response.body);
+  
     var i = 0;
     _.forEach(info, function (item) {
       if (i == 0) {
