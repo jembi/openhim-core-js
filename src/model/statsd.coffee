@@ -149,7 +149,6 @@ exports.transactionsPerChannelPerHour = `function *(period) {
 
 
 fetchData = `function* fetchData(path) {
-
     var data = {};
     var options = {
       url: 'http://' + statsd_server.host + path
@@ -169,8 +168,6 @@ fetchData = `function* fetchData(path) {
       i++;
     });
   }
-
-
   return data;
 }`
 

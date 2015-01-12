@@ -51,8 +51,7 @@ describe "Stats Tests", ->
         Statsd = require("../../lib/model/statsd")
         Statsd.authenticated = auth.getAuthDetails();
         Statsd.request = {}
-        Statsd.request.query ={}
-
+        Statsd.request.query = {}
         done();
       })`
 
@@ -64,7 +63,7 @@ describe "Stats Tests", ->
         mock = sinon.mock(Statsd);
         mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.timers.statsd-VirtualBox.Development.Channels.mean,'1hour'))&from=-1days&format=json")
         co(function* () {
-          var result = yield Statsd.retrieveAverageLoadTimePerHour();
+          yield Statsd.retrieveAverageLoadTimePerHour();
         });
         mock.verify();
         mock.restore();
@@ -75,14 +74,31 @@ describe "Stats Tests", ->
         mock = sinon.mock(Statsd);
         mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters.statsd-VirtualBox.Development.Channels.jjhreujiwh.Statuses.Processing.count,'1week'))&from=-1days&format=json");
         co(function* () {
-          try {
-            var result = yield Statsd.fetcGlobalStatusMetrics(['jjhreujiwh']);
-          } catch (e) {
-            console.log(e)
-          }
-
+           yield Statsd.fetcGlobalStatusMetrics(['jjhreujiwh']);
         });
         mock.verify();
         mock.restore();
-        done()
+        done();
       })`
+
+      `it("should fetch channel transaction count metrics ", function (done){
+          mock = sinon.mock(Statsd);
+          mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters.statsd-VirtualBox.Development.Channels.jjhreujiwh.count,'1day'))&from=-7days&format=json&target=transformNull(summarize(stats.timers.statsd-VirtualBox.Development.Channels.jjhreujiwh.sum,'1day','avg'))");
+          co(function* () {
+            yield Statsd.retrieveChannelMetrics('count','jjhreujiwh');
+          });
+          mock.verify();
+          mock.restore();
+          done();
+        })`
+
+      `it("should fetch channel status metrics ", function (done) {
+          mock = sinon.mock(Statsd);
+          mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters.statsd-VirtualBox.Development.Channels.jjhreujiwh.Statuses.Processing.count,'1week'))&from=-1weeks&format=json");
+          co(function* () {
+             yield Statsd.retrieveChannelMetrics('status','jjhreujiwh');
+          });
+          mock.verify();
+          mock.restore();
+          done();
+        })`
