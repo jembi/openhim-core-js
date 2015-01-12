@@ -75,7 +75,12 @@ describe "Stats Tests", ->
         mock = sinon.mock(Statsd);
         mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters.statsd-VirtualBox.Development.Channels.jjhreujiwh.Statuses.Processing.count,'1week'))&from=-1days&format=json");
         co(function* () {
+          try {
             var result = yield Statsd.fetcGlobalStatusMetrics(['jjhreujiwh']);
+          } catch (e) {
+            console.log(e)
+          }
+
         });
         mock.verify();
         mock.restore();

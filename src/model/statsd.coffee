@@ -17,7 +17,7 @@ exports.retrieveTransactionCountPerHour = `function *() {
 
   var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels.count,'1hour'))&from=-1days&format=json";
   var data = [];
-  var raw = yield this.fetchData(path);
+  var raw = yield exports.fetchData(path);
 
   _.forEach(raw.data, function (item) {
     data.push({
@@ -44,7 +44,7 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
       for (i = 0; i < status_array.length; i++) {
         path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
         console.log(path);
-        results[status_array[i]] = yield this.fetchData(path);
+        results[status_array[i]] = yield exports.fetchData(path);
         console.log(results)
       };
 
@@ -72,7 +72,7 @@ exports.retrieveAverageLoadTimePerHour = `function *() {
 
   var path = "/render?target=transformNull(summarize(stats.timers." + domain + ".Channels.mean,'1hour'))&from=-1days&format=json";
   var data = [];
-  var raw = yield this.fetchData(path);
+  var raw = yield exports.fetchData(path);
 
   _.forEach(raw.data, function (item) {
     data.push({
@@ -93,7 +93,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   if (type == 'status'){
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
-      results[status_array[i]] = yield this.fetchData(path);
+      results[status_array[i]] = yield exports.fetchData(path);
     };
 
     var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
@@ -117,7 +117,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
 
         path = render_url + ".count,'1day'))&from=-7days&format=json";
         path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".sum,'1day','avg'))";
-    var raw = yield this.fetchData(path);
+    var raw = yield exports.fetchData(path);
     var i = 0;
     _.forEach(raw.data, function (item) {
       data.push({
@@ -133,14 +133,14 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
 
 exports.retrieveSumOfTransactionsPerPeriod = `function *(period) {
   var path = '/render?target=integral(stats.counters.' + domain + '.Channels.count)&from=' + period + '&format=json';
-  this.body = yield this.fetchData(path);
+  this.body = yield fetchData(path);
 }`
 
 exports.transactionsPerChannelPerHour = `function *(period) {
   var path = "/render?target=summarize(stats.counters." + domain + ".Channels.count,'1hour')&from=-1days&format=json";
   path = "/render?target=summarize(stats.counters.OpenHIM-core-js-preprod.Production.Channels.count,'1hour')&from=-1days&format=json";
   var data = [];
-  var raw = yield this.fetchData(path);
+  var raw = yield exports.fetchData(path);
   var i = 0;
   _.forEach(raw.data, function (item) {
     data.push({
@@ -154,7 +154,7 @@ exports.transactionsPerChannelPerHour = `function *(period) {
 }`
 
 
-exports.fetchData  = `function* (path) {
+fetchData = `function* fetchData(path) {
 
     var data = {};
     var options = {
@@ -179,3 +179,5 @@ exports.fetchData  = `function* (path) {
 
   return data;
 }`
+
+exports.fetchData = fetchData
