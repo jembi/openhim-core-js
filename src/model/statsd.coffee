@@ -28,14 +28,20 @@ exports.retrieveTransactionCountPerHour = `function *() {
   this.body = data
 }`
 
+exports.testRunner = testRunner = ()->
+  exports.test()
+
+exports.test = test = ()->
+  console.log 'testing 123'
+
 # Retrives Global Status Metrics from the StatsD API
 
-exports.fetcGlobalStatusMetrics = `function *() {
-  var filtersObject = this.request.query;
+exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
+  //var filtersObject = this.request.query;
   var userRequesting = this.authenticated,
       path = '',
       results = {};
-  var allowedIds = yield metrics.getAllowedChannelIDs(userRequesting)
+  var allowedIds = allowedIds ? allowedIds : yield metrics.getAllowedChannelIDs(userRequesting)
   var data = []
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
 
@@ -43,7 +49,9 @@ exports.fetcGlobalStatusMetrics = `function *() {
       var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[j]
       for (i = 0; i < status_array.length; i++) {
         path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
-        results[status_array[i]] = yield fetchData(path);
+        console.log(path);
+        results[status_array[i]] = yield this.fetchData(path);
+        console.log(results)
       };
 
       var failed = 'data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0,
@@ -67,9 +75,10 @@ exports.fetcGlobalStatusMetrics = `function *() {
 }`
 
 exports.retrieveAverageLoadTimePerHour = `function *() {
+
   var path = "/render?target=transformNull(summarize(stats.timers." + domain + ".Channels.mean,'1hour'))&from=-1days&format=json";
   var data = [];
-  var raw = yield fetchData(path);
+  var raw = yield this.fetchData(path);
 
   _.forEach(raw.data, function (item) {
     data.push({
@@ -77,7 +86,8 @@ exports.retrieveAverageLoadTimePerHour = `function *() {
       timestamp: moment.unix(item[1])
     });
   });
-  this.body = data
+
+  return this.body = data
 }`
 
 exports.retrieveChannelMetrics = `function *(type, channelId) {
@@ -149,23 +159,32 @@ exports.transactionsPerChannelPerHour = `function *(period) {
   this.body = data
 }`
 
-exports.fetchData = fetchData = `function *(path) {
-  var options = {
-    url: 'http://' + statsd_server.host + path
-  };
-  var response = yield request(options);
-  var info = JSON.parse(response.body);
-  var data = {};
-  var i = 0;
+exports.duma = `function () {
+    return 'hellow duma testing';
+  }`
 
-  _.forEach(info, function (item) {
-    if (i == 0) {
-      data.data = item.datapoints
-    } else {
-      data['data' + i] = item.datapoints
-    }
-    i++;
-  });
+exports.fetchData  = fetchData = `function* (path) {
+    console.log('Now in fetchdata');
+    var data = {};
+    var options = {
+      url: 'http://' + statsd_server.host + path
+    };
+    var response = yield request(options);
+
+    var info = JSON.parse(response.body);
+    if (info.length) {
+    console.log('Now has body: ' + response.body);
+    var i = 0;
+    _.forEach(info, function (item) {
+      if (i == 0) {
+        data.data = item.datapoints
+      } else {
+        data['data' + i] = item.datapoints
+      }
+      i++;
+    });
+  }
+
 
   return data;
 }`

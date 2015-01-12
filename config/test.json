@@ -7,7 +7,7 @@
     },
     "statsd": {
         "enabled": true,
-        "host": "104.236.15.32"
+        "host": "127.0.0.1"
     },
     "application": {
         "name": "openhim.test"
