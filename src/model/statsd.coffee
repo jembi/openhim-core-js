@@ -154,7 +154,7 @@ exports.transactionsPerChannelPerHour = `function *(period) {
 }`
 
 
-exports.fetchData  = fetchData = `function* (path) {
+exports.fetchData  = `function* (path) {
 
     var data = {};
     var options = {
@@ -164,7 +164,7 @@ exports.fetchData  = fetchData = `function* (path) {
 
     var info = JSON.parse(response.body);
     if (info.length) {
-  
+
     var i = 0;
     _.forEach(info, function (item) {
       if (i == 0) {
