@@ -35,7 +35,7 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
   var userRequesting = this.authenticated,
       path = '',
       results = {};
-  var allowedIds = allowedIds.length ? allowedIds : yield metrics.getAllowedChannelIDs(userRequesting)
+  var allowedIds = allowedIds.length > 0 ? allowedIds : yield metrics.getAllowedChannelIDs(userRequesting)
   var data = []
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
 
