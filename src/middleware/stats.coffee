@@ -47,7 +47,7 @@ exports.measureTransactionDuration = (ctx, done) ->
       if ctx.mediatorResponse.orchestrations?
         for ochestration in ctx.mediatorResponse.orchestrations
           orchestratrionDuration = ochestration.response.timestamp - ochestration.request.timestamp
-          sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' ochestration.name, orchestratrionDuration 
+          sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + ochestration.name, orchestratrionDuration
 
 
   catch error
