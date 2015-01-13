@@ -26,16 +26,17 @@ exports.incrementTransactionCount = (ctx, done) ->
 
         if route.orchestrations?
           for orchestration in route.orchestrations
+            orchestrationStatus = orchestration.status
             sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name
-            sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestration.Status
+            sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus
             sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes.' + route.response.status + '.orchestrations.' + orchestration.name
-            sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes.' + route.response.status + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestration.Status
+            sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes.' + route.response.status + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus
 
 
     if ctx.mediatorResponse?
       if ctx.mediatorResponse.orchestrations?
         for orchestration in ctx.mediatorResponse.orchestrations
-          orchestrationStatus = orchestration.Status
+          orchestrationStatus = orchestration.status
           sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name
           sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus
           sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.Statuses.' + transactionStatus + '.orchestrations.' + orchestration.name
@@ -63,7 +64,7 @@ exports.measureTransactionDuration = (ctx, done) ->
         if route.orchestrations?
           for orchestration in route.orchestrations
             orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
-            orchestrationStatus = orchestration.Status
+            orchestrationStatus = orchestration.status
             sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name, orchestratrionDuration
             sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus , orchestratrionDuration
             sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status + '.orchestrations.' + orchestration.name, orchestratrionDuration
