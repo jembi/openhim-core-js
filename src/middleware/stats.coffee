@@ -43,6 +43,13 @@ exports.measureTransactionDuration = (ctx, done) ->
         sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, timer # Per Channel
         sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status, timer # Per Channel
 
+    if ctx.mediatorResponse?
+      if ctx.mediatorResponse.orchestrations?
+        for ochestration in ctx.mediatorResponse.orchestrations
+          orchestratrionDuration = ochestration.response.timestamp - ochestration.request.timestamp
+          sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' ochestration.name, orchestratrionDuration 
+
+
   catch error
     logger.error error, done
 
