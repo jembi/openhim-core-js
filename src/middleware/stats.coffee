@@ -67,8 +67,8 @@ exports.measureTransactionDuration = (ctx, done) ->
             orchestrationStatus = orchestration.response.status
             sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name, orchestratrionDuration
             sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus , orchestratrionDuration
-            sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status + '.orchestrations.' + orchestration.name, orchestratrionDuration
-            sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus , orchestratrionDuration
+            sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes.' + route.response.status + '.orchestrations.' + orchestration.name, orchestratrionDuration
+            sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes.' + route.response.status + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus , orchestratrionDuration
 
 
 
