@@ -22,7 +22,24 @@ exports.incrementTransactionCount = (ctx, done) ->
     if ctx.routes?
       for route in ctx.routes
         sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name # Per non-primary route
-        sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status # Per route response status
+        sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes.' + route.response.status # Per route response status
+
+        if route.orchestrations?
+          for orchestration in route.orchestrations
+            sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name
+            sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestration.Status
+            sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes.' + route.response.status + '.orchestrations.' + orchestration.name
+            sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes.' + route.response.status + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestration.Status
+
+
+    if ctx.mediatorResponse?
+      if ctx.mediatorResponse.orchestrations?
+        for orchestration in ctx.mediatorResponse.orchestrations
+          orchestrationStatus = orchestration.Status
+          sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name
+          sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus
+          sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.Statuses.' + transactionStatus + '.orchestrations.' + orchestration.name
+          sdc.increment domain + '.Channels.' + ctx.authorisedChannel._id + '.Statuses.' + transactionStatus + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus
 
   catch error
     logger.error error, done
@@ -40,14 +57,27 @@ exports.measureTransactionDuration = (ctx, done) ->
     #Collect stats for non-primary routes
     if ctx.routes?
       for route in ctx.routes
-        sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, timer # Per Channel
-        sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status, timer # Per Channel
+        sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, timer
+        sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status, timer
+
+        if route.orchestrations?
+          for orchestration in route.orchestrations
+            orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
+            orchestrationStatus = orchestration.Status
+            sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name, orchestratrionDuration
+            sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus , orchestratrionDuration
+            sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status + '.orchestrations.' + orchestration.name, orchestratrionDuration
+            sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.StatusCodes' + route.response.status + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus , orchestratrionDuration
+
+
 
     if ctx.mediatorResponse?
       if ctx.mediatorResponse.orchestrations?
-        for ochestration in ctx.mediatorResponse.orchestrations
-          orchestratrionDuration = ochestration.response.timestamp - ochestration.request.timestamp
-          sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.' + ochestration.name, orchestratrionDuration
+        for orchestration in ctx.mediatorResponse.orchestrations
+          orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
+          orchestrationStatus = orchestration.Status
+          sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name, orchestratrionDuration
+          sdc.timing domain + '.Channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name + '.StatusCodes.' + orchestrationStatus , orchestratrionDuration
 
 
   catch error
