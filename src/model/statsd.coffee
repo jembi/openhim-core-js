@@ -14,7 +14,7 @@ metrics = require "../metrics"
 
 exports.retrieveTransactionCountPerHour = `function *() {
 
-  var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels.count,'1hour'))&from=-1days&format=json";
+  var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels.count,'1hour'))&from=-1days&format=json";
   var data = [];
   var raw = yield exports.fetchData(path);
 
@@ -40,9 +40,9 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
 
   for (var j = 0; j < allowedIds.length; j++) {
-      var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + allowedIds[j]
+      var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + allowedIds[j]
       for (i = 0; i < status_array.length; i++) {
-        path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
+        path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
         results[status_array[i]] = yield exports.fetchData(path);
         final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0;
 
@@ -63,7 +63,7 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
 
 exports.retrieveAverageLoadTimePerHour = `function *() {
 
-  var path = "/render?target=transformNull(summarize(stats.timers." + domain + ".Channels.mean,'1hour'))&from=-1days&format=json";
+  var path = "/render?target=transformNull(summarize(stats.timers." + domain + ".channels.mean,'1hour'))&from=-1days&format=json";
   var data = [];
   var raw = yield exports.fetchData(path);
 
@@ -81,11 +81,11 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var data = [];
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
   var results = {}, path = ''
-  var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".Channels." + channelId
+  var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + channelId
 
   if (type == 'status'){
     for (i = 0; i < status_array.length; i++) {
-      path = render_url + ".Statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
+      path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
       results[status_array[i]] = yield exports.fetchData(path);
     };
 
@@ -109,7 +109,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   } else {
 
         path = render_url + ".count,'1day'))&from=-7days&format=json";
-        path += "&target=transformNull(summarize(stats.timers." + domain + ".Channels." + channelId + ".sum,'1day','avg'))";
+        path += "&target=transformNull(summarize(stats.timers." + domain + ".channels." + channelId + ".sum,'1day','avg'))";
     var raw = yield exports.fetchData(path);
     var i = 0;
     _.forEach(raw.data, function (item) {
@@ -125,13 +125,13 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
 }`
 
 exports.retrieveSumOfTransactionsPerPeriod = `function *(period) {
-  var path = '/render?target=integral(stats.counters.' + domain + '.Channels.count)&from=' + period + '&format=json';
+  var path = '/render?target=integral(stats.counters.' + domain + '.channels.count)&from=' + period + '&format=json';
   this.body = yield fetchData(path);
 }`
 
 exports.transactionsPerChannelPerHour = `function *(period) {
-  var path = "/render?target=summarize(stats.counters." + domain + ".Channels.count,'1hour')&from=-1days&format=json";
-  path = "/render?target=summarize(stats.counters.OpenHIM-core-js-preprod.Production.Channels.count,'1hour')&from=-1days&format=json";
+  var path = "/render?target=summarize(stats.counters." + domain + ".channels.count,'1hour')&from=-1days&format=json";
+  path = "/render?target=summarize(stats.counters.OpenHIM-core-js-preprod.Production.channels.count,'1hour')&from=-1days&format=json";
   var data = [];
   var raw = yield exports.fetchData(path);
   var i = 0;
