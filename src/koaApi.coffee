@@ -16,7 +16,7 @@ worker = require './api/worker'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
 serverRestart = require './restart'
-statsd = require './model/statsd'
+statsd = require './api/statsd'
 config = require './config/config'
 statsd_instance = config.get 'statsd'
 

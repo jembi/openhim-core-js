@@ -52,7 +52,7 @@ describe "Stats Tests", ->
       mock = {}
 
       `before(function(done){
-        Statsd = require("../../lib/model/statsd")
+        Statsd = require("../../lib/api/statsd")
         Statsd.authenticated = auth.getAuthDetails();
         Statsd.request = {}
         Statsd.request.query = {}
