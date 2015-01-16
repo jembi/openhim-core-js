@@ -45,9 +45,8 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
     var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + allowedIds[j]
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
-      results[status_array[i]] = co(function* () {
-        yield exports.fetchData(path)
-      });
+      results[status_array[i]] = yield exports.fetchData(path)
+
       final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0;
     }
 
@@ -81,9 +80,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   if (type == 'status') {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&format=json";
-      results[status_array[i]] = co(function* () {
-        yield exports.fetchData(path)
-      });
+      results[status_array[i]] = yield exports.fetchData(path)
     }
 
     var failed = 'data' in results.Failed ? results.Failed.data[0][0] : 0,
