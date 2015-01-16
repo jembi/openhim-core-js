@@ -152,7 +152,7 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
     handleServerError ctx, reason
 
 sendRequest = (ctx, route, options) ->
-  if route.type is 'tcp' or 'mllp'
+  if route.type is 'tcp' or route.type is 'mllp'
     logger.info 'Routing socket request'
     return sendSocketRequest ctx, route, options
   else
