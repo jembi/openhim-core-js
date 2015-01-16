@@ -81,14 +81,14 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&format=json";
       results[status_array[i]] = yield exports.fetchData(path);
       console.log(JSON.stringify(results))
+      var failed = 'data' in results.Failed ? results.Failed.data[0][0] : 0,
+        processing = 'data'  in results.Processing ? results.Processing.data[0][0]  : 0,
+        completed = 'data' in results.Completed ? results.Completed.data[0][0]  : 0,
+        successful = 'data' in  results.Successful ? results.Successful.data[0][0] : 0,
+        completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] : 0;
     }
-    ;
 
-    var failed = 'data' in results.Failed ? results.Failed.data[0][0] : 0,
-      processing = 'data'  in results.Processing ? results.Processing.data[0][0]  : 0,
-      completed = 'data' in results.Completed ? results.Completed.data[0][0]  : 0,
-      successful = 'data' in  results.Successful ? results.Successful.data[0][0] : 0,
-      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] : 0;
+
 
 
     data.push({
