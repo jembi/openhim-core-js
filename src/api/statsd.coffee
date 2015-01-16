@@ -75,24 +75,29 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
   var results = {}, path = ''
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + channelId
-  var statuses = []
 
   if (type == 'status') {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&format=json";
       results[status_array[i]] = yield exports.fetchData(path);
-      //results[status_array[i]].next()
-      console.log(JSON.stringify(results));
-      statuses[status_array[i]] =  'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0
+      console.log(JSON.stringify(results))
     }
-    console.log('now here');
+    ;
+
+    var failed = 'data' in results.Failed ? results.Failed.data[0][0] : 0,
+      processing = 'data'  in results.Processing ? results.Processing.data[0][0]  : 0,
+      completed = 'data' in results.Completed ? results.Completed.data[0][0]  : 0,
+      successful = 'data' in  results.Successful ? results.Successful.data[0][0] : 0,
+      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] : 0;
+
+
     data.push({
       _id: {"channelID": channelId},
-      processing : statuses[status_array[0]] ,
-      failed : statuses[status_array[1]] ,
-      completed: statuses[status_array[2]] ,
-      successful: statuses[status_array[3]] ,
-      completedWErrors: statuses[status_array[4]]
+      failed: failed,
+      successful: successful,
+      processing: processing,
+      completed: completed,
+      completedWErrors: completedWErrors
     });
 
 
@@ -123,7 +128,7 @@ fetchData = `function* fetchData(path) {
     url: 'http://' + statsd_server.host + path
   };
   var response = yield request(options);
-  //logger.info('Request to statsd: '+ path);
+  logger.info('Request to statsd: '+ path);
 
   var info = JSON.parse(response.body);
   if (info.length) {
