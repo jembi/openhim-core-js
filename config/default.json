@@ -1,7 +1,14 @@
 {
+  "mongo": {
+    "url": "mongodb://localhost/openhim"
+  },
+  "logger": {
+    "level": "info"
+  },
   "router": {
     "httpPort": 5001,
-    "httpsPort": 5000
+    "httpsPort": 5000,
+    "timeout": 60000
   },
   "api": {
     "httpsPort": 8080
@@ -12,8 +19,8 @@
   },
   "tcpAdapter": {
     "httpReceiver": {
-        "httpPort": 7787,
-        "host": "localhost"
+      "httpPort": 7787,
+      "host": "localhost"
     }
   },
   "polling": {
@@ -27,13 +34,13 @@
   "nodemailer": {
     "service": "Gmail",
     "auth": {
-        "user": "user@gmail.com",
-        "pass": "password"
+      "user": "user@gmail.com",
+      "pass": "password"
     }
   },
   "smsGateway": {
     "provider": "clickatell",
-	"config": {
+    "config": {
       "user": "user",
       "pass": "pass",
       "apiID": "apiID"
@@ -51,5 +58,15 @@
   "visualizer": {
     "enableVisualizer": true,
     "minimumEventPeriodMillis": 100
+  },
+  "statsd": {
+    "host": "127.0.0.1"
+  },
+  "application": {
+    "name": "Development"
+  },
+  "newUserExpiry": {
+    "duration": 7,
+    "durationType": "days"
   }
 }

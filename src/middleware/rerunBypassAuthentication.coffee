@@ -6,25 +6,25 @@ crypto = require "crypto"
 
 exports.authenticateUser = (ctx, done) ->
 
-	Client.findOne { _id: ctx.request.header.clientid }, (err, client) ->
-		ctx.authenticated = client
-		ctx.parentID = ctx.request.header.parentid
-		ctx.taskID = ctx.request.header.taskid
-		done null, client
-	
+  Client.findOne { _id: ctx.request.header.clientid }, (err, client) ->
+    ctx.authenticated = client
+    ctx.parentID = ctx.request.header.parentid
+    ctx.taskID = ctx.request.header.taskid
+    done null, client
+  
 
 ###
 # Koa middleware for authentication by basic auth
 ###
 exports.koaMiddleware = `function *rerunBypassAuthMiddleware(next) {
-	
-	var authenticateUser = Q.denodeify(exports.authenticateUser);
-	yield authenticateUser(this);
+  
+  var authenticateUser = Q.denodeify(exports.authenticateUser);
+  yield authenticateUser(this);
 
-	if (this.authenticated) {
-		yield next;
-	} else {
-		this.response.status = "unauthorized";
-	}
-	
+  if (this.authenticated) {
+    yield next;
+  } else {
+    this.response.status = "unauthorized";
+  }
+  
 }`

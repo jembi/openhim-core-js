@@ -20,8 +20,12 @@ See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more 
 1. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location
 2. Install and start [MongoDB](http://www.mongodb.org/)
 3. Install the dependencies by running `npm install`
-4. Build the project by running `cake build` (you may have to install coffescript first by running `npm install -g coffee-script`)
+4. Build the project by running `grunt build`
 5. Start the server by running `node --harmony lib/server.js`
+
+Alternatively you can also use one of the following options:
+* use [Vagrant](https://github.com/jembi/openhim-core-js/wiki/Running-the-OpenHIM-using-Vagrant) to fire up an instance if you're a developer, or just want a quick instance to test with, or
+* use [Puppet](https://github.com/jembi/openhim-core-js/wiki/OpenHIM-Installation-using-Puppet) to deploy an instance on a server.
 
 Installation and Development
 ============================
@@ -77,7 +81,7 @@ This step is optional but recommended to ensure that the system is running as ex
 Running the server
 ==================
 
-First make sure the project is build by running `cake build`.
+First make sure the project is build by running `grunt build`.
 
 Once all the prerequisites have been installed, configured and started, run the OpenHIM core server by executing the following:
 
@@ -89,22 +93,22 @@ The server will by default start in development mode using the mongodb database 
 
 This starts the server with production defaults, including the use of the production mongodb database called 'openhim'.
 
+To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config script and keep the settings you wish to override. You can then override the default configuration settings with the following command:
+
+`--conf=path/to/customConfig.json`
+
+So to start a production server with a custom config script it will look something like this:
+`NODE_ENV=production node --harmony lib/server.js --conf=path/to/customConfig.json`
+
 Testing
 =======
 
-This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using either `npm` or `cake`.
+This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using `grunt`:
+```
+grunt test
+```
 
-To run the tests using `npm` execute `npm test`.
-
-The project is build and tested using `cake`, if you want to run cake directly, you will need [CoffeeScript](http://coffeescript.org/). Install CoffeeScript by executing the following:
-
-`npm install -g coffee-script` (omit the `-g` if you don't wish to install globally) 
-
-See [the CoffeScript website](http://coffeescript.org/) for more further information.
-
-You can have the CoffeeScript files in `src/` auto compile as you save them by running:
-
-`cake watch`
+Alternatively you can also run the tests using `npm test`.
 
 Design
 ------

@@ -5,7 +5,6 @@ var fs   = require('fs');
 
 var args = process.argv;
 args.splice(0,2);
-console.log(args);
 
 var lib  = path.join(path.dirname(fs.realpathSync(__filename)), '../lib');
 
