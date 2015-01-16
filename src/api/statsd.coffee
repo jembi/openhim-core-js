@@ -75,28 +75,22 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
   var results = {}, path = ''
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + channelId
+  var statuses = []
 
   if (type == 'status') {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
       results[status_array[i]] = yield exports.fetchData(path);
+      statuses[status_array[i]] =  'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] + results[status_array[i]].data[1][0] : 0,
     }
-    ;
-
-    var failed = 'Failed' in results ? ('data' in results.Failed ? results.Failed.data[0][0] + results.Failed.data[1][0] : 0) : 0,
-      processing = 'Processing' in results ? ( 'data'  in results.Processing ? results.Processing.data[0][0] + results.Processing.data[1][0] : 0) : 0,
-      completed = 'Completed' in results ? ( 'data' in results.Completed ? results.Completed.data[0][0] + results.Completed.data[1][0] : 0) : 0,
-      successful ='Successful' in results ? ( 'data' in  results.Successful ? results.Successful.data[0][0] + results.Successful.data[1][0] : 0) : 0,
-      completedWErrors = 'Completed with error(s)' in results ? ( 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] + results['Completed with error(s)'].data[1][0] : 0) : 0;
-
 
     data.push({
       _id: {"channelID": channelId},
-      failed: failed,
-      successful: successful,
-      processing: processing,
-      completed: completed,
-      completedWErrors: completedWErrors
+      processing : statuses[status_array[0]] ,
+      failed : statuses[status_array[1]] ,
+      completed: statuses[status_array[2]] ,
+      successful: statuses[status_array[3]] ,
+      completedWErrors: statuses[status_array[4]]
     });
 
 
