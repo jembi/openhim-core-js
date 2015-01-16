@@ -1,13 +1,18 @@
 #!/usr/bin/env node
-var forever = require('forever');
+var forever = require('forever-monitor');
 var path = require('path');
 var fs   = require('fs');
+
+var args = process.argv;
+args.splice(0,2);
+console.log(args);
 
 var lib  = path.join(path.dirname(fs.realpathSync(__filename)), '../lib');
 
 var child = new (forever.Monitor)('server.js', {
   sourceDir: lib,
   command: 'node --harmony',
+  args: args,
   watch: true
 });
 
