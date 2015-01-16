@@ -9,6 +9,7 @@ request = require 'koa-request'
 _ = require "lodash"
 moment = require "moment"
 metrics = require "../metrics"
+logger = require "winston"
 
 # Overall Metrics
 
@@ -126,6 +127,7 @@ fetchData = `function* fetchData(path) {
     url: 'http://' + statsd_server.host + path
   };
   var response = yield request(options);
+  logger.info('Request to statsd: '+ path);
 
   var info = JSON.parse(response.body);
   if (info.length) {
