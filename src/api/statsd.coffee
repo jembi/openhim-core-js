@@ -104,17 +104,8 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
     path = render_url + ".count,'1day'))&from=-7days&format=json";
     path += "&target=transformNull(summarize(stats.timers." + domain + ".channels." + channelId + ".sum,'1day','avg'))";
     var raw = yield exports.fetchData(path);
-    var i = 0;
-    _.forEach(raw.data, function (item) {
-      data.push({
-        load: item[0],
-        avgResp: raw.data1[i][0],
-        timestamp: moment.unix(item[1])
-      });
-      i++;
-    });
+    this.body = exports.convertToRequiredFormat(raw, 'retrieveChannelMetrics');
   }
-  this.body = data
 }`
 
 exports.retrieveSumOfTransactionsPerPeriod = `function *(period) {
@@ -124,19 +115,8 @@ exports.retrieveSumOfTransactionsPerPeriod = `function *(period) {
 
 exports.transactionsPerChannelPerHour = `function *(period) {
   var path = "/render?target=summarize(stats.counters." + domain + ".channels.count,'1hour')&from=-1days&format=json";
-  path = "/render?target=summarize(stats.counters.OpenHIM-core-js-preprod.Production.channels.count,'1hour')&from=-1days&format=json";
-  var data = [];
   var raw = yield exports.fetchData(path);
-  var i = 0;
-  _.forEach(raw.data, function (item) {
-    data.push({
-      load: item[0],
-      avgResp: raw.data1[i][0],
-      timestamp: moment.unix(item[1])
-    });
-    i++;
-  });
-  this.body = data
+  this.body = exports.convertToRequiredFormat(raw, 'transactionsPerChannelPerHour');
 }`
 
 
@@ -171,7 +151,7 @@ convertToRequiredFormat = (raw, requiredFormat) ->
         load: item[0]
         timestamp: moment.unix item[1]
 
-    when "transactionsPerChannelPerHour" then _.forEach raw.data, (item) ->
+    when "retrieveChannelMetrics", "transactionsPerChannelPerHour" then _.forEach raw.data, (item) ->
       data.push
         load: item[0]
         avgResp: raw.data1[i][0]
