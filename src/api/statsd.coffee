@@ -75,22 +75,19 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
   var results = {}, path = ''
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + channelId
-
+  var promises = []
   if (type == 'status') {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&format=json";
       results[status_array[i]] = yield exports.fetchData(path);
-      console.log(JSON.stringify(results))
-      var failed = 'data' in results.Failed ? results.Failed.data[0][0] : 0,
-        processing = 'data'  in results.Processing ? results.Processing.data[0][0]  : 0,
-        completed = 'data' in results.Completed ? results.Completed.data[0][0]  : 0,
-        successful = 'data' in  results.Successful ? results.Successful.data[0][0] : 0,
-        completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] : 0;
+      promises.push(results[status_array[i]] )
     }
-
-
-
-
+  Q.all(promises).then (function(){
+    var failed = 'data' in results.Failed ? results.Failed.data[0][0] : 0,
+      processing = 'data'  in results.Processing ? results.Processing.data[0][0]  : 0,
+      completed = 'data' in results.Completed ? results.Completed.data[0][0]  : 0,
+      successful = 'data' in  results.Successful ? results.Successful.data[0][0] : 0,
+      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] : 0;
     data.push({
       _id: {"channelID": channelId},
       failed: failed,
@@ -99,7 +96,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       completed: completed,
       completedWErrors: completedWErrors
     });
-
+  })
 
   } else {
 
