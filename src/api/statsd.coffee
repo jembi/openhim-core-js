@@ -81,7 +81,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&from=-1weeks&format=json";
       results[status_array[i]] = yield exports.fetchData(path);
-      statuses[status_array[i]] =  'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] + results[status_array[i]].data[1][0] : 0
+      statuses[status_array[i]] =  'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0
     }
 
     data.push({
