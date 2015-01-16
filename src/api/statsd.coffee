@@ -10,6 +10,7 @@ _ = require "lodash"
 moment = require "moment"
 metrics = require "../metrics"
 logger = require "winston"
+co = require "co"
 
 # Overall Metrics
 
@@ -79,10 +80,11 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   if (type == 'status') {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&format=json";
-      results[status_array[i]] = yield exports.fetchData(path);
-      promises.push(results[status_array[i]] )
+      results[status_array[i]] = co(function* () {
+        yield exports.fetchData(path)
+      });
     }
-  Q.all(promises).then (function(){
+
     var failed = 'data' in results.Failed ? results.Failed.data[0][0] : 0,
       processing = 'data'  in results.Processing ? results.Processing.data[0][0]  : 0,
       completed = 'data' in results.Completed ? results.Completed.data[0][0]  : 0,
@@ -96,7 +98,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       completed: completed,
       completedWErrors: completedWErrors
     });
-  })
+
 
   } else {
 
