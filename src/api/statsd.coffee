@@ -97,9 +97,9 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       processing: processing,
       completed: completed,
       completedWErrors: completedWErrors
-    });
+    })
 
-
+    this.body = data
   } else {
 
     path = render_url + ".count,'1day'))&from=-7days&format=json";
