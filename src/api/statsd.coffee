@@ -147,6 +147,7 @@ fetchData = `function* fetchData(path) {
 
 convertToRequiredFormat = (raw, requiredFormat) ->
   data = []
+  i = 0
   switch requiredFormat
     when "retrieveAverageLoadTimePerHour" then _.forEach raw.data, (item) ->
       data.push
