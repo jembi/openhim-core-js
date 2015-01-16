@@ -86,6 +86,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       statuses[status_array[i]] =  'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0
     }
     console.log('now here');
+    data.push({
       _id: {"channelID": channelId},
       processing : statuses[status_array[0]] ,
       failed : statuses[status_array[1]] ,
