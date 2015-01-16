@@ -81,11 +81,11 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&format=json";
       results[status_array[i]] = yield exports.fetchData(path);
-      results[status_array[i]].next()
+      //results[status_array[i]].next()
+      console.log(JSON.stringify(results));
       statuses[status_array[i]] =  'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0
     }
-
-    data.push({
+    console.log('now here');
       _id: {"channelID": channelId},
       processing : statuses[status_array[0]] ,
       failed : statuses[status_array[1]] ,
@@ -122,7 +122,7 @@ fetchData = `function* fetchData(path) {
     url: 'http://' + statsd_server.host + path
   };
   var response = yield request(options);
-  logger.info('Request to statsd: '+ path);
+  //logger.info('Request to statsd: '+ path);
 
   var info = JSON.parse(response.body);
   if (info.length) {
