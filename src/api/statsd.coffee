@@ -104,6 +104,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
     path = render_url + ".count,'1day'))&from=-7days&format=json";
     path += "&target=transformNull(summarize(stats.timers." + domain + ".channels." + channelId + ".sum,'1day','avg'))";
     var raw = yield exports.fetchData(path);
+    console.log(JSON.stringify(raw));
     this.body = exports.convertToRequiredFormat(raw, 'retrieveChannelMetrics');
   }
 }`

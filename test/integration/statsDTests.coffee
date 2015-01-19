@@ -104,3 +104,29 @@ describe "Stats Tests", ->
           mock.verify()
           mock.restore()
           done()
+
+      it "should convert the result from statsd to the correct format", (done) ->
+        fetchDataObject = {}
+        fetchDataObject.data = [
+          [
+            83
+            1421280000
+          ]
+        ]
+
+        fetchDataObject.data1 = [
+          [
+            200
+            1421280000
+          ]
+        ]
+        convertToRequiredFormatSpy = sinon.spy Statsd, 'convertToRequiredFormat'
+        data = convertToRequiredFormatSpy fetchDataObject, 'retrieveAverageLoadTimePerHour'
+        data2 = convertToRequiredFormatSpy fetchDataObject, 'retrieveChannelMetrics'
+        data[0].avgResp.should.be.exactly 83
+        data2[0].avgResp.should.be.exactly 200
+        convertToRequiredFormatSpy.restore()
+        done()
+
+
+
