@@ -47,62 +47,60 @@ describe "Stats Tests", ->
       authDetails = auth.getAuthDetails()
 
     describe "*fetchGlobalStatusMetrics", ->
-
       Statsd = {}
       mock = {}
 
-      `before(function(done){
-        Statsd = require("../../lib/api/statsd")
-        Statsd.authenticated = auth.getAuthDetails();
+      before (done) ->
+        Statsd = require "../../lib/api/statsd"
+        Statsd.authenticated = auth.getAuthDetails()
         Statsd.request = {}
         Statsd.request.query = {}
-        done();
-      })`
-
-      `after(function(done){
-        done();
-      });`
-
-      `it("should fetch global load Time metrics", function (done) {
-        mock = sinon.mock(Statsd);
-        mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.timers." + domain + ".channels.mean,'1hour'))&from=-1days&format=json")
-        co(function* () {
-          yield Statsd.retrieveAverageLoadTimePerHour();
-        });
-        mock.verify();
-        mock.restore();
         done()
-      })`
 
-      `it("should fetch global status metrics ", function (done) {
+
+      after (done) ->
+        done()
+
+
+      it "should fetch global load Time metrics",  (done) ->
+        mock = sinon.mock(Statsd)
+        mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.timers." + domain + ".channels.mean,'1hour'))&from=-1days&format=json")
+        `co(function* () {
+          yield Statsd.retrieveAverageLoadTimePerHour();
+        })`
+        mock.verify()
+        mock.restore()
+        done()
+
+
+      it "should fetch global status metrics ",  (done) ->
         mock = sinon.mock(Statsd);
-        mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.statuses.Processing.count,'1week'))&from=-1days&format=json");
-        co(function* () {
+        mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.statuses.Processing.count,'1week'))&from=-1days&format=json")
+        `co(function* () {
            yield Statsd.fetcGlobalStatusMetrics(['jjhreujiwh']);
-        });
-        mock.verify();
-        mock.restore();
-        done();
-      })`
+        })`
+        mock.verify()
+        mock.restore()
+        done()
 
-      `it("should fetch channel transaction count metrics ", function (done){
+
+      it "should fetch channel transaction count metrics ", (done) ->
           mock = sinon.mock(Statsd);
-          mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.count,'1day'))&from=-7days&format=json&target=transformNull(summarize(stats.timers." + domain + ".channels.jjhreujiwh.sum,'1day','avg'))");
-          co(function* () {
+          mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.count,'1day'))&from=-7days&format=json&target=transformNull(summarize(stats.timers." + domain + ".channels.jjhreujiwh.sum,'1day','avg'))")
+          `co(function* () {
             yield Statsd.retrieveChannelMetrics('count','jjhreujiwh');
-          });
+          });`
           mock.verify();
           mock.restore();
           done();
-        })`
 
-      `it("should fetch channel status metrics ", function (done) {
-          mock = sinon.mock(Statsd);
-          mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.statuses.Processing.count,'1week'))&from=-1weeks&format=json");
-          co(function* () {
+
+      it "should fetch channel status metrics ",  (done) ->
+          mock = sinon.mock(Statsd)
+          mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.statuses.Processing.count,'1week'))&format=json")
+          `co(function* () {
              yield Statsd.retrieveChannelMetrics('status','jjhreujiwh');
-          });
-          mock.verify();
-          mock.restore();
-          done();
-        })`
+          });`
+          mock.verify()
+          mock.restore()
+          done()
