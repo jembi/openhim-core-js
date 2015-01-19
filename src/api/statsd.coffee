@@ -46,8 +46,11 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
       results[status_array[i]] = yield exports.fetchData(path)
-
-      final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0;
+      if (results[status_array[i]]) {
+        final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0;
+      } else {
+        final[status_array[i]] = 0 ;
+      }
     }
 
     data.push({
