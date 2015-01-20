@@ -1,3 +1,7 @@
+# Set app root global
+path = require 'path'
+global.appRoot = path.join path.resolve(__dirname), '..'
+
 http = require 'http'
 https = require 'https'
 net = require 'net'
