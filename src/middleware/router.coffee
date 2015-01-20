@@ -13,8 +13,9 @@ status = require "http-status"
 cookie = require 'cookie'
 fs = require 'fs'
 
-tlsKey = fs.readFileSync 'tls/key.pem'
-tlsCert = fs.readFileSync 'tls/cert.pem'
+# appRoot is a global var - set in server.cofee
+tlsKey = fs.readFileSync appRoot + '/tls/key.pem'
+tlsCert = fs.readFileSync appRoot + '/tls/cert.pem'
 
 containsMultiplePrimaries = (routes) ->
   numPrimaries = 0
