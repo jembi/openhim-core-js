@@ -66,7 +66,7 @@ if process.env.NODE_ENV == "test"
 
 # Is the channel enabled?
 # If there is no status field then the channel IS enabled
-checkChannelStatus = (channel) -> not channel.status or channel.status is 'enabled'
+exports.isChannelEnabled = isChannelEnabled = (channel) -> not channel.status or channel.status is 'enabled'
 
 
 exports.authorise = (ctx, done) ->
@@ -91,7 +91,7 @@ exports.authorise = (ctx, done) ->
               continue
 
           # now check if message content matches and that the status is 'enabled'
-          if matchContent(channel, ctx.body) and checkChannelStatus channel
+          if matchContent(channel, ctx.body) and isChannelEnabled channel
             ctx.authorisedChannel = channel
             logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannel.name
             return done()

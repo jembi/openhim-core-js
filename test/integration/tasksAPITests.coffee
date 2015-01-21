@@ -74,6 +74,20 @@ describe "API Integration Tests", ->
       channelID: "bbbb22222222222222222222"
       request: requ
 
+    transaction5 = new Transaction
+      _id: "101010101010101010105555"
+      status: "Successful"
+      clientID: "000000000000000000000000"
+      channelID: "cccc33333333333333333333"
+      request: requ
+
+    transaction6 = new Transaction
+      _id: "101010101010101010106666"
+      status: "Successful"
+      clientID: "000000000000000000000000"
+      channelID: "dddd44444444444444444444"
+      request: requ
+
 
     channel = new Channel
       _id: "aaaa11111111111111111111"
@@ -103,6 +117,36 @@ describe "API Integration Tests", ->
       txViewAcl: [ "group1" ]
       txRerunAcl: [ "group222222222" ]
 
+    channel3 = new Channel
+      _id: "cccc33333333333333333333"
+      name: "TestChannel3"
+      urlPattern: "test/sample3"
+      allow: [ "PoC", "Test1", "Test2" ]
+      routes: [
+            name: "test route"
+            host: "localhost"
+            port: 9876
+            primary: true
+          ]
+      txViewAcl: [ "group1" ]
+      txRerunAcl: [ "group222222222" ]
+      status: 'disabled'
+
+    channel4 = new Channel
+      _id: "dddd44444444444444444444"
+      name: "TestChannel4"
+      urlPattern: "test/sample4"
+      allow: [ "PoC", "Test1", "Test2" ]
+      routes: [
+            name: "test route"
+            host: "localhost"
+            port: 9876
+            primary: true
+          ]
+      txViewAcl: [ "group1" ]
+      txRerunAcl: [ "group222222222" ]
+      status: 'deleted'
+
     authDetails = {}
 
     before (done) ->
@@ -112,11 +156,15 @@ describe "API Integration Tests", ->
             transaction2.save ->
               transaction3.save ->
                 transaction4.save ->
-                  channel.save ->
-                    channel2.save ->
-                      auth.setupTestUsers ->
-                        server.start null, null, 8080, null, null, null, ->
-                          done()
+                  transaction5.save ->
+                    transaction6.save ->
+                      channel.save ->
+                        channel2.save ->
+                          channel3.save ->
+                            channel4.save ->
+                              auth.setupTestUsers ->
+                                server.start null, null, 8080, null, null, null, ->
+                                  done()
 
     after (done) ->
       server.stop ->
@@ -210,6 +258,42 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(newTask)
           .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should NOT add a new task if there are transactions linked to disabled channels', (done) ->
+        newTask =
+          tids: [ "888888888888888888888888", "999999999999999999999999", "101010101010101010101010", "101010101010101010105555" ]
+
+        request("https://localhost:8080")
+          .post("/tasks")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(newTask)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should NOT add a new task if there are transactions linked to deleted channels (flagged)', (done) ->
+        newTask =
+          tids: [ "888888888888888888888888", "999999999999999999999999", "101010101010101010101010", "101010101010101010106666" ]
+
+        request("https://localhost:8080")
+          .post("/tasks")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(newTask)
+          .expect(400)
           .end (err, res) ->
             if err
               done err
