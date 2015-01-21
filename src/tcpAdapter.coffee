@@ -116,10 +116,10 @@ adaptSocketRequest = (channel, sock, socketData) ->
   req.end()
 
 
-exports.stopServers = (callback) ->
+stopTCPServers = (servers, callback) ->
   promises = []
 
-  for server in tcpServers
+  for server in servers
     do (server) ->
       defer = Q.defer()
 
@@ -129,9 +129,22 @@ exports.stopServers = (callback) ->
 
       promises.push defer.promise
 
-  (Q.all promises).then ->
+  (Q.all promises).then -> callback()
+
+exports.stopServers = (callback) ->
+  stopTCPServers tcpServers, ->
     tcpServers = []
     callback()
+
+exports.stopServerForChannel = (channel, callback) ->
+  server = null
+  for s in tcpServers
+    if s.channelID.equals channel._id
+      server = s
+
+  return callback "Server for channel #{channel._id} not running" if not server
+
+  stopTCPServers [s], callback
 
 
 if process.env.NODE_ENV == "test"

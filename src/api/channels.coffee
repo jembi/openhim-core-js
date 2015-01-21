@@ -6,6 +6,7 @@ authorisation = require './authorisation'
 tcpAdapter = require '../tcpAdapter'
 server = require "../server"
 polling = require "../polling"
+authMiddleware = require '../middleware/authorisation'
 
 isPathValid = (channel) ->
   if channel.routes?
@@ -29,6 +30,15 @@ exports.getChannels = `function *getChannels() {
     this.status = 'internal server error';
   }
 }`
+
+
+processPostAddTriggers = (channel) ->
+  if channel.type and authMiddleware.isChannelEnabled channel
+    if channel.type is 'tcp' and server.isTcpHttpReceiverRunning()
+      tcpAdapter.startupTCPServer channel, (err) -> logger.error err if err
+    else if channel.type is 'polling'
+      polling.registerPollingChannel channel, (err) -> logger.error err if err
+
 
 ###
 # Creates a new channel
@@ -62,21 +72,7 @@ exports.addChannel = `function *addChannel() {
     this.status = 'created';
     logger.info('User %s created channel with id %s', this.authenticated.email, channel.id);
 
-    if (channel.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
-      tcpAdapter.startupTCPServer(channel, function(err){
-        if (err) {
-          logger.error('Failed to startup TCP server: ' + err);
-        }
-      });
-    }
-
-    if (channel.type && channel.type === 'polling') {
-      polling.registerPollingChannel(channel, function(err) {
-        if (err) {
-          logger.error(err);
-        }
-      });
-    }
+    processPostAddTriggers(channel);
   }
   catch (e) {
     // Error! So inform the user
@@ -130,6 +126,22 @@ exports.getChannel = `function *getChannel(channelId) {
   }
 }`
 
+
+processPostUpdateTriggers = (channel) ->
+  if channel.type
+    if channel.type is 'tcp' and server.isTcpHttpReceiverRunning()
+      if authMiddleware.isChannelEnabled channel
+        tcpAdapter.startupTCPServer channel, (err) -> logger.error err if err
+      else
+        tcpAdapter.stopServerForChannel channel, (err) -> logger.error err if err
+
+    else if channel.type is 'polling'
+      if authMiddleware.isChannelEnabled channel
+        polling.registerPollingChannel channel, (err) -> logger.error err if err
+      else
+        polling.removePollingChannel channel, (err) -> logger.error err if err
+
+
 ###
 # Updates the details for a specific channel
 ###
@@ -167,21 +179,7 @@ exports.updateChannel = `function *updateChannel(channelId) {
 
     var channel = yield Channel.findOne({ _id: id }).exec();
 
-    if (channelData.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
-      tcpAdapter.startupTCPServer(channel, function(err){
-        if (err) {
-          logger.error('Failed to startup TCP server: ' + err);
-        }
-      });
-    }
-
-    if (channel.type && channel.type === 'polling') {
-      polling.registerPollingChannel(channel, function(err) {
-        if (err) {
-          logger.error(err);
-        }
-      });
-    }
+    processPostUpdateTriggers(channel);
   }
   catch (e) {
     // Error! So inform the user
