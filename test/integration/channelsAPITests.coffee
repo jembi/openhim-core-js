@@ -4,6 +4,7 @@ server = require "../../lib/server"
 tcpAdapter = require "../../lib/tcpAdapter"
 polling = require "../../lib/polling"
 Channel = require("../../lib/model/channels").Channel
+Transaction = require("../../lib/model/transactions").Transaction
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 sinon = require "sinon"
@@ -48,18 +49,20 @@ describe "API Integration Tests", ->
           done()
 
     after (done) ->
-      Channel.remove {}, ->
-        server.stop ->
-          auth.cleanupTestUsers ->
-            done()
+      Transaction.remove {}, ->
+        Channel.remove {}, ->
+          server.stop ->
+            auth.cleanupTestUsers ->
+              done()
 
     beforeEach (done) ->
-      Channel.remove {}, ->
-        (new Channel channel1).save (err, ch1) ->
-          channel1._id = ch1._id
-          (new Channel channel2).save (err, ch2) ->
-            channel2._id = ch2._id
-            done()
+      Transaction.remove {}, ->
+        Channel.remove {}, ->
+          (new Channel channel1).save (err, ch1) ->
+            channel1._id = ch1._id
+            (new Channel channel2).save (err, ch2) ->
+              channel2._id = ch2._id
+              done()
 
 
     describe '*getChannels()', ->
@@ -473,21 +476,24 @@ describe "API Integration Tests", ->
     describe '*removeChannel(channelId)', ->
 
       it 'should remove a specific channel by name', (done) ->
+        Transaction.find { channelID: channel1._id }, (err, trx) ->
+          # there can't be any linked transactions
+          trx.length.should.be.exactly 0
 
-        request("https://localhost:8080")
-          .del("/channels/" + channel1._id)
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              Channel.find { name: "TestChannel1" }, (err, channels) ->
-                channels.should.have.length 0
-                done()
+          request("https://localhost:8080")
+            .del("/channels/" + channel1._id)
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Channel.find { name: "TestChannel1" }, (err, channels) ->
+                  channels.should.have.length 0
+                  done()
 
       it 'should only allow an admin user to remove a channel', (done) ->
 
@@ -521,20 +527,55 @@ describe "API Integration Tests", ->
 
         spy = sinon.spy polling, 'removePollingChannel'
 
-        pollChannel.save ->
+        Transaction.find { channelID: channel1._id }, (err, trx) ->
+          # there can't be any linked transactions
+          trx.length.should.be.exactly 0
+
+          pollChannel.save ->
+            request("https://localhost:8080")
+              .del("/channels/" + pollChannel._id)
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .expect(200)
+              .end (err, res) ->
+                spy.restore()
+                if err
+                  done err
+                else
+                  spy.calledOnce.should.be.true
+                  spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Remove'
+                  spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
+                  done()
+
+      it 'should NOT remove a specific channel if any transactions are linked to it but mark the status as deleted', (done) ->
+        trx = new Transaction
+          clientID: channel1._id #not really but anyway
+          channelID: channel1._id
+          request:
+            path: '/test/remove'
+            method: 'GET'
+            timestamp: new Date()
+          status: 'Successful'
+
+        trx.save (err) ->
+          return done err if err
+
           request("https://localhost:8080")
-            .del("/channels/" + pollChannel._id)
+            .del("/channels/" + channel1._id)
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
             .expect(200)
             .end (err, res) ->
-              spy.restore()
               if err
                 done err
               else
-                spy.calledOnce.should.be.true
-                spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Remove'
-                spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
-                done()
+                Channel.find { name: "TestChannel1" }, (err, channels) ->
+                  channels.should.have.length 1
+                  channels[0].status.should.exist
+                  channels[0].status.should.be.equal 'deleted'
+                  done()
+

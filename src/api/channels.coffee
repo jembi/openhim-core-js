@@ -1,4 +1,5 @@
 Channel = require('../model/channels').Channel
+Transaction = require('../model/transactions').Transaction
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
@@ -190,6 +191,7 @@ exports.updateChannel = `function *updateChannel(channelId) {
   }
 }`
 
+
 ###
 # Deletes a specific channels details
 ###
@@ -207,8 +209,17 @@ exports.removeChannel = `function *removeChannel(channelId) {
   var id = unescape(channelId);
 
   try {
+    var numExistingTransactions = yield Transaction.count({ channelID: id }).exec();
+
     // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-    var channel = yield Channel.findByIdAndRemove(id).exec();
+    var channel;
+    if (numExistingTransactions === 0) {
+      //safe to remove
+      channel = yield Channel.findByIdAndRemove(id).exec();
+    } else {
+      //not safe to remove. just flag as deleted
+      channel = yield Channel.findByIdAndUpdate(id, { status: 'deleted' }).exec();
+    }
 
     // All ok! So set the result
     this.body = 'The channel was successfully deleted';
