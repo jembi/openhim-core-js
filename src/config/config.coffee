@@ -19,10 +19,12 @@ Config = ->
 
   # environment override
   if environment
-    nconf.file 'environmentOverride', 'config/' + environment + '.json'
+    # appRoot is a global var - set in server.cofee
+    nconf.file 'environmentOverride', appRoot + '/config/' + environment + '.json'
 
   # load the default config file
-  nconf.file 'default', 'config/default.json'
+  # appRoot is a global var - set in server.cofee
+  nconf.file 'default', appRoot + '/config/default.json'
   
   # Return the result
   return

@@ -20,9 +20,10 @@ getTrustedClientCerts = (done) ->
 # mutualTLS is a boolean, when true mutual TLS authentication is enabled
 ###
 exports.getServerOptions = (mutualTLS, done) ->
+  # appRoot is a global var - set in server.cofee
   options =
-    key:  fs.readFileSync "tls/key.pem"
-    cert:  fs.readFileSync "tls/cert.pem"
+    key:  fs.readFileSync appRoot + '/tls/key.pem'
+    cert:  fs.readFileSync appRoot + '/tls/cert.pem'
   
   if mutualTLS
     getTrustedClientCerts (err, certs) ->

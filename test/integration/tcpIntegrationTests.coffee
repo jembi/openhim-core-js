@@ -12,11 +12,13 @@ stats = require "../../lib/middleware/stats"
 
 
 
-describe "TCP/TLS Integration Tests", ->
+describe "TCP/TLS/MLLP Integration Tests", ->
   testMessage = "This is an awesome test message!"
   mockTCPServer = null
   mockHTTPServer = null
   mockTLSServer = null
+  mockTLSServerWithoutClientCert = null
+  mockMLLPServer = null
 
   channel1 = new Channel
     name: 'TCPIntegrationChannel1'
@@ -74,7 +76,37 @@ describe "TCP/TLS Integration Tests", ->
       type: 'tcp'
       secured: true
       primary: true
-      cert: fs.readFileSync 'tls/cert.pem'
+      cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
+    ]
+  channel5 = new Channel
+    name: 'TCPIntegrationChannel5'
+    urlPattern: '/'
+    allow: [ 'tcp' ]
+    type: 'tcp'
+    tcpPort: 4004
+    tcpHost: 'localhost'
+    routes: [
+      name: 'tls route without client cert'
+      host: 'localhost'
+      port: 6003
+      type: 'tcp'
+      secured: true
+      primary: true
+      cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
+    ]
+  channel6 = new Channel
+    name: 'MLLPIntegrationChannel1'
+    urlPattern: '/'
+    allow: [ 'tcp' ]
+    type: 'tcp'
+    tcpPort: 4005
+    tcpHost: 'localhost'
+    routes: [
+      name: 'mllp route'
+      host: 'localhost'
+      port: 6004
+      type: 'mllp'
+      primary: true
     ]
 
   secureClient = new Client
@@ -103,19 +135,24 @@ describe "TCP/TLS Integration Tests", ->
       callback "#{data}"
 
   before (done) ->
-    channel1.save -> channel2.save -> channel3.save -> channel4.save -> secureClient.save ->
+    channel1.save -> channel2.save -> channel3.save -> channel4.save -> channel5.save -> channel6.save -> secureClient.save ->
       testUtils.createMockTCPServer 6000, testMessage, 'TCP OK', 'TCP Not OK', (server) ->
         mockTCPServer = server
         testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) ->
           mockHTTPServer = server
-          testUtils.createMockTLSServer 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
+          testUtils.createMockTLSServerWithMutualAuth 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
             mockTLSServer = server
-            done()
+            testUtils.createMockTLSServerWithMutualAuth 6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) ->
+              mockTLSServerWithoutClientCert = server
+              testUtils.createMockTCPServer 6004, testMessage, 'MLLP OK' + String.fromCharCode(0o034) + '\n', 'MLLP Not OK' + String.fromCharCode(0o034) + '\n', (server) ->
+                mockMLLPServer = server
+                done()
 
   beforeEach (done) -> Transaction.remove {}, done
 
   after (done) ->
-    Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, -> mockTCPServer.close -> mockHTTPServer.close -> mockTLSServer.close done
+    Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, ->
+      mockTCPServer.close -> mockHTTPServer.close -> mockTLSServer.close -> mockTLSServerWithoutClientCert.close -> mockMLLPServer.close done
 
   afterEach (done) -> server.stop done
 
@@ -155,6 +192,12 @@ describe "TCP/TLS Integration Tests", ->
         data.should.be.exactly 'TLS OK'
         done()
 
+  it "should return an error when the client cert is not known by the server", (done) ->
+    server.start null, null, null, null, 7787, null, ->
+      sendTCPTestMessage 4004, (data) ->
+        data.should.be.exactly 'An internal server error occurred'
+        done()
+
   it "should persist messages", (done) ->
     server.start null, null, null, null, 7787, null, ->
       sendTCPTestMessage 4000, (data) ->
@@ -164,3 +207,9 @@ describe "TCP/TLS Integration Tests", ->
           trx[0].request.body.should.be.exactly testMessage
           trx[0].response.body.should.be.exactly 'TCP OK'
           done()
+
+  it "should route MLLP messages", (done) ->
+    server.start null, null, null, null, 7787, null, ->
+      sendTCPTestMessage 4005, (data) ->
+        data.should.be.exactly 'MLLP OK' + String.fromCharCode(0o034) + '\n'
+        done()

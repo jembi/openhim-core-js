@@ -11,6 +11,11 @@ config.router = config.get('router')
 logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
+fs = require 'fs'
+
+# appRoot is a global var - set in server.cofee
+tlsKey = fs.readFileSync appRoot + '/tls/key.pem'
+tlsCert = fs.readFileSync appRoot + '/tls/cert.pem'
 
 containsMultiplePrimaries = (routes) ->
   numPrimaries = 0
@@ -81,6 +86,9 @@ sendRequestToRoutes = (ctx, routes, next) ->
       headers: ctx.request.header
       agent: false
       rejectUnauthorized: true
+      key: tlsKey
+      cert: tlsCert
+      secureProtocol: 'TLSv1_method'
 
     if ctx.request.querystring
       options.path += '?' + ctx.request.querystring
@@ -145,12 +153,9 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
     handleServerError ctx, reason
 
 sendRequest = (ctx, route, options) ->
-  if route.type is 'tcp'
-    logger.info 'Routing tcp request'
+  if route.type is 'tcp' or route.type is 'mllp'
+    logger.info 'Routing socket request'
     return sendSocketRequest ctx, route, options
-  else if route.type is 'mllp'
-    logger.info 'Routing mllp request'
-    return sendMLLPSocketRequest ctx, route, options
   else
     logger.info 'Routing http(s) request'
     return sendHttpRequest ctx, route, options
@@ -252,8 +257,12 @@ sendHttpRequest = (ctx, route, options) ->
 #    status: <200 if all work, else 500>
 #    body: <the received data from the socket>
 #    timestamp: <the time the response was recieved>
+#
+# Supports both normal and MLLP sockets
 ###
 sendSocketRequest = (ctx, route, options) ->
+  mllpEndChar = String.fromCharCode(0o034)
+
   defered = Q.defer()
   requestBody = ctx.body
   response = {}
@@ -266,21 +275,36 @@ sendSocketRequest = (ctx, route, options) ->
     host: options.hostname
     port: options.port
     rejectUnauthorized: options.rejectUnauthorized
+    key: options.key
+    cert: options.cert
+    secureProtocol: options.secureProtocol
 
   if route.cert?
     options.ca = route.cert
 
   client = method.connect options, ->
-    logger.info "Opened tcp connection to #{options.host}:#{options.port}"
-    client.end requestBody
+    logger.info "Opened #{route.type} connection to #{options.host}:#{options.port}"
+    if route.type is 'tcp'
+      client.end requestBody
+    else if route.type is 'mllp'
+      client.write requestBody
+    else
+      logger.error "Unkown route type #{route.type}"
 
   bufs = []
   client.on 'data', (chunk) ->
     bufs.push chunk
+    if route.type is 'mllp' and chunk.toString().indexOf(mllpEndChar) > -1
+      logger.debug 'Received MLLP response end character'
+      client.end()
 
   client.on 'error', (err) -> defered.reject err
 
   client.on 'end', ->
+    logger.info "Closed #{route.type} connection to #{options.host}:#{options.port}"
+
+    if route.secured and not client.authorized
+      return defered.reject new Error 'Client authorization failed'
     response.body = Buffer.concat bufs
     response.status = status.OK
     response.timestamp = new Date()
@@ -288,50 +312,6 @@ sendSocketRequest = (ctx, route, options) ->
       defered.resolve response
 
   return defered.promise
-
-###
-# A promise returning function that send a request to the given route using sockets and resolves
-# the returned promise with a response object of the following form: ()
-#   response =
-#    status: <200 if all work, else 500>
-#    body: <the received data from the socket>
-#    timestamp: <the time the response was recieved>
-###
-sendMLLPSocketRequest = (ctx, route, options) ->
-
-  endChar = `String.fromCharCode(034)`
-  defered = Q.defer()
-  requestBody = ctx.body
-  client = new net.Socket()
-  response = {}
-
-  client.connect options.port, options.hostname, ->
-    logger.info "Opened mllp connection to #{options.hostname}:#{options.port}"
-
-  client.on 'connect', ()->
-    client.write requestBody
-
-  bufs = []
-  client.on 'data', (chunk) ->
-    bufs.push chunk
-    n = chunk.toString().indexOf(endChar)
-    if n > -1
-      logger.info 'Received response end character'
-      response.body = Buffer.concat bufs
-      response.status = status.OK
-      response.timestamp = new Date()
-      if not defered.promise.isRejected()
-        defered.resolve response
-        client.end()
-
-
-  client.on 'error', (err) -> defered.reject err
-
-  client.on 'end', ->
-    logger.info "Closed mllp connection to #{options.hostname}:#{options.port}"
-
-  return defered.promise
-
 
 getDestinationPath = (route, requestPath) ->
   if route.path
