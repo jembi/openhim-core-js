@@ -298,6 +298,108 @@ describe "Authorisation middleware", ->
           (ctx.authorisedChannel == undefined).should.be.true
           done()
 
+    it "should allow a request if the client is authorised and the channel is enabled", (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Mock for Channel Status Test (enabled)"
+        urlPattern: "test/status/enabled"
+        allow: [ "PoC", "Test1", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        status: "enabled"
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          domain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/status/enabled"
+        ctx.response = {}
+        authorisation.authorise ctx, ->
+          ctx.authorisedChannel.should.exist
+          done()
+
+    it "should NOT allow a request if the client is authorised but the channel is disabled", (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Mock for Channel Status Test (disabled)"
+        urlPattern: "test/status/disabled"
+        allow: [ "PoC", "Test1", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        status: "disabled"
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          domain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/status/disabled"
+        ctx.response = {}
+        authorisation.authorise ctx, ->
+          (ctx.authorisedChannel == undefined).should.be.true
+          done()
+
+    it "should NOT allow a request if the client is authorised but the channel is deleted", (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Mock for Channel Status Test (deleted)"
+        urlPattern: "test/status/deleted"
+        allow: [ "PoC", "Test1", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        status: "disabled"
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          domain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/status/deleted"
+        ctx.response = {}
+        authorisation.authorise ctx, ->
+          (ctx.authorisedChannel == undefined).should.be.true
+          done()
+
   describe '.matchReg(regexPat, body)', ->
 
     it 'should return true if the regex pattern finds a match in the body', ->
