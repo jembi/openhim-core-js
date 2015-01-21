@@ -44,10 +44,10 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
   for (var j = 0; j < allowedIds.length; j++) {
     var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + allowedIds[j]
     for (i = 0; i < status_array.length; i++) {
-      path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&from=-1days&format=json";
+      path = render_url + ".statuses." + status_array[i] + ".count,'1day'))&format=json";
       results[status_array[i]] = yield exports.fetchData(path)
       if (results[status_array[i]]) {
-        final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0;
+        final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[1][0] : 0;
       } else {
         final[status_array[i]] = 0 ;
       }
@@ -64,11 +64,12 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
   }
 
   this.body = data
+  return data;
 }`
 
 exports.retrieveAverageLoadTimePerHour = `function *() {
 
-  var path = "/render?target=transformNull(summarize(stats.timers." + domain + ".channels.mean,'1hour'))&from=-1days&format=json";
+  var path = "/render?target=transformNull(summarize(stats.timers." + domain + ".channels.sum,'1hour','avg'))&from=-1days&format=json";
   var data = [];
   var raw = yield exports.fetchData(path);
   return this.body = exports.convertToRequiredFormat(raw, 'retrieveAverageLoadTimePerHour');
@@ -80,26 +81,27 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var results = {}, path = ''
   var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + channelId
   var promises = []
+  var final = {}
   if (type == 'status') {
     for (i = 0; i < status_array.length; i++) {
       path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&format=json";
       results[status_array[i]] = yield exports.fetchData(path)
+      if (results[status_array[i]]) {
+        final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0;
+      } else {
+        final[status_array[i]] = 0 ;
+      }
     }
 
-    var failed = 'data' in results.Failed ? results.Failed.data[0][0] : 0,
-      processing = 'data'  in results.Processing ? results.Processing.data[0][0]  : 0,
-      completed = 'data' in results.Completed ? results.Completed.data[0][0]  : 0,
-      successful = 'data' in  results.Successful ? results.Successful.data[0][0] : 0,
-      completedWErrors = 'data' in results['Completed with error(s)'] ? results['Completed with error(s)'].data[0][0] : 0;
 
     data.push({
       _id: {"channelID": channelId},
-      failed: failed,
-      successful: successful,
-      processing: processing,
-      completed: completed,
-      completedWErrors: completedWErrors
-    })
+      failed: final.Failed,
+      successful: final.Successful,
+      processing: final.Processing,
+      completed: final.Completed,
+      completedWErrors: final['Completed with error(s)']
+    });
 
     this.body = data
   } else {

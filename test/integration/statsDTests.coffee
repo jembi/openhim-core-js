@@ -21,9 +21,6 @@ application = config.get 'application'
 os = require "os"
 domain = os.hostname() + '.' + application.name
 
-
-
-
 describe "Stats Tests", ->
   describe "StatsD Metrics Api Testing", ->
     this.timeout 30000
@@ -64,7 +61,7 @@ describe "Stats Tests", ->
 
       it "should fetch global load Time metrics",  (done) ->
         mock = sinon.mock(Statsd)
-        mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.timers." + domain + ".channels.mean,'1hour'))&from=-1days&format=json")
+        mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.timers." + domain + ".channels.sum,'1hour','avg'))&from=-1days&format=json")
         `co(function* () {
           yield Statsd.retrieveAverageLoadTimePerHour();
         })`
@@ -75,7 +72,7 @@ describe "Stats Tests", ->
 
       it "should fetch global status metrics ",  (done) ->
         mock = sinon.mock(Statsd);
-        mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.statuses.Processing.count,'1week'))&from=-1days&format=json")
+        mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.statuses.Processing.count,'1day'))&format=json")
         `co(function* () {
            yield Statsd.fetcGlobalStatusMetrics(['jjhreujiwh']);
         })`
@@ -127,6 +124,9 @@ describe "Stats Tests", ->
         data2[0].avgResp.should.be.exactly 200
         convertToRequiredFormatSpy.restore()
         done()
+
+
+
 
 
 
