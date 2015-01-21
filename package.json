@@ -6,7 +6,9 @@
   "main": "./lib/server.js",
   "bin": "./bin/openhim-core.js",
   "license": "MPL-2.0",
-  "engines": { "node" : ">=0.11.0" },
+  "engines": {
+    "node": ">=0.11.0"
+  },
   "dependencies": {
     "agenda": "^0.6.26",
     "basic-auth": "^1.0.0",
@@ -24,6 +26,7 @@
     "koa-route": "^2.4.0",
     "koa-statsd": "0.0.2",
     "lodash": "^2.4.1",
+    "mock-udp": "^0.1.1",
     "moment": "^2.8.4",
     "mongoose": "^3.8.21",
     "monq": "^0.3.1",
