@@ -12,7 +12,7 @@ describe "API Integration Tests", ->
 
   describe 'Channels REST Api testing', ->
 
-    channel1 = new Channel
+    channel1 = {
       name: "TestChannel1"
       urlPattern: "test/sample"
       allow: [ "PoC", "Test1", "Test2" ]
@@ -23,8 +23,9 @@ describe "API Integration Tests", ->
             primary: true
           ]
       txViewAcl: "aGroup"
+    }
 
-    channel2 = new Channel
+    channel2 = {
       name: "TestChannel2"
       urlPattern: "test/sample"
       allow: [ "PoC", "Test1", "Test2" ]
@@ -35,26 +36,31 @@ describe "API Integration Tests", ->
             primary: true
           ]
       txViewAcl: "group1"
+    }
 
     authDetails = {}
 
     before (done) ->
-      Channel.remove {}, ->
-        channel1.save ->
-          channel2.save ->
-            auth.setupTestUsers (err) ->
-              return done err if err
-              server.start null, null, 8080, null, 7787, null, ->
-                done()
+      auth.setupTestUsers (err) ->
+        return done err if err
+        server.start null, null, 8080, null, 7787, null, ->
+          authDetails = auth.getAuthDetails()
+          done()
 
     after (done) ->
-      server.stop ->
-        auth.cleanupTestUsers ->
-          Channel.remove {}, ->
+      Channel.remove {}, ->
+        server.stop ->
+          auth.cleanupTestUsers ->
             done()
 
-    beforeEach ->
-      authDetails = auth.getAuthDetails()
+    beforeEach (done) ->
+      Channel.remove {}, ->
+        (new Channel channel1).save (err, ch1) ->
+          channel1._id = ch1._id
+          (new Channel channel2).save (err, ch2) ->
+            channel2._id = ch2._id
+            done()
+
 
     describe '*getChannels()', ->
 
