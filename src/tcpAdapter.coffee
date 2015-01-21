@@ -7,6 +7,7 @@ logger = require "winston"
 Channel = require("./model/channels").Channel
 Q = require "q"
 tlsAuthentication = require "./middleware/tlsAuthentication"
+authorisation = require "./middleware/authorisation"
 
 
 tcpServers = []
@@ -27,7 +28,7 @@ startListening = (channel, tcpServer, host, port, callback) ->
   tcpServer.on 'error', (err) ->
     logger.error err + ' Host: ' + host + ' Port: ' + port
 
-exports.startupTCPServer = startupTCPServer = (channel, callback) ->
+exports.startupTCPServer = (channel, callback) ->
   for existingServer in tcpServers
     # server already running for channel
     return callback null if existingServer.channelID.equals channel._id
@@ -74,13 +75,14 @@ exports.startupServers = (callback) ->
 
     for channel in channels
       do (channel) ->
-        defer = Q.defer()
+        if authorisation.isChannelEnabled channel
+          defer = Q.defer()
 
-        startupTCPServer channel, (err) ->
-          return callback err if err
-          defer.resolve()
+          exports.startupTCPServer channel, (err) ->
+            return callback err if err
+            defer.resolve()
 
-        promises.push defer.promise
+          promises.push defer.promise
 
     (Q.all promises).then -> callback null
 
