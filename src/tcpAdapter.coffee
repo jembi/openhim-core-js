@@ -124,7 +124,7 @@ stopTCPServers = (servers, callback) ->
       defer = Q.defer()
 
       server.server.close (err) ->
-        logger.info "Channel #{server.channelID}: Stopped TCP server"
+        logger.info "Channel #{server.channelID}: Stopped TCP/TLS server"
         defer.resolve()
 
       promises.push defer.promise
@@ -138,12 +138,17 @@ exports.stopServers = (callback) ->
 
 exports.stopServerForChannel = (channel, callback) ->
   server = null
+  notStoppedTcpServers = []
   for s in tcpServers
     if s.channelID.equals channel._id
       server = s
+    else
+      # push all except the server we're stopping
+      notStoppedTcpServers.push s
 
   return callback "Server for channel #{channel._id} not running" if not server
 
+  tcpServers = notStoppedTcpServers
   stopTCPServers [s], callback
 
 
