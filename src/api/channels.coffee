@@ -160,7 +160,7 @@ exports.updateChannel = `function *updateChannel(channelId) {
   var channelData = this.request.body;
 
   //Ignore _id if it exists, user cannot change the internal id
-  if (channelData._id) {
+  if (typeof channelData._id !== 'undefined') {
     delete channelData._id;
   }
 
@@ -171,13 +171,11 @@ exports.updateChannel = `function *updateChannel(channelId) {
   }
 
   try {
-    yield Channel.findByIdAndUpdate(id, channelData).exec();
+    var channel = yield Channel.findByIdAndUpdate(id, channelData).exec();
 
     // All ok! So set the result
     this.body = 'The channel was successfully updated';
     logger.info('User %s updated channel with id %s', this.authenticated.email, id);
-
-    var channel = yield Channel.findOne({ _id: id }).exec();
 
     processPostUpdateTriggers(channel);
   }
@@ -189,6 +187,13 @@ exports.updateChannel = `function *updateChannel(channelId) {
   }
 }`
 
+
+processPostDeleteTriggers = (channel) ->
+  if channel.type
+    if channel.type is 'tcp' and server.isTcpHttpReceiverRunning()
+      tcpAdapter.stopServerForChannel channel, (err) -> logger.error err if err
+    else if channel.type is 'polling'
+      polling.removePollingChannel channel, (err) -> logger.error err if err
 
 ###
 # Deletes a specific channels details
@@ -223,13 +228,7 @@ exports.removeChannel = `function *removeChannel(channelId) {
     this.body = 'The channel was successfully deleted';
     logger.info('User %s removed channel with id %s', this.authenticated.email, id);
 
-    if (channel.type && channel.type === 'polling') {
-      polling.removePollingChannel(channel, function(err) {
-        if (err) {
-          logger.error(err);
-        }
-      });
-    }
+    processPostDeleteTriggers(channel);
   }
   catch (e) {
     // Error! So inform the user
