@@ -18,6 +18,12 @@ Vagrant::Config.run do |config|
 			puppet module install puppetlabs/mongodb"
 	end
 
+	config.vm.provision :shell do |shell|
+		# setup way more strict time sync (default was 20mins)
+		shell.inline = "sed -i 's/daemon $binary > \\/dev\\/null/daemon $binary \"--timesync-set-start --timesync-set-on-restore 1 --timesync-set-threshold 2000\" > \\/dev\\/null/' /etc/init.d/vboxadd-service;
+			service vboxadd-service restart"
+	end
+
 	config.vm.provision :puppet do |puppet|
 		puppet.manifests_path = "./"
 		puppet.manifest_file  = "openhim-core-js.pp"
