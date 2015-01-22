@@ -378,7 +378,7 @@ describe "Authorisation middleware", ->
               port: 9876
               primary: true
             ]
-        status: "disabled"
+        status: "deleted"
       addedChannelNames.push channel.name
       channel.save (err) ->
         if err
