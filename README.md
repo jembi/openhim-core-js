@@ -104,7 +104,7 @@ Running the OpenHIM on boot
 
 To help you get the OpenHIM server running on boot we supply a upstart config file (good for Ubuntu or other system that use upstart). Install the upstart config by doing the following:
 
-`sudo cp /resources/openhim-core.conf /etc/init/`
+`sudo cp resources/openhim-core.conf /etc/init/`
 
 Then run start the server with:
 
