@@ -17,11 +17,10 @@ See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more 
 # Quickstart Guide
 
 0. Install [Node.js](http://nodejs.org/) 0.11.9 or greater
-1. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location
-2. Install and start [MongoDB](http://www.mongodb.org/)
-3. Install the dependencies by running `npm install`
-4. Build the project by running `grunt build`
-5. Start the server by running `node --harmony lib/server.js`
+1. Install and start [MongoDB](http://www.mongodb.org/)
+2. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location 
+3. In the root folder of the downloaded/cloned source, run `sudo npm install -g .`
+5. Start the server by executing `openhim-core`
 
 Alternatively you can also use one of the following options:
 * use [Vagrant](https://github.com/jembi/openhim-core-js/wiki/Running-the-OpenHIM-using-Vagrant) to fire up an instance if you're a developer, or just want a quick instance to test with, or
@@ -99,6 +98,19 @@ To make use of your own custom configurations you can copy the [default.json](ht
 
 So to start a production server with a custom config script it will look something like this:
 `NODE_ENV=production node --harmony lib/server.js --conf=path/to/customConfig.json`
+
+Running the OpenHIM on boot
+===========================
+
+To help you get the OpenHIM server running on boot we supply a upstart config file (good for Ubuntu or other system that use upstart). Install the upstart config by doing the following:
+
+`sudo cp /resources/openhim-core.conf /etc/init/`
+
+Then run start the server with:
+
+`sudo start openhim-core`
+
+It will automatically startup on reboot.
 
 Testing
 =======
