@@ -12,6 +12,7 @@ client = monq(config.mongo.url, safe: true)
 
 queue = client.queue("transactions")
 authorisation = require './authorisation'
+authMiddleware = require '../middleware/authorisation'
 
 
 #####################################################
@@ -59,6 +60,18 @@ exports.getTasks = `function *getTasks() {
 }`
 
 
+areTransactionChannelsValid = (transactions, callback) ->
+  Transaction.distinct "channelID", { _id: $in: transactions.tids } , (err, trxChannelIDs) ->
+    return callback err if err
+    Channel.find { _id: $in: trxChannelIDs }, {status: 1}, (err, trxChannels) ->
+      return callback err if err
+
+      for chan in trxChannels
+        if not authMiddleware.isChannelEnabled chan
+          return callback null, false
+      return callback null, true
+
+
 #####################################################
 # Creates a new Task
 # Create the new queue objects for the created task #
@@ -80,6 +93,14 @@ exports.addTask = `function *addTask() {
     
     // the rerun task may be created
     if ( allowRerunTaskCreation === true ){
+      var areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid);
+      var trxChannelsValid = yield areTrxChannelsValid(transactions);
+
+      if (!trxChannelsValid) {
+        this.body = 'Cannot queue task as there are transactions with disabled or deleted channels';
+        this.status = 'bad request';
+        return;
+      }
 
       for (var t=0; t<transactions.tids.length; t++ ){
         transaction = {tid: transactions.tids[t]};
@@ -111,7 +132,7 @@ exports.addTask = `function *addTask() {
           // Error! So inform the user
           logger.error('Could not add Queue item via the API: ' + e);
           this.body = e.message;
-          this.status = 'bad request';
+          this.status = 'internal server error';
         }
 
       }
@@ -131,7 +152,7 @@ exports.addTask = `function *addTask() {
     // Error! So inform the user
     logger.error('Could not add Task via the API: ' + e);
     this.body = e.message;
-    this.status = 'bad request';
+    this.status = 'internal server error';
   }
 }`
 

@@ -5,6 +5,7 @@ config.polling = config.get('polling')
 logger = require 'winston'
 Q = require 'q'
 logger = require 'winston'
+authorisation = require './middleware/authorisation'
 
 exports.agendaGlobal = null
 
@@ -42,7 +43,8 @@ exports.setupAgenda = (agenda, callback) ->
 
     promises = []
     for channel in channels
-      promises.push registerPollingChannelPromise channel
+      if authorisation.isChannelEnabled channel
+        promises.push registerPollingChannelPromise channel
 
     (Q.all promises).done callback
 

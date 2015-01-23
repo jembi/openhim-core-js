@@ -4,6 +4,7 @@ server = require "../../lib/server"
 tcpAdapter = require "../../lib/tcpAdapter"
 polling = require "../../lib/polling"
 Channel = require("../../lib/model/channels").Channel
+Transaction = require("../../lib/model/transactions").Transaction
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 sinon = require "sinon"
@@ -12,7 +13,7 @@ describe "API Integration Tests", ->
 
   describe 'Channels REST Api testing', ->
 
-    channel1 = new Channel
+    channel1 = {
       name: "TestChannel1"
       urlPattern: "test/sample"
       allow: [ "PoC", "Test1", "Test2" ]
@@ -23,8 +24,9 @@ describe "API Integration Tests", ->
             primary: true
           ]
       txViewAcl: "aGroup"
+    }
 
-    channel2 = new Channel
+    channel2 = {
       name: "TestChannel2"
       urlPattern: "test/sample"
       allow: [ "PoC", "Test1", "Test2" ]
@@ -35,26 +37,33 @@ describe "API Integration Tests", ->
             primary: true
           ]
       txViewAcl: "group1"
+    }
 
     authDetails = {}
 
     before (done) ->
-      Channel.remove {}, ->
-        channel1.save ->
-          channel2.save ->
-            auth.setupTestUsers (err) ->
-              return done err if err
-              server.start null, null, 8080, null, 7787, null, ->
-                done()
+      auth.setupTestUsers (err) ->
+        return done err if err
+        server.start null, null, 8080, null, 7787, null, ->
+          authDetails = auth.getAuthDetails()
+          done()
 
     after (done) ->
-      server.stop ->
-        auth.cleanupTestUsers ->
-          Channel.remove {}, ->
-            done()
+      Transaction.remove {}, ->
+        Channel.remove {}, ->
+          server.stop ->
+            auth.cleanupTestUsers ->
+              done()
 
-    beforeEach ->
-      authDetails = auth.getAuthDetails()
+    beforeEach (done) ->
+      Transaction.remove {}, ->
+        Channel.remove {}, ->
+          (new Channel channel1).save (err, ch1) ->
+            channel1._id = ch1._id
+            (new Channel channel2).save (err, ch2) ->
+              channel2._id = ch2._id
+              done()
+
 
     describe '*getChannels()', ->
 
@@ -229,6 +238,42 @@ describe "API Integration Tests", ->
                 seenChannelName.should.be.true
                 done()
 
+      it 'should NOT startup TCP server if the new channel is of type "tcp" but is disabled', (done) ->
+        tcpChannelDisabled =
+          name: "TCPTestChannel-Add-Disabled"
+          urlPattern: "/"
+          allow: [ 'tcp' ]
+          type: 'tcp'
+          tcpHost: '0.0.0.0'
+          tcpPort: 3601
+          routes: [
+                name: "TcpRoute"
+                host: "localhost"
+                port: 9876
+                primary: true
+                type: "tcp"
+              ]
+          status: 'disabled'
+
+        request("https://localhost:8080")
+          .post("/channels")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(tcpChannelDisabled)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Channel.findOne { name: tcpChannelDisabled.name }, (err, channel) ->
+                seenChannelName = false
+                for s in tcpAdapter.tcpServers
+                  seenChannelName = true if s.channelID.equals channel._id
+                seenChannelName.should.be.false
+                done()
+
       it 'should register the channel with the polling service if of type "polling"', (done) ->
         pollChannel =
           name: "POLLINGTestChannel-Add"
@@ -262,6 +307,39 @@ describe "API Integration Tests", ->
               spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Add'
               spy.getCall(0).args[0].should.have.property 'urlPattern', '/trigger'
               spy.getCall(0).args[0].should.have.property 'type', 'polling'
+              done()
+
+      it 'should NOT register the channel with the polling service if of type "polling" but is disabled', (done) ->
+        pollChannelDisabled =
+          name: "POLLINGTestChannel-Add-Disabled"
+          urlPattern: "/trigger"
+          allow: [ 'polling' ]
+          type: 'polling'
+          pollingSchedule: '5 * * * *'
+          routes: [
+                name: "PollRoute"
+                host: "localhost"
+                port: 9876
+                primary: true
+              ]
+          status: 'disabled'
+
+        spy = sinon.spy polling, 'registerPollingChannel'
+
+        request("https://localhost:8080")
+          .post("/channels")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(pollChannelDisabled)
+          .expect(201)
+          .end (err, res) ->
+            spy.restore()
+            if err
+              done err
+            else
+              spy.callCount.should.be.exactly 0
               done()
 
     describe '*getChannel(channelId)', ->
@@ -427,6 +505,45 @@ describe "API Integration Tests", ->
                 seenChannelName.should.be.true
                 done()
 
+      it 'should NOT startup a TCP server if the type is set to "tcp" but it is disabled', (done) ->
+        httpChannel = new Channel
+          name: "TestChannelForTCPUpdate-Disabled"
+          urlPattern: "/"
+          allow: [ "test" ]
+          routes: [
+                name: "test route"
+                host: "localhost"
+                port: 9876
+                primary: true
+              ]
+          txViewAcl: "group1"
+
+        changeToTCPDisabled = {
+          type: 'tcp'
+          tcpHost: '0.0.0.0'
+          tcpPort: 3603
+          status: 'disabled'
+        }
+
+        httpChannel.save ->
+          request("https://localhost:8080")
+            .put("/channels/" + httpChannel._id)
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(changeToTCPDisabled)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                seenChannelName = false
+                for s in tcpAdapter.tcpServers
+                  seenChannelName = true if s.channelID.equals httpChannel._id
+                seenChannelName.should.be.false
+                done()
+
       it 'should register the updated channel with the polling service if of type "polling"', (done) ->
         pollChannel = new Channel
           name: "POLLINGTestChannel-Update"
@@ -464,24 +581,61 @@ describe "API Integration Tests", ->
                 spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
                 done()
 
+      it 'should NOT register the updated channel with the polling service if of type "polling" but it is disabled', (done) ->
+        pollChannel = new Channel
+          name: "POLLINGTestChannel-Update-Disabled"
+          urlPattern: "/trigger"
+          allow: [ 'polling' ]
+          type: 'polling'
+          pollingSchedule: '5 * * * *'
+          routes: [
+                name: "PollRoute"
+                host: "localhost"
+                port: 9876
+                primary: true
+              ]
+          status: 'disabled'
+
+        spy = sinon.spy polling, 'registerPollingChannel'
+
+        pollChannel.save ->
+          request("https://localhost:8080")
+            .put("/channels/" + pollChannel._id)
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(pollChannel)
+            .expect(200)
+            .end (err, res) ->
+              spy.restore()
+              if err
+                done err
+              else
+                spy.callCount.should.be.exactly 0
+                done()
+
     describe '*removeChannel(channelId)', ->
 
       it 'should remove a specific channel by name', (done) ->
+        Transaction.find { channelID: channel1._id }, (err, trx) ->
+          # there can't be any linked transactions
+          trx.length.should.be.exactly 0
 
-        request("https://localhost:8080")
-          .del("/channels/" + channel1._id)
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              Channel.find { name: "TestChannel1" }, (err, channels) ->
-                channels.should.have.length 0
-                done()
+          request("https://localhost:8080")
+            .del("/channels/" + channel1._id)
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Channel.find { name: "TestChannel1" }, (err, channels) ->
+                  channels.should.have.length 0
+                  done()
 
       it 'should only allow an admin user to remove a channel', (done) ->
 
@@ -515,20 +669,55 @@ describe "API Integration Tests", ->
 
         spy = sinon.spy polling, 'removePollingChannel'
 
-        pollChannel.save ->
+        Transaction.find { channelID: channel1._id }, (err, trx) ->
+          # there can't be any linked transactions
+          trx.length.should.be.exactly 0
+
+          pollChannel.save ->
+            request("https://localhost:8080")
+              .del("/channels/" + pollChannel._id)
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .expect(200)
+              .end (err, res) ->
+                spy.restore()
+                if err
+                  done err
+                else
+                  spy.calledOnce.should.be.true
+                  spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Remove'
+                  spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
+                  done()
+
+      it 'should NOT remove a specific channel if any transactions are linked to it but mark the status as deleted', (done) ->
+        trx = new Transaction
+          clientID: channel1._id #not really but anyway
+          channelID: channel1._id
+          request:
+            path: '/test/remove'
+            method: 'GET'
+            timestamp: new Date()
+          status: 'Successful'
+
+        trx.save (err) ->
+          return done err if err
+
           request("https://localhost:8080")
-            .del("/channels/" + pollChannel._id)
+            .del("/channels/" + channel1._id)
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
             .expect(200)
             .end (err, res) ->
-              spy.restore()
               if err
                 done err
               else
-                spy.calledOnce.should.be.true
-                spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Remove'
-                spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
-                done()
+                Channel.find { name: "TestChannel1" }, (err, channels) ->
+                  channels.should.have.length 1
+                  channels[0].status.should.exist
+                  channels[0].status.should.be.equal 'deleted'
+                  done()
+
