@@ -35,7 +35,7 @@ exports.getChannels = `function *getChannels() {
 processPostAddTriggers = (channel) ->
   if channel.type and authMiddleware.isChannelEnabled channel
     if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
-      tcpAdapter.startupTCPServer channel, (err) -> logger.error err if err
+      tcpAdapter.startupTCPServer channel._id, (err) -> logger.error err if err
     else if channel.type is 'polling'
       polling.registerPollingChannel channel, (err) -> logger.error err if err
 
@@ -131,7 +131,7 @@ processPostUpdateTriggers = (channel) ->
   if channel.type
     if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
       if authMiddleware.isChannelEnabled channel
-        tcpAdapter.startupTCPServer channel, (err) -> logger.error err if err
+        tcpAdapter.startupTCPServer channel._id, (err) -> logger.error err if err
       else
         tcpAdapter.stopServerForChannel channel, (err) -> logger.error err if err
 
