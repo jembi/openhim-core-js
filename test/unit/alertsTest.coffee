@@ -69,6 +69,18 @@ testChannel = new Channel
     }
   ]
 
+disabledChannel = new Channel
+  name: 'disabled'
+  urlPattern: '/disabled'
+  allow: '*'
+  alerts: [
+    {
+      status: "404"
+      groups: ['aaa908908bbb98cc1d0809ee']
+    }
+  ]
+  status: 'disabled'
+
 testTransactions = [
   # 0
   new Transaction
@@ -154,6 +166,17 @@ testTransactions = [
     response:
       status: 404
     status: "Completed"
+
+  # 7
+  new Transaction
+    clientID: "111111111111111111111111"
+    request:
+      timestamp: new Date()
+      path: "/path"
+      method: "GET"
+    response:
+      status: 404
+    status: "Completed"
 ]
 
 dateFrom = new Date()
@@ -162,10 +185,11 @@ dateFrom.setHours 0, 0, 0, 0
 
 describe "Transaction Alerts", ->
   before (done) ->
-    testUser1.save -> testUser2.save -> testGroup1.save -> testGroup2.save -> testChannel.save ->
+    testUser1.save -> testUser2.save -> testGroup1.save -> testGroup2.save -> testChannel.save -> disabledChannel.save ->
       for testTransaction in testTransactions
         testTransaction.channelID = testChannel._id
       testTransactions[6].channelID = "000000000000000000000000" # a channel id that doesn't exist
+      testTransactions[7].channelID = disabledChannel._id
       done()
 
   after (done) ->
@@ -312,6 +336,7 @@ describe "Transaction Alerts", ->
                   results.length.should.be.exactly 0
                   done()
 
+
   describe ".alertingTask", ->
     buildJobStub = (date) ->
       jobStub = {}
@@ -400,3 +425,25 @@ describe "Transaction Alerts", ->
             secondSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
             secondSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
             done()
+
+    it "should not generate alerts for disabled channels", (done) ->
+      contactSpy = sinon.spy()
+      testTransactions[0].save (err) ->
+        return done err if err
+        testTransactions[7].save (err) ->
+          return done err if err
+
+          alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
+            contactSpy.called.should.be.true
+            Alert.find {}, (err, results) ->
+              return done err if err
+              results.length.should.be.exactly 2
+
+              resultUsers = results.map (result) -> result.user
+              resultUsers.should.containEql testUser1.email
+              resultUsers.should.containEql testUser2.email
+
+              resultChannels = results.map (result) -> result.channelID
+              resultChannels.should.containEql testChannel._id.toHexString()
+              resultChannels.should.not.containEql disabledChannel._id.toHexString()
+              done()

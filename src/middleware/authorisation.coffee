@@ -64,6 +64,11 @@ if process.env.NODE_ENV == "test"
   exports.matchJsonPath = matchJsonPath
   exports.extractContentType = extractContentType
 
+# Is the channel enabled?
+# If there is no status field then the channel IS enabled
+exports.isChannelEnabled = isChannelEnabled = (channel) -> not channel.status or channel.status is 'enabled'
+
+
 exports.authorise = (ctx, done) ->
   Channel.find {}, (err, channels) ->
     for channel in channels
@@ -85,8 +90,8 @@ exports.authorise = (ctx, done) ->
               # deny access to channel if the content type isn't set
               continue
 
-          # now check if message content matches
-          if matchContent(channel, ctx.body) is true
+          # now check that the status is 'enabled' and if the message content matches
+          if isChannelEnabled(channel) and matchContent(channel, ctx.body)
             ctx.authorisedChannel = channel
             logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannel.name
             return done()

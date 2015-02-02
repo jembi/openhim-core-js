@@ -1,10 +1,12 @@
 Channel = require('../model/channels').Channel
+Transaction = require('../model/transactions').Transaction
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
 tcpAdapter = require '../tcpAdapter'
 server = require "../server"
 polling = require "../polling"
+authMiddleware = require '../middleware/authorisation'
 
 isPathValid = (channel) ->
   if channel.routes?
@@ -28,6 +30,15 @@ exports.getChannels = `function *getChannels() {
     this.status = 'internal server error';
   }
 }`
+
+
+processPostAddTriggers = (channel) ->
+  if channel.type and authMiddleware.isChannelEnabled channel
+    if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
+      tcpAdapter.startupTCPServer channel, (err) -> logger.error err if err
+    else if channel.type is 'polling'
+      polling.registerPollingChannel channel, (err) -> logger.error err if err
+
 
 ###
 # Creates a new channel
@@ -61,21 +72,7 @@ exports.addChannel = `function *addChannel() {
     this.status = 'created';
     logger.info('User %s created channel with id %s', this.authenticated.email, channel.id);
 
-    if (channel.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
-      tcpAdapter.startupTCPServer(channel, function(err){
-        if (err) {
-          logger.error('Failed to startup TCP server: ' + err);
-        }
-      });
-    }
-
-    if (channel.type && channel.type === 'polling') {
-      polling.registerPollingChannel(channel, function(err) {
-        if (err) {
-          logger.error(err);
-        }
-      });
-    }
+    processPostAddTriggers(channel);
   }
   catch (e) {
     // Error! So inform the user
@@ -129,6 +126,22 @@ exports.getChannel = `function *getChannel(channelId) {
   }
 }`
 
+
+processPostUpdateTriggers = (channel) ->
+  if channel.type
+    if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
+      if authMiddleware.isChannelEnabled channel
+        tcpAdapter.startupTCPServer channel, (err) -> logger.error err if err
+      else
+        tcpAdapter.stopServerForChannel channel, (err) -> logger.error err if err
+
+    else if channel.type is 'polling'
+      if authMiddleware.isChannelEnabled channel
+        polling.registerPollingChannel channel, (err) -> logger.error err if err
+      else
+        polling.removePollingChannel channel, (err) -> logger.error err if err
+
+
 ###
 # Updates the details for a specific channel
 ###
@@ -147,7 +160,7 @@ exports.updateChannel = `function *updateChannel(channelId) {
   var channelData = this.request.body;
 
   //Ignore _id if it exists, user cannot change the internal id
-  if (channelData._id) {
+  if (typeof channelData._id !== 'undefined') {
     delete channelData._id;
   }
 
@@ -158,29 +171,13 @@ exports.updateChannel = `function *updateChannel(channelId) {
   }
 
   try {
-    yield Channel.findByIdAndUpdate(id, channelData).exec();
+    var channel = yield Channel.findByIdAndUpdate(id, channelData).exec();
 
     // All ok! So set the result
     this.body = 'The channel was successfully updated';
     logger.info('User %s updated channel with id %s', this.authenticated.email, id);
 
-    var channel = yield Channel.findOne({ _id: id }).exec();
-
-    if (channelData.type === 'tcp' && server.isTcpHttpReceiverRunning()) {
-      tcpAdapter.startupTCPServer(channel, function(err){
-        if (err) {
-          logger.error('Failed to startup TCP server: ' + err);
-        }
-      });
-    }
-
-    if (channel.type && channel.type === 'polling') {
-      polling.registerPollingChannel(channel, function(err) {
-        if (err) {
-          logger.error(err);
-        }
-      });
-    }
+    processPostUpdateTriggers(channel);
   }
   catch (e) {
     // Error! So inform the user
@@ -189,6 +186,14 @@ exports.updateChannel = `function *updateChannel(channelId) {
     this.status = 'internal server error';
   }
 }`
+
+
+processPostDeleteTriggers = (channel) ->
+  if channel.type
+    if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
+      tcpAdapter.stopServerForChannel channel, (err) -> logger.error err if err
+    else if channel.type is 'polling'
+      polling.removePollingChannel channel, (err) -> logger.error err if err
 
 ###
 # Deletes a specific channels details
@@ -207,20 +212,23 @@ exports.removeChannel = `function *removeChannel(channelId) {
   var id = unescape(channelId);
 
   try {
+    var numExistingTransactions = yield Transaction.count({ channelID: id }).exec();
+
     // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-    var channel = yield Channel.findByIdAndRemove(id).exec();
+    var channel;
+    if (numExistingTransactions === 0) {
+      //safe to remove
+      channel = yield Channel.findByIdAndRemove(id).exec();
+    } else {
+      //not safe to remove. just flag as deleted
+      channel = yield Channel.findByIdAndUpdate(id, { status: 'deleted' }).exec();
+    }
 
     // All ok! So set the result
     this.body = 'The channel was successfully deleted';
     logger.info('User %s removed channel with id %s', this.authenticated.email, id);
 
-    if (channel.type && channel.type === 'polling') {
-      polling.removePollingChannel(channel, function(err) {
-        if (err) {
-          logger.error(err);
-        }
-      });
-    }
+    processPostDeleteTriggers(channel);
   }
   catch (e) {
     // Error! So inform the user
