@@ -115,14 +115,14 @@ It will automatically startup on reboot.
 Exporting/Importing Default collections
 ===========================
 
-Exporting
+### Exporting
 Follow the below steps to successfully export and import the default collections ( Users, Channels, Clients, ContactGroups, Mediators )
 copy the file [default-export.sh](https://github.com/jembi/openhim-core-js/blob/master/resources/default-export.sh) to a folder where you wish your export to be saved. Run the shell scrip by executing the following command:
 `./default-export.sh`
 
 Your exported collections should be located in the folder structure '/dump/openhim/'.
 
-Importing
+### Importing
 To import you data successfully ensure that you are in the correct folder where the dump files are located. Execute the below command to  import your collections.
 `mongorestore --db openhim dump/openhim`
 
