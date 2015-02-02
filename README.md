@@ -127,6 +127,7 @@ To import you data successfully ensure that you are in the correct folder where 
 `mongorestore --db openhim dump/openhim`
 
 NB! if you have changed your database name, then do so for the export/import as well.
+NB! Please ensure that you stop the server before exporting and importing.
 
 
 Testing
