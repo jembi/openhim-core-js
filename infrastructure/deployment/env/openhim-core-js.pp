@@ -35,6 +35,8 @@ if $environment != 'deployment' {
     class { "mongodb":
         init => "upstart",
     }
+
+    class { 'mongodb::client': }
 }
 
 class { "nodejs":
@@ -47,12 +49,14 @@ nodejs::install { "node-v0.11.14":
 
 exec { "npm-install":
 	cwd => "$source_dir",
+	timeout => 0,
 	command => "$npm_exec install",
 	require => [ Nodejs::Install["node-v0.11.14"], Package["build-essential"] ],
 }
 
 exec { "install-grunt":
 	cwd => "$source_dir",
+	timeout => 0,
 	command => "npm install -g grunt-cli",
 	unless => "npm list -g grunt-cli",
 	require => Nodejs::Install["node-v0.11.14"],
@@ -60,6 +64,7 @@ exec { "install-grunt":
 
 exec { "build":
 	cwd => "$source_dir",
+	timeout => 0,
 	command => "grunt build",
 	require => [ Exec["install-grunt"], Exec["npm-install"] ],
 	notify => Service["openhim-core-js"],
