@@ -28,42 +28,44 @@ startListening = (channel, tcpServer, host, port, callback) ->
   tcpServer.on 'error', (err) ->
     logger.error err + ' Host: ' + host + ' Port: ' + port
 
-exports.startupTCPServer = (channel, callback) ->
+exports.startupTCPServer = (channelID, callback) ->
   for existingServer in tcpServers
     # server already running for channel
-    return callback null if existingServer.channelID.equals channel._id
-
-  host = channel.tcpHost
-  host = '0.0.0.0' if not host
-  port = channel.tcpPort
-
-  return callback "Channel #{channel.name} (#{channel._id}): TCP port not defined" if not port
+    return callback null if existingServer.channelID.equals channelID
 
   handler = (sock) ->
-    sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
-    sock.on 'error', (err) -> logger.error err
+    Channel.findById channelID, (err, channel) ->
+      return logger.error err if err
+      sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
+      sock.on 'error', (err) -> logger.error err
 
-  if channel.type is 'tls'
-    tlsAuthentication.getServerOptions true, (err, options) ->
-      return callback err if err
+  Channel.findById channelID, (err, channel) ->
+    host = channel.tcpHost or '0.0.0.0'
+    port = channel.tcpPort
 
-      tcpServer = tls.createServer options, handler
+    return callback "Channel #{channel.name} (#{channel._id}): TCP port not defined" if not port
+
+    if channel.type is 'tls'
+      tlsAuthentication.getServerOptions true, (err, options) ->
+        return callback err if err
+
+        tcpServer = tls.createServer options, handler
+        startListening channel, tcpServer, host, port, (err) ->
+          if err
+            callback err
+          else
+            logger.info "Channel #{channel.name} (#{channel._id}): TLS server listening on port #{port}"
+            callback null
+    else if channel.type is 'tcp'
+      tcpServer = net.createServer handler
       startListening channel, tcpServer, host, port, (err) ->
         if err
           callback err
         else
-          logger.info "Channel #{channel.name} (#{channel._id}): TLS server listening on port #{port}"
+          logger.info "Channel #{channel.name} (#{channel._id}): TCP server listening on port #{port}"
           callback null
-  else if channel.type is 'tcp'
-    tcpServer = net.createServer handler
-    startListening channel, tcpServer, host, port, (err) ->
-      if err
-        callback err
-      else
-        logger.info "Channel #{channel.name} (#{channel._id}): TCP server listening on port #{port}"
-        callback null
-  else
-    return callback "Cannot handle #{channel.type} channels"
+    else
+      return callback "Cannot handle #{channel.type} channels"
 
 
 # Startup a TCP server for each TCP channel
@@ -78,7 +80,7 @@ exports.startupServers = (callback) ->
         if authorisation.isChannelEnabled channel
           defer = Q.defer()
 
-          exports.startupTCPServer channel, (err) ->
+          exports.startupTCPServer channel._id, (err) ->
             return callback err if err
             defer.resolve()
 
