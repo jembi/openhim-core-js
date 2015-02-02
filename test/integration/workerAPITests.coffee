@@ -267,3 +267,28 @@ describe "API Integration Tests", ->
         worker.rerunUpdateTaskObject taskID, transactionID, HTTPResponse, (err, task) ->
           err.should.equal "No response supplied. Task cannot be updated"
           done()
+
+    describe 'Rerun TCP Transactions', ->
+
+      this.timeout  20000
+
+      it "should  rerun the tcp request", (done) ->
+
+        testUtils.createMockTCPServer 6000, 'this is a test server', 'TCP OK', 'TCP Not OK', (server) ->
+          channel = {}
+          channel.tcpHost = "127.0.0.1"
+          channel.tcpPort = 6000
+          channel.type = 'tcp'
+          transaction = {
+            request : {
+              body : 'this is a test server'
+            }
+          }
+
+          worker.rerunTcpRequestSend channel, transaction, (err, data) ->
+            console.log data
+            data.body.should.be.exactly 'TCP OK'
+            done()
+
+
+

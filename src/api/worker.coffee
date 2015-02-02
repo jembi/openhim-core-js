@@ -326,6 +326,7 @@ rerunTcpRequestSend = (channel, transaction, callback) ->
     transaction: {}
 
   client = new net.Socket()
+  console.log JSON.stringify channel
 
   client.connect channel.tcpPort, channel.tcpHost, ->
     console.log "Connected"
@@ -335,7 +336,7 @@ rerunTcpRequestSend = (channel, transaction, callback) ->
   client.on "data", (data) ->
     console.log "Received: " + data
     response.body += data
-    client.destroy() # kill client after server's response
+    client.end() # kill client after server's response
 
   client.on "end" , (err) ->
     console.log "Connection closed"
@@ -358,3 +359,4 @@ if process.env.NODE_ENV == "test"
   exports.rerunSetHTTPRequestOptions = rerunSetHTTPRequestOptions
   exports.rerunHttpRequestSend = rerunHttpRequestSend
   exports.rerunUpdateTaskObject = rerunUpdateTaskObject
+  exports.rerunTcpRequestSend = rerunTcpRequestSend
