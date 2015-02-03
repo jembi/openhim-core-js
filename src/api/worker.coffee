@@ -326,20 +326,19 @@ rerunTcpRequestSend = (channel, transaction, callback) ->
     transaction: {}
 
   client = new net.Socket()
-  console.log JSON.stringify channel
 
   client.connect channel.tcpPort, channel.tcpHost, ->
-    console.log "Connected"
+    logger.info "Connected"
     client.end transaction.request.body
     return
 
   client.on "data", (data) ->
-    console.log "Received: " + data
+    logger.info "Received: " + data
     response.body += data
-    client.end() # kill client after server's response
+    
 
   client.on "end" , (err) ->
-    console.log "Connection closed"
+
     response.status = 200
     response.transaction.status = "Completed"
     response.message = ''

@@ -286,7 +286,6 @@ describe "API Integration Tests", ->
           }
 
           worker.rerunTcpRequestSend channel, transaction, (err, data) ->
-            console.log data
             data.body.should.be.exactly 'TCP OK'
             done()
 
