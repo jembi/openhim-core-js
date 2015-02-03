@@ -335,7 +335,7 @@ rerunTcpRequestSend = (channel, transaction, callback) ->
   client.on "data", (data) ->
     logger.info "Received: " + data
     response.body += data
-    
+
 
   client.on "end" , (err) ->
 

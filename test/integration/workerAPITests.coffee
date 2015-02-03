@@ -270,8 +270,6 @@ describe "API Integration Tests", ->
 
     describe 'Rerun TCP Transactions', ->
 
-      this.timeout  20000
-
       it "should  rerun the tcp request", (done) ->
 
         testUtils.createMockTCPServer 6000, 'this is a test server', 'TCP OK', 'TCP Not OK', (server) ->
