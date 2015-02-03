@@ -55,6 +55,7 @@ ChannelSchema = new Schema
       { type: String, required: false }
   ]
   "alerts": [ AlertsSchema ]
+  "status": { type: String, required: false, default: 'enabled', enum: ['enabled', 'disabled', 'deleted'] }
 
 # compile the Channel and Route Schema into a Model
 exports.Route = mongoose.model 'Route', RouteSchema

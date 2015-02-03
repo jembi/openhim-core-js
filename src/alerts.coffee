@@ -9,6 +9,7 @@ Transaction = require('./model/transactions').Transaction
 ContactGroup = require('./model/contactGroups').ContactGroup
 Alert = require('./model/alerts').Alert
 User = require('./model/users').User
+authorisation = require('./middleware/authorisation')
 
 
 trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
@@ -238,20 +239,22 @@ alertingTask = (job, contactHandler, done) ->
     promises = []
 
     for channel in results
-      for alert in channel.alerts
-        do (alert) ->
-          deferred = Q.defer()
+      if authorisation.isChannelEnabled channel
 
-          findTransactionsMatchingStatus channel._id, alert.status, lastAlertDate, alert.failureRate, (err, results) ->
-            if err
-              logger.error err
-              deferred.resolve()
-            else if results? and results.length>0
-              sendAlerts channel, alert, results, contactHandler, -> deferred.resolve()
-            else
-              deferred.resolve()
+        for alert in channel.alerts
+          do (channel, alert) ->
+            deferred = Q.defer()
 
-          promises.push deferred.promise
+            findTransactionsMatchingStatus channel._id, alert.status, lastAlertDate, alert.failureRate, (err, results) ->
+              if err
+                logger.error err
+                deferred.resolve()
+              else if results? and results.length>0
+                sendAlerts channel, alert, results, contactHandler, -> deferred.resolve()
+              else
+                deferred.resolve()
+
+            promises.push deferred.promise
 
     (Q.all promises).then ->
       job.attrs.data.lastAlertDate = new Date()

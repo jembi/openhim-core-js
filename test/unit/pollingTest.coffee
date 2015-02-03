@@ -24,8 +24,16 @@ describe 'Polling tests', ->
     type: 'polling'
     pollingSchedule: '2 * * * *'
 
+  disabledChannel = new Channel
+    name: 'disabled'
+    urlPattern: '/disabled'
+    allow: '*'
+    type: 'polling'
+    pollingSchedule: '* * * * *'
+    status: 'disabled'
+
   before (done) ->
-    testChannel.save -> testChannel2.save -> testChannel3.save -> done()
+    testChannel.save -> testChannel2.save -> testChannel3.save -> disabledChannel.save -> done()
 
   createSpy = ->
     agenda =
@@ -87,10 +95,11 @@ describe 'Polling tests', ->
       polling.agendaGlobal.should.be.exactly mockAgenda
       done()
 
-    it 'should register a channel for each polling channel', (done) ->
+    it 'should register a channel for each enabled polling channel', (done) ->
       spy = sinon.spy polling, 'registerPollingChannel'
       polling.setupAgenda createSpy(), ->
         spy.calledTwice.should.be.true
         spy.calledWith testChannel
         spy.calledWith testChannel3
+        spy.neverCalledWith disabledChannel
         done()

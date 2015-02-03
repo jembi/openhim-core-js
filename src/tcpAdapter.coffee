@@ -7,6 +7,7 @@ logger = require "winston"
 Channel = require("./model/channels").Channel
 Q = require "q"
 tlsAuthentication = require "./middleware/tlsAuthentication"
+authorisation = require "./middleware/authorisation"
 
 
 tcpServers = []
@@ -27,42 +28,44 @@ startListening = (channel, tcpServer, host, port, callback) ->
   tcpServer.on 'error', (err) ->
     logger.error err + ' Host: ' + host + ' Port: ' + port
 
-exports.startupTCPServer = startupTCPServer = (channel, callback) ->
+exports.startupTCPServer = (channelID, callback) ->
   for existingServer in tcpServers
     # server already running for channel
-    return callback null if existingServer.channelID.equals channel._id
-
-  host = channel.tcpHost
-  host = '0.0.0.0' if not host
-  port = channel.tcpPort
-
-  return callback "Channel #{channel.name} (#{channel._id}): TCP port not defined" if not port
+    return callback null if existingServer.channelID.equals channelID
 
   handler = (sock) ->
-    sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
-    sock.on 'error', (err) -> logger.error err
+    Channel.findById channelID, (err, channel) ->
+      return logger.error err if err
+      sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
+      sock.on 'error', (err) -> logger.error err
 
-  if channel.type is 'tls'
-    tlsAuthentication.getServerOptions true, (err, options) ->
-      return callback err if err
+  Channel.findById channelID, (err, channel) ->
+    host = channel.tcpHost or '0.0.0.0'
+    port = channel.tcpPort
 
-      tcpServer = tls.createServer options, handler
+    return callback "Channel #{channel.name} (#{channel._id}): TCP port not defined" if not port
+
+    if channel.type is 'tls'
+      tlsAuthentication.getServerOptions true, (err, options) ->
+        return callback err if err
+
+        tcpServer = tls.createServer options, handler
+        startListening channel, tcpServer, host, port, (err) ->
+          if err
+            callback err
+          else
+            logger.info "Channel #{channel.name} (#{channel._id}): TLS server listening on port #{port}"
+            callback null
+    else if channel.type is 'tcp'
+      tcpServer = net.createServer handler
       startListening channel, tcpServer, host, port, (err) ->
         if err
           callback err
         else
-          logger.info "Channel #{channel.name} (#{channel._id}): TLS server listening on port #{port}"
+          logger.info "Channel #{channel.name} (#{channel._id}): TCP server listening on port #{port}"
           callback null
-  else if channel.type is 'tcp'
-    tcpServer = net.createServer handler
-    startListening channel, tcpServer, host, port, (err) ->
-      if err
-        callback err
-      else
-        logger.info "Channel #{channel.name} (#{channel._id}): TCP server listening on port #{port}"
-        callback null
-  else
-    return callback "Cannot handle #{channel.type} channels"
+    else
+      return callback "Cannot handle #{channel.type} channels"
 
 
 # Startup a TCP server for each TCP channel
@@ -74,13 +77,14 @@ exports.startupServers = (callback) ->
 
     for channel in channels
       do (channel) ->
-        defer = Q.defer()
+        if authorisation.isChannelEnabled channel
+          defer = Q.defer()
 
-        startupTCPServer channel, (err) ->
-          return callback err if err
-          defer.resolve()
+          exports.startupTCPServer channel._id, (err) ->
+            return callback err if err
+            defer.resolve()
 
-        promises.push defer.promise
+          promises.push defer.promise
 
     (Q.all promises).then -> callback null
 
@@ -114,22 +118,40 @@ adaptSocketRequest = (channel, sock, socketData) ->
   req.end()
 
 
-exports.stopServers = (callback) ->
+stopTCPServers = (servers, callback) ->
   promises = []
 
-  for server in tcpServers
+  for server in servers
     do (server) ->
       defer = Q.defer()
 
       server.server.close (err) ->
-        logger.info "Channel #{server.channelID}: Stopped TCP server"
+        logger.info "Channel #{server.channelID}: Stopped TCP/TLS server"
         defer.resolve()
 
       promises.push defer.promise
 
-  (Q.all promises).then ->
+  (Q.all promises).then -> callback()
+
+exports.stopServers = (callback) ->
+  stopTCPServers tcpServers, ->
     tcpServers = []
     callback()
+
+exports.stopServerForChannel = (channel, callback) ->
+  server = null
+  notStoppedTcpServers = []
+  for s in tcpServers
+    if s.channelID.equals channel._id
+      server = s
+    else
+      # push all except the server we're stopping
+      notStoppedTcpServers.push s
+
+  return callback "Server for channel #{channel._id} not running" if not server
+
+  tcpServers = notStoppedTcpServers
+  stopTCPServers [s], callback
 
 
 if process.env.NODE_ENV == "test"
