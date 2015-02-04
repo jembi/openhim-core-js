@@ -60,7 +60,7 @@ describe 'API Integration Tests', ->
         cert: 'cert test value'
         ca: [ cert1, cert2 ]
 
-      keystore.save -> callback()
+      keystore.save -> callback keystore
 
     it "Should fetch the current HIM server certificate", (done) ->
       setupTestData ->
@@ -94,7 +94,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should fetch the current trusted ca certificates", (done) ->
-      setupTestData ->
+      setupTestData (keystore) ->
         request("https://localhost:8080")
           .get("/keystore/ca")
           .set("auth-username", testUtils.rootUser.email)
@@ -107,15 +107,46 @@ describe 'API Integration Tests', ->
               done err
             else
               res.body.should.be.instanceof(Array).and.have.lengthOf(2);
-              res.body[0].should.have.property 'commonName', 'client1.openhim.org'
-              res.body[1].should.have.property 'commonName', 'client2.openhim.org'
-              console.log res.body
+              res.body[0].should.have.property 'commonName', keystore.ca[0].commonName
+              res.body[1].should.have.property 'commonName', keystore.ca[1].commonName
               done()
 
     it "Should not allow a non-admin user to fetch the current trusted ca certificates", (done) ->
       setupTestData ->
         request("https://localhost:8080")
           .get("/keystore/ca")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+    it "Should fetch a ca certificate by id", (done) ->
+      setupTestData (keystore) ->
+        request("https://localhost:8080")
+          .get("/keystore/ca/#{keystore.ca[0]._id}")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.should.have.property 'commonName', keystore.ca[0].commonName
+              console.log res.body
+              done()
+
+    it "Should not allow a non-admin user to fetch a ca certificate by id", (done) ->
+      setupTestData ->
+        request("https://localhost:8080")
+          .get("/keystore/ca/1234")
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)

@@ -34,3 +34,20 @@ exports.getCACerts = ->
     this.body = keystoreDoc.ca
   catch err
     logAndSetResponse this, 'internal server error', "Could not fetch the ca certs trusted by this server via the API: #{err}", 'error'
+
+exports.getCACert = (certId) ->
+  # Must be admin
+  if authorisation.inGroup('admin', this.authenticated) is false
+    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getCACert by id denied.", 'info'
+    return
+
+  try
+    keystoreDoc = yield Keystore.findOne().exec()
+    cert = keystoreDoc.ca.id(certId)
+
+    console.log keystoreDoc
+    console.log certId
+
+    this.body = cert
+  catch err
+    logAndSetResponse this, 'internal server error', "Could not fetch ca cert by id via the API: #{err}", 'error'
