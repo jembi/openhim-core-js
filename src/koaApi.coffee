@@ -15,6 +15,7 @@ Q = require 'q'
 worker = require './api/worker'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
+keystore = require './api/keystore'
 serverRestart = require './restart'
 
 exports.setupApp = (done) ->
@@ -85,6 +86,8 @@ exports.setupApp = (done) ->
   app.use route.get '/mediators/:uuid', mediators.getMediator
   app.use route.post '/mediators', mediators.addMediator
   app.use route.delete '/mediators/:urn', mediators.removeMediator
+
+  app.use route.get '/keystore/cert', keystore.getServerCert
 
   # server restart endpoint
   app.use route.post '/restart', serverRestart.restart
