@@ -4,23 +4,33 @@ Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
 
+logAndSetResponse = (ctx, status, msg, logLevel) ->
+  logger[logLevel] msg
+  ctx.body = msg
+  ctx.status = status
+
 exports.getServerCert = ->
-  console.log 'checking user auth...'
-  #Must be admin
+  # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    console.log 'access denied'
-    logger.info "User #{this.authenticated.email} is not an admin, API access to getServerCert denied."
-    this.body = "User #{this.authenticated.email} is not an admin, API access to getServerCert denied."
-    this.status = 'forbidden'
+    console.log 'in log error'
+    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getServerCert denied.", 'info'
     return
 
-  console.log 'trying to fetch keystore...'
   try
     keystoreDoc = yield Keystore.findOne().exec()
     this.body =
       cert: keystoreDoc.cert
   catch err
-    logger.error 'Could not fetch the server cert via the API: ' + err
-    console.log err
-    this.body = err.message
-    this.status = 'internal server error'
+    logAndSetResponse this, 'internal server error', "Could not fetch the server cert via the API: #{err}", 'error'
+
+exports.getCACerts = ->
+  # Must be admin
+  if authorisation.inGroup('admin', this.authenticated) is false
+    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getCACerts denied.", 'info'
+    return
+
+  try
+    keystoreDoc = yield Keystore.findOne().exec()
+    this.body = keystoreDoc.ca
+  catch err
+    logAndSetResponse this, 'internal server error', "Could not fetch the ca certs trusted by this server via the API: #{err}", 'error'

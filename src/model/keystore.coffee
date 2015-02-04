@@ -2,17 +2,16 @@ mongoose = require "mongoose"
 Schema = mongoose.Schema
 
 CertificateSchema = new Schema
-  subject:
-    country: { type: String }
-    state: { type: String }
-    locality: { type: String }
-    organization: { type: String }
-    organizationUnit: { type: String }
-    commonName: { type: String }
-    emailAddress: { type: String }
-    validity:
-      start: { type: Date }
-      end: { type: Date }
+  country: { type: String }
+  state: { type: String }
+  locality: { type: String }
+  organization: { type: String }
+  organizationUnit: { type: String }
+  commonName: { type: String }
+  emailAddress: { type: String }
+  validity:
+    start: { type: Date }
+    end: { type: Date }
 
 KeystoreSchema = new Schema
   key:    { type: String }

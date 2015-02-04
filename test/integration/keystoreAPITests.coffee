@@ -9,7 +9,7 @@ sinon = require "sinon"
 
 describe 'API Integration Tests', ->
 
-  describe "Keystore API Tests", ->
+  describe 'Keystore API Tests', ->
 
     authDetails = {}
 
@@ -40,8 +40,8 @@ describe 'API Integration Tests', ->
         commonName: 'client1.openhim.org'
         emailAddress: 'client1@openhim.org'
         validity:
-          start: new Date 2010, 0, 0
-          end: new Date 2050, 0, 0
+          start: new Date 2010, 0, 1
+          end: new Date 2050, 0, 1
 
       cert2 = new Certificate
         country: 'ZA'
@@ -52,8 +52,8 @@ describe 'API Integration Tests', ->
         commonName: 'client2.openhim.org'
         emailAddress: 'client2@openhim.org'
         validity:
-          start: new Date 2010, 0, 0
-          end: new Date 2050, 0, 0
+          start: new Date 2010, 0, 1
+          end: new Date 2050, 0, 1
 
       keystore = new Keystore
         key: 'key test value'
@@ -82,6 +82,40 @@ describe 'API Integration Tests', ->
       setupTestData ->
         request("https://localhost:8080")
           .get("/keystore/cert")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+    it "Should fetch the current trusted ca certificates", (done) ->
+      setupTestData ->
+        request("https://localhost:8080")
+          .get("/keystore/ca")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.should.be.instanceof(Array).and.have.lengthOf(2);
+              res.body[0].should.have.property 'commonName', 'client1.openhim.org'
+              res.body[1].should.have.property 'commonName', 'client2.openhim.org'
+              console.log res.body
+              done()
+
+    it "Should not allow a non-admin user to fetch the current trusted ca certificates", (done) ->
+      setupTestData ->
+        request("https://localhost:8080")
+          .get("/keystore/ca")
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)

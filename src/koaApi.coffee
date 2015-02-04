@@ -88,6 +88,7 @@ exports.setupApp = (done) ->
   app.use route.delete '/mediators/:urn', mediators.removeMediator
 
   app.use route.get '/keystore/cert', keystore.getServerCert
+  app.use route.get '/keystore/ca', keystore.getCACerts
 
   # server restart endpoint
   app.use route.post '/restart', serverRestart.restart
