@@ -313,3 +313,36 @@ describe 'API Integration Tests', ->
                 keystore.ca[2].commonName.should.be.exactly 'domain.com'
                 keystore.ca[3].commonName.should.be.exactly 'ca.marc-hi.ca'
                 done()
+
+    it "Should remove a ca certificate by id", (done) ->
+      setupTestData (keystore) ->
+        request("https://localhost:8080")
+          .del("/keystore/ca/#{keystore.ca[0]._id}")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Keystore.findOne {}, (err, keystore) ->
+                done(err) if err
+                keystore.ca.should.be.instanceOf(Array).and.have.lengthOf 1
+                done()
+
+    it "Should not allow a non-admin user to remove a ca certificate by id", (done) ->
+      setupTestData ->
+        request("https://localhost:8080")
+          .del("/keystore/ca/1234")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()

@@ -63,7 +63,7 @@ exports.setServerCert = ->
 
     keystoreDoc = yield Keystore.findOne().exec()
     keystoreDoc.cert = certInfo
-    Q.ninvoke keystoreDoc, 'save'
+    yield Q.ninvoke keystoreDoc, 'save'
     this.status = 'created'
   catch err
     logAndSetResponse this, 'internal server error', "Could not add server cert via the API: #{err}", 'error'
@@ -78,7 +78,7 @@ exports.getServerKey = ->
     key = this.request.body.key
     keystoreDoc = yield Keystore.findOne().exec()
     keystoreDoc.key = key
-    Q.ninvoke keystoreDoc, 'save'
+    yield Q.ninvoke keystoreDoc, 'save'
     this.status = 'created'
   catch err
     logAndSetResponse this, 'internal server error', "Could not add server key via the API: #{err}", 'error'
@@ -112,7 +112,22 @@ exports.addTrustedCert = ->
       certInfo.data = cert
       keystoreDoc.ca.push certInfo
 
-    Q.ninvoke keystoreDoc, 'save'
+    yield Q.ninvoke keystoreDoc, 'save'
     this.status = 'created'
   catch err
     logAndSetResponse this, 'internal server error', "Could not add trusted cert via the API: #{err}", 'error'
+
+exports.removeCACert = (certId) ->
+  console.log 'in removeCACert'
+  # Must be admin
+  if authorisation.inGroup('admin', this.authenticated) is false
+    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeCACert by id denied.", 'info'
+    return
+
+  try
+    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc.ca.id(certId).remove()
+    yield Q.ninvoke keystoreDoc, 'save'
+    this.status = 'ok'
+  catch err
+    logAndSetResponse this, 'internal server error', "Could not remove ca cert by id via the API: #{err}", 'error'
