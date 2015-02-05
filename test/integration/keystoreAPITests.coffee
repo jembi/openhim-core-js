@@ -6,6 +6,8 @@ server = require "../../lib/server"
 Keystore = require('../../lib/model/keystore').Keystore
 Certificate = require('../../lib/model/keystore').Certificate
 sinon = require "sinon"
+fs = require 'fs'
+path = require 'path'
 
 describe 'API Integration Tests', ->
 
@@ -31,6 +33,19 @@ describe 'API Integration Tests', ->
         done()
 
     setupTestData = (callback) ->
+      serverCert =
+        country: 'ZA'
+        state: 'KZN'
+        locality: 'Berea'
+        organization: 'Jembi Health Systems NPC'
+        organizationUnit: 'HISD'
+        commonName: 'openhim.org'
+        emailAddress: 'root@openhim.org'
+        validity:
+          start: new Date 2010, 0, 1
+          end: new Date 2050, 0, 1
+        data: 'cert test value'
+
       cert1 = new Certificate
         country: 'ZA'
         state: 'KZN'
@@ -42,6 +57,7 @@ describe 'API Integration Tests', ->
         validity:
           start: new Date 2010, 0, 1
           end: new Date 2050, 0, 1
+        data: 'cert1 data'
 
       cert2 = new Certificate
         country: 'ZA'
@@ -54,10 +70,11 @@ describe 'API Integration Tests', ->
         validity:
           start: new Date 2010, 0, 1
           end: new Date 2050, 0, 1
+        data: 'cert2 data'
 
       keystore = new Keystore
         key: 'key test value'
-        cert: 'cert test value'
+        cert: serverCert
         ca: [ cert1, cert2 ]
 
       keystore.save -> callback keystore
@@ -75,7 +92,8 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
-              res.body.cert.should.be.exactly 'cert test value'
+              res.body.data.should.be.exactly 'cert test value'
+              res.body.commonName.should.be.exactly 'openhim.org'
               done()
 
     it "Should not allow a non-admin user to fetch the current HIM server certificate", (done) ->
@@ -140,7 +158,7 @@ describe 'API Integration Tests', ->
               done err
             else
               res.body.should.have.property 'commonName', keystore.ca[0].commonName
-              console.log res.body
+              res.body.should.have.property 'data', keystore.ca[0].data
               done()
 
     it "Should not allow a non-admin user to fetch a ca certificate by id", (done) ->
@@ -151,6 +169,47 @@ describe 'API Integration Tests', ->
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+    it "Should add a new server certificate", (done) ->
+      setupTestData (keystore) ->
+        postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
+        console.log postData
+        request("https://localhost:8080")
+          .post("/keystore/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Keystore.findOne {}, (err, keystore) ->
+                done(err) if err
+                keystore.cert.data.should.be.exactly postData.cert
+                keystore.cert.commonName.should.be.exactly 'localhost'
+                keystore.cert.organization.should.be.exactly 'Jembi Health Systems NPC'
+                done()
+
+    it "Should not alllow a non-admin user to add a new server certificate", (done) ->
+      setupTestData (keystore) ->
+        postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
+        console.log postData
+        request("https://localhost:8080")
+          .post("/keystore/cert")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
           .expect(403)
           .end (err, res) ->
             if err
