@@ -92,6 +92,7 @@ exports.setupApp = (done) ->
   app.use route.get '/keystore/ca', keystore.getCACerts
   app.use route.get '/keystore/ca/:certId', keystore.getCACert
   app.use route.post '/keystore/key', keystore.getServerKey
+  app.use route.post '/keystore/ca/cert', keystore.addTrustedCert
 
   # server restart endpoint
   app.use route.post '/restart', serverRestart.restart

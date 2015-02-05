@@ -179,7 +179,6 @@ describe 'API Integration Tests', ->
     it "Should add a new server certificate", (done) ->
       setupTestData (keystore) ->
         postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
-        console.log postData
         request("https://localhost:8080")
           .post("/keystore/cert")
           .set("auth-username", testUtils.rootUser.email)
@@ -199,10 +198,9 @@ describe 'API Integration Tests', ->
                 keystore.cert.organization.should.be.exactly 'Jembi Health Systems NPC'
                 done()
 
-    it "Should not alllow a non-admin user to add a new server certificate", (done) ->
+    it "Should not allow a non-admin user to add a new server certificate", (done) ->
       setupTestData (keystore) ->
         postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
-        console.log postData
         request("https://localhost:8080")
           .post("/keystore/cert")
           .set("auth-username", testUtils.nonRootUser.email)
@@ -220,7 +218,6 @@ describe 'API Integration Tests', ->
     it "Should add a new server key", (done) ->
       setupTestData (keystore) ->
         postData = { key: fs.readFileSync(path.join __dirname, '../../tls/key.pem').toString() }
-        console.log postData
         request("https://localhost:8080")
           .post("/keystore/key")
           .set("auth-username", testUtils.rootUser.email)
@@ -241,7 +238,6 @@ describe 'API Integration Tests', ->
     it "Should not alllow a non-admin user to add a new server key", (done) ->
       setupTestData (keystore) ->
         postData = { key: fs.readFileSync(path.join __dirname, '../../tls/key.pem').toString() }
-        console.log postData
         request("https://localhost:8080")
           .post("/keystore/key")
           .set("auth-username", testUtils.nonRootUser.email)
@@ -255,3 +251,65 @@ describe 'API Integration Tests', ->
               done err
             else
               done()
+
+    it "Should add a new trusted certificate", (done) ->
+      setupTestData (keystore) ->
+        postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
+        request("https://localhost:8080")
+          .post("/keystore/ca/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Keystore.findOne {}, (err, keystore) ->
+                done(err) if err
+                keystore.ca.should.be.instanceOf(Array).and.have.lengthOf 3
+                keystore.ca[2].data.should.be.exactly postData.cert
+                keystore.ca[2].commonName.should.be.exactly 'localhost'
+                keystore.ca[2].organization.should.be.exactly 'Jembi Health Systems NPC'
+                done()
+
+    it "Should not allow a non-admin user to add a new trusted certificate", (done) ->
+      setupTestData (keystore) ->
+        postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
+        request("https://localhost:8080")
+          .post("/keystore/ca/cert")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+    it "Should add each certificate in a certificate chain", (done) ->
+      setupTestData (keystore) ->
+        postData = { cert: fs.readFileSync('test/resources/chain.pem').toString() }
+        request("https://localhost:8080")
+          .post("/keystore/ca/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Keystore.findOne {}, (err, keystore) ->
+                done(err) if err
+                keystore.ca.should.be.instanceOf(Array).and.have.lengthOf 4
+                keystore.ca[2].commonName.should.be.exactly 'domain.com'
+                keystore.ca[3].commonName.should.be.exactly 'ca.marc-hi.ca'
+                done()

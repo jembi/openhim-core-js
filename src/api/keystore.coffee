@@ -82,4 +82,37 @@ exports.getServerKey = ->
     this.status = 'created'
   catch err
     logAndSetResponse this, 'internal server error', "Could not add server key via the API: #{err}", 'error'
-    
+
+
+exports.addTrustedCert = ->
+  # Must be admin
+  if authorisation.inGroup('admin', this.authenticated) is false
+    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addTrustedCert by id denied.", 'info'
+    return
+
+  try
+    chain = this.request.body.cert
+
+    # Parse into an array in case this is a cert chain
+    # (code derived from: http://www.benjiegillam.com/2012/06/node-dot-js-ssl-certificate-chain/)
+    certs = []
+    chain = chain.split "\n"
+    cert = []
+    for line in chain when line.length isnt 0
+      cert.push line
+      if line.match /-END CERTIFICATE-/
+        certs.push ((cert.join "\n") + "\n")
+        cert = []
+
+    keystoreDoc = yield Keystore.findOne().exec()
+
+    for cert in certs
+      readCertificateInfo = Q.denodeify pem.readCertificateInfo
+      certInfo = yield readCertificateInfo cert
+      certInfo.data = cert
+      keystoreDoc.ca.push certInfo
+
+    Q.ninvoke keystoreDoc, 'save'
+    this.status = 'created'
+  catch err
+    logAndSetResponse this, 'internal server error', "Could not add trusted cert via the API: #{err}", 'error'
