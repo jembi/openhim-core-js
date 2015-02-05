@@ -52,7 +52,7 @@ exports.getCACert = (certId) ->
 exports.setServerCert = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getCACert by id denied.", 'info'
+    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to setServerCert by id denied.", 'info'
     return
 
   try
@@ -67,3 +67,19 @@ exports.setServerCert = ->
     this.status = 'created'
   catch err
     logAndSetResponse this, 'internal server error', "Could not add server cert via the API: #{err}", 'error'
+
+exports.getServerKey = ->
+  # Must be admin
+  if authorisation.inGroup('admin', this.authenticated) is false
+    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getServerKey by id denied.", 'info'
+    return
+
+  try
+    key = this.request.body.key
+    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc.key = key
+    Q.ninvoke keystoreDoc, 'save'
+    this.status = 'created'
+  catch err
+    logAndSetResponse this, 'internal server error', "Could not add server key via the API: #{err}", 'error'
+    

@@ -216,3 +216,42 @@ describe 'API Integration Tests', ->
               done err
             else
               done()
+
+    it "Should add a new server key", (done) ->
+      setupTestData (keystore) ->
+        postData = { key: fs.readFileSync(path.join __dirname, '../../tls/key.pem').toString() }
+        console.log postData
+        request("https://localhost:8080")
+          .post("/keystore/key")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Keystore.findOne {}, (err, keystore) ->
+                done(err) if err
+                keystore.key.should.be.exactly postData.key
+                done()
+
+    it "Should not alllow a non-admin user to add a new server key", (done) ->
+      setupTestData (keystore) ->
+        postData = { key: fs.readFileSync(path.join __dirname, '../../tls/key.pem').toString() }
+        console.log postData
+        request("https://localhost:8080")
+          .post("/keystore/key")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
