@@ -23,7 +23,7 @@ domain = os.hostname() + '.' + application.name
 
 describe "Stats Tests", ->
   describe "StatsD Metrics Api Testing", ->
-    this.timeout 30000
+#    this.timeout 30000
     before (done) ->
       auth.setupTestUsers (err) ->
         return done err if err
@@ -122,8 +122,65 @@ describe "Stats Tests", ->
         data2 = convertToRequiredFormatSpy fetchDataObject, 'retrieveChannelMetrics'
         data[0].avgResp.should.be.exactly 83
         data2[0].avgResp.should.be.exactly 200
+        data2[0].load.should.be.exactly 83
         convertToRequiredFormatSpy.restore()
         done()
+
+      describe "fetchData", ->
+        stub = {}
+        beforeEach (done) ->
+          console.log "stubbing"
+          stub = sinon.stub Statsd, "fetchData", (path) ->
+            fetchDataObject = {}
+            fetchDataObject.data = [
+              [
+                84
+                1421280000
+              ]
+            ]
+
+            fetchDataObject.data1 = [
+              [
+                200
+                1421280000
+              ]
+            ]
+            fetchDataObject
+          done()
+
+        afterEach (done) ->
+          stub.restore()
+          done()
+
+        it "should fetch and transform channel metrics from the api", (done) ->
+          `co(function* () {
+            yield Statsd.retrieveChannelMetrics('count','jjhreujiwh');
+            Statsd.body[0].load.should.be.exactly(84);
+            Statsd.body[0].avgResp.should.be.exactly(200);
+            done();
+          });`
+
+        it "should fetch and transform Average Load Times from the api", (done) ->
+          `co(function* () {
+            yield Statsd.retrieveAverageLoadTimePerHour('SJHBD');
+
+            Statsd.body[0].avgResp.should.be.exactly(84);
+            done();
+          });`
+
+        it "should fetch and transform Transactions Per Channel Per Hour from the api", (done) ->
+          `co(function* () {
+            yield Statsd.transactionsPerChannelPerHour('count','jjhreujiwh');
+            Statsd.body[0].load.should.be.exactly(84);
+            done();
+          });`
+
+
+
+
+
+
+
 
 
 

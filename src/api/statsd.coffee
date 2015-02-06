@@ -67,12 +67,13 @@ exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
   return data;
 }`
 
-exports.retrieveAverageLoadTimePerHour = `function *() {
+exports.retrieveAverageLoadTimePerHour = `function *(type) {
 
   var path = "/render?target=transformNull(summarize(stats.timers." + domain + ".channels.sum,'1hour','avg'))&from=-1days&format=json";
   var data = [];
   var raw = yield exports.fetchData(path);
-  return this.body = exports.convertToRequiredFormat(raw, 'retrieveAverageLoadTimePerHour');
+  this.body = exports.convertToRequiredFormat(raw, 'retrieveAverageLoadTimePerHour');
+  return this.body
 }`
 
 exports.retrieveChannelMetrics = `function *(type, channelId) {
@@ -103,14 +104,13 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       completedWErrors: final['Completed with error(s)']
     });
 
-    this.body = data
+    return this.body = data
   } else {
 
     path = render_url + ".count,'1day'))&from=-7days&format=json";
     path += "&target=transformNull(summarize(stats.timers." + domain + ".channels." + channelId + ".sum,'1day','avg'))";
     var raw = yield exports.fetchData(path);
-    console.log(JSON.stringify(raw));
-    this.body = exports.convertToRequiredFormat(raw, 'retrieveChannelMetrics');
+    return this.body = exports.convertToRequiredFormat(raw, 'retrieveChannelMetrics');
   }
 }`
 
