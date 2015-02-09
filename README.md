@@ -19,7 +19,7 @@ See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more 
 0. Install [Node.js](http://nodejs.org/) 0.11.9 or greater
 1. Install and start [MongoDB](http://www.mongodb.org/)
 2. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location 
-3. In the root folder of the downloaded/cloned source, run `sudo npm install -g .`
+3. In the root folder of the downloaded/cloned source, run `sudo npm install . -g`
 5. Start the server by executing `openhim-core`
 
 Alternatively you can also use one of the following options:
