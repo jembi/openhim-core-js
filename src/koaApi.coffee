@@ -80,9 +80,9 @@ exports.setupApp = (done) ->
   app.use route.get '/visualizer/sync', visualizer.sync
 
 # -- Old metrics Routes Purposely commented out for Backward Compatibility
-#  app.use route.get '/metrics', metrics.getGlobalLoadTimeMetrics
-#  app.use route.get '/metrics/status', metrics.getGlobalStatusMetrics
-#  app.use route.get '/metrics/:type/:channelId', metrics.getChannelMetrics
+  app.use route.get '/mongometrics', metrics.getGlobalLoadTimeMetrics
+  app.use route.get '/mongometrics/status', metrics.getGlobalStatusMetrics
+  app.use route.get '/mongometrics/:type/:channelId', metrics.getChannelMetrics
 # -- End of Old Metrics Routes --
 
 # -- New metrics Routes --
