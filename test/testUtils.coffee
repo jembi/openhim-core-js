@@ -4,6 +4,8 @@ net = require "net"
 tls = require "tls"
 fs = require "fs"
 User = require('../lib/model/users').User
+Keystore = require('../lib/model/keystore').Keystore
+Certificate = require('../lib/model/keystore').Certificate
 crypto = require "crypto"
 zlib = require "zlib"
 
@@ -193,3 +195,54 @@ exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, b
       else
         res.writeHead errStatusCode, {"Content-Type": "text/plain"}
         res.end()
+
+exports.setupTestKeystore = (callback) ->
+  serverCert =
+    country: 'ZA'
+    state: 'KZN'
+    locality: 'Berea'
+    organization: 'Jembi Health Systems NPC'
+    organizationUnit: 'HISD'
+    commonName: 'openhim.org'
+    emailAddress: 'root@openhim.org'
+    validity:
+      start: new Date 2010, 0, 1
+      end: new Date 2050, 0, 1
+    data: 'cert test value'
+
+  cert1 = new Certificate
+    country: 'ZA'
+    state: 'KZN'
+    locality: 'Berea'
+    organization: 'Jembi Health Systems NPC'
+    organizationUnit: 'HISD'
+    commonName: 'client1.openhim.org'
+    emailAddress: 'client1@openhim.org'
+    validity:
+      start: new Date 2010, 0, 1
+      end: new Date 2050, 0, 1
+    data: 'cert1 data'
+
+  cert2 = new Certificate
+    country: 'ZA'
+    state: 'WC'
+    locality: 'Westlake'
+    organization: 'Jembi Health Systems NPC'
+    organizationUnit: 'HISD'
+    commonName: 'client2.openhim.org'
+    emailAddress: 'client2@openhim.org'
+    validity:
+      start: new Date 2010, 0, 1
+      end: new Date 2050, 0, 1
+    data: 'cert2 data'
+
+  keystore = new Keystore
+    key: 'key test value'
+    cert: serverCert
+    ca: [ cert1, cert2 ]
+
+  keystore.save -> callback keystore
+
+exports.cleanupTestKeystore = (callback) ->
+  Keystore.remove {}, ->
+    callback()

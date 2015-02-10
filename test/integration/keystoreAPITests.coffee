@@ -17,7 +17,7 @@ describe 'API Integration Tests', ->
 
     before (done) ->
       auth.setupTestUsers (err) ->
-        server.start null, null, 8080, null, null, false,  ->
+        server.start null, null, 8080, null, null, false, ->
           done()
 
     after (done) ->
@@ -25,62 +25,17 @@ describe 'API Integration Tests', ->
         server.stop ->
           done()
 
-    beforeEach ->
+    beforeEach (done) ->
       authDetails = auth.getAuthDetails()
-
-    afterEach (done) ->
       Keystore.remove {}, ->
         done()
 
-    setupTestData = (callback) ->
-      serverCert =
-        country: 'ZA'
-        state: 'KZN'
-        locality: 'Berea'
-        organization: 'Jembi Health Systems NPC'
-        organizationUnit: 'HISD'
-        commonName: 'openhim.org'
-        emailAddress: 'root@openhim.org'
-        validity:
-          start: new Date 2010, 0, 1
-          end: new Date 2050, 0, 1
-        data: 'cert test value'
-
-      cert1 = new Certificate
-        country: 'ZA'
-        state: 'KZN'
-        locality: 'Berea'
-        organization: 'Jembi Health Systems NPC'
-        organizationUnit: 'HISD'
-        commonName: 'client1.openhim.org'
-        emailAddress: 'client1@openhim.org'
-        validity:
-          start: new Date 2010, 0, 1
-          end: new Date 2050, 0, 1
-        data: 'cert1 data'
-
-      cert2 = new Certificate
-        country: 'ZA'
-        state: 'WC'
-        locality: 'Westlake'
-        organization: 'Jembi Health Systems NPC'
-        organizationUnit: 'HISD'
-        commonName: 'client2.openhim.org'
-        emailAddress: 'client2@openhim.org'
-        validity:
-          start: new Date 2010, 0, 1
-          end: new Date 2050, 0, 1
-        data: 'cert2 data'
-
-      keystore = new Keystore
-        key: 'key test value'
-        cert: serverCert
-        ca: [ cert1, cert2 ]
-
-      keystore.save -> callback keystore
+    afterEach (done) ->
+      testUtils.cleanupTestKeystore ->
+      	done()
 
     it "Should fetch the current HIM server certificate", (done) ->
-      setupTestData ->
+      testUtils.setupTestKeystore ->
         request("https://localhost:8080")
           .get("/keystore/cert")
           .set("auth-username", testUtils.rootUser.email)
@@ -97,7 +52,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should not allow a non-admin user to fetch the current HIM server certificate", (done) ->
-      setupTestData ->
+      testUtils.setupTestKeystore ->
         request("https://localhost:8080")
           .get("/keystore/cert")
           .set("auth-username", testUtils.nonRootUser.email)
@@ -112,7 +67,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should fetch the current trusted ca certificates", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         request("https://localhost:8080")
           .get("/keystore/ca")
           .set("auth-username", testUtils.rootUser.email)
@@ -130,7 +85,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should not allow a non-admin user to fetch the current trusted ca certificates", (done) ->
-      setupTestData ->
+      testUtils.setupTestKeystore ->
         request("https://localhost:8080")
           .get("/keystore/ca")
           .set("auth-username", testUtils.nonRootUser.email)
@@ -145,7 +100,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should fetch a ca certificate by id", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         request("https://localhost:8080")
           .get("/keystore/ca/#{keystore.ca[0]._id}")
           .set("auth-username", testUtils.rootUser.email)
@@ -162,7 +117,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should not allow a non-admin user to fetch a ca certificate by id", (done) ->
-      setupTestData ->
+      testUtils.setupTestKeystore ->
         request("https://localhost:8080")
           .get("/keystore/ca/1234")
           .set("auth-username", testUtils.nonRootUser.email)
@@ -177,7 +132,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should add a new server certificate", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/cert")
@@ -199,7 +154,7 @@ describe 'API Integration Tests', ->
                 done()
 
     it "Should not allow a non-admin user to add a new server certificate", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/cert")
@@ -216,7 +171,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should add a new server key", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         postData = { key: fs.readFileSync(path.join __dirname, '../../tls/key.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/key")
@@ -236,7 +191,7 @@ describe 'API Integration Tests', ->
                 done()
 
     it "Should not alllow a non-admin user to add a new server key", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         postData = { key: fs.readFileSync(path.join __dirname, '../../tls/key.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/key")
@@ -253,7 +208,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should add a new trusted certificate", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/ca/cert")
@@ -276,7 +231,7 @@ describe 'API Integration Tests', ->
                 done()
 
     it "Should not allow a non-admin user to add a new trusted certificate", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/ca/cert")
@@ -293,7 +248,7 @@ describe 'API Integration Tests', ->
               done()
 
     it "Should add each certificate in a certificate chain", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         postData = { cert: fs.readFileSync('test/resources/chain.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/ca/cert")
@@ -315,7 +270,7 @@ describe 'API Integration Tests', ->
                 done()
 
     it "Should remove a ca certificate by id", (done) ->
-      setupTestData (keystore) ->
+      testUtils.setupTestKeystore (keystore) ->
         request("https://localhost:8080")
           .del("/keystore/ca/#{keystore.ca[0]._id}")
           .set("auth-username", testUtils.rootUser.email)
@@ -333,7 +288,7 @@ describe 'API Integration Tests', ->
                 done()
 
     it "Should not allow a non-admin user to remove a ca certificate by id", (done) ->
-      setupTestData ->
+      testUtils.setupTestKeystore ->
         request("https://localhost:8080")
           .del("/keystore/ca/1234")
           .set("auth-username", testUtils.nonRootUser.email)
