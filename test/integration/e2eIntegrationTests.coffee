@@ -11,7 +11,7 @@ Transaction = require("../../lib/model/transactions").Transaction
 Keystore = require("../../lib/model/keystore").Keystore
 testUtils = require "../testUtils"
 server = require "../../lib/server"
-FormData = require('form-data');
+FormData = require 'form-data'
 
 describe "e2e Integration Tests", ->
 

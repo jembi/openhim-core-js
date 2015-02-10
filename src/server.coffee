@@ -163,7 +163,6 @@ startHttpsServer = (httpsPort, app) ->
   mutualTLS = config.authentication.enableMutualTLSAuthentication
   tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
     return done err if err
-    console.log 'https options: ' + JSON.stringify(options)
     httpsServer = https.createServer options, app.callback()
 
     # set the socket timeout
@@ -214,8 +213,6 @@ startApiServer = (apiPort, app) ->
   tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
     logger.error "Could not fetch https server options: #{err}" if err
 
-    console.log "options are: " + options
-    console.log "err is: " + err
     apiHttpsServer = https.createServer options, app.callback()
     apiHttpsServer.listen apiPort, ->
       logger.info "API HTTPS listening on port " + apiPort
