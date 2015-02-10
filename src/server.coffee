@@ -163,7 +163,7 @@ startHttpsServer = (httpsPort, app) ->
   mutualTLS = config.authentication.enableMutualTLSAuthentication
   tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
     return done err if err
-
+    console.log 'https options: ' + JSON.stringify(options)
     httpsServer = https.createServer options, app.callback()
 
     # set the socket timeout

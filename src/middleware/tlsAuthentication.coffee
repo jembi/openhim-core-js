@@ -1,5 +1,6 @@
 fs = require "fs"
 Q = require "q"
+Client = require("../model/clients").Client
 Keystore = require("../model/keystore").Keystore
 logger = require "winston"
 

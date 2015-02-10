@@ -56,7 +56,7 @@ describe "e2e Integration Tests", ->
                 key: fs.readFileSync 'test/resources/server-tls/key.pem'
                 cert: 
                   data: fs.readFileSync 'test/resources/server-tls/cert.pem'
-                ca: [ fs.readFileSync 'test/resources/client-tls/cert.pem' ]
+                ca: [ { data: fs.readFileSync 'test/resources/client-tls/cert.pem' } ]
 
               keystore.save (err) ->
                 done err if err
@@ -85,8 +85,10 @@ describe "e2e Integration Tests", ->
             ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
           req = https.request options, (res) ->
-            res.statusCode.should.be.exactly 201
-            done()
+            res.on 'data', (chunk) -> 
+              console.log chunk.toString()
+              res.statusCode.should.be.exactly 201
+              done()
           req.end()
 
       it "should reject a request when using an invalid cert", (done) ->
