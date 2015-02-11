@@ -6,6 +6,7 @@ logger = require "winston"
 os = require "os"
 timer = new Date()
 domain = os.hostname() + '.' + application.name
+util = require "util"
 
 sdc = new statsd_client statsd_server
 
@@ -24,6 +25,22 @@ exports.incrementTransactionCount = (ctx, done) ->
         sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name # Per non-primary route
         sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status # Per route response status
 
+        console.log util.inspect route
+
+        if route.metrics?
+          for metric in route.metrics
+            if metric.type == 'counter'
+              logger.info 'incrementing mediator counter ' + metric.name
+              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name
+
+            if metric.type == 'timer'
+              logger.info 'incrementing mediator timer ' + metric.name
+              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name, metric.value
+
+            if metric.type == 'gauge'
+              logger.info 'incrementing mediator gauge ' + metric.name
+              sdc.gauge domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name, metric.value
+
         if route.orchestrations?
           for orchestration in route.orchestrations
             orchestrationStatus = orchestration.response.status
@@ -34,6 +51,24 @@ exports.incrementTransactionCount = (ctx, done) ->
 
 
     if ctx.mediatorResponse?
+#      Check for custom mediator metrics
+      if ctx.mediatorResponse.metrics?
+
+        for metric in ctx.mediatorResponse.metrics
+
+          if metric.type == 'counter'
+            logger.info 'incrementing mediator counter ' + metric.name
+            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.mediator_metrics.' + metric.name
+
+          if metric.type == 'timer'
+            logger.info 'incrementing mediator timer ' + metric.name
+            sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.mediator_metrics.' + metric.name, metric.value
+
+          if metric.type == 'gauge'
+            logger.info 'incrementing mediator gauge ' + metric.name
+            sdc.gauge domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.mediator_metrics.' + metric.name, metric.value
+
+
       if ctx.mediatorResponse.orchestrations?
         for orchestration in ctx.mediatorResponse.orchestrations
           orchestrationStatus = orchestration.response.status
@@ -41,6 +76,20 @@ exports.incrementTransactionCount = (ctx, done) ->
           sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus
           sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus + '.orchestrations.' + orchestration.name
           sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus
+
+          if orchestration.metrics?
+            for metric in orchestration.metrics
+              if metric.type == 'counter'
+                logger.info 'incrementing orchestration counter ' + metric.name
+                sdc.increment   domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestration.name + '.' + metric.name, metric.value
+
+              if metric.type == 'timer'
+                logger.info 'incrementing orchestration timer ' + metric.name
+                sdc.timing      domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestration.name + '.' + metric.name, metric.value
+
+              if metric.type == 'gauge'
+                logger.info 'incrementing orchestration gauge ' + metric.name
+                sdc.gauge       domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestration.name  + '.' + metric.name, metric.value
 
   catch error
     logger.error error, done
