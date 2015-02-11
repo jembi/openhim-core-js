@@ -58,7 +58,10 @@ exports.setServerCert = ->
   try
     cert = this.request.body.cert
     readCertificateInfo = Q.denodeify pem.readCertificateInfo
-    certInfo = yield readCertificateInfo cert
+    try
+      certInfo = yield readCertificateInfo cert
+    catch err
+      return logAndSetResponse this, 'bad request', "Could not add server cert via the API: #{err}", 'error'
     certInfo.data = cert
 
     keystoreDoc = yield Keystore.findOne().exec()
@@ -68,7 +71,7 @@ exports.setServerCert = ->
   catch err
     logAndSetResponse this, 'internal server error', "Could not add server cert via the API: #{err}", 'error'
 
-exports.getServerKey = ->
+exports.setServerKey = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
     logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getServerKey by id denied.", 'info'
@@ -91,6 +94,7 @@ exports.addTrustedCert = ->
     return
 
   try
+    invalidCert = false
     chain = this.request.body.cert
 
     # Parse into an array in case this is a cert chain
@@ -105,15 +109,26 @@ exports.addTrustedCert = ->
         cert = []
 
     keystoreDoc = yield Keystore.findOne().exec()
+    readCertificateInfo = Q.denodeify pem.readCertificateInfo
+
+    if certs.length < 1
+      invalidCert = true
 
     for cert in certs
-      readCertificateInfo = Q.denodeify pem.readCertificateInfo
-      certInfo = yield readCertificateInfo cert
+      try
+        certInfo = yield readCertificateInfo cert
+      catch err
+        invalidCert = true
+        continue
       certInfo.data = cert
       keystoreDoc.ca.push certInfo
 
     yield Q.ninvoke keystoreDoc, 'save'
-    this.status = 'created'
+
+    if invalidCert
+      logAndSetResponse this, 'bad request', "Failed to add one more cert, are they valid? #{err}", 'error'
+    else
+      this.status = 'created'
   catch err
     logAndSetResponse this, 'internal server error', "Could not add trusted cert via the API: #{err}", 'error'
 

@@ -27,8 +27,7 @@ describe 'API Integration Tests', ->
 
     beforeEach (done) ->
       authDetails = auth.getAuthDetails()
-      Keystore.remove {}, ->
-        done()
+      done()
 
     afterEach (done) ->
       testUtils.cleanupTestKeystore ->
@@ -153,6 +152,23 @@ describe 'API Integration Tests', ->
                 keystore.cert.organization.should.be.exactly 'Jembi Health Systems NPC'
                 done()
 
+    it "Should return a 400 if the server certificate isn't valid", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        postData = { cert: 'junkjunkjunk' }
+        request("https://localhost:8080")
+          .post("/keystore/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
     it "Should not allow a non-admin user to add a new server certificate", (done) ->
       testUtils.setupTestKeystore (keystore) ->
         postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
@@ -230,6 +246,23 @@ describe 'API Integration Tests', ->
                 keystore.ca[2].organization.should.be.exactly 'Trusted Inc.'
                 done()
 
+    it "Should respond with a 400 if one or more certs are invalid", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        postData = { cert: 'junkjunkjunk' }
+        request("https://localhost:8080")
+          .post("/keystore/ca/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
     it "Should not allow a non-admin user to add a new trusted certificate", (done) ->
       testUtils.setupTestKeystore (keystore) ->
         postData = { cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString() }
@@ -268,6 +301,23 @@ describe 'API Integration Tests', ->
                 keystore.ca[2].commonName.should.be.exactly 'domain.com'
                 keystore.ca[3].commonName.should.be.exactly 'ca.marc-hi.ca'
                 done()
+
+    it "Should return 400 with there is an invlaid cert in the chain", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        postData = { cert: fs.readFileSync('test/resources/invalid-chain.pem').toString() }
+        request("https://localhost:8080")
+          .post("/keystore/ca/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
 
     it "Should remove a ca certificate by id", (done) ->
       testUtils.setupTestKeystore (keystore) ->
