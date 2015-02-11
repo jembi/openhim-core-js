@@ -1,6 +1,5 @@
 should = require "should"
 request = require "supertest"
-server = require "../../lib/server"
 Transaction = require("../../lib/model/transactions").Transaction
 Channel = require("../../lib/model/channels").Channel
 worker = require "../../lib/api/worker"
@@ -12,6 +11,7 @@ logger = require 'winston'
 mongoose = require 'mongoose'
 authorisation = require "../../lib/api/authorisation"
 config = require "../../lib/config/config"
+server = require "../../lib/server"
 
 describe "API Metrics Tests", ->
 
@@ -144,6 +144,7 @@ describe "API Metrics Tests", ->
     authDetails = {}
 
     before (done) ->
+      config.statsd.enabled = false
       Channel.remove {}, ->
         Transaction.remove {}, ->
           channel1.save (err) ->
@@ -160,8 +161,10 @@ describe "API Metrics Tests", ->
                                 transaction10.save (err) ->
                                   auth.setupTestUsers (err) ->
                                     return done err if err
+                                    config.statsd.enabled = false
+                                    console.log config.statsd
                                     server.start null, null, 8080, null, 7787, null, ->
-                                      done()()
+                                      done()
 
     after (done) ->
       server.stop ->

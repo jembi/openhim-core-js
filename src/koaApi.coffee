@@ -18,7 +18,7 @@ metrics = require './api/metrics'
 serverRestart = require './restart'
 statsd = require './api/statsd'
 config = require './config/config'
-statsd_instance = config.get 'statsd'
+#statsd_instance = config.get 'statsd'
 
 exports.setupApp = (done) ->
 
@@ -86,10 +86,10 @@ exports.setupApp = (done) ->
 # -- End of Old Metrics Routes --
 
 # -- New metrics Routes --
-  app.use route.get '/metrics', if statsd_instance.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
-  app.use route.get '/metrics/status', if statsd_instance.enabled then statsd.fetcGlobalStatusMetrics else metrics.getGlobalStatusMetrics
-  app.use route.get '/metrics/:type/:channelId', if statsd_instance.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
-  app.use route.get '/metrics/load-time', if statsd_instance.enabled then statsd.retrieveAverageLoadTimePerHour else metrics.getGlobalLoadTimeMetrics
+  app.use route.get '/metrics', if config.statsd.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
+  app.use route.get '/metrics/status', if config.statsd.enabled then statsd.fetcGlobalStatusMetrics else metrics.getGlobalStatusMetrics
+  app.use route.get '/metrics/:type/:channelId', if config.statsd.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
+  app.use route.get '/metrics/load-time', if config.statsd.enabled then statsd.retrieveAverageLoadTimePerHour else metrics.getGlobalLoadTimeMetrics
 
 # -- StatsD only metrics routes --
   app.use route.get '/statsd', statsd.retrieveTransactionCountPerHour
