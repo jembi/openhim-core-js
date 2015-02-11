@@ -31,7 +31,7 @@ exports.retrieveTransactionCountPerHour = `function *() {
 
 # Retrives Global Status Metrics from the StatsD API
 
-exports.fetcGlobalStatusMetrics = `function *(allowedIds) {
+exports.fetchGlobalStatusMetrics = `function *(allowedIds) {
   var filtersObject = this.request.query;
   var userRequesting = this.authenticated,
     path = '',
@@ -129,24 +129,17 @@ exports.transactionsPerChannelPerHour = `function *(period) {
 fetchData = `function* fetchData(path) {
   var data = {};
   var options = {
-    url: 'http://' + statsd_server.host + path
+    url: 'http://' + statsd_server.host + path,
+    json: true
   };
   var response = yield request(options);
-  logger.info('Request to statsd: '+ path);
-
-  var info = JSON.parse(response.body);
-  if (info.length) {
-
-    var i = 0;
-    _.forEach(info, function (item) {
+  _.forEach(response.body, function (item, i) {
       if (i == 0) {
         data.data = item.datapoints
       } else {
         data['data' + i] = item.datapoints
       }
-      i++;
-    });
-  }
+  });
   return data;
 }`
 
@@ -154,18 +147,19 @@ convertToRequiredFormat = (raw, requiredFormat) ->
   data = []
   i = 0
   switch requiredFormat
-    when "retrieveAverageLoadTimePerHour" then _.forEach raw.data, (item) ->
+    when "retrieveAverageLoadTimePerHour" then _.forEach raw.data, (item, i) ->
       data.push
         avgResp: item[0]
         timestamp: moment.unix item[1]
 
-    when "retrieveChannelMetrics", "transactionsPerChannelPerHour" then _.forEach raw.data, (item) ->
+    when "retrieveChannelMetrics", "transactionsPerChannelPerHour" then _.forEach raw.data, (item, i) ->
       data.push
         load: item[0]
         avgResp: raw.data1[i][0]
         timestamp: moment.unix item[1]
-      i++
+
   data
 
 exports.fetchData = fetchData
 exports.convertToRequiredFormat = convertToRequiredFormat
+exports.timer = this.timer

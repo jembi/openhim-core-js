@@ -26,7 +26,6 @@
     "koa-route": "^2.4.0",
     "koa-statsd": "0.0.2",
     "lodash": "^2.4.1",
-    "mock-udp": "^0.1.1",
     "moment": "^2.8.4",
     "mongoose": "^3.8.21",
     "monq": "^0.3.1",
@@ -40,7 +39,6 @@
     "sinon-es6": "0.0.3",
     "statsd-client": "0.0.17",
     "statsy": "^0.2.0",
-    "string": "^3.0.0",
     "winston": "^0.8.3",
     "xmldom": "^0.1.19",
     "xpath": "0.0.9"

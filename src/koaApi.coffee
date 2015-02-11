@@ -81,18 +81,9 @@ exports.setupApp = (done) ->
 
 # -- New metrics Routes --
   app.use route.get '/metrics', if config.statsd.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
-  app.use route.get '/metrics/status', if config.statsd.enabled then statsd.fetcGlobalStatusMetrics else metrics.getGlobalStatusMetrics
+  app.use route.get '/metrics/status', if config.statsd.enabled then statsd.fetchGlobalStatusMetrics else metrics.getGlobalStatusMetrics
   app.use route.get '/metrics/:type/:channelId', if config.statsd.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
   app.use route.get '/metrics/load-time', if config.statsd.enabled then statsd.retrieveAverageLoadTimePerHour else metrics.getGlobalLoadTimeMetrics
-
-# -- StatsD only metrics routes --
-  app.use route.get '/statsd', statsd.retrieveTransactionCountPerHour
-  app.use route.get '/statsd/status', statsd.fetcGlobalStatusMetrics
-  app.use route.get '/statsd/:type/:channelId', statsd.retrieveChannelMetrics
-  app.use route.get '/statsd/load-time', statsd.retrieveAverageLoadTimePerHour
-  app.use route.get '/statsd/transactions/:channelId/:status', statsd.transactionsPerChannelPerHour
-
-  # app.use route.get '/statsd', statsd.retrieveTransactionCount
 
   app.use route.get '/mediators', mediators.getAllMediators
   app.use route.get '/mediators/:uuid', mediators.getMediator

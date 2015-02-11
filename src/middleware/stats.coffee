@@ -121,7 +121,7 @@ exports.measureTransactionDuration = (ctx, done) ->
     #Collect stats for non-primary routes
     if ctx.routes?
       for route in ctx.routes
-        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, timer
+        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, this.timer
         sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes' + route.response.status, timer
 
         if route.orchestrations?
@@ -149,7 +149,7 @@ exports.measureTransactionDuration = (ctx, done) ->
   done()
 
 exports.koaMiddleware = `function *statsMiddleware(next) {
-    timer = new Date();
+    this.timer = new Date();
     yield next;
     exports.incrementTransactionCount(this,function(){})
     exports.measureTransactionDuration(this,function(){})

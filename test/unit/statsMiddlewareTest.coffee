@@ -16,11 +16,11 @@ domain = os.hostname() + '.' + application.name
 describe "Stats Middleware ", ->
   s = {}
 
-  before (done) ->
+  beforeEach (done) ->
     s = new FakeServer()
     s.start done
 
-  after ->
+  afterEach ->
     s.stop()
 
 
@@ -77,13 +77,13 @@ describe "Stats Middleware ", ->
                 s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c', ->
                   s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c', done
 
-#  it "Should measure transaction duration", (done) ->
-#    this.timeout = 900000
-#    stats.timer = new Date()
-#    stats.measureTransactionDuration ctx, () ->
-#      s._packetsReceived.forEach (item, index) ->
-#        console.log s._packetsReceived[index].toString()
-#      s.expectMessage '', done
+  it "Should measure transaction duration", (done) ->
+    this.timeout = 900000
+    stats.timer = 10
+    stats.measureTransactionDuration ctx, () ->
+      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms', ->
+        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms', done
+
 
 
 

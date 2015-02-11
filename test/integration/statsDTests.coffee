@@ -74,7 +74,7 @@ describe "Stats Tests", ->
         mock = sinon.mock(Statsd);
         mock.expects('fetchData').once().withExactArgs("/render?target=transformNull(summarize(stats.counters." + domain + ".channels.jjhreujiwh.statuses.Processing.count,'1day'))&format=json")
         `co(function* () {
-           yield Statsd.fetcGlobalStatusMetrics(['jjhreujiwh']);
+           yield Statsd.fetchGlobalStatusMetrics(['jjhreujiwh']);
         })`
         mock.verify()
         mock.restore()
@@ -163,7 +163,6 @@ describe "Stats Tests", ->
         it "should fetch and transform Average Load Times from the api", (done) ->
           `co(function* () {
             yield Statsd.retrieveAverageLoadTimePerHour('SJHBD');
-
             Statsd.body[0].avgResp.should.be.exactly(84);
             done();
           });`
