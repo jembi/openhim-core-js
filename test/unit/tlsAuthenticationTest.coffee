@@ -17,8 +17,8 @@ describe "Setup mutual TLS", ->
     tlsAuthentication.getServerOptions true, (err, options) ->
       options.ca.should.be.ok
       options.ca.should.be.an.Array
-      options.ca.should.containEql 'cert1 data'
-      options.ca.should.containEql 'cert2 data'
+      options.ca.should.containEql (fs.readFileSync 'test/resources/trust-tls/cert1.pem').toString()
+      options.ca.should.containEql (fs.readFileSync 'test/resources/trust-tls/cert2.pem').toString()
       options.requestCert.should.be.true
       options.rejectUnauthorized.should.be.false
       done()

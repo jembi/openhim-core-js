@@ -12,10 +12,7 @@ logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
 fs = require 'fs'
-
-# appRoot is a global var - set in server.cofee
-tlsKey = fs.readFileSync appRoot + '/tls/key.pem'
-tlsCert = fs.readFileSync appRoot + '/tls/cert.pem'
+Keystore = require("../model/keystore").Keystore
 
 containsMultiplePrimaries = (routes) ->
   numPrimaries = 0
@@ -76,53 +73,58 @@ sendRequestToRoutes = (ctx, routes, next) ->
   if containsMultiplePrimaries routes
     return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
 
-  for route in routes
-    path = getDestinationPath route, ctx.path
-    options =
-      hostname: route.host
-      port: route.port
-      path: path
-      method: ctx.request.method
-      headers: ctx.request.header
-      agent: false
-      rejectUnauthorized: true
-      key: tlsKey
-      cert: tlsCert
-      secureProtocol: 'TLSv1_method'
+  Keystore.findOne {}, (err, keystore) ->
 
-    if ctx.request.querystring
-      options.path += '?' + ctx.request.querystring
+    for route in routes
+      path = getDestinationPath route, ctx.path
+      options =
+        hostname: route.host
+        port: route.port
+        path: path
+        method: ctx.request.method
+        headers: ctx.request.header
+        agent: false
+        rejectUnauthorized: true
+        key: keystore.key
+        cert: keystore.cert.data
+        secureProtocol: 'TLSv1_method'
 
-    if options.headers && options.headers.authorization
-      delete options.headers.authorization
+      if route.cert?
+        options.ca = keystore.ca.id(route.cert).data
 
-    if route.username and route.password
-      options.auth = route.username + ":" + route.password
+      if ctx.request.querystring
+        options.path += '?' + ctx.request.querystring
 
-    if options.headers && options.headers.host
-      delete options.headers.host
+      if options.headers && options.headers.authorization
+        delete options.headers.authorization
 
-    if route.primary
-      promise = sendRequest(ctx, route, options)
-      .then (response) ->
-        if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
-          # handle mediator reponse
-          responseObj = JSON.parse response.body
-          ctx.mediatorResponse = responseObj
-          # then set koa response from responseObj.response
-          setKoaResponse ctx, responseObj.response
-        else
-          setKoaResponse ctx, response
-      .fail (reason) ->
-        # on failure
-        handleServerError ctx, reason
-    else
-      promise = buildNonPrimarySendRequestPromise ctx, route, options, path
+      if route.username and route.password
+        options.auth = route.username + ":" + route.password
 
-    promises.push promise
+      if options.headers && options.headers.host
+        delete options.headers.host
 
-  (Q.all promises).then ->
-    next()
+      if route.primary
+        promise = sendRequest(ctx, route, options, keystore)
+        .then (response) ->
+          if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
+            # handle mediator reponse
+            responseObj = JSON.parse response.body
+            ctx.mediatorResponse = responseObj
+            # then set koa response from responseObj.response
+            setKoaResponse ctx, responseObj.response
+          else
+            setKoaResponse ctx, response
+        .fail (reason) ->
+          # on failure
+          handleServerError ctx, reason
+      else
+        promise = buildNonPrimarySendRequestPromise ctx, route, options, path
+
+      promises.push promise
+
+    (Q.all promises).then ->
+      next()
 
 # function to build fresh promise for transactions routes
 buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
@@ -152,13 +154,13 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
     # on failure
     handleServerError ctx, reason
 
-sendRequest = (ctx, route, options) ->
+sendRequest = (ctx, route, options, keystore) ->
   if route.type is 'tcp' or route.type is 'mllp'
     logger.info 'Routing socket request'
-    return sendSocketRequest ctx, route, options
+    return sendSocketRequest ctx, route, options, keystore
   else
     logger.info 'Routing http(s) request'
-    return sendHttpRequest ctx, route, options
+    return sendHttpRequest ctx, route, options, keystore
 
 obtainCharset = (headers) ->
   contentType = headers['content-type'] || ''
@@ -176,7 +178,7 @@ obtainCharset = (headers) ->
 #    headers: <http_headers_object>
 #    timestamp: <the time the response was recieved>
 ###
-sendHttpRequest = (ctx, route, options) ->
+sendHttpRequest = (ctx, route, options, keystore) ->
   defered = Q.defer()
   response = {}
 
@@ -187,9 +189,6 @@ sendHttpRequest = (ctx, route, options) ->
 
   if route.secured
     method = https
-
-  if route.cert?
-    options.ca = route.cert
 
   routeReq = method.request options, (routeRes) ->
     response.status = routeRes.statusCode
@@ -260,7 +259,7 @@ sendHttpRequest = (ctx, route, options) ->
 #
 # Supports both normal and MLLP sockets
 ###
-sendSocketRequest = (ctx, route, options) ->
+sendSocketRequest = (ctx, route, options, keystore) ->
   mllpEndChar = String.fromCharCode(0o034)
 
   defered = Q.defer()
@@ -278,9 +277,7 @@ sendSocketRequest = (ctx, route, options) ->
     key: options.key
     cert: options.cert
     secureProtocol: options.secureProtocol
-
-  if route.cert?
-    options.ca = route.cert
+    ca: options.ca
 
   client = method.connect options, ->
     logger.info "Opened #{route.type} connection to #{options.host}:#{options.port}"

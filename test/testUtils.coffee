@@ -8,6 +8,9 @@ Keystore = require('../lib/model/keystore').Keystore
 Certificate = require('../lib/model/keystore').Certificate
 crypto = require "crypto"
 zlib = require "zlib"
+pem = require "pem"
+logger = require "winston"
+Q = require "q"
 
 exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
   requestCallback = requestCallback || ->
@@ -43,7 +46,7 @@ exports.createMockHTTPSServerWithMutualAuth = (resStatusCode, resBody, port, use
     secureProtocol: 'TLSv1_method'
 
   if useClientCert
-    options.ca = fs.readFileSync 'tls/cert.pem'
+    options.ca = fs.readFileSync 'test/resources/server-tls/cert.pem'
 
   requestCallback = requestCallback || ->
     # Create mock endpoint to forward requests to
@@ -75,7 +78,7 @@ exports.createMockTLSServerWithMutualAuth = (port, expected, matchResponse, nonM
     secureProtocol: 'TLSv1_method'
 
   if useClientCert
-    options.ca = fs.readFileSync 'tls/cert.pem'
+    options.ca = fs.readFileSync 'test/resources/server-tls/cert.pem'
 
   server = tls.createServer options, (sock) ->
     sock.on 'data', (data) ->
@@ -196,52 +199,59 @@ exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, b
         res.writeHead errStatusCode, {"Content-Type": "text/plain"}
         res.end()
 
-exports.setupTestKeystore = (callback) ->
-  serverCert =
-    country: 'ZA'
-    state: 'KZN'
-    locality: 'Berea'
-    organization: 'Jembi Health Systems NPC'
-    organizationUnit: 'HISD'
-    commonName: 'openhim.org'
-    emailAddress: 'root@openhim.org'
-    validity:
-      start: new Date 2010, 0, 1
-      end: new Date 2050, 0, 1
-    data: 'cert test value'
+###
+# Sets up a keystore of testing. serverCert, serverKey, ca are optional, however if
+# you provide a serverCert you must provide the serverKey or null one out and vice
+# versa.
+###
+exports.setupTestKeystore = (serverCert, serverKey, ca, callback) ->
 
-  cert1 = new Certificate
-    country: 'ZA'
-    state: 'KZN'
-    locality: 'Berea'
-    organization: 'Jembi Health Systems NPC'
-    organizationUnit: 'HISD'
-    commonName: 'client1.openhim.org'
-    emailAddress: 'client1@openhim.org'
-    validity:
-      start: new Date 2010, 0, 1
-      end: new Date 2050, 0, 1
-    data: 'cert1 data'
+  if typeof serverCert is 'function'
+    callback = serverCert
+    serverCert = null
 
-  cert2 = new Certificate
-    country: 'ZA'
-    state: 'WC'
-    locality: 'Westlake'
-    organization: 'Jembi Health Systems NPC'
-    organizationUnit: 'HISD'
-    commonName: 'client2.openhim.org'
-    emailAddress: 'client2@openhim.org'
-    validity:
-      start: new Date 2010, 0, 1
-      end: new Date 2050, 0, 1
-    data: 'cert2 data'
+  if serverCert instanceof Array and typeof serverKey is 'function'
+    ca = serverCert
+    callback = serverKey
+    serverCert = null
+    serverKey = null
 
-  keystore = new Keystore
-    key: 'key test value'
-    cert: serverCert
-    ca: [ cert1, cert2 ]
+  serverCert = fs.readFileSync 'test/resources/server-tls/cert.pem' if not serverCert?
+  serverKey = fs.readFileSync 'test/resources/server-tls/key.pem' if not serverKey?
+  if not ca?
+    ca = []
+    ca.push fs.readFileSync 'test/resources/trust-tls/cert1.pem'
+    ca.push fs.readFileSync 'test/resources/trust-tls/cert2.pem'
 
-  keystore.save -> callback keystore
+  # remove any existing keystore
+  Keystore.remove {}, ->
+
+    pem.readCertificateInfo serverCert, (err, serverCertInfo) ->
+      if err?
+        logger.error "Failed to get certificate info in test utils: #{err}"
+        return callback null
+      serverCertInfo.data = serverCert
+
+      keystore = new Keystore
+        key: serverKey
+        cert: serverCertInfo
+        ca: []
+
+      if ca.length > 0
+        readCertInfo = Q.denodeify pem.readCertificateInfo
+        promises = []
+
+        for cert in ca
+          promises.push(readCertInfo cert)
+
+        Q.all(promises).then (caCertsInfo) ->
+          keystore.ca = caCertsInfo
+          # Add in the cert data
+          for cert, i in ca
+            keystore.ca[i].data = cert;
+          keystore.save -> callback keystore
+      else
+        keystore.save -> callback keystore
 
 exports.cleanupTestKeystore = (callback) ->
   Keystore.remove {}, ->

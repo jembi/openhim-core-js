@@ -70,7 +70,6 @@ exports.isChannelEnabled = isChannelEnabled = (channel) -> not channel.status or
 
 
 exports.authorise = (ctx, done) ->
-  console.log 'in Auth'
   Channel.find {}, (err, channels) ->
     for channel in channels
       pat = new RegExp channel.urlPattern

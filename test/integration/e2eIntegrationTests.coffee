@@ -86,7 +86,6 @@ describe "e2e Integration Tests", ->
 
           req = https.request options, (res) ->
             res.on 'data', (chunk) -> 
-              console.log chunk.toString()
               res.statusCode.should.be.exactly 201
               done()
           req.end()
@@ -99,7 +98,7 @@ describe "e2e Integration Tests", ->
             port: 5000
             cert: fs.readFileSync "test/resources/client-tls/invalid-cert.pem"
             key:  fs.readFileSync "test/resources/client-tls/invalid-key.pem"
-            ca: [ fs.readFileSync "tls/cert.pem" ]
+            ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
           req = https.request options, (res) ->
             res.statusCode.should.be.exactly 401
@@ -803,7 +802,6 @@ describe "e2e Integration Tests", ->
         client = new Client testAppDoc
         client.save (error, newAppDoc) ->
           mockServer = testUtils.createMockMediatorServer 200, mediatorResponse, 1276, ->
-            console.log 'mock server started'
             done()
 
     after (done) ->

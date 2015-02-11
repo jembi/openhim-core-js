@@ -118,7 +118,6 @@ exports.addTrustedCert = ->
     logAndSetResponse this, 'internal server error', "Could not add trusted cert via the API: #{err}", 'error'
 
 exports.removeCACert = (certId) ->
-  console.log 'in removeCACert'
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
     logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeCACert by id denied.", 'info'

@@ -35,7 +35,7 @@ describe 'API Integration Tests', ->
       	done()
 
     it "Should fetch the current HIM server certificate", (done) ->
-      testUtils.setupTestKeystore ->
+      testUtils.setupTestKeystore (keystore) ->
         request("https://localhost:8080")
           .get("/keystore/cert")
           .set("auth-username", testUtils.rootUser.email)
@@ -47,8 +47,8 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
-              res.body.data.should.be.exactly 'cert test value'
-              res.body.commonName.should.be.exactly 'openhim.org'
+              res.body.data.should.be.exactly keystore.cert.data
+              res.body.commonName.should.be.exactly 'localhost'
               done()
 
     it "Should not allow a non-admin user to fetch the current HIM server certificate", (done) ->
@@ -133,7 +133,7 @@ describe 'API Integration Tests', ->
 
     it "Should add a new server certificate", (done) ->
       testUtils.setupTestKeystore (keystore) ->
-        postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
+        postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/cert")
           .set("auth-username", testUtils.rootUser.email)
@@ -155,7 +155,7 @@ describe 'API Integration Tests', ->
 
     it "Should not allow a non-admin user to add a new server certificate", (done) ->
       testUtils.setupTestKeystore (keystore) ->
-        postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
+        postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/cert")
           .set("auth-username", testUtils.nonRootUser.email)
@@ -172,7 +172,7 @@ describe 'API Integration Tests', ->
 
     it "Should add a new server key", (done) ->
       testUtils.setupTestKeystore (keystore) ->
-        postData = { key: fs.readFileSync(path.join __dirname, '../../tls/key.pem').toString() }
+        postData = { key: fs.readFileSync('test/resources/server-tls/key.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/key")
           .set("auth-username", testUtils.rootUser.email)
@@ -192,7 +192,7 @@ describe 'API Integration Tests', ->
 
     it "Should not alllow a non-admin user to add a new server key", (done) ->
       testUtils.setupTestKeystore (keystore) ->
-        postData = { key: fs.readFileSync(path.join __dirname, '../../tls/key.pem').toString() }
+        postData = { key: fs.readFileSync('test/resources/server-tls/key.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/key")
           .set("auth-username", testUtils.nonRootUser.email)
@@ -209,7 +209,7 @@ describe 'API Integration Tests', ->
 
     it "Should add a new trusted certificate", (done) ->
       testUtils.setupTestKeystore (keystore) ->
-        postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
+        postData = { cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/ca/cert")
           .set("auth-username", testUtils.rootUser.email)
@@ -226,13 +226,13 @@ describe 'API Integration Tests', ->
                 done(err) if err
                 keystore.ca.should.be.instanceOf(Array).and.have.lengthOf 3
                 keystore.ca[2].data.should.be.exactly postData.cert
-                keystore.ca[2].commonName.should.be.exactly 'localhost'
-                keystore.ca[2].organization.should.be.exactly 'Jembi Health Systems NPC'
+                keystore.ca[2].commonName.should.be.exactly 'trust1.org'
+                keystore.ca[2].organization.should.be.exactly 'Trusted Inc.'
                 done()
 
     it "Should not allow a non-admin user to add a new trusted certificate", (done) ->
       testUtils.setupTestKeystore (keystore) ->
-        postData = { cert: fs.readFileSync(path.join __dirname, '../../tls/cert.pem').toString() }
+        postData = { cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString() }
         request("https://localhost:8080")
           .post("/keystore/ca/cert")
           .set("auth-username", testUtils.nonRootUser.email)
