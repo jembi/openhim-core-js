@@ -25,8 +25,6 @@ exports.incrementTransactionCount = (ctx, done) ->
         sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name # Per non-primary route
         sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status # Per route response status
 
-        console.log util.inspect route
-
         if route.metrics?
           for metric in route.metrics
             if metric.type == 'counter'
@@ -48,6 +46,21 @@ exports.incrementTransactionCount = (ctx, done) ->
             sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus
             sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestration.name
             sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus
+
+#           Log custom orchestration metrics
+            if orchestration.metrics?
+              for metric in orchestration.metrics
+                if metric.type == 'counter'
+                  logger.info 'incrementing '+ route.name + ' orchestration counter ' + metric.name
+                  sdc.increment   domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.' + metric.name, metric.value
+
+                if metric.type == 'timer'
+                  logger.info 'incrementing '+ route.name + 'orchestration timer ' + metric.name
+                  sdc.timing      domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.' + metric.name, metric.value
+
+                if metric.type == 'gauge'
+                  logger.info 'incrementing '+ route.name + 'orchestration gauge ' + metric.name
+                  sdc.gauge       domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name  + '.' + metric.name, metric.value
 
 
     if ctx.mediatorResponse?
