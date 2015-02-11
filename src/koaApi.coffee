@@ -79,12 +79,6 @@ exports.setupApp = (done) ->
   app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
   app.use route.get '/visualizer/sync', visualizer.sync
 
-# -- Old metrics Routes Purposely commented out for Backward Compatibility
-  app.use route.get '/mongometrics', metrics.getGlobalLoadTimeMetrics
-  app.use route.get '/mongometrics/status', metrics.getGlobalStatusMetrics
-  app.use route.get '/mongometrics/:type/:channelId', metrics.getChannelMetrics
-# -- End of Old Metrics Routes --
-
 # -- New metrics Routes --
   app.use route.get '/metrics', if config.statsd.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
   app.use route.get '/metrics/status', if config.statsd.enabled then statsd.fetcGlobalStatusMetrics else metrics.getGlobalStatusMetrics
