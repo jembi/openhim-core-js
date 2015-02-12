@@ -1,4 +1,5 @@
 TaskModel = require('../model/tasks').Task
+Channel = require('../model/channels').Channel
 Q = require("q")
 logger = require("winston")
 monq = require("monq")
@@ -6,6 +7,8 @@ config = require("../config/config")
 client = monq(config.mongo.url, safe: true)
 http = require 'http'
 TransactionModel = require("../model/transactions").Transaction
+net = require "net"
+rerunMiddleware = require "../middleware/rerunUpdateTransactionTask"
 
 
 #####################################################################################################
@@ -28,32 +31,76 @@ worker.register rerun_transaction: (params, callback) ->
       return callback err, null
 
     # setup the option object for the HTTP Request
-    rerunSetHTTPRequestOptions transaction, taskID, (err, options) ->
-
+    Channel.findById transaction.channelID, (err, channel) ->
       if err
-        logger.error(err)
-        return callback err, null
+        logger.error err
+        return err
+      logger.info "Rerunning " + channel.type + " transaction"
 
-      #############################################################################
-      ### The job has processed correctly and is preparing to send HTTP Request ###
-      ### Move on to another job while this one waits for HTTPResponse to save  ###
-      ###     the result - "callback null, trasnactionID" completes the job     ###
-      #############################################################################
-      callback null, transactionID
-      
-      # Run the HTTP Request with details supplied in options object
-      rerunHttpRequestSend options, transaction, (err, HTTPResponse) ->
-
-        if err
-          logger.error(err)
-          return callback err, null
-
-        # Update the task object with the response details
-        rerunUpdateTaskObject taskID, transactionID, HTTPResponse, (err, updatedTask) ->
+      if channel.type == "http" or channel.type == "polling"
+        rerunSetHTTPRequestOptions transaction, taskID, (err, options) ->
 
           if err
             logger.error(err)
             return callback err, null
+
+          #############################################################################
+          ### The job has processed correctly and is preparing to send HTTP Request ###
+          ### Move on to another job while this one waits for HTTPResponse to save  ###
+          ###     the result - "callback null, transactionID" completes the job     ###
+          #############################################################################
+          callback null, transactionID
+
+          # Run the HTTP Request with details supplied in options object
+          rerunHttpRequestSend options, transaction, (err, HTTPResponse) ->
+
+            if err
+              logger.error(err)
+              return callback err, null
+
+            # Update the task object with the response details
+            rerunUpdateTaskObject taskID, transactionID, HTTPResponse, (err, updatedTask) ->
+
+              if err
+                logger.error(err)
+                return callback err, null
+
+
+      if channel.type == 'tcp' or channel.type == 'tls'
+
+        #############################################################################
+        ### The job has processed correctly and is preparing to send HTTP Request ###
+        ### Move on to another job while this one waits for HTTPResponse to save  ###
+        ###     the result - "callback null, transactionID" completes the job     ###
+        #############################################################################
+        callback null, transactionID
+
+        # Run the TCP Request with details supplied in options object
+        rerunTcpRequestSend channel, transaction, (err, TCPResponse) ->
+
+          if err
+            logger.error err
+            return callback err, null
+
+          rerunUpdateTaskObject taskID, transactionID, TCPResponse, (err, updatedTask) ->
+            if err
+              logger.error err
+              return callback err, null
+#          Update original
+            ctx =
+              parentID : transaction._id
+              transactionId : transactionID
+              transactionStatus: TCPResponse.status
+              taskID : taskID
+
+            rerunMiddleware.updateOriginalTransaction ctx,  ->
+              rerunMiddleware.updateTask ctx, ->
+
+
+
+
+
+
 
 exports.startupWorker = ->
   worker.start()
@@ -179,11 +226,11 @@ rerunHttpRequestSend = (options, transaction, callback) ->
     return callback err, null
 
   response =
+    body: ''
     transaction: {}
 
   logger.info('Rerun Transaction #' + transaction._id + ' - HTTP Request is being sent...')
   req = http.request options, (res) ->
-    response.body = ''
 
     res.on "data", (chunk) ->
       # response data
@@ -282,6 +329,46 @@ rerunUpdateTaskObject = (taskID, transactionID, response, callback) ->
 # Function for updating the task object with response details #
 ###############################################################
 
+rerunTcpRequestSend = (channel, transaction, callback) ->
+
+  response =
+    body: ''
+    transaction: {}
+
+  client = new net.Socket()
+
+  client.connect channel.tcpPort, channel.tcpHost, ->
+    logger.info "Connected"
+    client.end transaction.request.body
+    return
+
+  client.on "data", (data) ->
+    logger.info "Received: " + data
+    response.body += data
+
+
+  client.on "end" , (data) ->
+
+    response.status = 200
+    response.transaction.status = "Completed"
+    response.message = ''
+    response.headers = {}
+    response.timestamp = new Date
+
+    logger.info('Rerun Transaction #' + transaction._id + ' - TCP Response has been captured')
+    callback data, response
+    return
+
+  client.on "error" , (err) ->
+    logger.info('problem with request: ' + err.message)
+    # update the status of the transaction that was processed to indicate it failed to process
+    response.transaction.status = "Failed" if err
+
+    response.status = 500
+    response.message = "Internal Server Error"
+    response.timestamp = new Date
+
+    callback err, response
 
 #########################################################
 # Export these functions when in the "test" environment #
@@ -292,3 +379,4 @@ if process.env.NODE_ENV == "test"
   exports.rerunSetHTTPRequestOptions = rerunSetHTTPRequestOptions
   exports.rerunHttpRequestSend = rerunHttpRequestSend
   exports.rerunUpdateTaskObject = rerunUpdateTaskObject
+  exports.rerunTcpRequestSend = rerunTcpRequestSend
