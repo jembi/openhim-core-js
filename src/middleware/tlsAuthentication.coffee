@@ -52,22 +52,19 @@ exports.getServerOptions = (mutualTLS, done) ->
 ###
 # Koa middleware for mutual TLS authentication
 ###
-exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
-    if (this.req.client.authorized === true) {
-      var subject = this.req.connection.getPeerCertificate().subject;
-      logger.info(subject.CN + " is authenticated via TLS.");
+exports.koaMiddleware = (next) ->
+  if this.req.client.authorized is true
+    subject = this.req.connection.getPeerCertificate().subject
+    logger.info "#{subject.CN} is authenticated via TLS."
 
-      // lookup client by subject.CN (CN = clientDomain) and set them as the authenticated user
-      this.authenticated = yield Client.findOne({ clientDomain: subject.CN }).exec();
+    # lookup client by subject.CN (CN = clientDomain) and set them as the authenticated user
+    this.authenticated = yield Client.findOne({ clientDomain: subject.CN }).exec()
 
-      if ( this.authenticated ){
-        yield next;
-      }else{
-        this.response.status = "unauthorized";
-        logger.info("Certificate Authentication Failed: the certificate's common name (" + subject.CN + ") did not match any client's domain attribute");
-      }
-    } else {
-      this.response.status = "unauthorized";
-      logger.info("Request is NOT authenticated via TLS: " + this.req.client.authorizationError);
-    }
-  }`
+    if this.authenticated?
+      yield next
+    else
+      this.response.status = "unauthorized"
+      logger.info "Certificate Authentication Failed: the certificate's common name #{subject.CN} did not match any client's domain attribute"
+  else
+    this.response.status = "unauthorized"
+    logger.info "Request is NOT authenticated via TLS: #{this.req.client.authorizationError}"

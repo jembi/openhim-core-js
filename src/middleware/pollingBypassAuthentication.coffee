@@ -16,15 +16,11 @@ exports.authenticateUser = (ctx, done) ->
 ###
 # Koa middleware for bypassing authentication for polling requests
 ###
-exports.koaMiddleware = `function *pollingBypassAuthMiddleware(next) {
-  
-  var authenticateUser = Q.denodeify(exports.authenticateUser);
-  yield authenticateUser(this);
+exports.koaMiddleware = (next) ->
+  authenticateUser = Q.denodeify exports.authenticateUser
+  yield authenticateUser this
 
-  if (this.authenticated) {
-    yield next;
-  } else {
-    this.response.status = "unauthorized";
-  }
-  
-}`
+  if this.authenticated?
+    yield next
+  else
+    this.response.status = "unauthorized"

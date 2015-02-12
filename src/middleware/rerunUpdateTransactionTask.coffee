@@ -34,15 +34,12 @@ exports.updateTask = (ctx, done) ->
 ###
 # Koa middleware for updating original transaction with childID
 ###
-exports.koaMiddleware = `function *rerunUpdateTransactionTask(next) {
-  
-  // do intial yield for koa to come back to this function with updated ctx object
-  yield next;
+exports.koaMiddleware = (next) ->
+  # do intial yield for koa to come back to this function with updated ctx object
+  yield next
 
-  var updateOriginalTransaction = Q.denodeify(exports.updateOriginalTransaction);
-  yield updateOriginalTransaction(this);
+  updateOriginalTransaction = Q.denodeify exports.updateOriginalTransaction
+  yield updateOriginalTransaction this
 
-  var updateTask = Q.denodeify(exports.updateTask);
-  yield updateTask(this);
-  
-}`
+  updateTask = Q.denodeify exports.updateTask
+  yield updateTask this
