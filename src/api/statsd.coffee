@@ -17,16 +17,14 @@ co = require "co"
 exports.retrieveTransactionCountPerHour = `function *() {
 
   var path = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels.count,'1hour'))&from=-1days&format=json";
-  var data = [];
   var raw = yield exports.fetchData(path);
 
-  _.forEach(raw.data, function (item) {
-    data.push({
+  this.body = raw.data.map(function(item) {
+    return {
       load: item[0],
       timestamp: moment.unix(item[1])
-    });
+    };
   });
-  this.body = data
 }`
 
 # Retrives Global Status Metrics from the StatsD API
@@ -77,37 +75,34 @@ exports.retrieveAverageLoadTimePerHour = `function *(type) {
 }`
 
 exports.retrieveChannelMetrics = `function *(type, channelId) {
-  var data = [];
-  var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
-  var results = {}, path = ''
-  var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + channelId
-  var promises = []
-  var final = {}
-  if (type == 'status') {
-    for (i = 0; i < status_array.length; i++) {
-      path = render_url + ".statuses." + status_array[i] + ".count,'1week'))&format=json";
-      results[status_array[i]] = yield exports.fetchData(path)
-      if (results[status_array[i]]) {
-        final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[0][0] : 0;
+  var statusArray = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)'];
+  var renderUrl = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + channelId
+  var path = '';
+  var total = {};
+  if (type === 'status') {
+    statusArray.forEach(co.wrap(function*(statusType) {
+      path = renderUrl + ".statuses." + statusType + ".count,'1week'))&format=json";
+      var result = yield exports.fetchData(path);
+      if (result && result.data) {
+        total[statusType] = result.data[0][0];
       } else {
-        final[status_array[i]] = 0 ;
+        total[statusType] = 0;
       }
-    }
+    }));
 
-
-    data.push({
-      _id: {"channelID": channelId},
-      failed: final.Failed,
-      successful: final.Successful,
-      processing: final.Processing,
-      completed: final.Completed,
-      completedWErrors: final['Completed with error(s)']
-    });
-
-    return this.body = data
+    return this.body = [
+      {
+        _id: {"channelID": channelId},
+        failed: total.Failed,
+        successful: total.Successful,
+        processing: total.Processing,
+        completed: total.Completed,
+        completedWErrors: total['Completed with error(s)']
+      }
+    ];
   } else {
 
-    path = render_url + ".count,'1day'))&from=-7days&format=json";
+    path = renderUrl + ".count,'1day'))&from=-7days&format=json";
     path += "&target=transformNull(summarize(stats.timers." + domain + ".channels." + channelId + ".sum,'1day','avg'))";
     var raw = yield exports.fetchData(path);
     return this.body = exports.convertToRequiredFormat(raw, 'retrieveChannelMetrics');
@@ -144,21 +139,15 @@ fetchData = `function* fetchData(path) {
 }`
 
 convertToRequiredFormat = (raw, requiredFormat) ->
-  data = []
-  i = 0
   switch requiredFormat
-    when "retrieveAverageLoadTimePerHour" then _.forEach raw.data, (item, i) ->
-      data.push
-        avgResp: item[0]
-        timestamp: moment.unix item[1]
+    when "retrieveAverageLoadTimePerHour" then return raw.data.map (item) ->
+      avgResp: item[0]
+      timestamp: moment.unix item[1]
 
-    when "retrieveChannelMetrics", "transactionsPerChannelPerHour" then _.forEach raw.data, (item, i) ->
-      data.push
-        load: item[0]
-        avgResp: raw.data1[i][0]
-        timestamp: moment.unix item[1]
-
-  data
+    when "retrieveChannelMetrics", "transactionsPerChannelPerHour" then return raw.data.map (item, i) ->
+      load: item[0]
+      avgResp: raw.data1[i][0]
+      timestamp: moment.unix item[1]
 
 exports.fetchData = fetchData
 exports.convertToRequiredFormat = convertToRequiredFormat
