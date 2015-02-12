@@ -351,3 +351,54 @@ describe 'API Integration Tests', ->
               done err
             else
               done()
+
+    it "Should verify that a valid server cert and key match", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        request("https://localhost:8080")
+          .get("/keystore/validity")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.valid.should.be.exactly false
+              done()
+
+    it "Should verify that an server cert and key DO NOT match if they are invalid", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        keystore.key = fs.readFileSync 'test/resources/trust-tls/key1.pem'
+        keystore.save ->
+          request("https://localhost:8080")
+            .get("/keystore/validity")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                res.body.valid.should.be.exactly false
+                done()
+
+    it "Should respond with a 400 if one or more certs are invalid when checking validity", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        keystore.key = 'junkjunkjunk'
+        keystore.save ->
+          request("https://localhost:8080")
+            .get("/keystore/validity")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(400)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()

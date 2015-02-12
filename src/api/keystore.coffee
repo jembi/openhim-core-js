@@ -145,3 +145,27 @@ exports.removeCACert = (certId) ->
     this.status = 'ok'
   catch err
     logAndSetResponse this, 'internal server error', "Could not remove ca cert by id via the API: #{err}", 'error'
+
+exports.verifyServerKeys = ->
+  # Must be admin
+  if authorisation.inGroup('admin', this.authenticated) is false
+    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to verifyServerKeys.", 'info'
+    return
+
+  try
+    keystoreDoc = yield Keystore.findOne().exec()
+    getModulus = Q.denodeify pem.getModulus
+
+    try
+      keyModulus = yield getModulus keystoreDoc.key
+      certModulus = yield getModulus keystoreDoc.cert.data
+    catch err
+      return logAndSetResponse this, 'bad request', "Could not verify certificate and key, are they valid? #{err}", 'error'
+
+    if keyModulus is certModulus
+      this.body = { valid: true }
+    else
+      this.body = { valid: false }
+    this.status = 'ok'
+  catch err
+    logAndSetResponse this, 'internal server error', "Could not determine validity via the API: #{err}", 'error'
