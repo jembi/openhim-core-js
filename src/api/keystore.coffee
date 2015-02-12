@@ -17,7 +17,7 @@ exports.getServerCert = ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = yield Keystore.findOne().select('cert').exec()
     this.body = keystoreDoc.cert
   catch err
     logAndSetResponse this, 'internal server error', "Could not fetch the server cert via the API: #{err}", 'error'
@@ -29,7 +29,7 @@ exports.getCACerts = ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = yield Keystore.findOne().select('ca').exec()
     this.body = keystoreDoc.ca
   catch err
     logAndSetResponse this, 'internal server error', "Could not fetch the ca certs trusted by this server via the API: #{err}", 'error'
@@ -41,7 +41,7 @@ exports.getCACert = (certId) ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = yield Keystore.findOne().select('ca').exec()
     cert = keystoreDoc.ca.id(certId)
 
     this.body = cert
@@ -153,7 +153,7 @@ exports.verifyServerKeys = ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = yield Keystore.findOne().select('key cert').exec()
     getModulus = Q.denodeify pem.getModulus
 
     try
