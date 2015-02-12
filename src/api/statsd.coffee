@@ -3,10 +3,9 @@ config = require '../config/config'
 application = config.get 'application'
 os = require "os"
 domain = os.hostname() + '.' + application.name
-statsd_server = config.get 'statsd'
+statsdServer = config.get 'statsd'
 Q = require "q"
 request = require 'koa-request'
-_ = require "lodash"
 moment = require "moment"
 metrics = require "../metrics"
 logger = require "winston"
@@ -119,11 +118,11 @@ exports.transactionsPerChannelPerHour = `function *(period) {
 fetchData = `function* fetchData(path) {
   var data = {};
   var options = {
-    url: 'http://' + statsd_server.host + path,
+    url: 'http://' + statsdServer.host + path,
     json: true
   };
   var response = yield request(options);
-  _.forEach(response.body, function (item, i) {
+  response.body.forEach(function (item, i) {
       if (i == 0) {
         data.data = item.datapoints
       } else {
