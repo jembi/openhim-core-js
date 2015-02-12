@@ -12,6 +12,8 @@ metrics = require "../metrics"
 logger = require "winston"
 co = require "co"
 
+statusArray = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
+
 # Overall Metrics
 
 exports.retrieveTransactionCountPerHour = `function *() {
@@ -30,39 +32,33 @@ exports.retrieveTransactionCountPerHour = `function *() {
 # Retrives Global Status Metrics from the StatsD API
 
 exports.fetchGlobalStatusMetrics = `function *(allowedIds) {
-  var filtersObject = this.request.query;
-  var userRequesting = this.authenticated,
-    path = '',
-    results = {},
-    final = {};
-  allowedIds = allowedIds.length > 0 ? allowedIds : yield metrics.getAllowedChannelIDs(userRequesting)
-  var data = []
-  var status_array = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
+  allowedIds = allowedIds.length > 0 ? allowedIds : yield metrics.getAllowedChannelIDs(this.authenticated);
 
-  for (var j = 0; j < allowedIds.length; j++) {
-    var render_url = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + allowedIds[j]
-    for (i = 0; i < status_array.length; i++) {
-      path = render_url + ".statuses." + status_array[i] + ".count,'1day'))&format=json";
-      results[status_array[i]] = yield exports.fetchData(path)
-      if (results[status_array[i]]) {
-        final[status_array[i]] = 'data' in results[status_array[i]] ? results[status_array[i]].data[1][0] : 0;
+  var data = allowedIds.map(function(channelId) {
+    var total = {};
+    var renderUrl = '/render?target=transformNull(summarize(stats.counters.' + domain + '.channels.' + channelId;
+
+    statusArray.forEach(co.wrap(function*(statusType) {
+      var path = renderUrl + '.statuses.' + statusType + '.count,\'1day\'))&format=json';
+      var result = yield exports.fetchData(path);
+      if (result && result.data) {
+        total[statusType] = result.data[1][0];
       } else {
-        final[status_array[i]] = 0 ;
+        total[statusType] = 0;
       }
-    }
+    }));
 
-    data.push({
-      _id: {"channelID": allowedIds[j]},
-      failed: final.Failed,
-      successful: final.Successful,
-      processing: final.Processing,
-      completed: final.Completed,
-      completedWErrors: final['Completed with error(s)']
-    });
-  }
+    return {
+      _id: {channelID: channelId},
+      failed: total.Failed,
+      successful: total.Successful,
+      processing: total.Processing,
+      completed: total.Completed,
+      completedWErrors: total['Completed with error(s)']
+    };
+  });
 
-  this.body = data
-  return data;
+  return this.body = data;
 }`
 
 exports.retrieveAverageLoadTimePerHour = `function *(type) {
@@ -75,7 +71,6 @@ exports.retrieveAverageLoadTimePerHour = `function *(type) {
 }`
 
 exports.retrieveChannelMetrics = `function *(type, channelId) {
-  var statusArray = ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)'];
   var renderUrl = "/render?target=transformNull(summarize(stats.counters." + domain + ".channels." + channelId
   var path = '';
   var total = {};
