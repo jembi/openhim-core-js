@@ -18,7 +18,6 @@ FakeServer::start = (cb) ->
   @_socket = dgram.createSocket("udp4")
   @_socket.on "message", (msg, rinfo) ->
 
-    console.warn("Server got: '" + msg.toString() + "'");
     msg.toString().split("\n").forEach (part) ->
       that._packetsReceived.push part
       return

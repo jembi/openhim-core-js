@@ -14,6 +14,7 @@ domain = os.hostname() + '.' + application.name
 
 
 describe "Stats Middleware ", ->
+  this.timeout 20000
   s = {}
 
   beforeEach (done) ->
@@ -46,9 +47,12 @@ describe "Stats Middleware ", ->
   ctx.request.method = "GET"
   ctx.requestTimestamp = requestTimestamp
   ctx.transactionStatus = "Successful"
-
-#  TODO add orchestrations and non primary routes to the ctx object
-  ctx.mediatorResponse = orchestrations: [
+  ctx.routes = []
+  ctx.mediatorResponse = new Object()
+  ctx.mediatorResponse.properties =
+    name: 'primary mediator'
+  ctx.mediatorResponse.metrics = []
+  ctx.mediatorResponse.orchestrations = [
     name: "Lab API"
     request:
       path: "api/patient/lab"
@@ -62,7 +66,58 @@ describe "Stats Middleware ", ->
       headers: {}
       body: "<route response>"
       timestamp: 1412257881909
+    metrics : []
   ]
+
+
+#Non Primary routes
+  ctx.routes.push
+    name: "secondary route"
+    request:
+      path: "api/patient/lab"
+      headers:
+        "Content-Type": "text/plain"
+      body: "<route request>"
+      method: "POST"
+      timestamp: 1412257881904
+    "response":
+      "status": 200
+      "headers":
+        "content-type": "application\/json"
+      "body": "Primary Route Reached"
+      "timestamp": 1423489768398
+
+    orchestrations: [
+      name: "Lab API"
+      request:
+        path: "api/patient/lab"
+        headers:
+          "Content-Type": "text/plain"
+        body: "<route request>"
+        method: "POST"
+        timestamp: 1412257881904
+      response:
+        status: "200"
+        headers: {}
+        body: "<route response>"
+        timestamp: 1412257881909
+    ]
+
+#    Adding Custom Metrics
+  ctx.mediatorResponse.metrics.push
+      name: 'my-counter-metric'
+      type: 'counter'
+      value: 1
+  ctx.mediatorResponse.metrics.push
+    name: 'my-gauge-metric'
+    type: 'gauge'
+    value: 11
+  ctx.mediatorResponse.metrics.push
+    name: 'my-timer-metric'
+    type: 'timer'
+    value: 1522
+
+
 
 
 
@@ -75,14 +130,23 @@ describe "Stats Middleware ", ->
             s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:1|c', ->
               s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:1|c', ->
                 s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c', ->
-                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c', done
+                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c', ->
+                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-counter-metric:1|c', ->
+                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-gauge-metric:11|g', ->
+                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-timer-metric:1522|ms', done
 
   it "Should measure transaction duration", (done) ->
-    this.timeout = 900000
-    stats.timer = 10
-    stats.measureTransactionDuration ctx, () ->
-      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms', ->
-        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms', done
+      ctx.timer = 10
+      stats.measureTransactionDuration ctx, () ->
+        s.expectMessage domain + '.channels:10|ms', ->
+          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms', ->
+            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms', ->
+              s.expectMessage domain + '.channels.Successful:10|ms', ->
+                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:10|ms', ->
+                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful:10|ms', ->
+                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route:10|ms', ->
+                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms', ->
+                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms', done
 
 
 

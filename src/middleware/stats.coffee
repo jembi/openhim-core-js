@@ -67,6 +67,7 @@ exports.incrementTransactionCount = (ctx, done) ->
 #      Check for custom mediator metrics
       if ctx.mediatorResponse.metrics?
 
+
         for metric in ctx.mediatorResponse.metrics
 
           if metric.type == 'counter'
@@ -112,17 +113,18 @@ exports.incrementTransactionCount = (ctx, done) ->
 exports.measureTransactionDuration = (ctx, done) ->
   logger.info 'sending durations to statsd for ' + domain + '.' + ctx.authorisedChannel._id
   transactionStatus = ctx.transactionStatus
+
   try
-    sdc.timing domain + '.channels'  , timer # Overall Timer
-    sdc.timing domain + '.channels.' + transactionStatus, timer # Overall Transaction Status
-    sdc.timing domain + '.channels.' + ctx.authorisedChannel._id, timer # Per Channel
-    sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus, timer # Per Channel Status
+    sdc.timing domain + '.channels'  , ctx.timer # Overall Timer
+    sdc.timing domain + '.channels.' + transactionStatus, ctx.timer # Overall Transaction Status
+    sdc.timing domain + '.channels.' + ctx.authorisedChannel._id, ctx.timer # Per Channel
+    sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus, ctx.timer # Per Channel Status
 
     #Collect stats for non-primary routes
     if ctx.routes?
       for route in ctx.routes
-        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, this.timer
-        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes' + route.response.status, timer
+        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, ctx.timer
+        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status, ctx.timer
 
         if route.orchestrations?
           for orchestration in route.orchestrations
