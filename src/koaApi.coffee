@@ -15,6 +15,7 @@ Q = require 'q'
 worker = require './api/worker'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
+keystore = require './api/keystore'
 serverRestart = require './restart'
 
 exports.setupApp = (done) ->
@@ -85,6 +86,15 @@ exports.setupApp = (done) ->
   app.use route.get '/mediators/:uuid', mediators.getMediator
   app.use route.post '/mediators', mediators.addMediator
   app.use route.delete '/mediators/:urn', mediators.removeMediator
+
+  app.use route.get '/keystore/cert', keystore.getServerCert
+  app.use route.post '/keystore/cert', keystore.setServerCert
+  app.use route.get '/keystore/ca', keystore.getCACerts
+  app.use route.get '/keystore/ca/:certId', keystore.getCACert
+  app.use route.delete '/keystore/ca/:certId', keystore.removeCACert
+  app.use route.post '/keystore/key', keystore.setServerKey
+  app.use route.post '/keystore/ca/cert', keystore.addTrustedCert
+  app.use route.get '/keystore/validity', keystore.verifyServerKeys
 
   # server restart endpoint
   app.use route.post '/restart', serverRestart.restart
