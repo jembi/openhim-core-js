@@ -34,7 +34,7 @@ describe 'TCP adapter tests', ->
       tcpAdapter.startupServers ->
         try
           spy.calledOnce.should.be.true
-          spy.calledWith testChannel
+          spy.calledWith testChannel._id
         catch err
           return done err
         done()

@@ -19,7 +19,7 @@ See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more 
 0. Install [Node.js](http://nodejs.org/) 0.11.9 or greater
 1. Install and start [MongoDB](http://www.mongodb.org/)
 2. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location 
-3. In the root folder of the downloaded/cloned source, run `sudo npm install -g .`
+3. In the root folder of the downloaded/cloned source, run `sudo npm install . -g`
 5. Start the server by executing `openhim-core`
 
 Alternatively you can also use one of the following options:
@@ -111,6 +111,24 @@ Then run start the server with:
 `sudo start openhim-core`
 
 It will automatically startup on reboot.
+
+Exporting/Importing Server Configuration
+===========================
+
+### Exporting
+Follow the below steps to export and import the server metadata configuration. By default, the Users, Channels, Clients, ContactGroups and Mediators collections will be exported.
+Copy the file [openhim-configuration-export.sh](https://github.com/jembi/openhim-core-js/blob/master/resources/openhim-configuration-export.sh) to a folder where you wish your export to be saved. Run the shell scrip by executing the following command:
+`./openhim-configuration-export.sh`
+
+Your exported collections should be located in the folder structure '/dump/openhim/'.
+
+### Importing
+To import you data successfully ensure that you are in the correct folder where the dump files are located. Execute the below command to  import your collections.
+`mongorestore --db openhim dump/openhim`
+
+NB! if you have changed your database name, then do so for the export/import as well.
+NB! Please ensure that you stop the server before exporting and importing.
+
 
 Testing
 =======

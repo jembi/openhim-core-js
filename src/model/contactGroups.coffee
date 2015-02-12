@@ -7,7 +7,7 @@ exports.ContactUserSchema = ContactUserSchema = new Schema
   "maxAlerts":  { type: String, enum: ["no max", "1 per hour", "1 per day" ], default: "no max" }
 
 ContactGroupSchema = new Schema
-  "group":   { type: String, required: true }
+  "group":   { type: String, required: true, unique: true }
   "users":   [ ContactUserSchema ]
  
 exports.ContactUser = mongoose.model 'ContactUser', ContactUserSchema
