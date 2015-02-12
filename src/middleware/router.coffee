@@ -371,8 +371,7 @@ exports.route = (ctx, next) ->
 #
 # Use with: app.use(router.koaMiddleware)
 ###
-exports.koaMiddleware = `function *routeMiddleware(next) {
-  var route = Q.denodeify(exports.route);
-  yield route(this);
-  yield next;
-}`
+exports.koaMiddleware = (next) ->
+  route = Q.denodeify exports.route
+  yield route this
+  yield next
