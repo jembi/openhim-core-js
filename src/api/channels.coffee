@@ -174,7 +174,6 @@ exports.removeChannel = (channelId) ->
     numExistingTransactions = yield Transaction.count({ channelID: id }).exec()
 
     # Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-    channel
     if numExistingTransactions is 0
       # safe to remove
       channel = yield Channel.findByIdAndRemove(id).exec()
