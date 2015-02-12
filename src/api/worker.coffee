@@ -8,6 +8,7 @@ client = monq(config.mongo.url, safe: true)
 http = require 'http'
 TransactionModel = require("../model/transactions").Transaction
 net = require "net"
+rerunMiddleware = require "../middleware/rerunUpdateTransactionTask"
 
 
 #####################################################################################################
@@ -85,6 +86,15 @@ worker.register rerun_transaction: (params, callback) ->
             if err
               logger.error err
               return callback err, null
+#          Update original
+            ctx =
+              parentID : transaction._id
+              transactionId : transactionID
+              transactionStatus: TCPResponse.status
+              taskID : taskID
+
+            rerunMiddleware.updateOriginalTransaction ctx,  ->
+              rerunMiddleware.updateTask ctx, ->
 
 
 
@@ -337,7 +347,7 @@ rerunTcpRequestSend = (channel, transaction, callback) ->
     response.body += data
 
 
-  client.on "end" , (err) ->
+  client.on "end" , (data) ->
 
     response.status = 200
     response.transaction.status = "Completed"
@@ -346,8 +356,19 @@ rerunTcpRequestSend = (channel, transaction, callback) ->
     response.timestamp = new Date
 
     logger.info('Rerun Transaction #' + transaction._id + ' - TCP Response has been captured')
-    callback err, response
+    callback data, response
     return
+
+  client.on "error" , (err) ->
+    logger.info('problem with request: ' + err.message)
+    # update the status of the transaction that was processed to indicate it failed to process
+    response.transaction.status = "Failed" if err
+
+    response.status = 500
+    response.message = "Internal Server Error"
+    response.timestamp = new Date
+
+    callback err, response
 
 #########################################################
 # Export these functions when in the "test" environment #
