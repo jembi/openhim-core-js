@@ -1,6 +1,7 @@
+dgram = require('dgram')
+
 # A small fake UDP-server.
 #
-S = require "string"
 
 FakeServer = (options) ->
   options = options or {}
@@ -9,7 +10,6 @@ FakeServer = (options) ->
   @_packetsReceived = []
   @_expectedPackets = []
   return
-dgram = require("dgram")
 
 # Start the server and listen for messages.
 #
