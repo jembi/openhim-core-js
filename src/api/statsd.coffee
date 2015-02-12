@@ -33,11 +33,12 @@ exports.retrieveTransactionCountPerHour = `function *() {
 exports.fetchGlobalStatusMetrics = `function *(allowedIds) {
   allowedIds = allowedIds.length > 0 ? allowedIds : yield metrics.getAllowedChannelIDs(this.authenticated);
 
-  var data = allowedIds.map(function(channelId) {
+  var data = [];
+  for (var channelId of allowedIds) {
     var total = {};
     var renderUrl = '/render?target=transformNull(summarize(stats.counters.' + domain + '.channels.' + channelId;
 
-    statusArray.forEach(co.wrap(function*(statusType) {
+    for (var statusType of statusArray) {
       var path = renderUrl + '.statuses.' + statusType + '.count,\'1day\'))&format=json';
       var result = yield exports.fetchData(path);
       if (result && result.data) {
@@ -45,17 +46,17 @@ exports.fetchGlobalStatusMetrics = `function *(allowedIds) {
       } else {
         total[statusType] = 0;
       }
-    }));
+    }
 
-    return {
+    data.push({
       _id: {channelID: channelId},
       failed: total.Failed,
       successful: total.Successful,
       processing: total.Processing,
       completed: total.Completed,
       completedWErrors: total['Completed with error(s)']
-    };
-  });
+    });
+  }
 
   return this.body = data;
 }`
@@ -74,7 +75,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
   var path = '';
   var total = {};
   if (type === 'status') {
-    statusArray.forEach(co.wrap(function*(statusType) {
+    for (var statusType of statusArray) {
       path = renderUrl + ".statuses." + statusType + ".count,'1week'))&format=json";
       var result = yield exports.fetchData(path);
       if (result && result.data) {
@@ -82,7 +83,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       } else {
         total[statusType] = 0;
       }
-    }));
+    }
 
     return this.body = [
       {
@@ -133,6 +134,8 @@ fetchData = `function* fetchData(path) {
 }`
 
 convertToRequiredFormat = (raw, requiredFormat) ->
+  if not raw.data
+    return []
   switch requiredFormat
     when "retrieveAverageLoadTimePerHour" then return raw.data.map (item) ->
       avgResp: item[0]
