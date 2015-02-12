@@ -162,7 +162,7 @@ exports.verifyServerKeys = ->
     catch err
       return logAndSetResponse this, 'bad request', "Could not verify certificate and key, are they valid? #{err}", 'error'
 
-    if keyModulus is certModulus
+    if keyModulus.modulus is certModulus.modulus
       this.body = { valid: true }
     else
       this.body = { valid: false }

@@ -365,7 +365,7 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
-              res.body.valid.should.be.exactly false
+              res.body.valid.should.be.exactly true
               done()
 
     it "Should verify that an server cert and key DO NOT match if they are invalid", (done) ->
