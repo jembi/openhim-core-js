@@ -105,7 +105,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
         delete options.headers.host
 
       if route.primary
-        promise = sendRequest(ctx, route, options, keystore)
+        promise = sendRequest(ctx, route, options)
         .then (response) ->
           if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
             # handle mediator reponse
@@ -154,13 +154,13 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
     # on failure
     handleServerError ctx, reason
 
-sendRequest = (ctx, route, options, keystore) ->
+sendRequest = (ctx, route, options) ->
   if route.type is 'tcp' or route.type is 'mllp'
     logger.info 'Routing socket request'
-    return sendSocketRequest ctx, route, options, keystore
+    return sendSocketRequest ctx, route, options
   else
     logger.info 'Routing http(s) request'
-    return sendHttpRequest ctx, route, options, keystore
+    return sendHttpRequest ctx, route, options
 
 obtainCharset = (headers) ->
   contentType = headers['content-type'] || ''
@@ -178,7 +178,7 @@ obtainCharset = (headers) ->
 #    headers: <http_headers_object>
 #    timestamp: <the time the response was recieved>
 ###
-sendHttpRequest = (ctx, route, options, keystore) ->
+sendHttpRequest = (ctx, route, options) ->
   defered = Q.defer()
   response = {}
 
@@ -259,7 +259,7 @@ sendHttpRequest = (ctx, route, options, keystore) ->
 #
 # Supports both normal and MLLP sockets
 ###
-sendSocketRequest = (ctx, route, options, keystore) ->
+sendSocketRequest = (ctx, route, options) ->
   mllpEndChar = String.fromCharCode(0o034)
 
   defered = Q.defer()
