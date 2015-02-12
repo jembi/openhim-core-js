@@ -87,5 +87,5 @@ storeVisualizerEvents = (ctx, done) ->
 
 exports.koaMiddleware = (next) ->
   yield next
-  if config.visualizer.enableVisualizer?
+  if config.visualizer.enableVisualizer
     storeVisualizerEvents this, ->
