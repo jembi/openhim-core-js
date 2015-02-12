@@ -66,7 +66,6 @@ exports.addMediator = ->
     if typeof existing != 'undefined' and existing != null
       if semver.gt(mediator.version, existing.version)
         yield Mediator.findByIdAndUpdate(existing._id, mediator).exec();
-      else
     else
       if !mediator.endpoints or mediator.endpoints.length < 1
         throw
@@ -75,7 +74,6 @@ exports.addMediator = ->
       yield Q.ninvoke(new Mediator(mediator), 'save')
       if mediator.defaultChannelConfig
         yield saveDefaultChannelConfig(mediator.defaultChannelConfig);
-      else
     @status = 'created'
     logger.info 'User %s created mediator with urn %s', @authenticated.email, mediator.urn
   catch err
