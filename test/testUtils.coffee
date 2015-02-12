@@ -4,8 +4,13 @@ net = require "net"
 tls = require "tls"
 fs = require "fs"
 User = require('../lib/model/users').User
+Keystore = require('../lib/model/keystore').Keystore
+Certificate = require('../lib/model/keystore').Certificate
 crypto = require "crypto"
 zlib = require "zlib"
+pem = require "pem"
+logger = require "winston"
+Q = require "q"
 
 exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
   requestCallback = requestCallback || ->
@@ -41,7 +46,7 @@ exports.createMockHTTPSServerWithMutualAuth = (resStatusCode, resBody, port, use
     secureProtocol: 'TLSv1_method'
 
   if useClientCert
-    options.ca = fs.readFileSync 'tls/cert.pem'
+    options.ca = fs.readFileSync 'test/resources/server-tls/cert.pem'
 
   requestCallback = requestCallback || ->
     # Create mock endpoint to forward requests to
@@ -73,7 +78,7 @@ exports.createMockTLSServerWithMutualAuth = (port, expected, matchResponse, nonM
     secureProtocol: 'TLSv1_method'
 
   if useClientCert
-    options.ca = fs.readFileSync 'tls/cert.pem'
+    options.ca = fs.readFileSync 'test/resources/server-tls/cert.pem'
 
   server = tls.createServer options, (sock) ->
     sock.on 'data', (data) ->
@@ -193,3 +198,61 @@ exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, b
       else
         res.writeHead errStatusCode, {"Content-Type": "text/plain"}
         res.end()
+
+###
+# Sets up a keystore of testing. serverCert, serverKey, ca are optional, however if
+# you provide a serverCert you must provide the serverKey or null one out and vice
+# versa.
+###
+exports.setupTestKeystore = (serverCert, serverKey, ca, callback) ->
+
+  if typeof serverCert is 'function'
+    callback = serverCert
+    serverCert = null
+
+  if serverCert instanceof Array and typeof serverKey is 'function'
+    ca = serverCert
+    callback = serverKey
+    serverCert = null
+    serverKey = null
+
+  serverCert = fs.readFileSync 'test/resources/server-tls/cert.pem' if not serverCert?
+  serverKey = fs.readFileSync 'test/resources/server-tls/key.pem' if not serverKey?
+  if not ca?
+    ca = []
+    ca.push fs.readFileSync 'test/resources/trust-tls/cert1.pem'
+    ca.push fs.readFileSync 'test/resources/trust-tls/cert2.pem'
+
+  # remove any existing keystore
+  Keystore.remove {}, ->
+
+    pem.readCertificateInfo serverCert, (err, serverCertInfo) ->
+      if err?
+        logger.error "Failed to get certificate info in test utils: #{err}"
+        return callback null
+      serverCertInfo.data = serverCert
+
+      keystore = new Keystore
+        key: serverKey
+        cert: serverCertInfo
+        ca: []
+
+      if ca.length > 0
+        readCertInfo = Q.denodeify pem.readCertificateInfo
+        promises = []
+
+        for cert in ca
+          promises.push(readCertInfo cert)
+
+        Q.all(promises).then (caCertsInfo) ->
+          keystore.ca = caCertsInfo
+          # Add in the cert data
+          for cert, i in ca
+            keystore.ca[i].data = cert;
+          keystore.save -> callback keystore
+      else
+        keystore.save -> callback keystore
+
+exports.cleanupTestKeystore = (callback) ->
+  Keystore.remove {}, ->
+    callback()
