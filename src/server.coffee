@@ -2,6 +2,7 @@
 path = require 'path'
 global.appRoot = path.join path.resolve(__dirname), '..'
 
+fs = require 'fs'
 http = require 'http'
 https = require 'https'
 net = require 'net'
@@ -55,73 +56,19 @@ rootUser =
   # password = 'openhim-password'
 
 defaultKeystore =
-  key:  """
-        -----BEGIN PRIVATE KEY-----
-        MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDjpI1w8H17ihTM
-        yI4oTe3n3cUT7ULOHAf1exeHpMIZ86Ea1i9X6HZ422vF/Q6LUx3uoAD4SSYd3xHA
-        LytWXvnGS+ipXua+QYS/mF1VD7GZOa/bl3iLYS0aanEzp9kCi0ZCJG0l7L+EnCke
-        RmnCdzs9tAgPZacjXETEkC1kjoBTkshgK4pLu+2+dbb9vWaScUhf/JdLKuDsXXxd
-        CgQOi2x2gc7jfMsQltBCeEKcHWk2gnha5izwteu6rCzwz4xqTDtgj9LJFDRB8Zuy
-        f+XZiBN4yuASmpnBXTt7QZOXReb9Nvrsq1SCaP2bVHa4oscDKkejhJeDOOaVDgmX
-        ERiuCsx1AgMBAAECggEACmgXXzZfRiqF0ObKOOV3HsZwn/yUtT9qzboW1Uie5vjQ
-        QJ3SBD7IS7YcMyziYVQnZiVCZhdR+sOb2CFP5d7ppDsMI9IG0mPEYc3hVmYlRE/y
-        ziMai6ShnzeGfUoLDaa4S4XGx5kPGEzbRFsLsqwotSVpyOpovaEWM7YznQk2rJtP
-        Ir1WKuja0TSeTREh0+eYWH8zpmGWM5y3j/FEZTP5hblr9ljQvGxQxhKroTmKVb7E
-        HnHjNcwnnTxyWTn99hNblXn95yccESmoMh9/YKGp97zxWLI3iqkWNHXc3iYznnj4
-        umNkS5eXQaKNivgYRVo3aOxmCUX6ZEa2sy+mqD30cQKBgQD04ks+yZaHMcaRgYml
-        Ktb07WXxNkrmsNWufc9ahPJF56f4ZDgY1RnYhMDbpPdrNK/ZmlKgBmwwb3Eoby6I
-        Dskom9eaROXfdzZ67FQ8yfkVlL8OJ4W2cdktVj/TPHN4Z+3wyh8TxEspq3vy79hk
-        vhdRXjcFXmC61//6mELMnUIoVwKBgQDt+ee8npkemQlrv+zB/+tO/xo5mWImOIv5
-        6At3bNs5jZLxhKunMHYHmeBFeqMf58CwFHwq2UC5d1DtdqmhkxxlEXzNcEVMOVLE
-        KwZG9M9eJ9BBixOAHecZohiJquFR0LTFfXQZLpMo8AhvfR2A6DyYWisjmmsrND6u
-        G1Cz+oPiEwKBgQDycp1W05UR0ukqpFqXyTs7EVMtprgvgAJ/GJZTo26OYVV+6hJU
-        G5/UK1MZ41EGtgooYc7OGq3AooUhKDqkgCcO6oRiezYvscKhnxujd8ABatxhciXD
-        RSJk7ZCRXbdhDVyZWjO8iUp1Pg+grW/MBhvl9mZ5DUCtnC8Wdusj08ptTwKBgAjG
-        y64gJ0OCn19S77dj6di6/cucBYulUDxCO5IG+LrRptazbuU2m1PCcAv/7t4xXODh
-        kIbABmwQo3JuiukDlOuBTpoBBv09q/jCIXQieTdevoZ8S5bRA4HlgYQqQi8TRGd4
-        Lfzzw8ehup3p/lmPtxRjVu30Nvmb7qfbKAnLNmvzAoGBAM3TKtnncN1B8J78qy1H
-        EsYbhzphTjF4PvfPmdwjhnHRTx6X2Pn6o2jKEZ8wFkD/dLBZXzvqqIfeHGVJP/Hm
-        mwYV8eJkzJRJkRNpFFBB6PKUfd1bb0/BQpHjlimk7mfv7XB4HYoX7a8BW2EevjN/
-        uuDQFcShTjEeK/cfzrx9UuPY
-        -----END PRIVATE KEY-----\n
-        """
+  key: fs.readFileSync 'resources/certs/default/key.pem'
   cert:
     country: 'ZA'
     state: 'KZN'
     locality: 'Durban'
-    organization: 'Jembi Health Systems NPC'
-    organizationUnit: 'eHealth'
-    commonName: 'localhost'
-    emailAddress: 'ryan@jembi.org'
+    organization: 'OpenHIM Default Certificate'
+    organizationUnit: 'Default'
+    commonName: '*.openhim.org'
+    emailAddress: 'openhim-implementers@googlegroups.com'
     validity:
-      start: 1395318140000
-      end: 1710678140000
-    data: """
-          -----BEGIN CERTIFICATE-----
-          MIID/TCCAuWgAwIBAgIJANGZIlc5XXHCMA0GCSqGSIb3DQEBBQUAMIGUMQswCQYD
-          VQQGEwJaQTEMMAoGA1UECAwDS1pOMQ8wDQYDVQQHDAZEdXJiYW4xITAfBgNVBAoM
-          GEplbWJpIEhlYWx0aCBTeXN0ZW1zIE5QQzEQMA4GA1UECwwHZUhlYWx0aDESMBAG
-          A1UEAwwJbG9jYWxob3N0MR0wGwYJKoZIhvcNAQkBFg5yeWFuQGplbWJpLm9yZzAe
-          Fw0xNDAzMjAxMjIyMjBaFw0yNDAzMTcxMjIyMjBaMIGUMQswCQYDVQQGEwJaQTEM
-          MAoGA1UECAwDS1pOMQ8wDQYDVQQHDAZEdXJiYW4xITAfBgNVBAoMGEplbWJpIEhl
-          YWx0aCBTeXN0ZW1zIE5QQzEQMA4GA1UECwwHZUhlYWx0aDESMBAGA1UEAwwJbG9j
-          YWxob3N0MR0wGwYJKoZIhvcNAQkBFg5yeWFuQGplbWJpLm9yZzCCASIwDQYJKoZI
-          hvcNAQEBBQADggEPADCCAQoCggEBAOOkjXDwfXuKFMzIjihN7efdxRPtQs4cB/V7
-          F4ekwhnzoRrWL1fodnjba8X9DotTHe6gAPhJJh3fEcAvK1Ze+cZL6Kle5r5BhL+Y
-          XVUPsZk5r9uXeIthLRpqcTOn2QKLRkIkbSXsv4ScKR5GacJ3Oz20CA9lpyNcRMSQ
-          LWSOgFOSyGAriku77b51tv29ZpJxSF/8l0sq4OxdfF0KBA6LbHaBzuN8yxCW0EJ4
-          QpwdaTaCeFrmLPC167qsLPDPjGpMO2CP0skUNEHxm7J/5dmIE3jK4BKamcFdO3tB
-          k5dF5v02+uyrVIJo/ZtUdriixwMqR6OEl4M45pUOCZcRGK4KzHUCAwEAAaNQME4w
-          HQYDVR0OBBYEFJnizHQGoVgbP56IJT/yORX5ENkBMB8GA1UdIwQYMBaAFJnizHQG
-          oVgbP56IJT/yORX5ENkBMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEFBQADggEB
-          AI28PX4eBljmgpMy9AYbMBgyRikOyJZYEGfhZrIMO/GRpXmTTI0I15QEwJH12TJg
-          mzNinW4Iwo0lM63zU93TkYorJ3kt8OHejOamEXntrRmFxZXgWKJztGg//AdPK4Ii
-          RAJ8To7o80W3Y/P7E9c/S/nYJmaJ1Ft4LQl177sy8+rEEWZzspyhuRRmfGN/Ww1z
-          6nvPZD1ZuOL8awomUvBvXpnNVnsdy/qp+VSdtmMXe+Xb1brfMFMzYwBV5qPeciN6
-          OLLjp874y8rw5cpDTw+baRwYkXi9zcQDIIJrIN5CmdU6iRoyaNfkXsj7rYpuAh5V
-          0oYABhnhtDozbwMtj2zBm1Y=
-          -----END CERTIFICATE-----\n
-          """
+      start: 1423810077000
+      end: 3151810077000
+    data: fs.readFileSync 'resources/certs/default/cert.pem'
   ca: []
 
 # Job scheduler
