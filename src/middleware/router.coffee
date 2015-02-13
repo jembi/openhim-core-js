@@ -142,6 +142,7 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
       responseObj = JSON.parse response.body
       routeObj.orchestrations = responseObj.orchestrations
       routeObj.properties = responseObj.properties
+      routeObj.metrics = responseObj.metrics if responseObj.metrics
       routeObj.response = responseObj.response
     else
       routeObj.response = response

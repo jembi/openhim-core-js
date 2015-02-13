@@ -8,7 +8,9 @@ testUtils = require "../testUtils"
 server = require "../../lib/server"
 fs = require "fs"
 sinon = require "sinon"
+config = require "../../lib/config/config"
 stats = require "../../lib/middleware/stats"
+
 
 
 
@@ -163,9 +165,10 @@ describe "TCP/TLS/MLLP Integration Tests", ->
     server.start null, null, null, null, 7787, null, ->
       sendTCPTestMessage 4000, (data) ->
         data.should.be.exactly 'TCP OK'
-        incrementTransactionCountSpy.calledOnce.should.be.true
-        incrementTransactionCountSpy.getCall(0).args[0].authorisedChannel.should.have.property 'name', 'TCPIntegrationChannel1'
-        measureTransactionDurationSpy.calledOnce.should.be.true
+        if config.statsd.enabled
+          incrementTransactionCountSpy.calledOnce.should.be.true
+          incrementTransactionCountSpy.getCall(0).args[0].authorisedChannel.should.have.property 'name', 'TCPIntegrationChannel1'
+          measureTransactionDurationSpy.calledOnce.should.be.true
         done()
 
   it "should handle disconnected clients", (done) ->
