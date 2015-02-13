@@ -60,7 +60,7 @@
     "supertest": "^0.15.0"
   },
   "scripts": {
-    "prepublish": "./node_modules/grunt-cli/bin/grunt build",
-    "test": "./node_modules/grunt-cli/bin/grunt test"
+    "prepublish": "grunt build",
+    "test": "grunt test"
   }
 }
