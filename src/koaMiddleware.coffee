@@ -27,10 +27,9 @@ Q = require "q"
 compress = require 'koa-compress'
 
 rawBodyReader = (next) ->
-  body = yield getRawBody this.req, {
+  body = yield getRawBody this.req,
     length: this.length,
     encoding: this.charset
-  }
 
   this.body = body if body
   yield next
