@@ -5,39 +5,36 @@ logger = require 'winston'
 authorisation = require './authorisation'
 pem = require 'pem'
 
-logAndSetResponse = (ctx, status, msg, logLevel) ->
-  logger[logLevel] msg
-  ctx.body = msg
-  ctx.status = status
+utils = require "../utils"
 
 exports.getServerCert = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getServerCert denied.", 'info'
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getServerCert denied.", 'info'
     return
 
   try
     keystoreDoc = yield Keystore.findOne().select('cert').exec()
     this.body = keystoreDoc.cert
   catch err
-    logAndSetResponse this, 'internal server error', "Could not fetch the server cert via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not fetch the server cert via the API: #{err}", 'error'
 
 exports.getCACerts = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getCACerts denied.", 'info'
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getCACerts denied.", 'info'
     return
 
   try
     keystoreDoc = yield Keystore.findOne().select('ca').exec()
     this.body = keystoreDoc.ca
   catch err
-    logAndSetResponse this, 'internal server error', "Could not fetch the ca certs trusted by this server via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not fetch the ca certs trusted by this server via the API: #{err}", 'error'
 
 exports.getCACert = (certId) ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getCACert by id denied.", 'info'
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getCACert by id denied.", 'info'
     return
 
   try
@@ -46,13 +43,13 @@ exports.getCACert = (certId) ->
 
     this.body = cert
   catch err
-    logAndSetResponse this, 'internal server error', "Could not fetch ca cert by id via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not fetch ca cert by id via the API: #{err}", 'error'
 
 
 exports.setServerCert = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to setServerCert by id denied.", 'info'
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to setServerCert by id denied.", 'info'
     return
 
   try
@@ -61,7 +58,7 @@ exports.setServerCert = ->
     try
       certInfo = yield readCertificateInfo cert
     catch err
-      return logAndSetResponse this, 'bad request', "Could not add server cert via the API: #{err}", 'error'
+      return utils.logAndSetResponse this, 'bad request', "Could not add server cert via the API: #{err}", 'error'
     certInfo.data = cert
 
     keystoreDoc = yield Keystore.findOne().exec()
@@ -69,12 +66,12 @@ exports.setServerCert = ->
     yield Q.ninvoke keystoreDoc, 'save'
     this.status = 'created'
   catch err
-    logAndSetResponse this, 'internal server error', "Could not add server cert via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not add server cert via the API: #{err}", 'error'
 
 exports.setServerKey = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getServerKey by id denied.", 'info'
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getServerKey by id denied.", 'info'
     return
 
   try
@@ -84,13 +81,13 @@ exports.setServerKey = ->
     yield Q.ninvoke keystoreDoc, 'save'
     this.status = 'created'
   catch err
-    logAndSetResponse this, 'internal server error', "Could not add server key via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not add server key via the API: #{err}", 'error'
 
 
 exports.addTrustedCert = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addTrustedCert by id denied.", 'info'
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addTrustedCert by id denied.", 'info'
     return
 
   try
@@ -126,16 +123,16 @@ exports.addTrustedCert = ->
     yield Q.ninvoke keystoreDoc, 'save'
 
     if invalidCert
-      logAndSetResponse this, 'bad request', "Failed to add one more cert, are they valid? #{err}", 'error'
+      utils.logAndSetResponse this, 'bad request', "Failed to add one more cert, are they valid? #{err}", 'error'
     else
       this.status = 'created'
   catch err
-    logAndSetResponse this, 'internal server error', "Could not add trusted cert via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not add trusted cert via the API: #{err}", 'error'
 
 exports.removeCACert = (certId) ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeCACert by id denied.", 'info'
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeCACert by id denied.", 'info'
     return
 
   try
@@ -144,12 +141,12 @@ exports.removeCACert = (certId) ->
     yield Q.ninvoke keystoreDoc, 'save'
     this.status = 'ok'
   catch err
-    logAndSetResponse this, 'internal server error', "Could not remove ca cert by id via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not remove ca cert by id via the API: #{err}", 'error'
 
 exports.verifyServerKeys = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
-    logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to verifyServerKeys.", 'info'
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to verifyServerKeys.", 'info'
     return
 
   try
@@ -160,7 +157,7 @@ exports.verifyServerKeys = ->
       keyModulus = yield getModulus keystoreDoc.key
       certModulus = yield getModulus keystoreDoc.cert.data
     catch err
-      return logAndSetResponse this, 'bad request', "Could not verify certificate and key, are they valid? #{err}", 'error'
+      return utils.logAndSetResponse this, 'bad request', "Could not verify certificate and key, are they valid? #{err}", 'error'
 
     if keyModulus.modulus is certModulus.modulus
       this.body = { valid: true }
@@ -168,4 +165,4 @@ exports.verifyServerKeys = ->
       this.body = { valid: false }
     this.status = 'ok'
   catch err
-    logAndSetResponse this, 'internal server error', "Could not determine validity via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not determine validity via the API: #{err}", 'error'
