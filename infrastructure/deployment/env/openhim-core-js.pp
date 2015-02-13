@@ -9,7 +9,7 @@
 $home="/root"
 $source_dir="$home/openhim-core-js"
 $node_env="production"
-$node_bin="/usr/local/node/node-v0.11.14/bin"
+$node_bin="/usr/local/node/node-v0.12.0/bin"
 $node_exec="$node_bin/node"
 $npm_exec="$node_bin/npm"
 
@@ -43,15 +43,15 @@ class { "nodejs":
 	version => "stable",
 }
 
-nodejs::install { "node-v0.11.14":
-	version => "v0.11.14",
+nodejs::install { "node-v0.12.0":
+	version => "v0.12.0",
 }
 
 exec { "npm-install":
 	cwd => "$source_dir",
 	timeout => 0,
 	command => "$npm_exec install",
-	require => [ Nodejs::Install["node-v0.11.14"], Package["build-essential"] ],
+	require => [ Nodejs::Install["node-v0.12.0"], Package["build-essential"] ],
 }
 
 exec { "install-grunt":
@@ -59,7 +59,7 @@ exec { "install-grunt":
 	timeout => 0,
 	command => "npm install -g grunt-cli",
 	unless => "npm list -g grunt-cli",
-	require => Nodejs::Install["node-v0.11.14"],
+	require => Nodejs::Install["node-v0.12.0"],
 }
 
 exec { "build":
