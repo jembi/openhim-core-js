@@ -79,13 +79,13 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
       path = renderUrl + ".statuses." + statusType + ".count,'1week'))&format=json";
       var result = yield exports.fetchData(path);
       if (result && result.data) {
-        total[statusType] = result.data[1][0];
+        total[statusType] = (result.data[1] || result.data[0])[0];
       } else {
         total[statusType] = 0;
       }
     }
 
-    return this.body = [
+     this.body = [
       {
         _id: {"channelID": channelId},
         failed: total.Failed,
@@ -95,6 +95,7 @@ exports.retrieveChannelMetrics = `function *(type, channelId) {
         completedWErrors: total['Completed with error(s)']
       }
     ];
+    return this.body
   } else {
 
     path = renderUrl + ".count,'1day'))&from=-7days&format=json";
