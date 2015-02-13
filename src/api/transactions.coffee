@@ -101,7 +101,7 @@ exports.addTransaction = ->
     # Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Q.ninvoke tx, "save"
     this.status = 'created'
-    logger.info 'User %s created transaction with id %s', this.authenticated.email, tx.id
+    logger.info "User #{this.authenticated.email} created transaction with id #{tx.id}"
   catch e
     util.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
 
@@ -154,12 +154,12 @@ exports.getTransactionById = (transactionId) ->
     result = yield transactions.Transaction.findById(transactionId, projectionFiltersObject).exec()
 
     # Test if the result if valid
-    if result is null or result.length is 0
+    if result?.length is 0
       this.body = "Could not find transaction with ID: #{transactionId}"
       this.status = 'not found'
     # Test if the user is authorised
     else if not authorisation.inGroup 'admin', this.authenticated
-      channels = yield authorisation.getUserViewableChannels(this.authenticated)
+      channels = yield authorisation.getUserViewableChannels this.authenticated
       if getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0
         this.body = result
       else
@@ -225,7 +225,7 @@ exports.updateTransaction = (transactionId) ->
     yield transactions.Transaction.findByIdAndUpdate(transactionId, updates).exec()
     this.body = "Transaction with ID: #{transactionId} successfully updated"
     this.status = 'ok'
-    logger.info 'User %s updated transaction with id %s', this.authenticated.email, transactionId
+    logger.info "User #{this.authenticated.email} updated transaction with id #{transactionId}"
   catch e
     util.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
 
@@ -247,6 +247,6 @@ exports.removeTransaction = (transactionId) ->
     yield transactions.Transaction.findByIdAndRemove(transactionId).exec()
     this.body = 'Transaction successfully deleted'
     this.status = 'ok'
-    logger.info 'User %s removed transaction with id %s', this.authenticated.email, transactionId
+    logger.info "User #{this.authenticated.email} removed transaction with id #{transactionId}"
   catch e
     util.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
