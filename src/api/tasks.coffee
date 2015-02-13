@@ -50,12 +50,12 @@ isRerunPermissionsValid = (user, transactions, callback) ->
 ######################################
 exports.getTasks = ->
   # Must be admin
-  if authorisation.inGroup('admin', @authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to getTasks denied.", 'info'
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getTasks denied.", 'info'
     return
 
   try
-    @body = yield Task.find({}).exec();
+    this.body = yield Task.find({}).exec();
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not fetch all tasks via the API: #{err}", 'error'
 
@@ -81,16 +81,16 @@ areTransactionChannelsValid = (transactions, callback) ->
 exports.addTask = ->
 
   # Get the values to use
-  transactions = @request.body
+  transactions = this.request.body
   try
     taskObject = {}
     transactionsArr = []
     taskObject.remainingTransactions = transactions.tids.length
-    taskObject.user = @authenticated.email
+    taskObject.user = this.authenticated.email
 
     # check rerun permission and whether to create the rerun task
     isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
-    allowRerunTaskCreation = yield isRerunPermsValid( @authenticated, transactions )
+    allowRerunTaskCreation = yield isRerunPermsValid( this.authenticated, transactions )
 
     # the rerun task may be created
     if allowRerunTaskCreation == true
@@ -132,7 +132,7 @@ exports.addTask = ->
         i++
 
       # All ok! So set the result
-      utils.logAndSetResponse this, 'created', "User #{@authenticated.email} created task with id #{task.id}", 'info'
+      utils.logAndSetResponse this, 'created', "User #{this.authenticated.email} created task with id #{task.id}", 'info'
     else
       # rerun task creation not allowed
       utils.logAndSetResponse this, 'forbidden', "Insufficient permissions prevents this rerun task from being created", 'error'
@@ -149,7 +149,7 @@ exports.addTask = ->
 exports.getTask = (taskId) ->
 
   # Get the values to use
-  taskId = unescape(taskId)
+  taskId = unescape taskId
 
   try
     # Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
@@ -160,7 +160,7 @@ exports.getTask = (taskId) ->
       # Channel not foud! So inform the user
       utils.logAndSetResponse this, 'not found', "We could not find a Task with this ID: #{taskId}.", 'info'
     else
-      @body = result
+      this.body = result
       # All ok! So set the result
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not fetch Task by ID {taskId} via the API: #{err}", 'error'
@@ -173,20 +173,20 @@ exports.getTask = (taskId) ->
 ###########################################
 exports.updateTask = (taskId) ->
   # Must be admin
-  if authorisation.inGroup('admin', @authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to removeTask denied.", 'info'
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateTask denied.", 'info'
     return
 
   # Get the values to use
-  taskId = unescape(taskId)
-  taskData = @request.body
+  taskId = unescape taskId
+  taskData = this.request.body
 
   try
     yield Task.findOneAndUpdate({ _id: taskId }, taskData).exec()
 
     # All ok! So set the result
-    @body = 'The Task was successfully updated'
-    logger.info "User #{@authenticated.email} updated task with id #{taskId}"
+    this.body = 'The Task was successfully updated'
+    logger.info "User #{this.authenticated.email} updated task with id #{taskId}"
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not update Task by ID {taskId} via the API: #{err}", 'error'
 
@@ -197,19 +197,19 @@ exports.updateTask = (taskId) ->
 ####################################
 exports.removeTask = (taskId) ->
   # Must be admin
-  if authorisation.inGroup('admin', @authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to removeTask denied.", 'info'
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeTask denied.", 'info'
     return
 
   # Get the values to use
-  taskId = unescape(taskId)
+  taskId = unescape taskId
 
   try
     # Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Task.remove({ _id: taskId }).exec();
 
     # All ok! So set the result
-    @body = 'The Task was successfully deleted'
-    logger.info "User #{@authenticated.email} removed task with id #{taskId}"
+    this.body = 'The Task was successfully deleted'
+    logger.info "User #{this.authenticated.email} removed task with id #{taskId}"
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not remove Task by ID {taskId} via the API: #{err}", 'error'
