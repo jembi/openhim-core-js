@@ -27,7 +27,7 @@ class { "mongodb":
 class { 'mongodb::client': }
 
 class { "nodejs":
-	version => "latest",
+	version => "stable",
 }
 
 exec { "npm-install":
