@@ -1,5 +1,7 @@
 language: node_js
 node_js:
   - "0.11"
+  - "0.12"
+  - iojs
 services: mongodb
 after_success: 'curl -v -X POST -H "api_key: fdb9e03f-f843-4bea-9d02-43ab619dd289" http://162.243.219.172/deploys/openhim-core/preprod'
