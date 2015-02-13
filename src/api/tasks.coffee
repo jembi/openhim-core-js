@@ -50,8 +50,8 @@ isRerunPermissionsValid = (user, transactions, callback) ->
 ######################################
 exports.getTasks = ->
   # Must be admin
-  if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getTasks denied.", 'info'
+  if authorisation.inGroup('admin', @authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to getTasks denied.", 'info'
     return
 
   try
@@ -90,7 +90,7 @@ exports.addTask = ->
 
     # check rerun permission and whether to create the rerun task
     isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
-    allowRerunTaskCreation = yield isRerunPermsValid( this.authenticated, transactions )
+    allowRerunTaskCreation = yield isRerunPermsValid( @authenticated, transactions )
 
     # the rerun task may be created
     if allowRerunTaskCreation == true
@@ -121,18 +121,18 @@ exports.addTask = ->
             transactionID: transactionID
             taskID: taskID
           }, (e, job) ->
-            logger.info 'Enqueued transaction:', job.data.params.transactionID
+            logger.info 'Enqueued transaction: #{job.data.params.transactionID}'
             return
 
           # All ok! So set the result
           utils.logAndSetResponse this, 'created', 'Queue item successfully created', 'info'
         catch err
           # Error! So inform the user
-          utils.logAndSetResponse this, 'internal server error', 'Could not add Queue item via the API: ' + err, 'info'
+          utils.logAndSetResponse this, 'internal server error', "Could not add Queue item via the API: #{err}", 'info'
         i++
 
       # All ok! So set the result
-      utils.logAndSetResponse this, 'created', 'User {@authenticated.email} created task with id {task.id}', 'info'
+      utils.logAndSetResponse this, 'created', "User #{@authenticated.email} created task with id #{task.id}", 'info'
     else
       # rerun task creation not allowed
       utils.logAndSetResponse this, 'forbidden', "Insufficient permissions prevents this rerun task from being created", 'error'
@@ -158,7 +158,7 @@ exports.getTask = (taskId) ->
     # Test if the result if valid
     if result == null
       # Channel not foud! So inform the user
-      utils.logAndSetResponse this, 'not found', 'We could not find a Task with this ID: ' + taskId + '.', 'info'
+      utils.logAndSetResponse this, 'not found', "We could not find a Task with this ID: #{taskId}.", 'info'
     else
       @body = result
       # All ok! So set the result
@@ -173,20 +173,20 @@ exports.getTask = (taskId) ->
 ###########################################
 exports.updateTask = (taskId) ->
   # Must be admin
-  if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeTask denied.", 'info'
+  if authorisation.inGroup('admin', @authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to removeTask denied.", 'info'
     return
 
   # Get the values to use
   taskId = unescape(taskId)
-  taskData = this.request.body
+  taskData = @request.body
 
   try
     yield Task.findOneAndUpdate({ _id: taskId }, taskData).exec()
 
     # All ok! So set the result
     @body = 'The Task was successfully updated'
-    logger.info 'User %s updated task with id %s', @authenticated.email, taskId
+    logger.info "User #{@authenticated.email} updated task with id #{taskId}"
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not update Task by ID {taskId} via the API: #{err}", 'error'
 
@@ -197,8 +197,8 @@ exports.updateTask = (taskId) ->
 ####################################
 exports.removeTask = (taskId) ->
   # Must be admin
-  if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeTask denied.", 'info'
+  if authorisation.inGroup('admin', @authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to removeTask denied.", 'info'
     return
 
   # Get the values to use
@@ -210,6 +210,6 @@ exports.removeTask = (taskId) ->
 
     # All ok! So set the result
     @body = 'The Task was successfully deleted'
-    logger.info 'User %s removed task with id %s', @authenticated.email, taskId
+    logger.info "User #{@authenticated.email} removed task with id #{taskId}"
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not remove Task by ID {taskId} via the API: #{err}", 'error'

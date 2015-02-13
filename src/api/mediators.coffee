@@ -10,8 +10,8 @@ utils = require "../utils"
 
 exports.getAllMediators = ->
   # Must be admin
-  if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getAllMediators denied.", 'info'
+  if authorisation.inGroup('admin', @authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to getAllMediators denied.", 'info'
     return
 
   try
@@ -23,8 +23,8 @@ exports.getAllMediators = ->
 
 exports.getMediator = (mediatorURN) ->
   # Must be admin
-  if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getMediator denied.", 'info'
+  if authorisation.inGroup('admin', @authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to getMediator denied.", 'info'
     return
 
   urn = unescape(mediatorURN)
@@ -46,8 +46,8 @@ saveDefaultChannelConfig = (config) -> new Channel(channel).save() for channel i
 
 exports.addMediator = ->
   # Must be admin
-  if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addMediator denied.", 'info'
+  if authorisation.inGroup('admin', @authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to addMediator denied.", 'info'
     return
 
   try
@@ -75,7 +75,7 @@ exports.addMediator = ->
       if mediator.defaultChannelConfig
         yield saveDefaultChannelConfig(mediator.defaultChannelConfig);
     @status = 'created'
-    logger.info 'User %s created mediator with urn %s', @authenticated.email, mediator.urn
+    logger.info "User #{@authenticated.email} created mediator with urn #{mediator.urn}"
   catch err
     if err.name == 'ValidationError'
       utils.logAndSetResponse this, 'bad request', "Could not add Mediator via the API: #{err}", 'error'
@@ -87,15 +87,15 @@ exports.addMediator = ->
 
 exports.removeMediator = (urn) ->
   # Must be admin
-  if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
+  if authorisation.inGroup('admin', @authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{@authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
     return
 
   urn = unescape (urn)
 
   try
     yield Mediator.findOneAndRemove({ urn: urn }).exec()
-    @body = "Mediator with urn '+urn+' has been successfully removed by "+@authenticated.email
-    logger.info 'Mediator with urn %s has been successfully removed by %s', urn, @authenticated.email
+    @body = "Mediator with urn #{urn} has been successfully removed by #{@authenticated.email}"
+    logger.info "Mediator with urn #{urn} has been successfully removed by #{@authenticated.email}"
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not remove Mediator by urn  {urn} via the API: #{err}", 'error'
