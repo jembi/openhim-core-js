@@ -51,8 +51,8 @@ exports.authenticateUser = (ctx, done) ->
         done null, null
   else
     logger.error "No basic auth details supplied"
-    ctx.authenticated = {}
-    done null, {}
+    ctx.authenticated = null
+    done null, null
 
 ###
 # Koa middleware for authentication by basic auth

@@ -147,7 +147,6 @@ describe "e2e Integration Tests", ->
             request("http://localhost:5001")
               .get("/test/mock")
               .expect(401)
-              .expect('WWW-Authenticate', 'Basic')
               .end (err, res) ->
                 if err
                   done err

@@ -52,7 +52,7 @@ describe "Basic Auth", ->
     it "ctx.authenticated should not exist", (done) ->
       ctx = buildEmptyCtx()
       basicAuthentication.authenticateUser ctx, ->
-        should.not.exist ctx.authenticated
+        null.should.not.equal ctx.authenticated
         done()
 
   describe "with unknown user", ->

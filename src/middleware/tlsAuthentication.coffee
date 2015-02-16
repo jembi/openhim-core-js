@@ -49,8 +49,10 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
       if ( this.authenticated ){
         yield next;
       }else{
-        this.response.status = "unauthorized";
+        //this.response.status = "unauthorized";
         logger.info("Certificate Authentication Failed: the certificate's common name did not match any client's domain attribute");
+        // However pass on to authorization middleware for further validation
+        this.authenticated = null
       }
     } else {
       this.response.status = "unauthorized";
