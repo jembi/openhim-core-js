@@ -34,6 +34,9 @@ ChannelSchema = new Schema
   "allow": [
       { type: String, required: true }
   ]
+  "whitelist" : [
+    { type: String, required: false }
+  ]
   "routes": [ RouteSchema ]
   "matchContentTypes": [
       { type: String, required: false }
