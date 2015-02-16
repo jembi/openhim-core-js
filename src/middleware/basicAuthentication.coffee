@@ -51,7 +51,7 @@ exports.authenticateUser = (ctx, done) ->
         done null, null
   else
     logger.error "No basic auth details supplied"
-    ctx.authenticated = null
+    ctx.authenticated = {} # Set to empty object rather than null
     done null, null
 
 ###

@@ -39,6 +39,11 @@ exports.getServerOptions = (mutualTLS, done) ->
 # Koa middleware for mutual TLS authentication
 ###
 exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
+  if (this.authenticated && this.authenticated.name !== undefined){
+    //Already authenticated via another middleware i.e basic auth
+    yield next;
+  } else{
+    //Try authenticate via tls
     if (this.req.client.authorized === true) {
       var subject = this.req.connection.getPeerCertificate().subject;
       logger.info(subject.CN + " is authenticated via TLS.");
@@ -52,10 +57,11 @@ exports.koaMiddleware = `function *tlsAuthMiddleware(next) {
         //this.response.status = "unauthorized";
         logger.info("Certificate Authentication Failed: the certificate's common name did not match any client's domain attribute");
         // However pass on to authorization middleware for further validation
-        this.authenticated = null
+        this.authenticated = {}
       }
     } else {
       this.response.status = "unauthorized";
       logger.info("Request is NOT authenticated via TLS: " + this.req.client.authorizationError);
     }
+  }
   }`

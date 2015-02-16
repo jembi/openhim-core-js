@@ -52,14 +52,14 @@ describe "Basic Auth", ->
     it "ctx.authenticated should not exist", (done) ->
       ctx = buildEmptyCtx()
       basicAuthentication.authenticateUser ctx, ->
-        null.should.not.equal ctx.authenticated
+        {}.should.not.equal ctx.authenticated
         done()
 
   describe "with unknown user", ->
     it "ctx.authenticated should not exist", (done) ->
       ctx = buildCtx("incorrect_user", "incorrect_password")
       basicAuthentication.authenticateUser ctx, ->
-        should.not.exist ctx.authenticated
+        {}.should.not.equal ctx.authenticated
         done()
   
   describe "default algorithm (bcrypt) with correct credentials", ->
