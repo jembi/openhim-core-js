@@ -14,20 +14,19 @@ metrics = require "../metrics"
 exports.getGlobalLoadTimeMetrics =  ->
   filtersObject = this.request.query
   userRequesting = this.authenticated
-  results = yield metrics.fetchGlobalLoadTimeMetrics(userRequesting, filtersObject)
+  results = yield metrics.fetchGlobalLoadTimeMetrics userRequesting, filtersObject
   this.body = []
-  i = 0
-  while i < results.length
+
+  for result, i in results
     this.body.push
-      load: results[i].load
+      load: result.load
       avgResp: results[i].avgResp
       timestamp: moment.utc([
-        results[i]._id.year
-        results[i]._id.month - 1
-        results[i]._id.day
-        results[i]._id.hour
+        result._id.year
+        result._id.month - 1
+        result._id.day
+        result._id.hour
       ]).format()
-    i++
   return
 
 ################################################################################################
@@ -37,7 +36,7 @@ exports.getGlobalLoadTimeMetrics =  ->
 exports.getGlobalStatusMetrics = ->
   filtersObject = this.request.query
   userRequesting = this.authenticated
-  results = yield metrics.fetchGlobalStatusMetrics(userRequesting, filtersObject)
+  results = yield metrics.fetchGlobalStatusMetrics userRequesting, filtersObject
   this.body = results
   return
 
@@ -48,29 +47,29 @@ exports.getGlobalStatusMetrics = ->
 exports.getChannelMetrics = (time, channelId) ->
   filtersObject = this.request.query
   userRequesting = this.authenticated
-  results = yield metrics.fetchChannelMetrics(time, channelId, userRequesting, filtersObject)
-  if time == 'status'
+  results = yield metrics.fetchChannelMetrics time, channelId, userRequesting, filtersObject
+  if time is 'status'
     this.body = results
   else
     this.body = []
     #format the message to show what the console expects
-    i = 0
-    while i < results.length
-      if !results[i]._id.minute
-        results[i]._id.minute = '00'
-      if !results[i]._id.hour
-        results[i]._id.hour = '00'
-      if !results[i]._id.day
-        results[i]._id.day = '1'
+
+    for result, i in results
+      if !result._id.minute
+        result._id.minute = '00'
+      if !result._id.hour
+        result._id.hour = '00'
+      if !result._id.day
+        result._id.day = '1'
       this.body.push
-        load: results[i].load
-        avgResp: results[i].avgResp
+        load: result.load
+        avgResp: result.avgResp
         timestamp: moment.utc([
-          results[i]._id.year
-          results[i]._id.month - 1
-          results[i]._id.day
-          results[i]._id.hour
-          results[i]._id.minute
+          result._id.year
+          result._id.month - 1
+          result._id.day
+          result._id.hour
+          result._id.minute
         ]).format()
-      i++
+
   return
