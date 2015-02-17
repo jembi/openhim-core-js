@@ -213,31 +213,60 @@ describe "e2e Integration Tests", ->
           primary: true
         ]
 
+      channel3 = new Channel
+        name: "TEST DATA - Mock WIth Return endpoint public"
+        urlPattern: "/public"
+        allow: [ ]
+        authType: "public"
+        routes: [
+          name: "test route"
+          host: "localhost"
+          port: 1232
+          primary: true
+        ]
+
+      channel4 = new Channel
+        name: "TEST DATA - Mock WIth Return endpoint private - whitelist"
+        urlPattern: "/private"
+        allow: [ ]
+        whitelist: ['::ffff:127.0.0.1'] #localhost in IPV6
+        authType: "private"
+        routes: [
+          name: "test route"
+          host: "localhost"
+          port: 1232
+          primary: true
+        ]
+
+
+
 
       channel1.save (err) ->
         channel2.save (err)->
-          testAppDoc =
-            clientID: "testApp"
-            clientDomain: "test-client.jembi.org"
-            name: "TEST Client"
-            roles:
-              [
-                "OpenMRS_PoC"
-                "PoC"
-              ]
-            passwordAlgorithm: "sha512"
-            passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
-            passwordSalt: "1234567890"
-            cert: ""
+          channel3.save (err) ->
+            channel4.save (err) ->
+              testAppDoc =
+                clientID: "testApp"
+                clientDomain: "test-client.jembi.org"
+                name: "TEST Client"
+                roles:
+                  [
+                    "OpenMRS_PoC"
+                    "PoC"
+                  ]
+                passwordAlgorithm: "sha512"
+                passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+                passwordSalt: "1234567890"
+                cert: ""
 
-          client = new Client testAppDoc
-          client.save (error, newAppDoc) ->
-            # Create mock endpoint to forward requests to
-            mockServer = testUtils.createMockServerForPost(201, 400, testDoc)
-            mockServerWithReturn = testUtils.createMockServerForPostWithReturn(201, 400, testDoc)
+              client = new Client testAppDoc
+              client.save (error, newAppDoc) ->
+                # Create mock endpoint to forward requests to
+                mockServer = testUtils.createMockServerForPost(201, 400, testDoc)
+                mockServerWithReturn = testUtils.createMockServerForPostWithReturn(201, 400, testDoc)
 
-            mockServer.listen 1232, () ->
-              mockServerWithReturn.listen 1499, done
+                mockServer.listen 1232, () ->
+                  mockServerWithReturn.listen 1499, done
 
     after (done) ->
       Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
@@ -262,6 +291,30 @@ describe "e2e Integration Tests", ->
               done err
             else
               done()
+
+    it "should return 201 CREATED on POST - Public Channel", (done) ->
+      server.start 5001, null, null, null, null, null, ->
+        request("http://localhost:5001")
+        .post("/public")
+        .send(testDoc)
+        .expect(201)
+        .end (err, res) ->
+          if err
+            done err
+          else
+            done()
+
+    it "should return 201 CREATED on POST - Private Channel with whitelisted ip", (done) ->
+      server.start 5001, null, null, null, null, null, ->
+        request("http://localhost:5001")
+        .post("/private")
+        .send(testDoc)
+        .expect(201)
+        .end (err, res) ->
+          if err
+            done err
+          else
+            done()
 
     it "should return 201 CREATED on PUT", (done) ->
       server.start 5001, null, null, null, null, null, ->
