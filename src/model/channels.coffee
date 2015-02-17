@@ -37,6 +37,7 @@ ChannelSchema = new Schema
   "whitelist" : [
     { type: String, required: false }
   ]
+  "authType": { type: String, default: 'private', enum: ['private', 'public'] }
   "routes": [ RouteSchema ]
   "matchContentTypes": [
       { type: String, required: false }
