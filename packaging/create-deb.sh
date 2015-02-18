@@ -132,7 +132,7 @@ do
     rm -fr $PKGDIR
     mkdir -p $OHDIR
     mkdir -p $SRCDIR
-    git clone https://github.com/openhie/$PKG.git  $SRCDIR
+    git clone https://github.com/jembi/$PKG.git  $SRCDIR
     for CPDIR in "${CPDIRS[@]}"
     do
 	if [ -d "$SRCDIR/$CPDIR" ]; then
