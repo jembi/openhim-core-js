@@ -1,0 +1,13 @@
+#!/bin/bash
+set -x
+
+
+USERNAME=openhim
+HOME=/home/$USERNAME
+USERADD=/usr/sbin/useradd
+ADDGROUP=/usr/sbin/addgroup
+
+$USERADD $USERNAME -m -s /bin/bash 
+#adduser  --gecos ""   $USERNAME
+$ADDGROUP $USERNAME
+
