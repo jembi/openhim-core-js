@@ -124,7 +124,7 @@ do
     PKGDIR=${BUILD}/${PKG}-${RLS}~${TARGET}
     SRCDIR=/tmp/packaging-src/${PKGDIR}
     CHANGES=${BUILD}/${PKG}_${RLS}~${TARGET}_source.changes
-    OHDIR=$PKGDIR/home/openhim/$PKG
+    OHDIR=$PKGDIR/var/lib/openhim/$PKG
 
     echo  "echo Building Package $PKG  on Release $RLS for Target $TARGET"
 

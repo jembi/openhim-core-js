@@ -11,7 +11,8 @@ $USERADD $USERNAME -m -s /bin/bash
 #adduser  --gecos ""   $USERNAME
 $ADDGROUP $USERNAME
 
-chown -R $USERNAME:$USERNAME $HOME
+ln -s /var/lib/openhim/openhim-core-js $HOME
+chown  $USERNAME:$USERNAME openhim-core-js
 
 NPM=/usr/bin/npm
 CURL=/usr/bin/curl
