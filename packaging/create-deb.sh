@@ -134,8 +134,8 @@ do
     mkdir -p $OHDIR
     mkdir -p $SRCDIR
     $GIT clone https://github.com/jembi/$PKG.git  $SRCDIR
-    $GIT checkout $RLSVERS
     cd $SRCDIR 
+    $GIT checkout $RLSVERS
     for CPDIR in "${CPDIRS[@]}"
     do
 	if [ -d "$SRCDIR/$CPDIR" ]; then
