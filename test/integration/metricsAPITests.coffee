@@ -1,6 +1,5 @@
 should = require "should"
 request = require "supertest"
-server = require "../../lib/server"
 Transaction = require("../../lib/model/transactions").Transaction
 Channel = require("../../lib/model/channels").Channel
 worker = require "../../lib/api/worker"
@@ -11,10 +10,13 @@ moment = require 'moment'
 logger = require 'winston'
 mongoose = require 'mongoose'
 authorisation = require "../../lib/api/authorisation"
+config = require "../../lib/config/config"
+server = require "../../lib/server"
 
 describe "API Metrics Tests", ->
 
   describe 'openHIM Metrics Api testing', ->
+    this.timeout(15000);
 
     transaction1 = new Transaction
       _id: "111111111111111111111111"
@@ -142,6 +144,7 @@ describe "API Metrics Tests", ->
     authDetails = {}
 
     before (done) ->
+      config.statsd.enabled = false
       Channel.remove {}, ->
         Transaction.remove {}, ->
           channel1.save (err) ->
@@ -158,6 +161,8 @@ describe "API Metrics Tests", ->
                                 transaction10.save (err) ->
                                   auth.setupTestUsers (err) ->
                                     return done err if err
+                                    config.statsd.enabled = false
+                                    console.log config.statsd
                                     server.start null, null, 8080, null, 7787, null, ->
                                       done()
 
@@ -173,7 +178,7 @@ describe "API Metrics Tests", ->
 
     describe '*getGlobalLoadTimeMetrics()', ->
 
-      it 'should fetch dashbord channel metrics based on the currently logged in user permissions', (done) ->
+      it 'should fetch dashboard channel metrics based on the currently logged in user permissions', (done) ->
 
         request("https://localhost:8080")
         .get("/metrics?startDate=%222014-07-18T00:00:00.000Z%22&endDate=%222014-07-19T00:00:00.000Z%22")

@@ -89,7 +89,7 @@ stopAgenda = ->
     logger.info "Stopped agenda job scheduler"
   return defer
 
-startHttpServer = (httpPort, app) ->
+startHttpServer = (httpPort, bindAddress, app) ->
   deferred = Q.defer()
 
   httpServer = http.createServer app.callback()
@@ -98,13 +98,13 @@ startHttpServer = (httpPort, app) ->
   httpServer.setTimeout config.router.timeout, ->
     logger.info "HTTP socket timeout reached"
 
-  httpServer.listen httpPort, ->
+  httpServer.listen httpPort, bindAddress, ->
     logger.info "HTTP listening on port " + httpPort
     deferred.resolve()
 
   return deferred
 
-startHttpsServer = (httpsPort, app) ->
+startHttpsServer = (httpsPort, bindAddress, app) ->
   deferred = Q.defer()
 
   mutualTLS = config.authentication.enableMutualTLSAuthentication
@@ -116,7 +116,7 @@ startHttpsServer = (httpsPort, app) ->
     httpsServer.setTimeout config.router.timeout, ->
       logger.info "HTTPS socket timeout reached"
 
-    httpsServer.listen httpsPort, ->
+    httpsServer.listen httpsPort, bindAddress, ->
       logger.info "HTTPS listening on port " + httpsPort
       deferred.resolve()
 
@@ -152,7 +152,7 @@ ensureKeystore = (callback) ->
     else
       callback()
 
-startApiServer = (apiPort, app) ->
+startApiServer = (apiPort, bindAddress, app) ->
   deferred = Q.defer()
 
   # mutualTLS not applicable for the API - set false
@@ -161,7 +161,7 @@ startApiServer = (apiPort, app) ->
     logger.error "Could not fetch https server options: #{err}" if err
 
     apiHttpsServer = https.createServer options, app.callback()
-    apiHttpsServer.listen apiPort, ->
+    apiHttpsServer.listen apiPort, bindAddress, ->
       logger.info "API HTTPS listening on port " + apiPort
       ensureRootUser -> deferred.resolve()
 
@@ -201,19 +201,20 @@ startPollingServer = (pollingPort, app) ->
   return defer
 
 exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPort, pollingPort, done) ->
-  logger.info "Starting OpenHIM server..."
+  bindAddress = config.get 'bindAddress'
+  logger.info "Starting OpenHIM server on #{bindAddress}..."
   promises = []
 
   ensureKeystore ->
 
     if httpPort or httpsPort
       koaMiddleware.setupApp (app) ->
-        promises.push startHttpServer(httpPort, app).promise if httpPort
-        promises.push startHttpsServer(httpsPort, app).promise if httpsPort
+        promises.push startHttpServer(httpPort, bindAddress, app).promise if httpPort
+        promises.push startHttpsServer(httpsPort, bindAddress, app).promise if httpsPort
 
     if apiPort
       koaApi.setupApp (app) ->
-        promises.push startApiServer(apiPort, app).promise
+        promises.push startApiServer(apiPort, bindAddress, app).promise
 
     if rerunHttpPort
       koaMiddleware.rerunApp (app) ->

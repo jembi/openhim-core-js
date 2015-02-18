@@ -6,9 +6,10 @@
         "level": "error"
     },
     "statsd": {
-        "host": "127.0.0.1"
+        "enabled": true,
+        "host": "localhost"
     },
     "application": {
-        "name": "Test"
+        "name": "openhim.test"
     }
 }
