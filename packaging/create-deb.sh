@@ -32,6 +32,7 @@ cd $HOME
 
 
 
+
 RLSVERS=`$GIT tag -l 'v*' | $SED 's/^v//' | $SORT -rV | $HEAD -1`
 PKGVERS=`$GIT tag -l 'ubuntu-*' | $SED 's/^ubuntu-//' | $SORT -rV | $HEAD -1`
 PKGRLS=`$GIT tag -l 'ubuntu-*' | $SED 's/^ubuntu-//' | $SED 's/-.*//' | $SORT -rV | $HEAD -1`
