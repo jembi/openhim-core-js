@@ -21,11 +21,7 @@ FMT=/usr/bin/fmt
 PR=/usr/bin/pr
 XARGS=/usr/bin/xargs
 CUT=/usr/bin/cut
-NPM=/usr/bin/npm
 
-NVM=nvm
-NVM_DIR="/home/litlfred/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
 
 
 cd $HOME/targets
@@ -128,16 +124,18 @@ do
     RLS=`$HEAD -1 $TARGETDIR/debian/changelog | $AWK '{print $2}' | $AWK -F~ '{print $1}' | $AWK -F\( '{print $2}'`
     PKG=`$HEAD -1 $TARGETDIR/debian/changelog | $AWK '{print $1}'`
     PKGDIR=${BUILD}/${PKG}-${RLS}~${TARGET}
-    SRCDIR=${PKGDIR}/tmp-src
+    SRCDIR=/tmp/packaging-src/${PKGDIR}
     CHANGES=${BUILD}/${PKG}_${RLS}~${TARGET}_source.changes
-    OHDIR=$PKGDIR/var/lib/openhim/core
+    OHDIR=$PKGDIR/users/openhim/$PKG
 
     echo  "echo Building Package $PKG  on Release $RLS for Target $TARGET"
 
     rm -fr $PKGDIR
     mkdir -p $OHDIR
     mkdir -p $SRCDIR
-    git clone https://github.com/jembi/$PKG.git  $SRCDIR
+    $GIT clone https://github.com/jembi/$PKG.git  $SRCDIR
+    $GIT checkout $RLSVERS
+    cd $SRCDIR 
     for CPDIR in "${CPDIRS[@]}"
     do
 	if [ -d "$SRCDIR/$CPDIR" ]; then
@@ -157,13 +155,7 @@ do
     cp  -R $TARGETDIR/* $PKGDIR
 
     cd $PKGDIR  
-    $NVM install 0.12.0
-    $NPM install grunt-cli grunt  
-    $NPM run prepublish
-    cd $HOME
 
-    cd $PKGDIR  
-    #CMD="dpkg-buildpackage $KEY  -S -sa "
     DPKGCMD="dpkg-buildpackage $KEY  -S -sa "
     $DPKGCMD
 
@@ -173,9 +165,6 @@ do
     if [[ -n "${DEB_SIGN_KEYID}" && -n "{$LAUNCHPADLOGIN}" ]]; then
 	DPUTCMD="dput ppa:$LAUNCHPADPPALOGIN/$PPA  $CHANGES"
 	$DPUTCMD
-        #cd $PKGDIR && dpkg-buildpackage -uc -us
-        #cd $PKGDIR && dpkg-buildpackage -k${DEB_SIGN_KEYID} -S -sa 
-        #
     else
 	echo "Not uploaded to launchpad"
     fi
