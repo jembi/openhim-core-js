@@ -7,7 +7,7 @@ HOME=/home/$USERNAME
 adduser --disabled-password --gecos ""   $USERNAME
 addgroup $USERNAME
 
-chown -R $USERNAME:$USERNAME $SRCDIR
+chown -R $USERNAME:$USERNAME $HOME
 
 NPM=/usr/bin/npm
 CURL=/usr/bin/curl
