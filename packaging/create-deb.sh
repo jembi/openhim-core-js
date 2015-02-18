@@ -23,6 +23,10 @@ XARGS=/usr/bin/xargs
 CUT=/usr/bin/cut
 NPM=/usr/bin/npm
 
+NVM_DIR="/home/litlfred/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+
+
 cd $HOME/targets
 TARGETS=(*)
 echo $TARGETS
@@ -152,6 +156,7 @@ do
     cp  -R $TARGETDIR/* $PKGDIR
 
     cd $PKGDIR  
+    $NVM install 0.12.0
     $NPM install grunt-cli grunt  
     $NPM run prepublish
     cd $HOME
