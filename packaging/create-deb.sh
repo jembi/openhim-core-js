@@ -71,8 +71,8 @@ $LOGLINES" |  $XARGS -0 | $AWK '{printf "%-'"$WIDTH.$WIDTH"'s\n" , $0}')
 	$DCH -Mv "${VERS}~$TARGET" --distribution "${TARGET}" "${FULLCOMMITMSG}"
     done
     cd $HOME
-
-    $GIT  --no-pager diff
+    
+    $GIT  status
 
     $GIT add .
 
@@ -152,7 +152,7 @@ do
     cp  -R $TARGETDIR/* $PKGDIR
 
     cd $PKGDIR  
-    $NPM install grunt-cli grunt 
+    $NPM install grunt-cli grunt  
     grunt build
     cd $HOME
 
