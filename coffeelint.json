@@ -45,9 +45,6 @@
         "value": 3,
         "level": "ignore"
     },
-    "no_backticks": {
-        "level": "ignore"
-    },
     "no_debugger": {
         "level": "warn"
     },

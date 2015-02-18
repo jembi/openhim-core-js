@@ -18,7 +18,6 @@ describe "API Integration Tests", ->
           "PoC"
         ]
       passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-      cert: "8fajd89ada"
 
     authDetails = {}
 
@@ -61,7 +60,6 @@ describe "API Integration Tests", ->
                 client.roles[0].should.equal "OpenMRS_PoC"
                 client.roles[1].should.equal "PoC"
                 client.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-                client.cert.should.equal "8fajd89ada"
                 done()
 
       it  "should only allow an admin user to add a client", (done) ->
@@ -89,7 +87,6 @@ describe "API Integration Tests", ->
             "monitoring"
           ]
         passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-        cert: ""
 
       clientId = null
 
@@ -118,7 +115,6 @@ describe "API Integration Tests", ->
               res.body.roles[0].should.equal "test_role_PoC"
               res.body.roles[1].should.equal "monitoring"
               res.body.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-              res.body.cert.should.equal ""
               done()
 
       it "should return status 404 if not found", (done) ->
@@ -167,7 +163,6 @@ describe "API Integration Tests", ->
               should.not.exist(res.body.domainName)
               should.not.exist(res.body.roles)
               should.not.exist(res.body.passwordHash)
-              should.not.exist(res.body.cert)
               done()
 
 
@@ -181,7 +176,6 @@ describe "API Integration Tests", ->
             "monitoring"
           ]
         passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-        cert: ""
 
       it "should return client with specified clientDomain", (done) ->
         client = new Client clientTest
@@ -204,7 +198,6 @@ describe "API Integration Tests", ->
                 res.body.roles[0].should.equal "test_role_PoC"
                 res.body.roles[1].should.equal "monitoring"
                 res.body.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-                res.body.cert.should.equal ""
                 done()
 
       it "should not allow a non admin user to fetch a client by domain", (done) ->
@@ -231,7 +224,6 @@ describe "API Integration Tests", ->
             "analysis_POC"
           ]
         passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-        cert: "12345"
 
       it  "should return all clients ", (done) ->
         Client.count (err, countBefore)->
@@ -289,7 +281,6 @@ describe "API Integration Tests", ->
             "analysis_POC"
           ]
         passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-        cert: "12345"
 
       it "should update the specified client ", (done) ->
         client = new Client testDocument
@@ -378,7 +369,7 @@ describe "API Integration Tests", ->
               "analysis_POC"
             ]
           passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-          cert: "1098765"
+          
         client = new Client docTestRemove
         client.save (error, testDoc) ->
           should.not.exist(error)

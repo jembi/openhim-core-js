@@ -107,6 +107,7 @@ exports.incrementTransactionCount = (ctx, done) ->
 
   catch error
     logger.error error, done
+    console.log error
   done()
 
 
@@ -150,10 +151,9 @@ exports.measureTransactionDuration = (ctx, done) ->
     logger.error error, done
   done()
 
-exports.koaMiddleware = `function *statsMiddleware(next) {
-    this.timer = new Date();
-    yield next;
-    exports.incrementTransactionCount(this,function(){})
-    exports.measureTransactionDuration(this,function(){})
-    sdc.close();
-}`
+exports.koaMiddleware = (next) ->
+  this.timer = new Date()
+  yield next
+  exports.incrementTransactionCount this, ->
+  exports.measureTransactionDuration this, ->
+  sdc.close()

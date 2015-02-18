@@ -13,9 +13,7 @@ exports.authoriseUser = (ctx, done) ->
 ###
 # Koa middleware for authentication by basic auth
 ###
-exports.koaMiddleware = `function *rerunBypassAuthMiddleware(next) {
-  
-  var authoriseUser = Q.denodeify(exports.authoriseUser);
-  yield authoriseUser(this);
-  yield next;
-}`
+exports.koaMiddleware = (next) ->
+  authoriseUser = Q.denodeify exports.authoriseUser
+  yield authoriseUser this
+  yield next

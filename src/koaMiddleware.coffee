@@ -27,18 +27,14 @@ config.statsd = config.get 'statsd'
 
 compress = require 'koa-compress'
 
-rawBodyReader = `function *(next) {
-  var body = yield getRawBody(this.req, {
+rawBodyReader = (next) ->
+  body = yield getRawBody this.req,
     length: this.length,
     encoding: this.charset
-  });
 
-  if (body) {
-    this.body = body;
-  }
+  this.body = body if body
+  yield next
 
-  yield next;
-}`
 
 # Primary app
 
