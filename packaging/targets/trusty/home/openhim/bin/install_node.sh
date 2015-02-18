@@ -3,13 +3,14 @@
 
 USERNAME=openhim
 HOME=/home/$USERNAME
-NPM=/usr/bin/npm
+export NVM_DIR=$HOME/.nvm 
+NPM=$NVM_DIR/current/bin/npm
 CURL=/usr/bin/curl
 COREDIR=$HOME/openhim-core-js
 SH=/bin/sh
 
 
-export NVM_DIR=$HOME/.nvm 
+
 
 . $HOME/.nvm/nvm.sh
 
