@@ -4,8 +4,12 @@ set -x
 
 USERNAME=openhim
 HOME=/home/$USERNAME
-adduser --disabled-password --gecos ""   $USERNAME
-addgroup $USERNAME
+USERADD=/usr/sbin/useradd
+ADDGROUP=/usr/sbin/addgroup
+
+$USERADD $USERNAME -m -s /bin/bash 
+#adduser  --gecos ""   $USERNAME
+$ADDGROUP $USERNAME
 
 chown -R $USERNAME:$USERNAME $HOME
 
