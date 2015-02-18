@@ -12,7 +12,7 @@ if id -u $USERNAME >/dev/null 2>&1; then
     echo "user $USERNAME exists."
 else
     echo "user $USERNAME does not exist. adding."
-    $USERADD  --quiet $USERNAME -m -s /bin/bash 
+    $USERADD  -- $USERNAME -m -s /bin/bash 
 fi
 
 if ! getent group $USERNAME >/dev/null; then
