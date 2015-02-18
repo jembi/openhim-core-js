@@ -83,7 +83,7 @@ elif  [[ "$INCVERS" == "n" || "$INCVERS" == "N" ]];  then
     echo "Not incremementing version"
 else
     echo "Don't know what' to do"
-    exit 1
+    exit 1 
 fi
 
 
