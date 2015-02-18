@@ -1,6 +1,22 @@
 openhim-core-js (1.0.0-2~trusty) trusty; urgency=medium
 
   * Release Version 1.0.0-2
+    -e9ab24b ignore git config in packaging directory
+    --https://github.com/jembi/openhim-core-js/commmit/e9ab24b
+    -5c45a7b "Release Version 1.0.0-2"
+    --https://github.com/jembi/openhim-core-js/commmit/5c45a7b
+    -dd11d04 fixing up packaging
+    --https://github.com/jembi/openhim-core-js/commmit/dd11d04
+    -9d138f0 cleanup files
+    --https://github.com/jembi/openhim-core-js/commmit/9d138f0
+    -d12b4a4 "Release Version 1.0.0-2"
+    --https://github.com/jembi/openhim-core-js/commmit/d12b4a4
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:00:51 -0500
+
+openhim-core-js (1.0.0-2~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-2
     -dd11d04 fixing up packaging
     --https://github.com/jembi/openhim-core-js/commmit/dd11d04
     -9d138f0 cleanup files
