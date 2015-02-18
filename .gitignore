@@ -4,6 +4,7 @@ node_modules/
 /openhim-js.sublime-workspace
 .idea/**
 packaging/.gnupg
+packaging/.npm
 packaging/builds/*
 packaging/.gitconfig
 \#*
