@@ -99,18 +99,16 @@ else
   echo "You can do: export LAUNCHPADPPALOGIN=$LAUNCHPADPPALOGIN to avoid this step in the future"
 fi
 
-KEY=
+
 
 if [ -n "${DEB_SIGN_KEYID}" ]; then
   echo Using ${DEB_SIGN_KEYID} for Launchpad PPA login
   echo "To Change You can do: export DEB_SIGN_KEYID=${DEB_SIGN_KEYID}"
   echo "For unsigned you can do: export DEB_SIGN_KEYID="
-  KEY="-k${DEB_SIGN_KEYID}"
 else 
   echo "No DEB_SIGN_KEYID key has been set.  Will create an unsigned"
   echo "To set a key for signing do: export DEB_SIGN_KEYID=<KEYID>"
   echo "Use gpg --list-keys to see the available keys"
-  KEY="-uc -us"
 fi
 
 
@@ -156,17 +154,17 @@ do
 
     cd $PKGDIR  
 
-    DPKGCMD="dpkg-buildpackage $KEY  -S -sa "
-    $DPKGCMD
 
-
-    cd ~/
-    echo `pwd`
     if [[ -n "${DEB_SIGN_KEYID}" && -n "{$LAUNCHPADLOGIN}" ]]; then
+	DPKGCMD="dpkg-buildpackage -k${DEB_SIGN_KEYID}  -S -sa "
+	$DPKGCMD
 	DPUTCMD="dput ppa:$LAUNCHPADPPALOGIN/$PPA  $CHANGES"
 	$DPUTCMD
     else
-	echo "Not uploaded to launchpad"
+	echo "Not uploading to launchpad"
+	DPKGCMD="dpkg-buildpackage -uc -us"
+	$DPKGCMD
+
     fi
 done
 
