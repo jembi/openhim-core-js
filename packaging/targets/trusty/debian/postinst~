@@ -1,0 +1,52 @@
+#!/bin/bash
+set -x
+
+
+
+WGET=/usr/bin/wget
+UNZIP=/usr/bin/unzip
+OI=/var/lib/openinfoman
+USERNAME=oi
+BASEX=$OI/bin/basex
+
+TMP=/tmp/openinfoman-basex
+mkdir -p "${TMP}"
+$WGET http://files.basex.org/releases/8.0/BaseX80.zip -O ${TMP}/BaseX80.zip
+$UNZIP -o -d ${TMP} ${TMP}/BaseX80.zip
+
+
+cp $TMP/basex/BaseX.jar $OI
+DIRS=("bin" "etc" "lib" "webapp/dba")
+for DIR in ${DIRS[@]}
+do
+    mkdir -p $OI/$DIR
+    cp -R $TMP/basex/$DIR/* $OI/$DIR
+done
+
+$BASEX -Vc 'create database provider_directory'
+
+adduser --system $USERNAME
+addgroup $USERNAME
+chown -R $USERNAME:$USERNAME $OI
+chmod +s /usr/bin/oi-log
+
+
+
+
+
+REPOS=("csd_base_library.xqm" "csd_base_library_updating.xqm"   "csd_base_stored_queries.xqm"  "csd_document_manager.xqm"  "csd_load_sample_directories.xqm"  "csd_query_updated_services.xqm"  "csd_poll_service_directories.xqm"  "csd_local_services_cache.xqm"  "csd_merge_cached_services.xqm"  "csr_processor.xqm"  "svs_load_shared_value_sets.xqm"  "csd_webapp_config.xqm")
+
+
+$BASEX -Vc "REPO INSTALL http://files.basex.org/modules/expath/functx-1.0.xar"
+
+
+mkdir -p $OI/repo-src
+for REPO in ${REPOS[@]}
+do
+   INST="REPO INSTALL ${OI}/repo-src/${REPO}"
+   $BASEX -Vc "${INST}"
+done
+
+chown -R $USERNAME:$USERNAME $OI
+
+

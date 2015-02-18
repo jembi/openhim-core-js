@@ -1,0 +1,3 @@
+var/lib/* var/lib
+usr/bin/* usr/bin
+etc/init/openinfoman.conf etc/init
