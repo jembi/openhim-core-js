@@ -4,15 +4,8 @@ set -x
 
 USERNAME=openhim
 HOME=/home/$USERNAME
-USERADD=/usr/sbin/useradd
-ADDGROUP=/usr/sbin/addgroup
 
-$USERADD $USERNAME -m -s /bin/bash 
-#adduser  --gecos ""   $USERNAME
-$ADDGROUP $USERNAME
-
-ln -s /var/lib/openhim/openhim-core-js $HOME
-chown  $USERNAME:$USERNAME openhim-core-js
+chown -R  $USERNAME:$USERNAME $HOME/openhim-core-js
 
 NPM=/usr/bin/npm
 CURL=/usr/bin/curl
@@ -25,12 +18,11 @@ mkdir -p $SRCDIR
 $CURL https://raw.githubusercontent.com/creationix/nvm/v0.16.1/install.sh -o $SRCDIR/install.sh
 chown -R $USERNAME:$USERNAME $SRCDIR
 
-sudo -u $USERNAME touch $HOME/.profile
 sudo -u $USERNAME sh $SRCDIR/install.sh
 
 source "/$HOME/.nvm/nvm.sh"  
 
-sudo -u $USERNAME nvm install 0.12
+sudo -i -u $USERNAME nvm install 0.12
 sudo -u $USERNAME nvm alias default 0.12
 sudo -u $USERNAME nvm use 0.12
 
