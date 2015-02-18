@@ -1,2 +1,2 @@
 var/lib/* var/lib
-var/lib/openhim/core/resources/openhim-core.conf  etc/init
+etc/* etc

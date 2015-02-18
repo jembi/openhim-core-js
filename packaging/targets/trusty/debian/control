@@ -9,7 +9,7 @@ Homepage: https://github.com/openhie/openhim-core-js
 
 Package: openhim-core-js
 Architecture: all
-Depends: npm, node, mongodb, nodejs
+Depends: build-essential,  libssl-dev, curl, npm
 Recommends: 
 Description: OpenHIM Core
  The OpenHIM core component is responsible for providing a single entry-point into an HIE as well as providing the following key features:
