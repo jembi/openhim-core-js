@@ -12,7 +12,7 @@
   "dependencies": {
     "agenda": "^0.6.26",
     "basic-auth": "^1.0.0",
-    "bcrypt": "^0.8.0",
+    "bcryptjs": "^2.0.0",
     "co": "^4.1.0",
     "cookie": "^0.1.2",
     "forever-monitor": "^1.5.2",
