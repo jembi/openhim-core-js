@@ -7,7 +7,14 @@ HOME=/home/$USERNAME
 USERADD=/usr/sbin/useradd
 ADDGROUP=/usr/sbin/addgroup
 
-$USERADD $USERNAME -m -s /bin/bash 
+
+if id -u $1 >/dev/null 2>&1; then
+    echo "user $USERNAME exists."
+else
+    echo "user $USERNAME does not exist. adding."
+    $USERADD $USERNAME -m -s /bin/bash 
+fi
+
 #adduser  --gecos ""   $USERNAME
-$ADDGROUP $USERNAME
+
 
