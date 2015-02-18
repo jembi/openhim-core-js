@@ -153,7 +153,7 @@ do
 
     cd $PKGDIR  
     $NPM install grunt-cli grunt  
-    grunt build
+    $NPM run prepublish
     cd $HOME
 
     cd $PKGDIR  
