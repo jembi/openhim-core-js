@@ -8,8 +8,10 @@ CURL=/usr/bin/curl
 COREDIR=$HOME/openhim-core-js
 SH=/bin/sh
 
-cd $HOME
+ 
+. $HOME/.nvm/nvm.sh
 
+cd $HOME
 
 nvm install 0.12
 nvm alias default 0.12
