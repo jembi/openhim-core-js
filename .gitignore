@@ -5,6 +5,7 @@ node_modules/
 .idea/**
 packaging/.gnupg
 packaging/builds/*
+packaging/.gitconfig
 \#*
 *~
 .#*
