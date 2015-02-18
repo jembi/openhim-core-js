@@ -6,6 +6,7 @@ USERNAME=openhim
 HOME=/home/$USERNAME
 USERADD=/usr/sbin/useradd
 ADDGROUP=/usr/sbin/addgroup
+ADDUSER=/usr/sbin/adduser
 
 
 if id -u $USERNAME >/dev/null 2>&1; then
@@ -20,7 +21,7 @@ if ! getent group $USERNAME >/dev/null; then
     $ADDGROUP --quiet --system $USERNAME
 fi
 
-echo "Add group $USERNAME to group $USERNAME"
+echo "Adding user $USERNAME to group $USERNAME"
 $ADDUSER --quiet $USERNAME $USERNAME
 
 exit 0
