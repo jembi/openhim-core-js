@@ -8,13 +8,21 @@ USERADD=/usr/sbin/useradd
 ADDGROUP=/usr/sbin/addgroup
 
 
-if id -u $1 >/dev/null 2>&1; then
+if id -u $USERNAME >/dev/null 2>&1; then
     echo "user $USERNAME exists."
 else
     echo "user $USERNAME does not exist. adding."
     $USERADD $USERNAME -m -s /bin/bash 
 fi
 
-#adduser  --gecos ""   $USERNAME
+if ! getent group $USERNAME >/dev/null; then
+    echo "Creating group $USERNAME"
+    $ADDGROUP --quiet --system $USERNAME
+fi
+
+$ADDUSER --quiet $USERNAME $USERNAME
+
+
+
 
 
