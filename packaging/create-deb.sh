@@ -51,7 +51,7 @@ echo Should we update changelogs, commit under packacing everything and tag rele
 read INCVERS 
 
 if [[ "$INCVERS" == "y" || "$INCVERS" == "Y" ]];  then
-    TAG="ubuntu-$RLSVERS"
+    TAG="ubuntu-$VERS"
     COMMITMSG="Release Version $VERS"
     WIDTH=68
     URL=$($GIT config --get remote.origin.url | $SED 's/\.git//' | $SED 's/$/\/commmit\//')
