@@ -21,8 +21,8 @@ cd $HOME
 
 mkdir -p $SRCDIR
 $CURL https://raw.githubusercontent.com/creationix/nvm/v0.16.1/install.sh -o $SRCDIR/install.sh
-sudo -iu $USERNAME $SH $SRCDIR/install.sh
-sudo -iu $USERNAME $SH $HOME/bin/install_node.sh
+sudo -u $USERNAME $SH $SRCDIR/install.sh
+sudo -u $USERNAME $SH $HOME/bin/install_node.sh
 
 
 start mongodb 
