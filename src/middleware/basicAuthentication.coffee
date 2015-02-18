@@ -4,7 +4,7 @@ Client = require("../model/clients").Client
 logger = require "winston"
 crypto = require "crypto"
 
-bcrypt = require 'bcrypt'
+bcrypt = require 'bcryptjs'
 
 bcryptCompare = (pass, client, callback) -> bcrypt.compare pass, client.passwordHash, callback
 
