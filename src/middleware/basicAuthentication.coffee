@@ -51,7 +51,7 @@ exports.authenticateUser = (ctx, done) ->
         done null, null
   else
     logger.error "No basic auth details supplied"
-    ctx.authenticated = {} # Set to empty object rather than null
+    ctx.authenticated = null # Set to empty object rather than null
     done null, null
 
 ###
@@ -62,7 +62,9 @@ exports.koaMiddleware = `function *basicAuthMiddleware(next) {
   var authenticateUser = Q.denodeify(exports.authenticateUser);
   yield authenticateUser(this);
 
-  if (this.authenticated) {
+  if (this.authenticated || this.authenticated === null) {
+     console.log('pushing request to next auth midlleware')
+
     yield next;
   } else {
     this.response.status = "unauthorized";
