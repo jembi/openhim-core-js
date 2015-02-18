@@ -135,7 +135,7 @@ do
     mkdir -p $SRCDIR
     $GIT clone https://github.com/jembi/$PKG.git  $SRCDIR
     cd $SRCDIR 
-    $GIT checkout $RLSVERS
+    $GIT checkout "v$RLSVERS"
     for CPDIR in "${CPDIRS[@]}"
     do
 	if [ -d "$SRCDIR/$CPDIR" ]; then
