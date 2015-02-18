@@ -57,7 +57,9 @@
   },
   "visualizer": {
     "enableVisualizer": true,
-    "minimumEventPeriodMillis": 100
+    "minimumEventPeriodMillis": 100,
+    "enableTSNormalization": true,
+    "orchestrationTSBufferMillis": 100
   },
   "statsd": {
     "enabled": true,
