@@ -7,46 +7,31 @@ config.api = config.get('api')
 config.rerun = config.get('rerun')
 config.polling = config.get('polling')
 config.tcpAdapter = config.get('tcpAdapter')
+utils = require "./utils"
 
 ###
 # restart the server
 ###
-exports.restart = `function *restart() {
+exports.restart = ->
+  # Test if the user is authorised
+  if authorisation.inGroup('admin', this.authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to restart the server denied.", 'info'
+    return
 
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to Restart the server denied.')
-    this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to Restart the server denied.'
-    this.status = 'forbidden';
-    return;
-  }
+  try
+    this.body = 'Server being restarted'
 
-  try {
-
-    // All ok! So set the result
-    this.body = 'Server being restarted';
-
-    // stop the server
-    server.stop(function(){
-
-      var apiPort, httpPort, httpsPort, pollingPort, rerunPort, tcpHttpReceiverPort;
-      httpPort = config.router.httpPort;
-      httpsPort = config.router.httpsPort;
-      apiPort = config.api.httpsPort;
-      rerunPort = config.rerun.httpPort;
-      tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort;
-      pollingPort = config.polling.pollingPort;
+    # stop the server
+    server.stop ->
+      httpPort = config.router.httpPort
+      httpsPort = config.router.httpsPort
+      apiPort = config.api.httpsPort
+      rerunPort = config.rerun.httpPort
+      tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort
+      pollingPort = config.polling.pollingPort
       
-      // start the server again
-      server.start(httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, pollingPort);
+      # and start the server again
+      server.start(httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, pollingPort)
 
-    });
-
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not restart the servers via the API: ' + e);
-    this.body = e.message;
-    this.status = 'bad request';
-  }
-}`
+  catch e
+    utils.logAndSetResponse this, 'bad request', "Could not restart the servers via the API: #{e}", 'error'

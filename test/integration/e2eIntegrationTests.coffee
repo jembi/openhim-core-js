@@ -8,9 +8,10 @@ config.authentication = config.get('authentication')
 Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
+Keystore = require("../../lib/model/keystore").Keystore
 testUtils = require "../testUtils"
 server = require "../../lib/server"
-FormData = require('form-data');
+FormData = require 'form-data'
 
 describe "e2e Integration Tests", ->
 
@@ -36,7 +37,7 @@ describe "e2e Integration Tests", ->
                 primary: true
               ]
         channel1.save (err) ->
-          testAppDoc =
+          testClientDoc =
             clientID: "testApp"
             clientDomain: "test-client.jembi.org"
             name: "TEST Client"
@@ -46,12 +47,22 @@ describe "e2e Integration Tests", ->
                 "PoC"
               ]
             passwordHash: ""
-            cert: (fs.readFileSync "test/resources/client-tls/cert.pem").toString()
 
-          client = new Client testAppDoc
+          client = new Client testClientDoc
           client.save (error, newAppDoc) ->
-            mockServer = testUtils.createMockServer 201, "Mock response body\n", 1232, ->
-              done()
+          	# remove default keystore
+          	Keystore.remove {}, ->
+              keystore = new Keystore
+                key: fs.readFileSync 'test/resources/server-tls/key.pem'
+                cert: 
+                  data: fs.readFileSync 'test/resources/server-tls/cert.pem'
+                ca: [ { data: fs.readFileSync 'test/resources/client-tls/cert.pem' } ]
+
+              keystore.save (err) ->
+                done err if err
+
+                mockServer = testUtils.createMockServer 201, "Mock response body\n", 1232, ->
+                  done()
 
       after (done) ->
         Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
@@ -71,11 +82,12 @@ describe "e2e Integration Tests", ->
             port: 5000
             cert: fs.readFileSync "test/resources/client-tls/cert.pem"
             key:  fs.readFileSync "test/resources/client-tls/key.pem"
-            ca: [ fs.readFileSync "tls/cert.pem" ]
+            ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
           req = https.request options, (res) ->
-            res.statusCode.should.be.exactly 201
-            done()
+            res.on 'data', (chunk) -> 
+              res.statusCode.should.be.exactly 201
+              done()
           req.end()
 
       it "should reject a request when using an invalid cert", (done) ->
@@ -86,7 +98,7 @@ describe "e2e Integration Tests", ->
             port: 5000
             cert: fs.readFileSync "test/resources/client-tls/invalid-cert.pem"
             key:  fs.readFileSync "test/resources/client-tls/invalid-key.pem"
-            ca: [ fs.readFileSync "tls/cert.pem" ]
+            ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
           req = https.request options, (res) ->
             res.statusCode.should.be.exactly 401
@@ -229,7 +241,7 @@ describe "e2e Integration Tests", ->
         name: "TEST DATA - Mock WIth Return endpoint private - whitelist"
         urlPattern: "/private"
         allow: [ ]
-        whitelist: ['::ffff:127.0.0.1'] #localhost in IPV6
+        whitelist: ['::ffff:127.0.0.1', '127.0.0.1'] #localhost in IPV6
         authType: "private"
         routes: [
           name: "test route"
@@ -842,7 +854,6 @@ describe "e2e Integration Tests", ->
         client = new Client testAppDoc
         client.save (error, newAppDoc) ->
           mockServer = testUtils.createMockMediatorServer 200, mediatorResponse, 1276, ->
-            console.log 'mock server started'
             done()
 
     after (done) ->

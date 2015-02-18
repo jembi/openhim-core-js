@@ -119,9 +119,8 @@ exports.storeResponse = (ctx, done) ->
       return done err
     return done()
 
-exports.koaMiddleware =  `function *storeMiddleware(next) {
-    var saveTransaction = Q.denodeify(exports.storeTransaction);
-    yield saveTransaction(this);
-    yield next;
-    exports.storeResponse(this, function(){});
-  }`
+exports.koaMiddleware = (next) ->
+  saveTransaction = Q.denodeify exports.storeTransaction
+  yield saveTransaction this
+  yield next
+  exports.storeResponse this, ->

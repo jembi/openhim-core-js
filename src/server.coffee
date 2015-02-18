@@ -2,6 +2,7 @@
 path = require 'path'
 global.appRoot = path.join path.resolve(__dirname), '..'
 
+fs = require 'fs'
 http = require 'http'
 https = require 'https'
 net = require 'net'
@@ -24,6 +25,7 @@ logger = require "winston"
 logger.level = config.logger.level
 mongoose = require "mongoose"
 User = require('./model/users').User
+Keystore = require('./model/keystore').Keystore
 Agenda = require 'agenda'
 alerts = require './alerts'
 reports = require './reports'
@@ -53,6 +55,22 @@ rootUser =
   groups: [ 'admin' ]
   # password = 'openhim-password'
 
+defaultKeystore =
+  key: fs.readFileSync 'resources/certs/default/key.pem'
+  cert:
+    country: 'ZA'
+    state: 'KZN'
+    locality: 'Durban'
+    organization: 'OpenHIM Default Certificate'
+    organizationUnit: 'Default'
+    commonName: '*.openhim.org'
+    emailAddress: 'openhim-implementers@googlegroups.com'
+    validity:
+      start: 1423810077000
+      end: 3151810077000
+    data: fs.readFileSync 'resources/certs/default/cert.pem'
+  ca: []
+
 # Job scheduler
 agenda = null
 
@@ -71,7 +89,7 @@ stopAgenda = ->
     logger.info "Stopped agenda job scheduler"
   return defer
 
-startHttpServer = (httpPort, app) ->
+startHttpServer = (httpPort, bindAddress, app) ->
   deferred = Q.defer()
 
   httpServer = http.createServer app.callback()
@@ -80,26 +98,25 @@ startHttpServer = (httpPort, app) ->
   httpServer.setTimeout config.router.timeout, ->
     logger.info "HTTP socket timeout reached"
 
-  httpServer.listen httpPort, ->
+  httpServer.listen httpPort, bindAddress, ->
     logger.info "HTTP listening on port " + httpPort
     deferred.resolve()
 
   return deferred
 
-startHttpsServer = (httpsPort, app) ->
+startHttpsServer = (httpsPort, bindAddress, app) ->
   deferred = Q.defer()
 
   mutualTLS = config.authentication.enableMutualTLSAuthentication
   tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
     return done err if err
-
     httpsServer = https.createServer options, app.callback()
 
     # set the socket timeout
     httpsServer.setTimeout config.router.timeout, ->
       logger.info "HTTPS socket timeout reached"
 
-    httpsServer.listen httpsPort, ->
+    httpsServer.listen httpsPort, bindAddress, ->
       logger.info "HTTPS listening on port " + httpsPort
       deferred.resolve()
 
@@ -120,16 +137,31 @@ ensureRootUser = (callback) ->
     else
       callback()
 
-startApiServer = (apiPort, app) ->
+# Ensure that a default keystore always exists
+ensureKeystore = (callback) ->
+  Keystore.findOne {}, (err, keystore) ->
+    if not keystore?
+      keystore = new Keystore defaultKeystore
+      keystore.save (err, keystore) ->
+        if err
+          logger.error "Could not save keystore: " + err
+          return callback err
+
+        logger.info "Default keystore created."
+        callback()
+    else
+      callback()
+
+startApiServer = (apiPort, bindAddress, app) ->
   deferred = Q.defer()
 
   # mutualTLS not applicable for the API - set false
   mutualTLS = false
   tlsAuthentication.getServerOptions mutualTLS, (err, options) ->
-    return done err if err
+    logger.error "Could not fetch https server options: #{err}" if err
 
     apiHttpsServer = https.createServer options, app.callback()
-    apiHttpsServer.listen apiPort, ->
+    apiHttpsServer.listen apiPort, bindAddress, ->
       logger.info "API HTTPS listening on port " + apiPort
       ensureRootUser -> deferred.resolve()
 
@@ -169,34 +201,37 @@ startPollingServer = (pollingPort, app) ->
   return defer
 
 exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPort, pollingPort, done) ->
-  logger.info "Starting OpenHIM server..."
+  bindAddress = config.get 'bindAddress'
+  logger.info "Starting OpenHIM server on #{bindAddress}..."
   promises = []
 
-  if httpPort or httpsPort
-    koaMiddleware.setupApp (app) ->
-      promises.push startHttpServer(httpPort, app).promise if httpPort
-      promises.push startHttpsServer(httpsPort, app).promise if httpsPort
+  ensureKeystore ->
 
-  if apiPort
-    koaApi.setupApp (app) ->
-      promises.push startApiServer(apiPort, app).promise
+    if httpPort or httpsPort
+      koaMiddleware.setupApp (app) ->
+        promises.push startHttpServer(httpPort, bindAddress, app).promise if httpPort
+        promises.push startHttpsServer(httpsPort, bindAddress, app).promise if httpsPort
 
-  if rerunHttpPort
-    koaMiddleware.rerunApp (app) ->
-      promises.push startRerunServer(rerunHttpPort, app).promise
+    if apiPort
+      koaApi.setupApp (app) ->
+        promises.push startApiServer(apiPort, bindAddress, app).promise
 
-  if tcpHttpReceiverPort
-    koaMiddleware.tcpApp (app) ->
-      promises.push startTCPServersAndHttpReceiver(tcpHttpReceiverPort, app).promise
+    if rerunHttpPort
+      koaMiddleware.rerunApp (app) ->
+        promises.push startRerunServer(rerunHttpPort, app).promise
 
-  if pollingPort
-    koaMiddleware.pollingApp (app) ->
-      promises.push startPollingServer(pollingPort, app).promise
+    if tcpHttpReceiverPort
+      koaMiddleware.tcpApp (app) ->
+        promises.push startTCPServersAndHttpReceiver(tcpHttpReceiverPort, app).promise
 
-  (Q.all promises).then ->
-    workerAPI.startupWorker() if rerunHttpPort
-    startAgenda()
-    done()
+    if pollingPort
+      koaMiddleware.pollingApp (app) ->
+        promises.push startPollingServer(pollingPort, app).promise
+
+    (Q.all promises).then ->
+      workerAPI.startupWorker() if rerunHttpPort
+      startAgenda()
+      done()
 
 
 exports.stop = stop = (done) ->

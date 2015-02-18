@@ -4,12 +4,23 @@ sinon = require "sinon"
 http = require "http"
 router = require "../../lib/middleware/router"
 testUtils = require "../testUtils"
+Keystore = require("../../lib/model/keystore").Keystore
+Certificate = require("../../lib/model/keystore").Certificate
 
 describe "HTTP Router", ->
 
   requestTimestamp = (new Date()).toString()
 
+  before (done) ->
+    testUtils.setupTestKeystore null, null, [], ->
+      done()
+
+  after (done) ->
+    testUtils.cleanupTestKeystore ->
+      done()
+
   describe ".route", ->
+
     it "should route an incomming request to the endpoints specific by the channel config", (done) ->
       testUtils.createMockServer 201, "Mock response body\n", 9876, ->
         # Setup a channel for the mock endpoint
@@ -68,35 +79,42 @@ describe "HTTP Router", ->
 
     it "should route an incomming https request to the endpoints specific by the channel config", (done) ->
       testUtils.createMockHTTPSServerWithMutualAuth 201, "Mock response body\n", 9877, (server) ->
-        # Setup a channel for the mock endpoint
-        channel =
-          name: "Mock endpoint"
-          urlPattern: ".+"
-          routes: [
-            secured: true
-            host: 'localhost'
-            port: 9877
-            primary: true
-            cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
-          ]
 
-        ctx = new Object()
-        ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
-        ctx.response.set = ->
-        ctx.path = ctx.request.url = "/test"
-        ctx.request.method = "GET"
+        keystore = Keystore.findOne {}, (err, keystore) ->
+          cert = new Certificate
+            data: fs.readFileSync 'test/resources/server-tls/cert.pem'
+          keystore.ca.push cert
+          keystore.save ->
 
-        router.route ctx, (err) ->
-          if err
-            return server.close ->
-              done err
+            # Setup a channel for the mock endpoint
+            channel =
+              name: "Mock endpoint"
+              urlPattern: ".+"
+              routes: [
+                secured: true
+                host: 'localhost'
+                port: 9877
+                primary: true
+                cert: cert._id
+              ]
 
-          ctx.response.status.should.be.exactly 201
-          ctx.response.body.toString().should.be.eql "Secured Mock response body\n"
-          ctx.response.header.should.be.ok
-          server.close done
+            ctx = new Object()
+            ctx.authorisedChannel = channel
+            ctx.request = new Object()
+            ctx.response = new Object()
+            ctx.response.set = ->
+            ctx.path = ctx.request.url = "/test"
+            ctx.request.method = "GET"
+
+            router.route ctx, (err) ->
+              if err
+                return server.close ->
+                  done err
+
+              ctx.response.status.should.be.exactly 201
+              ctx.response.body.toString().should.be.eql "Secured Mock response body\n"
+              ctx.response.header.should.be.ok
+              server.close done
 
     it "should be denied access if the server doesn't know the client cert when using mutual TLS authentication", (done) ->
       testUtils.createMockHTTPSServerWithMutualAuth 201, "Mock response body\n", 9877, false, (server) ->

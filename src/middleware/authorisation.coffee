@@ -81,6 +81,7 @@ exports.authorise = (ctx, done) ->
             matchedRoles = channel.allow.filter (element) ->
               return (ctx.authenticated.roles.indexOf element) isnt -1
         else
+          console.log ctx.ip
           ctx.authenticated = {}
         # if the user has a role that is allowed or their username is allowed specifically
         if matchedRoles.length > 0 or (channel.allow.indexOf ctx.authenticated.clientID) isnt -1 or (channel.whitelist.indexOf ctx.ip) isnt -1 or (channel.authType == 'public') is true
@@ -107,10 +108,8 @@ exports.authorise = (ctx, done) ->
     logger.info "The request, '" + ctx.request.url + "', is not authorised to access any channels."
     return done()
 
-exports.koaMiddleware = `function *authorisationMiddleware(next) {
-    var authorise = Q.denodeify(exports.authorise);
-    yield authorise(this);
-    if (this.authorisedChannel) {
-      yield next;
-    }
-  }`
+exports.koaMiddleware = (next) ->
+  authorise = Q.denodeify exports.authorise
+  yield authorise this
+  if this.authorisedChannel?
+    yield next
