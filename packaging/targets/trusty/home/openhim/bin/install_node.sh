@@ -8,7 +8,9 @@ CURL=/usr/bin/curl
 COREDIR=$HOME/openhim-core-js
 SH=/bin/sh
 
- 
+
+export NVM_DIR=$HOME/.nvm 
+
 . $HOME/.nvm/nvm.sh
 
 cd $HOME
