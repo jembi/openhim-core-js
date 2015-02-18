@@ -49,8 +49,11 @@ fi
 
 echo Current ubuntu  verison is $RLSVERS.  Want to create ubuntu release $VERS
 $GIT status
-echo Should we update changelogs, commit under packacing everything and tag release as $VERS? [y/n]
+echo Should we update changelogs, commit everything under 'packaging'  and tag the release as $VERS? [y/n]
 read INCVERS 
+
+echo Should we package only against the formal release v$RLSVERS rather than the latest commit? [y/n]
+read FORMAL
 
 if [[ "$INCVERS" == "y" || "$INCVERS" == "Y" ]];  then
     TAG="ubuntu-$VERS"
@@ -134,7 +137,9 @@ do
     mkdir -p $SRCDIR
     $GIT clone https://github.com/jembi/$PKG.git  $SRCDIR
     cd $SRCDIR 
-    $GIT checkout "v$RLSVERS"
+    if [[ "$FORMAL" == "y" || "$FORMAL" == "Y" ]];  then
+	$GIT checkout "v$RLSVERS"
+    fi
     for CPDIR in "${CPDIRS[@]}"
     do
 	if [ -d "$SRCDIR/$CPDIR" ]; then
@@ -143,7 +148,7 @@ do
     done
     for CPFILE in "${CPFILES[@]}"
     do
-	if [ -e "$SRCDIR/$CPFILE" ]; then
+	if [ -f "$SRCDIR/$CPFILE" ]; then
 	    cp  $SRCDIR/$CPFILE $OHDIR
 	fi
     done
