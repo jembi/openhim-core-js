@@ -20,7 +20,7 @@ mkdir -p $SRCDIR
 $CURL https://raw.githubusercontent.com/creationix/nvm/v0.16.1/install.sh -o $SRCDIR/install.sh
 chown -R $USERNAME:$USERNAME $SRCDIR
 
-sudo -u $USERNAME rouch $HOME/.profile
+sudo -u $USERNAME touch $HOME/.profile
 sudo -u $USERNAME sh $SRCDIR/install.sh
 
 export NVM_DIR="/$HOME/.nvm"
