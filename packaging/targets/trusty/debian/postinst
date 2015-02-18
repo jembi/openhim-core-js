@@ -28,8 +28,7 @@ chown -R $USERNAME:$USERNAME $SRCDIR
 sudo -u $USERNAME touch $HOME/.profile
 sudo -u $USERNAME sh $SRCDIR/install.sh
 
-export NVM_DIR="/$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  
+source "/$HOME/.nvm/nvm.sh"  
 
 sudo -u $USERNAME nvm install 0.12
 sudo -u $USERNAME nvm alias default 0.12
