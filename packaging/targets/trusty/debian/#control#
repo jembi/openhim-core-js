@@ -1,0 +1,18 @@
+Source: openhim-core-js
+Maintainer: Carl Leitner <litlfred@ibiblio.org>
+Section: web
+Priority: optional
+Standards-Version: 3.9.1
+Build-Depends: debhelper (>= 7)
+Homepage: https://github.com/openhie/openhim-core-js
+
+
+Package: openhim-core-js
+Architecture: all
+Depends: npm, node, mongodb, nodejs, 
+Recommends: 
+Description: OpenHIM Core
+ The OpenHIM core component is responsible for providing a single entry-point into an HIE as well as providing the following key features:
+ - Point of service client authentication and authorization
+ - Persistence and audit logging of all messages that flow through the OpenHIM
+ - Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)

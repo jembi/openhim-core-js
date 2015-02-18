@@ -1,0 +1,7 @@
+#!/bin/bash
+
+
+OI=/var/lib/openinfoman
+tail -f /tmp/openinfoman.log 
+
+
