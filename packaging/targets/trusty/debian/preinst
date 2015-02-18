@@ -9,20 +9,18 @@ ADDGROUP=/usr/sbin/addgroup
 ADDUSER=/usr/sbin/adduser
 
 
-if id -u $USERNAME >/dev/null 2>&1; then
-    echo "user $USERNAME exists."
-else
-    echo "user $USERNAME does not exist. adding."
-    $USERADD  $USERNAME -m -s /bin/bash 
-fi
-
 if ! getent group $USERNAME >/dev/null; then
     echo "Creating group $USERNAME"
     $ADDGROUP --quiet --system $USERNAME
 fi
 
-echo "Adding user $USERNAME to group $USERNAME"
-$ADDUSER --quiet $USERNAME $USERNAME
+
+if id -u $USERNAME >/dev/null 2>&1; then
+    echo "user $USERNAME exists."
+else
+    echo "user $USERNAME does not exist. adding."
+    $USERADD  $USERNAME -g -m -s /bin/bash 
+fi
 
 exit 0
 
