@@ -23,6 +23,7 @@ XARGS=/usr/bin/xargs
 CUT=/usr/bin/cut
 NPM=/usr/bin/npm
 
+NVM=nvm
 NVM_DIR="/home/litlfred/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
 
