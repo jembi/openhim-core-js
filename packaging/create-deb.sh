@@ -152,7 +152,7 @@ do
     cp  -R $TARGETDIR/* $PKGDIR
 
     cd $PKGDIR  
-    $NPM npm install -g grunt-cli grunt 
+    $NPM install grunt-cli grunt 
     grunt build
     cd $HOME
 
