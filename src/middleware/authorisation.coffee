@@ -101,10 +101,8 @@ exports.authorise = (ctx, done) ->
     logger.info "The request, '" + ctx.request.url + "', is not authorised to access any channels."
     return done()
 
-exports.koaMiddleware = `function *authorisationMiddleware(next) {
-    var authorise = Q.denodeify(exports.authorise);
-    yield authorise(this);
-    if (this.authorisedChannel) {
-      yield next;
-    }
-  }`
+exports.koaMiddleware = (next) ->
+  authorise = Q.denodeify exports.authorise
+  yield authorise this
+  if this.authorisedChannel?
+    yield next

@@ -127,9 +127,7 @@ storeVisualizerEvents = (ctx, done) ->
 
   events.VisualizerEvent.create trxEvents, (err) -> return if err then done err else done()
 
-exports.koaMiddleware =  `function *visualizerMiddleware(next) {
-  yield next;
-  if (config.visualizer.enableVisualizer) {
-    storeVisualizerEvents(this, function(){});
-  }
-}`
+exports.koaMiddleware = (next) ->
+  yield next
+  if config.visualizer.enableVisualizer
+    storeVisualizerEvents this, ->

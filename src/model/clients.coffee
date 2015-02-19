@@ -9,7 +9,6 @@ ClientSchema = new Schema
   "passwordAlgorithm":{ type: String, required: false }
   "passwordHash":   { type: String, required: false }
   "passwordSalt":   { type: String, required: false }
-  "cert":       { type: String, required: false }
     
 #compile the Client Schema into a Model
 exports.Client = mongoose.model 'Client', ClientSchema

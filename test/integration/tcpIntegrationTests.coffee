@@ -4,15 +4,13 @@ tls = require 'tls'
 Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
+Certificate = require("../../lib/model/keystore").Certificate
 testUtils = require "../testUtils"
 server = require "../../lib/server"
 fs = require "fs"
 sinon = require "sinon"
 config = require "../../lib/config/config"
 stats = require "../../lib/middleware/stats"
-
-
-
 
 describe "TCP/TLS/MLLP Integration Tests", ->
   testMessage = "This is an awesome test message!"
@@ -78,7 +76,6 @@ describe "TCP/TLS/MLLP Integration Tests", ->
       type: 'tcp'
       secured: true
       primary: true
-      cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
     ]
   channel5 = new Channel
     name: 'TCPIntegrationChannel5'
@@ -94,7 +91,6 @@ describe "TCP/TLS/MLLP Integration Tests", ->
       type: 'tcp'
       secured: true
       primary: true
-      cert: fs.readFileSync 'test/resources/server-tls/cert.pem'
     ]
   channel6 = new Channel
     name: 'MLLPIntegrationChannel1'
@@ -129,7 +125,7 @@ describe "TCP/TLS/MLLP Integration Tests", ->
     options =
       cert: fs.readFileSync "test/resources/client-tls/cert.pem"
       key:  fs.readFileSync "test/resources/client-tls/key.pem"
-      ca: [ fs.readFileSync "tls/cert.pem" ]
+      ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
     client = tls.connect port, 'localhost', options, -> client.write testMessage
     client.on 'data', (data) ->
@@ -137,24 +133,34 @@ describe "TCP/TLS/MLLP Integration Tests", ->
       callback "#{data}"
 
   before (done) ->
-    channel1.save -> channel2.save -> channel3.save -> channel4.save -> channel5.save -> channel6.save -> secureClient.save ->
-      testUtils.createMockTCPServer 6000, testMessage, 'TCP OK', 'TCP Not OK', (server) ->
-        mockTCPServer = server
-        testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) ->
-          mockHTTPServer = server
-          testUtils.createMockTLSServerWithMutualAuth 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
-            mockTLSServer = server
-            testUtils.createMockTLSServerWithMutualAuth 6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) ->
-              mockTLSServerWithoutClientCert = server
-              testUtils.createMockTCPServer 6004, testMessage, 'MLLP OK' + String.fromCharCode(0o034) + '\n', 'MLLP Not OK' + String.fromCharCode(0o034) + '\n', (server) ->
-                mockMLLPServer = server
-                done()
+    testUtils.setupTestKeystore null, null, [], (keystore) ->
+      cert = new Certificate
+        data: fs.readFileSync 'test/resources/server-tls/cert.pem'
+      # Setup certs for secure channels
+      channel4.routes[0].cert = cert._id
+      channel5.routes[0].cert = cert._id
+
+      keystore.ca.push cert
+      keystore.save ->
+        channel1.save -> channel2.save -> channel3.save -> channel4.save -> channel5.save -> channel6.save -> secureClient.save ->
+          testUtils.createMockTCPServer 6000, testMessage, 'TCP OK', 'TCP Not OK', (server) ->
+            mockTCPServer = server
+            testUtils.createMockHTTPRespondingPostServer 6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) ->
+              mockHTTPServer = server
+              testUtils.createMockTLSServerWithMutualAuth 6002, testMessage, 'TLS OK', 'TLS Not OK', (server) ->
+                mockTLSServer = server
+                testUtils.createMockTLSServerWithMutualAuth 6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) ->
+                  mockTLSServerWithoutClientCert = server
+                  testUtils.createMockTCPServer 6004, testMessage, 'MLLP OK' + String.fromCharCode(0o034) + '\n', 'MLLP Not OK' + String.fromCharCode(0o034) + '\n', (server) ->
+                    mockMLLPServer = server
+                    done()
 
   beforeEach (done) -> Transaction.remove {}, done
 
   after (done) ->
-    Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, ->
-      mockTCPServer.close -> mockHTTPServer.close -> mockTLSServer.close -> mockTLSServerWithoutClientCert.close -> mockMLLPServer.close done
+    testUtils.cleanupTestKeystore ->
+      Channel.remove {}, -> Transaction.remove {}, -> Client.remove {}, ->
+        mockTCPServer.close -> mockHTTPServer.close -> mockTLSServer.close -> mockTLSServerWithoutClientCert.close -> mockMLLPServer.close done
 
   afterEach (done) -> server.stop done
 
