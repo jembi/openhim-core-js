@@ -1,3 +1,11 @@
+openhim-core-js (1.0.0-44~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-44
+    -9813d3d fixup paths for node and npm to use nvm current in debian
+    --https://github.com/jembi/openhim-core-js/commmit/9813d3d
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Thu, 19 Feb 2015 13:21:47 -0500
+
 openhim-core-js (1.0.0-43~trusty) trusty; urgency=medium
 
   * Release Version 1.0.0-43
