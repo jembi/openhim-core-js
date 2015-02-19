@@ -4,7 +4,7 @@ Client = require("../model/clients").Client
 logger = require "winston"
 crypto = require "crypto"
 
-bcrypt = require 'bcrypt'
+bcrypt = require 'bcryptjs'
 
 bcryptCompare = (pass, client, callback) -> bcrypt.compare pass, client.passwordHash, callback
 
@@ -56,15 +56,12 @@ exports.authenticateUser = (ctx, done) ->
 ###
 # Koa middleware for authentication by basic auth
 ###
-exports.koaMiddleware = `function *basicAuthMiddleware(next) {
-  
-  var authenticateUser = Q.denodeify(exports.authenticateUser);
-  yield authenticateUser(this);
+exports.koaMiddleware = (next) ->
+  authenticateUser = Q.denodeify exports.authenticateUser
+  yield authenticateUser this
 
-  if (this.authenticated) {
-    yield next;
-  } else {
-    this.response.status = "unauthorized";
-    this.set("WWW-Authenticate", "Basic");
-  }
-}`
+  if this.authenticated?
+    yield next
+  else
+    this.response.status = "unauthorized"
+    this.set "WWW-Authenticate", "Basic"

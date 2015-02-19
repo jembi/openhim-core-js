@@ -12,7 +12,6 @@ exports.setupProxyHeaders = setupProxyHeaders = (ctx) ->
   setOrAppendHeader ctx, 'X-Forwarded-For', ctx.request.ip
   setOrAppendHeader ctx, 'X-Forwarded-Host', ctx.request.host
 
-exports.koaMiddleware =  `function *setupProxyHeaders(next) {
-    exports.setupProxyHeaders(this);
-    yield next;
-  }`
+exports.koaMiddleware = (next) ->
+  exports.setupProxyHeaders this
+  yield next

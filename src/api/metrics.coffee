@@ -11,70 +11,65 @@ metrics = require "../metrics"
 # getGlobalLoadTimeMetrics() function for generating aggregated global Metrics #
 ########################################################################
 
-exports.getGlobalLoadTimeMetrics = `function *() {
-
-  var filtersObject = this.request.query;
-  var userRequesting = this.authenticated;
-
-  results = yield metrics.fetchGlobalLoadTimeMetrics(userRequesting, filtersObject);
+exports.getGlobalLoadTimeMetrics =  ->
+  filtersObject = this.request.query
+  userRequesting = this.authenticated
+  results = yield metrics.fetchGlobalLoadTimeMetrics userRequesting, filtersObject
   this.body = []
 
-  for (var i = 0; i < results.length; i++) {
-        this.body.push({
-          load: results[i].load,
-          avgResp: results[i].avgResp,
-          timestamp : moment.utc([results[i]._id.year, results[i]._id.month - 1, results[i]._id.day,results[i]._id.hour]).format()//, 'YYYY-MM-DD H+00:00'
-      });
-    }
-
-}`
+  for result, i in results
+    this.body.push
+      load: result.load
+      avgResp: results[i].avgResp
+      timestamp: moment.utc([
+        result._id.year
+        result._id.month - 1
+        result._id.day
+        result._id.hour
+      ]).format()
+  return
 
 ################################################################################################
 # getGlobalStatusMetrics() function for generating aggregated Transaction Status Metrics #
 ################################################################################################
 
-exports.getGlobalStatusMetrics = `function *() {
-
-  var filtersObject = this.request.query;
-  var userRequesting = this.authenticated;
-
-  results = yield metrics.fetchGlobalStatusMetrics(userRequesting, filtersObject);
+exports.getGlobalStatusMetrics = ->
+  filtersObject = this.request.query
+  userRequesting = this.authenticated
+  results = yield metrics.fetchGlobalStatusMetrics userRequesting, filtersObject
   this.body = results
-
-}`
+  return
 
 ##########################################################################
 # getChannelMetrics() function for generating aggregated channel Metrics #
 ##########################################################################
 
-exports.getChannelMetrics = `function *(time, channelId) {
+exports.getChannelMetrics = (time, channelId) ->
+  filtersObject = this.request.query
+  userRequesting = this.authenticated
+  results = yield metrics.fetchChannelMetrics time, channelId, userRequesting, filtersObject
+  if time is 'status'
+    this.body = results
+  else
+    this.body = []
+    #format the message to show what the console expects
 
-  var filtersObject = this.request.query;
-  var userRequesting = this.authenticated;
+    for result, i in results
+      if !result._id.minute
+        result._id.minute = '00'
+      if !result._id.hour
+        result._id.hour = '00'
+      if !result._id.day
+        result._id.day = '1'
+      this.body.push
+        load: result.load
+        avgResp: result.avgResp
+        timestamp: moment.utc([
+          result._id.year
+          result._id.month - 1
+          result._id.day
+          result._id.hour
+          result._id.minute
+        ]).format()
 
-  results = yield metrics.fetchChannelMetrics(time, channelId,userRequesting,filtersObject);
-
-  if (time == 'status') {
-    this.body = results;
-  } else {
-    this.body = [];
-   //format the message to show what the console expects
-    for (var i = 0; i < results.length; i++) {
-      if (!results[i]._id.minute) {
-        results[i]._id.minute = '00'
-      }
-      if (!results[i]._id.hour) {
-        results[i]._id.hour = '00'
-        }
-    if (!results[i]._id.day) {
-      results[i]._id.day = '1'
-    }
-
-    this.body.push({
-      load: results[i].load,
-      avgResp: results[i].avgResp,
-      timestamp: moment.utc([results[i]._id.year, results[i]._id.month - 1, results[i]._id.day,results[i]._id.hour, results[i]._id.minute]).format() //, 'YYYY-MM-DD H:mm+00:00'
-    });
-  }
-  }
-}`;
+  return

@@ -7,6 +7,7 @@ tcpAdapter = require '../tcpAdapter'
 server = require "../server"
 polling = require "../polling"
 authMiddleware = require '../middleware/authorisation'
+utils = require "../utils"
 
 isPathValid = (channel) ->
   if channel.routes?
@@ -19,18 +20,11 @@ isPathValid = (channel) ->
 ###
 # Retrieves the list of active channels
 ###
-exports.getChannels = `function *getChannels() {
-  try {
-    this.body = yield authorisation.getUserViewableChannels(this.authenticated);
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not fetch all channels via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
-
+exports.getChannels = ->
+  try
+    this.body = yield authorisation.getUserViewableChannels this.authenticated
+  catch err
+    utils.logAndSetResponse this, 'internal server error', "Could not fetch all channels via the API: #{err}", 'error'
 
 processPostAddTriggers = (channel) ->
   if channel.type and authMiddleware.isChannelEnabled channel
@@ -39,93 +33,74 @@ processPostAddTriggers = (channel) ->
     else if channel.type is 'polling'
       polling.registerPollingChannel channel, (err) -> logger.error err if err
 
-
 ###
 # Creates a new channel
 ###
-exports.addChannel = `function *addChannel() {
+exports.addChannel = ->
+  # Test if the user is authorised
+  if authorisation.inGroup('admin', this.authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addChannel denied.", 'info'
+    return
 
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to addChannel denied.')
-    this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to addChannel denied.'
-    this.status = 'forbidden';
-    return;
-  }
+  # Get the values to use
+  channelData = this.request.body
 
-  // Get the values to use
-  var channelData = this.request.body;
+  try
+    channel = new Channel channelData
 
-  try {
-    var channel = new Channel(channelData);
+    if not isPathValid channel
+      this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]'
+      this.status = 'bad request'
+      return
 
-    if (!isPathValid(channel)) {
-      this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]';
-      this.status = 'bad request';
-      return;
-    }
+    result = yield Q.ninvoke channel, 'save'
 
-    var result = yield Q.ninvoke(channel, 'save');
+    # All ok! So set the result
+    this.body = 'Channel successfully created'
+    this.status = 'created'
+    logger.info 'User %s created channel with id %s', this.authenticated.email, channel.id
 
-    // All ok! So set the result
-    this.body = 'Channel successfully created';
-    this.status = 'created';
-    logger.info('User %s created channel with id %s', this.authenticated.email, channel.id);
-
-    processPostAddTriggers(channel);
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not add channel via the API: ' + e);
-    this.body = e.message;
-    this.status = 'bad request';
-  }
-}`
+    processPostAddTriggers channel
+  catch err
+    # Error! So inform the user
+    util.logAndSetResponse this, 'bad request', "Could not add channel via the API: #{err}", 'error'
 
 ###
 # Retrieves the details for a specific channel
 ###
-exports.getChannel = `function *getChannel(channelId) {
-  // Get the values to use
-  var id = unescape(channelId);
+exports.getChannel = (channelId) ->
+  # Get the values to use
+  id = unescape channelId
 
-  try {
-    // Try to get the channel
-    var result = null;
-    var accessDenied = false;
-    // if admin allow acces to all channels otherwise restrict result set
-    if (authorisation.inGroup('admin', this.authenticated) === false) {
-      result = yield Channel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec();
-      var adminResult = yield Channel.findById(id).exec();
-      if (!!adminResult) {
-        accessDenied = true;
-      }
-    } else {
-      result = yield Channel.findById(id).exec();
-    }
+  try
+    # Try to get the channel
+    result = null
+    accessDenied = false
+    # if admin allow acces to all channels otherwise restrict result set
+    if authorisation.inGroup('admin', this.authenticated) is false
+      result = yield Channel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec()
+      adminResult = yield Channel.findById(id).exec()
+      if adminResult?
+        accessDenied = true
+    else
+      result = yield Channel.findById(id).exec()
 
-    // Test if the result if valid
-    if (result === null) {
-      if (accessDenied) {
-        // Channel exists but this user doesn't have access
-        this.body = "Access denied to channel with Id: '" + id + "'.";
-        this.status = 'forbidden';
-      } else {
-        // Channel not found! So inform the user
-        this.body = "We could not find a channel with Id:'" + id + "'.";
-        this.status = 'not found';
-      }
-    }
-    else { this.body = result; } // All ok! So set the result
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not fetch channel by Id ' +id+ ' via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
-
+    # Test if the result if valid
+    if result is null
+      if accessDenied
+        # Channel exists but this user doesn't have access
+        this.body = "Access denied to channel with Id: '#{id}'."
+        this.status = 'forbidden'
+      else
+        # Channel not found! So inform the user
+        this.body = "We could not find a channel with Id:'#{id}'."
+        this.status = 'not found'
+    else
+      # All ok! So set the result
+      this.body = result
+  catch err
+    # Error! So inform the user
+    utils.logAndSetResponse this, 'internal server error', "Could not fetch channel by Id '#{id}' via the API: #{err}", 'error'
 
 processPostUpdateTriggers = (channel) ->
   if channel.type
@@ -141,52 +116,39 @@ processPostUpdateTriggers = (channel) ->
       else
         polling.removePollingChannel channel, (err) -> logger.error err if err
 
-
 ###
 # Updates the details for a specific channel
 ###
-exports.updateChannel = `function *updateChannel(channelId) {
+exports.updateChannel = (channelId) ->
 
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateChannel denied.')
-    this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateChannel denied.'
-    this.status = 'forbidden';
-    return;
-  }
+  # Test if the user is authorised
+  if authorisation.inGroup('admin', this.authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateChannel denied.", 'info'
+    return
 
-  // Get the values to use
-  var id = unescape(channelId);
-  var channelData = this.request.body;
+  # Get the values to use
+  id = unescape channelId
+  channelData = this.request.body
 
-  //Ignore _id if it exists, user cannot change the internal id
-  if (typeof channelData._id !== 'undefined') {
-    delete channelData._id;
-  }
+  # Ignore _id if it exists, user cannot change the internal id
+  if typeof channelData._id isnt 'undefined'
+    delete channelData._id
 
-  if (!isPathValid(channelData)) {
-    this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]';
-    this.status = 'bad request';
-    return;
-  }
+  if not isPathValid channelData
+    utils.logAndSetResponse this, 'bad request', 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]', 'info'
+    return
 
-  try {
-    var channel = yield Channel.findByIdAndUpdate(id, channelData).exec();
+  try
+    channel = yield Channel.findByIdAndUpdate(id, channelData).exec()
 
-    // All ok! So set the result
-    this.body = 'The channel was successfully updated';
-    logger.info('User %s updated channel with id %s', this.authenticated.email, id);
+    # All ok! So set the result
+    this.body = 'The channel was successfully updated'
+    logger.info 'User %s updated channel with id %s', this.authenticated.email, id
 
-    processPostUpdateTriggers(channel);
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not update channel by id: ' +id+ ' via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
-
+    processPostUpdateTriggers channel
+  catch err
+    # Error! So inform the user
+    utils.logAndSetResponse this, 'internal server error', "Could not update channel by id: #{id} via the API: #{e}", 'error'
 
 processPostDeleteTriggers = (channel) ->
   if channel.type
@@ -198,42 +160,32 @@ processPostDeleteTriggers = (channel) ->
 ###
 # Deletes a specific channels details
 ###
-exports.removeChannel = `function *removeChannel(channelId) {
+exports.removeChannel = (channelId) ->
 
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeChannel denied.')
-    this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeChannel denied.'
-    this.status = 'forbidden';
-    return;
-  }
+  # Test if the user is authorised
+  if authorisation.inGroup('admin', this.authenticated) is false
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
+    return
 
-  // Get the values to use
-  var id = unescape(channelId);
+  # Get the values to use
+  id = unescape channelId
 
-  try {
-    var numExistingTransactions = yield Transaction.count({ channelID: id }).exec();
+  try
+    numExistingTransactions = yield Transaction.count({ channelID: id }).exec()
 
-    // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
-    var channel;
-    if (numExistingTransactions === 0) {
-      //safe to remove
-      channel = yield Channel.findByIdAndRemove(id).exec();
-    } else {
-      //not safe to remove. just flag as deleted
-      channel = yield Channel.findByIdAndUpdate(id, { status: 'deleted' }).exec();
-    }
+    # Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
+    if numExistingTransactions is 0
+      # safe to remove
+      channel = yield Channel.findByIdAndRemove(id).exec()
+    else
+      # not safe to remove. just flag as deleted
+      channel = yield Channel.findByIdAndUpdate(id, { status: 'deleted' }).exec()
 
-    // All ok! So set the result
-    this.body = 'The channel was successfully deleted';
-    logger.info('User %s removed channel with id %s', this.authenticated.email, id);
+    # All ok! So set the result
+    this.body = 'The channel was successfully deleted'
+    logger.info "User #{this.authenticated.email} removed channel with id #{id}"
 
-    processPostDeleteTriggers(channel);
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not remove channel by id: ' +id+ ' via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
+    processPostDeleteTriggers channel
+  catch err
+    # Error! So inform the user
+    utils.logAndSetResponse this, 'internal server error', "Could not remove channel by id: #{id} via the API: #{e}", 'error'

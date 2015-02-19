@@ -14,10 +14,12 @@ queue = client.queue("transactions")
 authorisation = require './authorisation'
 authMiddleware = require '../middleware/authorisation'
 
+utils = require '../utils'
 
 #####################################################
 # Function to check if rerun task creation is valid #
 #####################################################
+
 isRerunPermissionsValid = (user, transactions, callback) ->
 
   # if 'admin' - set rerun permissions to true
@@ -46,18 +48,16 @@ isRerunPermissionsValid = (user, transactions, callback) ->
 ######################################
 # Retrieves the list of active tasks #
 ######################################
-exports.getTasks = `function *getTasks() {
+exports.getTasks = ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getTasks denied.", 'info'
+    return
 
-  try {
+  try
     this.body = yield Task.find({}).exec();
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not fetch all tasks via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
+  catch err
+    utils.logAndSetResponse this, 'internal server error', "Could not fetch all tasks via the API: #{err}", 'error'
 
 
 areTransactionChannelsValid = (transactions, callback) ->
@@ -72,182 +72,144 @@ areTransactionChannelsValid = (transactions, callback) ->
       return callback null, true
 
 
+
+
 #####################################################
 # Creates a new Task
 # Create the new queue objects for the created task #
 #####################################################
-exports.addTask = `function *addTask() {
+exports.addTask = ->
 
-  // Get the values to use
-  var transactions = this.request.body;
-  try {
+  # Get the values to use
+  transactions = this.request.body
+  try
+    taskObject = {}
+    transactionsArr = []
+    taskObject.remainingTransactions = transactions.tids.length
+    taskObject.user = this.authenticated.email
 
-    var taskObject = {};
-    var transactionsArr = [];
-    taskObject.remainingTransactions = transactions.tids.length;
-    taskObject.user = this.authenticated.email;
+    # check rerun permission and whether to create the rerun task
+    isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
+    allowRerunTaskCreation = yield isRerunPermsValid( this.authenticated, transactions )
 
-    // check rerun permission and whether to create the rerun task
-    var isRerunPermsValid = Q.denodeify(isRerunPermissionsValid);
-    var allowRerunTaskCreation = yield isRerunPermsValid( this.authenticated, transactions );
-    
-    // the rerun task may be created
-    if ( allowRerunTaskCreation === true ){
-      var areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid);
-      var trxChannelsValid = yield areTrxChannelsValid(transactions);
+    # the rerun task may be created
+    if allowRerunTaskCreation == true
+      areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid)
+      trxChannelsValid = yield areTrxChannelsValid(transactions)
 
-      if (!trxChannelsValid) {
-        this.body = 'Cannot queue task as there are transactions with disabled or deleted channels';
-        this.status = 'bad request';
-        return;
-      }
+      if !trxChannelsValid
+        utils.logAndSetResponse this, 'bad request', 'Cannot queue task as there are transactions with disabled or deleted channels', 'info'
+        return
 
-      for (var t=0; t<transactions.tids.length; t++ ){
-        transaction = {tid: transactions.tids[t]};
-        transactionsArr.push( transaction );
-      }
-      taskObject.transactions = transactionsArr;
+      t = 0
+      while t < transactions.tids.length
+        transaction = tid: transactions.tids[t]
+        transactionsArr.push transaction
+        t++
+      taskObject.transactions = transactionsArr
 
-      var task = new Task(taskObject);
-      var result = yield Q.ninvoke(task, 'save');
+      task = new Task(taskObject)
+      result = yield Q.ninvoke(task, 'save')
 
-      var taskID = result[0]._id;
-      var transactions = taskObject.transactions;
-      for (var i = 0; i < transactions.length; i++ ){
-
-        try{
-          var transactionID = transactions[i].tid;
-          queue.enqueue("rerun_transaction", {
-            transactionID: transactionID,
+      taskID = result[0]._id
+      transactions = taskObject.transactions
+      i = 0
+      while i < transactions.length
+        try
+          transactionID = transactions[i].tid
+          queue.enqueue 'rerun_transaction', {
+            transactionID: transactionID
             taskID: taskID
-            }, function(e, job) {
-            logger.info("Enqueued transaction:", job.data.params.transactionID);
-          });
+          }, (e, job) ->
+            logger.info 'Enqueued transaction: #{job.data.params.transactionID}'
+            return
 
-          // All ok! So set the result
-          this.body = 'info: Queue item successfully created';
-          this.status = 'created';
-        }
-        catch(e){
-          // Error! So inform the user
-          logger.error('Could not add Queue item via the API: ' + e);
-          this.body = e.message;
-          this.status = 'internal server error';
-        }
+          # All ok! So set the result
+          utils.logAndSetResponse this, 'created', 'Queue item successfully created', 'info'
+        catch err
+          # Error! So inform the user
+          utils.logAndSetResponse this, 'internal server error', "Could not add Queue item via the API: #{err}", 'info'
+        i++
 
-      }
+      # All ok! So set the result
+      utils.logAndSetResponse this, 'created', "User #{this.authenticated.email} created task with id #{task.id}", 'info'
+    else
+      # rerun task creation not allowed
+      utils.logAndSetResponse this, 'forbidden', "Insufficient permissions prevents this rerun task from being created", 'error'
+  catch err
+    # Error! So inform the user
+    utils.logAndSetResponse this, 'internal server error', "Could not add Task via the API: #{err}", 'error'
 
-      // All ok! So set the result
-      this.body = 'Task successfully created';
-      this.status = 'created';
-      logger.info('User %s created task with id %s', this.authenticated.email, task.id);
-    } else {
-      // rerun task creation not allowed
-      this.body = 'Insufficient permissions prevents this rerun task from being created';
-      this.status = 'forbidden';
-    }
-    
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not add Task via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
+
 
 
 #############################################
 # Retrieves the details for a specific Task #
 #############################################
-exports.getTask = `function *getTask(taskId) {
+exports.getTask = (taskId) ->
 
-  // Get the values to use
-  var taskId = unescape(taskId);
+  # Get the values to use
+  taskId = unescape taskId
 
-  try {
-  
-    // Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    var result = yield Task.findById(taskId).exec();
+  try
+    # Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
+    result = yield Task.findById(taskId).exec();
 
-    // Test if the result if valid
-    if (result === null) {
-      // Channel not foud! So inform the user
-      this.body = "We could not find a Task with this ID:'" + taskId + "'.";
-      this.status = 'not found';
-    }
-    else { this.body = result; } // All ok! So set the result
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not fetch Task by ID ' +taskId+ ' via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
+    # Test if the result if valid
+    if result == null
+      # Channel not foud! So inform the user
+      utils.logAndSetResponse this, 'not found', "We could not find a Task with this ID: #{taskId}.", 'info'
+    else
+      this.body = result
+      # All ok! So set the result
+  catch err
+    utils.logAndSetResponse this, 'internal server error', "Could not fetch Task by ID {taskId} via the API: #{err}", 'error'
+
+
 
 
 ###########################################
 # Updates the details for a specific Task #
 ###########################################
-exports.updateTask = `function *updateTask(taskId) {
+exports.updateTask = (taskId) ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateTask denied.", 'info'
+    return
 
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to updateTask denied.')
-    this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to updateTask denied.'
-    this.status = 'forbidden';
-    return;
-  }
+  # Get the values to use
+  taskId = unescape taskId
+  taskData = this.request.body
 
-  // Get the values to use
-  var taskId = unescape(taskId);
-  var taskData = this.request.body;
+  try
+    yield Task.findOneAndUpdate({ _id: taskId }, taskData).exec()
 
-  try {
-    yield Task.findOneAndUpdate({ _id: taskId }, taskData).exec();
+    # All ok! So set the result
+    this.body = 'The Task was successfully updated'
+    logger.info "User #{this.authenticated.email} updated task with id #{taskId}"
+  catch err
+    utils.logAndSetResponse this, 'internal server error', "Could not update Task by ID {taskId} via the API: #{err}", 'error'
 
-    // All ok! So set the result
-    this.body = 'The Task was successfully updated';
-    logger.info('User %s updated task with id %s', this.authenticated.email, taskId);
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not update Task by ID ' +taskId+ ' via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
 
 
 ####################################
 # Deletes a specific Tasks details #
 ####################################
-exports.removeTask = `function *removeTask(taskId) {
+exports.removeTask = (taskId) ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeTask denied.", 'info'
+    return
 
-  // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    logger.info('User ' +this.authenticated.email+ ' is not an admin, API access to removeTask denied.')
-    this.body = 'User ' +this.authenticated.email+ ' is not an admin, API access to removeTask denied.'
-    this.status = 'forbidden';
-    return;
-  }
+  # Get the values to use
+  taskId = unescape taskId
 
-  // Get the values to use
-  var taskId = unescape(taskId);
-
-  try {
-    // Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
+  try
+    # Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Task.remove({ _id: taskId }).exec();
 
-    // All ok! So set the result
-    this.body = 'The Task was successfully deleted';
-    logger.info('User %s removed task with id %s', this.authenticated.email, taskId);
-  }
-  catch (e) {
-    // Error! So inform the user
-    logger.error('Could not remove Task by ID ' +taskId+ ' via the API: ' + e);
-    this.body = e.message;
-    this.status = 'internal server error';
-  }
-}`
+    # All ok! So set the result
+    this.body = 'The Task was successfully deleted'
+    logger.info "User #{this.authenticated.email} removed task with id #{taskId}"
+  catch err
+    utils.logAndSetResponse this, 'internal server error', "Could not remove Task by ID {taskId} via the API: #{err}", 'error'
