@@ -14,7 +14,7 @@ domain = os.hostname() + '.' + application.name
 
 
 describe "Stats Middleware ", ->
-  this.timeout 20000
+  this.timeout 30000
   s = {}
 
   beforeEach (done) ->
@@ -54,6 +54,7 @@ describe "Stats Middleware ", ->
   ctx.mediatorResponse.metrics = []
   ctx.mediatorResponse.orchestrations = [
     name: "Lab API"
+    group: "group"
     request:
       path: "api/patient/lab"
       headers:
@@ -89,6 +90,7 @@ describe "Stats Middleware ", ->
 
     orchestrations: [
       name: "Lab API"
+      group: "group"
       request:
         path: "api/patient/lab"
         headers:
@@ -127,10 +129,10 @@ describe "Stats Middleware ", ->
       s.expectMessage domain + '.channels:1|c', ->
         s.expectMessage domain + '.channels.Successful:1|c', ->
           s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:1|c', ->
-            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:1|c', ->
-              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:1|c', ->
-                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c', ->
-                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c', ->
+            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:1|c', ->
+              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:1|c', ->
+                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API:1|c', ->
+                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API.statusCodes.200:1|c', ->
                     s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-counter-metric:1|c', ->
                       s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-gauge-metric:11|g', ->
                         s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-timer-metric:1522|ms', done
@@ -139,14 +141,14 @@ describe "Stats Middleware ", ->
       ctx.timer = 10
       stats.measureTransactionDuration ctx, () ->
         s.expectMessage domain + '.channels:10|ms', ->
-          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms', ->
-            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms', ->
+          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:5|ms', ->
+            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:5|ms', ->
               s.expectMessage domain + '.channels.Successful:10|ms', ->
                 s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:10|ms', ->
                   s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful:10|ms', ->
                     s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route:10|ms', ->
                       s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms', ->
-                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms', done
+                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.group.Lab API:5|ms', done
 
 
 
