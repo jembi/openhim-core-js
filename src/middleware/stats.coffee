@@ -43,6 +43,7 @@ exports.incrementTransactionCount = (ctx, done) ->
           for orchestration in route.orchestrations
             do (orchestration) ->
               orchestrationStatus = orchestration.response.status
+              orchestrationName = orchestration.name
               if orchestration.group
                 orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
               sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName
@@ -90,6 +91,7 @@ exports.incrementTransactionCount = (ctx, done) ->
         for orchestration in ctx.mediatorResponse.orchestrations
           do (orchestration) ->
             orchestrationStatus = orchestration.response.status
+            orchestrationName = orchestration.name
             if orchestration.group
               orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
             sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestrationName
@@ -138,7 +140,7 @@ exports.measureTransactionDuration = (ctx, done) ->
             do (orchestration) ->
               orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
               orchestrationStatus = orchestration.response.status
-
+              orchestrationName = orchestration.name
               if orchestration.group
                 orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
               sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName, orchestratrionDuration
@@ -154,6 +156,7 @@ exports.measureTransactionDuration = (ctx, done) ->
           do (orchestration) ->
             orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
             orchestrationStatus = orchestration.response.status
+            orchestrationName = orchestration.name
             if orchestration.group
               orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
 
