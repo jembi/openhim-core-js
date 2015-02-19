@@ -22,7 +22,7 @@ nvm use 0.12
 
 cd $COREDIR
 
-
-$NPM install  grunt-cli grunt grunt-coffeelint grunt-contrib-coffee grunt-contrib-clean grunt-mocha-cli grunt-contrib-watch
+$NPM install
+$NPM install  grunt-cli grunt
 
 $COREDIR/node_modules/grunt-cli/bin/grunt build
