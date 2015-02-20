@@ -8,12 +8,15 @@ config.visualizer = config.get('visualizer')
 minEvPeriod = config.visualizer.minimumEventPeriodMillis ? 100
 
 enableTSNormalization = config.visualizer.enableTSNormalization ? false
-orchestrationTSBufferMillis = config.visualizer.orchestrationTSBufferMillis ? 100
+if enableTSNormalization is true 
+  orchestrationTsBufferMillis = config.visualizer.orchestrationTsBufferMillis ? 100
+else
+  orchestrationTsBufferMillis = 0
 
 formatTS = (ts) -> moment(new Date(ts)).valueOf()
 
 # function to get the TimeStamp difference
-getTSDiff = ( CTXStartTS, obj ) ->
+getTsDiff = ( ctxStartTS, obj ) ->
   # default TS
   earliestTS = 0
 
@@ -25,24 +28,24 @@ getTSDiff = ( CTXStartTS, obj ) ->
     # if TS earlier then update
     if earliestTS < ts then earliestTS = ts
 
-  # CTXStartTS minus earlistTS to get TS diff
-  TSDiff = CTXStartTS - earliestTS
+  # ctxStartTS minus earlistTS to get TS diff
+  TsDiff = ctxStartTS - earliestTS
 
   # add visualizer buffer
-  TSDiff += orchestrationTSBufferMillis
+  TsDiff += orchestrationTsBufferMillis
 
-  return TSDiff
+  return TsDiff
 
 
-addRouteEvents = (dst, route, prefix, TSDiff) ->
+addRouteEvents = (dst, route, prefix, TsDiff) ->
 
   startTS = formatTS route.request.timestamp
   endTS = formatTS route.response.timestamp
 
-  # add TSDiff if normalization enabled
+  # add TsDiff if normalization enabled
   if enableTSNormalization is true
-    startTS = startTS + TSDiff
-    endTS = endTS + TSDiff
+    startTS = startTS + TsDiff
+    endTS = endTS + TsDiff
   
   if startTS > endTS then startTS = endTS
   # round a sub MIN ms response to MIN ms
@@ -90,19 +93,19 @@ storeVisualizerEvents = (ctx, done) ->
 
   if ctx.routes
     # find TS difference
-    TSDiff = getTSDiff startTS, ctx.routes
+    TsDiff = getTsDiff startTS, ctx.routes
     
     for route in ctx.routes
-      addRouteEvents trxEvents, route, 'route', TSDiff
+      addRouteEvents trxEvents, route, 'route', TsDiff
 
       if route.orchestrations
         # find TS difference
-        TSDiff = getTSDiff startTS, route.orchestrations
-        addRouteEvents trxEvents, orch, 'orch', TSDiff for orch in route.orchestrations
+        TsDiff = getTsDiff startTS, route.orchestrations
+        addRouteEvents trxEvents, orch, 'orch', TsDiff for orch in route.orchestrations
   if ctx.mediatorResponse?.orchestrations?
     # find TS difference
-    TSDiff = getTSDiff startTS, ctx.mediatorResponse.orchestrations
-    addRouteEvents trxEvents, orch, 'orch', TSDiff for orch in ctx.mediatorResponse.orchestrations
+    TsDiff = getTsDiff startTS, ctx.mediatorResponse.orchestrations
+    addRouteEvents trxEvents, orch, 'orch', TsDiff for orch in ctx.mediatorResponse.orchestrations
 
   status = 'ok'
   if ctx.transactionStatus is messageStore.transactionStatus.COMPLETED
@@ -114,13 +117,13 @@ storeVisualizerEvents = (ctx, done) ->
 
   # Transaction end for primary route
   trxEvents.push new events.VisualizerEvent
-    ts: endTS + orchestrationTSBufferMillis
+    ts: endTS + orchestrationTsBufferMillis
     comp: ctx.authorisedChannel.name
     ev: 'end'
     status: status
   # Transaction end for channel
   trxEvents.push new events.VisualizerEvent
-    ts: endTS + orchestrationTSBufferMillis
+    ts: endTS + orchestrationTsBufferMillis
     comp: "channel-#{ctx.authorisedChannel.name}"
     ev: 'end'
     status: status
