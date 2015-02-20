@@ -343,31 +343,19 @@ if not module.parent
 
 exports.getCertKeyStatus = (callback) ->
 
-  Keystore.findOne ( err, keystoreDoc ) ->
-    
-    if err
-      return callback err, null
-    else
-      getModulus = Q.denodeify pem.getModulus
+  Keystore.findOne (err, keystoreDoc) ->
+    return callback err, null if err
 
-      keyModulus = getModulus keystoreDoc.key
-      keyModulus.then (keyModulus) ->
+    pem.getModulus keystoreDoc.key, (err, keyModulus) ->
+      return callback err, null if err
+      pem.getModulus keystoreDoc.cert.data, (err, certModulus) ->
+        return callback err, null if err
 
-        certModulus = getModulus keystoreDoc.cert.data
-        certModulus.then (certModulus) ->
-
-          # if cert/key match and are valid
-          if keyModulus.modulus is certModulus.modulus
-            return callback null, true
-          else
-            return callback null, false
-
-        certModulus.fail (reason) ->
-          callback reason, false
-
-      keyModulus.fail (reason) ->
-        callback reason, false
-
+        # if cert/key match and are valid
+        if keyModulus.modulus is certModulus.modulus
+          return callback null, true
+        else
+          return callback null, false
 
 restartServer = (config, done) ->
   # stop the server
