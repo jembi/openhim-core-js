@@ -151,12 +151,13 @@ exports.verifyServerKeys = ->
     return
 
   try
-    result = yield server.getCertKeyStatus
+    try
+      result = yield Q.nfcall server.getCertKeyStatus
+    catch err
+      return utils.logAndSetResponse this, 'bad request', "Could not verify certificate and key, are they valid? #{err}", 'error'
 
-    if result is true
-      this.body = { valid: true }
-    else
-      this.body = { valid: false }
+    this.body =
+      valid: result
     this.status = 'ok'
     
   catch err

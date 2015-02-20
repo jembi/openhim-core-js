@@ -23,10 +23,10 @@ exports.restart = (next) ->
   try
     emailAddr = this.authenticated.email
 
-    result = yield server.getCertKeyStatus
+    result = yield Q.nfcall server.getCertKeyStatus
 
     # valid certificate/key
-    if result is true
+    if result
       server.startRestartServerAgenda ->
         logger.info 'User ' +emailAddr+ ' has requested a Server Restart. Proceeding to restart servers...'
 
