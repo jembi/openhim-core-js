@@ -81,7 +81,7 @@ exports.getTransactions = ->
       .exec()
 
   catch e
-    util.logAndSetResponse this, 'internal server error', "Could not retrieve transactions via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not retrieve transactions via the API: #{e}", 'error'
 
 ###
 # Adds an transaction
@@ -103,7 +103,7 @@ exports.addTransaction = ->
     this.status = 'created'
     logger.info "User #{this.authenticated.email} created transaction with id #{tx.id}"
   catch e
-    util.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
 
 
 ###
@@ -168,7 +168,7 @@ exports.getTransactionById = (transactionId) ->
       this.body = result
 
   catch e
-    util.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
 
 
 ###
@@ -205,7 +205,7 @@ exports.findTransactionByClientId = (clientId) ->
       .exec()
     
   catch e
-    util.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
 
 
 ###
@@ -227,7 +227,7 @@ exports.updateTransaction = (transactionId) ->
     this.status = 'ok'
     logger.info "User #{this.authenticated.email} updated transaction with id #{transactionId}"
   catch e
-    util.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
 
 
 ###
@@ -249,4 +249,4 @@ exports.removeTransaction = (transactionId) ->
     this.status = 'ok'
     logger.info "User #{this.authenticated.email} removed transaction with id #{transactionId}"
   catch e
-    util.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
