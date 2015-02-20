@@ -8,7 +8,7 @@ config.visualizer = config.get('visualizer')
 minEvPeriod = config.visualizer.minimumEventPeriodMillis ? 100
 
 enableTSNormalization = config.visualizer.enableTSNormalization ? false
-if enableTSNormalization is true 
+if enableTSNormalization is true
   orchestrationTsBufferMillis = config.visualizer.orchestrationTsBufferMillis ? 100
 else
   orchestrationTsBufferMillis = 0

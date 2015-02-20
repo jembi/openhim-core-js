@@ -21,13 +21,13 @@ exports.authenticate = (email) ->
     user = yield User.findOne(email: email).exec()
 
     if not user
-      utils.logAndSetResponse this, 'not found', "Could not find user by email #{email}", 'info'
+      util.logAndSetResponse this, 'not found', "Could not find user by email #{email}", 'info'
     else
       this.body =
         salt: user.passwordSalt
         ts: new Date()
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Error during authentication #{e}", 'error'
+    util.logAndSetResponse this, 'internal server error', "Error during authentication #{e}", 'error'
 
 
 #######################################
