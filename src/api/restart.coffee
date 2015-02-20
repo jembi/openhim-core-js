@@ -1,15 +1,15 @@
 logger = require 'winston'
-authorisation = require './api/authorisation'
-server = require "./server"
-config = require "./config/config"
+authorisation = require '../api/authorisation'
+server = require "../server"
+config = require "../config/config"
 config.router = config.get('router')
 config.api = config.get('api')
 config.rerun = config.get('rerun')
 config.polling = config.get('polling')
 config.tcpAdapter = config.get('tcpAdapter')
-Keystore = require('./model/keystore').Keystore
-KeystoreAPI = require "./api/keystore"
-utils = require "./utils"
+Keystore = require('../model/keystore').Keystore
+KeystoreAPI = require "../api/keystore"
+utils = require "../utils"
 Q = require 'q'
 
 ###
