@@ -41,26 +41,30 @@ exports.incrementTransactionCount = (ctx, done) ->
 
         if route.orchestrations?
           for orchestration in route.orchestrations
-            orchestrationStatus = orchestration.response.status
-            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name
-            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus
-            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestration.name
-            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus
+            do (orchestration) ->
+              orchestrationStatus = orchestration.response.status
+              orchestrationName = orchestration.name
+              if orchestration.group
+                orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
+              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName
+              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
+              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName
+              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
 
-#           Log custom orchestration metrics
-            if orchestration.metrics?
-              for metric in orchestration.metrics
-                if metric.type == 'counter'
-                  logger.info 'incrementing '+ route.name + ' orchestration counter ' + metric.name
-                  sdc.increment   domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.' + metric.name, metric.value
+  #           Log custom orchestration metrics
+              if orchestration.metrics?
+                for metric in orchestration.metrics
+                  if metric.type == 'counter'
+                    logger.info 'incrementing '+ route.name + ' orchestration counter ' + metric.name
+                    sdc.increment   domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
 
-                if metric.type == 'timer'
-                  logger.info 'incrementing '+ route.name + 'orchestration timer ' + metric.name
-                  sdc.timing      domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.' + metric.name, metric.value
+                  if metric.type == 'timer'
+                    logger.info 'incrementing '+ route.name + 'orchestration timer ' + metric.name
+                    sdc.timing      domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
 
-                if metric.type == 'gauge'
-                  logger.info 'incrementing '+ route.name + 'orchestration gauge ' + metric.name
-                  sdc.gauge       domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name  + '.' + metric.name, metric.value
+                  if metric.type == 'gauge'
+                    logger.info 'incrementing '+ route.name + 'orchestration gauge ' + metric.name
+                    sdc.gauge       domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName  + '.' + metric.name, metric.value
 
 
     if ctx.mediatorResponse?
@@ -85,25 +89,29 @@ exports.incrementTransactionCount = (ctx, done) ->
 
       if ctx.mediatorResponse.orchestrations?
         for orchestration in ctx.mediatorResponse.orchestrations
-          orchestrationStatus = orchestration.response.status
-          sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name
-          sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus
-          sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus + '.orchestrations.' + orchestration.name
-          sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus
+          do (orchestration) ->
+            orchestrationStatus = orchestration.response.status
+            orchestrationName = orchestration.name
+            if orchestration.group
+              orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
+            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestrationName
+            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
+            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus + '.orchestrations.' + orchestrationName
+            sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
 
-          if orchestration.metrics?
-            for metric in orchestration.metrics
-              if metric.type == 'counter'
-                logger.info 'incrementing orchestration counter ' + metric.name
-                sdc.increment   domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestration.name + '.' + metric.name, metric.value
+            if orchestration.metrics?
+              for metric in orchestration.metrics
+                if metric.type == 'counter'
+                  logger.info 'incrementing orchestration counter ' + metric.name
+                  sdc.increment   domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
 
-              if metric.type == 'timer'
-                logger.info 'incrementing orchestration timer ' + metric.name
-                sdc.timing      domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestration.name + '.' + metric.name, metric.value
+                if metric.type == 'timer'
+                  logger.info 'incrementing orchestration timer ' + metric.name
+                  sdc.timing      domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
 
-              if metric.type == 'gauge'
-                logger.info 'incrementing orchestration gauge ' + metric.name
-                sdc.gauge       domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestration.name  + '.' + metric.name, metric.value
+                if metric.type == 'gauge'
+                  logger.info 'incrementing orchestration gauge ' + metric.name
+                  sdc.gauge       domain + '.channels.' + ctx.authorisedChannel._id + '.' + ctx.mediatorResponse.properties.name + '.orchestrations.' + orchestrationName  + '.' + metric.name, metric.value
 
   catch error
     logger.error error, done
@@ -129,22 +137,31 @@ exports.measureTransactionDuration = (ctx, done) ->
 
         if route.orchestrations?
           for orchestration in route.orchestrations
-            orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
-            orchestrationStatus = orchestration.response.status
-            sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name, orchestratrionDuration
-            sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
-            sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestration.name, orchestratrionDuration
-            sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
+            do (orchestration) ->
+              orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
+              orchestrationStatus = orchestration.response.status
+              orchestrationName = orchestration.name
+              if orchestration.group
+                orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
+              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName, orchestratrionDuration
+              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
+              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName, orchestratrionDuration
+              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
 
 
 
     if ctx.mediatorResponse?
       if ctx.mediatorResponse.orchestrations?
         for orchestration in ctx.mediatorResponse.orchestrations
-          orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
-          orchestrationStatus = orchestration.response.status
-          sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name, orchestratrionDuration
-          sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestration.name + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
+          do (orchestration) ->
+            orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
+            orchestrationStatus = orchestration.response.status
+            orchestrationName = orchestration.name
+            if orchestration.group
+              orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
+
+            sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestrationName, orchestratrionDuration
+            sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
 
 
   catch error
