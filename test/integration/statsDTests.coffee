@@ -142,7 +142,6 @@ describe "Stats Tests", ->
       describe "fetchData", ->
         stub = {}
         beforeEach (done) ->
-          console.log "stubbing"
           stub = sinon.stub Statsd, "fetchData", (path) ->
             fetchDataObject = {}
             fetchDataObject.data = [
