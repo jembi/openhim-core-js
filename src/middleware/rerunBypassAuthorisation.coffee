@@ -1,13 +1,15 @@
 auth = require 'basic-auth'
-Q = require "q"
-Transaction = require("../model/transactions").Transaction
-logger = require "winston"
+Channel = require('../model/channels').Channel
+logger = require 'winston'
+Transaction = require('../model/transactions').Transaction
+Q = require 'q'
 
 exports.authoriseUser = (ctx, done) ->
   # Use the original transaction's channel to setup the authorised channel
   Transaction.findOne _id: ctx.parentID, (err, originalTransaction) ->
-    ctx.authorisedChannel = { _id: originalTransaction.channelID }
-    done()
+    Channel.findOne _id: originalTransaction.channelID, (err, authorisedChannel) ->
+      ctx.authorisedChannel = authorisedChannel
+      done()
   
 
 ###
