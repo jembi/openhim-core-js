@@ -44,7 +44,7 @@
     "xpath": "^0.0.9"
   },
   "devDependencies": {
-    "coffee-script": "jashkenas/coffeescript",
+    "coffee-script": "^1.9.1",
     "coffeelint": "alubbe/coffeelint",
     "form-data": "^0.2.0",
     "grunt": "^0.4.5",
