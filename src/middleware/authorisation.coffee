@@ -81,7 +81,6 @@ exports.authorise = (ctx, done) ->
             matchedRoles = channel.allow.filter (element) ->
               return (ctx.authenticated.roles.indexOf element) isnt -1
         else
-          console.log ctx.ip
           ctx.authenticated = {}
         # if the user has a role that is allowed or their username is allowed specifically
         if matchedRoles.length > 0 or (channel.allow.indexOf ctx.authenticated.clientID) isnt -1 or (channel.whitelist.indexOf ctx.ip) isnt -1 or (channel.authType == 'public') is true
