@@ -10,6 +10,7 @@ config.tcpAdapter = config.get('tcpAdapter')
 Keystore = require('./model/keystore').Keystore
 KeystoreAPI = require "./api/keystore"
 utils = require "./utils"
+Q = require 'q'
 
 ###
 # restart the server
