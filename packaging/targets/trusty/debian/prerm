@@ -1,0 +1,7 @@
+#!/bin/bash
+
+service openhim-core stop || true
+
+
+
+
