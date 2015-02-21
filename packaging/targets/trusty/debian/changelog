@@ -1,3 +1,15 @@
+openhim-core-js (1.0.0-49~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-49
+    -bec5dea "Release Version 1.0.0-48"
+    --https://github.com/jembi/openhim-core-js/commmit/bec5dea
+    -cdf35dc Merge branch 'debian-packaging' of https://github.com/jemb
+    --https://github.com/jembi/openhim-core-js/commmit/cdf35dc
+    -ba5bd1a "Release Version 1.0.0-48"
+    --https://github.com/jembi/openhim-core-js/commmit/ba5bd1a
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Sat, 21 Feb 2015 01:06:36 -0500
+
 openhim-core-js (1.0.0-48~trusty) trusty; urgency=medium
 
   * Release Version 1.0.0-48
