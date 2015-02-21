@@ -8,6 +8,7 @@ USERADD=/usr/sbin/useradd
 ADDGROUP=/usr/sbin/addgroup
 ADDUSER=/usr/sbin/adduser
 
+service openhim-core stop || true
 
 if ! getent group $USERNAME >/dev/null; then
     echo "Creating group $USERNAME"
