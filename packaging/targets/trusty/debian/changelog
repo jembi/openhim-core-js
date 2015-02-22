@@ -1,3 +1,9 @@
+openhim-core-js (1.0.0-50~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-50
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Sun, 22 Feb 2015 06:32:59 -0500
+
 openhim-core-js (1.0.0-49~trusty) trusty; urgency=medium
 
   * Release Version 1.0.0-49
