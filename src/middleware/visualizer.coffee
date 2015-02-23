@@ -29,23 +29,23 @@ getTsDiff = ( ctxStartTS, obj ) ->
     if earliestTS < ts then earliestTS = ts
 
   # ctxStartTS minus earlistTS to get TS diff
-  TsDiff = ctxStartTS - earliestTS
+  tsDiff = ctxStartTS - earliestTS
 
   # add visualizer buffer
-  TsDiff += orchestrationTsBufferMillis
+  tsDiff += orchestrationTsBufferMillis
 
-  return TsDiff
+  return tsDiff
 
 
-addRouteEvents = (dst, route, prefix, TsDiff) ->
+addRouteEvents = (dst, route, prefix, tsDiff) ->
 
   startTS = formatTS route.request.timestamp
   endTS = formatTS route.response.timestamp
 
-  # add TsDiff if normalization enabled
+  # add tsDiff if normalization enabled
   if enableTSNormalization is true
-    startTS = startTS + TsDiff
-    endTS = endTS + TsDiff
+    startTS = startTS + tsDiff
+    endTS = endTS + tsDiff
   
   if startTS > endTS then startTS = endTS
   # round a sub MIN ms response to MIN ms
@@ -93,19 +93,19 @@ storeVisualizerEvents = (ctx, done) ->
 
   if ctx.routes
     # find TS difference
-    TsDiff = getTsDiff startTS, ctx.routes
+    tsDiff = getTsDiff startTS, ctx.routes
     
     for route in ctx.routes
-      addRouteEvents trxEvents, route, 'route', TsDiff
+      addRouteEvents trxEvents, route, 'route', tsDiff
 
       if route.orchestrations
         # find TS difference
-        TsDiff = getTsDiff startTS, route.orchestrations
-        addRouteEvents trxEvents, orch, 'orch', TsDiff for orch in route.orchestrations
+        tsDiff = getTsDiff startTS, route.orchestrations
+        addRouteEvents trxEvents, orch, 'orch', tsDiff for orch in route.orchestrations
   if ctx.mediatorResponse?.orchestrations?
     # find TS difference
-    TsDiff = getTsDiff startTS, ctx.mediatorResponse.orchestrations
-    addRouteEvents trxEvents, orch, 'orch', TsDiff for orch in ctx.mediatorResponse.orchestrations
+    tsDiff = getTsDiff startTS, ctx.mediatorResponse.orchestrations
+    addRouteEvents trxEvents, orch, 'orch', tsDiff for orch in ctx.mediatorResponse.orchestrations
 
   status = 'ok'
   if ctx.transactionStatus is messageStore.transactionStatus.COMPLETED
