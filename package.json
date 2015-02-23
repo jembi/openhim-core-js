@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "coffee-script": "^1.9.1",
-    "coffeelint": "alubbe/coffeelint",
+    "coffeelint": "^1.9.1",
     "form-data": "^0.2.0",
     "grunt": "^0.4.5",
     "grunt-cli": "^0.1.13",
