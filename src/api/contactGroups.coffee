@@ -107,6 +107,6 @@ exports.getContactGroups = ->
     return
 
   try
-    this.body = yield ContactGroup.find().exec();
+    this.body = yield ContactGroup.find().exec()
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not fetch all Contact Group via the API: #{err}", 'error'
