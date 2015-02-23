@@ -162,7 +162,6 @@ describe "API Metrics Tests", ->
                                   auth.setupTestUsers (err) ->
                                     return done err if err
                                     config.statsd.enabled = false
-                                    console.log config.statsd
                                     server.start null, null, 8080, null, 7787, null, ->
                                       done()
 
