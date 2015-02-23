@@ -50,7 +50,7 @@
     "grunt-cli": "^0.1.13",
     "grunt-coffeelint": "^0.0.13",
     "grunt-contrib-clean": "^0.6.0",
-    "grunt-contrib-coffee": "rcrichton/grunt-contrib-coffee",
+    "grunt-contrib-coffee": "^0.13.0",
     "grunt-contrib-watch": "^0.6.1",
     "grunt-mocha-cli": "^1.11.0",
     "mocha": "^2.1.0",
