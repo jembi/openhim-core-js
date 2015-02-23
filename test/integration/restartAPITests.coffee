@@ -1,4 +1,5 @@
 should = require "should"
+sinon = require "sinon"
 request = require "supertest"
 Transaction = require("../../lib/model/transactions").Transaction
 Channel = require("../../lib/model/channels").Channel
@@ -88,59 +89,34 @@ describe "API Integration Tests", ->
 
     describe "*restart()", ->
 
-      i = 0
-      while i < 10
-        i++
+      it "should successfully send API request to restart the server", (done) ->
+        spy = sinon.spy server, 'startRestartServerAgenda'
+        request("https://localhost:8080")
+          .post("/restart")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send()
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              spy.calledOnce.should.be.true
+              done()
 
-        # send request to restart server
-        if i is 5
-          it "should successfully send API request to restart the server", (done) ->
-            request("https://localhost:8080")
-              .post("/restart")
-              .set("auth-username", testUtils.rootUser.email)
-              .set("auth-ts", authDetails.authTS)
-              .set("auth-salt", authDetails.authSalt)
-              .set("auth-token", authDetails.authToken)
-              .send()
-              .expect(200)
-              .end (err, res) ->
-                if err
-                  done err
-                else
-                  done()
-
-        it "should successfully create transaction " + i, (done) ->
-          request("https://localhost:8080")
-            .post("/transactions")
-            .set("auth-username", testUtils.rootUser.email)
+      it "should not allow non admin user to restart the server", (done) ->
+        request("https://localhost:8080")
+            .post("/restart")
+            .set("auth-username", testUtils.nonRootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
-            .send(transactionData)
-            .expect(201)
+            .send()
+            .expect(403)
             .end (err, res) ->
               if err
                 done err
               else
                 done()
-
-
-
-      it "should call getTransactions ", (done) ->
-        Transaction.count {}, (err, countBefore) ->
-          tx = new Transaction transactionData
-          tx.save (error, result) ->
-            should.not.exist (error)
-            request("https://localhost:8080")
-              .get("/transactions?filterPage=0&filterLimit=10")
-              .set("auth-username", testUtils.rootUser.email)
-              .set("auth-ts", authDetails.authTS)
-              .set("auth-salt", authDetails.authSalt)
-              .set("auth-token", authDetails.authToken)
-              .expect(200)
-              .end (err, res) ->
-                if err
-                  done err
-                else
-                  res.body.length.should.equal 10
-                  done()
