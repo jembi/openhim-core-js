@@ -71,5 +71,5 @@ exports.koaMiddleware = (next) ->
         yield next
     else
       this.authenticated = null
-      yield next
       logger.info "Request is NOT authenticated via TLS: #{this.req.client.authorizationError}"
+      yield next
