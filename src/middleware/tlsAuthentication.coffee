@@ -70,5 +70,6 @@ exports.koaMiddleware = (next) ->
         logger.info "Certificate Authentication Failed: the certificate's common name #{subject.CN} did not match any client's domain attribute"
         yield next
     else
-      this.response.status = "unauthorized"
+      this.authenticated = null
+      yield next
       logger.info "Request is NOT authenticated via TLS: #{this.req.client.authorizationError}"
