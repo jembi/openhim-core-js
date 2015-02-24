@@ -28,6 +28,7 @@ exports.storeTransaction = (ctx, done) ->
     status: transactionStatus.PROCESSING
     clientID: ctx.authenticated._id
     channelID: ctx.authorisedChannel._id
+    clientIP: ctx.authenticated.ip
     request:
       path: ctx.path
       headers: headers

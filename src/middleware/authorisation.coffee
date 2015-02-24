@@ -75,10 +75,27 @@ exports.authorise = (ctx, done) ->
       pat = new RegExp channel.urlPattern
       # if url pattern matches
       if pat.test ctx.request.url
-        matchedRoles = channel.allow.filter (element) ->
-          return (ctx.authenticated.roles.indexOf element) isnt -1
+        matchedRoles = {}
+        allowedClient = false
+        if ctx.authenticated?
+          # used by messageStore
+          ctx.authenticated.ip = ctx.ip
+
+          if ctx.authenticated.roles?
+            matchedRoles = channel.allow.filter (element) ->
+              return (ctx.authenticated.roles.indexOf element) isnt -1
+          if ((channel.allow.indexOf ctx.authenticated.clientID) isnt -1)
+            allowedClient = true
+        else
+          # used by messageStore
+          ctx.authenticated =
+            ip: ctx.ip
+
         # if the user has a role that is allowed or their username is allowed specifically
-        if matchedRoles.length > 0 or (channel.allow.indexOf ctx.authenticated.clientID) isnt -1
+        requireWhitelistCheck = channel.whitelist.length > 0
+        isWhiteListed = not requireWhitelistCheck or ((channel.whitelist.indexOf ctx.ip) isnt -1)
+
+        if isWhiteListed and ((matchedRoles.length > 0) or allowedClient or ((channel.authType == 'public') is true))
           # authorisation success, now check if content type matches
           if channel.matchContentTypes and channel.matchContentTypes.length > 0
             if ctx.request.header and ctx.request.header['content-type']
