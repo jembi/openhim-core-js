@@ -242,7 +242,7 @@ describe "e2e Integration Tests", ->
         urlPattern: "/private"
         allow: [ ]
         whitelist: ['::ffff:127.0.0.1', '127.0.0.1'] #localhost in IPV6
-        authType: "private"
+        authType: "public"
         routes: [
           name: "test route"
           host: "localhost"
@@ -316,7 +316,7 @@ describe "e2e Integration Tests", ->
           else
             done()
 
-    it "should return 201 CREATED on POST - Private Channel with whitelisted ip", (done) ->
+    it "should return 201 CREATED on POST - Public Channel with whitelisted ip", (done) ->
       server.start 5001, null, null, null, null, null, ->
         request("http://localhost:5001")
         .post("/private")

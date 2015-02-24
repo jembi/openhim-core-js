@@ -92,7 +92,10 @@ exports.authorise = (ctx, done) ->
             ip: ctx.ip
 
         # if the user has a role that is allowed or their username is allowed specifically
-        if (matchedRoles.length > 0) or allowedClient or ((channel.whitelist.indexOf ctx.ip) isnt -1) or ((channel.authType == 'public') is true)
+        requireWhitelistCheck = channel.whitelist.length > 0
+        isWhiteListed = not requireWhitelistCheck or ((channel.whitelist.indexOf ctx.ip) isnt -1)
+
+        if isWhiteListed and ((matchedRoles.length > 0) or allowedClient or ((channel.authType == 'public') is true))
           # authorisation success, now check if content type matches
           if channel.matchContentTypes and channel.matchContentTypes.length > 0
             if ctx.request.header and ctx.request.header['content-type']
