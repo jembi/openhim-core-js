@@ -77,6 +77,7 @@ This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing
 
 * `grunt watch` - will automatically build the project on any changes.
 * `grunt lint` - ensure the code is lint free, this is also run before an `npm test`
+* `npm link` - will symlink you local working directory to the globally installed openhim-core module. Use this so you can use the global openhim-core binary to run your current work in progress. Also, if you build any local changes the server will automatically restart.
 
 Running the OpenHIM on boot
 ---------------------------
