@@ -341,22 +341,6 @@ if not module.parent
 ###   Restart the server - Agenda Job     ###
 #############################################
 
-exports.getCertKeyStatus = (callback) ->
-
-  Keystore.findOne (err, keystoreDoc) ->
-    return callback err, null if err
-
-    pem.getModulus keystoreDoc.key, (err, keyModulus) ->
-      return callback err, null if err
-      pem.getModulus keystoreDoc.cert.data, (err, certModulus) ->
-        return callback err, null if err
-
-        # if cert/key match and are valid
-        if keyModulus.modulus is certModulus.modulus
-          return callback null, true
-        else
-          return callback null, false
-
 restartServer = (config, done) ->
   # stop the server
   exports.stop ->
