@@ -41,13 +41,15 @@ rawBodyReader = (next) ->
 exports.setupApp = (done) ->
   app = koa()
 
+  # Basic authentication middleware
+  if config.authentication.enableBasicAuthentication
+    app.use basicAuthentication.koaMiddleware
+
   # TLS authentication middleware
   if config.authentication.enableMutualTLSAuthentication
     app.use tlsAuthentication.koaMiddleware
 
-  # Basic authentication middlware
-  if config.authentication.enableBasicAuthentication
-    app.use basicAuthentication.koaMiddleware
+
 
   app.use rawBodyReader
 

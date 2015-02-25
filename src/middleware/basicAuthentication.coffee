@@ -51,6 +51,7 @@ exports.authenticateUser = (ctx, done) ->
         done null, null
   else
     logger.error "No basic auth details supplied"
+    ctx.authenticated = null # Set to empty object rather than null
     done null, null
 
 ###
@@ -60,7 +61,7 @@ exports.koaMiddleware = (next) ->
   authenticateUser = Q.denodeify exports.authenticateUser
   yield authenticateUser this
 
-  if this.authenticated?
+  if this.authenticated || this.authenticated is null
     yield next
   else
     this.response.status = "unauthorized"

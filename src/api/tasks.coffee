@@ -55,7 +55,7 @@ exports.getTasks = ->
     return
 
   try
-    this.body = yield Task.find({}).exec();
+    this.body = yield Task.find({}).exec()
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not fetch all tasks via the API: #{err}", 'error'
 
@@ -153,7 +153,7 @@ exports.getTask = (taskId) ->
 
   try
     # Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    result = yield Task.findById(taskId).exec();
+    result = yield Task.findById(taskId).exec()
 
     # Test if the result if valid
     if result == null
@@ -206,7 +206,7 @@ exports.removeTask = (taskId) ->
 
   try
     # Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    yield Task.remove({ _id: taskId }).exec();
+    yield Task.remove({ _id: taskId }).exec()
 
     # All ok! So set the result
     this.body = 'The Task was successfully deleted'
