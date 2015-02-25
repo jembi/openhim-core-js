@@ -150,19 +150,32 @@ exports.verifyServerKeys = ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().select('key cert').exec()
-    getModulus = Q.denodeify pem.getModulus
-
     try
-      keyModulus = yield getModulus keystoreDoc.key
-      certModulus = yield getModulus keystoreDoc.cert.data
+      result = yield Q.nfcall getCertKeyStatus
     catch err
       return utils.logAndSetResponse this, 'bad request', "Could not verify certificate and key, are they valid? #{err}", 'error'
 
-    if keyModulus.modulus is certModulus.modulus
-      this.body = { valid: true }
-    else
-      this.body = { valid: false }
+    this.body =
+      valid: result
     this.status = 'ok'
+    
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not determine validity via the API: #{err}", 'error'
+
+
+
+exports.getCertKeyStatus = getCertKeyStatus = (callback) ->
+
+  Keystore.findOne (err, keystoreDoc) ->
+    return callback err, null if err
+
+    pem.getModulus keystoreDoc.key, (err, keyModulus) ->
+      return callback err, null if err
+      pem.getModulus keystoreDoc.cert.data, (err, certModulus) ->
+        return callback err, null if err
+
+        # if cert/key match and are valid
+        if keyModulus.modulus is certModulus.modulus
+          return callback null, true
+        else
+          return callback null, false

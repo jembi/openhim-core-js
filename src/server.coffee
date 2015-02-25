@@ -19,6 +19,7 @@ config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
+uuid = require 'node-uuid'
 
 Q = require "q"
 logger = require "winston"
@@ -26,6 +27,7 @@ logger.level = config.logger.level
 mongoose = require "mongoose"
 User = require('./model/users').User
 Keystore = require('./model/keystore').Keystore
+pem = require 'pem'
 Agenda = require 'agenda'
 alerts = require './alerts'
 reports = require './reports'
@@ -42,6 +44,27 @@ apiHttpsServer = null
 rerunServer = null
 tcpHttpReceiver = null
 pollingServer = null
+
+activeHttpConnections = {}
+activeHttpsConnections = {}
+activeApiConnections = {}
+activeRerunConnections = {}
+activeTcpConnections = {}
+activePollingConnections = {}
+
+trackConnection = (map, socket) ->
+  # save active socket
+  id = uuid.v4()
+  map[id] = socket
+
+  # remove socket once it closes
+  socket.on 'close', ->
+    map[id] = null
+    delete map[id]
+
+  # log any socket errors
+  socket.on 'error', (err) ->
+    logger.error err
 
 exports.isTcpHttpReceiverRunning = -> tcpHttpReceiver?
 
@@ -102,6 +125,8 @@ startHttpServer = (httpPort, bindAddress, app) ->
     logger.info "HTTP listening on port " + httpPort
     deferred.resolve()
 
+  httpServer.on 'connection', (socket) -> trackConnection activeHttpConnections, socket
+
   return deferred
 
 startHttpsServer = (httpsPort, bindAddress, app) ->
@@ -119,6 +144,8 @@ startHttpsServer = (httpsPort, bindAddress, app) ->
     httpsServer.listen httpsPort, bindAddress, ->
       logger.info "HTTPS listening on port " + httpsPort
       deferred.resolve()
+
+    httpsServer.on 'connection', (socket) -> trackConnection activeHttpsConnections, socket
 
   return deferred
 
@@ -165,6 +192,8 @@ startApiServer = (apiPort, bindAddress, app) ->
       logger.info "API HTTPS listening on port " + apiPort
       ensureRootUser -> deferred.resolve()
 
+    apiHttpsServer.on 'connection', (socket) -> trackConnection activeApiConnections, socket
+
   return deferred
 
 startTCPServersAndHttpReceiver = (tcpHttpReceiverPort, app) ->
@@ -177,6 +206,8 @@ startTCPServersAndHttpReceiver = (tcpHttpReceiverPort, app) ->
       logger.error err if err
       defer.resolve()
 
+  tcpHttpReceiver.on 'connection', (socket) -> trackConnection activeTcpConnections, socket
+
   return defer
 
 startRerunServer = (httpPort, app) ->
@@ -186,6 +217,8 @@ startRerunServer = (httpPort, app) ->
   rerunServer.listen httpPort, config.rerun.host, ->
     logger.info "Transaction Rerun HTTP listening on port " + httpPort
     deferredHttp.resolve()
+
+  rerunServer.on 'connection', (socket) -> trackConnection activeRerunConnections, socket
 
   return deferredHttp
 
@@ -197,6 +230,8 @@ startPollingServer = (pollingPort, app) ->
     logger.error err if err
     logger.info 'Polling port listenting on port ' + pollingPort
     defer.resolve()
+
+  pollingServer.on 'connection', (socket) -> trackConnection activePollingConnections, socket
 
   return defer
 
@@ -260,6 +295,20 @@ exports.stop = stop = (done) ->
     tcpAdapter.stopServers -> defer.resolve()
     promises.push defer.promise
 
+  # close active connection so that servers can stop
+  for key, socket of activeHttpConnections
+    socket.destroy()
+  for key, socket of activeHttpsConnections
+    socket.destroy()
+  for key, socket of activeApiConnections
+    socket.destroy()
+  for key, socket of activeRerunConnections
+    socket.destroy()
+  for key, socket of activeTcpConnections
+    socket.destroy()
+  for key, socket of activePollingConnections
+    socket.destroy()
+
   (Q.all promises).then ->
     httpServer = null
     httpsServer = null
@@ -286,3 +335,29 @@ if not module.parent
     process.on 'SIGINT', -> stop process.exit
     # terminate signal
     process.on 'SIGTERM', -> stop process.exit
+
+
+#############################################
+###   Restart the server - Agenda Job     ###
+#############################################
+
+restartServer = (config, done) ->
+  # stop the server
+  exports.stop ->
+    httpPort = config.router.httpPort
+    httpsPort = config.router.httpsPort
+    apiPort = config.api.httpsPort
+    rerunPort = config.rerun.httpPort
+    tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort
+    pollingPort = config.polling.pollingPort
+
+    exports.start httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, pollingPort, ->
+      done()
+
+
+exports.startRestartServerAgenda = (done) ->
+  agenda = new Agenda db: { address: config.mongo.url }
+  agenda.define 'Restart Server', {priority: 'high', concurrency: 1}, (job, done) -> restartServer config, done
+  agenda.start()
+  agenda.schedule "in 2 seconds", 'Restart Server'
+  done()
