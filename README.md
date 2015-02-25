@@ -14,11 +14,13 @@ See the [development roadmap](https://github.com/jembi/openhim-core-js/wiki/Open
 
 See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more details to get started.
 
+For additional information and tutorials see [openhim.org](http://openhim.org).
+
 Getting started with the OpenHIM-core
 -------------------------------------
 
 1. Install the latest stable [Node.js](http://nodejs.org/) 0.12.0 or greater.
-2. Install and start [MongoDB](http://www.mongodb.org/).
+2. Install and start [MongoDB](http://www.mongodb.org/) 2.4 or greater.
 3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your PATH.
 4. Start the server by executing `openhim-core` from anywhere.
 
@@ -37,7 +39,7 @@ You can use vagrant if you would want to get up and running quickly with a dev e
 
 Clone the `https://github.com/jembi/openhim-core-js.git` repository.
 
-Ensure you have the followign installed:
+Ensure you have the following installed:
 * [Node.js](http://nodejs.org/) 0.12.0 or greater
 * [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt-get install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
 
@@ -100,7 +102,7 @@ If you require custom config you will have to edit `openhim-core.conf` to add in
 Contributing
 ------------
 
-You may view/add issue here: https://github.com/jembi/openhim-core-js/issues
+You may view/add issues here: https://github.com/jembi/openhim-core-js/issues
 
 To contibute code, please fork the repository and submit a pull request. The maintainers will review the code and merge it in if all is well.
 
