@@ -14,75 +14,54 @@ See the [development roadmap](https://github.com/jembi/openhim-core-js/wiki/Open
 
 See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more details to get started.
 
-# Quickstart Guide
+Getting started with the OpenHIM-core
+-------------------------------------
 
-0. Install [Node.js](http://nodejs.org/) 0.11.9 or greater
-1. Install and start [MongoDB](http://www.mongodb.org/)
-2. Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip) to the desired location 
-3. In the root folder of the downloaded/cloned source, run `sudo npm install . -g`
-5. Start the server by executing `openhim-core`
+1. Install the latest stable [Node.js](http://nodejs.org/) 0.12.0 or greater.
+2. Install and start [MongoDB](http://www.mongodb.org/).
+3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your PATH.
+4. Start the server by executing `openhim-core` from anywhere.
 
-Alternatively you can also use one of the following options:
-* use [Vagrant](https://github.com/jembi/openhim-core-js/wiki/Running-the-OpenHIM-using-Vagrant) to fire up an instance if you're a developer, or just want a quick instance to test with, or
-* use [Puppet](https://github.com/jembi/openhim-core-js/wiki/OpenHIM-Installation-using-Puppet) to deploy an instance on a server.
+To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default setting:
 
-Installation and Development
-============================
+```
+wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/default.json
+# edit default.json, then
+openhim-core --conf=path/to/default.json
+```
 
-Clone the `https://github.com/jembi/openhim-core-js.git` repository or download [the code](https://github.com/jembi/openhim-core-js/archive/master.zip).
+Developer guide
+---------------
 
-Prerequisites
--------------
-* [Node.js](http://nodejs.org/) 0.11.9 or greater
-* [Koa framework](http://koajs.com/)
-* [MongoDB](http://www.mongodb.org/)
+You can use vagrant if you would want to get up and running quickly with a dev environment in a vm. See here to [use Vagrant](https://github.com/jembi/openhim-core-js/wiki/Running-the-OpenHIM-using-Vagrant) to fire up an instance. 
 
-The OpenHIM core makes use of the [Koa framework](http://koajs.com/), which requires node version 0.11.9 or greater. Node also has to be run with the `--harmony` flag for this allocation to work.
+Clone the `https://github.com/jembi/openhim-core-js.git` repository.
+
+Ensure you have the followign installed:
+* [Node.js](http://nodejs.org/) 0.12.0 or greater
+* [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt-get install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
+
+The OpenHIM core makes use of the [Koa framework](http://koajs.com/), which requires node version 0.12.0 or greater. Node also has to be run with the `--harmony` flag for Koa to work as it needs generator support.
 
 The easiest way to use the latest version of node is to install [`nvm`](https://github.com/creationix/nvm). On Ubuntu, you can install using the install script but you have to add `[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh # This loads NVM` to the end of your `~/.bashrc` file as well.
 
 Once `nvm `is installed, run the following:
 
-`nvm install 0.11`
+`nvm install 0.12`
 
-`nvm alias default 0.11`
+`nvm alias default 0.12`
 
-The latest version of node 0.11 should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
+The latest version of node 0.12 should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
 
 `npm install`
 
+Then build the project:
+
+`grunt build`
+
 In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must be installed and running.
 
-### Installing MongoDB
-_Skip this section if you have already installed MongoDB_
-* [Linux install instructions](http://docs.mongodb.org/manual/administration/install-on-linux/):
-  * in Ubuntu run `sudo apt-get install mongodb`
-* [OSX install instructions](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/):
-  * using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`
-* To install MongoDB on Windows, follow the [Windows install instructions](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/).
-
-For further information see the [MongoDB installation documentation](http://docs.mongodb.org/manual/installation/).
-
-### Starting MongoDB
-
-* [Starting MongoDB on Linux](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-ubuntu/#run-mongodb):
-  * in Ubuntu run `sudo service mongodb start`
-* [Starting MongoDB on OSX](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-os-x/#run-mongodb)
-  * run `mongod` (or `mongod --dbpath <some alternate directory>` to manually specify your data directory)
-* To run MongoDB on Windows, see the [Windows documentation](http://docs.mongodb.org/manual/tutorial/install-mongodb-on-windows/#start-mongodb).
-
-For more information see the [MongoDB getting started guide](http://docs.mongodb.org/manual/tutorial/getting-started/).
-
-### Testing
-This step is optional but recommended to ensure that the system is running as expected. To run the tests see the [Testing](https://github.com/jembi/openhim-core-js#testing-1) section below.
-
-
-Running the server
-==================
-
-First make sure the project is build by running `grunt build`.
-
-Once all the prerequisites have been installed, configured and started, run the OpenHIM core server by executing the following:
+To run the server, execute:
 
 `node --harmony lib/server.js`
 
@@ -92,19 +71,22 @@ The server will by default start in development mode using the mongodb database 
 
 This starts the server with production defaults, including the use of the production mongodb database called 'openhim'.
 
-To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config script and keep the settings you wish to override. You can then override the default configuration settings with the following command:
+This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using `npm test`.
 
-`--conf=path/to/customConfig.json`
+**Useful tips:**
 
-So to start a production server with a custom config script it will look something like this:
-`NODE_ENV=production node --harmony lib/server.js --conf=path/to/customConfig.json`
+* `grunt watch` - will automatically build the project on any changes.
+* `grunt lint` - ensure the code is lint free, this is also run before an `npm test`
 
 Running the OpenHIM on boot
-===========================
+---------------------------
 
 To help you get the OpenHIM server running on boot we supply a upstart config file (good for Ubuntu or other system that use upstart). Install the upstart config by doing the following:
 
-`sudo cp resources/openhim-core.conf /etc/init/`
+```
+wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/resources/openhim-core.conf
+sudo cp openhim-core.conf /etc/init/
+```
 
 Then run start the server with:
 
@@ -112,10 +94,15 @@ Then run start the server with:
 
 It will automatically startup on reboot.
 
+If you require custom config you will have to edit `openhim-core.conf` to add in the `--conf` parameter pointing to your external config file.
+
 Exporting/Importing Server Configuration
-===========================
+----------------------------------------
+
+**Note:** This can now be done from the OpenHIM console which may be easier.
 
 ### Exporting
+
 Follow the below steps to export and import the server metadata configuration. By default, the Users, Channels, Clients, ContactGroups and Mediators collections will be exported.
 Copy the file [openhim-configuration-export.sh](https://github.com/jembi/openhim-core-js/blob/master/resources/openhim-configuration-export.sh) to a folder where you wish your export to be saved. Run the shell scrip by executing the following command:
 `./openhim-configuration-export.sh`
@@ -123,22 +110,12 @@ Copy the file [openhim-configuration-export.sh](https://github.com/jembi/openhim
 Your exported collections should be located in the folder structure '/dump/openhim/'.
 
 ### Importing
+
 To import you data successfully ensure that you are in the correct folder where the dump files are located. Execute the below command to  import your collections.
 `mongorestore --db openhim dump/openhim`
 
 NB! if you have changed your database name, then do so for the export/import as well.
 NB! Please ensure that you stop the server before exporting and importing.
-
-
-Testing
-=======
-
-This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using `grunt`:
-```
-grunt test
-```
-
-Alternatively you can also run the tests using `npm test`.
 
 Design
 ------
