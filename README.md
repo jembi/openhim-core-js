@@ -96,6 +96,13 @@ It will automatically startup on reboot.
 
 If you require custom config you will have to edit `openhim-core.conf` to add in the `--conf` parameter pointing to your external config file.
 
+Contributing
+------------
+
+You may view/add issue here: https://github.com/jembi/openhim-core-js/issues
+
+To contibute code, please fork the repository and submit a pull request. The maintainers will review the code and merge it in if all is well.
+
 Exporting/Importing Server Configuration
 ----------------------------------------
 
