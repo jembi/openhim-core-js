@@ -2,10 +2,6 @@
     "mongo": {
         "url": "mongodb://localhost/openhim-development"
     },
-    "authentication": {
-      "enableMutualTLSAuthentication": false,
-      "enableBasicAuthentication": true
-    },
     "logger": {
         "level": "info"
     },

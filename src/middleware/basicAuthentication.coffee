@@ -44,13 +44,13 @@ exports.authenticateUser = (ctx, done) ->
             ctx.authenticated = client
             done null, client
           else
-            logger.info "#{user.name} is NOT authenticated."
+            logger.info "#{user.name} could NOT be authenticated, trying next auth mechanism if any..."
             done null, null
       else
-        logger.info "#{user.name} not found."
+        logger.info "#{user.name} not found, trying next auth mechanism if any..."
         done null, null
   else
-    logger.error "No basic auth details supplied"
+    logger.info "No basic auth details supplied, trying next auth mechanism if any..."
     ctx.authenticated = null # Set to empty object rather than null
     done null, null
 
@@ -58,11 +58,9 @@ exports.authenticateUser = (ctx, done) ->
 # Koa middleware for authentication by basic auth
 ###
 exports.koaMiddleware = (next) ->
-  authenticateUser = Q.denodeify exports.authenticateUser
-  yield authenticateUser this
-
-  if this.authenticated || this.authenticated is null
+  if this.authenticated?
     yield next
   else
-    this.response.status = "unauthorized"
-    this.set "WWW-Authenticate", "Basic"
+    authenticateUser = Q.denodeify exports.authenticateUser
+    yield authenticateUser this
+    yield next

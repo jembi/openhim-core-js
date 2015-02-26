@@ -102,6 +102,7 @@ describe "Authorisation middleware", ->
         ctx.request = {}
         ctx.request.url = "test/authorisation"
         ctx.response = {}
+        ctx.set = ->
         authorisation.authorise ctx, ->
           (ctx.authorisedChannel == undefined).should.be.true
           ctx.response.status.should.be.exactly "unauthorized"
@@ -212,6 +213,7 @@ describe "Authorisation middleware", ->
         ctx.request = {}
         ctx.request.url = "test/authorisation"
         ctx.response = {}
+        ctx.set = ->
         authorisation.authorise ctx, ->
           (ctx.authorisedChannel == undefined).should.be.true
           done()
@@ -294,6 +296,7 @@ describe "Authorisation middleware", ->
         ctx.request.header = {}
         ctx.request.header['content-type'] = "text/dodgy-xml; charset=utf-8"
         ctx.response = {}
+        ctx.set = ->
         authorisation.authorise ctx, ->
           (ctx.authorisedChannel == undefined).should.be.true
           done()
@@ -362,6 +365,7 @@ describe "Authorisation middleware", ->
         ctx.request = {}
         ctx.request.url = "test/status/disabled"
         ctx.response = {}
+        ctx.set = ->
         authorisation.authorise ctx, ->
           (ctx.authorisedChannel == undefined).should.be.true
           done()
@@ -396,6 +400,7 @@ describe "Authorisation middleware", ->
         ctx.request = {}
         ctx.request.url = "test/status/deleted"
         ctx.response = {}
+        ctx.set = ->
         authorisation.authorise ctx, ->
           (ctx.authorisedChannel == undefined).should.be.true
           done()
