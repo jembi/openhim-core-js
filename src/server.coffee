@@ -79,7 +79,7 @@ rootUser =
   # password = 'openhim-password'
 
 defaultKeystore =
-  key: fs.readFileSync 'resources/certs/default/key.pem'
+  key: fs.readFileSync "#{appRoot}/resources/certs/default/key.pem"
   cert:
     country: 'ZA'
     state: 'KZN'
@@ -91,7 +91,7 @@ defaultKeystore =
     validity:
       start: 1423810077000
       end: 3151810077000
-    data: fs.readFileSync 'resources/certs/default/cert.pem'
+    data: fs.readFileSync "#{appRoot}/resources/certs/default/cert.pem"
   ca: []
 
 # Job scheduler
