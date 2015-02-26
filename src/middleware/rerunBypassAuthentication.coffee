@@ -23,4 +23,8 @@ exports.koaMiddleware = (next) ->
   if this.authenticated?
     yield next
   else
-    this.response.status = "unauthorized"
+    this.authenticated =
+      ip : '127.0.0.1'
+    # This is a public channel, allow rerun
+    yield next
+
