@@ -4,6 +4,8 @@ Q = require "q"
 xpath = require "xpath"
 dom = require("xmldom").DOMParser
 logger = require "winston"
+config = require '../config/config'
+config.authentication = config.get('authentication')
 
 matchContent = (channel, body) ->
   if channel.matchContentRegex
@@ -115,6 +117,8 @@ exports.authorise = (ctx, done) ->
 
     # authorisation failed
     ctx.response.status = "unauthorized"
+    if config.authentication.enableBasicAuthentication
+      ctx.set "WWW-Authenticate", "Basic"
     logger.info "The request, '" + ctx.request.url + "', is not authorised to access any channels."
     return done()
 

@@ -53,8 +53,8 @@ exports.getServerOptions = (mutualTLS, done) ->
 # Koa middleware for mutual TLS authentication
 ###
 exports.koaMiddleware = (next) ->
-  if this.authenticated
-    next
+  if this.authenticated?
+    yield next
   else
     if this.req.client.authorized is true
       subject = this.req.connection.getPeerCertificate().subject
@@ -67,9 +67,9 @@ exports.koaMiddleware = (next) ->
         yield next
       else
         this.authenticated = null
-        logger.info "Certificate Authentication Failed: the certificate's common name #{subject.CN} did not match any client's domain attribute"
+        logger.info "Certificate Authentication Failed: the certificate's common name #{subject.CN} did not match any client's domain attribute, trying next auth mechanism if any..."
         yield next
     else
       this.authenticated = null
-      logger.info "Request is NOT authenticated via TLS: #{this.req.client.authorizationError}"
+      logger.info "Could NOT authenticate via TLS: #{this.req.client.authorizationError}, trying next auth mechanism if any..."
       yield next
