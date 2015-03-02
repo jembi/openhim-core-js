@@ -1,21 +1,18 @@
 mongoose = require "mongoose"
 Schema = mongoose.Schema
 
-eventIdSchema = new Schema
-  "code": { type: String, required: false }
-  "codeSystemName": { type: String, required: false }
-  "displayName": { type: String, required: false }
-
-codeType = new Schema
+codeTypeSchema = new Schema
   "code": { type: String, required: false }
   "displayName": { type: String, required: false }
   "codeSystemName": { type: String, required: false }
 
-eventTypeCodeSchema = codeType
+eventIdSchema = codeTypeSchema
 
-RoleIDCodeSchema = codeType
+eventTypeCodeSchema = codeTypeSchema
 
-ParticipantObjectIDTypeCodeSchema = codeType
+RoleIDCodeSchema = codeTypeSchema
+
+ParticipantObjectIDTypeCodeSchema = codeTypeSchema
 
 activeParticipantSchema = new Schema
   "UserID": { type: String, required: false }
