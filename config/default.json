@@ -30,7 +30,7 @@
   },
   "authentication": {
     "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": false
+    "enableBasicAuthentication": true
   },
   "nodemailer": {
     "service": "Gmail",
@@ -63,7 +63,7 @@
     "orchestrationTSBufferMillis": 100
   },
   "statsd": {
-    "enabled": true,
+    "enabled": false,
     "host": "127.0.0.1"
   },
   "application": {

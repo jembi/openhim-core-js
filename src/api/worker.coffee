@@ -196,7 +196,9 @@ rerunSetHTTPRequestOptions = (transaction, taskID, callback) ->
     method: transaction.request.method
     headers: transaction.request.headers
 
-  options.headers.clientID = transaction.clientID
+  if transaction.clientID
+    options.headers.clientID = transaction.clientID
+
   options.headers.parentID = transaction._id
   options.headers.taskID = taskID
 

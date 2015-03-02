@@ -168,7 +168,7 @@ exports.getTransactionById = (transactionId) ->
       this.body = result
 
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not get transaction by ID via the API: #{e}", 'error'
 
 
 ###
@@ -205,7 +205,7 @@ exports.findTransactionByClientId = (clientId) ->
       .exec()
     
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not get transaction by clientID via the API: #{e}", 'error'
 
 
 ###
@@ -249,4 +249,4 @@ exports.removeTransaction = (transactionId) ->
     this.status = 'ok'
     logger.info "User #{this.authenticated.email} removed transaction with id #{transactionId}"
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 'internal server error', "Could not remove transaction via the API: #{e}", 'error'

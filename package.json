@@ -1,13 +1,14 @@
 {
   "name": "openhim-core",
   "description": "The OpenHIM core application that provides logging and routing of http requests",
-  "version": "1.1.0",
-  "private": true,
+  "version": "1.1.1",
   "main": "./lib/server.js",
-  "bin": "./bin/openhim-core.js",
+  "bin": {
+    "openhim-core": "./bin/openhim-core.js"
+  },
   "license": "MPL-2.0",
   "engines": {
-    "node": ">=0.11.0"
+    "node": ">=0.12.0"
   },
   "dependencies": {
     "agenda": "^0.6.26",
@@ -29,6 +30,7 @@
     "mongoose": "^3.8.21",
     "monq": "^0.3.1",
     "nconf": "^0.7.1",
+    "node-uuid": "^1.4.1",
     "nodemailer": "^0.7.1",
     "pem": "^1.5.0",
     "q": "^1.1.2",
@@ -63,5 +65,22 @@
   "scripts": {
     "prepublish": "grunt build",
     "test": "grunt test"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jembi/openhim-core-js.git"
+  },
+  "keywords": [
+    "openhim",
+    "hie",
+    "interoperability",
+    "tls",
+    "atna",
+    "openhie"
+  ],
+  "author": "Jembi Health Systems NPC",
+  "bugs": {
+    "url": "https://github.com/jembi/openhim-core-js/issues"
+  },
+  "homepage": "http://openhim.org"
 }

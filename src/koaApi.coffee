@@ -16,7 +16,7 @@ worker = require './api/worker'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
 keystore = require './api/keystore'
-serverRestart = require './restart'
+serverRestart = require './api/restart'
 statsd = require './api/statsd'
 config = require './config/config'
 #statsd_instance = config.get 'statsd'
@@ -80,7 +80,7 @@ exports.setupApp = (done) ->
   app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
   app.use route.get '/visualizer/sync', visualizer.sync
 
-# -- New metrics Routes --
+  # -- New metrics Routes --
   app.use route.get '/metrics', if config.statsd.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
   app.use route.get '/metrics/status', if config.statsd.enabled then statsd.fetchGlobalStatusMetrics else metrics.getGlobalStatusMetrics
   app.use route.get '/metrics/:type/:channelId', if config.statsd.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
