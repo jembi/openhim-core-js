@@ -48,3 +48,5 @@ auditRecordSchema = new Schema
   "ActiveParticipant":[ activeParticipantSchema ]
   "AuditSourceIdentification": AuditSourceIdentificationSchema
   "ParticipantObjectIdentification": [ ParticipantObjectIdentificationSchema ]
+
+exports.auditRecord = mongoose.model 'auditRecord', auditRecordSchema
