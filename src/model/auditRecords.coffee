@@ -6,15 +6,16 @@ eventIdSchema = new Schema
   "codeSystemName": { type: String, required: false }
   "displayName": { type: String, required: false }
 
-eventTypeCodeSchema = new Schema
+codeType = new Schema
   "code": { type: String, required: false }
   "displayName": { type: String, required: false }
   "codeSystemName": { type: String, required: false }
 
-RoleIDCodeSchema = new Schema
-  "code": { type: String, required: false }
-  "displayName": { type: String, required: false }
-  "codeSystemName": { type: String, required: false }
+eventTypeCodeSchema = codeType
+
+RoleIDCodeSchema = codeType
+
+ParticipantObjectIDTypeCodeSchema = codeType
 
 activeParticipantSchema = new Schema
   "UserID": { type: String, required: false }
@@ -35,16 +36,12 @@ ParticipantObjectIdentificationSchema = new Schema
   "ParticipantObjectQuery": { type: String, required: false }
   "ParticipantObjectDetail": ParticipantObjectDetailSchema
 
-ParticipantObjectIDTypeCodeSchema = new Schema
-  "code": { type: String, required: false }
-  "displayName": { type: String, required: false }
-  "codeSystemName": { type: String, required: false }
-
 ParticipantObjectDetailSchema = new Schema
   "type": { type: String, required: false }
   "value": { type: String, required: false }
 
 auditRecordSchema = new Schema
+  "rawMessage":  { type: String, required: false }
   "EventIdentification":
     "EventDateTime": { type: Date, required: true, default: Date.now }
     "EventOutcomeIndicator": { type: String, required: false }
