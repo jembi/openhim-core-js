@@ -47,4 +47,4 @@ auditRecordSchema = new Schema
     "EventTypeCode": eventTypeCodeSchema,
   "ActiveParticipant":[ activeParticipantSchema ]
   "AuditSourceIdentification": AuditSourceIdentificationSchema
-  "ParticipantObjectIdentification"[ ParticipantObjectIdentificationSchema ]
+  "ParticipantObjectIdentification": [ ParticipantObjectIdentificationSchema ]
