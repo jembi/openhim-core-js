@@ -15,7 +15,7 @@ getProjectionObject = ->
 ###
 # Retrieves the list of Audit Records
 ###
-exports.getAuditRecords = ->
+exports.getAudits = ->
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
     utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getAuditRecords denied.", 'info'
@@ -63,7 +63,7 @@ exports.getAuditRecords = ->
 ###
 # Retrieves the details for a specific Audit Record
 ###
-exports.getAuditRecordById = (auditRecordId) ->
+exports.getAuditById = (auditRecordId) ->
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
     utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getAuditRecordById denied.", 'info'

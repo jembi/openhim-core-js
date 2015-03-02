@@ -15,6 +15,77 @@ describe "API Integration Tests", ->
 
 
   describe "Transactions REST Api testing", ->
+
+
+
+    auditRecord = 
+      rawMessage:  'This will be the raw ATNA message that gets received to be used as a backup reference'
+      EventIdentification:
+        EventDateTime: '2015-02-20T15:38:25.282+02:00'
+        EventOutcomeIndicator: '0'
+        EventActionCode: 'E'
+        EventID: 
+          code: '110112'
+          displayName: 'Query'
+          codeSystemName: 'DCM'
+        EventTypeCode: 
+          code: 'ITI-9'
+          displayName: 'PIX Query'
+          codeSystemName: 'IHE Transactions'
+      ActiveParticipant:
+        [
+          {
+            UserID: 'pix|pix'
+            AlternativeUserID: '2100'
+            UserIsRequestor: 'false'
+            NetworkAccessPointID: 'localhost'
+            NetworkAccessPointTypeCode: '1'
+            RoleIDCode: 
+              code: '110152'
+              displayName: 'Destination'
+              codeSystemName: 'DCM'
+          }, {
+            UserID: 'pix|pix'
+            AlternativeUserID: '2100'
+            UserIsRequestor: 'false'
+            NetworkAccessPointID: 'localhost'
+            NetworkAccessPointTypeCode: '1'
+            RoleIDCode: 
+              code: '110152'
+              displayName: 'Destination'
+              codeSystemName: 'DCM'
+          }
+        ]
+      AuditSourceIdentification: 'openhim'
+      ParticipantObjectIdentification:
+        [
+          {
+            ParticipantObjectID: '975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO'
+            ParticipantObjectTypeCode: '1'
+            ParticipantObjectTypeCodeRole: '1'
+            ParticipantObjectIDTypeCode: 
+              code: '2'
+              displayName: 'PatientNumber'
+              codeSystemName: 'RFC-3881'
+          }, {
+            ParticipantObjectID: 'dca6c09e-cc92-4bc5-8741-47bd938fa405'
+            ParticipantObjectTypeCode: '2'
+            ParticipantObjectTypeCodeRole: '24'
+            ParticipantObjectIDTypeCode: 
+              code: 'ITI-9'
+              displayName: 'PIX Query'
+              codeSystemName: 'IHE Transactions'
+            ParticipantObjectQuery: 'TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAyMjAxNTM4MjUrMDIwMHx8UUJQXlEyM15RQlBfUTIxfDEwMDQxYWQ5LTkyNDAtNDEyNS04ZDMwLWZiYzczNGEwOTMwMXxQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXw1OTRhNDVkYS0zOTY5LTQzOTAtODE2Ni01MjhkZDFmNWU0ZTF8NzZjYzc2NWE0NDJmNDEwXl5eJjEuMy42LjEuNC4xLjIxMzY3LjIwMDUuMy43JklTT15QSXxeXl5FQ0lEJkVDSUQmSVNPXlBJDVJDUHxJDQ=='
+            ParticipantObjectDetail: 
+              type: 'MSH-10'
+              value: 'MTAwNDFhZDktOTI0MC00MTI1LThkMzAtZmJjNzM0YTA5MzAx'
+          }
+        ]
+
+
+
+
+
     transactionId = null
     requ =
       path: "/api/test"
