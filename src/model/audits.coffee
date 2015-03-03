@@ -8,36 +8,36 @@ codeTypeSchema =
 
 
 activeParticipantSchema = new Schema
-  "UserID": { type: String, required: false }
-  "AlternativeUserID": { type: String, required: false }
-  "UserIsRequestor": { type: String, required: false }
-  "NetworkAccessPointID": { type: String, required: false }
-  "NetworkAccessPointTypeCode": { type: String, required: false }
-  "RoleIDCode": codeTypeSchema
+  "userID": { type: String, required: false }
+  "alternativeUserID": { type: String, required: false }
+  "userIsRequestor": { type: String, required: false }
+  "networkAccessPointID": { type: String, required: false }
+  "networkAccessPointTypeCode": { type: String, required: false }
+  "roleIDCode": codeTypeSchema
   
 
 ParticipantObjectIdentificationSchema = new Schema
-  "ParticipantObjectID": { type: String, required: false }
-  "ParticipantObjectTypeCode": { type: String, required: false }
-  "ParticipantObjectTypeCodeRole": { type: String, required: false }
-  "ParticipantObjectIDTypeCode": codeTypeSchema
-  "ParticipantObjectQuery": { type: String, required: false }
-  "ParticipantObjectDetail":
+  "participantObjectID": { type: String, required: false }
+  "participantObjectTypeCode": { type: String, required: false }
+  "participantObjectTypeCodeRole": { type: String, required: false }
+  "participantObjectIDTypeCode": codeTypeSchema
+  "participantObjectQuery": { type: String, required: false }
+  "participantObjectDetail":
     "type": { type: String, required: false }
     "value": { type: String, required: false }
 
 
 auditRecordSchema = new Schema
   "rawMessage":  { type: String, required: false }
-  "EventIdentification":
-    "EventDateTime": { type: Date, required: true, default: Date.now }
-    "EventOutcomeIndicator": { type: String, required: false }
-    "EventActionCode": { type: String, required: false }
-    "EventID": codeTypeSchema
-    "EventTypeCode": codeTypeSchema
-  "ActiveParticipant": [ activeParticipantSchema ]
-  "AuditSourceIdentification":
-    "AuditSourceID": { type: String, required: false }
-  "ParticipantObjectIdentification": [ ParticipantObjectIdentificationSchema ]
+  "eventIdentification":
+    "eventDateTime": { type: Date, required: true, default: Date.now }
+    "eventOutcomeIndicator": { type: String, required: false }
+    "eventActionCode": { type: String, required: false }
+    "eventID": codeTypeSchema
+    "eventTypeCode": codeTypeSchema
+  "activeParticipant": [ activeParticipantSchema ]
+  "auditSourceIdentification":
+    "auditSourceID": { type: String, required: false }
+  "participantObjectIdentification": [ ParticipantObjectIdentificationSchema ]
 
 exports.Audit = mongoose.model 'Audit', auditRecordSchema
