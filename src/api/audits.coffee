@@ -17,7 +17,7 @@ getProjectionObject = (filterRepresentation) ->
     else
       # no filterRepresentation supplied - simple view
       # view minimum required data for audits
-      return { "ParticipantObjectIdentification": 0, "ActiveParticipant": 0 }
+      return { "ParticipantObjectIdentification": 0, "ActiveParticipant": 0, "rawMessage": 0 }
   
 
 
