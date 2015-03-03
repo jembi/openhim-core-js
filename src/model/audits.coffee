@@ -22,7 +22,7 @@ ParticipantObjectIdentificationSchema = new Schema
   "ParticipantObjectTypeCodeRole": { type: String, required: false }
   "ParticipantObjectIDTypeCode": codeTypeSchema
   "ParticipantObjectQuery": { type: String, required: false }
-  "ParticipantObjectDetail": 
+  "ParticipantObjectDetail":
     "type": { type: String, required: false }
     "value": { type: String, required: false }
 
@@ -36,7 +36,7 @@ auditRecordSchema = new Schema
     "EventID": codeTypeSchema
     "EventTypeCode": codeTypeSchema
   "ActiveParticipant": [ activeParticipantSchema ]
-  "AuditSourceIdentification": 
+  "AuditSourceIdentification":
     "AuditSourceID": { type: String, required: false }
   "ParticipantObjectIdentification": [ ParticipantObjectIdentificationSchema ]
 
