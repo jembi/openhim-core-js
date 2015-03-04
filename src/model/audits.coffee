@@ -7,7 +7,7 @@ codeTypeSchema =
   "codeSystemName": { type: String, required: false }
 
 
-activeParticipantSchema = new Schema
+ActiveParticipantSchema = new Schema
   "userID": { type: String, required: false }
   "alternativeUserID": { type: String, required: false }
   "userIsRequestor": { type: String, required: false }
@@ -27,7 +27,7 @@ ParticipantObjectIdentificationSchema = new Schema
     "value": { type: String, required: false }
 
 
-auditRecordSchema = new Schema
+AuditRecordSchema = new Schema
   "rawMessage":  { type: String, required: false }
   "eventIdentification":
     "eventDateTime": { type: Date, required: true, default: Date.now }
@@ -35,9 +35,9 @@ auditRecordSchema = new Schema
     "eventActionCode": { type: String, required: false }
     "eventID": codeTypeSchema
     "eventTypeCode": codeTypeSchema
-  "activeParticipant": [ activeParticipantSchema ]
+  "activeParticipant": [ ActiveParticipantSchema ]
   "auditSourceIdentification":
     "auditSourceID": { type: String, required: false }
   "participantObjectIdentification": [ ParticipantObjectIdentificationSchema ]
 
-exports.Audit = mongoose.model 'Audit', auditRecordSchema
+exports.Audit = mongoose.model 'Audit', AuditRecordSchema
