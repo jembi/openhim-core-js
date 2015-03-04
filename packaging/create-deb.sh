@@ -3,7 +3,7 @@
 set -e
 set -x
 
-PPA=mhero
+PPA=release
 CPDIRS=("bin" "config" "infrastructure"  "resources" "src" "tests" "tls")
 CPFILES=("coffeelint.json" "Gruntfile.coffee" "LICENSE" "package.json" "README.md")
 
