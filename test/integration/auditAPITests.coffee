@@ -16,64 +16,64 @@ describe "API Integration Tests", ->
 
     auditData = 
       rawMessage:  'This will be the raw ATNA message that gets received to be used as a backup reference'
-      EventIdentification:
-        EventDateTime: '2015-02-20T15:38:25.282Z'
-        EventOutcomeIndicator: '0'
-        EventActionCode: 'E'
-        EventID: 
+      eventIdentification:
+        eventDateTime: '2015-02-20T15:38:25.282Z'
+        eventOutcomeIndicator: '0'
+        eventActionCode: 'E'
+        eventID: 
           code: '110112'
           displayName: 'Query'
           codeSystemName: 'DCM'
-        EventTypeCode: 
+        eventTypeCode: 
           code: 'ITI-9'
           displayName: 'PIX Query'
           codeSystemName: 'IHE Transactions'
-      ActiveParticipant:
+      activeParticipant:
         [
           {
-            UserID: 'pix|pix'
-            AlternativeUserID: '2100'
-            UserIsRequestor: 'false'
-            NetworkAccessPointID: 'localhost'
-            NetworkAccessPointTypeCode: '1'
-            RoleIDCode: 
+            userID: 'pix|pix'
+            alternativeUserID: '2100'
+            userIsRequestor: 'false'
+            networkAccessPointID: 'localhost'
+            networkAccessPointTypeCode: '1'
+            roleIDCode: 
               code: '110152'
               displayName: 'Destination'
               codeSystemName: 'DCM'
           }, {
-            UserID: 'pix|pix'
-            AlternativeUserID: '2100'
-            UserIsRequestor: 'false'
-            NetworkAccessPointID: 'localhost'
-            NetworkAccessPointTypeCode: '1'
-            RoleIDCode: 
+            userID: 'pix|pix'
+            alternativeUserID: '2100'
+            userIsRequestor: 'false'
+            networkAccessPointID: 'localhost'
+            networkAccessPointTypeCode: '1'
+            roleIDCode: 
               code: '110152'
               displayName: 'Destination'
               codeSystemName: 'DCM'
           }
         ]
-      AuditSourceIdentification: 
-        AuditSourceID: 'openhim'
-      ParticipantObjectIdentification:
+      auditSourceIdentification: 
+        auditSourceID: 'openhim'
+      participantObjectIdentification:
         [
           {
-            ParticipantObjectID: '975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO'
-            ParticipantObjectTypeCode: '1'
-            ParticipantObjectTypeCodeRole: '1'
-            ParticipantObjectIDTypeCode: 
+            participantObjectID: '975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO'
+            participantObjectTypeCode: '1'
+            participantObjectTypeCodeRole: '1'
+            participantObjectIDTypeCode: 
               code: '2'
               displayName: 'PatientNumber'
               codeSystemName: 'RFC-3881'
           }, {
-            ParticipantObjectID: 'dca6c09e-cc92-4bc5-8741-47bd938fa405'
-            ParticipantObjectTypeCode: '2'
-            ParticipantObjectTypeCodeRole: '24'
-            ParticipantObjectIDTypeCode: 
+            participantObjectID: 'dca6c09e-cc92-4bc5-8741-47bd938fa405'
+            participantObjectTypeCode: '2'
+            participantObjectTypeCodeRole: '24'
+            participantObjectIDTypeCode: 
               code: 'ITI-9'
               displayName: 'PIX Query'
               codeSystemName: 'IHE Transactions'
-            ParticipantObjectQuery: 'TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAyMjAxNTM4MjUrMDIwMHx8UUJQXlEyM15RQlBfUTIxfDEwMDQxYWQ5LTkyNDAtNDEyNS04ZDMwLWZiYzczNGEwOTMwMXxQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXw1OTRhNDVkYS0zOTY5LTQzOTAtODE2Ni01MjhkZDFmNWU0ZTF8NzZjYzc2NWE0NDJmNDEwXl5eJjEuMy42LjEuNC4xLjIxMzY3LjIwMDUuMy43JklTT15QSXxeXl5FQ0lEJkVDSUQmSVNPXlBJDVJDUHxJDQ=='
-            ParticipantObjectDetail: 
+            participantObjectQuery: 'TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAyMjAxNTM4MjUrMDIwMHx8UUJQXlEyM15RQlBfUTIxfDEwMDQxYWQ5LTkyNDAtNDEyNS04ZDMwLWZiYzczNGEwOTMwMXxQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXw1OTRhNDVkYS0zOTY5LTQzOTAtODE2Ni01MjhkZDFmNWU0ZTF8NzZjYzc2NWE0NDJmNDEwXl5eJjEuMy42LjEuNC4xLjIxMzY3LjIwMDUuMy43JklTT15QSXxeXl5FQ0lEJkVDSUQmSVNPXlBJDVJDUHxJDQ=='
+            participantObjectDetail: 
               type: 'MSH-10'
               value: 'MTAwNDFhZDktOTI0MC00MTI1LThkMzAtZmJjNzM0YTA5MzAx'
           }
@@ -116,22 +116,22 @@ describe "API Integration Tests", ->
             if err
               done err
             else
-              Audit.findOne { "EventIdentification.EventDateTime": "2015-02-20T15:38:25.282Z" }, (error, newAudit) ->
+              Audit.findOne { "eventIdentification.eventDateTime": "2015-02-20T15:38:25.282Z" }, (error, newAudit) ->
                 should.not.exist (error)
                 (newAudit != null).should.be.true
-                newAudit.EventIdentification.EventActionCode.should.equal "E"
-                newAudit.EventIdentification.EventID.code.should.equal "110112"
-                newAudit.EventIdentification.EventID.displayName.should.equal "Query"
-                newAudit.EventIdentification.EventID.codeSystemName.should.equal "DCM"
-                newAudit.ActiveParticipant.length.should.equal 2
-                newAudit.ActiveParticipant[0].UserID.should.equal "pix|pix"
-                newAudit.ActiveParticipant[0].NetworkAccessPointID.should.equal "localhost"
-                newAudit.AuditSourceIdentification.AuditSourceID.should.equal "openhim"
-                newAudit.ParticipantObjectIdentification.length.should.equal 2
-                newAudit.ParticipantObjectIdentification[0].ParticipantObjectID.should.equal "975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO"
-                newAudit.ParticipantObjectIdentification[0].ParticipantObjectIDTypeCode.codeSystemName.should.equal "RFC-3881"
-                newAudit.ParticipantObjectIdentification[1].ParticipantObjectID.should.equal "dca6c09e-cc92-4bc5-8741-47bd938fa405"
-                newAudit.ParticipantObjectIdentification[1].ParticipantObjectIDTypeCode.codeSystemName.should.equal "IHE Transactions"
+                newAudit.eventIdentification.eventActionCode.should.equal "E"
+                newAudit.eventIdentification.eventID.code.should.equal "110112"
+                newAudit.eventIdentification.eventID.displayName.should.equal "Query"
+                newAudit.eventIdentification.eventID.codeSystemName.should.equal "DCM"
+                newAudit.activeParticipant.length.should.equal 2
+                newAudit.activeParticipant[0].userID.should.equal "pix|pix"
+                newAudit.activeParticipant[0].networkAccessPointID.should.equal "localhost"
+                newAudit.auditSourceIdentification.auditSourceID.should.equal "openhim"
+                newAudit.participantObjectIdentification.length.should.equal 2
+                newAudit.participantObjectIdentification[0].participantObjectID.should.equal "975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO"
+                newAudit.participantObjectIdentification[0].participantObjectIDTypeCode.codeSystemName.should.equal "RFC-3881"
+                newAudit.participantObjectIdentification[1].participantObjectID.should.equal "dca6c09e-cc92-4bc5-8741-47bd938fa405"
+                newAudit.participantObjectIdentification[1].participantObjectIDTypeCode.codeSystemName.should.equal "IHE Transactions"
                 done()
 
       it  "should only allow admin users to add audits", (done) ->
@@ -212,20 +212,20 @@ describe "API Integration Tests", ->
                 done err
               else
                 (res != null).should.be.true
-                res.body.EventIdentification.EventDateTime.should.equal "2015-02-20T15:38:25.282Z"
-                res.body.EventIdentification.EventActionCode.should.equal "E"
-                res.body.EventIdentification.EventID.code.should.equal "110112"
-                res.body.EventIdentification.EventID.displayName.should.equal "Query"
-                res.body.EventIdentification.EventID.codeSystemName.should.equal "DCM"
-                res.body.ActiveParticipant.length.should.equal 2
-                res.body.ActiveParticipant[0].UserID.should.equal "pix|pix"
-                res.body.ActiveParticipant[0].NetworkAccessPointID.should.equal "localhost"
-                res.body.AuditSourceIdentification.AuditSourceID.should.equal "openhim"
-                res.body.ParticipantObjectIdentification.length.should.equal 2
-                res.body.ParticipantObjectIdentification[0].ParticipantObjectID.should.equal "975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO"
-                res.body.ParticipantObjectIdentification[0].ParticipantObjectIDTypeCode.codeSystemName.should.equal "RFC-3881"
-                res.body.ParticipantObjectIdentification[1].ParticipantObjectID.should.equal "dca6c09e-cc92-4bc5-8741-47bd938fa405"
-                res.body.ParticipantObjectIdentification[1].ParticipantObjectIDTypeCode.codeSystemName.should.equal "IHE Transactions"
+                res.body.eventIdentification.eventDateTime.should.equal "2015-02-20T15:38:25.282Z"
+                res.body.eventIdentification.eventActionCode.should.equal "E"
+                res.body.eventIdentification.eventID.code.should.equal "110112"
+                res.body.eventIdentification.eventID.displayName.should.equal "Query"
+                res.body.eventIdentification.eventID.codeSystemName.should.equal "DCM"
+                res.body.activeParticipant.length.should.equal 2
+                res.body.activeParticipant[0].userID.should.equal "pix|pix"
+                res.body.activeParticipant[0].networkAccessPointID.should.equal "localhost"
+                res.body.auditSourceIdentification.auditSourceID.should.equal "openhim"
+                res.body.participantObjectIdentification.length.should.equal 2
+                res.body.participantObjectIdentification[0].participantObjectID.should.equal "975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO"
+                res.body.participantObjectIdentification[0].participantObjectIDTypeCode.codeSystemName.should.equal "RFC-3881"
+                res.body.participantObjectIdentification[1].participantObjectID.should.equal "dca6c09e-cc92-4bc5-8741-47bd938fa405"
+                res.body.participantObjectIdentification[1].participantObjectIDTypeCode.codeSystemName.should.equal "IHE Transactions"
                 done()
 
       it "should NOT return a audit that a user is not allowed to view", (done) ->
