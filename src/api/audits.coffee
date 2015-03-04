@@ -17,7 +17,7 @@ getProjectionObject = (filterRepresentation) ->
     else
       # no filterRepresentation supplied - simple view
       # view minimum required data for audits
-      return { "ParticipantObjectIdentification": 0, "ActiveParticipant": 0, "rawMessage": 0 }
+      return { "participantObjectIdentification": 0, "activeParticipant": 0, "rawMessage": 0 }
   
 
 
@@ -62,7 +62,7 @@ exports.getAudits = ->
 
     #construct date range filter option
     if filtersObject.startDate and filtersObject.endDate
-      filtersObject['EventIdentification.EventDateTime'] = $gte: filtersObject.startDate, $lt: filtersObject.endDate
+      filtersObject['eventIdentification.eventDateTime'] = $gte: filtersObject.startDate, $lt: filtersObject.endDate
 
       #remove startDate/endDate from objects filter (Not part of filtering and will break filter)
       delete filtersObject.startDate
@@ -89,7 +89,7 @@ exports.getAudits = ->
       .find filtersObject, projectionFiltersObject
       .skip filterSkip
       .limit filterLimit
-      .sort 'EventIdentification.EventDateTime': -1
+      .sort 'eventIdentification.eventDateTime': -1
       .exec()
   catch e
     utils.logAndSetResponse this, 'internal server error', "Could not retrieve audits via the API: #{e}", 'error'
