@@ -251,7 +251,8 @@ startAuditUDPServer = (auditUDPPort, bindAddress) ->
 
   auditUDPServer.on 'message', (msg, rinfo) ->
     logger.info "[Auditing UDP] Received message from #{rinfo.address}:#{rinfo.port}"
-    auditing.processAudit msg
+
+    auditing.processAudit msg, -> logger.info "[Auditing UDP] Processed audit"
 
   auditUDPServer.bind auditUDPPort, bindAddress
 

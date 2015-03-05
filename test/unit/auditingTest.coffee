@@ -43,6 +43,19 @@ describe "Auditing", ->
 
           audits[0].rawMessage.should.be.exactly testAudit
 
+          audits[0].syslog.should.exist
+          audits[0].syslog.msgID.should.be.equal 'IHE+RFC-3881'
+          audits[0].syslog.pid.should.be.equal '9293'
+          audits[0].syslog.appName.should.be.equal 'java'
+          audits[0].syslog.host.should.be.equal 'Hanness-MBP.jembi.local'
+          audits[0].syslog.time.should.exist
+          audits[0].syslog.type.should.be.equal 'RFC5424'
+          audits[0].syslog.severity.should.be.equal 'notice'
+          audits[0].syslog.facility.should.be.equal 'sec'
+          audits[0].syslog.severityID.should.be.equal 5
+          audits[0].syslog.facilityID.should.be.equal 10
+          audits[0].syslog.prival.should.be.equal 85
+
           audits[0].eventIdentification.should.exist
           audits[0].eventIdentification.eventDateTime.should.exist
           audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal '0'
@@ -76,7 +89,7 @@ describe "Auditing", ->
           audits[0].auditSourceIdentification.auditSourceID.should.be.equal 'openhim'
 
           audits[0].participantObjectIdentification.length.should.be.exactly 2
-          audits[0].participantObjectIdentification[0].participantObjectID.should.be.equal 'fc133984036647e^^^&amp;1.3.6.1.4.1.21367.2005.13.20.3000&amp;ISO'
+          audits[0].participantObjectIdentification[0].participantObjectID.should.be.equal 'fc133984036647e^^^&1.3.6.1.4.1.21367.2005.13.20.3000&ISO'
           audits[0].participantObjectIdentification[0].participantObjectTypeCode.should.be.equal '1'
           audits[0].participantObjectIdentification[0].participantObjectTypeCodeRole.should.be.equal '1'
           audits[0].participantObjectIdentification[0].participantObjectIDTypeCode.code.should.be.equal '2'
