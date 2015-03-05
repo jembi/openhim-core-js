@@ -6,7 +6,7 @@ testAuditParticipantQuery = """
 TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAzMDUxMjUyMzErMDIwMHx8UUJQXlEyM15RQlBfUTIxfGJiMDczYjg1LTU3YTktNDBiYS05MjkxLTE1ZDIxMThkNDhmM3xQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXxmZmQ4ZTlmNy1hYzJiLTQ2MjUtYmQ4MC1kZTcwNDU5MmQ5ZjN8MTExMTExMTExMV5eXiYxLjIuMyZJU09eUEl8Xl5eRUNJRCZFQ0lEJklTT15QSQ1SQ1B8SQ0=
 """
 
-testAudit = """
+exports.testAuditMessage = testAudit = """
 <85>1 2015-03-05T12:52:31.358+02:00 Hanness-MBP.jembi.local java 9293 IHE+RFC-3881 - <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <AuditMessage>
 <EventIdentification EventActionCode="E" EventDateTime="2015-03-05T12:52:31.356+02:00" EventOutcomeIndicator="0">
@@ -34,6 +34,20 @@ testAudit = """
 describe "Auditing", ->
   beforeEach (done) -> Audit.remove {}, -> done()
 
+  validateSyslog = (syslog) ->
+    syslog.should.exist
+    syslog.msgID.should.be.equal 'IHE+RFC-3881'
+    syslog.pid.should.be.equal '9293'
+    syslog.appName.should.be.equal 'java'
+    syslog.host.should.be.equal 'Hanness-MBP.jembi.local'
+    syslog.time.should.exist
+    syslog.type.should.be.equal 'RFC5424'
+    syslog.severity.should.be.equal 'notice'
+    syslog.facility.should.be.equal 'sec'
+    syslog.severityID.should.be.equal 5
+    syslog.facilityID.should.be.equal 10
+    syslog.prival.should.be.equal 85
+
   describe ".processAudit", ->
     it "should parse audit message and persist it to the database", (done) ->
       auditing.processAudit testAudit, ->
@@ -43,18 +57,7 @@ describe "Auditing", ->
 
           audits[0].rawMessage.should.be.exactly testAudit
 
-          audits[0].syslog.should.exist
-          audits[0].syslog.msgID.should.be.equal 'IHE+RFC-3881'
-          audits[0].syslog.pid.should.be.equal '9293'
-          audits[0].syslog.appName.should.be.equal 'java'
-          audits[0].syslog.host.should.be.equal 'Hanness-MBP.jembi.local'
-          audits[0].syslog.time.should.exist
-          audits[0].syslog.type.should.be.equal 'RFC5424'
-          audits[0].syslog.severity.should.be.equal 'notice'
-          audits[0].syslog.facility.should.be.equal 'sec'
-          audits[0].syslog.severityID.should.be.equal 5
-          audits[0].syslog.facilityID.should.be.equal 10
-          audits[0].syslog.prival.should.be.equal 85
+          validateSyslog audits[0].syslog
 
           audits[0].eventIdentification.should.exist
           audits[0].eventIdentification.eventDateTime.should.exist
@@ -106,4 +109,28 @@ describe "Auditing", ->
           audits[0].participantObjectIdentification[1].participantObjectDetail.type.should.be.equal 'MSH-10'
           audits[0].participantObjectIdentification[1].participantObjectDetail.value.should.be.equal 'YmIwNzNiODUtNTdhOS00MGJhLTkyOTEtMTVkMjExOGQ0OGYz'
 
+          done()
+
+    it "should still persist to the database even if the audit includes a non-xml message", (done) ->
+      nonXmlAudit = "<85>1 2015-03-05T12:52:31.358+02:00 Hanness-MBP.jembi.local java 9293 IHE+RFC-3881 - this is a message?>"
+
+      auditing.processAudit nonXmlAudit, ->
+        Audit.find {}, (err, audits) ->
+          return done err if err
+
+          audits.length.should.be.exactly 1
+          audits[0].rawMessage.should.be.exactly nonXmlAudit
+          validateSyslog audits[0].syslog
+          done()
+
+    it "should still persist to the database even if the audit includes an unexpected type of xml message", (done) ->
+      nonXmlAudit = "<85>1 2015-03-05T12:52:31.358+02:00 Hanness-MBP.jembi.local java 9293 IHE+RFC-3881 - <data>data</data>?>"
+
+      auditing.processAudit nonXmlAudit, ->
+        Audit.find {}, (err, audits) ->
+          return done err if err
+
+          audits.length.should.be.exactly 1
+          audits[0].rawMessage.should.be.exactly nonXmlAudit
+          validateSyslog audits[0].syslog
           done()
