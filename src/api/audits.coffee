@@ -111,10 +111,8 @@ exports.getAuditById = (auditId) ->
   auditId = unescape auditId
 
   try
-    filtersObject = this.request.query
-
     # get projection object
-    projectionFiltersObject = getProjectionObject
+    projectionFiltersObject = getProjectionObject 'full'
 
     result = yield Audit.findById(auditId, projectionFiltersObject).exec()
 

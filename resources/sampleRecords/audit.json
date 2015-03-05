@@ -1,17 +1,17 @@
 {
   "rawMessage": "This will be the raw ATNA message that gets received to be used as a backup reference",
   "eventIdentification": {
-    "eventDateTime": "2015-02-20T15:38:25.282+02:00",
+    "eventDateTime": "2015-02-17T15:38:25.282+02:00",
     "eventOutcomeIndicator": "0",
-    "eventActionCode": "E",
+    "eventActionCode": "R",
     "eventID": {
-      "code": "110112",
-      "displayName": "Query",
+      "code": "222",
+      "displayName": "Read",
       "codeSystemName": "DCM"
     },
     "eventTypeCode": {
       "code": "ITI-9",
-      "displayName": "PIX Query",
+      "displayName": "PIX Read",
       "codeSystemName": "IHE Transactions"
     }
   },
