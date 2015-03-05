@@ -168,7 +168,7 @@ describe "TCP/TLS/MLLP Integration Tests", ->
     incrementTransactionCountSpy = sinon.spy stats, 'incrementTransactionCount' # check if the method was called
     measureTransactionDurationSpy = sinon.spy stats, 'measureTransactionDuration' # check if the method was called
 
-    server.start null, null, null, null, 7787, null, ->
+    server.start tcpHttpReceiverPort: 7787, ->
       sendTCPTestMessage 4000, (data) ->
         data.should.be.exactly 'TCP OK'
         if config.statsd.enabled
@@ -178,37 +178,37 @@ describe "TCP/TLS/MLLP Integration Tests", ->
         done()
 
   it "should handle disconnected clients", (done) ->
-    server.start null, null, null, null, 7787, null, ->
+    server.start tcpHttpReceiverPort: 7787, ->
       client = net.connect 4000, 'localhost', ->
         client.on 'close', -> server.stop done
         client.end 'test'
 
   it "should route TLS messages", (done) ->
-    server.start null, null, null, null, 7787, null, ->
+    server.start tcpHttpReceiverPort: 7787, ->
       sendTLSTestMessage 4001, (data) ->
         data.should.be.exactly 'TCP OK'
         done()
 
   it "should route TCP messages to HTTP routes", (done) ->
-    server.start null, null, null, null, 7787, null, ->
+    server.start tcpHttpReceiverPort: 7787, ->
       sendTCPTestMessage 4002, (data) ->
         data.should.be.exactly 'HTTP OK'
         done()
 
   it "should route TCP messages to TLS routes", (done) ->
-    server.start null, null, null, null, 7787, null, ->
+    server.start tcpHttpReceiverPort: 7787, ->
       sendTCPTestMessage 4003, (data) ->
         data.should.be.exactly 'TLS OK'
         done()
 
   it "should return an error when the client cert is not known by the server", (done) ->
-    server.start null, null, null, null, 7787, null, ->
+    server.start tcpHttpReceiverPort: 7787, ->
       sendTCPTestMessage 4004, (data) ->
         data.should.be.exactly 'An internal server error occurred'
         done()
 
   it "should persist messages", (done) ->
-    server.start null, null, null, null, 7787, null, ->
+    server.start tcpHttpReceiverPort: 7787, ->
       sendTCPTestMessage 4000, (data) ->
         Transaction.find {}, (err, trx) ->
           trx.length.should.be.exactly 1
@@ -218,7 +218,7 @@ describe "TCP/TLS/MLLP Integration Tests", ->
           done()
 
   it "should route MLLP messages", (done) ->
-    server.start null, null, null, null, 7787, null, ->
+    server.start tcpHttpReceiverPort: 7787, ->
       sendTCPTestMessage 4005, (data) ->
         data.should.be.exactly 'MLLP OK' + String.fromCharCode(0o034) + '\n'
         done()

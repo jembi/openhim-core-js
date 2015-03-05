@@ -257,39 +257,39 @@ startAuditUDPServer = (auditUDPPort, bindAddress) ->
 
   return defer
 
-exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPort, pollingPort, auditUDPPort, done) ->
+exports.start = (ports, done) ->
   bindAddress = config.get 'bindAddress'
   logger.info "Starting OpenHIM server on #{bindAddress}..."
   promises = []
 
   ensureKeystore ->
 
-    if httpPort or httpsPort
+    if ports.httpPort or ports.httpsPort
       koaMiddleware.setupApp (app) ->
-        promises.push startHttpServer(httpPort, bindAddress, app).promise if httpPort
-        promises.push startHttpsServer(httpsPort, bindAddress, app).promise if httpsPort
+        promises.push startHttpServer(ports.httpPort, bindAddress, app).promise if ports.httpPort
+        promises.push startHttpsServer(ports.httpsPort, bindAddress, app).promise if ports.httpsPort
 
-    if apiPort
+    if ports.apiPort
       koaApi.setupApp (app) ->
-        promises.push startApiServer(apiPort, bindAddress, app).promise
+        promises.push startApiServer(ports.apiPort, bindAddress, app).promise
 
-    if rerunHttpPort
+    if ports.rerunHttpPort
       koaMiddleware.rerunApp (app) ->
-        promises.push startRerunServer(rerunHttpPort, app).promise
+        promises.push startRerunServer(ports.rerunHttpPort, app).promise
 
-    if tcpHttpReceiverPort
+    if ports.tcpHttpReceiverPort
       koaMiddleware.tcpApp (app) ->
-        promises.push startTCPServersAndHttpReceiver(tcpHttpReceiverPort, app).promise
+        promises.push startTCPServersAndHttpReceiver(ports.tcpHttpReceiverPort, app).promise
 
-    if pollingPort
+    if ports.pollingPort
       koaMiddleware.pollingApp (app) ->
-        promises.push startPollingServer(pollingPort, app).promise
+        promises.push startPollingServer(ports.pollingPort, app).promise
 
-    if auditUDPPort
-      promises.push startAuditUDPServer auditUDPPort, bindAddress
+    if ports.auditUDPPort
+      promises.push startAuditUDPServer ports.auditUDPPort, bindAddress
 
     (Q.all promises).then ->
-      workerAPI.startupWorker() if rerunHttpPort
+      workerAPI.startupWorker() if ports.rerunHttpPort
       startAgenda()
       done()
 
@@ -360,7 +360,7 @@ if not module.parent
   # start the server
   ports = lookupServerPorts()
 
-  exports.start ports.httpPort, ports.httpsPort, ports.apiPort, ports.rerunPort, ports.tcpHttpReceiverPort, ports.pollingPort, ports.auditUDPPort, ->
+  exports.start ports, ->
     # setup shutdown listeners
     process.on 'exit', stop
     # interrupt signal, e.g. ctrl-c
@@ -377,9 +377,7 @@ restartServer = (config, done) ->
   # stop the server
   exports.stop ->
     ports = lookupServerPorts()
-
-    exports.start ports.httpPort, ports.httpsPort, ports.apiPort, ports.rerunPort, ports.tcpHttpReceiverPort, ports.pollingPort, ports.auditUDPPort, ->
-      done()
+    exports.start ports, -> done()
 
 
 exports.startRestartServerAgenda = (done) ->
