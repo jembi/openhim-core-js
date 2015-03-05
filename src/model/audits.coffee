@@ -6,6 +6,18 @@ codeTypeSchema =
   "displayName": { type: String, required: false }
   "codeSystemName": { type: String, required: false }
 
+syslogSchema =
+  "prival": { type: Number, required: false }
+  "facilityID": { type: Number, required: false }
+  "severityID": { type: Number, required: false }
+  "facility": { type: String, required: false }
+  "severity": { type: String, required: false }
+  "type": { type: String, required: false }
+  "time": { type: Date, required: false }
+  "host": { type: String, required: false }
+  "appName": { type: String, required: false }
+  "pid": { type: String, required: false }
+  "msgID": { type: String, required: false }
 
 ActiveParticipantSchema = new Schema
   "userID": { type: String, required: false }
@@ -29,6 +41,7 @@ ParticipantObjectIdentificationSchema = new Schema
 
 AuditRecordSchema = new Schema
   "rawMessage":  { type: String, required: false }
+  "syslog": syslogSchema
   "eventIdentification":
     "eventDateTime": { type: Date, required: true, default: Date.now }
     "eventOutcomeIndicator": { type: String, required: false }
