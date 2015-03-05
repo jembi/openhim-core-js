@@ -1,7 +1,10 @@
 logger = require 'winston'
+syslogParser = require('glossy').Parse
 Audit = require('./model/audits').Audit
 
-exports.processAudit = (msg) ->
+exports.processAudit = (msg, callback) ->
+  parsedMsg = syslogParser.parse(msg)
+
   audit = new Audit
     rawMessage: msg
 
@@ -10,3 +13,4 @@ exports.processAudit = (msg) ->
       logger.error "An error occurred while saving the audit entry: #{err}"
     else
       logger.info 'Processed audit message'
+    callback()
