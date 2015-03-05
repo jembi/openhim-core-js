@@ -60,7 +60,5 @@ exports.processAudit = (msg, callback) ->
     audit.save (saveErr) ->
       if err or saveErr
         logger.error "An error occurred while processing the audit entry: #{err}"
-      else
-        logger.info 'Processed audit message'
 
       callback()
