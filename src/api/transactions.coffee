@@ -154,7 +154,7 @@ exports.getTransactionById = (transactionId) ->
     result = yield transactions.Transaction.findById(transactionId, projectionFiltersObject).exec()
 
     # Test if the result if valid
-    if result?.length is 0
+    if not result
       this.body = "Could not find transaction with ID: #{transactionId}"
       this.status = 'not found'
     # Test if the user is authorised
