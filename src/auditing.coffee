@@ -5,11 +5,15 @@ firstCharLowerCase = require('xml2js').processors.firstCharLowerCase
 Audit = require('./model/audits').Audit
 
 parseAuditRecordFromXML = (xml, callback) ->
+  # DICOM mappers
+  csdCodeToCode = (name) -> if name is 'csd-code' then 'code' else name
+  originalTextToDisplayName = (name) -> if name is 'originalText' then 'displayName' else name
+
   options =
     mergeAttrs: true,
     explicitArray: false
     tagNameProcessors: [firstCharLowerCase]
-    attrNameProcessors: [firstCharLowerCase]
+    attrNameProcessors: [firstCharLowerCase, csdCodeToCode, originalTextToDisplayName]
 
   parseString xml, options, (err, result) ->
     return callback err if err
@@ -48,6 +52,10 @@ parseAuditRecordFromXML = (xml, callback) ->
 
 exports.processAudit = (msg, callback) ->
   parsedMsg = syslogParser.parse(msg)
+
+  if not parsedMsg or not parsedMsg.message
+    logger.info 'Invalid message received'
+    return callback()
 
   parseAuditRecordFromXML parsedMsg.message, (err, result) ->
     audit = new Audit result

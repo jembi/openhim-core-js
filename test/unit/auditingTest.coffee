@@ -31,24 +31,85 @@ exports.testAuditMessage = testAudit = """
 </AuditMessage>
 """
 
+# an example from IHE http://ihewiki.wustl.edu/wiki/index.php/Syslog_Collector
+testAuditIHE_RFC3881 = """
+<85>1 2010-12-17T15:12:04.287-06:00 cabig-h1 OHT 521 IHE+RFC-3881 - 
+<?xml version="1.0" encoding="UTF-8"?>
+<AuditMessage>
+
+   <EventIdentification EventDateTime="2010-12-17T15:12:04.287-06:00" 
+      EventOutcomeIndicator="0" 
+      EventActionCode="E">
+      <EventID code="110114" codeSystemName="DCM" 
+         displayName="UserAuthenticated" />
+      <EventTypeCode code="110122" codeSystemName="DCM" 
+         displayName="Login" />
+	</EventIdentification>
+	
+   <ActiveParticipant UserID="fe80::5999:d1ef:63de:a8bb%11" 
+      UserIsRequestor="true" 
+      NetworkAccessPointTypeCode="1" 
+      NetworkAccessPointID="125.20.175.12">
+      <RoleIDCode code="110150" codeSystemName="DCM" 
+         displayName="Application" />
+   </ActiveParticipant>
+	
+   <ActiveParticipant UserID="farley.granger@wb.com" UserIsRequestor="true"/>
+	
+   <AuditSourceIdentification AuditEnterpriseSiteID="End User" 
+      AuditSourceID="farley.granger@wb.com">
+      <AuditSourceTypeCode code="1" />
+   </AuditSourceIdentification>
+	
+</AuditMessage>
+"""
+
+# an example from IHE http://ihewiki.wustl.edu/wiki/index.php/Syslog_Collector
+testAuditIHE_DICOM = """
+<85>1 2013-10-17T15:12:04.287-06:00 cabig-h1 OHT 521 IHE+DICOM - 
+<?xml version="1.0" encoding="UTF-8"?>
+<AuditMessage>
+
+   <EventIdentification EventDateTime="2013-10-17T15:12:04.287-06:00" 
+      EventOutcomeIndicator="0" 
+      EventActionCode="E">
+      <EventID csd-code="110114" codeSystemName="DCM" originalText="UserAuthenticated" />
+      <EventTypeCode csd-code="110122" codeSystemName="DCM" originalText="Login" />
+   </EventIdentification>
+	
+   <ActiveParticipant UserID="fe80::5999:d1ef:63de:a8bb%11" 
+      UserIsRequestor="true" 
+      NetworkAccessPointTypeCode="1" 
+      NetworkAccessPointID="125.20.175.12">
+      <RoleIDCode csd-code="110150" codeSystemName="DCM" originalText="Application" />
+   </ActiveParticipant>
+	
+   <ActiveParticipant UserID="farley.granger@wb.com" UserIsRequestor="true"/>
+	
+   <AuditSourceIdentification code="1" 
+      AuditEnterpriseSiteID="End User" AuditSourceID="farley.granger@wb.com"/>
+	
+</AuditMessage>
+"""
+
 describe "Auditing", ->
   beforeEach (done) -> Audit.remove {}, -> done()
 
-  validateSyslog = (syslog) ->
-    syslog.should.exist
-    syslog.msgID.should.be.equal 'IHE+RFC-3881'
-    syslog.pid.should.be.equal '9293'
-    syslog.appName.should.be.equal 'java'
-    syslog.host.should.be.equal 'Hanness-MBP.jembi.local'
-    syslog.time.should.exist
-    syslog.type.should.be.equal 'RFC5424'
-    syslog.severity.should.be.equal 'notice'
-    syslog.facility.should.be.equal 'sec'
-    syslog.severityID.should.be.equal 5
-    syslog.facilityID.should.be.equal 10
-    syslog.prival.should.be.equal 85
-
   describe ".processAudit", ->
+    validateSyslog = (syslog) ->
+      syslog.should.exist
+      syslog.msgID.should.be.equal 'IHE+RFC-3881'
+      syslog.pid.should.be.equal '9293'
+      syslog.appName.should.be.equal 'java'
+      syslog.host.should.be.equal 'Hanness-MBP.jembi.local'
+      syslog.time.should.exist
+      syslog.type.should.be.equal 'RFC5424'
+      syslog.severity.should.be.equal 'notice'
+      syslog.facility.should.be.equal 'sec'
+      syslog.severityID.should.be.equal 5
+      syslog.facilityID.should.be.equal 10
+      syslog.prival.should.be.equal 85
+
     it "should parse audit message and persist it to the database", (done) ->
       auditing.processAudit testAudit, ->
         Audit.find {}, (err, audits) ->
@@ -133,4 +194,78 @@ describe "Auditing", ->
           audits.length.should.be.exactly 1
           audits[0].rawMessage.should.be.exactly nonXmlAudit
           validateSyslog audits[0].syslog
+          done()
+
+    it "should reject bad messages", (done) ->
+      badAudit = "this message is a garbage message"
+
+      auditing.processAudit badAudit, ->
+        Audit.find {}, (err, audits) ->
+          return done err if err
+
+          audits.length.should.be.exactly 0
+          done()
+
+  describe "IHE Samples", ->
+    validateIHEAudit = (type, audit) ->
+      audit.syslog.should.exist
+      audit.syslog.msgID.should.be.equal type
+      audit.syslog.pid.should.be.equal '521'
+      audit.syslog.appName.should.be.equal 'OHT'
+      audit.syslog.host.should.be.equal 'cabig-h1'
+      audit.syslog.time.should.exist
+      audit.syslog.type.should.be.equal 'RFC5424'
+      audit.syslog.severity.should.be.equal 'notice'
+      audit.syslog.facility.should.be.equal 'sec'
+      audit.syslog.severityID.should.be.equal 5
+      audit.syslog.facilityID.should.be.equal 10
+      audit.syslog.prival.should.be.equal 85
+
+      audit.eventIdentification.should.exist
+      audit.eventIdentification.eventDateTime.should.exist
+      audit.eventIdentification.eventOutcomeIndicator.should.be.equal '0'
+      audit.eventIdentification.eventActionCode.should.be.equal 'E'
+      audit.eventIdentification.eventID.code.should.be.equal '110114'
+      audit.eventIdentification.eventID.displayName.should.be.equal 'UserAuthenticated'
+      audit.eventIdentification.eventID.codeSystemName.should.be.equal 'DCM'
+      audit.eventIdentification.eventTypeCode.code.should.be.equal '110122'
+      audit.eventIdentification.eventTypeCode.displayName.should.be.equal 'Login'
+      audit.eventIdentification.eventTypeCode.codeSystemName.should.be.equal 'DCM'
+
+      audit.activeParticipant.length.should.be.exactly 2
+      audit.activeParticipant[0].userID.should.be.equal 'fe80::5999:d1ef:63de:a8bb%11'
+      audit.activeParticipant[0].userIsRequestor.should.be.equal 'true'
+      audit.activeParticipant[0].networkAccessPointID.should.be.equal '125.20.175.12'
+      audit.activeParticipant[0].networkAccessPointTypeCode.should.be.equal '1'
+      audit.activeParticipant[0].roleIDCode.code.should.be.equal '110150'
+      audit.activeParticipant[0].roleIDCode.displayName.should.be.equal 'Application'
+      audit.activeParticipant[0].roleIDCode.codeSystemName.should.be.equal 'DCM'
+      audit.activeParticipant[1].userID.should.be.equal 'farley.granger@wb.com'
+      audit.activeParticipant[1].userIsRequestor.should.be.equal 'true'
+
+      audit.auditSourceIdentification.should.exist
+      audit.auditSourceIdentification.auditSourceID.should.be.equal 'farley.granger@wb.com'
+      audit.auditSourceIdentification.auditEnterpriseSiteID.should.be.equal 'End User'
+
+
+    it "should parse IHE sample RFC3881 audit message and persist it to the database", (done) ->
+      auditing.processAudit testAuditIHE_RFC3881, ->
+        Audit.find {}, (err, audits) ->
+          return done err if err
+
+          audits.length.should.be.exactly 1
+          audits[0].rawMessage.should.be.exactly testAuditIHE_RFC3881
+          validateIHEAudit 'IHE+RFC-3881', audits[0]
+
+          done()
+
+    it "should parse IHE sample DICOM audit message and persist it to the database", (done) ->
+      auditing.processAudit testAuditIHE_DICOM, ->
+        Audit.find {}, (err, audits) ->
+          return done err if err
+
+          audits.length.should.be.exactly 1
+          audits[0].rawMessage.should.be.exactly testAuditIHE_DICOM
+          validateIHEAudit 'IHE+DICOM', audits[0]
+
           done()
