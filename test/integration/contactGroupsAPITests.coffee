@@ -22,7 +22,7 @@ describe "API Integration Tests", ->
 
     before (done) ->
       auth.setupTestUsers (err) ->
-        server.start null, null, 8080, null, null, false,  ->
+        server.start apiPort: 8080, ->
           done()
 
     after (done) ->

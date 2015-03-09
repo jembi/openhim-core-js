@@ -8,6 +8,9 @@ Vagrant::Config.run do |config|
 	config.vm.network :bridged
 	config.vm.forward_port 5000, 5000
 	config.vm.forward_port 5001, 5001
+	config.vm.forward_port 5050, 5050
+	config.vm.forward_port 5051, 5051
+	config.vm.forward_port 5052, 5052
 	config.vm.forward_port 8080, 8080
 
 	config.vm.share_folder "openhim-core-js", "/openhim-core-js", "../../../"

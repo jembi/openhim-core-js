@@ -163,7 +163,7 @@ describe "API Integration Tests", ->
                           channel3.save ->
                             channel4.save ->
                               auth.setupTestUsers ->
-                                server.start null, null, 8080, null, null, null, ->
+                                server.start apiPort: 8080, ->
                                   done()
 
     after (done) ->

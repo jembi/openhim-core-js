@@ -162,7 +162,7 @@ describe "API Metrics Tests", ->
                                   auth.setupTestUsers (err) ->
                                     return done err if err
                                     config.statsd.enabled = false
-                                    server.start null, null, 8080, null, 7787, null, ->
+                                    server.start apiPort: 8080, tcpHttpReceiverPort: 7787, ->
                                       done()
 
     after (done) ->

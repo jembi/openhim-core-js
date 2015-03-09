@@ -54,6 +54,8 @@ AuditRecordSchema = new Schema
   "activeParticipant": [ ActiveParticipantSchema ]
   "auditSourceIdentification":
     "auditSourceID": { type: String, required: false }
+    "auditEnterpriseSiteID": { type: String, required: false }
+    "auditSourceTypeCode": codeTypeSchema
   "participantObjectIdentification": [ ParticipantObjectIdentificationSchema ]
 
 exports.Audit = connectionATNA.model 'Audit', AuditRecordSchema

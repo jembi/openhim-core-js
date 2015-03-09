@@ -44,7 +44,7 @@ describe "API Integration Tests", ->
     before (done) ->
       auth.setupTestUsers (err) ->
         return done err if err
-        server.start null, null, 8080, null, 7787, null, ->
+        server.start apiPort: 8080, tcpHttpReceiverPort: 7787, ->
           authDetails = auth.getAuthDetails()
           done()
 
