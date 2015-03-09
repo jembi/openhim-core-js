@@ -4,6 +4,14 @@ Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
 utils = require "../utils"
+config = require '../config/config'
+statsd_client = require "statsd-client"
+statsd_server = config.get 'statsd'
+sdc = new statsd_client statsd_server
+application = config.get 'application'
+os = require "os"
+timer = new Date()
+domain = os.hostname() + '.' + application.name
 
 getChannelIDsArray = (channels) ->
   channelIDs = []
@@ -25,7 +33,7 @@ getProjectionObject = (filterRepresentation) ->
       # no filterRepresentation supplied - simple view
       # view minimum required data for transactions
       return { "request.body": 0, "request.headers": 0, "response.body": 0, "response.headers": 0, orchestrations: 0, routes: 0 }
-  
+
 
 
 
@@ -203,7 +211,7 @@ exports.findTransactionByClientId = (clientId) ->
       .find filtersObject, projectionFiltersObject
       .sort 'request.timestamp': -1
       .exec()
-    
+
   catch e
     utils.logAndSetResponse this, 'internal server error', "Could not get transaction by clientID via the API: #{e}", 'error'
 
@@ -213,19 +221,78 @@ exports.findTransactionByClientId = (clientId) ->
 ###
 exports.updateTransaction = (transactionId) ->
 
-  # Test if the user is authorised
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateTransaction denied.", 'info'
-    return
+#  # Test if the user is authorised
+#  if not authorisation.inGroup 'admin', this.authenticated
+#    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateTransaction denied.", 'info'
+#    return
 
   transactionId = unescape transactionId
   updates = this.request.body
+  that = this
 
   try
-    yield transactions.Transaction.findByIdAndUpdate(transactionId, updates).exec()
-    this.body = "Transaction with ID: #{transactionId} successfully updated"
-    this.status = 'ok'
-    logger.info "User #{this.authenticated.email} updated transaction with id #{transactionId}"
+    yield transactions.Transaction.findByIdAndUpdate transactionId, updates, () ->
+      that.body = "Transaction with ID: #{transactionId} successfully updated"
+      that.status = 'ok'
+      logger.info "User #{that.authenticated.email} updated transaction with id #{transactionId}"
+
+      ###
+      # Update transaction metrics
+      ###
+      transactions.Transaction.findById transactionId, (err, doc) ->
+        if updates.routes?
+          for route in updates.routes
+            do (route) ->
+              if route.metrics?
+                for metric in route.metrics
+                  if metric.type == 'counter'
+                    logger.info 'incrementing mediator counter ' + metric.name
+                    sdc.increment domain + '.channels.' + doc.channelID + '.' + route.name + '.mediator_metrics.' + metric.name
+
+                  if metric.type == 'timer'
+                    logger.info 'incrementing mediator timer ' + metric.name
+                    sdc.timing domain + '.channels.' + doc.channelID + '.' + route.name + '.mediator_metrics.' + metric.name, metric.value
+
+                  if metric.type == 'gauge'
+                    logger.info 'incrementing mediator gauge ' + metric.name
+                    sdc.gauge domain + '.channels.' + doc.channelID + '.' + route.name + '.mediator_metrics.' + metric.name, metric.value
+
+              for orchestration in route.orchestrations
+                do (orchestration) ->
+                  orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp
+                  orchestrationStatus = orchestration.response.status
+                  orchestrationName = orchestration.name
+                  if orchestration.group
+                    orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
+
+                  ###
+                  # Update timers
+                  ###
+                  logger.info 'updating async route timers'
+                  sdc.timing domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName, orchestrationDuration
+                  sdc.timing domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestrationDuration
+
+                  ###
+                  # Update counters
+                  ###
+                  logger.info 'updating async route counters'
+                  sdc.increment domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName
+                  sdc.increment domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
+
+                  if orchestration.metrics?
+                    for metric in orchestration.metrics
+                      if metric.type == 'counter'
+                        logger.info 'incrementing '+ route.name + ' orchestration counter ' + metric.name
+                        sdc.increment   domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
+
+                      if metric.type == 'timer'
+                        logger.info 'incrementing '+ route.name + 'orchestration timer ' + metric.name
+                        sdc.timing      domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
+
+                      if metric.type == 'gauge'
+                        logger.info 'incrementing '+ route.name + 'orchestration gauge ' + metric.name
+                        sdc.gauge       domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName  + '.' + metric.name, metric.value
+
   catch e
     utils.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
 
