@@ -221,10 +221,10 @@ exports.findTransactionByClientId = (clientId) ->
 ###
 exports.updateTransaction = (transactionId) ->
 
-#  # Test if the user is authorised
-#  if not authorisation.inGroup 'admin', this.authenticated
-#    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateTransaction denied.", 'info'
-#    return
+  # Test if the user is authorised
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateTransaction denied.", 'info'
+    return
 
   transactionId = unescape transactionId
   updates = this.request.body
