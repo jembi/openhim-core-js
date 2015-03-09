@@ -6,6 +6,7 @@ fs = require 'fs'
 http = require 'http'
 https = require 'https'
 net = require 'net'
+dgram = require 'dgram'
 koaMiddleware = require "./koaMiddleware"
 koaApi = require "./koaApi"
 tlsAuthentication = require "./middleware/tlsAuthentication"
@@ -19,6 +20,7 @@ config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
+config.auditing = config.get('auditing')
 uuid = require 'node-uuid'
 
 Q = require "q"
@@ -33,7 +35,8 @@ alerts = require './alerts'
 reports = require './reports'
 polling = require './polling'
 tcpAdapter = require './tcpAdapter'
-workerAPI = require "./api/worker"
+workerAPI = require './api/worker'
+auditing = require './auditing'
 
 # Configure mongose to connect to mongo
 mongoose.connect config.mongo.url
@@ -44,6 +47,8 @@ apiHttpsServer = null
 rerunServer = null
 tcpHttpReceiver = null
 pollingServer = null
+
+auditUDPServer = null
 
 activeHttpConnections = {}
 activeHttpsConnections = {}
@@ -228,43 +233,64 @@ startPollingServer = (pollingPort, app) ->
   pollingServer = http.createServer app.callback()
   pollingServer.listen pollingPort, config.polling.host, (err) ->
     logger.error err if err
-    logger.info 'Polling port listenting on port ' + pollingPort
+    logger.info 'Polling port listening on port ' + pollingPort
     defer.resolve()
 
   pollingServer.on 'connection', (socket) -> trackConnection activePollingConnections, socket
 
   return defer
 
-exports.start = (httpPort, httpsPort, apiPort, rerunHttpPort, tcpHttpReceiverPort, pollingPort, done) ->
+startAuditUDPServer = (auditUDPPort, bindAddress) ->
+  defer = Q.defer()
+
+  auditUDPServer = dgram.createSocket 'udp4'
+
+  auditUDPServer.on 'listening', ->
+    logger.info "Auditing UDP server listening on port #{auditUDPPort}"
+    defer.resolve()
+
+  auditUDPServer.on 'message', (msg, rinfo) ->
+    logger.info "[Auditing UDP] Received message from #{rinfo.address}:#{rinfo.port}"
+
+    auditing.processAudit msg, -> logger.info "[Auditing UDP] Processed audit"
+
+  auditUDPServer.bind auditUDPPort, bindAddress
+
+  return defer
+
+exports.start = (ports, done) ->
   bindAddress = config.get 'bindAddress'
   logger.info "Starting OpenHIM server on #{bindAddress}..."
   promises = []
 
   ensureKeystore ->
 
-    if httpPort or httpsPort
+    if ports.httpPort or ports.httpsPort
       koaMiddleware.setupApp (app) ->
-        promises.push startHttpServer(httpPort, bindAddress, app).promise if httpPort
-        promises.push startHttpsServer(httpsPort, bindAddress, app).promise if httpsPort
+        promises.push startHttpServer(ports.httpPort, bindAddress, app).promise if ports.httpPort
+        promises.push startHttpsServer(ports.httpsPort, bindAddress, app).promise if ports.httpsPort
 
-    if apiPort
+    if ports.apiPort
       koaApi.setupApp (app) ->
-        promises.push startApiServer(apiPort, bindAddress, app).promise
+        promises.push startApiServer(ports.apiPort, bindAddress, app).promise
 
-    if rerunHttpPort
+    if ports.rerunHttpPort
       koaMiddleware.rerunApp (app) ->
-        promises.push startRerunServer(rerunHttpPort, app).promise
+        promises.push startRerunServer(ports.rerunHttpPort, app).promise
 
-    if tcpHttpReceiverPort
+    if ports.tcpHttpReceiverPort
       koaMiddleware.tcpApp (app) ->
-        promises.push startTCPServersAndHttpReceiver(tcpHttpReceiverPort, app).promise
+        promises.push startTCPServersAndHttpReceiver(ports.tcpHttpReceiverPort, app).promise
 
-    if pollingPort
+    if ports.pollingPort
       koaMiddleware.pollingApp (app) ->
-        promises.push startPollingServer(pollingPort, app).promise
+        promises.push startPollingServer(ports.pollingPort, app).promise
+
+    if ports.auditUDPPort
+      promises.push startAuditUDPServer ports.auditUDPPort, bindAddress
 
     (Q.all promises).then ->
-      workerAPI.startupWorker() if rerunHttpPort
+      workerAPI.startupWorker() if ports.rerunHttpPort
       startAgenda()
       done()
 
@@ -287,6 +313,8 @@ exports.stop = stop = (done) ->
   promises.push stopServer(rerunServer, 'Rerun HTTP') if rerunServer
   promises.push stopServer(pollingServer, 'Polling HTTP') if pollingServer
   promises.push stopAgenda().promise if agenda
+
+  auditUDPServer.close() if auditUDPServer
 
   if tcpHttpReceiver
     promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver')
@@ -316,19 +344,24 @@ exports.stop = stop = (done) ->
     rerunServer = null
     tcpHttpReceiver = null
     pollingServer = null
+    auditUDPServer = null
     agenda = null
     done()
 
+lookupServerPorts = ->
+  httpPort: config.router.httpPort
+  httpsPort: config.router.httpsPort
+  apiPort: config.api.httpsPort
+  rerunPort: config.rerun.httpPort
+  tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort
+  pollingPort: config.polling.pollingPort
+  auditUDPPort: config.auditing.servers.udp.port if config.auditing.servers.udp.enabled
+
 if not module.parent
   # start the server
-  httpPort = config.router.httpPort
-  httpsPort = config.router.httpsPort
-  apiPort = config.api.httpsPort
-  rerunPort = config.rerun.httpPort
-  tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort
-  pollingPort = config.polling.pollingPort
+  ports = lookupServerPorts()
 
-  exports.start httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, pollingPort, ->
+  exports.start ports, ->
     # setup shutdown listeners
     process.on 'exit', stop
     # interrupt signal, e.g. ctrl-c
@@ -344,15 +377,8 @@ if not module.parent
 restartServer = (config, done) ->
   # stop the server
   exports.stop ->
-    httpPort = config.router.httpPort
-    httpsPort = config.router.httpsPort
-    apiPort = config.api.httpsPort
-    rerunPort = config.rerun.httpPort
-    tcpHttpReceiverPort = config.tcpAdapter.httpReceiver.httpPort
-    pollingPort = config.polling.pollingPort
-
-    exports.start httpPort, httpsPort, apiPort, rerunPort, tcpHttpReceiverPort, pollingPort, ->
-      done()
+    ports = lookupServerPorts()
+    exports.start ports, -> done()
 
 
 exports.startRestartServerAgenda = (done) ->
