@@ -1,4 +1,7 @@
 mongoose = require "mongoose"
+server = require "../server"
+
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
 # Request Schema definition
@@ -50,6 +53,6 @@ TransactionSchema = new Schema
 TransactionSchema.index "request.timestamp"
 
 #compile schema into Model
-exports.RouteMetadata = mongoose.model 'RouteMetadata', RouteMetadataSchema
-exports.OrchestrationMetadata = mongoose.model 'OrchestrationMetadata', OrchestrationMetadataSchema
-exports.Transaction = mongoose.model 'Transaction', TransactionSchema
+exports.RouteMetadata = connectionDefault.model 'RouteMetadata', RouteMetadataSchema
+exports.OrchestrationMetadata = connectionDefault.model 'OrchestrationMetadata', OrchestrationMetadataSchema
+exports.Transaction = connectionDefault.model 'Transaction', TransactionSchema

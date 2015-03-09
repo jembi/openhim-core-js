@@ -4,6 +4,7 @@ Q = require("q")
 logger = require("winston")
 monq = require("monq")
 config = require("../config/config")
+config.mongo = config.get('mongo')
 client = monq(config.mongo.url, safe: true)
 http = require 'http'
 TransactionModel = require("../model/transactions").Transaction

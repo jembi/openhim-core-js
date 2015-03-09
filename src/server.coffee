@@ -2,14 +2,9 @@
 path = require 'path'
 global.appRoot = path.join path.resolve(__dirname), '..'
 
-fs = require 'fs'
-http = require 'http'
-https = require 'https'
-net = require 'net'
-koaMiddleware = require "./koaMiddleware"
-koaApi = require "./koaApi"
-tlsAuthentication = require "./middleware/tlsAuthentication"
+mongoose = require "mongoose"
 config = require "./config/config"
+config.mongo = config.get('mongo')
 config.authentication = config.get('authentication')
 config.router = config.get('router')
 config.api = config.get('api')
@@ -19,12 +14,26 @@ config.logger = config.get('logger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
+
+# Setup mongodb connections
+exports.connectionDefault = connectionDefault = mongoose.createConnection( config.mongo.url )
+exports.connectionATNA = connectionATNA = mongoose.createConnection( config.mongo.atnaUrl )
+
+
+fs = require 'fs'
+http = require 'http'
+https = require 'https'
+net = require 'net'
+koaMiddleware = require "./koaMiddleware"
+koaApi = require "./koaApi"
+tlsAuthentication = require "./middleware/tlsAuthentication"
+
 uuid = require 'node-uuid'
 
 Q = require "q"
 logger = require "winston"
 logger.level = config.logger.level
-mongoose = require "mongoose"
+
 User = require('./model/users').User
 Keystore = require('./model/keystore').Keystore
 pem = require 'pem'
@@ -35,8 +44,6 @@ polling = require './polling'
 tcpAdapter = require './tcpAdapter'
 workerAPI = require "./api/worker"
 
-# Configure mongose to connect to mongo
-mongoose.connect config.mongo.url
 
 httpServer = null
 httpsServer = null

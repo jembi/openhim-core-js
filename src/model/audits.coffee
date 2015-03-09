@@ -1,4 +1,7 @@
 mongoose = require "mongoose"
+server = require "../server"
+
+connectionATNA = server.connectionATNA
 Schema = mongoose.Schema
 
 codeTypeSchema =
@@ -53,4 +56,4 @@ AuditRecordSchema = new Schema
     "auditSourceID": { type: String, required: false }
   "participantObjectIdentification": [ ParticipantObjectIdentificationSchema ]
 
-exports.Audit = mongoose.model 'Audit', AuditRecordSchema
+exports.Audit = connectionATNA.model 'Audit', AuditRecordSchema

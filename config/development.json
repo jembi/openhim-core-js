@@ -1,6 +1,7 @@
 {
     "mongo": {
-        "url": "mongodb://localhost/openhim-development"
+        "url": "mongodb://localhost/openhim-development",
+        "atnaUrl": "mongodb://localhost/openhim-development"
     },
     "logger": {
         "level": "info"

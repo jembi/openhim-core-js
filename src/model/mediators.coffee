@@ -1,5 +1,9 @@
 mongoose = require "mongoose"
+server = require "../server"
+
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
+
 RouteSchema = require('./channels').RouteSchema
 ChannelSchema = require('./channels').ChannelSchema
 
@@ -12,4 +16,4 @@ MediatorSchema = new Schema
   "defaultChannelConfig": [ ChannelSchema ]
  
 # Model for describing a collection of mediators that have registered themselves with core
-exports.Mediator = mongoose.model 'Mediator', MediatorSchema
+exports.Mediator = connectionDefault.model 'Mediator', MediatorSchema

@@ -1,4 +1,7 @@
 mongoose = require "mongoose"
+server = require "../server"
+
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
 UserSchema = new Schema
@@ -18,4 +21,4 @@ UserSchema = new Schema
   "locked":      { type: Boolean, required: false }
   
 #compile the User Schema into a Model
-exports.User = mongoose.model 'User', UserSchema
+exports.User = connectionDefault.model 'User', UserSchema
