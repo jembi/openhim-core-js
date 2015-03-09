@@ -19,7 +19,7 @@ parseAuditRecordFromXML = (xml, callback) ->
     return callback err if err
 
     if not result?.auditMessage
-      return callback 'Document is not a valid AuditMessage'
+      return callback new Error 'Document is not a valid AuditMessage'
 
     audit = {}
 
@@ -57,7 +57,7 @@ exports.processAudit = (msg, callback) ->
     logger.info 'Invalid message received'
     return callback()
 
-  parseAuditRecordFromXML parsedMsg.message, (err, result) ->
+  parseAuditRecordFromXML parsedMsg.message, (xmlErr, result) ->
     audit = new Audit result
 
     audit.rawMessage = msg
@@ -66,7 +66,7 @@ exports.processAudit = (msg, callback) ->
     delete audit.syslog.message
 
     audit.save (saveErr) ->
-      if err or saveErr
-        logger.error "An error occurred while processing the audit entry: #{err}"
+      if saveErr then logger.error "An error occurred while processing the audit entry: #{saveErr}"
+      if xmlErr then logger.info "Failed to parse message as an AuditMessage XML document: #{xmlErr}"
 
       callback()
