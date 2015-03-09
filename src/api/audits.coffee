@@ -60,14 +60,6 @@ exports.getAudits = ->
 
     filtersObject = this.request.query
 
-    #construct date range filter option
-    if filtersObject.startDate and filtersObject.endDate
-      filtersObject['eventIdentification.eventDateTime'] = $gte: filtersObject.startDate, $lt: filtersObject.endDate
-
-      #remove startDate/endDate from objects filter (Not part of filtering and will break filter)
-      delete filtersObject.startDate
-      delete filtersObject.endDate
-
     #get limit and page values
     filterLimit = filtersObject.filterLimit
     filterPage = filtersObject.filterPage
@@ -84,9 +76,27 @@ exports.getAudits = ->
     # get projection object
     projectionFiltersObject = getProjectionObject filterRepresentation
 
+    filters = JSON.parse filtersObject.filters
+
+    # parse date to get it into the correct format for querying
+    if filters['eventIdentification.eventDateTime']
+      filters['eventIdentification.eventDateTime'] = JSON.parse filters['eventIdentification.eventDateTime']
+
+    if filters['participantObjectIdentification.participantObjectID']
+      # filter by AND on same property for patientID and objectID
+      if filters['participantObjectIdentification.participantObjectID'].type
+        patientID = new RegExp filters['participantObjectIdentification.participantObjectID'].patientID
+        objectID = new RegExp filters['participantObjectIdentification.participantObjectID'].objectID
+        filters['$and'] = [ { 'participantObjectIdentification.participantObjectID': patientID }, { 'participantObjectIdentification.participantObjectID': objectID } ]
+        # remove participantObjectIdentification.participantObjectID property as we create a new '$and' operator
+        delete filters['participantObjectIdentification.participantObjectID']
+      else
+        participantObjectID = JSON.parse filters['participantObjectIdentification.participantObjectID']
+        filters['participantObjectIdentification.participantObjectID'] = new RegExp "#{participantObjectID}"
+
     # execute the query
     this.body = yield Audit
-      .find filtersObject, projectionFiltersObject
+      .find filters, projectionFiltersObject
       .skip filterSkip
       .limit filterLimit
       .sort 'eventIdentification.eventDateTime': -1
@@ -117,7 +127,7 @@ exports.getAuditById = (auditId) ->
     result = yield Audit.findById(auditId, projectionFiltersObject).exec()
 
     # Test if the result if valid
-    if result?.length is 0
+    if not result
       this.body = "Could not find audits record with ID: #{auditId}"
       this.status = 'not found'
     else
@@ -125,3 +135,35 @@ exports.getAuditById = (auditId) ->
 
   catch e
     utils.logAndSetResponse this, 'internal server error', "Could not get audit by ID via the API: #{e}", 'error'
+
+
+
+###
+# construct audit filtering dropdown options
+###
+exports.getAuditsFilterOptions = ->
+
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getAudits denied.", 'info'
+    return
+
+  try
+
+    # execute the query
+    eventID = yield Audit.distinct('eventIdentification.eventID').exec()
+    eventTypeCode = yield Audit.distinct('eventIdentification.eventTypeCode').exec()
+    roleIDCode = yield Audit.distinct('activeParticipant.roleIDCode').exec()
+    participantObjectIDTypeCode = yield Audit.distinct('participantObjectIdentification.participantObjectIDTypeCode').exec()
+
+    responseObject =
+      eventType: eventTypeCode
+      eventID: eventID
+      activeParticipantRoleID: roleIDCode
+      participantObjectIDTypeCode: participantObjectIDTypeCode
+    
+    this.body = responseObject
+  catch e
+    utils.logAndSetResponse this, 'internal server error', "Could not retrieve audits filter options via the API: #{e}", 'error'
+
+  

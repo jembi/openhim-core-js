@@ -158,7 +158,7 @@ describe "API Integration Tests", ->
           newAudit.save (error, result) ->
             should.not.exist (error)
             request("https://localhost:8080")
-              .get("/audits?filterPage=0&filterLimit=10")
+              .get("/audits?filterPage=0&filterLimit=10&filters={}")
               .set("auth-username", testUtils.rootUser.email)
               .set("auth-ts", authDetails.authTS)
               .set("auth-salt", authDetails.authSalt)
@@ -174,12 +174,17 @@ describe "API Integration Tests", ->
       it "should call getAudits with filter paramaters ", (done) ->
         startDate = "2015-02-20T00:00:00.000Z"
         endDate = "2015-02-21T00:00:00.000Z"
+
+        filters = {}
+        filters["eventIdentification.eventDateTime"] = "{ \"$gte\": \"2015-02-20T00:00:00.000Z\",\"$lte\": \"2015-02-21T00:00:00.000Z\" }"
+        filters = JSON.stringify filters
+
         Audit.count {}, (err, countBefore) ->
           audit = new Audit auditData
           audit.save (error, result) ->
             should.not.exist (error)
             request("https://localhost:8080")
-              .get("/audits?filterPage=0&filterLimit=10&startDate="+startDate+"&endDate="+endDate)
+              .get("/audits?filterPage=0&filterLimit=10&filters="+encodeURIComponent(filters))
               .set("auth-username", testUtils.rootUser.email)
               .set("auth-ts", authDetails.authTS)
               .set("auth-salt", authDetails.authSalt)
