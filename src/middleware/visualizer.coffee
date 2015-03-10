@@ -52,7 +52,7 @@ addRouteEvents = (dst, route, prefix, tsDiff) ->
   if endTS-startTS<minEvPeriod then endTS = startTS+minEvPeriod
 
   # Transaction start for route
-  dst.push new events.VisualizerEvent
+  dst.push
     ts: startTS
     comp: "#{prefix}-#{route.name}"
     ev: 'start'
@@ -64,7 +64,7 @@ addRouteEvents = (dst, route, prefix, tsDiff) ->
     routeStatus = 'error'
 
   # Transaction end for route
-  dst.push new events.VisualizerEvent
+  dst.push
     ts: endTS
     comp: "#{prefix}-#{route.name}"
     ev: 'end'
@@ -81,12 +81,12 @@ storeVisualizerEvents = (ctx, done) ->
   if endTS-startTS<minEvPeriod then endTS = startTS+minEvPeriod
 
   # Transaction start for channal
-  trxEvents.push new events.VisualizerEvent
+  trxEvents.push
     ts: startTS
     comp: "channel-#{ctx.authorisedChannel.name}"
     ev: 'start'
   # Transaction start for primary route
-  trxEvents.push new events.VisualizerEvent
+  trxEvents.push
     ts: startTS
     comp: ctx.authorisedChannel.name
     ev: 'start'
@@ -116,21 +116,28 @@ storeVisualizerEvents = (ctx, done) ->
     status = 'error'
 
   # Transaction end for primary route
-  trxEvents.push new events.VisualizerEvent
+  trxEvents.push
     ts: endTS + orchestrationTsBufferMillis
     comp: ctx.authorisedChannel.name
     ev: 'end'
     status: status
   # Transaction end for channel
-  trxEvents.push new events.VisualizerEvent
+  trxEvents.push
     ts: endTS + orchestrationTsBufferMillis
     comp: "channel-#{ctx.authorisedChannel.name}"
     ev: 'end'
     status: status
 
-  events.VisualizerEvent.create trxEvents, (err) -> return if err then done err else done()
+  now = new Date
+  event.created = now for event in trxEvents
+  events.VisualizerEvent.collection.createIndex { created: 1 }, { expireAfterSeconds: 600 }, ->
+    events.VisualizerEvent.collection.insert trxEvents, (err) -> return if err then done err else done()
+
 
 exports.koaMiddleware = (next) ->
   yield next
   if config.visualizer.enableVisualizer
-    storeVisualizerEvents this, ->
+    ctx = this
+    do (ctx) ->
+      f = -> storeVisualizerEvents ctx, ->
+      setTimeout f, 0
