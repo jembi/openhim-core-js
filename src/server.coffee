@@ -26,6 +26,7 @@ fs = require 'fs'
 http = require 'http'
 https = require 'https'
 net = require 'net'
+dgram = require 'dgram'
 koaMiddleware = require "./koaMiddleware"
 koaApi = require "./koaApi"
 tlsAuthentication = require "./middleware/tlsAuthentication"
