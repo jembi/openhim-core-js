@@ -4,6 +4,15 @@ Client = require("../model/clients").Client
 Keystore = require("../model/keystore").Keystore
 logger = require "winston"
 
+config = require '../config/config'
+statsdServer = config.get 'statsd'
+application = config.get 'application'
+SDC = require 'statsd-client'
+os = require 'os'
+
+domain = "#{os.hostname()}.#{application.name}.appMetrics"
+sdc = new SDC statsdServer
+
 ###
 # Fetches the trusted certificates, callsback with an array of certs.
 ###
@@ -53,6 +62,7 @@ exports.getServerOptions = (mutualTLS, done) ->
 # Koa middleware for mutual TLS authentication
 ###
 exports.koaMiddleware = (next) ->
+  startTime = new Date() if statsdServer.enabled
   if this.authenticated?
     yield next
   else
@@ -64,12 +74,15 @@ exports.koaMiddleware = (next) ->
       this.authenticated = yield Client.findOne({ clientDomain: subject.CN }).exec()
 
       if this.authenticated?
+        sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
         yield next
       else
         this.authenticated = null
         logger.info "Certificate Authentication Failed: the certificate's common name #{subject.CN} did not match any client's domain attribute, trying next auth mechanism if any..."
+        sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
         yield next
     else
       this.authenticated = null
       logger.info "Could NOT authenticate via TLS: #{this.req.client.authorizationError}, trying next auth mechanism if any..."
+      sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
       yield next
