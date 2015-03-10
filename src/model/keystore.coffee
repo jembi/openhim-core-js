@@ -1,6 +1,5 @@
 mongoose = require "mongoose"
 server = require "../server"
-
 connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 

@@ -1,9 +1,7 @@
 mongoose = require "mongoose"
 server = require "../server"
-
 connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
-
 ContactUserSchema = require('./contactGroups').ContactUserSchema
 
 RouteSchema = new Schema
@@ -66,7 +64,7 @@ ChannelSchema = new Schema
   "status": { type: String, required: false, default: 'enabled', enum: ['enabled', 'disabled', 'deleted'] }
 
 # compile the Channel and Route Schema into a Model
-exports.Route = connectionDefault.model 'Route', RouteSchema
+exports.Route = mongoose.model 'Route', RouteSchema
 exports.RouteSchema = RouteSchema
 
 ###

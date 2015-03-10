@@ -1,7 +1,7 @@
 should = require "should"
 request = require "supertest"
-Audit = require("../../lib/model/audits").Audit
 server = require "../../lib/server"
+Audit = require("../../lib/model/audits").Audit
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 
@@ -80,16 +80,11 @@ describe "API Integration Tests", ->
         ]
 
 
-
-
-
-    
-
     authDetails = {}
 
     before (done) ->
       auth.setupTestUsers (err) ->
-        server.start null, null, 8080, null, null, null,  ->
+        server.start apiPort: 8080, ->
           done()
 
     after (done) ->
@@ -271,10 +266,10 @@ describe "API Integration Tests", ->
                 done err
               else
                 (res != null).should.be.true
-                res.body.eventIdentification.eventDateTime.should.equal "2015-02-20T15:38:25.282Z"
-                res.body.eventIdentification.eventActionCode.should.equal "E"
-                res.body.eventIdentification.eventID.code.should.equal "110112"
-
+                res.body.eventType.length.should.equal 1
+                res.body.eventID.length.should.equal 1
+                res.body.activeParticipantRoleID.length.should.equal 1
+                res.body.participantObjectIDTypeCode.length.should.equal 2
                 done()
 
       it "should NOT return a filter dropdown object if user is not admin", (done) ->

@@ -1,6 +1,5 @@
 mongoose = require "mongoose"
 server = require "../server"
-
 connectionATNA = server.connectionATNA
 Schema = mongoose.Schema
 

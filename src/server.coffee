@@ -2,8 +2,6 @@
 path = require 'path'
 global.appRoot = path.join path.resolve(__dirname), '..'
 
-mongoose = require "mongoose"
-
 config = require "./config/config"
 config.mongo = config.get('mongo')
 config.authentication = config.get('authentication')
@@ -17,10 +15,9 @@ config.polling = config.get('polling')
 config.reports = config.get('reports')
 config.auditing = config.get('auditing')
 
-# Setup mongodb connections
-exports.connectionDefault = connectionDefault = mongoose.createConnection( config.mongo.url )
-exports.connectionATNA = connectionATNA = mongoose.createConnection( config.mongo.atnaUrl )
-
+mongoose = require "mongoose"
+exports.connectionDefault = connectionDefault = mongoose.createConnection(config.mongo.url)
+exports.connectionATNA = connectionATNA = mongoose.createConnection(config.mongo.atnaUrl)
 
 fs = require 'fs'
 http = require 'http'
@@ -30,13 +27,11 @@ dgram = require 'dgram'
 koaMiddleware = require "./koaMiddleware"
 koaApi = require "./koaApi"
 tlsAuthentication = require "./middleware/tlsAuthentication"
-
 uuid = require 'node-uuid'
 
 Q = require "q"
 logger = require "winston"
 logger.level = config.logger.level
-
 User = require('./model/users').User
 Keystore = require('./model/keystore').Keystore
 pem = require 'pem'
@@ -48,6 +43,8 @@ tcpAdapter = require './tcpAdapter'
 workerAPI = require './api/worker'
 auditing = require './auditing'
 
+# Configure mongose to connect to mongo
+mongoose.connect config.mongo.url
 
 httpServer = null
 httpsServer = null
@@ -55,7 +52,6 @@ apiHttpsServer = null
 rerunServer = null
 tcpHttpReceiver = null
 pollingServer = null
-
 auditUDPServer = null
 
 activeHttpConnections = {}
@@ -360,7 +356,7 @@ lookupServerPorts = ->
   httpPort: config.router.httpPort
   httpsPort: config.router.httpsPort
   apiPort: config.api.httpsPort
-  rerunPort: config.rerun.httpPort
+  rerunHttpPort: config.rerun.httpPort
   tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort
   pollingPort: config.polling.pollingPort
   auditUDPPort: config.auditing.servers.udp.port if config.auditing.servers.udp.enabled

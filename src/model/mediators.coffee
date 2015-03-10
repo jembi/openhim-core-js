@@ -1,9 +1,7 @@
 mongoose = require "mongoose"
 server = require "../server"
-
 connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
-
 RouteSchema = require('./channels').RouteSchema
 ChannelSchema = require('./channels').ChannelSchema
 
