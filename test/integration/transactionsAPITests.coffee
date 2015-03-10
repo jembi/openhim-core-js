@@ -6,6 +6,11 @@ User = require('../../lib/model/users').User
 server = require "../../lib/server"
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
+FakeServer = require "../fakeTcpServer"
+config = require '../../lib/config/config'
+application = config.get 'application'
+os = require "os"
+domain = os.hostname() + '.' + application.name
 
 describe "API Integration Tests", ->
 
@@ -147,6 +152,14 @@ describe "API Integration Tests", ->
               done()
 
     describe "*updateTransaction()", ->
+
+      s = {}
+      beforeEach (done) ->
+        s = new FakeServer()
+        s.start done
+
+      afterEach ->
+        s.stop()
       
       it "should call /updateTransaction ", (done) ->
         tx = new Transaction transactionData
@@ -212,6 +225,8 @@ describe "API Integration Tests", ->
                   updatedTrans.request.method.should.equal "PUT"
                   updatedTrans.routes[1].name.should.equal "async"
                   updatedTrans.routes[1].orchestrations[0].name.should.equal "test"
+                  s.expectMessage domain + '.channels.888888888888888888888888.async.orchestrations.test:1|c', ->
+                    s.expectMessage domain + '.channels.888888888888888888888888.async.orchestrations.test.statusCodes.201:1|c', done
 
                   done()
 
