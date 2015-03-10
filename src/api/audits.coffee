@@ -155,12 +155,14 @@ exports.getAuditsFilterOptions = ->
     eventTypeCode = yield Audit.distinct('eventIdentification.eventTypeCode').exec()
     roleIDCode = yield Audit.distinct('activeParticipant.roleIDCode').exec()
     participantObjectIDTypeCode = yield Audit.distinct('participantObjectIdentification.participantObjectIDTypeCode').exec()
+    auditSourceID = yield Audit.distinct('auditSourceIdentification.auditSourceID').exec()
 
     responseObject =
       eventType: eventTypeCode
       eventID: eventID
       activeParticipantRoleID: roleIDCode
       participantObjectIDTypeCode: participantObjectIDTypeCode
+      auditSourceID: auditSourceID
     
     this.body = responseObject
   catch e
