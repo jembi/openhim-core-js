@@ -3,6 +3,15 @@ Transaction = require("../model/transactions").Transaction
 Task = require("../model/tasks").Task
 logger = require "winston"
 
+config = require '../config/config'
+statsdServer = config.get 'statsd'
+application = config.get 'application'
+SDC = require 'statsd-client'
+os = require 'os'
+
+domain = "#{os.hostname()}.#{application.name}.appMetrics"
+sdc = new SDC statsdServer
+
 exports.updateOriginalTransaction = (ctx, done) ->
   Transaction.findOne { _id: ctx.parentID }, (err, transaction) ->
     transaction.childIDs.push ctx.transactionId
@@ -37,9 +46,10 @@ exports.updateTask = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   # do intial yield for koa to come back to this function with updated ctx object
   yield next
-
+  startTime = new Date() if statsdServer.enabled
   updateOriginalTransaction = Q.denodeify exports.updateOriginalTransaction
   yield updateOriginalTransaction this
 
   updateTask = Q.denodeify exports.updateTask
   yield updateTask this
+  sdc.timing "#{domain}.rerunUpdateTransactionMiddleware", startTime if statsdServer.enabled

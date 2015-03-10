@@ -6,13 +6,21 @@ net = require 'net'
 tls = require 'tls'
 Q = require 'q'
 config = require '../config/config'
-config.mongo = config.get('mongo')
-config.router = config.get('router')
+config.mongo = config.get 'mongo'
+config.router = config.get 'router'
 logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
 fs = require 'fs'
 Keystore = require("../model/keystore").Keystore
+
+statsdServer = config.get 'statsd'
+application = config.get 'application'
+SDC = require 'statsd-client'
+os = require 'os'
+
+domain = "#{os.hostname()}.#{application.name}.appMetrics"
+sdc = new SDC statsdServer
 
 containsMultiplePrimaries = (routes) ->
   numPrimaries = 0
@@ -370,6 +378,8 @@ exports.route = (ctx, next) ->
 # Use with: app.use(router.koaMiddleware)
 ###
 exports.koaMiddleware = (next) ->
+  startTime = new Date() if statsdServer.enabled
   route = Q.denodeify exports.route
   yield route this
+  sdc.timing "#{domain}.routerMiddleware", startTime if statsdServer.enabled
   yield next

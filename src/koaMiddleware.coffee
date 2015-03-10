@@ -18,21 +18,26 @@ config = require './config/config'
 config.authentication = config.get('authentication')
 getRawBody = require 'raw-body'
 tcpAdapter = require './tcpAdapter'
-Client = require "statsy"
 Q = require "q"
 config.statsd = config.get 'statsd'
 
+application = config.get 'application'
+SDC = require 'statsd-client'
+os = require 'os'
 
-
+domain = "#{os.hostname()}.#{application.name}.appMetrics"
+sdc = new SDC config.statsd
 
 compress = require 'koa-compress'
 
 rawBodyReader = (next) ->
+  startTime = new Date() if config.statsd.enabled
   body = yield getRawBody this.req,
     length: this.length,
     encoding: this.charset
 
   this.body = body if body
+  sdc.timing "#{domain}.rawBodyReaderMiddleware", startTime if config.statsd.enabled
   yield next
 
 
@@ -49,8 +54,6 @@ exports.setupApp = (done) ->
   if config.authentication.enableMutualTLSAuthentication
     app.use tlsAuthentication.koaMiddleware
 
-
-
   app.use rawBodyReader
 
   # Authorisation middleware
@@ -61,6 +64,7 @@ exports.setupApp = (done) ->
     threshold: 8
     flush: require("zlib").Z_SYNC_FLUSH
   )
+
   # Visualizer
   app.use visualizer.koaMiddleware
 

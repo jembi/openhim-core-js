@@ -5,6 +5,14 @@ messageStore = require '../middleware/messageStore'
 config = require "../config/config"
 config.visualizer = config.get('visualizer')
 
+statsdServer = config.get 'statsd'
+application = config.get 'application'
+SDC = require 'statsd-client'
+os = require 'os'
+
+domain = "#{os.hostname()}.#{application.name}.appMetrics"
+sdc = new SDC statsdServer
+
 minEvPeriod = config.visualizer.minimumEventPeriodMillis ? 100
 
 enableTSNormalization = config.visualizer.enableTSNormalization ? false
@@ -137,7 +145,9 @@ storeVisualizerEvents = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   yield next
   if config.visualizer.enableVisualizer
+    startTime = new Date() if statsdServer.enabled
     ctx = this
     do (ctx) ->
       f = -> storeVisualizerEvents ctx, ->
       setTimeout f, 0
+    sdc.timing "#{domain}.visualizerMiddleware", startTime if statsdServer.enabled

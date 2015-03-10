@@ -1,14 +1,14 @@
 config = require '../config/config'
-statsd_client = require "statsd-client"
-statsd_server = config.get 'statsd'
+SDC = require "statsd-client"
+statsdServer = config.get 'statsd'
 application = config.get 'application'
 logger = require "winston"
-os = require "os"
+os = require 'os'
 timer = new Date()
 domain = os.hostname() + '.' + application.name
-util = require "util"
+util = require 'util'
 
-sdc = new statsd_client statsd_server
+sdc = new SDC statsdServer
 
 exports.incrementTransactionCount = (ctx, done) ->
   logger.info 'sending counts to statsd for ' + domain + '.' + ctx.authorisedChannel._id
@@ -171,6 +171,8 @@ exports.measureTransactionDuration = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   this.timer = new Date()
   yield next
+  appMetricsStartTime = new Date() if statsdServer.enabled
   exports.incrementTransactionCount this, ->
   exports.measureTransactionDuration this, ->
+  sdc.timing "#{domain}.appMetrics.statsMiddleware", appMetricsStartTime if statsdServer.enabled
   sdc.close()

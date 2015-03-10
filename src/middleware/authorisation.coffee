@@ -7,6 +7,14 @@ logger = require "winston"
 config = require '../config/config'
 config.authentication = config.get('authentication')
 
+statsdServer = config.get 'statsd'
+application = config.get 'application'
+SDC = require 'statsd-client'
+os = require 'os'
+
+domain = "#{os.hostname()}.#{application.name}.appMetrics"
+sdc = new SDC statsdServer
+
 matchContent = (channel, body) ->
   if channel.matchContentRegex
     return matchRegex channel.matchContentRegex, body
@@ -123,7 +131,9 @@ exports.authorise = (ctx, done) ->
     return done()
 
 exports.koaMiddleware = (next) ->
+  startTime = new Date() if statsdServer.enabled
   authorise = Q.denodeify exports.authorise
   yield authorise this
   if this.authorisedChannel?
+    sdc.timing "#{domain}.authorisationMiddleware", startTime if statsdServer.enabled
     yield next
