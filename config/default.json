@@ -72,5 +72,21 @@
   "newUserExpiry": {
     "duration": 7,
     "durationType": "days"
+  },
+  "auditing": {
+    "servers": {
+      "udp": {
+        "enabled": false,
+        "port": 5050
+      },
+      "tls": {
+        "enabled": false,
+        "port": 5051
+      },
+      "tcp": {
+        "enabled": false,
+        "port": 5052
+      }
+    }
   }
 }

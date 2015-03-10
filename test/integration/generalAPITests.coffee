@@ -19,7 +19,7 @@ describe "API Integration Tests", ->
       # password is 'password'
 
     before (done) ->
-      server.start null, null, 8080, null, null, null, ->
+      server.start apiPort: 8080, ->
         user.save ->
           done()
 

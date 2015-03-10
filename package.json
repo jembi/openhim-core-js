@@ -17,6 +17,7 @@
     "co": "^4.1.0",
     "cookie": "^0.1.2",
     "forever-monitor": "^1.5.2",
+    "glossy": "^0.1.7",
     "http-status": "^0.1.8",
     "koa": "^0.7.0",
     "koa-basic-auth": "^1.1.2",
@@ -40,6 +41,7 @@
     "semver": "^4.2.0",
     "statsd-client": "^0.0.17",
     "winston": "^0.9.0",
+    "xml2js": "^0.4.5",
     "xmldom": "^0.1.19",
     "xpath": "^0.0.9"
   },
