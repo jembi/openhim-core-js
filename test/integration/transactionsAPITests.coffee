@@ -165,6 +165,28 @@ describe "API Integration Tests", ->
             request: reqUp
             status: "Completed"
             clientID: "777777777777777777777777"
+            $push: {
+              routes : {
+                "name": "async",
+                "orchestrations": [
+                  {
+                    "name": "test",
+                    "request": {
+                      "method": "POST",
+                      "body": "data",
+                      "timestamp": 1425897647329
+                    },
+                    "response": {
+                      "status": 201,
+                      "body": "OK",
+                      "timestamp": 1425897688016
+                    }
+                  }
+                ]
+              }
+            }
+
+
           request("https://localhost:8080")
             .put("/transactions/#{transactionId}")
             .set("auth-username", testUtils.rootUser.email)
@@ -188,6 +210,9 @@ describe "API Integration Tests", ->
                   updatedTrans.request.querystring.should.equal "updated=value"
                   updatedTrans.request.body.should.equal "<HTTP body update>"
                   updatedTrans.request.method.should.equal "PUT"
+                  updatedTrans.routes[1].name.should.equal "async"
+                  updatedTrans.routes[1].orchestrations[0].name.should.equal "test"
+
                   done()
 
       it "should only allow admin user to update a transaction", (done) ->
