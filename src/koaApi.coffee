@@ -108,7 +108,7 @@ exports.setupApp = (done) ->
   app.use route.post '/audits', audits.addAudit
   app.use route.get '/audits', audits.getAudits
   app.use route.get '/audits/:auditId', audits.getAuditById
-  app.use route.get '/audits-filter-options/', audits.getAuditsFilterOptions
+  app.use route.get '/audits-filter-options', audits.getAuditsFilterOptions
 
   # Return the result
   done(app)

@@ -105,7 +105,6 @@ describe "API Integration Tests", ->
 
       it "should not allow non admin user to restart the server", (done) ->
         request("https://localhost:8080")
-<<<<<<< HEAD
           .post("/restart")
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -118,17 +117,4 @@ describe "API Integration Tests", ->
               done err
             else
               done()
-=======
-            .post("/restart")
-            .set("auth-username", testUtils.nonRootUser.email)
-            .set("auth-ts", authDetails.authTS)
-            .set("auth-salt", authDetails.authSalt)
-            .set("auth-token", authDetails.authToken)
-            .send()
-            .expect(403)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                done()
->>>>>>> 9e6e2018077a6732b89e5ac43e738dbe32f013e9
+

@@ -251,4 +251,48 @@ describe "API Integration Tests", ->
               else
                 done()
 
+
+    describe "*getAuditsFilterOptions", ->
+
+      it "should fetch dropdown filter options - admin user", (done) ->
+        audit = new Audit auditData
+        audit.save (err, result)->
+          should.not.exist(err)
+          auditId = result._id
+          request("https://localhost:8080")
+            .get("/audits-filter-options")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                (res != null).should.be.true
+                res.body.eventIdentification.eventDateTime.should.equal "2015-02-20T15:38:25.282Z"
+                res.body.eventIdentification.eventActionCode.should.equal "E"
+                res.body.eventIdentification.eventID.code.should.equal "110112"
+
+                done()
+
+      it "should NOT return a filter dropdown object if user is not admin", (done) ->
+        audit = new Audit auditData
+        audit.save (err, result)->
+          should.not.exist(err)
+          
+          request("https://localhost:8080")
+            .get("/audits-filter-options")
+            .set("auth-username", testUtils.nonRootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(403)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
+
     
