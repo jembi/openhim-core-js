@@ -1,4 +1,6 @@
 mongoose = require "mongoose"
+server = require "../server"
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
 AlertSchema = new Schema
@@ -11,4 +13,4 @@ AlertSchema = new Schema
   "error":     { type: String, required: false }
   "alertStatus": { type: String, required: true, enum: ["Failed", "Completed"] }
  
-exports.Alert = mongoose.model 'Alert', AlertSchema
+exports.Alert = connectionDefault.model 'Alert', AlertSchema

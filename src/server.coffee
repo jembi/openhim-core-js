@@ -2,15 +2,8 @@
 path = require 'path'
 global.appRoot = path.join path.resolve(__dirname), '..'
 
-fs = require 'fs'
-http = require 'http'
-https = require 'https'
-net = require 'net'
-dgram = require 'dgram'
-koaMiddleware = require "./koaMiddleware"
-koaApi = require "./koaApi"
-tlsAuthentication = require "./middleware/tlsAuthentication"
 config = require "./config/config"
+config.mongo = config.get('mongo')
 config.authentication = config.get('authentication')
 config.router = config.get('router')
 config.api = config.get('api')
@@ -21,12 +14,24 @@ config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
 config.auditing = config.get('auditing')
+
+mongoose = require "mongoose"
+exports.connectionDefault = connectionDefault = mongoose.createConnection(config.mongo.url)
+exports.connectionATNA = connectionATNA = mongoose.createConnection(config.mongo.atnaUrl)
+
+fs = require 'fs'
+http = require 'http'
+https = require 'https'
+net = require 'net'
+dgram = require 'dgram'
+koaMiddleware = require "./koaMiddleware"
+koaApi = require "./koaApi"
+tlsAuthentication = require "./middleware/tlsAuthentication"
 uuid = require 'node-uuid'
 
 Q = require "q"
 logger = require "winston"
 logger.level = config.logger.level
-mongoose = require "mongoose"
 User = require('./model/users').User
 Keystore = require('./model/keystore').Keystore
 pem = require 'pem'
@@ -47,7 +52,6 @@ apiHttpsServer = null
 rerunServer = null
 tcpHttpReceiver = null
 pollingServer = null
-
 auditUDPServer = null
 
 activeHttpConnections = {}
@@ -352,7 +356,7 @@ lookupServerPorts = ->
   httpPort: config.router.httpPort
   httpsPort: config.router.httpsPort
   apiPort: config.api.httpsPort
-  rerunPort: config.rerun.httpPort
+  rerunHttpPort: config.rerun.httpPort
   tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort
   pollingPort: config.polling.pollingPort
   auditUDPPort: config.auditing.servers.udp.port if config.auditing.servers.udp.enabled

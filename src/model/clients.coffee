@@ -1,4 +1,6 @@
 mongoose = require "mongoose"
+server = require "../server"
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
 ClientSchema = new Schema
@@ -11,4 +13,4 @@ ClientSchema = new Schema
   "passwordSalt":   { type: String, required: false }
     
 #compile the Client Schema into a Model
-exports.Client = mongoose.model 'Client', ClientSchema
+exports.Client = connectionDefault.model 'Client', ClientSchema

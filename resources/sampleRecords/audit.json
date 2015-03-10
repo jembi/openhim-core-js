@@ -1,0 +1,72 @@
+{
+  "rawMessage": "This will be the raw ATNA message that gets received to be used as a backup reference",
+  "eventIdentification": {
+    "eventDateTime": "2015-02-17T15:38:25.282+02:00",
+    "eventOutcomeIndicator": "0",
+    "eventActionCode": "R",
+    "eventID": {
+      "code": "222",
+      "displayName": "Read",
+      "codeSystemName": "DCM"
+    },
+    "eventTypeCode": {
+      "code": "ITI-9",
+      "displayName": "PIX Read",
+      "codeSystemName": "IHE Transactions"
+    }
+  },
+  "activeParticipant": [
+    {
+      "userID": "pix|pix",
+      "alternativeUserID": "2100",
+      "userIsRequestor": "false",
+      "networkAccessPointID": "localhost",
+      "networkAccessPointTypeCode": "1",
+      "roleIDCode": {
+        "code": "110152",
+        "displayName": "Destination",
+        "codeSystemName": "DCM"
+      }
+    }, {
+      "userID": "pix|pix",
+      "alternativeUserID": "2100",
+      "userIsRequestor": "false",
+      "networkAccessPointID": "localhost",
+      "networkAccessPointTypeCode": "1",
+      "roleIDCode": {
+        "code": "110152",
+        "displayName": "Destination",
+        "codeSystemName": "DCM"
+      }
+    }
+  ],
+  "auditSourceIdentification": {
+    "auditSourceID": "openhim"
+  },
+  "participantObjectIdentification": [
+    {
+      "participantObjectID": "975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO",
+      "participantObjectTypeCode": "1",
+      "participantObjectTypeCodeRole": "1",
+      "participantObjectIDTypeCode": {
+        "code": "2",
+        "displayName": "PatientNumber",
+        "codeSystemName": "RFC-3881"
+      }
+    }, {
+      "participantObjectID": "dca6c09e-cc92-4bc5-8741-47bd938fa405",
+      "participantObjectTypeCode": "2",
+      "participantObjectTypeCodeRole": "24",
+      "participantObjectIDTypeCode": {
+        "code": "ITI-9",
+        "displayName": "PIX Query",
+        "codeSystemName": "IHE Transactions"
+      },
+      "participantObjectQuery": "TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAyMjAxNTM4MjUrMDIwMHx8UUJQXlEyM15RQlBfUTIxfDEwMDQxYWQ5LTkyNDAtNDEyNS04ZDMwLWZiYzczNGEwOTMwMXxQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXw1OTRhNDVkYS0zOTY5LTQzOTAtODE2Ni01MjhkZDFmNWU0ZTF8NzZjYzc2NWE0NDJmNDEwXl5eJjEuMy42LjEuNC4xLjIxMzY3LjIwMDUuMy43JklTT15QSXxeXl5FQ0lEJkVDSUQmSVNPXlBJDVJDUHxJDQ==",
+      "participantObjectDetail": {
+        "type": "MSH-10",
+        "value": "MTAwNDFhZDktOTI0MC00MTI1LThkMzAtZmJjNzM0YTA5MzAx"
+      }
+    }
+  ]
+}

@@ -17,6 +17,7 @@ mediators = require './api/mediators'
 metrics = require './api/metrics'
 keystore = require './api/keystore'
 serverRestart = require './api/restart'
+audits = require './api/audits'
 statsd = require './api/statsd'
 config = require './config/config'
 #statsd_instance = config.get 'statsd'
@@ -102,6 +103,12 @@ exports.setupApp = (done) ->
 
   # server restart endpoint
   app.use route.post '/restart', serverRestart.restart
+
+  # AuditRecord endpoint
+  app.use route.post '/audits', audits.addAudit
+  app.use route.get '/audits', audits.getAudits
+  app.use route.get '/audits/:auditId', audits.getAuditById
+  app.use route.get '/audits-filter-options', audits.getAuditsFilterOptions
 
   # Return the result
   done(app)

@@ -1,4 +1,6 @@
 mongoose = require "mongoose"
+server = require "../server"
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
 certificate =
@@ -22,5 +24,5 @@ KeystoreSchema = new Schema
   ca:     [ CertificateSchema ]
 
 # Model for storing the server key and cert as well as trusted certificates
-exports.Keystore = mongoose.model 'Keystore', KeystoreSchema
-exports.Certificate = mongoose.model 'Certificate', CertificateSchema
+exports.Keystore = connectionDefault.model 'Keystore', KeystoreSchema
+exports.Certificate = connectionDefault.model 'Certificate', CertificateSchema

@@ -1,4 +1,6 @@
 mongoose = require "mongoose"
+server = require "../server"
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
 TaskSchema = new Schema
@@ -13,4 +15,4 @@ TaskSchema = new Schema
 # The task object that describes a specific task within the OpenHIM.
 # It provides some metadata describing a task and contains a number of transaction IDs.
 ###
-exports.Task = mongoose.model 'Task', TaskSchema
+exports.Task = connectionDefault.model 'Task', TaskSchema

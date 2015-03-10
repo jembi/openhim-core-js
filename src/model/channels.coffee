@@ -1,4 +1,6 @@
 mongoose = require "mongoose"
+server = require "../server"
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 ContactUserSchema = require('./contactGroups').ContactUserSchema
 
@@ -74,5 +76,5 @@ exports.RouteSchema = RouteSchema
 # A channel also has an allow property. This property should contain a list
 # of users or group that are authroised to send messages to this channel.
 ###
-exports.Channel = mongoose.model 'Channel', ChannelSchema
+exports.Channel = connectionDefault.model 'Channel', ChannelSchema
 exports.ChannelSchema = ChannelSchema

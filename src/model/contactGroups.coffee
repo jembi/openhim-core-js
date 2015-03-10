@@ -1,4 +1,6 @@
 mongoose = require "mongoose"
+server = require "../server"
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
 exports.ContactUserSchema = ContactUserSchema = new Schema
@@ -10,5 +12,5 @@ ContactGroupSchema = new Schema
   "group":   { type: String, required: true, unique: true }
   "users":   [ ContactUserSchema ]
  
-exports.ContactUser = mongoose.model 'ContactUser', ContactUserSchema
-exports.ContactGroup = mongoose.model 'ContactGroup', ContactGroupSchema
+exports.ContactUser = connectionDefault.model 'ContactUser', ContactUserSchema
+exports.ContactGroup = connectionDefault.model 'ContactGroup', ContactGroupSchema

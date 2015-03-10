@@ -1,4 +1,6 @@
 mongoose = require "mongoose"
+server = require "../server"
+connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
 VisualizerEventsSchema = new Schema
@@ -8,4 +10,4 @@ VisualizerEventsSchema = new Schema
   "ev": { type: String }
   "status": { type: String }
  
-exports.VisualizerEvent = mongoose.model 'VisualizerEvent', VisualizerEventsSchema
+exports.VisualizerEvent = connectionDefault.model 'VisualizerEvent', VisualizerEventsSchema
