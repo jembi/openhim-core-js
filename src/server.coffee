@@ -22,6 +22,7 @@ exports.connectionATNA = connectionATNA = mongoose.createConnection(config.mongo
 fs = require 'fs'
 http = require 'http'
 https = require 'https'
+tls = require 'tls'
 net = require 'net'
 dgram = require 'dgram'
 koaMiddleware = require "./koaMiddleware"
@@ -53,6 +54,9 @@ rerunServer = null
 tcpHttpReceiver = null
 pollingServer = null
 auditUDPServer = null
+
+auditTlsServer = null
+auditTcpServer = null
 
 activeHttpConnections = {}
 activeHttpsConnections = {}
@@ -262,6 +266,91 @@ startAuditUDPServer = (auditUDPPort, bindAddress) ->
 
   return defer
 
+
+# function to start the TLS Audit server
+startAuditTlsServer = (auditTlsPort, bindAddress) ->
+  defer = Q.defer()
+
+  tlsAuthentication.getServerOptions true, (err, options) ->
+    return callback err if err
+
+    auditTlsServer = tls.createServer options, (sock) ->
+      message = ""
+      length = 0
+
+      sock.on 'data', (data) ->
+        # convert to string anf concatenate
+        message += data.toString()
+
+        # check if length is is still zero and first occurannce of space
+        if length == 0 and message.indexOf(' ') != -1
+          # get index of end of message length
+          lengthIndex = message.indexOf " "
+
+          # source message length
+          lengthValue = message.substr(0, lengthIndex)
+
+          # remove white spaces
+          length = parseInt(lengthValue.trim())
+          
+          # update message to remove length - add one extra character to remove the space
+          message = message.substr(lengthIndex + 1)
+        
+        # if sourced length equals message length then full message received
+        if length == message.length
+          logger.info "[Auditing TLS] Received message from #{sock.remoteAddress}"
+          auditing.processAudit message, -> logger.info "[Auditing TLS] Processed audit"
+
+      sock.on 'error', (err) ->
+        logger.error err
+    
+    auditTlsServer.listen auditTlsPort, '0.0.0.0', ->
+      logger.info "Auditing TLS server listening on port #{auditTlsPort}"
+      defer.resolve()
+
+  return defer
+
+# function to start the TCP Audit server
+startAuditTcpServer = (auditTcpPort) ->
+  defer = Q.defer()
+
+  auditTcpServer = net.createServer (sock) ->
+    message = ""
+    length = 0
+
+    sock.on 'data', (data) ->
+      # convert to string anf concatenate
+      message += data.toString()
+
+      # check if length is is still zero and first occurannce of space
+      if length == 0 and message.indexOf(' ') != -1
+        # get index of end of message length
+        lengthIndex = message.indexOf " "
+
+        # source message length
+        lengthValue = message.substr(0, lengthIndex)
+
+        # remove white spaces
+        length = parseInt(lengthValue.trim())
+
+        # update message to remove length - add one extra character to remove the space
+        message = message.substr(lengthIndex + 1)
+      
+      # if sourced length equals message length then full message received
+      if length == message.length
+        logger.info "[Auditing TCP] Received message from #{sock.remoteAddress}"
+        auditing.processAudit message, -> logger.info "[Auditing TCP] Processed audit"
+
+    sock.on 'error', (err) ->
+      logger.error err
+
+  auditTcpServer.listen auditTcpPort, '0.0.0.0', ->
+    logger.info "Auditing TCP server listening on port #{auditTcpPort}"
+    defer.resolve()
+
+  return defer
+
+
 exports.start = (ports, done) ->
   bindAddress = config.get 'bindAddress'
   logger.info "Starting OpenHIM server on #{bindAddress}..."
@@ -293,6 +382,12 @@ exports.start = (ports, done) ->
     if ports.auditUDPPort
       promises.push startAuditUDPServer ports.auditUDPPort, bindAddress
 
+    if ports.auditTlsPort
+      promises.push startAuditTlsServer ports.auditTlsPort, bindAddress
+
+    if ports.auditTcpPort
+      promises.push startAuditTcpServer ports.auditTcpPort, bindAddress
+
     (Q.all promises).then ->
       workerAPI.startupWorker() if ports.rerunHttpPort
       startAgenda()
@@ -318,7 +413,13 @@ exports.stop = stop = (done) ->
   promises.push stopServer(pollingServer, 'Polling HTTP') if pollingServer
   promises.push stopAgenda().promise if agenda
 
-  auditUDPServer.close() if auditUDPServer
+  promises.push stopServer(auditTlsServer, 'Audit TLS').promise if auditTlsServer
+  promises.push stopServer(auditTcpServer, 'Audit TCP').promise if auditTcpServer
+  
+  if auditUDPServer
+    logger.info "Stopped Audit UDP server"
+    auditUDPServer.close()
+
 
   if tcpHttpReceiver
     promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver')
@@ -349,6 +450,9 @@ exports.stop = stop = (done) ->
     tcpHttpReceiver = null
     pollingServer = null
     auditUDPServer = null
+    auditTlsServer = null
+    auditTcpServer = null
+
     agenda = null
     done()
 
@@ -360,6 +464,8 @@ lookupServerPorts = ->
   tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort
   pollingPort: config.polling.pollingPort
   auditUDPPort: config.auditing.servers.udp.port if config.auditing.servers.udp.enabled
+  auditTlsPort: config.auditing.servers.tls.port if config.auditing.servers.tls.enabled
+  auditTcpPort: config.auditing.servers.tcp.port if config.auditing.servers.tcp.enabled
 
 if not module.parent
   # start the server
