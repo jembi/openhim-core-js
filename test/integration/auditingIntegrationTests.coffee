@@ -63,6 +63,24 @@ describe "Auditing Integration Tests", ->
         audits[0].rawMessage.should.be.exactly testAuditMessage
         done()
 
+    it "should send TLS audit messages and NOT save (Invalid)", (done) ->
+
+      options =
+        cert: fs.readFileSync "test/resources/trust-tls/cert1.pem"
+        key:  fs.readFileSync "test/resources/trust-tls/key1.pem"
+        ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
+
+      client = tls.connect 5051, 'localhost', options, ->
+        client.write testAuditMessage
+        client.end()
+
+      client.on 'end', -> Audit.find {}, (err, audits) ->
+        return done err if err
+
+        # message fields already validate heavily in unit test, just perform basic check
+        audits.length.should.be.exactly 0
+        done()
+
   describe "TCP Audit Server", ->
     it "should send TCP audit messages and save (valid)", (done) ->
       client = net.connect 5052, 'localhost', ->
