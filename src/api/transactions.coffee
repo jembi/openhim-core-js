@@ -246,16 +246,16 @@ exports.updateTransaction = (transactionId) ->
               if route.metrics?
                 for metric in route.metrics
                   if metric.type == 'counter'
-                    logger.info 'incrementing mediator counter ' + metric.name
-                    sdc.increment domain + '.channels.' + doc.channelID + '.' + route.name + '.mediator_metrics.' + metric.name
+                    logger.info "incrementing mediator counter  #{metric.name}"
+                    sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}"
 
                   if metric.type == 'timer'
-                    logger.info 'incrementing mediator timer ' + metric.name
-                    sdc.timing domain + '.channels.' + doc.channelID + '.' + route.name + '.mediator_metrics.' + metric.name, metric.value
+                    logger.info "incrementing mediator timer  #{metric.name}"
+                    sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}", metric.value
 
                   if metric.type == 'gauge'
-                    logger.info 'incrementing mediator gauge ' + metric.name
-                    sdc.gauge domain + '.channels.' + doc.channelID + '.' + route.name + '.mediator_metrics.' + metric.name, metric.value
+                    logger.info "incrementing mediator gauge  #{metric.name}"
+                    sdc.gauge "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}", metric.value
 
               for orchestration in route.orchestrations
                 do (orchestration) ->
@@ -269,29 +269,29 @@ exports.updateTransaction = (transactionId) ->
                   # Update timers
                   ###
                   logger.info 'updating async route timers'
-                  sdc.timing domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName, orchestrationDuration
-                  sdc.timing domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestrationDuration
+                  sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}", orchestrationDuration
+                  sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.statusCodes.#{orchestrationStatus}" , orchestrationDuration
 
                   ###
                   # Update counters
                   ###
                   logger.info 'updating async route counters'
-                  sdc.increment domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName
-                  sdc.increment domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
+                  sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}"
+                  sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.statusCodes.#{orchestrationStatus}"
 
                   if orchestration.metrics?
                     for metric in orchestration.metrics
                       if metric.type == 'counter'
-                        logger.info 'incrementing '+ route.name + ' orchestration counter ' + metric.name
-                        sdc.increment   domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
+                        logger.info "incrementing #{route.name} orchestration counter #{metric.name}"
+                        sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
 
                       if metric.type == 'timer'
-                        logger.info 'incrementing '+ route.name + 'orchestration timer ' + metric.name
-                        sdc.timing      domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
+                        logger.info  "incrementing #{route.name} orchestration timer #{metric.name}"
+                        sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
 
                       if metric.type == 'gauge'
-                        logger.info 'incrementing '+ route.name + 'orchestration gauge ' + metric.name
-                        sdc.gauge       domain + '.channels.' + doc.channelID + '.' + route.name + '.orchestrations.' + orchestrationName  + '.' + metric.name, metric.value
+                        logger.info  "incrementing #{route.name} orchestration gauge #{metric.name}"
+                        sdc.gauge "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
 
   catch e
     utils.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
