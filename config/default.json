@@ -92,6 +92,6 @@
   },
   "caching": {
     "enabled": true,
-    "refreshMillis": 5000
+    "refreshMillis": 1000
   }
 }

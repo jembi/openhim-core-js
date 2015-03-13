@@ -19,7 +19,7 @@ refreshMillis = config.caching.refreshMillis
 getCachedValues = (store, callback) ->
   lastCheck = cacheValueStore["#{store}"]?.lastCheck
 
-  if not config.caching.enabled or not lastCheck or ((new Date)-lastCheck) > refreshMillis
+  if not config.caching.enabled or not lastCheck? or ((new Date)-lastCheck) > refreshMillis
 
     handler = (err, results) ->
       return callback err if err
