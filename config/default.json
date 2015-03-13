@@ -89,5 +89,9 @@
         "port": 5052
       }
     }
+  },
+  "caching": {
+    "enabled": true,
+    "refreshMillis": 1000
   }
 }

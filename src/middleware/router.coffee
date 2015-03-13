@@ -12,7 +12,7 @@ logger = require "winston"
 status = require "http-status"
 cookie = require 'cookie'
 fs = require 'fs'
-Keystore = require("../model/keystore").Keystore
+utils = require '../utils'
 
 statsdServer = config.get 'statsd'
 application = config.get 'application'
@@ -81,7 +81,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
   if containsMultiplePrimaries routes
     return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
 
-  Keystore.findOne {}, (err, keystore) ->
+  utils.getKeystore (err, keystore) ->
 
     for route in routes
       path = getDestinationPath route, ctx.path

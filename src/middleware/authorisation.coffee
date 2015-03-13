@@ -1,4 +1,3 @@
-Channel = require("../model/channels").Channel
 Transaction = require("../model/transactions").Transaction
 Q = require "q"
 xpath = require "xpath"
@@ -6,6 +5,7 @@ dom = require("xmldom").DOMParser
 logger = require "winston"
 config = require '../config/config'
 config.authentication = config.get('authentication')
+utils = require '../utils'
 
 statsdServer = config.get 'statsd'
 application = config.get 'application'
@@ -80,7 +80,7 @@ exports.isChannelEnabled = isChannelEnabled = (channel) -> not channel.status or
 
 
 exports.authorise = (ctx, done) ->
-  Channel.find {}, (err, channels) ->
+  utils.getAllChannels (err, channels) ->
     for channel in channels
       pat = new RegExp channel.urlPattern
       # if url pattern matches
