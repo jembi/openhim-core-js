@@ -138,7 +138,7 @@ storeVisualizerEvents = (ctx, done) ->
 
   now = new Date
   event.created = now for event in trxEvents
-  events.VisualizerEvent.collection.createIndex { created: 1 }, { expireAfterSeconds: 600 }, ->
+  events.VisualizerEvent.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 600 }, ->
     events.VisualizerEvent.collection.insert trxEvents, (err) -> return if err then done err else done()
 
 
