@@ -50,11 +50,11 @@ describe "Auditing Integration Tests", ->
         key:  fs.readFileSync "test/resources/trust-tls/key1.pem"
         ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
-      normalSocket = new (net.Socket)
-      client = new (tls.TLSSocket)(normalSocket)
-      client.connect 5051, 'localhost', options, ->
+      client = tls.connect 5051, 'localhost', options, ->
+        console.log( options )
         messagePrependlength = testAuditMessage.length + ' ' + testAuditMessage
         client.write messagePrependlength
+        client.end()
 
         checkAudits = -> Audit.find {}, (err, audits) ->
           return done err if err
@@ -67,14 +67,17 @@ describe "Auditing Integration Tests", ->
         # async test :(
         setTimeout checkAudits, 5000
 
+      client.on 'error', (err) ->
+        console.log(err)
+
     
 
   describe "TCP Audit Server", ->
     it "should send TCP audit messages and save (valid)", (done) ->
-      client = new (net.Socket)
-      client.connect 5052, 'localhost', ->
+      client = net.connect 5052, 'localhost', ->
         messagePrependlength = testAuditMessage.length + ' ' + testAuditMessage
         client.write messagePrependlength
+        client.end()
 
         checkAudits = -> Audit.find {}, (err, audits) ->
           return done err if err
@@ -88,10 +91,10 @@ describe "Auditing Integration Tests", ->
         setTimeout checkAudits, 1000
 
     it "should send TCP audit message and NOT save (Invalid)", (done) ->
-      client = new (net.Socket)
-      client.connect 5052, 'localhost', ->
+      client = net.connect 5052, 'localhost', ->
         # testAuditMessage does not have message length with space prepended
         client.write testAuditMessage
+        client.end()
         
         checkAudits = -> Audit.find {}, (err, audits) ->
           return done err if err

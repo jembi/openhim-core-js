@@ -267,59 +267,18 @@ startAuditUDPServer = (auditUDPPort, bindAddress) ->
   return defer
 
 
-# function to start the TLS Audit server
-startAuditTlsServer = (auditTlsPort, bindAddress) ->
+
+# function to start the TCP/TLS Audit server
+startAuditTcpTlsServer = (type, auditPort, bindAddress) ->
   defer = Q.defer()
 
-  tlsAuthentication.getServerOptions true, (err, options) ->
-    return callback err if err
-
-    auditTlsServer = tls.createServer options, (sock) ->
-      message = ""
-      length = 0
-
-      sock.on 'data', (data) ->
-        # convert to string anf concatenate
-        message += data.toString()
-
-        # check if length is is still zero and first occurannce of space
-        if length == 0 and message.indexOf(' ') != -1
-          # get index of end of message length
-          lengthIndex = message.indexOf " "
-
-          # source message length
-          lengthValue = message.substr(0, lengthIndex)
-
-          # remove white spaces
-          length = parseInt(lengthValue.trim())
-          
-          # update message to remove length - add one extra character to remove the space
-          message = message.substr(lengthIndex + 1)
-        
-        # if sourced length equals message length then full message received
-        if length == message.length
-          logger.info "[Auditing TLS] Received message from #{sock.remoteAddress}"
-          auditing.processAudit message, -> logger.info "[Auditing TLS] Processed audit"
-
-      sock.on 'error', (err) ->
-        logger.error err
-    
-    auditTlsServer.listen auditTlsPort, '0.0.0.0', ->
-      logger.info "Auditing TLS server listening on port #{auditTlsPort}"
-      defer.resolve()
-
-  return defer
-
-# function to start the TCP Audit server
-startAuditTcpServer = (auditTcpPort) ->
-  defer = Q.defer()
-
-  auditTcpServer = net.createServer (sock) ->
+  # data handler
+  handler = (sock) ->
     message = ""
     length = 0
 
     sock.on 'data', (data) ->
-      # convert to string anf concatenate
+      # convert to string and concatenate
       message += data.toString()
 
       # check if length is is still zero and first occurannce of space
@@ -332,23 +291,34 @@ startAuditTcpServer = (auditTcpPort) ->
 
         # remove white spaces
         length = parseInt(lengthValue.trim())
-
+        
         # update message to remove length - add one extra character to remove the space
         message = message.substr(lengthIndex + 1)
       
       # if sourced length equals message length then full message received
       if length == message.length
-        logger.info "[Auditing TCP] Received message from #{sock.remoteAddress}"
-        auditing.processAudit message, -> logger.info "[Auditing TCP] Processed audit"
+        logger.info "[Auditing #{type}] Received message from #{sock.remoteAddress}"
+        auditing.processAudit message, -> logger.info "[Auditing #{type}] Processed audit"
 
     sock.on 'error', (err) ->
       logger.error err
 
-  auditTcpServer.listen auditTcpPort, '0.0.0.0', ->
-    logger.info "Auditing TCP server listening on port #{auditTcpPort}"
-    defer.resolve()
+  if type is 'TLS'
+    tlsAuthentication.getServerOptions true, (err, options) ->
+      return callback err if err
+
+      auditTlsServer = tls.createServer options, handler
+      auditTlsServer.listen auditPort, bindAddress, ->
+        logger.info "Auditing TLS server listening on port #{auditPort}"
+        defer.resolve()
+  else if type is 'TCP'
+    auditTcpServer = net.createServer handler
+    auditTcpServer.listen auditPort, bindAddress, ->
+      logger.info "Auditing TCP server listening on port #{auditPort}"
+      defer.resolve()
 
   return defer
+
 
 
 exports.start = (ports, done) ->
@@ -383,10 +353,10 @@ exports.start = (ports, done) ->
       promises.push startAuditUDPServer ports.auditUDPPort, bindAddress
 
     if ports.auditTlsPort
-      promises.push startAuditTlsServer ports.auditTlsPort, bindAddress
+      promises.push startAuditTcpTlsServer 'TLS', ports.auditTlsPort, bindAddress
 
     if ports.auditTcpPort
-      promises.push startAuditTcpServer ports.auditTcpPort, bindAddress
+      promises.push startAuditTcpTlsServer 'TCP',ports.auditTcpPort, bindAddress
 
     (Q.all promises).then ->
       workerAPI.startupWorker() if ports.rerunHttpPort
