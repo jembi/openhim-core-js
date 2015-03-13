@@ -6,6 +6,11 @@ User = require('../../lib/model/users').User
 server = require "../../lib/server"
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
+FakeServer = require "../fakeTcpServer"
+config = require '../../lib/config/config'
+application = config.get 'application'
+os = require "os"
+domain = os.hostname() + '.' + application.name
 
 describe "API Integration Tests", ->
 
@@ -147,6 +152,14 @@ describe "API Integration Tests", ->
               done()
 
     describe "*updateTransaction()", ->
+
+      s = {}
+      beforeEach (done) ->
+        s = new FakeServer()
+        s.start done
+
+      afterEach ->
+        s.stop()
       
       it "should call /updateTransaction ", (done) ->
         tx = new Transaction transactionData
@@ -165,6 +178,28 @@ describe "API Integration Tests", ->
             request: reqUp
             status: "Completed"
             clientID: "777777777777777777777777"
+            $push: {
+              routes : {
+                "name": "async",
+                "orchestrations": [
+                  {
+                    "name": "test",
+                    "request": {
+                      "method": "POST",
+                      "body": "data",
+                      "timestamp": 1425897647329
+                    },
+                    "response": {
+                      "status": 201,
+                      "body": "OK",
+                      "timestamp": 1425897688016
+                    }
+                  }
+                ]
+              }
+            }
+
+
           request("https://localhost:8080")
             .put("/transactions/#{transactionId}")
             .set("auth-username", testUtils.rootUser.email)
@@ -188,6 +223,11 @@ describe "API Integration Tests", ->
                   updatedTrans.request.querystring.should.equal "updated=value"
                   updatedTrans.request.body.should.equal "<HTTP body update>"
                   updatedTrans.request.method.should.equal "PUT"
+                  updatedTrans.routes[1].name.should.equal "async"
+                  updatedTrans.routes[1].orchestrations[0].name.should.equal "test"
+                  s.expectMessage domain + '.channels.888888888888888888888888.async.orchestrations.test:1|c', ->
+                    s.expectMessage domain + '.channels.888888888888888888888888.async.orchestrations.test.statusCodes.201:1|c', done
+
                   done()
 
       it "should only allow admin user to update a transaction", (done) ->

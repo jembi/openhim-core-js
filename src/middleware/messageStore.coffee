@@ -114,7 +114,8 @@ exports.storeResponse = (ctx, done) ->
   # assign new transactions status to ctx object
   ctx.transactionStatus = status
 
-  update = { response: res, status: status, routes: ctx.routes }
+  update = { response: res, status: status }
+  update.routes = ctx.routes if ctx.routes?
 
   if ctx.mediatorResponse
     update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
