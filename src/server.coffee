@@ -298,6 +298,10 @@ startAuditTcpTlsServer = (type, auditPort, bindAddress) ->
         logger.info "[Auditing #{type}] Received message from #{sock.remoteAddress}"
         auditing.processAudit message, -> logger.info "[Auditing #{type}] Processed audit"
 
+        # reset message and length variables
+        message = ""
+        length = 0
+
     sock.on 'error', (err) ->
       logger.error err
 
