@@ -6,6 +6,7 @@ dom = require("xmldom").DOMParser
 logger = require "winston"
 config = require '../config/config'
 config.authentication = config.get('authentication')
+config.caching = config.get('caching')
 
 statsdServer = config.get 'statsd'
 application = config.get 'application'
@@ -79,8 +80,24 @@ if process.env.NODE_ENV == "test"
 exports.isChannelEnabled = isChannelEnabled = (channel) -> not channel.status or channel.status is 'enabled'
 
 
+# Channel lookup caching
+channelsCache = null
+lastCheckDate = null
+refreshMillis = config.caching.refreshMillis
+
+getChannels = (callback) ->
+  if not config.caching.enabled or not channelsCache or not lastCheckDate or
+      ((new Date)-lastCheckDate) > refreshMillis
+    Channel.find {}, (err, channels) ->
+      channelsCache = channels
+      lastCheckDate = new Date
+      callback channelsCache
+  else
+    callback channelsCache
+
+
 exports.authorise = (ctx, done) ->
-  Channel.find {}, (err, channels) ->
+  getChannels (channels) ->
     for channel in channels
       pat = new RegExp channel.urlPattern
       # if url pattern matches
