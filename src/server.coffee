@@ -123,7 +123,7 @@ stopAgenda = ->
   agenda.stop () ->
     defer.resolve()
     logger.info "Stopped agenda job scheduler"
-  return defer
+  return defer.promise
 
 startHttpServer = (httpPort, bindAddress, app) ->
   deferred = Q.defer()
@@ -140,7 +140,7 @@ startHttpServer = (httpPort, bindAddress, app) ->
 
   httpServer.on 'connection', (socket) -> trackConnection activeHttpConnections, socket
 
-  return deferred
+  return deferred.promise
 
 startHttpsServer = (httpsPort, bindAddress, app) ->
   deferred = Q.defer()
@@ -160,7 +160,7 @@ startHttpsServer = (httpsPort, bindAddress, app) ->
 
     httpsServer.on 'connection', (socket) -> trackConnection activeHttpsConnections, socket
 
-  return deferred
+  return deferred.promise
 
 # Ensure that a root user always exists
 ensureRootUser = (callback) ->
@@ -207,7 +207,7 @@ startApiServer = (apiPort, bindAddress, app) ->
 
     apiHttpsServer.on 'connection', (socket) -> trackConnection activeApiConnections, socket
 
-  return deferred
+  return deferred.promise
 
 startTCPServersAndHttpReceiver = (tcpHttpReceiverPort, app) ->
   defer = Q.defer()
@@ -221,7 +221,7 @@ startTCPServersAndHttpReceiver = (tcpHttpReceiverPort, app) ->
 
   tcpHttpReceiver.on 'connection', (socket) -> trackConnection activeTcpConnections, socket
 
-  return defer
+  return defer.promise
 
 startRerunServer = (httpPort, app) ->
   deferredHttp = Q.defer()
@@ -233,7 +233,7 @@ startRerunServer = (httpPort, app) ->
 
   rerunServer.on 'connection', (socket) -> trackConnection activeRerunConnections, socket
 
-  return deferredHttp
+  return deferredHttp.promise
 
 startPollingServer = (pollingPort, app) ->
   defer = Q.defer()
@@ -246,7 +246,7 @@ startPollingServer = (pollingPort, app) ->
 
   pollingServer.on 'connection', (socket) -> trackConnection activePollingConnections, socket
 
-  return defer
+  return defer.promise
 
 startAuditUDPServer = (auditUDPPort, bindAddress) ->
   defer = Q.defer()
@@ -264,9 +264,7 @@ startAuditUDPServer = (auditUDPPort, bindAddress) ->
 
   auditUDPServer.bind auditUDPPort, bindAddress
 
-  return defer
-
-
+  return defer.promise
 
 # function to start the TCP/TLS Audit server
 startAuditTcpTlsServer = (type, auditPort, bindAddress) ->
@@ -317,9 +315,7 @@ startAuditTcpTlsServer = (type, auditPort, bindAddress) ->
       logger.info "Auditing TCP server listening on port #{auditPort}"
       defer.resolve()
 
-  return defer
-
-
+  return defer.promise
 
 exports.start = (ports, done) ->
   bindAddress = config.get 'bindAddress'
@@ -330,24 +326,24 @@ exports.start = (ports, done) ->
 
     if ports.httpPort or ports.httpsPort
       koaMiddleware.setupApp (app) ->
-        promises.push startHttpServer(ports.httpPort, bindAddress, app).promise if ports.httpPort
-        promises.push startHttpsServer(ports.httpsPort, bindAddress, app).promise if ports.httpsPort
+        promises.push startHttpServer ports.httpPort, bindAddress, app if ports.httpPort
+        promises.push startHttpsServer ports.httpsPort, bindAddress, app if ports.httpsPort
 
     if ports.apiPort
       koaApi.setupApp (app) ->
-        promises.push startApiServer(ports.apiPort, bindAddress, app).promise
+        promises.push startApiServer ports.apiPort, bindAddress, app
 
     if ports.rerunHttpPort
       koaMiddleware.rerunApp (app) ->
-        promises.push startRerunServer(ports.rerunHttpPort, app).promise
+        promises.push startRerunServer ports.rerunHttpPort, app
 
     if ports.tcpHttpReceiverPort
       koaMiddleware.tcpApp (app) ->
-        promises.push startTCPServersAndHttpReceiver(ports.tcpHttpReceiverPort, app).promise
+        promises.push startTCPServersAndHttpReceiver ports.tcpHttpReceiverPort, app
 
     if ports.pollingPort
       koaMiddleware.pollingApp (app) ->
-        promises.push startPollingServer(ports.pollingPort, app).promise
+        promises.push startPollingServer ports.pollingPort, app
 
     if ports.auditUDPPort
       promises.push startAuditUDPServer ports.auditUDPPort, bindAddress
@@ -356,9 +352,10 @@ exports.start = (ports, done) ->
       promises.push startAuditTcpTlsServer 'TLS', ports.auditTlsPort, bindAddress
 
     if ports.auditTcpPort
-      promises.push startAuditTcpTlsServer 'TCP',ports.auditTcpPort, bindAddress
+      promises.push startAuditTcpTlsServer 'TCP', ports.auditTcpPort, bindAddress
 
     (Q.all promises).then ->
+      logger.info "OpenHIM server started: #{new Date()}"
       workerAPI.startupWorker() if ports.rerunHttpPort
       startAgenda()
       done()
@@ -381,7 +378,7 @@ exports.stop = stop = (done) ->
   promises.push stopServer(apiHttpsServer, 'API HTTP') if apiHttpsServer
   promises.push stopServer(rerunServer, 'Rerun HTTP') if rerunServer
   promises.push stopServer(pollingServer, 'Polling HTTP') if pollingServer
-  promises.push stopAgenda().promise if agenda
+  promises.push stopAgenda() if agenda
 
   promises.push stopServer(auditTlsServer, 'Audit TLS').promise if auditTlsServer
   promises.push stopServer(auditTcpServer, 'Audit TCP').promise if auditTcpServer
