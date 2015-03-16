@@ -4,14 +4,6 @@ Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
 
-ObjectId = require('mongoose').Types.ObjectId
-monq = require("monq")
-
-config = require("../config/config")
-config.mongo = config.get('mongo')
-client = monq(config.mongo.url, safe: true)
-
-queue = client.queue("transactions")
 authorisation = require './authorisation'
 authMiddleware = require '../middleware/authorisation'
 
@@ -77,7 +69,6 @@ areTransactionChannelsValid = (transactions, callback) ->
 
 #####################################################
 # Creates a new Task
-# Create the new queue objects for the created task #
 #####################################################
 exports.addTask = ->
 
@@ -102,35 +93,11 @@ exports.addTask = ->
         utils.logAndSetResponse this, 'bad request', 'Cannot queue task as there are transactions with disabled or deleted channels', 'info'
         return
 
-      t = 0
-      while t < transactions.tids.length
-        transaction = tid: transactions.tids[t]
-        transactionsArr.push transaction
-        t++
+      transactionsArr.push tid: tid for tid in transactions.tids
       taskObject.transactions = transactionsArr
 
       task = new Task(taskObject)
       result = yield Q.ninvoke(task, 'save')
-
-      taskID = result[0]._id
-      transactions = taskObject.transactions
-      i = 0
-      while i < transactions.length
-        try
-          transactionID = transactions[i].tid
-          queue.enqueue 'rerun_transaction', {
-            transactionID: transactionID
-            taskID: taskID
-          }, (e, job) ->
-            logger.info 'Enqueued transaction: #{job.data.params.transactionID}'
-            return
-
-          # All ok! So set the result
-          utils.logAndSetResponse this, 'created', 'Queue item successfully created', 'info'
-        catch err
-          # Error! So inform the user
-          utils.logAndSetResponse this, 'internal server error', "Could not add Queue item via the API: #{err}", 'info'
-        i++
 
       # All ok! So set the result
       utils.logAndSetResponse this, 'created', "User #{this.authenticated.email} created task with id #{task.id}", 'info'
