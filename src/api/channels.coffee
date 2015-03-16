@@ -63,7 +63,7 @@ exports.addChannel = ->
     processPostAddTriggers channel
   catch err
     # Error! So inform the user
-    util.logAndSetResponse this, 'bad request', "Could not add channel via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 'bad request', "Could not add channel via the API: #{err}", 'error'
 
 ###
 # Retrieves the details for a specific channel
