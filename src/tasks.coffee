@@ -1,15 +1,15 @@
-TaskModel = require('../model/tasks').Task
-Channel = require('../model/channels').Channel
+TaskModel = require('./model/tasks').Task
+Channel = require('./model/channels').Channel
 Q = require("q")
 logger = require("winston")
 monq = require("monq")
-config = require("../config/config")
+config = require("./config/config")
 config.mongo = config.get('mongo')
 client = monq(config.mongo.url, safe: true)
 http = require 'http'
-TransactionModel = require("../model/transactions").Transaction
+TransactionModel = require("./model/transactions").Transaction
 net = require "net"
-rerunMiddleware = require "../middleware/rerunUpdateTransactionTask"
+rerunMiddleware = require "./middleware/rerunUpdateTransactionTask"
 
 
 #####################################################################################################

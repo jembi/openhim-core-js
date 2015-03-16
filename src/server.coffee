@@ -41,7 +41,7 @@ alerts = require './alerts'
 reports = require './reports'
 polling = require './polling'
 tcpAdapter = require './tcpAdapter'
-workerAPI = require './api/worker'
+workerAPI = require './tasks'
 auditing = require './auditing'
 
 # Configure mongose to connect to mongo
