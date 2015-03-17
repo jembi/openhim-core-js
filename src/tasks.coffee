@@ -21,7 +21,7 @@ findAndProcessAQueuedTask = ->
     else if task
       activeTasks++
       processNextTaskRound task, (err) ->
-        logger.err "An error occurred while processing rerun task #{task._id}s: #{err}" if err
+        logger.err "An error occurred while processing rerun task #{task._id}: #{err}" if err
         activeTasks--
         # task has finished its current round, pick up the next one
         if live then findAndProcessAQueuedTask()
@@ -311,3 +311,4 @@ if process.env.NODE_ENV == "test"
   exports.rerunSetHTTPRequestOptions = rerunSetHTTPRequestOptions
   exports.rerunHttpRequestSend = rerunHttpRequestSend
   exports.rerunTcpRequestSend = rerunTcpRequestSend
+  exports.findAndProcessAQueuedTask = findAndProcessAQueuedTask
