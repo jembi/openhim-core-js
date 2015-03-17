@@ -27,11 +27,11 @@ describe "API Integration Tests", ->
       user: "root@openhim.org"
     task2 = new Task
       _id: "aaa777777bbb66cc5d4444ee"
-      status: "NotStarted"
+      status: "Queued"
       remainingTransactions: 3
-      transactions: [ {tid: "55555", tstatus: "NotStarted"},
-              {tid: "66666", tstatus: "NotStarted"},
-              {tid: "77777", tstatus: "NotStarted"} ]
+      transactions: [ {tid: "55555", tstatus: "Queued"},
+              {tid: "66666", tstatus: "Queued"},
+              {tid: "77777", tstatus: "Queued"} ]
       created: "2014-06-18T12:00:00.929Z"
       user: "root@openhim.org"
 
@@ -195,7 +195,7 @@ describe "API Integration Tests", ->
             if err
               done err
             else
-              res.body.length.should.be.eql(2);
+              res.body.length.should.be.eql(2)
               done()
 
     describe '*addTask()', ->
@@ -217,7 +217,7 @@ describe "API Integration Tests", ->
               done err
             else
               Task.findOne { $and: [ transactions: { $elemMatch: { tid: "888888888888888888888888" } }, { transactions: $elemMatch: { tid: "999999999999999999999999" } }, { transactions: $elemMatch: { tid: "101010101010101010101010" } } ] }, (err, task) ->
-                task.should.have.property "status", "NotStarted"
+                task.should.have.property "status", "Queued"
                 task.transactions.should.have.length 3
                 task.should.have.property "remainingTransactions", 3
                 done()
@@ -239,7 +239,7 @@ describe "API Integration Tests", ->
               done err
             else
               Task.findOne { $and: [ transactions: { $elemMatch: { tid: "888888888888888888888888" } }, { transactions: $elemMatch: { tid: "999999999999999999999999" } }, { transactions: $elemMatch: { tid: "101010101010101010101010" } } ] }, (err, task) ->
-                task.should.have.property "status", "NotStarted"
+                task.should.have.property "status", "Queued"
                 task.transactions.should.have.length 3
                 task.should.have.property "remainingTransactions", 3
                 done()

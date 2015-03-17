@@ -33,10 +33,10 @@ describe "API Integration Tests", ->
       _id: "53c4dd063b8cb04d2acf0adc"
       created: "2014-07-15T07:49:26.238Z"
       remainingTransactions: 2
-      status: "NotStarted"
-      transactions: [ {tid: "53bfbccc6a2b417f6cd14871", tstatus: "NotStarted"},
-              {tid: "53bfbcd06a2b417f6cd14872", tstatus: "NotStarted"},
-              {tid: "aaaaaaaaaabbbbbbbbbbcccc", tstatus: "NotStarted"} ]
+      status: "Queued"
+      transactions: [ {tid: "53bfbccc6a2b417f6cd14871", tstatus: "Queued"},
+              {tid: "53bfbcd06a2b417f6cd14872", tstatus: "Queued"},
+              {tid: "aaaaaaaaaabbbbbbbbbbcccc", tstatus: "Queued"} ]
       user: "root@openhim.org"
 
     authDetails = {}
@@ -68,7 +68,7 @@ describe "API Integration Tests", ->
 
         # check task object before function run
         Task.findOne { _id: taskID }, (err, task) ->
-          task.status.should.equal "NotStarted"
+          task.status.should.equal "Queued"
           task.remainingTransactions.should.equal 2
 
         # run the worker function and check results
