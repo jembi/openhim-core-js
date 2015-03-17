@@ -17,7 +17,11 @@
   },
   "rerun": {
     "httpPort": 7786,
-    "host": "localhost"
+    "host": "localhost",
+    "processor": {
+      "enabled": true,
+      "pollPeriodMillis": 2000
+    }
   },
   "tcpAdapter": {
     "httpReceiver": {

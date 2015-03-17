@@ -29,7 +29,6 @@
     "koa-statsd": "^0.0.2",
     "moment": "^2.8.4",
     "mongoose": "^3.8.21",
-    "monq": "^0.3.1",
     "nconf": "^0.7.1",
     "node-uuid": "^1.4.1",
     "nodemailer": "^0.7.1",

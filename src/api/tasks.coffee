@@ -80,6 +80,11 @@ exports.addTask = ->
     taskObject.remainingTransactions = transactions.tids.length
     taskObject.user = this.authenticated.email
 
+    if transactions.batchSize?
+      if transactions.batchSize <= 0
+        return utils.logAndSetResponse this, 'bad request', 'Invalid batch size specified', 'info'
+      taskObject.batchSize = transactions.batchSize
+
     # check rerun permission and whether to create the rerun task
     isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
     allowRerunTaskCreation = yield isRerunPermsValid( this.authenticated, transactions )
