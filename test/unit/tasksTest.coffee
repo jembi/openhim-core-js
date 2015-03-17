@@ -266,3 +266,41 @@ describe "Rerun Task Tests", ->
                 done()
 
           setTimeout validateTask, 1000
+
+    it 'should not process a paused task', (done) ->
+      Task.update { _id: task1._id }, { status: 'Paused' }, (err) ->
+        return done err if err
+
+        server = testUtils.createMockServer 200, "Mock response", 7786, ->
+          tasks.findAndProcessAQueuedTask()
+          validateTask = ->
+            Task.findOne _id: task1._id, (err, task) ->
+              # Task should be untouched
+              task.status.should.be.equal 'Paused'
+              task.remainingTransactions.should.be.equal 3
+              task.transactions[0].tstatus.should.be.equal 'Queued'
+              task.transactions[1].tstatus.should.be.equal 'Queued'
+              task.transactions[2].tstatus.should.be.equal 'Queued'
+              server.close ->
+                done()
+
+          setTimeout validateTask, 1000
+
+    it 'should not process a cancelled task', (done) ->
+      Task.update { _id: task1._id }, { status: 'Cancelled' }, (err) ->
+        return done err if err
+
+        server = testUtils.createMockServer 200, "Mock response", 7786, ->
+          tasks.findAndProcessAQueuedTask()
+          validateTask = ->
+            Task.findOne _id: task1._id, (err, task) ->
+              # Task should be untouched
+              task.status.should.be.equal 'Cancelled'
+              task.remainingTransactions.should.be.equal 3
+              task.transactions[0].tstatus.should.be.equal 'Queued'
+              task.transactions[1].tstatus.should.be.equal 'Queued'
+              task.transactions[2].tstatus.should.be.equal 'Queued'
+              server.close ->
+                done()
+
+          setTimeout validateTask, 1000
