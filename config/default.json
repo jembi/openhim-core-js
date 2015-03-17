@@ -93,5 +93,8 @@
   "caching": {
     "enabled": true,
     "refreshMillis": 1000
+  },
+  "tlsClientLookup": {
+    "type": "strict"
   }
 }
