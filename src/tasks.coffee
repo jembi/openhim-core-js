@@ -102,11 +102,11 @@ processNextTaskRound = (task, callback) ->
         if err
           transaction.tstatus = 'Failed'
           transaction.error = err
-          logger.error err
+          logger.error "An error occurred while rerunning transaction #{transaction.tid} for task #{task._id}: #{err}"
         else if response?.status is 'Failed'
           transaction.tstatus = 'Failed'
           transaction.error = response.message
-          logger.error response.message
+          logger.error "An error occurred while rerunning transaction #{transaction.tid} for task #{task._id}: #{err}"
         else
           transaction.tstatus = 'Completed'
 
@@ -160,11 +160,11 @@ rerunTransaction = (transactionID, taskID, callback) ->
 rerunGetTransaction = (transactionID, callback) ->
   TransactionModel.findById transactionID, (err, transaction) ->
     if not transaction?
-      return callback "Transaction #{transactionID} could not be found", null
+      return callback (new Error "Transaction #{transactionID} could not be found"), null
 
     # check if 'canRerun' property is false - reject the rerun
     if not transaction.canRerun
-      err = "Transaction #{transactionID} cannot be rerun as there isn't enough information about the request"
+      err = new Error "Transaction #{transactionID} cannot be rerun as there isn't enough information about the request"
       return callback err, null
 
     # send the transactions data in callback
@@ -179,7 +179,7 @@ rerunGetTransaction = (transactionID, callback) ->
 rerunSetHTTPRequestOptions = (transaction, taskID, callback) ->
 
   if transaction == null
-    err = "An empty Transaction object was supplied. Aborting HTTP options configuration"
+    err = new Error "An empty Transaction object was supplied. Aborting HTTP options configuration"
     return callback err, null
 
   logger.info('Rerun Transaction #' + transaction._id + ' - HTTP Request options being configured')
@@ -214,11 +214,11 @@ rerunSetHTTPRequestOptions = (transaction, taskID, callback) ->
 rerunHttpRequestSend = (options, transaction, callback) ->
 
   if options == null
-    err = "An empty 'Options' object was supplied. Aborting HTTP Send Request"
+    err = new Error "An empty 'Options' object was supplied. Aborting HTTP Send Request"
     return callback err, null
 
   if transaction == null
-    err = "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
+    err = new Error "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
     return callback err, null
 
   response =

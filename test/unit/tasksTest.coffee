@@ -90,7 +90,7 @@ describe "Rerun Task Tests", ->
 
       # run the tasks function and check results
       tasks.rerunGetTransaction transactionID, (err, transaction) ->
-        err.should.equal "Transaction aaaaaaaaaabbbbbbbbbbcccc could not be found"
+        err.message.should.equal "Transaction aaaaaaaaaabbbbbbbbbbcccc could not be found"
         done()
 
 
@@ -117,7 +117,7 @@ describe "Rerun Task Tests", ->
       taskID = '53c4dd063b8cb04d2acf0adc'
       transaction = null
       tasks.rerunSetHTTPRequestOptions transaction, taskID, (err, options) ->
-        err.should.equal "An empty Transaction object was supplied. Aborting HTTP options configuration"
+        err.message.should.equal "An empty Transaction object was supplied. Aborting HTTP options configuration"
         done()
 
 
@@ -155,7 +155,7 @@ describe "Rerun Task Tests", ->
         options = null
 
         tasks.rerunHttpRequestSend options, transaction, (err, HTTPResponse) ->
-          err.should.equal "An empty 'Options' object was supplied. Aborting HTTP Send Request"
+          err.message.should.equal "An empty 'Options' object was supplied. Aborting HTTP Send Request"
           done()
 
 
@@ -169,7 +169,7 @@ describe "Rerun Task Tests", ->
 
       transaction = null
       tasks.rerunHttpRequestSend options, transaction, (err, HTTPResponse) ->
-        err.should.equal "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
+        err.message.should.equal "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
         done()
 
 
