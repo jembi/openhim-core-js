@@ -5,6 +5,7 @@ fs = require "fs"
 request = require "supertest"
 config = require "../../lib/config/config"
 config.authentication = config.get('authentication')
+config.tlsClientLookup = config.get('tlsClientLookup')
 Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
@@ -37,7 +38,7 @@ describe "e2e Integration Tests", ->
                 primary: true
               ]
         channel1.save (err) ->
-          testClientDoc =
+          testClientDoc1 =
             clientID: "testApp"
             clientDomain: "test-client.jembi.org"
             name: "TEST Client"
@@ -48,15 +49,32 @@ describe "e2e Integration Tests", ->
               ]
             passwordHash: ""
 
-          client = new Client testClientDoc
-          client.save (error, newAppDoc) ->
+          testClientDoc2 =
+            clientID: "testApp2"
+            clientDomain: "ca.openhim.org"
+            name: "TEST Client 2"
+            roles:
+              [
+                "OpenMRS_PoC"
+                "PoC"
+              ]
+            passwordHash: ""
+
+          client1 = new Client testClientDoc1
+          client2 = new Client testClientDoc2
+
+          Client.remove {}, -> client1.save -> client2.save ->
           	# remove default keystore
           	Keystore.remove {}, ->
               keystore = new Keystore
                 key: fs.readFileSync 'test/resources/server-tls/key.pem'
                 cert: 
                   data: fs.readFileSync 'test/resources/server-tls/cert.pem'
-                ca: [ { data: fs.readFileSync 'test/resources/client-tls/cert.pem' } ]
+                ca: [
+                  { data: fs.readFileSync 'test/resources/client-tls/cert.pem' },
+                  { data: fs.readFileSync 'test/resources/trust-tls/chain/intermediate.cert.pem' },
+                  { data: fs.readFileSync 'test/resources/trust-tls/chain/ca.cert.pem' }
+                ]
 
               keystore.save (err) ->
                 done err if err
@@ -67,8 +85,9 @@ describe "e2e Integration Tests", ->
       after (done) ->
         Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
           Client.remove { clientID: "testApp" }, ->
-            mockServer.close ->
-              done()
+            Client.remove { clientID: "testApp2" }, ->
+              mockServer.close ->
+                done()
 
       afterEach (done) ->
         server.stop ->
@@ -85,9 +104,8 @@ describe "e2e Integration Tests", ->
             ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
           req = https.request options, (res) ->
-            res.on 'data', (chunk) -> 
-              res.statusCode.should.be.exactly 201
-              done()
+            res.statusCode.should.be.exactly 201
+            done()
           req.end()
 
       it "should reject a request when using an invalid cert", (done) ->
@@ -98,6 +116,54 @@ describe "e2e Integration Tests", ->
             port: 5000
             cert: fs.readFileSync "test/resources/client-tls/invalid-cert.pem"
             key:  fs.readFileSync "test/resources/client-tls/invalid-key.pem"
+            ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
+
+          req = https.request options, (res) ->
+            res.statusCode.should.be.exactly 401
+            done()
+          req.end()
+
+      it "should authenticate a client further up the chain if 'in-chain' config is set", (done) ->
+        config.tlsClientLookup.type = "in-chain"
+        server.start httpPort: 5001, httpsPort: 5000, ->
+          options =
+            host: "localhost"
+            path: "/test/mock"
+            port: 5000
+            cert: fs.readFileSync "test/resources/trust-tls/chain/test.openhim.org.cert.pem"
+            key:  fs.readFileSync "test/resources/trust-tls/chain/test.openhim.org.key.pem"
+            ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
+
+          req = https.request options, (res) ->
+            res.statusCode.should.be.exactly 201
+            done()
+          req.end()
+
+      it "should reject a request with an invalid cert if 'in-chain' config is set", (done) ->
+        config.tlsClientLookup.type = "in-chain"
+        server.start httpPort: 5001, httpsPort: 5000, ->
+          options =
+            host: "localhost"
+            path: "/test/mock"
+            port: 5000
+            cert: fs.readFileSync "test/resources/client-tls/invalid-cert.pem"
+            key:  fs.readFileSync "test/resources/client-tls/invalid-key.pem"
+            ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
+
+          req = https.request options, (res) ->
+            res.statusCode.should.be.exactly 401
+            done()
+          req.end()
+
+      it "should NOT authenticate a client further up the chain if 'strict' config is set", (done) ->
+        config.tlsClientLookup.type = "strict"
+        server.start httpPort: 5001, httpsPort: 5000, ->
+          options =
+            host: "localhost"
+            path: "/test/mock"
+            port: 5000
+            cert: fs.readFileSync "test/resources/trust-tls/chain/test.openhim.org.cert.pem"
+            key:  fs.readFileSync "test/resources/trust-tls/chain/test.openhim.org.key.pem"
             ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
           req = https.request options, (res) ->
