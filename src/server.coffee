@@ -41,8 +41,8 @@ alerts = require './alerts'
 reports = require './reports'
 polling = require './polling'
 tcpAdapter = require './tcpAdapter'
-workerAPI = require './api/worker'
 auditing = require './auditing'
+tasks = require './tasks'
 
 # Configure mongose to connect to mongo
 mongoose.connect config.mongo.url
@@ -341,6 +341,11 @@ exports.start = (ports, done) ->
       koaMiddleware.rerunApp (app) ->
         promises.push startRerunServer ports.rerunHttpPort, app
 
+      if config.rerun.processor.enabled
+        defer = Q.defer()
+        tasks.start -> defer.resolve()
+        promises.push defer.promise
+
     if ports.tcpHttpReceiverPort
       koaMiddleware.tcpApp (app) ->
         promises.push startTCPServersAndHttpReceiver ports.tcpHttpReceiverPort, app
@@ -360,12 +365,18 @@ exports.start = (ports, done) ->
 
     (Q.all promises).then ->
       logger.info "OpenHIM server started: #{new Date()}"
-      workerAPI.startupWorker() if ports.rerunHttpPort
       startAgenda()
       done()
 
 
-exports.stop = stop = (done) ->
+# wait for any running tasks before trying to stop anything
+stopTasksProcessor = (callback) ->
+  if tasks.isRunning()
+    tasks.stop callback
+  else
+    callback()
+
+exports.stop = stop = (done) -> stopTasksProcessor ->
   promises = []
 
   stopServer = (server, serverType) ->
