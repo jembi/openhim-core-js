@@ -61,6 +61,7 @@
     "should": "^5.0.0",
     "sinon": "^1.12.2",
     "sinon-es6": "^0.0.3",
+    "source-map-support": "^0.2.10",
     "supertest": "^0.15.0"
   },
   "scripts": {
