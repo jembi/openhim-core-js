@@ -63,7 +63,7 @@ describe "e2e Integration Tests", ->
           client1 = new Client testClientDoc1
           client2 = new Client testClientDoc2
 
-          client1.save -> client2.save ->
+          Client.remove {}, -> client1.save -> client2.save ->
           	# remove default keystore
           	Keystore.remove {}, ->
               keystore = new Keystore
@@ -104,9 +104,8 @@ describe "e2e Integration Tests", ->
             ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
 
           req = https.request options, (res) ->
-            res.on 'data', (chunk) -> 
-              res.statusCode.should.be.exactly 201
-              done()
+            res.statusCode.should.be.exactly 201
+            done()
           req.end()
 
       it "should reject a request when using an invalid cert", (done) ->

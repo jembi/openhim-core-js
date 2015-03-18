@@ -60,9 +60,16 @@ exports.getServerOptions = (mutualTLS, done) ->
     else
       done null, options
 
+###
+# A promise returning function that lookup up a client via the given subjectCN, if
+# not found and config.tlsClientLookup.type is 'in-chain' then the function will
+# recursively walk up the certificate chain and look for clients for certificates
+# higher in the chain.
+###
 clientLookup = (subjectCN, issuerCN) ->
   logger.debug "Looking up client for subject #{subjectCN} and issuer #{issuerCN}"
   deferred = Q.defer()
+  
   Client.findOne clientDomain: subjectCN, (err, result) ->
     deferred.reject err if err
 
@@ -75,16 +82,30 @@ clientLookup = (subjectCN, issuerCN) ->
       return deferred.resolve null
 
     if config.tlsClientLookup.type is 'in-chain'
+      # walk further up and cert chain and check
       utils.getKeystore (err, keystore) ->
-        for cert in keystore.ca
-          do (cert) ->
-            pem.readCertificateInfo cert.data, (err, info) ->
-              if err
-                return deferred.reject err
+        deferred.reject err if err
+        missedMatches = 0
+        # find the isser cert
+        if not keystore.ca? || keystore.ca.length < 1
+          logger.info "Issuer cn=#{issuerCN} for cn=#{subjectCN} not found in keystore."
+          deferred.resolve null
+        else
+          for cert in keystore.ca
+            do (cert) ->
+              pem.readCertificateInfo cert.data, (err, info) ->
+                if err
+                  return deferred.reject err
 
-              if info.commonName is issuerCN
-                promise = clientLookup info.commonName, info.issuer.commonName
-                promise.then (result) -> deferred.resolve result
+                if info.commonName is issuerCN
+                  promise = clientLookup info.commonName, info.issuer.commonName
+                  promise.then (result) -> deferred.resolve result
+                else
+                  missedMatches++
+
+                if missedMatches is keystore.ca.length
+                  logger.info "Issuer cn=#{issuerCN} for cn=#{subjectCN} not found in keystore."
+                  deferred.resolve null
     else
       if config.tlsClientLookup.type isnt 'strict'
         logger.warn "tlsClientLookup.type config option does not contain a known value, defaulting to 'strict'. Available options are 'strict' and 'in-chain'."
@@ -92,6 +113,8 @@ clientLookup = (subjectCN, issuerCN) ->
 
   return deferred.promise
 
+if process.env.NODE_ENV == "test"
+  exports.clientLookup = clientLookup
 
 ###
 # Koa middleware for mutual TLS authentication
