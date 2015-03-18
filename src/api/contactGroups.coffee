@@ -2,6 +2,7 @@ ContactGroup = require('../model/contactGroups').ContactGroup
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
+Channel = require('../model/channels').Channel
 
 utils = require "../utils"
 
@@ -88,9 +89,22 @@ exports.removeContactGroup = (contactGroupId) ->
   contactGroupId = unescape contactGroupId
 
   try
-    yield ContactGroup.findByIdAndRemove(contactGroupId).exec()
-    this.body = "Successfully removed contact group with ID '#{contactGroupId}'"
-    logger.info "User #{this.authenticated.email} removed contact group with id #{contactGroupId}"
+    # find out if there are any alert alerts associated with this group
+    hasLinkedAlert = yield Channel.find({
+      alerts :{
+        $elemMatch :{
+          groups: {
+            $in: [contactGroupId]
+          }
+        }
+      }
+    }).exec()
+    if hasLinkedAlert.length > 0
+      utils.logAndSetResponse this, 'forbidden', " #{contactGroupId} has alerts linked to it", 'error'
+    else
+      yield ContactGroup.findByIdAndRemove(contactGroupId).exec()
+      this.body = "Successfully removed contact group with ID '#{contactGroupId}'"
+      logger.info "User #{this.authenticated.email} removed contact group with id #{contactGroupId}"
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not remove Contact Group by id {contactGroupId} via the API: #{err}", 'error'
 

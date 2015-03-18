@@ -1,6 +1,7 @@
 should = require "should"
 request = require "supertest"
 ContactGroup = require("../../lib/model/contactGroups").ContactGroup
+Channel = require("../../lib/model/channels").Channel
 server = require "../../lib/server"
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
@@ -295,6 +296,20 @@ describe "API Integration Tests", ->
                       (notFoundDoc == null).should.be.true
                       (countBefore - 1).should.equal countAfter
                       done()
+
+      it  "should not remove an contactGroup with specified contactGroupID", (done) ->
+        request("https://localhost:8080")
+        .del("/groups/" + contactGroup._id)
+        .set("auth-username", testUtils.rootUser.email)
+        .set("auth-ts", authDetails.authTS)
+        .set("auth-salt", authDetails.authSalt)
+        .set("auth-token", authDetails.authToken)
+        .expect(403)
+        .end (err, res) ->
+          if err
+            done err
+          else
+            done()
 
       it  "should not allow a non admin user to remove a contactGroup", (done) ->
         contactGroupData = {}
