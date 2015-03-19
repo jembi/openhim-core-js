@@ -55,7 +55,6 @@ exports.getTransactions = ->
   try
 
     filtersObject = this.request.query
-    console.log( filtersObject )
 
     #get limit and page values
     filterLimit = filtersObject.filterLimit
@@ -85,11 +84,7 @@ exports.getTransactions = ->
     projectionFiltersObject = getProjectionObject filterRepresentation
     
     # get filters object
-    console.log('test 1')
     filters = JSON.parse filtersObject.filters
-    console.log('test 2')
-    console.log( filters )
-    console.log('test 3')
 
     # parse date to get it into the correct format for querying
     if filters['request.timestamp']
