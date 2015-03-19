@@ -4,7 +4,6 @@ koarequest = require "koa-request"
 server = require "../../lib/server"
 Transaction = require("../../lib/model/transactions").Transaction
 Channel = require("../../lib/model/channels").Channel
-worker = require "../../lib/api/worker"
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 ObjectId = require('mongoose').Types.ObjectId

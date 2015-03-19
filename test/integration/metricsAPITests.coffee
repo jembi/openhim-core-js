@@ -2,7 +2,6 @@ should = require "should"
 request = require "supertest"
 Transaction = require("../../lib/model/transactions").Transaction
 Channel = require("../../lib/model/channels").Channel
-worker = require "../../lib/api/worker"
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 ObjectId = require('mongoose').Types.ObjectId;

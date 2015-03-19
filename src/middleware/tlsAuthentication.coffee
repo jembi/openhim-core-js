@@ -3,8 +3,11 @@ Q = require "q"
 Client = require("../model/clients").Client
 Keystore = require("../model/keystore").Keystore
 logger = require "winston"
+utils = require '../utils'
+pem = require 'pem'
 
 config = require '../config/config'
+config.tlsClientLookup = config.get('tlsClientLookup')
 statsdServer = config.get 'statsd'
 application = config.get 'application'
 SDC = require 'statsd-client'
@@ -57,6 +60,61 @@ exports.getServerOptions = (mutualTLS, done) ->
     else
       done null, options
 
+###
+# A promise returning function that lookup up a client via the given subjectCN, if
+# not found and config.tlsClientLookup.type is 'in-chain' then the function will
+# recursively walk up the certificate chain and look for clients for certificates
+# higher in the chain.
+###
+clientLookup = (subjectCN, issuerCN) ->
+  logger.debug "Looking up client for subject #{subjectCN} and issuer #{issuerCN}"
+  deferred = Q.defer()
+  
+  Client.findOne clientDomain: subjectCN, (err, result) ->
+    deferred.reject err if err
+
+    if result?
+      # found a match
+      return deferred.resolve result
+
+    if subjectCN is issuerCN
+      # top certificate reached
+      return deferred.resolve null
+
+    if config.tlsClientLookup.type is 'in-chain'
+      # walk further up and cert chain and check
+      utils.getKeystore (err, keystore) ->
+        deferred.reject err if err
+        missedMatches = 0
+        # find the isser cert
+        if not keystore.ca? || keystore.ca.length < 1
+          logger.info "Issuer cn=#{issuerCN} for cn=#{subjectCN} not found in keystore."
+          deferred.resolve null
+        else
+          for cert in keystore.ca
+            do (cert) ->
+              pem.readCertificateInfo cert.data, (err, info) ->
+                if err
+                  return deferred.reject err
+
+                if info.commonName is issuerCN
+                  promise = clientLookup info.commonName, info.issuer.commonName
+                  promise.then (result) -> deferred.resolve result
+                else
+                  missedMatches++
+
+                if missedMatches is keystore.ca.length
+                  logger.info "Issuer cn=#{issuerCN} for cn=#{subjectCN} not found in keystore."
+                  deferred.resolve null
+    else
+      if config.tlsClientLookup.type isnt 'strict'
+        logger.warn "tlsClientLookup.type config option does not contain a known value, defaulting to 'strict'. Available options are 'strict' and 'in-chain'."
+      deferred.resolve null
+
+  return deferred.promise
+
+if process.env.NODE_ENV == "test"
+  exports.clientLookup = clientLookup
 
 ###
 # Koa middleware for mutual TLS authentication
@@ -67,18 +125,21 @@ exports.koaMiddleware = (next) ->
     yield next
   else
     if this.req.client.authorized is true
-      subject = this.req.connection.getPeerCertificate().subject
-      logger.info "#{subject.CN} is authenticated via TLS."
+      cert = this.req.connection.getPeerCertificate true
+      logger.info "#{cert.subject.CN} is authenticated via TLS."
 
       # lookup client by subject.CN (CN = clientDomain) and set them as the authenticated user
-      this.authenticated = yield Client.findOne({ clientDomain: subject.CN }).exec()
+      try
+        this.authenticated = yield clientLookup cert.subject.CN, cert.issuer.CN
+      catch err
+        logger.error "Failed to lookup client: #{err}"
 
       if this.authenticated?
         sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
         yield next
       else
         this.authenticated = null
-        logger.info "Certificate Authentication Failed: the certificate's common name #{subject.CN} did not match any client's domain attribute, trying next auth mechanism if any..."
+        logger.info "Certificate Authentication Failed: the certificate's common name #{cert.subject.CN} did not match any client's domain attribute, trying next auth mechanism if any..."
         sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
         yield next
     else

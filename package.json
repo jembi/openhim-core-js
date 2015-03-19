@@ -29,11 +29,10 @@
     "koa-statsd": "^0.0.2",
     "moment": "^2.8.4",
     "mongoose": "^3.8.21",
-    "monq": "^0.3.1",
     "nconf": "^0.7.1",
     "node-uuid": "^1.4.1",
     "nodemailer": "^0.7.1",
-    "pem": "^1.5.0",
+    "pem": "andris9/pem",
     "q": "^1.1.2",
     "rand-token": "^0.2.1",
     "raw-body": "^1.3.1",
@@ -61,6 +60,7 @@
     "should": "^5.0.0",
     "sinon": "^1.12.2",
     "sinon-es6": "^0.0.3",
+    "source-map-support": "^0.2.10",
     "supertest": "^0.15.0"
   },
   "scripts": {
