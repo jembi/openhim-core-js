@@ -254,11 +254,12 @@ describe "API Integration Tests", ->
 
       it "should call getTransactions ", (done) ->
         Transaction.count {}, (err, countBefore) ->
+
           tx = new Transaction transactionData
           tx.save (error, result) ->
             should.not.exist (error)
             request("https://localhost:8080")
-              .get("/transactions?filterPage=0&filterLimit=10")
+              .get("/transactions?filterPage=0&filterLimit=10&filters={}")
               .set("auth-username", testUtils.rootUser.email)
               .set("auth-ts", authDetails.authTS)
               .set("auth-salt", authDetails.authSalt)
@@ -266,20 +267,39 @@ describe "API Integration Tests", ->
               .expect(200)
               .end (err, res) ->
                 if err
+                  console.log( err )
                   done err
                 else
                   res.body.length.should.equal countBefore + 1
                   done()
 
       it "should call getTransactions with filter paramaters ", (done) ->
-        startDate = "2014-06-09T00:00:00.000Z"
-        endDate = "2014-06-10T00:00:00.000Z"
+
+        obj =
+          filterPage: 0
+          filterLimit: 10
+          filters: 'status': 'Processing'
+          'request.timestamp':
+            '$gte': '2014-06-09T00:00:00.000Z'
+            '$lte': '2014-06-10T00:00:00.000Z'
+          'request.path': '/api/test'
+          'response.status': '2xx'
+
+        params = ""
+        for k, v of obj
+          v = JSON.stringify v
+          if params.length > 0
+              params += "&"
+          params += "#{k}=#{v}"
+
+        params = encodeURI params
+
         Transaction.count {}, (err, countBefore) ->
           tx = new Transaction transactionData
           tx.save (error, result) ->
             should.not.exist (error)
             request("https://localhost:8080")
-              .get("/transactions?status=Processing&filterPage=0&filterLimit=10&startDate="+startDate+"&endDate="+endDate)
+              .get("/transactions?"+params)
               .set("auth-username", testUtils.rootUser.email)
               .set("auth-ts", authDetails.authTS)
               .set("auth-salt", authDetails.authSalt)
@@ -287,6 +307,7 @@ describe "API Integration Tests", ->
               .expect(200)
               .end (err, res) ->
                 if err
+                  console.log( err )
                   done err
                 else
                   res.body.length.should.equal countBefore + 1
@@ -298,9 +319,27 @@ describe "API Integration Tests", ->
         tx.save (err) ->
           if err
             return done err
+
+        obj =
+          filterPage: 0
+          filterLimit: 10
+          filters: 'status': 'Processing'
+          'request.timestamp':
+            '$gte': '2014-06-09T00:00:00.000Z'
+            '$lte': '2014-06-10T00:00:00.000Z'
+          'request.path': '/api/test'
+
+        params = ""
+        for k, v of obj
+          v = JSON.stringify v
+          if params.length > 0
+              params += "&"
+          params += "#{k}=#{v}"
+
+        params = encodeURI params
           
         request("https://localhost:8080")
-          .get("/transactions")
+          .get("/transactions?"+params)
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
