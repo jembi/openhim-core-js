@@ -300,6 +300,29 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it 'should add a new task with status Paused if the request contains paused=true', (done) ->
+        newTask =
+          tids: [ "222288888888888888888888", "333399999999999999999999", "444410101010101010101010" ]
+          paused: true
+
+        request("https://localhost:8080")
+          .post("/tasks")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(newTask)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Task.findOne { $and: [ transactions: { $elemMatch: { tid: "222288888888888888888888" } }, { transactions: $elemMatch: { tid: "333399999999999999999999" } }, { transactions: $elemMatch: { tid: "444410101010101010101010" } } ] }, (err, task) ->
+                task.should.have.property "status", "Paused"
+                task.transactions.should.have.length 3
+                task.should.have.property "remainingTransactions", 3
+                done()
+
     describe '*getTask(taskId)', ->
 
       it 'should fetch a specific task by ID', (done) ->
