@@ -34,8 +34,7 @@ tlsAuthentication = require "./middleware/tlsAuthentication"
 uuid = require 'node-uuid'
 Q = require 'q'
 logger = require 'winston'
-logger.level = config.logger.level
-logger.colorize = true
+logger.remove logger.transports.Console
 cluster = require 'cluster'
 numCPUs = require('os').cpus().length
 nconf = require 'nconf'
@@ -54,7 +53,16 @@ tasks = require './tasks'
 clusterArg = nconf.get 'cluster'
 
 # Configure clustering if relevent
-if cluster.isMaster and clusterArg?
+if cluster.isMaster
+
+  # configure master logger
+  logger.add logger.transports.Console,
+    colorize: true
+    label: "master"
+    level: config.logger.level
+
+  if not clusterArg?
+    clusterArg = 1
 
   if clusterArg is 'auto'
     clusterSize = numCPUs
@@ -93,6 +101,12 @@ if cluster.isMaster and clusterArg?
   cluster.on 'listening', (worker, address) ->
     logger.debug "worker #{worker.process.pid} is now connected to #{address.address}:#{address.port}"
 else
+  # configure worker logger
+  logger.add logger.transports.Console,
+    colorize: true
+    label: "worker#{cluster.worker.id}"
+    level: config.logger.level
+
   # Configure mongose to connect to mongo
   mongoose.connect config.mongo.url
 
@@ -515,7 +529,6 @@ else
       # restart on message
       process.on 'message', (msg) ->
         if msg is 'restart'
-          console.log 'calling restart'
           restartServer()
 
 
@@ -531,16 +544,8 @@ else
 
 
   exports.startRestartServerAgenda = (done) ->
-    if cluster.isMaster
-      # restart myself in 2s
-      agenda = new Agenda db: { address: config.mongo.url }
-      agenda.define 'Restart Server', {priority: 'high', concurrency: 1}, (job, done) -> restartServer done
-      agenda.start()
-      agenda.schedule "in 2 seconds", 'Restart Server'
-      done()
-    else
-      # notify master to restart all workers in 2s
-      setTimeout ->
-        logger.debug 'Sending restart cluster message...'
-        process.send('restart-all')
-      , 2000
+    # notify master to restart all workers in 2s
+    setTimeout ->
+      logger.debug 'Sending restart cluster message...'
+      process.send('restart-all')
+    , 2000
