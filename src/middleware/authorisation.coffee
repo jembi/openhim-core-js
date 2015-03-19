@@ -66,7 +66,7 @@ extractContentType = (ctHeader) ->
     return ctHeader.trim()
 
 # export private functions for unit testing
-# note: you can't spy on these method because of this :(
+# note: you cant spy on these method because of this :(
 if process.env.NODE_ENV == "test"
   exports.matchContent = matchContent
   exports.matchRegex = matchRegex
@@ -84,7 +84,7 @@ exports.authorise = (ctx, done) ->
     for channel in channels
       pat = new RegExp channel.urlPattern
       # if url pattern matches
-      if pat.test ctx.request.url
+      if pat.test ctx.request.path
         matchedRoles = {}
         allowedClient = false
         if ctx.authenticated?
@@ -111,23 +111,23 @@ exports.authorise = (ctx, done) ->
             if ctx.request.header and ctx.request.header['content-type']
               ct = extractContentType ctx.request.header['content-type']
               if (channel.matchContentTypes.indexOf ct) is -1
-                # deny access to channel if the content type doesn't match
+                # deny access to channel if the content type doesnt match
                 continue
             else
-              # deny access to channel if the content type isn't set
+              # deny access to channel if the content type isnt set
               continue
 
           # now check that the status is 'enabled' and if the message content matches
           if isChannelEnabled(channel) and matchContent(channel, ctx.body)
             ctx.authorisedChannel = channel
-            logger.info "The request, '" + ctx.request.url + "' is authorised to access " + ctx.authorisedChannel.name
+            logger.info "The request, '" + ctx.request.path + "' is authorised to access " + ctx.authorisedChannel.name
             return done()
 
     # authorisation failed
     ctx.response.status = "unauthorized"
     if config.authentication.enableBasicAuthentication
       ctx.set "WWW-Authenticate", "Basic"
-    logger.info "The request, '" + ctx.request.url + "', is not authorised to access any channels."
+    logger.info "The request, '" + ctx.request.path + "', is not authorised to access any channels."
     return done()
 
 exports.koaMiddleware = (next) ->
