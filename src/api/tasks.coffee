@@ -85,6 +85,9 @@ exports.addTask = ->
         return utils.logAndSetResponse this, 'bad request', 'Invalid batch size specified', 'info'
       taskObject.batchSize = transactions.batchSize
 
+    if transactions.paused
+      taskObject.status = 'Paused'
+
     # check rerun permission and whether to create the rerun task
     isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
     allowRerunTaskCreation = yield isRerunPermsValid( this.authenticated, transactions )
