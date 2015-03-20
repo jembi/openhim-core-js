@@ -90,7 +90,7 @@ exports.removeContactGroup = (contactGroupId) ->
 
   try
     # find out if there are any alerts associated with this group
-    LinkedAlerts = yield Channel.find({
+    linkedAlerts = yield Channel.find({
       alerts :{
         $elemMatch :{
           groups: {
@@ -99,8 +99,9 @@ exports.removeContactGroup = (contactGroupId) ->
         }
       }
     }).exec()
-    if LinkedAlerts.length > 0
-      utils.logAndSetResponse this, 'forbidden', " #{contactGroupId} has alerts linked to it", 'error'
+    if linkedAlerts.length > 0
+      this.status = "conflict"
+      this.body = linkedAlerts
     else
       yield ContactGroup.findByIdAndRemove(contactGroupId).exec()
       this.body = "Successfully removed contact group with ID '#{contactGroupId}'"
