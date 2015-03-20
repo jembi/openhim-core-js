@@ -42,15 +42,6 @@ getProjectionObject = (filterRepresentation) ->
 # Retrieves the list of transactions
 ###
 
-# function to check if string match status code pattern
-patternMatch = (string) ->
-  pat = /\dxx/.exec string
-  if patternMatch
-    return true
-
-  return false
-
-
 exports.getTransactions = ->
   try
 
@@ -103,7 +94,7 @@ exports.getTransactions = ->
       filters['request.querystring'] = new RegExp filters['request.querystring'], "i"
 
     # response status pattern match checking
-    if filters['response.status'] && patternMatch( filters['response.status'] )
+    if filters['response.status'] && utils.statusCodePatternMatch( filters['response.status'] )
       filters['response.status'] = "$gte": filters['response.status'][0]*100, "$lt": filters['response.status'][0]*100+100
 
     # check if properties exist
@@ -136,7 +127,7 @@ exports.getTransactions = ->
       filters['routes.request.querystring'] = new RegExp filters['routes.request.querystring'], "i"
 
     # route response status pattern match checking
-    if filters['routes.response.status'] && patternMatch( filters['routes.response.status'] )
+    if filters['routes.response.status'] && utils.statusCodePatternMatch( filters['routes.response.status'] )
       filters['routes.response.status'] = "$gte": filters['routes.response.status'][0]*100, "$lt": filters['routes.response.status'][0]*100+100
 
 
@@ -151,7 +142,7 @@ exports.getTransactions = ->
       filters['orchestrations.request.querystring'] = new RegExp filters['orchestrations.request.querystring'], "i"
 
     # orchestration response status pattern match checking
-    if filters['orchestrations.response.status'] && patternMatch( filters['orchestrations.response.status'] )
+    if filters['orchestrations.response.status'] && utils.statusCodePatternMatch( filters['orchestrations.response.status'] )
       filters['orchestrations.response.status'] = "$gte": filters['orchestrations.response.status'][0]*100, "$lt": filters['orchestrations.response.status'][0]*100+100
 
     
@@ -393,28 +384,3 @@ exports.removeTransaction = (transactionId) ->
     logger.info "User #{this.authenticated.email} removed transaction with id #{transactionId}"
   catch e
     utils.logAndSetResponse this, 'internal server error', "Could not remove transaction via the API: #{e}", 'error'
-
-
-
-###
-# construct transaction filtering dropdown options
-###
-exports.getTransactionsFilterOptions = ->
-
-  # Must be admin
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getTransactionsFilterOptions denied.", 'info'
-    return
-
-  try
-    # execute the query
-    channels = yield Channel.find().exec()
-    clients = yield Client.find().exec()
-
-    responseObject =
-      channels: channels
-      clients: clients
-    
-    this.body = responseObject
-  catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not retrieve transaction filter options via the API: #{e}", 'error'

@@ -46,3 +46,7 @@ getCachedValues = (store, callback) ->
 exports.getAllChannels = (callback) -> getCachedValues 'channels', callback
 
 exports.getKeystore = (callback) -> getCachedValues 'keystore', callback
+
+
+# function to check if string match status code pattern
+exports.statusCodePatternMatch = (string, callback) -> /\dxx/.test string

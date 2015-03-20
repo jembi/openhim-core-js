@@ -58,7 +58,6 @@ exports.setupApp = (done) ->
   app.use route.get '/transactions/clients/:clientId', transactions.findTransactionByClientId
   app.use route.put '/transactions/:transactionId', transactions.updateTransaction
   app.use route.delete '/transactions/:transactionId', transactions.removeTransaction
-  app.use route.get '/transactions-filter-options', transactions.getTransactionsFilterOptions
 
   app.use route.get '/groups', contactGroups.getContactGroups
   app.use route.get '/groups/:contactGroupId', contactGroups.getContactGroup
