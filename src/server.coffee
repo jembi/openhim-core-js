@@ -17,6 +17,7 @@ config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
 config.auditing = config.get('auditing')
+config.agenda = config.get('agenda')
 
 mongoose = require "mongoose"
 exports.connectionDefault = connectionDefault = mongoose.createConnection(config.mongo.url)
@@ -53,7 +54,7 @@ tasks = require './tasks'
 clusterArg = nconf.get 'cluster'
 
 # Configure clustering if relevent
-if cluster.isMaster
+if cluster.isMaster and not module.parent
 
   # configure master logger
   logger.add logger.transports.Console,
@@ -104,7 +105,7 @@ else
   # configure worker logger
   logger.add logger.transports.Console,
     colorize: true
-    label: "worker#{cluster.worker.id}"
+    label: "worker#{cluster.worker.id}" if cluster.worker?.id?
     level: config.logger.level
 
   # Configure mongose to connect to mongo
@@ -174,12 +175,20 @@ else
   agenda = null
 
   startAgenda = ->
-    agenda = new Agenda db: { address: config.mongo.url}
+    defer = Q.defer()
+    agenda = new Agenda
+      db:
+        address: config.mongo.url
     alerts.setupAgenda agenda if config.alerts.enableAlerts
     reports.setupAgenda agenda if config.reports.enableReports
     polling.setupAgenda agenda, ->
-      agenda.start()
-      logger.info "Started agenda job scheduler"
+      # give workers a change to setup agenda tasks
+      setTimeout ->
+        agenda.start()
+        defer.resolve()
+        logger.info "Started agenda job scheduler"
+      , config.agenda.startupDelay
+    return defer.promise
 
   stopAgenda = ->
     defer = Q.defer()
@@ -437,9 +446,10 @@ else
       if ports.auditTcpPort
         promises.push startAuditTcpTlsServer 'TCP', ports.auditTcpPort, bindAddress
 
+      promises.push startAgenda()
+
       (Q.all promises).then ->
         logger.info "OpenHIM server started: #{new Date()}"
-        startAgenda()
         done()
 
 
@@ -473,12 +483,8 @@ else
     promises.push stopServer(auditTcpServer, 'Audit TCP').promise if auditTcpServer
     
     if auditUDPServer
-      try
-        auditUDPServer.close()
-        logger.info "Stopped Audit UDP server"
-      catch err
-        if err.message isnt 'Not running'
-          logger.error "Error stopping UDP audit server: #{err}"
+      auditUDPServer.close()
+      logger.info "Stopped Audit UDP server"
 
     if tcpHttpReceiver
       promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver')
@@ -513,6 +519,7 @@ else
       auditTcpServer = null
 
       agenda = null
+      logger.info 'Server shutdown complete.'
       done()
 
   lookupServerPorts = ->
@@ -540,23 +547,30 @@ else
       # restart on message
       process.on 'message', (msg) ->
         if msg is 'restart'
-          restartServer()
+          exports.restartServer()
 
+  exports.restartServer = (ports, done) ->
+    if typeof ports is 'function'
+      done = ports
+      ports = null
 
-  #############################################
-  ###   Restart the server - Agenda Job     ###
-  #############################################
-
-  restartServer = (done) ->
-    # stop the server
-    exports.stop ->
+    if not port?
       ports = lookupServerPorts()
+
+    exports.stop ->
       exports.start ports, -> done()
 
-
-  exports.startRestartServerAgenda = (done) ->
-    # notify master to restart all workers in 2s
-    setTimeout ->
-      logger.debug 'Sending restart cluster message...'
-      process.send('restart-all')
-    , 2000
+  exports.startRestartServerTimeout = (done) ->
+    if cluster.isMaster
+      # restart myself in 2s
+      setTimeout ->
+        logger.debug 'Master restarting itself...'
+        exports.restartServer()
+      , 2000
+    else
+      # notify master to restart all workers in 2s
+      setTimeout ->
+        logger.debug 'Sending restart cluster message...'
+        process.send('restart-all')
+      , 2000
+    done()

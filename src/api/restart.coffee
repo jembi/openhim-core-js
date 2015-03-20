@@ -28,7 +28,7 @@ exports.restart = (next) ->
 
     # valid certificate/key
     if result
-      server.startRestartServerAgenda ->
+      server.startRestartServerTimeout ->
         logger.info 'User ' +emailAddr+ ' has requested a Server Restart. Proceeding to restart servers...'
 
       # All ok! So set the result
