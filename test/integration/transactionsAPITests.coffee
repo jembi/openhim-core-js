@@ -389,7 +389,6 @@ describe "API Integration Tests", ->
                 if err
                   done err
                 else
-                  console.log(res.body)
                   # prop3 does not exist so no records should be returned
                   res.body.length.should.equal 0
                   done()
