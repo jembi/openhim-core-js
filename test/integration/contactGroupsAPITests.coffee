@@ -297,7 +297,7 @@ describe "API Integration Tests", ->
                       (countBefore - 1).should.equal countAfter
                       done()
 
-      it  "should remove an contactGroup with an associated channel", (done) ->
+      it  "should not remove an contactGroup with an associated channel", (done) ->
         contactGroupData =
           group: "Group 2"
           users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'},

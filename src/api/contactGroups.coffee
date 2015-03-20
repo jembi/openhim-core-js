@@ -20,7 +20,7 @@ exports.addContactGroup = ->
   try
     contactGroup = new ContactGroup contactGroupData
     result = yield Q.ninvoke(contactGroup, 'save')
-    
+
     utils.logAndSetResponse this, 'created', "Contact Group successfully created", 'info'
   catch err
     utils.logAndSetResponse this, 'bad request', "Could not add a contact group via the API: #{err}", 'error'
@@ -89,8 +89,8 @@ exports.removeContactGroup = (contactGroupId) ->
   contactGroupId = unescape contactGroupId
 
   try
-    # find out if there are any alert alerts associated with this group
-    hasLinkedAlert = yield Channel.find({
+    # find out if there are any alerts associated with this group
+    LinkedAlerts = yield Channel.find({
       alerts :{
         $elemMatch :{
           groups: {
@@ -99,7 +99,7 @@ exports.removeContactGroup = (contactGroupId) ->
         }
       }
     }).exec()
-    if hasLinkedAlert.length > 0
+    if LinkedAlerts.length > 0
       utils.logAndSetResponse this, 'forbidden', " #{contactGroupId} has alerts linked to it", 'error'
     else
       yield ContactGroup.findByIdAndRemove(contactGroupId).exec()
