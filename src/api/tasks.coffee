@@ -157,6 +157,9 @@ exports.updateTask = (taskId) ->
   taskId = unescape taskId
   taskData = this.request.body
 
+  # Ignore _id if it exists, user cannot change the internal id
+  delete taskData._id if taskData._id?
+
   try
     yield Task.findOneAndUpdate({ _id: taskId }, taskData).exec()
 
