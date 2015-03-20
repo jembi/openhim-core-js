@@ -325,7 +325,18 @@ else
 
       auditing.processAudit msg, -> logger.info "[Auditing UDP] Processed audit"
 
-    auditUDPServer.bind auditUDPPort, bindAddress
+    auditUDPServer.on 'error', (err) ->
+      if err.code is 'EADDRINUSE'
+        # ignore to allow only 1 worker to bind (workaround for: https://github.com/joyent/node/issues/9261)
+        defer.resolve()
+      else
+        logger.error "UDP Audit server error: #{err}", err
+        defer.reject err
+
+    auditUDPServer.bind
+      port: auditUDPPort
+      address: bindAddress
+      exclusive: true # workaround for: https://github.com/joyent/node/issues/9261
 
     return defer.promise
 
