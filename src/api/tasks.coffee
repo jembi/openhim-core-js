@@ -68,8 +68,6 @@ exports.getTasks = ->
     # exclude transactions object from tasks list
     projectionFiltersObject = { 'transactions': 0 }
 
-    console.log( filters )
-
     this.body = yield Task.find({}).exec()
 
     # execute the query
