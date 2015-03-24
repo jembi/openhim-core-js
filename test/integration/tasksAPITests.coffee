@@ -18,6 +18,7 @@ describe "API Integration Tests", ->
       _id: "aaa908908bbb98cc1d0809ee"
       status: "Completed"
       remainingTransactions: 0
+      totalTransactions: 4
       transactions: [ {tid: "11111", tstatus: "Completed"},
               {tid: "22222", tstatus: "Completed"},
               {tid: "33333", tstatus: "Failed"},
@@ -29,6 +30,7 @@ describe "API Integration Tests", ->
       _id: "aaa777777bbb66cc5d4444ee"
       status: "Queued"
       remainingTransactions: 3
+      totalTransactions: 3
       transactions: [ {tid: "55555", tstatus: "Queued"},
               {tid: "66666", tstatus: "Queued"},
               {tid: "77777", tstatus: "Queued"} ]
@@ -184,8 +186,22 @@ describe "API Integration Tests", ->
 
       it 'should fetch all tasks', (done) ->
 
+        obj =
+          filterPage: 0
+          filterLimit: 10
+          filters: {}
+
+        params = ""
+        for k, v of obj
+          v = JSON.stringify v
+          if params.length > 0
+              params += "&"
+          params += "#{k}=#{v}"
+
+        params = encodeURI params
+
         request("https://localhost:8080")
-          .get("/tasks")
+          .get("/tasks?"+params)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
@@ -195,6 +211,7 @@ describe "API Integration Tests", ->
             if err
               done err
             else
+              console.log( res.body )
               res.body.length.should.be.eql(2)
               done()
 
@@ -326,8 +343,23 @@ describe "API Integration Tests", ->
     describe '*getTask(taskId)', ->
 
       it 'should fetch a specific task by ID', (done) ->
+
+        obj =
+          filterPage: 0
+          filterLimit: 10
+          filters: {}
+
+        params = ""
+        for k, v of obj
+          v = JSON.stringify v
+          if params.length > 0
+              params += "&"
+          params += "#{k}=#{v}"
+
+        params = encodeURI params
+
         request("https://localhost:8080")
-          .get("/tasks/aaa908908bbb98cc1d0809ee")
+          .get("/tasks/aaa908908bbb98cc1d0809ee?"+params)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)

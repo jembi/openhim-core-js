@@ -57,7 +57,7 @@ exports.getTasks = ->
 
     #determine skip amount
     filterSkip = filterPage*filterLimit
-    
+
     # get filters object
     filters = JSON.parse filtersObject.filters
 
@@ -67,6 +67,10 @@ exports.getTasks = ->
 
     # exclude transactions object from tasks list
     projectionFiltersObject = { 'transactions': 0 }
+
+    console.log( filters )
+
+    this.body = yield Task.find({}).exec()
 
     # execute the query
     this.body = yield Task
@@ -175,24 +179,24 @@ exports.getTask = (taskId) ->
     # are filters present
     if Object.keys( filters ).length > 0
       # clear tempTransactions array to rebuild with filters when applicable
-      tempTransactions = [];
+      tempTransactions = []
 
       i = 0
       while i < result.transactions.length
         # set filter variable to captured failed filters
-        filtersFailed = false;
+        filtersFailed = false
 
-        if filters.tstatus 
+        if filters.tstatus
           # if tstatus doesnt equal filter then set filter failed to true
           if filters.tstatus != result.transactions[i].tstatus
             filtersFailed = true
 
-        if filters.rerunStatus 
+        if filters.rerunStatus
           # if rerunStatus doesnt equal filter then set filter failed to true
           if filters.rerunStatus != result.transactions[i].rerunStatus
             filtersFailed = true
 
-        if filters.hasErrors 
+        if filters.hasErrors
           # if hasErrors filter 'yes' but no hasErrors exist then set filter failed to true
           if filters.hasErrors == 'yes' && !result.transactions[i].hasErrors
             filtersFailed = true
@@ -202,7 +206,7 @@ exports.getTask = (taskId) ->
 
         # add transaction if all filters passed successfully
         if filtersFailed is false
-          tempTransactions.push( result.transactions[i] );
+          tempTransactions.push( result.transactions[i] )
 
         # increment counter
         i++
