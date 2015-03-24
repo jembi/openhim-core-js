@@ -48,7 +48,34 @@ exports.getTasks = ->
     return
 
   try
-    this.body = yield Task.find({}).exec()
+
+    filtersObject = this.request.query
+
+    #get limit and page values
+    filterLimit = filtersObject.filterLimit
+    filterPage = filtersObject.filterPage
+
+    #determine skip amount
+    filterSkip = filterPage*filterLimit
+    
+    # get filters object
+    filters = JSON.parse filtersObject.filters
+
+    # parse date to get it into the correct format for querying
+    if filters['created']
+      filters['created'] = JSON.parse filters['created']
+
+    # exclude transactions object from tasks list
+    projectionFiltersObject = { 'transactions': 0 }
+
+    # execute the query
+    this.body = yield Task
+      .find filters, projectionFiltersObject
+      .skip filterSkip
+      .limit filterLimit
+      .sort 'created': -1
+      .exec()
+
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not fetch all tasks via the API: #{err}", 'error'
 
@@ -103,6 +130,7 @@ exports.addTask = ->
 
       transactionsArr.push tid: tid for tid in transactions.tids
       taskObject.transactions = transactionsArr
+      taskObject.totalTransactions = transactionsArr.length
 
       task = new Task(taskObject)
       result = yield Q.ninvoke(task, 'save')
@@ -128,12 +156,71 @@ exports.getTask = (taskId) ->
   taskId = unescape taskId
 
   try
-    # Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    result = yield Task.findById(taskId).exec()
+
+    filtersObject = this.request.query
+
+    #get limit and page values
+    filterLimit = filtersObject.filterLimit
+    filterPage = filtersObject.filterPage
+
+    #determine skip amount
+    filterSkip = filterPage*filterLimit
+    
+    # get filters object
+    filters = JSON.parse filtersObject.filters
+
+    result = yield Task.findById(taskId).lean().exec()
+    tempTransactions = result.transactions
+
+    # are filters present
+    if Object.keys( filters ).length > 0
+      # clear tempTransactions array to rebuild with filters when applicable
+      tempTransactions = [];
+
+      i = 0
+      while i < result.transactions.length
+        # set filter variable to captured failed filters
+        filtersFailed = false;
+
+        if filters.tstatus 
+          # if tstatus doesnt equal filter then set filter failed to true
+          if filters.tstatus != result.transactions[i].tstatus
+            filtersFailed = true
+
+        if filters.rerunStatus 
+          # if rerunStatus doesnt equal filter then set filter failed to true
+          if filters.rerunStatus != result.transactions[i].rerunStatus
+            filtersFailed = true
+
+        if filters.hasErrors 
+          # if hasErrors filter 'yes' but no hasErrors exist then set filter failed to true
+          if filters.hasErrors == 'yes' && !result.transactions[i].hasErrors
+            filtersFailed = true
+          # if hasErrors filter 'no' but hasErrors does exist then set filter failed to true
+          else if filters.hasErrors == 'no' && result.transactions[i].hasErrors
+            filtersFailed = true
+
+        # add transaction if all filters passed successfully
+        if filtersFailed is false
+          tempTransactions.push( result.transactions[i] );
+
+        # increment counter
+        i++
+
+    # get new transactions filters length
+    totalFilteredTransactions = tempTransactions.length
+    # assign new transactions filters length to result property
+    result.totalFilteredTransactions = totalFilteredTransactions
+
+    # work out where to slice from and till where
+    sliceFrom = filterSkip
+    sliceTo = filterSkip + parseInt filterLimit
+    # slice the transactions array to return only the correct amount of records at the correct index
+    result.transactions = tempTransactions.slice sliceFrom, sliceTo
 
     # Test if the result if valid
     if result == null
-      # Channel not foud! So inform the user
+      # task not found! So inform the user
       utils.logAndSetResponse this, 'not found', "We could not find a Task with this ID: #{taskId}.", 'info'
     else
       this.body = result

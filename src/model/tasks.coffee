@@ -10,6 +10,7 @@ TaskSchema = new Schema
   "completedDate": { type: Date, required: false }
   "user": { type: String, required: true }
   "remainingTransactions": { type: Number, required: true }
+  "totalTransactions": { type: Number, required: true }
   "batchSize": { type: Number, default: 1 }
 
 ###
