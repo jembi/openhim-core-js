@@ -211,7 +211,6 @@ describe "API Integration Tests", ->
             if err
               done err
             else
-              console.log( res.body )
               res.body.length.should.be.eql(2)
               done()
 
