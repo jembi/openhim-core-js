@@ -79,12 +79,26 @@ if cluster.isMaster and not module.parent
     worker = cluster.fork()
 
     worker.on 'message', (msg) ->
-      if msg is 'restart-all'
+      logger.debug "Message recieved from worker #{worker.id}", msg
+      if msg.type is 'restart-all'
         # restart all workers
         logger.debug "Restarting all workers..."
         for id, worker of cluster.workers
           logger.debug "Restarting worker #{worker.id}..."
-          worker.send 'restart'
+          worker.send
+            type: 'restart'
+      else if msg.type is 'start-tcp-channel'
+        # start tcp channel on all workers
+        logger.info "Starting TCP channel for channel: #{msg.channelID}"
+        for id, worker of cluster.workers
+          logger.debug "Starting TCP channel on worker #{worker.id}..."
+          worker.send msg
+      else if msg.type is 'stop-tcp-channel'
+        # stop tcp channel on all workers
+        logger.info "Stopping TCP channel for channel: #{msg.channelID}"
+        for id, worker of cluster.workers
+          logger.debug "Stopping TCP channel on worker #{worker.id}..."
+          worker.send msg
 
   # start all workers
   for i in [1..clusterSize]
@@ -97,19 +111,16 @@ if cluster.isMaster and not module.parent
       addWorker()
 
   cluster.on 'online', (worker) ->
-    logger.info "worker #{worker.process.pid} is online"
+    logger.info "worker with pid #{worker.process.pid} is online"
 
   cluster.on 'listening', (worker, address) ->
-    logger.debug "worker #{worker.process.pid} is now connected to #{address.address}:#{address.port}"
+    logger.debug "worker #{worker.id} is now connected to #{address.address}:#{address.port}"
 else
   # configure worker logger
   logger.add logger.transports.Console,
     colorize: true
     label: "worker#{cluster.worker.id}" if cluster.worker?.id?
     level: config.logger.level
-
-  # Configure mongose to connect to mongo
-  mongoose.connect config.mongo.url
 
   httpServer = null
   httpsServer = null
@@ -546,7 +557,7 @@ else
       process.on 'SIGTERM', -> stop process.exit
       # restart on message
       process.on 'message', (msg) ->
-        if msg is 'restart'
+        if msg.type is 'restart'
           exports.restartServer()
 
   exports.restartServer = (ports, done) ->
@@ -571,6 +582,7 @@ else
       # notify master to restart all workers in 2s
       setTimeout ->
         logger.debug 'Sending restart cluster message...'
-        process.send('restart-all')
+        process.send
+          type: 'restart-all'
       , 2000
     done()

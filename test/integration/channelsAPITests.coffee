@@ -203,7 +203,7 @@ describe "API Integration Tests", ->
             else
               done()
 
-      it 'should startup TCP server if the new channel is of type "tcp"', (done) ->
+      it 'should notify master to startup TCP server if the new channel is of type "tcp"', (done) ->
         tcpChannel =
           name: "TCPTestChannel-Add"
           urlPattern: "/"
@@ -219,6 +219,8 @@ describe "API Integration Tests", ->
                 type: "tcp"
               ]
 
+        stub = sinon.stub tcpAdapter, 'notifyMasterToStartTCPServer'
+
         request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
@@ -231,14 +233,11 @@ describe "API Integration Tests", ->
             if err
               done err
             else
-              Channel.findOne { name: tcpChannel.name }, (err, channel) ->
-                seenChannelName = false
-                for s in tcpAdapter.tcpServers
-                  seenChannelName = true if s.channelID.equals channel._id
-                seenChannelName.should.be.true
-                done()
+              stub.should.be.calledOnce
+              stub.restore()
+              done()
 
-      it 'should NOT startup TCP server if the new channel is of type "tcp" but is disabled', (done) ->
+      it 'should NOT notify master to startup TCP server if the new channel is of type "tcp" but is disabled', (done) ->
         tcpChannelDisabled =
           name: "TCPTestChannel-Add-Disabled"
           urlPattern: "/"
@@ -255,6 +254,8 @@ describe "API Integration Tests", ->
               ]
           status: 'disabled'
 
+        stub = sinon.stub tcpAdapter, 'notifyMasterToStartTCPServer'
+
         request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
@@ -267,12 +268,9 @@ describe "API Integration Tests", ->
             if err
               done err
             else
-              Channel.findOne { name: tcpChannelDisabled.name }, (err, channel) ->
-                seenChannelName = false
-                for s in tcpAdapter.tcpServers
-                  seenChannelName = true if s.channelID.equals channel._id
-                seenChannelName.should.be.false
-                done()
+              stub.should.not.be.called
+              stub.restore()
+              done()
 
       it 'should register the channel with the polling service if of type "polling"', (done) ->
         pollChannel =
@@ -467,7 +465,7 @@ describe "API Integration Tests", ->
             else
               done()
 
-      it 'should startup a TCP server if the type is set to "tcp"', (done) ->
+      it 'should notify master to startup a TCP server if the type is set to "tcp"', (done) ->
         httpChannel = new Channel
           name: "TestChannelForTCPUpdate"
           urlPattern: "/"
@@ -486,6 +484,8 @@ describe "API Integration Tests", ->
           tcpPort: 3601
         }
 
+        stub = sinon.stub tcpAdapter, 'notifyMasterToStartTCPServer'
+
         httpChannel.save ->
           request("https://localhost:8080")
             .put("/channels/" + httpChannel._id)
@@ -499,14 +499,11 @@ describe "API Integration Tests", ->
               if err
                 done err
               else
-                Channel.findOne name: httpChannel.name, (err, channel) ->
-                  seenChannelName = false
-                  for s in tcpAdapter.tcpServers
-                    seenChannelName = true if s.channelID.equals channel._id
-                  seenChannelName.should.be.true
-                  done()
+                stub.should.be.calledOnce
+                stub.restore()
+                done()
 
-      it 'should NOT startup a TCP server if the type is set to "tcp" but it is disabled', (done) ->
+      it 'should NOT notify master to startup a TCP server if the type is set to "tcp" but it is disabled', (done) ->
         httpChannel = new Channel
           name: "TestChannelForTCPUpdate-Disabled"
           urlPattern: "/"
@@ -526,6 +523,9 @@ describe "API Integration Tests", ->
           status: 'disabled'
         }
 
+        startStub = sinon.stub tcpAdapter, 'notifyMasterToStartTCPServer'
+        stopStub = sinon.stub tcpAdapter, 'notifyMasterToStopTCPServer'
+
         httpChannel.save ->
           request("https://localhost:8080")
             .put("/channels/" + httpChannel._id)
@@ -539,10 +539,10 @@ describe "API Integration Tests", ->
               if err
                 done err
               else
-                seenChannelName = false
-                for s in tcpAdapter.tcpServers
-                  seenChannelName = true if s.channelID.equals httpChannel._id
-                seenChannelName.should.be.false
+                startStub.should.not.be.called
+                stopStub.should.be.calledOnce
+                startStub.restore()
+                stopStub.restore()
                 done()
 
       it 'should register the updated channel with the polling service if of type "polling"', (done) ->
