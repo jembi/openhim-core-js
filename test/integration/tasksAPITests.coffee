@@ -37,6 +37,37 @@ describe "API Integration Tests", ->
       created: "2014-06-18T12:00:00.929Z"
       user: "root@openhim.org"
 
+    task3 = new Task
+      _id: "bbb777777bbb66cc5d4444ee"
+      status: "Paused"
+      remainingTransactions: 11
+      totalTransactions: 23
+      transactions: [ {tid: "11111", tstatus: "Completed", rerunID: "111111111111", rerunStatus: "Successful"},
+              {tid: "22222", tstatus: "Completed", rerunID: "22222222222", rerunStatus: "Successful"},
+              {tid: "33333", tstatus: "Completed", rerunID: "33333333333", rerunStatus: "Successful"},
+              {tid: "fakeIDShouldFail", tstatus: "Failed", error: "Failed due to incorrect format of ID"},
+              {tid: "55555", tstatus: "Completed", rerunID: "55555555555", rerunStatus: "Failed"},
+              {tid: "66666", tstatus: "Completed", rerunID: "66666666666", rerunStatus: "Completed"},
+              {tid: "77777", tstatus: "Completed", rerunID: "77777777777", rerunStatus: "Successful"},
+              {tid: "88888", tstatus: "Completed", rerunID: "88888888888", rerunStatus: "Failed"},
+              {tid: "fakeIDShouldFail2", tstatus: "Failed", error: "Failed due to incorrect format of ID"},
+              {tid: "10101", tstatus: "Completed", rerunID: "10101010101", rerunStatus: "Failed"},
+              {tid: "11011", tstatus: "Completed", rerunID: "11011011011", rerunStatus: "Failed"},
+              {tid: "12121", tstatus: "Processing"},
+              {tid: "13131", tstatus: "Queued"},
+              {tid: "14141", tstatus: "Queued"},
+              {tid: "15151", tstatus: "Queued"},
+              {tid: "16161", tstatus: "Queued"},
+              {tid: "17171", tstatus: "Queued"},
+              {tid: "18181", tstatus: "Queued"},
+              {tid: "19191", tstatus: "Queued"},
+              {tid: "20202", tstatus: "Queued"},
+              {tid: "21212", tstatus: "Queued"},
+              {tid: "22022", tstatus: "Queued"},
+              {tid: "23232", tstatus: "Queued"} ]
+      created: "2014-06-18T12:00:00.929Z"
+      user: "root@openhim.org"
+
 
     requ =
       path: "/api/test"
@@ -154,19 +185,20 @@ describe "API Integration Tests", ->
     before (done) ->
       task1.save ->
         task2.save ->
-          transaction1.save ->
-            transaction2.save ->
-              transaction3.save ->
-                transaction4.save ->
-                  transaction5.save ->
-                    transaction6.save ->
-                      channel.save ->
-                        channel2.save ->
-                          channel3.save ->
-                            channel4.save ->
-                              auth.setupTestUsers ->
-                                server.start apiPort: 8080, ->
-                                  done()
+          task3.save (err) ->
+            transaction1.save ->
+              transaction2.save ->
+                transaction3.save ->
+                  transaction4.save ->
+                    transaction5.save ->
+                      transaction6.save ->
+                        channel.save ->
+                          channel2.save ->
+                            channel3.save ->
+                              channel4.save ->
+                                auth.setupTestUsers ->
+                                  server.start apiPort: 8080, ->
+                                    done()
 
     after (done) ->
       server.stop ->
@@ -211,7 +243,38 @@ describe "API Integration Tests", ->
             if err
               done err
             else
-              res.body.length.should.be.eql(2)
+              res.body.length.should.be.eql(3)
+              done()
+
+      it 'should fetch all tasks that are currently Paused', (done) ->
+
+        obj =
+          filterPage: 0
+          filterLimit: 10
+          filters: 
+            status: 'Paused'
+
+        params = ""
+        for k, v of obj
+          v = JSON.stringify v
+          if params.length > 0
+              params += "&"
+          params += "#{k}=#{v}"
+
+        params = encodeURI params
+
+        request("https://localhost:8080")
+          .get("/tasks?"+params)
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.length.should.be.eql(1)
               done()
 
     describe '*addTask()', ->
@@ -370,6 +433,122 @@ describe "API Integration Tests", ->
             else
               res.body.should.have.property "_id", "aaa908908bbb98cc1d0809ee"
               res.body.should.have.property "status", "Completed"
+              res.body.transactions.should.have.length 4
+              done()
+
+      it 'should fetch a specific task by ID with limit of first 10 records', (done) ->
+
+        obj =
+          filterPage: 0
+          filterLimit: 10
+          filters: {}
+
+        params = ""
+        for k, v of obj
+          v = JSON.stringify v
+          if params.length > 0
+              params += "&"
+          params += "#{k}=#{v}"
+
+        params = encodeURI params
+
+        request("https://localhost:8080")
+          .get("/tasks/bbb777777bbb66cc5d4444ee?"+params)
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.should.have.property "_id", "bbb777777bbb66cc5d4444ee"
+              res.body.should.have.property "status", "Paused"
+              res.body.transactions.should.have.length 10
+              
+              res.body.transactions[0].should.have.property "rerunStatus", "Successful"
+              res.body.transactions[2].should.have.property "rerunStatus", "Successful"
+              res.body.transactions[3].should.have.property "error", "Failed due to incorrect format of ID"
+              res.body.transactions[7].should.have.property "rerunStatus", "Failed"
+              res.body.transactions[8].should.have.property "error", "Failed due to incorrect format of ID"
+              res.body.transactions[9].should.have.property "rerunStatus", "Failed"
+              done()
+
+      it 'should fetch a specific task by ID with filters ( tstatus: "Completed" )', (done) ->
+
+        obj =
+          filterPage: 0
+          filterLimit: 10
+          filters: 
+            tstatus: 'Completed'
+
+        params = ""
+        for k, v of obj
+          v = JSON.stringify v
+          if params.length > 0
+              params += "&"
+          params += "#{k}=#{v}"
+
+        params = encodeURI params
+
+        request("https://localhost:8080")
+          .get("/tasks/bbb777777bbb66cc5d4444ee?"+params)
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.should.have.property "_id", "bbb777777bbb66cc5d4444ee"
+              res.body.should.have.property "status", "Paused"
+              res.body.transactions.should.have.length 9
+
+              res.body.transactions[0].should.have.property "rerunStatus", "Successful"
+              res.body.transactions[1].should.have.property "rerunStatus", "Successful"
+              res.body.transactions[2].should.have.property "rerunStatus", "Successful"
+              res.body.transactions[3].should.have.property "rerunStatus", "Failed"
+              res.body.transactions[4].should.have.property "rerunStatus", "Completed"
+              res.body.transactions[5].should.have.property "rerunStatus", "Successful"
+              res.body.transactions[6].should.have.property "rerunStatus", "Failed"
+              res.body.transactions[7].should.have.property "rerunStatus", "Failed"
+              res.body.transactions[8].should.have.property "rerunStatus", "Failed"
+              done()
+
+      it 'should fetch a specific task by ID with filters ( tstatus: "Completed", rerunStatus: "Successful" )', (done) ->
+
+        obj =
+          filterPage: 0
+          filterLimit: 10
+          filters: 
+            tstatus: 'Completed'
+            rerunStatus: 'Successful'
+
+        params = ""
+        for k, v of obj
+          v = JSON.stringify v
+          if params.length > 0
+              params += "&"
+          params += "#{k}=#{v}"
+
+        params = encodeURI params
+
+        request("https://localhost:8080")
+          .get("/tasks/bbb777777bbb66cc5d4444ee?"+params)
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.should.have.property "_id", "bbb777777bbb66cc5d4444ee"
+              res.body.should.have.property "status", "Paused"
               res.body.transactions.should.have.length 4
               done()
 

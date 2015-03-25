@@ -152,6 +152,49 @@ exports.addTask = ->
 #############################################
 # Retrieves the details for a specific Task #
 #############################################
+
+
+# function to build filtered transactions
+buildFilteredTransactionsArray = (filters, transactions) ->
+
+  # set tempTransactions array to return
+  tempTransactions = []
+
+  i = 0
+  while i < transactions.length
+    # set filter variable to captured failed filters
+    filtersFailed = false
+
+    if filters.tstatus
+      # if tstatus doesnt equal filter then set filter failed to true
+      if filters.tstatus != transactions[i].tstatus
+        filtersFailed = true
+
+    if filters.rerunStatus
+      # if rerunStatus doesnt equal filter then set filter failed to true
+      if filters.rerunStatus != transactions[i].rerunStatus
+        filtersFailed = true
+
+    if filters.hasErrors
+      # if hasErrors filter 'yes' but no hasErrors exist then set filter failed to true
+      if filters.hasErrors == 'yes' && !transactions[i].hasErrors
+        filtersFailed = true
+      # if hasErrors filter 'no' but hasErrors does exist then set filter failed to true
+      else if filters.hasErrors == 'no' && transactions[i].hasErrors
+        filtersFailed = true
+
+    # add transaction if all filters passed successfully
+    if filtersFailed is false
+      tempTransactions.push( transactions[i] )
+
+    # increment counter
+    i++
+
+  return tempTransactions
+
+
+
+
 exports.getTask = (taskId) ->
 
   # Get the values to use
@@ -174,49 +217,22 @@ exports.getTask = (taskId) ->
     result = yield Task.findById(taskId).lean().exec()
     tempTransactions = result.transactions
 
+
     # are filters present
     if Object.keys( filters ).length > 0
-      # clear tempTransactions array to rebuild with filters when applicable
-      tempTransactions = []
-
-      i = 0
-      while i < result.transactions.length
-        # set filter variable to captured failed filters
-        filtersFailed = false
-
-        if filters.tstatus
-          # if tstatus doesnt equal filter then set filter failed to true
-          if filters.tstatus != result.transactions[i].tstatus
-            filtersFailed = true
-
-        if filters.rerunStatus
-          # if rerunStatus doesnt equal filter then set filter failed to true
-          if filters.rerunStatus != result.transactions[i].rerunStatus
-            filtersFailed = true
-
-        if filters.hasErrors
-          # if hasErrors filter 'yes' but no hasErrors exist then set filter failed to true
-          if filters.hasErrors == 'yes' && !result.transactions[i].hasErrors
-            filtersFailed = true
-          # if hasErrors filter 'no' but hasErrors does exist then set filter failed to true
-          else if filters.hasErrors == 'no' && result.transactions[i].hasErrors
-            filtersFailed = true
-
-        # add transaction if all filters passed successfully
-        if filtersFailed is false
-          tempTransactions.push( result.transactions[i] )
-
-        # increment counter
-        i++
+      tempTransactions = buildFilteredTransactionsArray filters, result.transactions
+      
 
     # get new transactions filters length
     totalFilteredTransactions = tempTransactions.length
+
     # assign new transactions filters length to result property
     result.totalFilteredTransactions = totalFilteredTransactions
 
     # work out where to slice from and till where
     sliceFrom = filterSkip
     sliceTo = filterSkip + parseInt filterLimit
+
     # slice the transactions array to return only the correct amount of records at the correct index
     result.transactions = tempTransactions.slice sliceFrom, sliceTo
 
