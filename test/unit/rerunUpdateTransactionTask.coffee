@@ -29,6 +29,7 @@ task1 = new Task
   _id: "53e34b915d0180cf6eef2d01"
   created: "2014-07-15T07:49:26.238Z"
   remainingTransactions: 2
+  totalTransactions: 3
   status: "Processing"
   transactions: [ {tid: "53e096fea0af3105689acd6a", tstatus: "Completed"},
       {tid: "53bfbcd06a2b417f6cd14872", tstatus: "Queued"},

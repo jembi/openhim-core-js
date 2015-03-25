@@ -17,11 +17,11 @@ activeTasks = 0
 findAndProcessAQueuedTask = ->
   TaskModel.findOneAndUpdate { status: 'Queued' }, { status: 'Processing' }, (err, task) ->
     if err
-      logger.err "An error occurred while looking for rerun tasks: #{err}"
+      logger.error "An error occurred while looking for rerun tasks: #{err}"
     else if task
       activeTasks++
       processNextTaskRound task, (err) ->
-        logger.err "An error occurred while processing rerun task #{task._id}: #{err}" if err
+        logger.error "An error occurred while processing rerun task #{task._id}: #{err}" if err
         activeTasks--
         # task has finished its current round, pick up the next one
         if live then findAndProcessAQueuedTask()

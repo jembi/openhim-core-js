@@ -30,6 +30,7 @@ describe "Rerun Task Tests", ->
     _id: "53c4dd063b8cb04d2acf0adc"
     created: "2014-07-15T07:49:26.238Z"
     remainingTransactions: 3
+    totalTransactions: 3
     status: "Queued"
     transactions: [ {tid: "53bfbccc6a2b417f6cd14871", tstatus: "Queued"},
             {tid: "53bfbcd06a2b417f6cd14872", tstatus: "Queued"},
