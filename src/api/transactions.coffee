@@ -307,7 +307,7 @@ exports.updateTransaction = (transactionId) ->
     # Update transaction metrics
     ###
     transactions.Transaction.findById transactionId, (err, doc) ->
-      if updates['$push'].routes?
+      if updates['$push']?.routes?
         for k, route of updates['$push']
           do (route) ->
             if route.metrics?
