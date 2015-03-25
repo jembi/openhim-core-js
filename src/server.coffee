@@ -494,8 +494,11 @@ else
     promises.push stopServer(auditTcpServer, 'Audit TCP').promise if auditTcpServer
     
     if auditUDPServer
-      auditUDPServer.close()
-      logger.info "Stopped Audit UDP server"
+      try
+        auditUDPServer.close()
+        logger.info "Stopped Audit UDP server"
+      catch err
+        # ignore errors when shutting down the server, sometimes its already stopped
 
     if tcpHttpReceiver
       promises.push stopServer(tcpHttpReceiver, 'TCP HTTP Receiver')
