@@ -28,7 +28,7 @@
     "koa-route": "^2.4.0",
     "koa-statsd": "^0.0.2",
     "moment": "^2.8.4",
-    "mongoose": "^3.8.21",
+    "mongoose": "3.8.23",
     "nconf": "^0.7.1",
     "node-uuid": "^1.4.1",
     "nodemailer": "^0.7.1",

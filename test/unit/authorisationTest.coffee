@@ -68,6 +68,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
         ctx.response = {}
         authorisation.authorise ctx, ->
           ctx.authorisedChannel.should.exist
@@ -101,6 +102,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
         ctx.response = {}
         ctx.set = ->
         authorisation.authorise ctx, ->
@@ -136,6 +138,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
         ctx.response = {}
         authorisation.authorise ctx, ->
           ctx.authorisedChannel.should.exist
@@ -174,6 +177,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
         ctx.response = {}
         authorisation.authorise ctx, ->
           ctx.authorisedChannel.should.exist
@@ -212,6 +216,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
         ctx.response = {}
         ctx.set = ->
         authorisation.authorise ctx, ->
@@ -252,6 +257,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
         ctx.request.header = {}
         ctx.request.header['content-type'] = "text/xml; charset=utf-8"
         ctx.response = {}
@@ -293,6 +299,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
         ctx.request.header = {}
         ctx.request.header['content-type'] = "text/dodgy-xml; charset=utf-8"
         ctx.response = {}
@@ -330,6 +337,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/status/enabled"
+        ctx.request.path = "test/status/enabled"
         ctx.response = {}
         authorisation.authorise ctx, ->
           ctx.authorisedChannel.should.exist
@@ -364,6 +372,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/status/disabled"
+        ctx.request.path = "test/status/disabled"
         ctx.response = {}
         ctx.set = ->
         authorisation.authorise ctx, ->
@@ -399,6 +408,7 @@ describe "Authorisation middleware", ->
           cert: ""
         ctx.request = {}
         ctx.request.url = "test/status/deleted"
+        ctx.request.path = "test/status/deleted"
         ctx.response = {}
         ctx.set = ->
         authorisation.authorise ctx, ->

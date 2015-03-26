@@ -2,6 +2,7 @@ ContactGroup = require('../model/contactGroups').ContactGroup
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
+Channel = require('../model/channels').Channel
 
 utils = require "../utils"
 
@@ -19,7 +20,7 @@ exports.addContactGroup = ->
   try
     contactGroup = new ContactGroup contactGroupData
     result = yield Q.ninvoke(contactGroup, 'save')
-    
+
     utils.logAndSetResponse this, 'created', "Contact Group successfully created", 'info'
   catch err
     utils.logAndSetResponse this, 'bad request', "Could not add a contact group via the API: #{err}", 'error'
@@ -88,9 +89,23 @@ exports.removeContactGroup = (contactGroupId) ->
   contactGroupId = unescape contactGroupId
 
   try
-    yield ContactGroup.findByIdAndRemove(contactGroupId).exec()
-    this.body = "Successfully removed contact group with ID '#{contactGroupId}'"
-    logger.info "User #{this.authenticated.email} removed contact group with id #{contactGroupId}"
+    # find out if there are any alerts associated with this group
+    linkedAlerts = yield Channel.find({
+      alerts :{
+        $elemMatch :{
+          groups: {
+            $in: [contactGroupId]
+          }
+        }
+      }
+    }).exec()
+    if linkedAlerts.length > 0
+      this.status = "conflict"
+      this.body = linkedAlerts
+    else
+      yield ContactGroup.findByIdAndRemove(contactGroupId).exec()
+      this.body = "Successfully removed contact group with ID '#{contactGroupId}'"
+      logger.info "User #{this.authenticated.email} removed contact group with id #{contactGroupId}"
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not remove Contact Group by id {contactGroupId} via the API: #{err}", 'error'
 

@@ -1,6 +1,7 @@
 should = require "should"
 request = require "supertest"
 ContactGroup = require("../../lib/model/contactGroups").ContactGroup
+Channel = require("../../lib/model/channels").Channel
 server = require "../../lib/server"
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
@@ -73,7 +74,7 @@ describe "API Integration Tests", ->
             else
               done()
 
-    
+
     describe "*getContactGroup(_id)", ->
       contactGroupData =
         group: "Group 1"
@@ -294,6 +295,58 @@ describe "API Integration Tests", ->
                     ContactGroup.findOne { group: "Group 1" }, (error, notFoundDoc) ->
                       (notFoundDoc == null).should.be.true
                       (countBefore - 1).should.equal countAfter
+                      done()
+
+      it  "should not remove an contactGroup with an associated channel", (done) ->
+        contactGroupData =
+          group: "Group 2"
+          users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'},
+            {user: 'User 2', method: 'email', maxAlerts: '1 per hour'},
+            {user: 'User 3', method: 'sms', maxAlerts: '1 per day'},
+            {user: 'User 4', method: 'email', maxAlerts: 'no max'},
+            {user: 'User 5', method: 'sms', maxAlerts: '1 per hour'},
+            {user: 'User 6', method: 'email', maxAlerts: '1 per day'}]
+        contactGroup = new ContactGroup contactGroupData
+        contactGroup.save (error, group) ->
+          channel1 = {
+            name: "TestChannel1XXX"
+            urlPattern: "test/sample"
+            allow: [ "PoC", "Test1", "Test2" ]
+            routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+            txViewAcl: "aGroup"
+            alerts: [
+              {
+                "status" : "300"
+                "failureRate" : 13
+                "users" : []
+                "groups" : [
+                  contactGroup._id
+                ]
+              }
+            ]
+          }
+          (new Channel channel1).save (err, ch1) ->
+            should.not.exist(error)
+            ContactGroup.count (err, countBefore) ->
+              request("https://localhost:8080")
+              .del("/groups/" + contactGroup._id)
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .expect(409)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  ContactGroup.count (err, countAfter) ->
+                    ContactGroup.findOne { group: "Group 2" }, (error, notFoundDoc) ->
+                      countBefore.should.equal countAfter
                       done()
 
       it  "should not allow a non admin user to remove a contactGroup", (done) ->
