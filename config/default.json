@@ -100,5 +100,8 @@
   },
   "tlsClientLookup": {
     "type": "strict"
+  },
+  "agenda": {
+    "startupDelay": 500
   }
 }

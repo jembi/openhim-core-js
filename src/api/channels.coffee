@@ -29,7 +29,7 @@ exports.getChannels = ->
 processPostAddTriggers = (channel) ->
   if channel.type and authMiddleware.isChannelEnabled channel
     if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
-      tcpAdapter.startupTCPServer channel._id, (err) -> logger.error err if err
+      tcpAdapter.notifyMasterToStartTCPServer channel._id, (err) -> logger.error err if err
     else if channel.type is 'polling'
       polling.registerPollingChannel channel, (err) -> logger.error err if err
 
@@ -106,9 +106,9 @@ processPostUpdateTriggers = (channel) ->
   if channel.type
     if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
       if authMiddleware.isChannelEnabled channel
-        tcpAdapter.startupTCPServer channel._id, (err) -> logger.error err if err
+        tcpAdapter.notifyMasterToStartTCPServer channel._id, (err) -> logger.error err if err
       else
-        tcpAdapter.stopServerForChannel channel, (err) -> logger.error err if err
+        tcpAdapter.notifyMasterToStopTCPServer channel._id, (err) -> logger.error err if err
 
     else if channel.type is 'polling'
       if authMiddleware.isChannelEnabled channel
@@ -153,7 +153,7 @@ exports.updateChannel = (channelId) ->
 processPostDeleteTriggers = (channel) ->
   if channel.type
     if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
-      tcpAdapter.stopServerForChannel channel, (err) -> logger.error err if err
+      tcpAdapter.notifyMasterToStopTCPServer channel._id, (err) -> logger.error err if err
     else if channel.type is 'polling'
       polling.removePollingChannel channel, (err) -> logger.error err if err
 

@@ -20,7 +20,6 @@ describe 'Server tests', ->
 
   it 'should be able to restart the server in under 5 seconds', (done) ->
     future = moment().add '5', 's'
-    server.stop ->
-      server.start ports, ->
-        (moment().isBefore future).should.be.true
-        done()
+    server.restartServer ->
+      (moment().isBefore future).should.be.true
+      done()

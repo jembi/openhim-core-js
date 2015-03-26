@@ -87,7 +87,7 @@ describe "API Integration Tests", ->
     describe "*restart()", ->
 
       it "should successfully send API request to restart the server", (done) ->
-        spy = sinon.spy server, 'startRestartServerAgenda'
+        stub = sinon.stub server, 'startRestartServerTimeout'
         request("https://localhost:8080")
           .post("/restart")
           .set("auth-username", testUtils.rootUser.email)
@@ -100,7 +100,7 @@ describe "API Integration Tests", ->
             if err
               done err
             else
-              spy.calledOnce.should.be.true
+              stub.calledOnce.should.be.true
               done()
 
       it "should not allow non admin user to restart the server", (done) ->

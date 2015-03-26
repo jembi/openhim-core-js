@@ -4,7 +4,7 @@
     "atnaUrl": "mongodb://localhost/openhim-development"
   },
   "logger": {
-    "level": "info"
+    "level": "debug"
   },
   "statsd": {
     "host": "127.0.0.1"

@@ -15,11 +15,18 @@ tcpServers = []
 newKey = 0
 datastore = {}
 
+process.on 'message', (msg) ->
+  if msg.type is 'start-tcp-channel'
+    logger.debug "Recieved message to start tcp channel: #{msg.channelID}"
+    exports.startupTCPServer msg.channelID, ->
+  else if msg.type is 'stop-tcp-channel'
+    logger.debug "Recieved message to stop tcp channel: #{msg.channelID}"
+    exports.stopServerForChannel msg.channelID, ->
+
 exports.popTransaction = (key) ->
   res = datastore["#{key}"]
   delete datastore["#{key}"]
   return res
-
 
 startListening = (channel, tcpServer, host, port, callback) ->
   tcpServer.listen port, host, ->
@@ -27,6 +34,12 @@ startListening = (channel, tcpServer, host, port, callback) ->
     callback null
   tcpServer.on 'error', (err) ->
     logger.error err + ' Host: ' + host + ' Port: ' + port
+
+exports.notifyMasterToStartTCPServer = (channelID, callback) ->
+  logger.debug "Sending message to master to start tcp channel: #{channelID}"
+  process.send
+    type: 'start-tcp-channel'
+    channelID: channelID
 
 exports.startupTCPServer = (channelID, callback) ->
   for existingServer in tcpServers
@@ -126,8 +139,12 @@ stopTCPServers = (servers, callback) ->
       defer = Q.defer()
 
       server.server.close (err) ->
-        logger.info "Channel #{server.channelID}: Stopped TCP/TLS server"
-        defer.resolve()
+        if err
+          logger.error "Could not close tcp server: #{err}"
+          defer.reject err
+        else
+          logger.info "Channel #{server.channelID}: Stopped TCP/TLS server"
+          defer.resolve()
 
       promises.push defer.promise
 
@@ -138,20 +155,26 @@ exports.stopServers = (callback) ->
     tcpServers = []
     callback()
 
-exports.stopServerForChannel = (channel, callback) ->
+exports.notifyMasterToStopTCPServer = (channelID, callback) ->
+  logger.debug "Sending message to master to stop tcp channel: #{channelID}"
+  process.send
+    type: 'stop-tcp-channel'
+    channelID: channelID
+
+exports.stopServerForChannel = (channelID, callback) ->
   server = null
   notStoppedTcpServers = []
-  for s in tcpServers
-    if s.channelID.equals channel._id
-      server = s
+  for serverDetails in tcpServers
+    if serverDetails.channelID.equals channelID
+      server = serverDetails
     else
       # push all except the server we're stopping
-      notStoppedTcpServers.push s
+      notStoppedTcpServers.push serverDetails
 
-  return callback "Server for channel #{channel._id} not running" if not server
+  return callback "Server for channel #{channelID} not running" if not server
 
   tcpServers = notStoppedTcpServers
-  stopTCPServers [s], callback
+  stopTCPServers [server], callback
 
 
 if process.env.NODE_ENV == "test"

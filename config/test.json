@@ -15,5 +15,8 @@
   },
   "caching": {
     "enabled": false
+  },
+  "agenda": {
+    "startupDelay": 0
   }
 }
