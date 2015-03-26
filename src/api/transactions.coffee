@@ -30,6 +30,9 @@ getProjectionObject = (filterRepresentation) ->
     when "full"
       # view all transaction data
       return {}
+    when "idsOnly"
+      # view only '_id's
+      return { "_id": 1 }
     else
       # no filterRepresentation supplied - simple view
       # view minimum required data for transactions
