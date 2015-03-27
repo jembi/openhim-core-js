@@ -159,7 +159,7 @@ exports.getTransactions = ->
       .exec()
 
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not retrieve transactions via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not retrieve transactions via the API: #{e}", 'error'
 
 ###
 # Adds an transaction
@@ -168,7 +168,7 @@ exports.addTransaction = ->
 
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addTransaction denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addTransaction denied.", 'info'
     return
 
   # Get the values to use
@@ -178,10 +178,10 @@ exports.addTransaction = ->
   try
     # Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Q.ninvoke tx, "save"
-    this.status = 'created'
+    this.status = 201
     logger.info "User #{this.authenticated.email} created transaction with id #{tx.id}"
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not add a transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not add a transaction via the API: #{e}", 'error'
 
 
 ###
@@ -208,7 +208,7 @@ exports.getTransactionById = (transactionId) ->
       txChannelID = yield transactions.Transaction.findById(transactionId, channelID: 1, _id: 0).exec()
       if txChannelID?.length is 0
         this.body = "Could not find transaction with ID: #{transactionId}"
-        this.status = 'not found'
+        this.status = 404
         return
       else
         # assume user is not allowed to view all content - show only 'simpledetails'
@@ -234,19 +234,19 @@ exports.getTransactionById = (transactionId) ->
     # Test if the result if valid
     if not result
       this.body = "Could not find transaction with ID: #{transactionId}"
-      this.status = 'not found'
+      this.status = 404
     # Test if the user is authorised
     else if not authorisation.inGroup 'admin', this.authenticated
       channels = yield authorisation.getUserViewableChannels this.authenticated
       if getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0
         this.body = result
       else
-        utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not authenticated to retrieve transaction #{transactionId}", 'info'
+        utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not authenticated to retrieve transaction #{transactionId}", 'info'
     else
       this.body = result
 
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not get transaction by ID via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not get transaction by ID via the API: #{e}", 'error'
 
 
 ###
@@ -283,7 +283,7 @@ exports.findTransactionByClientId = (clientId) ->
       .exec()
 
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not get transaction by clientID via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not get transaction by clientID via the API: #{e}", 'error'
 
 
 ###
@@ -293,7 +293,7 @@ exports.updateTransaction = (transactionId) ->
 
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateTransaction denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateTransaction denied.", 'info'
     return
 
   transactionId = unescape transactionId
@@ -303,7 +303,7 @@ exports.updateTransaction = (transactionId) ->
   try
     yield transactions.Transaction.findByIdAndUpdate(transactionId, updates).exec()
     that.body = "Transaction with ID: #{transactionId} successfully updated"
-    that.status = 'ok'
+    that.status = 200
     logger.info "User #{that.authenticated.email} updated transaction with id #{transactionId}"
 
     ###
@@ -364,7 +364,7 @@ exports.updateTransaction = (transactionId) ->
                       sdc.gauge "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
 
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not update transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not update transaction via the API: #{e}", 'error'
 
 
 ###
@@ -374,7 +374,7 @@ exports.removeTransaction = (transactionId) ->
 
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeTransaction denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeTransaction denied.", 'info'
     return
 
   # Get the values to use
@@ -383,7 +383,7 @@ exports.removeTransaction = (transactionId) ->
   try
     yield transactions.Transaction.findByIdAndRemove(transactionId).exec()
     this.body = 'Transaction successfully deleted'
-    this.status = 'ok'
+    this.status = 200
     logger.info "User #{this.authenticated.email} removed transaction with id #{transactionId}"
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not remove transaction via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not remove transaction via the API: #{e}", 'error'

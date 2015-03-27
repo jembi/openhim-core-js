@@ -766,7 +766,7 @@ describe "e2e Integration Tests", ->
     mediatorResponse =
       status: "Successful"
       response:
-        status: "200"
+        status: 200
         headers: {}
         body: "<transaction response>"
         timestamp: 1412257881909
@@ -780,7 +780,7 @@ describe "e2e Integration Tests", ->
           method: "POST"
           timestamp: 1412257881904
         response:
-          status: "200"
+          status: 200
           headers: {}
           body: "<route response>"
           timestamp: 1412257881909
@@ -871,7 +871,7 @@ describe "e2e Integration Tests", ->
       mediatorResponse =
         status: "Successful"
         response:
-          status: "200"
+          status: 200
           headers: {}
           body: "<transaction response>"
           timestamp: 1412257881909
@@ -885,7 +885,7 @@ describe "e2e Integration Tests", ->
             method: "POST"
             timestamp: 1412257881904
           response:
-            status: "200"
+            status: 200
             headers: {}
             body: "<route response>"
             timestamp: 1412257881909

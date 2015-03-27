@@ -107,7 +107,7 @@ describe "Authorisation middleware", ->
         ctx.set = ->
         authorisation.authorise ctx, ->
           (ctx.authorisedChannel == undefined).should.be.true
-          ctx.response.status.should.be.exactly "unauthorized"
+          ctx.response.status.should.be.exactly 401
           done()
 
     it "should allow a request if the client is authorised to use the channel by clientID", (done) ->

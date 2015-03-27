@@ -9,7 +9,6 @@ config = require '../config/config'
 config.mongo = config.get 'mongo'
 config.router = config.get 'router'
 logger = require "winston"
-status = require "http-status"
 cookie = require 'cookie'
 fs = require 'fs'
 utils = require '../utils'
@@ -68,7 +67,7 @@ setCookiesOnContext = (ctx, value) ->
       ctx.cookies.set p_key,p_val,c_opts
 
 handleServerError = (ctx, err) ->
-  ctx.response.status = status.INTERNAL_SERVER_ERROR
+  ctx.response.status = 500
   ctx.response.timestamp = new Date()
   ctx.response.body = "An internal server error occurred"
   logger.error "Internal server error occured: #{err} "
@@ -312,7 +311,7 @@ sendSocketRequest = (ctx, route, options) ->
     if route.secured and not client.authorized
       return defered.reject new Error 'Client authorization failed'
     response.body = Buffer.concat bufs
-    response.status = status.OK
+    response.status = 200
     response.timestamp = new Date()
     if not defered.promise.isRejected()
       defered.resolve response

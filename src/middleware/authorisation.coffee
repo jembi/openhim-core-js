@@ -124,7 +124,7 @@ exports.authorise = (ctx, done) ->
             return done()
 
     # authorisation failed
-    ctx.response.status = "unauthorized"
+    ctx.response.status = 401
     if config.authentication.enableBasicAuthentication
       ctx.set "WWW-Authenticate", "Basic"
     logger.info "The request, '" + ctx.request.path + "', is not authorised to access any channels."

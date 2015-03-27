@@ -27,7 +27,7 @@ getProjectionObject = (filterRepresentation) ->
 exports.addAudit = ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addAudit denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addAudit denied.", 'info'
     return
 
   auditData = this.request.body
@@ -38,11 +38,11 @@ exports.addAudit = ->
     
     logger.info "User #{this.authenticated.email} created audit with id #{audit.id}"
     this.body = 'Audit successfully created'
-    this.status = 'created'
+    this.status = 201
   catch e
     logger.error "Could not add a audit via the API: #{e.message}"
     this.body = e.message
-    this.status = 'bad request'
+    this.status = 400
 
 
 
@@ -53,7 +53,7 @@ exports.addAudit = ->
 exports.getAudits = ->
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getAudits denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getAudits denied.", 'info'
     return
 
   try
@@ -102,7 +102,7 @@ exports.getAudits = ->
       .sort 'eventIdentification.eventDateTime': -1
       .exec()
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not retrieve audits via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not retrieve audits via the API: #{e}", 'error'
 
 
 
@@ -114,7 +114,7 @@ exports.getAudits = ->
 exports.getAuditById = (auditId) ->
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getAuditById denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getAuditById denied.", 'info'
     return
 
   # Get the values to use
@@ -129,12 +129,12 @@ exports.getAuditById = (auditId) ->
     # Test if the result if valid
     if not result
       this.body = "Could not find audits record with ID: #{auditId}"
-      this.status = 'not found'
+      this.status = 404
     else
       this.body = result
 
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not get audit by ID via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not get audit by ID via the API: #{e}", 'error'
 
 
 
@@ -145,7 +145,7 @@ exports.getAuditsFilterOptions = ->
 
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getAudits denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getAudits denied.", 'info'
     return
 
   try
@@ -166,6 +166,6 @@ exports.getAuditsFilterOptions = ->
     
     this.body = responseObject
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not retrieve audits filter options via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not retrieve audits filter options via the API: #{e}", 'error'
 
   

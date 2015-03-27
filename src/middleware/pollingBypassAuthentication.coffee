@@ -34,5 +34,5 @@ exports.koaMiddleware = (next) ->
     sdc.timing "#{domain}.pollingBypassAuthenticationMiddleware", startTime if statsdServer.enabled
     yield next
   else
-    this.response.status = "unauthorized"
+    this.response.status = 401
     sdc.timing "#{domain}.pollingBypassAuthenticationMiddleware", startTime if statsdServer.enabled

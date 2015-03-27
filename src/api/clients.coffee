@@ -11,7 +11,7 @@ exports.addClient = () ->
 
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addClient denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addClient denied.", 'info'
     return
 
   clientData = this.request.body
@@ -22,11 +22,11 @@ exports.addClient = () ->
     
     logger.info "User #{this.authenticated.email} created client with id #{client.id}"
     this.body = 'Client successfully created'
-    this.status = 'created'
+    this.status = 201
   catch e
     logger.error "Could not add a client via the API: #{e.message}"
     this.body = e.message
-    this.status = 'bad request'
+    this.status = 400
 
 ###
 # Retrieves the details of a specific client
@@ -41,12 +41,12 @@ exports.getClient = (clientId, property) ->
         _id: 0
         name: 1
     else
-      utils.logAndSetResponse this, 'not found', "The property (#{property}) you are trying to retrieve is not found.", 'info'
+      utils.logAndSetResponse this, 404, "The property (#{property}) you are trying to retrieve is not found.", 'info'
       return
   else
     # Test if the user is authorised
     if not authorisation.inGroup 'admin', this.authenticated
-      utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to findClientById denied.", 'info'
+      utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to findClientById denied.", 'info'
       return
 
   clientId = unescape clientId
@@ -54,20 +54,20 @@ exports.getClient = (clientId, property) ->
   try
     result = yield Client.findById(clientId, projectionRestriction).exec()
     if result is null
-      utils.logAndSetResponse this, 'not found', "Client with id #{clientId} could not be found.", 'info'
+      utils.logAndSetResponse this, 404, "Client with id #{clientId} could not be found.", 'info'
     else
       this.body = result
   catch e
     logger.error "Could not find client by id #{clientId} via the API: #{e.message}"
     this.body = e.message
-    this.status = 'internal server error'
+    this.status = 500
 
 
 exports.findClientByDomain = (clientDomain) ->
 
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to findClientByDomain denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to findClientByDomain denied.", 'info'
     return
 
   clientDomain = unescape clientDomain
@@ -75,19 +75,19 @@ exports.findClientByDomain = (clientDomain) ->
   try
     result = yield Client.findOne(clientDomain: clientDomain).exec()
     if result is null
-      utils.logAndSetResponse this, 'not found', "Could not find client with clientDomain #{clientDomain}", 'info'
+      utils.logAndSetResponse this, 404, "Could not find client with clientDomain #{clientDomain}", 'info'
     else
       this.body = result
   catch e
     logger.error "Could not find client by client Domain #{clientDomain} via the API: #{e.message}"
     this.body = e.message
-    this.status = 'internal server error'
+    this.status = 500
 
 exports.updateClient = (clientId) ->
 
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateClient denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateClient denied.", 'info'
     return
 
   clientId = unescape clientId
@@ -103,13 +103,13 @@ exports.updateClient = (clientId) ->
   catch e
     logger.error "Could not update client by ID #{clientId} via the API: #{e.message}"
     this.body = e.message
-    this.status = 'internal server error'
+    this.status = 500
 
 exports.removeClient = (clientId) ->
  
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeClient denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeClient denied.", 'info'
     return
 
   clientId = unescape clientId
@@ -121,13 +121,13 @@ exports.removeClient = (clientId) ->
   catch e
     logger.error "Could not remove client by ID #{clientId} via the API: #{e.message}"
     this.body = e.message
-    this.status = 'internal server error'
+    this.status = 500
 
 exports.getClients = () ->
 
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getClients denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getClients denied.", 'info'
     return
 
   try
@@ -135,4 +135,4 @@ exports.getClients = () ->
   catch e
     logger.error "Could not fetch all clients via the API: #{e.message}"
     this.message = e.message
-    this.status = 'internal server error'
+    this.status = 500
