@@ -65,7 +65,7 @@ addRouteEvents = (dst, route, prefix, tsDiff) ->
     comp: "#{prefix}-#{route.name}"
     ev: 'start'
 
-  routeStatus = 'ok'
+  routeStatus = 200
   if 400 <= route.response.status <= 499
     routeStatus = 'completed'
   else if 500 <= route.response.status <= 599
@@ -115,7 +115,7 @@ storeVisualizerEvents = (ctx, done) ->
     tsDiff = getTsDiff startTS, ctx.mediatorResponse.orchestrations
     addRouteEvents trxEvents, orch, 'orch', tsDiff for orch in ctx.mediatorResponse.orchestrations
 
-  status = 'ok'
+  status = 200
   if ctx.transactionStatus is messageStore.transactionStatus.COMPLETED
     status = 'completed'
   else if ctx.transactionStatus is messageStore.transactionStatus.COMPLETED_W_ERR

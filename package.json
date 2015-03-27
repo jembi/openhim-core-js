@@ -19,7 +19,7 @@
     "forever-monitor": "^1.5.2",
     "glossy": "^0.1.7",
     "http-status": "^0.1.8",
-    "koa": "^0.7.0",
+    "koa": "0.18.1",
     "koa-basic-auth": "^1.1.2",
     "koa-body-parser": "^1.1.0",
     "koa-compress": "^1.0.8",

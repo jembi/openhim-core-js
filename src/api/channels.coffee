@@ -24,7 +24,7 @@ exports.getChannels = ->
   try
     this.body = yield authorisation.getUserViewableChannels this.authenticated
   catch err
-    utils.logAndSetResponse this, 'internal server error', "Could not fetch all channels via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not fetch all channels via the API: #{err}", 'error'
 
 processPostAddTriggers = (channel) ->
   if channel.type and authMiddleware.isChannelEnabled channel
@@ -39,7 +39,7 @@ processPostAddTriggers = (channel) ->
 exports.addChannel = ->
   # Test if the user is authorised
   if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addChannel denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addChannel denied.", 'info'
     return
 
   # Get the values to use
@@ -50,20 +50,20 @@ exports.addChannel = ->
 
     if not isPathValid channel
       this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]'
-      this.status = 'bad request'
+      this.status = 400
       return
 
     result = yield Q.ninvoke channel, 'save'
 
     # All ok! So set the result
     this.body = 'Channel successfully created'
-    this.status = 'created'
+    this.status = 201
     logger.info 'User %s created channel with id %s', this.authenticated.email, channel.id
 
     processPostAddTriggers channel
   catch err
     # Error! So inform the user
-    utils.logAndSetResponse this, 'bad request', "Could not add channel via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 400, "Could not add channel via the API: #{err}", 'error'
 
 ###
 # Retrieves the details for a specific channel
@@ -90,17 +90,17 @@ exports.getChannel = (channelId) ->
       if accessDenied
         # Channel exists but this user doesn't have access
         this.body = "Access denied to channel with Id: '#{id}'."
-        this.status = 'forbidden'
+        this.status = 403
       else
         # Channel not found! So inform the user
         this.body = "We could not find a channel with Id:'#{id}'."
-        this.status = 'not found'
+        this.status = 404
     else
       # All ok! So set the result
       this.body = result
   catch err
     # Error! So inform the user
-    utils.logAndSetResponse this, 'internal server error', "Could not fetch channel by Id '#{id}' via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not fetch channel by Id '#{id}' via the API: #{err}", 'error'
 
 processPostUpdateTriggers = (channel) ->
   if channel.type
@@ -123,7 +123,7 @@ exports.updateChannel = (channelId) ->
 
   # Test if the user is authorised
   if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateChannel denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateChannel denied.", 'info'
     return
 
   # Get the values to use
@@ -135,7 +135,7 @@ exports.updateChannel = (channelId) ->
     delete channelData._id
 
   if not isPathValid channelData
-    utils.logAndSetResponse this, 'bad request', 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]', 'info'
+    utils.logAndSetResponse this, 400, 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]', 'info'
     return
 
   try
@@ -148,7 +148,7 @@ exports.updateChannel = (channelId) ->
     processPostUpdateTriggers channel
   catch err
     # Error! So inform the user
-    utils.logAndSetResponse this, 'internal server error', "Could not update channel by id: #{id} via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not update channel by id: #{id} via the API: #{e}", 'error'
 
 processPostDeleteTriggers = (channel) ->
   if channel.type
@@ -164,7 +164,7 @@ exports.removeChannel = (channelId) ->
 
   # Test if the user is authorised
   if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
     return
 
   # Get the values to use
@@ -188,4 +188,4 @@ exports.removeChannel = (channelId) ->
     processPostDeleteTriggers channel
   catch err
     # Error! So inform the user
-    utils.logAndSetResponse this, 'internal server error', "Could not remove channel by id: #{id} via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not remove channel by id: #{id} via the API: #{e}", 'error'

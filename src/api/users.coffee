@@ -21,13 +21,13 @@ exports.authenticate = (email) ->
     user = yield User.findOne(email: email).exec()
 
     if not user
-      utils.logAndSetResponse this, 'not found', "Could not find user by email #{email}", 'info'
+      utils.logAndSetResponse this, 404, "Could not find user by email #{email}", 'info'
     else
       this.body =
         salt: user.passwordSalt
         ts: new Date()
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Error during authentication #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Error during authentication #{e}", 'error'
 
 
 #######################################
@@ -44,18 +44,18 @@ exports.getNewUser = (token) ->
     result = yield User.findOne(token: token, projectionRestriction).exec()
     if not result
       this.body = "User with token #{token} could not be found."
-      this.status = 'not found'
+      this.status = 404
     else
       # if expiry date has past
       if moment(result.expiry).utc().format() < moment().utc().format()
         # new user- set password - expired
         this.body = "User with token #{token} has expired to set their password."
-        this.status = 'gone'
+        this.status = 410
       else
         # valid new user - set password
         this.body = result
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not find user with token #{token} via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not find user with token #{token} via the API #{e}", 'error'
 
 
 # update the password/details for the new user
@@ -69,18 +69,18 @@ exports.updateNewUser = (token) ->
 
     if not newUserOldData
       this.body = "User with token #{token} could not be found."
-      this.status = 'not found'
+      this.status = 404
       return
     else
       # if expiry date has past
       if moment(newUserOldData.expiry).utc().format() < moment().utc().format()
         # new user- set password - expired
         this.body = "User with token #{token} has expired to set their password."
-        this.status = 'gone'
+        this.status = 410
         return
 
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not find user with token #{token} via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not find user with token #{token} via the API #{e}", 'error'
     return
 
 
@@ -104,7 +104,7 @@ exports.updateNewUser = (token) ->
     this.body = "Successfully set new user password."
     logger.info "New user updated by token #{token}"
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not update user with token #{token} via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not update user with token #{token} via the API #{e}", 'error'
 
 
 #######################################
@@ -135,7 +135,7 @@ htmlMessageTemplate = (firstname, setPasswordLink) -> """
 exports.addUser = ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to addUser denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addUser denied.", 'info'
     return
 
   userData = this.request.body
@@ -168,10 +168,10 @@ exports.addUser = ->
       logger.info 'The email has been sent to the new user'
     
     this.body = 'User successfully created'
-    this.status = 'created'
+    this.status = 201
     logger.info "User #{this.authenticated.email} created user #{userData.email}"
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not add user via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not add user via the API #{e}", 'error'
 
 
 ###
@@ -183,18 +183,18 @@ exports.getUser = (email) ->
 
   # Test if the user is authorised, allow a user to fetch their own details
   if not authorisation.inGroup('admin', this.authenticated) and this.authenticated.email isnt email
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getUser denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getUser denied.", 'info'
     return
 
   try
     result = yield User.findOne(email: email).exec()
     if not result
       this.body = "User with email #{email} could not be found."
-      this.status = 'not found'
+      this.status = 404
     else
       this.body = result
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not get user via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not get user via the API #{e}", 'error'
 
 
 exports.updateUser = (email) ->
@@ -203,7 +203,7 @@ exports.updateUser = (email) ->
 
   # Test if the user is authorised, allow a user to update their own details
   if not authorisation.inGroup('admin', this.authenticated) and this.authenticated.email isnt email
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateUser denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateUser denied.", 'info'
     return
 
   userData = this.request.body
@@ -225,21 +225,21 @@ exports.updateUser = (email) ->
     this.body = "Successfully updated user."
     logger.info "User #{this.authenticated.email} updated user #{userData.email}"
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not update user #{email} via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not update user #{email} via the API #{e}", 'error'
 
 
 exports.removeUser = (email) ->
 
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeUser denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeUser denied.", 'info'
     return
 
   email = unescape email
 
   # Test if the user is root@openhim.org
   if email is 'root@openhim.org'
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is OpenHIM root, User cannot be deleted through the API", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is OpenHIM root, User cannot be deleted through the API", 'info'
     return
 
   try
@@ -247,16 +247,16 @@ exports.removeUser = (email) ->
     this.body = "Successfully removed user with email #{email}"
     logger.info "User #{this.authenticated.email} removed user #{email}"
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not remove user #{email} via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not remove user #{email} via the API #{e}", 'error'
 
 
 exports.getUsers = ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getUsers denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getUsers denied.", 'info'
     return
 
   try
     this.body = yield User.find().exec()
   catch e
-    utils.logAndSetResponse this, 'internal server error', "Could not fetch all users via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not fetch all users via the API #{e}", 'error'

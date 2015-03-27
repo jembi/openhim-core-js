@@ -44,7 +44,7 @@ isRerunPermissionsValid = (user, transactions, callback) ->
 exports.getTasks = ->
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to getTasks denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getTasks denied.", 'info'
     return
 
   try
@@ -79,7 +79,7 @@ exports.getTasks = ->
       .exec()
 
   catch err
-    utils.logAndSetResponse this, 'internal server error', "Could not fetch all tasks via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not fetch all tasks via the API: #{err}", 'error'
 
 
 areTransactionChannelsValid = (transactions, callback) ->
@@ -111,7 +111,7 @@ exports.addTask = ->
 
     if transactions.batchSize?
       if transactions.batchSize <= 0
-        return utils.logAndSetResponse this, 'bad request', 'Invalid batch size specified', 'info'
+        return utils.logAndSetResponse this, 400, 'Invalid batch size specified', 'info'
       taskObject.batchSize = transactions.batchSize
 
     if transactions.paused
@@ -127,7 +127,7 @@ exports.addTask = ->
       trxChannelsValid = yield areTrxChannelsValid(transactions)
 
       if !trxChannelsValid
-        utils.logAndSetResponse this, 'bad request', 'Cannot queue task as there are transactions with disabled or deleted channels', 'info'
+        utils.logAndSetResponse this, 400, 'Cannot queue task as there are transactions with disabled or deleted channels', 'info'
         return
 
       transactionsArr.push tid: tid for tid in transactions.tids
@@ -138,13 +138,13 @@ exports.addTask = ->
       result = yield Q.ninvoke(task, 'save')
 
       # All ok! So set the result
-      utils.logAndSetResponse this, 'created', "User #{this.authenticated.email} created task with id #{task.id}", 'info'
+      utils.logAndSetResponse this, 201, "User #{this.authenticated.email} created task with id #{task.id}", 'info'
     else
       # rerun task creation not allowed
-      utils.logAndSetResponse this, 'forbidden', "Insufficient permissions prevents this rerun task from being created", 'error'
+      utils.logAndSetResponse this, 403, "Insufficient permissions prevents this rerun task from being created", 'error'
   catch err
     # Error! So inform the user
-    utils.logAndSetResponse this, 'internal server error', "Could not add Task via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not add Task via the API: #{err}", 'error'
 
 
 
@@ -239,12 +239,12 @@ exports.getTask = (taskId) ->
     # Test if the result if valid
     if result == null
       # task not found! So inform the user
-      utils.logAndSetResponse this, 'not found', "We could not find a Task with this ID: #{taskId}.", 'info'
+      utils.logAndSetResponse this, 404, "We could not find a Task with this ID: #{taskId}.", 'info'
     else
       this.body = result
       # All ok! So set the result
   catch err
-    utils.logAndSetResponse this, 'internal server error', "Could not fetch Task by ID {taskId} via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not fetch Task by ID {taskId} via the API: #{err}", 'error'
 
 
 
@@ -255,7 +255,7 @@ exports.getTask = (taskId) ->
 exports.updateTask = (taskId) ->
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to updateTask denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateTask denied.", 'info'
     return
 
   # Get the values to use
@@ -272,7 +272,7 @@ exports.updateTask = (taskId) ->
     this.body = 'The Task was successfully updated'
     logger.info "User #{this.authenticated.email} updated task with id #{taskId}"
   catch err
-    utils.logAndSetResponse this, 'internal server error', "Could not update Task by ID {taskId} via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not update Task by ID {taskId} via the API: #{err}", 'error'
 
 
 
@@ -282,7 +282,7 @@ exports.updateTask = (taskId) ->
 exports.removeTask = (taskId) ->
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to removeTask denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeTask denied.", 'info'
     return
 
   # Get the values to use
@@ -296,4 +296,4 @@ exports.removeTask = (taskId) ->
     this.body = 'The Task was successfully deleted'
     logger.info "User #{this.authenticated.email} removed task with id #{taskId}"
   catch err
-    utils.logAndSetResponse this, 'internal server error', "Could not remove Task by ID {taskId} via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not remove Task by ID {taskId} via the API: #{err}", 'error'
