@@ -7,11 +7,11 @@ exports.getLatestEvents = (receivedTime) ->
     result = yield VisualizerEvent.find({ 'created': { '$gte': rtDate } }).sort({ 'ts': 1 }).exec()
     this.body = events: result
   catch err
-    utils.logAndSetResponse this, 'internal server error', "Could not fetch the latest visualizer events via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not fetch the latest visualizer events via the API: #{err}", 'error'
 
 exports.sync = (next) ->
   try
     this.body = now: Date.now()
     yield next
   catch err
-    utils.logAndSetResponse this, 'internal server error', "Could not fetch current date via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not fetch current date via the API: #{err}", 'error'

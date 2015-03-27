@@ -13,7 +13,8 @@
     "timeout": 60000
   },
   "api": {
-    "httpsPort": 8080
+    "httpsPort": 8080,
+    "authWindowSeconds": 10
   },
   "rerun": {
     "httpPort": 7786,
@@ -100,5 +101,8 @@
   },
   "tlsClientLookup": {
     "type": "strict"
+  },
+  "agenda": {
+    "startupDelay": 500
   }
 }

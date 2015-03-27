@@ -1,6 +1,8 @@
 User = require('../model/users').User
 crypto = require 'crypto'
 logger = require 'winston'
+config = require "../config/config"
+config.api = config.get('api')
 
 exports.authenticate = (next) ->
 
@@ -13,15 +15,16 @@ exports.authenticate = (next) ->
   # check if request is recent
   requestDate = new Date Date.parse authTS
 
+  authWindowSeconds = config.api.authWindowSeconds ? 10
   to = new Date()
-  to.setSeconds(to.getSeconds() + 2)
+  to.setSeconds(to.getSeconds() + authWindowSeconds)
   from = new Date()
-  from.setSeconds(from.getSeconds() - 2)
+  from.setSeconds(from.getSeconds() - authWindowSeconds)
 
   if requestDate < from or requestDate > to
     # request expired
     logger.info "API request made by #{email} from #{this.request.host} has expired, denying access"
-    this.status = 'unauthorized'
+    this.status = 401
     return
 
   user = yield User.findOne(email: email).exec()
@@ -30,7 +33,7 @@ exports.authenticate = (next) ->
   if not user
     # not authenticated - user not found
     logger.info "No user exists for #{email}, denying access to API, request originated from #{this.request.host}"
-    this.status = 'unauthorized'
+    this.status = 401
     return
 
   hash = crypto.createHash 'sha512'
@@ -44,4 +47,4 @@ exports.authenticate = (next) ->
   else
     # not authenticated - token mismatch
     logger.info "API token did not match expected value, denying access to API, the request was made by #{email} from #{this.request.host}"
-    this.status = 'unauthorized'
+    this.status = 401

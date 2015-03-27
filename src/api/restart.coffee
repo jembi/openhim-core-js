@@ -18,7 +18,7 @@ Q = require 'q'
 exports.restart = (next) ->
   # Test if the user is authorised
   if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 'forbidden', "User #{this.authenticated.email} is not an admin, API access to restart the server denied.", 'info'
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to restart the server denied.", 'info'
     return
 
   try
@@ -28,17 +28,17 @@ exports.restart = (next) ->
 
     # valid certificate/key
     if result
-      server.startRestartServerAgenda ->
+      server.startRestartServerTimeout ->
         logger.info 'User ' +emailAddr+ ' has requested a Server Restart. Proceeding to restart servers...'
 
       # All ok! So set the result
       this.body = 'Server being restarted'
-      this.status = 'ok'
+      this.status = 200
     else
       # Not valid
       logger.info 'User ' +emailAddr+ ' has requested a Server Restart with invalid certificate details. Cancelling restart...'
       this.body = 'Certificates and Key did not match. Cancelling restart...'
-      this.status = 'bad request'
+      this.status = 400
 
   catch e
-    utils.logAndSetResponse this, 'bad request', "Could not restart the servers via the API: #{e}", 'error'
+    utils.logAndSetResponse this, 400, "Could not restart the servers via the API: #{e}", 'error'
