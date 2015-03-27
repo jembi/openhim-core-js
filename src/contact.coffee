@@ -8,7 +8,7 @@ config.smsGateway = config.get('smsGateway')
 sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
   logger.info "Sending email to '#{contactAddress}' using service " +
     "#{config.nodemailer.service} - #{config.nodemailer.auth.user}"
-  smtpTransport = nodemailer.createTransport "SMTP", config.nodemailer
+  smtpTransport = nodemailer.createTransport config.nodemailer
 
   smtpTransport.sendMail {
     from: config.nodemailer.auth.user
