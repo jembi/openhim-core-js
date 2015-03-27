@@ -30,6 +30,9 @@ getProjectionObject = (filterRepresentation) ->
     when "full"
       # view all transaction data
       return {}
+    when "bulkrerun"
+      # view only 'bulkrerun' properties
+      return { "_id": 1, "childIDs": 1, "canRerun": 1, "channelID": 1 }
     else
       # no filterRepresentation supplied - simple view
       # view minimum required data for transactions
