@@ -143,7 +143,7 @@ describe "API Integration Tests", ->
 
             # create tokenhash
             authTS = new Date()
-            authTS.setSeconds(authTS.getSeconds() - 3);
+            authTS.setSeconds(authTS.getSeconds() - 13);
             authTS = authTS.toISOString()
             requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
             tokenhash = crypto.createHash('sha512');
