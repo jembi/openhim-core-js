@@ -15,7 +15,7 @@ activeTasks = 0
 
 
 findAndProcessAQueuedTask = ->
-  TaskModel.findOneAndUpdate { status: 'Queued' }, { status: 'Processing' }, (err, task) ->
+  TaskModel.findOneAndUpdate { status: 'Queued' }, { status: 'Processing' }, { 'new': true }, (err, task) ->
     if err
       logger.error "An error occurred while looking for rerun tasks: #{err}"
     else if task
@@ -91,6 +91,7 @@ finalizeTaskRound = (task, callback) ->
 # This model allows the instance the get updated information regarding the task in between rounds:
 # i.e. if the server has been stopped, if the task has been paused, etc.
 processNextTaskRound = (task, callback) ->
+  logger.debug "Processing next task round: total transactions = #{task.totalTransactions}, remainingTransactions = #{task.remainingTransactions}"
   promises = []
   nextI = task.transactions.length - task.remainingTransactions
 
@@ -117,9 +118,11 @@ processNextTaskRound = (task, callback) ->
 
       promises.push defer.promise
 
-  task.save ->
-
-  (Q.all promises).then -> finalizeTaskRound task, callback
+  (Q.all promises).then ->
+    task.save (err) ->
+      if err?
+        logger.error "Failed to save current task while processing round: taskID=#{task._id}, err=#{err}", err
+      finalizeTaskRound task, callback
 
 
 rerunTransaction = (transactionID, taskID, callback) ->
