@@ -110,9 +110,7 @@ exports.setupApp = (done) ->
   app.use route.get '/audits-filter-options', audits.getAuditsFilterOptions
 
   # Ceritficates endpoint
-  app.use route.get '/certificates', certificateAuthority.listCerts
-  app.use route.get '/certificate/:certId', certificateAuthority.getCert
-  app.use route.post '/certificates', certificateAuthority.createCert
+  app.use route.post '/certificates', certificateAuthority.generateCert
 
   # Return the result
   done(app)
