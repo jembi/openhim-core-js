@@ -59,6 +59,7 @@ if cluster.isMaster and not module.parent
   # configure master logger
   logger.add logger.transports.Console,
     colorize: true
+    timestamp: true
     label: "master"
     level: config.logger.level
 
@@ -119,6 +120,7 @@ else
   # configure worker logger
   logger.add logger.transports.Console,
     colorize: true
+    timestamp: true
     label: "worker#{cluster.worker.id}" if cluster.worker?.id?
     level: config.logger.level
 
