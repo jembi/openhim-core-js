@@ -53,7 +53,7 @@ exports.getServerOptions = (mutualTLS, done) ->
           logger.error "Could not fetch trusted certificates: #{err}"
           return done err, null
 
-        options.ca = [keystore.cert.data].concat certs
+        options.ca = certs
         options.requestCert = true
         options.rejectUnauthorized = false  # we test authority ourselves
         done null, options
