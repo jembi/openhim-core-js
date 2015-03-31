@@ -44,17 +44,17 @@ exports.getServerOptions = (mutualTLS, done) ->
       options =
         key:  keystore.key
         cert: keystore.cert.data
-        ca: [keystore.cert.data]
     else
       return done(new Error 'Keystore does not exist')
     
     if mutualTLS
+      options.ca = [keystore.cert.data]
       exports.getTrustedClientCerts (err, certs) ->
         if err
           logger.error "Could not fetch trusted certificates: #{err}"
           return done err, null
 
-        options.ca.push certs
+        options.ca = options.ca.concat certs
         options.requestCert = true
         options.rejectUnauthorized = false  # we test authority ourselves
         done null, options
