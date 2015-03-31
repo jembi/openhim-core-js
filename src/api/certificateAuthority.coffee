@@ -63,24 +63,19 @@ generateServerCert = (options) ->
 
 
 createCertificate = (options) ->
-  response = {}
-  promises = []
   deferred = Q.defer()
-  promises.push deferred.promise
-  Q.denodeify pem.createCertificate options, (err, cert) ->
+  pem.createCertificate options, (err, cert) ->
     if (err)
-
       response =
         err : err
-      deferred.resolve()
+      deferred.resolve response
     else
       response =
         certificate : cert.certificate
         key : cert.clientKey
-      deferred.resolve()
+      deferred.resolve response
 
-  (Q.all promises).then ->
-    response
+  return deferred.promise
 
 getRandomInt = (min, max) ->
   Math.floor(Math.random() * (max - min + 1)) + min
