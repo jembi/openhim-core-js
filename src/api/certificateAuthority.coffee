@@ -26,10 +26,7 @@ generateClientCert = (options) ->
   keystoreDoc = yield Keystore.findOne().exec()
 
   # Set additional options
-  options.selfSigned = false
-  options.serviceCertificate = keystoreDoc.cert.data
-  options.serviceKey = keystoreDoc.key
-  options.serial = getRandomInt 1000, 100000
+  options.selfSigned = true
 
   # Attempt to create the certificate
   try
@@ -77,7 +74,7 @@ createCertificate = (options) ->
       response =
         certificate : cert.certificate
         key : cert.clientKey
-      deferred.resolve response
+      deferred.resolve responsephanto
 
   return deferred.promise
 
