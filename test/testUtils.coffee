@@ -5,7 +5,6 @@ tls = require "tls"
 fs = require "fs"
 User = require('../lib/model/users').User
 Keystore = require('../lib/model/keystore').Keystore
-Certificate = require('../lib/model/keystore').Certificate
 crypto = require "crypto"
 zlib = require "zlib"
 pem = require "pem"

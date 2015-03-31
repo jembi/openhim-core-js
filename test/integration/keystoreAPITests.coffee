@@ -4,7 +4,6 @@ testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 server = require "../../lib/server"
 Keystore = require('../../lib/model/keystore').Keystore
-Certificate = require('../../lib/model/keystore').Certificate
 sinon = require "sinon"
 fs = require 'fs'
 path = require 'path'

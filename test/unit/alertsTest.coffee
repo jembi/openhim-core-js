@@ -9,7 +9,6 @@ config.alerts = config.get('alerts')
 Channel = require("../../lib/model/channels").Channel
 User = require("../../lib/model/users").User
 ContactGroup = require("../../lib/model/contactGroups").ContactGroup
-ContactUser = require("../../lib/model/contactGroups").ContactUser
 Transaction = require("../../lib/model/transactions").Transaction
 Alert = require("../../lib/model/alerts").Alert
 

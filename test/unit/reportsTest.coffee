@@ -9,7 +9,6 @@ config = require "../../lib/config/config"
 #config.reports = config.get('reports')
 Channel = require("../../lib/model/channels").Channel
 User = require("../../lib/model/users").User
-ContactUser = require("../../lib/model/contactGroups").ContactUser
 Transaction = require("../../lib/model/transactions").Transaction
 contact = require "../../lib/contact"
 mongoose = require 'mongoose'

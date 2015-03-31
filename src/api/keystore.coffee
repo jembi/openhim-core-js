@@ -1,5 +1,4 @@
 Keystore = require('../model/keystore').Keystore
-Certificate = require('../model/keystore').Certificate
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
