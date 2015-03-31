@@ -19,7 +19,7 @@ serverRestart = require './api/restart'
 audits = require './api/audits'
 statsd = require './api/statsd'
 config = require './config/config'
-#statsd_instance = config.get 'statsd'
+certificateAuthority = require './api/certificateAuthority'
 
 exports.setupApp = (done) ->
 
@@ -108,6 +108,9 @@ exports.setupApp = (done) ->
   app.use route.get '/audits', audits.getAudits
   app.use route.get '/audits/:auditId', audits.getAuditById
   app.use route.get '/audits-filter-options', audits.getAuditsFilterOptions
+
+  # Ceritficates endpoint
+  app.use route.post '/certificates', certificateAuthority.generateCert
 
   # Return the result
   done(app)
