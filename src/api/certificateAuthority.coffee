@@ -28,6 +28,7 @@ generateClientCert = (options) ->
   # Set additional options
   options.selfSigned = true
 
+
   # Attempt to create the certificate
   try
     this.body = yield createCertificate options
@@ -74,7 +75,7 @@ createCertificate = (options) ->
       response =
         certificate : cert.certificate
         key : cert.clientKey
-      deferred.resolve responsephanto
+      deferred.resolve response
 
   return deferred.promise
 
