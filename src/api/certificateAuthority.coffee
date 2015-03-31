@@ -33,7 +33,6 @@ generateClientCert = (options) ->
     certInfo.data = this.body.certificate
     keystoreDoc.ca.push certInfo
     yield Q.ninvoke keystoreDoc, 'save'
-
     #Add the new certficate to the keystore
     this.status = 201
     logger.info 'Client certificate created'
@@ -58,7 +57,6 @@ generateServerCert = (options) ->
 
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not create a client cert via the API: #{err}", 'error'
-
   this.body
 
 
