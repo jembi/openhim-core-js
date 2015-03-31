@@ -4,8 +4,14 @@ Q = require 'q'
 logger = require 'winston'
 utils = require "../utils"
 pem = require "pem"
+authorisation = require './authorisation'
 
 exports.generateCert = ->
+  # Must be admin
+  if authorisation.inGroup('admin', this.authenticated) is false
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getServerKey by id denied.", 'info'
+    return
+
   options = this.request.body
   if options.type is 'server'
     logger.info 'Generating server cert'
