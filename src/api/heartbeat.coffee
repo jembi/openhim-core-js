@@ -1,11 +1,7 @@
 utils = require "../utils"
-logger = require 'winston'
 server = require "../server"
 Q = require 'q'
-moment = require 'moment'
 
-#############
-#############
 
 exports.getHeartbeat = (next) ->
   try
