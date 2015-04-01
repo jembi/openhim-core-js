@@ -603,7 +603,7 @@ else
 
     if cluster.isMaster
       # send reponse back to API request
-      uptime = 
+      uptime =
         master: process.uptime()
       callback null, uptime
     else
@@ -613,7 +613,7 @@ else
 
       # listen for response from master
       process.once 'message', (uptime) ->
-        uptime = 
+        uptime =
           master: uptime.masterUptime
 
         # send reponse back to API request
