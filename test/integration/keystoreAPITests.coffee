@@ -206,7 +206,7 @@ describe 'API Integration Tests', ->
                 keystore.key.should.be.exactly postData.key
                 done()
 
-    it "Should not alllow a non-admin user to add a new server key", (done) ->
+    it "Should not allow a non-admin user to add a new server key", (done) ->
       testUtils.setupTestKeystore (keystore) ->
         postData = { key: fs.readFileSync('test/resources/server-tls/key.pem').toString() }
         request("https://localhost:8080")
