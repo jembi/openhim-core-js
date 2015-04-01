@@ -19,6 +19,7 @@ serverRestart = require './api/restart'
 audits = require './api/audits'
 statsd = require './api/statsd'
 config = require './config/config'
+heartbeat = require './api/heartbeat'
 #statsd_instance = config.get 'statsd'
 
 exports.setupApp = (done) ->
@@ -27,6 +28,9 @@ exports.setupApp = (done) ->
   app = koa()
   app.use cors()
   app.use bodyParser()
+
+  # Expose uptime server stats route before the auth middleware so that it is publically accessible
+  app.use route.get '/heartbeat', heartbeat.getHeartbeat
 
   # Expose the set-user-password route before the auth middleware so that it is publically accessible
   app.use route.get '/new-user/:token', users.getNewUser

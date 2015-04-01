@@ -80,6 +80,12 @@ if cluster.isMaster and not module.parent
     worker = cluster.fork()
 
     worker.on 'message', (msg) ->
+
+      if msg.uptime
+        # send response back to worker requesting uptime
+        worker.send
+          masterUptime: process.uptime()
+
       logger.debug "Message recieved from worker #{worker.id}", msg
       if msg.type is 'restart-all'
         # restart all workers
@@ -591,3 +597,24 @@ else
           type: 'restart-all'
       , 2000
     done()
+
+  # function to return process uptimes
+  exports.getUptime = (callback) ->
+
+    if cluster.isMaster
+      # send reponse back to API request
+      uptime = 
+        master: process.uptime()
+      callback null, uptime
+    else
+      # send request to master
+      process.send
+        uptime: true
+
+      # listen for response from master
+      process.once 'message', (uptime) ->
+        uptime = 
+          master: uptime.masterUptime
+
+        # send reponse back to API request
+        callback null, uptime
