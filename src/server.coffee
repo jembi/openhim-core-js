@@ -200,13 +200,19 @@ else
         address: config.mongo.url
     alerts.setupAgenda agenda if config.alerts.enableAlerts
     reports.setupAgenda agenda if config.reports.enableReports
-    polling.setupAgenda agenda, ->
-      # give workers a change to setup agenda tasks
-      setTimeout ->
-        agenda.start()
-        defer.resolve()
-        logger.info "Started agenda job scheduler"
-      , config.agenda.startupDelay
+    if config.polling.enabled
+      polling.setupAgenda agenda, ->
+        # give workers a change to setup agenda tasks
+        setTimeout ->
+          agenda.start()
+          defer.resolve()
+          logger.info "Started agenda job scheduler"
+        , config.agenda.startupDelay
+    else
+      # Start agenda anyway for the other servers
+      agenda.start()
+      defer.resolve()
+
     return defer.promise
 
   stopAgenda = ->
@@ -435,7 +441,7 @@ else
           promises.push startHttpServer ports.httpPort, bindAddress, app if ports.httpPort
           promises.push startHttpsServer ports.httpsPort, bindAddress, app if ports.httpsPort
 
-      if ports.apiPort
+      if ports.apiPort and config.api.enabled
         koaApi.setupApp (app) ->
           promises.push startApiServer ports.apiPort, bindAddress, app
 

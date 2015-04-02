@@ -13,6 +13,7 @@
     "timeout": 60000
   },
   "api": {
+    "enabled" : true,
     "httpsPort": 8080,
     "authWindowSeconds": 10
   },
@@ -31,6 +32,7 @@
     }
   },
   "polling": {
+    "enabled": true,
     "pollingPort": 7788,
     "host": "localhost"
   },

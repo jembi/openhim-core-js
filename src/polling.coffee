@@ -36,6 +36,7 @@ exports.removePollingChannel = removePollingChannel = (channel, callback) ->
     callback null
 
 exports.setupAgenda = (agenda, callback) ->
+  logger.info "Starting polling server..."
   registerPollingChannelPromise = Q.denodeify exports.registerPollingChannel
   exports.agendaGlobal = agenda
   Channel.find { type: 'polling' }, (err, channels) ->
