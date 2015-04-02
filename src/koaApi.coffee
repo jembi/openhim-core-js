@@ -20,7 +20,6 @@ audits = require './api/audits'
 statsd = require './api/statsd'
 config = require './config/config'
 heartbeat = require './api/heartbeat'
-#statsd_instance = config.get 'statsd'
 certificateAuthority = require './api/certificateAuthority'
 
 exports.setupApp = (done) ->

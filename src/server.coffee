@@ -616,6 +616,9 @@ else
         if uptime.type is 'get-uptime'
           uptime =
             master: uptime.masterUptime
+        else
+          uptime =
+            master: null
 
-          # send reponse back to API request
-          callback null, uptime
+        # send reponse back to API request
+        callback null, uptime
