@@ -616,11 +616,13 @@ else
           uptime =
             master: uptime.masterUptime
 
+          # remove eventListner
+          process.removeListener 'message', processEvent
+
           # send reponse back to API request
           return callback null, uptime
 
-          # remove eventListner
-          process.removeListener 'message', processEvent
+          
 
 
       # listen for response from master
