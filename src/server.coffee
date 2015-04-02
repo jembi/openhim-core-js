@@ -611,14 +611,18 @@ else
       process.send
         type: 'get-uptime'
 
-      # listen for response from master
-      process.once 'message', (uptime) ->
+      processEvent = (uptime) ->
         if uptime.type is 'get-uptime'
           uptime =
             master: uptime.masterUptime
-        else
-          uptime =
-            master: null
 
-        # send reponse back to API request
-        callback null, uptime
+          # send reponse back to API request
+          return callback null, uptime
+
+          # remove eventListner
+          process.removeListener 'message', processEvent
+
+
+      # listen for response from master
+      process.on 'message', processEvent
+
