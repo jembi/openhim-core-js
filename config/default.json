@@ -31,6 +31,7 @@
     }
   },
   "polling": {
+    "enabled": true,
     "pollingPort": 7788,
     "host": "localhost"
   },

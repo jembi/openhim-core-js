@@ -194,13 +194,14 @@ else
         address: config.mongo.url
     alerts.setupAgenda agenda if config.alerts.enableAlerts
     reports.setupAgenda agenda if config.reports.enableReports
-    polling.setupAgenda agenda, ->
-      # give workers a change to setup agenda tasks
-      setTimeout ->
-        agenda.start()
-        defer.resolve()
-        logger.info "Started agenda job scheduler"
-      , config.agenda.startupDelay
+    polling.setupAgenda agenda if config.polling.enabled
+
+    # give workers a change to setup agenda tasks
+    setTimeout ->
+      agenda.start()
+      defer.resolve()
+      logger.info "Started agenda job scheduler"
+    , config.agenda.startupDelay
     return defer.promise
 
   stopAgenda = ->
