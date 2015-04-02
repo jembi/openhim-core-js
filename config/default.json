@@ -13,6 +13,7 @@
     "timeout": 60000
   },
   "api": {
+    "enabled" : true,
     "httpsPort": 8080,
     "authWindowSeconds": 10
   },
