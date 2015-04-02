@@ -81,11 +81,6 @@ if cluster.isMaster and not module.parent
 
     worker.on 'message', (msg) ->
 
-      if msg.uptime
-        # send response back to worker requesting uptime
-        worker.send
-          masterUptime: process.uptime()
-
       logger.debug "Message recieved from worker #{worker.id}", msg
       if msg.type is 'restart-all'
         # restart all workers
@@ -106,6 +101,11 @@ if cluster.isMaster and not module.parent
         for id, worker of cluster.workers
           logger.debug "Stopping TCP channel on worker #{worker.id}..."
           worker.send msg
+      else if msg.type is 'get-uptime'
+        # send response back to worker requesting uptime
+        worker.send
+          type: 'get-uptime'
+          masterUptime: process.uptime()
 
   # start all workers
   for i in [1..clusterSize]
@@ -609,12 +609,13 @@ else
     else
       # send request to master
       process.send
-        uptime: true
+        type: 'get-uptime'
 
       # listen for response from master
       process.once 'message', (uptime) ->
-        uptime =
-          master: uptime.masterUptime
+        if uptime.type is 'get-uptime'
+          uptime =
+            master: uptime.masterUptime
 
-        # send reponse back to API request
-        callback null, uptime
+          # send reponse back to API request
+          callback null, uptime
