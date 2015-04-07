@@ -128,9 +128,10 @@ fetchWeeklySubscribers = (callback) ->
   User.find { weeklyReport: true }, callback
 
 plainTemplate = (report) ->
+  text = ''
   for data in report.data
     do (data) ->
-      " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
+      text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
                 Channel Name: #{data.channel.name} \r\n
                 Channel Load: #{ data.data[0].load } transactions  \r\n
                 Ave response time: #{ data.data[0].avgResp } \r\n
@@ -143,6 +144,8 @@ plainTemplate = (report) ->
               \r\n
               \r\n
             "
+  text
+
 htmlTemplate = (report) ->
   text = "
     <html>
