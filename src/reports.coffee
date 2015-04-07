@@ -200,8 +200,10 @@ setupAgenda = (agenda) ->
   agenda.every "1 days", 'send daily channel metrics'
 
 exports.setupAgenda = setupAgenda
-exports.sendReports = sendReports
-exports.fetchDailySubscribers = fetchDailySubscribers
-exports.fetchWeeklySubscribers = fetchWeeklySubscribers
-exports.fetchChannelReport = fetchChannelReport
-exports.sendUserEmail = sendUserEmail
+
+if process.env.NODE_ENV == "test"
+  exports.sendReports = sendReports
+  exports.fetchDailySubscribers = fetchDailySubscribers
+  exports.fetchWeeklySubscribers = fetchWeeklySubscribers
+  exports.fetchChannelReport = fetchChannelReport
+  exports.sendUserEmail = sendUserEmail
