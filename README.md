@@ -32,6 +32,8 @@ wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/defau
 openhim-core --conf=path/to/default.json
 ```
 
+For more information about the config options, [click here](https://github.com/jembi/openhim-core-js/blob/master/config/config.md).
+
 **Note:** one of the first things that you should do once the OpenHIM is up and running is setup a properly signed TLS certificate. You can do this through the [OpenHIM console](https://github.com/jembi/openhim-console) under 'Certificates' on the sidebar.
 
 Developer guide
