@@ -118,13 +118,17 @@ processNextTaskRound = (task, callback) ->
 
       promises.push defer.promise
 
-  # Save task with transaction in progress
+  # Save task with transactions in progress
   task.save (err) ->
     if err?
       logger.error "Failed to save current task while processing round: taskID=#{task._id}, err=#{err}", err
 
   (Q.all promises).then ->
-    finalizeTaskRound task, callback
+    # Save task once transactions have been updated
+    task.save (err) ->
+      if err?
+        logger.error "Failed to save current task while processing round: taskID=#{task._id}, err=#{err}", err
+      finalizeTaskRound task, callback
 
 
 rerunTransaction = (transactionID, taskID, callback) ->

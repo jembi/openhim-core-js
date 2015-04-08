@@ -247,7 +247,7 @@ describe "Rerun Task Tests", ->
               server.close ->
                 done()
 
-          setTimeout validateTask, 1800
+          setTimeout validateTask, 1000
 
     it 'should complete a queued task after all its transactions are finished', (done) ->
       Task.update { _id: task1._id }, { batchSize: 3 }, (err) ->
