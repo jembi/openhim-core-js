@@ -1,7 +1,7 @@
 OpenHIM Config options
 ======================
 
-The following config option are provided by the OpenHIM. All of these option have default values. You only need to provide config options if they differ from the defaults.
+The following config option are provided by the OpenHIM. All of these options have default values. You only need to provide config options if they differ from the defaults.
 
 ```js
 {
@@ -19,13 +19,13 @@ The following config option are provided by the OpenHIM. All of these option hav
     "level": "info"
   },
   "router": {
-    // This is the port that the OpenHIM will recieve HTTP request on to
+    // This is the port that the OpenHIM will receive HTTP request on to
     // them to other services
     "httpPort": 5001,
-    // This is the port that the OpenHIM will recieve HTTPS request on to
+    // This is the port that the OpenHIM will receive HTTPS request on to
     // them to other services
     "httpsPort": 5000,
-    // The timout for requests that the OpenHIM makes to other services
+    // The timeout for requests that the OpenHIM makes to other services
     "timeout": 60000
   },
   "api": {
@@ -51,11 +51,11 @@ The following config option are provided by the OpenHIM. All of these option hav
   },
   "tcpAdapter": {
     "httpReceiver": {
-      // the port that the HTTP reciever for TCP transaction runs on. This
-      // is an internally used port and SHOULD NOT be expposed past your
+      // the port that the HTTP receiver for TCP transaction runs on. This
+      // is an internally used port and SHOULD NOT be exposed past your
       // firewall.
       "httpPort": 7787,
-      // The host where the tcp adpater's http reciever is running (always
+      // The host where the tcp adpater's http receiver is running (always
       // the OpenHIM server)
       "host": "localhost"
     }
@@ -69,7 +69,7 @@ The following config option are provided by the OpenHIM. All of these option hav
     "host": "localhost"
   },
   "authentication": {
-    // What kid of authentication methods to allow
+    // What kind of authentication methods to allow
     "enableMutualTLSAuthentication": true,
     "enableBasicAuthentication": true
   },
@@ -107,8 +107,15 @@ The following config option are provided by the OpenHIM. All of these option hav
   "visualizer": {
     // To enable the visualizer API
     "enableVisualizer": true,
+    // The minimum duration to use for the event. If the event's duration is
+    // less than this specified period, then the end time will be adjusted
+    // in order to match
     "minimumEventPeriodMillis": 100,
+    // Should orchestration and route timestamps be normalized to the
+    // transaction time. This may be useful if you have mediators running on
+    // other servers
     "enableTSNormalization": true,
+    // A buffer period for orchestration timestamps
     "orchestrationTSBufferMillis": 100
   },
   "statsd": {
