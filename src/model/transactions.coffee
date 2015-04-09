@@ -5,53 +5,55 @@ Schema = mongoose.Schema
 
 # Request Schema definition
 RequestDef =
-  "path" :{ type: String, required: false }
-  "headers": {type: Object}
-  "querystring": { type: String }
-  "body":{ type: String}
-  "method":{ type: String, required: false }
-  "timestamp":{ type: Date, required: true }
+  "path" :        String
+  "headers":      Object
+  "querystring":  String
+  "body":         String
+  "method":       String
+  "timestamp":    type: Date, required: true
 
 # Response Schema definition
 ResponseDef =
-  "status" :{ type: Number }
-  "headers": { type: Object }
-  "body":{ type: String }
-  "timestamp":{ type: Date }
-
-# Route Schema
-RouteMetadataSchema = new Schema
-  "name" :{ type: String, required: true }
-  "request": RequestDef
-  "response": ResponseDef
-  "orchestrations": [ OrchestrationMetadataSchema ]
-  "properties": { type: Object }
+  "status" :    Number
+  "headers":    Object
+  "body":       String
+  "timestamp":  Date
 
 # OrchestrationMetadata Schema
-OrchestrationMetadataSchema = new Schema
-  "name" :{ type: String, required: true }
-  "group" :{ type: String, required: false }
-  "request": RequestDef
-  "response": ResponseDef
+OrchestrationMetadataDef =
+  "name" :      type: String, required: true
+  "group" :     String
+  "request":    RequestDef
+  "response":   ResponseDef
+
+# Route Schema
+RouteMetadataDef =
+  "name" :          type: String, required: true
+  "request":        RequestDef
+  "response":       ResponseDef
+  "orchestrations": [OrchestrationMetadataDef]
+  "properties":      Object
 
 # Trasnaction schema
 TransactionSchema = new Schema
-  "clientID": { type: Schema.Types.ObjectId, required: false }
-  "clientIP": { type: String, required: false }
-  "parentID": { type: Schema.Types.ObjectId, required: false }
-  "childIDs": [ { type: Schema.Types.ObjectId, required: false } ]
-  "channelID": { type: Schema.Types.ObjectId, required: false, index: true }
-  "request": RequestDef
-  "response": ResponseDef
-  "routes": [ RouteMetadataSchema ]
-  "orchestrations": [ OrchestrationMetadataSchema ]
-  "properties": { type: Object }
-  "canRerun": { type: Boolean, default: true }
-  "status": { type: String, required: true, index: true, enum: ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)'] }
+  "clientID":       Schema.Types.ObjectId
+  "clientIP":       String
+  "parentID":       Schema.Types.ObjectId
+  "childIDs":       [Schema.Types.ObjectId]
+  "channelID":      type: Schema.Types.ObjectId, index: true
+  "request":        RequestDef
+  "response":       ResponseDef
+  "routes":         [RouteMetadataDef]
+  "orchestrations": [OrchestrationMetadataDef]
+  "properties":     Object
+  "canRerun":       type: Boolean, default: true
+  "status":
+    type:     String
+    required: true
+    index:    true
+    enum:     ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
 
 TransactionSchema.index "request.timestamp"
 
 #compile schema into Model
-exports.RouteMetadata = connectionDefault.model 'RouteMetadata', RouteMetadataSchema
-exports.OrchestrationMetadata = connectionDefault.model 'OrchestrationMetadata', OrchestrationMetadataSchema
 exports.Transaction = connectionDefault.model 'Transaction', TransactionSchema

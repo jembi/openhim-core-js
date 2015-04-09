@@ -1,5 +1,4 @@
 Keystore = require('../model/keystore').Keystore
-Certificate = require('../model/keystore').Certificate
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
@@ -45,6 +44,21 @@ exports.getCACert = (certId) ->
   catch err
     utils.logAndSetResponse this, 500, "Could not fetch ca cert by id via the API: #{err}", 'error'
 
+exports.setServerPassphrase = ->
+# Must be admin
+  if authorisation.inGroup('admin', this.authenticated) is false
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to setServerPassphrase denied.", 'info'
+    return
+
+  try
+    passphrase = this.request.body.passphrase
+    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc.passphrase = passphrase
+    yield Q.ninvoke keystoreDoc, 'save'
+    this.status = 201
+
+  catch err
+    utils.logAndSetResponse this, 500, "Could not set the passphrase  via the API: #{err}", 'error'
 
 exports.setServerCert = ->
   # Must be admin
@@ -54,6 +68,7 @@ exports.setServerCert = ->
 
   try
     cert = this.request.body.cert
+    passphrase = this.request.body.passphrase
     readCertificateInfo = Q.denodeify pem.readCertificateInfo
     try
       certInfo = yield readCertificateInfo cert
@@ -63,6 +78,8 @@ exports.setServerCert = ->
 
     keystoreDoc = yield Keystore.findOne().exec()
     keystoreDoc.cert = certInfo
+    keystoreDoc.passphrase = passphrase
+
     yield Q.ninvoke keystoreDoc, 'save'
     this.status = 201
   catch err
@@ -76,8 +93,10 @@ exports.setServerKey = ->
 
   try
     key = this.request.body.key
+    passphrase = this.request.body.passphrase
     keystoreDoc = yield Keystore.findOne().exec()
     keystoreDoc.key = key
+    keystoreDoc.passphrase = passphrase
     yield Q.ninvoke keystoreDoc, 'save'
     this.status = 201
   catch err
@@ -169,9 +188,9 @@ exports.getCertKeyStatus = getCertKeyStatus = (callback) ->
   Keystore.findOne (err, keystoreDoc) ->
     return callback err, null if err
 
-    pem.getModulus keystoreDoc.key, (err, keyModulus) ->
+    pem.getModulusOfCertificate keystoreDoc.key, keystoreDoc.passphrase, (err, keyModulus) ->
       return callback err, null if err
-      pem.getModulusOfCertificate keystoreDoc.cert.data, 'mushr00m', (err, certModulus) ->
+      pem.getModulusOfCertificate keystoreDoc.cert.data, keystoreDoc.passphrase, (err, certModulus) ->
         return callback err, null if err
 
         # if cert/key match and are valid

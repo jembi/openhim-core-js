@@ -5,7 +5,6 @@ net = require 'net'
 dgram = require 'dgram'
 Audit = require('../../lib/model/audits').Audit
 server = require '../../lib/server'
-Certificate = require("../../lib/model/keystore").Certificate
 testUtils = require "../testUtils"
 testAuditMessage = require('../unit/auditingTest').testAuditMessage
 
