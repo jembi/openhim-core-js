@@ -15,6 +15,7 @@ certificate =
     start:          { type: Date }
     end:            { type: Date }
   data:             { type: String }
+  passphrase:       { type: String }
 
 CertificateSchema = new Schema certificate
 
