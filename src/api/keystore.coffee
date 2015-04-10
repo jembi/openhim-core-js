@@ -188,9 +188,9 @@ exports.getCertKeyStatus = getCertKeyStatus = (callback) ->
   Keystore.findOne (err, keystoreDoc) ->
     return callback err, null if err
 
-    pem.getModulusOfCertificate keystoreDoc.key, keystoreDoc.passphrase, (err, keyModulus) ->
+    pem.getModulusFromProtected keystoreDoc.key, keystoreDoc.passphrase, (err, keyModulus) ->
       return callback err, null if err
-      pem.getModulusOfCertificate keystoreDoc.cert.data, keystoreDoc.passphrase, (err, certModulus) ->
+      pem.getModulus keystoreDoc.cert.data, keystoreDoc.passphrase, (err, certModulus) ->
         return callback err, null if err
 
         # if cert/key match and are valid
