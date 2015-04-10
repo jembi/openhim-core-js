@@ -8,7 +8,9 @@ The following config option are provided by the OpenHIM. All of these options ha
   "bindAddress": "0.0.0.0",
   "mongo": {
     // The address of 1 or more mongo servers. If you are using a replicaSet
-    // you must specify the '?replicatSet=<name>' option in the url.
+    // you must specify the '?replicatSet=<name>' option in the url and list
+    // all of the hosts in the replica set in a comma separated list.
+    // eg. mongodb://localhost:27017,localhost:27018,localhost:27019/openhim?replicaSet=rs0
     "url": "mongodb://localhost/openhim",
     // The mongo address for the ATNA auditing to use, if different from the
     // above.
