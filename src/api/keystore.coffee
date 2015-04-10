@@ -177,7 +177,7 @@ exports.verifyServerKeys = ->
     this.body =
       valid: result
     this.status = 200
-    
+
   catch err
     utils.logAndSetResponse this, 500, "Could not determine validity via the API: #{err}", 'error'
 
@@ -190,7 +190,7 @@ exports.getCertKeyStatus = getCertKeyStatus = (callback) ->
 
     pem.getModulusFromProtected keystoreDoc.key, keystoreDoc.passphrase, (err, keyModulus) ->
       return callback err, null if err
-      pem.getModulus keystoreDoc.cert.data, keystoreDoc.passphrase, (err, certModulus) ->
+      pem.getModulus keystoreDoc.cert.data, (err, certModulus) ->
         return callback err, null if err
 
         # if cert/key match and are valid
