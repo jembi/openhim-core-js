@@ -235,6 +235,14 @@ else
       logger.info "HTTP listening on port " + httpPort
       deferred.resolve()
 
+    # listen for server error
+    httpServer.on 'error', (err) ->
+      logger.info "An httpServer error occured: #{err}"
+
+    # listen for client error
+    httpServer.on 'clientError', (err) ->
+      logger.info "An httpServer clientError occured: #{err}"
+
     httpServer.on 'connection', (socket) -> trackConnection activeHttpConnections, socket
 
     return deferred.promise
@@ -254,6 +262,14 @@ else
       httpsServer.listen httpsPort, bindAddress, ->
         logger.info "HTTPS listening on port " + httpsPort
         deferred.resolve()
+
+      # listen for server error
+      httpsServer.on 'error', (err) ->
+        logger.info "An httpsServer error occured: #{err}"
+
+      # listen for client error
+      httpsServer.on 'clientError', (err) ->
+        logger.info "An httpsServer clientError occured: #{err}"
 
       httpsServer.on 'connection', (socket) -> trackConnection activeHttpsConnections, socket
 
