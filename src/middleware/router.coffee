@@ -247,6 +247,8 @@ sendHttpRequest = (ctx, route, options) ->
           defered.resolve response
 
   routeReq.on "error", (err) -> defered.reject err
+  
+  routeReq.on "clientError", (err) -> defered.reject err
 
   routeReq.setTimeout config.router.timeout, -> defered.reject "Request Timed Out"
 
@@ -304,6 +306,8 @@ sendSocketRequest = (ctx, route, options) ->
       client.end()
 
   client.on 'error', (err) -> defered.reject err
+
+  client.on 'clientError', (err) -> defered.reject err
 
   client.on 'end', ->
     logger.info "Closed #{route.type} connection to #{options.host}:#{options.port}"
