@@ -1,0 +1,31 @@
+#!/bin/bash
+set -x
+
+
+USERNAME=openhim
+HOME=/home/$USERNAME
+SH=/bin/sh
+NPM=/usr/bin/npm
+CURL=/usr/bin/curl
+SRCDIR=/tmp/openhim-core-js/src/nvm
+COREDIR=$HOME/openhim-core-js
+
+
+
+chown -R  $USERNAME:$USERNAME $HOME/bin
+chown -R  $USERNAME:$USERNAME $HOME/bin/install_node.sh
+chown -R  $USERNAME:$USERNAME $COREDIR
+
+
+cd $HOME
+
+mkdir -p $SRCDIR
+$CURL https://raw.githubusercontent.com/creationix/nvm/v0.16.1/install.sh -o $SRCDIR/install.sh
+sudo -u $USERNAME $SH $SRCDIR/install.sh
+sudo -u $USERNAME $SH $HOME/bin/install_node.sh
+
+
+start mongodb 
+start openhim-core
+
+exit 0

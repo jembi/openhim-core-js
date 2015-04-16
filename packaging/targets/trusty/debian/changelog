@@ -1,0 +1,382 @@
+openhim-core-js (1.1.1-3~trusty) trusty; urgency=medium
+
+  * Release Version 1.1.1-3
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 04 Mar 2015 13:47:54 +0000
+
+openhim-core-js (1.1.1-2~trusty) trusty; urgency=medium
+
+  * Release Version 1.1.1-2
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 04 Mar 2015 13:47:26 +0000
+
+openhim-core-js (1.0.0-50~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-50
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Sun, 22 Feb 2015 06:32:59 -0500
+
+openhim-core-js (1.0.0-49~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-49
+    -bec5dea "Release Version 1.0.0-48"
+    --https://github.com/jembi/openhim-core-js/commmit/bec5dea
+    -cdf35dc Merge branch 'debian-packaging' of https://github.com/jemb
+    --https://github.com/jembi/openhim-core-js/commmit/cdf35dc
+    -ba5bd1a "Release Version 1.0.0-48"
+    --https://github.com/jembi/openhim-core-js/commmit/ba5bd1a
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Sat, 21 Feb 2015 01:06:36 -0500
+
+openhim-core-js (1.0.0-48~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-48
+    -cdf35dc Merge branch 'debian-packaging' of https://github.com/jemb
+    --https://github.com/jembi/openhim-core-js/commmit/cdf35dc
+    -ba5bd1a "Release Version 1.0.0-48"
+    --https://github.com/jembi/openhim-core-js/commmit/ba5bd1a
+    -1df9903 "Release Version 1.0.0-48"
+    --https://github.com/jembi/openhim-core-js/commmit/1df9903
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Sat, 21 Feb 2015 01:06:12 -0500
+
+openhim-core-js (1.0.0-48~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-48
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Fri, 20 Feb 2015 16:41:04 +0000
+
+openhim-core-js (1.0.0-47~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-47
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Thu, 19 Feb 2015 16:30:47 -0500
+
+openhim-core-js (1.0.0-46~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-46
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Thu, 19 Feb 2015 15:29:42 -0500
+
+openhim-core-js (1.0.0-45~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-45
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Thu, 19 Feb 2015 15:16:31 -0500
+
+openhim-core-js (1.0.0-44~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-44
+    -9813d3d fixup paths for node and npm to use nvm current in debian
+    --https://github.com/jembi/openhim-core-js/commmit/9813d3d
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Thu, 19 Feb 2015 13:21:47 -0500
+
+openhim-core-js (1.0.0-43~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-43
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 15:00:31 -0500
+
+openhim-core-js (1.0.0-42~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-42
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 14:49:56 -0500
+
+openhim-core-js (1.0.0-41~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-41
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 13:56:54 -0500
+
+openhim-core-js (1.0.0-40~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-40
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 13:11:33 -0500
+
+openhim-core-js (1.0.0-39~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-39
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:49:15 -0500
+
+openhim-core-js (1.0.0-38~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-38
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:47:32 -0500
+
+openhim-core-js (1.0.0-37~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-37
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:45:48 -0500
+
+openhim-core-js (1.0.0-36~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-36
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:36:05 -0500
+
+openhim-core-js (1.0.0-35~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-35
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:34:22 -0500
+
+openhim-core-js (1.0.0-34~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-34
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:33:26 -0500
+
+openhim-core-js (1.0.0-33~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-33
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:31:04 -0500
+
+openhim-core-js (1.0.0-32~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-32
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:30:16 -0500
+
+openhim-core-js (1.0.0-31~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-31
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:29:31 -0500
+
+openhim-core-js (1.0.0-30~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-30
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:27:35 -0500
+
+openhim-core-js (1.0.0-29~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-29
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 11:02:45 -0500
+
+openhim-core-js (1.0.0-28~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-28
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:59:49 -0500
+
+openhim-core-js (1.0.0-27~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-27
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:49:32 -0500
+
+openhim-core-js (1.0.0-26~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-26
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:45:39 -0500
+
+openhim-core-js (1.0.0-25~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-25
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:35:03 -0500
+
+openhim-core-js (1.0.0-24~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-24
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:32:18 -0500
+
+openhim-core-js (1.0.0-23~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-23
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:30:00 -0500
+
+openhim-core-js (1.0.0-22~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-22
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:28:06 -0500
+
+openhim-core-js (1.0.0-21~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-21
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:23:32 -0500
+
+openhim-core-js (1.0.0-20~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-20
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:15:18 -0500
+
+openhim-core-js (1.0.0-19~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-19
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:13:55 -0500
+
+openhim-core-js (1.0.0-18~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-18
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:10:27 -0500
+
+openhim-core-js (1.0.0-17~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-17
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:07:39 -0500
+
+openhim-core-js (1.0.0-16~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-16
+    -bb82024 updated git ignore
+    --https://github.com/jembi/openhim-core-js/commmit/bb82024
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 10:03:46 -0500
+
+openhim-core-js (1.0.0-15~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-15
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 09:46:29 -0500
+
+openhim-core-js (1.0.0-14~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-14
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 09:45:08 -0500
+
+openhim-core-js (1.0.0-13~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-13
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 09:42:06 -0500
+
+openhim-core-js (1.0.0-12~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-12
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 09:41:49 -0500
+
+openhim-core-js (1.0.0-11~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-11
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 09:41:14 -0500
+
+openhim-core-js (1.0.0-10~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-10
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:34:32 -0500
+
+openhim-core-js (1.0.0-9~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-9
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:34:08 -0500
+
+openhim-core-js (1.0.0-8~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-8
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:27:11 -0500
+
+openhim-core-js (1.0.0-7~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-7
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:26:16 -0500
+
+openhim-core-js (1.0.0-5~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-5
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:05:19 -0500
+
+openhim-core-js (1.0.0-4~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-4
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:04:24 -0500
+
+openhim-core-js (1.0.0-3~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-3
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:02:38 -0500
+
+openhim-core-js (1.0.0-2~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-2
+    -9e41578 "Release Version 1.0.0-2"
+    --https://github.com/jembi/openhim-core-js/commmit/9e41578
+    -e9ab24b ignore git config in packaging directory
+    --https://github.com/jembi/openhim-core-js/commmit/e9ab24b
+    -5c45a7b "Release Version 1.0.0-2"
+    --https://github.com/jembi/openhim-core-js/commmit/5c45a7b
+    -dd11d04 fixing up packaging
+    --https://github.com/jembi/openhim-core-js/commmit/dd11d04
+    -9d138f0 cleanup files
+    --https://github.com/jembi/openhim-core-js/commmit/9d138f0
+    -d12b4a4 "Release Version 1.0.0-2"
+    --https://github.com/jembi/openhim-core-js/commmit/d12b4a4
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:01:14 -0500
+
+openhim-core-js (1.0.0-2~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-2
+    -e9ab24b ignore git config in packaging directory
+    --https://github.com/jembi/openhim-core-js/commmit/e9ab24b
+    -5c45a7b "Release Version 1.0.0-2"
+    --https://github.com/jembi/openhim-core-js/commmit/5c45a7b
+    -dd11d04 fixing up packaging
+    --https://github.com/jembi/openhim-core-js/commmit/dd11d04
+    -9d138f0 cleanup files
+    --https://github.com/jembi/openhim-core-js/commmit/9d138f0
+    -d12b4a4 "Release Version 1.0.0-2"
+    --https://github.com/jembi/openhim-core-js/commmit/d12b4a4
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 04:00:51 -0500
+
+openhim-core-js (1.0.0-2~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-2
+    -dd11d04 fixing up packaging
+    --https://github.com/jembi/openhim-core-js/commmit/dd11d04
+    -9d138f0 cleanup files
+    --https://github.com/jembi/openhim-core-js/commmit/9d138f0
+    -d12b4a4 "Release Version 1.0.0-2"
+    --https://github.com/jembi/openhim-core-js/commmit/d12b4a4
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 03:59:29 -0500
+
+openhim-core-js (1.0.0-2~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-2
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 03:48:37 -0500
+
+openhim-core-js (1.0.0-2~trusty) trusty; urgency=medium
+
+  * Release Version 1.0.0-2
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Wed, 18 Feb 2015 03:48:11 -0500
+
+openhim-core-js (1.0.0-0~trusty) trusty; urgency=low
+
+  [Carl Leitner <litlfred@ibiblio.org>]
+  * Initial Build
+    Fri 2015-02-13 13:55:10 -0500
+
+ -- Carl Leitner <litlfred@ibiblio.org>  Fri, 13 February 2015 13:55:10 -0500  
+
