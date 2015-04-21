@@ -271,7 +271,7 @@ else
       httpsServer.on 'clientError', (err) ->
         logger.error "An httpsServer clientError occured: #{err}"
 
-      httpsServer.on 'connection', (socket) -> trackConnection activeHttpsConnections, socket
+      httpsServer.on 'secureConnection', (socket) -> trackConnection activeHttpsConnections, socket
 
     return deferred.promise
 
@@ -318,7 +318,7 @@ else
         logger.info "API HTTPS listening on port " + apiPort
         ensureRootUser -> deferred.resolve()
 
-      apiHttpsServer.on 'connection', (socket) -> trackConnection activeApiConnections, socket
+      apiHttpsServer.on 'secureConnection', (socket) -> trackConnection activeApiConnections, socket
 
     return deferred.promise
 
