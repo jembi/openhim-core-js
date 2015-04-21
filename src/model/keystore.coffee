@@ -15,6 +15,7 @@ certificate =
     start:          Date
     end:            Date
   data:             String
+  fingerprint:      String
 
 CertificateSchema = new Schema certificate
 

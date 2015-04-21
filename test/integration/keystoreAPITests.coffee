@@ -30,7 +30,7 @@ describe 'API Integration Tests', ->
 
     afterEach (done) ->
       testUtils.cleanupTestKeystore ->
-      	done()
+        done()
 
     it "Should fetch the current HIM server certificate", (done) ->
       testUtils.setupTestKeystore (keystore) ->
@@ -77,7 +77,7 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
-              res.body.should.be.instanceof(Array).and.have.lengthOf(2);
+              res.body.should.be.instanceof(Array).and.have.lengthOf(2)
               res.body[0].should.have.property 'commonName', keystore.ca[0].commonName
               res.body[1].should.have.property 'commonName', keystore.ca[1].commonName
               done()
@@ -149,6 +149,26 @@ describe 'API Integration Tests', ->
                 keystore.cert.data.should.be.exactly postData.cert
                 keystore.cert.commonName.should.be.exactly 'localhost'
                 keystore.cert.organization.should.be.exactly 'Jembi Health Systems NPC'
+                done()
+
+    it "Should calculate and store the correct certificate fingerprint", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
+        request("https://localhost:8080")
+          .post("/keystore/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Keystore.findOne {}, (err, keystore) ->
+                done(err) if err
+                keystore.cert.fingerprint.should.be.exactly '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
                 done()
 
     it "Should return a 400 if the server certificate isn't valid", (done) ->
@@ -243,6 +263,26 @@ describe 'API Integration Tests', ->
                 keystore.ca[2].data.should.be.exactly postData.cert
                 keystore.ca[2].commonName.should.be.exactly 'trust1.org'
                 keystore.ca[2].organization.should.be.exactly 'Trusted Inc.'
+                done()
+
+    it "Should calculate fingerprint for new trusted certificate", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        postData = { cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString() }
+        request("https://localhost:8080")
+          .post("/keystore/ca/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Keystore.findOne {}, (err, keystore) ->
+                done(err) if err
+                keystore.ca[2].fingerprint.should.be.exactly '23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54'
                 done()
 
     it "Should respond with a 400 if one or more certs are invalid", (done) ->
