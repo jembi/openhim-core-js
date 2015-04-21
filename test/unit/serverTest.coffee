@@ -3,6 +3,8 @@ sinon = require 'sinon'
 http = require 'http'
 server = require '../../lib/server'
 moment = require 'moment'
+testUtils = require '../testUtils'
+fs = require 'fs'
 
 describe 'Server tests', ->
   ports =
@@ -23,3 +25,15 @@ describe 'Server tests', ->
     server.restartServer ->
       (moment().isBefore future).should.be.true
       done()
+
+  it 'should start a server when a key is protected', (done) ->
+    future = moment().add '5', 's'
+    testUtils.setupTestKeystore (keystore) ->
+      keystore.key = fs.readFileSync 'test/resources/protected/test.key'
+      keystore.cert.data = fs.readFileSync 'test/resources/protected/test.crt'
+      keystore.passphrase = 'password'
+      keystore.save ->
+        server.restartServer ->
+          (moment().isBefore future).should.be.true
+          done()
+

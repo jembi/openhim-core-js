@@ -44,6 +44,11 @@ exports.getServerOptions = (mutualTLS, done) ->
       options =
         key:  keystore.key
         cert: keystore.cert.data
+
+      #if key has password add it to the options
+      if keystore.passphrase
+        options.passphrase = keystore.passphrase
+
     else
       return done(new Error 'Keystore does not exist')
     

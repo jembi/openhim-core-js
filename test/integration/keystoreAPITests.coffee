@@ -401,3 +401,24 @@ describe 'API Integration Tests', ->
                 done err
               else
                 done()
+
+    it "Should find the compare the modulus of a certificate it corresponding protected key", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        keystore.key = fs.readFileSync 'test/resources/protected/test.key'
+        keystore.cert.data = fs.readFileSync 'test/resources/protected/test.crt'
+        keystore.passphrase = 'password'
+        keystore.save ->
+          request("https://localhost:8080")
+          .get("/keystore/validity")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.valid.should.be.exactly true
+              done()
+

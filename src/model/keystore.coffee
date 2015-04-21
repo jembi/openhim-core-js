@@ -16,10 +16,12 @@ certificate =
     end:            Date
   data:             String
 
+
 CertificateSchema = new Schema certificate
 
 KeystoreSchema = new Schema
   key:    String
+  passphrase: String
   cert:   certificate
   ca:     [certificate]
 
