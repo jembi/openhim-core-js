@@ -11,6 +11,7 @@ ClientSchema = new Schema
   "passwordAlgorithm":  String
   "passwordHash":       String
   "passwordSalt":       String
+  "certFingerprint":	String
     
 #compile the Client Schema into a Model
 exports.Client = connectionDefault.model 'Client', ClientSchema

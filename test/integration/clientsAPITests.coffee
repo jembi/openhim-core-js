@@ -18,6 +18,7 @@ describe "API Integration Tests", ->
           "PoC"
         ]
       passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+      certFingerprint: "23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC"
 
     authDetails = {}
 
@@ -60,6 +61,7 @@ describe "API Integration Tests", ->
                 client.roles[0].should.equal "OpenMRS_PoC"
                 client.roles[1].should.equal "PoC"
                 client.passwordHash.should.equal "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
+                client.certFingerprint.should.equal "23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC"
                 done()
 
       it  "should only allow an admin user to add a client", (done) ->
