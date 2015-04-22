@@ -6,6 +6,9 @@ utils = require "../utils"
 pem = require "pem"
 authorisation = require './authorisation'
 
+readCertificateInfo = Q.denodeify pem.readCertificateInfo
+getFingerprint = Q.denodeify pem.getFingerprint
+
 exports.generateCert = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
@@ -28,13 +31,10 @@ generateClientCert = (options) ->
   # Set additional options
   options.selfSigned = true
 
-
   # Attempt to create the certificate
   try
     this.body = yield createCertificate options
-    readCertificateInfo = Q.denodeify pem.readCertificateInfo
-    certInfo = yield readCertificateInfo this.body.certificate
-    certInfo.data = this.body.certificate
+    certInfo = yield extractCertMetadata this.body.certificate
     keystoreDoc.ca.push certInfo
     yield Q.ninvoke keystoreDoc, 'save'
     #Add the new certficate to the keystore
@@ -49,10 +49,7 @@ generateServerCert = (options) ->
   options.selfSigned = true
   try
     this.body = yield createCertificate options
-    readCertificateInfo = Q.denodeify pem.readCertificateInfo
-    certInfo = yield readCertificateInfo this.body.certificate
-    certInfo.data = this.body.certificate
-    keystoreDoc.cert = certInfo
+    keystoreDoc.cert = yield extractCertMetadata this.body.certificate
     keystoreDoc.key = this.body.key
     yield Q.ninvoke keystoreDoc, 'save'
     #Add the new certficate to the keystore
@@ -62,7 +59,6 @@ generateServerCert = (options) ->
   catch err
     utils.logAndSetResponse this, 'internal server error', "Could not create a client cert via the API: #{err}", 'error'
   this.body
-
 
 createCertificate = (options) ->
   deferred = Q.defer()
@@ -78,6 +74,13 @@ createCertificate = (options) ->
       deferred.resolve response
 
   return deferred.promise
+
+extractCertMetadata = (cert) ->
+  certInfo = yield readCertificateInfo cert
+  fingerprint = yield getFingerprint cert
+  certInfo.data = this.body.certificate
+  certInfo.fingerprint = fingerprint.fingerprint
+  return certInfo
 
 getRandomInt = (min, max) ->
   Math.floor(Math.random() * (max - min + 1)) + min
