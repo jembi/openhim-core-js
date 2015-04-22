@@ -48,6 +48,7 @@ describe "e2e Integration Tests", ->
                 "PoC"
               ]
             passwordHash: ""
+            certFingerprint: "6D:BF:A5:BE:D7:F5:01:C2:EC:D0:BC:74:A4:12:5A:6F:36:C4:77:5C"
 
           testClientDoc2 =
             clientID: "testApp2"
@@ -59,21 +60,28 @@ describe "e2e Integration Tests", ->
                 "PoC"
               ]
             passwordHash: ""
+            certFingerprint: "18:B7:F9:52:FA:37:86:C5:F5:63:DA:8B:FA:E6:6B:4D:FB:A0:27:ED"
 
           client1 = new Client testClientDoc1
           client2 = new Client testClientDoc2
 
           Client.remove {}, -> client1.save -> client2.save ->
-          	# remove default keystore
-          	Keystore.remove {}, ->
+            # remove default keystore
+            Keystore.remove {}, ->
               keystore = new Keystore
                 key: fs.readFileSync 'test/resources/server-tls/key.pem'
-                cert: 
+                cert:
                   data: fs.readFileSync 'test/resources/server-tls/cert.pem'
+                  fingerprint: '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
                 ca: [
-                  { data: fs.readFileSync 'test/resources/client-tls/cert.pem' },
-                  { data: fs.readFileSync 'test/resources/trust-tls/chain/intermediate.cert.pem' },
-                  { data: fs.readFileSync 'test/resources/trust-tls/chain/ca.cert.pem' }
+                  data: fs.readFileSync 'test/resources/client-tls/cert.pem'
+                  fingerprint: '6D:BF:A5:BE:D7:F5:01:C2:EC:D0:BC:74:A4:12:5A:6F:36:C4:77:5C'
+                ,
+                  data: fs.readFileSync 'test/resources/trust-tls/chain/intermediate.cert.pem'
+                  fingerprint: '3B:21:0A:F1:D2:ED:4F:9B:9C:02:71:DF:4E:14:1B:3E:32:F5:B9:BB'
+                ,
+                  data: fs.readFileSync 'test/resources/trust-tls/chain/ca.cert.pem'
+                  fingerprint: '18:B7:F9:52:FA:37:86:C5:F5:63:DA:8B:FA:E6:6B:4D:FB:A0:27:ED'
                 ]
 
               keystore.save (err) ->
