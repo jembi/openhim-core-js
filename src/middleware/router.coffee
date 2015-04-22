@@ -28,6 +28,14 @@ containsMultiplePrimaries = (routes) ->
   return numPrimaries > 1
 
 setKoaResponse = (ctx, response) ->
+
+  # Try and parse the status to an int if it is a string
+  if typeof response.status is 'string'
+    try
+      response.status = parseInt response.status
+    catch err
+      logger.error err
+
   ctx.response.status = response.status
   ctx.response.timestamp = response.timestamp
   ctx.response.body = response.body
