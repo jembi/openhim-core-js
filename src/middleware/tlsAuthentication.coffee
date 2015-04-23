@@ -98,12 +98,8 @@ clientLookup = (fingerprint, subjectCN, issuerCN) ->
                   return deferred.reject err
 
                 if info.commonName is issuerCN
-                  pem.getFingerprint cert.data, (err, issuerFingerprint) ->
-                    if err?
-                      logger.error "Could not read issuer fingerprint while resolving in-chain authentication: #{err}"
-                      return deferred.resolve null
-                    promise = clientLookup issuerFingerprint.fingerprint, info.commonName, info.issuer.commonName
-                    promise.then (result) -> deferred.resolve result
+                  promise = clientLookup cert.fingerprint, info.commonName, info.issuer.commonName
+                  promise.then (result) -> deferred.resolve result
                 else
                   missedMatches++
 
