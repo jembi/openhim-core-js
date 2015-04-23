@@ -231,26 +231,38 @@ exports.setupTestKeystore = (serverCert, serverKey, ca, callback) ->
         return callback null
       serverCertInfo.data = serverCert
 
-      keystore = new Keystore
-        key: serverKey
-        cert: serverCertInfo
-        ca: []
+      pem.getFingerprint serverCert, (err, serverCertFingerprint) ->
+        if err?
+          logger.error "Failed to get certificate fingerprint in test utils: #{err}"
+          return callback null
+        serverCertInfo.fingerprint = serverCertFingerprint.fingerprint
 
-      if ca.length > 0
-        readCertInfo = Q.denodeify pem.readCertificateInfo
-        promises = []
+        keystore = new Keystore
+          key: serverKey
+          cert: serverCertInfo
+          ca: []
 
-        for cert in ca
-          promises.push(readCertInfo cert)
+        if ca.length > 0
+          readCertInfo = Q.denodeify pem.readCertificateInfo
+          getFingerprint = Q.denodeify pem.getFingerprint
+          infoPromises = []
+          fingerprintPromises = []
 
-        Q.all(promises).then (caCertsInfo) ->
-          keystore.ca = caCertsInfo
-          # Add in the cert data
-          for cert, i in ca
-            keystore.ca[i].data = cert;
+          for cert in ca
+            infoPromises.push(readCertInfo cert)
+            fingerprintPromises.push(getFingerprint cert)
+
+          Q.all(infoPromises).then (caCertsInfo) ->
+            Q.all(fingerprintPromises).then (caFingerprints) ->
+              keystore.ca = caCertsInfo
+              # Add in the cert data
+              for cert, i in ca
+                keystore.ca[i].data = cert
+                keystore.ca[i].fingerprint = caFingerprints[i].fingerprint
+              console.log JSON.stringify keystore
+              keystore.save -> callback keystore
+        else
           keystore.save -> callback keystore
-      else
-        keystore.save -> callback keystore
 
 exports.cleanupTestKeystore = (callback) ->
   Keystore.remove {}, ->
