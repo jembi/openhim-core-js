@@ -1,5 +1,6 @@
 dbVersion = require('./model/dbVersion').dbVersion
 Keystore = require('./model/keystore').Keystore
+Client = require('./model/clients').Client
 logger = require 'winston'
 pem = require 'pem'
 Q = require 'q'
@@ -38,17 +39,44 @@ upgradeFuncs.push
   description: "Convert clients link to certs via their domain to use the cert fingerprint instead"
   func: ->
     defer = Q.defer()
-    # do some more stuff
-    setTimeout ->
-      console.log('did more stuff')
-      defer.resolve()
-    , 2000
+    
+    Client.find (err, clients) ->
+      if err?
+        logger.error "Couldn't fetch all clients to upgrade db: #{err}"
+        return defer.reject()
+
+      Keystore.findOne (err, keystore) ->
+        if err?
+          logger.error "Couldn't fetch keystore to upgrade db: #{err}"
+          return defer.reject()
+
+        promises = []
+        for client in clients
+          clientDefer = Q.defer()
+          promises.push clientDefer.promise
+
+          for cert in keystore.ca
+            if client.clientDomain is cert.commonName and not client.certFingerprint?
+              client.certFingerprint = cert.fingerprint
+              break
+          
+          do (clientDefer) ->
+            client.save (err) ->
+              if err?
+                logger.error "Couldn't save client #{client.clientID} while upgrading db: #{err}"
+                return clientDefer.reject()
+                  
+              clientDefer.resolve()
+
+        Q.all(promises).then ->
+          defer.resolve()
+
     return defer.promise
 
 # add new upgrade functions here
 
 runUpgradeFunc = (i, dbVer) ->
-  logger.info "  Running update: #{upgradeFuncs[i].description}..."
+  logger.info "  \u2022 Running update: #{upgradeFuncs[i].description}..."
   defer = Q.defer()
   # run upgrade function
   upgradeFuncs[i].func().then ->
@@ -57,7 +85,7 @@ runUpgradeFunc = (i, dbVer) ->
     dbVer.lastUpdated = new Date()
     dbVer.save (err) ->
       logger.error err if err?
-      logger.info "  Done."
+      logger.info "  \u2713 Done."
       defer.resolve()
   return defer.promise
 
