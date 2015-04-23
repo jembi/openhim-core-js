@@ -145,10 +145,10 @@ exports.auth.getAuthDetails = () ->
   # create tokenhash
   authTS = new Date().toISOString()
   requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
-  tokenhash = crypto.createHash('sha512');
-  tokenhash.update(exports.rootUser.passwordHash);
-  tokenhash.update(requestsalt);
-  tokenhash.update(authTS);
+  tokenhash = crypto.createHash 'sha512'
+  tokenhash.update exports.rootUser.passwordHash
+  tokenhash.update requestsalt
+  tokenhash.update authTS
 
   auth =
     authTS: authTS
@@ -259,7 +259,6 @@ exports.setupTestKeystore = (serverCert, serverKey, ca, callback) ->
               for cert, i in ca
                 keystore.ca[i].data = cert
                 keystore.ca[i].fingerprint = caFingerprints[i].fingerprint
-              console.log JSON.stringify keystore
               keystore.save -> callback keystore
         else
           keystore.save -> callback keystore

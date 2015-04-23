@@ -73,7 +73,7 @@ upgradeFuncs.push
 
     return defer.promise
 
-# add new upgrade functions here
+# add new upgrade functions here ^^
 
 runUpgradeFunc = (i, dbVer) ->
   logger.info "  \u2022 Running update: #{upgradeFuncs[i].description}..."
@@ -88,6 +88,10 @@ runUpgradeFunc = (i, dbVer) ->
       logger.info "  \u2713 Done."
       defer.resolve()
   return defer.promise
+
+if process.env.NODE_ENV == "test"
+  exports.upgradeFuncs = upgradeFuncs
+  exports.runUpgradeFunc = runUpgradeFunc
 
 exports.upgradeDb = (callback) ->
   dbVersion.findOne (err, dbVer) ->
