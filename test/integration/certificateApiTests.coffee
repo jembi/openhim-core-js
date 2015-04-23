@@ -64,9 +64,10 @@ describe 'API Integration Tests', ->
               keystore.ca[2].commonName.should.be.exactly 'testcert.com'
               keystore.ca[2].organization.should.be.exactly 'test Org'
               keystore.ca[2].country.should.be.exactly 'za'
+              keystore.ca[2].fingerprint.should.exist
               done()
 
-    it "Should create a new client certificate", (done) ->
+    it "Should create a new server certificate", (done) ->
       testUtils.setupTestKeystore (keystore) ->
 
         serverCert = fs.readFileSync 'test/resources/server-tls/cert.pem'
@@ -104,6 +105,7 @@ describe 'API Integration Tests', ->
               keystore.cert.commonName.should.be.exactly 'testcert.com'
               keystore.cert.organization.should.be.exactly 'test Org'
               keystore.cert.country.should.be.exactly 'za'
+              keystore.cert.fingerprint.should.exist
               keystore.cert.data.should.not.equal serverCert.toString()
               keystore.key.should.not.equal serverKey.toString()
               done()

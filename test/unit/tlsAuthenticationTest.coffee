@@ -55,11 +55,12 @@ describe "tlsAuthentication.coffee", ->
             "PoC"
           ]
         passwordHash: ""
+        certFingerprint: "8F:AB:2A:51:84:F2:ED:1B:13:2B:41:21:8B:78:D4:11:47:84:73:E6"
 
       client = new Client testClientDoc
       client.save ->
         config.tlsClientLookup.type = 'in-chain'
-        promise = tlsAuthentication.clientLookup 'test', 'trust2.org'
+        promise = tlsAuthentication.clientLookup 'wont_be_found', 'test', 'trust2.org'
         promise.then (result) ->
           result.should.have.property 'clientID', client.clientID
           Client.remove {}, ->

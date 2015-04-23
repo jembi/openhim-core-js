@@ -66,16 +66,16 @@ exports.getServerOptions = (mutualTLS, done) ->
       done null, options
 
 ###
-# A promise returning function that lookup up a client via the given subjectCN, if
-# not found and config.tlsClientLookup.type is 'in-chain' then the function will
-# recursively walk up the certificate chain and look for clients for certificates
+# A promise returning function that lookups up a client via the given cert fingerprint,
+# if not found and config.tlsClientLookup.type is 'in-chain' then the function will
+# recursively walk up the certificate chain and look for clients with certificates
 # higher in the chain.
 ###
-clientLookup = (subjectCN, issuerCN) ->
-  logger.debug "Looking up client for subject #{subjectCN} and issuer #{issuerCN}"
+clientLookup = (fingerprint, subjectCN, issuerCN) ->
+  logger.debug "Looking up client linked to cert with fingerprint #{fingerprint} with subject #{subjectCN} and issuer #{issuerCN}"
   deferred = Q.defer()
   
-  Client.findOne clientDomain: subjectCN, (err, result) ->
+  Client.findOne certFingerprint: fingerprint, (err, result) ->
     deferred.reject err if err
 
     if result?
@@ -103,7 +103,7 @@ clientLookup = (subjectCN, issuerCN) ->
                   return deferred.reject err
 
                 if info.commonName is issuerCN
-                  promise = clientLookup info.commonName, info.issuer.commonName
+                  promise = clientLookup cert.fingerprint, info.commonName, info.issuer.commonName
                   promise.then (result) -> deferred.resolve result
                 else
                   missedMatches++
@@ -135,7 +135,7 @@ exports.koaMiddleware = (next) ->
 
       # lookup client by subject.CN (CN = clientDomain) and set them as the authenticated user
       try
-        this.authenticated = yield clientLookup cert.subject.CN, cert.issuer.CN
+        this.authenticated = yield clientLookup cert.fingerprint, cert.subject.CN, cert.issuer.CN
       catch err
         logger.error "Failed to lookup client: #{err}"
 
@@ -144,7 +144,7 @@ exports.koaMiddleware = (next) ->
         yield next
       else
         this.authenticated = null
-        logger.info "Certificate Authentication Failed: the certificate's common name #{cert.subject.CN} did not match any client's domain attribute, trying next auth mechanism if any..."
+        logger.info "Certificate Authentication Failed: the certificate's fingerprint #{cert.fingerprint} did not match any client's certFingerprint attribute, trying next auth mechanism if any..."
         sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
         yield next
     else

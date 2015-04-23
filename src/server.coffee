@@ -50,6 +50,7 @@ polling = require './polling'
 tcpAdapter = require './tcpAdapter'
 auditing = require './auditing'
 tasks = require './tasks'
+upgradeDB = require './upgradeDB'
 
 clusterArg = nconf.get 'cluster'
 
@@ -107,21 +108,24 @@ if cluster.isMaster and not module.parent
           type: 'get-uptime'
           masterUptime: process.uptime()
 
-  # start all workers
-  for i in [1..clusterSize]
-    addWorker()
+  # upgrade the database if needed
+  upgradeDB.upgradeDb ->
 
-  cluster.on 'exit', (worker, code, signal) ->
-    logger.warn "worker #{worker.process.pid} died"
-    if not worker.suicide
-      # respawn
+    # start all workers
+    for i in [1..clusterSize]
       addWorker()
 
-  cluster.on 'online', (worker) ->
-    logger.info "worker with pid #{worker.process.pid} is online"
+    cluster.on 'exit', (worker, code, signal) ->
+      logger.warn "worker #{worker.process.pid} died"
+      if not worker.suicide
+        # respawn
+        addWorker()
 
-  cluster.on 'listening', (worker, address) ->
-    logger.debug "worker #{worker.id} is now connected to #{address.address}:#{address.port}"
+    cluster.on 'online', (worker) ->
+      logger.info "worker with pid #{worker.process.pid} is online"
+
+    cluster.on 'listening', (worker, address) ->
+      logger.debug "worker #{worker.id} is now connected to #{address.address}:#{address.port}"
 else
   # configure worker logger
   logger.add logger.transports.Console,
