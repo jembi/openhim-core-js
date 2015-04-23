@@ -1,5 +1,7 @@
 dbVersion = require('./model/dbVersion').dbVersion
+Keystore = require('./model/keystore').Keystore
 logger = require 'winston'
+pem = require 'pem'
 Q = require 'q'
 
 # push new upgrade functions to this array
@@ -7,18 +9,33 @@ Q = require 'q'
 upgradeFuncs = []
 
 upgradeFuncs.push
-  description: "Upgrade some stuff"
+  description: "Ensure that all certs have a fingerprint property"
   func: ->
     defer = Q.defer()
-    # do some stuff
-    setTimeout ->
-      console.log('did stuff')
-      defer.resolve()
-    , 500
+    
+    Keystore.findOne (err, keystore) ->
+      # convert server cert
+      pem.getFingerprint keystore.cert.data, (err, obj) ->
+        keystore.cert.fingerprint = obj.fingerprint
+
+        promises = []
+        for cert, i in keystore.ca
+          caDefer = Q.defer()
+          promises.push caDefer.promise
+          do (caDefer, i) ->
+            pem.getFingerprint cert.data, (err, obj) ->
+              keystore.ca[i].fingerprint = obj.fingerprint
+              caDefer.resolve()
+
+        Q.all(promises).then ->
+          keystore.save (err) ->
+            logger.error "Failed to save keystore: #{err}" if err?
+            defer.resolve()
+
     return defer.promise
 
 upgradeFuncs.push
-  description: "Upgrade some more stuff"
+  description: "Convert clients link to certs via their domain to use the cert fingerprint instead"
   func: ->
     defer = Q.defer()
     # do some more stuff
