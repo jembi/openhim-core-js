@@ -50,9 +50,11 @@ sendReports = (job, flag, done) ->
 #     Pre-Fetch report data into Channel Map
       for key , obj of channelMap
         innerDeferred = Q.defer()
-        fetchChannelReport obj.channel, obj.user, flag, (item) ->
-          channelReportMap[key] = item
-          innerDeferred.resolve()
+        do (innerDeferred,key, obj) ->
+          fetchChannelReport obj.channel, obj.user, flag, (item) ->
+
+            channelReportMap[key] = item
+            innerDeferred.resolve()
         innerPromises.push innerDeferred.promise
 
       (Q.all innerPromises).then ->
@@ -118,7 +120,6 @@ fetchChannelReport = (channel, user, flag, callback) ->
 
     .then (statusData) ->
       item.statusData = statusData
-#      console.log item
       callback item
 
 fetchDailySubscribers = (callback) ->
