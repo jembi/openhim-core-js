@@ -15,6 +15,10 @@ package { "build-essential":
 	ensure => "installed",
 }
 
+package { "git":
+    ensure => "installed",
+}
+
 
 class { 'mongodb::globals':
 	manage_package_repo => true
@@ -35,7 +39,7 @@ exec { "npm-install":
 	cwd => "/openhim-core-js",
 	timeout => 0,
 	command => "npm install",
-	require => [ Class["nodejs"], Package["build-essential"] ],
+	require => [ Class["nodejs"], Package["build-essential"], Package["git"] ],
 }
 
 exec { "install-grunt":
