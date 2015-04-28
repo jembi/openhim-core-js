@@ -128,8 +128,8 @@ transaction10 = new Transaction
   _id: "101010101010101010101010"
   channelID: "222222222222222222222222"
   clientID: "42bbe25485e77d8e5daad4b4"
-  request: { path: "/sample/api", method: "GET", timestamp: moment().utc().format() }
-  response: { status: "200", timestamp: moment().add(1, 'seconds').utc().format() }
+  request: { path: "/sample/api", method: "GET", timestamp: moment().subtract(1, 'days').utc().format() }
+  response: { status: "200", timestamp: moment().subtract(1, 'days').add(1, 'seconds').utc().format() }
   routes: { name: "dummy-route" }
   orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
@@ -228,6 +228,3 @@ describe "Transaction Reports", ->
         reports.sendUserEmail.should.be.called
 
       done()
-
-
-
