@@ -96,12 +96,12 @@ sendUserEmail = (report) ->
 
 fetchChannelReport = (channel, user, flag, callback) ->
   if flag == 'dailyReport'
-    from = moment().subtract(1, 'days').startOf('day').toDate()
-    to = moment().subtract(1, 'days').endOf('day').toDate()
+    from = moment().subtract(1, 'days').startOf('isoWeek').toDate()
+    to = moment().subtract(1, 'days').endOf('isoWeek').toDate()
     period = 'day'
   else
-    from = moment().subtract(1, 'days').startOf('week').toDate()
-    to = moment().subtract(1, 'days').endOf('week').toDate()
+    from = moment().subtract(1, 'days').startOf('isoWeek').toDate()
+    to = moment().subtract(1, 'days').endOf('isoWeek').toDate()
     period = 'week'
 
   item = {}
