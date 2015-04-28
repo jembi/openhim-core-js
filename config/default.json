@@ -62,7 +62,9 @@
     "consoleURL": "http://openhim.jembi.org"
   },
   "reports": {
-    "enableReports": true
+    "enableReports": true,
+    "dailyReportAt": "00 7 * * *",
+    "weeklyReportAt": "00 7 * * 6"
   },
   "visualizer": {
     "enableVisualizer": true,

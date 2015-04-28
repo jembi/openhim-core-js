@@ -7,6 +7,8 @@ config.reports = config.get('reports')
 contact = require './contact'
 metrics = require './metrics'
 moment = require "moment"
+config = require "./config/config"
+config.reports = config.get('reports')
 
 # Function Sends the reports
 
@@ -94,12 +96,12 @@ sendUserEmail = (report) ->
 
 fetchChannelReport = (channel, user, flag, callback) ->
   if flag == 'dailyReport'
-    from = moment().startOf('day').toDate()
-    to = moment().endOf('day').toDate()
+    from = moment().subtract(1, 'days').startOf('day').toDate()
+    to = moment().subtract(1, 'days').endOf('day').toDate()
     period = 'day'
   else
-    from = moment().startOf('week').toDate()
-    to = moment().endOf('week').toDate()
+    from = moment().subtract(1, 'days').startOf('week').toDate()
+    to = moment().subtract(1, 'days').endOf('week').toDate()
     period = 'week'
 
   item = {}
@@ -132,19 +134,22 @@ plainTemplate = (report) ->
   text = ''
   for data in report.data
     do (data) ->
-      text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
-                Channel Name: #{data.channel.name} \r\n
-                Channel Load: #{ data.data[0].load } transactions  \r\n
-                Ave response time: #{ data.data[0].avgResp } \r\n
-                Failed:  #{ data.statusData[0].failed }  \r\n
-                Successful:  #{ data.statusData[0].successful }  \r\n
-                Processing: #{ data.statusData[0].processing }  \r\n
-                Completed:  #{ data.statusData[0].completed }  \r\n
-                Completed with errors: #{ data.statusData[0].completedWErrors } \r\n \r\n
-                <---------- End Channel -------------------------------------------------> \r\n \r\n
-              \r\n
-              \r\n
-            "
+      if data.data[0] and data.statusData[0]
+        text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
+                  Channel Name: #{data.channel.name} \r\n
+                  Channel Load: #{ data.data[0].load } transactions  \r\n
+                  Ave response time: #{ data.data[0].avgResp } \r\n
+                  Failed:  #{ data.statusData[0].failed }  \r\n
+                  Successful:  #{ data.statusData[0].successful }  \r\n
+                  Processing: #{ data.statusData[0].processing }  \r\n
+                  Completed:  #{ data.statusData[0].completed }  \r\n
+                  Completed with errors: #{ data.statusData[0].completedWErrors } \r\n \r\n
+                  <---------- End Channel -------------------------------------------------> \r\n \r\n
+                \r\n
+                \r\n
+              "
+      else
+        text += "There is no data in this"
   text
 
 htmlTemplate = (report) ->
@@ -169,14 +174,17 @@ htmlTemplate = (report) ->
         "
   for data in report.data
     do (data) ->
-      text += "<tr><td><i>#{data.channel.name}</i></td>"
-      text += "<td> #{ data.data[0].load } transactions </td>"
-      text += "<td> #{ data.data[0].avgResp } </td>"
-      text += "<td> #{ data.statusData[0].failed }  </td>"
-      text += "<td> #{ data.statusData[0].successful }  </td>"
-      text += "<td> #{ data.statusData[0].processing }  </td>"
-      text += "<td> #{ data.statusData[0].completed }  </td>"
-      text += "<td> #{ data.statusData[0].completedWErrors } </td></tr>"
+      if data.data[0] and data.statusData[0]
+        text += "<tr><td><i>#{data.channel.name}</i></td>"
+        text += "<td> #{ data.data[0].load } transactions </td>"
+        text += "<td> #{ data.data[0].avgResp } </td>"
+        text += "<td> #{ data.statusData[0].failed }  </td>"
+        text += "<td> #{ data.statusData[0].successful }  </td>"
+        text += "<td> #{ data.statusData[0].processing }  </td>"
+        text += "<td> #{ data.statusData[0].completed }  </td>"
+        text += "<td> #{ data.statusData[0].completedWErrors } </td></tr>"
+      else
+        text += "<tr><td>There is no data in this report</td></tr>"
   text += "
     </table>
     </div>
@@ -197,8 +205,14 @@ setupAgenda = (agenda) ->
   agenda.define 'send daily channel metrics', (job, done) ->
     sendReports job, 'dailyReport', done
 
-  agenda.every "1 weeks", 'send weekly channel metrics'
-  agenda.every "1 days", 'send daily channel metrics'
+  agenda.every config.reports.weeklyReportAt, 'send weekly channel metrics'
+  agenda.every config.reports.dailyReportAt, 'send daily channel metrics'
+
+  agenda.on "start", (job)->
+    logger.info "starting job: " + job.attrs.name
+
+  agenda.on "fail", (err, job)->
+    logger.error "Job " + job.attrs.name + " failed with " + err.message
 
 exports.setupAgenda = setupAgenda
 
