@@ -15,6 +15,8 @@ upgradeFuncs.push
     defer = Q.defer()
     
     Keystore.findOne (err, keystore) ->
+      return defer.resolve() if not keystore
+
       # convert server cert
       pem.getFingerprint keystore.cert.data, (err, obj) ->
         keystore.cert.fingerprint = obj.fingerprint
