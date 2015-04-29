@@ -210,8 +210,8 @@ else
       logger.error "Job " + job.attrs.name + " failed with " + err.message
 
     agenda.on "complete", (job)->
-      logger.error "Job " + job.attrs.name + " has completed"
-    
+      logger.info "Job " + job.attrs.name + " has completed"
+
     alerts.setupAgenda agenda if config.alerts.enableAlerts
     reports.setupAgenda agenda if config.reports.enableReports
     if config.polling.enabled
