@@ -17,6 +17,7 @@
     "co": "^4.1.0",
     "cookie": "^0.1.2",
     "forever-monitor": "^1.5.2",
+    "form-data": "^0.2.0",
     "glossy": "^0.1.7",
     "http-status": "^0.1.8",
     "koa": "0.18.1",
@@ -48,7 +49,6 @@
   "devDependencies": {
     "coffee-script": "^1.9.1",
     "coffeelint": "^1.9.1",
-    "form-data": "^0.2.0",
     "grunt": "^0.4.5",
     "grunt-cli": "^0.1.13",
     "grunt-coffeelint": "^0.0.13",
@@ -61,7 +61,6 @@
     "should": "^5.0.0",
     "sinon": "^1.12.2",
     "sinon-es6": "^0.0.3",
-    "source-map-support": "^0.2.10",
     "supertest": "^0.15.0"
   },
   "scripts": {
