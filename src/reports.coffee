@@ -84,8 +84,11 @@ sendReports = (job, flag, done) ->
             report.type = 'Daily'
           else
             report.type = 'Weekly'
-
-          sendUserEmail report
+          try
+            sendUserEmail report
+          catch err
+            logger.error err
+            job.fail "Failed to send report reason: #{err}"
 
         done()
 
@@ -136,13 +139,13 @@ plainTemplate = (report) ->
     do (data) ->
       text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
                 Channel Name: #{data.channel.name} \r\n
-                Channel Load: #{ if data.data[0].load then data.data[0].load else 0} transactions  \r\n
-                Ave response time: #{ if data.data[0].avgResp then data.data[0].avgResp  else 0 } \r\n
-                Failed:  #{ if data.statusData[0].failed then data.statusData[0].failed  else 0 }  \r\n
-                Successful:  #{ if data.statusData[0].successful then data.statusData[0].successful  else 0 }  \r\n
-                Processing: #{ if data.statusData[0].processing then data.statusData[0].processing  else 0 }  \r\n
-                Completed:  #{ if data.statusData[0].completed then data.statusData[0].completed  else 0 }  \r\n
-                Completed with errors: #{ if data.statusData[0].completedWErrors then data.statusData[0].completedWErrors else 0 } \r\n \r\n
+                Channel Load: #{ if data.data[0]?.load? then data.data[0].load else 0} transactions  \r\n
+                Ave response time: #{ if data.data[0]?.avgResp? then data.data[0].avgResp  else 0 } \r\n
+                Failed:  #{ if data.statusData[0]?.failed? then data.statusData[0].failed  else 0 }  \r\n
+                Successful:  #{ if data.statusData[0]?.successful? then data.statusData[0].successful  else 0 }  \r\n
+                Processing: #{ if data.statusData[0]?.processing? then data.statusData[0].processing  else 0 }  \r\n
+                Completed:  #{ if data.statusData[0]?.completed? then data.statusData[0].completed  else 0 }  \r\n
+                Completed with errors: #{ if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0 } \r\n \r\n
                 <---------- End Channel -------------------------------------------------> \r\n \r\n
               \r\n
               \r\n
@@ -172,13 +175,13 @@ htmlTemplate = (report) ->
   for data in report.data
     do (data) ->
       text += "<tr><td><i>#{data.channel.name}</i></td>"
-      text += "<td> #{ if data.data[0].load then data.data[0].load else 0 } transactions </td>"
-      text += "<td> #{ if data.data[0].avgResp then data.data[0].avgResp else 0 } </td>"
-      text += "<td> #{ if data.statusData[0].failed then data.statusData[0].failed else 0 }  </td>"
-      text += "<td> #{ if data.statusData[0].successful then data.statusData[0].successful else 0 }  </td>"
-      text += "<td> #{ if data.statusData[0].processing then data.statusData[0].processing else 0 }  </td>"
-      text += "<td> #{ if data.statusData[0].completed then data.statusData[0].completed else 0 }  </td>"
-      text += "<td> #{ if data.statusData[0].completedWErrors then data.statusData[0].completedWErrors else 0 } </td></tr>"
+      text += "<td> #{ if data.data[0]?.load? then data.data[0].load else 0 } transactions </td>"
+      text += "<td> #{ if data.data[0]?.avgResp? then data.data[0].avgResp else 0 } </td>"
+      text += "<td> #{ if data.statusData[0]?.failed? then data.statusData[0].failed else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0]?.successful? then data.statusData[0].successful else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0]?.processing? then data.statusData[0].processing else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0]?.completed? then data.statusData[0].completed else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0 } </td></tr>"
   text += "
     </table>
     </div>
