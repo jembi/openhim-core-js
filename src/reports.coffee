@@ -134,7 +134,7 @@ fetchWeeklySubscribers = (callback) ->
   User.find { weeklyReport: true }, callback
 
 plainTemplate = (report) ->
-  text = ''
+  text = "Generated on: #{new Date().toString()}"
   for data in report.data
     do (data) ->
       text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
@@ -160,6 +160,7 @@ htmlTemplate = (report) ->
     <h1>#{report.type} OpenHIM Transactions Summary</h1>
     <div>
     <p>on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
+    <p><span>Generated on: #{new Date().toString()}</span></p>
     <table>
     <tr>
       <th>Channel Name</th>
