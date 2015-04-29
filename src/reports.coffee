@@ -202,11 +202,6 @@ setupAgenda = (agenda) ->
   agenda.every config.reports.weeklyReportAt, 'send weekly channel metrics'
   agenda.every config.reports.dailyReportAt, 'send daily channel metrics'
 
-  agenda.on "start", (job)->
-    logger.info "starting job: " + job.attrs.name
-
-  agenda.on "fail", (err, job)->
-    logger.error "Job " + job.attrs.name + " failed with " + err.message
 
 exports.setupAgenda = setupAgenda
 

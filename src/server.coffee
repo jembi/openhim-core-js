@@ -202,6 +202,16 @@ else
     agenda = new Agenda
       db:
         address: config.mongo.url
+
+    agenda.on "start", (job)->
+      logger.info "starting job: " + job.attrs.name
+
+    agenda.on "fail", (err, job)->
+      logger.error "Job " + job.attrs.name + " failed with " + err.message
+
+    agenda.on "complete", (job)->
+      logger.error "Job " + job.attrs.name + " has completed"
+    
     alerts.setupAgenda agenda if config.alerts.enableAlerts
     reports.setupAgenda agenda if config.reports.enableReports
     if config.polling.enabled
