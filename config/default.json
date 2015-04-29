@@ -63,8 +63,8 @@
   },
   "reports": {
     "enableReports": true,
-    "dailyReportAt": "00 7 * * *",
-    "weeklyReportAt": "00 7 * * 1"
+    "dailyReportAt": "0 7 * * *",
+    "weeklyReportAt": "0 7 * * 1"
   },
   "visualizer": {
     "enableVisualizer": true,

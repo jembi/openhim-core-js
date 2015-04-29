@@ -52,11 +52,11 @@ sendReports = (job, flag, done) ->
 #     Pre-Fetch report data into Channel Map
       for key , obj of channelMap
         innerDeferred = Q.defer()
-        do (innerDeferred,key, obj) ->
+        do (innerDeferred, key, obj) ->
           fetchChannelReport obj.channel, obj.user, flag, (item) ->
-
             channelReportMap[key] = item
             innerDeferred.resolve()
+
         innerPromises.push innerDeferred.promise
 
       (Q.all innerPromises).then ->
@@ -134,22 +134,19 @@ plainTemplate = (report) ->
   text = ''
   for data in report.data
     do (data) ->
-      if data.data[0] and data.statusData[0]
-        text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
-                  Channel Name: #{data.channel.name} \r\n
-                  Channel Load: #{ data.data[0].load } transactions  \r\n
-                  Ave response time: #{ data.data[0].avgResp } \r\n
-                  Failed:  #{ data.statusData[0].failed }  \r\n
-                  Successful:  #{ data.statusData[0].successful }  \r\n
-                  Processing: #{ data.statusData[0].processing }  \r\n
-                  Completed:  #{ data.statusData[0].completed }  \r\n
-                  Completed with errors: #{ data.statusData[0].completedWErrors } \r\n \r\n
-                  <---------- End Channel -------------------------------------------------> \r\n \r\n
-                \r\n
-                \r\n
-              "
-      else
-        text += "There is no data in this"
+      text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
+                Channel Name: #{data.channel.name} \r\n
+                Channel Load: #{ if data.data[0].load then data.data[0].load else 0} transactions  \r\n
+                Ave response time: #{ if data.data[0].avgResp then data.data[0].avgResp  else 0 } \r\n
+                Failed:  #{ if data.statusData[0].failed then data.statusData[0].failed  else 0 }  \r\n
+                Successful:  #{ if data.statusData[0].successful then data.statusData[0].successful  else 0 }  \r\n
+                Processing: #{ if data.statusData[0].processing then data.statusData[0].processing  else 0 }  \r\n
+                Completed:  #{ if data.statusData[0].completed then data.statusData[0].completed  else 0 }  \r\n
+                Completed with errors: #{ if data.statusData[0].completedWErrors then data.statusData[0].completedWErrors else 0 } \r\n \r\n
+                <---------- End Channel -------------------------------------------------> \r\n \r\n
+              \r\n
+              \r\n
+            "
   text
 
 htmlTemplate = (report) ->
@@ -174,17 +171,14 @@ htmlTemplate = (report) ->
         "
   for data in report.data
     do (data) ->
-      if data.data[0] and data.statusData[0]
-        text += "<tr><td><i>#{data.channel.name}</i></td>"
-        text += "<td> #{ data.data[0].load } transactions </td>"
-        text += "<td> #{ data.data[0].avgResp } </td>"
-        text += "<td> #{ data.statusData[0].failed }  </td>"
-        text += "<td> #{ data.statusData[0].successful }  </td>"
-        text += "<td> #{ data.statusData[0].processing }  </td>"
-        text += "<td> #{ data.statusData[0].completed }  </td>"
-        text += "<td> #{ data.statusData[0].completedWErrors } </td></tr>"
-      else
-        text += "<tr><td>There is no data in this report</td></tr>"
+      text += "<tr><td><i>#{data.channel.name}</i></td>"
+      text += "<td> #{ if data.data[0].load then data.data[0].load else 0 } transactions </td>"
+      text += "<td> #{ if data.data[0].avgResp then data.data[0].avgResp else 0 } </td>"
+      text += "<td> #{ if data.statusData[0].failed then data.statusData[0].failed else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0].successful then data.statusData[0].successful else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0].processing then data.statusData[0].processing else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0].completed then data.statusData[0].completed else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0].completedWErrors then data.statusData[0].completedWErrors else 0 } </td></tr>"
   text += "
     </table>
     </div>
