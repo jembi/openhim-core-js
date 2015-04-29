@@ -7,6 +7,8 @@ config.reports = config.get('reports')
 contact = require './contact'
 metrics = require './metrics'
 moment = require "moment"
+config = require "./config/config"
+config.reports = config.get('reports')
 
 # Function Sends the reports
 
@@ -50,9 +52,11 @@ sendReports = (job, flag, done) ->
 #     Pre-Fetch report data into Channel Map
       for key , obj of channelMap
         innerDeferred = Q.defer()
-        fetchChannelReport obj.channel, obj.user, flag, (item) ->
-          channelReportMap[key] = item
-          innerDeferred.resolve()
+        do (innerDeferred, key, obj) ->
+          fetchChannelReport obj.channel, obj.user, flag, (item) ->
+            channelReportMap[key] = item
+            innerDeferred.resolve()
+
         innerPromises.push innerDeferred.promise
 
       (Q.all innerPromises).then ->
@@ -80,8 +84,11 @@ sendReports = (job, flag, done) ->
             report.type = 'Daily'
           else
             report.type = 'Weekly'
-
-          sendUserEmail report
+          try
+            sendUserEmail report
+          catch err
+            logger.error err
+            job.fail "Failed to send report reason: #{err}"
 
         done()
 
@@ -92,12 +99,12 @@ sendUserEmail = (report) ->
 
 fetchChannelReport = (channel, user, flag, callback) ->
   if flag == 'dailyReport'
-    from = moment().startOf('day').toDate()
-    to = moment().endOf('day').toDate()
+    from = moment().subtract(1, 'days').startOf('day').toDate()
+    to = moment().subtract(1, 'days').endOf('day').toDate()
     period = 'day'
   else
-    from = moment().startOf('week').toDate()
-    to = moment().endOf('week').toDate()
+    from = moment().subtract(1, 'days').startOf('isoWeek').toDate()
+    to = moment().subtract(1, 'days').endOf('isoWeek').toDate()
     period = 'week'
 
   item = {}
@@ -118,7 +125,6 @@ fetchChannelReport = (channel, user, flag, callback) ->
 
     .then (statusData) ->
       item.statusData = statusData
-#      console.log item
       callback item
 
 fetchDailySubscribers = (callback) ->
@@ -128,18 +134,18 @@ fetchWeeklySubscribers = (callback) ->
   User.find { weeklyReport: true }, callback
 
 plainTemplate = (report) ->
-  text = ''
+  text = "Generated on: #{new Date().toString()}"
   for data in report.data
     do (data) ->
       text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
                 Channel Name: #{data.channel.name} \r\n
-                Channel Load: #{ data.data[0].load } transactions  \r\n
-                Ave response time: #{ data.data[0].avgResp } \r\n
-                Failed:  #{ data.statusData[0].failed }  \r\n
-                Successful:  #{ data.statusData[0].successful }  \r\n
-                Processing: #{ data.statusData[0].processing }  \r\n
-                Completed:  #{ data.statusData[0].completed }  \r\n
-                Completed with errors: #{ data.statusData[0].completedWErrors } \r\n \r\n
+                Channel Load: #{ if data.data[0]?.load? then data.data[0].load else 0} transactions  \r\n
+                Ave response time: #{ if data.data[0]?.avgResp? then data.data[0].avgResp  else 0 } \r\n
+                Failed:  #{ if data.statusData[0]?.failed? then data.statusData[0].failed  else 0 }  \r\n
+                Successful:  #{ if data.statusData[0]?.successful? then data.statusData[0].successful  else 0 }  \r\n
+                Processing: #{ if data.statusData[0]?.processing? then data.statusData[0].processing  else 0 }  \r\n
+                Completed:  #{ if data.statusData[0]?.completed? then data.statusData[0].completed  else 0 }  \r\n
+                Completed with errors: #{ if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0 } \r\n \r\n
                 <---------- End Channel -------------------------------------------------> \r\n \r\n
               \r\n
               \r\n
@@ -154,6 +160,7 @@ htmlTemplate = (report) ->
     <h1>#{report.type} OpenHIM Transactions Summary</h1>
     <div>
     <p>on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
+    <p><span>Generated on: #{new Date().toString()}</span></p>
     <table>
     <tr>
       <th>Channel Name</th>
@@ -169,13 +176,13 @@ htmlTemplate = (report) ->
   for data in report.data
     do (data) ->
       text += "<tr><td><i>#{data.channel.name}</i></td>"
-      text += "<td> #{ data.data[0].load } transactions </td>"
-      text += "<td> #{ data.data[0].avgResp } </td>"
-      text += "<td> #{ data.statusData[0].failed }  </td>"
-      text += "<td> #{ data.statusData[0].successful }  </td>"
-      text += "<td> #{ data.statusData[0].processing }  </td>"
-      text += "<td> #{ data.statusData[0].completed }  </td>"
-      text += "<td> #{ data.statusData[0].completedWErrors } </td></tr>"
+      text += "<td> #{ if data.data[0]?.load? then data.data[0].load else 0 } transactions </td>"
+      text += "<td> #{ if data.data[0]?.avgResp? then data.data[0].avgResp else 0 } </td>"
+      text += "<td> #{ if data.statusData[0]?.failed? then data.statusData[0].failed else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0]?.successful? then data.statusData[0].successful else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0]?.processing? then data.statusData[0].processing else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0]?.completed? then data.statusData[0].completed else 0 }  </td>"
+      text += "<td> #{ if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0 } </td></tr>"
   text += "
     </table>
     </div>
@@ -196,8 +203,9 @@ setupAgenda = (agenda) ->
   agenda.define 'send daily channel metrics', (job, done) ->
     sendReports job, 'dailyReport', done
 
-  agenda.every "1 weeks", 'send weekly channel metrics'
-  agenda.every "1 days", 'send daily channel metrics'
+  agenda.every config.reports.weeklyReportAt, 'send weekly channel metrics'
+  agenda.every config.reports.dailyReportAt, 'send daily channel metrics'
+
 
 exports.setupAgenda = setupAgenda
 
