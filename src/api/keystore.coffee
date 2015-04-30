@@ -193,6 +193,10 @@ exports.getCertKeyStatus = getCertKeyStatus = (callback) ->
 
   Keystore.findOne (err, keystoreDoc) ->
     return callback err, null if err
+    
+    # if the key is encrypted but no passphrase is supplied, return  false instantly
+    if /Proc-Type:.*ENCRYPTED/.test(keystoreDoc.key) and (not keystoreDoc.passphrase? or keystoreDoc.passphrase.length == 0)
+      return callback null, false
 
     pem.getModulusFromProtected keystoreDoc.key, keystoreDoc.passphrase, (err, keyModulus) ->
       return callback err, null if err
