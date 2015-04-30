@@ -4,4 +4,4 @@ node_js:
   - iojs
 services: mongodb
 after_success:
-  - if [ true ]; then "curl -v -X POST -H 'api_key: fdb9e03f-f843-4bea-9d02-43ab619dd289' http://162.243.219.172/deploys/openhim-core/preprod"; fi
+  - if [ "$TRAVIS_BRANCH" == "master" ]; then curl -v -X POST -H 'api_key: fdb9e03f-f843-4bea-9d02-43ab619dd289' http://162.243.219.172/deploys/openhim-core/preprod; fi
