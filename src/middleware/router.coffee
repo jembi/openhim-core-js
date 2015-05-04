@@ -148,6 +148,8 @@ sendRequestToRoutes = (ctx, routes, next) ->
     (Q.all nonPrimaryPromises).then ->
       messageStore.storeResponse ctx, ->
         logger.info 'Storing non primary route responses'
+        stats.incrementTransactionCount ctx, ->
+        stats.measureTransactionDuration ctx, ->
 
 # function to build fresh promise for transactions routes
 buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
