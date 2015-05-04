@@ -2,8 +2,8 @@
 # vi: set ft=ruby :
 
 Vagrant::Config.run do |config|
-	config.vm.box = "precise32"
-	config.vm.box_url = "http://files.vagrantup.com/precise32.box"
+	config.vm.box = "ubuntu/trusty64"
+	config.vm.box_url = "http://atlas.hashicorp.com/ubuntu/boxes/trusty64"
 
 	config.vm.network :bridged
 	config.vm.forward_port 5000, 5000
@@ -19,12 +19,6 @@ Vagrant::Config.run do |config|
 		shell.inline = "mkdir -p /etc/puppet/modules;
 			puppet module install willdurand/nodejs;
 			puppet module install puppetlabs/mongodb"
-	end
-
-	config.vm.provision :shell do |shell|
-		# setup way more strict time sync (default was 20mins)
-		shell.inline = "sed -i 's/daemon $binary > \\/dev\\/null/daemon $binary \"--timesync-set-start --timesync-set-on-restore 1 --timesync-set-threshold 2000\" > \\/dev\\/null/' /etc/init.d/vboxadd-service;
-			service vboxadd-service restart"
 	end
 
 	config.vm.provision :puppet do |puppet|
