@@ -12,6 +12,7 @@ logger = require "winston"
 cookie = require 'cookie'
 fs = require 'fs'
 utils = require '../utils'
+messageStore = require '../middleware/messageStore'
 
 statsdServer = config.get 'statsd'
 application = config.get 'application'
@@ -84,6 +85,7 @@ handleServerError = (ctx, err) ->
 
 sendRequestToRoutes = (ctx, routes, next) ->
   promises = []
+  nonPrimaryPromises = []
 
   if containsMultiplePrimaries routes
     return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
@@ -134,12 +136,18 @@ sendRequestToRoutes = (ctx, routes, next) ->
           # on failure
           handleServerError ctx, reason
       else
-        promise = buildNonPrimarySendRequestPromise ctx, route, options, path
+        nonPrimaryPromise = buildNonPrimarySendRequestPromise ctx, route, options, path
+
 
       promises.push promise
+      nonPrimaryPromises.push nonPrimaryPromise
 
     (Q.all promises).then ->
       next()
+
+    (Q.all nonPrimaryPromises).then ->
+      messageStore.storeResponse ctx, ->
+        logger.info 'Storing non primary route responses'
 
 # function to build fresh promise for transactions routes
 buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
@@ -255,7 +263,7 @@ sendHttpRequest = (ctx, route, options) ->
           defered.resolve response
 
   routeReq.on "error", (err) -> defered.reject err
-  
+
   routeReq.on "clientError", (err) -> defered.reject err
 
   routeReq.setTimeout config.router.timeout, -> defered.reject "Request Timed Out"

@@ -171,7 +171,7 @@ describe "HTTP Router", ->
             router.route ctx, (err) ->
               if err
                 return done err
-
+              console.log JSON.stringify ctx
               ctx.routes.length.should.be.exactly 2
               ctx.routes[0].response.status.should.be.exactly 200
               ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
