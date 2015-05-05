@@ -13,7 +13,7 @@ cookie = require 'cookie'
 fs = require 'fs'
 utils = require '../utils'
 messageStore = require '../middleware/messageStore'
-
+stats = require "../middleware/stats"
 statsdServer = config.get 'statsd'
 application = config.get 'application'
 SDC = require 'statsd-client'
@@ -86,6 +86,7 @@ handleServerError = (ctx, err) ->
 sendRequestToRoutes = (ctx, routes, next) ->
   promises = []
   nonPrimaryPromises = []
+  ctx.timer = new Date
 
   if containsMultiplePrimaries routes
     return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
@@ -122,8 +123,10 @@ sendRequestToRoutes = (ctx, routes, next) ->
         delete options.headers.host
 
       if route.primary
+
         promise = sendRequest(ctx, route, options)
         .then (response) ->
+          logger.info "executing primary route : #{route.name}"
           if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
             # handle mediator reponse
             responseObj = JSON.parse response.body
@@ -136,7 +139,9 @@ sendRequestToRoutes = (ctx, routes, next) ->
           # on failure
           handleServerError ctx, reason
       else
+        logger.info "executing non primary: #{route.name}"
         nonPrimaryPromise = buildNonPrimarySendRequestPromise ctx, route, options, path
+
 
 
       promises.push promise
@@ -151,6 +156,8 @@ sendRequestToRoutes = (ctx, routes, next) ->
         stats.incrementTransactionCount ctx, ->
         stats.measureTransactionDuration ctx, ->
 
+
+exports.nonPrimaryRoutes = []
 # function to build fresh promise for transactions routes
 buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
   sendRequest ctx, route, options
@@ -176,6 +183,7 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
 
     ctx.routes = [] if not ctx.routes
     ctx.routes.push routeObj
+    exports.nonPrimaryRoutes.push routeObj
   .fail (reason) ->
     # on failure
     handleServerError ctx, reason

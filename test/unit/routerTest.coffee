@@ -57,13 +57,16 @@ describe "HTTP Router", ->
         name: "Multicast 1"
         urlPattern: "test/multicast.+"
         routes: [
+              name: "non_primary_1"
               host: "localhost"
               port: 7777
             ,
+              name: "primary"
               host: "localhost"
               port: 8888
               primary: true
             ,
+              name: "non_primary_2"
               host: "localhost"
               port: 9999
             ]
@@ -151,9 +154,9 @@ describe "HTTP Router", ->
             server.close -> done err
 
     it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
-      testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
-        testUtils.createMockServer 201, "Mock response body 2\n", 8888, ->
-          testUtils.createMockServer 400, "Mock response body 3\n", 9999, ->
+      s1 = testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
+        s2 = testUtils.createMockServer 201, "Mock response body 2\n", 8888, ->
+          s3 = testUtils.createMockServer 400, "Mock response body 3\n", 9999, ->
             ctx = setupContextForMulticast()
             router.route ctx, (err) ->
               if err
@@ -161,29 +164,38 @@ describe "HTTP Router", ->
               ctx.response.status.should.be.exactly 201
               ctx.response.body.toString().should.be.eql "Mock response body 2\n"
               ctx.response.header.should.be.ok
-              done()
+              s1.close ->
+                s2.close ->
+                  s3.close ->
+                    router.nonPrimaryRoutes = []
+                    done()
+
 
     it "should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes", (done) ->
-      testUtils.createMockServer 200, "Mock response body 1\n", 7750, ->
-        testUtils.createMockServer 201, "Mock response body 2\n", 7751, ->
-          testUtils.createMockServer 400, "Mock response body 3\n", 7752, ->
+      s1 = testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
+        s2 = testUtils.createMockServer 201, "Mock response body 2\n", 8888, ->
+          s3 = testUtils.createMockServer 400, "Mock response body 3\n", 9999, ->
             ctx = setupContextForMulticast()
             router.route ctx, (err) ->
               if err
                 return done err
-              console.log JSON.stringify ctx
-              ctx.routes.length.should.be.exactly 2
-              ctx.routes[0].response.status.should.be.exactly 200
-              ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
-              ctx.routes[0].response.headers.should.be.ok
-              ctx.routes[0].request.path.should.be.exactly "/test/multicasting"
-              ctx.routes[0].request.timestamp.should.be.exactly requestTimestamp
-              ctx.routes[1].response.status.should.be.exactly 400
-              ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
-              ctx.routes[1].response.headers.should.be.ok
-              ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
-              ctx.routes[1].request.timestamp.should.be.exactly requestTimestamp
-              done()
+
+              router.nonPrimaryRoutes.length.should.be.exactly 2
+              router.nonPrimaryRoutes[0].response.status.should.be.exactly 400
+              router.nonPrimaryRoutes[0].response.body.toString().should.be.eql "Mock response body 3\n"
+              router.nonPrimaryRoutes[0].response.headers.should.be.ok
+              router.nonPrimaryRoutes[0].request.path.should.be.exactly "/test/multicasting"
+              router.nonPrimaryRoutes[0].request.timestamp.should.be.exactly requestTimestamp
+              router.nonPrimaryRoutes[1].response.status.should.be.exactly 200
+              router.nonPrimaryRoutes[1].response.body.toString().should.be.eql "Mock response body 1\n"
+              router.nonPrimaryRoutes[1].response.headers.should.be.ok
+              router.nonPrimaryRoutes[1].request.path.should.be.exactly "/test/multicasting"
+              router.nonPrimaryRoutes[1].request.timestamp.should.be.exactly requestTimestamp
+              s1.close ->
+                s2.close ->
+                  s3.close ->
+                    router.nonPrimaryRoutes = []
+                    done()
 
 
     it "should pass an error to next if there are multiple primary routes", (done) ->
@@ -389,6 +401,7 @@ describe "HTTP Router", ->
             done err
 
     it "should set mediator response data for non-primary routes", (done) ->
+      router.nonPrimaryRoutes = []
       mediatorResponse =
         status: 'Failed'
         response:
@@ -416,12 +429,14 @@ describe "HTTP Router", ->
             name: "Mock endpoint"
             urlPattern: ".+"
             routes: [
+                  name: 'non prim'
+                  host: "localhost"
+                  port: 9889
+                ,
+                  name: 'primary'
                   host: "localhost"
                   port: 9888
                   primary: true
-                ,
-                  host: "localhost"
-                  port: 9889
                 ]
 
           ctx = new Object()
@@ -432,14 +447,15 @@ describe "HTTP Router", ->
           ctx.request.method = "GET"
           ctx.requestTimestamp = requestTimestamp
 
+
           router.route ctx, (err) ->
             if err
               return done err
 
             try
-              ctx.routes[0].response.should.be.eql mediatorResponse.response
-              ctx.routes[0].orchestrations.should.be.eql mediatorResponse.orchestrations
-              ctx.routes[0].properties.should.be.eql mediatorResponse.properties
+              router.nonPrimaryRoutes[0].response.body.toString().should.be.eql "Mock response body from mediator\n"
+              router.nonPrimaryRoutes[0].orchestrations.should.be.eql mediatorResponse.orchestrations
+              router.nonPrimaryRoutes[0].properties.should.be.eql mediatorResponse.properties
               done()
             catch err
               done err
