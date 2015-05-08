@@ -94,67 +94,71 @@ sendRequestToRoutes = (ctx, routes, next) ->
   utils.getKeystore (err, keystore) ->
 
     for route in routes
-      path = getDestinationPath route, ctx.path
-      options =
-        hostname: route.host
-        port: route.port
-        path: path
-        method: ctx.request.method
-        headers: ctx.request.header
-        agent: false
-        rejectUnauthorized: true
-        key: keystore.key
-        cert: keystore.cert.data
-        secureProtocol: 'TLSv1_method'
+      do (route) ->
+        path = getDestinationPath route, ctx.path
+        options =
+          hostname: route.host
+          port: route.port
+          path: path
+          method: ctx.request.method
+          agent: false
+          rejectUnauthorized: true
+          key: keystore.key
+          cert: keystore.cert.data
+          secureProtocol: 'TLSv1_method'
 
-      if route.cert?
-        options.ca = keystore.ca.id(route.cert).data
+          headers: ctx.request.header
+        if route.cert?
+          options.ca = keystore.ca.id(route.cert).data
 
-      if ctx.request.querystring
-        options.path += '?' + ctx.request.querystring
+        if ctx.request.querystring
+          options.path += '?' + ctx.request.querystring
 
-      if options.headers && options.headers.authorization
-        delete options.headers.authorization
+        if options.headers && options.headers.authorization
+          delete options.headers.authorization
 
-      if route.username and route.password
-        options.auth = route.username + ":" + route.password
+        if route.username and route.password
+          options.auth = route.username + ":" + route.password
 
-      if options.headers && options.headers.host
-        delete options.headers.host
+        if options.headers && options.headers.host
+          delete options.headers.host
 
-      if route.primary
+        if route.primary
+          promise = sendRequest(ctx, route, options)
+          .then (response) ->
+            logger.info "executing primary route : #{route.name}"
+            if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
+              # handle mediator reponse
+              responseObj = JSON.parse response.body
+              ctx.mediatorResponse = responseObj
+              # then set koa response from responseObj.response
+              setKoaResponse ctx, responseObj.response
+            else
+              setKoaResponse ctx, response
+          .then ->
+            logger.info "primary route completed"
+            next()
 
-        promise = sendRequest(ctx, route, options)
-        .then (response) ->
-          logger.info "executing primary route : #{route.name}"
-          if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
-            # handle mediator reponse
-            responseObj = JSON.parse response.body
-            ctx.mediatorResponse = responseObj
-            # then set koa response from responseObj.response
-            setKoaResponse ctx, responseObj.response
-          else
-            setKoaResponse ctx, response
-        .fail (reason) ->
-          # on failure
-          handleServerError ctx, reason
-      else
-        logger.info "executing non primary: #{route.name}"
-        nonPrimaryPromise = buildNonPrimarySendRequestPromise ctx, route, options, path
+          .fail (reason) ->
+            # on failure
+            handleServerError ctx, reason
+        else
+          logger.info "executing non primary: #{route.name}"
+          nonPrimaryPromise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
+          .then (response) ->
+            # console.log JSON.stringify response
+            logger.info "Storing non primary route responses #{route.name}"
+            try
+              messageStore.storeNonPrimaryResponse ctx, route, response, ->
+                stats.incrementTransactionCount ctx, ->
+                stats.measureTransactionDuration ctx, ->
+            catch err
+              console.log err
 
-
-
-      promises.push promise
-      nonPrimaryPromises.push nonPrimaryPromise
-
-    (Q.all promises).then ->
-      next()
+        nonPrimaryPromises.push nonPrimaryPromise
 
     (Q.all nonPrimaryPromises).then ->
-      messageStore.storeResponse ctx, ->
-        logger.info 'Storing non primary route responses'
-        stats.incrementTransactionCount ctx, ->
-        stats.measureTransactionDuration ctx, ->
+      logger.info "all non primary routes completed"
 
 
 exports.nonPrimaryRoutes = []
@@ -183,7 +187,7 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
 
     ctx.routes = [] if not ctx.routes
     ctx.routes.push routeObj
-    exports.nonPrimaryRoutes.push routeObj
+    routeObj
   .fail (reason) ->
     # on failure
     handleServerError ctx, reason

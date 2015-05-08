@@ -7,6 +7,8 @@ statsdServer = config.get 'statsd'
 application = config.get 'application'
 SDC = require 'statsd-client'
 os = require 'os'
+co = require "co"
+Channel = require('../model/channels').Channel
 
 domain = "#{os.hostname()}.#{application.name}.appMetrics"
 sdc = new SDC statsdServer
@@ -17,6 +19,8 @@ exports.transactionStatus = transactionStatus =
   COMPLETED: 'Completed'
   COMPLETED_W_ERR: 'Completed with error(s)'
   FAILED: 'Failed'
+
+exports.routeStatus = routeStatus = true
 
 copyMapWithEscapedReservedCharacters = (map) ->
   escapedMap = {}
@@ -69,28 +73,21 @@ exports.storeTransaction = (ctx, done) ->
 
 exports.storeResponse = (ctx, done) ->
   logger.info 'Storing response for transaction: ' + ctx.transactionId
-
-  routeFailures = false
-  routeSuccess = true
-  if ctx.routes
-    for route in ctx.routes
-      if 500 <= route.response.status <= 599
-        routeFailures = true
-      if not (200 <= route.response.status <= 299)
-        routeSuccess = false
-
+  status = transactionStatus.PROCESSING
   if (500 <= ctx.response.status <= 599)
     status = transactionStatus.FAILED
   else
-    if routeFailures
-      status = transactionStatus.COMPLETED_W_ERR
-    if (200 <= ctx.response.status <= 299) && routeSuccess
-      status = transactionStatus.SUCCESSFUL
+    # Check if the channel has non primary routes
+    getNumRoutes ctx.channelID, (numRoutes) ->
+      if numRoutes > 1
+        status = transactionStatus.PROCESSING
+      if (200 <= ctx.response.status <= 299)
+        status = transactionStatus.SUCCESSFUL
 
   # In all other cases mark as completed
   if status is null or status is undefined
-    status = transactionStatus.COMPLETED
-  
+    status = transactionStatus.PROCESSING
+
   headers = copyMapWithEscapedReservedCharacters ctx.response.header
 
   res =
@@ -115,7 +112,6 @@ exports.storeResponse = (ctx, done) ->
   ctx.transactionStatus = status
 
   update = { response: res, status: status }
-  update.routes = ctx.routes if ctx.routes?
 
   if ctx.mediatorResponse
     update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
@@ -129,6 +125,41 @@ exports.storeResponse = (ctx, done) ->
       logger.error 'Could not find transaction: ' + ctx.transactionId
       return done err
     return done()
+
+exports.getNumRoutes = getNumRoutes = (channelID, callback) ->
+  Channel.findById channelID, (err, channel) ->
+    if channel?.routes?
+      callback channel.routes.length
+    else
+      callback 0
+
+exports.storeNonPrimaryResponse = (ctx, route, response, done) ->
+  #  get channel and determine number of routes in channel
+  getNumRoutes ctx.request.header["channel-id"], (numRoutes) ->
+  #  Get the current transaction and get the number of routes that have completed
+    transactions.Transaction.findById ctx.request.header["X-OpenHIM-TransactionID"], (err,tx) ->
+      numRouteResps = tx.routes.length
+#  determine whether this is the last response
+
+      if (numRoutes - numRouteResps) is 2
+        console.log 'this is the last response'
+        console.log JSON.stringify route
+        tx.status = transactionStatus.SUCCESSFUL
+      else
+        console.log 'This is not the last response'
+        console.log JSON.stringify route
+      tx.routes.push response
+      tx.save done
+
+exports.getStatus = getStatus = (route) ->
+  obj =
+    routeFailures: false
+    routeSuccess: true
+  if 500 <= route.response.status <= 599
+    obj.routeFailures = true
+  if not (200 <= route.response.status <= 299)
+    obj.routeSuccess = false
+  return obj
 
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
