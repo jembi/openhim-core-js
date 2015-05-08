@@ -146,14 +146,13 @@ sendRequestToRoutes = (ctx, routes, next) ->
           logger.info "executing non primary: #{route.name}"
           nonPrimaryPromise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
           .then (response) ->
-            # console.log JSON.stringify response
             logger.info "Storing non primary route responses #{route.name}"
             try
               messageStore.storeNonPrimaryResponse ctx, route, response, ->
                 stats.incrementTransactionCount ctx, ->
                 stats.measureTransactionDuration ctx, ->
             catch err
-              console.log err
+              logger.error err
 
         nonPrimaryPromises.push nonPrimaryPromise
 

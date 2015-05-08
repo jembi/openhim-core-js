@@ -142,12 +142,11 @@ exports.storeNonPrimaryResponse = (ctx, route, response, done) ->
 #  determine whether this is the last response
 
       if (numRoutes - numRouteResps) is 2
-        console.log 'this is the last response'
-        console.log JSON.stringify route
+        logger.info "storing last route: #{route.name}"
+#        Todo Set appropriate status
         tx.status = transactionStatus.SUCCESSFUL
       else
-        console.log 'This is not the last response'
-        console.log JSON.stringify route
+        logger.info "storing route: #{route.name}"
       tx.routes.push response
       tx.save done
 
