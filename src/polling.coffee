@@ -22,7 +22,7 @@ exports.registerPollingChannel = (channel, callback) ->
         url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
         headers:
           'channel-id': channel._id
-          'X-LastRunAt': job.attrs.lastRunAt
+          'X-OpenHIM-LastRunAt': job.attrs.lastRunAt
 
       request options, ->
         done()
