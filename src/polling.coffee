@@ -20,7 +20,9 @@ exports.registerPollingChannel = (channel, callback) ->
 
       options =
         url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
-        headers: { 'channel-id': channel._id }
+        headers:
+          'channel-id': channel._id
+          'X-LastRunAt': job.attrs.lastRunAt 
 
       request options, ->
         done()
@@ -48,4 +50,3 @@ exports.setupAgenda = (agenda, callback) ->
         promises.push registerPollingChannelPromise channel
 
     (Q.all promises).done callback
-
