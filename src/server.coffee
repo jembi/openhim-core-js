@@ -204,7 +204,7 @@ else
         address: config.mongo.url
 
     agenda.on "start", (job)->
-      logger.info "starting job: " + job.attrs.name
+      logger.info "starting job: " + job.attrs.name + ", Last Ran at: " + job.attrs.lastRunAt
 
     agenda.on "fail", (err, job)->
       logger.error "Job " + job.attrs.name + " failed with " + err.message
@@ -427,10 +427,10 @@ else
 
           # remove white spaces
           length = parseInt(lengthValue.trim())
-          
+
           # update message to remove length - add one extra character to remove the space
           message = message.substr(lengthIndex + 1)
-        
+
         # if sourced length equals message length then full message received
         if length == message.length
           logger.info "[Auditing #{type}] Received message from #{sock.remoteAddress}"
@@ -536,7 +536,7 @@ else
 
     promises.push stopServer(auditTlsServer, 'Audit TLS').promise if auditTlsServer
     promises.push stopServer(auditTcpServer, 'Audit TCP').promise if auditTcpServer
-    
+
     if auditUDPServer
       try
         auditUDPServer.close()
@@ -658,9 +658,8 @@ else
           # send reponse back to API request
           return callback null, uptime
 
-          
+
 
 
       # listen for response from master
       process.on 'message', processEvent
-
