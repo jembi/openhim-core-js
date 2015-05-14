@@ -4,10 +4,47 @@ http = require "http"
 messageStore = require "../../lib/middleware/messageStore"
 Transaction = require("../../lib/model/transactions").Transaction
 ObjectId = require('mongoose').Types.ObjectId
+Channel = require("../../lib/model/channels").Channel
+
 
 transactionId = null
 
 describe "MessageStore", ->
+
+  channel1 = {
+    name: "TestChannel1"
+    urlPattern: "test/sample"
+    allow: [ "PoC", "Test1", "Test2" ]
+    routes: [
+          {
+            name: "test route"
+            host: "localhost"
+            port: 9876
+            primary: true
+          },
+          {
+            name: "test route 2"
+            host: "localhost"
+            port: 9876
+            primary: true
+          }
+        ]
+    txViewAcl: "aGroup"
+  }
+
+  channel2 = {
+    name: "TestChannel2"
+    urlPattern: "test/sample"
+    allow: [ "PoC", "Test1", "Test2" ]
+    routes: [
+          name: "test route"
+          host: "localhost"
+          port: 9876
+          primary: true
+        ]
+    txViewAcl: "group1"
+  }
+
   req = new Object()
   req.path = "/api/test/request"
   req.headers =
@@ -36,7 +73,7 @@ describe "MessageStore", ->
         request: req
         response: res
       ]
-      
+
   orchestrations = [
             name: "validate provider"
             request: req
@@ -49,7 +86,7 @@ describe "MessageStore", ->
   properties =
     property: "prop1", value: "prop1-value1"
     property:"prop2", value: "prop-value1"
-   
+
   ctx = new Object()
   ctx.path = "/api/test/request"
   ctx.header =
@@ -66,16 +103,27 @@ describe "MessageStore", ->
   ctx.authenticated._id = new ObjectId "313233343536373839319999"
 
   ctx.authorisedChannel = new Object()
-  ctx.authorisedChannel._id = new ObjectId "313233343536373839313030"
   ctx.authorisedChannel.requestBody = true
   ctx.authorisedChannel.responseBody = true
 
 
-  beforeEach (done) -> Transaction.remove {}, -> done()
+  beforeEach (done) ->
+    Transaction.remove {}, ->
+      Channel.remove {}, ->
+        (new Channel channel1).save (err, ch1) ->
+          channel1._id = ch1._id
+          ctx.authorisedChannel._id = ch1._id
+          (new Channel channel2).save (err, ch2) ->
+            channel2._id = ch2._id
+            done()
 
-  afterEach (done)-> Transaction.remove {}, -> done()
+  afterEach (done)->
+    Transaction.remove {}, ->
+      Channel.remove {}, ->
+        done()
 
   describe ".storeTransaction", ->
+
 
     it "should be able to save the transaction in the db", (done) ->
       messageStore.storeTransaction ctx, (error, result) ->
@@ -89,7 +137,7 @@ describe "MessageStore", ->
           trans.request.path.should.equal "/api/test/request"
           trans.request.headers['Content-Type'].should.equal "application/json"
           trans.request.querystring.should.equal "param1=value1&param2=value2"
-          trans.channelID.toString().should.equal "313233343536373839313030"
+          trans.channelID.toString().should.equal channel1._id.toString()
           done()
 
     it "should be able to save the transaction if the headers contain Mongo reserved characters ($ or .)", (done) ->
@@ -110,6 +158,15 @@ describe "MessageStore", ->
           done()
 
   describe ".storeResponse", ->
+    beforeEach (done) ->
+      console.log 'setting up response fixtures'
+      Channel.remove {}, ->
+        (new Channel channel1).save (err, ch1) ->
+          channel1._id = ch1._id
+          ctx.authorisedChannel._id = ch1._id
+          (new Channel channel2).save (err, ch2) ->
+            channel2._id = ch2._id
+            done()
 
     createResponse = (status) ->
       return {
@@ -141,10 +198,12 @@ describe "MessageStore", ->
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.transactionId = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
+#          console.log JSON.stringify ctx
           should.not.exist(err2)
           Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
             should.not.exist(err3)
             (trans != null).should.true
+#            console.log JSON.stringify trans
             trans.response.status.should.equal 201
             trans.response.headers.testHeader.should.equal "value"
             trans.response.body.should.equal "<HTTP response body>"
@@ -154,22 +213,37 @@ describe "MessageStore", ->
     it "should update the transaction with the responses from non-primary routes", (done) ->
       ctx.response = createResponse 201
       ctx.routes = []
-      ctx.routes.push createRoute "route1", 200
+      route = createRoute "route1", 200
+      response = createResponse 201
+      # ctx.routes.push route
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
+#        console.log storedTrans
         ctx.transactionId = storedTrans._id
+        ctx.request = {}
+        ctx.request.header = {}
+        ctx.request.header = storedTrans.request.headers
+#        console.log 'I am here' +  JSON.stringify ctx
+        ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          should.not.exist(err2)
-          Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-            should.not.exist(err3)
-            (trans != null).should.true
-            trans.routes.length.should.be.exactly 1
-            trans.routes[0].name.should.equal "route1"
-            trans.routes[0].response.status.should.equal 200
-            trans.routes[0].response.headers.test.should.equal "test"
-            trans.routes[0].response.body.should.equal "route body"
-            trans.routes[0].request.path.should.equal "/test"
-            done()
+          console.log JSON.stringify ctx
+          messageStore.storeNonPrimaryResponse ctx, route, response, () ->
+            # console.log 'non primary stored'
+            # console.log ctx.transactionId.toString()
+            # console.log storedTrans._id.toString()
+            # console.log route
+            # console.log response
+            Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+              # console.log trans
+              should.not.exist(err3)
+              (trans != null).should.true
+              trans.routes.length.should.be.exactly 1
+              trans.routes[0].name.should.equal "route1"
+              trans.routes[0].response.status.should.equal 200
+              trans.routes[0].response.headers.test.should.equal "test"
+              trans.routes[0].response.body.should.equal "route body"
+              trans.routes[0].request.path.should.equal "/test"
+              done()
 
     it "should set the status to successful if all route return a status in 2xx", (done) ->
       ctx.response = createResponse 201
@@ -179,10 +253,12 @@ describe "MessageStore", ->
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.transactionId = storedTrans._id
+#        console.log JSON.stringify storedTrans
         messageStore.storeResponse ctx, (err2) ->
           should.not.exist(err2)
           Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
             should.not.exist(err3)
+#            console.log JSON.stringify trans
             (trans != null).should.true
             trans.status.should.be.exactly "Successful"
             done()
@@ -276,7 +352,7 @@ describe "MessageStore", ->
             done()
 
 
-      
+
     it "should remove the request body if set in channel settings and save to the DB", (done) ->
 
       ctx.authorisedChannel.requestBody = false
@@ -287,7 +363,7 @@ describe "MessageStore", ->
           should.not.exist(error)
           (trans != null).should.be.true
           trans.clientID.toString().should.equal "313233343536373839319999"
-          trans.channelID.toString().should.equal "313233343536373839313030"
+          trans.channelID.toString().should.equal channel1._id.toString()
           trans.status.should.equal "Processing"
           trans.request.body.should.equal ""
           trans.canRerun.should.equal false
