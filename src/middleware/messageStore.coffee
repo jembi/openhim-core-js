@@ -144,7 +144,6 @@ exports.storeNonPrimaryResponse = (ctx, route, response, done) ->
           transactions.Transaction.findById ctx.request.header["X-OpenHIM-TransactionID"], (err,tx) ->
             do (tx) ->
               numRouteResps = tx.routes.length
-          #  determine whether this is the last response
               remainingRoutes = numRoutes - numRouteResps
               logger.info "num remaining routes: #{remainingRoutes}"
               isLastRoute = false

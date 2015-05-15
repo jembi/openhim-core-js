@@ -226,13 +226,7 @@ describe "MessageStore", ->
 #        console.log 'I am here' +  JSON.stringify ctx
         ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          console.log JSON.stringify ctx
           messageStore.storeNonPrimaryResponse ctx, route, response, () ->
-            # console.log 'non primary stored'
-            # console.log ctx.transactionId.toString()
-            # console.log storedTrans._id.toString()
-            # console.log route
-            # console.log response
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
               # console.log trans
               should.not.exist(err3)
@@ -253,12 +247,10 @@ describe "MessageStore", ->
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.transactionId = storedTrans._id
-#        console.log JSON.stringify storedTrans
         messageStore.storeResponse ctx, (err2) ->
           should.not.exist(err2)
           Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
             should.not.exist(err3)
-#            console.log JSON.stringify trans
             (trans != null).should.true
             trans.status.should.be.exactly "Successful"
             done()
