@@ -148,7 +148,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
           .then (response) ->
             logger.info "Storing non primary route responses #{route.name}"
             try
-              messageStore.storeNonPrimaryResponse ctx, route, response, ->
+              messageStore.storeNonPrimaryResponse ctx, response, ->
                 stats.incrementTransactionCount ctx, ->
                 stats.measureTransactionDuration ctx, ->
             catch err

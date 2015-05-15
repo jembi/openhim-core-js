@@ -182,7 +182,9 @@ describe "MessageStore", ->
         name: name
         request: {
           path: "/test"
+          timestamp: new Date()
         }
+
         response: {
           status: status
           headers:
@@ -198,12 +200,10 @@ describe "MessageStore", ->
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.transactionId = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-#          console.log JSON.stringify ctx
           should.not.exist(err2)
           Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
             should.not.exist(err3)
             (trans != null).should.true
-#            console.log JSON.stringify trans
             trans.response.status.should.equal 201
             trans.response.headers.testHeader.should.equal "value"
             trans.response.body.should.equal "<HTTP response body>"
@@ -213,22 +213,24 @@ describe "MessageStore", ->
     it "should update the transaction with the responses from non-primary routes", (done) ->
       ctx.response = createResponse 201
       ctx.routes = []
-      route = createRoute "route1", 200
-      response = createResponse 201
+      response = createRoute "route1", 200
+
+
       # ctx.routes.push route
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
-#        console.log storedTrans
         ctx.transactionId = storedTrans._id
         ctx.request = {}
         ctx.request.header = {}
         ctx.request.header = storedTrans.request.headers
-#        console.log 'I am here' +  JSON.stringify ctx
+        response.request.headers = storedTrans.request.headers
+        response.request.headers["X-OpenHIM-TransactionID"] = storedTrans._id
+        response.request.headers["channel-id"] = ctx.authorisedChannel._id
         ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          messageStore.storeNonPrimaryResponse ctx, route, response, () ->
+          messageStore.storeNonPrimaryResponse ctx, response, () ->
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-              # console.log trans
+              console.log JSON.stringify trans
               should.not.exist(err3)
               (trans != null).should.true
               trans.routes.length.should.be.exactly 1
@@ -274,18 +276,25 @@ describe "MessageStore", ->
     it "should set the status to completed with errors if the primary route return a status in 2xx or 4xx but one or more routes return 5xx", (done) ->
       ctx.response = createResponse 404
       ctx.routes = []
-      ctx.routes.push createRoute "route1", 201
-      ctx.routes.push createRoute "route2", 501
+      response1 = createRoute "route1", 201
+      response2 = createRoute "route2", 501
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.transactionId = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          should.not.exist(err2)
-          Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-            should.not.exist(err3)
-            (trans != null).should.true
-            trans.status.should.be.exactly "Completed with error(s)"
-            done()
+          ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
+          response1.request.headers = storedTrans.request.headers
+          response2.request.headers = storedTrans.request.headers
+          response1.request.headers["channel-id"] = ctx.authorisedChannel._id
+          response2.request.headers["channel-id"] = ctx.authorisedChannel._id
+          messageStore.storeNonPrimaryResponse ctx, response1, () ->
+            messageStore.storeNonPrimaryResponse ctx, response2, () ->
+              should.not.exist(err2)
+              Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                should.not.exist(err3)
+                (trans != null).should.true
+                trans.status.should.be.exactly "Completed with error(s)"
+                done()
 
     it "should set the status to completed if any route returns a status in 4xx (test 1)", (done) ->
       ctx.response = createResponse 201

@@ -134,7 +134,7 @@ exports.getNumRoutes = getNumRoutes = (channelID, callback) ->
     else
       callback 0
 
-exports.storeNonPrimaryResponse = (ctx, route, response, done) ->
+exports.storeNonPrimaryResponse = (ctx, response, done) ->
   #  get channel and determine number of routes in channel
   if ctx.request.header?["channel-id"]?
     getNumRoutes ctx.request.header["channel-id"], (numRoutes) ->
@@ -143,30 +143,44 @@ exports.storeNonPrimaryResponse = (ctx, route, response, done) ->
         if ctx.request.header?["X-OpenHIM-TransactionID"]?
           transactions.Transaction.findById ctx.request.header["X-OpenHIM-TransactionID"], (err,tx) ->
             do (tx) ->
-              numRouteResps = tx.routes.length
+#              console.log tx.routes
+              numRouteResps = tx.routes.length + 1
               remainingRoutes = numRoutes - numRouteResps
               logger.info "num remaining routes: #{remainingRoutes}"
               isLastRoute = false
-              if remainingRoutes is 2
-                tx.status = transactionStatus.SUCCESSFUL
-                logger.info "storing last route: #{route.name}"
-                isLastRoute = true
-    #            for route in tx.routes
-    #              console.log "#{route.name}: #{route.status}"
-              else
-                #if not last route leave current status
-                logger.info "storing route: #{route.name}"
-
               tx.routes.push response
               tx.save
-
+              console.log "remaining routes #{remainingRoutes}"
+              if remainingRoutes <= 1
+                tx.status = transactionStatus.SUCCESSFUL
+                logger.info "storing last route: #{response.name}"
+                isLastRoute = true
+              else
+                logger.info "storing route: #{response.name}"
+#             Set final response
               if isLastRoute
-                if (400 <= ctx.response.status <= 499)
-                  tx.status = transactionStatus.COMPLETED
-                else
-                  tx.status = transactionStatus.SUCCESSFUL
+                routeFailures = false
+                routeSuccess = true
+                if tx.routes
+                  for route in tx.routes
+                    if 500 <= route.response.status <= 599
+                      routeFailures = true
+                    if not (200 <= route.response.status <= 299)
+                      routeSuccess = false
 
-              tx.save done
+                if (500 <= tx.response.status <= 599)
+                  tx.status = transactionStatus.FAILED
+                else
+                  if routeFailures
+                    tx.status = transactionStatus.COMPLETED_W_ERR
+                  if (200 <= tx.response.status <= 299) && routeSuccess
+                    tx.status = transactionStatus.SUCCESSFUL
+
+                if tx.status is null or tx.status is undefined
+                  tx.status = transactionStatus.COMPLETED
+
+                console.log JSON.stringify tx.status
+                tx.save done
 
 exports.getStatus = getStatus = (route) ->
   obj =
