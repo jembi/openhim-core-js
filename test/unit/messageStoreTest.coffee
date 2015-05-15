@@ -299,34 +299,50 @@ describe "MessageStore", ->
     it "should set the status to completed if any route returns a status in 4xx (test 1)", (done) ->
       ctx.response = createResponse 201
       ctx.routes = []
-      ctx.routes.push createRoute "route1", 201
-      ctx.routes.push createRoute "route2", 404
+      response1 = createRoute "route1", 201
+      response2 = createRoute "route2", 404
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.transactionId = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          should.not.exist(err2)
-          Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-            should.not.exist(err3)
-            (trans != null).should.true
-            trans.status.should.be.exactly "Completed"
-            done()
+          ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
+          response1.request.headers = storedTrans.request.headers
+          response2.request.headers = storedTrans.request.headers
+          response1.request.headers["channel-id"] = ctx.authorisedChannel._id
+          response2.request.headers["channel-id"] = ctx.authorisedChannel._id
+          messageStore.storeNonPrimaryResponse ctx, response1, () ->
+            messageStore.storeNonPrimaryResponse ctx, response2, () ->
+              should.not.exist(err2)
+              Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                should.not.exist(err3)
+                (trans != null).should.true
+                console.log JSON.stringify trans
+                trans.status.should.be.exactly "Completed"
+                done()
 
     it "should set the status to completed if any route returns a status in 4xx (test 2)", (done) ->
       ctx.response = createResponse 404
       ctx.routes = []
-      ctx.routes.push createRoute "route1", 201
-      ctx.routes.push createRoute "route2", 404
+      response1 = createRoute "route1", 201
+      response2 = createRoute "route2", 404
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.transactionId = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          should.not.exist(err2)
-          Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-            should.not.exist(err3)
-            (trans != null).should.true
-            trans.status.should.be.exactly "Completed"
-            done()
+          ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
+          response1.request.headers = storedTrans.request.headers
+          response2.request.headers = storedTrans.request.headers
+          response1.request.headers["channel-id"] = ctx.authorisedChannel._id
+          response2.request.headers["channel-id"] = ctx.authorisedChannel._id
+          messageStore.storeNonPrimaryResponse ctx, response1, () ->
+            messageStore.storeNonPrimaryResponse ctx, response2, () ->
+              should.not.exist(err2)
+              Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                should.not.exist(err3)
+                (trans != null).should.true
+                console.log JSON.stringify trans
+                trans.status.should.be.exactly "Completed"
+                done()
 
     createResponseWithReservedChars = (status) ->
       return {

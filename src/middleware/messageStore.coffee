@@ -79,15 +79,14 @@ exports.storeResponse = (ctx, done) ->
     if (500 <= ctx.response.status <= 599)
       status = transactionStatus.FAILED
     else
-      # Check if the channel has non primary routes
-      if numRoutes > 1
-        status = transactionStatus.PROCESSING
       if (200 <= ctx.response.status <= 299)
+        console.log 'in Primary successful'
         status = transactionStatus.SUCCESSFUL
 
       # In all other cases mark as completed
       if status is null or status is undefined
-        status = transactionStatus.PROCESSING
+        console.log 'in Primary Completed'
+        status = transactionStatus.COMPLETED
 
     headers = copyMapWithEscapedReservedCharacters ctx.response.header
 
@@ -143,21 +142,19 @@ exports.storeNonPrimaryResponse = (ctx, response, done) ->
         if ctx.request.header?["X-OpenHIM-TransactionID"]?
           transactions.Transaction.findById ctx.request.header["X-OpenHIM-TransactionID"], (err,tx) ->
             do (tx) ->
-#              console.log tx.routes
               numRouteResps = tx.routes.length + 1
               remainingRoutes = numRoutes - numRouteResps
               logger.info "num remaining routes: #{remainingRoutes}"
               isLastRoute = false
-              tx.routes.push response
-              tx.save
-              console.log "remaining routes #{remainingRoutes}"
-              if remainingRoutes <= 1
+              if remainingRoutes = 1
                 tx.status = transactionStatus.SUCCESSFUL
                 logger.info "storing last route: #{response.name}"
                 isLastRoute = true
               else
                 logger.info "storing route: #{response.name}"
 #             Set final response
+              tx.routes.push response
+
               if isLastRoute
                 routeFailures = false
                 routeSuccess = true
@@ -174,23 +171,17 @@ exports.storeNonPrimaryResponse = (ctx, response, done) ->
                   if routeFailures
                     tx.status = transactionStatus.COMPLETED_W_ERR
                   if (200 <= tx.response.status <= 299) && routeSuccess
+                    console.log 'in nonPrimary successful'
                     tx.status = transactionStatus.SUCCESSFUL
 
                 if tx.status is null or tx.status is undefined
                   tx.status = transactionStatus.COMPLETED
 
-                console.log JSON.stringify tx.status
+                logger.info "Final status for transaction #{tx._id} : #{tx.status}"
+                tx.save done
+              else
                 tx.save done
 
-exports.getStatus = getStatus = (route) ->
-  obj =
-    routeFailures: false
-    routeSuccess: true
-  if 500 <= route.response.status <= 599
-    obj.routeFailures = true
-  if not (200 <= route.response.status <= 299)
-    obj.routeSuccess = false
-  return obj
 
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
