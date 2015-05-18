@@ -52,14 +52,14 @@ describe "HTTP Router", ->
           done()
 
     it 'should route binary data', ->
-      testUtils.createStaticServer 'test/resources', 93377 , (server)->
+      testUtils.createStaticServer 'test/resources', 9337 , (server)->
         # Setup a channel for the mock endpoint
         channel =
           name: "Static Server Endpoint"
           urlPattern: "/openhim-logo-green.png"
           routes: [
                 host: "localhost"
-                port: 93377
+                port: 9337
                 primary: true
               ]
 
