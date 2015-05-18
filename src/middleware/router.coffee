@@ -255,7 +255,7 @@ sendHttpRequest = (ctx, route, options) ->
           defered.resolve response
 
   routeReq.on "error", (err) -> defered.reject err
-  
+
   routeReq.on "clientError", (err) -> defered.reject err
 
   routeReq.setTimeout config.router.timeout, -> defered.reject "Request Timed Out"

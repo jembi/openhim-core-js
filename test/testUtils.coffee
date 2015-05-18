@@ -10,6 +10,8 @@ zlib = require "zlib"
 pem = require "pem"
 logger = require "winston"
 Q = require "q"
+finalhandler = require('finalhandler')
+serveStatic = require('serve-static')
 
 exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallback) ->
   requestCallback = requestCallback || ->
@@ -30,6 +32,23 @@ exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch
       else
         res.writeHead errStatusCode, {"Content-Type": "text/plain"}
         res.end()
+
+exports.createStaticServer = (path, port, callback) ->
+  # Serve up public/ftp folder
+  serve = serveStatic(path, 'index': [
+    'index.html'
+    'index.htm'
+  ])
+
+  # Create server
+  server = http.createServer((req, res) ->
+    done = finalhandler(req, res)
+    serve req, res, done
+    return
+  )
+  # Listen
+  server.listen port, 'localhost', -> callback server
+
 
 exports.createMockHTTPSServerWithMutualAuth = (resStatusCode, resBody, port, useClientCert, callback, requestCallback) ->
   if typeof useClientCert is 'function'
@@ -188,7 +207,7 @@ exports.createMockServerForPostWithReturn = (successStatusCode, errStatusCode, b
               "content-encoding": "gzip"
               "content-length": result.length
               "connection": "close"
-              
+
             res.writeHead successStatusCode,  headers
             res.end result
         else
