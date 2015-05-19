@@ -58,10 +58,10 @@
     "grunt-mocha-cli": "^1.11.0",
     "mocha": "^2.1.0",
     "mongodb": "^1.4.28",
-    "should": "^5.0.0",
+    "should": "^6.0.1",
     "sinon": "^1.12.2",
     "sinon-es6": "^0.0.3",
-    "supertest": "^0.15.0"
+    "supertest": "^1.0.1"
   },
   "scripts": {
     "prepublish": "grunt build",

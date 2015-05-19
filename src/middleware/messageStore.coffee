@@ -110,6 +110,7 @@ exports.storeResponse = (ctx, done) ->
 
     # assign new transactions status to ctx object
     ctx.transactionStatus = status
+    console.log "hello #{status}"
 
     update = { response: res, status: status }
 
@@ -118,6 +119,8 @@ exports.storeResponse = (ctx, done) ->
       update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
 
     transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update, (err, tx) ->
+      console.log update
+      console.log tx.status
       if err
         logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
         return done err
@@ -144,43 +147,50 @@ exports.storeNonPrimaryResponse = (ctx, response, done) ->
             do (tx) ->
               numRouteResps = tx.routes.length + 1
               remainingRoutes = numRoutes - numRouteResps
-              logger.info "num remaining routes: #{remainingRoutes}"
+              console.log "num remaining routes: #{remainingRoutes}"
               isLastRoute = false
-              if remainingRoutes = 1
+              if remainingRoutes = 0
                 tx.status = transactionStatus.SUCCESSFUL
-                logger.info "storing last route: #{response.name}"
+                console.log "storing last route: #{response.name}"
                 isLastRoute = true
               else
-                logger.info "storing route: #{response.name}"
+                console.log "storing route: #{response.name}"
 #             Set final response
               tx.routes.push response
+              tx.save
 
-              if isLastRoute
-                routeFailures = false
-                routeSuccess = true
-                if tx.routes
-                  for route in tx.routes
-                    if 500 <= route.response.status <= 599
-                      routeFailures = true
-                    if not (200 <= route.response.status <= 299)
-                      routeSuccess = false
-
-                if (500 <= tx.response.status <= 599)
-                  tx.status = transactionStatus.FAILED
-                else
-                  if routeFailures
-                    tx.status = transactionStatus.COMPLETED_W_ERR
-                  if (200 <= tx.response.status <= 299) && routeSuccess
-                    console.log 'in nonPrimary successful'
-                    tx.status = transactionStatus.SUCCESSFUL
-
-                if tx.status is null or tx.status is undefined
-                  tx.status = transactionStatus.COMPLETED
-
-                logger.info "Final status for transaction #{tx._id} : #{tx.status}"
+              if true
+                tx = setFinalStatus(tx)
                 tx.save done
               else
                 tx.save done
+
+exports.setFinalStatus = setFinalStatus = (tx) ->
+  tx.status = null
+  routeFailures = false
+  routeSuccess = true
+  if tx.routes
+    for route in tx.routes
+      if 500 <= route.response.status <= 599
+        routeFailures = true
+      if not (200 <= route.response.status <= 299)
+        routeSuccess = false
+
+  if (500 <= tx.response.status <= 599)
+    tx.status = transactionStatus.FAILED
+  else
+    if routeFailures
+      tx.status = transactionStatus.COMPLETED_W_ERR
+    if (200 <= tx.response.status <= 299) && routeSuccess
+      tx.status = transactionStatus.SUCCESSFUL
+
+  # In all other cases mark as completed
+  if tx.status is null or tx.status is undefined
+    tx.status = transactionStatus.COMPLETED
+
+  logger.info "Final status for transaction #{tx._id} : #{tx.status}"
+  return tx
+
 
 
 exports.koaMiddleware = (next) ->

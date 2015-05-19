@@ -141,6 +141,7 @@ describe "HTTP Router", ->
         ctx.request.method = "GET"
 
         router.route ctx, (err) ->
+          console.log JSON.stringify err
           if err
             logger.error err
             return server.close ->
