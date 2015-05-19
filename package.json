@@ -49,6 +49,7 @@
   "devDependencies": {
     "coffee-script": "^1.9.1",
     "coffeelint": "^1.9.1",
+    "finalhandler": "^0.3.6",
     "grunt": "^0.4.5",
     "grunt-cli": "^0.1.13",
     "grunt-coffeelint": "^0.0.13",
@@ -58,10 +59,11 @@
     "grunt-mocha-cli": "^1.11.0",
     "mocha": "^2.1.0",
     "mongodb": "^1.4.28",
-    "should": "^6.0.1",
+    "serve-static": "^1.9.3",
+    "should": "^5.0.0",
     "sinon": "^1.12.2",
     "sinon-es6": "^0.0.3",
-    "supertest": "^1.0.1"
+    "supertest": "^0.15.0"
   },
   "scripts": {
     "prepublish": "grunt build",
