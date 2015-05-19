@@ -51,6 +51,36 @@ describe "HTTP Router", ->
           ctx.response.header.should.be.ok
           done()
 
+    it 'should route binary data', ->
+      testUtils.createStaticServer 'test/resources', 9337 , (server)->
+        # Setup a channel for the mock endpoint
+        channel =
+          name: "Static Server Endpoint"
+          urlPattern: "/openhim-logo-green.png"
+          routes: [
+                host: "localhost"
+                port: 9337
+                primary: true
+              ]
+
+
+        ctx = new Object()
+        ctx.authorisedChannel = channel
+        ctx.request = new Object()
+        ctx.response = new Object()
+        ctx.response.set = ->
+        ctx.path = ctx.request.url = "/openhim-logo-green.png"
+        ctx.request.method = "GET"
+        ctx.requestTimestamp = requestTimestamp
+
+        router.route ctx, (err) ->
+          if err
+            return done err
+          ctx.response.type.should.equal 'image/png'
+          ctx.response.body.should.equal fs.readFileSync 'test/resources/openhim-logo-green.png'
+          server.close done
+
+
     setupContextForMulticast = () ->
       # Setup channels for the mock endpoints
       channel =
@@ -76,6 +106,8 @@ describe "HTTP Router", ->
       ctx.request.method = "GET"
       ctx.requestTimestamp = requestTimestamp
       return ctx
+
+
 
     it "should route an incomming https request to the endpoints specific by the channel config", (done) ->
       testUtils.createMockHTTPSServerWithMutualAuth 201, "Mock response body\n", 9877, (server) ->
@@ -218,7 +250,7 @@ describe "HTTP Router", ->
               if err
                 err.message.should.be.exactly "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
                 done()
-          
+
     it "should forward PUT and POST requests correctly", (done) ->
       # Create mock endpoint to forward requests to
       mockServer = testUtils.createMockServerForPost(200, 400, "TestBody")
@@ -475,7 +507,7 @@ describe "HTTP Router", ->
         # Base64("username:password") = "dXNlcm5hbWU6cGFzc3dvcmQ=""
         req.headers.authorization.should.be.exactly "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
         done()
-    
+
     it "should not have authorization header if username and password is absent from options", (done) ->
       testUtils.createMockServer 201, "Mock response body\n", 9874, (->
         # Setup a channel for the mock endpoint
