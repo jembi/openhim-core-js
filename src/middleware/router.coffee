@@ -84,7 +84,6 @@ handleServerError = (ctx, err) ->
 
 
 sendRequestToRoutes = (ctx, routes, next) ->
-  promises = []
   nonPrimaryPromises = []
   ctx.timer = new Date
 
@@ -101,13 +100,13 @@ sendRequestToRoutes = (ctx, routes, next) ->
           port: route.port
           path: path
           method: ctx.request.method
+          headers: ctx.request.header
           agent: false
           rejectUnauthorized: true
           key: keystore.key
           cert: keystore.cert.data
           secureProtocol: 'TLSv1_method'
 
-          headers: ctx.request.header
         if route.cert?
           options.ca = keystore.ca.id(route.cert).data
 
@@ -124,7 +123,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
           delete options.headers.host
 
         if route.primary
-          promise = sendRequest(ctx, route, options)
+          sendRequest(ctx, route, options)
           .then (response) ->
             logger.info "executing primary route : #{route.name}"
             if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
@@ -159,8 +158,6 @@ sendRequestToRoutes = (ctx, routes, next) ->
     (Q.all nonPrimaryPromises).then ->
       logger.info "all non primary routes completed"
 
-
-exports.nonPrimaryRoutes = []
 # function to build fresh promise for transactions routes
 buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
   sendRequest ctx, route, options

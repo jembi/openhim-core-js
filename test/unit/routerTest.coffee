@@ -1,3 +1,4 @@
+Error.stackTraceLimit = Infinity
 fs = require "fs"
 should = require "should"
 sinon = require "sinon"
@@ -6,6 +7,8 @@ router = require "../../lib/middleware/router"
 testUtils = require "../testUtils"
 Keystore = require("../../lib/model/keystore").Keystore
 Certificate = require("../../lib/model/keystore").Certificate
+Channel = require("../../lib/model/channels").Channel
+
 
 describe "HTTP Router", ->
 
@@ -155,36 +158,44 @@ describe "HTTP Router", ->
       testUtils.createMockHTTPSServerWithMutualAuth 201, "Mock response body\n", 9877, false, (server) ->
         # Setup a channel for the mock endpoint
         channel =
-          name: "Mock endpoint"
+          name: "Mock endpoint mutual tls"
           urlPattern: ".+"
+          allow: ['admin', 'aGroup', 'test']
+          authType: "public"
           routes: [
-            secured: true
-            host: "localhost"
-            port: 9877
-            primary: true
+            {
+              name: "test mock"
+              secured: true
+              host: "localhost"
+              port: 9877
+              primary: true
+            }
           ]
+          txViewAcl: "aGroup"
 
-        ctx = new Object()
-        ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
-        ctx.response.set = ->
-        ctx.path = ctx.request.url = "/test"
-        ctx.request.method = "GET"
+        (new Channel channel).save (err, ch1) ->
+          ctx = new Object()
+          ctx.authorisedChannel = ch1
+          ctx.request = new Object()
+          ctx.response = new Object()
+          ctx.response.set = ->
+          ctx.path = ctx.request.url = "/test"
+          ctx.authorisedChannel._id = ch1._id
+          ctx.request.method = "GET"
+          router.route ctx, (err) ->
+            if err
+              logger.error err
+              return server.close ->
+                done err
 
-        router.route ctx, (err) ->
-          console.log JSON.stringify err
-          if err
-            logger.error err
-            return server.close ->
-              done err
-
-          try
             ctx.response.status.should.be.exactly 500
             ctx.response.body.toString().should.be.eql "An internal server error occurred"
-            server.close done
-          catch err
-            server.close -> done err
+            if server
+              server.close done
+            else
+              done
+
+
 
     it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
       s1 = testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->

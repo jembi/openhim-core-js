@@ -74,60 +74,54 @@ exports.storeTransaction = (ctx, done) ->
 
 exports.storeResponse = (ctx, done) ->
   logger.info 'Storing response for transaction: ' + ctx.transactionId
-  getNumRoutes ctx.authorisedChannel._id, (numRoutes) ->
-    status = null
-    if (500 <= ctx.response.status <= 599)
-      status = transactionStatus.FAILED
-    else
-      if (200 <= ctx.response.status <= 299)
-        console.log 'in Primary successful'
-        status = transactionStatus.SUCCESSFUL
+  status = null
+  if (500 <= ctx.response.status <= 599)
+    status = transactionStatus.FAILED
+  else
+    if (200 <= ctx.response.status <= 299)
+      status = transactionStatus.SUCCESSFUL
 
-      # In all other cases mark as completed
-      if status is null or status is undefined
-        console.log 'in Primary Completed'
-        status = transactionStatus.COMPLETED
+    # In all other cases mark as completed
+    if status is null or status is undefined
+      status = transactionStatus.COMPLETED
 
-    headers = copyMapWithEscapedReservedCharacters ctx.response.header
+  headers = copyMapWithEscapedReservedCharacters ctx.response.header
 
-    res =
-      status: ctx.response.status
-      headers: headers
-      body: if not ctx.response.body then "" else ctx.response.body.toString()
-      timestamp: ctx.response.timestamp
+  res =
+    status: ctx.response.status
+    headers: headers
+    body: if not ctx.response.body then "" else ctx.response.body.toString()
+    timestamp: ctx.response.timestamp
 
 
-    # check if channel response body is false and remove
-    if ctx.authorisedChannel.responseBody == false
-      # reset request body - primary route
-      res.body = ''
+  # check if channel response body is false and remove
+  if ctx.authorisedChannel.responseBody == false
+    # reset request body - primary route
+    res.body = ''
 
-      # reset request body - routes
-      if ctx.routes
-        for route in ctx.routes
-          route.response.body = ''
+    # reset request body - routes
+    if ctx.routes
+      for route in ctx.routes
+        route.response.body = ''
 
 
-    # assign new transactions status to ctx object
-    ctx.transactionStatus = status
-    console.log "hello #{status}"
+  # assign new transactions status to ctx object
+  ctx.transactionStatus = status
+  logger.info "Primary route status: #{status}"
+  update = { response: res, status: status }
 
-    update = { response: res, status: status }
+  if ctx.mediatorResponse
+    update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
+    update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
 
-    if ctx.mediatorResponse
-      update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
-      update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
-
-    transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update, (err, tx) ->
-      console.log update
-      console.log tx.status
-      if err
-        logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
-        return done err
-      if tx is undefined or tx is null
-        logger.error 'Could not find transaction: ' + ctx.transactionId
-        return done err
-      return done()
+  transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update , { runValidators: true }, (err, tx) ->
+    if err
+      logger.info 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
+      return done err
+    if tx is undefined or tx is null
+      logger.error 'Could not find transaction: ' + ctx.transactionId
+      return done err
+    return done()
 
 exports.getNumRoutes = getNumRoutes = (channelID, callback) ->
   Channel.findById channelID, (err, channel) ->
@@ -147,14 +141,14 @@ exports.storeNonPrimaryResponse = (ctx, response, done) ->
             do (tx) ->
               numRouteResps = tx.routes.length + 1
               remainingRoutes = numRoutes - numRouteResps
-              console.log "num remaining routes: #{remainingRoutes}"
+              logger.info "num remaining routes: #{remainingRoutes}"
               isLastRoute = false
               if remainingRoutes = 0
                 tx.status = transactionStatus.SUCCESSFUL
-                console.log "storing last route: #{response.name}"
+                logger.info "storing last route: #{response.name}"
                 isLastRoute = true
               else
-                console.log "storing route: #{response.name}"
+                logger.info "storing route: #{response.name}"
 #             Set final response
               tx.routes.push response
               tx.save

@@ -159,7 +159,6 @@ describe "MessageStore", ->
 
   describe ".storeResponse", ->
     beforeEach (done) ->
-      console.log 'setting up response fixtures'
       Channel.remove {}, ->
         (new Channel channel1).save (err, ch1) ->
           channel1._id = ch1._id
@@ -167,6 +166,11 @@ describe "MessageStore", ->
           (new Channel channel2).save (err, ch2) ->
             channel2._id = ch2._id
             done()
+
+    afterEach (done)->
+      Transaction.remove {}, ->
+        Channel.remove {}, ->
+          done()
 
     createResponse = (status) ->
       return {
@@ -230,7 +234,7 @@ describe "MessageStore", ->
         messageStore.storeResponse ctx, (err2) ->
           messageStore.storeNonPrimaryResponse ctx, response, () ->
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-              console.log JSON.stringify trans
+
               should.not.exist(err3)
               (trans != null).should.true
               trans.routes.length.should.be.exactly 1
@@ -316,7 +320,7 @@ describe "MessageStore", ->
               Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                 should.not.exist(err3)
                 (trans != null).should.true
-                console.log JSON.stringify trans
+#
                 trans.status.should.be.exactly "Completed"
                 done()
 
@@ -340,7 +344,7 @@ describe "MessageStore", ->
               Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                 should.not.exist(err3)
                 (trans != null).should.true
-                console.log JSON.stringify trans
+
                 trans.status.should.be.exactly "Completed"
                 done()
 

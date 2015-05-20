@@ -777,7 +777,7 @@ describe "e2e Integration Tests", ->
         status: 200
         headers: {}
         body: "<transaction response>"
-        timestamp: 1412257881909
+        timestamp: new Date
       orchestrations: [
         name: "Lab API"
         request:
@@ -786,12 +786,12 @@ describe "e2e Integration Tests", ->
             "Content-Type": "text/plain"
           body: "<route request>"
           method: "POST"
-          timestamp: 1412257881904
+          timestamp: new Date
         response:
           status: 200
           headers: {}
           body: "<route response>"
-          timestamp: 1412257881909
+          timestamp: new Date
       ]
       properties:
         orderId: "TEST00001"
@@ -840,7 +840,8 @@ describe "e2e Integration Tests", ->
 
     afterEach (done) ->
       server.stop ->
-        done()
+        Transaction.remove {}, ->
+          done()
 
     describe "mediator response processing", ->
       it "should return the specified mediator response element as the actual response", (done) ->
@@ -857,7 +858,7 @@ describe "e2e Integration Tests", ->
             .get("/test/mediator")
             .auth("mediatorTestApp", "password")
             .expect(200)
-            .end (err, res) ->
+            .end (err, result) ->
               if err
                 done err
               else
@@ -882,7 +883,7 @@ describe "e2e Integration Tests", ->
           status: 200
           headers: {}
           body: "<transaction response>"
-          timestamp: 1412257881909
+          timestamp: new Date
         orchestrations: [
           name: "Lab API"
           request:
@@ -891,12 +892,12 @@ describe "e2e Integration Tests", ->
               "Content-Type": "text/plain"
             body: "<route request>"
             method: "POST"
-            timestamp: 1412257881904
+            timestamp: new Date
           response:
             status: 200
             headers: {}
             body: "<route response>"
-            timestamp: 1412257881909
+            timestamp: new Date
         ]
 
     #Setup some test data
