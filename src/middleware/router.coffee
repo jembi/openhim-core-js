@@ -141,6 +141,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
           .fail (reason) ->
             # on failure
             handleServerError ctx, reason
+            next()
         else
           logger.info "executing non primary: #{route.name}"
           nonPrimaryPromise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
