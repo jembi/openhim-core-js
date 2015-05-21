@@ -73,17 +73,6 @@ exports.storeTransaction = (ctx, done) ->
       return done null, tx
 
 exports.storeResponse = (ctx, done) ->
-  logger.info 'Storing response for transaction: ' + ctx.transactionId
-  status = null
-  if (500 <= ctx.response.status <= 599)
-    status = transactionStatus.FAILED
-  else
-    if (200 <= ctx.response.status <= 299)
-      status = transactionStatus.SUCCESSFUL
-
-    # In all other cases mark as completed
-    if status is null or status is undefined
-      status = transactionStatus.COMPLETED
 
   headers = copyMapWithEscapedReservedCharacters ctx.response.header
 
@@ -99,22 +88,14 @@ exports.storeResponse = (ctx, done) ->
     # reset request body - primary route
     res.body = ''
 
-    # reset request body - routes
-    if ctx.routes
-      for route in ctx.routes
-        route.response.body = ''
-
-
-  # assign new transactions status to ctx object
-  ctx.transactionStatus = status
-  logger.info "Primary route status: #{status}"
-  update = { response: res, status: status }
+  update = { response: res }
 
   if ctx.mediatorResponse
     update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
     update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
 
   transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update , { runValidators: true }, (err, tx) ->
+    logger.info "stored primary response for #{tx._id}"
     if err
       logger.info 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
       return done err
@@ -123,67 +104,53 @@ exports.storeResponse = (ctx, done) ->
       return done err
     return done()
 
-exports.getNumRoutes = getNumRoutes = (channelID, callback) ->
-  Channel.findById channelID, (err, channel) ->
-    if channel?.routes?
-      callback channel.routes.length
-    else
-      callback 0
+exports.storeNonPrimaryResponse = (ctx, done) ->
+  # check if channel response body is false and remove
+  if ctx.authorisedChannel.responseBody == false
+    response.response.body = ''
 
-exports.storeNonPrimaryResponse = (ctx, response, done) ->
-  #  get channel and determine number of routes in channel
-  if ctx.request.header?["channel-id"]?
-    getNumRoutes ctx.request.header["channel-id"], (numRoutes) ->
-    #  Get the current transaction and get the number of routes that have completed
-      do (numRoutes) ->
-        if ctx.request.header?["X-OpenHIM-TransactionID"]?
-          transactions.Transaction.findById ctx.request.header["X-OpenHIM-TransactionID"], (err,tx) ->
-            do (tx) ->
-              numRouteResps = tx.routes.length + 1
-              remainingRoutes = numRoutes - numRouteResps
-              logger.info "num remaining routes: #{remainingRoutes}"
-              isLastRoute = false
-              if remainingRoutes = 0
-                tx.status = transactionStatus.SUCCESSFUL
-                logger.info "storing last route: #{response.name}"
-                isLastRoute = true
-              else
-                logger.info "storing route: #{response.name}"
-#             Set final response
-              tx.routes.push response
-              tx.save
+  if ctx.transactionId?
+    transactions.Transaction.findByIdAndUpdate ctx.transactionId, { routes: ctx.routes }, (err,tx) ->
+      logger.info ctx.transactionId
+      if err
+        return done err
+      done tx
 
-              if true
-                tx = setFinalStatus(tx)
-                tx.save done
-              else
-                tx.save done
 
-exports.setFinalStatus = setFinalStatus = (tx) ->
-  tx.status = null
-  routeFailures = false
-  routeSuccess = true
-  if tx.routes
-    for route in tx.routes
-      if 500 <= route.response.status <= 599
-        routeFailures = true
-      if not (200 <= route.response.status <= 299)
-        routeSuccess = false
-
-  if (500 <= tx.response.status <= 599)
-    tx.status = transactionStatus.FAILED
+exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
+  transactionId = ''
+  if ctx.request?.header?["X-OpenHIM-TransactionID"]
+    transactionId = ctx.request.header["X-OpenHIM-TransactionID"]
   else
-    if routeFailures
-      tx.status = transactionStatus.COMPLETED_W_ERR
-    if (200 <= tx.response.status <= 299) && routeSuccess
-      tx.status = transactionStatus.SUCCESSFUL
+    transactionId = ctx.transactionId.toString()
 
-  # In all other cases mark as completed
-  if tx.status is null or tx.status is undefined
-    tx.status = transactionStatus.COMPLETED
+  transactions.Transaction.findById transactionId, (err, tx) ->
+    routeFailures = false
+    routeSuccess = true
+    if ctx.routes
+      for route in ctx.routes
+        if 500 <= route.response.status <= 599
+          routeFailures = true
+        if not (200 <= route.response.status <= 299)
+          routeSuccess = false
+          tx.status = transactionStatus.COMPLETED
 
-  logger.info "Final status for transaction #{tx._id} : #{tx.status}"
-  return tx
+    if (500 <= ctx.response.status <= 599)
+      tx.status = transactionStatus.FAILED
+    else
+      if routeFailures
+        tx.status = transactionStatus.COMPLETED_W_ERR
+      if (200 <= ctx.response.status <= 299) && routeSuccess
+        tx.status = transactionStatus.SUCCESSFUL
+
+    # In all other cases mark as completed
+    if ctx.status is null or ctx.status is undefined
+      tx.status = transactionStatus.COMPLETED
+
+    logger.info "Final status for transaction #{tx._id} : #{tx.status}"
+    transactions.Transaction.findByIdAndUpdate transactionId, {status: tx.status}, { },  (err,tx) ->
+      tx.save
+      callback tx
 
 
 

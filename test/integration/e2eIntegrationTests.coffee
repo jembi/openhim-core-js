@@ -858,17 +858,18 @@ describe "e2e Integration Tests", ->
             .get("/test/mediator")
             .auth("mediatorTestApp", "password")
             .expect(200)
-            .end (err, result) ->
+            .end (err, res) ->
               if err
                 done err
               else
-                Transaction.findOne {}, (err, res) ->
-                  res.status.should.be.equal mediatorResponse.status
-                  res.orchestrations.length.should.be.exactly 1
-                  res.orchestrations[0].name.should.be.equal mediatorResponse.orchestrations[0].name
-                  should.exist res.properties
-                  res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
-                  done()
+                Transaction.findOne {}, (err1, res1) ->
+                  Transaction.findOne {}, (err, res) ->
+                    res.status.should.be.equal mediatorResponse.status
+                    res.orchestrations.length.should.be.exactly 1
+                    res.orchestrations[0].name.should.be.equal mediatorResponse.orchestrations[0].name
+                    should.exist res.properties
+                    res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
+                    done()
 
   describe "Multipart form data tests", ->
     mockServer = null

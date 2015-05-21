@@ -44,6 +44,10 @@ setKoaResponse = (ctx, response) ->
   if not ctx.response.header
     ctx.response.header = {}
 
+  if ctx.request?.header?["X-OpenHIM-TransactionID"]
+    if response?.headers?
+      response.headers["X-OpenHIM-TransactionID"] = ctx.request.header["X-OpenHIM-TransactionID"]
+
   for key, value of response.headers
     switch key.toLowerCase()
       when 'set-cookie' then setCookiesOnContext ctx, value
@@ -84,7 +88,8 @@ handleServerError = (ctx, err) ->
 
 
 sendRequestToRoutes = (ctx, routes, next) ->
-  nonPrimaryPromises = []
+  promises = []
+  promise = {}
   ctx.timer = new Date
 
   if containsMultiplePrimaries routes
@@ -123,7 +128,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
           delete options.headers.host
 
         if route.primary
-          sendRequest(ctx, route, options)
+          promise = sendRequest(ctx, route, options)
           .then (response) ->
             logger.info "executing primary route : #{route.name}"
             if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
@@ -144,20 +149,21 @@ sendRequestToRoutes = (ctx, routes, next) ->
             next()
         else
           logger.info "executing non primary: #{route.name}"
-          nonPrimaryPromise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
-          .then (response) ->
+          promise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
+          .then () ->
             logger.info "Storing non primary route responses #{route.name}"
             try
-              messageStore.storeNonPrimaryResponse ctx, response, ->
+              messageStore.storeNonPrimaryResponse ctx, ->
                 stats.incrementTransactionCount ctx, ->
                 stats.measureTransactionDuration ctx, ->
             catch err
               logger.error err
 
-        nonPrimaryPromises.push nonPrimaryPromise
+        promises.push promise
+    (Q.all promises).then ->
+      messageStore.setFinalStatus ctx, ->
+        logger.info "all routes completed"
 
-    (Q.all nonPrimaryPromises).then ->
-      logger.info "all non primary routes completed"
 
 # function to build fresh promise for transactions routes
 buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
