@@ -7,8 +7,6 @@ statsdServer = config.get 'statsd'
 application = config.get 'application'
 SDC = require 'statsd-client'
 os = require 'os'
-co = require "co"
-Channel = require('../model/channels').Channel
 
 domain = "#{os.hostname()}.#{application.name}.appMetrics"
 sdc = new SDC statsdServer
@@ -19,8 +17,6 @@ exports.transactionStatus = transactionStatus =
   COMPLETED: 'Completed'
   COMPLETED_W_ERR: 'Completed with error(s)'
   FAILED: 'Failed'
-
-exports.routeStatus = routeStatus = true
 
 copyMapWithEscapedReservedCharacters = (map) ->
   escapedMap = {}
@@ -97,7 +93,7 @@ exports.storeResponse = (ctx, done) ->
   transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update , { runValidators: true }, (err, tx) ->
     logger.info "stored primary response for #{tx._id}"
     if err
-      logger.info 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
+      logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
       return done err
     if tx is undefined or tx is null
       logger.error 'Could not find transaction: ' + ctx.transactionId
