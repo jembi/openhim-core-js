@@ -224,7 +224,7 @@ describe "MessageStore", ->
         ctx.transactionId = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
           should.not.exist(err2)
-          messageStore.storeNonPrimaryResponse ctx, ->
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
               should.not.exist(err3)
               (trans != null).should.true
@@ -243,20 +243,23 @@ describe "MessageStore", ->
       ctx.routes.push createRoute "route1", 200
       ctx.routes.push createRoute "route2", 201
 
+     
+
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.request = storedTrans.request
         ctx.request.header = {}
         ctx.transactionId = storedTrans._id
         ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          messageStore.storeNonPrimaryResponse ctx, ->
-            messageStore.setFinalStatus ctx, ->
-              should.not.exist(err2)
-              Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-                should.not.exist(err3)
-                (trans != null).should.true
-                trans.status.should.be.exactly "Successful"
-                done()
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+              messageStore.setFinalStatus ctx, ->
+                should.not.exist(err2)
+                Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                  should.not.exist(err3)
+                  (trans != null).should.true
+                  trans.status.should.be.exactly "Successful"
+                  done()
 
     it "should set the status to failed if the primary route return a status in 5xx", (done) ->
       ctx.response = createResponse 500
@@ -270,14 +273,15 @@ describe "MessageStore", ->
         ctx.transactionId = storedTrans._id
         ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          messageStore.storeNonPrimaryResponse ctx, ->
-            messageStore.setFinalStatus ctx, ->
-              should.not.exist(err2)
-              Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-                should.not.exist(err3)
-                (trans != null).should.true
-                trans.status.should.be.exactly "Failed"
-                done()
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+              messageStore.setFinalStatus ctx, ->
+                should.not.exist(err2)
+                Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                  should.not.exist(err3)
+                  (trans != null).should.true
+                  trans.status.should.be.exactly "Failed"
+                  done()
 
     it "should set the status to completed with errors if the primary route return a status in 2xx or 4xx but one or more routes return 5xx", (done) ->
       ctx.response = createResponse 404
@@ -291,14 +295,15 @@ describe "MessageStore", ->
         ctx.transactionId = storedTrans._id
         ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          messageStore.storeNonPrimaryResponse ctx, ->
-            messageStore.setFinalStatus ctx, ->
-              should.not.exist(err2)
-              Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-                should.not.exist(err3)
-                (trans != null).should.be.true
-                trans.status.should.be.exactly "Completed with error(s)"
-                done()
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+              messageStore.setFinalStatus ctx, ->
+                should.not.exist(err2)
+                Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                  should.not.exist(err3)
+                  (trans != null).should.be.true
+                  trans.status.should.be.exactly "Completed with error(s)"
+                  done()
 
     it "should set the status to completed if any route returns a status in 4xx (test 1)", (done) ->
 
@@ -313,14 +318,15 @@ describe "MessageStore", ->
         ctx.transactionId = storedTrans._id
         ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          messageStore.storeNonPrimaryResponse ctx, ->
-            messageStore.setFinalStatus ctx, ->
-              should.not.exist(err2)
-              Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-                should.not.exist(err3)
-                (trans != null).should.true
-                trans.status.should.be.exactly "Completed"
-                done()
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+              messageStore.setFinalStatus ctx, ->
+                should.not.exist(err2)
+                Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                  should.not.exist(err3)
+                  (trans != null).should.true
+                  trans.status.should.be.exactly "Completed"
+                  done()
 
     it "should set the status to completed if any route returns a status in 4xx (test 2)", (done) ->
       ctx.response = createResponse 404
@@ -334,14 +340,15 @@ describe "MessageStore", ->
         ctx.transactionId = storedTrans._id
         ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          messageStore.storeNonPrimaryResponse ctx, ->
-            messageStore.setFinalStatus ctx, ->
-              should.not.exist(err2)
-              Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
-                should.not.exist(err3)
-                (trans != null).should.true
-                trans.status.should.be.exactly "Completed"
-                done()
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+              messageStore.setFinalStatus ctx,  ->
+                should.not.exist(err2)
+                Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                  should.not.exist(err3)
+                  (trans != null).should.true
+                  trans.status.should.be.exactly "Completed"
+                  done()
 
     createResponseWithReservedChars = (status) ->
       return {

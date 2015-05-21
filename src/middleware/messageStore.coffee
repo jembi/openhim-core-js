@@ -100,16 +100,17 @@ exports.storeResponse = (ctx, done) ->
       return done err
     return done()
 
-exports.storeNonPrimaryResponse = (ctx, done) ->
+exports.storeNonPrimaryResponse = (ctx, routeObject, done) ->
   # check if channel response body is false and remove
   if ctx.authorisedChannel.responseBody == false
     response.response.body = ''
 
   if ctx.transactionId?
-    transactions.Transaction.findByIdAndUpdate ctx.transactionId, { routes: ctx.routes }, (err,tx) ->
+    transactions.Transaction.findByIdAndUpdate ctx.transactionId, {$push: { "routes": routeObject } } , (err,tx) ->
       logger.info ctx.transactionId
+
       if err
-        return done err
+        logger.error err
       done tx
 
 
