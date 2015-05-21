@@ -190,7 +190,7 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
 
     ctx.routes = [] if not ctx.routes
     ctx.routes.push routeObj
-    routeObj
+    return routeObj
   .fail (reason) ->
     # on failure
     handleServerError ctx, reason

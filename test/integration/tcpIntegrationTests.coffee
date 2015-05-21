@@ -201,12 +201,11 @@ describe "TCP/TLS/MLLP Integration Tests", ->
         data.should.be.exactly 'TLS OK'
         done()
 
-#  it "should return an error when the client cert is not known by the server", (done) ->
-#    server.start tcpHttpReceiverPort: 7787, ->
-#      this.timeout 30000
-#      sendTCPTestMessage 4004, (data) ->
-#        data.should.be.exactly 'An internal server error occurred'
-#        done()
+  it "should return an error when the client cert is not known by the server", (done) ->
+    server.start tcpHttpReceiverPort: 7787, ->
+      sendTCPTestMessage 4004, (data) ->
+        data.should.be.exactly 'An internal server error occurred'
+        done()
 
   it "should persist messages", (done) ->
     server.start tcpHttpReceiverPort: 7787, ->
