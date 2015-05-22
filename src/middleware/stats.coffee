@@ -19,10 +19,6 @@ exports.incrementTransactionCount = (ctx, done) ->
     sdc.increment domain + '.channels.' + ctx.authorisedChannel._id # Per channel
     sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus # Per Channel Status
 
-    #Collect stats for non-primary routes
-#    if ctx.routes?
-#      for route in ctx.routes
-
     if ctx.mediatorResponse?
 #      Check for custom mediator metrics
       if ctx.mediatorResponse.metrics?
@@ -71,7 +67,6 @@ exports.incrementTransactionCount = (ctx, done) ->
 
   catch error
     logger.error error, done
-    console.log error
   done()
 
 
@@ -85,9 +80,6 @@ exports.measureTransactionDuration = (ctx, done) ->
     sdc.timing domain + '.channels.' + ctx.authorisedChannel._id, ctx.timer # Per Channel
     sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus, ctx.timer # Per Channel Status
 
-    #Collect stats for non-primary routes
-#    if ctx.routes?
-#      for route in ctx.routes
 
     if ctx.mediatorResponse?
       if ctx.mediatorResponse.orchestrations?
@@ -139,7 +131,7 @@ exports.nonPrimaryRouteRequestCount = (ctx, route, done) ->
         sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName
         sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
 
-        #           Log custom orchestration metrics
+        # Log custom orchestration metrics
         if orchestration.metrics?
           for metric in orchestration.metrics
             if metric.type == 'counter'
