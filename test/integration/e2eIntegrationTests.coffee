@@ -862,7 +862,7 @@ describe "e2e Integration Tests", ->
               if err
                 done err
               else
-                Transaction.findOne {}, (err1, res1) ->
+                setTimeout ( ->
                   Transaction.findOne {}, (err, res) ->
                     res.status.should.be.equal mediatorResponse.status
                     res.orchestrations.length.should.be.exactly 1
@@ -870,6 +870,7 @@ describe "e2e Integration Tests", ->
                     should.exist res.properties
                     res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
                     done()
+                ), 1500
 
   describe "Multipart form data tests", ->
     mockServer = null
