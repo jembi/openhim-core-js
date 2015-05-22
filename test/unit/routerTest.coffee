@@ -209,7 +209,6 @@ describe "HTTP Router", ->
               done()
 
     it "should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes", (done) ->
-      this.timeout(10000)
       testUtils.createMockServer 200, "Mock response body 1\n", 7750, ->
         testUtils.createMockServer 201, "Mock response body 2\n", 7751, ->
           testUtils.createMockServer 400, "Mock response body 3\n", 7752, ->
@@ -230,7 +229,7 @@ describe "HTTP Router", ->
                 ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
                 ctx.routes[1].request.timestamp.should.be.exactly requestTimestamp
                 done()
-              ), 5000
+              ), 1000
 
 
     it "should pass an error to next if there are multiple primary routes", (done) ->
@@ -436,7 +435,6 @@ describe "HTTP Router", ->
             done err
 
     it "should set mediator response data for non-primary routes", (done) ->
-      this.timeout(10000)
       router.nonPrimaryRoutes = []
       mediatorResponse =
         status: 'Failed'
@@ -495,7 +493,7 @@ describe "HTTP Router", ->
                 done()
               catch err
                 done err
-            ), 5000
+            ), 500
 
   describe "Basic Auth", ->
     it "should have valid authorization header if username and password is set in options", (done) ->

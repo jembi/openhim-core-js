@@ -243,7 +243,7 @@ describe "MessageStore", ->
       ctx.routes.push createRoute "route1", 200
       ctx.routes.push createRoute "route2", 201
 
-     
+
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.request = storedTrans.request
