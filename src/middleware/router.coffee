@@ -157,14 +157,14 @@ sendRequestToRoutes = (ctx, routes, next) ->
               messageStore.storeNonPrimaryResponse ctx, routeObj, ->
                 stats.nonPrimaryRouteRequestCount ctx, routeObj, ->
                   stats.nonPrimaryRouteDurations ctx, routeObj, ->
-                    console.log 'sent durarions'
+
             catch err
               logger.error err
 
         promises.push promise
     (Q.all promises).then ->
       messageStore.setFinalStatus ctx, ->
-        logger.info "all routes completed"
+        logger.info "All routes completed for transaction: #{ctx.transactionId.toString()}"
 
 
 # function to build fresh promise for transactions routes
