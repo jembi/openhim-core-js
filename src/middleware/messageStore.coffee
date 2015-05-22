@@ -65,7 +65,6 @@ exports.storeTransaction = (ctx, done) ->
     else
       ctx.transactionId = tx._id
       ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
-      ctx.header['channel-id'] = tx.channelID
       return done null, tx
 
 exports.storeResponse = (ctx, done) ->
