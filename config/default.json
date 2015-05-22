@@ -73,8 +73,8 @@
     "orchestrationTSBufferMillis": 100
   },
   "statsd": {
-    "enabled": true,
-    "host": "104.236.15.32"
+    "enabled": false,
+    "host": "127.0.0.1"
   },
   "application": {
     "name": "Development"
