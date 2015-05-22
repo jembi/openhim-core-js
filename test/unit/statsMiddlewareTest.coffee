@@ -210,37 +210,41 @@ describe "Stats Middleware ", ->
     this.timeout = 400000
     stats.incrementTransactionCount ctx, () ->
       stats.incrementTransactionCount ctx2, () ->
-        s.expectMessage domain + '.channels:1|c', ->
-          s.expectMessage domain + '.channels.Successful:1|c', ->
-            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:1|c', ->
-              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:1|c', ->
-                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:1|c', ->
-                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API:1|c', ->
-                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API.statusCodes.200:1|c', ->
-                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-counter-metric:1|c', ->
-                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-gauge-metric:11|g', ->
-                          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-timer-metric:1522|ms', ->
-                            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:1|c', ->
-                              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:1|c', ->
-                                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c', ->
-                                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c', done
+        stats.nonPrimaryRouteRequestCount ctx, ctx.routes[0], () ->
+          stats.nonPrimaryRouteRequestCount ctx2, ctx2.routes[0], () ->
+            s.expectMessage domain + '.channels:1|c', ->
+              s.expectMessage domain + '.channels.Successful:1|c', ->
+                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:1|c', ->
+                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:1|c', ->
+                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:1|c', ->
+                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API:1|c', ->
+                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API.statusCodes.200:1|c', ->
+                          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-counter-metric:1|c', ->
+                            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-gauge-metric:11|g', ->
+                              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-timer-metric:1522|ms', ->
+                                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:1|c', ->
+                                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:1|c', ->
+                                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c', ->
+                                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c', done
 
   it "Should measure transaction duration", (done) ->
       ctx.timer = 10
       stats.measureTransactionDuration ctx, () ->
         stats.measureTransactionDuration ctx2, () ->
-          s.expectMessage domain + '.channels:10|ms', ->
-            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:5|ms', ->
-              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:5|ms', ->
-                s.expectMessage domain + '.channels.Successful:10|ms', ->
-                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:10|ms', ->
-                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful:10|ms', ->
-                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route:10|ms', ->
-                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms', ->
-                          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.group.Lab API:5|ms', ->
-                            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms', ->
-                              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms', ->
-                                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms', done
+          stats.nonPrimaryRouteDurations ctx, ctx.routes[0], () ->
+            stats.nonPrimaryRouteDurations ctx2, ctx2.routes[0], () ->
+              s.expectMessage domain + '.channels:10|ms', ->
+                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:5|ms', ->
+                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:5|ms', ->
+                    s.expectMessage domain + '.channels.Successful:10|ms', ->
+                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:10|ms', ->
+                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful:10|ms', ->
+                          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route:10|ms', ->
+                            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms', ->
+                              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.group.Lab API:5|ms', ->
+                                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms', ->
+                                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms', ->
+                                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms', done
 
 
 

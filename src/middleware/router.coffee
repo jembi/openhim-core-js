@@ -12,7 +12,8 @@ logger = require "winston"
 cookie = require 'cookie'
 fs = require 'fs'
 utils = require '../utils'
-
+messageStore = require '../middleware/messageStore'
+stats = require "../middleware/stats"
 statsdServer = config.get 'statsd'
 application = config.get 'application'
 SDC = require 'statsd-client'
@@ -42,6 +43,10 @@ setKoaResponse = (ctx, response) ->
 
   if not ctx.response.header
     ctx.response.header = {}
+
+  if ctx.request?.header?["X-OpenHIM-TransactionID"]
+    if response?.headers?
+      response.headers["X-OpenHIM-TransactionID"] = ctx.request.header["X-OpenHIM-TransactionID"]
 
   for key, value of response.headers
     switch key.toLowerCase()
@@ -84,6 +89,8 @@ handleServerError = (ctx, err) ->
 
 sendRequestToRoutes = (ctx, routes, next) ->
   promises = []
+  promise = {}
+  ctx.timer = new Date
 
   if containsMultiplePrimaries routes
     return next new Error "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
@@ -91,55 +98,74 @@ sendRequestToRoutes = (ctx, routes, next) ->
   utils.getKeystore (err, keystore) ->
 
     for route in routes
-      path = getDestinationPath route, ctx.path
-      options =
-        hostname: route.host
-        port: route.port
-        path: path
-        method: ctx.request.method
-        headers: ctx.request.header
-        agent: false
-        rejectUnauthorized: true
-        key: keystore.key
-        cert: keystore.cert.data
-        secureProtocol: 'TLSv1_method'
+      do (route) ->
+        path = getDestinationPath route, ctx.path
+        options =
+          hostname: route.host
+          port: route.port
+          path: path
+          method: ctx.request.method
+          headers: ctx.request.header
+          agent: false
+          rejectUnauthorized: true
+          key: keystore.key
+          cert: keystore.cert.data
+          secureProtocol: 'TLSv1_method'
 
-      if route.cert?
-        options.ca = keystore.ca.id(route.cert).data
+        if route.cert?
+          options.ca = keystore.ca.id(route.cert).data
 
-      if ctx.request.querystring
-        options.path += '?' + ctx.request.querystring
+        if ctx.request.querystring
+          options.path += '?' + ctx.request.querystring
 
-      if options.headers && options.headers.authorization
-        delete options.headers.authorization
+        if options.headers && options.headers.authorization
+          delete options.headers.authorization
 
-      if route.username and route.password
-        options.auth = route.username + ":" + route.password
+        if route.username and route.password
+          options.auth = route.username + ":" + route.password
 
-      if options.headers && options.headers.host
-        delete options.headers.host
+        if options.headers && options.headers.host
+          delete options.headers.host
 
-      if route.primary
-        promise = sendRequest(ctx, route, options)
-        .then (response) ->
-          if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
-            # handle mediator reponse
-            responseObj = JSON.parse response.body
-            ctx.mediatorResponse = responseObj
-            # then set koa response from responseObj.response
-            setKoaResponse ctx, responseObj.response
-          else
-            setKoaResponse ctx, response
-        .fail (reason) ->
-          # on failure
-          handleServerError ctx, reason
-      else
-        promise = buildNonPrimarySendRequestPromise ctx, route, options, path
+        if route.primary
+          promise = sendRequest(ctx, route, options)
+          .then (response) ->
+            logger.info "executing primary route : #{route.name}"
+            if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
+              # handle mediator reponse
+              responseObj = JSON.parse response.body
+              ctx.mediatorResponse = responseObj
+              # then set koa response from responseObj.response
+              setKoaResponse ctx, responseObj.response
+            else
+              setKoaResponse ctx, response
+          .then ->
+            logger.info "primary route completed"
+            next()
 
-      promises.push promise
+          .fail (reason) ->
+            # on failure
+            handleServerError ctx, reason
+            next()
+        else
+          logger.info "executing non primary: #{route.name}"
+          promise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
+          .then (routeObj) ->
+            logger.info "Storing non primary route responses #{route.name}"
 
+            try
+              messageStore.storeNonPrimaryResponse ctx, routeObj, ->
+                stats.nonPrimaryRouteRequestCount ctx, routeObj, ->
+                  stats.nonPrimaryRouteDurations ctx, routeObj, ->
+
+            catch err
+              logger.error err
+
+        promises.push promise
     (Q.all promises).then ->
-      next()
+      messageStore.setFinalStatus ctx, ->
+        logger.info "All routes completed for transaction: #{ctx.transactionId.toString()}"
+
 
 # function to build fresh promise for transactions routes
 buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
@@ -166,6 +192,7 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
 
     ctx.routes = [] if not ctx.routes
     ctx.routes.push routeObj
+    return routeObj
   .fail (reason) ->
     # on failure
     handleServerError ctx, reason

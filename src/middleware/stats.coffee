@@ -19,54 +19,6 @@ exports.incrementTransactionCount = (ctx, done) ->
     sdc.increment domain + '.channels.' + ctx.authorisedChannel._id # Per channel
     sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus # Per Channel Status
 
-    #Collect stats for non-primary routes
-    if ctx.routes?
-      for route in ctx.routes
-        sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name # Per non-primary route
-        sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status # Per route response status
-
-        if route.metrics?
-          for metric in route.metrics
-            if metric.type == 'counter'
-              logger.info 'incrementing mediator counter ' + metric.name
-              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name
-
-            if metric.type == 'timer'
-              logger.info 'incrementing mediator timer ' + metric.name
-              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name, metric.value
-
-            if metric.type == 'gauge'
-              logger.info 'incrementing mediator gauge ' + metric.name
-              sdc.gauge domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name, metric.value
-
-        if route.orchestrations?
-          for orchestration in route.orchestrations
-            do (orchestration) ->
-              orchestrationStatus = orchestration.response.status
-              orchestrationName = orchestration.name
-              if orchestration.group
-                orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
-              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName
-              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
-              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName
-              sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
-
-  #           Log custom orchestration metrics
-              if orchestration.metrics?
-                for metric in orchestration.metrics
-                  if metric.type == 'counter'
-                    logger.info 'incrementing '+ route.name + ' orchestration counter ' + metric.name
-                    sdc.increment   domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
-
-                  if metric.type == 'timer'
-                    logger.info 'incrementing '+ route.name + 'orchestration timer ' + metric.name
-                    sdc.timing      domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
-
-                  if metric.type == 'gauge'
-                    logger.info 'incrementing '+ route.name + 'orchestration gauge ' + metric.name
-                    sdc.gauge       domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName  + '.' + metric.name, metric.value
-
-
     if ctx.mediatorResponse?
 #      Check for custom mediator metrics
       if ctx.mediatorResponse.metrics?
@@ -115,7 +67,6 @@ exports.incrementTransactionCount = (ctx, done) ->
 
   catch error
     logger.error error, done
-    console.log error
   done()
 
 
@@ -128,26 +79,6 @@ exports.measureTransactionDuration = (ctx, done) ->
     sdc.timing domain + '.channels.' + transactionStatus, ctx.timer # Overall Transaction Status
     sdc.timing domain + '.channels.' + ctx.authorisedChannel._id, ctx.timer # Per Channel
     sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus, ctx.timer # Per Channel Status
-
-    #Collect stats for non-primary routes
-    if ctx.routes?
-      for route in ctx.routes
-        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, ctx.timer
-        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status, ctx.timer
-
-        if route.orchestrations?
-          for orchestration in route.orchestrations
-            do (orchestration) ->
-              orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
-              orchestrationStatus = orchestration.response.status
-              orchestrationName = orchestration.name
-              if orchestration.group
-                orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
-              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName, orchestratrionDuration
-              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
-              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName, orchestratrionDuration
-              sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
-
 
 
     if ctx.mediatorResponse?
@@ -167,6 +98,76 @@ exports.measureTransactionDuration = (ctx, done) ->
   catch error
     logger.error error, done
   done()
+
+
+exports.nonPrimaryRouteRequestCount = (ctx, route, done) ->
+
+  sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name # Per non-primary route
+  sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status # Per route response status
+
+  if route.metrics?
+    for metric in route.metrics
+      if metric.type == 'counter'
+        logger.info 'incrementing mediator counter ' + metric.name
+        sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name
+
+      if metric.type == 'timer'
+        logger.info 'incrementing mediator timer ' + metric.name
+        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name, metric.value
+
+      if metric.type == 'gauge'
+        logger.info 'incrementing mediator gauge ' + metric.name
+        sdc.gauge domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.mediator_metrics.' + metric.name, metric.value
+
+  if route.orchestrations?
+    for orchestration in route.orchestrations
+      do (orchestration) ->
+        orchestrationStatus = orchestration.response.status
+        orchestrationName = orchestration.name
+        if orchestration.group
+          orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
+        sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName
+        sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
+        sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName
+        sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus
+
+        # Log custom orchestration metrics
+        if orchestration.metrics?
+          for metric in orchestration.metrics
+            if metric.type == 'counter'
+              logger.info 'incrementing '+ route.name + ' orchestration counter ' + metric.name
+              sdc.increment   domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
+
+            if metric.type == 'timer'
+              logger.info 'incrementing '+ route.name + 'orchestration timer ' + metric.name
+              sdc.timing      domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.' + metric.name, metric.value
+
+            if metric.type == 'gauge'
+              logger.info 'incrementing '+ route.name + 'orchestration gauge ' + metric.name
+              sdc.gauge       domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName  + '.' + metric.name, metric.value
+  done()
+
+exports.nonPrimaryRouteDurations = (ctx, route, done) ->
+
+  sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name, ctx.timer
+  sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status, ctx.timer
+
+  if route.orchestrations?
+    for orchestration in route.orchestrations
+      do (orchestration) ->
+        orchestratrionDuration = orchestration.response.timestamp - orchestration.request.timestamp
+        orchestrationStatus = orchestration.response.status
+        orchestrationName = orchestration.name
+        if orchestration.group
+          orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
+        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName, orchestratrionDuration
+        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
+        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName, orchestratrionDuration
+        sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
+
+  done()
+
+
 
 exports.koaMiddleware = (next) ->
   this.timer = new Date()

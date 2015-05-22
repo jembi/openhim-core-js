@@ -15,7 +15,7 @@ server = require "../../lib/server"
 describe "API Metrics Tests", ->
 
   describe 'openHIM Metrics Api testing', ->
-    this.timeout(15000);
+    this.timeout(15000)
 
     transaction1 = new Transaction
       _id: "111111111111111111111111"

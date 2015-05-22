@@ -1,3 +1,4 @@
+Error.stackTraceLimit = Infinity
 fs = require "fs"
 should = require "should"
 sinon = require "sinon"
@@ -6,6 +7,8 @@ router = require "../../lib/middleware/router"
 testUtils = require "../testUtils"
 Keystore = require("../../lib/model/keystore").Keystore
 Certificate = require("../../lib/model/keystore").Certificate
+Channel = require("../../lib/model/channels").Channel
+
 
 describe "HTTP Router", ->
 
@@ -87,13 +90,16 @@ describe "HTTP Router", ->
         name: "Multicast 1"
         urlPattern: "test/multicast.+"
         routes: [
+              name: "non_primary_1"
               host: "localhost"
               port: 7777
             ,
+              name: "primary"
               host: "localhost"
               port: 8888
               primary: true
             ,
+              name: "non_primary_2"
               host: "localhost"
               port: 9999
             ]
@@ -106,8 +112,6 @@ describe "HTTP Router", ->
       ctx.request.method = "GET"
       ctx.requestTimestamp = requestTimestamp
       return ctx
-
-
 
     it "should route an incomming https request to the endpoints specific by the channel config", (done) ->
       testUtils.createMockHTTPSServerWithMutualAuth 201, "Mock response body\n", 9877, (server) ->
@@ -152,35 +156,44 @@ describe "HTTP Router", ->
       testUtils.createMockHTTPSServerWithMutualAuth 201, "Mock response body\n", 9877, false, (server) ->
         # Setup a channel for the mock endpoint
         channel =
-          name: "Mock endpoint"
+          name: "Mock endpoint mutual tls"
           urlPattern: ".+"
+          allow: ['admin', 'aGroup', 'test']
+          authType: "public"
           routes: [
-            secured: true
-            host: "localhost"
-            port: 9877
-            primary: true
+            {
+              name: "test mock"
+              secured: true
+              host: "localhost"
+              port: 9877
+              primary: true
+            }
           ]
+          txViewAcl: "aGroup"
 
-        ctx = new Object()
-        ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
-        ctx.response.set = ->
-        ctx.path = ctx.request.url = "/test"
-        ctx.request.method = "GET"
+        (new Channel channel).save (err, ch1) ->
+          ctx = new Object()
+          ctx.authorisedChannel = ch1
+          ctx.request = new Object()
+          ctx.response = new Object()
+          ctx.response.set = ->
+          ctx.path = ctx.request.url = "/test"
+          ctx.authorisedChannel._id = ch1._id
+          ctx.request.method = "GET"
+          router.route ctx, (err) ->
+            if err
+              logger.error err
+              return server.close ->
+                done err
 
-        router.route ctx, (err) ->
-          if err
-            logger.error err
-            return server.close ->
-              done err
-
-          try
             ctx.response.status.should.be.exactly 500
             ctx.response.body.toString().should.be.eql "An internal server error occurred"
-            server.close done
-          catch err
-            server.close -> done err
+            if server
+              server.close done
+            else
+              done
+
+
 
     it "should be able to multicast to multiple endpoints but return only the response from the primary route", (done) ->
       testUtils.createMockServer 200, "Mock response body 1\n", 7777, ->
@@ -203,19 +216,20 @@ describe "HTTP Router", ->
             router.route ctx, (err) ->
               if err
                 return done err
-
-              ctx.routes.length.should.be.exactly 2
-              ctx.routes[0].response.status.should.be.exactly 200
-              ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
-              ctx.routes[0].response.headers.should.be.ok
-              ctx.routes[0].request.path.should.be.exactly "/test/multicasting"
-              ctx.routes[0].request.timestamp.should.be.exactly requestTimestamp
-              ctx.routes[1].response.status.should.be.exactly 400
-              ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
-              ctx.routes[1].response.headers.should.be.ok
-              ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
-              ctx.routes[1].request.timestamp.should.be.exactly requestTimestamp
-              done()
+              setTimeout (->
+                ctx.routes.length.should.be.exactly 2
+                ctx.routes[0].response.status.should.be.exactly 200
+                ctx.routes[0].response.body.toString().should.be.eql "Mock response body 1\n"
+                ctx.routes[0].response.headers.should.be.ok
+                ctx.routes[0].request.path.should.be.exactly "/test/multicasting"
+                ctx.routes[0].request.timestamp.should.be.exactly requestTimestamp
+                ctx.routes[1].response.status.should.be.exactly 400
+                ctx.routes[1].response.body.toString().should.be.eql "Mock response body 3\n"
+                ctx.routes[1].response.headers.should.be.ok
+                ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
+                ctx.routes[1].request.timestamp.should.be.exactly requestTimestamp
+                done()
+              ), 1000
 
 
     it "should pass an error to next if there are multiple primary routes", (done) ->
@@ -421,6 +435,7 @@ describe "HTTP Router", ->
             done err
 
     it "should set mediator response data for non-primary routes", (done) ->
+      router.nonPrimaryRoutes = []
       mediatorResponse =
         status: 'Failed'
         response:
@@ -448,12 +463,14 @@ describe "HTTP Router", ->
             name: "Mock endpoint"
             urlPattern: ".+"
             routes: [
+                  name: 'non prim'
+                  host: "localhost"
+                  port: 9889
+                ,
+                  name: 'primary'
                   host: "localhost"
                   port: 9888
                   primary: true
-                ,
-                  host: "localhost"
-                  port: 9889
                 ]
 
           ctx = new Object()
@@ -464,17 +481,19 @@ describe "HTTP Router", ->
           ctx.request.method = "GET"
           ctx.requestTimestamp = requestTimestamp
 
+
           router.route ctx, (err) ->
             if err
               return done err
-
-            try
-              ctx.routes[0].response.should.be.eql mediatorResponse.response
-              ctx.routes[0].orchestrations.should.be.eql mediatorResponse.orchestrations
-              ctx.routes[0].properties.should.be.eql mediatorResponse.properties
-              done()
-            catch err
-              done err
+            setTimeout (->
+              try
+                ctx.routes[0].response.body.toString().should.be.eql "Mock response body from mediator\n"
+                ctx.routes[0].orchestrations.should.be.eql mediatorResponse.orchestrations
+                ctx.routes[0].properties.should.be.eql mediatorResponse.properties
+                done()
+              catch err
+                done err
+            ), 500
 
   describe "Basic Auth", ->
     it "should have valid authorization header if username and password is set in options", (done) ->

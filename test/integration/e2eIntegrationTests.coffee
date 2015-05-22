@@ -777,7 +777,7 @@ describe "e2e Integration Tests", ->
         status: 200
         headers: {}
         body: "<transaction response>"
-        timestamp: 1412257881909
+        timestamp: new Date
       orchestrations: [
         name: "Lab API"
         request:
@@ -786,12 +786,12 @@ describe "e2e Integration Tests", ->
             "Content-Type": "text/plain"
           body: "<route request>"
           method: "POST"
-          timestamp: 1412257881904
+          timestamp: new Date
         response:
           status: 200
           headers: {}
           body: "<route response>"
-          timestamp: 1412257881909
+          timestamp: new Date
       ]
       properties:
         orderId: "TEST00001"
@@ -840,7 +840,8 @@ describe "e2e Integration Tests", ->
 
     afterEach (done) ->
       server.stop ->
-        done()
+        Transaction.remove {}, ->
+          done()
 
     describe "mediator response processing", ->
       it "should return the specified mediator response element as the actual response", (done) ->
@@ -861,13 +862,15 @@ describe "e2e Integration Tests", ->
               if err
                 done err
               else
-                Transaction.findOne {}, (err, res) ->
-                  res.status.should.be.equal mediatorResponse.status
-                  res.orchestrations.length.should.be.exactly 1
-                  res.orchestrations[0].name.should.be.equal mediatorResponse.orchestrations[0].name
-                  should.exist res.properties
-                  res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
-                  done()
+                setTimeout ( ->
+                  Transaction.findOne {}, (err, res) ->
+                    res.status.should.be.equal mediatorResponse.status
+                    res.orchestrations.length.should.be.exactly 1
+                    res.orchestrations[0].name.should.be.equal mediatorResponse.orchestrations[0].name
+                    should.exist res.properties
+                    res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
+                    done()
+                ), 1500
 
   describe "Multipart form data tests", ->
     mockServer = null
@@ -882,7 +885,7 @@ describe "e2e Integration Tests", ->
           status: 200
           headers: {}
           body: "<transaction response>"
-          timestamp: 1412257881909
+          timestamp: new Date
         orchestrations: [
           name: "Lab API"
           request:
@@ -891,12 +894,12 @@ describe "e2e Integration Tests", ->
               "Content-Type": "text/plain"
             body: "<route request>"
             method: "POST"
-            timestamp: 1412257881904
+            timestamp: new Date
           response:
             status: 200
             headers: {}
             body: "<route response>"
-            timestamp: 1412257881909
+            timestamp: new Date
         ]
 
     #Setup some test data
