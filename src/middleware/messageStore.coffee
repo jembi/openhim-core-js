@@ -102,7 +102,7 @@ exports.storeResponse = (ctx, done) ->
 exports.storeNonPrimaryResponse = (ctx, routeObject, done) ->
   # check if channel response body is false and remove
   if ctx.authorisedChannel.responseBody == false
-    response.response.body = ''
+    routeObject.response.body = ''
 
   if ctx.transactionId?
     transactions.Transaction.findByIdAndUpdate ctx.transactionId, {$push: { "routes": routeObject } } , (err,tx) ->
@@ -110,6 +110,8 @@ exports.storeNonPrimaryResponse = (ctx, routeObject, done) ->
       if err
         logger.error err
       done tx
+  else
+    logger.error "the request has no transactionId"
 
 
 exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
