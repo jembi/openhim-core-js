@@ -152,10 +152,12 @@ sendRequestToRoutes = (ctx, routes, next) ->
           promise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
           .then (routeObj) ->
             logger.info "Storing non primary route responses #{route.name}"
+
             try
               messageStore.storeNonPrimaryResponse ctx, routeObj, ->
-                stats.incrementTransactionCount ctx, ->
-                stats.measureTransactionDuration ctx, ->
+                stats.nonPrimaryRouteRequestCount ctx, routeObj, ->
+                  stats.nonPrimaryRouteDurations ctx, routeObj, ->
+                    console.log 'sent durarions'
             catch err
               logger.error err
 

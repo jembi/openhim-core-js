@@ -107,7 +107,6 @@ exports.storeNonPrimaryResponse = (ctx, routeObject, done) ->
 
   if ctx.transactionId?
     transactions.Transaction.findByIdAndUpdate ctx.transactionId, {$push: { "routes": routeObject } } , (err,tx) ->
-      logger.info ctx.transactionId
 
       if err
         logger.error err
