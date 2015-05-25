@@ -154,12 +154,30 @@ sendRequestToRoutes = (ctx, routes, next) ->
             logger.info "Storing non primary route responses #{route.name}"
 
             try
+              if not routeObj?.name?
+                routeObj =
+                  name: route.name
+
+              if not routeObj?.response?
+                routeObj.response =
+                  status: 500
+                  timestamp: ctx.requestTimestamp
+
+              if not routeObj?.request?
+                routeObj.request =
+                  path: path
+                  headers: ctx.request.header
+                  querystring: ctx.request.querystring
+                  method: ctx.request.method
+                  timestamp: ctx.requestTimestamp
+
               messageStore.storeNonPrimaryResponse ctx, routeObj, ->
                 stats.nonPrimaryRouteRequestCount ctx, routeObj, ->
                   stats.nonPrimaryRouteDurations ctx, routeObj, ->
 
             catch err
               logger.error err
+
 
         promises.push promise
     (Q.all promises).then ->
