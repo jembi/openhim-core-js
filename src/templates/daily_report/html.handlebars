@@ -423,13 +423,13 @@
                                                         {{#each data}}
                                                         <tr>
                                                             <td style="border: 1px solid darkgreen;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content00"><strong>{{this.channel.name}}</strong></td>
-                                                            <td style="border: 1px solid darkgreen;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content01">{{this.load}}</td>
-                                                            <td style="border: 1px solid darkgreen;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content02">{{this.avgResp}}</td>
+                                                            <td style="border: 1px solid darkgreen; {{loadStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content01">{{this.load}}</td>
+                                                            <td style="border: 1px solid darkgreen; {{avgRespStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content02">{{this.avgResp}}</td>
                                                             <td style="border: 1px solid darkgreen; {{failedStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content03">{{this.failed}}</td>
-                                                            <td style="border: 1px solid darkgreen;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content04">{{this.successful}}</td>
-                                                            <td style="border: 1px solid darkgreen;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content05">{{this.processing}}</td>
-                                                            <td style="border: 1px solid darkgreen;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content06">{{this.completed}}</td>
-                                                            <td style="border: 1px solid darkgreen;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content07">{{this.completedWErrors}}</td>
+                                                            <td style="border: 1px solid darkgreen; {{successfulStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content04">{{this.successful}}</td>
+                                                            <td style="border: 1px solid darkgreen; {{processingStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content05">{{this.processing}}</td>
+                                                            <td style="border: 1px solid darkgreen; {{completedStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content06">{{this.completed}}</td>
+                                                            <td style="border: 1px solid darkgreen; {{completedWErrorsStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content07">{{this.completedWErrors}}</td>
                                                         </tr>
                                                         {{/each}}
                                                     </table>

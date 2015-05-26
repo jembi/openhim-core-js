@@ -101,7 +101,13 @@ sendReports = (job, flag, done) ->
                 report.data[i].processing = (if data.statusData[0]?.processing? then data.statusData[0].processing else 0)
                 report.data[i].completed = (if data.statusData[0]?.completed? then data.statusData[0].completed else 0)
                 report.data[i].completedWErrors = (if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0)
-                report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else '')
+                report.data[i].loadStyle = (if report.data[i].load > 0 then '' else 'color: grey;')
+                report.data[i].avgRespStyle = (if report.data[i].avgResp > 0 then '' else 'color: grey;')
+                report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else 'color: grey;')
+                report.data[i].successfulStyle = (if report.data[i].successful > 0 then '' else 'color: grey;')
+                report.data[i].processingStyle = (if report.data[i].processing > 0 then '' else 'color: grey;')
+                report.data[i].completedStyle = (if report.data[i].completed > 0 then 'color: orange;' else '')
+                report.data[i].completedWErrorsStyle = (if report.data[i].completedWErrors > 0 then 'color: orangered;' else '')
                 i++
 
             sendUserEmail report
