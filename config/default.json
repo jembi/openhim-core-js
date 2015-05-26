@@ -43,8 +43,8 @@
   "nodemailer": {
     "service": "Gmail",
     "auth": {
-      "user": "user@gmail.com",
-      "pass": "password"
+      "user": "jembi.tester@gmail.com",
+      "pass": "Jembi#123"
     }
   },
   "smsGateway": {
