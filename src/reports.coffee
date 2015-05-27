@@ -91,8 +91,7 @@ sendReports = (job, flag, done) ->
           report.instance = config.alerts.himInstance
 
           try
-            i = 0
-            for data in report.data
+            for data, i in report.data
               do (data) ->
                 colorGrey = 'color: grey;'
                 rowColor = 'background-color: #d9ead3'
@@ -114,7 +113,7 @@ sendReports = (job, flag, done) ->
                 report.data[i].completedStyle = (if report.data[i].completed > 0 then 'color: orange;' else colorGrey)
                 report.data[i].completedWErrorsStyle = (if report.data[i].completedWErrors > 0 then 'color: orangered;' else colorGrey)
                 report.data[i].rowColor = rowColor
-                i++
+
 
             sendUserEmail report
           catch err
@@ -126,7 +125,7 @@ sendReports = (job, flag, done) ->
 
 sendUserEmail = (report) ->
   report.date = new Date().toString()
-  renderTemplate 'daily_report', report, (reportHtml) ->
+  renderTemplate 'report', report, (reportHtml) ->
     contact.contactUser 'email', report.email, report.type + ' report for: ' + report.instance, plainTemplate(report), reportHtml, afterEmail
 
 
@@ -186,7 +185,7 @@ plainTemplate = (report) ->
   text
 
 renderTemplate = (templateName, templateData, callback) ->
-  templateDir = path.join(__dirname, '../src/templates', templateName)
+  templateDir = path.join(__dirname, '../templates', templateName)
   template = new EmailTemplate(templateDir)
   template.render templateData, (err, result) ->
     if err
