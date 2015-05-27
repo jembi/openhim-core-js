@@ -47,36 +47,38 @@ getTsDiff = ( ctxStartTS, obj ) ->
 
 addRouteEvents = (dst, route, prefix, tsDiff) ->
 
-  startTS = formatTS route.request.timestamp
-  endTS = formatTS route.response.timestamp
+  if route?.request?.timestamp? and route?.response?.timestamp?
+    
+    startTS = formatTS route.request.timestamp
+    endTS = formatTS route.response.timestamp
 
-  # add tsDiff if normalization enabled
-  if enableTSNormalization is true
-    startTS = startTS + tsDiff
-    endTS = endTS + tsDiff
-  
-  if startTS > endTS then startTS = endTS
-  # round a sub MIN ms response to MIN ms
-  if endTS-startTS<minEvPeriod then endTS = startTS+minEvPeriod
+    # add tsDiff if normalization enabled
+    if enableTSNormalization is true
+      startTS = startTS + tsDiff
+      endTS = endTS + tsDiff
 
-  # Transaction start for route
-  dst.push
-    ts: startTS
-    comp: "#{prefix}-#{route.name}"
-    ev: 'start'
+    if startTS > endTS then startTS = endTS
+    # round a sub MIN ms response to MIN ms
+    if endTS-startTS<minEvPeriod then endTS = startTS+minEvPeriod
 
-  routeStatus = 200
-  if 400 <= route.response.status <= 499
-    routeStatus = 'completed'
-  else if 500 <= route.response.status <= 599
-    routeStatus = 'error'
+    # Transaction start for route
+    dst.push
+      ts: startTS
+      comp: "#{prefix}-#{route.name}"
+      ev: 'start'
 
-  # Transaction end for route
-  dst.push
-    ts: endTS
-    comp: "#{prefix}-#{route.name}"
-    ev: 'end'
-    status: routeStatus
+    routeStatus = 200
+    if 400 <= route.response.status <= 499
+      routeStatus = 'completed'
+    else if 500 <= route.response.status <= 599
+      routeStatus = 'error'
+
+    # Transaction end for route
+    dst.push
+      ts: endTS
+      comp: "#{prefix}-#{route.name}"
+      ev: 'end'
+      status: routeStatus
 
 storeVisualizerEvents = (ctx, done) ->
   logger.info "Storing visualizer events for transaction: #{ctx.transactionId}"
@@ -102,7 +104,7 @@ storeVisualizerEvents = (ctx, done) ->
   if ctx.routes
     # find TS difference
     tsDiff = getTsDiff startTS, ctx.routes
-    
+
     for route in ctx.routes
       addRouteEvents trxEvents, route, 'route', tsDiff
 

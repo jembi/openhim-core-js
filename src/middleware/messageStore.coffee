@@ -85,6 +85,10 @@ exports.storeResponse = (ctx, done) ->
 
   update = { response: res }
 
+  # Set status from mediator
+  if ctx.mediatorResponse?.status?
+    update.status = ctx.mediatorResponse.status
+
   if ctx.mediatorResponse
     update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
     update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
@@ -122,32 +126,38 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
     transactionId = ctx.transactionId.toString()
 
   transactions.Transaction.findById transactionId, (err, tx) ->
-    routeFailures = false
-    routeSuccess = true
-    if ctx.routes
-      for route in ctx.routes
-        if 500 <= route.response.status <= 599
-          routeFailures = true
-        if not (200 <= route.response.status <= 299)
-          routeSuccess = false
+    if ctx.mediatorResponse?.status?
+      logger.info "The transaction status has been set to #{ctx.mediatorResponse.status} by the mediator"
+      callback tx
+    else
+      routeFailures = false
+      routeSuccess = true
+      if ctx.routes
+        for route in ctx.routes
+          if 500 <= route.response.status <= 599
+            routeFailures = true
+          if not (200 <= route.response.status <= 299)
+            routeSuccess = false
+            tx.status = transactionStatus.COMPLETED
+
+      if (500 <= ctx.response.status <= 599)
+        tx.status = transactionStatus.FAILED
+      else
+        if routeFailures
+          tx.status = transactionStatus.COMPLETED_W_ERR
+        if (200 <= ctx.response.status <= 299) && routeSuccess
+          tx.status = transactionStatus.SUCCESSFUL
+        if (400 <= ctx.response.status <= 499) && routeSuccess
           tx.status = transactionStatus.COMPLETED
 
-    if (500 <= ctx.response.status <= 599)
-      tx.status = transactionStatus.FAILED
-    else
-      if routeFailures
-        tx.status = transactionStatus.COMPLETED_W_ERR
-      if (200 <= ctx.response.status <= 299) && routeSuccess
-        tx.status = transactionStatus.SUCCESSFUL
+      # In all other cases mark as completed
+      if ctx.status is null or ctx.status is undefined
+        tx.status = transactionStatus.COMPLETED
 
-    # In all other cases mark as completed
-    if ctx.status is null or ctx.status is undefined
-      tx.status = transactionStatus.COMPLETED
-
-    logger.info "Final status for transaction #{tx._id} : #{tx.status}"
-    transactions.Transaction.findByIdAndUpdate transactionId, {status: tx.status}, { },  (err,tx) ->
-      tx.save
-      callback tx
+      logger.info "Final status for transaction #{tx._id} : #{tx.status}"
+      transactions.Transaction.findByIdAndUpdate transactionId, {status: tx.status}, { },  (err,tx) ->
+        tx.save
+        callback tx
 
 
 
