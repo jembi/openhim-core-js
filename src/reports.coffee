@@ -9,6 +9,9 @@ metrics = require './metrics'
 moment = require "moment"
 config = require "./config/config"
 config.reports = config.get('reports')
+EmailTemplate = require('email-templates').EmailTemplate
+path = require('path')
+
 
 # Function Sends the reports
 
@@ -84,7 +87,34 @@ sendReports = (job, flag, done) ->
             report.type = 'Daily'
           else
             report.type = 'Weekly'
+
+          report.instance = config.alerts.himInstance
+
           try
+            for data, i in report.data
+              do (data) ->
+                colorGrey = 'color: grey;'
+                rowColor = 'background-color: #d9ead3'
+                if i % 2
+                  rowColor = 'background-color: #b6d7a8;'
+
+                report.data[i].load = (if data.data[0]?.load? then data.data[0].load else 0)
+                report.data[i].avgResp = (if data.data[0]?.avgResp? then data.data[0].avgResp else 0)
+                report.data[i].failed = (if data.statusData[0]?.failed? then data.statusData[0].failed else 0)
+                report.data[i].successful = (if data.statusData[0]?.successful? then data.statusData[0].successful else 0)
+                report.data[i].processing = (if data.statusData[0]?.processing? then data.statusData[0].processing else 0)
+                report.data[i].completed = (if data.statusData[0]?.completed? then data.statusData[0].completed else 0)
+                report.data[i].completedWErrors = (if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0)
+                report.data[i].loadStyle = (if report.data[i].load > 0 then '' else colorGrey)
+                report.data[i].avgRespStyle = (if report.data[i].avgResp > 0 then '' else colorGrey)
+                report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else colorGrey)
+                report.data[i].successfulStyle = (if report.data[i].successful > 0 then '' else colorGrey)
+                report.data[i].processingStyle = (if report.data[i].processing > 0 then '' else colorGrey)
+                report.data[i].completedStyle = (if report.data[i].completed > 0 then 'color: orange;' else colorGrey)
+                report.data[i].completedWErrorsStyle = (if report.data[i].completedWErrors > 0 then 'color: orangered;' else colorGrey)
+                report.data[i].rowColor = rowColor
+
+
             sendUserEmail report
           catch err
             logger.error err
@@ -94,7 +124,9 @@ sendReports = (job, flag, done) ->
 
 
 sendUserEmail = (report) ->
-  contact.contactUser 'email', report.email, report.type + ' report for ' + report.email, plainTemplate(report), htmlTemplate(report), afterEmail
+  report.date = new Date().toString()
+  renderTemplate 'report', report, (reportHtml) ->
+    contact.contactUser 'email', report.email, report.type + ' report for: ' + report.instance, plainTemplate(report), reportHtml, afterEmail
 
 
 fetchChannelReport = (channel, user, flag, callback) ->
@@ -152,44 +184,13 @@ plainTemplate = (report) ->
             "
   text
 
-htmlTemplate = (report) ->
-  text = "
-    <html>
-    <head></head>
-    <body>
-    <h1>#{report.type} OpenHIM Transactions Summary</h1>
-    <div>
-    <p>on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
-    <p><span>Generated on: #{new Date().toString()}</span></p>
-    <table>
-    <tr>
-      <th>Channel Name</th>
-      <th>Channel Load</th>
-      <th>Ave response time</th>
-      <th>Failed</th>
-      <th>Successful</th>
-      <th>Processing</th>
-      <th>Completed</th>
-      <th>Completed with errors</th>
-    </tr>
-        "
-  for data in report.data
-    do (data) ->
-      text += "<tr><td><i>#{data.channel.name}</i></td>"
-      text += "<td> #{ if data.data[0]?.load? then data.data[0].load else 0 } transactions </td>"
-      text += "<td> #{ if data.data[0]?.avgResp? then data.data[0].avgResp else 0 } </td>"
-      text += "<td> #{ if data.statusData[0]?.failed? then data.statusData[0].failed else 0 }  </td>"
-      text += "<td> #{ if data.statusData[0]?.successful? then data.statusData[0].successful else 0 }  </td>"
-      text += "<td> #{ if data.statusData[0]?.processing? then data.statusData[0].processing else 0 }  </td>"
-      text += "<td> #{ if data.statusData[0]?.completed? then data.statusData[0].completed else 0 }  </td>"
-      text += "<td> #{ if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0 } </td></tr>"
-  text += "
-    </table>
-    </div>
-    </body>
-    </html>
-    "
-  text
+renderTemplate = (templateName, templateData, callback) ->
+  templateDir = "#{appRoot}/templates/#{templateName}"
+  template = new EmailTemplate(templateDir)
+  template.render templateData, (err, result) ->
+    if err
+      logger.err err
+    callback result.html.toString()
 
 
 afterEmail = (callback) ->
