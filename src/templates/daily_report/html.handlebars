@@ -378,6 +378,23 @@
                 <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateContainer">
                     <tr>
                         <td align="center" valign="top">
+                            <!-- // Begin Template Header \\ -->
+                            <table border="0" cellpadding="0" cellspacing="0" width="600" id="templateHeader">
+                                <tr>
+                                    <td class="headerContent" align="center">
+
+                                        <!-- // Begin Module: Standard Header Image \\ -->
+                                        <img src="http://www.openhim.org/wp-content/uploads/2015/01/opehim-logo-green.png" style="max-width:300px;" id="headerImage campaign-icon" mc:label="header_image" mc:edit="header_image" mc:allowdesigner mc:allowtext />
+                                        <!-- // End Module: Standard Header Image \\ -->
+
+                                    </td>
+                                </tr>
+                            </table>
+                            <!-- // End Template Header \\ -->
+                        </td>
+                    </tr>
+                    <tr>
+                        <td align="center" valign="top">
                             <!-- // Begin Template Body \\ -->
                             <table border="0" cellpadding="0" cellspacing="0" width="800" id="templateBody">
                                 <tr>
@@ -385,7 +402,7 @@
                                         <!-- // Begin Module: Standard Content \\ -->
                                         <table border="0" cellpadding="20" cellspacing="0" width="100%">
                                             <tr>
-                                                <td valign="top" class="bodyContent">
+                                                <td valign="top" align="center" class="bodyContent">
                                                     <div mc:edit="std_content00">
                                                         <h1 class="h1" style="color: darkgreen">{{type}} Transaction  Report for {{instance}}</h1>
                                                     </div>
@@ -393,43 +410,43 @@
                                             </tr>
                                             <tr>
                                                 <td valign="top" style="padding-top:0; padding-bottom:0;">
-                                                    <table border="0" cellpadding="10" cellspacing="0" width="100%" class="templateDataTable" style="border: 1px solid darkgreen; ">
+                                                    <table border="0" cellpadding="10" cellspacing="0" width="100%" class="templateDataTable" style="border-collapse: collapse;">
                                                         <tr>
-                                                            <th style="border: 1px solid darkgreen; background-color: darkgreen; color: white;" scope="col" valign="top" width="30%" class="dataTableHeading" mc:edit="data_table_heading00">
+                                                            <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="30%" class="dataTableHeading" mc:edit="data_table_heading00">
                                                                 Channel
                                                             </th>
-                                                            <th style="border: 1px solid darkgreen; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading00">
+                                                            <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading00">
                                                                 Load
                                                             </th>
-                                                            <th style="border: 1px solid darkgreen; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading01">
+                                                            <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading01">
                                                                 Average Response (ms)
                                                             </th>
-                                                            <th style="border: 1px solid darkgreen; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading02">
+                                                            <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading02">
                                                                 Failed
                                                             </th>
-                                                            <th style="border: 1px solid darkgreen; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading03">
+                                                            <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading03">
                                                                 Successful
                                                             </th>
-                                                            <th style="border: 1px solid darkgreen; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading04">
+                                                            <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading04">
                                                                 Processing
                                                             </th>
-                                                            <th style="border: 1px solid darkgreen; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading05">
+                                                            <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading05">
                                                                 Completed
                                                             </th>
-                                                            <th style="border: 1px solid darkgreen; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading06">
+                                                            <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading06">
                                                                 Completed with errors
                                                             </th>
                                                         </tr>
                                                         {{#each data}}
-                                                        <tr>
-                                                            <td style="border: 1px solid darkgreen;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content00"><strong>{{this.channel.name}}</strong></td>
-                                                            <td style="border: 1px solid darkgreen; {{loadStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content01">{{this.load}}</td>
-                                                            <td style="border: 1px solid darkgreen; {{avgRespStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content02">{{this.avgResp}}</td>
-                                                            <td style="border: 1px solid darkgreen; {{failedStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content03">{{this.failed}}</td>
-                                                            <td style="border: 1px solid darkgreen; {{successfulStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content04">{{this.successful}}</td>
-                                                            <td style="border: 1px solid darkgreen; {{processingStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content05">{{this.processing}}</td>
-                                                            <td style="border: 1px solid darkgreen; {{completedStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content06">{{this.completed}}</td>
-                                                            <td style="border: 1px solid darkgreen; {{completedWErrorsStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content07">{{this.completedWErrors}}</td>
+                                                        <tr style="{{rowColor}}">
+                                                            <td style="border: 1px solid black;" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content00"><strong>{{this.channel.name}}</strong></td>
+                                                            <td style="border: 1px solid black; {{loadStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content01">{{this.load}}</td>
+                                                            <td style="border: 1px solid black; {{avgRespStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content02">{{this.avgResp}}</td>
+                                                            <td style="border: 1px solid black; {{failedStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content03">{{this.failed}}</td>
+                                                            <td style="border: 1px solid black; {{successfulStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content04">{{this.successful}}</td>
+                                                            <td style="border: 1px solid black; {{processingStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content05">{{this.processing}}</td>
+                                                            <td style="border: 1px solid black; {{completedStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content06">{{this.completed}}</td>
+                                                            <td style="border: 1px solid black; {{completedWErrorsStyle}}" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content07">{{this.completedWErrors}}</td>
                                                         </tr>
                                                         {{/each}}
                                                     </table>
@@ -441,7 +458,7 @@
                                                         <tr>
                                                             <td valign="middle" class="templateButtonContent">
                                                                 <div>
-                                                                    Generated on <em>{{date}}</em>
+
                                                                 </div>
                                                             </td>
                                                         </tr>
@@ -467,16 +484,16 @@
                                         <!-- // Begin Module: Transactional Footer \\ -->
                                         <table border="0" cellpadding="10" cellspacing="0" width="100%">
                                             <tr>
-                                                <td valign="middle" id="utility">
+                                                <td valign="middle" id="utility"  align="center">
                                                     <div mc:edit="std_utility">
-                                                        Generated by: &nbsp;<a href="http://{{instance}}" target="_blank"><em>{{instance}}</em></a> | <a href="http://{{instance}}">unsubscribe from this list</a> | <a href="{{instance}}">update subscription preferences</a>&nbsp;
+                                                        Generated on <em>{{date}}</em>
                                                     </div>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td align="center" valign="top">
                                                     <div mc:edit="std_footer">
-                                                        <em>Copyright &copy; <a href="http://{{instance}}" target="_blank">OpenHIM</a>, All rights reserved.</em>
+                                                        <em>Powered by <a href="http://www.openhim.org/" target="_blank">OpenHIM</a></em>
                                                         <br />
                                                     </div>
                                                 </td>

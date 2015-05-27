@@ -94,6 +94,11 @@ sendReports = (job, flag, done) ->
             i = 0
             for data in report.data
               do (data) ->
+                colorGrey = 'color: grey;'
+                rowColor = 'background-color: #d9ead3'
+                if i % 2
+                  rowColor = 'background-color: #b6d7a8;'
+
                 report.data[i].load = (if data.data[0]?.load? then data.data[0].load else 0)
                 report.data[i].avgResp = (if data.data[0]?.avgResp? then data.data[0].avgResp else 0)
                 report.data[i].failed = (if data.statusData[0]?.failed? then data.statusData[0].failed else 0)
@@ -101,13 +106,14 @@ sendReports = (job, flag, done) ->
                 report.data[i].processing = (if data.statusData[0]?.processing? then data.statusData[0].processing else 0)
                 report.data[i].completed = (if data.statusData[0]?.completed? then data.statusData[0].completed else 0)
                 report.data[i].completedWErrors = (if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0)
-                report.data[i].loadStyle = (if report.data[i].load > 0 then '' else 'color: grey;')
-                report.data[i].avgRespStyle = (if report.data[i].avgResp > 0 then '' else 'color: grey;')
-                report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else 'color: grey;')
-                report.data[i].successfulStyle = (if report.data[i].successful > 0 then '' else 'color: grey;')
-                report.data[i].processingStyle = (if report.data[i].processing > 0 then '' else 'color: grey;')
-                report.data[i].completedStyle = (if report.data[i].completed > 0 then 'color: orange;' else '')
-                report.data[i].completedWErrorsStyle = (if report.data[i].completedWErrors > 0 then 'color: orangered;' else '')
+                report.data[i].loadStyle = (if report.data[i].load > 0 then '' else colorGrey)
+                report.data[i].avgRespStyle = (if report.data[i].avgResp > 0 then '' else colorGrey)
+                report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else colorGrey)
+                report.data[i].successfulStyle = (if report.data[i].successful > 0 then '' else colorGrey)
+                report.data[i].processingStyle = (if report.data[i].processing > 0 then '' else colorGrey)
+                report.data[i].completedStyle = (if report.data[i].completed > 0 then 'color: orange;' else colorGrey)
+                report.data[i].completedWErrorsStyle = (if report.data[i].completedWErrors > 0 then 'color: orangered;' else colorGrey)
+                report.data[i].rowColor = rowColor
                 i++
 
             sendUserEmail report
