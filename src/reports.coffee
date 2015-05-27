@@ -185,7 +185,7 @@ plainTemplate = (report) ->
   text
 
 renderTemplate = (templateName, templateData, callback) ->
-  templateDir = path.join(__dirname, '../templates', templateName)
+  templateDir = "#{appRoot}/templates/#{templateName}"
   template = new EmailTemplate(templateDir)
   template.render templateData, (err, result) ->
     if err
