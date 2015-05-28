@@ -64,30 +64,8 @@ describe "MessageStore", ->
   res.body = "<HTTP response>"
   res.timestamp = new Date()
 
-  routes = [
-        name: "jembi.org"
-        request: req
-        response: res
-      ,
-        name: "green.brown"
-        request: req
-        response: res
-      ]
-
-  orchestrations = [
-            name: "validate provider"
-            request: req
-            response: res
-          ,
-            name: "validate provider"
-            request: req
-            response: res
-          ]
-  properties =
-    property: "prop1", value: "prop1-value1"
-    property:"prop2", value: "prop-value1"
-
   ctx = new Object()
+  ctx.host = 'localhost:5000'
   ctx.path = "/api/test/request"
   ctx.header =
     headerName: "headerValue"
@@ -137,6 +115,8 @@ describe "MessageStore", ->
           trans.request.path.should.equal "/api/test/request"
           trans.request.headers['Content-Type'].should.equal "application/json"
           trans.request.querystring.should.equal "param1=value1&param2=value2"
+          trans.request.host.should.equal 'localhost'
+          trans.request.port.should.equal '5000'
           trans.channelID.toString().should.equal channel1._id.toString()
           done()
 
@@ -184,18 +164,17 @@ describe "MessageStore", ->
     createRoute = (name, status) ->
       return {
         name: name
-        request: {
+        request:
+          host: "localhost"
+          port: "4466"
           path: "/test"
           timestamp: new Date()
-        }
-
-        response: {
+        response:
           status: status
           headers:
             test: "test"
           body: "route body"
           timestamp: new Date()
-        }
       }
 
     it "should update the transaction with the response", (done) ->
@@ -217,14 +196,13 @@ describe "MessageStore", ->
 
     it "should update the transaction with the responses from non-primary routes", (done) ->
       ctx.response = createResponse 201
-      ctx.routes = []
-      ctx.routes.push createRoute "route1", 200
+      route = createRoute "route1", 200
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.transactionId = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
           should.not.exist(err2)
-          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+          messageStore.storeNonPrimaryResponse ctx, route, ->
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
               should.not.exist(err3)
               (trans != null).should.true
@@ -234,16 +212,15 @@ describe "MessageStore", ->
               trans.routes[0].response.headers.test.should.equal "test"
               trans.routes[0].response.body.should.equal "route body"
               trans.routes[0].request.path.should.equal "/test"
+              trans.routes[0].request.host.should.equal 'localhost'
+              trans.routes[0].request.port.should.equal '4466'
               done()
 
     it "should set the status to successful if all route return a status in 2xx", (done) ->
 
       ctx.response = createResponse 201
-      ctx.routes = []
-      ctx.routes.push createRoute "route1", 200
-      ctx.routes.push createRoute "route2", 201
-
-
+      route1 = createRoute "route1", 200
+      route2 = createRoute "route2", 201
 
       messageStore.storeTransaction ctx, (err, storedTrans) ->
         ctx.request = storedTrans.request
@@ -251,8 +228,8 @@ describe "MessageStore", ->
         ctx.transactionId = storedTrans._id
         ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
         messageStore.storeResponse ctx, (err2) ->
-          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
-            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+          messageStore.storeNonPrimaryResponse ctx, route1, ->
+            messageStore.storeNonPrimaryResponse ctx, route2, ->
               messageStore.setFinalStatus ctx, ->
                 should.not.exist(err2)
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
