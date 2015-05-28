@@ -5,6 +5,8 @@ Schema = mongoose.Schema
 
 # Request Schema definition
 RequestDef =
+  "host":         String
+  "port":         String
   "path" :        String
   "headers":      Object
   "querystring":  String

@@ -39,6 +39,8 @@ exports.storeTransaction = (ctx, done) ->
     channelID: ctx.authorisedChannel._id
     clientIP: ctx.authenticated.ip
     request:
+      host: ctx.host?.split(':')[0]
+      port: ctx.host?.split(':')[1]
       path: ctx.path
       headers: headers
       querystring: ctx.querystring

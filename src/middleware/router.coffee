@@ -165,6 +165,8 @@ sendRequestToRoutes = (ctx, routes, next) ->
 
               if not routeObj?.request?
                 routeObj.request =
+                  host: options.hostname
+                  port: options.port
                   path: path
                   headers: ctx.request.header
                   querystring: ctx.request.querystring
@@ -192,6 +194,8 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
     routeObj = {}
     routeObj.name = route.name
     routeObj.request =
+      host: options.hostname
+      port: options.port
       path: path
       headers: ctx.request.header
       querystring: ctx.request.querystring
