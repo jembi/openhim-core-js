@@ -151,7 +151,7 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
           tx.status = transactionStatus.COMPLETED
 
       # In all other cases mark as completed
-      if ctx.status is null or ctx.status is undefined
+      if not ctx.status
         tx.status = transactionStatus.COMPLETED
 
       logger.info "Final status for transaction #{tx._id} : #{tx.status}"
