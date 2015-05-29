@@ -14,6 +14,7 @@ pollingBypassAuthorisation = require './middleware/pollingBypassAuthorisation'
 pollingBypassAuthentication = require './middleware/pollingBypassAuthentication'
 visualizer = require './middleware/visualizer'
 proxy = require './middleware/proxy'
+rewrite = require './middleware/rewriteUrls'
 config = require './config/config'
 config.authentication = config.get('authentication')
 getRawBody = require 'raw-body'
@@ -77,6 +78,9 @@ exports.setupApp = (done) ->
 
   # Persist message middleware
   app.use messageStore.koaMiddleware
+
+  # URL rewriting middleware
+  app.use rewrite.koaMiddleware
 
   # Call router
   app.use router.koaMiddleware

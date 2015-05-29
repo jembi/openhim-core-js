@@ -133,7 +133,7 @@ exports.koaMiddleware = (next) ->
       cert = this.req.connection.getPeerCertificate true
       logger.info "#{cert.subject.CN} is authenticated via TLS."
 
-      # lookup client by subject.CN (CN = clientDomain) and set them as the authenticated user
+      # lookup client by cert fingerprint and set them as the authenticated user
       try
         this.authenticated = yield clientLookup cert.fingerprint, cert.subject.CN, cert.issuer.CN
       catch err
@@ -141,6 +141,7 @@ exports.koaMiddleware = (next) ->
 
       if this.authenticated?
         sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
+        this.authenticationType = 'tls'
         yield next
       else
         this.authenticated = null

@@ -85,6 +85,7 @@ This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing
 * `grunt lint` - ensure the code is lint free, this is also run before an `npm test`
 * `npm link` - will symlink you local working directory to the globally installed openhim-core module. Use this so you can use the global openhim-core binary to run your current work in progress. Also, if you build any local changes the server will automatically restart.
 * `grunt test --mochaGrep=<regex>` - will only run tests with names matching the regex
+* `grunt test --ddebugTests` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
 
 Running the OpenHIM on boot
 ---------------------------

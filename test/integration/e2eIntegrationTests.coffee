@@ -324,9 +324,6 @@ describe "e2e Integration Tests", ->
           primary: true
         ]
 
-
-
-
       channel1.save (err) ->
         channel2.save (err)->
           channel3.save (err) ->
@@ -963,4 +960,71 @@ describe "e2e Integration Tests", ->
             if err
               done err
             else
+              done()
+
+  describe "URL rewriting e2e test", ->
+
+    mockServer = null
+
+    jsonResponse =
+      href: 'http://localhost:1232/test/mock'
+
+    before (done) ->
+      config.authentication.enableMutualTLSAuthentication = false
+      config.authentication.enableBasicAuthentication = true
+
+      # Setup some test data
+      channel1 = new Channel
+        name: "TEST DATA - Mock endpoint"
+        urlPattern: "test/mock"
+        allow: [ "PoC" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 1232
+              primary: true
+            ]
+        rewriteUrls: true
+      channel1.save (err) ->
+        testAppDoc =
+          clientID: "testApp"
+          clientDomain: "test-client.jembi.org"
+          name: "TEST Client"
+          roles:
+            [
+              "OpenMRS_PoC"
+              "PoC"
+            ]
+          passwordAlgorithm: "sha512"
+          passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+          passwordSalt: "1234567890"
+          cert: ""
+
+        client = new Client testAppDoc
+        client.save (error, newAppDoc) ->
+          # Create mock endpoint to forward requests to
+          mockServer = testUtils.createMockServer 201, JSON.stringify(jsonResponse), 1232, done
+
+    after (done) ->
+      Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
+        Client.remove { clientID: "testApp" }, ->
+          mockServer.close ->
+            done()
+
+    afterEach (done) ->
+      server.stop ->
+        done()
+
+    it "should rewrite response urls", (done) ->
+      server.start httpPort: 5001, ->
+        request("http://localhost:5001")
+          .get("/test/mock")
+          .auth("testApp", "password")
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              response = JSON.parse res.text
+              response.href.should.be.exactly 'http://localhost:5001/test/mock'
               done()

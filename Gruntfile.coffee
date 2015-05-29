@@ -44,6 +44,7 @@ module.exports = (grunt) ->
           NODE_ENV: 'test'
           NODE_TLS_REJECT_UNAUTHORIZED: 0
         grep: grunt.option 'mochaGrep' || null
+        debug: grunt.option 'debugTests' || false
       all:
         files.test
 

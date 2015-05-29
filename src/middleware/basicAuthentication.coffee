@@ -51,6 +51,7 @@ exports.authenticateUser = (ctx, done) ->
           if res
             logger.info "#{user.name} is authenticated."
             ctx.authenticated = client
+            ctx.authenticationType = 'basic'
             done null, client
           else
             logger.info "#{user.name} could NOT be authenticated, trying next auth mechanism if any..."
