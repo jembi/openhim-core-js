@@ -9,38 +9,65 @@ utils = require '../../lib/utils'
 router = require '../../lib/middleware/router'
 
 invertPathTransform = (pathTransform) ->
-  return pathTransform.replace /s\/(.*?)\/(.*?)($|\/(.*)$)/, 's/$2/$1/$4'
+  # see https://regex101.com/r/lW0cN0/1 for an explanation of this regex
+  return pathTransform.replace /s\/(.*?)\/(.*?)(?:$|\/(.*)$)/, 's/$2/$1/$3'
 
 exports.fetchRewriteConfig = (channel, authType, callback) ->
-  # set rewrite config from current channel
+  # set the user defined rewrite config from current channel
   rwConfig = []
   if channel.rewriteUrlsConfig?
-    rwConfig = channel.rewriteUrlsConfig
+    rwConfig = rwConfig.concat channel.rewriteUrlsConfig
 
-  # add in default rewrite rules for hosts we proxy
-  utils.getAllChannels (err, channels) ->
-    if err?
-      return callback err
+  if channel.addAutoRewiteRules
+    ###
+    # Add in default (virtual) rewrite rules for hosts we proxy
+    #
+    # For example if the SHR for some reason sent back a link to a patient in the CR
+    # (using a direct link to the CR), then if we have a channel that points to the
+    # CR on a primary route we are able to rewrite the link to point to us instead
+    # because we know that host.
+    ###
+    utils.getAllChannels (err, channels) ->
+      if err?
+        return callback err
 
-    for channel in channels
-      for route in channel.routes
-        do ->
-          if route.primary
-            if route.pathTransform
-              inverveTransform = invertPathTransform route.pathTransform
+      for channel in channels
+        for route in channel.routes
+          do ->
+            if route.primary
+              ###
+              # if this channel has a pathTranform on its primary route then
+              # invert the path transform so that links that point to this route
+              # have the path transform reversed when they are rewritten
+              #
+              # For example, say we have a channel with urlPattern=/CSD/ and a
+              # pathTransform on the primary route as follows pathTransform=s/CSD/ihris/
+              # (ie. the actual server we are proxying is running on http://<host>:<port>/ihirs/).
+              # If we get links back from this server it will be something like
+              # http://<host>:<port>/ihirs/something/123 but we need it to be
+              # http://<him_host>:<him_port>/CSD/something/123. To do this we can reverse
+              # the pathTransform on the route (s/ihris/CSD/) and apply it while doing the
+              # rewrite.
+              ###
+              if route.pathTransform
+                inverseTransform = invertPathTransform route.pathTransform
 
-            if authType? is 'tls'
-              toPort = routerConf.httpsPort
-            else
-              toPort = routerConf.httpPort
+              # rewrite to the secure port if tls was used for this transaction
+              if authType? is 'tls'
+                toPort = routerConf.httpsPort
+              else
+                toPort = routerConf.httpPort
 
-            rwConfig.push
-              'fromHost':       route.host
-              'toHost':         routerConf.externalHostname
-              'fromPort':       route.port
-              'toPort':         toPort
-              'pathTransform':  if inverveTransform then inverveTransform else null
+              # add 'virtual' rewrite config after any user defined config that has been set
+              rwConfig.push
+                'fromHost':       route.host
+                'toHost':         routerConf.externalHostname
+                'fromPort':       route.port
+                'toPort':         toPort
+                'pathTransform':  if inverseTransform then inverseTransform else null
 
+      callback null, rwConfig
+  else
     callback null, rwConfig
 
 rewriteUrls = (body, channel, authType, callback) ->
@@ -48,11 +75,12 @@ rewriteUrls = (body, channel, authType, callback) ->
     if err?
       return callback err
 
-    # rewrite each found href attribute (in JSON or XML)
-    newBody = body.replace /["|']?href["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) ->
+    # rewrite each found href or src attribute (in JSON or XML)
+    # See https://regex101.com/r/uY3fO1/1 for an explanation of this regex
+    newBody = body.replace /["|']?(?:href|src)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) ->
       hrefUrlObj = url.parse hrefUrl
 
-      # default to using this channel's host if no host
+      # default to using this channel's host if no host so we can match a rewrite rule
       if not hrefUrlObj.host?
         for route in channel.routes
           if route.primary
@@ -67,16 +95,18 @@ rewriteUrls = (body, channel, authType, callback) ->
           hrefUrlObj.hostname = rewriteRule.toHost
           hrefUrlObj.port = rewriteRule.toPort
 
+          # rewrite protocol depending on the port the rewriteRule uses
           if hrefUrlObj.protocol
             if rewriteRule.toPort is routerConf.httpsPort
               hrefUrlObj.protocol = 'https'
             else
               hrefUrlObj.protocol = 'http'
 
+          # if this rewrite rule requires the path to be transformed then do the transform
           if rewriteRule.pathTransform
             hrefUrlObj.pathname = router.transformPath hrefUrlObj.pathname, rewriteRule.pathTransform
 
-          # we only run the first matching rule
+          # we only run the first matching rule found
           break
 
       if relativePath # remove the host stuff before formating
@@ -84,6 +114,7 @@ rewriteUrls = (body, channel, authType, callback) ->
         hrefUrlObj.hostname = null
         hrefUrlObj.port = null
 
+      # replace the url in the match
       replacement = url.format hrefUrlObj
       winston.debug "Rewriting url #{hrefUrl} as #{replacement}"
       return match.replace hrefUrl, replacement

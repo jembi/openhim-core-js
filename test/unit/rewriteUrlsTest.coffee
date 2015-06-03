@@ -55,7 +55,8 @@ describe 'Rewrite URLs middleware', ->
         port: 5559
       ]
 
-    it 'should fetch the rewrite config for the current channel and include global defaults', (done) ->
+    it 'should fetch the rewrite config for the current channel and INCLUDE virtual defaults', (done) ->
+      currentChannel.addAutoRewiteRules = true
       stub = sinon.stub utils, 'getAllChannels'
       stub.callsArgWith 0, null, [currentChannel, channel1, channel2]
       rewriteUrls.fetchRewriteConfig currentChannel, 'tls', (err, rewriteConfig) ->
@@ -72,6 +73,18 @@ describe 'Rewrite URLs middleware', ->
         rewriteConfig[3].fromHost.should.be.exactly 'route4.org'
         rewriteConfig[3].toHost.should.be.exactly 'localhost'
         should.not.exist(rewriteConfig[3].pathTransform)
+        stub.restore()
+        done()
+
+    it 'should fetch the rewrite config for the current channel and EXCLUDE virtual defaults', (done) ->
+      currentChannel.addAutoRewiteRules = false
+      stub = sinon.stub utils, 'getAllChannels'
+      stub.callsArgWith 0, null, [currentChannel, channel1, channel2]
+      rewriteUrls.fetchRewriteConfig currentChannel, 'tls', (err, rewriteConfig) ->
+        rewriteConfig.should.have.length 1
+        rewriteConfig[0].fromHost.should.be.exactly 'from.org'
+        rewriteConfig[0].toHost.should.be.exactly 'to.org'
+        rewriteConfig[0].pathTransform.should.be.exactly 's/some/transform/'
         stub.restore()
         done()
 
@@ -146,6 +159,7 @@ describe 'Rewrite URLs middleware', ->
         <tag2>
           <child href="http://fromWithTransform.org:8080/this"></child>
         </tag2>
+        <img src="http://from.org/image">
       </someTags>
       """
 
@@ -168,7 +182,9 @@ describe 'Rewrite URLs middleware', ->
         doc = new dom().parseFromString newResponse
         href1 = xpath.select 'string(//someTags/tag1/@href)', doc
         href2 = xpath.select 'string(//someTags/tag2/child/@href)', doc
+        src = xpath.select 'string(//someTags/img/@src)', doc
         href1.should.be.exactly 'http://to.org:5001/test1'
         href2.should.be.exactly 'https://toWithTransform.org:5000/that'
+        src.should.be.exactly 'http://to.org:5001/image'
         stub.restore()
         done()
