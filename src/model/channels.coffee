@@ -56,7 +56,7 @@ ChannelSchema = new Schema
   "alerts":             [AlertsDef]
   "status":             type: String, default: 'enabled', enum: ['enabled', 'disabled', 'deleted']
   "rewriteUrls":        type: Boolean, default: false
-  "addAutoRewiteRules": type: Boolean, default: true
+  "addAutoRewriteRules": type: Boolean, default: true
   "rewriteUrlsConfig":  [RewriteRuleDef]
 
 # Expose the route schema

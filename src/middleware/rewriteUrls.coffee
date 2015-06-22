@@ -18,7 +18,7 @@ exports.fetchRewriteConfig = (channel, authType, callback) ->
   if channel.rewriteUrlsConfig?
     rwConfig = rwConfig.concat channel.rewriteUrlsConfig
 
-  if channel.addAutoRewiteRules
+  if channel.addAutoRewriteRules
     ###
     # Add in default (virtual) rewrite rules for hosts we proxy
     #
