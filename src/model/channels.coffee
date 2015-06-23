@@ -23,6 +23,13 @@ AlertsDef =
   "users":        [ContactUserDef]
   "failureRate":  Number
 
+RewriteRuleDef =
+  "fromHost":       type: String, required: true
+  "toHost":         type: String, required: true
+  "fromPort":       type: Number, required: true, default: 80
+  "toPort":         type: Number, required: true, default: 80
+  "pathTransform":  String
+
 ChannelSchema = new Schema
   "name":               type: String, required: true, unique: true
   "description":        String
@@ -48,6 +55,9 @@ ChannelSchema = new Schema
   "txRerunAcl":         [String]
   "alerts":             [AlertsDef]
   "status":             type: String, default: 'enabled', enum: ['enabled', 'disabled', 'deleted']
+  "rewriteUrls":        type: Boolean, default: false
+  "addAutoRewriteRules": type: Boolean, default: true
+  "rewriteUrlsConfig":  [RewriteRuleDef]
 
 # Expose the route schema
 exports.RouteDef = RouteDef

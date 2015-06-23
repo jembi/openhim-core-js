@@ -46,7 +46,7 @@
     "winston": "^0.9.0",
     "xml2js": "^0.4.5",
     "xmldom": "^0.1.19",
-    "xpath": "^0.0.9"
+    "xpath": "0.0.9"
   },
   "devDependencies": {
     "coffee-script": "^1.9.1",

@@ -8,6 +8,7 @@
     "level": "info"
   },
   "router": {
+    "externalHostname": "localhost",
     "httpPort": 5001,
     "httpsPort": 5000,
     "timeout": 60000
