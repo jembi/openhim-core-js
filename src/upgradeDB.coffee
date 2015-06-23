@@ -57,10 +57,11 @@ upgradeFuncs.push
           clientDefer = Q.defer()
           promises.push clientDefer.promise
 
-          for cert in keystore.ca
-            if client.clientDomain is cert.commonName and not client.certFingerprint?
-              client.certFingerprint = cert.fingerprint
-              break
+          if keystore?.ca?
+            for cert in keystore.ca
+              if client.clientDomain is cert.commonName and not client.certFingerprint?
+                client.certFingerprint = cert.fingerprint
+                break
           
           do (clientDefer) ->
             client.save (err) ->
