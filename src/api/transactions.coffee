@@ -62,6 +62,9 @@ exports.getTransactions = ->
 
     #determine skip amount
     filterSkip = filterPage*filterLimit
+    
+    # get filters object
+    filters = if filtersObject.filters? then JSON.parse filtersObject.filters else {}
 
     # Test if the user is authorised
     if not authorisation.inGroup 'admin', this.authenticated
@@ -69,23 +72,25 @@ exports.getTransactions = ->
       channels = yield authorisation.getUserViewableChannels this.authenticated
 
       if not filtersObject.channelID
-        filtersObject.channelID = $in: getChannelIDsArray channels
+        filters.channelID = $in: getChannelIDsArray channels
+
+      else if filtersObject.channelID not in getChannelIDsArray channels
+        return utils.logAndSetResponse this, 403, "Forbidden: Unauthorized channel #{filtersObject.channelID}", 'info'
 
       # set 'filterRepresentation' to default if user isnt admin
       filterRepresentation = ''
 
     # get projection object
     projectionFiltersObject = getProjectionObject filterRepresentation
-    
-    # get filters object
-    filters = JSON.parse filtersObject.filters
+
+
+    if filtersObject.channelID
+      filters.channelID = filtersObject.channelID
 
     # parse date to get it into the correct format for querying
     if filters['request.timestamp']
       filters['request.timestamp'] = JSON.parse filters['request.timestamp']
  
-
-
 
     ### Transaction Filters ###
     # build RegExp for transaction request path filter
