@@ -78,7 +78,7 @@ exports.getTransactions = ->
     projectionFiltersObject = getProjectionObject filterRepresentation
     
     # get filters object
-    filters = JSON.parse filtersObject.filters
+    filters = if filtersObject.filters? then JSON.parse filtersObject.filters else {}
 
     # parse date to get it into the correct format for querying
     if filters['request.timestamp']
