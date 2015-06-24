@@ -82,14 +82,14 @@ describe "API Integration Tests", ->
     channel2 = new Channel
       name: "TestChannel2"
       urlPattern: "test2/sample"
-      allow: [ "PoC", "Test1", "Test2", "group1" ]
+      allow: [ "PoC", "Test1", "Test2" ]
       routes: [
             name: "test route"
             host: "localhost"
             port: 9876
             primary: true
           ]
-      txViewAcl: []
+      txViewAcl: [ "not-for-non-root" ]
       txViewFullAcl: []
 
     before (done) ->
@@ -404,30 +404,62 @@ describe "API Integration Tests", ->
           tx2.save (err) ->
             return done err if err
 
-            obj =
-              filterPage: 0
-              filterLimit: 10
-
-            params = ""
-            for k, v of obj
-              v = JSON.stringify v
-              if params.length > 0
-                  params += "&"
-              params += "#{k}=#{v}"
-
-            params = encodeURI params
-              
             request("https://localhost:8080")
-              .get("/transactions?"+params)
+              .get("/transactions")
               .set("auth-username", testUtils.nonRootUser.email)
               .set("auth-ts", authDetails.authTS)
               .set("auth-salt", authDetails.authSalt)
               .set("auth-token", authDetails.authToken)
               .expect(200)
               .end (err, res) ->
+                # should NOT retrieve tx2
                 res.body.should.have.length(1)
-                res.body[0]._id.should.be.equal "111111111111111111111112"
+                res.body[0]._id.should.be.equal "111111111111111111111111"
                 done()
+
+      it "should return the transactions for a channel that a user has permission to view", (done) ->
+        tx = new Transaction transactionData
+        tx.channelID = channel._id
+        tx.save (err) ->
+          return done err if err
+          tx2 = new Transaction transactionData
+          tx2._id = "111111111111111111111112"
+          tx2.channelID = channel2._id
+          tx2.save (err) ->
+            return done err if err
+
+            request("https://localhost:8080")
+              .get("/transactions?channelID=#{channel._id}")
+              .set("auth-username", testUtils.nonRootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .expect(200)
+              .end (err, res) ->
+                # should NOT retrieve tx2
+                res.body.should.have.length(1)
+                res.body[0]._id.should.be.equal "111111111111111111111111"
+                done()
+
+      it "should return 403 for a channel that a user does NOT have permission to view", (done) ->
+        tx = new Transaction transactionData
+        tx.channelID = channel._id
+        tx.save (err) ->
+          return done err if err
+          tx2 = new Transaction transactionData
+          tx2._id = "111111111111111111111112"
+          tx2.channelID = channel2._id
+          tx2.save (err) ->
+            return done err if err
+
+            request("https://localhost:8080")
+              .get("/transactions?channelID=#{tx2.channelID}")
+              .set("auth-username", testUtils.nonRootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .expect(403)
+              .end (err, res) -> done()
 
     describe "*getTransactionById (transactionId)", ->
 
