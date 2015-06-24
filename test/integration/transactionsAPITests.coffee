@@ -81,8 +81,8 @@ describe "API Integration Tests", ->
 
     channel2 = new Channel
       name: "TestChannel2"
-      urlPattern: "test/sample"
-      allow: [ "PoC", "Test1", "Test2" ]
+      urlPattern: "test2/sample"
+      allow: [ "PoC", "Test1", "Test2", "group1" ]
       routes: [
             name: "test route"
             host: "localhost"
@@ -397,37 +397,37 @@ describe "API Integration Tests", ->
         tx = new Transaction transactionData
         tx.channelID = channel._id
         tx.save (err) ->
-          if err
-            return done err
+          return done err if err
+          tx2 = new Transaction transactionData
+          tx2._id = "111111111111111111111112"
+          tx2.channelID = channel2._id
+          tx2.save (err) ->
+            return done err if err
 
-        obj =
-          filterPage: 0
-          filterLimit: 10
-          filters: 'status': 'Processing'
-          'request.timestamp':
-            '$gte': '2014-06-09T00:00:00.000Z'
-            '$lte': '2014-06-10T00:00:00.000Z'
-          'request.path': '/api/test'
+            obj =
+              filterPage: 0
+              filterLimit: 10
 
-        params = ""
-        for k, v of obj
-          v = JSON.stringify v
-          if params.length > 0
-              params += "&"
-          params += "#{k}=#{v}"
+            params = ""
+            for k, v of obj
+              v = JSON.stringify v
+              if params.length > 0
+                  params += "&"
+              params += "#{k}=#{v}"
 
-        params = encodeURI params
-          
-        request("https://localhost:8080")
-          .get("/transactions?"+params)
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .expect(200)
-          .end (err, res) ->
-            res.body.should.have.length(1)
-            done()
+            params = encodeURI params
+              
+            request("https://localhost:8080")
+              .get("/transactions?"+params)
+              .set("auth-username", testUtils.nonRootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .expect(200)
+              .end (err, res) ->
+                res.body.should.have.length(1)
+                res.body[0]._id.should.be.equal "111111111111111111111112"
+                done()
 
     describe "*getTransactionById (transactionId)", ->
 
