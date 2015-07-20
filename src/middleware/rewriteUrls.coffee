@@ -85,6 +85,7 @@ rewriteUrls = (body, channel, authType, callback) ->
         for route in channel.routes
           if route.primary
             hrefUrlObj.hostname = route.host
+            hrefUrlObj.port = route.port.toString()
             relativePath = true
             break
 

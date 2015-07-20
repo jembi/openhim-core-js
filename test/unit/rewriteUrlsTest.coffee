@@ -142,7 +142,7 @@ describe 'Rewrite URLs middleware', ->
         fromHost:       'route0.org'
         toHost:         'route0To.org'
         pathTransform:  's/from/to'
-        'fromPort':       80
+        'fromPort':       5555
         'toPort':         5001
       ]
 
