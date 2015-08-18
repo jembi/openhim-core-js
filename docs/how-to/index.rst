@@ -9,3 +9,5 @@ How to's
    how-to-run-the-openhim-using-vagrant
    how-to-run-on-startup
    how-to-import-export
+   how-to-setup-a-basic-cluster
+   how-to-install-on-ubuntu-trusty
