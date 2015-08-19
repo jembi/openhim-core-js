@@ -1,6 +1,8 @@
 Sample disaster recovery procedure
 ==================================
 
+This page describes a suggested disaster recover plan for an OpenHIM deployment. We suggest you follow this as a minimum for an production deploymnet of the OpenHIM.
+
 ## Prior to disaster
 
 The OpenHIM can be configured fairly simply to allow for disaster recovery. The only artefacts that need to be protected are the mongodb databases (main and the audit db) that the OpenHIM uses and the OpenHIM config file(s) that are used.

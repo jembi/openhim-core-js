@@ -1,56 +1,50 @@
 Adding Users
 ============
 
-### Overview
+In order to configure the OpenHIM you have to be a registered user account with relevant permissions. A default super/admin user is provided when you first run the OpenHIM.
 
-In order to use the OpenHIM you have to be a registered user with the relevant permissions:
-A default super/admin user is provided when you first run the OpenHIM
+The default admin user is as follows:
 
-
-The default admin user is a as follows:
-
+```
 username: root@openhim.org
 password: openhim-password
+```
 
-NB: It is recommended that you change these as soon as you have installed the him to avoid abuse.
+Note: It is recommended that you change these as soon as you have installed the him to avoid abuse. Newer versions of the OpenHIM console should prompt you to do this on first login.
 
-**Other users:**
-Using the default admin user, you may create other users. these too may belong to the admin group or may belong to other groups. 
+Using the default admin user, you may create other users. These too may belong to the admin group or may belong to other groups. Non-admin users cannot create clients and channels, however, they may view transactions for certain channels that they are given access to.
 
-NB: Users that belong to the admin group are Super Users.
-
-**Purpose:**
+> Note: Users that belong to the **admin** group are Super Users.
 
 Users accounts are created in order to give users of the system an certain capabilities depending on the groups to which they belong. Users can access these capabilities through the OpenHIM console
 
-### Differentiate from API clients:
+## How are users different from clients
 
-Clients are different from users, they represent systems that can route transactions through the OpenHIM further details  are provided in [this section](https://github.com/jembi/openhim-console/wiki/Getting-started-guide#clients) 
+Clients are different from users, they represent systems that can route transactions through the OpenHIM. Users are people accessing and configuring the OpenHIM and clients are systems that are allowed to send requests to the OpenHIM. 
 
-### User Groups:
+## User Groups:
 
-Groups can be created by just adding that group as a text string in the user form. When you go on to create the channel, you just need to make sure the group matches the one you specified when you created the user.
+Groups are created automatically by just adding a new group name in the user form. You do not need to add a group explicitly. When you go on to create the channel, you just need to make sure the group name matches the one you specified when you created the user.
 
 There are 2 kinds of group
 
-1. The 'admin' group this one is the super user group that grants users all permissions
+1. The 'admin' group: this is a special group that grants users all permissions
 2. Then the rest are defined by the system administrator and in the channels, an admin can 
-set whether the group has any the Roles below.
+set whether the group has any the permissions below.
 
-### Roles
+## Permissions
 
-Users belonging to a certain group can be assigned certain roles on a channel depending on the desired permissions. This is done by adding the group to which they belong to that particular
-role.
+Users belonging to a certain group can be assigned certain permissions on a channel. This is done by adding the group to which they belong to that particular permission.
 
-The roles themselves are pretty self explanatory and are listed below with some brief explanations.
+The permissions themselves are pretty self explanatory and are listed below with some brief explanations.
 
 1. Can view channel transactions
 2. Can view channel transaction bodies - bodies may contain private patient data
-3. Can re-run transactions. - this needs to be done with good reason because it may cause downstream duplicates and data corruption.
+3. Can re-run transactions - enabling this permission needs to be done with care because it may cause downstream duplicates and data corruption if they users doesn't know what they are doing
 
-Also on the users page, there is a matrix that shows these permissions and can be viewed by clicking the button above the list of users.
+Also on the users page, there is a matrix that shows these permissions. This can be viewed by clicking the button above the list of users.
 
-### Walk through and examples
+## Walk through and examples
 
 1. To add a user as an admin user, navigate to the admin section and click the button to add the user.
 
@@ -87,6 +81,6 @@ The statuses are as follows:
 
 2. List settings: Upon clicking on a transaction in the transactions page, you can choose by default whether to view the transaction on the same page, or to open it in a new window altogether.
 
-If you have any questions that are not covered in this guide, please [submit an issue](https://github.com/jembi/openhim-console/issues/new) with the 'documentation' label and we will strive to add it to this page.
+If you find a field that is not described here, please let us know by [filing an issue on github](https://github.com/jembi/openhim-core-js/issues/new) with the 'documentation' label.
 
 

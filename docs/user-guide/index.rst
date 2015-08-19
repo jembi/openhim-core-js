@@ -4,9 +4,9 @@ User guide
 .. toctree::
    :maxdepth: 2
 
-   deploy
    basic-config
-   error-resolution
+   adding-users
+   transaction-list
    alerting
    certificates
    mediators

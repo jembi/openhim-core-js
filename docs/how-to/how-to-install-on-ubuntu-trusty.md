@@ -3,6 +3,16 @@ How to install on Ubuntu 14.04 Trusty
 
 The following is a quickstart tutorial to help guide you through the steps required for a new OpenHIM installation on a clean Ubuntu 14.04 instance.
 
+This quickest an easiest way to install the OpenHIM on ubuntu is to use our deb package. This will install botht he OpenHIM core and console on your server. To install execute the following:
+
+```sh
+$ sudo add-apt-repository ppa:openhie/release
+$ sudo apt-get update
+$ sudo apt-get install openhim-core-js openhim-console
+```
+
+If you would like to install the OpenHIM manually, read on.
+
 ## Install Node.js 0.12.x
 
 _As per [https://nodesource.com/blog/nodejs-v012-iojs-and-the-nodesource-linux-repositories](https://nodesource.com/blog/nodejs-v012-iojs-and-the-nodesource-linux-repositories)_ The first required dependency is Node.js. You should at least be running version 0.12, which isn't available in the official Ubuntu repositories in 14.04\. Therefore we need to use an alternative source:

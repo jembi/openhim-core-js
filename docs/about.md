@@ -31,15 +31,15 @@ The OpenHIM also comes with an admin console. This admin console provides an eas
 
 If you want to install and implement the OpenHIM, see the user guide for information on how to get setup and how to configure the system using the OpenHIM console.
 
-## Funders:
+## Funders
 
 [![pepfar](http://www.openhim.org/wp-content/uploads/2014/11/pepfar.jpg)](http://www.pepfar.gov/ "PEPFAR")[![cdc](http://www.openhim.org/wp-content/uploads/2014/11/cdc.jpg)](http://www.cdc.gov/ "CDC")[![idrc](http://www.openhim.org/wp-content/uploads/2014/11/idrc.jpg)](http://www.idrc.ca/EN/Pages/default.aspx "IDRC")[![rockefellerFoundation](http://www.openhim.org/wp-content/uploads/2014/11/rockefellerFoundation.jpg)](http://www.rockefellerfoundation.org/ "Rockefeller Foundation")
 
-## Development Partners:
+## Development Partners
 
 [![heal](http://www.openhim.org/wp-content/uploads/2014/11/heal.png)](http://heal.cs.ukzn.ac.za/ "HeAL UKZN")
 
-## Partners:
+## Partners
 
 [![mohawk](http://www.openhim.org/wp-content/uploads/2014/11/mohawk.jpg)](http://www.mohawkcollege.ca/ "Mohawk College")[![regenstriefInstitute](http://www.openhim.org/wp-content/uploads/2014/11/regenstriefInstitute.jpg)](http://www.regenstrief.org/ "Regenstrif Institute")[![intraHealth](http://www.openhim.org/wp-content/uploads/2014/11/intraHealth.jpg)](http://www.intrahealth.org/ "InntraHealth")[![hisp](http://www.openhim.org/wp-content/uploads/2014/11/hisp.png)](http://hisp.org)[eCGroup](http://www.ecgroupinc.com/index.htm "eCGroup")
 
