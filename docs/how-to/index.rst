@@ -12,3 +12,4 @@ How to's
    how-to-import-export
    how-to-setup-a-basic-cluster
    how-to-install-on-ubuntu-trusty
+   how-to-build-the-documentation
