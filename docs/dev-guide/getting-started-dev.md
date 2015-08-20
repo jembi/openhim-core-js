@@ -1,7 +1,12 @@
 Getting started with OpenHIM development
 ========================================
 
-You can use vagrant if you would want to get up and running quickly with a dev environment in a vm. See here to [use Vagrant](https://github.com/jembi/openhim-core-js/wiki/Running-the-OpenHIM-using-Vagrant) to fire up an instance. Otherwise, read on to learn more.
+The fist thing you will need to do is get you development environment up. This guide describes how to get a development environment up for the OpenHIM-core and the OpenHIM-console.
+
+Setting up your OpenHIM-core dev environment
+--------------------------------------------
+
+You can use vagrant if you would want to get up and running quickly with a dev environment in a vm. See here to [use Vagrant](/how-to/how-to-run-the-openhim-using-vagrant.html) to fire up an instance. Otherwise, read on to learn more.
 
 Clone the `https://github.com/jembi/openhim-core-js.git` repository.
 
@@ -48,3 +53,22 @@ This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing
 * `npm link` - will symlink you local working directory to the globally installed openhim-core module. Use this so you can use the global openhim-core binary to run your current work in progress. Also, if you build any local changes the server will automatically restart.
 * `grunt test --mochaGrep=<regex>` - will only run tests with names matching the regex
 * `grunt test --ddebugTests` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
+
+Setting up your OpenHIM-console dev environment
+-----------------------------------------------
+
+Clone the repository at `https://github.com/jembi/openhim-console.git` and then run `npm install`
+
+Install cli tools: `npm install -g grunt-cli grunt bower`
+
+Install bower web components: `bower install`
+
+To run the unit tests run `grunt test`
+
+To start up a development instance of the webapp run `grunt serve`. The hostname and port can be changed in `Gruntfile.js`. The hostname can be changed to `0.0.0.0` in order to access the site from outside.
+
+Note all changes will be automatically applied to the webapp and the page will be reloaded after each change. In addition JSHint will be run to provide information about errors or bad code style. The unit tests will also be automatically be run if JSHint does not find any problems.
+
+For unit testing we are using [mocha](http://visionmedia.github.io/mocha/) with [chai.js](http://chaijs.com/api/bdd/) for assertions. We are using the BDD `should` style for chai as it more closely resembles the unit testing style that is being used for the [OpenHIM-core component](https://github.com/jembi/openhim-core-js)
+
+This code was scaffolded using [Yeoman](http://yeoman.io/) and the [angular generator](https://github.com/yeoman/generator-angular). You can find more detials about the commands available by looking at the docs of those tools.

@@ -1,5 +1,5 @@
-Mediators
-=========
+Developing mediators
+====================
 
 **OpenHIM mediators** are separate micro services that run independently to the OpenHIM and perform additional mediation tasks for a particular use case. The common tasks within a mediator are as follows:
 
