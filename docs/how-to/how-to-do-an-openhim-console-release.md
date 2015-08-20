@@ -1,6 +1,8 @@
 How to do an OpenHIM-console release
 ====================================
 
+This page describes the steps to follow to do an OpenHIM console release. Make sure you are on the master branch and it is fully up-to-date before beginning this process.
+
 1. `npm version (major|minor|patch)` - choose one according to semver.
 2. `git push origin master`
 3. `git push origin vx.x.x` - push the tag that 2 created.

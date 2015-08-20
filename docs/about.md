@@ -29,7 +29,11 @@ The OpenHIM core provides a framework to add and mange your own implementation s
 
 The OpenHIM also comes with an admin console. This admin console provides an easy to use user interface for configuring and managing an OpenHIM server.
 
-If you want to install and implement the OpenHIM, see the user guide for information on how to get setup and how to configure the system using the OpenHIM console.
+If you want to install and implement the OpenHIM, see the [getting started](/getting-started.html) section and the [user guide](/user-guide/index.html) for information on how to get setup and how to configure the system using the OpenHIM console.
+
+## Roadmap
+
+To see the roadmap for the OpenHIM you can view the [issues list for core](https://github.com/jembi/openhim-core-js/issues) and [for console](https://github.com/jembi/openhim-console/issues). When a release is being worked on we try to maintain a milestone for that release. You can see core milstones [here](https://github.com/jembi/openhim-core-js/milestones) and console milestones [here](https://github.com/jembi/openhim-console/milestones). To view what went into our latest releases, have a look at our releases pages. [Core releases](https://github.com/jembi/openhim-core-js/releases) and [console releases](https://github.com/jembi/openhim-console/releases).
 
 ## Funders
 
