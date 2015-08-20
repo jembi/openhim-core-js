@@ -1,4 +1,4 @@
-How to build the docuemntation
+How to build the documentation
 ==============================
 
 To build the documentation execute the commands below from the 'docs' directory:
