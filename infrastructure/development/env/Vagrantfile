@@ -1,28 +1,39 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-Vagrant::Config.run do |config|
-	config.vm.box = "ubuntu/trusty64"
-	config.vm.box_url = "http://atlas.hashicorp.com/ubuntu/boxes/trusty64"
+VAGRANTFILE_API_VERSION = "2"
 
-	config.vm.network :bridged
-	config.vm.forward_port 5000, 5000
-	config.vm.forward_port 5001, 5001
-	config.vm.forward_port 5050, 5050
-	config.vm.forward_port 5051, 5051
-	config.vm.forward_port 5052, 5052
-	config.vm.forward_port 8080, 8080
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-	config.vm.share_folder "openhim-core-js", "/openhim-core-js", "../../../"
+  # Use trusty64 base box
+  config.vm.box = "ubuntu/trusty64"
+  config.vm.provider "virtualbox" do |v|
+    v.customize ["modifyvm", :id, "--memory", 1536]
+  end
 
-	config.vm.provision :shell do |shell|
-		shell.inline = "mkdir -p /etc/puppet/modules;
-			puppet module install willdurand/nodejs;
-			puppet module install puppetlabs/mongodb"
-	end
+  # Configure port forwarding
+  config.vm.network "forwarded_port", guest: 5000, host: 5000
+  config.vm.network "forwarded_port", guest: 5001, host: 5001
+  config.vm.network "forwarded_port", guest: 5050, host: 5050
+  config.vm.network "forwarded_port", guest: 5051, host: 5051
+  config.vm.network "forwarded_port", guest: 5052, host: 5052
+  config.vm.network "forwarded_port", guest: 8080, host: 8080
 
-	config.vm.provision :puppet do |puppet|
-		puppet.manifests_path = "./"
-		puppet.manifest_file  = "openhim-core-js.pp"
-	end
+  config.vm.provision :shell do |shell|
+    shell.inline = "mkdir -p /etc/puppet/modules;
+        puppet module install willdurand/nodejs;
+        puppet module install puppetlabs/mongodb --version 0.10.0"
+  end
+
+  # Setup LC_ALL locale flag
+  config.vm.provision :shell do |shell|
+    shell.inline = "echo 'LC_ALL=\"en_US.UTF-8\"' >> /etc/default/locale"
+  end
+
+  config.vm.synced_folder "../../../", "/openhim-core-js"
+
+  config.vm.provision :puppet do |puppet|
+    puppet.manifests_path = "./"
+    puppet.manifest_file  = "openhim-core-js.pp"
+  end
 end
