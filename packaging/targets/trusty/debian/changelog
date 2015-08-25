@@ -1,3 +1,15 @@
+openhim-core-js (1.3.0-5~trusty) trusty; urgency=medium
+
+  * Release Debian Build 1.3.0-5
+
+ -- Ryan Crichton <ryan@jembi.org>  Tue, 25 Aug 2015 14:14:15 +0200
+
+openhim-core-js (1.3.0-4~trusty) trusty; urgency=medium
+
+  * Release Debian Build 1.3.0-4
+
+ -- Ryan Crichton <ryan@jembi.org>  Tue, 25 Aug 2015 14:09:15 +0200
+
 openhim-core-js (1.1.1-3~trusty) trusty; urgency=medium
 
   * Release Version 1.1.1-3

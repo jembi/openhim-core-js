@@ -1,30 +1,24 @@
 #!/bin/bash
-set -x
 
+OPENHIM_VERSION=
 
 USERNAME=openhim
 HOME=/home/$USERNAME
-SH=/bin/sh
-NPM=/usr/bin/npm
-CURL=/usr/bin/curl
-SRCDIR=/tmp/openhim-core-js/src/nvm
-COREDIR=$HOME/openhim-core-js
+SH=/bin/bash
 
+chown -R $USERNAME:$USERNAME $HOME/bin
+chown -R $USERNAME:$USERNAME $HOME/bin/install_openhim.sh
 
-
-chown -R  $USERNAME:$USERNAME $HOME/bin
-chown -R  $USERNAME:$USERNAME $HOME/bin/install_node.sh
-chown -R  $USERNAME:$USERNAME $COREDIR
-
+# Fetch OpenHIM config file
+mkdir /etc/openhim/
+wget -O /etc/openhim/config.json https://raw.githubusercontent.com/jembi/openhim-core-js/v$OPENHIM_VERSION/config/default.json
 
 cd $HOME
 
-mkdir -p $SRCDIR
-$CURL https://raw.githubusercontent.com/creationix/nvm/v0.16.1/install.sh -o $SRCDIR/install.sh
-sudo -u $USERNAME $SH $SRCDIR/install.sh
-sudo -u $USERNAME $SH $HOME/bin/install_node.sh
+# Install OpenHIM as openhim user
+sudo -u $USERNAME $SH $HOME/bin/install_openhim.sh
 
-
+# Ensure services are started
 start mongodb 
 start openhim-core
 

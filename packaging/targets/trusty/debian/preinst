@@ -1,6 +1,4 @@
 #!/bin/bash
-set -x
-
 
 USERNAME=openhim
 HOME=/home/$USERNAME
@@ -10,6 +8,7 @@ ADDUSER=/usr/sbin/adduser
 
 service openhim-core stop || true
 
+# Create user and group
 if ! getent group $USERNAME >/dev/null; then
     echo "Creating group $USERNAME"
     $ADDGROUP --quiet --system $USERNAME
@@ -24,6 +23,3 @@ else
 fi
 
 exit 0
-
-
-
