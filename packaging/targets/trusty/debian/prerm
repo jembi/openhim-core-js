@@ -4,6 +4,7 @@ USERNAME=openhim
 HOME=/home/$USERNAME
 
 service openhim-core stop || true
+sleep 2
 userdel $USERNAME
 rm -r $HOME
 
