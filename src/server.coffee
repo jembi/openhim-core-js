@@ -431,6 +431,10 @@ else
           # update message to remove length - add one extra character to remove the space
           message = message.substr(lengthIndex + 1)
 
+        if isNaN(length)
+          logger.info "[Auditing #{type}] No length supplied"
+          sock.destroy()
+          
         # if sourced length equals message length then full message received
         if length == message.length
           logger.info "[Auditing #{type}] Received message from #{sock.remoteAddress}"
