@@ -88,9 +88,11 @@ do
     if [[ "$UPLOAD" == "y" || "$UPLOAD" == "Y" ]] && [[ -n "${DEB_SIGN_KEYID}" && -n "{$LAUNCHPADLOGIN}" ]]; then
         echo "Uploading to PPA ${LAUNCHPADPPALOGIN}/${PPA}"
 
+        CHANGES=${BUILDDIR}/${BUILD}_source.changes
+
     	DPKGCMD="dpkg-buildpackage -k${DEB_SIGN_KEYID} -S -sa "
     	$DPKGCMD
-    	DPUTCMD="dput ppa:$LAUNCHPADPPALOGIN/$PPA  $CHANGES"
+    	DPUTCMD="dput ppa:$LAUNCHPADPPALOGIN/$PPA $CHANGES"
     	$DPUTCMD
     else
     	echo "Not uploading to launchpad"
