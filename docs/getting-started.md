@@ -3,6 +3,20 @@ Getting started
 
 To get started we will show you how to install the OpenHIM along with the admin console for easy configuration.
 
+If you are on Ubuntu installing the OpenHIM is very easy as we provide a debian package in the openhie PPA. Just execute the following commands:
+
+```sh
+$ sudo add-apt-repository ppa:openhie/release
+$ sudo apt-get update
+$ sudo apt-get install openhim-core-js openhim-console
+```
+
+When installing the console, it will ask you for the host and port of the openhim-core server. Make sure you provide the **public** hostname where the openhim-core server will be accessible (localhost is fine if you are testing and just want access on your local machine). You can run `sudo dpkg-reconfigure openhim-console` at any time to specify a new openhim-core host and port.
+
+These packages will install the openhim-core using NPM for the openhim user, add the openhim-core as a service and install the console to nginx. You can find the core log file here `/var/log/upstart/openhim-core.log` and may stop and start the openhim-core with `sudo start openhim-core` or `sudo stop openhim-core`.
+
+If you don't have ubuntu or want to install manually, follow the steps below.
+
 Installing the OpenHIM core
 ---------------------------
 
