@@ -9,12 +9,9 @@ The OpenHIM core component is responsible for providing a single entry-point int
 * Persistence and audit logging of all messages that flow through the OpenHIM
 * Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
 
+**To get started and to learn more about using the OpenHIM** see [the full documentation](http://openhim.rtfd.org).
 
-See the [development roadmap](https://github.com/jembi/openhim-core-js/wiki/OpenHIM-core-Development-Roadmap) for more details on what is to come!
-
-See [the documentation](https://github.com/jembi/openhim-core-js/wiki) for more details to get started.
-
-For additional information and tutorials see [openhim.org](http://openhim.org).
+Some of the important information is repeated here, however, the the above documentation is much more comprehensive.
 
 Getting started with the OpenHIM-core
 -------------------------------------
@@ -87,56 +84,9 @@ This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing
 * `grunt test --mochaGrep=<regex>` - will only run tests with names matching the regex
 * `grunt test --ddebugTests` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
 
-Running the OpenHIM on boot
----------------------------
-
-To help you get the OpenHIM server running on boot we supply a upstart config file (good for Ubuntu or other system that use upstart). Install the upstart config by doing the following:
-
-```
-wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/resources/openhim-core.conf
-sudo cp openhim-core.conf /etc/init/
-```
-
-Then run start the server with:
-
-`sudo start openhim-core`
-
-It will automatically startup on reboot.
-
-If you require custom config you will have to edit `openhim-core.conf` to add in the `--conf` parameter pointing to your external config file.
-
 Contributing
 ------------
 
 You may view/add issues here: https://github.com/jembi/openhim-core-js/issues
 
 To contibute code, please fork the repository and submit a pull request. The maintainers will review the code and merge it in if all is well.
-
-Exporting/Importing Server Configuration
-----------------------------------------
-
-**Note:** This can now be done from the OpenHIM console which may be easier.
-
-### Exporting
-
-Follow the below steps to export and import the server metadata configuration. By default, the Users, Channels, Clients, ContactGroups and Mediators collections will be exported.
-Copy the file [openhim-configuration-export.sh](https://github.com/jembi/openhim-core-js/blob/master/resources/openhim-configuration-export.sh) to a folder where you wish your export to be saved. Run the shell scrip by executing the following command:
-`./openhim-configuration-export.sh`
-
-Your exported collections should be located in the folder structure '/dump/openhim/'.
-
-### Importing
-
-To import you data successfully ensure that you are in the correct folder where the dump files are located. Execute the below command to  import your collections.
-`mongorestore --db openhim dump/openhim`
-
-NB! if you have changed your database name, then do so for the export/import as well.
-NB! Please ensure that you stop the server before exporting and importing.
-
-Design
-------
-
-To see some design docs refer to the OpenHIE wiki pages:
-
-* [High level design](https://wiki.ohie.org/display/SUB/OpenHIE+Interoperability+Layer+design+document)
-* [Technical design using node](https://wiki.ohie.org/display/SUB/Design+of+the+Interoperability+Layer+core+using+Node.js)
