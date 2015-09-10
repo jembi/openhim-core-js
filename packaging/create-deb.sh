@@ -26,6 +26,11 @@ PKG=openhim-core-js
 echo -n "Which version of the OpenHIM (from NPM) would you like this package to install? (eg. 1.3.0) "
 read OPENHIM_VERSION
 
+if [ -z "$OPENHIM_VERSION" ]; then
+    echo "Please supply a valid openhim-core version."
+    exit 1
+fi
+
 echo -n "Would you like to upload the build(s) to Launchpad? [y/N] "
 read UPLOAD
 if [[ "$UPLOAD" == "y" || "$UPLOAD" == "Y" ]];  then
