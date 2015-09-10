@@ -10,7 +10,7 @@ CONFIGDIR=/etc/openhim
 CONFIGFILE=$CONFIGDIR/config.json
 
 chown -R $USERNAME:$USERNAME $HOME/bin
-chown -R $USERNAME:$USERNAME $HOME/bin/install_openhim.sh
+chown -R $USERNAME:$USERNAME $HOME/bin/install_node.sh
 
 # Fetch OpenHIM config file
 mkdir /etc/openhim/ || true
@@ -23,8 +23,8 @@ fi
 
 cd $HOME
 
-# Install OpenHIM as openhim user
-sudo -u $USERNAME $SH $HOME/bin/install_openhim.sh
+# Install node using nvm as openhim user
+sudo -u $USERNAME $SH $HOME/bin/install_node.sh
 
 # Ensure service is started
 start openhim-core

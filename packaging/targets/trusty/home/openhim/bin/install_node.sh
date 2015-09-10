@@ -2,6 +2,7 @@
 set -e
 
 OPENHIM_VERSION=
+NODE_VERSION=0.12.7
 
 USERNAME=openhim
 HOME=/home/$USERNAME
@@ -15,15 +16,10 @@ echo "Installing node version manager for "$USERNAME" user ..."
 $CURL -o- https://raw.githubusercontent.com/creationix/nvm/v0.26.1/install.sh | $SH > /dev/null
 . $HOME/.nvm/nvm.sh
 
-# Install node 0.12
-echo "Installing node.js 0.12.7 via nvm ..."
-nvm install 0.12.7
-nvm alias default 0.12.7
-nvm use 0.12.7
-
-# Install OpenHIM, globally
-echo "Installing OpenHIM v"$OPENHIM_VERSION" using npm ("`which npm`") ..."
-npm install openhim-core@$OPENHIM_VERSION -g
-echo "OpenHIM v"$OPENHIM_VERSION" installed!"
+# Install node
+echo "Installing node.js $NODE_VERSION via nvm ..."
+nvm install $NODE_VERSION
+nvm alias default $NODE_VERSION
+nvm use default
 
 exit 0

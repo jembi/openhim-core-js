@@ -72,7 +72,7 @@ do
     # Update changelog
     cd $TARGETDIR
     echo "Updating changelog for build ..."
-    $DCH -Mv "${OPENHIM_VERSION}-${BUILDNO}~${TARGET}" --distribution "${TARGET}" "Release Debian Build ${OPENHIM_VERSION}-${BUILDNO}"
+    $DCH -Mv "${OPENHIM_VERSION}-${BUILDNO}~${TARGET}" --distribution "${TARGET}" "Release Debian Build ${OPENHIM_VERSION}-${BUILDNO}. Find v${OPENHIM_VERSION} changelog here: https://github.com/jembi/openhim-core-js/releases"
 
     # Clear and create packaging directory
     PKGDIR=${BUILDDIR}/${BUILD}
@@ -81,8 +81,18 @@ do
     cp -R $TARGETDIR/* $PKGDIR
 
     # Set NPM version of the OpenHIM to install
-    $SED -i s/OPENHIM_VERSION=/OPENHIM_VERSION=$OPENHIM_VERSION/ $PKGDIR/home/openhim/bin/install_openhim.sh
+    $SED -i s/OPENHIM_VERSION=/OPENHIM_VERSION=$OPENHIM_VERSION/ $PKGDIR/home/openhim/bin/install_node.sh
     $SED -i s/OPENHIM_VERSION=/OPENHIM_VERSION=$OPENHIM_VERSION/ $PKGDIR/debian/postinst
+
+    # Install OpenHIM from NPM to get latest files to include in package
+    cd /tmp
+    TGZ=`npm pack openhim-core@$OPENHIM_VERSION`
+    tar xvzf $TGZ
+    cd /tmp/package
+    npm install --production
+    mkdir -p $PKGDIR/usr/share/openhim-core
+    mv /tmp/package/* $PKGDIR/usr/share/openhim-core
+    rm -r /tmp/package
 
     cd $PKGDIR  
     if [[ "$UPLOAD" == "y" || "$UPLOAD" == "Y" ]] && [[ -n "${DEB_SIGN_KEYID}" && -n "{$LAUNCHPADLOGIN}" ]]; then
