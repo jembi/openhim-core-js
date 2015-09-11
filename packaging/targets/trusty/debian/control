@@ -1,0 +1,15 @@
+Source: openhim-core-js
+Maintainer: Ryan Crichton <ryan@jembi.org>
+Section: web
+Priority: optional
+Standards-Version: 3.9.1
+Build-Depends: debhelper (>= 7)
+Homepage: http://www.openhim.org/
+
+
+Package: openhim-core-js
+Architecture: amd64
+Depends: curl, mongodb, git
+Recommends: 
+Description: OpenHIM Core
+ The Open Health Information Mediator (OpenHIM) is a middleware software component designed to ease interoperability between disparate information systems. It provides a security communications and data governance as well as support for routing, orchestrating and translating messages as they flow between systems. The HIM can be though of as the "lock" within a health information exchange.

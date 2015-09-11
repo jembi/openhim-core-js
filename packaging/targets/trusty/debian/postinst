@@ -1,0 +1,32 @@
+#!/bin/bash
+set -e
+
+OPENHIM_VERSION=
+
+USERNAME=openhim
+HOME=/home/$USERNAME
+SH=/bin/bash
+CONFIGDIR=/etc/openhim
+CONFIGFILE=$CONFIGDIR/config.json
+
+chown -R $USERNAME:$USERNAME $HOME/bin
+chown -R $USERNAME:$USERNAME $HOME/bin/install_node.sh
+
+# Fetch OpenHIM config file
+mkdir /etc/openhim/ || true
+if [ ! -f $CONFIGFILE ]; then
+    echo "Fetching shiny new config file from github ..."
+    wget -O /etc/openhim/config.json https://raw.githubusercontent.com/jembi/openhim-core-js/v$OPENHIM_VERSION/config/default.json
+else
+    echo "Config file "$CONFIGFILE" exits. Keeping old config, ensure you update this manually to support any new features in OpenHIM v"$OPENHIM_VERSION"!"
+fi
+
+cd $HOME
+
+# Install node using nvm as openhim user
+sudo -u $USERNAME $SH $HOME/bin/install_node.sh
+
+# Ensure service is started
+start openhim-core
+
+exit 0

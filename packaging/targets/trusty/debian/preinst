@@ -1,0 +1,25 @@
+#!/bin/bash
+
+USERNAME=openhim
+HOME=/home/$USERNAME
+USERADD=/usr/sbin/useradd
+ADDGROUP=/usr/sbin/addgroup
+ADDUSER=/usr/sbin/adduser
+
+service openhim-core stop || true
+
+# Create user and group
+if ! getent group $USERNAME >/dev/null; then
+    echo "Creating group $USERNAME"
+    $ADDGROUP --quiet --system $USERNAME
+fi
+
+
+if id -u $USERNAME >/dev/null 2>&1; then
+    echo "user $USERNAME exists."
+else
+    echo "user $USERNAME does not exist. adding."
+    $USERADD  $USERNAME -g $USERNAME -m -s /bin/bash 
+fi
+
+exit 0
