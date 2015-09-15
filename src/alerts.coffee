@@ -14,34 +14,35 @@ authorisation = require('./middleware/authorisation')
 
 trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
 
-plainTemplate = (transactions, channelName, status) -> "
-OpenHIM Transactions Alert\n
-\n
-The following transaction(s) have completed with status #{status} on the OpenHIM instance running on #{config.alerts.himInstance}:\n
-Channel - #{channelName}\n
-#{(transactions.map (trx) -> trxURL trx).join '\n'}\n
-"
+plainTemplate = (transactions, channelName, status) ->
+  """
+  OpenHIM Transactions Alert
+
+  The following transaction(s) have completed with status #{status} on the OpenHIM instance running on #{config.alerts.himInstance}:
+  Channel - #{channelName}
+  #{(transactions.map (trx) -> trxURL trx).join '\n'}
+
+  """
 
 htmlTemplate = (transactions, channelName, status) ->
-  """
-  <html>
-    <head></head>
-    <body>
-      <h1>OpenHIM Transactions Alert</h1>
-      <div>
-        <p>The following transaction(s) have completed with status <b>#{status}</b> on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
-        <table>
-          <tr><td>Channel - <b>#{channelName}</b></td></td>
-  """
-  +
-    (transactions.map (trx) -> "<tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'
-  +
-  """
-        </table>
-      </div>
-    </body>
-  </html>
-  """
+  alert = """
+    <html>
+      <head></head>
+      <body>
+        <h1>OpenHIM Transactions Alert</h1>
+        <div>
+          <p>The following transaction(s) have completed with status <b>#{status}</b> on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
+          <table>
+            <tr><td>Channel - <b>#{channelName}</b></td></td>\n
+    """
+  alert += (transactions.map (trx) -> "        <tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'
+  alert += '\n'
+  alert += """
+          </table>
+        </div>
+      </body>
+    </html>
+    """
 
 smsTemplate = (transactions, channelName, status) ->
   alert = "Alert - "
