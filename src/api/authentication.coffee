@@ -4,6 +4,9 @@ logger = require 'winston'
 config = require "../config/config"
 config.api = config.get('api')
 
+isUndefOrEmpty = (string) ->
+  return not string? or string is ''
+
 exports.authenticate = (next) ->
 
   header = this.request.header
@@ -11,6 +14,12 @@ exports.authenticate = (next) ->
   authTS = header['auth-ts']
   authSalt = header['auth-salt']
   authToken = header['auth-token']
+
+  # if any of the required headers aren't present
+  if isUndefOrEmpty(email) or isUndefOrEmpty(authTS) or isUndefOrEmpty(authSalt) or isUndefOrEmpty(authToken)
+    logger.info "API request made by #{email} from #{this.request.host} is missing required API authentication headers, denying access"
+    this.status = 401
+    return
 
   # check if request is recent
   requestDate = new Date Date.parse authTS
