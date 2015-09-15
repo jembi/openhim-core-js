@@ -431,9 +431,7 @@ exports.route = (ctx, next) ->
 
 ###
 # The [Koa](http://koajs.com/) middleware function that enables the
-# router to work with the Koa framework. CoffeeScript does not support
-# ES6 generators yet so this function has to be passed through as pure
-# Javascript.
+# router to work with the Koa framework.
 #
 # Use with: app.use(router.koaMiddleware)
 ###
