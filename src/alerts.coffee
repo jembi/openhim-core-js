@@ -14,43 +14,46 @@ authorisation = require('./middleware/authorisation')
 
 trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
 
-plainTemplate = (transactions, channelName, status) -> "
-OpenHIM Transactions Alert\n
-\n
-The following transaction(s) have completed with status #{status} on the OpenHIM instance running on #{config.alerts.himInstance}:\n
-Channel - #{channelName}\n
-#{(transactions.map (trx) -> trxURL trx).join '\n'}\n
-"
+plainTemplate = (transactions, channelName, status) ->
+  """
+  OpenHIM Transactions Alert
 
-htmlTemplate = (transactions, channelName, status) -> "
-<html>
-<head></head>
-<body>
-<h1>OpenHIM Transactions Alert</h1>
-<div>
-<p>The following transaction(s) have completed with status <b>#{status}</b> on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
-<table>
-<tr><td>Channel - <b>#{channelName}</b></td></td>
-#{(transactions.map (trx) -> "<tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'}
-</table>
-</div>
-</body>
-</html>
-"
+  The following transaction(s) have completed with status #{status} on the OpenHIM instance running on #{config.alerts.himInstance}:
+  Channel - #{channelName}
+  #{(transactions.map (trx) -> trxURL trx).join '\n'}
 
-smsTemplate = (transactions, channelName, status) -> "
-Alert - #{
+  """
+
+htmlTemplate = (transactions, channelName, status) ->
+  alert = """
+    <html>
+      <head></head>
+      <body>
+        <h1>OpenHIM Transactions Alert</h1>
+        <div>
+          <p>The following transaction(s) have completed with status <b>#{status}</b> on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
+          <table>
+            <tr><td>Channel - <b>#{channelName}</b></td></td>\n
+    """
+  alert += (transactions.map (trx) -> "        <tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'
+  alert += '\n'
+  alert += """
+          </table>
+        </div>
+      </body>
+    </html>
+    """
+
+smsTemplate = (transactions, channelName, status) ->
+  alert = "Alert - "
   if transactions.length > 1
-    "#{transactions.length} transactions have"
+    alert += "#{transactions.length} transactions have"
   else if transactions.length is 1
-    "1 transaction has"
+    alert += "1 transaction has"
   else
-    "no transactions have"
-}
-completed with status #{status} on the OpenHIM running on #{config.alerts.himInstance}
-(#{channelName})
-"
-
+    alert += "no transactions have"
+    
+  alert += " completed with status #{status} on the OpenHIM running on #{config.alerts.himInstance} (#{channelName})"
 
 getAllChannels = (callback) -> Channel.find {}, callback
 
