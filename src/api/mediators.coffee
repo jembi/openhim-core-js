@@ -36,7 +36,7 @@ exports.getMediator = (mediatorURN) ->
     else
       this.body = result
   catch err
-    logAndSetResponse this, 500, "Could not fetch mediator using UUID {urn} via the API: #{err}", 'error'
+    logAndSetResponse this, 500, "Could not fetch mediator using UUID #{urn} via the API: #{err}", 'error'
 
 
 
@@ -98,4 +98,49 @@ exports.removeMediator = (urn) ->
     this.body = "Mediator with urn #{urn} has been successfully removed by #{this.authenticated.email}"
     logger.info "Mediator with urn #{urn} has been successfully removed by #{this.authenticated.email}"
   catch err
-    utils.logAndSetResponse this, 500, "Could not remove Mediator by urn  {urn} via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not remove Mediator by urn #{urn} via the API: #{err}", 'error'
+
+exports.heartbeat = (urn) ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
+    return
+
+  urn = unescape urn
+
+  try
+    mediator = yield Mediator.findOne({ urn: urn }).exec()
+
+    if not mediator?
+      this.status = 404
+      return
+
+    if mediator._configModifiedTS > mediator._lastHeartbeat
+      # Retrun config if it has changed since last heartbeat
+      this.body = mediator._currentConfig
+
+    # set internal properties
+    heartbeat = this.request.body
+    if heartbeat?
+      update =
+        _lastHeartbeat: heartbeat.lastHeartbeat
+        _uptime: heartbeat.uptime
+
+      yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
+
+    this.status = 200
+  catch err
+    utils.logAndSetResponse this, 500, "Could process mediator heartbeat (urn: #{urn}): #{err}", 'error'
+
+exports.setConfig = (urn) ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
+    return
+
+  urn = unescape urn
+
+  try
+    yield mediator = Mediator.findOneAndUpdate({ urn: urn }, { _currentConfig: this.request.body }).exec()
+  catch
+    utils.logAndSetResponse this, 500, "Could set mediator config (urn: #{urn}): #{err}", 'error'

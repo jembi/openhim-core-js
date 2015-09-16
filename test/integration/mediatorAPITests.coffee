@@ -498,3 +498,113 @@ describe "API Integration Tests", ->
               done err
             else
               done()
+
+    describe '*heartbeat()', ->
+
+      it 'should store uptime and lastHeartbeat then return a 200 status', (done) ->
+        new Mediator(mediator1).save ->
+          now = new Date()
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(
+              "uptime": 50.25
+              "lastHeartbeat": now
+            )
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Mediator.findOne urn: mediator1.urn, (err, mediator) ->
+                  if err
+                    return done err
+                  mediator._uptime.should.be.exactly 50.25
+                  mediator._lastHeartbeat.toISOString().should.be.exactly now.toISOString()
+                  done()
+
+      it 'should return config if the config was updated since the last heartbeat', (done) ->
+        new Mediator(mediator1).save ->
+          now = new Date()
+          prev = new Date()
+          update =
+            _currentConfig:
+              param1: "val1"
+              param2: "val2"
+            _configModifiedTS: now
+            _lastHeartbeat: new Date(prev.setMinutes(now.getMinutes() - 5))
+          Mediator.findOneAndUpdate urn: mediator1.urn, update, (err) ->
+            request("https://localhost:8080")
+              .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .send(
+                "uptime": 50.25
+                "lastHeartbeat": now
+              )
+              .expect(200)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  Mediator.findOne urn: mediator1.urn, (err, mediator) ->
+                    if err
+                      return done err
+                    res.body.param1.should.be.exactly "val1"
+                    res.body.param2.should.be.exactly "val2"
+                    done()
+
+      it 'should deny access to a non admin user', (done) ->
+        request("https://localhost:8080")
+          .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(
+            uptime: 50.25
+            lastHeartbeat: new Date()
+          )
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should return a 404 if the mediator specified by urn cannot be found', (done) ->
+        request("https://localhost:8080")
+          .post("/mediators/urn:uuid:this-deosnt-exist/heartbeat")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(
+            uptime: 50.25
+            lastHeartbeat: new Date()
+          )
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+    describe '*setConfig()', ->
+
+      it 'should deny access to a non admin user', (done) ->
+        done new Error 'Not implemented'
+
+      it 'should return a 404 if the mediator specified by urn cannot be found', (done) ->
+        done new Error 'Not implemented'
+
+      it 'should set the current config for a mediator', (done) ->
+        done new Error 'Not implemented'
+
+      it 'should return a 401 if the config object contains unknown keys', (done) ->
+        done new Error 'Not implemented'

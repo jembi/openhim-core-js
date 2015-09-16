@@ -94,6 +94,8 @@ exports.setupApp = (done) ->
   app.use route.get '/mediators/:uuid', mediators.getMediator
   app.use route.post '/mediators', mediators.addMediator
   app.use route.delete '/mediators/:urn', mediators.removeMediator
+  app.use route.post '/mediators/:urn/heartbeat', mediators.heartbeat
+  app.use route.post '/mediators/:urn/config', mediators.setConfig
 
   app.use route.get '/keystore/cert', keystore.getServerCert
   app.use route.post '/keystore/cert', keystore.setServerCert
