@@ -179,5 +179,4 @@ exports.setConfig = (urn) ->
     yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body }).exec()
     this.status = 201
   catch err
-    console.log err
     utils.logAndSetResponse this, 500, "Could not set mediator config (urn: #{urn}): #{err}", 'error'
