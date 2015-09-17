@@ -134,10 +134,7 @@ exports.heartbeat = (urn) ->
 
 validateConfig = (configDef, config) ->
   # reduce to a single true or false value, start assuming valid
-  return Object.keys(config).reduce((accumVal, param) ->
-    # if a validation has already failed, return a failure
-    if accumVal is false
-      return false
+  return Object.keys(config).every (param) ->
     # find the matching def is there is one
     matchingDefs = configDef.filter (def) ->
       return def.param is param
@@ -155,7 +152,6 @@ validateConfig = (configDef, config) ->
     ).reduce((finalResult, result) ->
       return finalResult and result
     , true)
-  , true)
 
 if process.env.NODE_ENV == "test"
   exports.validateConfig = validateConfig
