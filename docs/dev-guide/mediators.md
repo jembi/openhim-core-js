@@ -41,7 +41,7 @@ Mediator communication with core
 
 ### Mediator registration
 
-A mediator MUST register itself with the OpenHIM core each time it starts up. The registration process informs the OpenHIM core of some useful details:
+A mediator **MUST** register itself with the OpenHIM core each time it starts up. The registration process informs the OpenHIM core of some useful details:
 
 * An identifier and name to associate with the OpenHIM-core
 * The hostname or IP address of the mediator
@@ -54,7 +54,7 @@ In order to register itself a mediator MUST send an API request to the OpenHIM-c
 
 with a body contain the following sample structure:
 
-```
+```js
 {
     urn: "<a unique URN>", // A unique identifier to identify the mediator, this identifier should always stay the same even if the mediator changes (eg. "urn:openhim-mediator:my-awesome-mediator")
     version: "", // the version of the mediator, if this is incremented the OpenHIM-core will update the channel configuration - expects a semver string
@@ -66,7 +66,9 @@ with a body contain the following sample structure:
     endpoints: [ // (A minimum of 1 endpoint must be defined) an array of endpoints that the mediator can be contacted on
         { ... }, // a route object as defined by OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/8264a9b7c81a05853c20cd071e379d23d740dd33/src/model/channels.coffee#L5-L15
         { ... }
-    ]
+    ],
+    configDefs: [ ... ] // (optional) An array of config definitions of config that can be set in the OpenHIM-console - see https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee
+    config: { param1: val1, param2: val2 } // (optional) Default mediator configuration
 }
 ```
 
@@ -76,13 +78,13 @@ The OpenHIM-core SHALL respond with an appropriate 5xx status if the mediator re
 
 ### Return transaction metadata
 
-A mediator SHOULD return a structured object that indicates the response that should be returned to the user as well as metadata about the actions that were performed. The mediator is not required to do this however useful information can be returned to the OpenHIM-core in this way. If a structured response is not returned to the OpenHIM-core then what ever is returned to the OpenHIM-core  is pass directly on to the client that make the request.
+A mediator **SHOULD** return a structured object that indicates the response that should be returned to the user as well as metadata about the actions that were performed. The mediator is not required to do this however useful information can be returned to the OpenHIM-core in this way. If a structured response is not returned to the OpenHIM-core then what ever is returned to the OpenHIM-core  is pass directly on to the client that make the request.
 
 The structured object should be returned in the HTTP response for each request that the OpenHIM-core forwards to the mediator. If the mediator chooses to return a strucutred response then the mediator MUST return this object with a content-type header with the value: 'application/json+openhim'. If the mediator wants to set a specific content-type to return to the client, they can set this in the response object as a header (see below).
 
 The JSON object returned to the OpenHIM should take the following form:
 
-```
+```js
 {
     "x-mediator-urn": "<a unique URN>", //same as the mediator's urn 
     "status": "Successful", // (optional) an indicator of the status of the transaction, this can be one of the following: ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
@@ -98,20 +100,22 @@ The JSON object returned to the OpenHIM should take the following form:
 }
 ```
 
-### Return transaction metrics
+### (Optional) Send heartbeats and recieve user configuration directly from OpenHIM-core
 
-:warning: **not yet implemented**
+A mediator **MAY** opt to send heartbeats to the OpenHIM-core to demonstrate its aliveness. The heartbeats also allow it to recieve user specified configuration data and any changes to that configuration in a near real-time fashion.
+
+The mediator can do this by utilising the mediator heartbeats API endpoint of the OpenHIM-core. You can find [details on this endpoint here](/dev-guide/api-ref.html#mediator-heartbeat-endpoint). This API endpoint, if supported by the medaitor, should always be called once at mediator startup using the `config: true` flag to get the initial startup config for the mediator if it exists. There after the API endpoint should be hit at least every 30s (a good number to work with is every 10s) by the mediator to provide the OpenHIM-core with its heartbeat and so that the medaitor can recieve the latest user config as it becomes available.
+
+### (not yet implemented) Return transaction metrics
 
 In addition to returning transaction metadata, a mediator MAY return transaction metrics about the transaction that is processes. To do this then a mediator MAY add a metrics object to the structured response object. This metrics object should be populated with any metrics that the mediator wishes to report.
 
 The OpenHIM-core must be be setup to use a metrics service for this function to be used. The metrics object MUST be formatted as follows (see https://github.com/jembi/openhim-core-js/issues/104 for more details):
 
-```
+```js
 "metrics": {
     "<metric_name>": "62", // for metrics that apply to the entire transaction
     "<orchestration_name>.<metric_name>": "16", // for metrics that apply to a particular orchestration step, the orchestration_name should reference an orchestration in the orchestrations object
     ...
 }
 ```
-
-If you have any questions that are not covered in this guide, please [submit an issue](https://github.com/jembi/openhim-console/issues/new) with the 'documentation' label and we will strive to add it to this page.
