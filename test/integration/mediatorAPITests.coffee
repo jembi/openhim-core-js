@@ -524,6 +524,7 @@ describe "API Integration Tests", ->
                     return done err
                   mediator._uptime.should.be.exactly 50.25
                   mediator._lastHeartbeat.toISOString().should.be.exactly now.toISOString()
+                  res.body.should.be.empty()
                   done()
 
       it 'should return config if the config was updated since the last heartbeat', (done) ->
@@ -546,6 +547,36 @@ describe "API Integration Tests", ->
               .send(
                 "uptime": 50.25
                 "lastHeartbeat": now
+              )
+              .expect(200)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  res.body.param1.should.be.exactly "val1"
+                  res.body.param2.should.be.exactly "val2"
+                  done()
+
+      it 'should return the latest config if the config property in the request is true', (done) ->
+        new Mediator(mediator1).save ->
+          now = new Date()
+          update =
+            config:
+              param1: "val1"
+              param2: "val2"
+            _configModifiedTS: now
+            _lastHeartbeat: now
+          Mediator.findOneAndUpdate urn: mediator1.urn, update, (err) ->
+            request("https://localhost:8080")
+              .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .send(
+                "uptime": 50.25
+                "lastHeartbeat": now
+                "config": true
               )
               .expect(200)
               .end (err, res) ->

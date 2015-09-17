@@ -115,12 +115,12 @@ exports.heartbeat = (urn) ->
       this.status = 404
       return
 
-    if mediator._configModifiedTS > mediator._lastHeartbeat
+    heartbeat = this.request.body
+    if mediator._configModifiedTS > mediator._lastHeartbeat or heartbeat?.config
       # Retrun config if it has changed since last heartbeat
       this.body = mediator.config
 
     # set internal properties
-    heartbeat = this.request.body
     if heartbeat?
       update =
         _lastHeartbeat: heartbeat.lastHeartbeat
