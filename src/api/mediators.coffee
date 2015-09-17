@@ -117,7 +117,7 @@ exports.heartbeat = (urn) ->
 
     if mediator._configModifiedTS > mediator._lastHeartbeat
       # Retrun config if it has changed since last heartbeat
-      this.body = mediator._currentConfig
+      this.body = mediator.config
 
     # set internal properties
     heartbeat = this.request.body
@@ -130,7 +130,35 @@ exports.heartbeat = (urn) ->
 
     this.status = 200
   catch err
-    utils.logAndSetResponse this, 500, "Could process mediator heartbeat (urn: #{urn}): #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not process mediator heartbeat (urn: #{urn}): #{err}", 'error'
+
+validateConfig = (configDef, config) ->
+  # reduce to a single true or false value, start assuming valid
+  return Object.keys(config).reduce((accumVal, param) ->
+    # if a validation has already failed, return a failure
+    if accumVal is false
+      return false
+    # find the matching def is there is one
+    matchingDefs = configDef.filter (def) ->
+      return def.param is param
+    # fail if there isn't a matching def
+    if matchingDefs.length is 0
+      return false
+    # validate the param against the defs
+    return matchingDefs.map((def) ->
+      switch def.type
+        when 'string' then return typeof config[param] is 'string'
+        when 'number' then return typeof config[param] is 'number'
+        when 'bool' then return typeof config[param] is 'boolean'
+        when 'option' then return (def.values.indexOf config[param]) isnt -1
+    # reduce array of results to a single value
+    ).reduce((finalResult, result) ->
+      return finalResult and result
+    , true)
+  , true)
+
+if process.env.NODE_ENV == "test"
+  exports.validateConfig = validateConfig
 
 exports.setConfig = (urn) ->
   # Must be admin
@@ -139,8 +167,21 @@ exports.setConfig = (urn) ->
     return
 
   urn = unescape urn
+  config = this.request.body
 
   try
-    yield mediator = Mediator.findOneAndUpdate({ urn: urn }, { _currentConfig: this.request.body }).exec()
-  catch
-    utils.logAndSetResponse this, 500, "Could set mediator config (urn: #{urn}): #{err}", 'error'
+    mediator = yield Mediator.findOne({ urn: urn }).exec()
+
+    if not mediator?
+      this.status = 404
+      return
+
+    if not validateConfig mediator.configDefs, config
+      this.status = 400
+      return
+
+    yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body }).exec()
+    this.status = 201
+  catch err
+    console.log err
+    utils.logAndSetResponse this, 500, "Could not set mediator config (urn: #{urn}): #{err}", 'error'

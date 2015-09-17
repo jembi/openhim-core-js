@@ -531,7 +531,7 @@ describe "API Integration Tests", ->
           now = new Date()
           prev = new Date()
           update =
-            _currentConfig:
+            config:
               param1: "val1"
               param2: "val2"
             _configModifiedTS: now
@@ -552,12 +552,9 @@ describe "API Integration Tests", ->
                 if err
                   done err
                 else
-                  Mediator.findOne urn: mediator1.urn, (err, mediator) ->
-                    if err
-                      return done err
-                    res.body.param1.should.be.exactly "val1"
-                    res.body.param2.should.be.exactly "val2"
-                    done()
+                  res.body.param1.should.be.exactly "val1"
+                  res.body.param2.should.be.exactly "val2"
+                  done()
 
       it 'should deny access to a non admin user', (done) ->
         request("https://localhost:8080")
@@ -579,7 +576,7 @@ describe "API Integration Tests", ->
 
       it 'should return a 404 if the mediator specified by urn cannot be found', (done) ->
         request("https://localhost:8080")
-          .post("/mediators/urn:uuid:this-deosnt-exist/heartbeat")
+          .post("/mediators/urn:uuid:this-doesnt-exist/heartbeat")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
@@ -598,13 +595,97 @@ describe "API Integration Tests", ->
     describe '*setConfig()', ->
 
       it 'should deny access to a non admin user', (done) ->
-        done new Error 'Not implemented'
+        request("https://localhost:8080")
+          .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(
+            param1: "val1"
+            param2: "val2"
+          )
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
 
       it 'should return a 404 if the mediator specified by urn cannot be found', (done) ->
-        done new Error 'Not implemented'
+        request("https://localhost:8080")
+          .post("/mediators/urn:uuid:this-doesnt-exist/config")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(
+            param1: "val1"
+            param2: "val2"
+          )
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
 
-      it 'should set the current config for a mediator', (done) ->
-        done new Error 'Not implemented'
+      it 'should set the current config for a mediator and return a 201 status', (done) ->
+        mediator1.configDefs =
+          [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "string"
+          ]
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(
+              param1: "val1"
+              param2: "val2"
+            )
+            .expect(201)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Mediator.findOne urn: mediator1.urn, (err, mediator) ->
+                  if err
+                    return done err
+                  mediator.config.param1.should.be.exactly "val1"
+                  mediator.config.param2.should.be.exactly "val2"
+                  done()
 
-      it 'should return a 401 if the config object contains unknown keys', (done) ->
-        done new Error 'Not implemented'
+      it 'should return a 400 if the config object contains unknown keys', (done) ->
+        mediator1.configDefs =
+          [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "string"
+          ]
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(
+              param1: "val1"
+              param2: "val2"
+              badParam: "val3"
+            )
+            .expect(400)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
