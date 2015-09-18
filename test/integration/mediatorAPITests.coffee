@@ -503,7 +503,6 @@ describe "API Integration Tests", ->
 
       it 'should store uptime and lastHeartbeat then return a 200 status', (done) ->
         new Mediator(mediator1).save ->
-          now = new Date()
           request("https://localhost:8080")
             .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
             .set("auth-username", testUtils.rootUser.email)
@@ -512,7 +511,6 @@ describe "API Integration Tests", ->
             .set("auth-token", authDetails.authToken)
             .send(
               "uptime": 50.25
-              "lastHeartbeat": now
             )
             .expect(200)
             .end (err, res) ->
@@ -523,7 +521,7 @@ describe "API Integration Tests", ->
                   if err
                     return done err
                   mediator._uptime.should.be.exactly 50.25
-                  mediator._lastHeartbeat.toISOString().should.be.exactly now.toISOString()
+                  should.exist mediator._lastHeartbeat
                   res.body.should.be.empty()
                   done()
 
@@ -546,7 +544,6 @@ describe "API Integration Tests", ->
               .set("auth-token", authDetails.authToken)
               .send(
                 "uptime": 50.25
-                "lastHeartbeat": now
               )
               .expect(200)
               .end (err, res) ->
@@ -575,7 +572,6 @@ describe "API Integration Tests", ->
               .set("auth-token", authDetails.authToken)
               .send(
                 "uptime": 50.25
-                "lastHeartbeat": now
                 "config": true
               )
               .expect(200)
@@ -596,7 +592,6 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(
             uptime: 50.25
-            lastHeartbeat: new Date()
           )
           .expect(403)
           .end (err, res) ->
@@ -614,7 +609,6 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(
             uptime: 50.25
-            lastHeartbeat: new Date()
           )
           .expect(404)
           .end (err, res) ->
@@ -623,11 +617,29 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it 'should return a 400 if an invalid body is received', (done) ->
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(
+              downtime: 0.5
+            )
+            .expect(400)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
+
     describe '*setConfig()', ->
 
       it 'should deny access to a non admin user', (done) ->
         request("https://localhost:8080")
-          .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+          .put("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
@@ -645,7 +657,7 @@ describe "API Integration Tests", ->
 
       it 'should return a 404 if the mediator specified by urn cannot be found', (done) ->
         request("https://localhost:8080")
-          .post("/mediators/urn:uuid:this-doesnt-exist/config")
+          .put("/mediators/urn:uuid:this-doesnt-exist/config")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
@@ -672,7 +684,7 @@ describe "API Integration Tests", ->
           ]
         new Mediator(mediator1).save ->
           request("https://localhost:8080")
-            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+            .put("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
@@ -691,6 +703,7 @@ describe "API Integration Tests", ->
                     return done err
                   mediator.config.param1.should.be.exactly "val1"
                   mediator.config.param2.should.be.exactly "val2"
+                  should.exist mediator._configModifiedTS
                   done()
 
       it 'should return a 400 if the config object contains unknown keys', (done) ->
@@ -704,7 +717,7 @@ describe "API Integration Tests", ->
           ]
         new Mediator(mediator1).save ->
           request("https://localhost:8080")
-            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+            .put("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)

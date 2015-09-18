@@ -6,57 +6,80 @@ describe "Mediator API unit tests", ->
   describe ".validateConfig()", ->
 
     it "should reject config that includes extra, unknown params", ->
-      mediators.validateConfig(
-        [
-          param: "param1"
-          type: "string"
-        ],
-        param1: "val1"
-        unknown: "val2"
-      ).should.be.false()
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "string"
+          ],
+          param1: "val1"
+          unknown: "val2"
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
 
     it "should allow config that doesn't include all params", ->
-      mediators.validateConfig(
-        [
-          param: "param1"
-          type: "string"
-        ,
-          param: "param2"
-          type: "string"
-        ],
-        param1: "val1"
-      ).should.be.true()
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "string"
+          ],
+          param1: "val1"
+        )
 
     it "should reject config value if they are the incorrect type", ->
-      mediators.validateConfig(
-        [
-          param: "param1"
-          type: "number"
-        ],
-        param1: "val1"
-      ).should.be.false()
-      mediators.validateConfig(
-        [
-          param: "param1"
-          type: "string"
-        ],
-        param1: 5
-      ).should.be.false()
-      mediators.validateConfig(
-        [
-          param: "param1"
-          type: "bool"
-        ],
-        param1: 5
-      ).should.be.false()
-      mediators.validateConfig(
-        [
-          param: "param1"
-          type: "option"
-          values: [ "test1", "test2" ]
-        ],
-        param1: true
-      ).should.be.false()
+      errors = 0
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "number"
+          ],
+          param1: "val1"
+        )
+      catch err
+        errors++
+
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "string"
+          ],
+          param1: 5
+        )
+      catch err
+        errors++
+
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "bool"
+          ],
+          param1: 5
+        )
+      catch err
+        errors++
+
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "option"
+            values: [ "test1", "test2" ]
+          ],
+          param1: true
+        )
+      catch err
+        errors++
+
+      errors.should.be.exactly 4
 
     it "should allow config value if they are the correct type", ->
       mediators.validateConfig(
@@ -65,21 +88,21 @@ describe "Mediator API unit tests", ->
           type: "number"
         ],
         param1: 5
-      ).should.be.true()
+      )
       mediators.validateConfig(
         [
           param: "param1"
           type: "string"
         ],
         param1: "val1"
-      ).should.be.true()
+      )
       mediators.validateConfig(
         [
           param: "param1"
           type: "bool"
         ],
         param1: true
-      ).should.be.true()
+      )
       mediators.validateConfig(
         [
           param: "param1"
@@ -87,4 +110,4 @@ describe "Mediator API unit tests", ->
           values: [ "test1", "test2" ]
         ],
         param1: "test2"
-      ).should.be.true()
+      )

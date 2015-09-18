@@ -402,10 +402,10 @@ The response status code will be `200` if successful and the response body will 
 
 This endpoint allows a mediator to send a heartbeat to the OpenHIM-core. This serves two purposes:
 
-1. It allows the mediator to demonstrate is alive-ness and submit an uptime property
-2. It allow the mediator to fetch the latest configuration from the OpenHIM-core
+1. It allows the mediator to demonstrate its alive-ness and submit an uptime property
+2. It allows the mediator to fetch the latest configuration from the OpenHIM-core
 
-This endpoint only returns mediator config if the config has changed between the time the previous heartbeat was recieved and the current time. You may force the endpoint to return the latest config via the `config: true` property.
+This endpoint only returns mediator config if the config has changed between the time the previous heartbeat was received and the current time. You may force the endpoint to return the latest config via the `config: true` property.
 
 `POST /mediators/:urn/heartbeat`
 
@@ -413,21 +413,20 @@ where `:urn` is the `urn` property of the mediator that is sending in a heartbea
 
 with an http body of:
 
-```javascript
+```js
 {
   "uptime": 50.25 // The uptime is seconds
-  "lastHeartbeat": '2015-09-17T13:41:07.784Z' // A date in ISO 8601 format
   "config": true // (Optional) a flag to force the OpenHIM-core to send back the latest config
 }
 ```
 
-The response will always have a `200` status if successful or a `404` if the mediator specified by the urn cannot be found. The response body will contain the latest mediator config that has been set on the OpenHIM-core server only if the config has changed since the last time a heartbeat was recieved from this mediator. Otherise, the response body is left empty.
+The response will always have a `200` status if successful or a `404` if the mediator specified by the urn cannot be found. The response body will contain the latest mediator config that has been set on the OpenHIM-core server only if the config has changed since the last time a heartbeat was received from this mediator. Otherise, the response body is left empty.
 
 This endpoint can only be called by an admin user.
 
 #### Set mediator config
 
-Sets the current configuration values for this mediator. The recieved configuration must conform to the configuration definition that the mediator defined in its registration message.
+Sets the current configuration values for this mediator. The received configuration must conform to the configuration definition that the mediator defined in its registration message.
 
 `POST /mediators/:urn/config`
 

@@ -116,14 +116,19 @@ exports.heartbeat = (urn) ->
       return
 
     heartbeat = this.request.body
-    if mediator._configModifiedTS > mediator._lastHeartbeat or heartbeat?.config
-      # Retrun config if it has changed since last heartbeat
+
+    if not heartbeat?.uptime?
+      this.status = 400
+      return
+
+    if mediator._configModifiedTS > mediator._lastHeartbeat or heartbeat?.config is true
+      # Return config if it has changed since last heartbeat
       this.body = mediator.config
 
     # set internal properties
     if heartbeat?
       update =
-        _lastHeartbeat: heartbeat.lastHeartbeat
+        _lastHeartbeat: new Date()
         _uptime: heartbeat.uptime
 
       yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
@@ -140,18 +145,23 @@ validateConfig = (configDef, config) ->
       return def.param is param
     # fail if there isn't a matching def
     if matchingDefs.length is 0
-      return false
+      throw new Error "No config definition found for parameter #{param}"
     # validate the param against the defs
-    return matchingDefs.map((def) ->
+    matchingDefs.map (def) ->
       switch def.type
-        when 'string' then return typeof config[param] is 'string'
-        when 'number' then return typeof config[param] is 'number'
-        when 'bool' then return typeof config[param] is 'boolean'
-        when 'option' then return (def.values.indexOf config[param]) isnt -1
+        when 'string'
+          if typeof config[param] isnt 'string'
+            throw new Error "Expected config param #{param} to be a string."
+        when 'number'
+          if typeof config[param] isnt 'number'
+            throw new Error "Expected config param #{param} to be a number."
+        when 'bool'
+          if typeof config[param] isnt 'boolean'
+            throw new Error "Expected config param #{param} to be a boolean."
+        when 'option'
+          if (def.values.indexOf config[param]) is -1
+            throw new Error "Expected config param #{param} to be one of #{def.values}"
     # reduce array of results to a single value
-    ).reduce((finalResult, result) ->
-      return finalResult and result
-    , true)
 
 if process.env.NODE_ENV == "test"
   exports.validateConfig = validateConfig
@@ -170,13 +180,16 @@ exports.setConfig = (urn) ->
 
     if not mediator?
       this.status = 404
+      this.body = 'No mediator found for this urn.'
       return
-
-    if not validateConfig mediator.configDefs, config
+    try
+      validateConfig mediator.configDefs, config
+    catch err
       this.status = 400
+      this.body = err.message
       return
 
-    yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body }).exec()
+    yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec()
     this.status = 201
   catch err
     utils.logAndSetResponse this, 500, "Could not set mediator config (urn: #{urn}): #{err}", 'error'
