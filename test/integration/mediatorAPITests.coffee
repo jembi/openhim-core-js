@@ -748,7 +748,7 @@ describe "API Integration Tests", ->
             else
               done()
 
-      it 'should set the current config for a mediator and return a 201 status', (done) ->
+      it 'should set the current config for a mediator and return a 200 status', (done) ->
         mediator1.configDefs =
           [
             param: "param1"
@@ -768,7 +768,7 @@ describe "API Integration Tests", ->
               param1: "val1"
               param2: "val2"
             )
-            .expect(201)
+            .expect(200)
             .end (err, res) ->
               if err
                 done err
