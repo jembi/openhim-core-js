@@ -38,11 +38,12 @@ exports.getMediator = (mediatorURN) ->
   catch err
     logAndSetResponse this, 500, "Could not fetch mediator using UUID #{urn} via the API: #{err}", 'error'
 
-
-
 saveDefaultChannelConfig = (config) -> new Channel(channel).save() for channel in config
 
-
+constructError = (message, name) ->
+  err = new Error message
+  err.name = name
+  return err
 
 exports.addMediator = ->
   # Must be admin
@@ -52,14 +53,13 @@ exports.addMediator = ->
 
   try
     mediator = this.request.body
-    if !mediator.urn
-      throw
-        name: 'ValidationError'
-        message: 'URN is required'
-    if !mediator.version or !semver.valid(mediator.version)
-      throw
-        name: 'ValidationError'
-        message: 'Version is required. Must be in SemVer form x.y.z'
+    if not mediator.urn
+      throw constructError 'URN is required', 'ValidationError'
+    if not mediator.version or not semver.valid(mediator.version)
+      throw constructError 'Version is required. Must be in SemVer form x.y.z', 'ValidationError'
+
+    if mediator.config?
+      validateConfig mediator.configDefs, mediator.config
 
     existing = yield Mediator.findOne({urn: mediator.urn}).exec()
 
@@ -67,23 +67,18 @@ exports.addMediator = ->
       if semver.gt(mediator.version, existing.version)
         yield Mediator.findByIdAndUpdate(existing._id, mediator).exec()
     else
-      if !mediator.endpoints or mediator.endpoints.length < 1
-        throw
-          name: 'ValidationError'
-          message: 'At least 1 endpoint is required'
+      if not mediator.endpoints or mediator.endpoints.length < 1
+        throw constructError 'At least 1 endpoint is required', 'ValidationError'
       yield Q.ninvoke(new Mediator(mediator), 'save')
       if mediator.defaultChannelConfig
         yield saveDefaultChannelConfig(mediator.defaultChannelConfig)
     this.status = 201
     logger.info "User #{this.authenticated.email} created mediator with urn #{mediator.urn}"
   catch err
-    if err.name == 'ValidationError'
+    if err.name is 'ValidationError'
       utils.logAndSetResponse this, 400, "Could not add Mediator via the API: #{err}", 'error'
     else
       utils.logAndSetResponse this, 500, "Could not add Mediator via the API: #{err}", 'error'
-
-
-
 
 exports.removeMediator = (urn) ->
   # Must be admin
@@ -145,22 +140,22 @@ validateConfig = (configDef, config) ->
       return def.param is param
     # fail if there isn't a matching def
     if matchingDefs.length is 0
-      throw new Error "No config definition found for parameter #{param}"
+      throw constructError "No config definition found for parameter #{param}", 'ValidationError'
     # validate the param against the defs
     matchingDefs.map (def) ->
       switch def.type
         when 'string'
           if typeof config[param] isnt 'string'
-            throw new Error "Expected config param #{param} to be a string."
+            throw constructError "Expected config param #{param} to be a string.", 'ValidationError'
         when 'number'
           if typeof config[param] isnt 'number'
-            throw new Error "Expected config param #{param} to be a number."
+            throw constructError "Expected config param #{param} to be a number.", 'ValidationError'
         when 'bool'
           if typeof config[param] isnt 'boolean'
-            throw new Error "Expected config param #{param} to be a boolean."
+            throw constructError "Expected config param #{param} to be a boolean.", 'ValidationError'
         when 'option'
           if (def.values.indexOf config[param]) is -1
-            throw new Error "Expected config param #{param} to be one of #{def.values}"
+            throw constructError "Expected config param #{param} to be one of #{def.values}", 'ValidationError'
     # reduce array of results to a single value
 
 if process.env.NODE_ENV == "test"

@@ -432,6 +432,81 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it 'should reject mediators with invalid default config', (done) ->
+        invalidMediator =
+          urn: "urn:uuid:CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
+          name: "Patient Mediator"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "number"
+          ]
+          config:
+            param1: "val1"
+            param2: "val2"
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(invalidMediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should store mediator config and config definitions', (done) ->
+        validMediator =
+          urn: "urn:uuid:35a7e5e6-acbb-497d-8b01-259fdcc0d5c2"
+          name: "Patient Mediator"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "number"
+          ]
+          config:
+            param1: "val1"
+            param2: 5
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(validMediator)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Mediator.findOne urn: validMediator.urn, (err, mediator) ->
+                mediator.config.should.deepEqual validMediator.config
+                mediator.configDefs.should.have.length 2
+                done()
+
     describe "*removeMediator", ->
       it  "should remove an mediator with specified urn", (done) ->
 
