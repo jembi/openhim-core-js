@@ -50,7 +50,7 @@
   },
   "devDependencies": {
     "coffee-script": "^1.9.1",
-    "coffeelint": "^1.9.1",
+    "coffeelint": "1.11.1",
     "finalhandler": "^0.4.0",
     "grunt": "^0.4.5",
     "grunt-cli": "^0.1.13",

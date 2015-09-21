@@ -165,7 +165,7 @@ Users of the system.
 
 The response status code will be `200` if successful and the response body will contain an array of users objects. See the [user schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.coffee).
 
-#### Add a use
+#### Add a user
 
 `POST /users`
 
@@ -392,11 +392,58 @@ The response code will be `201` is successful.
 
 #### Fetch a specific mediator
 
-`GET /mediators/:uuid`
+`GET /mediators/:urn`
 
-where `:uuid` is the `uuid` property of the mediator to fetch.
+where `:urn` is the `urn` property of the mediator to fetch.
 
 The response status code will be `200` if successful and the response body will contain a mediator object. See the [mediator schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
+
+#### Mediator heartbeat endpoint
+
+This endpoint allows a mediator to send a heartbeat to the OpenHIM-core. This serves two purposes:
+
+1. It allows the mediator to demonstrate its alive-ness and submit an uptime property
+2. It allows the mediator to fetch the latest configuration from the OpenHIM-core
+
+This endpoint only returns mediator config if the config has changed between the time the previous heartbeat was received and the current time. You may force the endpoint to return the latest config via the `config: true` property.
+
+`POST /mediators/:urn/heartbeat`
+
+where `:urn` is the `urn` property of the mediator that is sending in a heartbeat.
+
+with an http body of:
+
+```js
+{
+  "uptime": 50.25 // The uptime is seconds
+  "config": true // (Optional) a flag to force the OpenHIM-core to send back the latest config
+}
+```
+
+The response will always have a `200` status if successful or a `404` if the mediator specified by the urn cannot be found. The response body will contain the latest mediator config that has been set on the OpenHIM-core server only if the config has changed since the last time a heartbeat was received from this mediator. Otherise, the response body is left empty.
+
+This endpoint can only be called by an admin user.
+
+#### Set mediator config
+
+Sets the current configuration values for this mediator. The received configuration must conform to the configuration definition that the mediator defined in its registration message.
+
+`POST /mediators/:urn/config`
+
+where `:urn` is the `urn` property of the mediator that is sending in it heartbeat.
+
+with an http body of:
+
+```js
+{
+  paramName: "value",
+  paramName: "value"
+}
+```
+
+The response will have an http status code of `201` if successful, `404` if the mediator referenced by urn cannot be found and `400` if the config supplied cannot be validated against the configuration definition supplied in the mediator registration message.
+
+This endpoint can only be called by an admin user.
 
 ### Metrics resource
 

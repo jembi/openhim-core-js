@@ -36,13 +36,14 @@ exports.getMediator = (mediatorURN) ->
     else
       this.body = result
   catch err
-    logAndSetResponse this, 500, "Could not fetch mediator using UUID {urn} via the API: #{err}", 'error'
-
-
+    logAndSetResponse this, 500, "Could not fetch mediator using UUID #{urn} via the API: #{err}", 'error'
 
 saveDefaultChannelConfig = (config) -> new Channel(channel).save() for channel in config
 
-
+constructError = (message, name) ->
+  err = new Error message
+  err.name = name
+  return err
 
 exports.addMediator = ->
   # Must be admin
@@ -52,14 +53,13 @@ exports.addMediator = ->
 
   try
     mediator = this.request.body
-    if !mediator.urn
-      throw
-        name: 'ValidationError'
-        message: 'URN is required'
-    if !mediator.version or !semver.valid(mediator.version)
-      throw
-        name: 'ValidationError'
-        message: 'Version is required. Must be in SemVer form x.y.z'
+    if not mediator.urn
+      throw constructError 'URN is required', 'ValidationError'
+    if not mediator.version or not semver.valid(mediator.version)
+      throw constructError 'Version is required. Must be in SemVer form x.y.z', 'ValidationError'
+
+    if mediator.config?
+      validateConfig mediator.configDefs, mediator.config
 
     existing = yield Mediator.findOne({urn: mediator.urn}).exec()
 
@@ -67,23 +67,18 @@ exports.addMediator = ->
       if semver.gt(mediator.version, existing.version)
         yield Mediator.findByIdAndUpdate(existing._id, mediator).exec()
     else
-      if !mediator.endpoints or mediator.endpoints.length < 1
-        throw
-          name: 'ValidationError'
-          message: 'At least 1 endpoint is required'
+      if not mediator.endpoints or mediator.endpoints.length < 1
+        throw constructError 'At least 1 endpoint is required', 'ValidationError'
       yield Q.ninvoke(new Mediator(mediator), 'save')
       if mediator.defaultChannelConfig
         yield saveDefaultChannelConfig(mediator.defaultChannelConfig)
     this.status = 201
     logger.info "User #{this.authenticated.email} created mediator with urn #{mediator.urn}"
   catch err
-    if err.name == 'ValidationError'
+    if err.name is 'ValidationError'
       utils.logAndSetResponse this, 400, "Could not add Mediator via the API: #{err}", 'error'
     else
       utils.logAndSetResponse this, 500, "Could not add Mediator via the API: #{err}", 'error'
-
-
-
 
 exports.removeMediator = (urn) ->
   # Must be admin
@@ -98,4 +93,98 @@ exports.removeMediator = (urn) ->
     this.body = "Mediator with urn #{urn} has been successfully removed by #{this.authenticated.email}"
     logger.info "Mediator with urn #{urn} has been successfully removed by #{this.authenticated.email}"
   catch err
-    utils.logAndSetResponse this, 500, "Could not remove Mediator by urn  {urn} via the API: #{err}", 'error'
+    utils.logAndSetResponse this, 500, "Could not remove Mediator by urn #{urn} via the API: #{err}", 'error'
+
+exports.heartbeat = (urn) ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
+    return
+
+  urn = unescape urn
+
+  try
+    mediator = yield Mediator.findOne({ urn: urn }).exec()
+
+    if not mediator?
+      this.status = 404
+      return
+
+    heartbeat = this.request.body
+
+    if not heartbeat?.uptime?
+      this.status = 400
+      return
+
+    if mediator._configModifiedTS > mediator._lastHeartbeat or heartbeat?.config is true
+      # Return config if it has changed since last heartbeat
+      this.body = mediator.config
+
+    # set internal properties
+    if heartbeat?
+      update =
+        _lastHeartbeat: new Date()
+        _uptime: heartbeat.uptime
+
+      yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
+
+    this.status = 200
+  catch err
+    utils.logAndSetResponse this, 500, "Could not process mediator heartbeat (urn: #{urn}): #{err}", 'error'
+
+validateConfig = (configDef, config) ->
+  # reduce to a single true or false value, start assuming valid
+  return Object.keys(config).every (param) ->
+    # find the matching def is there is one
+    matchingDefs = configDef.filter (def) ->
+      return def.param is param
+    # fail if there isn't a matching def
+    if matchingDefs.length is 0
+      throw constructError "No config definition found for parameter #{param}", 'ValidationError'
+    # validate the param against the defs
+    matchingDefs.map (def) ->
+      switch def.type
+        when 'string'
+          if typeof config[param] isnt 'string'
+            throw constructError "Expected config param #{param} to be a string.", 'ValidationError'
+        when 'number'
+          if typeof config[param] isnt 'number'
+            throw constructError "Expected config param #{param} to be a number.", 'ValidationError'
+        when 'bool'
+          if typeof config[param] isnt 'boolean'
+            throw constructError "Expected config param #{param} to be a boolean.", 'ValidationError'
+        when 'option'
+          if (def.values.indexOf config[param]) is -1
+            throw constructError "Expected config param #{param} to be one of #{def.values}", 'ValidationError'
+    # reduce array of results to a single value
+
+if process.env.NODE_ENV == "test"
+  exports.validateConfig = validateConfig
+
+exports.setConfig = (urn) ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
+    return
+
+  urn = unescape urn
+  config = this.request.body
+
+  try
+    mediator = yield Mediator.findOne({ urn: urn }).exec()
+
+    if not mediator?
+      this.status = 404
+      this.body = 'No mediator found for this urn.'
+      return
+    try
+      validateConfig mediator.configDefs, config
+    catch err
+      this.status = 400
+      this.body = err.message
+      return
+
+    yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec()
+    this.status = 200
+  catch err
+    utils.logAndSetResponse this, 500, "Could not set mediator config (urn: #{urn}): #{err}", 'error'
