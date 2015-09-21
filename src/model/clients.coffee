@@ -15,8 +15,8 @@ ClientSchema = new Schema
   "organization":       String
   "softwareName":       String
   "description":        String
-  "contantPerson":      String
-  "contantPersonEmail": String
+  "contactPerson":      String
+  "contactPersonEmail": String
  
 #compile the Client Schema into a Model
 exports.Client = connectionDefault.model 'Client', ClientSchema
