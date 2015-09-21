@@ -72,6 +72,12 @@ with a body contain the following sample structure:
 }
 ```
 
+The `configDefs` property defines an array of configuration definitions that each describe configuration parameters that could be provided by the user. These configuration parameters could have the following `type` properties:
+* `string` - A string of text
+* `bool` - A boolean value (true or false)
+* `number` - An integer or decimal value
+* `option` - A value from a pre-defined list. If this datatype is use then the `values` property MUST also be used. The `values` property specifies an array of possible values for the parameter.
+
 The OpenHIM-core SHALL respond with a HTTP status of 201 if the mediator registration was successful.
 The OpenHIM-core SHALL respond with an appropriate 4xx status if the mediator registration could not be completed due to a bad request.
 The OpenHIM-core SHALL respond with an appropriate 5xx status if the mediator registration could not be completed due to server error in the OpenHIM-core.
@@ -86,7 +92,7 @@ The JSON object returned to the OpenHIM should take the following form:
 
 ```js
 {
-    "x-mediator-urn": "<a unique URN>", //same as the mediator's urn 
+    "x-mediator-urn": "<a unique URN>", //same as the mediator's urn
     "status": "Successful", // (optional) an indicator of the status of the transaction, this can be one of the following: ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
     "response": { ... }, // a response object as defined by OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/8264a9b7c81a05853c20cd071e379d23d740dd33/src/model/transactions.coffee#L13-L18
     "orchestrations": [ // (optional) an array of orchestration objects
