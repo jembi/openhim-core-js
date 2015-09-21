@@ -432,6 +432,81 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it 'should reject mediators with invalid default config', (done) ->
+        invalidMediator =
+          urn: "urn:uuid:CA5B32BC-87CB-46A5-B9C7-AAF03500989A"
+          name: "Patient Mediator"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "number"
+          ]
+          config:
+            param1: "val1"
+            param2: "val2"
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(invalidMediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should store mediator config and config definitions', (done) ->
+        validMediator =
+          urn: "urn:uuid:35a7e5e6-acbb-497d-8b01-259fdcc0d5c2"
+          name: "Patient Mediator"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "number"
+          ]
+          config:
+            param1: "val1"
+            param2: 5
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(validMediator)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Mediator.findOne urn: validMediator.urn, (err, mediator) ->
+                mediator.config.should.deepEqual validMediator.config
+                mediator.configDefs.should.have.length 2
+                done()
+
     describe "*removeMediator", ->
       it  "should remove an mediator with specified urn", (done) ->
 
@@ -498,3 +573,238 @@ describe "API Integration Tests", ->
               done err
             else
               done()
+
+    describe '*heartbeat()', ->
+
+      it 'should store uptime and lastHeartbeat then return a 200 status', (done) ->
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(
+              "uptime": 50.25
+            )
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Mediator.findOne urn: mediator1.urn, (err, mediator) ->
+                  if err
+                    return done err
+                  mediator._uptime.should.be.exactly 50.25
+                  should.exist mediator._lastHeartbeat
+                  res.body.should.be.empty()
+                  done()
+
+      it 'should return config if the config was updated since the last heartbeat', (done) ->
+        new Mediator(mediator1).save ->
+          now = new Date()
+          prev = new Date()
+          update =
+            config:
+              param1: "val1"
+              param2: "val2"
+            _configModifiedTS: now
+            _lastHeartbeat: new Date(prev.setMinutes(now.getMinutes() - 5))
+          Mediator.findOneAndUpdate urn: mediator1.urn, update, (err) ->
+            request("https://localhost:8080")
+              .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .send(
+                "uptime": 50.25
+              )
+              .expect(200)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  res.body.param1.should.be.exactly "val1"
+                  res.body.param2.should.be.exactly "val2"
+                  done()
+
+      it 'should return the latest config if the config property in the request is true', (done) ->
+        new Mediator(mediator1).save ->
+          now = new Date()
+          update =
+            config:
+              param1: "val1"
+              param2: "val2"
+            _configModifiedTS: now
+            _lastHeartbeat: now
+          Mediator.findOneAndUpdate urn: mediator1.urn, update, (err) ->
+            request("https://localhost:8080")
+              .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .send(
+                "uptime": 50.25
+                "config": true
+              )
+              .expect(200)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  res.body.param1.should.be.exactly "val1"
+                  res.body.param2.should.be.exactly "val2"
+                  done()
+
+      it 'should deny access to a non admin user', (done) ->
+        request("https://localhost:8080")
+          .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(
+            uptime: 50.25
+          )
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should return a 404 if the mediator specified by urn cannot be found', (done) ->
+        request("https://localhost:8080")
+          .post("/mediators/urn:uuid:this-doesnt-exist/heartbeat")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(
+            uptime: 50.25
+          )
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should return a 400 if an invalid body is received', (done) ->
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(
+              downtime: 0.5
+            )
+            .expect(400)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
+
+    describe '*setConfig()', ->
+
+      it 'should deny access to a non admin user', (done) ->
+        request("https://localhost:8080")
+          .put("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(
+            param1: "val1"
+            param2: "val2"
+          )
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should return a 404 if the mediator specified by urn cannot be found', (done) ->
+        request("https://localhost:8080")
+          .put("/mediators/urn:uuid:this-doesnt-exist/config")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(
+            param1: "val1"
+            param2: "val2"
+          )
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should set the current config for a mediator and return a 200 status', (done) ->
+        mediator1.configDefs =
+          [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "string"
+          ]
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .put("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(
+              param1: "val1"
+              param2: "val2"
+            )
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Mediator.findOne urn: mediator1.urn, (err, mediator) ->
+                  if err
+                    return done err
+                  mediator.config.param1.should.be.exactly "val1"
+                  mediator.config.param2.should.be.exactly "val2"
+                  should.exist mediator._configModifiedTS
+                  done()
+
+      it 'should return a 400 if the config object contains unknown keys', (done) ->
+        mediator1.configDefs =
+          [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "string"
+          ]
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .put("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(
+              param1: "val1"
+              param2: "val2"
+              badParam: "val3"
+            )
+            .expect(400)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
