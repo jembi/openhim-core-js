@@ -184,12 +184,14 @@ dateFrom.setHours 0, 0, 0, 0
 
 describe "Transaction Alerts", ->
   before (done) ->
-    testUser1.save -> testUser2.save -> testGroup1.save -> testGroup2.save -> testChannel.save -> disabledChannel.save ->
-      for testTransaction in testTransactions
-        testTransaction.channelID = testChannel._id
-      testTransactions[6].channelID = "000000000000000000000000" # a channel id that doesn't exist
-      testTransactions[7].channelID = disabledChannel._id
-      done()
+    Transaction.ensureIndexes ->
+      Alert.ensureIndexes ->
+        testUser1.save -> testUser2.save -> testGroup1.save -> testGroup2.save -> testChannel.save -> disabledChannel.save ->
+          for testTransaction in testTransactions
+            testTransaction.channelID = testChannel._id
+          testTransactions[6].channelID = "000000000000000000000000" # a channel id that doesn't exist
+          testTransactions[7].channelID = disabledChannel._id
+          done()
 
   after (done) ->
     User.remove {}, -> ContactGroup.remove {}, -> Channel.remove {}, -> done()

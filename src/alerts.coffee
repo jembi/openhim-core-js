@@ -60,14 +60,17 @@ getAllChannels = (callback) -> Channel.find {}, callback
 findGroup = (groupID, callback) -> ContactGroup.findOne _id: groupID, callback
 
 findTransactions = (channelID, dateFrom, status, callback) ->
-  Transaction.find {
-    "request.timestamp": $gte: dateFrom
-    channelID: channelID
-    "$or": [
-      { "response.status": status }
-      { routes: "$elemMatch": "response.status": status }
-    ]
-  }, { '_id' }, callback
+  Transaction
+    .find {
+      "request.timestamp": $gte: dateFrom
+      channelID: channelID
+      "$or": [
+        { "response.status": status }
+        { routes: "$elemMatch": "response.status": status }
+      ]
+    }, { '_id' }
+    .hint "request.timestamp": 1
+    .exec callback
 
 countTotalTransactionsForChannel = (channelID, dateFrom, callback) ->
   Transaction.count {
@@ -83,7 +86,10 @@ findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
     alertStatus: alertStatus
   }
   criteria.user = user if user
-  Alert.findOne criteria, callback
+  Alert
+    .findOne criteria
+    .hint timestamp: 1
+    .exec callback
 
 
 findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, callback) ->
