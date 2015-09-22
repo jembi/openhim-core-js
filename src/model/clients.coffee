@@ -13,6 +13,7 @@ ClientSchema = new Schema
   "passwordSalt":       String
   "certFingerprint":    String
   "organization":       String
+  "location":           String
   "softwareName":       String
   "description":        String
   "contactPerson":      String
