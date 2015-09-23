@@ -26,6 +26,8 @@ MediatorSchema = new Schema
   "_configModifiedTS":      Date
   "_uptime":                Number
   "_lastHeartbeat":         Date
+
+MediatorSchema.index "defaultChannelConfig.name", sparse: true
  
 # Model for describing a collection of mediators that have registered themselves with core
 exports.Mediator = connectionDefault.model 'Mediator', MediatorSchema
