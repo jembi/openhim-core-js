@@ -66,7 +66,7 @@ findTransactions = (channelID, dateFrom, status, callback) ->
       created: $gte: dateFrom
       channelID: channelID
       event: 'end'
-      statusCode: status
+      status: status
     }, { 'transactionID' }
     .hint created: 1
     .exec callback

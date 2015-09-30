@@ -70,10 +70,8 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       event: 'start'
       name: route.name
 
-    routeStatus = 200
-    if 400 <= route.response.status <= 499
-      routeStatus = 'completed'
-    else if 500 <= route.response.status <= 599
+    routeStatus = 'success'
+    if 500 <= route.response.status <= 599
       routeStatus = 'error'
 
     # Transaction end for route
@@ -84,7 +82,8 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       route: prefix
       event: 'end'
       name: route.name
-      status: routeStatus
+      status: route.response.status
+      visualizerStatus: routeStatus
 
 storeVisualizerEvents = (ctx, done) ->
   logger.info "Storing visualizer events for transaction: #{ctx.transactionId}"
@@ -121,12 +120,8 @@ storeVisualizerEvents = (ctx, done) ->
     tsDiff = getTsDiff startTS, ctx.mediatorResponse.orchestrations
     addRouteEvents ctx, trxEvents, orch, 'orchestration', tsDiff for orch in ctx.mediatorResponse.orchestrations
 
-  status = 200
-  if ctx.transactionStatus is messageStore.transactionStatus.COMPLETED
-    status = 'completed'
-  else if ctx.transactionStatus is messageStore.transactionStatus.COMPLETED_W_ERR
-    status = 'completed-w-err'
-  else if ctx.transactionStatus is messageStore.transactionStatus.FAILED
+  status = 'success'
+  if 500 <= ctx.response.status <= 599
     status = 'error'
 
   # Transaction end for primary route
@@ -137,7 +132,8 @@ storeVisualizerEvents = (ctx, done) ->
     route: 'primary'
     event: 'end'
     name: ctx.authorisedChannel.name
-    status: status
+    status: ctx.response.status
+    visualizerStatus: status
 
   now = new Date
   event.created = now for event in trxEvents

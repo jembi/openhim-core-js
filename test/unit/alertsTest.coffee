@@ -86,56 +86,56 @@ testTransactions = [
     transactionID: 'aaa908908bbb98cc1daaaaa0'
     route: 'primary'
     event: 'end'
-    statusCode: 404
+    status: 404
 
   # 1
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa1'
     route: 'route'
     event: 'end'
-    statusCode: 404
+    status: 404
 
   # 2
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa2'
     route: 'primary'
     event: 'end'
-    statusCode: 400
+    status: 400
 
   # 3
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa3'
     route: 'primary'
     event: 'end'
-    statusCode: 500
+    status: 500
 
   # 4
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa4'
     route: 'primary'
     event: 'end'
-    statusCode: 500
+    status: 500
 
   # 5
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa5'
     route: 'primary'
     event: 'end'
-    statusCode: 500
+    status: 500
 
   # 6
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa6'
     route: 'primary'
     event: 'end'
-    statusCode: 404
+    status: 404
 
   # 7
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa7'
     route: 'primary'
     event: 'end'
-    statusCode: 404
+    status: 404
 ]
 
 dateFrom = new Date()

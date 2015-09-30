@@ -13,7 +13,7 @@ exports.getLatestEvents = (receivedTime) ->
       fEvent =
         created: event.created
         ev: event.event
-        status: event.status
+        status: event.visualizerStatus
         ts: event.visualizerTimestamp
 
       if event.route is 'primary'
@@ -24,7 +24,7 @@ exports.getLatestEvents = (receivedTime) ->
           created: event.created
           comp: "channel-#{event.name}"
           ev: event.event
-          status: event.status
+          status: event.visualizerStatus
           ts: event.visualizerTimestamp
       else
         fEvent.comp = "#{event.route}-#{event.name}"

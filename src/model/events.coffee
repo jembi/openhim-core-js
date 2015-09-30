@@ -17,8 +17,8 @@ EventsSchema = new Schema
   "route":               type: String, enum: ['primary', 'route', 'orchestration']
   "event":               type: String, enum: ['start', 'end']
   "name":                String
-  "statusCode":          Number
-  "status":              String
+  "status":              Number
+  "visualizerStatus":    type: String, enum: ['success', 'error']  #status string supported by visualizer (e.g. 'error' is red)
   "visualizerTimestamp": String  #the visualizer alters the request timestamp for display purposes
  
 exports.Event = connectionDefault.model 'Event', EventsSchema

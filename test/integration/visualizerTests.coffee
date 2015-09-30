@@ -138,3 +138,30 @@ describe 'Visualizer Integration Tests', ->
               return b
 
             done()
+
+  it 'should set the transaction status as a string', (done) ->
+    startTime = new Date()
+
+    request('http://localhost:5001')
+      .get('/test/mock')
+      .auth('testApp', 'password')
+      .expect(200)
+      .end (err, res) ->
+        return done err if err
+
+        request('https://localhost:8080')
+          .get("/visualizer/events/#{+startTime}")
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .end (err, res) ->
+            return done err if err
+
+            res.body.should.have.property 'events'
+            res.body.events.length.should.be.exactly 6
+
+            events = (res.body.events.map (event) -> event.status)
+            events.should.containEql 'success'
+
+            done()
