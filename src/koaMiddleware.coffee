@@ -12,7 +12,7 @@ authorisation = require './middleware/authorisation'
 stats = require './middleware/stats'
 pollingBypassAuthorisation = require './middleware/pollingBypassAuthorisation'
 pollingBypassAuthentication = require './middleware/pollingBypassAuthentication'
-visualizer = require './middleware/visualizer'
+events = require './middleware/events'
 proxy = require './middleware/proxy'
 rewrite = require './middleware/rewriteUrls'
 config = require './config/config'
@@ -66,8 +66,8 @@ exports.setupApp = (done) ->
     flush: require("zlib").Z_SYNC_FLUSH
   )
 
-  # Visualizer
-  app.use visualizer.koaMiddleware
+  # Events
+  app.use events.koaMiddleware
 
   # Send stats to StatsD
   if config.statsd.enabled
@@ -103,8 +103,8 @@ exports.rerunApp = (done) ->
   # Update original transaction with reruned transaction ID
   app.use rerunUpdateTransactionTask.koaMiddleware
 
-  # Visualizer
-  app.use visualizer.koaMiddleware
+  # Events
+  app.use events.koaMiddleware
 
   # Send stats to StatsD
   if config.statsd.enabled
@@ -131,8 +131,8 @@ exports.tcpApp = (done) ->
   # TCP bypass authentication middlware
   app.use tcpBypassAuthentication.koaMiddleware
 
-  # Visualizer
-  app.use visualizer.koaMiddleware
+  # Events
+  app.use events.koaMiddleware
 
   # Send stats to StatsD
   if config.statsd.enabled
@@ -161,8 +161,8 @@ exports.pollingApp = (done) ->
   # Polling bypass authorisation middleware
   app.use pollingBypassAuthorisation.koaMiddleware
 
-  # Visualizer
-  app.use visualizer.koaMiddleware
+  # Events
+  app.use events.koaMiddleware
 
   # Send stats to StatsD
   if config.statsd.enabled

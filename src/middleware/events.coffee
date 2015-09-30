@@ -85,8 +85,8 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       status: route.response.status
       visualizerStatus: routeStatus
 
-storeVisualizerEvents = (ctx, done) ->
-  logger.info "Storing visualizer events for transaction: #{ctx.transactionId}"
+storeEvents = (ctx, done) ->
+  logger.info "Storing events for transaction: #{ctx.transactionId}"
   trxEvents = []
 
   startTS = formatTS ctx.requestTimestamp
@@ -143,10 +143,10 @@ storeVisualizerEvents = (ctx, done) ->
 
 exports.koaMiddleware = (next) ->
   yield next
-  if config.visualizer.enableVisualizer
-    startTime = new Date() if statsdServer.enabled
-    ctx = this
-    do (ctx) ->
-      f = -> storeVisualizerEvents ctx, ->
-      setTimeout f, 0
-    sdc.timing "#{domain}.visualizerMiddleware", startTime if statsdServer.enabled
+
+  startTime = new Date() if statsdServer.enabled
+  ctx = this
+  do (ctx) ->
+    f = -> storeEvents ctx, ->
+    setTimeout f, 0
+  sdc.timing "#{domain}.eventsMiddleware", startTime if statsdServer.enabled
