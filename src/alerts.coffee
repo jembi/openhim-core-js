@@ -5,11 +5,12 @@ contact = require './contact'
 moment = require 'moment'
 Q = require 'q'
 Channel = require('./model/channels').Channel
-Transaction = require('./model/transactions').Transaction
+Event = require('./model/events').Event
 ContactGroup = require('./model/contactGroups').ContactGroup
 Alert = require('./model/alerts').Alert
 User = require('./model/users').User
 authorisation = require('./middleware/authorisation')
+utils = require './utils'
 
 
 trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
@@ -60,22 +61,21 @@ getAllChannels = (callback) -> Channel.find {}, callback
 findGroup = (groupID, callback) -> ContactGroup.findOne _id: groupID, callback
 
 findTransactions = (channelID, dateFrom, status, callback) ->
-  Transaction
+  Event
     .find {
-      "request.timestamp": $gte: dateFrom
+      created: $gte: dateFrom
       channelID: channelID
-      "$or": [
-        { "response.status": status }
-        { routes: "$elemMatch": "response.status": status }
-      ]
-    }, { '_id' }
-    .hint "request.timestamp": 1
+      event: 'end'
+      statusCode: status
+    }, { 'transactionID' }
+    .hint created: 1
     .exec callback
 
 countTotalTransactionsForChannel = (channelID, dateFrom, callback) ->
-  Transaction.count {
-    "request.timestamp": $gte: dateFrom
+  Event.count {
+    created: $gte: dateFrom
     channelID: channelID
+    event: 'end'
   }, callback
 
 findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
@@ -88,7 +88,6 @@ findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
   criteria.user = user if user
   Alert
     .findOne criteria
-    .hint timestamp: 1
     .exec callback
 
 
@@ -117,7 +116,7 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
             if alert?
               callback err, []
             else
-              callback err, results
+              callback err, utils.uniqArray results
         else
           callback err, []
     else
@@ -189,8 +188,6 @@ afterSendAlert = (err, channelID, alert, user, transactions, skipSave, done) ->
       method: user.method
       channelID: channelID
       status: alert.status
-      transactions: transactions.map (trx) -> trx._id
-      error: err
       alertStatus: if err then 'Failed' else 'Completed'
 
     alert.save (err) ->

@@ -45,7 +45,7 @@ getTsDiff = ( ctxStartTS, obj ) ->
   return tsDiff
 
 
-addRouteEvents = (dst, route, prefix, tsDiff) ->
+addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
 
   if route?.request?.timestamp? and route?.response?.timestamp?
     
@@ -63,9 +63,12 @@ addRouteEvents = (dst, route, prefix, tsDiff) ->
 
     # Transaction start for route
     dst.push
-      ts: startTS
-      comp: "#{prefix}-#{route.name}"
-      ev: 'start'
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      visualizerTimestamp: startTS
+      route: prefix
+      event: 'start'
+      name: route.name
 
     routeStatus = 200
     if 400 <= route.response.status <= 499
@@ -75,9 +78,12 @@ addRouteEvents = (dst, route, prefix, tsDiff) ->
 
     # Transaction end for route
     dst.push
-      ts: endTS
-      comp: "#{prefix}-#{route.name}"
-      ev: 'end'
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      visualizerTimestamp: endTS
+      route: prefix
+      event: 'end'
+      name: route.name
       status: routeStatus
 
 storeVisualizerEvents = (ctx, done) ->
@@ -90,32 +96,30 @@ storeVisualizerEvents = (ctx, done) ->
   # round a sub MIN ms response to MIN ms
   if endTS-startTS<minEvPeriod then endTS = startTS+minEvPeriod
 
-  # Transaction start for channal
+  # Transaction end for primary route
   trxEvents.push
-    ts: startTS
-    comp: "channel-#{ctx.authorisedChannel.name}"
-    ev: 'start'
-  # Transaction start for primary route
-  trxEvents.push
-    ts: startTS
-    comp: ctx.authorisedChannel.name
-    ev: 'start'
+    channelID: ctx.authorisedChannel._id
+    transactionID: ctx.transactionId
+    visualizerTimestamp: startTS
+    route: 'primary'
+    event: 'start'
+    name: ctx.authorisedChannel.name
 
   if ctx.routes
     # find TS difference
     tsDiff = getTsDiff startTS, ctx.routes
 
     for route in ctx.routes
-      addRouteEvents trxEvents, route, 'route', tsDiff
+      addRouteEvents ctx, trxEvents, route, 'route', tsDiff
 
       if route.orchestrations
         # find TS difference
         tsDiff = getTsDiff startTS, route.orchestrations
-        addRouteEvents trxEvents, orch, 'orch', tsDiff for orch in route.orchestrations
+        addRouteEvents ctx, trxEvents, orch, 'orchestration', tsDiff for orch in route.orchestrations
   if ctx.mediatorResponse?.orchestrations?
     # find TS difference
     tsDiff = getTsDiff startTS, ctx.mediatorResponse.orchestrations
-    addRouteEvents trxEvents, orch, 'orch', tsDiff for orch in ctx.mediatorResponse.orchestrations
+    addRouteEvents ctx, trxEvents, orch, 'orchestration', tsDiff for orch in ctx.mediatorResponse.orchestrations
 
   status = 200
   if ctx.transactionStatus is messageStore.transactionStatus.COMPLETED
@@ -127,21 +131,18 @@ storeVisualizerEvents = (ctx, done) ->
 
   # Transaction end for primary route
   trxEvents.push
-    ts: endTS + orchestrationTsBufferMillis
-    comp: ctx.authorisedChannel.name
-    ev: 'end'
-    status: status
-  # Transaction end for channel
-  trxEvents.push
-    ts: endTS + orchestrationTsBufferMillis
-    comp: "channel-#{ctx.authorisedChannel.name}"
-    ev: 'end'
+    channelID: ctx.authorisedChannel._id
+    transactionID: ctx.transactionId
+    visualizerTimestamp: endTS + orchestrationTsBufferMillis
+    route: 'primary'
+    event: 'end'
+    name: ctx.authorisedChannel.name
     status: status
 
   now = new Date
   event.created = now for event in trxEvents
-  events.VisualizerEvent.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 600 }, ->
-    events.VisualizerEvent.collection.insert trxEvents, (err) -> return if err then done err else done()
+  events.Event.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 3600 }, ->
+    events.Event.collection.insert trxEvents, (err) -> return if err then done err else done()
 
 
 exports.koaMiddleware = (next) ->

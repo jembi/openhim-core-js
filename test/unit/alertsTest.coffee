@@ -9,7 +9,7 @@ config.alerts = config.get('alerts')
 Channel = require("../../lib/model/channels").Channel
 User = require("../../lib/model/users").User
 ContactGroup = require("../../lib/model/contactGroups").ContactGroup
-Transaction = require("../../lib/model/transactions").Transaction
+Event = require("../../lib/model/events").Event
 Alert = require("../../lib/model/alerts").Alert
 
 testUser1 = new User
@@ -82,100 +82,60 @@ disabledChannel = new Channel
 
 testTransactions = [
   # 0
-  new Transaction
-    clientID: "111111111111111111111111"
-    request:
-      timestamp: new Date()
-      path: "/path"
-      method: "GET"
-    response:
-      status: 404
-    status: "Completed"
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa0'
+    route: 'primary'
+    event: 'end'
+    statusCode: 404
 
   # 1
-  new Transaction
-    clientID: "111111111111111111111111"
-    request:
-      timestamp: new Date()
-      path: "/path"
-      method: "GET"
-    response:
-      status: 200
-    routes: [
-      name: "testRoute"
-      request:
-        timestamp: new Date()
-        path: "/path"
-        method: "GET"
-      response: status: 404
-    ]
-    status: "Completed"
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa1'
+    route: 'route'
+    event: 'end'
+    statusCode: 404
 
   # 2
-  new Transaction
-    clientID: "111111111111111111111111"
-    request:
-      timestamp: new Date()
-      path: "/path"
-      method: "GET"
-    response:
-      status: 400
-    status: "Completed"
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa2'
+    route: 'primary'
+    event: 'end'
+    statusCode: 400
 
   # 3
-  new Transaction
-    clientID: "111111111111111111111111"
-    request:
-      timestamp: new Date()
-      path: "/path"
-      method: "GET"
-    response:
-      status: 500
-    status: "Completed"
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa3'
+    route: 'primary'
+    event: 'end'
+    statusCode: 500
 
   # 4
-  new Transaction
-    clientID: "111111111111111111111111"
-    request:
-      timestamp: new Date()
-      path: "/path"
-      method: "GET"
-    response:
-      status: 500
-    status: "Completed"
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa4'
+    route: 'primary'
+    event: 'end'
+    statusCode: 500
 
   # 5
-  new Transaction
-    clientID: "111111111111111111111111"
-    request:
-      timestamp: new Date()
-      path: "/path"
-      method: "GET"
-    response:
-      status: 500
-    status: "Completed"
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa5'
+    route: 'primary'
+    event: 'end'
+    statusCode: 500
 
   # 6
-  new Transaction
-    clientID: "111111111111111111111111"
-    request:
-      timestamp: new Date()
-      path: "/path"
-      method: "GET"
-    response:
-      status: 404
-    status: "Completed"
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa6'
+    route: 'primary'
+    event: 'end'
+    statusCode: 404
 
   # 7
-  new Transaction
-    clientID: "111111111111111111111111"
-    request:
-      timestamp: new Date()
-      path: "/path"
-      method: "GET"
-    response:
-      status: 404
-    status: "Completed"
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa7'
+    route: 'primary'
+    event: 'end'
+    statusCode: 404
 ]
 
 dateFrom = new Date()
@@ -184,7 +144,7 @@ dateFrom.setHours 0, 0, 0, 0
 
 describe "Transaction Alerts", ->
   before (done) ->
-    Transaction.ensureIndexes ->
+    Event.ensureIndexes ->
       Alert.ensureIndexes ->
         testUser1.save -> testUser2.save -> testGroup1.save -> testGroup2.save -> testChannel.save -> disabledChannel.save ->
           for testTransaction in testTransactions
@@ -198,7 +158,7 @@ describe "Transaction Alerts", ->
 
   afterEach (done) ->
     Alert.remove {}, ->
-      Transaction.remove {}, ->
+      Event.remove {}, ->
         for testTransaction in testTransactions
           testTransaction.isNew = true
           delete testTransaction._id

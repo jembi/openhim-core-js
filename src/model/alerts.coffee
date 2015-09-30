@@ -6,11 +6,9 @@ Schema = mongoose.Schema
 AlertSchema = new Schema
   "user":         type: String, required: true
   "method":       type: String, required: true
-  "timestamp":    type: Date, required: true, default: Date.now, index: true
+  "timestamp":    type: Date, required: true, default: Date.now, expires: '1d'
   "channelID":    type: String, required: true
   "status":       type: String, required: true
-  "transactions": [String]
-  "error":        String
   "alertStatus":  type: String, required: true, enum: ["Failed", "Completed"]
  
 exports.Alert = connectionDefault.model 'Alert', AlertSchema

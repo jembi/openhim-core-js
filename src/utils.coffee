@@ -50,3 +50,10 @@ exports.getKeystore = (callback) -> getCachedValues 'keystore', callback
 
 # function to check if string match status code pattern
 exports.statusCodePatternMatch = (string, callback) -> /\dxx/.test string
+
+
+# returns an array with no duplicates
+exports.uniqArray = (arr) ->
+  dict = {}
+  dict[k] = k for k in arr
+  return (v for k, v of dict)
