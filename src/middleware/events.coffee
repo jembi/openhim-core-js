@@ -137,6 +137,9 @@ storeEvents = (ctx, done) ->
 
   now = new Date
   event.created = now for event in trxEvents
+
+  #bypass mongoose for quick batch inserts
+  #index needs to be ensured manually since the collection might not already exist
   events.Event.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 3600 }, ->
     events.Event.collection.insert trxEvents, (err) -> return if err then done err else done()
 

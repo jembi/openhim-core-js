@@ -3,6 +3,8 @@ server = require "../server"
 connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
+# A collection for keeping a day-long log of any alerts that got sent out to users
+# It is used for the user max-alert policies
 AlertSchema = new Schema
   "user":         type: String, required: true
   "method":       type: String, required: true
