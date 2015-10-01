@@ -5,11 +5,12 @@ contact = require './contact'
 moment = require 'moment'
 Q = require 'q'
 Channel = require('./model/channels').Channel
-Transaction = require('./model/transactions').Transaction
+Event = require('./model/events').Event
 ContactGroup = require('./model/contactGroups').ContactGroup
 Alert = require('./model/alerts').Alert
 User = require('./model/users').User
 authorisation = require('./middleware/authorisation')
+utils = require './utils'
 
 
 trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
@@ -60,19 +61,21 @@ getAllChannels = (callback) -> Channel.find {}, callback
 findGroup = (groupID, callback) -> ContactGroup.findOne _id: groupID, callback
 
 findTransactions = (channelID, dateFrom, status, callback) ->
-  Transaction.find {
-    "request.timestamp": $gte: dateFrom
-    channelID: channelID
-    "$or": [
-      { "response.status": status }
-      { routes: "$elemMatch": "response.status": status }
-    ]
-  }, { '_id' }, callback
+  Event
+    .find {
+      created: $gte: dateFrom
+      channelID: channelID
+      event: 'end'
+      status: status
+    }, { 'transactionID' }
+    .hint created: 1
+    .exec callback
 
 countTotalTransactionsForChannel = (channelID, dateFrom, callback) ->
-  Transaction.count {
-    "request.timestamp": $gte: dateFrom
+  Event.count {
+    created: $gte: dateFrom
     channelID: channelID
+    event: 'end'
   }, callback
 
 findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
@@ -83,7 +86,9 @@ findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
     alertStatus: alertStatus
   }
   criteria.user = user if user
-  Alert.findOne criteria, callback
+  Alert
+    .findOne criteria
+    .exec callback
 
 
 findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, callback) ->
@@ -100,7 +105,10 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
   findTransactions channelID, dateToCheck, statusMatch, (err, results) ->
     if not err and results? and failureRate?
       # Get count of total transactions and work out failure ratio
+      _countStart = new Date()
       countTotalTransactionsForChannel channelID, dateToCheck, (err, count) ->
+        logger.debug ".countTotalTransactionsForChannel: #{new Date()-_countStart} ms"
+        
         return callback err, null if err
 
         failureRatio = results.length/count*100.0
@@ -111,7 +119,7 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
             if alert?
               callback err, []
             else
-              callback err, results
+              callback err, utils.uniqArray results
         else
           callback err, []
     else
@@ -183,8 +191,6 @@ afterSendAlert = (err, channelID, alert, user, transactions, skipSave, done) ->
       method: user.method
       channelID: channelID
       status: alert.status
-      transactions: transactions.map (trx) -> trx._id
-      error: err
       alertStatus: if err then 'Failed' else 'Completed'
 
     alert.save (err) ->
@@ -202,6 +208,7 @@ sendAlerts = (channel, alert, transactions, contactHandler, done) ->
   # a promise is resolved per user when the alert is both sent and stored.
   promises = []
 
+  _alertStart = new Date()
   if alert.groups
     for group in alert.groups
       groupDefer = Q.defer()
@@ -230,7 +237,9 @@ sendAlerts = (channel, alert, transactions, contactHandler, done) ->
           afterSendAlert err, channel._id, alert, user, transactions, skipSave, -> userDefer.resolve()
         promises.push userDefer.promise
 
-  (Q.all promises).then -> done()
+  (Q.all promises).then ->
+    logger.debug ".sendAlerts: #{new Date()-_alertStart} ms"
+    done()
 
 
 alertingTask = (job, contactHandler, done) ->
@@ -238,6 +247,7 @@ alertingTask = (job, contactHandler, done) ->
 
   lastAlertDate = job.attrs.data.lastAlertDate ? new Date()
 
+  _taskStart = new Date()
   getAllChannels (err, results) ->
     promises = []
 
@@ -248,7 +258,10 @@ alertingTask = (job, contactHandler, done) ->
           do (channel, alert) ->
             deferred = Q.defer()
 
+            _findStart = new Date()
             findTransactionsMatchingStatus channel._id, alert.status, lastAlertDate, alert.failureRate, (err, results) ->
+              logger.debug ".findTransactionsMatchingStatus: #{new Date()-_findStart} ms"
+
               if err
                 logger.error err
                 deferred.resolve()
@@ -261,7 +274,9 @@ alertingTask = (job, contactHandler, done) ->
 
     (Q.all promises).then ->
       job.attrs.data.lastAlertDate = new Date()
+      logger.debug "Alerting task total time: #{new Date()-_taskStart} ms"
       done()
+
 
 setupAgenda = (agenda) ->
   agenda.define 'generate transaction alerts', (job, done) -> alertingTask job, contact.contactUser, done
