@@ -105,7 +105,10 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
   findTransactions channelID, dateToCheck, statusMatch, (err, results) ->
     if not err and results? and failureRate?
       # Get count of total transactions and work out failure ratio
+      _countStart = new Date()
       countTotalTransactionsForChannel channelID, dateToCheck, (err, count) ->
+        logger.debug ".countTotalTransactionsForChannel: #{new Date()-_countStart} ms"
+        
         return callback err, null if err
 
         failureRatio = results.length/count*100.0
@@ -205,6 +208,7 @@ sendAlerts = (channel, alert, transactions, contactHandler, done) ->
   # a promise is resolved per user when the alert is both sent and stored.
   promises = []
 
+  _alertStart = new Date()
   if alert.groups
     for group in alert.groups
       groupDefer = Q.defer()
@@ -233,7 +237,9 @@ sendAlerts = (channel, alert, transactions, contactHandler, done) ->
           afterSendAlert err, channel._id, alert, user, transactions, skipSave, -> userDefer.resolve()
         promises.push userDefer.promise
 
-  (Q.all promises).then -> done()
+  (Q.all promises).then ->
+    logger.debug ".sendAlerts: #{new Date()-_alertStart} ms"
+    done()
 
 
 alertingTask = (job, contactHandler, done) ->
@@ -241,6 +247,7 @@ alertingTask = (job, contactHandler, done) ->
 
   lastAlertDate = job.attrs.data.lastAlertDate ? new Date()
 
+  _taskStart = new Date()
   getAllChannels (err, results) ->
     promises = []
 
@@ -251,7 +258,10 @@ alertingTask = (job, contactHandler, done) ->
           do (channel, alert) ->
             deferred = Q.defer()
 
+            _findStart = new Date()
             findTransactionsMatchingStatus channel._id, alert.status, lastAlertDate, alert.failureRate, (err, results) ->
+              logger.debug ".findTransactionsMatchingStatus: #{new Date()-_findStart} ms"
+
               if err
                 logger.error err
                 deferred.resolve()
@@ -264,7 +274,9 @@ alertingTask = (job, contactHandler, done) ->
 
     (Q.all promises).then ->
       job.attrs.data.lastAlertDate = new Date()
+      logger.debug "Alerting task total time: #{new Date()-_taskStart} ms"
       done()
+
 
 setupAgenda = (agenda) ->
   agenda.define 'generate transaction alerts', (job, done) -> alertingTask job, contact.contactUser, done
