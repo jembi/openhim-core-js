@@ -9,8 +9,8 @@ exports.configParamTypes = [ 'string', 'bool', 'number', 'option' ]
 
 configDef =
   "param":    String
-  "type":     type: String
-  "values":   [ type: String, enum: exports.configParamTypes ]
+  "type":     type: String, enum: exports.configParamTypes
+  "values":   [ type: String ]
   "default":  String
 
 # The properties prefixed with an '_' are internally used properties and shouldn't be set by the user
