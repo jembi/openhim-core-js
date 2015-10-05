@@ -119,6 +119,8 @@ exports.heartbeat = (urn) ->
     if mediator._configModifiedTS > mediator._lastHeartbeat or heartbeat?.config is true
       # Return config if it has changed since last heartbeat
       this.body = mediator.config
+    else
+      this.body = ""
 
     # set internal properties
     if heartbeat?
@@ -129,7 +131,6 @@ exports.heartbeat = (urn) ->
       yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
 
     this.status = 200
-    this.body = ""
   catch err
     utils.logAndSetResponse this, 500, "Could not process mediator heartbeat (urn: #{urn}): #{err}", 'error'
 
