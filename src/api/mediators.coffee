@@ -129,6 +129,7 @@ exports.heartbeat = (urn) ->
       yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
 
     this.status = 200
+    this.body = ""
   catch err
     utils.logAndSetResponse this, 500, "Could not process mediator heartbeat (urn: #{urn}): #{err}", 'error'
 
