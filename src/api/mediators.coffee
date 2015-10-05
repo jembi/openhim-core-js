@@ -119,6 +119,8 @@ exports.heartbeat = (urn) ->
     if mediator._configModifiedTS > mediator._lastHeartbeat or heartbeat?.config is true
       # Return config if it has changed since last heartbeat
       this.body = mediator.config
+    else
+      this.body = ""
 
     # set internal properties
     if heartbeat?
