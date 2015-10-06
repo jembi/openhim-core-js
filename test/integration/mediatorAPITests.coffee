@@ -282,6 +282,67 @@ describe "API Integration Tests", ->
                   res[0].name.should.be.exactly updatedMediator.name
                   done()
 
+      it 'should not update config that has already been set', (done) ->
+        mediator =
+          urn: "urn:uuid:66237a48-2e76-4318-8cd6-9c6649ad6f5f"
+          name: "Mediator"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "number"
+          ]
+          config:
+            param1: "val1"
+            param2: 5
+        updatedMediator =
+          urn: "urn:uuid:66237a48-2e76-4318-8cd6-9c6649ad6f5f"
+          version: "1.0.1"
+          name: "Updated Mediator"
+          configDefs: [
+            param: "param1"
+            type: "string"
+          ,
+            param: "param2"
+            type: "number"
+          ,
+            param: "param3"
+            type: "bool"
+          ]
+          config:
+            param1: "val1"
+            param2: 6
+            param3: true
+        new Mediator(mediator).save ->
+          request("https://localhost:8080")
+            .post("/mediators")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(updatedMediator)
+            .expect(201)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Mediator.find { urn: mediator.urn }, (err, res) ->
+                  return done err if err
+                  res.length.should.be.exactly 1
+                  res[0].name.should.be.exactly updatedMediator.name
+                  res[0].config.param2.should.be.exactly 5 # unchanged
+                  res[0].config.param3.should.be.exactly true # new
+                  done()
+
       it 'should reject mediators without a UUID', (done) ->
         invalidMediator =
           version: "0.8.2"
