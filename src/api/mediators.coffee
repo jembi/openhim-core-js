@@ -62,11 +62,17 @@ exports.addMediator = ->
       validateConfig mediator.configDefs, mediator.config
 
     existing = yield Mediator.findOne({urn: mediator.urn}).exec()
-
     if typeof existing != 'undefined' and existing != null
       if semver.gt(mediator.version, existing.version)
+        # update the mediator
+        if mediator.config? and existing.config?
+          # if some config already exists, add only config that didn't exist previously
+          for param, val of mediator.config
+            if existing.config[param]?
+              mediator.config[param] = existing.config[param]
         yield Mediator.findByIdAndUpdate(existing._id, mediator).exec()
     else
+      # this is a new mediator validate and save it
       if not mediator.endpoints or mediator.endpoints.length < 1
         throw constructError 'At least 1 endpoint is required', 'ValidationError'
       yield Q.ninvoke(new Mediator(mediator), 'save')
