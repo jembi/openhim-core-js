@@ -21,16 +21,16 @@ describe "Mediator API unit tests", ->
       throw new Error 'Failed'
 
     it "should allow config that doesn't include all params", ->
-        mediators.validateConfig(
-          [
-            param: "param1"
-            type: "string"
-          ,
-            param: "param2"
-            type: "string"
-          ],
-          param1: "val1"
-        )
+      mediators.validateConfig(
+        [
+          param: "param1"
+          type: "string"
+        ,
+          param: "param2"
+          type: "string"
+        ],
+        param1: "val1"
+      )
 
     it "should reject config value if they are the incorrect type", ->
       errors = 0

@@ -8,10 +8,11 @@ ChannelSchema = require('./channels').ChannelSchema
 exports.configParamTypes = [ 'string', 'bool', 'number', 'option' ]
 
 configDef =
-  "param":    String
-  "type":     type: String, enum: exports.configParamTypes
-  "values":   [ type: String ]
-  "default":  String
+  "param":        String
+  "displayName":  String
+  "description":  String
+  "type":         type: String, enum: exports.configParamTypes
+  "values":       [ type: String ]
 
 # The properties prefixed with an '_' are internally used properties and shouldn't be set by the user
 MediatorSchema = new Schema
@@ -28,6 +29,6 @@ MediatorSchema = new Schema
   "_lastHeartbeat":         Date
 
 MediatorSchema.index "defaultChannelConfig.name", sparse: true
- 
+
 # Model for describing a collection of mediators that have registered themselves with core
 exports.Mediator = connectionDefault.model 'Mediator', MediatorSchema
