@@ -5,7 +5,7 @@ Schema = mongoose.Schema
 RouteDef = require('./channels').RouteDef
 ChannelSchema = require('./channels').ChannelSchema
 
-exports.configParamTypes = [ 'string', 'bool', 'number', 'option' ]
+exports.configParamTypes = [ 'string', 'bool', 'number', 'option', 'bigstring' ]
 
 configDef =
   "param":        String

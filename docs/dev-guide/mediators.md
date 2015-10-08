@@ -74,6 +74,7 @@ with a body contain the following sample structure:
 
 The `configDefs` property defines an array of configuration definitions that each describe configuration parameters that could be provided by the user. These configuration parameters could have the following `type` properties:
 * `string` - A string of text
+* `bigstring` - A string of text that is expected to be large (it will be displayed as a text area on the admin console)
 * `bool` - A boolean value (true or false)
 * `number` - An integer or decimal value
 * `option` - A value from a pre-defined list. If this datatype is use then the `values` property MUST also be used. The `values` property specifies an array of possible values for the parameter.
