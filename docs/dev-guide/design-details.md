@@ -27,7 +27,7 @@ The OpenHIM-core will use Koa middleware to act on HTTP requests and Responses. 
 
 Each row in the diagram representing the OepnHIM-core is a middleware component. Each of the components of the OpenHIM-core will be described further in the following sections. The OpenHIM-core will also have a REST API that will allow a web UI to be created for easy of management.
 
-![](https://wiki.ohie.org/download/attachments/14680506/OpenHIM-js%20design.png?version=1&modificationDate=1393577404110&api=v2)
+![](/_static/design/OpenHIM-js-design.png)
 
 ## Authentication and Authorization
 
@@ -151,9 +151,9 @@ A custom router will have to be developed that can route according to these rule
                 "name": "Some Registry",
                 "path": "some/other/path" // this is optional if left out original path is used
                 "host": "localhost",
-                "port": 8080 
+                "port": 8080
             }
-             
+
         ],
         "properties": [ // optional meta data about a channel
             { "prop1": "value1" },
@@ -174,7 +174,7 @@ A custom router will have to be developed that can route according to these rule
             {
                 "name": "Logger",
                 "host": "log-host",
-                "port": 4789 
+                "port": 4789
             }
         ]
         "properties": [ // optional meta data about a channel

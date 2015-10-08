@@ -25,7 +25,7 @@ The following is a list of key requirements that are seen as necessary for an in
 
 Below, the architecture of the Interoperability Layer is shown in the context of the other expected services and registries. The Interoperability Layer components are show in **<span style="color: rgb(51,204,204);">blue</span>**, the domain services (registries) are shown in **<span style="color: rgb(153,51,0);">red</span>** and the clients are shown in <span style="color: rgb(153,204,0);">**green.**</span>
 
-![](https://wiki.ohie.org/download/attachments/11370499/Central%20HIM%20componentv2.png?version=1&modificationDate=1381999282070&api=v2)
+![](/_static/design/Central-HIM-componentv2.png)
 
 ### The core (thin proxy) component
 

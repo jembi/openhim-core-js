@@ -15,7 +15,7 @@ Suggested mediator structure
 
 For maximum reusability and modifiability, we suggest that mediators be split into a number of sub-components. These sub-components are shown in the diagram bellow. Mediators do not need to follow this structure however it provides some useful benefits. If a mediator is simple and does not need the complexity added by having multiple sub-components it may implement its functionality in which ever way is simplest. If you mediator does not require this, you may skip this section.
 
-![mediator image](https://docs.google.com/drawings/d/1ahvqbO0PPFTk3icP-hWpGQ_dShSE1ztiLcWeh57St-k/pub?w=697&h=569)
+![](/_static/mediators/mediator-structure.png)
 
 Each mediator should consist of a **normalisation** sub-components, a **orchestration** sub-component and a **de-normalisation** sub-component. The purpose of each of these are described below.
 
