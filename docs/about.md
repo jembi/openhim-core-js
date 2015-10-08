@@ -37,14 +37,23 @@ To see the roadmap for the OpenHIM you can view the [issues list for core](https
 
 ## Funders
 
-[![pepfar](/_static/funders/pepfar.jpg)](http://www.pepfar.gov/ "PEPFAR")[![cdc](/_static/funders/cdc.jpg)](http://www.cdc.gov/ "CDC")[![idrc](/_static/funders/idrc.jpg)](http://www.idrc.ca/EN/Pages/default.aspx "IDRC")[![rockefellerFoundation](/_static/funders/rockefellerFoundation.jpg)](http://www.rockefellerfoundation.org/ "Rockefeller Foundation")
+[![pepfar](/_static/funders/pepfar.jpg)](http://www.pepfar.gov/ "PEPFAR")
+[![cdc](/_static/funders/cdc.jpg)](http://www.cdc.gov/ "CDC")
+[![idrc](/_static/funders/idrc.jpg)](http://www.idrc.ca/EN/Pages/default.aspx "IDRC")
+
+[![rockefellerFoundation](/_static/funders/rockefellerFoundation.jpg)](http://www.rockefellerfoundation.org/ "Rockefeller Foundation")
 
 ## Development Partners
 
+[![jembi](/_static/funders/jembi.png)](http://jembi.org)
 [![heal](/_static/funders/heal.png)](http://heal.cs.ukzn.ac.za/ "HeAL UKZN")
 
-## Partners
+## Other Partners
 
-[![mohawk](/_static/funders/mohawk.jpg)](http://www.mohawkcollege.ca/ "Mohawk College")[![regenstriefInstitute](/_static/funders/regenstriefInstitute.jpg)](http://www.regenstrief.org/ "Regenstrief Institute")[![intraHealth](/_static/funders/intraHealth.jpg)](http://www.intrahealth.org/ "InntraHealth")[![hisp](/_static/funders/hisp.png)](http://hisp.org)[eCGroup](http://www.ecgroupinc.com/index.htm "eCGroup")
+[![mohawk](/_static/funders/mohawk.jpg)](http://www.mohawkcollege.ca/ "Mohawk College")
+[![regenstriefInstitute](/_static/funders/regenstriefInstitute.jpg)](http://www.regenstrief.org/ "Regenstrief Institute")
+[![intraHealth](/_static/funders/intraHealth.jpg)](http://www.intrahealth.org/ "InntraHealth")
 
-[![jembi](/_static/funders/jembi.png)](http://jembi.org)[![openhie-logo](/_static/funders/openhie-logo.png)](http://ohie.org)
+[![hisp](/_static/funders/hisp.png)](http://hisp.org)
+[![openhie-logo](/_static/funders/openhie-logo.png)](http://ohie.org)
+[**eCGroup**](http://www.ecgroupinc.com/index.htm "eCGroup")
