@@ -11,3 +11,4 @@ User guide
    certificates
    mediators
    disaster-recovery
+   versioning
