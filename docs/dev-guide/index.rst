@@ -10,3 +10,4 @@ Developer guide
    mediators
    api-ref
    contrib
+   versioning
