@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "agenda": "^0.6.26",
+    "atna-audit": "^0.2.1",
     "basic-auth": "^1.0.0",
     "bcryptjs": "^2.0.0",
     "co": "^4.1.0",
