@@ -9,7 +9,9 @@ contact = require '../contact'
 config = require "../config/config"
 config.newUserExpiry = config.get('newUserExpiry')
 utils = require "../utils"
-
+atna = require 'atna-audit'
+os = require 'os'
+auditing = require '../auditing'
 
 ###
 # Get authentication details
@@ -22,10 +24,19 @@ exports.authenticate = (email) ->
 
     if not user
       utils.logAndSetResponse this, 404, "Could not find user by email #{email}", 'info'
+      # User NOTE authenticated, send audit
+      audit = atna.userLoginAudit 8, 'openhim', os.hostname(), email
+      audit = atna.wrapInSyslog audit
+      auditing.processAudit audit, -> logger.info 'Processed internal audit'
     else
       this.body =
         salt: user.passwordSalt
         ts: new Date()
+
+      # User authenticated, send audit
+      audit = atna.userLoginAudit 0, 'openhim', os.hostname(), email, user.groups.join(','), user.groups.join(',')
+      audit = atna.wrapInSyslog audit
+      auditing.processAudit audit, -> logger.info 'Processed internal audit'
   catch e
     utils.logAndSetResponse this, 500, "Error during authentication #{e}", 'error'
 
@@ -62,7 +73,7 @@ exports.getNewUser = (token) ->
 exports.updateNewUser = (token) ->
   token = unescape token
   userData = this.request.body
-  
+
   try
     # first try get new user details to check expiry date
     newUserOldData = yield User.findOne(token: token).exec()
@@ -166,7 +177,7 @@ exports.addUser = ->
 
     contact.contactUser 'email', userData.email, 'OpenHIM Console Profile', plainMessage, htmlMessage, ->
       logger.info 'The email has been sent to the new user'
-    
+
     this.body = 'User successfully created'
     this.status = 201
     logger.info "User #{this.authenticated.email} created user #{userData.email}"
