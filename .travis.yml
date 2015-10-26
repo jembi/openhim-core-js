@@ -1,5 +1,6 @@
 language: node_js
 node_js:
+  - "0.12"
   - "4"
 services: mongodb
 after_success:
