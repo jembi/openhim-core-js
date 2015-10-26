@@ -25,7 +25,7 @@ exports.authenticate = (email) ->
     if not user
       utils.logAndSetResponse this, 404, "Could not find user by email #{email}", 'info'
       # User NOT authenticated, send audit
-      audit = atna.userLoginAudit 8, 'openhim', os.hostname(), email
+      audit = atna.userLoginAudit atna.OUTCOME_SERIOUS_FAILURE, 'openhim', os.hostname(), email
       audit = atna.wrapInSyslog audit
       auditing.processAudit audit, -> logger.info 'Processed internal audit'
     else
@@ -34,7 +34,7 @@ exports.authenticate = (email) ->
         ts: new Date()
 
       # User authenticated, send audit
-      audit = atna.userLoginAudit 0, 'openhim', os.hostname(), email, user.groups.join(','), user.groups.join(',')
+      audit = atna.userLoginAudit atna.OUTCONE_SUCCESS, 'openhim', os.hostname(), email, user.groups.join(','), user.groups.join(',')
       audit = atna.wrapInSyslog audit
       auditing.processAudit audit, -> logger.info 'Processed internal audit'
   catch e
