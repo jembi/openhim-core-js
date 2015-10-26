@@ -673,8 +673,5 @@ else
           # send reponse back to API request
           return callback null, uptime
 
-
-
-
       # listen for response from master
       process.on 'message', processEvent
