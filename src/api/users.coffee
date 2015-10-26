@@ -24,7 +24,7 @@ exports.authenticate = (email) ->
 
     if not user
       utils.logAndSetResponse this, 404, "Could not find user by email #{email}", 'info'
-      # User NOTE authenticated, send audit
+      # User NOT authenticated, send audit
       audit = atna.userLoginAudit 8, 'openhim', os.hostname(), email
       audit = atna.wrapInSyslog audit
       auditing.processAudit audit, -> logger.info 'Processed internal audit'
