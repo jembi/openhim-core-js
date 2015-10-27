@@ -34,7 +34,7 @@ exports.authenticate = (email) ->
         ts: new Date()
 
       # User authenticated, send audit
-      audit = atna.userLoginAudit atna.OUTCONE_SUCCESS, 'openhim', os.hostname(), email, user.groups.join(','), user.groups.join(',')
+      audit = atna.userLoginAudit atna.OUTCOME_SUCCESS, 'openhim', os.hostname(), email, user.groups.join(','), user.groups.join(',')
       audit = atna.wrapInSyslog audit
       auditing.processAudit audit, -> logger.info 'Processed internal audit'
   catch e
