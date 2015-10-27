@@ -62,7 +62,7 @@ exports.addMediator = ->
       mediatorHost = 'unknown'
 
     # audit mediator start
-    audit = atna.appActivityAudit true, mediator.name, mediatorHost, 'root'
+    audit = atna.appActivityAudit true, mediator.name, mediatorHost, 'system'
     audit = atna.wrapInSyslog audit
     auditing.processAudit audit, ->
       logger.info "Processed internal mediator start audit for: #{mediator.name} - #{mediator.urn}"

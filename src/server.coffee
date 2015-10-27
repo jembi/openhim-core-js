@@ -510,7 +510,7 @@ else
       promises.push startAgenda()
 
       (Q.all promises).then ->
-        audit = atna.appActivityAudit true, 'openhim', os.hostname(), 'root'
+        audit = atna.appActivityAudit true, 'openhim', os.hostname(), 'system'
         audit = atna.wrapInSyslog audit
         auditing.processAudit audit, ->
           logger.info 'Processed internal start audit'
@@ -588,7 +588,7 @@ else
 
       agenda = null
 
-      audit = atna.appActivityAudit false, 'openhim', os.hostname(), 'root'
+      audit = atna.appActivityAudit false, 'openhim', os.hostname(), 'system'
       audit = atna.wrapInSyslog audit
       auditing.processAudit audit, ->
         logger.info 'Processed internal stop audit'
