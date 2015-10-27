@@ -33,8 +33,8 @@ describe "Auditing Integration Tests", ->
           return done err if err
 
           # message fields already validate heavily in unit test, just perform basic check
-          audits.length.should.be.exactly 1
-          audits[0].rawMessage.should.be.exactly testAuditMessage
+          audits.length.should.be.exactly 2 # 1 extra due to automatic actor start audit
+          audits[1].rawMessage.should.be.exactly testAuditMessage
           done()
 
         # async test :(
@@ -58,8 +58,8 @@ describe "Auditing Integration Tests", ->
         return done err if err
 
         # message fields already validate heavily in unit test, just perform basic check
-        audits.length.should.be.exactly 1
-        audits[0].rawMessage.should.be.exactly testAuditMessage
+        audits.length.should.be.exactly 2 # 1 extra due to automatic actor start audit
+        audits[1].rawMessage.should.be.exactly testAuditMessage
         done()
 
     it "should send TLS audit messages and NOT save (Invalid)", (done) ->
@@ -77,7 +77,7 @@ describe "Auditing Integration Tests", ->
         return done err if err
 
         # message fields already validate heavily in unit test, just perform basic check
-        audits.length.should.be.exactly 0
+        audits.length.should.be.exactly 1 # 1 extra due to automatic actor start audit
         done()
 
   describe "TCP Audit Server", ->
@@ -91,8 +91,8 @@ describe "Auditing Integration Tests", ->
         return done err if err
 
         # message fields already validate heavily in unit test, just perform basic check
-        audits.length.should.be.exactly 1
-        audits[0].rawMessage.should.be.exactly testAuditMessage
+        audits.length.should.be.exactly 2  # 1 extra due to automatic actor start audit
+        audits[1].rawMessage.should.be.exactly testAuditMessage
         done()
 
     it "should send TCP audit message and NOT save (Invalid)", (done) ->
@@ -100,10 +100,10 @@ describe "Auditing Integration Tests", ->
         # testAuditMessage does not have message length with space prepended
         client.write testAuditMessage
         client.end()
-        
+
       client.on 'end', -> Audit.find {}, (err, audits) ->
         return done err if err
 
         # message fields already validate heavily in unit test, just perform basic check
-        audits.length.should.be.exactly 0
+        audits.length.should.be.exactly 1 # 1 extra due to automatic actor start audit
         done()

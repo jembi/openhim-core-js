@@ -4,8 +4,10 @@ Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
 semver = require 'semver'
+atna = require 'atna-audit'
 
 utils = require "../utils"
+auditing = require '../auditing'
 
 
 exports.getAllMediators = ->
@@ -53,6 +55,18 @@ exports.addMediator = ->
 
   try
     mediator = this.request.body
+
+    if mediator?.endpoints?[0]?.host?
+      mediatorHost = mediator.endpoints[0].host
+    else
+      mediatorHost = 'unknown'
+
+    # audit mediator start
+    audit = atna.appActivityAudit true, mediator.name, mediatorHost, 'system'
+    audit = atna.wrapInSyslog audit
+    auditing.processAudit audit, ->
+      logger.info "Processed internal mediator start audit for: #{mediator.name} - #{mediator.urn}"
+
     if not mediator.urn
       throw constructError 'URN is required', 'ValidationError'
     if not mediator.version or not semver.valid(mediator.version)

@@ -39,6 +39,8 @@ logger.remove logger.transports.Console
 cluster = require 'cluster'
 numCPUs = require('os').cpus().length
 nconf = require 'nconf'
+atna = require 'atna-audit'
+os = require 'os'
 
 User = require('./model/users').User
 Keystore = require('./model/keystore').Keystore
@@ -434,7 +436,7 @@ else
         if isNaN(length)
           logger.info "[Auditing #{type}] No length supplied"
           sock.destroy()
-          
+
         # if sourced length equals message length then full message received
         if length == message.length
           logger.info "[Auditing #{type}] Received message from #{sock.remoteAddress}"
@@ -508,8 +510,12 @@ else
       promises.push startAgenda()
 
       (Q.all promises).then ->
-        logger.info "OpenHIM server started: #{new Date()}"
-        done()
+        audit = atna.appActivityAudit true, 'openhim', os.hostname(), 'system'
+        audit = atna.wrapInSyslog audit
+        auditing.processAudit audit, ->
+          logger.info 'Processed internal start audit'
+          logger.info "OpenHIM server started: #{new Date()}"
+          done()
 
 
   # wait for any running tasks before trying to stop anything
@@ -581,8 +587,13 @@ else
       auditTcpServer = null
 
       agenda = null
-      logger.info 'Server shutdown complete.'
-      done()
+
+      audit = atna.appActivityAudit false, 'openhim', os.hostname(), 'system'
+      audit = atna.wrapInSyslog audit
+      auditing.processAudit audit, ->
+        logger.info 'Processed internal stop audit'
+        logger.info 'Server shutdown complete.'
+        done()
 
   lookupServerPorts = ->
     httpPort: config.router.httpPort
@@ -661,9 +672,6 @@ else
 
           # send reponse back to API request
           return callback null, uptime
-
-
-
 
       # listen for response from master
       process.on 'message', processEvent
