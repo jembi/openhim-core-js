@@ -21,6 +21,7 @@ statsd = require './api/statsd'
 config = require './config/config'
 heartbeat = require './api/heartbeat'
 certificateAuthority = require './api/certificateAuthority'
+logs = require './api/logs'
 
 exports.setupApp = (done) ->
 
@@ -118,6 +119,9 @@ exports.setupApp = (done) ->
 
   # Ceritficates endpoint
   app.use route.post '/certificates', certificateAuthority.generateCert
+
+  # Logs endpoint
+  app.use route.get '/logs', logs.getLogs
 
   # Return the result
   done(app)

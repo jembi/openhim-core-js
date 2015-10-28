@@ -35,6 +35,7 @@ tlsAuthentication = require "./middleware/tlsAuthentication"
 uuid = require 'node-uuid'
 Q = require 'q'
 logger = require 'winston'
+require('winston-mongodb').MongoDB
 logger.remove logger.transports.Console
 cluster = require 'cluster'
 numCPUs = require('os').cpus().length
@@ -63,6 +64,10 @@ if cluster.isMaster and not module.parent
   logger.add logger.transports.Console,
     colorize: true
     timestamp: true
+    label: "master"
+    level: config.logger.level
+  logger.add logger.transports.MongoDB,
+    db: config.mongo.url
     label: "master"
     level: config.logger.level
 
@@ -133,6 +138,10 @@ else
   logger.add logger.transports.Console,
     colorize: true
     timestamp: true
+    label: "worker#{cluster.worker.id}" if cluster.worker?.id?
+    level: config.logger.level
+  logger.add logger.transports.MongoDB,
+    db: config.mongo.url
     label: "worker#{cluster.worker.id}" if cluster.worker?.id?
     level: config.logger.level
 
