@@ -52,7 +52,7 @@ Example implementations
 
 An example of how this authentication mechanism can implemented for use with curl is show here: https://github.com/jembi/openhim-core-js/blob/master/resources/openhim-api-curl.sh
 
-An example of how this is implemented in the OpenHIM Console see: https://github.com/jembi/openhim-console/blob/master/app/scripts/services/login.js#L12-L39 and https://github.com/jembi/openhim-console/blob/master/app/scripts/services/authinterceptor.js#L20-L50 
+An example of how this is implemented in the OpenHIM Console see: https://github.com/jembi/openhim-console/blob/master/app/scripts/services/login.js#L12-L39 and https://github.com/jembi/openhim-console/blob/master/app/scripts/services/authinterceptor.js#L20-L50
 
 API Reference
 -------------
@@ -453,7 +453,7 @@ This endpoint can only be called by an admin user.
 
 `/metrics`
 
-This fetches global load and transaction duration metrics for all channels that the logged in user has permissions to view. 
+This fetches global load and transaction duration metrics for all channels that the logged in user has permissions to view.
 
 These are fetched from either aggregating transaction data from MongoDB or from an instance of the statd metrics service. This depends on the configuration of the HIM in question.
 
@@ -588,3 +588,50 @@ returns 200 ok
 `GET keystore/validity`
 
 return 200 ok with `{ valid: true|false}`
+
+### Logs resource
+
+The logs resource allows you to get access to the server logs. This resource is only accessible by admin users and only works if you have [database logging](https://github.com/jembi/openhim-core-js/blob/master/config/config.md) enabled (This is enabled by default).
+
+#### Get logs
+
+`GET logs?[filters]`
+
+Fetches server logs. You may apply a number of filters to fetch the logs that you require. By default the logs with level `info` and above for the last 5 mins with be returned. The logs will be returned as an ordered array with the latest message at the end of the array.
+
+A maximum of 100 000 log messages will ever be returned. So don't make unreasonable queries as you won't get all the results (hint: use pagination).
+
+The following filters are available:
+
+* `from` - an ISO8601 formatted date to query from. Defaults to 5 mins ago.
+* `until` - an ISO8601 formatted date to query until. Defaults to now.
+* `start` - a number n: the log message to start from, if specified the first `n` message are NOT returned. Useful along with limit for pagination. Defaults to 0.
+* `limit` - a number n: the max number of log messages to return. Useful along with `start` for pagination. Defaults to 100 000.
+* `level` - The log level to return. Possible values are `debug`, `info`, `warn` and `error`. All messages with a level equal to or of higher severity to the specified value will be returned. Defaults to `info`.
+
+The logs will be returned in the following format with a `200` status code:
+
+```js
+[
+  {
+    "label": "worker1",
+    "meta": {},
+    "level": "info",
+    "timestamp": "2015-10-29T09:40:31.536Z",
+    "message": "Some message"
+  },
+  {
+    "label": "worker1",
+    "meta": {},
+    "level": "info",
+    "timestamp": "2015-10-29T09:40:39.128Z",
+    "message": "Another message"
+  }
+  // ...
+]
+```
+
+For example a sample request could look like this:
+```
+https://localhost:8080/logs?from=2015-10-28T12:31:46&until=2015-10-28T12:38:55&limit=100&start=10&level=error`
+```
