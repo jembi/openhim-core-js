@@ -18,7 +18,16 @@ The following config option are provided by the OpenHIM. All of these options ha
   },
   "logger": {
     // the logging level
-    "level": "info"
+    "level": "info",
+    // Whether to store log messages to mongo. Note: if this is disabled the
+    // logs API will NOT work!
+    "logToDB": true,
+    // Whether to cap the size of the log message stored in mongo. This only
+    // takes effect if the collection is being created for the first time. Ie.
+    // the first time the OpenHIM is run.
+    "capDBLogs": true,
+    // The max size in bytes of the logs collection
+    "capSize": 10000000,
   },
   "router": {
     // The external hostname of the OpenHIM, used to rewrite urls in http responses
