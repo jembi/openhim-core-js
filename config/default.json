@@ -5,7 +5,10 @@
     "atnaUrl": "mongodb://localhost/openhim"
   },
   "logger": {
-    "level": "info"
+    "level": "info",
+    "logToDB": true,
+    "capDBLogs": true,
+    "capSize": 10000000
   },
   "router": {
     "externalHostname": "localhost",

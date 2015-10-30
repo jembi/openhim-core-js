@@ -44,7 +44,8 @@
     "semver": "^4.3.6",
     "source-map-support": "^0.3.2",
     "statsd-client": "^0.1.0",
-    "winston": "^1.0.1",
+    "winston": "^1.1.1",
+    "winston-mongodb": "^1.2.0",
     "xml2js": "^0.4.5",
     "xmldom": "^0.1.19",
     "xpath": "0.0.9"

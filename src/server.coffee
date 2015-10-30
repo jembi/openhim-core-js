@@ -35,6 +35,7 @@ tlsAuthentication = require "./middleware/tlsAuthentication"
 uuid = require 'node-uuid'
 Q = require 'q'
 logger = require 'winston'
+require('winston-mongodb').MongoDB
 logger.remove logger.transports.Console
 cluster = require 'cluster'
 numCPUs = require('os').cpus().length
@@ -65,6 +66,13 @@ if cluster.isMaster and not module.parent
     timestamp: true
     label: "master"
     level: config.logger.level
+  if config.logger.logToDB is true
+    logger.add logger.transports.MongoDB,
+      db: config.mongo.url
+      label: "master"
+      level: 'debug'
+      capped: config.logger.capDBLogs
+      cappedSize: config.logger.capSize
 
   if not clusterArg?
     clusterArg = 1
@@ -135,6 +143,13 @@ else
     timestamp: true
     label: "worker#{cluster.worker.id}" if cluster.worker?.id?
     level: config.logger.level
+  if config.logger.logToDB is true
+    logger.add logger.transports.MongoDB,
+      db: config.mongo.url
+      label: "worker#{cluster.worker.id}" if cluster.worker?.id?
+      level: 'debug'
+      capped: config.logger.capDBLogs
+      cappedSize: config.logger.capSize
 
   httpServer = null
   httpsServer = null
