@@ -643,3 +643,5 @@ https://localhost:8080/logs?from=2015-10-28T12:31:46&until=2015-10-28T12:38:55&l
 returns 200 ok with `{ master: <core-uptime>, mediators: { <urn>: <mediator-uptime> ... }`
 
 Returns the server uptime in seconds. Includes a list of all registered mediators and if heartbeats have been received for them, will include their uptimes as well.
+
+Note that this is a public endpoint that does not require any authorization. It is convenient for integrating with external monitoring tools.
