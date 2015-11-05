@@ -2,7 +2,20 @@ language: node_js
 node_js:
   - "0.12"
   - "4"
-services: mongodb
+
+addons:
+  apt:
+    sources:
+      - mongodb-upstart
+      - mongodb-3.0-precise
+    packages:
+      - mongodb-org-server
+      - mongodb-org-shell
+
+before_script:
+  - sleep 15
+
 after_success:
   - 'if [ "$TRAVIS_BRANCH" == "master" ]; then curl -v -X POST -H ''api_key: fdb9e03f-f843-4bea-9d02-43ab619dd289'' http://162.243.219.172/deploys/openhim-core/preprod; fi'
+
 sudo: false
