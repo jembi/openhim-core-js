@@ -13,12 +13,11 @@ exports.getHeartbeat = ->
     for mediator in mediators
       if not result.mediators then result.mediators = {}
 
-      isUp = -> mediator._lastHeartbeat? and mediator._uptime? and
+      if mediator._lastHeartbeat? and mediator._uptime? and
       # have we received a heartbeat within the last minute?
       moment().diff(mediator._lastHeartbeat, 'seconds') <= 60
-
-      if isUp mediator
         result.mediators[mediator.urn] = mediator._uptime
+
       else
         result.mediators[mediator.urn] = null
 
