@@ -169,6 +169,7 @@ exports.nonPrimaryRouteDurations = (ctx, route, done) ->
 
 
 
+# DEPRECATED not applicable with async routes
 exports.koaMiddleware = (next) ->
   this.timer = new Date()
   yield next

@@ -6,6 +6,7 @@ config = require '../config/config'
 statsdServer = config.get 'statsd'
 application = config.get 'application'
 SDC = require 'statsd-client'
+stats = require './stats'
 os = require 'os'
 
 domain = "#{os.hostname()}.#{application.name}.appMetrics"
@@ -156,10 +157,16 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
       if not ctx.status
         tx.status = transactionStatus.COMPLETED
 
+      ctx.transactionStatus = tx.status
+
       logger.info "Final status for transaction #{tx._id} : #{tx.status}"
       transactions.Transaction.findByIdAndUpdate transactionId, {status: tx.status}, { },  (err,tx) ->
         tx.save
         callback tx
+
+        if config.statsd.enabled
+          stats.incrementTransactionCount ctx, ->
+          stats.measureTransactionDuration ctx, ->
 
 
 
