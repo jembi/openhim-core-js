@@ -20,9 +20,12 @@ exports.retrieveTransactionCountPerHour = ->
   path = "/render?target=transformNull(summarize(stats.counters.#{domain}.channels.count,'1hour'))&from=-1days&format=json"
   raw = yield exports.fetchData path
 
-  this.body = raw.data.map (item) ->
-    load: item[0]
-    timestamp: moment.unix item[1]
+  if raw.data?
+    this.body = raw.data.map (item) ->
+      load: item[0]
+      timestamp: moment.unix item[1]
+  else
+    this.body = []
 
 # Retrives Global Status Metrics from the StatsD API
 
