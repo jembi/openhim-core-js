@@ -3,7 +3,7 @@ server = require "../server"
 connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 RouteDef = require('./channels').RouteDef
-ChannelSchema = require('./channels').ChannelSchema
+ChannelDef = require('./channels').ChannelDef
 
 exports.configParamTypes = [ 'string', 'bool', 'number', 'option', 'bigstring' ]
 
@@ -21,14 +21,12 @@ MediatorSchema = new Schema
   "name":                   type: String, required: true
   "description":            String
   "endpoints":              [RouteDef]
-  "defaultChannelConfig":   [ChannelSchema]
+  "defaultChannelConfig":   [ChannelDef]
   "configDefs":             [configDef]
   "config":                 Object
   "_configModifiedTS":      Date
   "_uptime":                Number
   "_lastHeartbeat":         Date
-
-MediatorSchema.index "defaultChannelConfig.name", sparse: true
 
 # Model for describing a collection of mediators that have registered themselves with core
 exports.Mediator = connectionDefault.model 'Mediator', MediatorSchema
