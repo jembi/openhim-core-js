@@ -131,6 +131,31 @@ describe "API Integration Tests", ->
                 channel.allow.should.have.length 3
                 done()
 
+      it 'should reject a channel without a name', (done) ->
+        newChannel =
+          urlPattern: "test/sample"
+          allow: [ "PoC", "Test1", "Test2" ]
+          routes: [
+                name: "test route"
+                host: "localhost"
+                port: 9876
+                primary: true
+              ]
+
+        request("https://localhost:8080")
+          .post("/channels")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(newChannel)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
       it 'should reject invalid channels with invalid pathTransform', (done) ->
         invalidChannel =
           name: "InvalidChannel"

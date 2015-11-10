@@ -30,8 +30,8 @@ RewriteRuleDef =
   "toPort":         type: Number, required: true, default: 80
   "pathTransform":  String
 
-ChannelSchema = new Schema
-  "name":               type: String, required: true, unique: true
+ChannelDef =
+  "name":               type: String, required: true
   "description":        String
   "urlPattern":         type: String, required: true
   "type":               type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
@@ -71,5 +71,8 @@ exports.RouteDef = RouteDef
 # A channel also has an allow property. This property should contain a list
 # of users or group that are authroised to send messages to this channel.
 ###
+ChannelSchema = new Schema ChannelDef
+ChannelSchema.index "name", unique: true
+
 exports.Channel = connectionDefault.model 'Channel', ChannelSchema
-exports.ChannelSchema = ChannelSchema
+exports.ChannelDef = ChannelDef
