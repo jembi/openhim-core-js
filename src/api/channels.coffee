@@ -60,7 +60,7 @@ exports.addChannel = ->
     this.status = 201
     logger.info 'User %s created channel with id %s', this.authenticated.email, channel.id
 
-    processPostAddTriggers channel
+    processPostAddTriggers channelData
   catch err
     # Error! So inform the user
     utils.logAndSetResponse this, 400, "Could not add channel via the API: #{err}", 'error'
@@ -145,7 +145,7 @@ exports.updateChannel = (channelId) ->
     this.body = 'The channel was successfully updated'
     logger.info 'User %s updated channel with id %s', this.authenticated.email, id
 
-    processPostUpdateTriggers channel
+    processPostUpdateTriggers channelData
   catch err
     # Error! So inform the user
     utils.logAndSetResponse this, 500, "Could not update channel by id: #{id} via the API: #{e}", 'error'
