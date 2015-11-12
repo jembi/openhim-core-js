@@ -78,6 +78,7 @@ The `configDefs` property defines an array of configuration definitions that eac
 * `bool` - A boolean value (true or false)
 * `number` - An integer or decimal value
 * `option` - A value from a pre-defined list. If this datatype is use then the `values` property MUST also be used. The `values` property specifies an array of possible values for the parameter.
+* `map` - Key/value pairs. A map is formatted as an object with string values, e.g. `{ "key1": "value1", "key2": "value2" }`. New keys can be added dynamically.
 
 The OpenHIM-core SHALL respond with a HTTP status of 201 if the mediator registration was successful.
 The OpenHIM-core SHALL respond with an appropriate 4xx status if the mediator registration could not be completed due to a bad request.

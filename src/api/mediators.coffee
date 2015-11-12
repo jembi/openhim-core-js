@@ -181,6 +181,12 @@ validateConfig = (configDef, config) ->
         when 'option'
           if (def.values.indexOf config[param]) is -1
             throw constructError "Expected config param #{param} to be one of #{def.values}", 'ValidationError'
+        when 'map'
+          if typeof config[param] isnt 'object'
+            throw constructError "Expected config param #{param} to be an object.", 'ValidationError'
+          for k, v of config[param]
+            if typeof v isnt 'string'
+              throw constructError "Expected config param #{param} to only contain string values.", 'ValidationError'
     # reduce array of results to a single value
 
 if process.env.NODE_ENV == "test"

@@ -111,3 +111,76 @@ describe "Mediator API unit tests", ->
         ],
         param1: "test2"
       )
+
+    it "should allow config that includes the 'map' type", ->
+      mediators.validateConfig(
+        [
+          param: "param1"
+          type: "map"
+        ],
+        param1:
+          k1: "v1"
+          k2: "v2"
+      )
+
+    it "should reject config that includes a 'map' that isn't an object", ->
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "map"
+          ],
+          param1: [
+            k1: "v1"
+            k2: "v2"
+          ]
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
+
+    it "should reject config that includes a 'map' that isn't an object", ->
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "map"
+          ],
+          param1: "blah"
+        )
+      catch err
+        return
+
+    it "should reject config that includes a 'map' with non-string values", ->
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "map"
+          ],
+          param1:
+            k1: "v1"
+            k2: 42
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
+
+    it "should reject config that includes a 'map' with non-string values", ->
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "map"
+          ],
+          param1:
+            k1: "v1"
+            k2:
+              subK: "blah"
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
