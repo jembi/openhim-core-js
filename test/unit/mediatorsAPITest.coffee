@@ -152,7 +152,7 @@ describe "Mediator API unit tests", ->
       catch err
         return
 
-    it "should reject config that includes a 'map' with non-string values", ->
+    it "should reject config that includes a 'map' with non-string values (number)", ->
       try
         mediators.validateConfig(
           [
@@ -168,7 +168,7 @@ describe "Mediator API unit tests", ->
 
       throw new Error 'Failed'
 
-    it "should reject config that includes a 'map' with non-string values", ->
+    it "should reject config that includes a 'map' with non-string values (object)", ->
       try
         mediators.validateConfig(
           [
