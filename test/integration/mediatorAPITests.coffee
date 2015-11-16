@@ -51,12 +51,28 @@ describe "API Integration Tests", ->
         }
       ]
 
+    mediator3 =
+      urn: "urn:mediator:no-default-channel-conf"
+      version: "1.0.0"
+      name: "Mediator without default channel conf"
+      description: "Another mediator for testing"
+      endpoints: [
+        {
+          name: 'Route'
+          host: 'localhost'
+          port: '8009'
+          type: 'http'
+        }
+      ]
+
     authDetails = {}
 
     before (done) ->
       auth.setupTestUsers (err) ->
         return done err if err
-        server.start apiPort: 8080, done
+        Channel.ensureIndexes ->
+          Mediator.ensureIndexes ->
+            server.start apiPort: 8080, done
 
     after (done) ->
       server.stop -> auth.cleanupTestUsers done
@@ -208,6 +224,29 @@ describe "API Integration Tests", ->
               Channel.findOne { name: mediator1.defaultChannelConfig[0].name }, (err, res) ->
                 return done err if err
                 should.exist(res)
+                done()
+
+      it 'should add multiple mediators without default channel config', (done) ->
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator2)
+          .expect(201)
+          .end (err, res) ->
+            return done err if err
+            request("https://localhost:8080")
+              .post("/mediators")
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .send(mediator3)
+              .expect(201)
+              .end (err, res) ->
+                return done err if err
                 done()
 
       it 'should not do anything if the mediator already exists and the version number is equal', (done) ->
