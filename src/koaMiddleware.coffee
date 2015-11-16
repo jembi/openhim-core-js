@@ -9,7 +9,7 @@ rerunUpdateTransactionTask = require "./middleware/rerunUpdateTransactionTask"
 tcpBypassAuthentication = require "./middleware/tcpBypassAuthentication"
 retrieveTCPTransaction = require "./middleware/retrieveTCPTransaction"
 authorisation = require './middleware/authorisation'
-stats = require './middleware/stats'
+stats = require './stats'
 pollingBypassAuthorisation = require './middleware/pollingBypassAuthorisation'
 pollingBypassAuthentication = require './middleware/pollingBypassAuthentication'
 events = require './middleware/events'
@@ -69,10 +69,6 @@ exports.setupApp = (done) ->
   # Events
   app.use events.koaMiddleware
 
-  # Send stats to StatsD
-  if config.statsd.enabled
-    app.use stats.koaMiddleware
-
   # Proxy
   app.use proxy.koaMiddleware
 
@@ -106,10 +102,6 @@ exports.rerunApp = (done) ->
   # Events
   app.use events.koaMiddleware
 
-  # Send stats to StatsD
-  if config.statsd.enabled
-    app.use stats.koaMiddleware
-
   # Persist message middleware
   app.use messageStore.koaMiddleware
 
@@ -133,10 +125,6 @@ exports.tcpApp = (done) ->
 
   # Events
   app.use events.koaMiddleware
-
-  # Send stats to StatsD
-  if config.statsd.enabled
-    app.use stats.koaMiddleware
 
   # Proxy
   app.use proxy.koaMiddleware
@@ -163,10 +151,6 @@ exports.pollingApp = (done) ->
 
   # Events
   app.use events.koaMiddleware
-
-  # Send stats to StatsD
-  if config.statsd.enabled
-    app.use stats.koaMiddleware
 
   # Persist message middleware
   app.use messageStore.koaMiddleware

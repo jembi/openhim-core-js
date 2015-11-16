@@ -216,6 +216,21 @@ describe "MessageStore", ->
               trans.routes[0].request.port.should.equal '4466'
               done()
 
+    it "should set the ctx.transactionStatus variable with the final status", (done) ->
+      ctx.response = createResponse 201
+      ctx.transactionStatus = null
+
+      messageStore.storeTransaction ctx, (err, storedTrans) ->
+        ctx.request = storedTrans.request
+        ctx.request.header = {}
+        ctx.transactionId = storedTrans._id
+        ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
+        messageStore.storeResponse ctx, (err2) ->
+          should.not.exist(err2)
+          messageStore.setFinalStatus ctx, ->
+            should(ctx.transactionStatus).be.exactly 'Successful'
+            done()
+
     it "should set the status to successful if all route return a status in 2xx", (done) ->
 
       ctx.response = createResponse 201

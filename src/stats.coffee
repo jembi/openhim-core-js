@@ -1,4 +1,4 @@
-config = require '../config/config'
+config = require './config/config'
 SDC = require "statsd-client"
 statsdServer = config.get 'statsd'
 application = config.get 'application'
@@ -166,14 +166,3 @@ exports.nonPrimaryRouteDurations = (ctx, route, done) ->
         sdc.timing domain + '.channels.' + ctx.authorisedChannel._id + '.nonPrimaryRoutes.' + route.name + '.statusCodes.' + route.response.status + '.orchestrations.' + orchestrationName + '.statusCodes.' + orchestrationStatus , orchestratrionDuration
 
   done()
-
-
-
-exports.koaMiddleware = (next) ->
-  this.timer = new Date()
-  yield next
-  appMetricsStartTime = new Date() if statsdServer.enabled
-  exports.incrementTransactionCount this, ->
-  exports.measureTransactionDuration this, ->
-  sdc.timing "#{domain}.appMetrics.statsMiddleware", appMetricsStartTime if statsdServer.enabled
-  sdc.close()
