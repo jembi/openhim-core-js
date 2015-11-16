@@ -6,7 +6,7 @@ config = require '../config/config'
 statsdServer = config.get 'statsd'
 application = config.get 'application'
 SDC = require 'statsd-client'
-stats = require './stats'
+stats = require '../stats'
 os = require 'os'
 
 domain = "#{os.hostname()}.#{application.name}.appMetrics"

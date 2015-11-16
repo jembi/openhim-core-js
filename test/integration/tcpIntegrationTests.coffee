@@ -10,7 +10,7 @@ server = require "../../lib/server"
 fs = require "fs"
 sinon = require "sinon"
 config = require "../../lib/config/config"
-stats = require "../../lib/middleware/stats"
+stats = require "../../lib/stats"
 
 describe "TCP/TLS/MLLP Integration Tests", ->
   testMessage = "This is an awesome test message!"
