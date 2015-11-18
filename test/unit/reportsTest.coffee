@@ -6,7 +6,6 @@ reports = require "../../lib/reports"
 metrics = require "../../lib/metrics"
 testUtils = require "../testUtils"
 config = require "../../lib/config/config"
-#config.reports = config.get('reports')
 Channel = require("../../lib/model/channels").Channel
 User = require("../../lib/model/users").User
 Transaction = require("../../lib/model/transactions").Transaction

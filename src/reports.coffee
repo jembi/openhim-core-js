@@ -109,7 +109,7 @@ sendReports = (job, flag, done) ->
                   rowColor = 'background-color: #b6d7a8;'
 
                 report.data[i].load = (if data.data[0]?.load? then data.data[0].load else 0)
-                report.data[i].avgResp = (if data.data[0]?.avgResp? then data.data[0].avgResp else 0)
+                report.data[i].avgResp = (if data.data[0]?.avgResp? then Math.round(data.data[0].avgResp) else 0)
                 report.data[i].failed = (if data.statusData[0]?.failed? then data.statusData[0].failed else 0)
                 report.data[i].successful = (if data.statusData[0]?.successful? then data.statusData[0].successful else 0)
                 report.data[i].processing = (if data.statusData[0]?.processing? then data.statusData[0].processing else 0)
