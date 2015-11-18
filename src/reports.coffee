@@ -14,13 +14,19 @@ path = require('path')
 
 
 # Function Sends the reports
-
 sendReports = (job, flag, done) ->
   reportMap = {}
   channelReportMap = {}
   channelMap = {}
 
-  #Select the right subscribers for the report
+  if flag == 'dailyReport'
+    from = moment().subtract(1, 'days').startOf('day').toDate()
+    to = moment().subtract(1, 'days').endOf('day').toDate()
+  else
+    from = moment().subtract(1, 'days').startOf('isoWeek').toDate()
+    to = moment().subtract(1, 'days').endOf('isoWeek').toDate()
+
+  # Select the right subscribers for the report
   if flag == 'dailyReport'
     fetchUsers = fetchDailySubscribers
   if flag == 'weeklyReport'
@@ -49,14 +55,14 @@ sendReports = (job, flag, done) ->
 
         promises.push deferred.promise
 
-#    Loop through the enriched user array
+    # Loop through the enriched user array
     innerPromises = []
     (Q.all promises).then ->
-#     Pre-Fetch report data into Channel Map
+      # Pre-Fetch report data into Channel Map
       for key , obj of channelMap
         innerDeferred = Q.defer()
         do (innerDeferred, key, obj) ->
-          fetchChannelReport obj.channel, obj.user, flag, (item) ->
+          fetchChannelReport obj.channel, obj.user, flag, from, to, (item) ->
             channelReportMap[key] = item
             innerDeferred.resolve()
 
@@ -81,14 +87,18 @@ sendReports = (job, flag, done) ->
               else
                 logger.info 'should never be here since channels have been pre-fetched'
 
-#        Iterate over reports and send the emails
+        # Iterate over reports and send the emails
         for key, report of reportMap
           if flag == 'dailyReport'
-            report.type = 'Daily'
+            report.isDaily = true
           else
-            report.type = 'Weekly'
+            report.isDaily = false
 
           report.instance = config.alerts.himInstance
+          report.consoleURL = config.alerts.consoleURL
+
+          report.from = moment(from).format 'YYYY-MM-DD'
+          report.to = moment(to).format 'YYYY-MM-DD'
 
           try
             for data, i in report.data
@@ -99,7 +109,7 @@ sendReports = (job, flag, done) ->
                   rowColor = 'background-color: #b6d7a8;'
 
                 report.data[i].load = (if data.data[0]?.load? then data.data[0].load else 0)
-                report.data[i].avgResp = (if data.data[0]?.avgResp? then data.data[0].avgResp else 0)
+                report.data[i].avgResp = (if data.data[0]?.avgResp? then Math.round(data.data[0].avgResp) else 0)
                 report.data[i].failed = (if data.statusData[0]?.failed? then data.statusData[0].failed else 0)
                 report.data[i].successful = (if data.statusData[0]?.successful? then data.statusData[0].successful else 0)
                 report.data[i].processing = (if data.statusData[0]?.processing? then data.statusData[0].processing else 0)
@@ -129,14 +139,10 @@ sendUserEmail = (report) ->
     contact.contactUser 'email', report.email, report.type + ' report for: ' + report.instance, plainTemplate(report), reportHtml, afterEmail
 
 
-fetchChannelReport = (channel, user, flag, callback) ->
+fetchChannelReport = (channel, user, flag, from, to, callback) ->
   if flag == 'dailyReport'
-    from = moment().subtract(1, 'days').startOf('day').toDate()
-    to = moment().subtract(1, 'days').endOf('day').toDate()
     period = 'day'
   else
-    from = moment().subtract(1, 'days').startOf('isoWeek').toDate()
-    to = moment().subtract(1, 'days').endOf('isoWeek').toDate()
     period = 'week'
 
   item = {}

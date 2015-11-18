@@ -6,7 +6,6 @@ reports = require "../../lib/reports"
 metrics = require "../../lib/metrics"
 testUtils = require "../testUtils"
 config = require "../../lib/config/config"
-#config.reports = config.get('reports')
 Channel = require("../../lib/model/channels").Channel
 User = require("../../lib/model/users").User
 Transaction = require("../../lib/model/transactions").Transaction
@@ -205,14 +204,16 @@ describe "Transaction Reports", ->
 
   describe "Reports", ->
     it "should return a channel Report", (done) ->
-      reports.fetchChannelReport channel2, testUser1, 'dailyReport', (item) ->
+      from = moment().subtract(1, 'days').startOf('day').toDate()
+      to = moment().subtract(1, 'days').endOf('day').toDate()
+      reports.fetchChannelReport channel2, testUser1, 'dailyReport', from, to, (item) ->
         item.data[0].should.have.property 'load', 1
         item.data[0].should.have.property 'avgResp', 1000
         item.statusData[0].should.have.property 'completed', 1
         done()
 
     it "should send a  weekly channel report", (done) ->
-      sinon.spy(reports, 'fetchWeeklySubscribers');
+      sinon.spy(reports, 'fetchWeeklySubscribers')
       reports.sendReports {}, 'weeklyReport', () ->
         reports.fetchWeeklySubscribers.should.be.called
         reports.fetchChannelReport.should.be.called
@@ -221,7 +222,7 @@ describe "Transaction Reports", ->
       done()
 
     it "should send a  daily channel report", (done) ->
-      sinon.spy(reports, 'fetchDailySubscribers');
+      sinon.spy(reports, 'fetchDailySubscribers')
       reports.sendReports {}, 'weeklyReport', () ->
         reports.fetchDailySubscribers.should.be.called
         reports.fetchChannelReport.should.be.called
