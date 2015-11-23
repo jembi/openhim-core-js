@@ -332,7 +332,6 @@ describe "API Integration Tests", ->
               validateEvents = ->
                 Event.find {}, (err, events) ->
                   return done err if err
-                  console.log events
                   events.length.should.be.exactly 6 #2+2+2 start/end for each of primary, async route and orchestration
                   eventRoutes = events.map (ev) -> ev.route
                   eventRoutes.should.containEql 'primary'
