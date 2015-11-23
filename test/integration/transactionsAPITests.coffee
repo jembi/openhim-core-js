@@ -8,6 +8,7 @@ testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 FakeServer = require "../fakeTcpServer"
 config = require '../../lib/config/config'
+Event = require("../../lib/model/events").Event
 application = config.get 'application'
 os = require "os"
 domain = os.hostname() + '.' + application.name
@@ -105,12 +106,17 @@ describe "API Integration Tests", ->
           server.stop ->
             done()
 
-    beforeEach ->
+    beforeEach (done) ->
       authDetails = auth.getAuthDetails()
+      Event.ensureIndexes done
+
+    afterEach (done) ->
+      Event.remove {}, done
 
     describe "*addTransaction()", ->
 
       it  "should add a transaction and return status 201 - transaction created", (done) ->
+        transactionData.channelID = channel._id
         request("https://localhost:8080")
           .post("/transactions")
           .set("auth-username", testUtils.rootUser.email)
@@ -128,6 +134,7 @@ describe "API Integration Tests", ->
                 (newTransaction != null).should.be.true
                 newTransaction.status.should.equal "Processing"
                 newTransaction.clientID.toString().should.equal "999999999999999999999999"
+                newTransaction.channelID.toString().should.equal channel._id.toString()
                 newTransaction.request.path.should.equal "/api/test"
                 newTransaction.request.headers['header-title'].should.equal "header1-value"
                 newTransaction.request.headers['another-header'].should.equal "another-header-value"
@@ -150,6 +157,28 @@ describe "API Integration Tests", ->
               done err
             else
               done()
+
+      it  "should generate events after adding a transaction", (done) ->
+        transactionData.channelID = channel._id
+        request("https://localhost:8080")
+          .post("/transactions")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(transactionData)
+          .expect(201)
+          .end (err, res) ->
+            return done err if err
+
+            validateEvents = ->
+              Event.find {}, (err, events) ->
+                return done err if err
+                events.length.should.be.exactly 4
+                for ev in events
+                  ev.channelID.toString().should.be.exactly channel._id.toString()
+                done()
+            setTimeout validateEvents, 1000
 
     describe "*updateTransaction()", ->
 
@@ -249,6 +278,67 @@ describe "API Integration Tests", ->
                 done err
               else
                 done()
+
+      it "should generate events on update", (done) ->
+        tx = new Transaction transactionData
+        tx.save (err, result) ->
+          should.not.exist(err)
+          transactionId = result._id
+          reqUp = new Object()
+          reqUp.path = "/api/test/updated"
+          reqUp.headers =
+            "Content-Type": "text/javascript"
+            "Access-Control": "authentication-required"
+          reqUp.querystring = 'updated=value'
+          reqUp.body = "<HTTP body update>"
+          reqUp.method = "PUT"
+          updates =
+            request: reqUp
+            status: "Failed"
+            clientID: "777777777777777777777777"
+            $push: {
+              routes : {
+                "name": "async",
+                "orchestrations": [
+                  {
+                    "name": "test",
+                    "request": {
+                      "method": "POST",
+                      "body": "data",
+                      "timestamp": 1425897647329
+                    },
+                    "response": {
+                      "status": 500,
+                      "body": "OK",
+                      "timestamp": 1425897688016
+                    }
+                  }
+                ]
+              }
+            }
+
+
+          request("https://localhost:8080")
+            .put("/transactions/#{transactionId}")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(updates)
+            .expect(200)
+            .end (err, res) ->
+              return done err if err
+
+              validateEvents = ->
+                Event.find {}, (err, events) ->
+                  return done err if err
+                  events.length.should.be.exactly 6 #2+2+2 start/end for each of primary, async route and orchestration
+                  eventRoutes = events.map (ev) -> ev.route
+                  eventRoutes.should.containEql 'primary'
+                  eventRoutes.should.containEql 'route'
+                  eventRoutes.should.containEql 'orchestration'
+                  done()
+              setTimeout validateEvents, 1000
 
     describe "*getTransactions()", ->
 
@@ -565,6 +655,7 @@ describe "API Integration Tests", ->
       it "should NOT return transactions that a user is not allowed to view", (done) ->
         clientId = "444444444444444444444444"
         transactionData.clientID = clientId
+        transactionData.channelID = "888888888888888888888888"
         tx = new Transaction transactionData
         tx.save (err, result)->
           should.not.exist(err)
