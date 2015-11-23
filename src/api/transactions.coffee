@@ -1,4 +1,5 @@
 transactions = require '../model/transactions'
+events = require '../middleware/events'
 Channel = require('../model/channels').Channel
 Client = require('../model/clients').Client
 Q = require 'q'
@@ -185,6 +186,8 @@ exports.addTransaction = ->
     yield Q.ninvoke tx, "save"
     this.status = 201
     logger.info "User #{this.authenticated.email} created transaction with id #{tx.id}"
+
+    generateEvents tx
   catch e
     utils.logAndSetResponse this, 500, "Could not add a transaction via the API: #{e}", 'error'
 
@@ -291,6 +294,71 @@ exports.findTransactionByClientId = (clientId) ->
     utils.logAndSetResponse this, 500, "Could not get transaction by clientID via the API: #{e}", 'error'
 
 
+generateEvents = (transaction) ->
+  Channel.findById transaction.channelID, (err, channel) ->
+    events.storeEvents {
+      transactionId: transaction._id
+      requestTimestamp: transaction.request.timestamp
+      response: transaction.response
+      authorisedChannel: channel
+      routes: transaction.routes
+      }, ->
+
+updateTransactionMetrics = (updates, doc) ->
+  if updates['$push']?.routes?
+    for k, route of updates['$push']
+      do (route) ->
+        if route.metrics?
+          for metric in route.metrics
+            if metric.type == 'counter'
+              logger.debug "incrementing mediator counter  #{metric.name}"
+              sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}"
+
+            if metric.type == 'timer'
+              logger.debug "incrementing mediator timer  #{metric.name}"
+              sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}", metric.value
+
+            if metric.type == 'gauge'
+              logger.debug "incrementing mediator gauge  #{metric.name}"
+              sdc.gauge "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}", metric.value
+
+        for orchestration in route.orchestrations
+          do (orchestration) ->
+            orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp
+            orchestrationStatus = orchestration.response.status
+            orchestrationName = orchestration.name
+            if orchestration.group
+              orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
+
+            ###
+            # Update timers
+            ###
+            logger.debug 'updating async route timers'
+            sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}", orchestrationDuration
+            sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.statusCodes.#{orchestrationStatus}" , orchestrationDuration
+
+            ###
+            # Update counters
+            ###
+            logger.debug 'updating async route counters'
+            sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}"
+            sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.statusCodes.#{orchestrationStatus}"
+
+            if orchestration.metrics?
+              for metric in orchestration.metrics
+                if metric.type == 'counter'
+                  logger.debug "incrementing #{route.name} orchestration counter #{metric.name}"
+                  sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
+
+                if metric.type == 'timer'
+                  logger.debug  "incrementing #{route.name} orchestration timer #{metric.name}"
+                  sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
+
+                if metric.type == 'gauge'
+                  logger.debug  "incrementing #{route.name} orchestration gauge #{metric.name}"
+                  sdc.gauge "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
+
+
 ###
 # Updates a transaction record specified by transactionId
 ###
@@ -303,70 +371,16 @@ exports.updateTransaction = (transactionId) ->
 
   transactionId = unescape transactionId
   updates = this.request.body
-  that = this
 
   try
     yield transactions.Transaction.findByIdAndUpdate(transactionId, updates).exec()
-    that.body = "Transaction with ID: #{transactionId} successfully updated"
-    that.status = 200
-    logger.info "User #{that.authenticated.email} updated transaction with id #{transactionId}"
+    this.body = "Transaction with ID: #{transactionId} successfully updated"
+    this.status = 200
+    logger.info "User #{this.authenticated.email} updated transaction with id #{transactionId}"
 
-    ###
-    # Update transaction metrics
-    ###
     transactions.Transaction.findById transactionId, (err, doc) ->
-      if updates['$push']?.routes?
-        for k, route of updates['$push']
-          do (route) ->
-            if route.metrics?
-              for metric in route.metrics
-                if metric.type == 'counter'
-                  logger.info "incrementing mediator counter  #{metric.name}"
-                  sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}"
-
-                if metric.type == 'timer'
-                  logger.info "incrementing mediator timer  #{metric.name}"
-                  sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}", metric.value
-
-                if metric.type == 'gauge'
-                  logger.info "incrementing mediator gauge  #{metric.name}"
-                  sdc.gauge "#{domain}.channels.#{doc.channelID}.#{route.name}.mediator_metrics.#{metric.name}", metric.value
-
-            for orchestration in route.orchestrations
-              do (orchestration) ->
-                orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp
-                orchestrationStatus = orchestration.response.status
-                orchestrationName = orchestration.name
-                if orchestration.group
-                  orchestrationName = "#{orchestration.group}.#{orchestration.name}" #Namespace it by group
-
-                ###
-                # Update timers
-                ###
-                logger.info 'updating async route timers'
-                sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}", orchestrationDuration
-                sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.statusCodes.#{orchestrationStatus}" , orchestrationDuration
-
-                ###
-                # Update counters
-                ###
-                logger.info 'updating async route counters'
-                sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}"
-                sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.statusCodes.#{orchestrationStatus}"
-
-                if orchestration.metrics?
-                  for metric in orchestration.metrics
-                    if metric.type == 'counter'
-                      logger.info "incrementing #{route.name} orchestration counter #{metric.name}"
-                      sdc.increment "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
-
-                    if metric.type == 'timer'
-                      logger.info  "incrementing #{route.name} orchestration timer #{metric.name}"
-                      sdc.timing "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
-
-                    if metric.type == 'gauge'
-                      logger.info  "incrementing #{route.name} orchestration gauge #{metric.name}"
-                      sdc.gauge "#{domain}.channels.#{doc.channelID}.#{route.name}.orchestrations.#{orchestrationName}.#{metric.name}", metric.value
+      generateEvents doc
+      updateTransactionMetrics updates, doc
 
   catch e
     utils.logAndSetResponse this, 500, "Could not update transaction via the API: #{e}", 'error'

@@ -85,7 +85,7 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       status: route.response.status
       visualizerStatus: routeStatus
 
-storeEvents = (ctx, done) ->
+exports.storeEvents = storeEvents = (ctx, done) ->
   logger.info "Storing events for transaction: #{ctx.transactionId}"
   trxEvents = []
 
