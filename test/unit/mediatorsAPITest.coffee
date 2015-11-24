@@ -360,3 +360,38 @@ describe "Mediator API unit tests", ->
         return
 
       throw new Error 'Failed'
+
+    it "should reject config that is NOT defined as an array but has an array value", ->
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "string"
+            array: false
+          ],
+          param1: [
+            "v1"
+            "v2"
+          ]
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
+
+    it "should reject config that is NOT defined as an array but has an array value ('array' undefined - default behaviour)", ->
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "string"
+          ],
+          param1: [
+            "v1"
+            "v2"
+          ]
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
