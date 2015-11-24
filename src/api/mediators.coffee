@@ -47,6 +47,32 @@ constructError = (message, name) ->
   err.name = name
   return err
 
+
+validateConfigDef = (def) ->
+  if def.type is 'struct' and not def.template
+    throw constructError "Must specify a template for struct param '#{def.param}'", 'ValidationError'
+
+  else if def.type is 'struct'
+    for templateItem in def.template
+      if not templateItem.param
+        throw constructError "Must specify field 'param' in template definition for param '#{def.param}'", 'ValidationError'
+
+      if not templateItem.type
+        throw constructError "Must specify field 'type' in template definition for param '#{def.param}'", 'ValidationError'
+
+      if templateItem.type is 'struct'
+        throw constructError "May not recursively specify 'struct' in template definitions (param '#{def.param}')", 'ValidationError'
+
+      validateConfigDef templateItem
+
+  else if def.type is 'option' and not def.values?
+    throw constructError "Must specify a values array for option param '#{def.param}'", 'ValidationError'
+
+# validations additional to the mongoose schema validation
+validateConfigDefs = (configDefs) ->
+  validateConfigDef def for def in configDefs
+
+
 exports.addMediator = ->
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
@@ -72,8 +98,10 @@ exports.addMediator = ->
     if not mediator.version or not semver.valid(mediator.version)
       throw constructError 'Version is required. Must be in SemVer form x.y.z', 'ValidationError'
 
-    if mediator.config?
-      validateConfig mediator.configDefs, mediator.config
+    if mediator.configDefs
+      validateConfigDefs mediator.configDefs
+      if mediator.config?
+        validateConfig mediator.configDefs, mediator.config
 
     existing = yield Mediator.findOne({urn: mediator.urn}).exec()
     if typeof existing != 'undefined' and existing != null
@@ -187,6 +215,13 @@ validateConfig = (configDef, config) ->
           for k, v of config[param]
             if typeof v isnt 'string'
               throw constructError "Expected config param #{param} to only contain string values.", 'ValidationError'
+        when 'struct'
+          if typeof config[param] isnt 'object'
+            throw constructError "Expected config param #{param} to be an object.", 'ValidationError'
+          templateFields = (def.template.map (tp) -> tp.param)
+          for paramField of config[param]
+            if paramField not in templateFields
+              throw constructError "Field #{paramField} is not defined in template definition for config param #{param}.", 'ValidationError'
     # reduce array of results to a single value
 
 if process.env.NODE_ENV == "test"

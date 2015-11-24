@@ -79,6 +79,7 @@ The `configDefs` property defines an array of configuration definitions that eac
 * `number` - An integer or decimal value
 * `option` - A value from a pre-defined list. If this datatype is use then the `values` property MUST also be used. The `values` property specifies an array of possible values for the parameter.
 * `map` - Key/value pairs. A map is formatted as an object with string values, e.g. `{ "key1": "value1", "key2": "value2" }`. New key/value pairs can be added dynamically.
+* `struct` - A collection of fields that can be of any of type. If a parameter is a struct, then a `template` field must be defined. A template is an array with each element defining the individual fields that the struct is made up of. The definition schema is the same as the `configDefs` [schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee) with the exception that a struct may not recursively define other structs, i.e. a template may not contain definitions of type struct.
 
 The OpenHIM-core SHALL respond with a HTTP status of 201 if the mediator registration was successful.
 The OpenHIM-core SHALL respond with an appropriate 4xx status if the mediator registration could not be completed due to a bad request.

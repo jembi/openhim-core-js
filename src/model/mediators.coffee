@@ -5,14 +5,15 @@ Schema = mongoose.Schema
 RouteDef = require('./channels').RouteDef
 ChannelDef = require('./channels').ChannelDef
 
-exports.configParamTypes = [ 'string', 'bool', 'number', 'option', 'bigstring', 'map' ]
+exports.configParamTypes = [ 'string', 'bool', 'number', 'option', 'bigstring', 'map', 'struct' ]
 
-configDef =
+exports.configDef = configDef =
   "param":        String
   "displayName":  String
   "description":  String
   "type":         type: String, enum: exports.configParamTypes
   "values":       [ type: String ]
+  "template":     { type: Array }
 
 # The properties prefixed with an '_' are internally used properties and shouldn't be set by the user
 MediatorSchema = new Schema

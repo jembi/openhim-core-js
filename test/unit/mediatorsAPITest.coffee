@@ -184,3 +184,91 @@ describe "Mediator API unit tests", ->
         return
 
       throw new Error 'Failed'
+
+
+    testStruct =
+      param: "param1"
+      displayName: "Parameter 1"
+      description: "Test config"
+      type: "struct"
+      template: [
+        {
+          param: "server"
+          displayName: "Server"
+          description: "Server"
+          type: "string"
+        }, {
+          param: "port"
+          displayName: "Port"
+          description: "Port"
+          type: "number"
+        }, {
+          param: "secure"
+          type: "bool"
+        }, {
+          param: "pickAorB"
+          type: "option"
+          values: ["A", "B"]
+        }
+      ]
+
+    it "should allow config that includes the 'struct' type", ->
+      mediators.validateConfig(
+        [
+          testStruct
+        ],
+        param1:
+          server: 'localhost'
+          port: 8080
+          secure: false
+          pickAorB: 'A'
+      )
+
+    it "should reject config that includes a 'struct' with a non-object value", ->
+      try
+        mediators.validateConfig(
+          [
+            testStruct
+          ],
+          param1: "localhost"
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
+
+    it "should accept config that includes a 'struct' with null params", ->
+      mediators.validateConfig(
+        [
+          testStruct
+        ],
+        param1:
+          server: 'localhost'
+          port: null
+          secure: null
+          pickAorB: null
+      )
+
+    it "should accept config that includes a 'struct' with undefined params", ->
+      mediators.validateConfig(
+        [
+          testStruct
+        ],
+        param1:
+          server: 'localhost'
+      )
+
+    it "should reject config that includes a 'struct' with params not defined in the template", ->
+      try
+        mediators.validateConfig(
+          [
+            testStruct
+          ],
+          param1:
+            server: 'localhost'
+            notDefined: 'blah'
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
