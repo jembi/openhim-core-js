@@ -14,6 +14,7 @@ exports.configDef = configDef =
   "type":         type: String, enum: exports.configParamTypes
   "values":       [ type: String ]
   "template":     { type: Array }
+  "array":        Boolean
 
 # The properties prefixed with an '_' are internally used properties and shouldn't be set by the user
 MediatorSchema = new Schema

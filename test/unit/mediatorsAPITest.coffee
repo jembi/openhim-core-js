@@ -272,3 +272,91 @@ describe "Mediator API unit tests", ->
         return
 
       throw new Error 'Failed'
+
+    it "should allow config that is defined as an array (string)", ->
+      mediators.validateConfig(
+        [
+          param: "param1"
+          type: "string"
+          array: true
+        ],
+        param1: [
+          "v1"
+          "v2"
+        ]
+      )
+
+    it "should allow config that is defined as an array (struct)", ->
+      mediators.validateConfig(
+        [
+          param: "param1"
+          type: "struct"
+          array: true
+          template: [
+            {
+              param: "name"
+              type: "string"
+            }, {
+              param: "value"
+              type: "number"
+            }
+          ]
+        ],
+        param1: [
+          {
+            "name": "name1"
+            "value": 42
+          },
+          {
+            "name": "name2"
+            "value": 43
+          },
+          {
+            "name": "name3"
+            "value": 44
+          }
+        ]
+      )
+
+    it "should allow config that is defined as an array (empty)", ->
+      mediators.validateConfig(
+        [
+          param: "param1"
+          type: "string"
+          array: true
+        ],
+        param1: []
+      )
+
+    it "should reject config that is defined as an array but has a non-array value", ->
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "string"
+            array: true
+          ],
+          param1: "value"
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
+
+    it "should reject config that is defined as an array but has elements that are not of the defined type", ->
+      try
+        mediators.validateConfig(
+          [
+            param: "param1"
+            type: "string"
+            array: true
+          ],
+          param1: [
+            "42"
+            42
+          ]
+        )
+      catch err
+        return
+
+      throw new Error 'Failed'
