@@ -56,19 +56,19 @@ with a JSON body that conforms to the following structure:
 
 ```js
 {
-    urn: "<a unique URN>", // A unique identifier to identify the mediator, this identifier should always stay the same even if the mediator changes (eg. "urn:openhim-mediator:my-awesome-mediator")
-    version: "", // the version of the mediator, if this is incremented the OpenHIM-core will update the channel configuration - expects a semver string
-    name: "", // a human readable name for the mediator
-    defaultChannelConfig: [ // (optional) an array of default channels to add for this mediator
+    "urn": "<a unique URN>", // A unique identifier to identify the mediator, this identifier should always stay the same even if the mediator changes (eg. "urn:openhim-mediator:my-awesome-mediator")
+    "version": "", // the version of the mediator, if this is incremented the OpenHIM-core will update the channel configuration - expects a semver string
+    "name": "", // a human readable name for the mediator
+    "defaultChannelConfig": [ // (optional) an array of default channels to add for this mediator
         { ... }, // a channel object as defined by the OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/8264a9b7c81a05853c20cd071e379d23d740dd33/src/model/channels.coffee#L23-L56
         { ... }
     ],
-    endpoints: [ // (A minimum of 1 endpoint must be defined) an array of endpoints that the mediator can be contacted on
+    "endpoints": [ // (A minimum of 1 endpoint must be defined) an array of endpoints that the mediator can be contacted on
         { ... }, // a route object as defined by OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/8264a9b7c81a05853c20cd071e379d23d740dd33/src/model/channels.coffee#L5-L15
         { ... }
     ],
-    configDefs: [ ... ], // (optional) An array of config definitions of config that can be set in the OpenHIM-console - see https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee
-    config: { param1: val1, param2: val2 } // (optional) Default mediator configuration
+    "configDefs": [ ... ], // (optional) An array of config definitions of config that can be set in the OpenHIM-console - see https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee
+    "config": { "<param1>": "<val1>", "<param2>": "<val2>" } // (optional) Default mediator configuration
 }
 ```
 
@@ -79,7 +79,7 @@ The `configDefs` property defines an array of configuration definitions that eac
 * `number` - An integer or decimal value
 * `option` - A value from a pre-defined list. If this datatype is use then the `values` property MUST also be used. The `values` property specifies an array of possible values for the parameter.
 * `map` - Key/value pairs. A map is formatted as an object with string values, e.g. `{ "key1": "value1", "key2": "value2" }`. New key/value pairs can be added dynamically.
-* `struct` - A collection of fields that can be of any of type. If a parameter is a struct, then a `template` field MUST be defined. A template is an array with each element defining the individual fields that the struct is made up of. The definition schema is the same as the `configDefs` [schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee) with the exception that a struct may not recursively define other structs, i.e. a template may not contain definitions of type struct.
+* `struct` - A collection of fields that can be of any of type. If a parameter is a struct, then a `template` field MUST be defined. A template is an array with each element defining the individual fields that the struct is made up of. The definition schema is the same as the `configDefs` [schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee) with the exception that a struct may not recursively define other structs.
 
 A config definition may also specify an `array` property (boolean). If true, then the config can have an array of values. The elements in the array must be of the specified type, e.g. if the config definition is of type `string`, then the config must be an array of strings.
 
@@ -90,7 +90,7 @@ The OpenHIM-core SHALL respond with an appropriate 5xx status if the mediator re
 #### Mediator Config Definition Examples
 
 ##### Basic Settings
-The following config definition defines some basic server settings:
+The following is a config definition for basic server settings:
 ```js
 {
   ...
@@ -196,7 +196,7 @@ Valid config would be:
 ```
 
 ##### Array example
-The following config definition defines a string array
+The following is a config definition for a string array:
 ```js
 {
   ...
