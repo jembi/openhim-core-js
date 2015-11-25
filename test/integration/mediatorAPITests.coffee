@@ -764,6 +764,72 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it 'should reject a mediator if the config definition contains an empty \'values\' array for an option', (done) ->
+        mediator =
+          urn: "urn:mediator:optionmediator-2"
+          name: "optionmediator-2"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            displayName: "Parameter 1"
+            description: "Test config"
+            type: "option"
+            values: []
+          ]
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should reject a mediator if the config definition contains a non-array \'values\' field for an option', (done) ->
+        mediator =
+          urn: "urn:mediator:optionmediator-3"
+          name: "optionmediator-3"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            displayName: "Parameter 1"
+            description: "Test config"
+            type: "option"
+            values: "this is not an array"
+          ]
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
     describe "*removeMediator", ->
       it  "should remove an mediator with specified urn", (done) ->
 

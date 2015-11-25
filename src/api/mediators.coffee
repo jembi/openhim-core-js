@@ -65,8 +65,11 @@ validateConfigDef = (def) ->
 
       validateConfigDef templateItem
 
-  else if def.type is 'option' and not def.values?
-    throw constructError "Must specify a values array for option param '#{def.param}'", 'ValidationError'
+  else if def.type is 'option'
+    if not utils.typeIsArray def.values
+      throw constructError "Expected field 'values' to be an array (option param '#{def.param}')", 'ValidationError'
+    if not def.values? or def.values.length is 0
+      throw constructError "Must specify a values array for option param '#{def.param}'", 'ValidationError'
 
 # validations additional to the mongoose schema validation
 validateConfigDefs = (configDefs) ->
