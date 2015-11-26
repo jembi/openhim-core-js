@@ -607,6 +607,229 @@ describe "API Integration Tests", ->
                 mediator.configDefs.should.have.length 2
                 done()
 
+      it 'should reject a mediator if the config definition does not contain a template for a struct', (done) ->
+        mediator =
+          urn: "urn:mediator:structmediator-1"
+          name: "structmediator-1"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            displayName: "Parameter 1"
+            description: "Test config"
+            type: "struct"
+          ]
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should reject a mediator if the config definition contains an invalid template for a struct', (done) ->
+        mediator =
+          urn: "urn:mediator:structmediator-2"
+          name: "structmediator-2"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            displayName: "Parameter 1"
+            description: "Test config"
+            type: "struct"
+            template: [
+              field: "this is not a valid template"
+            ]
+          ]
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should store a mediator with config and a config definition that contains a valid struct', (done) ->
+        mediator =
+          urn: "urn:mediator:structmediator-3"
+          name: "structmediator-3"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            displayName: "Parameter 1"
+            description: "Test config"
+            type: "struct"
+            template: [
+              {
+                param: "server"
+                displayName: "Server"
+                description: "Server"
+                type: "string"
+              }, {
+                param: "port"
+                displayName: "Port"
+                description: "Port"
+                type: "number"
+              }, {
+                param: "secure"
+                type: "bool"
+              }, {
+                param: "pickAorB"
+                type: "option"
+                values: ["A", "B"]
+              }
+            ]
+          ]
+          config:
+            param1:
+              server: 'localhost'
+              port: 8080
+              secure: false
+              pickAorB: 'A'
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should reject a mediator if the config definition does not contain a \'values\' array for an option', (done) ->
+        mediator =
+          urn: "urn:mediator:optionmediator-1"
+          name: "optionmediator-1"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            displayName: "Parameter 1"
+            description: "Test config"
+            type: "option"
+          ]
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should reject a mediator if the config definition contains an empty \'values\' array for an option', (done) ->
+        mediator =
+          urn: "urn:mediator:optionmediator-2"
+          name: "optionmediator-2"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            displayName: "Parameter 1"
+            description: "Test config"
+            type: "option"
+            values: []
+          ]
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should reject a mediator if the config definition contains a non-array \'values\' field for an option', (done) ->
+        mediator =
+          urn: "urn:mediator:optionmediator-3"
+          name: "optionmediator-3"
+          version: "0.8.0"
+          description: "Invalid mediator for testing"
+          endpoints: [
+            name: 'Patient'
+            host: 'localhost'
+            port: '8006'
+            type: 'http'
+          ]
+          configDefs: [
+            param: "param1"
+            displayName: "Parameter 1"
+            description: "Test config"
+            type: "option"
+            values: "this is not an array"
+          ]
+        request("https://localhost:8080")
+          .post("/mediators")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(mediator)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
     describe "*removeMediator", ->
       it  "should remove an mediator with specified urn", (done) ->
 

@@ -57,3 +57,6 @@ exports.uniqArray = (arr) ->
   dict = {}
   dict[k] = k for k in arr
   return (v for k, v of dict)
+
+# thanks to https://coffeescript-cookbook.github.io/chapters/arrays/check-type-is-array
+exports.typeIsArray = Array.isArray || ( value ) -> return {}.toString.call( value ) is '[object Array]'

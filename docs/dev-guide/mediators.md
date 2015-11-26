@@ -1,14 +1,14 @@
 Developing mediators
 ====================
 
-**OpenHIM mediators** are separate micro services that run independently to the OpenHIM and perform additional mediation tasks for a particular use case. The common tasks within a mediator are as follows:
+**OpenHIM mediators** are separate micro services that run independently from the OpenHIM-core and perform additional mediation tasks for a particular use case. The common tasks within a mediator are as follows:
 
-* Message format adaptation - this is the transformation of messages received in a certain format into another format (eg. HL7 v2 to HL7 v3 or MHD to XDS.b).
-* Message orchestration - this is the execution of a business function that may need to call out to other service endpoint on oother system. (eg. Enriching a message with a client's unique identifier retrieved from a client registry).
+* Message format adaptation - this is the transformation of messages received in a certain format into another format (e.g. HL7 v2 to HL7 v3 or MHD to XDS.b).
+* Message orchestration - this is the execution of a business function that may need to call out to other service endpoints on other systems. (e.g. Enriching a message with a client's unique identifier retrieved from a client registry).
 
 Mediators can be built using any platform that is desired (some good options are Apache Camel, Mule ESB, or any language or platform that is a good fit for your needs). The only restriction is that the mediator MUST communicate with the OpenHIM-core in a particular way. There are 3 different types of communication that a mediator can have with the OpenHIM-core. These are [described later](https://github.com/jembi/openhim-core-js/wiki/Creating-an-OpenHIM-mediator#mediator-communication-with-core).
 
-You can also take a look at our handy [mediator yeoman generators](https://github.com/jembi/openhim-mediator-yeoman-generators) to get set-up with scaffolding to start building a mediator. To help you get started we have also created some tutorials that you can find [here](http://www.openhim.org/tutorials/). If you're a java developer, you can also take a look at our [mediator engine](https://github.com/jembi/openhim-mediator-engine-java) for additional documentation.
+You can also take a look at our handy [mediator yeoman generators](https://github.com/jembi/openhim-mediator-yeoman-generators) to get set-up with scaffolding to start building a mediator. To help you get started we have also created some tutorials that you can find [here](http://openhim.readthedocs.org/en/latest/tutorial/index.html). If you're a java developer, you can also take a look at our [mediator engine](https://github.com/jembi/openhim-mediator-engine-java) for additional documentation.
 
 Suggested mediator structure
 ----------------------------
@@ -41,7 +41,7 @@ Mediator communication with core
 
 ### Mediator registration
 
-A mediator **MUST** register itself with the OpenHIM core each time it starts up. The registration process informs the OpenHIM core of some useful details:
+A mediator **MUST** register itself with the OpenHIM-core each time it starts up. The registration process informs the OpenHIM-core of some useful details:
 
 * An identifier and name to associate with the OpenHIM-core
 * The hostname or IP address of the mediator
@@ -52,37 +52,217 @@ In order to register itself a mediator MUST send an API request to the OpenHIM-c
 
 `POST https://<openhim-core_host>:<api_port>/mediators`
 
-with a body contain the following sample structure:
+with a JSON body that conforms to the following structure:
 
 ```js
 {
-    urn: "<a unique URN>", // A unique identifier to identify the mediator, this identifier should always stay the same even if the mediator changes (eg. "urn:openhim-mediator:my-awesome-mediator")
-    version: "", // the version of the mediator, if this is incremented the OpenHIM-core will update the channel configuration - expects a semver string
-    name: "", // a human readable name for the mediator
-    defaultChannelConfig: [ // (optional) an array of default channels to add for this mediator
+    "urn": "<a unique URN>", // A unique identifier to identify the mediator, this identifier should always stay the same even if the mediator changes (eg. "urn:openhim-mediator:my-awesome-mediator")
+    "version": "", // the version of the mediator, if this is incremented the OpenHIM-core will update the channel configuration - expects a semver string
+    "name": "", // a human readable name for the mediator
+    "defaultChannelConfig": [ // (optional) an array of default channels to add for this mediator
         { ... }, // a channel object as defined by the OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/8264a9b7c81a05853c20cd071e379d23d740dd33/src/model/channels.coffee#L23-L56
         { ... }
     ],
-    endpoints: [ // (A minimum of 1 endpoint must be defined) an array of endpoints that the mediator can be contacted on
+    "endpoints": [ // (A minimum of 1 endpoint must be defined) an array of endpoints that the mediator can be contacted on
         { ... }, // a route object as defined by OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/8264a9b7c81a05853c20cd071e379d23d740dd33/src/model/channels.coffee#L5-L15
         { ... }
     ],
-    configDefs: [ ... ], // (optional) An array of config definitions of config that can be set in the OpenHIM-console - see https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee
-    config: { param1: val1, param2: val2 } // (optional) Default mediator configuration
+    "configDefs": [ ... ], // (optional) An array of config definitions of config that can be set in the OpenHIM-console - see https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee
+    "config": { "<param1>": "<val1>", "<param2>": "<val2>" } // (optional) Default mediator configuration
 }
 ```
 
 The `configDefs` property defines an array of configuration definitions that each describe configuration parameters that could be provided by the user. These configuration parameters could have the following `type` properties:
 * `string` - A string of text
-* `bigstring` - A string of text that is expected to be large (it will be displayed as a text area on the admin console)
+* `bigstring` - A string of text that is expected to be large (it will be displayed as a text area on the OpenHIM-console)
 * `bool` - A boolean value (true or false)
 * `number` - An integer or decimal value
 * `option` - A value from a pre-defined list. If this datatype is use then the `values` property MUST also be used. The `values` property specifies an array of possible values for the parameter.
 * `map` - Key/value pairs. A map is formatted as an object with string values, e.g. `{ "key1": "value1", "key2": "value2" }`. New key/value pairs can be added dynamically.
+* `struct` - A collection of fields that can be of any of type. If a parameter is a struct, then a `template` field MUST be defined. A template is an array with each element defining the individual fields that the struct is made up of. The definition schema is the same as the `configDefs` [schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee) with the exception that a struct may not recursively define other structs.
+
+A config definition may also specify an `array` property (boolean). If true, then the config can have an array of values. The elements in the array must be of the specified type, e.g. if the config definition is of type `string`, then the config must be an array of strings.
 
 The OpenHIM-core SHALL respond with a HTTP status of 201 if the mediator registration was successful.
 The OpenHIM-core SHALL respond with an appropriate 4xx status if the mediator registration could not be completed due to a bad request.
 The OpenHIM-core SHALL respond with an appropriate 5xx status if the mediator registration could not be completed due to server error in the OpenHIM-core.
+
+#### Mediator Config Definition Examples
+
+##### Basic Settings
+The following is a config definition for basic server settings:
+```js
+{
+  ...
+  "configDefs": [
+    {
+      "param": "host",
+      "displayName": "Host",
+      "description": "Server host",
+      "type": "string"
+    }, {
+      "param": "port",
+      "displayName": "Port",
+      "description": "Server port",
+      "type": "number"
+    }, {
+      "param": "scheme",
+      "displayName": "scheme",
+      "description": "Server Scheme",
+      "type": "option",
+      "values": ["http", "https"]
+    }
+  ]
+}
+```
+Valid config would be:
+```js
+{
+  "host": "localhost",
+  "port": 8080,
+  "scheme": "http"
+}
+```
+
+##### Map example
+A map is a collection of key/value pairs:
+```js
+{
+  ...
+  "configDefs": [
+    {
+      "param": "uidMappings",
+      "displayName": "UID Mappings",
+      "type": "map"
+    }
+  ]
+}
+```
+Valid config would be:
+```js
+{
+  "uidMappings": {
+    "value1": "a1b2c3",
+    "value2": "d4e5f6",
+    "value3": "g7h8i9"
+  }
+}
+```
+Note that the keys `value1`, `value2`, etc. were not predefined in the definition. The OpenHIM-console allows users to dynamically add key/value pairs for a map.
+
+##### Struct example
+A struct is a grouping of other types:
+```js
+{
+  ...
+  "configDefs": [
+    {
+      "param": "server",
+      "displayName": "Target Server",
+      "description": "Target Server",
+      "type": "struct",
+      "template": [
+        {
+          "param": "host",
+          "displayName": "Host",
+          "description": "Server host",
+          "type": "string"
+        }, {
+          "param": "port",
+          "displayName": "Port",
+          "description": "Server port",
+          "type": "number"
+        }, {
+          "param": "scheme",
+          "displayName": "scheme",
+          "description": "Server Scheme",
+          "type": "option",
+          "values": ["http", "https"]
+        }
+      ]
+    }
+  ]
+}
+```
+Valid config would be:
+```js
+{
+  "server": {
+    "host": "localhost",
+    "port": 8080,
+    "scheme": "http"
+  }
+}
+```
+
+##### Array example
+The following is a config definition for a string array:
+```js
+{
+  ...
+  "configDefs": [
+    {
+      "param": "balancerHosts",
+      "displayName": "Balancer Hostnames",
+      "description": "A list of hosts to load balance between",
+      "type": "string",
+      "array": true
+    }
+  ]
+}
+```
+Valid config would be:
+```js
+{
+  "balancerHosts": [
+    "192.168.0.1",
+    "192.168.0.3",
+    "192.168.0.7"
+  ]
+}
+```
+
+Arrays are supported for all types, including structs:
+```js
+{
+  ...
+  "configDefs": [
+    {
+      "param": "balancerHosts",
+      "displayName": "Balancer Hostnames",
+      "description": "A list of hosts to load balance between",
+      "type": "struct",
+      "array": true,
+      "template": [
+        {
+          "param": "host",
+          "type": "string"
+        }, {
+          "param": "weight",
+          "type": "number"
+        }
+      ]
+    }
+  ]
+}
+```
+Valid config would be:
+```js
+{
+  "balancerHosts": [
+    {
+      "host": "192.168.0.1",
+      "weight": 0.6
+    }, {
+      "host": "192.168.0.3",
+      "weight": 0.2
+    }, {
+      "host": "192.168.0.7",
+      "weight": 0.2
+    }
+  ]
+}
+```
 
 ### Return transaction metadata
 
