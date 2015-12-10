@@ -75,9 +75,10 @@ exports.createMockHTTPSServerWithMutualAuth = (resStatusCode, resBody, port, use
   mockServer.listen port, -> callback mockServer
   mockServer.on "request", requestCallback
 
-exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, callback) ->
+exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, callback, requestCallback=(->)) ->
   server = net.createServer (sock) ->
     sock.on 'data', (data) ->
+      requestCallback(data)
       response = if "#{data}" is expected then matchResponse else nonMatchResponse
       sock.write response
 

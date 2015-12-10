@@ -101,6 +101,11 @@
         "enabled": false,
         "port": 5052
       }
+    },
+    "auditEvents": {
+      "type": "internal",
+      "host": "127.0.0.1",
+      "port": 5051
     }
   },
   "caching": {

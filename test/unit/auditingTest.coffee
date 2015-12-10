@@ -1,6 +1,10 @@
 should = require "should"
 auditing = require "../../lib/auditing"
 Audit = require("../../lib/model/audits").Audit
+testUtils = require '../testUtils'
+FakeServer = require '../fakeTcpServer'
+config = require '../../lib/config/config'
+config.auditing = config.get('auditing')
 
 testAuditParticipantQuery = """
 TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAzMDUxMjUyMzErMDIwMHx8UUJQXlEyM15RQlBfUTIxfGJiMDczYjg1LTU3YTktNDBiYS05MjkxLTE1ZDIxMThkNDhmM3xQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXxmZmQ4ZTlmNy1hYzJiLTQ2MjUtYmQ4MC1kZTcwNDU5MmQ5ZjN8MTExMTExMTExMV5eXiYxLjIuMyZJU09eUEl8Xl5eRUNJRCZFQ0lEJklTT15QSQ1SQ1B8SQ0=
@@ -269,3 +273,41 @@ describe "Auditing", ->
           validateIHEAudit 'IHE+DICOM', audits[0]
 
           done()
+
+  describe '.sendAuditEvent', ->
+    it 'should process audit internally', (done) ->
+      auditing.sendAuditEvent testAudit, ->
+        Audit.find {}, (err, audits) ->
+          return done err if err
+          audits.length.should.be.exactly 1
+          audits[0].rawMessage.should.be.exactly testAudit
+          done()
+
+    #describe 'type: udp'
+      #mockUDPServer = null
+
+      #before (done) ->
+        #mockUDPServer = new FakeServer()
+        #mockUDPServer.start done
+
+      #after -> mockUDPServer.stop()
+
+    it 'should send an audit event via TCP', (done) ->
+      server = null
+      called = {}
+
+      validate = (data) ->
+        "#{data}".should.be.exactly "#{testAudit.length} #{testAudit}"
+        called.tcp = true
+        console.log called
+
+      afterSetup = (s) ->
+        auditing.sendAuditEvent testAudit, ->
+          called.should.have.property 'called'
+          s.close()
+          done()
+          console.log 'here'
+
+      config.auditing.auditEvents.type = 'tcp'
+      config.auditing.auditEvents.port = 6052
+      testUtils.createMockTCPServer 6052, testAudit, 'ok', 'not-ok', afterSetup, validate

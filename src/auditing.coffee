@@ -3,6 +3,13 @@ syslogParser = require('glossy').Parse
 parseString = require('xml2js').parseString
 firstCharLowerCase = require('xml2js').processors.firstCharLowerCase
 Audit = require('./model/audits').Audit
+tlsAuthentication = require "./middleware/tlsAuthentication"
+dgram = require 'dgram'
+tls = require 'tls'
+net = require 'net'
+config = require "./config/config"
+config.auditing = config.get('auditing')
+
 
 parseAuditRecordFromXML = (xml, callback) ->
   # DICOM mappers
@@ -50,7 +57,7 @@ parseAuditRecordFromXML = (xml, callback) ->
     callback null, audit
 
 
-exports.processAudit = (msg, callback) ->
+exports.processAudit = processAudit = (msg, callback=(->)) ->
   parsedMsg = syslogParser.parse(msg)
 
   if not parsedMsg or not parsedMsg.message
@@ -70,3 +77,44 @@ exports.processAudit = (msg, callback) ->
       if xmlErr then logger.info "Failed to parse message as an AuditMessage XML document: #{xmlErr}"
 
       callback()
+
+
+sendUDPAudit = (msg, callback) ->
+  client = dgram.createSocket('udp4')
+  client.send msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, (err) ->
+    client.close()
+    callback err
+
+sendTLSAudit = (msg, callback) ->
+  tlsAuthentication.getServerOptions true, (err, options) ->
+    return callback err if err
+
+    client = tls.connect config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, ->
+      client.write "#{msg.length} #{msg}"
+      client.end()
+
+    client.on 'end', -> callback()
+
+sendTCPAudit = (msg, callback) ->
+  client = net.connect config.auditing.auditEvents.port, config.auditing.auditEvents.host, ->
+    client.write "#{msg.length} #{msg}"
+    client.end()
+
+  client.on 'end', -> callback()
+
+
+# Send an audit event
+exports.sendAuditEvent = (msg, callback=(->)) ->
+  done = (err) ->
+    if err then logger.error err
+    callback()
+
+  if not config.auditing?.auditEvents?
+    return done 'Unable to record audit event: Missing config.auditing.auditEvents'
+
+  switch config.auditing.auditEvents.type
+    when 'internal' then processAudit msg, done
+    when 'udp' then sendUDPAudit msg, done
+    when 'tls' then sendTLSAudit msg, done
+    when 'tcp' then sendTCPAudit msg, done
+    else done "Invalid audit event type '#{config.auditing.auditEvents.type}'"

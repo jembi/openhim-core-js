@@ -148,7 +148,7 @@ The following config option are provided by the OpenHIM. All of these options ha
     "durationType": "days"
   },
   "auditing": {
-    // Enable or disable the ATNA auditing servers and config their ports
+    // ATNA Audit Repository: Enable or disable the ATNA auditing servers and configure their ports
     "servers": {
       "udp": {
         "enabled": false,
@@ -161,7 +161,16 @@ The following config option are provided by the OpenHIM. All of these options ha
       "tcp": {
         "enabled": false,
         "port": 5052
-      }
+      },
+    },
+    // ATNA Record Audit Event: Target repository for core to send its own audit events to
+    "auditEvents": {
+      // Connection type. Options are 'tcp', 'tls', 'udp' or 'internal'
+      // If 'internal' then audits will be sent to the HIM's internal audit repository.
+      "type": "internal",
+      // Host and port are mandatory for all types except 'internal', in which case the values are ignored
+      "host": "127.0.0.1",
+      "port": 5051
     }
   },
   "caching": {
