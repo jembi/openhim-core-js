@@ -167,8 +167,8 @@ The following config option are provided by the OpenHIM. All of these options ha
     "auditEvents": {
       // Connection type. Options are 'tcp', 'tls', 'udp' or 'internal'
       // If 'internal' then audits will be sent to the HIM's internal audit repository.
-      "type": "internal",
-      // Host and port are mandatory for all types except 'internal', in which case the values are ignored
+      "interface": "internal",
+      // Host and port are mandatory for all interfaces except 'internal', in which case the values are ignored
       "host": "localhost",
       "port": 5051
     }

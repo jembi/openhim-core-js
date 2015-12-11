@@ -103,7 +103,7 @@
       }
     },
     "auditEvents": {
-      "type": "internal",
+      "interface": "internal",
       "host": "localhost",
       "port": 5051
     }

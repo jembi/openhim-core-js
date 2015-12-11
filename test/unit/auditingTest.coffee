@@ -288,7 +288,7 @@ describe "Auditing", ->
       testUtils.cleanupTestKeystore -> done()
 
     it 'should process audit internally', (done) ->
-      config.auditing.auditEvents.type = 'internal'
+      config.auditing.auditEvents.interface = 'internal'
 
       auditing.sendAuditEvent testAudit, ->
         Audit.find {}, (err, audits) ->
@@ -301,7 +301,7 @@ describe "Auditing", ->
       server = dgram.createSocket 'udp4'
 
       server.on 'listening', ->
-        config.auditing.auditEvents.type = 'udp'
+        config.auditing.auditEvents.interface = 'udp'
         config.auditing.auditEvents.port = 6050
         auditing.sendAuditEvent testAudit, ->
 
@@ -327,7 +327,7 @@ describe "Auditing", ->
           server.close()
           done()
 
-      config.auditing.auditEvents.type = 'tls'
+      config.auditing.auditEvents.interface = 'tls'
       config.auditing.auditEvents.port = 6051
       testUtils.createMockTLSServerWithMutualAuth 6051, testAudit, 'ok', 'not-ok', afterSetup, validate
 
@@ -344,6 +344,6 @@ describe "Auditing", ->
           server.close()
           done()
 
-      config.auditing.auditEvents.type = 'tcp'
+      config.auditing.auditEvents.interface = 'tcp'
       config.auditing.auditEvents.port = 6052
       testUtils.createMockTCPServer 6052, testAudit, 'ok', 'not-ok', afterSetup, validate

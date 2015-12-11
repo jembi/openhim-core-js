@@ -116,9 +116,9 @@ exports.sendAuditEvent = (msg, callback=(->)) ->
   if not config.auditing?.auditEvents?
     return done 'Unable to record audit event: Missing config.auditing.auditEvents'
 
-  switch config.auditing.auditEvents.type
+  switch config.auditing.auditEvents.interface
     when 'internal' then processAudit msg, done
     when 'udp' then sendUDPAudit msg, done
     when 'tls' then sendTLSAudit msg, done
     when 'tcp' then sendTCPAudit msg, done
-    else done "Invalid audit event type '#{config.auditing.auditEvents.type}'"
+    else done "Invalid audit event interface '#{config.auditing.auditEvents.interface}'"
