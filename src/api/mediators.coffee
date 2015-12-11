@@ -93,7 +93,7 @@ exports.addMediator = ->
     # audit mediator start
     audit = atna.appActivityAudit true, mediator.name, mediatorHost, 'system'
     audit = atna.wrapInSyslog audit
-    auditing.processAudit audit, ->
+    auditing.sendAuditEvent audit, ->
       logger.info "Processed internal mediator start audit for: #{mediator.name} - #{mediator.urn}"
 
     if not mediator.urn

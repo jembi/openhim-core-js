@@ -27,7 +27,7 @@ exports.authenticate = (email) ->
       # User NOT authenticated, send audit
       audit = atna.userLoginAudit atna.OUTCOME_SERIOUS_FAILURE, 'openhim', os.hostname(), email
       audit = atna.wrapInSyslog audit
-      auditing.processAudit audit, -> logger.debug 'Processed internal audit'
+      auditing.sendAuditEvent audit, -> logger.debug 'Processed internal audit'
     else
       this.body =
         salt: user.passwordSalt
@@ -36,7 +36,7 @@ exports.authenticate = (email) ->
       # User authenticated, send audit
       audit = atna.userLoginAudit atna.OUTCOME_SUCCESS, 'openhim', os.hostname(), email, user.groups.join(','), user.groups.join(',')
       audit = atna.wrapInSyslog audit
-      auditing.processAudit audit, -> logger.debug 'Processed internal audit'
+      auditing.sendAuditEvent audit, -> logger.debug 'Processed internal audit'
   catch e
     utils.logAndSetResponse this, 500, "Error during authentication #{e}", 'error'
 

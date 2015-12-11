@@ -1,6 +1,11 @@
 should = require "should"
 auditing = require "../../lib/auditing"
 Audit = require("../../lib/model/audits").Audit
+testUtils = require '../testUtils'
+dgram = require 'dgram'
+fs = require 'fs'
+config = require '../../lib/config/config'
+config.auditing = config.get('auditing')
 
 testAuditParticipantQuery = """
 TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAzMDUxMjUyMzErMDIwMHx8UUJQXlEyM15RQlBfUTIxfGJiMDczYjg1LTU3YTktNDBiYS05MjkxLTE1ZDIxMThkNDhmM3xQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXxmZmQ4ZTlmNy1hYzJiLTQ2MjUtYmQ4MC1kZTcwNDU5MmQ5ZjN8MTExMTExMTExMV5eXiYxLjIuMyZJU09eUEl8Xl5eRUNJRCZFQ0lEJklTT15QSQ1SQ1B8SQ0=
@@ -269,3 +274,77 @@ describe "Auditing", ->
           validateIHEAudit 'IHE+DICOM', audits[0]
 
           done()
+
+  describe '.sendAuditEvent', ->
+    testString = 'hello - this is a test'
+    _restore = null
+
+    before (done) ->
+      _restore = JSON.stringify config.auditing.auditEvents
+      ca = [fs.readFileSync 'test/resources/server-tls/cert.pem']
+      testUtils.setupTestKeystore null, null, ca, -> done()
+
+    after (done) ->
+      config.auditing.auditEvents = JSON.parse _restore
+      testUtils.cleanupTestKeystore -> done()
+
+    it 'should process audit internally', (done) ->
+      config.auditing.auditEvents.interface = 'internal'
+
+      auditing.sendAuditEvent testAudit, ->
+        Audit.find {}, (err, audits) ->
+          return done err if err
+          audits.length.should.be.exactly 1
+          audits[0].rawMessage.should.be.exactly testAudit
+          done()
+
+    it 'should send an audit event via UDP', (done) ->
+      server = dgram.createSocket 'udp4'
+
+      server.on 'listening', ->
+        config.auditing.auditEvents.interface = 'udp'
+        config.auditing.auditEvents.port = 6050
+        auditing.sendAuditEvent testString, ->
+
+      server.on 'message', (msg, rinfo) ->
+        "#{msg}".should.be.exactly testString
+        server.close()
+        done()
+
+      server.on 'error', done
+
+      server.bind port: 6050
+
+    it 'should send an audit event via TLS', (done) ->
+      called = {}
+
+      validate = (data) ->
+        "#{data}".should.be.exactly "#{testString.length} #{testString}"
+        called['called-tls'] = true
+
+      afterSetup = (server) ->
+        auditing.sendAuditEvent testString, ->
+          called.should.have.property 'called-tls'
+          server.close()
+          done()
+
+      config.auditing.auditEvents.interface = 'tls'
+      config.auditing.auditEvents.port = 6051
+      testUtils.createMockTLSServerWithMutualAuth 6051, testString, 'ok', 'not-ok', afterSetup, validate
+
+    it 'should send an audit event via TCP', (done) ->
+      called = {}
+
+      validate = (data) ->
+        "#{data}".should.be.exactly "#{testString.length} #{testString}"
+        called['called-tcp'] = true
+
+      afterSetup = (server) ->
+        auditing.sendAuditEvent testString, ->
+          called.should.have.property 'called-tcp'
+          server.close()
+          done()
+
+      config.auditing.auditEvents.interface = 'tcp'
+      config.auditing.auditEvents.port = 6052
+      testUtils.createMockTCPServer 6052, testString, 'ok', 'not-ok', afterSetup, validate

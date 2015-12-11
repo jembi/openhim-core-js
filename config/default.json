@@ -101,6 +101,11 @@
         "enabled": false,
         "port": 5052
       }
+    },
+    "auditEvents": {
+      "interface": "internal",
+      "host": "localhost",
+      "port": 5051
     }
   },
   "caching": {
