@@ -276,6 +276,7 @@ describe "Auditing", ->
           done()
 
   describe '.sendAuditEvent', ->
+    testString = 'hello - this is a test'
     _restore = null
 
     before (done) ->
@@ -303,10 +304,10 @@ describe "Auditing", ->
       server.on 'listening', ->
         config.auditing.auditEvents.interface = 'udp'
         config.auditing.auditEvents.port = 6050
-        auditing.sendAuditEvent testAudit, ->
+        auditing.sendAuditEvent testString, ->
 
       server.on 'message', (msg, rinfo) ->
-        "#{msg}".should.be.exactly testAudit
+        "#{msg}".should.be.exactly testString
         server.close()
         done()
 
@@ -318,32 +319,32 @@ describe "Auditing", ->
       called = {}
 
       validate = (data) ->
-        "#{data}".should.be.exactly "#{testAudit.length} #{testAudit}"
+        "#{data}".should.be.exactly "#{testString.length} #{testString}"
         called['called-tls'] = true
 
       afterSetup = (server) ->
-        auditing.sendAuditEvent testAudit, ->
+        auditing.sendAuditEvent testString, ->
           called.should.have.property 'called-tls'
           server.close()
           done()
 
       config.auditing.auditEvents.interface = 'tls'
       config.auditing.auditEvents.port = 6051
-      testUtils.createMockTLSServerWithMutualAuth 6051, testAudit, 'ok', 'not-ok', afterSetup, validate
+      testUtils.createMockTLSServerWithMutualAuth 6051, testString, 'ok', 'not-ok', afterSetup, validate
 
     it 'should send an audit event via TCP', (done) ->
       called = {}
 
       validate = (data) ->
-        "#{data}".should.be.exactly "#{testAudit.length} #{testAudit}"
+        "#{data}".should.be.exactly "#{testString.length} #{testString}"
         called['called-tcp'] = true
 
       afterSetup = (server) ->
-        auditing.sendAuditEvent testAudit, ->
+        auditing.sendAuditEvent testString, ->
           called.should.have.property 'called-tcp'
           server.close()
           done()
 
       config.auditing.auditEvents.interface = 'tcp'
       config.auditing.auditEvents.port = 6052
-      testUtils.createMockTCPServer 6052, testAudit, 'ok', 'not-ok', afterSetup, validate
+      testUtils.createMockTCPServer 6052, testString, 'ok', 'not-ok', afterSetup, validate
