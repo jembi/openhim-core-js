@@ -12,3 +12,4 @@ User guide
    mediators
    disaster-recovery
    versioning
+   auditing
