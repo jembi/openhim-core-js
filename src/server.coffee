@@ -527,8 +527,8 @@ else
       (Q.all promises).then ->
         audit = atna.appActivityAudit true, 'openhim', os.hostname(), 'system'
         audit = atna.wrapInSyslog audit
-        auditing.processAudit audit, ->
-          logger.info 'Processed internal start audit'
+        auditing.sendAuditEvent audit, ->
+          logger.info 'Processed start audit event'
           logger.info "OpenHIM server started: #{new Date()}"
           done()
 
@@ -605,8 +605,8 @@ else
 
       audit = atna.appActivityAudit false, 'openhim', os.hostname(), 'system'
       audit = atna.wrapInSyslog audit
-      auditing.processAudit audit, ->
-        logger.info 'Processed internal stop audit'
+      auditing.sendAuditEvent audit, ->
+        logger.info 'Processed stop audit event'
         logger.info 'Server shutdown complete.'
         done()
 

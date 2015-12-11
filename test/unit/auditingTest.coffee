@@ -276,11 +276,15 @@ describe "Auditing", ->
           done()
 
   describe '.sendAuditEvent', ->
+    _restore = null
+
     before (done) ->
+      _restore = JSON.stringify config.auditing.auditEvents
       ca = [fs.readFileSync 'test/resources/server-tls/cert.pem']
       testUtils.setupTestKeystore null, null, ca, -> done()
 
     after (done) ->
+      config.auditing.auditEvents = JSON.parse _restore
       testUtils.cleanupTestKeystore -> done()
 
     it 'should process audit internally', (done) ->
