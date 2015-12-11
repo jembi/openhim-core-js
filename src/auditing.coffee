@@ -90,17 +90,21 @@ sendTLSAudit = (msg, callback) ->
     return callback err if err
 
     client = tls.connect config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, ->
+      if not client.authorized then return callback client.authorizationError
+
       client.write "#{msg.length} #{msg}"
       client.end()
 
-    client.on 'end', -> callback()
+    client.on 'error', (err) -> logger.error err
+    client.on 'close', -> callback()
 
 sendTCPAudit = (msg, callback) ->
   client = net.connect config.auditing.auditEvents.port, config.auditing.auditEvents.host, ->
     client.write "#{msg.length} #{msg}"
     client.end()
 
-  client.on 'end', -> callback()
+  client.on 'error', (err) -> logger.error
+  client.on 'close', -> callback()
 
 
 # Send an audit event

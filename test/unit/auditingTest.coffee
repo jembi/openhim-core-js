@@ -2,7 +2,8 @@ should = require "should"
 auditing = require "../../lib/auditing"
 Audit = require("../../lib/model/audits").Audit
 testUtils = require '../testUtils'
-FakeServer = require '../fakeTcpServer'
+dgram = require 'dgram'
+fs = require 'fs'
 config = require '../../lib/config/config'
 config.auditing = config.get('auditing')
 
@@ -275,7 +276,16 @@ describe "Auditing", ->
           done()
 
   describe '.sendAuditEvent', ->
+    before (done) ->
+      ca = [fs.readFileSync 'test/resources/server-tls/cert.pem']
+      testUtils.setupTestKeystore null, null, ca, -> done()
+
+    after (done) ->
+      testUtils.cleanupTestKeystore -> done()
+
     it 'should process audit internally', (done) ->
+      config.auditing.auditEvents.type = 'internal'
+
       auditing.sendAuditEvent testAudit, ->
         Audit.find {}, (err, audits) ->
           return done err if err
@@ -283,30 +293,52 @@ describe "Auditing", ->
           audits[0].rawMessage.should.be.exactly testAudit
           done()
 
-    #describe 'type: udp'
-      #mockUDPServer = null
+    it 'should send an audit event via UDP', (done) ->
+      server = dgram.createSocket 'udp4'
 
-      #before (done) ->
-        #mockUDPServer = new FakeServer()
-        #mockUDPServer.start done
+      server.on 'listening', ->
+        config.auditing.auditEvents.type = 'udp'
+        config.auditing.auditEvents.port = 6050
+        auditing.sendAuditEvent testAudit, ->
 
-      #after -> mockUDPServer.stop()
+      server.on 'message', (msg, rinfo) ->
+        "#{msg}".should.be.exactly testAudit
+        server.close()
+        done()
 
-    it 'should send an audit event via TCP', (done) ->
-      server = null
+      server.on 'error', done
+
+      server.bind port: 6050
+
+    it 'should send an audit event via TLS', (done) ->
       called = {}
 
       validate = (data) ->
         "#{data}".should.be.exactly "#{testAudit.length} #{testAudit}"
-        called.tcp = true
-        console.log called
+        called['called-tls'] = true
 
-      afterSetup = (s) ->
+      afterSetup = (server) ->
         auditing.sendAuditEvent testAudit, ->
-          called.should.have.property 'called'
-          s.close()
+          called.should.have.property 'called-tls'
+          server.close()
           done()
-          console.log 'here'
+
+      config.auditing.auditEvents.type = 'tls'
+      config.auditing.auditEvents.port = 6051
+      testUtils.createMockTLSServerWithMutualAuth 6051, testAudit, 'ok', 'not-ok', afterSetup, validate
+
+    it 'should send an audit event via TCP', (done) ->
+      called = {}
+
+      validate = (data) ->
+        "#{data}".should.be.exactly "#{testAudit.length} #{testAudit}"
+        called['called-tcp'] = true
+
+      afterSetup = (server) ->
+        auditing.sendAuditEvent testAudit, ->
+          called.should.have.property 'called-tcp'
+          server.close()
+          done()
 
       config.auditing.auditEvents.type = 'tcp'
       config.auditing.auditEvents.port = 6052

@@ -169,7 +169,7 @@ The following config option are provided by the OpenHIM. All of these options ha
       // If 'internal' then audits will be sent to the HIM's internal audit repository.
       "type": "internal",
       // Host and port are mandatory for all types except 'internal', in which case the values are ignored
-      "host": "127.0.0.1",
+      "host": "localhost",
       "port": 5051
     }
   },
