@@ -78,7 +78,7 @@ exports.createMockHTTPSServerWithMutualAuth = (resStatusCode, resBody, port, use
 exports.createMockTCPServer = (port, expected, matchResponse, nonMatchResponse, callback, onRequest=(->)) ->
   server = net.createServer (sock) ->
     sock.on 'data', (data) ->
-      onRequest(data)
+      onRequest data
       response = if "#{data}" is expected then matchResponse else nonMatchResponse
       sock.write response
 
