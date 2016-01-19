@@ -120,13 +120,14 @@ clientLookup = (fingerprint, subjectCN, issuerCN) ->
 
   return deferred.promise
 
-if process.env.NODE_ENV == "test"
-  exports.clientLookup = clientLookup
-  
 genAuthAudit = (remoteAddress) ->
   audit = atna.nodeAuthentication remoteAddress, 'openhim', os.hostname(), atna.OUTCOME_MINOR_FAILURE
   audit = atna.wrapInSyslog audit
   return audit
+  
+if process.env.NODE_ENV == "test"
+  exports.clientLookup = clientLookup
+  exports.genAuthAudit = genAuthAudit
 
 ###
 # Koa middleware for mutual TLS authentication
