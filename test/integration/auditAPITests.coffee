@@ -192,6 +192,56 @@ describe "API Integration Tests", ->
                   res.body.length.should.equal countBefore + 1
                   done()
 
+      it "should generate an 'audit log used' audit when using non-basic representation", (done) ->
+        audit = new Audit auditData
+        audit.save (err, result)->
+          return done err if err
+
+          request("https://localhost:8080")
+            .get("/audits?filterRepresentation=full")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Audit.find {}, (err, newAudits) ->
+                  return done err if err
+                  newAudits.length.should.be.exactly 2
+
+                  if newAudits[0].eventIdentification.eventID.displayName is 'Audit Log Used'
+                    newAudits[0].participantObjectIdentification.length.should.be.exactly 1
+                    newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
+                  else
+                    newAudits[1].eventIdentification.eventID.displayName is 'Audit Log Used'
+                    newAudits[1].participantObjectIdentification.length.should.be.exactly 1
+                    newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
+                  done()
+
+      it "should NOT generate an 'audit log used' audit when using basic (default) representation", (done) ->
+        audit = new Audit auditData
+        audit.save (err, result)->
+          return done err if err
+
+          request("https://localhost:8080")
+            .get("/audits")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Audit.find {}, (err, newAudits) ->
+                  return done err if err
+                  newAudits.length.should.be.exactly 1
+                  done()
+
 
     describe "*getAuditById (auditId)", ->
 
@@ -245,6 +295,35 @@ describe "API Integration Tests", ->
                 done err
               else
                 done()
+
+      it "should generate an 'audit log used' audit", (done) ->
+        audit = new Audit auditData
+        audit.save (err, result)->
+          return done err if err
+
+          request("https://localhost:8080")
+            .get("/audits/#{result._id}")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Audit.find {}, (err, newAudits) ->
+                  return done err if err
+                  newAudits.length.should.be.exactly 2
+
+                  if newAudits[0].eventIdentification.eventID.displayName is 'Audit Log Used'
+                    newAudits[0].participantObjectIdentification.length.should.be.exactly 1
+                    newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
+                  else
+                    newAudits[1].eventIdentification.eventID.displayName is 'Audit Log Used'
+                    newAudits[1].participantObjectIdentification.length.should.be.exactly 1
+                    newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
+                  done()
 
 
     describe "*getAuditsFilterOptions", ->
