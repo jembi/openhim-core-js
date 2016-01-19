@@ -168,7 +168,7 @@ describe 'API Integration Tests', ->
             else
               Keystore.findOne {}, (err, keystore) ->
                 done(err) if err
-                keystore.cert.fingerprint.should.be.exactly '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+                keystore.cert.fingerprint.should.be.exactly '35:B1:95:80:45:F6:39:A8:1E:75:E1:B1:16:16:32:EB:12:EA:1A:24'
                 done()
 
     it "Should return a 400 if the server certificate isn't valid", (done) ->
@@ -481,4 +481,3 @@ describe 'API Integration Tests', ->
             else
               res.body.valid.should.be.exactly false
               done()  
-
