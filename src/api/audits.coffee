@@ -6,8 +6,6 @@ utils = require "../utils"
 atna = require 'atna-audit'
 auditing = require '../auditing'
 os = require 'os'
-config = require '../config/config'
-config.api = config.get('api')
 
 
 # function to construct projection object
