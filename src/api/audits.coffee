@@ -3,6 +3,11 @@ authorisation = require './authorisation'
 Q = require 'q'
 logger = require 'winston'
 utils = require "../utils"
+atna = require 'atna-audit'
+auditing = require '../auditing'
+os = require 'os'
+config = require '../config/config'
+config.api = config.get('api')
 
 
 # function to construct projection object
@@ -18,7 +23,15 @@ getProjectionObject = (filterRepresentation) ->
       # no filterRepresentation supplied - simple view
       # view minimum required data for audits
       return { "participantObjectIdentification": 0, "activeParticipant": 0, "rawMessage": 0 }
-  
+ 
+
+# Audit the audit record retrieval
+auditLogUsed = (auditId, outcome, user, uri) ->
+  groups = user.groups.join(',')
+  audit = atna.auditLogUsedAudit outcome, 'openhim', os.hostname(), user.email, groups, groups, uri
+  audit = atna.wrapInSyslog audit
+  auditing.sendAuditEvent audit, ->
+    logger.debug "Processed audit log used message for user '#{user.email}' and audit '#{auditId}'"
 
 
 ###
@@ -101,11 +114,14 @@ exports.getAudits = ->
       .limit filterLimit
       .sort 'eventIdentification.eventDateTime': -1
       .exec()
+
+    # audit each retrieved record, but only for non-basic representation requests
+    if filterRepresentation is 'full' or filterRepresentation is 'simpledetails'
+      for record in this.body
+        auditLogUsed record._id, atna.OUTCOME_SUCCESS, this.authenticated, this.request.href
+
   catch e
     utils.logAndSetResponse this, 500, "Could not retrieve audits via the API: #{e}", 'error'
-
-
-
 
 
 ###
@@ -130,11 +146,14 @@ exports.getAuditById = (auditId) ->
     if not result
       this.body = "Could not find audits record with ID: #{auditId}"
       this.status = 404
+      auditLogUsed auditId, atna.OUTCOME_MINOR_FAILURE, this.authenticated, this.request.href
     else
       this.body = result
+      auditLogUsed auditId, atna.OUTCOME_SUCCESS, this.authenticated, this.request.href
 
   catch e
     utils.logAndSetResponse this, 500, "Could not get audit by ID via the API: #{e}", 'error'
+    auditLogUsed auditId, atna.OUTCOME_MAJOR_FAILURE, this.authenticated, this.request.href
 
 
 
