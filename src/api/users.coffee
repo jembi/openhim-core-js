@@ -12,6 +12,7 @@ utils = require "../utils"
 atna = require 'atna-audit'
 os = require 'os'
 auditing = require '../auditing'
+himSourceID = config.get('auditing').auditEvents.auditSourceID
 
 ###
 # Get authentication details
@@ -25,7 +26,7 @@ exports.authenticate = (email) ->
     if not user
       utils.logAndSetResponse this, 404, "Could not find user by email #{email}", 'info'
       # User NOT authenticated, send audit
-      audit = atna.userLoginAudit atna.OUTCOME_SERIOUS_FAILURE, 'openhim', os.hostname(), email
+      audit = atna.userLoginAudit atna.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email
       audit = atna.wrapInSyslog audit
       auditing.sendAuditEvent audit, -> logger.debug 'Processed internal audit'
     else
@@ -34,7 +35,7 @@ exports.authenticate = (email) ->
         ts: new Date()
 
       # User authenticated, send audit
-      audit = atna.userLoginAudit atna.OUTCOME_SUCCESS, 'openhim', os.hostname(), email, user.groups.join(','), user.groups.join(',')
+      audit = atna.userLoginAudit atna.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(','), user.groups.join(',')
       audit = atna.wrapInSyslog audit
       auditing.sendAuditEvent audit, -> logger.debug 'Processed internal audit'
   catch e
