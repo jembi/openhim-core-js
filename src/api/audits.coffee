@@ -9,6 +9,7 @@ os = require 'os'
 config = require "../config/config"
 config.router = config.get('router')
 config.api = config.get('api')
+himSourceID = config.get('auditing').auditEvents.auditSourceID
 
 
 # function to construct projection object
@@ -30,7 +31,7 @@ getProjectionObject = (filterRepresentation) ->
 auditLogUsed = (auditId, outcome, user) ->
   groups = user.groups.join(',')
   uri = "https://#{config.router.externalHostname}:#{config.api.httpsPort}/audits/#{auditId}"
-  audit = atna.auditLogUsedAudit outcome, 'openhim', os.hostname(), user.email, groups, groups, uri
+  audit = atna.auditLogUsedAudit outcome, himSourceID, os.hostname(), user.email, groups, groups, uri
   audit = atna.wrapInSyslog audit
   auditing.sendAuditEvent audit, ->
     logger.debug "Processed audit log used message for user '#{user.email}' and audit '#{auditId}'"
