@@ -6,7 +6,6 @@ logger = require "winston"
 utils = require '../utils'
 pem = require 'pem'
 atna = require 'atna-audit'
-auditing = require '../auditing'
 
 config = require '../config/config'
 config.tlsClientLookup = config.get('tlsClientLookup')
@@ -119,15 +118,9 @@ clientLookup = (fingerprint, subjectCN, issuerCN) ->
       deferred.resolve null
 
   return deferred.promise
-
-genAuthAudit = (remoteAddress) ->
-  audit = atna.nodeAuthentication remoteAddress, 'openhim', os.hostname(), atna.OUTCOME_MINOR_FAILURE
-  audit = atna.wrapInSyslog audit
-  return audit
   
 if process.env.NODE_ENV == "test"
   exports.clientLookup = clientLookup
-  exports.genAuthAudit = genAuthAudit
 
 ###
 # Koa middleware for mutual TLS authentication
@@ -153,13 +146,11 @@ exports.koaMiddleware = (next) ->
         yield next
       else
         this.authenticated = null
-        auditing.sendAuditEvent genAuthAudit(this.req.connection.remoteAddress), -> logger.info 'Processed nodeAuthentication audit'
         logger.info "Certificate Authentication Failed: the certificate's fingerprint #{cert.fingerprint} did not match any client's certFingerprint attribute, trying next auth mechanism if any..."
         sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
         yield next
     else
       this.authenticated = null
-      auditing.sendAuditEvent genAuthAudit(this.req.connection.remoteAddress), -> logger.info 'Processed nodeAuthentication audit'
       logger.info "Could NOT authenticate via TLS: #{this.req.client.authorizationError}, trying next auth mechanism if any..."
       sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
       yield next

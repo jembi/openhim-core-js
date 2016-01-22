@@ -76,10 +76,3 @@ describe "tlsAuthentication.coffee", ->
         config.tlsClientLookup.type = 'in-chain'
         promise = tlsAuthentication.clientLookup 'you.wont.find.me', 'me.either'
         promise.then -> done()
-  
-  describe '.genAuthAudit', ->
-    
-    it 'should generate an audit with the remoteAddress included', ->
-      audit = tlsAuthentication.genAuthAudit '1.2.3.4'
-      audit.should.be.ok()
-      audit.should.match /ParticipantObjectID="1\.2\.3\.4"/
