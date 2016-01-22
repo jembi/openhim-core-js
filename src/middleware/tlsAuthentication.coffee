@@ -5,7 +5,6 @@ Keystore = require("../model/keystore").Keystore
 logger = require "winston"
 utils = require '../utils'
 pem = require 'pem'
-atna = require 'atna-audit'
 
 config = require '../config/config'
 config.tlsClientLookup = config.get('tlsClientLookup')
@@ -118,7 +117,7 @@ clientLookup = (fingerprint, subjectCN, issuerCN) ->
       deferred.resolve null
 
   return deferred.promise
-  
+
 if process.env.NODE_ENV == "test"
   exports.clientLookup = clientLookup
 
