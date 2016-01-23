@@ -11,6 +11,7 @@ auditing = require '../auditing'
 
 statsdServer = config.get 'statsd'
 application = config.get 'application'
+himSourceID = config.get('auditing').auditEvents.auditSourceID
 SDC = require 'statsd-client'
 os = require 'os'
 
@@ -66,9 +67,9 @@ extractContentType = (ctHeader) ->
     return ctHeader.substring(0, index).trim()
   else
     return ctHeader.trim()
-    
+
 genAuthAudit = (remoteAddress) ->
-  audit = atna.nodeAuthentication remoteAddress, 'openhim', os.hostname(), atna.OUTCOME_MINOR_FAILURE
+  audit = atna.nodeAuthentication remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE
   audit = atna.wrapInSyslog audit
   return audit
 
