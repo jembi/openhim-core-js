@@ -137,7 +137,7 @@ exports.authorise = (ctx, done) ->
     if config.authentication.enableBasicAuthentication
       ctx.set "WWW-Authenticate", "Basic"
     logger.info "The request, '" + ctx.request.path + "', is not authorised to access any channels."
-    auditing.sendAuditEvent genAuthAudit(ctx.ip), -> logger.info 'Processed nodeAuthentication audit'
+    auditing.sendAuditEvent genAuthAudit(ctx.ip), -> logger.debug 'Processed nodeAuthentication audit'
     return done()
 
 exports.koaMiddleware = (next) ->
