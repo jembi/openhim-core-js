@@ -105,7 +105,8 @@
     "auditEvents": {
       "interface": "internal",
       "host": "localhost",
-      "port": 5051
+      "port": 5051,
+      "auditSourceID": "OpenHIM"
     }
   },
   "caching": {

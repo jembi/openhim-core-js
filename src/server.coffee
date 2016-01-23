@@ -19,6 +19,8 @@ config.reports = config.get('reports')
 config.auditing = config.get('auditing')
 config.agenda = config.get('agenda')
 
+himSourceID = config.get('auditing').auditEvents.auditSourceID
+
 mongoose = require "mongoose"
 exports.connectionDefault = connectionDefault = mongoose.createConnection(config.mongo.url)
 exports.connectionATNA = connectionATNA = mongoose.createConnection(config.mongo.atnaUrl)
@@ -525,7 +527,7 @@ else
       promises.push startAgenda()
 
       (Q.all promises).then ->
-        audit = atna.appActivityAudit true, 'openhim', os.hostname(), 'system'
+        audit = atna.appActivityAudit true, himSourceID, os.hostname(), 'system'
         audit = atna.wrapInSyslog audit
         auditing.sendAuditEvent audit, ->
           logger.info 'Processed start audit event'
@@ -603,7 +605,7 @@ else
 
       agenda = null
 
-      audit = atna.appActivityAudit false, 'openhim', os.hostname(), 'system'
+      audit = atna.appActivityAudit false, himSourceID, os.hostname(), 'system'
       audit = atna.wrapInSyslog audit
       auditing.sendAuditEvent audit, ->
         logger.info 'Processed stop audit event'
