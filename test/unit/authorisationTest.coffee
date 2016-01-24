@@ -482,3 +482,10 @@ describe "Authorisation middleware", ->
       authorisation.extractContentType('text/xml').should.be.exactly 'text/xml'
       authorisation.extractContentType('   text/xml ').should.be.exactly 'text/xml'
       authorisation.extractContentType('text/xml;').should.be.exactly 'text/xml'
+
+  describe '.genAuthAudit', ->
+    
+    it 'should generate an audit with the remoteAddress included', ->
+      audit = authorisation.genAuthAudit '1.2.3.4'
+      audit.should.be.ok()
+      audit.should.match /ParticipantObjectID="1\.2\.3\.4"/

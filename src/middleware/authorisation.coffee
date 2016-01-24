@@ -3,12 +3,15 @@ Q = require "q"
 xpath = require "xpath"
 dom = require("xmldom").DOMParser
 logger = require "winston"
+atna = require 'atna-audit'
 config = require '../config/config'
 config.authentication = config.get('authentication')
 utils = require '../utils'
+auditing = require '../auditing'
 
 statsdServer = config.get 'statsd'
 application = config.get 'application'
+himSourceID = config.get('auditing').auditEvents.auditSourceID
 SDC = require 'statsd-client'
 os = require 'os'
 
@@ -65,6 +68,11 @@ extractContentType = (ctHeader) ->
   else
     return ctHeader.trim()
 
+genAuthAudit = (remoteAddress) ->
+  audit = atna.nodeAuthentication remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE
+  audit = atna.wrapInSyslog audit
+  return audit
+
 # export private functions for unit testing
 # note: you cant spy on these method because of this :(
 if process.env.NODE_ENV == "test"
@@ -73,6 +81,7 @@ if process.env.NODE_ENV == "test"
   exports.matchXpath = matchXpath
   exports.matchJsonPath = matchJsonPath
   exports.extractContentType = extractContentType
+  exports.genAuthAudit = genAuthAudit
 
 # Is the channel enabled?
 # If there is no status field then the channel IS enabled
@@ -128,6 +137,7 @@ exports.authorise = (ctx, done) ->
     if config.authentication.enableBasicAuthentication
       ctx.set "WWW-Authenticate", "Basic"
     logger.info "The request, '" + ctx.request.path + "', is not authorised to access any channels."
+    auditing.sendAuditEvent genAuthAudit(ctx.ip), -> logger.debug 'Processed nodeAuthentication audit'
     return done()
 
 exports.koaMiddleware = (next) ->
