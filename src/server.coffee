@@ -454,8 +454,9 @@ else
           logger.info "[Auditing #{type}] No length supplied"
           sock.destroy()
 
+        logger.debug "Length prefix is: #{length} and message length so far is #{Buffer.byteLength(message)}"
         # if sourced length equals message length then full message received
-        if length == message.length
+        if length == Buffer.byteLength(message)
           logger.info "[Auditing #{type}] Received message from #{sock.remoteAddress}"
           auditing.processAudit message, -> logger.info "[Auditing #{type}] Processed audit"
 
