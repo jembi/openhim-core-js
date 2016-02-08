@@ -88,56 +88,72 @@ if process.env.NODE_ENV == "test"
 exports.isChannelEnabled = isChannelEnabled = (channel) -> not channel.status or channel.status is 'enabled'
 
 
+channelWithHighestPriority = (channels) ->
+  channels.reduce (channel1, channel2) ->
+    # let channel1 have precedence if equal
+    if not channel2.priority? then return channel1
+    if not channel1.priority? then return channel2
+    if channel1.priority <= channel2.priority then return channel1
+    return channel2
+
+
 exports.authorise = (ctx, done) ->
   utils.getAllChannels (err, channels) ->
+    approvedChannels = []
+
     for channel in channels
-      pat = new RegExp channel.urlPattern
-      # if url pattern matches
-      if pat.test ctx.request.path
-        matchedRoles = {}
-        allowedClient = false
-        if ctx.authenticated?
-          # used by messageStore
-          ctx.authenticated.ip = ctx.ip
+      do (channel) ->
+        pat = new RegExp channel.urlPattern
+        # if url pattern matches
+        if pat.test ctx.request.path
+          matchedRoles = {}
+          allowedClient = false
+          if ctx.authenticated?
+            # used by messageStore
+            ctx.authenticated.ip = ctx.ip
 
-          if ctx.authenticated.roles?
-            matchedRoles = channel.allow.filter (element) ->
-              return (ctx.authenticated.roles.indexOf element) isnt -1
-          if ((channel.allow.indexOf ctx.authenticated.clientID) isnt -1)
-            allowedClient = true
-        else
-          # used by messageStore
-          ctx.authenticated =
-            ip: ctx.ip
+            if ctx.authenticated.roles?
+              matchedRoles = channel.allow.filter (element) ->
+                return (ctx.authenticated.roles.indexOf element) isnt -1
+            if ((channel.allow.indexOf ctx.authenticated.clientID) isnt -1)
+              allowedClient = true
+          else
+            # used by messageStore
+            ctx.authenticated =
+              ip: ctx.ip
 
-        # if the user has a role that is allowed or their username is allowed specifically
-        requireWhitelistCheck = channel.whitelist.length > 0
-        isWhiteListed = not requireWhitelistCheck or ((channel.whitelist.indexOf ctx.ip) isnt -1)
+          # if the user has a role that is allowed or their username is allowed specifically
+          requireWhitelistCheck = channel.whitelist.length > 0
+          isWhiteListed = not requireWhitelistCheck or ((channel.whitelist.indexOf ctx.ip) isnt -1)
 
-        if isWhiteListed and ((matchedRoles.length > 0) or allowedClient or ((channel.authType == 'public') is true))
-          # authorisation success, now check if content type matches
-          if channel.matchContentTypes and channel.matchContentTypes.length > 0
-            if ctx.request.header and ctx.request.header['content-type']
-              ct = extractContentType ctx.request.header['content-type']
-              if (channel.matchContentTypes.indexOf ct) is -1
-                # deny access to channel if the content type doesnt match
-                continue
-            else
-              # deny access to channel if the content type isnt set
-              continue
+          if isWhiteListed and ((matchedRoles.length > 0) or allowedClient or ((channel.authType == 'public') is true))
+            # authorisation success, now check if content type matches
+            if channel.matchContentTypes and channel.matchContentTypes.length > 0
+              if ctx.request.header and ctx.request.header['content-type']
+                ct = extractContentType ctx.request.header['content-type']
+                if (channel.matchContentTypes.indexOf ct) is -1
+                  # deny access to channel if the content type doesnt match
+                  return #(continue loop)
+              else
+                # deny access to channel if the content type isnt set
+                return #(continue loop)
 
-          # now check that the status is 'enabled' and if the message content matches
-          if isChannelEnabled(channel) and matchContent(channel, ctx.body)
-            ctx.authorisedChannel = channel
-            logger.info "The request, '" + ctx.request.path + "' is authorised to access " + ctx.authorisedChannel.name
-            return done()
+            # now check that the status is 'enabled' and if the message content matches
+            if isChannelEnabled(channel) and matchContent(channel, ctx.body)
+              approvedChannels.push channel
 
-    # authorisation failed
-    ctx.response.status = 401
-    if config.authentication.enableBasicAuthentication
-      ctx.set "WWW-Authenticate", "Basic"
-    logger.info "The request, '" + ctx.request.path + "', is not authorised to access any channels."
-    auditing.sendAuditEvent genAuthAudit(ctx.ip), -> logger.debug 'Processed nodeAuthentication audit'
+    if approvedChannels.length > 0
+      # authorisation succeeded
+      ctx.authorisedChannel = channelWithHighestPriority approvedChannels
+      logger.info "The request, '" + ctx.request.path + "' is authorised to access " + ctx.authorisedChannel.name
+    else
+      # authorisation failed
+      ctx.response.status = 401
+      if config.authentication.enableBasicAuthentication
+        ctx.set "WWW-Authenticate", "Basic"
+      logger.info "The request, '" + ctx.request.path + "', is not authorised to access any channels."
+      auditing.sendAuditEvent genAuthAudit(ctx.ip), -> logger.debug 'Processed nodeAuthentication audit'
+
     return done()
 
 exports.koaMiddleware = (next) ->

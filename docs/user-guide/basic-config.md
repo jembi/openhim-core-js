@@ -53,6 +53,7 @@ There are many fields that you may supply and these are spread over a number of 
 * **Basic Info tab**
     * **Channel Name** - This is a descriptive name of the **Channel**.
     * **URL Pattern** - Supply a URL pattern to match an incoming transaction - **Note** this field excepts a RegEx value - More information on RegEx can be found [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) or [here](http://www.regular-expressions.info/)
+    * **Priority** - If a transaction matches the URL patterns of two or more channels, then the channel with higher priority will be picked. A value of 1 is the highest possible priority (first priority). Larger numbers therefore indicate that a channel should take lower priority.
     * **Channel Type** - Select a **Channel** type
         * **HTTP** - Default **Channel** type.
         * **TCP** - Supply a TCP Host and Port
