@@ -4,12 +4,12 @@ Polling Channels (scheduled tasks)
 A great feature of the OpenHIM is the ability to trigger tasks in other systems.
 This is made possible by a special type of channel called a polling channel. Polling
 channels are channels that the OpenHIM will trigger internally on some sort of
-schedule. When a channel is trigger it will cause each of the routes that are
+schedule. When a channel is triggered it will cause each of the routes that are
 configured for that channel to execute.
 
 The OpenHIM will trigger the polling channel with a `GET` request to the `/trigger`
 path on the defined schedule. Each route can override the path with their own as
-long as they are configured with a path. External systems can be trigger by
+long as they are configured with a path. External systems can be triggered by
 pointing a route at them. The external systems will have to expose an HTTP
 endpoint for them to be triggered. The triggering will always happen as an HTTP
 `GET` request.
