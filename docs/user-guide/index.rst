@@ -8,6 +8,7 @@ User guide
    adding-users
    transaction-list
    alerting
+   polling-channels
    certificates
    mediators
    disaster-recovery

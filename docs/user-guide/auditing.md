@@ -1,7 +1,7 @@
 Auditing
 ========
 
-# ATNA Audit Repository
+## ATNA Audit Repository
 The OpenHIM provides full support as an Audit Repository actor in the [IHE ATNA profile](http://wiki.ihe.net/index.php?title=Audit_Trail_and_Node_Authentication).
 
 You can make use of this functionality by enabling any of the audit servers in [config](https://github.com/jembi/openhim-core-js/blob/4de019301579600f9c54725b44bf40958b2aa3bf/config/default.json#L91-L103) before starting up the OpenHIM-core:
@@ -29,7 +29,7 @@ The OpenHIM supports both RFC3881 and DICOM formatted audit events.
 
 The OpenHIM-console has an audit viewer available on the 'Audit Log' page.
 
-# ATNA Audit Events
+## ATNA Audit Events
 The OpenHIM will generate audit events on application start/stop, as well as user authentication. These events can either be sent to the OpenHIM's own internal audit repository, or to an external repository. This can be setup in [config](https://github.com/jembi/openhim-core-js/blob/4de019301579600f9c54725b44bf40958b2aa3bf/config/default.json#L105-L108) by choosing an appropriate `interface`:
 ```js
 "auditEvents": {
