@@ -82,6 +82,7 @@ There are many fields that you may supply and these are spread over a number of 
     * **Basic Auth Username** - Supply a username if the route requires basic authentication.
     * **Basic Auth Password** - Supply a password if the route requires basic authentication.
     * **Is this the primary route?** - Set whether or not a route is primary - Setting a route to primary indicates that this is the first route to check and is the primary endpoint to reach.
+    * **Status** - Set whether or not a route is enabled/disabled.
     * **+ Save** - All required fields need to be supplied before the blue "**+ Save**" button becomes active.
     * **Note** - At least one route needs to be added to the **Channel** and only one route is allowed to be set to primary
 * **Alerts tab**:

@@ -1029,6 +1029,164 @@ describe "e2e Integration Tests", ->
               response.href.should.be.exactly 'http://localhost:5001/test/mock'
               done()
 
+
+  describe "Routes enabled/disabled tests", ->
+
+    mockServer1 = null
+    mockServer2 = null
+
+    channel1 = new Channel
+      name: "TEST DATA - Mock endpoint 1"
+      urlPattern: "^/test/channel1$"
+      allow: [ "PoC" ]
+      routes: [
+          {
+            name: "test route"
+            host: "localhost"
+            port: 1233
+            primary: true
+          }, {
+            name: "test route 2"
+            host: "localhost"
+            port: 1234
+          }
+        ]
+    channel2 = new Channel
+      name: "TEST DATA - Mock endpoint 2"
+      urlPattern: "^/test/channel2$"
+      allow: [ "PoC" ]
+      routes: [
+          {
+            name: "test route"
+            host: "localhost"
+            port: 1233
+            status: 'disabled'
+          }, {
+            name: "test route 2"
+            host: "localhost"
+            port: 1234
+            primary: true
+            status: 'enabled'
+          }
+        ]
+    channel3 = new Channel
+      name: "TEST DATA - Mock endpoint 3"
+      urlPattern: "^/test/channel3$"
+      allow: [ "PoC" ]
+      routes: [
+          {
+            name: "test route"
+            host: "localhost"
+            port: 1233
+            primary: true
+            status: 'enabled'
+          }, {
+            name: "test route 2"
+            host: "localhost"
+            port: 1234
+            primary: true
+            status: 'disabled'
+          }
+        ]
+
+    before (done) ->
+      config.authentication.enableMutualTLSAuthentication = false
+      config.authentication.enableBasicAuthentication = true
+
+      channel1.save (err) -> channel2.save (err) -> channel3.save (err) ->
+        testAppDoc =
+          clientID: "testApp"
+          clientDomain: "test-client.jembi.org"
+          name: "TEST Client"
+          roles:
+            [
+              "OpenMRS_PoC"
+              "PoC"
+            ]
+          passwordAlgorithm: "sha512"
+          passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+          passwordSalt: "1234567890"
+          cert: ""
+
+        client = new Client testAppDoc
+        client.save (error, newAppDoc) ->
+          # Create mock endpoint to forward requests to
+          mockServer1 = testUtils.createMockServer 200, 'target1', 1233, ->
+            mockServer2 = testUtils.createMockServer 200, 'target2', 1234, done
+
+    after (done) ->
+      Channel.remove { name: "TEST DATA - Mock endpoint 1" }, ->
+        Channel.remove { name: "TEST DATA - Mock endpoint 2" }, ->
+          Channel.remove { name: "TEST DATA - Mock endpoint 3" }, ->
+            Client.remove { clientID: "testApp" }, ->
+              mockServer1.close ->
+                mockServer2.close ->
+                  done()
+
+    afterEach (done) -> server.stop -> Transaction.remove {}, done
+
+    beforeEach (done) -> Transaction.remove {}, done
+
+    it "should route transactions to routes that have no status specified (default: enabled)", (done) ->
+      server.start httpPort: 5001, ->
+        request("http://localhost:5001")
+          .get("/test/channel1")
+          .auth("testApp", "password")
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.text.should.be.exactly 'target1'
+              # routes are async
+              setTimeout ( ->
+                Transaction.findOne {}, (err, trx) ->
+                  return done err if err
+                  trx.routes.length.should.be.exactly 1
+                  trx.routes[0].should.have.property 'name', 'test route 2'
+                  trx.routes[0].response.body.should.be.exactly 'target2'
+                  done()
+              ), 1500
+
+    it "should NOT route transactions to disabled routes", (done) ->
+      server.start httpPort: 5001, ->
+        request("http://localhost:5001")
+          .get("/test/channel2")
+          .auth("testApp", "password")
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.text.should.be.exactly 'target2'
+              # routes are async
+              setTimeout ( ->
+                Transaction.findOne {}, (err, trx) ->
+                  return done err if err
+                  trx.routes.length.should.be.exactly 0
+                  done()
+              ), 1500
+
+    it "should ignore disabled primary routes (multiple primary routes)", (done) ->
+      server.start httpPort: 5001, ->
+        request("http://localhost:5001")
+          .get("/test/channel3")
+          .auth("testApp", "password")
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.text.should.be.exactly 'target1'
+              # routes are async
+              setTimeout ( ->
+                Transaction.findOne {}, (err, trx) ->
+                  return done err if err
+                  trx.routes.length.should.be.exactly 0
+                  done()
+              ), 1500
+ 
+
   describe "Channel priority tests", ->
 
     mockServer1 = null
