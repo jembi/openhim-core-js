@@ -145,8 +145,7 @@ exports.authorise = (ctx, done) ->
 
     if approvedChannels.length > 0
       # authorisation succeeded
-      if config.logger.level is 'debug' then logger.debug "Channels that match request: #{(approvedChannels.map (c) -> c.name)}"
-
+      logger.debug "Channels that match request: #{(approvedChannels.map (c) -> c.name)}"
       ctx.authorisedChannel = channelWithHighestPriority approvedChannels
       logger.info "The request, '" + ctx.request.path + "' is authorised to access " + ctx.authorisedChannel.name
     else
