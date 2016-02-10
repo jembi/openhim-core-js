@@ -87,6 +87,10 @@
     "duration": 7,
     "durationType": "days"
   },
+  "userPasswordResetExpiry": {
+    "duration": 1,
+    "durationType": "hours"
+  },
   "auditing": {
     "servers": {
       "udp": {

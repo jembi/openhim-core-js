@@ -8,6 +8,7 @@ randtoken = require 'rand-token'
 contact = require '../contact'
 config = require "../config/config"
 config.newUserExpiry = config.get('newUserExpiry')
+config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')
 utils = require "../utils"
 atna = require 'atna-audit'
 os = require 'os'
@@ -42,16 +43,131 @@ exports.authenticate = (email) ->
     utils.logAndSetResponse this, 500, "Error during authentication #{e}", 'error'
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#################################
+### Reset password Functions ###
+#################################
+
+
+passwordResetPlainMessageTemplate = (firstname, setPasswordLink) -> """
+<---------- Existing User - Reset Password ---------->
+Hi #{firstname},
+
+A request has been made to reset your password on OpenHIM
+Follow the below link to reset your password and log into OpenHIM Console
+#{setPasswordLink}
+<---------- Existing User - Reset Password ---------->
+"""
+
+passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) -> """
+<h1>Reset OpenHIM Password</h1>
+<p>Hi #{firstname},<br/><br/>A request has been made to reset your password on OpenHIM</p>
+<p>Follow the below link to set your password and log into OpenHIM Console</p>
+<p>#{setPasswordLink}</p>
+"""
+
+###
+# update user token/expiry and send new password email
+###
+exports.userPasswordResetRequest = (email) ->
+  email = unescape email
+
+  # Generate the new user token here
+  # set expiry date = true
+
+  token = randtoken.generate 32
+  duration = config.userPasswordResetExpiry.duration
+  durationType = config.userPasswordResetExpiry.durationType
+  expiry = moment().add(duration, durationType).utc().format()
+
+  updateUserTokenExpiry =
+    token: token
+    tokenType: 'existingUser'
+    expiry: expiry
+
+  try
+    user = yield User.findOneAndUpdate(email: email, updateUserTokenExpiry).exec()
+    consoleURL = config.alerts.consoleURL
+    setPasswordLink = "#{consoleURL}/#/set-password/#{token}"
+    
+    # Send email to user to reset password
+    plainMessage = passwordResetPlainMessageTemplate user.firstname, setPasswordLink
+    htmlMessage = passwordResetHtmlMessageTemplate user.firstname, setPasswordLink
+
+    contact.contactUser 'email', email, 'OpenHIM Console Password Reset', plainMessage, htmlMessage, ->
+      logger.info 'The email has been sent to the user'
+
+    this.body = "Successfully set user token/expiry for password reset."
+    this.status = 201
+    logger.info "User updated token/expiry for password reset #{email}"
+  
+  catch e
+    utils.logAndSetResponse this, 500, "Could not update user with email #{email} via the API #{e}", 'error'
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #######################################
 ### New User Set Password Functions ###
 #######################################
 
 # get the new user details
-exports.getNewUser = (token) ->
+exports.getUserByToken = (token) ->
   token = unescape token
 
   try
-    projectionRestriction = "firstname": 1, "surname": 1, "msisdn": 1, "token": 1, "locked": 1, "expiry": 1, "_id": 0
+    projectionRestriction = "firstname": 1, "surname": 1, "msisdn": 1, "token": 1, "tokenType": 1, "locked": 1, "expiry": 1, "_id": 0
 
     result = yield User.findOne(token: token, projectionRestriction).exec()
     if not result
@@ -60,32 +176,31 @@ exports.getNewUser = (token) ->
     else
       # if expiry date has past
       if moment(result.expiry).utc().format() < moment().utc().format()
-        # new user- set password - expired
+        # user- set password - expired
         this.body = "User with token #{token} has expired to set their password."
         this.status = 410
       else
-        # valid new user - set password
         this.body = result
   catch e
     utils.logAndSetResponse this, 500, "Could not find user with token #{token} via the API #{e}", 'error'
 
 
 # update the password/details for the new user
-exports.updateNewUser = (token) ->
+exports.updateUserByToken = (token) ->
   token = unescape token
   userData = this.request.body
 
   try
     # first try get new user details to check expiry date
-    newUserOldData = yield User.findOne(token: token).exec()
+    userDataExpiry = yield User.findOne(token: token).exec()
 
-    if not newUserOldData
+    if not userDataExpiry
       this.body = "User with token #{token} could not be found."
       this.status = 404
       return
     else
       # if expiry date has past
-      if moment(newUserOldData.expiry).utc().format() < moment().utc().format()
+      if moment(userDataExpiry.expiry).utc().format() < moment().utc().format()
         # new user- set password - expired
         this.body = "User with token #{token} has expired to set their password."
         this.status = 410
@@ -95,26 +210,28 @@ exports.updateNewUser = (token) ->
     utils.logAndSetResponse this, 500, "Could not find user with token #{token} via the API #{e}", 'error'
     return
 
-
   # check to make sure 'msisdn' isnt 'undefined' when saving
   if userData.msisdn then msisdn = userData.msisdn else msisdn = null
 
   # construct user object to prevent other properties from being updated
-  newUserUpdate =
-    firstname: userData.firstname
-    surname: userData.surname
+  userUpdateObj =
     token: null
-    locked: false
+    tokenType: null
     expiry: null
-    msisdn: msisdn
     passwordAlgorithm: userData.passwordAlgorithm
     passwordSalt: userData.passwordSalt
     passwordHash: userData.passwordHash
 
+  if userDataExpiry.tokenType is 'newUser'
+    userUpdateObj.firstname = userData.firstname
+    userUpdateObj.surname = userData.surname
+    userUpdateObj.locked = false
+    userUpdateObj.msisdn = msisdn
+
   try
-    yield User.findOneAndUpdate(token: token, newUserUpdate).exec()
+    yield User.findOneAndUpdate(token: token, userUpdateObj).exec()
     this.body = "Successfully set new user password."
-    logger.info "New user updated by token #{token}"
+    logger.info "User updated by token #{token}"
   catch e
     utils.logAndSetResponse this, 500, "Could not update user with token #{token} via the API #{e}", 'error'
 
@@ -158,6 +275,7 @@ exports.addUser = ->
 
   token = randtoken.generate 32
   userData.token = token
+  userData.tokenType = 'newUser'
   userData.locked = true
 
   duration = config.newUserExpiry.duration
@@ -223,6 +341,7 @@ exports.updateUser = (email) ->
   # reset token/locked/expiry when user is updated and password supplied
   if userData.passwordAlgorithm and userData.passwordHash and userData.passwordSalt
     userData.token = null
+    userData.tokenType = null
     userData.locked = false
     userData.expiry = null
 

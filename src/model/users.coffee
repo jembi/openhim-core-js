@@ -16,6 +16,10 @@ UserSchema = new Schema
   "weeklyReport":       Boolean
   "settings":           Object
   "token":              String
+  "tokenType":          
+    type:     String
+    enum:     ['newUser', 'existingUser']
+    default:  "newUser"
   "expiry":             Date
   "locked":             Boolean
   
