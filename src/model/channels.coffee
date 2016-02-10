@@ -16,6 +16,7 @@ RouteDef =
   "password":       String
   "type":           type: String, default: 'http', enum: ['http', 'tcp', 'mllp']
   "cert":           Schema.Types.ObjectId
+  "status":         type: String, default: 'enabled', enum: ['enabled', 'disabled']
 
 AlertsDef =
   "status":       type: String, required: true

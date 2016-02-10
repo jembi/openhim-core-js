@@ -8,6 +8,7 @@ tcpAdapter = require '../tcpAdapter'
 server = require "../server"
 polling = require "../polling"
 authMiddleware = require '../middleware/authorisation'
+routerMiddleware = require '../middleware/router'
 utils = require "../utils"
 
 isPathValid = (channel) ->
@@ -34,6 +35,7 @@ processPostAddTriggers = (channel) ->
     else if channel.type is 'polling'
       polling.registerPollingChannel channel, (err) -> logger.error err if err
 
+
 ###
 # Creates a new channel
 ###
@@ -51,6 +53,16 @@ exports.addChannel = ->
 
     if not isPathValid channel
       this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]'
+      this.status = 400
+      return
+
+    numPrimaries = routerMiddleware.numberOfPrimaryRoutes channel.routes
+    if numPrimaries is 0
+      this.body = 'Channel must have a primary route'
+      this.status = 400
+      return
+    if numPrimaries > 1
+      this.body = 'Channel cannot have a multiple primary routes'
       this.status = 400
       return
 
@@ -139,6 +151,17 @@ exports.updateChannel = (channelId) ->
   if not isPathValid channelData
     utils.logAndSetResponse this, 400, 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]', 'info'
     return
+
+  if channelData.routes?
+    numPrimaries = routerMiddleware.numberOfPrimaryRoutes channelData.routes
+    if numPrimaries is 0
+      this.body = 'Channel must have a primary route'
+      this.status = 400
+      return
+    if numPrimaries > 1
+      this.body = 'Channel cannot have a multiple primary routes'
+      this.status = 400
+      return
 
   try
     channel = yield Channel.findByIdAndUpdate(id, channelData).exec()

@@ -365,6 +365,98 @@ describe "API Integration Tests", ->
               spy.callCount.should.be.exactly 0
               done()
 
+      it 'should reject a channel without a primary route', (done) ->
+        newChannel =
+          name: 'no-primary-route-test'
+          urlPattern: "test/sample"
+          allow: [ "PoC", "Test1", "Test2" ]
+          routes: [
+                name: "test route"
+                host: "localhost"
+                port: 9876
+              ]
+
+        request("https://localhost:8080")
+          .post("/channels")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(newChannel)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should reject a channel with multiple primary routes', (done) ->
+        newChannel =
+          name: 'mulitple-primary-route-test'
+          urlPattern: "test/sample"
+          allow: [ "PoC", "Test1", "Test2" ]
+          routes: [
+              {
+                name: "test route"
+                host: "localhost"
+                port: 9876
+                primary: true
+              }, {
+                name: "test route 2"
+                host: "localhost"
+                port: 9877
+                primary: true
+              }
+            ]
+
+        request("https://localhost:8080")
+          .post("/channels")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(newChannel)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should accept a channel with one enabled primary route but multiple disabled primary routes', (done) ->
+        newChannel =
+          name: 'disabled-primary-route-test'
+          urlPattern: "test/sample"
+          allow: [ "PoC", "Test1", "Test2" ]
+          routes: [
+              {
+                name: "test route"
+                host: "localhost"
+                port: 9876
+                primary: true
+              }, {
+                name: "test route 2"
+                host: "localhost"
+                port: 9877
+                primary: true
+                status: 'disabled'
+              }
+            ]
+
+        request("https://localhost:8080")
+          .post("/channels")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(newChannel)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
     describe '*getChannel(channelId)', ->
 
       it 'should fetch a specific channel by id', (done) ->
@@ -450,7 +542,6 @@ describe "API Integration Tests", ->
                 name: "test route2"
                 host: "localhost"
                 port: 8899
-                primary: true
               ]
 
         request("https://localhost:8080")
@@ -640,6 +731,95 @@ describe "API Integration Tests", ->
               else
                 spy.callCount.should.be.exactly 0
                 done()
+
+      it 'should reject an update with no primary routes', (done) ->
+        updates =
+          urlPattern: "test/changed"
+          allow: [ "PoC", "Test1", "Test2", "another" ]
+          routes: [
+                name: "test route"
+                host: "localhost"
+                port: 9876
+              ,
+                name: "test route2"
+                host: "localhost"
+                port: 8899
+              ]
+
+        request("https://localhost:8080")
+          .put("/channels/" + channel1._id)
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(updates)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should reject an update with multiple primary routes', (done) ->
+        updates =
+          urlPattern: "test/changed"
+          allow: [ "PoC", "Test1", "Test2", "another" ]
+          routes: [
+                name: "test route"
+                host: "localhost"
+                port: 9876
+                primary: true
+              ,
+                name: "test route2"
+                host: "localhost"
+                port: 8899
+                primary: true
+              ]
+
+        request("https://localhost:8080")
+          .put("/channels/" + channel1._id)
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(updates)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should accept an update with one primary route and multiple disabled primary routes', (done) ->
+        updates =
+          urlPattern: "test/changed"
+          allow: [ "PoC", "Test1", "Test2", "another" ]
+          routes: [
+                name: "test route"
+                host: "localhost"
+                port: 9876
+                primary: true
+              ,
+                name: "test route2"
+                host: "localhost"
+                port: 8899
+                primary: true
+                status: 'disabled'
+              ]
+
+        request("https://localhost:8080")
+          .put("/channels/" + channel1._id)
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(updates)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
 
     describe '*removeChannel(channelId)', ->
 
