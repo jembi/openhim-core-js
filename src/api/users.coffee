@@ -44,25 +44,6 @@ exports.authenticate = (email) ->
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #################################
 ### Reset password Functions ###
 #################################
@@ -122,39 +103,6 @@ exports.userPasswordResetRequest = (email) ->
   
   catch e
     utils.logAndSetResponse this, 500, "Could not update user with email #{email} via the API #{e}", 'error'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
