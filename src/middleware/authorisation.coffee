@@ -6,6 +6,7 @@ logger = require "winston"
 atna = require 'atna-audit'
 config = require '../config/config'
 config.authentication = config.get('authentication')
+config.logger = config.get('logger')
 utils = require '../utils'
 auditing = require '../auditing'
 
@@ -144,6 +145,8 @@ exports.authorise = (ctx, done) ->
 
     if approvedChannels.length > 0
       # authorisation succeeded
+      if config.logger.level is 'debug' then logger.debug "Channels that match request: #{(approvedChannels.map (c) -> c.name)}"
+
       ctx.authorisedChannel = channelWithHighestPriority approvedChannels
       logger.info "The request, '" + ctx.request.path + "' is authorised to access " + ctx.authorisedChannel.name
     else
