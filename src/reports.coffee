@@ -83,7 +83,10 @@ sendReports = (job, flag, done) ->
 
               # If report has been fetched get it from the map
               if channelReportMap[channel._id]
-                reportMap[userKey].data.push channelReportMap[channel._id]
+                data = channelReportMap[channel._id]
+                # add report - always add if the channel is enabled, otherwise only if there is data
+                if data.channel.status is 'enabled' or data.data.length isnt 0
+                  reportMap[userKey].data.push data
               else
                 logger.info 'should never be here since channels have been pre-fetched'
 
