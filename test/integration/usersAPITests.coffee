@@ -34,6 +34,7 @@ describe 'API Integration Tests', ->
       surname: 'Doe'
       email: 'jane@doe.net'
       token: 'l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM'
+      tokenType: 'newUser'
       locked: true
       expiry: moment().add(2, 'days').utc().format()
       groups: [ 'HISP' ]
@@ -43,6 +44,7 @@ describe 'API Integration Tests', ->
       surname: 'Smith'
       email: 'john@smith.net'
       token: 'hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg'
+      tokenType: 'newUser'
       locked: true
       expiry: moment().subtract(2, 'days').utc().format()
       groups: [ 'HISP' ]
@@ -84,13 +86,52 @@ describe 'API Integration Tests', ->
               res.body.salt.should.eql '22a61686-66f6-483c-a524-185aac251fb0'
               should.exist(res.body.ts)
               done()
+              
 
+    describe '*userPasswordResetRequest(email)', ->
 
-    describe '*getNewUser(token)', ->
-
-      it 'should return a new users details (basic details)', (done) ->
+      it 'should return 403 when requesting root@openhim.org password reset', (done) ->
         request("https://localhost:8080")
-          .get("/new-user/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM")
+          .get("/password-reset-request/root@openhim.org")
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should update the user with a token and send reset email', (done) ->
+        request("https://localhost:8080")
+          .get("/password-reset-request/r..@jembi.org")
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              User.findOne { email: "r..@jembi.org" }, (err, user) ->
+                user.should.have.property "firstname", "Ryan"
+                user.should.have.property "surname", "Chrichton"
+                user.should.have.property "token"
+                user.should.have.property "tokenType", 'existingUser'
+                user.should.have.property "expiry"
+                done()
+
+      it 'should return a not found error', (done) ->
+        request("https://localhost:8080")
+          .get("/password-reset-request/test@jembi.org")
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+
+    describe '*getUserByToken(token)', ->
+
+      it 'should return a users details (basic details)', (done) ->
+        request("https://localhost:8080")
+          .get("/token/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM")
           .expect(200)
           .end (err, res) ->
             if err
@@ -99,6 +140,7 @@ describe 'API Integration Tests', ->
               res.body.firstname.should.eql 'Jane'
               res.body.surname.should.eql 'Doe'
               res.body.token.should.eql 'l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM'
+              res.body.tokenType.should.eql 'newUser'
               res.body.locked.should.eql true
               should.exist(res.body.expiry)
               should.not.exist(res.body.email)
@@ -110,7 +152,7 @@ describe 'API Integration Tests', ->
 
       it 'should return a not found error', (done) ->
         request("https://localhost:8080")
-          .get("/new-user/hSas987asdS7y9vqqKJHDSoARXtA098g")
+          .get("/token/hSas987asdS7y9vqqKJHDSoARXtA098g")
           .expect(404)
           .end (err, res) ->
             if err
@@ -120,7 +162,7 @@ describe 'API Integration Tests', ->
 
       it 'should return a expired token error', (done) ->
         request("https://localhost:8080")
-          .get("/new-user/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg")
+          .get("/token/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg")
           .expect(410)
           .end (err, res) ->
             if err
@@ -129,54 +171,65 @@ describe 'API Integration Tests', ->
               done()
 
 
-    describe '*updateNewUser(token)', ->
+    describe '*updateUserByToken(token)', ->
 
-      it 'should update a new user by token', (done) ->
+      it 'should update a user by the supplied token', (done) ->
 
         updates =
-            firstname: 'Jane Sally'
-            surname: 'Doe'
-            msisdn: '27123456789'
-            passwordAlgorithm: 'sha256'
-            passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499'
-            passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
+          firstname: 'Jane Sally'
+          surname: 'Doe'
+          msisdn: '27123456789'
+          passwordAlgorithm: 'sha256'
+          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499'
+          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
 
-          request("https://localhost:8080")
-            .put("/new-user/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM")
-            .send(updates)
-            .expect(200)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                User.findOne { email: "jane@doe.net" }, (err, user) ->
-                  user.should.have.property "firstname", "Jane Sally"
-                  user.should.have.property "surname", "Doe"
-                  user.should.have.property "passwordHash", "af200ab5-4227-4840-97d1-92ba91206499"
-                  user.should.have.property "passwordSalt", "eca7205c-2129-4558-85da-45845d17bd5f"
-                  user.should.have.property "token", null
-                  user.should.have.property "locked", false
-                  user.should.have.property "expiry", null
-                  done()
+        request("https://localhost:8080")
+          .put("/token/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM")
+          .send(updates)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              User.findOne { email: "jane@doe.net" }, (err, user) ->
+                user.should.have.property "firstname", "Jane Sally"
+                user.should.have.property "surname", "Doe"
+                user.should.have.property "passwordHash", "af200ab5-4227-4840-97d1-92ba91206499"
+                user.should.have.property "passwordSalt", "eca7205c-2129-4558-85da-45845d17bd5f"
+                user.should.have.property "token", null
+                user.should.have.property "tokenType", null
+                user.should.have.property "locked", false
+                user.should.have.property "expiry", null
+                done()
 
       it 'should prevent an update with an expired token (expired token)', (done) ->
         updates =
-            firstname: 'Peter'
-            surname: 'smith'
-            msisdn: '27123456789'
-            passwordAlgorithm: 'sha256'
-            passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499'
-            passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
+          firstname: 'Peter'
+          surname: 'smith'
+          msisdn: '27123456789'
+          passwordAlgorithm: 'sha256'
+          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499'
+          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
 
-          request("https://localhost:8080")
-            .put("/new-user/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg")
-            .send(updates)
-            .expect(410)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                done()
+        request("https://localhost:8080")
+          .put("/token/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg")
+          .send(updates)
+          .expect(410)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+
+
+
+
+
+
+
+
+
 
 
     describe '*getUsers()', ->
@@ -240,6 +293,7 @@ describe 'API Integration Tests', ->
                 user.should.have.property 'surname', 'Newman'
                 user.groups.should.have.length 1
                 user.should.have.property 'token'
+                user.should.have.property 'tokenType', 'newUser'
                 user.should.have.property 'locked', true
                 user.should.have.property 'expiry'
                 done()

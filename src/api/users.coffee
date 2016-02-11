@@ -92,6 +92,13 @@ exports.userPasswordResetRequest = (email) ->
 
   try
     user = yield User.findOneAndUpdate(email: email, updateUserTokenExpiry).exec()
+
+    if not user
+      this.body = "Tried to request password reset for invalid email address: #{email}"
+      this.status = 404
+      logger.info "Tried to request password reset for invalid email address: #{email}"
+      return
+
     consoleURL = config.alerts.consoleURL
     setPasswordLink = "#{consoleURL}/#/set-password/#{token}"
     
