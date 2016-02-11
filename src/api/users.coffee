@@ -72,6 +72,11 @@ passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) -> """
 exports.userPasswordResetRequest = (email) ->
   email = unescape email
 
+  if email is 'root@openhim.org'
+    this.body = "Cannot request password reset for 'root@openhim.org'"
+    this.status = 403
+    return
+
   # Generate the new user token here
   # set expiry date = true
 
