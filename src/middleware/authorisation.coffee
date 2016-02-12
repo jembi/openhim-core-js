@@ -74,20 +74,10 @@ genAuthAudit = (remoteAddress) ->
   audit = atna.wrapInSyslog audit
   return audit
 
-# export private functions for unit testing
-# note: you cant spy on these method because of this :(
-if process.env.NODE_ENV == "test"
-  exports.matchContent = matchContent
-  exports.matchRegex = matchRegex
-  exports.matchXpath = matchXpath
-  exports.matchJsonPath = matchJsonPath
-  exports.extractContentType = extractContentType
-  exports.genAuthAudit = genAuthAudit
 
 # Is the channel enabled?
 # If there is no status field then the channel IS enabled
 exports.isChannelEnabled = isChannelEnabled = (channel) -> not channel.status or channel.status is 'enabled'
-
 
 channelWithHighestPriority = (channels) ->
   channels.reduce (channel1, channel2) ->
@@ -165,3 +155,15 @@ exports.koaMiddleware = (next) ->
   if this.authorisedChannel?
     sdc.timing "#{domain}.authorisationMiddleware", startTime if statsdServer.enabled
     yield next
+
+
+# export private functions for unit testing
+# note: you cant spy on these method because of this :(
+if process.env.NODE_ENV == "test"
+  exports.matchContent = matchContent
+  exports.matchRegex = matchRegex
+  exports.matchXpath = matchXpath
+  exports.matchJsonPath = matchJsonPath
+  exports.extractContentType = extractContentType
+  exports.genAuthAudit = genAuthAudit
+  exports.channelWithHighestPriority = channelWithHighestPriority
