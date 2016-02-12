@@ -19,7 +19,6 @@ UserSchema = new Schema
   "tokenType":
     type:     String
     enum:     ['newUser', 'existingUser']
-    default:  "newUser"
   "expiry":             Date
   "locked":             Boolean
   

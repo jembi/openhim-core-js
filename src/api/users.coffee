@@ -9,6 +9,7 @@ contact = require '../contact'
 config = require "../config/config"
 config.newUserExpiry = config.get('newUserExpiry')
 config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')
+config.alerts = config.get('alerts')
 utils = require "../utils"
 atna = require 'atna-audit'
 os = require 'os'
@@ -53,7 +54,7 @@ passwordResetPlainMessageTemplate = (firstname, setPasswordLink) -> """
 <---------- Existing User - Reset Password ---------->
 Hi #{firstname},
 
-A request has been made to reset your password on OpenHIM
+A request has been made to reset your password on the OpenHIM instance running on #{config.alerts.himInstance}
 Follow the below link to reset your password and log into OpenHIM Console
 #{setPasswordLink}
 <---------- Existing User - Reset Password ---------->
@@ -61,7 +62,7 @@ Follow the below link to reset your password and log into OpenHIM Console
 
 passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) -> """
 <h1>Reset OpenHIM Password</h1>
-<p>Hi #{firstname},<br/><br/>A request has been made to reset your password on OpenHIM</p>
+<p>Hi #{firstname},<br/><br/>A request has been made to reset your password on the OpenHIM instance running on #{config.alerts.himInstance}</p>
 <p>Follow the below link to set your password and log into OpenHIM Console</p>
 <p>#{setPasswordLink}</p>
 """
@@ -106,9 +107,12 @@ exports.userPasswordResetRequest = (email) ->
     plainMessage = passwordResetPlainMessageTemplate user.firstname, setPasswordLink
     htmlMessage = passwordResetHtmlMessageTemplate user.firstname, setPasswordLink
 
-    contact.contactUser 'email', email, 'OpenHIM Console Password Reset', plainMessage, htmlMessage, ->
-      logger.info 'The email has been sent to the user'
+    sendEmail = Q.denodeify contact.contactUser
+    sendEmailError = yield sendEmail 'email', email, 'OpenHIM Console Password Reset', plainMessage, htmlMessage
+    if sendEmailError
+      utils.logAndSetResponse this, 500, "Could not send email to user via the API #{e}", 'error'
 
+    logger.info 'The email has been sent to the user'
     this.body = "Successfully set user token/expiry for password reset."
     this.status = 201
     logger.info "User updated token/expiry for password reset #{email}"
@@ -127,7 +131,7 @@ exports.getUserByToken = (token) ->
   token = unescape token
 
   try
-    projectionRestriction = "firstname": 1, "surname": 1, "msisdn": 1, "token": 1, "tokenType": 1, "locked": 1, "expiry": 1, "_id": 0
+    projectionRestriction = "email": 1, "firstname": 1, "surname": 1, "msisdn": 1, "token": 1, "tokenType": 1, "locked": 1, "expiry": 1, "_id": 0
 
     result = yield User.findOne(token: token, projectionRestriction).exec()
     if not result
@@ -135,9 +139,9 @@ exports.getUserByToken = (token) ->
       this.status = 404
     else
       # if expiry date has past
-      if moment(result.expiry).utc().format() < moment().utc().format()
+      if moment(result.expiry).isBefore(moment())
         # user- set password - expired
-        this.body = "User with token #{token} has expired to set their password."
+        this.body = "Token #{token} has expired"
         this.status = 410
       else
         this.body = result
@@ -160,7 +164,7 @@ exports.updateUserByToken = (token) ->
       return
     else
       # if expiry date has past
-      if moment(userDataExpiry.expiry).utc().format() < moment().utc().format()
+      if moment(userDataExpiry.expiry).isBefore(moment())
         # new user- set password - expired
         this.body = "User with token #{token} has expired to set their password."
         this.status = 410
@@ -205,7 +209,7 @@ plainMessageTemplate = (firstname, setPasswordLink) -> """
 <---------- New User - Set Password ---------->
 Hi #{firstname},
 
-A profile has been created for you on OpenHIM
+A profile has been created for you on the OpenHIM instance running on #{config.alerts.himInstance}
 Follow the below link to set your password and log into OpenHIM Console
 #{setPasswordLink}
 <---------- New User - Set Password ---------->
@@ -213,7 +217,7 @@ Follow the below link to set your password and log into OpenHIM Console
 
 htmlMessageTemplate = (firstname, setPasswordLink) -> """
 <h1>New OpenHIM Profile</h1>
-<p>Hi #{firstname},<br/><br/>A profile has been created for you on OpenHIM</p>
+<p>Hi #{firstname},<br/><br/>A profile has been created for you on the OpenHIM instance running on #{config.alerts.himInstance}</p>
 <p>Follow the below link to set your password and log into OpenHIM Console</p>
 <p>#{setPasswordLink}</p>
 """
@@ -254,8 +258,11 @@ exports.addUser = ->
     plainMessage = plainMessageTemplate userData.firstname, setPasswordLink
     htmlMessage = htmlMessageTemplate userData.firstname, setPasswordLink
 
-    contact.contactUser 'email', userData.email, 'OpenHIM Console Profile', plainMessage, htmlMessage, ->
-      logger.info 'The email has been sent to the new user'
+    contact.contactUser 'email', userData.email, 'OpenHIM Console Profile', plainMessage, htmlMessage, (err) ->
+      if err
+        logger.error 'The email could not be sent to the user via the API #{err}'
+      else
+        logger.info 'The email has been sent to the new user'
 
     this.body = 'User successfully created'
     this.status = 201
