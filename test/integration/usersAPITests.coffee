@@ -137,13 +137,13 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
+              res.body.email.should.eql 'jane@doe.net'
               res.body.firstname.should.eql 'Jane'
               res.body.surname.should.eql 'Doe'
               res.body.token.should.eql 'l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM'
               res.body.tokenType.should.eql 'newUser'
               res.body.locked.should.eql true
               should.exist(res.body.expiry)
-              should.not.exist(res.body.email)
               should.not.exist(res.body.passwordAlgorithm)
               should.not.exist(res.body.passwordHash)
               should.not.exist(res.body.passwordSalt)
