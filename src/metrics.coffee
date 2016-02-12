@@ -321,6 +321,7 @@ getAllowedChannels = (requestingUser) ->
         allowedChannelIDs.push
           _id: channel._id
           name: channel.name
+          status: channel.status
 
         deferred.resolve()
         promises.push deferred.promise
