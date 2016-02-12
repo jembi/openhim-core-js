@@ -489,3 +489,51 @@ describe "Authorisation middleware", ->
       audit = authorisation.genAuthAudit '1.2.3.4'
       audit.should.be.ok()
       audit.should.match /ParticipantObjectID="1\.2\.3\.4"/
+
+  describe '.channelWithHighestPriority', ->
+    it 'should return the channel with the higher priority (first argument higher)', ->
+      channel1 = { id: 1, priority: 1 }
+      channel2 = { id: 2, priority: 2 }
+      channel3 = { id: 3, priority: 3 }
+      result = authorisation.channelWithHighestPriority [channel1, channel2, channel3]
+      result.id.should.be.exactly 1
+
+    it 'should return the channel with the higher priority (second argument higher)', ->
+      channel1 = { id: 1, priority: 2 }
+      channel2 = { id: 2, priority: 1 }
+      channel3 = { id: 3, priority: 3 }
+      result = authorisation.channelWithHighestPriority [channel1, channel2, channel3]
+      result.id.should.be.exactly 2
+
+    it 'should return the channel with the higher priority (third argument higher)', ->
+      channel1 = { id: 1, priority: 3 }
+      channel2 = { id: 2, priority: 2 }
+      channel3 = { id: 3, priority: 1 }
+      result = authorisation.channelWithHighestPriority [channel1, channel2, channel3]
+      result.id.should.be.exactly 3
+
+    it 'should treat an undefined priority as the lower priority (second argument undefined)', ->
+      channel1 = { id: 1, priority: 10 }
+      channel2 = { id: 2 }
+      result = authorisation.channelWithHighestPriority [channel1, channel2]
+      result.id.should.be.exactly 1
+
+    it 'should treat an undefined priority as the lower priority (first argument undefined)', ->
+      channel1 = { id: 1 }
+      channel2 = { id: 2, priority: 10 }
+      result = authorisation.channelWithHighestPriority [channel1, channel2]
+      result.id.should.be.exactly 2
+
+    it 'should respond with a channel when priorities are equal (channel selection behaviour is undefined)', ->
+      channel1 = { id: 1, priority: 1 }
+      channel2 = { id: 2, priority: 1 }
+      channel3 = { id: 3, priority: 1 }
+      result = authorisation.channelWithHighestPriority [channel1, channel2, channel3]
+      should.exist(result)
+
+    it 'should respond with a channel, not null, when priorities are undefined (channel selection behaviour is undefined)', ->
+      channel1 = { id: 1 }
+      channel2 = { id: 2 }
+      channel3 = { id: 3 }
+      result = authorisation.channelWithHighestPriority [channel1, channel2, channel3]
+      should.exist(result)

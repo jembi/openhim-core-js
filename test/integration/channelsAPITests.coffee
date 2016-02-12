@@ -457,6 +457,33 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it 'should reject a channel with a priority below 1', (done) ->
+        newChannel =
+          name: "Channel-Priority--1"
+          urlPattern: "test/sample"
+          priority: -1
+          allow: [ "PoC", "Test1", "Test2" ]
+          routes: [
+                name: "test route"
+                host: "localhost"
+                port: 9876
+                primary: true
+              ]
+
+        request("https://localhost:8080")
+          .post("/channels")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(newChannel)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
     describe '*getChannel(channelId)', ->
 
       it 'should fetch a specific channel by id', (done) ->
@@ -821,6 +848,28 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it 'should NOT update a channel with a priority below 1', (done) ->
+
+        updates =
+          urlPattern: "test/changed"
+          priority: -1
+
+        request("https://localhost:8080")
+          .put("/channels/" + channel1._id)
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(updates)
+          .expect(400)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Channel.findOne { name: "TestChannel1" }, (err, channel) ->
+                channel.should.have.property "urlPattern", "test/sample"
+                done()
+
     describe '*removeChannel(channelId)', ->
 
       it 'should remove a specific channel by name', (done) ->
@@ -926,4 +975,3 @@ describe "API Integration Tests", ->
                   channels[0].status.should.exist
                   channels[0].status.should.be.equal 'deleted'
                   done()
-
