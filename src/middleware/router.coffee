@@ -22,11 +22,17 @@ os = require 'os'
 domain = "#{os.hostname()}.#{application.name}.appMetrics"
 sdc = new SDC statsdServer
 
-containsMultiplePrimaries = (routes) ->
+
+isRouteEnabled = (route) -> not route.status? or route.status is 'enabled'
+
+exports.numberOfPrimaryRoutes = numberOfPrimaryRoutes = (routes) ->
   numPrimaries = 0
   for route in routes
-    numPrimaries++ if route.primary
-  return numPrimaries > 1
+    numPrimaries++ if isRouteEnabled(route) and route.primary
+  return numPrimaries
+
+containsMultiplePrimaries = (routes) -> numberOfPrimaryRoutes(routes) > 1
+
 
 setKoaResponse = (ctx, response) ->
 
@@ -99,6 +105,8 @@ sendRequestToRoutes = (ctx, routes, next) ->
 
     for route in routes
       do (route) ->
+        if not isRouteEnabled route then return #continue
+
         path = getDestinationPath route, ctx.path
         options =
           hostname: route.host
