@@ -17,7 +17,7 @@ sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
     text: messagePlain
     html: messageHTML
   }, (error, response) ->
-    callback err ? null
+    callback error ? null
 
 sendSMS = (contactAddress, message, callback) ->
   if config.smsGateway.provider is 'clickatell'
