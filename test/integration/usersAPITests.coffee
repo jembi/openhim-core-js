@@ -3,6 +3,7 @@ request = require 'supertest'
 server = require '../../lib/server'
 contact = require '../../lib/contact'
 User = require('../../lib/model/users').User
+users = require '../../lib/api/users'
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 sinon = require "sinon"
@@ -102,10 +103,10 @@ describe 'API Integration Tests', ->
             else
               done()
 
-      ###
       it 'should update the user with a token and send reset email', (done) ->
-        stubContact = sinon.stub(contact, 'sendEmail').returns null
-        stubContact.withArgs('email', 'r..@jembi.org', 'Email Title', 'Plain Message', '<p>HTML Message</p>').returns(null)
+
+        stubContact = sinon.stub(contact, 'sendEmail')
+        stubContact.yields(null)
 
         request("https://localhost:8080")
           .get("/password-reset-request/r..@jembi.org")
@@ -120,8 +121,8 @@ describe 'API Integration Tests', ->
                 user.should.have.property "token"
                 user.should.have.property "tokenType", 'existingUser'
                 user.should.have.property "expiry"
+                stubContact.restore()
                 done()
-      ###
 
       it 'should return a not found error', (done) ->
         request("https://localhost:8080")

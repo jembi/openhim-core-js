@@ -67,6 +67,9 @@ passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) -> """
 <p>#{setPasswordLink}</p>
 """
 
+exports.generateRandomToken = () ->
+  return randtoken.generate 32
+
 ###
 # update user token/expiry and send new password email
 ###
@@ -81,7 +84,7 @@ exports.userPasswordResetRequest = (email) ->
   # Generate the new user token here
   # set expiry date = true
 
-  token = randtoken.generate 32
+  token = exports.generateRandomToken()
   duration = config.userPasswordResetExpiry.duration
   durationType = config.userPasswordResetExpiry.durationType
   expiry = moment().add(duration, durationType).utc().format()
