@@ -123,6 +123,20 @@ describe 'API Integration Tests', ->
                 stubContact.restore()
                 done()
 
+      it 'should update the user with a token get a 500 error when nodemailer fails', (done) ->
+
+        stubContact = sinon.stub(contact, 'sendEmail')
+        stubContact.yields('An error occurred trying to send the email.')
+
+        request("https://localhost:8080")
+          .get("/password-reset-request/r..@jembi.org")
+          .expect(500)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
       it 'should return a not found error', (done) ->
         request("https://localhost:8080")
           .get("/password-reset-request/test@jembi.org")
