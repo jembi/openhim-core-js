@@ -5,7 +5,8 @@ config = require "./config/config"
 config.nodemailer = config.get('nodemailer')
 config.smsGateway = config.get('smsGateway')
 
-sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
+exports.sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
+
   logger.info "Sending email to '#{contactAddress}' using service " +
     "#{config.nodemailer.service} - #{config.nodemailer.auth.user}"
   smtpTransport = nodemailer.createTransport config.nodemailer
@@ -17,7 +18,7 @@ sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
     text: messagePlain
     html: messageHTML
   }, (error, response) ->
-    callback err ? null
+    callback error ? null
 
 sendSMS = (contactAddress, message, callback) ->
   if config.smsGateway.provider is 'clickatell'
@@ -45,7 +46,7 @@ escapeSpaces = (str) -> str.replace ' ', '+'
 ###
 exports.contactUser = contactUser = (method, contactAddress, title, messagePlain, messageHTML, callback) ->
   if method is 'email'
-    sendEmail contactAddress, title, messagePlain, messageHTML, callback
+    exports.sendEmail contactAddress, title, messagePlain, messageHTML, callback
   else if method is 'sms'
     sendSMS contactAddress, messagePlain, callback
   else

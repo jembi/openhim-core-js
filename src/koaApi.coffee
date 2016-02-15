@@ -34,8 +34,10 @@ exports.setupApp = (done) ->
   app.use route.get '/heartbeat', heartbeat.getHeartbeat
 
   # Expose the set-user-password route before the auth middleware so that it is publically accessible
-  app.use route.get '/new-user/:token', users.getNewUser
-  app.use route.put '/new-user/:token', users.updateNewUser
+  app.use route.get '/password-reset-request/:email', users.userPasswordResetRequest
+  app.use route.get '/token/:token', users.getUserByToken
+  app.use route.put '/token/:token', users.updateUserByToken
+  
 
   # Expose the authenticate route before the auth middleware so that it is publically accessible
   app.use route.get '/authenticate/:username', users.authenticate
