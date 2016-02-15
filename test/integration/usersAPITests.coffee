@@ -3,7 +3,6 @@ request = require 'supertest'
 server = require '../../lib/server'
 contact = require '../../lib/contact'
 User = require('../../lib/model/users').User
-users = require '../../lib/api/users'
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 sinon = require "sinon"
@@ -228,16 +227,6 @@ describe 'API Integration Tests', ->
               done err
             else
               done()
-
-
-
-
-
-
-
-
-
-
 
 
     describe '*getUsers()', ->
