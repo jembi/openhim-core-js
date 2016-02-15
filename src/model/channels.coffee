@@ -36,6 +36,7 @@ ChannelDef =
   "description":        String
   "urlPattern":         type: String, required: true
   "type":               type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
+  "priority":           type: Number, min: 1
   "tcpPort":            type: Number, min: 0, max: 65536
   "tcpHost":            String
   "pollingSchedule":    String

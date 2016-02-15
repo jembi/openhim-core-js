@@ -56,6 +56,11 @@ exports.addChannel = ->
       this.status = 400
       return
 
+    if channel.priority? and channel.priority < 1
+      this.body = 'Channel priority cannot be below 1 (= Highest priority)'
+      this.status = 400
+      return
+
     numPrimaries = routerMiddleware.numberOfPrimaryRoutes channel.routes
     if numPrimaries is 0
       this.body = 'Channel must have a primary route'
@@ -150,6 +155,11 @@ exports.updateChannel = (channelId) ->
 
   if not isPathValid channelData
     utils.logAndSetResponse this, 400, 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]', 'info'
+    return
+
+  if channelData.priority? and channelData.priority < 1
+    this.body = 'Channel priority cannot be below 1 (= Highest priority)'
+    this.status = 400
     return
 
   if channelData.routes?
