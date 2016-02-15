@@ -5,7 +5,7 @@ config = require "./config/config"
 config.nodemailer = config.get('nodemailer')
 config.smsGateway = config.get('smsGateway')
 
-sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
+exports.sendEmail = sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
   logger.info "Sending email to '#{contactAddress}' using service " +
     "#{config.nodemailer.service} - #{config.nodemailer.auth.user}"
   smtpTransport = nodemailer.createTransport config.nodemailer

@@ -1,9 +1,11 @@
 should = require 'should'
 request = require 'supertest'
 server = require '../../lib/server'
+contact = require '../../lib/contact'
 User = require('../../lib/model/users').User
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
+sinon = require "sinon"
 
 moment = require 'moment'
 
@@ -100,7 +102,11 @@ describe 'API Integration Tests', ->
             else
               done()
 
+      ###
       it 'should update the user with a token and send reset email', (done) ->
+        stubContact = sinon.stub(contact, 'sendEmail').returns null
+        stubContact.withArgs('email', 'r..@jembi.org', 'Email Title', 'Plain Message', '<p>HTML Message</p>').returns(null)
+
         request("https://localhost:8080")
           .get("/password-reset-request/r..@jembi.org")
           .expect(201)
@@ -115,6 +121,7 @@ describe 'API Integration Tests', ->
                 user.should.have.property "tokenType", 'existingUser'
                 user.should.have.property "expiry"
                 done()
+      ###
 
       it 'should return a not found error', (done) ->
         request("https://localhost:8080")
