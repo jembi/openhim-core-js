@@ -61,7 +61,8 @@ setKoaResponse = (ctx, response) ->
       when 'content-type' then ctx.response.type = value
       else
         try
-          if key != 'content-encoding' # Strip the content encoding header
+          # Strip the content and transfer encoding headers
+          if key != 'content-encoding' and key != 'transfer-encoding'
             ctx.response.set key, value
         catch err
           logger.error err
