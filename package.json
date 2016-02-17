@@ -26,7 +26,7 @@
     "koa": "0.21.0",
     "koa-basic-auth": "^1.1.2",
     "koa-body-parser": "^1.1.0",
-    "koa-compress": "^1.0.8",
+    "koa-compress": "^1.0.9",
     "koa-cors": "0.0.16",
     "koa-request": "^1.0.0",
     "koa-route": "^2.4.0",
