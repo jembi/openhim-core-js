@@ -36,7 +36,7 @@
     "nconf": "^0.8.4",
     "node-uuid": "^1.4.1",
     "nodemailer": "^2.1.0",
-    "pem": "andris9/pem#9e23b9266194a11b26aae5c966b5a2d023fd02c2",
+    "pem": "^1.8.1",
     "q": "^1.1.2",
     "rand-token": "^0.2.1",
     "raw-body": "^2.1.2",
