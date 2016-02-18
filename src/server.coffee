@@ -650,7 +650,7 @@ else
       ports = lookupServerPorts()
 
     exports.stop ->
-      exports.start ports, -> done()
+      exports.start ports, -> done() if done
 
   exports.startRestartServerTimeout = (done) ->
     if cluster.isMaster
