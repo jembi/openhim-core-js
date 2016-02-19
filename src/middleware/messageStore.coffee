@@ -141,7 +141,6 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
             routeFailures = true
           if not (200 <= route.response.status <= 299)
             routeSuccess = false
-            tx.status = transactionStatus.COMPLETED
 
       if (500 <= ctx.response.status <= 599)
         tx.status = transactionStatus.FAILED
@@ -154,7 +153,7 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
           tx.status = transactionStatus.COMPLETED
 
       # In all other cases mark as completed
-      if not ctx.status
+      if tx.status is 'Processing'
         tx.status = transactionStatus.COMPLETED
 
       ctx.transactionStatus = tx.status
