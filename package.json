@@ -35,7 +35,7 @@
     "mongoose": "4.0.2",
     "nconf": "^0.7.1",
     "node-uuid": "^1.4.1",
-    "nodemailer": "^1.3.2",
+    "nodemailer": "^2.2.1",
     "pem": "andris9/pem#9e23b9266194a11b26aae5c966b5a2d023fd02c2",
     "q": "^1.1.2",
     "rand-token": "^0.2.1",
