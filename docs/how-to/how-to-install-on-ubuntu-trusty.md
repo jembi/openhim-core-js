@@ -15,7 +15,7 @@ _As per [https://nodesource.com/blog/nodejs-v012-iojs-and-the-nodesource-linux-r
 
 ## Install MongoDB 3.0
 
-_As per [http://docs.mongodb.org/master/tutorial/install-mongodb-on-ubuntu](http://docs.mongodb.org/master/tutorial/install-mongodb-on-ubuntu)_ Next we need to setup MongoDB. At a minimum version 2.4 is required, but let's get version 3.0:
+_As per [http://docs.mongodb.org/master/tutorial/install-mongodb-on-ubuntu](http://docs.mongodb.org/master/tutorial/install-mongodb-on-ubuntu)_ Next we need to setup MongoDB. At a minimum version 2.6 is required, but let's get version 3.0:
 
 ```sh
 $ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 7F0CEB10
