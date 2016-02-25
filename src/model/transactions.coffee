@@ -25,7 +25,7 @@ ResponseDef =
 OrchestrationMetadataDef =
   "name" :      type: String, required: true
   "group" :     String
-  "request":    RequestDef
+  "request":    type: RequestDef, required: false # this is needed to prevent Validation error, see https://github.com/jembi/openhim-console/issues/356#issuecomment-188708443
   "response":   ResponseDef
 
 # Route Schema
