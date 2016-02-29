@@ -1,24 +1,10 @@
 OpenHIE
 ===============
 
-The OpenHIE Interoperability Layer Community (OHIE-IOL) aims to enable easier interoperability between Health Information Systems by providing a forum for discussion and knowledge sharing and by designing and developing an interoperability layer that connects the components within the OHIE.
+OpenHIE is an initiative that aims to provide a reference architecture and workflow specifications for sharing health information between point of care systems in low resource settings. It aims to be standards-based and open such that components of the architecture can be swapped out as is necessary. OpenHIE is made up of a number of sub-communities that each aim to discuss a particular component of the architecture. Each community maintains a reference implementation of their particular component.
 
-Our mission is to build and sustain an open community to discuss the challenges of interoperability between health information systems, as well as to design an architecture and develop a reference software application to support easier interoperability between disparate health systems and components. We promote the use of appropriate standards to support best practices for health data exchange.
+For more information see the [OpenHIE website](http://ohie.org/).
 
-Content taken from [OpenHIE](https://ohie.org/) website
+## How the OpenHIM is used
 
-## Why the OpenHIM for mHero?
-
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-
-## Hardware/Software Requirements
-
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-
-## Integration Process
-
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
-
-## Outcomes
-
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+The OpenHIM acts as a reference implementation of the interoperability layer component within the OpenHIE architecture. To learn more about this component please see the [interoperability layer community wiki](https://wiki.ohie.org/display/SUB/Interoperability+Layer+Community).

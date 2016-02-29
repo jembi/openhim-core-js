@@ -1,22 +1,25 @@
 mHero
-===============
+=====
 
-Health Worker Electronic Response and Outreach – is one way to harness the well-known power of mobile technology to reach frontline health workers. mHero, currently under rapid development with support from a consortium of partners including the UNICEF Global Centre for Innovations, USAID, IntraHealth, ThoughtWorks, and Jembi Health Systems is a free SMS mobile phone based communications system between MoH staff, health workers, and community health workers. By supporting the interoperability of HRIS systems, such as IntraHealth’s iHRIS, with UNICEF’s RapidPRO, and utilizing the OpenHIE architecture, the platform can immediately use the health workforce data to target specific communications based on cadre, location, and other information. Communications, which can be triggered both centrally and locally, go far beyond traditional “message blasts” offered by many technology vendors. Real-time monitoring, complex multi-path surveys, monitoring and detailed analysis can be conducted with ease. Furthermore, IVR mLearning approaches will take knowledge delivery one-step beyond SMS with higher content limits and addressing the literacy and language divides through spoken language.
+Mobile Health Worker Electronic Response and Outreach (mHero) is one way to harness the well-known power of mobile technology to reach frontline health workers. It combines data from multiple sources, such as a facility registry and a health worker registry, to enable targeted messaging directly to Health Workers. The messaging workflows that it enables provides an unprecedented link directly to those health workers that are in need of support.
 
-Content taken from [mHero](http://www.mhero.org/mHero/) website
+For more information please see the [mHero](http://www.mhero.org/mHero/) website.
 
-## Why the OpenHIM for mHero?
+## How the OpenHIM is used
 
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+![mhero architecture](/_static/mhero/mhero-diagram.png)
 
-## Hardware/Software Requirements
+Within the context of mHero, the OpenHIM performs a few vital functions.
 
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+* It triggers the synchronization between RapidPro and the OpenInfoMan.
+* It provides visibility into the messages being exchanged. This allows the user to ensure that the data exchange is occurring correctly.
+* It ensures that the communication between components occurs securely and it logs the transactions for historical and audit purposes.
+* It provides authentication and authorisation mechanisms to control access to the OpenInfoMan documents
 
-## Integration Process
+The OpenHIM provides polling channels to trigger the synchronization between RapidPro and the OpenInfoMan. These polling channels execute periodically and trigger an mHero mediator which in turn pulls data out of the OpenInfoMan and pushes it into RapidPro. To learn more about polling channels please see the OpenHIM docs here.
 
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+The OpenHIM provides a web console that enables the user to view these synchronization message. This enables any problems to be debugged effectively and provides confidence that the synchronization is working effectively.
 
-## Outcomes
+The OpenHIM was designed to protect an HIE by providing mechanisms to secure transactions  between various components of the HIE. It can ensure that requests that access certain OpenInfoMan documents come from known and authorised sources.
 
-Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+Within mHero, the OpenInfoMan contains a number of documents which contain health worker and facility information. The OpenHIM prevents unauthorised access to these documents by implementing a role-based access control mechanism. This allows documents with sensitive information to be secured and documents with non-sensitive information to be as open and accessible as necessary.
