@@ -28,7 +28,7 @@ exports.getLogs = ->
     from: query.from || moment().subtract(5, 'minutes').toDate()
     until: query.until || new Date
     order: 'asc'
-    start: query.start || 0
+    start: (parseInt query.start) || 0
     limit: 100000 # limit: 0 doesn't work :/
 
   results = yield Q.ninvoke logger, 'query', options

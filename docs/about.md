@@ -12,7 +12,7 @@ The OpenHIM is split into two logical parts:
 1. The core
 2. Optional mediators
 
-The core performs common functions that are useful for a SOA environment. It provides an interface that point of service application (clients) are able to contact in order to reach the services provided in the SOA. You can think of this interface as a reverse proxy for your applications but with some special features. These features include:
+The OpenHIM-core performs common functions that are useful for a SOA environment. It provides an interface that point of service application (clients) are able to contact in order to reach the services provided in the SOA. You can think of this interface as a reverse proxy for your applications but with some special features. These features include:
 
 * Access control - defaults to mutual TLS (client and server certificates) but can also be set to basic auth
 * Every request and response is stored for accountability
@@ -25,9 +25,9 @@ The mediators are optional, pluggable services that can add extended specific fu
 * Message format adaptation - this allows the transformation of messages received in a certain format into another format (eg. HL7 v2 to HL7 v3 or MHD to XDS.b).
 * Message orchestration - this allows the execution of a business process that may need to call out to other service endpoint on other system. (eg. Enriching a message with a client's unique identifier retrieved from a client registry).
 
-The OpenHIM core provides a framework to add and mange your own implementation specific medaiators in the system.
+The OpenHIM-core provides a framework to add and mange your own implementation specific mediators in the system.
 
-The OpenHIM also comes with an admin console. This admin console provides an easy to use user interface for configuring and managing an OpenHIM server.
+The OpenHIM also comes with an admin console which provides a user friendly interface for configuring and managing an OpenHIM instance.
 
 If you want to install and implement the OpenHIM, see the [getting started](/getting-started.html) section and the [user guide](/user-guide/index.html) for information on how to get setup and how to configure the system using the OpenHIM console.
 

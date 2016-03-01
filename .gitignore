@@ -14,3 +14,4 @@ packaging/.gitconfig
 packaging/builds
 .otto
 *.log
+Vagrantfile

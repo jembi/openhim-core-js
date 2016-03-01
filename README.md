@@ -17,7 +17,7 @@ Getting started with the OpenHIM-core
 -------------------------------------
 
 1. Install the latest stable [Node.js](http://nodejs.org/) 0.12.0 or greater.
-2. Install and start [MongoDB](http://www.mongodb.org/) 2.4 or greater.
+2. Install and start [MongoDB](http://www.mongodb.org/) 2.6 or greater.
 3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your PATH.
 4. Start the server by executing `openhim-core` from anywhere.
 
@@ -81,8 +81,9 @@ This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing
 * `grunt watch` - will automatically build the project on any changes.
 * `grunt lint` - ensure the code is lint free, this is also run before an `npm test`
 * `npm link` - will symlink you local working directory to the globally installed openhim-core module. Use this so you can use the global openhim-core binary to run your current work in progress. Also, if you build any local changes the server will automatically restart.
-* `grunt test --mochaGrep=<regex>` - will only run tests with names matching the regex
-* `grunt test --ddebugTests` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
+* `npm test -- --mochaGrep=<regex>` - will only run tests with names matching the regex
+* `npm test -- --debugTests` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
+* `npm test -- --bail` - exit on first test failure.
 
 Contributing
 ------------

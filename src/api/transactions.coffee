@@ -160,7 +160,7 @@ exports.getTransactions = ->
     this.body = yield transactions.Transaction
       .find filters, projectionFiltersObject
       .skip filterSkip
-      .limit filterLimit
+      .limit parseInt filterLimit
       .sort 'request.timestamp': -1
       .exec()
 
