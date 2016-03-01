@@ -11,21 +11,21 @@ $ sudo apt-get update
 $ sudo apt-get install openhim-core-js openhim-console
 ```
 
-When installing the console, it will ask you for the host and port of the openhim-core server. Make sure you provide the **public** hostname where the openhim-core server will be accessible (localhost is fine if you are testing and just want access on your local machine). You can run `sudo dpkg-reconfigure openhim-console` at any time to specify a new openhim-core host and port.
+When installing the console, it will ask you for the host and port of the OpenHIM-core server. Make sure you provide the **public** hostname where the OpenHIM-core server will be accessible (localhost is fine if you are testing and just want access on your local machine). You can run `sudo dpkg-reconfigure openhim-console` at any time to specify a new OpenHIM-core host and port.
 
-These packages will install the openhim-core using NPM for the openhim user, add the openhim-core as a service and install the console to nginx. You can find the core log file here `/var/log/upstart/openhim-core.log` and may stop and start the openhim-core with `sudo start openhim-core` or `sudo stop openhim-core`.
+These packages will install the OpenHIM-core using NPM for the OpenHIM user, add the OpenHIM-core as a service and install the console to nginx. You can find the core log file here `/var/log/upstart/openhim-core.log` and may stop and start the OpenHIM-core with `sudo start openhim-core` or `sudo stop openhim-core`.
 
 If you don't have ubuntu or want to install manually, follow the steps below.
 
-Installing the OpenHIM core
+Installing the OpenHIM-core
 ---------------------------
 
 1. Install the latest stable [Node.js](http://nodejs.org/) 0.12.0 or greater.
 2. Install and start [MongoDB](http://www.mongodb.org/) 2.6 or greater.
-3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your PATH.
+3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an OpenHIM-core binary to your PATH.
 4. Start the server by executing `openhim-core` from anywhere.
 
-To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default setting:
+To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default settings:
 
 ```sh
 wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/default.json
@@ -68,10 +68,10 @@ Now, navigate to your web server and you should see the OpenHIM-console load (eg
 * username: `root@openhim.org`
 * password: `openhim-password`
 
-You will be prompted to change this.
+You will be prompted to change this after your first successful login.
 
 **Note:** You will have problems logging in if your OpenHIM server is still setup to use a self-signed certificate (the default). To get around this you can use the following workaround (the proper way to solve this is to upload a proper certificate into the OpenHIM-core):
 
-> Visit the following link: `https://localhost:8080/authenticate/root@openhim.org` in Chrome. Make sure you are visiting this link from the system that is running the OpenHIM-core. Otherwise, replace `localhost` and `8080` with the appropriate OpenHIM-core server hostname and API port. You should see a message saying "Your connection is not private". Click "Advanced" and then click "Proceed". Once you have done this, you should see some JSON, you can ignore this and close the page. Ths will ignore the fact that the certificate is self-signed. Now, you should be able to go back to the Console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM-core server.
+> Visit the following link: `https://localhost:8080/authenticate/root@openhim.org` in Chrome. Make sure you are visiting this link from the system that is running the OpenHIM-core. Otherwise, replace `localhost` and `8080` with the appropriate OpenHIM-core server hostname and API port. You should see a message saying "Your connection is not private". Click "Advanced" and then click "Proceed". Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed. Now, you should be able to go back to the Console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM-core server.
 
-You now have the OpenHIM with admin console successfully up and running. From here you may wante to checkout our tutorials or continue on to the user guide to learn more about how to configure your instance.
+You now have the OpenHIM with admin console successfully up and running. From here you may want to checkout our tutorials or continue on to the user guide to learn more about how to configure your instance.
