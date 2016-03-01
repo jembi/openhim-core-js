@@ -495,6 +495,59 @@ describe "HTTP Router", ->
                 done err
             ), 500
 
+    it "should set mediator response location header if present and status is not 3xx", (done) ->
+      mediatorResponse =
+        status: 'Successful'
+        response:
+          status: 201
+          headers:
+            location: 'Patient/1/_history/1'
+          body: 'Mock response body\n'
+        orchestrations:
+          name: 'Mock mediator orchestration'
+          request:
+            path: '/some/path'
+            method: 'GET'
+            timestamp: (new Date()).toString()
+          response:
+            status: 200
+            body: 'Orchestrated response'
+            timestamp: (new Date()).toString()
+        properties:
+          prop1: 'val1'
+          prop2: 'val2'
+
+      testUtils.createMockMediatorServer 201, mediatorResponse, 9899, ->
+        # Setup a channel for the mock endpoint
+        channel =
+          name: "Mock endpoint"
+          urlPattern: ".+"
+          routes: [
+            host: "localhost"
+            port: 9899
+            primary: true
+          ]
+
+        ctx = new Object()
+        ctx.authorisedChannel = channel
+        ctx.request = new Object()
+        ctx.response = new Object()
+        ctx.path = ctx.request.url = "/test"
+        ctx.request.method = "GET"
+        ctx.requestTimestamp = requestTimestamp
+        headerSpy = {}
+        ctx.response.set = (k, v) -> headerSpy[k] = v
+
+        router.route ctx, (err) ->
+          if err
+            return done err
+
+          try
+            headerSpy.should.have.property 'location', mediatorResponse.response.headers.location
+            done()
+          catch err
+            done err
+
   describe "Basic Auth", ->
     it "should have valid authorization header if username and password is set in options", (done) ->
       testUtils.createMockServer 201, "Mock response body\n", 9875, (->
