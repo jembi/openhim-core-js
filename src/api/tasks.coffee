@@ -74,7 +74,7 @@ exports.getTasks = ->
     this.body = yield Task
       .find filters, projectionFiltersObject
       .skip filterSkip
-      .limit filterLimit
+      .limit parseInt filterLimit
       .sort 'created': -1
       .exec()
 

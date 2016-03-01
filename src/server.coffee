@@ -230,21 +230,22 @@ else
 
     agenda.on "complete", (job)->
       logger.info "Job " + job.attrs.name + " has completed"
-
-    alerts.setupAgenda agenda if config.alerts.enableAlerts
-    reports.setupAgenda agenda if config.reports.enableReports
-    if config.polling.enabled
-      polling.setupAgenda agenda, ->
-        # give workers a change to setup agenda tasks
-        setTimeout ->
-          agenda.start()
-          defer.resolve()
-          logger.info "Started agenda job scheduler"
-        , config.agenda.startupDelay
-    else
-      # Start agenda anyway for the other servers
-      agenda.start()
-      defer.resolve()
+      
+    agenda.on "ready", () ->
+      alerts.setupAgenda agenda if config.alerts.enableAlerts
+      reports.setupAgenda agenda if config.reports.enableReports
+      if config.polling.enabled
+        polling.setupAgenda agenda, ->
+          # give workers a change to setup agenda tasks
+          setTimeout ->
+            agenda.start()
+            defer.resolve()
+            logger.info "Started agenda job scheduler"
+          , config.agenda.startupDelay
+      else
+        # Start agenda anyway for the other servers
+        agenda.start()
+        defer.resolve()
 
     return defer.promise
 
@@ -649,7 +650,7 @@ else
       ports = lookupServerPorts()
 
     exports.stop ->
-      exports.start ports, -> done()
+      exports.start ports, -> done() if done
 
   exports.startRestartServerTimeout = (done) ->
     if cluster.isMaster
