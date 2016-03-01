@@ -117,7 +117,7 @@ exports.getAudits = ->
     this.body = yield Audit
       .find filters, projectionFiltersObject
       .skip filterSkip
-      .limit filterLimit
+      .limit parseInt filterLimit
       .sort 'eventIdentification.eventDateTime': -1
       .exec()
 

@@ -30,6 +30,10 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     shell.inline = "echo 'LC_ALL=\"en_US.UTF-8\"' >> /etc/default/locale"
   end
 
+  config.vm.provision :shell do |shell|
+    shell.inline = "apt-get update"
+  end
+
   config.vm.synced_folder "../../../", "/openhim-core-js"
 
   config.vm.provision :puppet do |puppet|

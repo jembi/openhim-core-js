@@ -40,8 +40,6 @@ transaction1 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T08:10:45.109Z" }
   response: { status: "200", timestamp: "2014-07-15T08:10:45.109Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
 
 transaction2 = new Transaction
@@ -50,8 +48,6 @@ transaction2 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T14:30:45.109Z" }
   response: { status: "200", timestamp: "2014-07-15T14:30:45.285Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
 
 transaction3 = new Transaction
@@ -60,8 +56,6 @@ transaction3 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T19:46:45.229Z" }
   response: { status: "200", timestamp: "2014-07-15T19:46:45.306Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
 
 transaction4 = new Transaction
@@ -70,8 +64,6 @@ transaction4 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T09:15:45.109Z" }
   response: { status: "404", timestamp: "2014-07-16T09:15:45.600Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Failed"
 transaction5 = new Transaction
   _id: "555555555555555555555555"
@@ -79,8 +71,6 @@ transaction5 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T13:30:45.650Z" }
   response: { status: "200", timestamp: "2014-07-16T13:30:46.109Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
 
 transaction6 = new Transaction
@@ -89,8 +79,6 @@ transaction6 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T16:10:39.850Z" }
   response: { status: "200", timestamp: "2014-07-16T16:10:40.109Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
 
 transaction7 = new Transaction
@@ -99,8 +87,6 @@ transaction7 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-07-17T14:45:20.109Z" }
   response: { status: "200", timestamp: "2014-07-17T14:45:20.385Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
 
 transaction8 = new Transaction
@@ -109,8 +95,6 @@ transaction8 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-07-17T19:21:45.129Z" }
   response: { status: "200", timestamp: "2014-07-17T19:21:45.306Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
 
 transaction9 = new Transaction
@@ -119,8 +103,6 @@ transaction9 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: "2014-10-01T11:17:45.909Z" }
   response: { status: "404", timestamp: "2014-10-01T11:17:46.200Z" }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Failed"
 
 transaction10 = new Transaction
@@ -129,8 +111,6 @@ transaction10 = new Transaction
   clientID: "42bbe25485e77d8e5daad4b4"
   request: { path: "/sample/api", method: "GET", timestamp: moment().subtract(1, 'days').utc().format() }
   response: { status: "200", timestamp: moment().subtract(1, 'days').add(1, 'seconds').utc().format() }
-  routes: { name: "dummy-route" }
-  orchestrations: { name: "dummy-orchestration" }
   status: "Completed"
 
 
@@ -160,8 +140,6 @@ describe "Transaction Reports", ->
 
     testUser1.save ->
       testUser2.save ->
-#      Channel.remove {}, ->
-#        Transaction.remove {}, ->
         channel1.save (err) ->
           channel2.save (err) ->
             transaction1.save (err) ->

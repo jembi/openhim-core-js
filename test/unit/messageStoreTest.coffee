@@ -341,6 +341,50 @@ describe "MessageStore", ->
                   (trans != null).should.true
                   trans.status.should.be.exactly "Completed"
                   done()
+                  
+    it "should set the status to completed if any other response code is recieved on primary", (done) ->
+      ctx.response = createResponse 302
+      ctx.routes = []
+      ctx.routes.push createRoute "route1", 201
+      ctx.routes.push createRoute "route2", 200
+
+      messageStore.storeTransaction ctx, (err, storedTrans) ->
+        ctx.request = storedTrans.request
+        ctx.request.header = {}
+        ctx.transactionId = storedTrans._id
+        ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
+        messageStore.storeResponse ctx, (err2) ->
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+              messageStore.setFinalStatus ctx,  ->
+                should.not.exist(err2)
+                Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                  should.not.exist(err3)
+                  (trans != null).should.true
+                  trans.status.should.be.exactly "Completed"
+                  done()
+                  
+    it "should set the status to completed if any other response code is recieved on secondary routes", (done) ->
+      ctx.response = createResponse 200
+      ctx.routes = []
+      ctx.routes.push createRoute "route1", 302
+      ctx.routes.push createRoute "route2", 200
+
+      messageStore.storeTransaction ctx, (err, storedTrans) ->
+        ctx.request = storedTrans.request
+        ctx.request.header = {}
+        ctx.transactionId = storedTrans._id
+        ctx.request.header["X-OpenHIM-TransactionID"] = storedTrans._id
+        messageStore.storeResponse ctx, (err2) ->
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+              messageStore.setFinalStatus ctx,  ->
+                should.not.exist(err2)
+                Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                  should.not.exist(err3)
+                  (trans != null).should.true
+                  trans.status.should.be.exactly "Completed"
+                  done()
 
     createResponseWithReservedChars = (status) ->
       return {

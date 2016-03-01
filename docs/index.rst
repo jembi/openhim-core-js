@@ -11,4 +11,5 @@ Contents:
    tutorial/index
    user-guide/index
    dev-guide/index
+   implementations/index
    how-to/index
