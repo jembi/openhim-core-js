@@ -1,0 +1,16 @@
+node_modules/
+/openhim-js.sublime-project
+/openhim-js.sublime-workspace
+.idea/**
+packaging/.gnupg
+packaging/.npm
+packaging/builds/*
+packaging/.gitconfig
+\#*
+*~
+.#*
+\#*\#
+packaging/builds
+.otto
+*.log
+Vagrantfile

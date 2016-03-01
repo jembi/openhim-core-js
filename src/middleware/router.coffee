@@ -57,11 +57,16 @@ setKoaResponse = (ctx, response) ->
   for key, value of response.headers
     switch key.toLowerCase()
       when 'set-cookie' then setCookiesOnContext ctx, value
-      when 'location' then ctx.response.redirect value if response.status >= 300 and response.status < 400
+      when 'location'
+        if response.status >= 300 and response.status < 400
+          ctx.response.redirect value
+        else
+          ctx.response.set key, value
       when 'content-type' then ctx.response.type = value
       else
         try
-          if key != 'content-encoding' # Strip the content encoding header
+          # Strip the content and transfer encoding headers
+          if key != 'content-encoding' and key != 'transfer-encoding'
             ctx.response.set key, value
         catch err
           logger.error err

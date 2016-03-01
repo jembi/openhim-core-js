@@ -40,7 +40,7 @@ class {'::mongodb::client':
 # Node
 
 class { "nodejs":
-    version => "v4.2.2",
+    version => "v4.3.0",
     make_install => false,
 }
 

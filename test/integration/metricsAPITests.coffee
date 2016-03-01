@@ -4,7 +4,7 @@ Transaction = require("../../lib/model/transactions").Transaction
 Channel = require("../../lib/model/channels").Channel
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
-ObjectId = require('mongoose').Types.ObjectId;
+ObjectId = require('mongoose').Types.ObjectId
 moment = require 'moment'
 logger = require 'winston'
 mongoose = require 'mongoose'
@@ -23,8 +23,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T08:10:45.109Z" }
       response: { status: "200", timestamp: "2014-07-15T08:10:45.109Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Completed"
 
     transaction2 = new Transaction
@@ -33,8 +31,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T14:30:45.109Z" }
       response: { status: "200", timestamp: "2014-07-15T14:30:45.285Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Completed"
 
     transaction3 = new Transaction
@@ -43,8 +39,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T19:46:45.229Z" }
       response: { status: "200", timestamp: "2014-07-15T19:46:45.306Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Completed"
 
     transaction4 = new Transaction
@@ -53,8 +47,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T09:15:45.109Z" }
       response: { status: "404", timestamp: "2014-07-16T09:15:45.600Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Failed"
 
     transaction5 = new Transaction
@@ -63,8 +55,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T13:30:45.650Z" }
       response: { status: "200", timestamp: "2014-07-16T13:30:46.109Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Completed"
 
     transaction6 = new Transaction
@@ -73,8 +63,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T16:10:39.850Z" }
       response: { status: "200", timestamp: "2014-07-16T16:10:40.109Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Completed"
 
     transaction7 = new Transaction
@@ -83,8 +71,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-17T14:45:20.109Z" }
       response: { status: "200", timestamp: "2014-07-17T14:45:20.385Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Completed"
 
     transaction8 = new Transaction
@@ -93,8 +79,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-17T19:21:45.129Z" }
       response: { status: "200", timestamp: "2014-07-17T19:21:45.306Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Completed"
 
     transaction9 = new Transaction
@@ -103,8 +87,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-18T11:17:45.909Z" }
       response: { status: "404", timestamp: "2014-07-18T11:17:46.200Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Failed"
 
     transaction10 = new Transaction
@@ -113,8 +95,6 @@ describe "API Metrics Tests", ->
       clientID: "42bbe25485e77d8e5daad4b4"
       request: { path: "/sample/api", method: "GET", timestamp: "2014-07-18T13:25:45.890Z" }
       response: { status: "200", timestamp: "2014-07-18T13:25:46.039Z" }
-      routes: { name: "dummy-route" }
-      orchestrations: { name: "dummy-orchestration" }
       status: "Completed"
 
 
@@ -266,4 +246,3 @@ describe "API Metrics Tests", ->
             res.body[0].completed.should.equal 1
             res.body[0].completedWErrors.should.equal 0
             done()
-

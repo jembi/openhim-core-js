@@ -38,13 +38,14 @@ module.exports = (grunt) ->
     mochacli:
       options:
         reporter: 'spec'
-        harmony: true
+        flags: ['--harmony']
         compilers: ['coffee:coffee-script/register']
         env:
           NODE_ENV: 'test'
           NODE_TLS_REJECT_UNAUTHORIZED: 0
         grep: grunt.option 'mochaGrep' || null
         debug: grunt.option 'debugTests' || false
+        bail: grunt.option 'bail' || false
       all:
         files.test
 
