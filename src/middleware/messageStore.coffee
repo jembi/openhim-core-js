@@ -97,13 +97,13 @@ exports.storeResponse = (ctx, done) ->
     update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
 
   transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update , { runValidators: true }, (err, tx) ->
-    logger.info "stored primary response for #{tx._id}"
     if err
       logger.error 'Could not save response metadata for transaction: ' + ctx.transactionId + '. ' + err
       return done err
     if tx is undefined or tx is null
       logger.error 'Could not find transaction: ' + ctx.transactionId
       return done err
+    logger.info "stored primary response for #{tx._id}"
     return done()
 
 exports.storeNonPrimaryResponse = (ctx, routeObject, done) ->
