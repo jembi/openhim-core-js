@@ -5,6 +5,7 @@ Keystore = require("../model/keystore").Keystore
 logger = require "winston"
 utils = require '../utils'
 pem = require 'pem'
+rootCAs = require('ssl-root-cas/latest').rootCas
 
 config = require '../config/config'
 config.tlsClientLookup = config.get('tlsClientLookup')
@@ -22,7 +23,7 @@ sdc = new SDC statsdServer
 exports.getTrustedClientCerts = (done) ->
   Keystore.findOne (err, keystore) ->
     done err, null if err
-    certs = []
+    certs = rootCAs
     if keystore.ca?
       for cert in keystore.ca
         certs.push cert.data
