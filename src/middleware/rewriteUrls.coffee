@@ -75,9 +75,9 @@ rewriteUrls = (body, channel, authType, callback) ->
     if err?
       return callback err
 
-    # rewrite each found href or src attribute (in JSON or XML)
+    # rewrite each found href, src or fullUrl attribute (in JSON or XML)
     # See https://regex101.com/r/uY3fO1/1 for an explanation of this regex
-    newBody = body.replace /["|']?(?:href|src)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) ->
+    newBody = body.replace /["|']?(?:href|src|fullUrl)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) ->
       hrefUrlObj = url.parse hrefUrl
 
       # default to using this channel's host if no host so we can match a rewrite rule

@@ -113,6 +113,8 @@ describe 'Rewrite URLs middleware', ->
         href:   'http://fromWithTransform.org:8080/this'
       obj2:
         href:   '/test1/from/xyz'
+      obj3:
+        fullUrl: 'http://fromWithTransform.org:8080/this'
 
     it 'should rewrite absolute hrefs in JSON', (done) ->
       stub = sinon.stub rewriteUrls, 'fetchRewriteConfig'
@@ -133,6 +135,7 @@ describe 'Rewrite URLs middleware', ->
         newResponse = JSON.parse newResponse
         newResponse.href.should.be.exactly 'http://to.org:5001/test1'
         newResponse.obj.href.should.be.exactly 'https://toWithTransform.org:5000/that'
+        newResponse.obj3.fullUrl.should.be.exactly 'https://toWithTransform.org:5000/that'
         stub.restore()
         done()
 
