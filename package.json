@@ -48,7 +48,7 @@
     "winston-mongodb": "^1.2.0",
     "xml2js": "^0.4.5",
     "xmldom": "^0.1.19",
-    "xpath": "0.0.21"
+    "xpath": "0.0.22"
   },
   "devDependencies": {
     "coffee-script": "^1.9.1",
