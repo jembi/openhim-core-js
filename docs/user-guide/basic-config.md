@@ -52,25 +52,29 @@ There are many fields that you may supply and these are spread over a number of 
 
 * **Basic Info tab**
     * **Channel Name** - This is a descriptive name of the **Channel**.
-    * **URL Pattern** - Supply a URL pattern to match an incoming transaction - **Note** this field excepts a RegEx value - More information on RegEx can be found [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) or [here](http://www.regular-expressions.info/)
-    * **Priority** - If a transaction matches the URL patterns of two or more channels, then the channel with higher priority will be picked. A value of 1 is the highest possible priority (first priority). Larger numbers therefore indicate that a channel should take lower priority.
     * **Channel Type** - Select a **Channel** type
         * **HTTP** - Default **Channel** type.
         * **TCP** - Supply a TCP Host and Port
         * **TLS** - Supply a TLS Host and Port
         * **Polling** - Supply a Polling schedule - Cron format: '*/10 * * * *' or Written format: '10 minutes' - The module 'Agenda' is used to accomplish the polling - You can find more documentation [here](https://github.com/rschmukler/agenda)
-* **Access Control tab**:
-    * **Allowed roles and clients** - Supply the roles and **Clients** allowed to make requests to this channel
-    * **User groups allowed to view this channel's transactions** - Supply the groups allowed to view this **Channel's** transactions
-    * **User groups allowed to view this channel's transactions request/response body** - Supply the groups allowed to view the request/response body of this **Channel's** transactions
-    * **User groups allowed to rerun this channel's transactions** - Supply the groups allowed to rerun this **Channel's** transactions
-* **Content Matching tab**:
+    * **Status** - Set whether this channel is enabled to receive requests or if its disbaled*.
+* **Request Matching tab**:
+    * **URL Pattern** - Supply a URL pattern to match an incoming transaction - **Note** this field excepts a RegEx value - More information on RegEx can be found [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) or [here](http://www.regular-expressions.info/)
+        * NB!. This field is not applicable for **Channel Type** of **TCP** or **TLS**
+    * **Priority** - If a transaction matches the URL patterns of two or more channels, then the channel with higher priority will be picked. A value of 1 is the highest possible priority (first priority). Larger numbers therefore indicate that a channel should take lower priority.
+    * **Authentication Type** - Set whether this channel is **Private** or **Public**
+    * **Whitelisted IP addresses** - ???A list of IP addresses that will be given access without authentication required???
+    * **Allowed roles and clients** - Only applicable when **Authentication Type** is set to **Private**. Supply the roles and **Clients** allowed to make requests to this channel
     * **Match Content Types** - Supply what content type to match too. (e.g text/json)
     * Matching Options - These options allows a **Channel** to be used if the request body matches certain conditions.
         * **No Matching** - No matching applicable
         * **RegEx Matching** - Supply a RegEx to match
         * **XML Matching** - Supply a X Path as well as a value to match
         * **JSON Matching** - Supply a JSON property as well as a value to match
+* **Access Control tab**:
+    * **User groups allowed to view this channel's transactions** - Supply the groups allowed to view this **Channel's** transactions
+    * **User groups allowed to view this channel's transactions request/response body** - Supply the groups allowed to view the request/response body of this **Channel's** transactions
+    * **User groups allowed to rerun this channel's transactions** - Supply the groups allowed to rerun this **Channel's** transactions
 * **Routes tab**:
     * **Mediator Route** - Select a mediator route if any, to populate the required route fields
     * **Name** - This is a descriptive name of the route
