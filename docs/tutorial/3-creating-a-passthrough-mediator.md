@@ -23,7 +23,7 @@ Currently we have support for two differnt generators. One for scafolding a node
 
 The below steps will guide you on how to create a new NodeJS Mediator through Yeoman. First, lets create a directory where our Mediator will be created:
 
-`$ mkdir tutorialmediator cd tutorialmediator`
+`$ mkdir tutorialmediator && cd tutorialmediator`
 
 To create a scaffolded Mediator through Yeoman you will need to download the npm **generator-mediator-js** module. execute the following command:
 
