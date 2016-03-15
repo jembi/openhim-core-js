@@ -375,15 +375,21 @@ public void testMediatorHTTPRequest() throws Exception {
 
 Feel free to complete this test if you want to get the hang of writing these! (Tip: the **org.openhim.mediator.engine.testing.MockHTTPConnector** class can be used to setup a mock endpoint) Now we're ready to build and launch our mediator.
 
-`$ mvn install $ java -jar target/tutorial-mediator-0.1.0-jar-with-dependencies.jar`
+```
+$ mvn install
+$ java -jar target/tutorial-mediator-0.1.0-jar-with-dependencies.jar
+```
 
 ### SunCertPathBuilderException: unable to find valid certification path to requested target
 
 If you are attempting to start your Java Mediator and you are experiencing a **SunCertPathBuilderException** error then you will need to follow the below mini tutorial to install the self signed certificate before you can continue. This mini tutorial is a short and quick version to get your self signed certificate installed. A more detailed and in-depth explanation can be found [here](http://www.mkyong.com/webservices/jax-ws/suncertpathbuilderexception-unable-to-find-valid-certification-path-to-requested-target/). Lets start by first creating a new folder where we will install our self signed certificate.
 
-`$ mkdir installCert $ cd installCert`
+```
+$ mkdir installCert
+$ cd installCert
+```
 
-Download the [InstallCert.java.zip](http://www.openhim.org/wp-content/uploads/2015/01/InstallCert.java_.zip "InstalCert.java.zip") folder and extract the **InstallCert.java** script into our new **installCert** directory. We need to compile our **InstallCert.java** script to generate a **jssecacerts** file for us. Lets start this off by executing the below command which will generate two Java **.class** files for us:
+Download the [InstallCert.java.zip](/_static/mediators/InstallCert.java.zip "InstalCert.java.zip") folder and extract the **InstallCert.java** script into our new **installCert** directory. We need to compile our **InstallCert.java** script to generate a **jssecacerts** file for us. Lets start this off by executing the below command which will generate two Java **.class** files for us:
 
 `$ javac InstallCert.java`
 
