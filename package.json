@@ -63,7 +63,7 @@
     "grunt-contrib-watch": "^0.6.1",
     "grunt-mocha-cli": "^2.0.0",
     "mocha": "^2.1.0",
-    "mongodb": "^2.0.36",
+    "mongodb": "^2.1.9",
     "serve-static": "^1.9.3",
     "should": "^8.2.2",
     "sinon": "^1.12.2",
