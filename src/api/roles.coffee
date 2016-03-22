@@ -60,17 +60,46 @@ exports.getRole = (name) ->
     return
 
   try
-    result = yield Channel.find({'allow': {'$in': [name]}}, {'_id': 1 }).exec()
-    if result is null
+    result = yield Channel.find({'allow': {'$in': [name]}}, {'name': 1 }).exec()
+    if result is null or result.length is 0
       utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
     else
       this.body =
         name: name
-        channels: result.map (r) -> "#{r._id}"
+        channels: result.map (r) -> _id: r._id, name: r.name
   catch e
     logger.error "Could not find role with name '#{name}' via the API: #{e.message}"
     this.body = e.message
     this.status = 500
+
+
+buildFindChannelByIdOrNameCriteria = (ctx, role) ->
+  criteria = {}
+  ids = []
+  names = []
+  for ch in role.channels
+    if ch._id
+      ids.push ch._id
+    else if ch.name
+      names.push ch.name
+    else
+      utils.logAndSetResponse ctx, 400, "_id and/or name must be specified for a channel", 'info'
+      return null
+
+  if ids.length > 0 and names.length > 0
+    criteria =
+      $or: [
+          _id: $in: ids
+        ,
+          name: $in: names
+      ]
+  else
+    if ids.length > 0
+      criteria._id = $in: ids
+    if names.length > 0
+      criteria.name = $in: names
+
+  return criteria
 
 
 exports.addRole = ->
@@ -86,6 +115,15 @@ exports.addRole = ->
     utils.logAndSetResponse this, 400, 'Must specify at least one channel to link the role to', 'info'
 
   try
+    result = yield Channel.find({'allow': {'$in': [role.name]}}, {'name': 1 }).exec()
+    if result isnt null and result.length > 0
+      return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
+
+    criteria = buildFindChannelByIdOrNameCriteria this, role
+    return if not criteria
+
+    yield Channel.update(criteria, { $push: allow: role.name }, { multi: true }).exec()
+
     logger.info "User #{this.authenticated.email} setup role '#{role.name}'"
     this.body = 'Role successfully created'
     this.status = 201
@@ -104,8 +142,41 @@ exports.updateRole = (name) ->
   role = this.request.body
 
   try
+    result = yield Channel.find({'allow': {'$in': [name]}}, {'name': 1 }).exec()
+    if result is null or result.length is 0
+      return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
+
+    if role.channels?
+      criteria = buildFindChannelByIdOrNameCriteria this, role
+      return if not criteria
+
+      yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
+      if role.channels.length > 0
+        yield Channel.update(criteria, { $push: allow: name }, { multi: true }).exec()
+
     logger.info "User #{this.authenticated.email} updated role with name '#{name}'"
     this.body = 'Successfully updated role'
+  catch e
+    logger.error "Could not update role with name '#{name}' via the API: #{e.message}"
+    this.body = e.message
+    this.status = 500
+
+
+exports.deleteRole = (name) ->
+  # Test if the user is authorised
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateRole denied.", 'info'
+    return
+
+  try
+    result = yield Channel.find({'allow': {'$in': [name]}}, {'name': 1 }).exec()
+    if result is null or result.length is 0
+      return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
+
+    yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
+
+    logger.info "User #{this.authenticated.email} deleted role with name '#{name}'"
+    this.body = 'Successfully deleted role'
   catch e
     logger.error "Could not update role with name '#{name}' via the API: #{e.message}"
     this.body = e.message

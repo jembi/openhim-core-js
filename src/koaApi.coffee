@@ -64,6 +64,7 @@ exports.setupApp = (done) ->
   app.use route.post '/roles', roles.addRole
   app.use route.get '/roles/:name', roles.getRole
   app.use route.put '/roles/:name', roles.updateRole
+  app.use route.delete '/roles/:name', roles.deleteRole
 
   app.use route.get '/transactions', transactions.getTransactions
   app.use route.post '/transactions', transactions.addTransaction
