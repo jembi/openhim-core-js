@@ -537,6 +537,43 @@ describe "API Integration Tests", ->
           .expect(403)
           .end (err, res) -> done err
 
+      it 'should rename a role', (done) ->
+        request("https://localhost:8080")
+          .put("/roles/role1")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send
+            name: 'the-new-role-name'
+          .expect(200)
+          .end (err, res) ->
+            return done err if err
+            Channel.find 'allow': '$in': ['the-new-role-name'], (err, channels) ->
+              return done err if err
+              channels.length.should.be.exactly 1
+              mapChId = (chns) -> (chns.map (ch) -> "#{ch._id}")
+              mapChId(channels).should.containEql "#{channel1._id}"
+              Client.find 'roles': '$in': ['the-new-role-name'], (err, clients) ->
+                return done err if err
+                clients.length.should.be.exactly 2
+                mapClId = (cls) -> (cls.map (cl) -> "#{cl._id}")
+                mapClId(clients).should.containEql "#{client1._id}"
+                mapClId(clients).should.containEql "#{client3._id}"
+                done()
+
+      it 'should reject a request to rename a role into an existing role name', (done) ->
+        request("https://localhost:8080")
+          .put("/roles/role1")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send
+            name: 'role2'
+          .expect(400)
+          .end (err, res) -> done err
+
 
     describe '*deleteRole()', ->
 

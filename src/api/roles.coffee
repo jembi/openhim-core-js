@@ -183,6 +183,13 @@ exports.updateRole = (name) ->
     if result is null or result.length is 0
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 
+    if role.name
+      # do check here but only perform rename updates later after channel/client updates
+      channels = yield Channel.find({'allow': {'$in': [role.name]}}, {'name': 1 }).exec()
+      clients = yield Client.find({'roles': {'$in': [role.name]}}, {'name': 1 }).exec()
+      if channels?.length > 0 or clients?.length > 0
+        return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
+
     if role.channels
       criteria = buildFindChannelByIdOrNameCriteria this, role
       return if not criteria
@@ -199,6 +206,13 @@ exports.updateRole = (name) ->
       yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
     if role.clients?.length > 0
       yield Client.update(clCriteria, { $push: roles: name }, { multi: true }).exec()
+
+    if role.name
+      # rename role
+      yield Channel.update({ allow: $in: [name] }, { $push: allow: role.name }, { multi: true }).exec()
+      yield Channel.update({ allow: $in: [name] }, { $pull: allow: name }, { multi: true }).exec()
+      yield Client.update({ roles: $in: [name] }, { $push: roles: role.name }, { multi: true }).exec()
+      yield Client.update({ roles: $in: [name] }, { $pull: roles: name }, { multi: true }).exec()
 
     logger.info "User #{this.authenticated.email} updated role with name '#{name}'"
     this.body = 'Successfully updated role'
