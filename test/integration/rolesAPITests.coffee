@@ -98,7 +98,7 @@ describe "API Integration Tests", ->
 
     describe '*getRoles()', ->
 
-      it 'should fetch all roles', (done) ->
+      it 'should fetch all roles and list linked channels', (done) ->
         request("https://localhost:8080")
           .get("/roles")
           .set("auth-username", testUtils.rootUser.email)
@@ -118,6 +118,8 @@ describe "API Integration Tests", ->
 
               mapChId = (chns) -> (chns.map (ch) -> ch._id)
               for role in res.body
+                role.should.have.property 'channels'
+
                 if role.name is 'role1'
                   mapChId(role.channels).should.containEql "#{channel1._id}"
                 if role.name is 'role2'
@@ -125,6 +127,38 @@ describe "API Integration Tests", ->
                   mapChId(role.channels).should.containEql "#{channel2._id}"
                 if role.name is 'role3'
                   mapChId(role.channels).should.containEql "#{channel2._id}"
+
+              done()
+
+      it 'should fetch all roles and list linked clients', (done) ->
+        request("https://localhost:8080")
+          .get("/roles")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.length.should.be.exactly 3
+              names = res.body.map (r) -> r.name
+              names.should.containEql 'role1'
+              names.should.containEql 'role2'
+              names.should.containEql 'role3'
+
+              mapClId = (cls) -> (cls.map (cl) -> cl._id)
+              for role in res.body
+                role.should.have.property 'clients'
+
+                if role.name is 'role1'
+                  mapClId(role.clients).should.containEql "#{client1._id}"
+                  mapClId(role.clients).should.containEql "#{client3._id}"
+                if role.name is 'role2'
+                  mapClId(role.clients).should.containEql "#{client2._id}"
+                if role.name is 'role3'
+                  mapClId(role.clients).should.containEql "#{client3._id}"
 
               done()
 
@@ -155,7 +189,7 @@ describe "API Integration Tests", ->
           .expect(403)
           .end (err, res) -> done err
 
-      it 'should return an empty array if there are not channels', (done) ->
+      it 'should return an empty array if there are no channels', (done) ->
         Channel.remove {}, ->
           request("https://localhost:8080")
             .get("/roles")
@@ -188,10 +222,12 @@ describe "API Integration Tests", ->
             else
               res.body.should.have.property 'name', 'role2'
               res.body.should.have.property 'channels'
+              res.body.should.have.property 'clients'
               res.body.channels.length.should.be.exactly 2
-              mapChId = (chns) -> (chns.map (ch) -> ch._id)
-              mapChId(res.body.channels).should.containEql "#{channel1._id}"
-              mapChId(res.body.channels).should.containEql "#{channel2._id}"
+              mapId = (arr) -> (arr.map (a) -> a._id)
+              mapId(res.body.channels).should.containEql "#{channel1._id}"
+              mapId(res.body.channels).should.containEql "#{channel2._id}"
+              mapId(res.body.clients).should.containEql "#{client2._id}"
               done()
 
       it 'should respond with 404 Not Found if role does not exist', (done) ->
@@ -255,6 +291,36 @@ describe "API Integration Tests", ->
               mapChId(channels).should.containEql "#{channel2._id}"
               done()
 
+      it 'should add a role and update clients', (done) ->
+        request("https://localhost:8080")
+          .post("/roles")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send
+            name: 'role4'
+            channels: [
+                _id: "#{channel1._id}"
+              ,
+                _id: "#{channel2._id}"
+            ]
+            clients: [
+                _id: "#{client1._id}"
+              ,
+                _id: "#{client2._id}"
+            ]
+          .expect(201)
+          .end (err, res) ->
+            return done err if err
+            Client.find 'roles': '$in': ['role4'], (err, clients) ->
+              return done err if err
+              clients.length.should.be.exactly 2
+              mapId = (arr) -> (arr.map (a) -> "#{a._id}")
+              mapId(clients).should.containEql "#{client1._id}"
+              mapId(clients).should.containEql "#{client2._id}"
+              done()
+
       it 'should add a role and update channels specified with either _id or name', (done) ->
         request("https://localhost:8080")
           .post("/roles")
@@ -278,6 +344,36 @@ describe "API Integration Tests", ->
               mapChId = (chns) -> (chns.map (ch) -> "#{ch._id}")
               mapChId(channels).should.containEql "#{channel1._id}"
               mapChId(channels).should.containEql "#{channel2._id}"
+              done()
+
+      it 'should add a role and update clients specified with either _id or clientID', (done) ->
+        request("https://localhost:8080")
+          .post("/roles")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send
+            name: 'role4'
+            channels: [
+                _id: "#{channel1._id}"
+              ,
+                _id: "#{channel2._id}"
+            ]
+            clients: [
+                _id: "#{client1._id}"
+              ,
+                clientID: "#{client2.clientID}"
+            ]
+          .expect(201)
+          .end (err, res) ->
+            return done err if err
+            Client.find 'roles': '$in': ['role4'], (err, clients) ->
+              return done err if err
+              clients.length.should.be.exactly 2
+              mapId = (arr) -> (arr.map (a) -> "#{a._id}")
+              mapId(clients).should.containEql "#{client1._id}"
+              mapId(clients).should.containEql "#{client2._id}"
               done()
 
 
@@ -328,6 +424,30 @@ describe "API Integration Tests", ->
               mapChId(channels).should.containEql "#{channel2._id}"
               done()
 
+      it 'should update a role (enable role1 for client2 and client3 and disable for client1)', (done) ->
+        request("https://localhost:8080")
+          .put("/roles/role1")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send
+            clients: [
+                _id: "#{client2._id}"
+              ,
+                _id: "#{client3._id}"
+            ]
+          .expect(200)
+          .end (err, res) ->
+            return done err if err
+            Client.find 'roles': '$in': ['role1'], (err, clients) ->
+              return done err if err
+              clients.length.should.be.exactly 2
+              mapId = (arr) -> (arr.map (a) -> "#{a._id}")
+              mapId(clients).should.containEql "#{client2._id}"
+              mapId(clients).should.containEql "#{client3._id}"
+              done()
+
       it 'should update a role (enable role1 on both channel1 and channel2)', (done) ->
         request("https://localhost:8080")
           .put("/roles/role1")
@@ -367,6 +487,23 @@ describe "API Integration Tests", ->
             Channel.find 'allow': '$in': ['role2'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 0
+              done()
+
+      it 'should remove clients for a role that is an update of an empty channel array', (done) ->
+        request("https://localhost:8080")
+          .put("/roles/role2")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send
+            channels: []
+          .expect(200)
+          .end (err, res) ->
+            return done err if err
+            Client.find 'allow': '$in': ['role2'], (err, clients) ->
+              return done err if err
+              clients.length.should.be.exactly 0
               done()
 
       it 'should update a role using channel name', (done) ->
@@ -428,7 +565,10 @@ describe "API Integration Tests", ->
             Channel.find 'allow': '$in': ['role2'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 0
-              done()
+              Client.find 'roles': '$in': ['role2'], (err, clients) ->
+                return done err if err
+                clients.length.should.be.exactly 0
+                done()
 
       it 'should reject a request from a non root user', (done) ->
         request("https://localhost:8080")

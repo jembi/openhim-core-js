@@ -9,7 +9,7 @@ utils = require '../utils'
 # Roles is a virtual API; virtual in the sense that it is not linked
 # to a concrete roles collection.
 #
-# Rather it an abstraction of the 'allowed' field on Channels,
+# Rather it an abstraction of the 'allow' field on Channels and 'roles' on Clients,
 # providing a mechanism for setting up allowed permissions.
 ###
 
@@ -32,6 +32,7 @@ filterRolesFromChannels = (channels, allClients) ->
     rolesArray.push
       name: role
       channels: roles[role].channels
+      clients: ((allClients.filter (cl) -> role in cl.roles).map (fc) -> _id: fc._id, clientID: fc.clientID)
 
   return rolesArray
 
@@ -44,7 +45,7 @@ exports.getRoles = ->
 
   try
     channels = yield Channel.find({}, {'name': 1, 'allow': 1 }).exec()
-    clients = yield Client.find({}, {'clientID': 1 }).exec()
+    clients = yield Client.find({}, {'clientID': 1, 'roles': 1 }).exec()
 
     this.body = filterRolesFromChannels channels, clients
   catch e
@@ -64,9 +65,11 @@ exports.getRole = (name) ->
     if result is null or result.length is 0
       utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
     else
+      clients = yield Client.find({ roles: $in: [name]}, {'clientID': 1 }).exec()
       this.body =
         name: name
         channels: result.map (r) -> _id: r._id, name: r.name
+        clients: clients.map (c) -> _id: c._id, clientID: c.clientID
   catch e
     logger.error "Could not find role with name '#{name}' via the API: #{e.message}"
     this.body = e.message
@@ -101,6 +104,34 @@ buildFindChannelByIdOrNameCriteria = (ctx, role) ->
 
   return criteria
 
+buildFindClientByIdOrClientIDCriteria = (ctx, role) ->
+  criteria = {}
+  ids = []
+  clientIDs = []
+  for ch in role.clients
+    if ch._id
+      ids.push ch._id
+    else if ch.clientID
+      clientIDs.push ch.clientID
+    else
+      utils.logAndSetResponse ctx, 400, "_id and/or clientID must be specified for a client", 'info'
+      return null
+
+  if ids.length > 0 and clientIDs.length > 0
+    criteria =
+      $or: [
+          _id: $in: ids
+        ,
+          clientID: $in: clientIDs
+      ]
+  else
+    if ids.length > 0
+      criteria._id = $in: ids
+    if clientIDs.length > 0
+      criteria.clientID = $in: clientIDs
+
+  return criteria
+
 
 exports.addRole = ->
   # Test if the user is authorised
@@ -122,7 +153,13 @@ exports.addRole = ->
     criteria = buildFindChannelByIdOrNameCriteria this, role
     return if not criteria
 
+    if role.clients
+      clCriteria = buildFindClientByIdOrClientIDCriteria this, role
+      return if not clCriteria
+
     yield Channel.update(criteria, { $push: allow: role.name }, { multi: true }).exec()
+    if role.clients
+      yield Client.update(clCriteria, { $push: roles: role.name }, { multi: true }).exec()
 
     logger.info "User #{this.authenticated.email} setup role '#{role.name}'"
     this.body = 'Role successfully created'
@@ -146,16 +183,26 @@ exports.updateRole = (name) ->
     if result is null or result.length is 0
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 
-    if role.channels?
+    if role.channels
       criteria = buildFindChannelByIdOrNameCriteria this, role
       return if not criteria
+    if role.clients
+      clCriteria = buildFindClientByIdOrClientIDCriteria this, role
+      return if not clCriteria
 
+    if role.channels
       yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
       if role.channels.length > 0
         yield Channel.update(criteria, { $push: allow: name }, { multi: true }).exec()
 
+    if role.clients or (role.channels and role.channels.length is 0) # also clear clients if channels length is 0
+      yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
+    if role.clients?.length > 0
+      yield Client.update(clCriteria, { $push: roles: name }, { multi: true }).exec()
+
     logger.info "User #{this.authenticated.email} updated role with name '#{name}'"
     this.body = 'Successfully updated role'
+    this.status = 200
   catch e
     logger.error "Could not update role with name '#{name}' via the API: #{e.message}"
     this.body = e.message
@@ -174,6 +221,7 @@ exports.deleteRole = (name) ->
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 
     yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
+    yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
 
     logger.info "User #{this.authenticated.email} deleted role with name '#{name}'"
     this.body = 'Successfully deleted role'
