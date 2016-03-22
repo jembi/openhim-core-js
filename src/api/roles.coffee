@@ -60,7 +60,7 @@ exports.getRole = (name) ->
     return
 
   try
-    result = yield Channel.find({'allowed': {'$in': name}}, {'_id': 1 }).exec()
+    result = yield Channel.find({'allow': {'$in': [name]}}, {'_id': 1 }).exec()
     if result is null
       utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
     else
