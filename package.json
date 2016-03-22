@@ -60,7 +60,7 @@
     "grunt-coffeelint": "^0.0.15",
     "grunt-contrib-coffee": "^1.0.0",
     "grunt-contrib-clean": "^1.0.0",
-    "grunt-contrib-watch": "^0.6.1",
+    "grunt-contrib-watch": "^1.0.0",
     "grunt-mocha-cli": "^2.0.0",
     "mocha": "^2.1.0",
     "mongodb": "^2.0.36",
