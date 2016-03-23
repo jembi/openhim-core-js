@@ -65,7 +65,7 @@
     "mocha": "^2.1.0",
     "mongodb": "^2.1.10",
     "serve-static": "^1.9.3",
-    "should": "^8.2.2",
+    "should": "^8.3.0",
     "sinon": "^1.12.2",
     "sinon-es6": "^0.0.3",
     "supertest": "1.2.0"
