@@ -161,7 +161,7 @@ It should be noted that there is no actual roles collection in the database. The
 
 #### Fetch all roles
 
-`GET /clients`
+`GET /roles`
 
 The response status will be `200` if successful and the response body will contain an array of role objects, each consisting of a `name`, an array of `channels` and an array of `clients`, e.g.:
 ```json
@@ -309,7 +309,7 @@ The response status code will be `200` if successful.
 
 ### Users resource
 
-Users of the system.
+Console and API Users of the system.
 
 `https://<server>:<api_port>/users`
 

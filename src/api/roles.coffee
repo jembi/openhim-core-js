@@ -40,12 +40,11 @@ filterRolesFromChannels = (channels, allClients) ->
 exports.getRoles = ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getRoles denied.", 'info'
-    return
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getRoles denied.", 'info'
 
   try
-    channels = yield Channel.find({}, {'name': 1, 'allow': 1 }).exec()
-    clients = yield Client.find({}, {'clientID': 1, 'roles': 1 }).exec()
+    channels = yield Channel.find({}, {name: 1, allow: 1 }).exec()
+    clients = yield Client.find({}, {clientID: 1, roles: 1 }).exec()
 
     this.body = filterRolesFromChannels channels, clients
   catch e
@@ -57,15 +56,14 @@ exports.getRoles = ->
 exports.getRole = (name) ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getRole denied.", 'info'
-    return
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getRole denied.", 'info'
 
   try
-    result = yield Channel.find({'allow': {'$in': [name]}}, {'name': 1 }).exec()
+    result = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
     if result is null or result.length is 0
       utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
     else
-      clients = yield Client.find({ roles: $in: [name]}, {'clientID': 1 }).exec()
+      clients = yield Client.find({ roles: $in: [name]}, {clientID: 1 }).exec()
       this.body =
         name: name
         channels: result.map (r) -> _id: r._id, name: r.name
@@ -136,18 +134,17 @@ buildFindClientByIdOrClientIDCriteria = (ctx, role) ->
 exports.addRole = ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addRole denied.", 'info'
-    return
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addRole denied.", 'info'
 
   role = this.request.body
   if not role.name
-    utils.logAndSetResponse this, 400, 'Must specify a role name', 'info'
-  if not role.channels or role.channels.length is 0
-    utils.logAndSetResponse this, 400, 'Must specify at least one channel to link the role to', 'info'
+    return utils.logAndSetResponse this, 400, 'Must specify a role name', 'info'
+  if role.channels?.length is 0
+    return utils.logAndSetResponse this, 400, 'Must specify at least one channel to link the role to', 'info'
 
   try
-    result = yield Channel.find({'allow': {'$in': [role.name]}}, {'name': 1 }).exec()
-    if result isnt null and result.length > 0
+    result = yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
+    if result?.length > 0
       return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
 
     criteria = buildFindChannelByIdOrNameCriteria this, role
@@ -173,20 +170,20 @@ exports.addRole = ->
 exports.updateRole = (name) ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateRole denied.", 'info'
-    return
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateRole denied.", 'info'
 
   role = this.request.body
 
   try
-    result = yield Channel.find({'allow': {'$in': [name]}}, {'name': 1 }).exec()
+    # request validity checks
+    result = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
     if result is null or result.length is 0
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 
     if role.name
       # do check here but only perform rename updates later after channel/client updates
-      channels = yield Channel.find({'allow': {'$in': [role.name]}}, {'name': 1 }).exec()
-      clients = yield Client.find({'roles': {'$in': [role.name]}}, {'name': 1 }).exec()
+      channels = yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
+      clients = yield Client.find({roles: {$in: [role.name]}}, {name: 1 }).exec()
       if channels?.length > 0 or clients?.length > 0
         return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
 
@@ -197,18 +194,25 @@ exports.updateRole = (name) ->
       clCriteria = buildFindClientByIdOrClientIDCriteria this, role
       return if not clCriteria
 
+    # update channels
     if role.channels
+      # clear role from existing
       yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
+      # set role on channels
       if role.channels.length > 0
         yield Channel.update(criteria, { $push: allow: name }, { multi: true }).exec()
 
-    if role.clients or (role.channels and role.channels.length is 0) # also clear clients if channels length is 0
+    # update clients
+    #
+    # clear role from existing
+    if role.clients or (role.channels?.length is 0) # also clear clients if channels length is 0
       yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
+    # set role on clients
     if role.clients?.length > 0
       yield Client.update(clCriteria, { $push: roles: name }, { multi: true }).exec()
 
+    # rename role
     if role.name
-      # rename role
       yield Channel.update({ allow: $in: [name] }, { $push: allow: role.name }, { multi: true }).exec()
       yield Channel.update({ allow: $in: [name] }, { $pull: allow: name }, { multi: true }).exec()
       yield Client.update({ roles: $in: [name] }, { $push: roles: role.name }, { multi: true }).exec()
@@ -226,11 +230,10 @@ exports.updateRole = (name) ->
 exports.deleteRole = (name) ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateRole denied.", 'info'
-    return
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateRole denied.", 'info'
 
   try
-    result = yield Channel.find({'allow': {'$in': [name]}}, {'name': 1 }).exec()
+    result = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
     if result is null or result.length is 0
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 

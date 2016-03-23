@@ -1,65 +1,65 @@
-should = require "should"
-request = require "supertest"
-server = require "../../lib/server"
-Channel = require("../../lib/model/channels").Channel
-Client = require("../../lib/model/clients").Client
-testUtils = require "../testUtils"
-auth = require("../testUtils").auth
+should = require 'should'
+request = require 'supertest'
+server = require '../../lib/server'
+Channel = require('../../lib/model/channels').Channel
+Client = require('../../lib/model/clients').Client
+testUtils = require '../testUtils'
+auth = require('../testUtils').auth
 
 
-describe "API Integration Tests", ->
+describe 'API Integration Tests', ->
 
   describe 'Roles REST Api testing', ->
 
     channel1 =
-      name: "TestChannel1"
-      urlPattern: "test/sample"
-      allow: [ "role1", "role2", "client4" ]
+      name: 'TestChannel1'
+      urlPattern: 'test/sample'
+      allow: [ 'role1', 'role2', 'client4' ]
       routes: [
-            name: "test route"
-            host: "localhost"
+            name: 'test route'
+            host: 'localhost'
             port: 9876
             primary: true
           ]
 
     channel2 =
-      name: "TestChannel2"
-      urlPattern: "test/sample"
-      allow: [ "role2", "role3"  ]
+      name: 'TestChannel2'
+      urlPattern: 'test/sample'
+      allow: [ 'role2', 'role3'  ]
       routes: [
-            name: "test route"
-            host: "localhost"
+            name: 'test route'
+            host: 'localhost'
             port: 9876
             primary: true
           ]
 
     client1 =
-      clientID: "client1"
-      name: "Client 1"
+      clientID: 'client1'
+      name: 'Client 1'
       roles: [
-          "role1"
+          'role1'
         ]
 
     client2 =
-      clientID: "client2"
-      name: "Client 2"
+      clientID: 'client2'
+      name: 'Client 2'
       roles: [
-          "role2"
+          'role2'
         ]
 
     client3 =
-      clientID: "client3"
-      name: "Client 3"
+      clientID: 'client3'
+      name: 'Client 3'
       roles: [
-          "role1"
-          "role3"
+          'role1'
+          'role3'
         ]
 
     client4 =
-      clientID: "client4"
-      name: "Client 4"
+      clientID: 'client4'
+      name: 'Client 4'
       roles: [
-          "other-role"
+          'other-role'
         ]
 
     authDetails = {}
@@ -99,12 +99,12 @@ describe "API Integration Tests", ->
     describe '*getRoles()', ->
 
       it 'should fetch all roles and list linked channels', (done) ->
-        request("https://localhost:8080")
-          .get("/roles")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .get('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(200)
           .end (err, res) ->
             if err
@@ -131,12 +131,12 @@ describe "API Integration Tests", ->
               done()
 
       it 'should fetch all roles and list linked clients', (done) ->
-        request("https://localhost:8080")
-          .get("/roles")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .get('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(200)
           .end (err, res) ->
             if err
@@ -163,12 +163,12 @@ describe "API Integration Tests", ->
               done()
 
       it 'should not misinterpret a client as a role', (done) ->
-        request("https://localhost:8080")
-          .get("/roles")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .get('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(200)
           .end (err, res) ->
             if err
@@ -180,23 +180,23 @@ describe "API Integration Tests", ->
               done()
 
       it 'should reject a request from a non root user', (done) ->
-        request("https://localhost:8080")
-          .get("/roles")
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .get('/roles')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(403)
           .end (err, res) -> done err
 
       it 'should return an empty array if there are no channels', (done) ->
         Channel.remove {}, ->
-          request("https://localhost:8080")
-            .get("/roles")
-            .set("auth-username", testUtils.rootUser.email)
-            .set("auth-ts", authDetails.authTS)
-            .set("auth-salt", authDetails.authSalt)
-            .set("auth-token", authDetails.authToken)
+          request('https://localhost:8080')
+            .get('/roles')
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
             .expect(200)
             .end (err, res) ->
               if err
@@ -209,12 +209,12 @@ describe "API Integration Tests", ->
     describe '*getRole()', ->
 
       it 'should get a role', (done) ->
-        request("https://localhost:8080")
-          .get("/roles/role2")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .get('/roles/role2')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(200)
           .end (err, res) ->
             if err
@@ -231,22 +231,22 @@ describe "API Integration Tests", ->
               done()
 
       it 'should respond with 404 Not Found if role does not exist', (done) ->
-        request("https://localhost:8080")
-          .get("/roles/nonexistent")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .get('/roles/nonexistent')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(404)
           .end (err, res) -> done err
 
       it 'should reject a request from a non root user', (done) ->
-        request("https://localhost:8080")
-          .get("/roles/role1")
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .get('/roles/role1')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(403)
           .end (err, res) -> done err
 
@@ -254,12 +254,12 @@ describe "API Integration Tests", ->
     describe '*addRole()', ->
 
       it 'should respond with 400 Bad Request if role already exists', (done) ->
-        request("https://localhost:8080")
-          .post("/roles")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             name: 'role1'
             channels: [_id: "#{channel2._id}"]
@@ -267,12 +267,12 @@ describe "API Integration Tests", ->
           .end (err, res) -> done err
 
       it 'should add a role', (done) ->
-        request("https://localhost:8080")
-          .post("/roles")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             name: 'role4'
             channels: [
@@ -283,7 +283,7 @@ describe "API Integration Tests", ->
           .expect(201)
           .end (err, res) ->
             return done err if err
-            Channel.find 'allow': '$in': ['role4'], (err, channels) ->
+            Channel.find allow: $in: ['role4'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 2
               mapChId = (chns) -> (chns.map (ch) -> "#{ch._id}")
@@ -292,12 +292,12 @@ describe "API Integration Tests", ->
               done()
 
       it 'should add a role and update clients', (done) ->
-        request("https://localhost:8080")
-          .post("/roles")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             name: 'role4'
             channels: [
@@ -313,7 +313,7 @@ describe "API Integration Tests", ->
           .expect(201)
           .end (err, res) ->
             return done err if err
-            Client.find 'roles': '$in': ['role4'], (err, clients) ->
+            Client.find roles: $in: ['role4'], (err, clients) ->
               return done err if err
               clients.length.should.be.exactly 2
               mapId = (arr) -> (arr.map (a) -> "#{a._id}")
@@ -322,12 +322,12 @@ describe "API Integration Tests", ->
               done()
 
       it 'should add a role and update channels specified with either _id or name', (done) ->
-        request("https://localhost:8080")
-          .post("/roles")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             name: 'role4'
             channels: [
@@ -338,7 +338,7 @@ describe "API Integration Tests", ->
           .expect(201)
           .end (err, res) ->
             return done err if err
-            Channel.find 'allow': '$in': ['role4'], (err, channels) ->
+            Channel.find allow: $in: ['role4'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 2
               mapChId = (chns) -> (chns.map (ch) -> "#{ch._id}")
@@ -347,12 +347,12 @@ describe "API Integration Tests", ->
               done()
 
       it 'should add a role and update clients specified with either _id or clientID', (done) ->
-        request("https://localhost:8080")
-          .post("/roles")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             name: 'role4'
             channels: [
@@ -368,7 +368,7 @@ describe "API Integration Tests", ->
           .expect(201)
           .end (err, res) ->
             return done err if err
-            Client.find 'roles': '$in': ['role4'], (err, clients) ->
+            Client.find roles: $in: ['role4'], (err, clients) ->
               return done err if err
               clients.length.should.be.exactly 2
               mapId = (arr) -> (arr.map (a) -> "#{a._id}")
@@ -376,14 +376,55 @@ describe "API Integration Tests", ->
               mapId(clients).should.containEql "#{client2._id}"
               done()
 
+      it 'should respond with 400 Bad Request if name is not specified', (done) ->
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send
+            channels: [
+                _id: "#{channel1._id}"
+              ,
+                _id: "#{channel2._id}"
+            ]
+          .expect(400)
+          .end (err, res) -> done err
+
+      it 'should respond with 400 Bad Request if channels is empty', (done) ->
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send
+            name: 'role2'
+            channels: []
+          .expect(400)
+          .end (err, res) -> done err
+
+      it 'should respond with 400 Bad Request if channels is not specified', (done) ->
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send
+            name: 'role2'
+          .expect(400)
+          .end (err, res) -> done err
+
 
       it 'should reject a request from a non root user', (done) ->
-        request("https://localhost:8080")
-          .post("/roles")
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             name: 'role4'
             channels: [_id: "#{channel1._id}"]
@@ -394,30 +435,30 @@ describe "API Integration Tests", ->
     describe '*updateRole()', ->
 
       it 'should respond with 400 Not Found if role doesn\'t exist', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role4")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role4')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             channels: [_id: "#{channel1._id}"]
           .expect(404)
           .end (err, res) -> done err
 
       it 'should update a role (enable role1 on channel2 and remove from channel1)', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role1")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role1')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             channels: [_id: "#{channel2._id}"]
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Channel.find 'allow': '$in': ['role1'], (err, channels) ->
+            Channel.find allow: $in: ['role1'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 1
               mapChId = (chns) -> (chns.map (ch) -> "#{ch._id}")
@@ -425,12 +466,12 @@ describe "API Integration Tests", ->
               done()
 
       it 'should update a role (enable role1 for client2 and client3 and disable for client1)', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role1")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role1')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             clients: [
                 _id: "#{client2._id}"
@@ -440,7 +481,7 @@ describe "API Integration Tests", ->
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Client.find 'roles': '$in': ['role1'], (err, clients) ->
+            Client.find roles: $in: ['role1'], (err, clients) ->
               return done err if err
               clients.length.should.be.exactly 2
               mapId = (arr) -> (arr.map (a) -> "#{a._id}")
@@ -449,12 +490,12 @@ describe "API Integration Tests", ->
               done()
 
       it 'should update a role (enable role1 on both channel1 and channel2)', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role1")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role1')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             channels: [
                 _id: "#{channel1._id}"
@@ -464,7 +505,7 @@ describe "API Integration Tests", ->
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Channel.find 'allow': '$in': ['role1'], (err, channels) ->
+            Channel.find allow: $in: ['role1'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 2
               mapChId = (chns) -> (chns.map (ch) -> "#{ch._id}")
@@ -473,52 +514,52 @@ describe "API Integration Tests", ->
               done()
 
       it 'should remove a role that is an update of an empty channel array', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role2")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role2')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             channels: []
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Channel.find 'allow': '$in': ['role2'], (err, channels) ->
+            Channel.find allow: $in: ['role2'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 0
               done()
 
       it 'should remove clients for a role that is an update of an empty channel array', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role2")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role2')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             channels: []
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Client.find 'allow': '$in': ['role2'], (err, clients) ->
+            Client.find allow: $in: ['role2'], (err, clients) ->
               return done err if err
               clients.length.should.be.exactly 0
               done()
 
       it 'should update a role using channel name', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role1")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role1')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             channels: [name: channel2.name]
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Channel.find 'allow': '$in': ['role1'], (err, channels) ->
+            Channel.find allow: $in: ['role1'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 1
               mapChId = (chns) -> (chns.map (ch) -> "#{ch._id}")
@@ -526,35 +567,35 @@ describe "API Integration Tests", ->
               done()
 
       it 'should reject a request from a non root user', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role1")
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role1')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             channels: [_id: "#{channel2._id}"]
           .expect(403)
           .end (err, res) -> done err
 
       it 'should rename a role', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role1")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role1')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             name: 'the-new-role-name'
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Channel.find 'allow': '$in': ['the-new-role-name'], (err, channels) ->
+            Channel.find allow: $in: ['the-new-role-name'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 1
               mapChId = (chns) -> (chns.map (ch) -> "#{ch._id}")
               mapChId(channels).should.containEql "#{channel1._id}"
-              Client.find 'roles': '$in': ['the-new-role-name'], (err, clients) ->
+              Client.find roles: $in: ['the-new-role-name'], (err, clients) ->
                 return done err if err
                 clients.length.should.be.exactly 2
                 mapClId = (cls) -> (cls.map (cl) -> "#{cl._id}")
@@ -563,12 +604,12 @@ describe "API Integration Tests", ->
                 done()
 
       it 'should reject a request to rename a role into an existing role name', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role1")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role1')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             name: 'role2'
           .expect(400)
@@ -578,41 +619,41 @@ describe "API Integration Tests", ->
     describe '*deleteRole()', ->
 
       it 'should respond with 404 Not Found if role doesn\'t exist', (done) ->
-        request("https://localhost:8080")
-          .put("/roles/role4")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .put('/roles/role4')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .send
             channels: [_id: "#{channel1._id}"]
           .expect(404)
           .end (err, res) -> done err
 
       it 'should delete a role', (done) ->
-        request("https://localhost:8080")
-          .delete("/roles/role2")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .delete('/roles/role2')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Channel.find 'allow': '$in': ['role2'], (err, channels) ->
+            Channel.find allow: $in: ['role2'], (err, channels) ->
               return done err if err
               channels.length.should.be.exactly 0
-              Client.find 'roles': '$in': ['role2'], (err, clients) ->
+              Client.find roles: $in: ['role2'], (err, clients) ->
                 return done err if err
                 clients.length.should.be.exactly 0
                 done()
 
       it 'should reject a request from a non root user', (done) ->
-        request("https://localhost:8080")
-          .delete("/roles/role2")
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
+        request('https://localhost:8080')
+          .delete('/roles/role2')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
           .expect(403)
           .end (err, res) -> done err
