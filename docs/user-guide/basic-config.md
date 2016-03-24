@@ -71,19 +71,6 @@ There are many fields that you may supply and these are spread over a number of 
         * **RegEx Matching** - Supply a RegEx to match
         * **XML Matching** - Supply a X Path as well as a value to match
         * **JSON Matching** - Supply a JSON property as well as a value to match
-* **Access Control tab**:
-    * **User groups allowed to view this channel's transactions** - Supply the groups allowed to view this **Channel's** transactions
-    * **User groups allowed to view this channel's transactions request/response body** - Supply the groups allowed to view the request/response body of this **Channel's** transactions
-    * **User groups allowed to rerun this channel's transactions** - Supply the groups allowed to rerun this **Channel's** transactions
-* **Data Control tab**:
-    * **Store Request Body** - Select whether or not to store the request body.
-        * **Note** - If a transaction is made through a POST/PUT/PATCH method and request body is NOT saved, then the transaction cannot be rerun.
-    * **Store Response Body** - Select whether or not to store the response body.
-    * **URL Rewriting enabled** - URL rewriting allows the OpenHIM to look for URLs in a response and rewrite them so that they point to the correct location.
-        * **From Host/Port** - Supply the host and port value you are looking to rewrite.
-        * **To Host/Port** - Supply the host and port value that will replace the 'From Host/Port' matches.
-        * **Path Transform** - Applies a said-like expression to the path string - Multiple endpoints can be reached using the same route.
-    * **Add Auto Rewrite Rules** - Determines whether automatic rewrite rules are used. These rules enabled URLs to be automatically rewritten for any URLs that points to a host that the OpenHIM proxies (any host on a primary route). These can be overridden by user specified rules if need be.
 * **Routes tab**:
     * **Mediator Route** - Select a mediator route if any, to populate the required route fields
     * **Name** - This is a descriptive name of the route
@@ -98,6 +85,19 @@ There are many fields that you may supply and these are spread over a number of 
     * **Status** - Set whether or not a route is enabled/disabled.
     * **+ Save** - All required fields need to be supplied before the blue "**+ Save**" button becomes active.
     * **Note** - At least one route needs to be added to the **Channel** and only one route is allowed to be set to primary
+* **Data Control tab**:
+    * **Store Request Body** - Select whether or not to store the request body.
+        * **Note** - If a transaction is made through a POST/PUT/PATCH method and request body is NOT saved, then the transaction cannot be rerun.
+    * **Store Response Body** - Select whether or not to store the response body.
+    * **URL Rewriting enabled** - URL rewriting allows the OpenHIM to look for URLs in a response and rewrite them so that they point to the correct location.
+        * **From Host/Port** - Supply the host and port value you are looking to rewrite.
+        * **To Host/Port** - Supply the host and port value that will replace the 'From Host/Port' matches.
+        * **Path Transform** - Applies a said-like expression to the path string - Multiple endpoints can be reached using the same route.
+    * **Add Auto Rewrite Rules** - Determines whether automatic rewrite rules are used. These rules enabled URLs to be automatically rewritten for any URLs that points to a host that the OpenHIM proxies (any host on a primary route). These can be overridden by user specified rules if need be.
+* **User Access tab**:
+    * **User groups allowed to view this channel's transactions** - Supply the groups allowed to view this **Channel's** transactions
+    * **User groups allowed to view this channel's transactions request/response body** - Supply the groups allowed to view the request/response body of this **Channel's** transactions
+    * **User groups allowed to rerun this channel's transactions** - Supply the groups allowed to rerun this **Channel's** transactions
 * **Alerts tab**:
     * **Status** - Supply the status of a transaction when the alert should be sent. This can be supplied in a range format (e.g 2xx or 4xx)
     * **Failure Rate (%)** - Supply the failure rate of when to start sending the alerts (e.g 50 - once failure rate above 50% then alerts will be sent)
