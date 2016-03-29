@@ -17,7 +17,7 @@
     "bcryptjs": "^2.0.0",
     "co": "^4.1.0",
     "cookie": "^0.2.3",
-    "email-templates": "^2.0.0-beta",
+    "email-templates": "^2.3.0",
     "forever-monitor": "^1.5.2",
     "form-data": "^1.0.0-rc3",
     "glossy": "^0.1.7",
