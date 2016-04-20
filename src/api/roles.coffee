@@ -15,7 +15,7 @@ utils = require '../utils'
 
 
 filterRolesFromChannels = (channels, allClients) ->
-  roles = {}
+  rolesMap = {} # K: permission, V: channels that share permission
   for ch in channels
     for permission in ch.allow
       isClient = false
@@ -24,14 +24,14 @@ filterRolesFromChannels = (channels, allClients) ->
           isClient = true
 
       if not isClient
-        if not roles[permission] then roles[permission] = channels: []
-        roles[permission].channels.push _id: ch._id, name: ch.name
+        if not rolesMap[permission] then rolesMap[permission] = channels: []
+        rolesMap[permission].channels.push _id: ch._id, name: ch.name
 
   rolesArray = []
-  for role of roles
+  for role of rolesMap
     rolesArray.push
       name: role
-      channels: roles[role].channels
+      channels: rolesMap[role].channels
       clients: ((allClients.filter (cl) -> role in cl.roles).map (fc) -> _id: fc._id, clientID: fc.clientID)
 
   return rolesArray
@@ -139,22 +139,25 @@ exports.addRole = ->
   role = this.request.body
   if not role.name
     return utils.logAndSetResponse this, 400, 'Must specify a role name', 'info'
-  if role.channels?.length is 0
-    return utils.logAndSetResponse this, 400, 'Must specify at least one channel to link the role to', 'info'
+  if role.channels?.length is 0 and role.clients?.length is 0
+    return utils.logAndSetResponse this, 400, 'Must specify at least one channel or client to link the role to', 'info'
 
   try
-    result = yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
-    if result?.length > 0
+    chResult = yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
+    clResult = yield Client.find({roles: {$in: [role.name]}}, {clientID: 1 }).exec()
+    if chResult?.length > 0 or clResults?.length > 0
       return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
 
-    criteria = buildFindChannelByIdOrNameCriteria this, role
-    return if not criteria
+    if role.channels
+      chCriteria = buildFindChannelByIdOrNameCriteria this, role
+      return if not chCriteria
 
     if role.clients
       clCriteria = buildFindClientByIdOrClientIDCriteria this, role
       return if not clCriteria
 
-    yield Channel.update(criteria, { $push: allow: role.name }, { multi: true }).exec()
+    if role.channels
+      yield Channel.update(chCriteria, { $push: allow: role.name }, { multi: true }).exec()
     if role.clients
       yield Client.update(clCriteria, { $push: roles: role.name }, { multi: true }).exec()
 
@@ -176,8 +179,9 @@ exports.updateRole = (name) ->
 
   try
     # request validity checks
-    result = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
-    if result is null or result.length is 0
+    chResult = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
+    clResult = yield Client.find({roles: {$in: [name]}}, {clientID: 1 }).exec()
+    if (chResult is null or chResult.length is 0) and (clResult is null or clResult.length is 0)
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 
     if role.name
@@ -188,8 +192,8 @@ exports.updateRole = (name) ->
         return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
 
     if role.channels
-      criteria = buildFindChannelByIdOrNameCriteria this, role
-      return if not criteria
+      chCriteria = buildFindChannelByIdOrNameCriteria this, role
+      return if not chCriteria
     if role.clients
       clCriteria = buildFindClientByIdOrClientIDCriteria this, role
       return if not clCriteria
@@ -200,16 +204,15 @@ exports.updateRole = (name) ->
       yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
       # set role on channels
       if role.channels.length > 0
-        yield Channel.update(criteria, { $push: allow: name }, { multi: true }).exec()
+        yield Channel.update(chCriteria, { $push: allow: name }, { multi: true }).exec()
 
     # update clients
-    #
-    # clear role from existing
-    if role.clients or (role.channels?.length is 0) # also clear clients if channels length is 0
+    if role.clients
+      # clear role from existing
       yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
-    # set role on clients
-    if role.clients?.length > 0
-      yield Client.update(clCriteria, { $push: roles: name }, { multi: true }).exec()
+      # set role on clients
+      if role.clients?.length > 0
+        yield Client.update(clCriteria, { $push: roles: name }, { multi: true }).exec()
 
     # rename role
     if role.name

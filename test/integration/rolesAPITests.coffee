@@ -405,7 +405,7 @@ describe 'API Integration Tests', ->
           .expect(400)
           .end (err, res) -> done err
 
-      it 'should respond with 400 Bad Request if channels is not specified', (done) ->
+      it 'should respond with 400 Bad Request if channels and clients are not specified', (done) ->
         request('https://localhost:8080')
           .post('/roles')
           .set('auth-username', testUtils.rootUser.email)
@@ -430,6 +430,31 @@ describe 'API Integration Tests', ->
             channels: [_id: "#{channel1._id}"]
           .expect(403)
           .end (err, res) -> done err
+
+      it 'should add a role for clients', (done) ->
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send
+            name: 'role4'
+            clients: [
+                _id: "#{client1._id}"
+              ,
+                _id: "#{client2._id}"
+            ]
+          .expect(201)
+          .end (err, res) ->
+            return done err if err
+            Client.find roles: $in: ['role4'], (err, clients) ->
+              return done err if err
+              clients.length.should.be.exactly 2
+              mapId = (arr) -> (arr.map (a) -> "#{a._id}")
+              mapId(clients).should.containEql "#{client1._id}"
+              mapId(clients).should.containEql "#{client2._id}"
+              done()
 
 
     describe '*updateRole()', ->
@@ -513,7 +538,7 @@ describe 'API Integration Tests', ->
               mapChId(channels).should.containEql "#{channel2._id}"
               done()
 
-      it 'should remove a role that is an update of an empty channel array', (done) ->
+      it 'should remove a role from all channels that is an update of an empty channel array', (done) ->
         request('https://localhost:8080')
           .put('/roles/role2')
           .set('auth-username', testUtils.rootUser.email)
@@ -530,7 +555,7 @@ describe 'API Integration Tests', ->
               channels.length.should.be.exactly 0
               done()
 
-      it 'should remove clients for a role that is an update of an empty channel array', (done) ->
+      it 'should not remove a role from clients if update contains empty channel array', (done) ->
         request('https://localhost:8080')
           .put('/roles/role2')
           .set('auth-username', testUtils.rootUser.email)
@@ -542,10 +567,31 @@ describe 'API Integration Tests', ->
           .expect(200)
           .end (err, res) ->
             return done err if err
-            Client.find allow: $in: ['role2'], (err, clients) ->
+            Client.find roles: $in: ['role2'], (err, clients) ->
               return done err if err
-              clients.length.should.be.exactly 0
+              clients.length.should.be.exactly 1
               done()
+
+      it 'should remove a role from all channels and clients if update contains empty channel and clients arrays', (done) ->
+        request('https://localhost:8080')
+          .put('/roles/role2')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send
+            channels: []
+            clients: []
+          .expect(200)
+          .end (err, res) ->
+            return done err if err
+            Channel.find allow: $in: ['role2'], (err, channels) ->
+              return done err if err
+              channels.length.should.be.exactly 0
+              Client.find roles: $in: ['role2'], (err, clients) ->
+                return done err if err
+                clients.length.should.be.exactly 0
+                done()
 
       it 'should update a role using channel name', (done) ->
         request('https://localhost:8080')

@@ -244,7 +244,7 @@ The response status code will be `200` if successful and the response body will 
 
 `POST /roles`
 
-with a json body containing the role name and channels and clients to apply to. Clients do not need to be specified, but at least one channel has to. Channels and clients can be specified either by their `_id` or `name` for a channel and `clientID` for a client.
+with a json body containing the role name and channels and clients to apply to. At least one channel or client has to be specified. Channels and clients can be specified either by their `_id` or `name` for a channel and `clientID` for a client.
 
 An example role that will give a client named *jembi* permission to access *channel1* and *channel2*.
 ```js
@@ -274,7 +274,7 @@ The response status code will be `201` if successful.
 
 with a json body containing any updates to channels and clients. As with the *Add a new role* operation, channels and clients can be specified either by their `_id` or `name` for a channel and `clientID` for a client.
 
-Note that the channel and client arrays, if specified, must contain the complete list of items to apply to, i.e. roles will be removed if they exist on any channels and clients that are not contained in the respective arrays. This also means that if `channels` is specified as an empty array, the result will be the same as deleting the role. If the fields are not specified, then the existing setup will be left as is.
+Note that the channel and client arrays, if specified, must contain the complete list of items to apply to, i.e. roles will be removed if they exist on any channels and clients that are not contained in the respective arrays. This also means that if `channels` and `clients` are specified as empty arrays, the result will be the same as deleting the role. If the fields are not specified, then the existing setup will be left as is.
 
 The following example will change `Role1` by giving the clients *jembi* and *client-service* permission to access *channel1*. Any other channels will be removed, e.g. following from the *Add a new role* example above, access to *channel2* will be removed:
 ```js
