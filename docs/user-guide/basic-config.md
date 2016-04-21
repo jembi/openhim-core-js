@@ -52,21 +52,21 @@ There are many fields that you may supply and these are spread over a number of 
 
 * **Basic Info tab**
     * **Channel Name** - This is a descriptive name of the **Channel**.
-    * **URL Pattern** - Supply a URL pattern to match an incoming transaction - **Note** this field excepts a RegEx value - More information on RegEx can be found [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) or [here](http://www.regular-expressions.info/)
-    * **Priority** - If a transaction matches the URL patterns of two or more channels, then the channel with higher priority will be picked. A value of 1 is the highest possible priority (first priority). Larger numbers therefore indicate that a channel should take lower priority.
     * **Channel Type** - Select a **Channel** type
         * **HTTP** - Default **Channel** type.
         * **TCP** - Supply a TCP Host and Port
         * **TLS** - Supply a TLS Host and Port
         * **Polling** - Supply a Polling schedule - Cron format: '*/10 * * * *' or Written format: '10 minutes' - The module 'Agenda' is used to accomplish the polling - You can find more documentation [here](https://github.com/rschmukler/agenda)
-* **Access Control tab**:
-    * **Allowed roles and clients** - Supply the roles and **Clients** allowed to make requests to this channel
-    * **User groups allowed to view this channel's transactions** - Supply the groups allowed to view this **Channel's** transactions
-    * **User groups allowed to view this channel's transactions request/response body** - Supply the groups allowed to view the request/response body of this **Channel's** transactions
-    * **User groups allowed to rerun this channel's transactions** - Supply the groups allowed to rerun this **Channel's** transactions
-* **Content Matching tab**:
+    * **Status** - Set whether this channel is enabled to receive requests or if its disbaled*.
+* **Request Matching tab**:
+    * **URL Pattern** - Supply a URL pattern to match an incoming transaction - **Note** this field excepts a RegEx value - More information on RegEx can be found [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) or [here](http://www.regular-expressions.info/)
+        * NB!. This field is not applicable for **Channel Type** of **TCP** or **TLS**
+    * **Priority** - If a transaction matches the URL patterns of two or more channels, then the channel with higher priority will be picked. A value of 1 is the highest possible priority (first priority). Larger numbers therefore indicate that a channel should take lower priority.
+    * **Authentication Type** - Set whether this channel is **Private** or **Public**
+    * **Whitelisted IP addresses** - ???A list of IP addresses that will be given access without authentication required???
+    * **Allowed roles and clients** - Only applicable when **Authentication Type** is set to **Private**. Supply the roles and **Clients** allowed to make requests to this channel
     * **Match Content Types** - Supply what content type to match too. (e.g text/json)
-    * Matching Options - These options allows a **Channel** to be used if the request body matches certain conditions.
+    * **Matching Options** - These options allows a **Channel** to be used if the request body matches certain conditions.
         * **No Matching** - No matching applicable
         * **RegEx Matching** - Supply a RegEx to match
         * **XML Matching** - Supply a X Path as well as a value to match
@@ -85,6 +85,19 @@ There are many fields that you may supply and these are spread over a number of 
     * **Status** - Set whether or not a route is enabled/disabled.
     * **+ Save** - All required fields need to be supplied before the blue "**+ Save**" button becomes active.
     * **Note** - At least one route needs to be added to the **Channel** and only one route is allowed to be set to primary
+* **Data Control tab**:
+    * **Store Request Body** - Select whether or not to store the request body.
+        * **Note** - If a transaction is made through a POST/PUT/PATCH method and request body is NOT saved, then the transaction cannot be rerun.
+    * **Store Response Body** - Select whether or not to store the response body.
+    * **URL Rewriting enabled** - URL rewriting allows the OpenHIM to look for URLs in a response and rewrite them so that they point to the correct location.
+        * **From Host/Port** - Supply the host and port value you are looking to rewrite.
+        * **To Host/Port** - Supply the host and port value that will replace the 'From Host/Port' matches.
+        * **Path Transform** - Applies a said-like expression to the path string - Multiple endpoints can be reached using the same route.
+    * **Add Auto Rewrite Rules** - Determines whether automatic rewrite rules are used. These rules enabled URLs to be automatically rewritten for any URLs that points to a host that the OpenHIM proxies (any host on a primary route). These can be overridden by user specified rules if need be.
+* **User Access tab**:
+    * **User groups allowed to view this channel's transactions** - Supply the groups allowed to view this **Channel's** transactions
+    * **User groups allowed to view this channel's transactions request/response body** - Supply the groups allowed to view the request/response body of this **Channel's** transactions
+    * **User groups allowed to rerun this channel's transactions** - Supply the groups allowed to rerun this **Channel's** transactions
 * **Alerts tab**:
     * **Status** - Supply the status of a transaction when the alert should be sent. This can be supplied in a range format (e.g 2xx or 4xx)
     * **Failure Rate (%)** - Supply the failure rate of when to start sending the alerts (e.g 50 - once failure rate above 50% then alerts will be sent)
@@ -95,9 +108,5 @@ There are many fields that you may supply and these are spread over a number of 
     * **Add Groups** - Add an entire group to receive alerts
         * **Add a new group** - Select a group from the drop down to be added to alerts
     * **+ Alert** - All required fields need to be supplied before the blue "**+ Save**" button becomes active.
-* **Settings tab**:
-    * **Store Request Body** - Select whether or not to store the request body.
-    * **Store Response Body** - Select whether or not to store the response body.
-    * **Note** - If a transaction is made through a POST/PUT/PATCH method and request body is NOT saved, then the transaction cannot be rerun.
 
 If you find a field that is not described here, please let us know by [filing an issue on github](https://github.com/jembi/openhim-core-js/issues/new) with the 'documentation' label.

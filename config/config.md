@@ -38,7 +38,7 @@ The following config option are provided by the OpenHIM. All of these options ha
     // This is the port that the OpenHIM will receive HTTPS request on to
     // them to other services
     "httpsPort": 5000,
-    // The timeout for requests that the OpenHIM makes to other services
+    // The timeout for requests that the OpenHIM makes to other services (in milliseconds)
     "timeout": 60000
   },
   "api": {

@@ -389,7 +389,7 @@ $ mkdir installCert
 $ cd installCert
 ```
 
-Download the [InstallCert.java.zip](/_static/mediators/InstallCert.java.zip "InstalCert.java.zip") folder and extract the **InstallCert.java** script into our new **installCert** directory. We need to compile our **InstallCert.java** script to generate a **jssecacerts** file for us. Lets start this off by executing the below command which will generate two Java **.class** files for us:
+Download the [InstallCert.java.zip](../_static/mediators/InstallCert.java.zip "InstalCert.java.zip") folder and extract the **InstallCert.java** script into our new **installCert** directory. We need to compile our **InstallCert.java** script to generate a **jssecacerts** file for us. Lets start this off by executing the below command which will generate two Java **.class** files for us:
 
 `$ javac InstallCert.java`
 
