@@ -153,9 +153,163 @@ where `:clientId` is the `_id` property of the client to delete.
 
 The response code will be `200` if successful.
 
+### Roles resource
+
+Allows for the management of client access control to channels.
+
+It should be noted that there is no actual roles collection in the database. The API is a facade on top of the `allow` and `roles` fields from Channels and Clients respectively. Roles can therefore also be altered by changing values for those fields directly.
+
+#### Fetch all roles
+
+`GET /roles`
+
+The response status will be `200` if successful and the response body will contain an array of role objects, each consisting of a `name`, an array of `channels` and an array of `clients`, e.g.:
+```json
+[
+  {
+    "name": "Role1",
+    "channels": [
+      {
+        "_id": "56d56f34131d779a3f220d6d",
+        "name": "channel1"
+      },
+      {
+        "_id": "56dfff5ef51fbdc660fe6722",
+        "name": "channel2"
+      }
+    ],
+    "clients": [
+      {
+        "_id": "56d43e584582beae226d8226",
+        "clientID": "jembi"
+      }
+    ]
+  },
+  {
+    "name": "Role2",
+    "channels": [
+      {
+        "_id": "56d43e424582beae226d8224",
+        "name": "Channel3"
+      }
+    ],
+    "clients": [
+      {
+        "_id": "56d43e584582beae226d8226",
+        "clientID": "jembi"
+      }
+    ]
+  },
+  {
+    "name": "internal",
+    "channels": [
+      {
+        "_id": "56e116d9beabfb406e0e7c91",
+        "name": "Daily Task"
+      }
+    ],
+    "clients": []
+  }
+]
+```
+
+#### Fetch a specific role by role name
+
+`GET /roles/:name`
+
+The response status code will be `200` if successful and the response body will contain a role object in the same format as the role elements in the *Fetch all roles* operation response above. E.g.
+```js
+{
+  "name": "Role1",
+  "channels": [
+    {
+      "_id": "56d56f34131d779a3f220d6d",
+      "name": "channel1"
+    },
+    {
+      "_id": "56dfff5ef51fbdc660fe6722",
+      "name": "channel2"
+    }
+  ],
+  "clients": [
+    {
+      "_id": "56d43e584582beae226d8226",
+      "clientID": "jembi"
+    }
+  ]
+}
+```
+
+#### Add a new role
+
+`POST /roles`
+
+with a json body containing the role name and channels and clients to apply to. At least one channel or client has to be specified. Channels and clients can be specified either by their `_id` or `name` for a channel and `clientID` for a client.
+
+An example role that will give a client named *jembi* permission to access *channel1* and *channel2*.
+```js
+{
+  "name": "Role1",
+  "channels": [
+    {
+      "name": "channel1"
+    },
+    {
+      "name": "channel2"
+    }
+  ],
+  "clients": [
+    {
+      "clientID": "jembi"
+    }
+  ]
+}
+```
+
+The response status code will be `201` if successful.
+
+#### Update an existing role
+
+`PUT /roles/:name`
+
+with a json body containing any updates to channels and clients. As with the *Add a new role* operation, channels and clients can be specified either by their `_id` or `name` for a channel and `clientID` for a client.
+
+Note that the channel and client arrays, if specified, must contain the complete list of items to apply to, i.e. roles will be removed if they exist on any channels and clients that are not contained in the respective arrays. This also means that if `channels` and `clients` are specified as empty arrays, the result will be the same as deleting the role. If the fields are not specified, then the existing setup will be left as is.
+
+The following example will change `Role1` by giving the clients *jembi* and *client-service* permission to access *channel1*. Any other channels will be removed, e.g. following from the *Add a new role* example above, access to *channel2* will be removed:
+```js
+{
+  "channels": [
+    {
+      "name": "channel1"
+    }
+  ],
+  "clients": [
+    {
+      "clientID": "jembi"
+    },
+    {
+      "clientID": "client-service"
+    }
+  ]
+}
+```
+
+Roles can also be renamed by specifying the `name` field.
+
+The response status code will be `200` if successful.
+
+#### Delete an existing role
+
+`DELETE /roles/:name`
+
+Remove an existing role from all channels and clients.
+
+The response status code will be `200` if successful.
+
 ### Users resource
 
-Users of the system.
+Console and API Users of the system.
 
 `https://<server>:<api_port>/users`
 
@@ -329,7 +483,7 @@ The response status code will be `200` if successful and the response body will 
 `POST /tasks`
 
 with a json body representing the task to be added in the following format:
-```
+```js
 {
   "tids": [
     "id#1",

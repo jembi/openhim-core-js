@@ -11,6 +11,7 @@ mongoose = require 'mongoose'
 authorisation = require "../../lib/api/authorisation"
 config = require "../../lib/config/config"
 server = require "../../lib/server"
+moment = require "moment"
 
 describe "API Metrics Tests", ->
 
@@ -173,7 +174,8 @@ describe "API Metrics Tests", ->
             res.body.should.have.length 2
             res.body[0].load.should.equal 1
             res.body[0].avgResp.should.equal 149
-            res.body[0].timestamp.should.equal '2014-07-18T13:00:00+00:00'
+            ts = moment(res.body[0].timestamp)
+            ts.format().should.equal moment('2014-07-18T13:00:00+00:00').format()
             done()
 
     describe '*getGlobalStatusMetrics()', ->
@@ -220,7 +222,8 @@ describe "API Metrics Tests", ->
             res.body.should.have.length 1
             res.body[0].load.should.equal 1
             res.body[0].avgResp.should.equal 149
-            res.body[0].timestamp.should.equal '2014-07-18T00:00:00+00:00'
+            ts = moment(res.body[0].timestamp)
+            ts.format().should.equal moment('2014-07-18T00:00:00+00:00').format()
             done()
 
     describe '*getStatusMetrics()', ->
