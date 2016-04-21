@@ -14,25 +14,37 @@ utils = require '../utils'
 ###
 
 
-filterRolesFromChannels = (channels, allClients) ->
-  rolesMap = {} # K: permission, V: channels that share permission
+filterRolesFromChannels = (channels, clients) ->
+  rolesMap = {} # K: permission, V: channels, clients that share permission
+
   for ch in channels
     for permission in ch.allow
       isClient = false
-      for cl in allClients
+      for cl in clients
         if cl.clientID is permission
           isClient = true
 
       if not isClient
-        if not rolesMap[permission] then rolesMap[permission] = channels: []
+        if not rolesMap[permission]
+          rolesMap[permission] =
+            channels: []
+            clients: []
         rolesMap[permission].channels.push _id: ch._id, name: ch.name
+
+  for cl in clients
+    for permission in cl.roles
+      if not rolesMap[permission]
+        rolesMap[permission] =
+          channels: []
+          clients: []
+      rolesMap[permission].clients.push _id: cl._id, clientID: cl.clientID
 
   rolesArray = []
   for role of rolesMap
     rolesArray.push
       name: role
       channels: rolesMap[role].channels
-      clients: ((allClients.filter (cl) -> role in cl.roles).map (fc) -> _id: fc._id, clientID: fc.clientID)
+      clients: rolesMap[role].clients
 
   return rolesArray
 

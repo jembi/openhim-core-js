@@ -110,11 +110,12 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
-              res.body.length.should.be.exactly 3
+              res.body.length.should.be.exactly 4
               names = res.body.map (r) -> r.name
               names.should.containEql 'role1'
               names.should.containEql 'role2'
               names.should.containEql 'role3'
+              names.should.containEql 'other-role'
 
               mapChId = (chns) -> (chns.map (ch) -> ch._id)
               for role in res.body
@@ -142,11 +143,12 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
-              res.body.length.should.be.exactly 3
+              res.body.length.should.be.exactly 4
               names = res.body.map (r) -> r.name
               names.should.containEql 'role1'
               names.should.containEql 'role2'
               names.should.containEql 'role3'
+              names.should.containEql 'other-role'
 
               mapClId = (cls) -> (cls.map (cl) -> cl._id)
               for role in res.body
@@ -159,8 +161,46 @@ describe 'API Integration Tests', ->
                   mapClId(role.clients).should.containEql "#{client2._id}"
                 if role.name is 'role3'
                   mapClId(role.clients).should.containEql "#{client3._id}"
+                  if role.name is 'other-role'
+                    mapClId(role.clients).should.containEql "#{client4._id}"
 
               done()
+
+      it 'should fetch all roles if there are only linked clients', (done) ->
+        Channel.remove {}, ->
+          request('https://localhost:8080')
+            .get('/roles')
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                res.body.length.should.be.exactly 4
+                names = res.body.map (r) -> r.name
+                names.should.containEql 'role1'
+                names.should.containEql 'role2'
+                names.should.containEql 'role3'
+                names.should.containEql 'other-role'
+
+                mapClId = (cls) -> (cls.map (cl) -> cl._id)
+                for role in res.body
+                  role.should.have.property 'clients'
+
+                  if role.name is 'role1'
+                    mapClId(role.clients).should.containEql "#{client1._id}"
+                    mapClId(role.clients).should.containEql "#{client3._id}"
+                  if role.name is 'role2'
+                    mapClId(role.clients).should.containEql "#{client2._id}"
+                  if role.name is 'role3'
+                    mapClId(role.clients).should.containEql "#{client3._id}"
+                  if role.name is 'other-role'
+                    mapClId(role.clients).should.containEql "#{client4._id}"
+
+                done()
 
       it 'should not misinterpret a client as a role', (done) ->
         request('https://localhost:8080')
@@ -174,7 +214,7 @@ describe 'API Integration Tests', ->
             if err
               done err
             else
-              res.body.length.should.be.exactly 3
+              res.body.length.should.be.exactly 4
               names = res.body.map (r) -> r.name
               names.should.not.containEql 'client4'
               done()
@@ -188,22 +228,6 @@ describe 'API Integration Tests', ->
           .set('auth-token', authDetails.authToken)
           .expect(403)
           .end (err, res) -> done err
-
-      it 'should return an empty array if there are no channels', (done) ->
-        Channel.remove {}, ->
-          request('https://localhost:8080')
-            .get('/roles')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
-            .expect(200)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                res.body.length.should.be.exactly 0
-                done()
 
 
     describe '*getRole()', ->
