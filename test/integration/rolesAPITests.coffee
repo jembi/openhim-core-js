@@ -230,6 +230,25 @@ describe 'API Integration Tests', ->
               mapId(res.body.clients).should.containEql "#{client2._id}"
               done()
 
+      it 'should get a role that is just linked to a client', (done) ->
+        request('https://localhost:8080')
+          .get('/roles/other-role')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.should.have.property 'name', 'other-role'
+              res.body.should.have.property 'clients'
+              res.body.clients.length.should.be.exactly 1
+              mapId = (arr) -> (arr.map (a) -> a._id)
+              mapId(res.body.clients).should.containEql "#{client4._id}"
+              done()
+
       it 'should respond with 404 Not Found if role does not exist', (done) ->
         request('https://localhost:8080')
           .get('/roles/nonexistent')
@@ -693,6 +712,21 @@ describe 'API Integration Tests', ->
                 return done err if err
                 clients.length.should.be.exactly 0
                 done()
+
+      it 'should delete a role that\'s only linked to a client', (done) ->
+        request('https://localhost:8080')
+          .delete('/roles/other-role')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            return done err if err
+            Client.find roles: $in: ['other-role'], (err, clients) ->
+              return done err if err
+              clients.length.should.be.exactly 0
+              done()
 
       it 'should reject a request from a non root user', (done) ->
         request('https://localhost:8080')

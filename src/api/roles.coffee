@@ -59,14 +59,14 @@ exports.getRole = (name) ->
     return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getRole denied.", 'info'
 
   try
-    result = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
-    if result is null or result.length is 0
+    channels = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
+    clients = yield Client.find({ roles: $in: [name]}, {clientID: 1 }).exec()
+    if (channels is null or channels.length is 0) and (clients is null or clients.length is 0)
       utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
     else
-      clients = yield Client.find({ roles: $in: [name]}, {clientID: 1 }).exec()
       this.body =
         name: name
-        channels: result.map (r) -> _id: r._id, name: r.name
+        channels: channels.map (r) -> _id: r._id, name: r.name
         clients: clients.map (c) -> _id: c._id, clientID: c.clientID
   catch e
     logger.error "Could not find role with name '#{name}' via the API: #{e.message}"
@@ -236,8 +236,9 @@ exports.deleteRole = (name) ->
     return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateRole denied.", 'info'
 
   try
-    result = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
-    if result is null or result.length is 0
+    channels = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
+    clients = yield Client.find({ roles: $in: [name]}, {clientID: 1 }).exec()
+    if (channels is null or channels.length is 0) and (clients is null or clients.length is 0)
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 
     yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
