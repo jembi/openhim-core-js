@@ -1185,7 +1185,7 @@ describe "e2e Integration Tests", ->
                   trx.routes.length.should.be.exactly 0
                   done()
               ), 1500
- 
+
 
   describe "Channel priority tests", ->
 

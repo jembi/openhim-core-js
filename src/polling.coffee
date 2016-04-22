@@ -1,4 +1,5 @@
-Channel = require('./model/channels').Channel
+Channels = require('./model/channels')
+Channel = Channels.Channel
 request = require 'request'
 config = require './config/config'
 config.polling = config.get('polling')
@@ -46,7 +47,7 @@ exports.setupAgenda = (agenda, callback) ->
 
     promises = []
     for channel in channels
-      if authorisation.isChannelEnabled channel
+      if Channels.isChannelEnabled channel
         promises.push registerPollingChannelPromise channel
 
     (Q.all promises).done callback

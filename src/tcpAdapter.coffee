@@ -4,11 +4,11 @@ tls = require 'tls'
 config = require "./config/config"
 config.tcpAdapter = config.get('tcpAdapter')
 logger = require "winston"
-Channel = require("./model/channels").Channel
+Channels = require('./model/channels')
+Channel = Channels.Channel
 Q = require "q"
 tlsAuthentication = require "./middleware/tlsAuthentication"
 authorisation = require "./middleware/authorisation"
-
 
 tcpServers = []
 
@@ -90,7 +90,7 @@ exports.startupServers = (callback) ->
 
     for channel in channels
       do (channel) ->
-        if authorisation.isChannelEnabled channel
+        if Channels.isChannelEnabled channel
           defer = Q.defer()
 
           exports.startupTCPServer channel._id, (err) ->
