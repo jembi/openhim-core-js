@@ -134,3 +134,4 @@ if process.env.NODE_ENV == "test"
   exports.matchXpath = matchXpath
   exports.matchJsonPath = matchJsonPath
   exports.extractContentType = extractContentType
+  exports.matchRequest = matchRequest

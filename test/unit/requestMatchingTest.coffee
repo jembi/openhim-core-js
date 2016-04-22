@@ -138,3 +138,315 @@ describe "Request Matching middleware", ->
       actual = matchChannel {}, {}
       actual.should.be.true()
       revert()
+
+  describe '.matchRequest(ctx, done)', ->
+
+    validTestBody =  """
+      <careServicesRequest>
+        <function uuid='4e8bbeb9-f5f5-11e2-b778-0800200c9a66'>
+          <codedType code="2221" codingScheme="ISCO-08" />
+            <address>
+              <addressLine component='city'>Kigali</addressLine>
+            </address>
+          <max>5</max>
+        </function>
+      </careServicesRequest>
+      """
+
+    invalidTestBody =  """
+      <careServicesRequest>
+        <function uuid='invalid'>
+          <codedType code="2221" codingScheme="ISCO-08" />
+            <address>
+              <addressLine component='city'>Kigali</addressLine>
+            </address>
+          <max>5</max>
+        </function>
+      </careServicesRequest>
+      """
+
+    addedChannelNames = []
+
+    afterEach ->
+      # remove test channels
+      for channelName in addedChannelNames
+        Channel.remove { name: channelName }, (err) ->
+
+      addedChannelNames = []
+
+    it 'should match if message content matches the channel rules', (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Authorisation mock channel 4"
+        urlPattern: "test/authorisation"
+        allow: [ "Test1", "Musha_OpenMRS", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        matchContentXpath: "string(/careServicesRequest/function/@uuid)"
+        matchContentValue: "4e8bbeb9-f5f5-11e2-b778-0800200c9a66"
+
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.body = validTestBody
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          clientDomain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
+        ctx.response = {}
+        requestMatching.matchRequest ctx, (err, match) ->
+          should.not.exist(err)
+          should.exist(match)
+          done()
+
+    it 'should NOT match if message content DOES NOT matches the channel rules', (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Authorisation mock channel 4"
+        urlPattern: "test/authorisation"
+        allow: [ "Test1", "Musha_OpenMRS", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        matchContentXpath: "string(/careServicesRequest/function/@uuid)"
+        matchContentValue: "4e8bbeb9-f5f5-11e2-b778-0800200c9a66"
+
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.body = invalidTestBody
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          clientDomain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
+        ctx.response = {}
+        ctx.set = ->
+        requestMatching.matchRequest ctx, (err, match) ->
+          should.not.exist(err)
+          should.not.exist(match)
+          done()
+
+    it 'should match if message content matches the content-type', (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Authorisation mock channel 4"
+        urlPattern: "test/authorisation"
+        allow: [ "Test1", "Musha_OpenMRS", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        matchContentTypes: [ "text/xml" ]
+        matchContentXpath: "string(/careServicesRequest/function/@uuid)"
+        matchContentValue: "4e8bbeb9-f5f5-11e2-b778-0800200c9a66"
+
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.body = validTestBody
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          clientDomain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
+        ctx.request.header = {}
+        ctx.request.header['content-type'] = "text/xml; charset=utf-8"
+        ctx.response = {}
+        requestMatching.matchRequest ctx, (err, match) ->
+          should.not.exist(err)
+          should.exist(match)
+          done()
+
+    it 'should NOT match if message content DOES NOT matches the channel rules', (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Authorisation mock channel 4"
+        urlPattern: "test/authorisation"
+        allow: [ "Test1", "Musha_OpenMRS", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        matchContentTypes: [ "text/xml" ]
+        matchContentXpath: "string(/careServicesRequest/function/@uuid)"
+        matchContentValue: "4e8bbeb9-f5f5-11e2-b778-0800200c9a66"
+
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.body = invalidTestBody
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          clientDomain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/authorisation"
+        ctx.request.path = "test/authorisation"
+        ctx.request.header = {}
+        ctx.request.header['content-type'] = "text/dodgy-xml; charset=utf-8"
+        ctx.response = {}
+        ctx.set = ->
+        requestMatching.matchRequest ctx, (err, match) ->
+          should.not.exist(err)
+          should.not.exist(match)
+          done()
+
+    it "should allow a request if the channel matches and is enabled", (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Mock for Channel Status Test (enabled)"
+        urlPattern: "test/status/enabled"
+        allow: [ "PoC", "Test1", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        status: "enabled"
+
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          domain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/status/enabled"
+        ctx.request.path = "test/status/enabled"
+        ctx.response = {}
+        requestMatching.matchRequest ctx, (err, match) ->
+          should.not.exist(err)
+          should.exist(match)
+          done()
+
+    it "should NOT allow a request if the channel matchess but is disabled", (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Mock for Channel Status Test (disabled)"
+        urlPattern: "test/status/disabled"
+        allow: [ "PoC", "Test1", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        status: "disabled"
+
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          domain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/status/disabled"
+        ctx.request.path = "test/status/disabled"
+        ctx.response = {}
+        ctx.set = ->
+        requestMatching.matchRequest ctx, (err, match) ->
+          should.not.exist(err)
+          should.not.exist(match)
+          done()
+
+    it "should NOT allow a request if the channel matches but is deleted", (done) ->
+      # Setup a channel for the mock endpoint
+      channel = new Channel
+        name: "Mock for Channel Status Test (deleted)"
+        urlPattern: "test/status/deleted"
+        allow: [ "PoC", "Test1", "Test2" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 9876
+              primary: true
+            ]
+        status: "deleted"
+
+      addedChannelNames.push channel.name
+      channel.save (err) ->
+        if err
+          return done err
+
+        # Setup test data, will need authentication mechanisms to set ctx.authenticated
+        ctx = {}
+        ctx.authenticated =
+          clientID: "Musha_OpenMRS"
+          domain: "poc1.jembi.org"
+          name: "OpenMRS Musha instance"
+          roles: [ "OpenMRS_PoC", "PoC" ]
+          passwordHash: ""
+          cert: ""
+        ctx.request = {}
+        ctx.request.url = "test/status/deleted"
+        ctx.request.path = "test/status/deleted"
+        ctx.response = {}
+        ctx.set = ->
+        requestMatching.matchRequest ctx, (err, match) ->
+          should.not.exist(err)
+          should.not.exist(match)
+          done()
