@@ -165,7 +165,7 @@ describe "Authorisation middleware", ->
       actual = authoriseClient channel, ctx
       actual.should.be.false()
 
-    it 'should return false for if allows is null', ->
+    it 'should return false if allows is null', ->
       ctx =
         authenticated:
           roles: [ 'test1', 'test2' ]
