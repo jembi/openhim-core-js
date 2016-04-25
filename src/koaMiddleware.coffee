@@ -8,6 +8,7 @@ rerunBypassAuthorisation = require "./middleware/rerunBypassAuthorisation"
 rerunUpdateTransactionTask = require "./middleware/rerunUpdateTransactionTask"
 tcpBypassAuthentication = require "./middleware/tcpBypassAuthentication"
 retrieveTCPTransaction = require "./middleware/retrieveTCPTransaction"
+requestMatching = require './middleware/requestMatching'
 authorisation = require './middleware/authorisation'
 stats = require './stats'
 pollingBypassAuthorisation = require './middleware/pollingBypassAuthorisation'
@@ -56,6 +57,9 @@ exports.setupApp = (done) ->
     app.use tlsAuthentication.koaMiddleware
 
   app.use rawBodyReader
+
+  # Request Matching middleware
+  app.use requestMatching.koaMiddleware
 
   # Authorisation middleware
   app.use authorisation.koaMiddleware

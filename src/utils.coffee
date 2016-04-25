@@ -4,7 +4,6 @@ config.caching = config.get('caching')
 Channel = require("./model/channels").Channel
 Keystore = require("./model/keystore").Keystore
 
-
 # function to log errors and return response
 exports.logAndSetResponse = (ctx, status, msg, logLevel) ->
   logger[logLevel] msg
@@ -33,7 +32,16 @@ getCachedValues = (store, callback) ->
 
     #TODO make this more generic (had issues passing Channel.find as a param [higher order function])
     if store is 'channels'
-      Channel.find {}, handler
+      Channel.find({}).sort(priority: 1).exec (err, channels) ->
+        return handler err if err
+        noPriorityChannels = []
+        sortedChannels = []
+        channels.forEach (channel) ->
+          if not channel.priority?
+            noPriorityChannels.push channel
+          else
+            sortedChannels.push channel
+        handler null, sortedChannels.concat(noPriorityChannels)
     else if store is 'keystore'
       Keystore.findOne {}, handler
     else
@@ -42,15 +50,12 @@ getCachedValues = (store, callback) ->
   else
     callback null, cacheValueStore["#{store}"].value
 
-
-exports.getAllChannels = (callback) -> getCachedValues 'channels', callback
+exports.getAllChannelsInPriorityOrder = (callback) -> getCachedValues 'channels', callback
 
 exports.getKeystore = (callback) -> getCachedValues 'keystore', callback
 
-
 # function to check if string match status code pattern
 exports.statusCodePatternMatch = (string, callback) -> /\dxx/.test string
-
 
 # returns an array with no duplicates
 exports.uniqArray = (arr) ->

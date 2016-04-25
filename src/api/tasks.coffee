@@ -1,11 +1,11 @@
 Task = require('../model/tasks').Task
 Transaction = require('../model/transactions').Transaction
-Channel = require('../model/channels').Channel
+Channels = require('../model/channels')
+Channel = Channels.Channel
 Q = require 'q'
 logger = require 'winston'
 
 authorisation = require './authorisation'
-authMiddleware = require '../middleware/authorisation'
 
 utils = require '../utils'
 
@@ -89,7 +89,7 @@ areTransactionChannelsValid = (transactions, callback) ->
       return callback err if err
 
       for chan in trxChannels
-        if not authMiddleware.isChannelEnabled chan
+        if not Channels.isChannelEnabled chan
           return callback null, false
       return callback null, true
 
@@ -210,7 +210,7 @@ exports.getTask = (taskId) ->
 
     #determine skip amount
     filterSkip = filterPage*filterLimit
-    
+
     # get filters object
     filters = JSON.parse filtersObject.filters
 
@@ -221,7 +221,6 @@ exports.getTask = (taskId) ->
     # are filters present
     if Object.keys( filters ).length > 0
       tempTransactions = buildFilteredTransactionsArray filters, result.transactions
-      
 
     # get new transactions filters length
     totalFilteredTransactions = tempTransactions.length

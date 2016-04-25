@@ -36,9 +36,9 @@ exports.storeTransaction = (ctx, done) ->
 
   tx = new transactions.Transaction
     status: transactionStatus.PROCESSING
-    clientID: ctx.authenticated._id
+    clientID: ctx.authenticated?._id
     channelID: ctx.authorisedChannel._id
-    clientIP: ctx.authenticated.ip
+    clientIP: ctx.ip
     request:
       host: ctx.host?.split(':')[0]
       port: ctx.host?.split(':')[1]

@@ -78,3 +78,7 @@ ChannelSchema.index "name", unique: true
 
 exports.Channel = connectionDefault.model 'Channel', ChannelSchema
 exports.ChannelDef = ChannelDef
+
+# Is the channel enabled?
+# If there is no status field then the channel IS enabled
+exports.isChannelEnabled = (channel) -> not channel.status or channel.status is 'enabled'

@@ -1,4 +1,5 @@
-Channel = require('../model/channels').Channel
+Channels = require('../model/channels')
+Channel = Channels.Channel
 Transaction = require('../model/transactions').Transaction
 ObjectId = require('mongoose').Types.ObjectId
 Q = require 'q'
@@ -7,7 +8,6 @@ authorisation = require './authorisation'
 tcpAdapter = require '../tcpAdapter'
 server = require "../server"
 polling = require "../polling"
-authMiddleware = require '../middleware/authorisation'
 routerMiddleware = require '../middleware/router'
 utils = require "../utils"
 
@@ -29,7 +29,7 @@ exports.getChannels = ->
     utils.logAndSetResponse this, 500, "Could not fetch all channels via the API: #{err}", 'error'
 
 processPostAddTriggers = (channel) ->
-  if channel.type and authMiddleware.isChannelEnabled channel
+  if channel.type and Channels.isChannelEnabled channel
     if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
       tcpAdapter.notifyMasterToStartTCPServer channel._id, (err) -> logger.error err if err
     else if channel.type is 'polling'
@@ -124,13 +124,13 @@ exports.getChannel = (channelId) ->
 processPostUpdateTriggers = (channel) ->
   if channel.type
     if (channel.type is 'tcp' or channel.type is 'tls') and server.isTcpHttpReceiverRunning()
-      if authMiddleware.isChannelEnabled channel
+      if Channels.isChannelEnabled channel
         tcpAdapter.notifyMasterToStartTCPServer channel._id, (err) -> logger.error err if err
       else
         tcpAdapter.notifyMasterToStopTCPServer channel._id, (err) -> logger.error err if err
 
     else if channel.type is 'polling'
-      if authMiddleware.isChannelEnabled channel
+      if Channels.isChannelEnabled channel
         polling.registerPollingChannel channel, (err) -> logger.error err if err
       else
         polling.removePollingChannel channel, (err) -> logger.error err if err

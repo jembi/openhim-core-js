@@ -54,8 +54,8 @@ describe "HTTP Router", ->
           ctx.response.header.should.be.ok
           done()
 
-    it 'should route binary data', ->
-      testUtils.createStaticServer 'test/resources', 9337 , (server)->
+    it 'should route binary data', (done) ->
+      testUtils.createStaticServer 'test/resources', 9337 , (server) ->
         # Setup a channel for the mock endpoint
         channel =
           name: "Static Server Endpoint"
@@ -80,8 +80,9 @@ describe "HTTP Router", ->
           if err
             return done err
           ctx.response.type.should.equal 'image/png'
-          ctx.response.body.should.equal fs.readFileSync 'test/resources/openhim-logo-green.png'
-          server.close done
+          ctx.response.body.toString().should.equal (fs.readFileSync 'test/resources/openhim-logo-green.png').toString()
+          server.close ->
+            done()
 
 
     setupContextForMulticast = () ->

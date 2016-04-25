@@ -57,7 +57,7 @@ describe 'Rewrite URLs middleware', ->
 
     it 'should fetch the rewrite config for the current channel and INCLUDE virtual defaults', (done) ->
       currentChannel.addAutoRewriteRules = true
-      stub = sinon.stub utils, 'getAllChannels'
+      stub = sinon.stub utils, 'getAllChannelsInPriorityOrder'
       stub.callsArgWith 0, null, [currentChannel, channel1, channel2]
       rewriteUrls.fetchRewriteConfig currentChannel, 'tls', (err, rewriteConfig) ->
         rewriteConfig.should.have.length 4
@@ -78,7 +78,7 @@ describe 'Rewrite URLs middleware', ->
 
     it 'should fetch the rewrite config for the current channel and EXCLUDE virtual defaults', (done) ->
       currentChannel.addAutoRewriteRules = false
-      stub = sinon.stub utils, 'getAllChannels'
+      stub = sinon.stub utils, 'getAllChannelsInPriorityOrder'
       stub.callsArgWith 0, null, [currentChannel, channel1, channel2]
       rewriteUrls.fetchRewriteConfig currentChannel, 'tls', (err, rewriteConfig) ->
         rewriteConfig.should.have.length 1

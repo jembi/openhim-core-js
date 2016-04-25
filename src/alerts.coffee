@@ -4,7 +4,8 @@ logger = require "winston"
 contact = require './contact'
 moment = require 'moment'
 Q = require 'q'
-Channel = require('./model/channels').Channel
+Channels = require('./model/channels')
+Channel = Channels.Channel
 Event = require('./model/events').Event
 ContactGroup = require('./model/contactGroups').ContactGroup
 Alert = require('./model/alerts').Alert
@@ -53,7 +54,7 @@ smsTemplate = (transactions, channelName, status) ->
     alert += "1 transaction has"
   else
     alert += "no transactions have"
-    
+
   alert += " completed with status #{status} on the OpenHIM running on #{config.alerts.himInstance} (#{channelName})"
 
 getAllChannels = (callback) -> Channel.find {}, callback
@@ -108,7 +109,7 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
       _countStart = new Date()
       countTotalTransactionsForChannel channelID, dateToCheck, (err, count) ->
         logger.debug ".countTotalTransactionsForChannel: #{new Date()-_countStart} ms"
-        
+
         return callback err, null if err
 
         failureRatio = results.length/count*100.0
@@ -252,7 +253,7 @@ alertingTask = (job, contactHandler, done) ->
     promises = []
 
     for channel in results
-      if authorisation.isChannelEnabled channel
+      if Channels.isChannelEnabled channel
 
         for alert in channel.alerts
           do (channel, alert) ->
