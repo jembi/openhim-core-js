@@ -79,4 +79,3 @@ exports.koaMiddleware = (next) ->
 # note: you cant spy on these method because of this :(
 if process.env.NODE_ENV == "test"
   exports.genAuthAudit = genAuthAudit
-  # exports.channelWithHighestPriority = channelWithHighestPriority
