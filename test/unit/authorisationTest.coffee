@@ -196,35 +196,11 @@ describe "Authorisation middleware", ->
       actual = authoriseIP channel, ctx
       actual.should.be.false()
 
-    it 'should return false if there are no whitelist entires', ->
+    it 'should return true if there are no whitelist entires', ->
       ctx =
         ip: '192.168.0.11'
       channel =
         whitelist: null
       authoriseIP = authorisation.__get__ 'authoriseIP'
       actual = authoriseIP channel, ctx
-      actual.should.be.false()
-
-  describe '.isAuthorised', ->
-
-    it 'should return false when every auth function returns false', () ->
-      revert = authorisation.__set__ 'authFunctions', [ falsey, falsey ]
-      isAuthorised = authorisation.__get__ 'isAuthorised'
-      actual = isAuthorised {}, {}
-      actual.should.be.false()
-      revert()
-
-    it 'should return true when atleast one auth function returns true', () ->
-      revert = authorisation.__set__ 'authFunctions', [ truthy, falsey, falsey ]
-      isAuthorised = authorisation.__get__ 'isAuthorised'
-      actual = isAuthorised {}, {}
       actual.should.be.true()
-      revert()
-
-    it 'should pass the channel and ctx to the authFunctions', ->
-      hasParams = (channel, ctx) -> return channel? and ctx?
-      revert = authorisation.__set__ 'authFunctions', [ hasParams ]
-      isAuthorised = authorisation.__get__ 'isAuthorised'
-      actual = isAuthorised {}, {}
-      actual.should.be.true()
-      revert()

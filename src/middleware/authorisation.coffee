@@ -35,21 +35,13 @@ authoriseIP = (channel, ctx) ->
   if channel.whitelist?.length > 0
     return ctx.ip in channel.whitelist
   else
-    return false
-
-authFunctions = [
-  authoriseClient,
-  authoriseIP
-]
-
-isAuthorised = (channel, ctx) ->
-  return authFunctions.some (authFunc) ->
-    return authFunc channel, ctx
+    return true # whitelist auth not required
 
 exports.authorise = (ctx, done) ->
 
   channel = ctx.matchingChannel
-  if channel? and (channel.authType is 'public' or isAuthorised(channel, ctx))
+
+  if channel? and authoriseIP(channel, ctx) and (channel.authType is 'public' or authoriseClient(channel, ctx))
     # authorisation succeeded
     ctx.authorisedChannel = channel
     logger.info "The request, '#{ctx.request.path}' is authorised to access #{ctx.authorisedChannel.name}"
