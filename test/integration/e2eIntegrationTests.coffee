@@ -1205,7 +1205,7 @@ describe "e2e Integration Tests", ->
     channel2 = new Channel
       name: "TEST DATA - Mock endpoint 2"
       urlPattern: "^/.*$"
-      priority: 2
+      priority: 3
       allow: [ "PoC" ]
       routes: [
             name: "test route"
@@ -1216,7 +1216,7 @@ describe "e2e Integration Tests", ->
     channel3 = new Channel
       name: "TEST DATA - Mock endpoint 3"
       urlPattern: "^/test/mock$"
-      priority: 1
+      priority: 2
       allow: [ "PoC" ]
       routes: [
             name: "test route"
@@ -1254,10 +1254,11 @@ describe "e2e Integration Tests", ->
       Channel.remove { name: "TEST DATA - Mock endpoint 1" }, ->
         Channel.remove { name: "TEST DATA - Mock endpoint 2" }, ->
           Channel.remove { name: "TEST DATA - Mock endpoint 3" }, ->
-            Client.remove { clientID: "testApp" }, ->
-              mockServer1.close ->
-                mockServer2.close ->
-                  done()
+            Channel.remove { name: "TEST DATA - Mock endpoint 4" }, ->
+              Client.remove { clientID: "testApp" }, ->
+                mockServer1.close ->
+                  mockServer2.close ->
+                    done()
 
     afterEach (done) ->
       server.stop ->
@@ -1288,3 +1289,29 @@ describe "e2e Integration Tests", ->
             else
               res.text.should.be.exactly 'target1' #should route to target1 via channel2
               done()
+
+    it "should deny access if multiple channels match but the top priority channel denys access", (done) ->
+      channel4 = new Channel
+        name: "TEST DATA - Mock endpoint 4"
+        urlPattern: "^/test/mock$"
+        priority: 1
+        allow: [ "something else" ]
+        routes: [
+              name: "test route"
+              host: "localhost"
+              port: 1234
+              primary: true
+            ]
+
+      channel4.save () ->
+
+        server.start httpPort: 5001, ->
+          request("http://localhost:5001")
+            .get("/test/mock")
+            .auth("testApp", "password")
+            .expect(401)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
