@@ -6,6 +6,7 @@ bodyParser = require 'koa-body-parser'
 authentication = require './api/authentication'
 users = require './api/users'
 clients = require './api/clients'
+roles = require './api/roles'
 transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
@@ -58,6 +59,12 @@ exports.setupApp = (done) ->
   app.use route.put '/clients/:clientId', clients.updateClient
   app.use route.delete '/clients/:clientId', clients.removeClient
   app.use route.get '/clients/:clientId/:property', clients.getClient
+
+  app.use route.get '/roles', roles.getRoles
+  app.use route.post '/roles', roles.addRole
+  app.use route.get '/roles/:name', roles.getRole
+  app.use route.put '/roles/:name', roles.updateRole
+  app.use route.delete '/roles/:name', roles.deleteRole
 
   app.use route.get '/transactions', transactions.getTransactions
   app.use route.post '/transactions', transactions.addTransaction
