@@ -23,21 +23,17 @@ genAuthAudit = (remoteAddress) ->
 authoriseClient = (channel, ctx) ->
   if ctx.authenticated? and channel.allow?
     if ctx.authenticated.roles?
-      match = false
-      channel.allow.forEach (role) ->
-        if ((ctx.authenticated.roles.indexOf role) isnt -1)
-          match = true
-          return
-      if match
-        return true
-    if ((channel.allow.indexOf ctx.authenticated.clientID) isnt -1)
+      for role in channel.allow
+        if role in ctx.authenticated.roles
+          return true
+    if ctx.authenticated.clientID in channel.allow
       return true
 
   return false
 
 authoriseIP = (channel, ctx) ->
   if channel.whitelist?.length > 0
-    return (channel.whitelist.indexOf ctx.ip) isnt -1
+    return ctx.ip in channel.whitelist
   else
     return false
 
@@ -53,16 +49,16 @@ isAuthorised = (channel, ctx) ->
 exports.authorise = (ctx, done) ->
 
   channel = ctx.matchingChannel
-  if channel? and (channel.authType == 'public' || isAuthorised(channel, ctx))
+  if channel? and (channel.authType is 'public' or isAuthorised(channel, ctx))
     # authorisation succeeded
     ctx.authorisedChannel = channel
-    logger.info "The request, '" + ctx.request.path + "' is authorised to access " + ctx.authorisedChannel.name
+    logger.info "The request, '#{ctx.request.path}' is authorised to access #{ctx.authorisedChannel.name}"
   else
     # authorisation failed
     ctx.response.status = 401
     if config.authentication.enableBasicAuthentication
       ctx.set "WWW-Authenticate", "Basic"
-    logger.info "The request, '" + ctx.request.path + "', is not authorised to access any channels."
+    logger.info "The request, '#{ctx.request.path}', is not authorised to access any channels."
     auditing.sendAuditEvent genAuthAudit(ctx.ip), -> logger.debug 'Processed nodeAuthentication audit'
 
   done()

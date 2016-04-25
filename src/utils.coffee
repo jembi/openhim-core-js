@@ -50,7 +50,7 @@ getCachedValues = (store, callback) ->
   else
     callback null, cacheValueStore["#{store}"].value
 
-exports.getAllChannels = (callback) -> getCachedValues 'channels', callback
+exports.getAllChannelsInPriorityOrder = (callback) -> getCachedValues 'channels', callback
 
 exports.getKeystore = (callback) -> getCachedValues 'keystore', callback
 

@@ -1290,7 +1290,7 @@ describe "e2e Integration Tests", ->
               res.text.should.be.exactly 'target1' #should route to target1 via channel2
               done()
 
-    it "should deny access if multiple channels match but the top priority channel denys access", (done) ->
+    it "should deny access if multiple channels match but the top priority channel denies access", (done) ->
       channel4 = new Channel
         name: "TEST DATA - Mock endpoint 4"
         urlPattern: "^/test/mock$"

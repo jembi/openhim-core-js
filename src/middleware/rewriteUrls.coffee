@@ -27,7 +27,7 @@ exports.fetchRewriteConfig = (channel, authType, callback) ->
     # CR on a primary route we are able to rewrite the link to point to us instead
     # because we know that host.
     ###
-    utils.getAllChannels (err, channels) ->
+    utils.getAllChannelsInPriorityOrder (err, channels) ->
       if err?
         return callback err
 

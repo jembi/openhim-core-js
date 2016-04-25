@@ -92,12 +92,12 @@ describe "Request Matching middleware", ->
 
     it 'should match correct content types', () ->
       matchContentTypes = requestMatching.__get__ 'matchContentTypes'
-      actual = matchContentTypes { matchContentTypes: 'text/plain' }, { request: header: 'content-type': 'text/plain' }
+      actual = matchContentTypes { matchContentTypes: ['text/plain', 'something/else'] }, { request: header: 'content-type': 'text/plain' }
       actual.should.be.true()
 
     it 'should not match incorrect content types', () ->
       matchContentTypes = requestMatching.__get__ 'matchContentTypes'
-      actual = matchContentTypes { matchContentTypes: 'text/plain' }, { request: header: 'content-type': 'application/json' }
+      actual = matchContentTypes { matchContentTypes: ['text/plain'] }, { request: header: 'content-type': 'application/json' }
       actual.should.be.false()
 
     it 'should return true if there is no matching criteria set (property doesnt exist)', () ->
@@ -113,6 +113,11 @@ describe "Request Matching middleware", ->
     it 'should return true if there is no matching criteria set (undefined)', () ->
       matchContentTypes = requestMatching.__get__ 'matchContentTypes'
       actual = matchContentTypes { matchContentTypes: undefined }, { request: header: 'content-type': 'application/json' }
+      actual.should.be.true()
+
+    it 'should return true if there is no matching criteria set (empty)', () ->
+      matchContentTypes = requestMatching.__get__ 'matchContentTypes'
+      actual = matchContentTypes { matchContentTypes: [] }, { request: header: 'content-type': 'application/json' }
       actual.should.be.true()
 
   describe '.matchChannel', ->

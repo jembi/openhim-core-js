@@ -27,7 +27,7 @@ matchContent = (channel, ctx) ->
   else if channel.matchContentXpath or channel.matchContentJson
     # if only the match expression is given, deny access
     # this is an invalid channel
-    logger.error 'Channel with name "' + channel.name + '" is invalid as it has a content match expression but no value to match'
+    logger.error "Channel with name '#{channel.name}' is invalid as it has a content match expression but no value to match"
     return false
   else
     return true
@@ -75,7 +75,7 @@ matchContentTypes = (channel, ctx) ->
   if channel.matchContentTypes?.length > 0
     if ctx.request.header and ctx.request.header['content-type']
       ct = extractContentType ctx.request.header['content-type']
-      if (channel.matchContentTypes.indexOf ct) >= 0
+      if ct in channel.matchContentTypes
         return true
       else
         # deny access to channel if the content type doesnt match
@@ -101,7 +101,7 @@ findMatchingChannel = (channels, ctx) ->
     return matchChannel channel, ctx
 
 matchRequest = (ctx, done) ->
-  utils.getAllChannels (err, channels) ->
+  utils.getAllChannelsInPriorityOrder (err, channels) ->
     if err
       ctx.response.status = 500
       logger.error 'Could not fetch OpenHIM channels', err
