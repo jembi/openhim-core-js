@@ -208,24 +208,6 @@ describe "API Integration Tests", ->
                 should.exist(res)
                 done()
 
-      it 'should create a channel with the default channel config supplied', (done) ->
-        request("https://localhost:8080")
-          .post("/mediators")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(mediator1)
-          .expect(201)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              Channel.findOne { name: mediator1.defaultChannelConfig[0].name }, (err, res) ->
-                return done err if err
-                should.exist(res)
-                done()
-
       it 'should add multiple mediators without default channel config', (done) ->
         request("https://localhost:8080")
           .post("/mediators")
