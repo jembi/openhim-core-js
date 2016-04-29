@@ -40,8 +40,6 @@ exports.getMediator = (mediatorURN) ->
   catch err
     logAndSetResponse this, 500, "Could not fetch mediator using UUID #{urn} via the API: #{err}", 'error'
 
-saveDefaultChannelConfig = (config) -> new Channel(channel).save() for channel in config
-
 constructError = (message, name) ->
   err = new Error message
   err.name = name
@@ -276,3 +274,45 @@ exports.setConfig = (urn) ->
     this.status = 200
   catch err
     utils.logAndSetResponse this, 500, "Could not set mediator config (urn: #{urn}): #{err}", 'error'
+
+saveDefaultChannelConfig = (channels) ->
+  promises = []
+  for channel in channels
+    delete channel._id
+    for route in channel.routes
+      delete route._id
+    promises.push new Channel(channel).save()
+  return promises
+
+exports.loadDefaultChannels = (urn) ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
+    return
+
+  urn = unescape urn
+  channels = this.request.body
+
+  try
+    mediator = yield Mediator.findOne({ urn: urn }).lean().exec()
+
+    if not mediator?
+      this.status = 404
+      this.body = 'No mediator found for this urn.'
+      return
+
+    if not channels? or channels.length is 0
+      yield Q.all saveDefaultChannelConfig(mediator.defaultChannelConfig)
+    else
+      filteredChannelConfig = mediator.defaultChannelConfig.filter (channel) ->
+        return channel.name in channels
+      if filteredChannelConfig.length < channels.length
+        utils.logAndSetResponse this, 400, "Could not load mediator default channel config, one or more channels in the request body not found in the mediator config (urn: #{urn})", 'error'
+        return
+      else
+        yield Q.all saveDefaultChannelConfig(filteredChannelConfig)
+
+    this.status = 201
+  catch err
+    logger.debug err.stack
+    utils.logAndSetResponse this, 500, "Could not load mediator default channel config (urn: #{urn}): #{err}", 'error'
