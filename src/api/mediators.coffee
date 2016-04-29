@@ -121,8 +121,6 @@ exports.addMediator = ->
       if not mediator.endpoints or mediator.endpoints.length < 1
         throw constructError 'At least 1 endpoint is required', 'ValidationError'
       yield Q.ninvoke(new Mediator(mediator), 'save')
-      if mediator.defaultChannelConfig
-        yield saveDefaultChannelConfig(mediator.defaultChannelConfig)
     this.status = 201
     logger.info "User #{this.authenticated.email} created mediator with urn #{mediator.urn}"
   catch err
