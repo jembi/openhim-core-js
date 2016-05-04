@@ -38,7 +38,7 @@ exports.setupApp = (done) ->
   app.use route.get '/password-reset-request/:email', users.userPasswordResetRequest
   app.use route.get '/token/:token', users.getUserByToken
   app.use route.put '/token/:token', users.updateUserByToken
-  
+
 
   # Expose the authenticate route before the auth middleware so that it is publically accessible
   app.use route.get '/authenticate/:username', users.authenticate
@@ -106,6 +106,7 @@ exports.setupApp = (done) ->
   app.use route.delete '/mediators/:urn', mediators.removeMediator
   app.use route.post '/mediators/:urn/heartbeat', mediators.heartbeat
   app.use route.put '/mediators/:urn/config', mediators.setConfig
+  app.use route.post '/mediators/:urn/channels', mediators.loadDefaultChannels
 
   app.use route.get '/keystore/cert', keystore.getServerCert
   app.use route.post '/keystore/cert', keystore.setServerCert

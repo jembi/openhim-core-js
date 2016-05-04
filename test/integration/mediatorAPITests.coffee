@@ -23,13 +23,26 @@ describe "API Integration Tests", ->
         }
       ]
       defaultChannelConfig: [
-        name: "Save Encounter"
+        name: "Save Encounter 1"
         urlPattern: "/encounters"
         type: 'http'
         allow: []
         routes: [
           {
-            name: 'Save Encounter'
+            name: 'Save Encounter 1'
+            host: 'localhost'
+            port: '8005'
+            type: 'http'
+          }
+        ]
+      ,
+        name: "Save Encounter 2"
+        urlPattern: "/encounters2"
+        type: 'http'
+        allow: []
+        routes: [
+          {
+            name: 'Save Encounter 2'
             host: 'localhost'
             port: '8005'
             type: 'http'
@@ -204,24 +217,6 @@ describe "API Integration Tests", ->
               done err
             else
               Mediator.findOne { urn: mediator1.urn }, (err, res) ->
-                return done err if err
-                should.exist(res)
-                done()
-
-      it 'should create a channel with the default channel config supplied', (done) ->
-        request("https://localhost:8080")
-          .post("/mediators")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(mediator1)
-          .expect(201)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              Channel.findOne { name: mediator1.defaultChannelConfig[0].name }, (err, res) ->
                 return done err if err
                 should.exist(res)
                 done()
@@ -1131,3 +1126,113 @@ describe "API Integration Tests", ->
                 done err
               else
                 done()
+
+    describe '*loadDefaultChannels()', ->
+
+      it 'should deny access to non-admin users', (done) ->
+        request("https://localhost:8080")
+          .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send([])
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should add all channels in the defaultChannelConfig property', (done) ->
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send([])
+            .expect(201)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Channel.find {}, (err, channels) ->
+                  done err if err
+                  channels.length.should.be.exactly 2
+                  channels[0].name.should.be.exactly 'Save Encounter 1'
+                  channels[1].name.should.be.exactly 'Save Encounter 2'
+                  done()
+
+      it 'should add selected channels in the defaultChannelConfig property if the body is set (save one)', (done) ->
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send([ 'Save Encounter 2' ])
+            .expect(201)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Channel.find {}, (err, channels) ->
+                  done err if err
+                  channels.length.should.be.exactly 1
+                  channels[0].name.should.be.exactly 'Save Encounter 2'
+                  done()
+
+      it 'should add selected channels in the defaultChannelConfig property if the body is set (save both)', (done) ->
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send([ 'Save Encounter 1', 'Save Encounter 2' ])
+            .expect(201)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Channel.find {}, (err, channels) ->
+                  done err if err
+                  channels.length.should.be.exactly 2
+                  channels[0].name.should.be.exactly 'Save Encounter 1'
+                  channels[1].name.should.be.exactly 'Save Encounter 2'
+                  done()
+
+      it 'should return a 400 when a channel from the request body isn\'t found', (done) ->
+        new Mediator(mediator1).save ->
+          request("https://localhost:8080")
+            .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send([ 'Something Wrong' ])
+            .expect(400)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
+
+      it 'should return a 404 if the mediator isn\'t found', (done) ->
+        request("https://localhost:8080")
+          .post("/mediators/urn:uuid:MISSING/channels")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send([])
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()

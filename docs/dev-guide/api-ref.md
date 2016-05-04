@@ -584,7 +584,7 @@ Sets the current configuration values for this mediator. The received configurat
 
 `POST /mediators/:urn/config`
 
-where `:urn` is the `urn` property of the mediator that is sending in it heartbeat.
+where `:urn` is the `urn` property of the mediator that is sending in the heartbeat.
 
 with an http body of:
 
@@ -598,6 +598,24 @@ with an http body of:
 The response will have an http status code of `201` if successful, `404` if the mediator referenced by urn cannot be found and `400` if the config supplied cannot be validated against the configuration definition supplied in the mediator registration message.
 
 This endpoint can only be called by an admin user.
+
+#### Install mediator channels
+
+Installs channels that are listed in the mediator's config (`defaultChannelConfig` property). This endpoint can install all listed channels or a subset of channels depending on the post body the of request.
+
+`POST /mediaotrs/:urn/channels`
+
+where `:urn` is the `urn` property of the mediator that is installing the channels.
+
+with an http body that contains a JSON array of channel names to install. These names must match the names of channels in the mediators `defaultChannelConfig` property. If no body is sent, all channel are added by default.
+
+e.g.
+
+```js
+[ 'Channel 1', 'Channel 2' ]
+```
+
+The response will be an http status code of `201` if the channels were successfully created and `400` if you provide a channel name that doesn't exist.
 
 ### Metrics resource
 
