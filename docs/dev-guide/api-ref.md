@@ -101,9 +101,9 @@ where `:channelId` is the `_id` property of the channel to delete.
 
 The response code will be `200` if successful.
 
-#### Trigger Channel
+#### Manually Trigger Polling Channel
 
-'GET /channels/trigger/:channelId'
+'GET /channels/:channelId/trigger'
 
 where ':channelId' is the '_id' property of the channel to manually trigger.
 
