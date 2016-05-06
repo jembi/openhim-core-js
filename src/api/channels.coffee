@@ -256,7 +256,6 @@ exports.triggerChannel = (channelId) ->
 
     request options, ->
       logger.info 'Done with this!!'
-      debugger;
   catch err
     # Error! So inform the user
     utils.logAndSetResponse this, 500, "Could not fetch channel by Id '#{id}' via the API: #{err}", 'error'
