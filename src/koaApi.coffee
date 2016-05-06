@@ -38,7 +38,7 @@ exports.setupApp = (done) ->
   app.use route.get '/password-reset-request/:email', users.userPasswordResetRequest
   app.use route.get '/token/:token', users.getUserByToken
   app.use route.put '/token/:token', users.updateUserByToken
-  
+
 
   # Expose the authenticate route before the auth middleware so that it is publically accessible
   app.use route.get '/authenticate/:username', users.authenticate
@@ -82,6 +82,7 @@ exports.setupApp = (done) ->
   app.use route.get '/channels', channels.getChannels
   app.use route.post '/channels', channels.addChannel
   app.use route.get '/channels/:channelId', channels.getChannel
+  app.use route.get '/channels/trigger/:channelId', channels.triggerChannel
   app.use route.put '/channels/:channelId', channels.updateChannel
   app.use route.delete '/channels/:channelId', channels.removeChannel
 

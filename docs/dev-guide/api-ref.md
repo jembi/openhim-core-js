@@ -101,6 +101,12 @@ where `:channelId` is the `_id` property of the channel to delete.
 
 The response code will be `200` if successful.
 
+#### Trigger Channel
+
+'GET /channels/trigger/:channelId'
+
+where ':channelId' is the '_id' property of the channel to manually trigger.
+
 ### Clients resource
 
 Other system that send request for the OpenHIM to forward.

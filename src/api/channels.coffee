@@ -225,3 +225,26 @@ exports.removeChannel = (channelId) ->
   catch err
     # Error! So inform the user
     utils.logAndSetResponse this, 500, "Could not remove channel by id: #{id} via the API: #{e}", 'error'
+
+###
+# Manually Triggers Polling Channel
+###
+exports.triggerChannel = (channelId) ->
+
+  # Test if the user is authorised
+  if authorisation.inGroup('admin', this.authenticated) is false
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
+    return
+
+  # Trigger polling schedule
+  logger.info "Manually polling channel: #{channel._id}"
+  return callback new Error 'no polling schedule set on this channel' if not channel.pollingSchedule
+
+  options =
+    url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
+    headers:
+      'channel-id': channel._id
+      'X-OpenHIM-LastRunAt': job.attrs.lastRunAt
+
+  request options, ->
+    done()
