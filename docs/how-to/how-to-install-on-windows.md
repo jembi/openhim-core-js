@@ -40,9 +40,17 @@ or with whichever file location you chose to create for the config.
 
 ## OpenHIM Console
 
-### Install Nginx
+A web server will be required to host the OpenHIM Console and in this guide we will use IIS and Nginx. However any good web server will be suitable, e.g. Apache.
 
-A web server will be required to host the OpenHIM Console and in this guide we will use Nginx. However any good web server will be suitable, e.g. Apache or IIS.
+### Setup a Web Server
+
+##### Install IIS
+
+Go to http://www.iis.net/learn/install for articles on how to install IIS for your particular flavour of Windows OS.
+
+If you want to check if IIS is installed, browse to http://localhost in your browser. If an image pops up, then IIS has been installed correctly.
+
+##### Install Nginx
 
 As per [this guide](https://www.nginx.com/resources/wiki/start/topics/tutorials/install/), download and extract the Nginx windows binary. You don't need to start nginx yet however.
 
@@ -51,6 +59,19 @@ As per [this guide](https://www.nginx.com/resources/wiki/start/topics/tutorials/
 Download the [latest Console release](https://github.com/jembi/openhim-console/releases/latest) and extract the contents into a folder such as `C:\OpenHIM\Console`. Note that you will need to use a utility such as [7-Zip](http://www.7-zip.org/) to extract the .tar.gz archive.
 
 Console contains a config file located in `Console\config\default.json`. You will need to edit the `host` and `port` fields to point to the *public* address that the OpenHIM Core is running on. If you are only using the OpenHIM locally, then it is fine to leave the setting on localhost, however if you wish to make the Console accessible to other hosts, you will need to change the setting to either the machine's public IP address or domain name.
+
+##### Configuring the Console for IIS
+
+Create a new site in Internet Information Services Manager. You can name it whatever you want. I'll call it Console in these instructions.
+1. Start IIS Manager.
+2. In the Connections panel, expand Sites
+3. Right-click Sites and then click Add Web Site.
+4. In the Add Web Site dialog box, fill in the required fields, for example: 
+   *   Site name: `Console`
+   *   Physical path: `C:\OpenHIM\Console`
+   *   Port: Make sure the port is something other than 80, as this will conflict with "Default Web Site" in IIS
+
+##### Configuring the Console for Nginx
 
 Next locate the Nginx configuration file `<nginx location>\conf\nginx.conf` and change the root context to point to the Console:
 ```
@@ -70,4 +91,6 @@ start nginx
 
 ## Fin
 
-The OpenHIM Core and Console should now be up and running! Access the console on http://yourserver and login with **root@openhim.org** using the password: **openhim-password**
+The OpenHIM Core and Console should now be up and running! 
+
+Access the console on http://yourserver:<port number> and login with **root@openhim.org** using the password: **openhim-password**
