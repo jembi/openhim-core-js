@@ -10,6 +10,9 @@ server = require "../server"
 polling = require "../polling"
 routerMiddleware = require '../middleware/router'
 utils = require "../utils"
+config = require '../config/config'
+config.polling = config.get('polling')
+request = require 'request'
 
 isPathValid = (channel) ->
   if channel.routes?
@@ -236,15 +239,24 @@ exports.triggerChannel = (channelId) ->
     utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
     return
 
-  # Trigger polling schedule
-  logger.info "Manually polling channel: #{channel._id}"
-  return callback new Error 'no polling schedule set on this channel' if not channel.pollingSchedule
+  # Get the values to use
+  id = unescape channelId
 
-  options =
-    url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
-    headers:
-      'channel-id': channel._id
-      'X-OpenHIM-LastRunAt': job.attrs.lastRunAt
+  try
+    # Try to get the channel
+    channel = channel = yield Channel.findById(id).exec()
 
-  request options, ->
-    done()
+    logger.info "Manually Polling channel #{channel._id}"
+
+    options =
+      url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
+      headers:
+        'channel-id': channel._id
+        'X-OpenHIM-LastRunAt': new Date
+
+    request options, ->
+      logger.info 'Done with this!!'
+      debugger;
+  catch err
+    # Error! So inform the user
+    utils.logAndSetResponse this, 500, "Could not fetch channel by Id '#{id}' via the API: #{err}", 'error'
