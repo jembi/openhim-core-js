@@ -245,9 +245,8 @@ exports.triggerChannel = (channelId) ->
   # need to Initialize return status otherwise will always return 404
   this.status = 200
 
-  channel = null
   try
-    channel = yield Channel.findById(id).exec()
+    channel = null
     accessDenied = false
 
     # if admin allow acces to all channels otherwise restrict result set
@@ -255,6 +254,7 @@ exports.triggerChannel = (channelId) ->
       utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to triggerChannel denied.", 'info'
       return
     else
+      # Try to get the channel
       channel = yield Channel.findById(id).exec()
 
       # Test if the result if valid
