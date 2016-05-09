@@ -235,27 +235,46 @@ exports.removeChannel = (channelId) ->
 exports.triggerChannel = (channelId) ->
 
   # Test if the user is authorised
-  if authorisation.inGroup('admin', this.authenticated) is false
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
-    return
+  # if authorisation.inGroup('admin', this.authenticated) is false
+  #   utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
+  #   return
 
   # Get the values to use
   id = unescape channelId
 
+  # need to Initialize return status otherwise will always return 404
+  this.status = 200
+
+  channel = null
   try
-    # Try to get the channel
-    channel = channel = yield Channel.findById(id).exec()
+    channel = yield Channel.findById(id).exec()
+    accessDenied = false
 
-    logger.info "Manually Polling channel #{channel._id}"
+    # if admin allow acces to all channels otherwise restrict result set
+    if authorisation.inGroup('admin', this.authenticated) is false
+      utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to triggerChannel denied.", 'info'
+      return
+    else
+      channel = yield Channel.findById(id).exec()
 
-    options =
-      url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
-      headers:
-        'channel-id': channel._id
-        'X-OpenHIM-LastRunAt': new Date
+      # Test if the result if valid
+      if channel is null
+        # Channel not found! So inform the user
+        this.body = "We could not find a channel with Id:'#{id}'."
+        this.status = 404
+      else
+        logger.info "Manually Polling channel #{channel._id}"
+        options =
+          url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
+          headers:
+            'channel-id': channel._id
+            'X-OpenHIM-LastRunAt': new Date
 
-    request options, ->
-      logger.info 'Done with this!!'
+        request options, ->
+          logger.info "Channel Successfully polled #{channel._id}"
+          # Return success status
+          this.status = 200
+
   catch err
     # Error! So inform the user
     utils.logAndSetResponse this, 500, "Could not fetch channel by Id '#{id}' via the API: #{err}", 'error'

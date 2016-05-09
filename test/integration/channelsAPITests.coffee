@@ -974,3 +974,51 @@ describe "API Integration Tests", ->
                   channels[0].status.should.exist
                   channels[0].status.should.be.equal 'deleted'
                   done()
+
+    describe '*manuallyPollChannel', ->
+
+      it 'should manually poll a channel', (done) ->
+
+        request("https://localhost:8080")
+          .get("/channels/" + channel1._id + "/trigger")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should reject a manually polled channel - channel not found', (done) ->
+        mongoose = require('mongoose');
+        invalidId = mongoose.Types.ObjectId('4eeeeeeeeeeeeeeeebbbbbb2');
+        request("https://localhost:8080")
+          .get("/channels/" + invalidId + "/trigger")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should not allow a non admin user from manually polling a channel they do not have access to', (done) ->
+
+        request("https://localhost:8080")
+          .get("/channels/" + channel1._id + "/trigger")
+          .set("auth-username", testUtils.nonRootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
