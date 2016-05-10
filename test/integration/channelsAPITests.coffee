@@ -985,7 +985,6 @@ describe "API Integration Tests", ->
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
-          .send({ _id: channel1._id })
           .expect(200)
           .end (err, res) ->
             if err
@@ -1002,7 +1001,6 @@ describe "API Integration Tests", ->
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
-          .send({ _id: invalidId })
           .expect(404)
           .end (err, res) ->
             if err
@@ -1018,7 +1016,6 @@ describe "API Integration Tests", ->
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
-          .send({ _id: channel1._id })
           .expect(403)
           .end (err, res) ->
             if err

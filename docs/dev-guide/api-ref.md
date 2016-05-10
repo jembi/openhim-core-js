@@ -103,7 +103,7 @@ The response code will be `200` if successful.
 
 #### Manually Trigger Polling Channel
 
-'GET /channels/:channelId/trigger'
+'POST /channels/:channelId/trigger'
 
 where ':channelId' is the '_id' property of the channel to manually trigger.
 

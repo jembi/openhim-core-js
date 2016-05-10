@@ -232,7 +232,7 @@ exports.removeChannel = (channelId) ->
 ###
 # Manually Triggers Polling Channel
 ###
-exports.triggerChannel = ->
+exports.triggerChannel = (channelId) ->
 
   # Test if the user is authorised
   if authorisation.inGroup('admin', this.authenticated) is false
@@ -240,8 +240,7 @@ exports.triggerChannel = ->
     return
 
   # Get the values to use
-  channelData = this.request.body
-  id = unescape channelData._id
+  id = unescape channelId
 
   # need to Initialize return status otherwise will always return 404
   this.status = 200
