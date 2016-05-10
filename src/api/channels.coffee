@@ -242,7 +242,7 @@ exports.triggerChannel = (channelId) ->
   # Get the values to use
   id = unescape channelId
 
-  # need to Initialize return status otherwise will always return 404
+  # need to initialize return status otherwise will always return 404
   this.status = 200
 
   try
