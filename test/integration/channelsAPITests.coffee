@@ -980,11 +980,12 @@ describe "API Integration Tests", ->
       it 'should manually poll a channel', (done) ->
 
         request("https://localhost:8080")
-          .get("/channels/" + channel1._id + "/trigger")
+          .post("/channels/" + channel1._id + "/trigger")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
+          .send({ _id: channel1._id })
           .expect(200)
           .end (err, res) ->
             if err
@@ -996,11 +997,12 @@ describe "API Integration Tests", ->
         mongoose = require('mongoose');
         invalidId = mongoose.Types.ObjectId('4eeeeeeeeeeeeeeeebbbbbb2');
         request("https://localhost:8080")
-          .get("/channels/" + invalidId + "/trigger")
+          .post("/channels/" + invalidId + "/trigger")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
+          .send({ _id: invalidId })
           .expect(404)
           .end (err, res) ->
             if err
@@ -1011,11 +1013,12 @@ describe "API Integration Tests", ->
       it 'should not allow a non admin user from manually polling a channel they do not have access to', (done) ->
 
         request("https://localhost:8080")
-          .get("/channels/" + channel1._id + "/trigger")
+          .post("/channels/" + channel1._id + "/trigger")
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
+          .send({ _id: channel1._id })
           .expect(403)
           .end (err, res) ->
             if err

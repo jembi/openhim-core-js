@@ -232,48 +232,40 @@ exports.removeChannel = (channelId) ->
 ###
 # Manually Triggers Polling Channel
 ###
-exports.triggerChannel = (channelId) ->
+exports.triggerChannel = ->
 
   # Test if the user is authorised
-  # if authorisation.inGroup('admin', this.authenticated) is false
-  #   utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
-  #   return
+  if authorisation.inGroup('admin', this.authenticated) is false
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeChannel denied.", 'info'
+    return
 
   # Get the values to use
-  id = unescape channelId
+  channelData = this.request.body
+  id = unescape channelData._id
 
   # need to Initialize return status otherwise will always return 404
   this.status = 200
 
   try
-    channel = null
-    accessDenied = false
+    channel = yield Channel.findById(id).exec()
 
-    # if admin allow acces to all channels otherwise restrict result set
-    if authorisation.inGroup('admin', this.authenticated) is false
-      utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to triggerChannel denied.", 'info'
-      return
+    # Test if the result if valid
+    if channel is null
+      # Channel not found! So inform the user
+      this.body = "We could not find a channel with Id:'#{id}'."
+      this.status = 404
     else
-      # Try to get the channel
-      channel = yield Channel.findById(id).exec()
+      logger.info "Manually Polling channel #{channel._id}"
+      options =
+        url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
+        headers:
+          'channel-id': channel._id
+          'X-OpenHIM-LastRunAt': new Date
 
-      # Test if the result if valid
-      if channel is null
-        # Channel not found! So inform the user
-        this.body = "We could not find a channel with Id:'#{id}'."
-        this.status = 404
-      else
-        logger.info "Manually Polling channel #{channel._id}"
-        options =
-          url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
-          headers:
-            'channel-id': channel._id
-            'X-OpenHIM-LastRunAt': new Date
-
-        request options, ->
-          logger.info "Channel Successfully polled #{channel._id}"
-          # Return success status
-          this.status = 200
+      request options, ->
+        logger.info "Channel Successfully polled #{channel._id}"
+        # Return success status
+        this.status = 200
 
   catch err
     # Error! So inform the user

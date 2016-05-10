@@ -83,7 +83,7 @@ exports.setupApp = (done) ->
   app.use route.get '/channels', channels.getChannels
   app.use route.post '/channels', channels.addChannel
   app.use route.get '/channels/:channelId', channels.getChannel
-  app.use route.get '/channels/:channelId/trigger', channels.triggerChannel
+  app.use route.post '/channels/:channelId/trigger', channels.triggerChannel
   app.use route.put '/channels/:channelId', channels.updateChannel
   app.use route.delete '/channels/:channelId', channels.removeChannel
 
