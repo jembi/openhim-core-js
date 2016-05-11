@@ -230,7 +230,7 @@ describe "HTTP Router", ->
                 ctx.routes[1].request.path.should.be.exactly "/test/multicasting"
                 ctx.routes[1].request.timestamp.should.be.exactly requestTimestamp
                 done()
-              ), 1000
+              ), 100 * global.testTimeoutFactor
 
 
     it "should pass an error to next if there are multiple primary routes", (done) ->
@@ -494,7 +494,7 @@ describe "HTTP Router", ->
                 done()
               catch err
                 done err
-            ), 500
+            ), 50 * global.testTimeoutFactor
 
     it "should set mediator response location header if present and status is not 3xx", (done) ->
       mediatorResponse =

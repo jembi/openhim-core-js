@@ -19,7 +19,7 @@ describe 'Upgrade DB Tests', ->
         else
           func1Complete = true
           defer.resolve()
-      , 10
+      , 10 * global.testTimeoutFactor
       return defer.promise
 
     mockUpgradeFunc2 = () ->
