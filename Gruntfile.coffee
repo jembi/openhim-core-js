@@ -11,6 +11,11 @@ module.exports = (grunt) ->
   grunt.loadNpmTasks 'grunt-mocha-cli'
   grunt.loadNpmTasks 'grunt-contrib-watch'
 
+  # increase mocha timeout if these tests are being run on TRAVIS
+  mochaTimeout = 2000 # default mocha timeout
+  if process.env.TRAVIS
+    mochaTimeout = 6000
+
   grunt.initConfig
     clean: ['./lib/']
 
@@ -46,6 +51,7 @@ module.exports = (grunt) ->
         grep: grunt.option 'mochaGrep' || null
         debug: grunt.option 'debugTests' || false
         bail: grunt.option 'bail' || false
+        timeout: mochaTimeout
       all:
         files.test
 
