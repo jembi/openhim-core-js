@@ -114,7 +114,7 @@ describe "Rerun Task Tests", ->
 
 
     it 'should run rerunSetHTTPRequestOptions() and return error if no Transaction object supplied', (done) ->
-    
+
       taskID = '53c4dd063b8cb04d2acf0adc'
       transaction = null
       tasks.rerunSetHTTPRequestOptions transaction, taskID, (err, options) ->
@@ -149,7 +149,7 @@ describe "Rerun Task Tests", ->
 
 
     it 'should run rerunHttpRequestSend() and fail when "options" is null', (done) ->
-    
+
       transactionID = "53bfbccc6a2b417f6cd14871"
       Transaction.findOne { _id: transactionID }, (err, transaction) ->
 
@@ -161,7 +161,7 @@ describe "Rerun Task Tests", ->
 
 
     it 'should run rerunHttpRequestSend() and fail when "transaction" is null', (done) ->
-    
+
       options = {}
       options.hostname = "localhost"
       options.port = 7786
@@ -228,7 +228,7 @@ describe "Rerun Task Tests", ->
             server.close ->
               done()
 
-        setTimeout validateTask, 1000
+        setTimeout validateTask, 100 * global.testTimeoutFactor
 
     it 'should process X transactions where X is the batch size', (done) ->
       Task.update { _id: task1._id }, { batchSize: 2 }, (err) ->
@@ -247,7 +247,7 @@ describe "Rerun Task Tests", ->
               server.close ->
                 done()
 
-          setTimeout validateTask, 1000
+          setTimeout validateTask, 100 * global.testTimeoutFactor
 
     it 'should complete a queued task after all its transactions are finished', (done) ->
       Task.update { _id: task1._id }, { batchSize: 3 }, (err) ->
@@ -266,7 +266,7 @@ describe "Rerun Task Tests", ->
               server.close ->
                 done()
 
-          setTimeout validateTask, 1000
+          setTimeout validateTask, 100 * global.testTimeoutFactor
 
     it 'should not process a paused task', (done) ->
       Task.update { _id: task1._id }, { status: 'Paused' }, (err) ->
@@ -285,7 +285,7 @@ describe "Rerun Task Tests", ->
               server.close ->
                 done()
 
-          setTimeout validateTask, 1000
+          setTimeout validateTask, 100 * global.testTimeoutFactor
 
     it 'should not process a cancelled task', (done) ->
       Task.update { _id: task1._id }, { status: 'Cancelled' }, (err) ->
@@ -304,4 +304,4 @@ describe "Rerun Task Tests", ->
               server.close ->
                 done()
 
-          setTimeout validateTask, 1000
+          setTimeout validateTask, 100 * global.testTimeoutFactor

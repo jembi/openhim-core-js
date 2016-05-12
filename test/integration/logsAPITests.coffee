@@ -43,15 +43,15 @@ describe 'API Integration Tests', ->
                           server.start apiPort: 8080, ->
                             done()
                             # We need to go deeper!
-                      , 50
-                    , 50
-                  , 50
-                , 50
-              , 50
-            , 50
-          , 50
-        , 50
-      , 50
+                      , 15 * global.testTimeoutFactor
+                    , 15 * global.testTimeoutFactor
+                  , 15 * global.testTimeoutFactor
+                , 15 * global.testTimeoutFactor
+              , 15 * global.testTimeoutFactor
+            , 15 * global.testTimeoutFactor
+          , 15 * global.testTimeoutFactor
+        , 15 * global.testTimeoutFactor
+      , 15 * global.testTimeoutFactor
 
     after (done) ->
       logger.transports.MongoDB.level = 'debug'

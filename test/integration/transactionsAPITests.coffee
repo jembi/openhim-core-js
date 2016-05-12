@@ -47,7 +47,7 @@ describe "API Integration Tests", ->
       channelID: "888888888888888888888888"
       request: requ
       response: respo
-        
+
       routes:
         [
           name: "dummy-route"
@@ -61,7 +61,7 @@ describe "API Integration Tests", ->
           request: requ
           response: respo
         ]
-      properties: 
+      properties:
         "prop1": "prop1-value1"
         "prop2": "prop-value1"
 
@@ -178,7 +178,7 @@ describe "API Integration Tests", ->
                 for ev in events
                   ev.channelID.toString().should.be.exactly channel._id.toString()
                 done()
-            setTimeout validateEvents, 1000
+            setTimeout validateEvents, 100 * global.testTimeoutFactor
 
     describe "*updateTransaction()", ->
 
@@ -189,7 +189,7 @@ describe "API Integration Tests", ->
 
       afterEach ->
         s.stop()
-      
+
       it "should call /updateTransaction ", (done) ->
         tx = new Transaction transactionData
         tx.save (err, result) ->
@@ -338,7 +338,7 @@ describe "API Integration Tests", ->
                   eventRoutes.should.containEql 'route'
                   eventRoutes.should.containEql 'orchestration'
                   done()
-              setTimeout validateEvents, 1000
+              setTimeout validateEvents, 100 * global.testTimeoutFactor
 
     describe "*getTransactions()", ->
 
@@ -367,7 +367,7 @@ describe "API Integration Tests", ->
         obj =
           filterPage: 0
           filterLimit: 10
-          filters: 
+          filters:
             'status': 'Processing'
             'request.timestamp': '{"$gte": "2014-06-09T00:00:00.000Z", "$lte": "2014-06-10T00:00:00.000Z" }'
             'request.path': '/api/test'
@@ -405,13 +405,13 @@ describe "API Integration Tests", ->
         obj =
           filterPage: 0
           filterLimit: 10
-          filters: 
+          filters:
             'status': 'Processing'
             'routes.request.path': '/api/test'
             'routes.response.status': '2xx'
             'orchestrations.request.path': '/api/test'
             'orchestrations.response.status': '2xx'
-            'properties': 
+            'properties':
               'prop1': 'prop1-value1'
 
         params = ""
@@ -446,13 +446,13 @@ describe "API Integration Tests", ->
         obj =
           filterPage: 0
           filterLimit: 10
-          filters: 
+          filters:
             'status': 'Processing'
             'routes.request.path': '/api/test'
             'routes.response.status': '2xx'
             'orchestrations.request.path': '/api/test'
             'orchestrations.response.status': '2xx'
-            'properties': 
+            'properties':
               'prop3': 'prop3-value3'
 
         params = ""

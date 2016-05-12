@@ -38,7 +38,7 @@ describe "Auditing Integration Tests", ->
           done()
 
         # async test :(
-        setTimeout checkAudits, 1000
+        setTimeout checkAudits, 100 * global.testTimeoutFactor
 
   describe "TLS Audit Server", ->
 

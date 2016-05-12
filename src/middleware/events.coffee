@@ -48,7 +48,7 @@ getTsDiff = ( ctxStartTS, obj ) ->
 addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
 
   if route?.request?.timestamp? and route?.response?.timestamp?
-    
+
     startTS = formatTS route.request.timestamp
     endTS = formatTS route.response.timestamp
 

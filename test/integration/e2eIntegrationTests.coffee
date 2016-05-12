@@ -921,7 +921,7 @@ describe "e2e Integration Tests", ->
                     should.exist res.properties
                     res.properties.orderId.should.be.equal mediatorResponse.properties.orderId
                     done()
-                ), 1500
+                ), 150 * global.testTimeoutFactor
 
   describe "Multipart form data tests", ->
     mockServer = null
@@ -1200,7 +1200,7 @@ describe "e2e Integration Tests", ->
                   trx.routes[0].should.have.property 'name', 'test route 2'
                   trx.routes[0].response.body.should.be.exactly 'target2'
                   done()
-              ), 1500
+              ), 150 * global.testTimeoutFactor
 
     it "should NOT route transactions to disabled routes", (done) ->
       server.start httpPort: 5001, ->
@@ -1219,7 +1219,7 @@ describe "e2e Integration Tests", ->
                   return done err if err
                   trx.routes.length.should.be.exactly 0
                   done()
-              ), 1500
+              ), 150 * global.testTimeoutFactor
 
     it "should ignore disabled primary routes (multiple primary routes)", (done) ->
       server.start httpPort: 5001, ->
@@ -1238,7 +1238,7 @@ describe "e2e Integration Tests", ->
                   return done err if err
                   trx.routes.length.should.be.exactly 0
                   done()
-              ), 1500
+              ), 150 * global.testTimeoutFactor
 
 
   describe "Channel priority tests", ->
