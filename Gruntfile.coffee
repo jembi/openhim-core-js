@@ -13,7 +13,7 @@ module.exports = (grunt) ->
 
   # increase mocha timeout if these tests are being run on TRAVIS
   mochaTimeout = 2000
-  if process.env.Travis
+  if process.env.TRAVIS
     mochaTimeout = 3000
 
   grunt.initConfig
