@@ -61,7 +61,7 @@
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-coffee": "^1.0.0",
     "grunt-contrib-watch": "^1.0.0",
-    "grunt-mocha-cli": "^2.0.0",
+    "grunt-mocha-cli": "^2.1.0",
     "mocha": "^2.1.0",
     "mongodb": "^2.1.19",
     "rewire": "^2.5.1",
