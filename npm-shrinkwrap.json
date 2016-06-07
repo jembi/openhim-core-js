@@ -1,6 +1,6 @@
 {
   "name": "openhim-core",
-  "version": "1.5.1",
+  "version": "2.0.0",
   "dependencies": {
     "agenda": {
       "version": "0.8.1",
