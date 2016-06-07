@@ -38,6 +38,21 @@ openhim-core --conf=C:\OpenHIM\core.json
 ```
 or with whichever file location you chose to create for the config.
 
+### Run as a Windows Service
+
+To ensure the OpenHIM runs all the time, we will install it as a Windows Service using [NSSM](http://nssm.cc/download) (the Non-Sucking Service Manager)
+
+1. Download [NSSM](http://nssm.cc/download) (the Non-Sucking Service Manager)
+2. Open the archive and extract the `win32` or `win64` directory (depending on your Windows architecture) to a location on disk, for example `c:\nssm`
+3. Add the location `c:\nssm` to your path, so that `nssm` is accessible without knowing and typing the whole path to the file on the command line
+4. Open a command window with administrator privileges
+5. Type `nssm install openhim-core "C:\Program Files\nodejs\node.exe"  "<insert-full-path>\node_modules\openhim-core\bin\openhim-core.js --conf=C:\OpenHIM\core.json"`
+6. To capture the log output, type `nssm set openhim-core AppStdout "c:\OpenHIM\stdout.log`
+7. To capture the error output, type `nssm set openhim-core AppStderr "c:\OpenHIM\stderr.log`
+8. Type `net start openhim-core` to start the service or start it from the service manager.
+
+You’re done. You’ve installed the OpenHIM as a windows service.
+
 ## OpenHIM Console
 
 A web server will be required to host the OpenHIM Console and in this guide we will use IIS and as an alternative we will also explain how to use Nginx. However any good web server will be suitable, e.g.  Apache.
