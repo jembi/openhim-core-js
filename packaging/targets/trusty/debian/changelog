@@ -1,3 +1,10 @@
+openhim-core-js (2.0.0-9~trusty) trusty; urgency=medium
+
+  * Release Debian Build 2.0.0-9. Find v2.0.0 changelog here:
+    https://github.com/jembi/openhim-core-js/releases
+
+ -- Ryan Crichton <ryan@jembi.org>  Tue, 07 Jun 2016 16:59:36 +0200
+
 openhim-core-js (1.5.1-8~trusty) trusty; urgency=medium
 
   * Release Debian Build 1.5.1-8. Find v1.5.1 changelog here:
