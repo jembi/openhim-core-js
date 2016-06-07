@@ -57,7 +57,7 @@
     "finalhandler": "^0.4.0",
     "grunt": "^0.4.5",
     "grunt-cli": "^1.0.0",
-    "grunt-coffeelint": "^0.0.15",
+    "grunt-coffeelint": "^0.0.16",
     "grunt-contrib-clean": "^1.0.0",
     "grunt-contrib-coffee": "^1.0.0",
     "grunt-contrib-watch": "^1.0.0",
