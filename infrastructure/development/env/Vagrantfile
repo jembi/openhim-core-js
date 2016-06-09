@@ -21,8 +21,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision :shell do |shell|
     shell.inline = "mkdir -p /etc/puppet/modules;
-        puppet module install willdurand/nodejs;
-        puppet module install puppetlabs/mongodb --version 0.10.0"
+        puppet module install willdurand/nodejs"
   end
 
   # Setup LC_ALL locale flag
@@ -32,6 +31,14 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
   config.vm.provision :shell do |shell|
     shell.inline = "apt-get update"
+  end
+
+  # Install MongoDB 3.2
+  config.vm.provision :shell do |shell|
+    shell.inline = "sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927;
+        echo 'deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse' | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list;
+        apt-get update;
+        apt-get install -y mongodb-org"
   end
 
   config.vm.synced_folder "../../../", "/openhim-core-js"
