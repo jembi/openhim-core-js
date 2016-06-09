@@ -1,4 +1,5 @@
 Audit = require('../model/audits').Audit
+AuditMeta = require('../model/audits').AuditMeta
 authorisation = require './authorisation'
 Q = require 'q'
 logger = require 'winston'
@@ -51,6 +52,7 @@ exports.addAudit = ->
   try
     audit = new Audit auditData
     result = yield Q.ninvoke audit, 'save'
+    yield Q.ninvoke auditing, 'processAuditMeta', audit
     
     logger.info "User #{this.authenticated.email} created audit with id #{audit.id}"
     this.body = 'Audit successfully created'
@@ -174,22 +176,7 @@ exports.getAuditsFilterOptions = ->
     return
 
   try
-
-    # execute the query
-    eventID = yield Audit.distinct('eventIdentification.eventID').exec()
-    eventTypeCode = yield Audit.distinct('eventIdentification.eventTypeCode').exec()
-    roleIDCode = yield Audit.distinct('activeParticipant.roleIDCode').exec()
-    participantObjectIDTypeCode = yield Audit.distinct('participantObjectIdentification.participantObjectIDTypeCode').exec()
-    auditSourceID = yield Audit.distinct('auditSourceIdentification.auditSourceID').exec()
-
-    responseObject =
-      eventType: eventTypeCode
-      eventID: eventID
-      activeParticipantRoleID: roleIDCode
-      participantObjectIDTypeCode: participantObjectIDTypeCode
-      auditSourceID: auditSourceID
-    
-    this.body = responseObject
+    this.body = yield AuditMeta.findOne({}).exec()
   catch e
     utils.logAndSetResponse this, 500, "Could not retrieve audits filter options via the API: #{e}", 'error'
 
