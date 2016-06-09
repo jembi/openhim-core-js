@@ -45,7 +45,7 @@ AuditRecordSchema = new Schema
   "rawMessage":                       String
   "syslog":                           syslogDef
   "eventIdentification":
-    "eventDateTime":          type: Date, required: true, default: Date.now
+    "eventDateTime":          type: Date, required: true, default: Date.now, index: true
     "eventOutcomeIndicator":  String
     "eventActionCode":        String
     "eventID":                codeTypeDef
