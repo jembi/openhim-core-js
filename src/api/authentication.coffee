@@ -11,8 +11,9 @@ himSourceID = config.auditing.auditEvents.auditSourceID
 
 # will NOT audit any successful logins on the following paths (specified as regex patterns)
 # only 'noisy' endpoints should be included, such as heartbeats or endpoints that get polled
+#
+# /transactions is treated as a special case - see below
 auditingExemptPaths = [
-  /\/transactions/
   /\/tasks/
   /\/visualizer.*/
   /\/metrics.*/
@@ -78,11 +79,17 @@ exports.authenticate = (next) ->
   if authToken is hash.digest 'hex'
     # authenticated
 
-    for pathTest in auditingExemptPaths
-      if pathTest.test this.path
+    if this.path is '/transactions'
+      if not this.query.filterRepresentation or this.query.filterRepresentation isnt 'full'
         # exempt from auditing success
         yield next
         return
+    else
+      for pathTest in auditingExemptPaths
+        if pathTest.test this.path
+          # exempt from auditing success
+          yield next
+          return
 
     # send audit
     audit = atna.userLoginAudit atna.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(','), user.groups.join(',')
