@@ -27,7 +27,7 @@ exports.authenticate = (email) ->
 
     if not user
       utils.logAndSetResponse this, 404, "Could not find user by email #{email}", 'info'
-      # User NOT authenticated, send audit
+      # Audit unknown user requested
       audit = atna.userLoginAudit atna.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email
       audit = atna.wrapInSyslog audit
       auditing.sendAuditEvent audit, -> logger.debug 'Processed internal audit'
@@ -36,10 +36,6 @@ exports.authenticate = (email) ->
         salt: user.passwordSalt
         ts: new Date()
 
-      # User authenticated, send audit
-      audit = atna.userLoginAudit atna.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(','), user.groups.join(',')
-      audit = atna.wrapInSyslog audit
-      auditing.sendAuditEvent audit, -> logger.debug 'Processed internal audit'
   catch e
     utils.logAndSetResponse this, 500, "Error during authentication #{e}", 'error'
 
