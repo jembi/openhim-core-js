@@ -2,14 +2,15 @@ should = require "should"
 request = require "supertest"
 server = require "../../lib/server"
 Audit = require("../../lib/model/audits").Audit
+AuditMeta = require("../../lib/model/audits").AuditMeta
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 
 describe "API Integration Tests", ->
 
-  beforeEach (done) -> Audit.remove {}, -> done()
+  beforeEach (done) -> Audit.remove {}, -> AuditMeta.remove {}, -> done()
 
-  afterEach (done)-> Audit.remove {}, -> done()
+  afterEach (done)-> Audit.remove {}, -> AuditMeta.remove {}, -> done()
 
 
   describe "Audits REST Api testing", ->
@@ -329,27 +330,35 @@ describe "API Integration Tests", ->
     describe "*getAuditsFilterOptions", ->
 
       it "should fetch dropdown filter options - admin user", (done) ->
-        audit = new Audit auditData
-        audit.save (err, result)->
-          should.not.exist(err)
-          auditId = result._id
-          request("https://localhost:8080")
-            .get("/audits-filter-options")
-            .set("auth-username", testUtils.rootUser.email)
-            .set("auth-ts", authDetails.authTS)
-            .set("auth-salt", authDetails.authSalt)
-            .set("auth-token", authDetails.authToken)
-            .expect(200)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                (res != null).should.be.true
-                res.body.eventType.length.should.equal 1
-                res.body.eventID.length.should.equal 1
-                res.body.activeParticipantRoleID.length.should.equal 1
-                res.body.participantObjectIDTypeCode.length.should.equal 2
-                done()
+        request("https://localhost:8080")
+          .post("/audits")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(auditData)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              request("https://localhost:8080")
+                .get("/audits-filter-options")
+                .set("auth-username", testUtils.rootUser.email)
+                .set("auth-ts", authDetails.authTS)
+                .set("auth-salt", authDetails.authSalt)
+                .set("auth-token", authDetails.authToken)
+                .expect(200)
+                .end (err, res) ->
+                  if err
+                    done err
+                  else
+                    (res != null).should.be.true
+                    res.body.eventType.length.should.equal 1
+                    res.body.eventID.length.should.equal 1
+                    res.body.activeParticipantRoleID.length.should.equal 1
+                    res.body.participantObjectIDTypeCode.length.should.equal 2
+                    done()
 
       it "should NOT return a filter dropdown object if user is not admin", (done) ->
         audit = new Audit auditData

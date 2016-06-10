@@ -1,6 +1,7 @@
 should = require "should"
 auditing = require "../../lib/auditing"
 Audit = require("../../lib/model/audits").Audit
+AuditMeta = require("../../lib/model/audits").AuditMeta
 testUtils = require '../testUtils'
 dgram = require 'dgram'
 fs = require 'fs'
@@ -98,7 +99,7 @@ testAuditIHE_DICOM = """
 """
 
 describe "Auditing", ->
-  beforeEach (done) -> Audit.remove {}, -> done()
+  beforeEach (done) -> Audit.remove {}, -> AuditMeta.remove {}, -> done()
 
   describe ".processAudit", ->
     validateSyslog = (syslog) ->
@@ -210,6 +211,58 @@ describe "Auditing", ->
 
           audits.length.should.be.exactly 0
           done()
+
+    it "should populate audit meta collection with filter fields", (done) ->
+      auditing.processAudit testAudit, ->
+        AuditMeta.findOne {}, (err, auditMeta) ->
+          return done err if err
+
+          auditMeta.eventID.should.exist
+          auditMeta.eventID.length.should.be.exactly 1
+          auditMeta.eventID[0].code.should.be.equal '110112'
+          auditMeta.eventID[0].displayName.should.be.equal 'Query'
+          auditMeta.eventID[0].codeSystemName.should.be.equal 'DCM'
+          auditMeta.eventType.should.exist
+          auditMeta.eventType.length.should.be.exactly 1
+          auditMeta.eventType[0].code.should.be.equal 'ITI-9'
+          auditMeta.eventType[0].displayName.should.be.equal 'PIX Query'
+          auditMeta.eventType[0].codeSystemName.should.be.equal 'IHE Transactions'
+          auditMeta.activeParticipantRoleID.should.exist
+          auditMeta.activeParticipantRoleID.length.should.be.exactly 2
+          auditMeta.activeParticipantRoleID[0].code.should.be.equal '110153'
+          auditMeta.activeParticipantRoleID[0].displayName.should.be.equal 'Source'
+          auditMeta.activeParticipantRoleID[0].codeSystemName.should.be.equal 'DCM'
+          auditMeta.activeParticipantRoleID[1].code.should.be.equal '110152'
+          auditMeta.activeParticipantRoleID[1].displayName.should.be.equal 'Destination'
+          auditMeta.activeParticipantRoleID[1].codeSystemName.should.be.equal 'DCM'
+          auditMeta.participantObjectIDTypeCode.should.exist
+          auditMeta.participantObjectIDTypeCode.length.should.be.exactly 2
+          auditMeta.participantObjectIDTypeCode[0].code.should.be.equal '2'
+          auditMeta.participantObjectIDTypeCode[0].displayName.should.be.equal 'PatientNumber'
+          auditMeta.participantObjectIDTypeCode[0].codeSystemName.should.be.equal 'RFC-3881'
+          auditMeta.participantObjectIDTypeCode[1].code.should.be.equal 'ITI-9'
+          auditMeta.participantObjectIDTypeCode[1].displayName.should.be.equal 'PIX Query'
+          auditMeta.participantObjectIDTypeCode[1].codeSystemName.should.be.equal 'IHE Transactions'
+
+          auditMeta.auditSourceID.should.exist
+          auditMeta.auditSourceID.length.should.be.exactly 1
+          auditMeta.auditSourceID[0].should.be.equal 'openhim'
+
+          done()
+
+    it "should not duplicate filter fields in audit meta collection", (done) ->
+      auditing.processAudit testAudit, ->
+        auditing.processAudit testAudit, ->
+          AuditMeta.findOne {}, (err, auditMeta) ->
+            return done err if err
+
+            auditMeta.eventID.length.should.be.exactly 1
+            auditMeta.eventType.length.should.be.exactly 1
+            auditMeta.activeParticipantRoleID.length.should.be.exactly 2
+            auditMeta.participantObjectIDTypeCode.length.should.be.exactly 2
+            auditMeta.auditSourceID.length.should.be.exactly 1
+
+            done()
 
   describe "IHE Samples", ->
     validateIHEAudit = (type, audit) ->

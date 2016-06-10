@@ -3,6 +3,7 @@ syslogParser = require('glossy').Parse
 parseString = require('xml2js').parseString
 firstCharLowerCase = require('xml2js').processors.firstCharLowerCase
 Audit = require('./model/audits').Audit
+AuditMeta = require('./model/audits').AuditMeta
 tlsAuthentication = require "./middleware/tlsAuthentication"
 dgram = require 'dgram'
 tls = require 'tls'
@@ -57,6 +58,40 @@ parseAuditRecordFromXML = (xml, callback) ->
     callback null, audit
 
 
+codeInArray = (code, arr) -> (code in arr.map (a) -> a.code)
+
+exports.processAuditMeta = processAuditMeta = (audit, callback) ->
+  AuditMeta.findOne {}, (err, auditMeta) ->
+    if err
+      logger.error err
+      return callback()
+
+    if not auditMeta then auditMeta = new AuditMeta()
+
+    if audit.eventIdentification?.eventTypeCode?.code and not codeInArray audit.eventIdentification.eventTypeCode.code, auditMeta.eventType
+      auditMeta.eventType.push audit.eventIdentification.eventTypeCode
+
+    if audit.eventIdentification?.eventID?.code and not codeInArray audit.eventIdentification.eventID.code, auditMeta.eventID
+      auditMeta.eventID.push audit.eventIdentification.eventID
+
+    if audit.activeParticipant
+      for activeParticipant in audit.activeParticipant
+        if activeParticipant.roleIDCode?.code and not codeInArray activeParticipant.roleIDCode.code, auditMeta.activeParticipantRoleID
+          auditMeta.activeParticipantRoleID.push activeParticipant.roleIDCode
+
+    if audit.participantObjectIdentification
+      for participantObject in audit.participantObjectIdentification
+        if participantObject.participantObjectIDTypeCode?.code and not codeInArray participantObject.participantObjectIDTypeCode.code, auditMeta.participantObjectIDTypeCode
+          auditMeta.participantObjectIDTypeCode.push participantObject.participantObjectIDTypeCode
+
+    if audit.auditSourceIdentification?.auditSourceID and audit.auditSourceIdentification.auditSourceID not in auditMeta.auditSourceID
+      auditMeta.auditSourceID.push audit.auditSourceIdentification.auditSourceID
+
+    auditMeta.save (err) ->
+      if err then logger.error err
+      callback()
+
+
 exports.processAudit = processAudit = (msg, callback=(->)) ->
   parsedMsg = syslogParser.parse(msg)
 
@@ -76,7 +111,7 @@ exports.processAudit = processAudit = (msg, callback=(->)) ->
       if saveErr then logger.error "An error occurred while processing the audit entry: #{saveErr}"
       if xmlErr then logger.info "Failed to parse message as an AuditMessage XML document: #{xmlErr}"
 
-      callback()
+      processAuditMeta audit, callback
 
 
 sendUDPAudit = (msg, callback) ->

@@ -45,7 +45,7 @@ AuditRecordSchema = new Schema
   "rawMessage":                       String
   "syslog":                           syslogDef
   "eventIdentification":
-    "eventDateTime":          type: Date, required: true, default: Date.now
+    "eventDateTime":          type: Date, required: true, default: Date.now, index: true
     "eventOutcomeIndicator":  String
     "eventActionCode":        String
     "eventID":                codeTypeDef
@@ -57,4 +57,16 @@ AuditRecordSchema = new Schema
     "auditSourceTypeCode":    codeTypeDef
   "participantObjectIdentification":  [ParticipantObjectIdentificationDef]
 
+# keeps track of unique codes for various fields found in the audits collection
+AuditMetaRecordSchema = new Schema {
+  "eventType":                    [codeTypeDef]
+  "eventID":                      [codeTypeDef]
+  "activeParticipantRoleID":      [codeTypeDef]
+  "participantObjectIDTypeCode":  [codeTypeDef]
+  "auditSourceID":                [String]
+}, {
+  "collection": "auditMeta"
+}
+
 exports.Audit = connectionATNA.model 'Audit', AuditRecordSchema
+exports.AuditMeta = connectionATNA.model 'AuditMeta', AuditMetaRecordSchema
