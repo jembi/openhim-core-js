@@ -1,3 +1,24 @@
+openhim-core-js (2.0.0-12~trusty) trusty; urgency=medium
+
+  * Release Debian Build 2.0.0-12. Find v2.0.0 changelog here:
+    https://github.com/jembi/openhim-core-js/releases
+
+ -- Ryan Crichton <ryan@jembi.org>  Mon, 13 Jun 2016 14:42:33 +0200
+
+openhim-core-js (2.0.0-11~trusty) trusty; urgency=medium
+
+  * Release Debian Build 2.0.0-11. Find v2.0.0 changelog here:
+    https://github.com/jembi/openhim-core-js/releases
+
+ -- Ryan Crichton <ryan@jembi.org>  Mon, 13 Jun 2016 12:41:27 +0200
+
+openhim-core-js (2.0.0-10~trusty) trusty; urgency=medium
+
+  * Release Debian Build 2.0.0-10. Find v2.0.0 changelog here:
+    https://github.com/jembi/openhim-core-js/releases
+
+ -- Ryan Crichton <ryan@jembi.org>  Mon, 13 Jun 2016 11:36:44 +0200
+
 openhim-core-js (2.0.0-9~trusty) trusty; urgency=medium
 
   * Release Debian Build 2.0.0-9. Find v2.0.0 changelog here:
