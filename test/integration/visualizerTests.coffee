@@ -61,7 +61,7 @@ describe 'Visualizer Integration Tests', ->
         auth.setupTestUsers (err) ->
           # Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServer 200, mockResponse, 1232, ->
-            mockServer2 = testUtils.createMockServer 200, mockResponse, 1233, done
+            mockServer2 = testUtils.createMockServer 200, mockResponse, 1233, -> done()
 
   after (done) ->
     Channel.remove { name: 'TEST DATA - Mock endpoint' }, ->
