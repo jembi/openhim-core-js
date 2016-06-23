@@ -1,5 +1,6 @@
 should = require "should"
-mediators = require "../../lib/api/mediators"
+rewire = require "rewire"
+mediators = rewire "../../lib/api/mediators"
 
 describe "Mediator API unit tests", ->
 
@@ -395,3 +396,241 @@ describe "Mediator API unit tests", ->
         return
 
       throw new Error 'Failed'
+
+  describe ".maskPasswords()", ->
+
+    it "should filter out a password from a mediator object", ->
+      maskPasswords = mediators.__get__('maskPasswords')
+      m =
+        configDefs: [
+          param: 'one'
+          type: 'password'
+        ,
+          param: 'two'
+          type: 'string'
+        ,
+          param: 'three'
+          type: 'boolean'
+        ,
+          param: 'four'
+          type: 'password'
+        ]
+        config:
+          one: 'secret'
+          two: 'a string'
+          three: true
+          four: 'another secret'
+
+      maskPasswords m.configDefs, m.config
+      m.config.one.should.be.exactly '**********'
+      m.config.two.should.be.exactly 'a string'
+      m.config.three.should.be.exactly true
+      m.config.four.should.be.exactly '**********'
+
+
+    it "should ignore a password param if it isn't set", ->
+      maskPasswords = mediators.__get__('maskPasswords')
+      m =
+        configDefs: [
+          param: 'one'
+          type: 'password'
+        ,
+          param: 'two'
+          type: 'string'
+        ,
+          param: 'three'
+          type: 'boolean'
+        ,
+          param: 'four'
+          type: 'password'
+        ]
+        config:
+          two: 'a string'
+          three: true
+          four: 'another secret'
+
+      maskPasswords m.configDefs, m.config
+      (m.config.one is undefined).should.be.true()
+      m.config.two.should.be.exactly 'a string'
+      m.config.three.should.be.exactly true
+      m.config.four.should.be.exactly '**********'
+
+    it "should filter out passwords nested in structs", ->
+      maskPasswords = mediators.__get__('maskPasswords')
+      m =
+        configDefs: [
+          param: 'one'
+          type: 'password'
+        ,
+          param: 'two'
+          type: 'struct'
+          template: [
+            param: 'nestedPass'
+            type: 'password'
+          ,
+            param: 'twoone'
+            type: 'struct'
+            template: [
+              param: 'nestedNestedPass'
+              type: 'password'
+            ]
+          ,
+            param: 'twotwo'
+            type: 'boolean'
+          ]
+        ,
+          param: 'three'
+          type: 'boolean'
+        ,
+          param: 'four'
+          type: 'password'
+        ]
+        config:
+          two:
+            nestedPass: 'test'
+            twoone:
+              nestedNestedPass: 'test'
+
+      maskPasswords m.configDefs, m.config
+      m.config.two.nestedPass.should.be.exactly '**********'
+      m.config.two.twoone.nestedNestedPass.should.be.exactly '**********'
+
+    it "should filter out an ARRAY of passwords from a mediator object", ->
+      maskPasswords = mediators.__get__('maskPasswords')
+      m =
+        configDefs: [
+          param: 'one'
+          type: 'password'
+          array: true
+        ,
+          param: 'two'
+          type: 'string'
+        ,
+          param: 'three'
+          type: 'boolean'
+        ,
+          param: 'four'
+          type: 'password'
+          array: true
+        ]
+        config:
+          one: [ 'secret1', 'secret2', 'secret3' ]
+
+      maskPasswords m.configDefs, m.config
+      m.config.one[0].should.be.exactly '**********'
+      m.config.one[1].should.be.exactly '**********'
+      m.config.one[2].should.be.exactly '**********'
+
+  describe ".restoreMaskedPasswords()", ->
+
+    it "should a restore a password in a mediator object", ->
+      restoreMaskedPasswords = mediators.__get__('restoreMaskedPasswords')
+      defs =
+        [
+          param: 'one'
+          type: 'password'
+        ,
+          param: 'two'
+          type: 'string'
+        ,
+          param: 'three'
+          type: 'boolean'
+        ,
+          param: 'four'
+          type: 'password'
+        ]
+      maskedConfig =
+          one: '**********'
+          two: 'a string'
+          three: true
+          four: 'changed secret'
+
+      config =
+        one: 'secret'
+        two: 'a string'
+        three: true
+        four: 'another secret'
+
+      restoreMaskedPasswords defs, maskedConfig, config
+      maskedConfig.one.should.be.exactly 'secret'
+      maskedConfig.four.should.be.exactly 'changed secret'
+
+    it "should restore passwords nested in structs", ->
+      restoreMaskedPasswords = mediators.__get__('restoreMaskedPasswords')
+      defs =
+        [
+          param: 'one'
+          type: 'password'
+        ,
+          param: 'two'
+          type: 'struct'
+          template: [
+            param: 'nestedPass'
+            type: 'password'
+          ,
+            param: 'twoone'
+            type: 'struct'
+            template: [
+              param: 'nestedNestedPass'
+              type: 'password'
+            ]
+          ,
+            param: 'twotwo'
+            type: 'boolean'
+          ]
+        ,
+          param: 'three'
+          type: 'boolean'
+        ,
+          param: 'four'
+          type: 'password'
+        ]
+      maskedConfig =
+        two:
+          nestedPass: '**********'
+          twoone:
+            nestedNestedPass: '**********'
+
+      config =
+        two:
+          nestedPass: 'one'
+          twoone:
+            nestedNestedPass: 'two'
+
+      restoreMaskedPasswords defs, maskedConfig, config
+      maskedConfig.two.nestedPass.should.be.exactly 'one'
+      maskedConfig.two.twoone.nestedNestedPass.should.be.exactly 'two'
+
+    it "should a restore an ARRAY of passwords in a mediator object", ->
+      restoreMaskedPasswords = mediators.__get__('restoreMaskedPasswords')
+      defs =
+        [
+          param: 'one'
+          type: 'password'
+        ,
+          param: 'two'
+          type: 'string'
+        ,
+          param: 'three'
+          type: 'boolean'
+        ,
+          param: 'four'
+          type: 'password'
+          array: true
+        ]
+      maskedConfig =
+          one: '**********'
+          two: 'a string'
+          three: true
+          four: ['**********', 'one more', '**********']
+
+      config =
+        one: 'secret'
+        two: 'a string'
+        three: true
+        four: ['another secret', 'one more', 'last one']
+
+      restoreMaskedPasswords defs, maskedConfig, config
+      maskedConfig.four[0].should.be.exactly 'another secret'
+      maskedConfig.four[1].should.be.exactly 'one more'
+      maskedConfig.four[2].should.be.exactly 'last one'
