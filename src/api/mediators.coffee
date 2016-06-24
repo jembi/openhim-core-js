@@ -9,6 +9,8 @@ atna = require 'atna-audit'
 utils = require "../utils"
 auditing = require '../auditing'
 
+mask = '**********'
+
 maskPasswords = (defs, config) ->
   if not config
     return
@@ -16,9 +18,9 @@ maskPasswords = (defs, config) ->
   defs.forEach (d) ->
     if d.type is 'password' and config[d.param]
       if d.array
-        config[d.param] = config[d.param].map -> '**********'
+        config[d.param] = config[d.param].map -> mask
       else
-        config[d.param] = '**********'
+        config[d.param] = mask
     if d.type is 'struct' and config[d.param]
       maskPasswords d.template, config[d.param]
 
@@ -30,10 +32,10 @@ restoreMaskedPasswords = (defs, maskedConfig, config) ->
     if d.type is 'password' and maskedConfig[d.param] and config[d.param]
       if d.array
         maskedConfig[d.param].forEach (p, i) ->
-          if p is '**********'
+          if p is mask
             maskedConfig[d.param][i] = config[d.param][i]
       else
-        if maskedConfig[d.param] is '**********'
+        if maskedConfig[d.param] is mask
           maskedConfig[d.param] = config[d.param]
     if d.type is 'struct' and maskedConfig[d.param] and config[d.param]
       restoreMaskedPasswords d.template, maskedConfig[d.param], config[d.param]

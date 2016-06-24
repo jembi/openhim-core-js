@@ -399,6 +399,8 @@ describe "Mediator API unit tests", ->
 
   describe ".maskPasswords()", ->
 
+    mask = '**********'
+
     it "should filter out a password from a mediator object", ->
       maskPasswords = mediators.__get__('maskPasswords')
       m =
@@ -422,10 +424,10 @@ describe "Mediator API unit tests", ->
           four: 'another secret'
 
       maskPasswords m.configDefs, m.config
-      m.config.one.should.be.exactly '**********'
+      m.config.one.should.be.exactly mask
       m.config.two.should.be.exactly 'a string'
       m.config.three.should.be.exactly true
-      m.config.four.should.be.exactly '**********'
+      m.config.four.should.be.exactly mask
 
 
     it "should ignore a password param if it isn't set", ->
@@ -453,7 +455,7 @@ describe "Mediator API unit tests", ->
       (m.config.one is undefined).should.be.true()
       m.config.two.should.be.exactly 'a string'
       m.config.three.should.be.exactly true
-      m.config.four.should.be.exactly '**********'
+      m.config.four.should.be.exactly mask
 
     it "should filter out passwords nested in structs", ->
       maskPasswords = mediators.__get__('maskPasswords')
@@ -492,8 +494,8 @@ describe "Mediator API unit tests", ->
               nestedNestedPass: 'test'
 
       maskPasswords m.configDefs, m.config
-      m.config.two.nestedPass.should.be.exactly '**********'
-      m.config.two.twoone.nestedNestedPass.should.be.exactly '**********'
+      m.config.two.nestedPass.should.be.exactly mask
+      m.config.two.twoone.nestedNestedPass.should.be.exactly mask
 
     it "should filter out an ARRAY of passwords from a mediator object", ->
       maskPasswords = mediators.__get__('maskPasswords')
@@ -517,11 +519,13 @@ describe "Mediator API unit tests", ->
           one: [ 'secret1', 'secret2', 'secret3' ]
 
       maskPasswords m.configDefs, m.config
-      m.config.one[0].should.be.exactly '**********'
-      m.config.one[1].should.be.exactly '**********'
-      m.config.one[2].should.be.exactly '**********'
+      m.config.one[0].should.be.exactly mask
+      m.config.one[1].should.be.exactly mask
+      m.config.one[2].should.be.exactly mask
 
   describe ".restoreMaskedPasswords()", ->
+
+    mask = '**********'
 
     it "should a restore a password in a mediator object", ->
       restoreMaskedPasswords = mediators.__get__('restoreMaskedPasswords')
@@ -540,7 +544,7 @@ describe "Mediator API unit tests", ->
           type: 'password'
         ]
       maskedConfig =
-          one: '**********'
+          one: mask
           two: 'a string'
           three: true
           four: 'changed secret'
@@ -587,9 +591,9 @@ describe "Mediator API unit tests", ->
         ]
       maskedConfig =
         two:
-          nestedPass: '**********'
+          nestedPass: mask
           twoone:
-            nestedNestedPass: '**********'
+            nestedNestedPass: mask
 
       config =
         two:
@@ -619,10 +623,10 @@ describe "Mediator API unit tests", ->
           array: true
         ]
       maskedConfig =
-          one: '**********'
+          one: mask
           two: 'a string'
           three: true
-          four: ['**********', 'one more', '**********']
+          four: [mask, 'one more', mask]
 
       config =
         one: 'secret'
