@@ -542,7 +542,7 @@ The response code will be `200` if successful.
 
 The response status code will be `200` if successful and the response body will contain an array of mediator objects. See the [mediators schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
 
-**Note:** All password types returned in a mediator's config will be masked. To get view the password, the heartbeat endpoint must be used by a mediator to retrieve config.
+**Note:** All password types returned in a mediator's config will be masked. To view the password, the heartbeat endpoint must be used by a mediator to retrieve config.
 
 #### Add a mediator
 
@@ -560,7 +560,7 @@ where `:urn` is the `urn` property of the mediator to fetch.
 
 The response status code will be `200` if successful and the response body will contain a mediator object. See the [mediator schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
 
-**Note:** All password types returned in a mediator's config will be masked. To get view the password, the heartbeat endpoint must be used by a mediator to retrieve config.
+**Note:** All password types returned in a mediator's config will be masked. To view the password, the heartbeat endpoint must be used by a mediator to retrieve config.
 
 #### Mediator heartbeat endpoint
 
