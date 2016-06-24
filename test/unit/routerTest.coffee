@@ -234,9 +234,9 @@ describe "HTTP Router", ->
 
 
     it "should pass an error to next if there are multiple primary routes", (done) ->
-      testUtils.createMockServer 200, "Mock response body 1\n", 4444, ->
-        testUtils.createMockServer 201, "Mock response body 2\n", 5555, ->
-          testUtils.createMockServer 400, "Mock response body 3\n", 6666, ->
+      testUtils.createMockServer 200, "Mock response body 1\n", 4444, (mock1) ->
+        testUtils.createMockServer 201, "Mock response body 2\n", 5555, (mock2) ->
+          testUtils.createMockServer 400, "Mock response body 3\n", 6666, (mock3) ->
             # Setup channels for the mock endpoints
             channel =
               name: "Multi-primary"
@@ -264,7 +264,7 @@ describe "HTTP Router", ->
             router.route ctx, (err) ->
               if err
                 err.message.should.be.exactly "Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed"
-                done()
+                mock1.close -> mock2.close -> mock3.close done
 
     it "should forward PUT and POST requests correctly", (done) ->
       # Create mock endpoint to forward requests to
@@ -297,10 +297,10 @@ describe "HTTP Router", ->
 
           ctx.response.status.should.be.exactly 200
           ctx.response.header.should.be.ok
-          done()
+          mockServer.close done
 
     it "should send request params if these where received from the incoming request", (done) ->
-      testUtils.createMockServer 201, "Mock response body\n", 9873, (->
+      mockServer = testUtils.createMockServer 201, "Mock response body\n", 9873, (->
         # Setup a channel for the mock endpoint
         channel =
           name: "Mock endpoint"
@@ -327,7 +327,7 @@ describe "HTTP Router", ->
             return done err
       ), (req, res) ->
         req.url.should.eql("/test?parma1=val1&parma2=val2")
-        done()
+        mockServer.close done
 
     it "should set mediator response object on ctx", (done) ->
       mediatorResponse =
@@ -551,7 +551,7 @@ describe "HTTP Router", ->
 
   describe "Basic Auth", ->
     it "should have valid authorization header if username and password is set in options", (done) ->
-      testUtils.createMockServer 201, "Mock response body\n", 9875, (->
+      mockServer = testUtils.createMockServer 201, "Mock response body\n", 9875, (->
         # Setup a channel for the mock endpoint
         channel =
           name: "Mock endpoint"
@@ -579,10 +579,10 @@ describe "HTTP Router", ->
       ), (req, res) ->
         # Base64("username:password") = "dXNlcm5hbWU6cGFzc3dvcmQ=""
         req.headers.authorization.should.be.exactly "Basic dXNlcm5hbWU6cGFzc3dvcmQ="
-        done()
+        mockServer.close done
 
     it "should not have authorization header if username and password is absent from options", (done) ->
-      testUtils.createMockServer 201, "Mock response body\n", 9874, (->
+      mockServer = testUtils.createMockServer 201, "Mock response body\n", 9874, (->
         # Setup a channel for the mock endpoint
         channel =
           name: "Mock endpoint"
@@ -606,10 +606,10 @@ describe "HTTP Router", ->
             return done err
       ), (req, res) ->
         (req.headers.authorization == undefined).should.be.true
-        done()
+        mockServer.close done
 
     it "should not propagate the authorization header present in the request headers", (done) ->
-      testUtils.createMockServer 201, "Mock response body\n", 9872, (->
+      mockServer = testUtils.createMockServer 201, "Mock response body\n", 9872, (->
         # Setup a channel for the mock endpoint
         channel =
           name: "Mock endpoint"
@@ -634,7 +634,36 @@ describe "HTTP Router", ->
             return done err
       ), (req, res) ->
         (req.headers.authorization == undefined).should.be.true
-        done()
+        mockServer.close done
+
+    it "should propagate the authorization header present in the request headers if forwardAuthHeader is set to true", (done) ->
+      mockServer = testUtils.createMockServer 201, "Mock response body\n", 9872, (->
+        # Setup a channel for the mock endpoint
+        channel =
+          name: "Mock endpoint"
+          urlPattern: ".+"
+          routes: [
+                host: "localhost"
+                port: 9872
+                primary: true
+                forwardAuthHeader: true
+              ]
+        ctx = new Object()
+        ctx.authorisedChannel = channel
+        ctx.request = new Object()
+        ctx.response = new Object()
+        ctx.response.set = ->
+        ctx.request.url = "/test"
+        ctx.request.method = "GET"
+        ctx.request.header = { authorization: "Basic bWU6bWU=" }
+        ctx.requestTimestamp = requestTimestamp
+
+        router.route ctx, (err) ->
+          if err
+            return done err
+      ), (req, res) ->
+        req.headers.authorization.should.be.exactly "Basic bWU6bWU="
+        mockServer.close done
 
     it "should not propagate the authorization header present in the request headers and must set the correct header if enabled on route", (done) ->
       testUtils.createMockServer 201, "Mock response body\n", 9871, (->

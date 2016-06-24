@@ -1057,7 +1057,7 @@ describe "e2e Integration Tests", ->
         client = new Client testAppDoc
         client.save (error, newAppDoc) ->
           # Create mock endpoint to forward requests to
-          mockServer = testUtils.createMockServer 201, JSON.stringify(jsonResponse), 1232, done
+          mockServer = testUtils.createMockServer 201, JSON.stringify(jsonResponse), 1232, -> done()
 
     after (done) ->
       Channel.remove { name: "TEST DATA - Mock endpoint" }, ->
@@ -1166,7 +1166,7 @@ describe "e2e Integration Tests", ->
         client.save (error, newAppDoc) ->
           # Create mock endpoint to forward requests to
           mockServer1 = testUtils.createMockServer 200, 'target1', 1233, ->
-            mockServer2 = testUtils.createMockServer 200, 'target2', 1234, done
+            mockServer2 = testUtils.createMockServer 200, 'target2', 1234, -> done()
 
     after (done) ->
       Channel.remove { name: "TEST DATA - Mock endpoint 1" }, ->
@@ -1302,7 +1302,7 @@ describe "e2e Integration Tests", ->
         client.save (error, newAppDoc) ->
           # Create mock endpoint to forward requests to
           mockServer1 = testUtils.createMockServer 200, 'target1', 1233, ->
-            mockServer2 = testUtils.createMockServer 200, 'target2', 1234, done
+            mockServer2 = testUtils.createMockServer 200, 'target2', 1234, -> done()
 
     after (done) ->
       Channel.remove { name: "TEST DATA - Mock endpoint 1" }, ->

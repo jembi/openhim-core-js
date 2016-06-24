@@ -20,8 +20,9 @@ exports.createMockServer = (resStatusCode, resBody, port, callback, requestCallb
     res.writeHead resStatusCode, {"Content-Type": "text/plain"}
     res.end resBody
 
-  mockServer.listen port, callback
+  mockServer.listen port, -> callback mockServer
   mockServer.on "request", requestCallback
+  return mockServer
 
 exports.createMockServerForPost = (successStatusCode, errStatusCode, bodyToMatch) ->
   return http.createServer (req, res) ->

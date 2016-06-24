@@ -5,18 +5,19 @@ Schema = mongoose.Schema
 ContactUserDef = require('./contactGroups').ContactUserDef
 
 RouteDef =
-  "name":           type: String, required: true
-  "secured":        Boolean
-  "host":           type: String, required: true
-  "port":           type: Number, required: true, min: 0, max: 65536
-  "path":           String
-  "pathTransform":  String
-  "primary":        Boolean
-  "username":       String
-  "password":       String
-  "type":           type: String, default: 'http', enum: ['http', 'tcp', 'mllp']
-  "cert":           Schema.Types.ObjectId
-  "status":         type: String, default: 'enabled', enum: ['enabled', 'disabled']
+  "name":               type: String, required: true
+  "secured":            Boolean
+  "host":               type: String, required: true
+  "port":               type: Number, required: true, min: 0, max: 65536
+  "path":               String
+  "pathTransform":      String
+  "primary":            Boolean
+  "username":           String
+  "password":           String
+  "type":               type: String, default: 'http', enum: ['http', 'tcp', 'mllp']
+  "cert":               Schema.Types.ObjectId
+  "status":             type: String, default: 'enabled', enum: ['enabled', 'disabled']
+  "forwardAuthHeader":  type: Boolean, default: false
 
 AlertsDef =
   "status":       type: String, required: true
