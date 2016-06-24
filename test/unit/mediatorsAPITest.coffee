@@ -80,7 +80,18 @@ describe "Mediator API unit tests", ->
       catch err
         errors++
 
-      errors.should.be.exactly 4
+      try
+        mediators.validateConfig(
+          [
+            param: "pass"
+            type: "password"
+          ],
+          pass: true
+        )
+      catch err
+        errors++
+
+      errors.should.be.exactly 5
 
     it "should allow config value if they are the correct type", ->
       mediators.validateConfig(
@@ -111,6 +122,13 @@ describe "Mediator API unit tests", ->
           values: [ "test1", "test2" ]
         ],
         param1: "test2"
+      )
+      mediators.validateConfig(
+        [
+          param: "pass"
+          type: "password"
+        ],
+        pass: "secret123"
       )
 
     it "should allow config that includes the 'map' type", ->

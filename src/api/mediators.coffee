@@ -252,6 +252,10 @@ validateConfigField = (param, def, field) ->
         if paramField not in templateFields
           throw constructError "Field #{paramField} is not defined in template definition for config param #{param}.", 'ValidationError'
 
+    when 'password'
+      if typeof field isnt 'string'
+        throw constructError "Expected config param #{param} to be a string representing a password.", 'ValidationError'
+
 validateConfig = (configDef, config) ->
   # reduce to a single true or false value, start assuming valid
   return Object.keys(config).every (param) ->
