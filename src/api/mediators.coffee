@@ -9,6 +9,36 @@ atna = require 'atna-audit'
 utils = require "../utils"
 auditing = require '../auditing'
 
+mask = '**********'
+
+maskPasswords = (defs, config) ->
+  if not config
+    return
+
+  defs.forEach (d) ->
+    if d.type is 'password' and config[d.param]
+      if d.array
+        config[d.param] = config[d.param].map -> mask
+      else
+        config[d.param] = mask
+    if d.type is 'struct' and config[d.param]
+      maskPasswords d.template, config[d.param]
+
+restoreMaskedPasswords = (defs, maskedConfig, config) ->
+  if not maskedConfig or not config
+    return
+
+  defs.forEach (d) ->
+    if d.type is 'password' and maskedConfig[d.param] and config[d.param]
+      if d.array
+        maskedConfig[d.param].forEach (p, i) ->
+          if p is mask
+            maskedConfig[d.param][i] = config[d.param][i]
+      else
+        if maskedConfig[d.param] is mask
+          maskedConfig[d.param] = config[d.param]
+    if d.type is 'struct' and maskedConfig[d.param] and config[d.param]
+      restoreMaskedPasswords d.template, maskedConfig[d.param], config[d.param]
 
 exports.getAllMediators = ->
   # Must be admin
@@ -17,7 +47,9 @@ exports.getAllMediators = ->
     return
 
   try
-    this.body = yield Mediator.find().exec()
+    m = yield Mediator.find().exec()
+    maskPasswords m.configDefs, m.config
+    this.body = m
   catch err
     logAndSetResponse this, 500, "Could not fetch mediators via the API: #{err}", 'error'
 
@@ -36,6 +68,7 @@ exports.getMediator = (mediatorURN) ->
     if result == null
       this.status = 404
     else
+      maskPasswords result.configDefs, result.config
       this.body = result
   catch err
     logAndSetResponse this, 500, "Could not fetch mediator using UUID #{urn} via the API: #{err}", 'error'
@@ -219,6 +252,10 @@ validateConfigField = (param, def, field) ->
         if paramField not in templateFields
           throw constructError "Field #{paramField} is not defined in template definition for config param #{param}.", 'ValidationError'
 
+    when 'password'
+      if typeof field isnt 'string'
+        throw constructError "Expected config param #{param} to be a string representing a password.", 'ValidationError'
+
 validateConfig = (configDef, config) ->
   # reduce to a single true or false value, start assuming valid
   return Object.keys(config).every (param) ->
@@ -262,6 +299,7 @@ exports.setConfig = (urn) ->
       this.body = 'No mediator found for this urn.'
       return
     try
+      restoreMaskedPasswords mediator.configDefs, config, mediator.config
       validateConfig mediator.configDefs, config
     catch err
       this.status = 400

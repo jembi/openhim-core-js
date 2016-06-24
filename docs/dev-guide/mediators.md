@@ -80,6 +80,7 @@ The `configDefs` property defines an array of configuration definitions that eac
 * `option` - A value from a pre-defined list. If this datatype is use then the `values` property MUST also be used. The `values` property specifies an array of possible values for the parameter.
 * `map` - Key/value pairs. A map is formatted as an object with string values, e.g. `{ "key1": "value1", "key2": "value2" }`. New key/value pairs can be added dynamically.
 * `struct` - A collection of fields that can be of any of type. If a parameter is a struct, then a `template` field MUST be defined. A template is an array with each element defining the individual fields that the struct is made up of. The definition schema is the same as the `configDefs` [schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee) with the exception that a struct may not recursively define other structs.
+* `password` - A string value representing a password or some other protected information. The value of this type will be masked when returned form the OpenHIM API in all but the `heartbeats` API endpoint to reduce the risk of accidental exposure.
 
 A config definition may also specify an `array` property (boolean). If true, then the config can have an array of values. The elements in the array must be of the specified type, e.g. if the config definition is of type `string`, then the config must be an array of strings.
 
@@ -293,17 +294,3 @@ The JSON object returned to the OpenHIM should take the following form:
 A mediator **MAY** opt to send heartbeats to the OpenHIM-core to demonstrate its aliveness. The heartbeats also allow it to recieve user specified configuration data and any changes to that configuration in a near real-time fashion.
 
 The mediator can do this by utilising the mediator heartbeats API endpoint of the OpenHIM-core. You can find [details on this endpoint here](/dev-guide/api-ref.html#mediator-heartbeat-endpoint). This API endpoint, if supported by the medaitor, should always be called once at mediator startup using the `config: true` flag to get the initial startup config for the mediator if it exists. There after the API endpoint should be hit at least every 30s (a good number to work with is every 10s) by the mediator to provide the OpenHIM-core with its heartbeat and so that the medaitor can recieve the latest user config as it becomes available.
-
-### (not yet implemented) Return transaction metrics
-
-In addition to returning transaction metadata, a mediator MAY return transaction metrics about the transaction that is processes. To do this then a mediator MAY add a metrics object to the structured response object. This metrics object should be populated with any metrics that the mediator wishes to report.
-
-The OpenHIM-core must be be setup to use a metrics service for this function to be used. The metrics object MUST be formatted as follows (see https://github.com/jembi/openhim-core-js/issues/104 for more details):
-
-```js
-"metrics": {
-    "<metric_name>": "62", // for metrics that apply to the entire transaction
-    "<orchestration_name>.<metric_name>": "16", // for metrics that apply to a particular orchestration step, the orchestration_name should reference an orchestration in the orchestrations object
-    ...
-}
-```
