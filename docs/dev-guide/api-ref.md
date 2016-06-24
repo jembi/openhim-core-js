@@ -542,6 +542,8 @@ The response code will be `200` if successful.
 
 The response status code will be `200` if successful and the response body will contain an array of mediator objects. See the [mediators schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
 
+**Note:** All password types returned in a mediator's config will be masked. To get view the password, the heartbeat endpoint must be used by a mediator to retrieve config.
+
 #### Add a mediator
 
 `POST /mediators`
@@ -557,6 +559,8 @@ The response code will be `201` is successful.
 where `:urn` is the `urn` property of the mediator to fetch.
 
 The response status code will be `200` if successful and the response body will contain a mediator object. See the [mediator schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
+
+**Note:** All password types returned in a mediator's config will be masked. To get view the password, the heartbeat endpoint must be used by a mediator to retrieve config.
 
 #### Mediator heartbeat endpoint
 
@@ -725,7 +729,7 @@ returns 200 ok with `{ subject: '', issuer: '', validity: '', cert: '<pem string
 
 returns 200 ok with `[ { subject: '', issuer: '', validity: '', cert: '<pem string>' }, ... ]`
 
-#### gets a ca cert by its _id
+#### gets a ca cert by its \_id
 
 `GET keystore/ca/_id`
 
@@ -755,7 +759,7 @@ data `{ cert: '<pem string>' }`
 
 returns 201 ok
 
-#### Removes a ca cert by its _id
+#### Removes a ca cert by its \_id
 
 `DELETE keystore/ca/_id`
 

@@ -80,6 +80,7 @@ The `configDefs` property defines an array of configuration definitions that eac
 * `option` - A value from a pre-defined list. If this datatype is use then the `values` property MUST also be used. The `values` property specifies an array of possible values for the parameter.
 * `map` - Key/value pairs. A map is formatted as an object with string values, e.g. `{ "key1": "value1", "key2": "value2" }`. New key/value pairs can be added dynamically.
 * `struct` - A collection of fields that can be of any of type. If a parameter is a struct, then a `template` field MUST be defined. A template is an array with each element defining the individual fields that the struct is made up of. The definition schema is the same as the `configDefs` [schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee) with the exception that a struct may not recursively define other structs.
+* `password` - A string value representing a password or some other protected information. The value of this type will be masked when returned form the OpenHIM API in all but the `heartbeats` API endpoint to reduce the risk of accidental exposure.
 
 A config definition may also specify an `array` property (boolean). If true, then the config can have an array of values. The elements in the array must be of the specified type, e.g. if the config definition is of type `string`, then the config must be an array of strings.
 
