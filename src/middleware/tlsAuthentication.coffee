@@ -52,7 +52,7 @@ exports.getServerOptions = (mutualTLS, done) ->
 
     else
       return done(new Error 'Keystore does not exist')
-    
+
     if mutualTLS
       exports.getTrustedClientCerts (err, certs) ->
         if err
@@ -75,7 +75,7 @@ exports.getServerOptions = (mutualTLS, done) ->
 clientLookup = (fingerprint, subjectCN, issuerCN) ->
   logger.debug "Looking up client linked to cert with fingerprint #{fingerprint} with subject #{subjectCN} and issuer #{issuerCN}"
   deferred = Q.defer()
-  
+
   Client.findOne certFingerprint: fingerprint, (err, result) ->
     deferred.reject err if err
 
@@ -141,6 +141,8 @@ exports.koaMiddleware = (next) ->
         logger.error "Failed to lookup client: #{err}"
 
       if this.authenticated?
+        if this.authenticated.clientID?
+          this.header['X-OpenHIM-ClientID'] = this.authenticated.clientID
         sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
         this.authenticationType = 'tls'
         yield next

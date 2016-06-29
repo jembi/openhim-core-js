@@ -74,5 +74,7 @@ exports.koaMiddleware = (next) ->
   else
     authenticateUser = Q.denodeify exports.authenticateUser
     yield authenticateUser this
+    if this.authenticated?.clientID?
+      this.header['X-OpenHIM-ClientID'] = this.authenticated.clientID
     sdc.timing "#{domain}.basicAuthMiddleware", startTime if statsdServer.enabled
     yield next
