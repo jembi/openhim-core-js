@@ -44,11 +44,11 @@ exports.getGlobalStatusMetrics = ->
 # getChannelMetrics() function for generating aggregated channel Metrics #
 ##########################################################################
 
-exports.getChannelMetrics = (time, channelId) ->
+exports.getChannelMetrics = (type, channelId) ->
   filtersObject = this.request.query
   userRequesting = this.authenticated
-  results = yield metrics.fetchChannelMetrics time, channelId, userRequesting, filtersObject
-  if time is 'status'
+  results = yield metrics.fetchChannelMetrics type, channelId, userRequesting, filtersObject
+  if type is 'status'
     this.body = results
   else
     this.body = []

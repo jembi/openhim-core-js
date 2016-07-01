@@ -88,7 +88,7 @@ sendReports = (job, flag, done) ->
                 if not data.channel.status? or data.channel.status is 'enabled' or data.data.length isnt 0
                   reportMap[userKey].data.push data
               else
-                logger.info 'should never be here since channels have been pre-fetched'
+                logger.error 'should never be here since channels have been pre-fetched'
 
         # Iterate over reports and send the emails
         for key, report of reportMap
