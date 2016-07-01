@@ -73,3 +73,30 @@ exports.getChannelMetrics = (type, channelId) ->
         ]).format()
 
   return
+
+exports.getMetrics = (channelID, timeSeries) ->
+  console.log 'In metrics!', channelID, timeSeries
+  channels = yield authorisation.getUserViewableChannels this.authenticated
+  channelIDs = channels.map (c) -> c._id
+  console.log channels.length
+  console.log channelIDs
+  console.log channelID, timeSeries
+  if typeof channelID 'string' and not (channelID in channelIDs)
+    console.log 'HERE'
+    this.status = 401
+    return
+  else if typeof channelID 'string'
+    channelIDs = [channelID]
+
+  query = this.request.query
+  console.log query
+  m = yield metrics.calculateMetrics new Date(query.startDate), new Date(query.endDate), null, channelIDs, timeSeries, true
+  console.log 'metrics', m
+
+  if m[0]?._id?.year? # if there are time components
+    m = m.map (item) ->
+      item.timestamp = moment(item._id)
+      return item
+
+  console.log 'setting body'
+  this.body = m

@@ -1,59 +1,69 @@
 Transaction = require('./model/transactions').Transaction
-Channel = require('./model/channels').Channel
-moment = require 'moment'
-logger = require 'winston'
-mongoose = require 'mongoose'
-authorisation = require './api/authorisation'
-Q = require 'q'
 
-# Fetches allowed Channels
-getAllowedChannels = (requestingUser) ->
-  authorisation.getUserViewableChannels requestingUser
-  .then (allowedChannelsArray)->
-
-    allowedChannelIDs = []
-    promises = []
-
-    for channel in allowedChannelsArray
-      do (channel) ->
-        deferred = Q.defer()
-        allowedChannelIDs.push
-          _id: channel._id
-          name: channel.name
-          status: channel.status
-
-        deferred.resolve()
-        promises.push deferred.promise
-
-    (Q.all promises).then ->
-      allowedChannelIDs
-
-# Fetches allowed Channel IDs
-getAllowedChannelIDs = (requestingUser) ->
-  authorisation.getUserViewableChannels requestingUser
-  .then (allowedChannelsArray)->
-
-    allowedChannelIDs = []
-    promises = []
-
-    for channel in allowedChannelsArray
-      do (channel) ->
-        deferred = Q.defer()
-        allowedChannelIDs.push channel._id
-
-        deferred.resolve()
-        promises.push deferred.promise
-
-    (Q.all promises).then ->
-      allowedChannelIDs
-
-exports.getAllowedChannels = getAllowedChannels
-exports.getAllowedChannelIDs = getAllowedChannelIDs
-
+# Calculates transaction metrics
+#
+# @startDate {Date} a timestamp representing the start of the range to calculate
+#                   metrics from (required)
+# @startDate {Date} a timestamp representing the end of the range to calculate
+#                   metrics to (required)
+# @transactionFilter {Object} a mongodb filter object to further restrict the
+#                             transactions collection (nullable)
+# @channelIDs {Array} an array of channel IDs to filter by, if not set all
+#                     channels will be considered (nullable)
+# @timeSeries {String} one of 'minute', 'hour', 'day', 'week', 'month', 'year'.
+#                      If set the metrics will be grouped into a periods of the
+#                      stated duration, otherwise, metrics for the entire period
+#                      will be returned (nullabe)
+# @groupByChannel {Boolean} if true the metrics will be grouped by each
+#                           particular channel that returns results (nullable)
+# @returns {Array} an array of metric objects for each grouping (timeseries
+#                  and/or channel) dependingg on the parameters that are set
+# e.g. metrics.calculateMetrics new Date("2014-07-15T00:00:00.000Z"),
+# new Date("2014-07-19T00:00:00.000Z"), null, null, 'day', true
+# [
+#   {
+#     _id: {
+#       channelID: 111111111111111111111111,
+#       day: 18,
+#       week: 28,
+#       month: 7,
+#       year: 2014
+#     },
+#     total: 1,
+#     aveResp: 100,
+#     minResp: 100,
+#     maxResp: 100,
+#     failed: 0,
+#     successful: 0,
+#     processing: 1,
+#     completed: 0,
+#     completedWErrors: 0
+#   }, {
+#     _id:
+#       {
+#         channelID: 222222222222222222222222,
+#         day: 18,
+#         week: 28,
+#         month: 7,
+#         year: 2014 },
+#     total: 1,
+#     aveResp: 200,
+#     minResp: 200,
+#     maxResp: 200,
+#     failed: 0,
+#     successful: 0,
+#     processing: 0,
+#     completed: 1,
+#     completedWErrors: 0
+#   }
+# ]
 exports.calculateMetrics = (startDate, endDate, transactionFilter, channelIDs, timeSeries, groupByChannels) ->
+  console.log 'beginning'
   if not (startDate instanceof Date) or not (endDate instanceof Date)
     return new Promise (resolve, reject) ->
       reject new Error 'startDate and endDate must be provided and be of type Date'
+
+  console.log 'Calc metrics'
 
   match =
     "request.timestamp":
@@ -65,6 +75,8 @@ exports.calculateMetrics = (startDate, endDate, transactionFilter, channelIDs, t
   if channelIDs
     match.channelID =
       $in: channelIDs
+
+  console.log match
 
   group =
     _id: {}
@@ -111,4 +123,5 @@ exports.calculateMetrics = (startDate, endDate, transactionFilter, channelIDs, t
         group._id.year = $year: "$request.timestamp"
 
   pipeline = [ { $match: match }, { $group: group } ]
+  console.log JSON.stringify(pipeline, null, 2)
   return Transaction.aggregate(pipeline).exec()

@@ -139,6 +139,7 @@ describe "API Metrics Tests", ->
                             transaction8.save (err) ->
                               transaction9.save (err) ->
                                 transaction10.save (err) ->
+                                  console.log 'saved transactions'
                                   auth.setupTestUsers (err) ->
                                     return done err if err
                                     config.statsd.enabled = false
@@ -249,3 +250,36 @@ describe "API Metrics Tests", ->
             res.body[0].completed.should.equal 1
             res.body[0].completedWErrors.should.equal 0
             done()
+
+    describe '*getMetrics()', ->
+
+      it 'should fetch metrics and return a 200', (done) ->
+        request "https://localhost:8080"
+          .get "/metrics?startDate=2014-07-18T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z"
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              res.body.length.should.be.greaterThan 0
+              done()
+
+      it 'should fetch metrics for a particular channel and return a 200', (done) ->
+        request "https://localhost:8080"
+          .get "/metrics/111111111111111111111111?startDate=2014-07-18T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z"
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .expect(200)
+          .end (err, res) ->
+            if err
+              console.log err.stack
+              done err
+            else
+              res.body.length.should.be.greaterThan 0
+              done()
