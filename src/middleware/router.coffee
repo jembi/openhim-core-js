@@ -94,6 +94,7 @@ handleServerError = (ctx, err) ->
   ctx.response.status = 500
   ctx.response.timestamp = new Date()
   ctx.response.body = "An internal server error occurred"
+  ctx.internalServerError = true
   logger.error "Internal server error occured: #{err} "
   logger.error "#{err.stack}" if err.stack
 

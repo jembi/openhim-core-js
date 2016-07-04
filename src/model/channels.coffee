@@ -33,34 +33,36 @@ RewriteRuleDef =
   "pathTransform":  String
 
 ChannelDef =
-  "name":               type: String, required: true
-  "description":        String
-  "urlPattern":         type: String, required: true
-  "type":               type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
-  "priority":           type: Number, min: 1
-  "tcpPort":            type: Number, min: 0, max: 65536
-  "tcpHost":            String
-  "pollingSchedule":    String
-  "requestBody":        Boolean
-  "responseBody":       Boolean
-  "allow":              [type: String, required: true]
-  "whitelist" :         [String]
-  "authType":           type: String, default: 'private', enum: ['private', 'public']
-  "routes":             [RouteDef]
-  "matchContentTypes":  [String]
-  "matchContentRegex":  String
-  "matchContentXpath":  String
-  "matchContentJson":   String
-  "matchContentValue":  String
-  "properties":         [Object]
-  "txViewAcl":          [String]
-  "txViewFullAcl":      [String]
-  "txRerunAcl":         [String]
-  "alerts":             [AlertsDef]
-  "status":             type: String, default: 'enabled', enum: ['enabled', 'disabled', 'deleted']
-  "rewriteUrls":        type: Boolean, default: false
-  "addAutoRewriteRules": type: Boolean, default: true
-  "rewriteUrlsConfig":  [RewriteRuleDef]
+  "name":                   type: String, required: true
+  "description":            String
+  "urlPattern":             type: String, required: true
+  "type":                   type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
+  "priority":               type: Number, min: 1
+  "tcpPort":                type: Number, min: 0, max: 65536
+  "tcpHost":                String
+  "pollingSchedule":        String
+  "requestBody":            Boolean
+  "responseBody":           Boolean
+  "allow":                  [type: String, required: true]
+  "whitelist" :             [String]
+  "authType":               type: String, default: 'private', enum: ['private', 'public']
+  "routes":                 [RouteDef]
+  "matchContentTypes":      [String]
+  "matchContentRegex":      String
+  "matchContentXpath":      String
+  "matchContentJson":       String
+  "matchContentValue":      String
+  "properties":             [Object]
+  "txViewAcl":              [String]
+  "txViewFullAcl":          [String]
+  "txRerunAcl":             [String]
+  "alerts":                 [AlertsDef]
+  "status":                 type: String, default: 'enabled', enum: ['enabled', 'disabled', 'deleted']
+  "rewriteUrls":            type: Boolean, default: false
+  "addAutoRewriteRules":     type: Boolean, default: true
+  "rewriteUrlsConfig":      [RewriteRuleDef]
+  "autoRetryEnabled":       type: Boolean, default: false
+  "autoRetryPeriodMinutes": type: Number, default: 60, min: 1
 
 # Expose the route schema
 exports.RouteDef = RouteDef

@@ -159,7 +159,11 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
       ctx.transactionStatus = tx.status
 
       logger.info "Final status for transaction #{tx._id} : #{tx.status}"
-      transactions.Transaction.findByIdAndUpdate transactionId, {status: tx.status}, { },  (err,tx) ->
+      update = {
+        status: tx.status
+        internalServerError: ctx.internalServerError
+      }
+      transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err,tx) ->
         tx.save
         callback tx
 

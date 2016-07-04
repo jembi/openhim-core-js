@@ -38,17 +38,18 @@ RouteMetadataDef =
 
 # Trasnaction schema
 TransactionSchema = new Schema
-  "clientID":       Schema.Types.ObjectId
-  "clientIP":       String
-  "parentID":       Schema.Types.ObjectId
-  "childIDs":       [Schema.Types.ObjectId]
-  "channelID":      type: Schema.Types.ObjectId, index: true
-  "request":        RequestDef
-  "response":       ResponseDef
-  "routes":         [RouteMetadataDef]
-  "orchestrations": [OrchestrationMetadataDef]
-  "properties":     Object
-  "canRerun":       type: Boolean, default: true
+  "clientID":             Schema.Types.ObjectId
+  "clientIP":             String
+  "parentID":             Schema.Types.ObjectId
+  "childIDs":             [Schema.Types.ObjectId]
+  "channelID":            type: Schema.Types.ObjectId, index: true
+  "request":              RequestDef
+  "response":             ResponseDef
+  "routes":               [RouteMetadataDef]
+  "orchestrations":       [OrchestrationMetadataDef]
+  "properties":           Object
+  "canRerun":             type: Boolean, default: true
+  "internalServerError":  Boolean
   "status":
     type:     String
     required: true
