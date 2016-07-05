@@ -49,6 +49,7 @@ TransactionSchema = new Schema
   "orchestrations":       [OrchestrationMetadataDef]
   "properties":           Object
   "canRerun":             type: Boolean, default: true
+  "wasRerun":             type: Boolean, default: false
   "internalServerError":  Boolean
   "status":
     type:     String
@@ -60,3 +61,14 @@ TransactionSchema.index "request.timestamp"
 
 #compile schema into Model
 exports.Transaction = connectionDefault.model 'Transaction', TransactionSchema
+
+exports.Transaction.collection.createIndex({
+  'request.timestamp': 1
+  channelID: 1
+},
+{
+  name: 'transaction.autoRetry'
+  partialFilterExpression:
+    internalServerError: true
+    wasRerun: false
+})

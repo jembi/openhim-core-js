@@ -25,11 +25,7 @@ findTransactions = (channel, callback) ->
       ,
         internalServerError: true
       ,
-        $or: [
-            childIDs: $exists: false
-          ,
-            childIDs: $size: 0
-        ]
+        wasRerun: false
     ]
 
   logger.debug "Executing query transactions.find(#{JSON.stringify query})"

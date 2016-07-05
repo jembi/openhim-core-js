@@ -56,6 +56,7 @@ retryTransaction3 = new Transaction
   status: 'Failed'
   internalServerError: true
   childIDs: ['bbb908908ccc98cc1d0888aa']
+  wasRerun: true
 
 retryTransaction4 = new Transaction
   request: {

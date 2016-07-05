@@ -15,6 +15,7 @@ sdc = new SDC statsdServer
 exports.updateOriginalTransaction = (ctx, done) ->
   Transaction.findOne { _id: ctx.parentID }, (err, transaction) ->
     transaction.childIDs.push ctx.transactionId
+    transaction.wasRerun = true
     
     transaction.save (err, tx) ->
       if err
