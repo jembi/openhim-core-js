@@ -14,14 +14,16 @@ utils = require './utils'
 getChannels = (callback) -> Channel.find autoRetryEnabled: true, status: 'enabled', callback
 
 findTransactions = (channel, callback) ->
-  from = moment().subtract 2*channel.autoRetryPeriodMinutes, 'minutes'
-  to = moment().subtract channel.autoRetryPeriodMinutes, 'minutes'
+  to = moment().subtract channel.autoRetryPeriodMinutes-1, 'minutes'
 
   query =
     $and: [
         'request.timestamp':
-          $gte: from.toDate()
           $lte: to.toDate()
+      ,
+        channelID: channel._id
+      ,
+        internalServerError: true
       ,
         $or: [
             childIDs: $exists: false
@@ -30,6 +32,7 @@ findTransactions = (channel, callback) ->
         ]
     ]
 
+  logger.debug "Executing query transactions.find(#{JSON.stringify query})"
   Transaction.find query, _id: 1, callback
 
 createRerunTask = (transactionIDs, callback) ->

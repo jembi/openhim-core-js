@@ -57,6 +57,15 @@ retryTransaction3 = new Transaction
   internalServerError: true
   childIDs: ['bbb908908ccc98cc1d0888aa']
 
+retryTransaction4 = new Transaction
+  request: {
+    path: '/sample/api',
+    method: 'GET',
+    timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
+  }
+  status: 'Successful'
+  internalServerError: false
+
 
 describe "Auto Retry Task", ->
   afterEach (done) ->
@@ -73,6 +82,8 @@ describe "Auto Retry Task", ->
       delete retryTransaction2._id
       retryTransaction3.isNew = true
       delete retryTransaction3._id
+      retryTransaction4.isNew = true
+      delete retryTransaction4._id
       done()
 
 
@@ -110,9 +121,10 @@ describe "Auto Retry Task", ->
             results[0]._id.equals(retryTransaction1._id).should.be.true
             done()
 
-    it "should return transactions that are too new", (done) ->
+    it "should not return transactions that are too new", (done) ->
       retryChannel.save ->
         retryTransaction1.channelID = retryChannel._id
+        retryTransaction2.channelID = retryChannel._id
         retryTransaction1.save -> retryTransaction2.save ->
           autoRetry.findTransactions retryChannel, (err, results) ->
             # should not return retryTransaction2 (too new)
@@ -120,9 +132,10 @@ describe "Auto Retry Task", ->
             results[0]._id.equals(retryTransaction1._id).should.be.true
             done()
 
-    it "should return transactions that have already been rerun", (done) ->
+    it "should not return transactions that have already been rerun", (done) ->
       retryChannel.save ->
         retryTransaction1.channelID = retryChannel._id
+        retryTransaction3.channelID = retryChannel._id
         retryTransaction1.save -> retryTransaction3.save ->
           autoRetry.findTransactions retryChannel, (err, results) ->
             # should not return retryTransaction3 (already rerun)
@@ -139,6 +152,17 @@ describe "Auto Retry Task", ->
             should.exist results[0]._id
             should.not.exist results[0].request.url
             should.not.exist results[0].path
+            done()
+
+    it "should not return transactions that succeeded", (done) ->
+      retryChannel.save ->
+        retryTransaction1.channelID = retryChannel._id
+        retryTransaction4.channelID = retryChannel._id
+        retryTransaction1.save -> retryTransaction4.save ->
+          autoRetry.findTransactions retryChannel, (err, results) ->
+            # should not return retryTransaction4 (succeeded)
+            results.length.should.be.exactly 1
+            results[0]._id.equals(retryTransaction1._id).should.be.true
             done()
 
   describe ".createRerunTask", ->
