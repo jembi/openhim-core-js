@@ -18,6 +18,8 @@ RouteDef =
   "cert":               Schema.Types.ObjectId
   "status":             type: String, default: 'enabled', enum: ['enabled', 'disabled']
   "forwardAuthHeader":  type: Boolean, default: false
+  "mediator":           String # if present indicates that the route is linked to a specific mediator (URN)
+  "mediatorEndpoint":   String
 
 AlertsDef =
   "status":       type: String, required: true
