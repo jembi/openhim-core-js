@@ -14,10 +14,10 @@ if [[ -z $server ]]; then
     server="https://localhost:8080"
 fi
 
-sync="${server}/visualizer/sync"
-eventsBase="${server}/visualizer/events"
+sync="${server}/heartbeat"
+eventsBase="${server}/events"
 
-serverNow=`./openhim-api-curl.sh $username $pass -s $sync | jq -M '.now'`
+serverNow=`curl -s $sync | jq -M '.now'`
 lastCheck=`node -e 'console.log(Date.now())'`
 diff=$(($serverNow - $lastCheck))
 

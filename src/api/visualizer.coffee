@@ -1,11 +1,21 @@
 Event = require('../model/events').Event
 utils = require "../utils"
+authorisation = require './authorisation'
 
+###
+# DEPRECATED
+#
+# superseded by /events
+###
 
 exports.getLatestEvents = (receivedTime) ->
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to events denied.", 'info'
+    return
+
   try
     rtDate = new Date(Number(receivedTime))
-    results = yield Event.find({ 'created': { '$gte': rtDate } }).sort({ 'visualizerTimestamp': 1 }).exec()
+    results = yield Event.find({ 'created': { '$gte': rtDate } }).sort({ 'normalizedTimestamp': 1 }).exec()
 
     formattedResults = []
 
@@ -13,8 +23,8 @@ exports.getLatestEvents = (receivedTime) ->
       fEvent =
         created: event.created
         ev: event.event
-        status: event.visualizerStatus
-        ts: event.visualizerTimestamp
+        status: event.statusType
+        ts: event.normalizedTimestamp
 
       if event.route is 'primary'
         fEvent.comp = event.name
@@ -24,8 +34,8 @@ exports.getLatestEvents = (receivedTime) ->
           created: event.created
           comp: "channel-#{event.name}"
           ev: event.event
-          status: event.visualizerStatus
-          ts: event.visualizerTimestamp
+          status: event.statusType
+          ts: event.normalizedTimestamp
       else
         fEvent.comp = "#{event.route}-#{event.name}"
 

@@ -12,6 +12,7 @@ channels = require './api/channels'
 tasks = require './api/tasks'
 contactGroups = require './api/contactGroups'
 visualizer = require './api/visualizer'
+events = require './api/events'
 Q = require 'q'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
@@ -93,7 +94,9 @@ exports.setupApp = (done) ->
   app.use route.put '/tasks/:taskId', tasks.updateTask
   app.use route.delete '/tasks/:taskId', tasks.removeTask
 
+  # DEPRECATED use /events/:receivedTime
   app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
+  # DEPRECATED use /heartbeat
   app.use route.get '/visualizer/sync', visualizer.sync
 
   # -- New metrics Routes --
@@ -134,6 +137,9 @@ exports.setupApp = (done) ->
 
   # Logs endpoint
   app.use route.get '/logs', logs.getLogs
+
+  # Events endpoint
+  app.use route.get '/events/:receivedTime', events.getLatestEvents
 
   # Return the result
   done(app)
