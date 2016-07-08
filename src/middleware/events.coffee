@@ -70,6 +70,8 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       route: prefix
       event: 'start'
       name: route.name
+      mediator: ctx.mediator?.urn
+      mediatorEndpoint: ctx.mediator?.endpoint
 
     routeStatus = 'success'
     if 500 <= route.response.status <= 599
@@ -85,6 +87,8 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       name: route.name
       status: route.response.status
       statusType: routeStatus
+      mediator: ctx.mediator?.urn
+      mediatorEndpoint: ctx.mediator?.endpoint
 
 exports.storeEvents = storeEvents = (ctx, done) ->
   logger.info "Storing events for transaction: #{ctx.transactionId}"
@@ -102,6 +106,8 @@ exports.storeEvents = storeEvents = (ctx, done) ->
     route: 'primary'
     event: 'start'
     name: ctx.authorisedChannel.name
+    mediator: ctx.mediator?.urn
+    mediatorEndpoint: ctx.mediator?.endpoint
 
   if ctx.routes
     # find TS difference
@@ -133,6 +139,8 @@ exports.storeEvents = storeEvents = (ctx, done) ->
     name: ctx.authorisedChannel.name
     status: ctx.response.status
     statusType: status
+    mediator: ctx.mediator?.urn
+    mediatorEndpoint: ctx.mediator?.endpoint
 
   now = new Date
   event.created = now for event in trxEvents

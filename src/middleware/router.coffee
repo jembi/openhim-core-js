@@ -141,6 +141,10 @@ sendRequestToRoutes = (ctx, routes, next) ->
           delete options.headers.host
 
         if route.primary
+          if route.mediator
+            ctx.mediator =
+              urn: route.mediator,
+              endpoint: route.mediatorEndpoint
           promise = sendRequest(ctx, route, options)
           .then (response) ->
             logger.info "executing primary route : #{route.name}"
