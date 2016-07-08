@@ -34,8 +34,6 @@ describe 'Events API Integration Tests', ->
           host: 'localhost'
           port: 1232
           primary: true
-          mediator: 'urn:mediator:test'
-          mediatorEndpoint: 'Mediator Endpoint'
         }, {
           name: secRouteName
           host: 'localhost'
@@ -178,37 +176,37 @@ describe 'Events API Integration Tests', ->
 
         setTimeout validate, 100 * global.testTimeoutFactor
 
-  it 'should add mediator info', (done) ->
-    startTime = new Date()
+  #it 'should add mediator info', (done) ->
+    #startTime = new Date()
 
-    request('http://localhost:5001')
-      .get('/test/mock')
-      .auth('testApp', 'password')
-      .expect(200)
-      .end (err, res) ->
-        return done err if err
+    #request('http://localhost:5001')
+      #.get('/test/mock')
+      #.auth('testApp', 'password')
+      #.expect(200)
+      #.end (err, res) ->
+        #return done err if err
 
-        validate = ->
-          request('https://localhost:8080')
-            .get("/events/#{+startTime}")
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
-            .end (err, res) ->
-              return done err if err
+        #validate = ->
+          #request('https://localhost:8080')
+            #.get("/events/#{+startTime}")
+            #.set('auth-username', testUtils.rootUser.email)
+            #.set('auth-ts', authDetails.authTS)
+            #.set('auth-salt', authDetails.authSalt)
+            #.set('auth-token', authDetails.authToken)
+            #.end (err, res) ->
+              #return done err if err
 
-              res.body.should.have.property 'events'
-              res.body.events.length.should.be.exactly 4
+              #res.body.should.have.property 'events'
+              #res.body.events.length.should.be.exactly 4
 
-              seen = false
-              for ev in res.body.events
-                if ev.route is 'primary'
-                  ev.mediator.should.be.exactly 'urn:mediator:test'
-                  ev.mediatorEndpoint.should.be.exactly 'Mediator Endpoint'
-                  seen = true
+              #seen = false
+              #for ev in res.body.events
+                #if ev.route is 'primary'
+                  #ev.mediator.should.be.exactly 'urn:mediator:test'
+                  #ev.mediatorEndpoint.should.be.exactly 'Mediator Endpoint'
+                  #seen = true
 
-              (seen).should.be.true()
-              done()
+              #(seen).should.be.true()
+              #done()
 
-        setTimeout validate, 100 * global.testTimeoutFactor
+        #setTimeout validate, 100 * global.testTimeoutFactor
