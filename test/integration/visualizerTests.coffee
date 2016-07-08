@@ -89,27 +89,30 @@ describe 'Visualizer Integration Tests', ->
       .end (err, res) ->
         return done err if err
 
-        request('https://localhost:8080')
-          .get("/visualizer/events/#{+startTime}")
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .end (err, res) ->
-            return done err if err
+        validate = ->
+          request('https://localhost:8080')
+            .get("/visualizer/events/#{+startTime}")
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .end (err, res) ->
+              return done err if err
 
-            res.body.should.have.property 'events'
-            res.body.events.length.should.be.exactly 6
+              res.body.should.have.property 'events'
+              res.body.events.length.should.be.exactly 6
 
-            events = (res.body.events.map (event) -> "#{event.comp}-#{event.ev}")
-            events.should.containEql "#{channelName}-start"
-            events.should.containEql "#{channelName}-end"
-            events.should.containEql "channel-#{channelName}-start"
-            events.should.containEql "channel-#{channelName}-end"
-            events.should.containEql "route-#{secRouteName}-start"
-            events.should.containEql "route-#{secRouteName}-end"
+              events = (res.body.events.map (event) -> "#{event.comp}-#{event.ev}")
+              events.should.containEql "#{channelName}-start"
+              events.should.containEql "#{channelName}-end"
+              events.should.containEql "channel-#{channelName}-start"
+              events.should.containEql "channel-#{channelName}-end"
+              events.should.containEql "route-#{secRouteName}-start"
+              events.should.containEql "route-#{secRouteName}-end"
 
-            done()
+              done()
+
+        setTimeout validate, 100 * global.testTimeoutFactor
 
   it "should sort visualizer events according to 'ts' field ascending", (done) ->
     startTime = new Date()
@@ -121,23 +124,26 @@ describe 'Visualizer Integration Tests', ->
       .end (err, res) ->
         return done err if err
 
-        request('https://localhost:8080')
-          .get("/visualizer/events/#{+startTime}")
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .end (err, res) ->
-            return done err if err
+        validate = ->
+          request('https://localhost:8080')
+            .get("/visualizer/events/#{+startTime}")
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .end (err, res) ->
+              return done err if err
 
-            res.body.should.have.property 'events'
-            res.body.events.length.should.be.exactly 6
+              res.body.should.have.property 'events'
+              res.body.events.length.should.be.exactly 6
 
-            (res.body.events.map (event) -> event.ts).reduce (a, b) ->
-              should(a <= b).be.true()
-              return b
+              (res.body.events.map (event) -> event.ts).reduce (a, b) ->
+                should(a <= b).be.true()
+                return b
 
-            done()
+              done()
+
+        setTimeout validate, 100 * global.testTimeoutFactor
 
   it 'should set the transaction status as a string', (done) ->
     startTime = new Date()
@@ -149,19 +155,22 @@ describe 'Visualizer Integration Tests', ->
       .end (err, res) ->
         return done err if err
 
-        request('https://localhost:8080')
-          .get("/visualizer/events/#{+startTime}")
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .end (err, res) ->
-            return done err if err
+        validate = ->
+          request('https://localhost:8080')
+            .get("/visualizer/events/#{+startTime}")
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .end (err, res) ->
+              return done err if err
 
-            res.body.should.have.property 'events'
-            res.body.events.length.should.be.exactly 6
+              res.body.should.have.property 'events'
+              res.body.events.length.should.be.exactly 6
 
-            events = (res.body.events.map (event) -> event.status)
-            events.should.containEql 'success'
+              events = (res.body.events.map (event) -> event.status)
+              events.should.containEql 'success'
 
-            done()
+              done()
+
+        setTimeout validate, 100 * global.testTimeoutFactor
