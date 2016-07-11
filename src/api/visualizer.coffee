@@ -21,7 +21,7 @@ exports.getLatestEvents = (receivedTime) ->
 
     for event in results
       fEvent =
-        comp: "#{event.route}-#{event.name}"
+        comp: "#{event.type}-#{event.name}"
         created: event.created
         ev: event.event
         status: event.statusType

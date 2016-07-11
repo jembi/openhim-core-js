@@ -112,7 +112,7 @@ describe 'Events API Integration Tests', ->
               for ev in res.body
                 ev.channelID.should.be.exactly channel1._id
 
-              events = (res.body.events.map (event) -> "#{event.route}-#{event.name}-#{event.event}")
+              events = (res.body.events.map (event) -> "#{event.type}-#{event.name}-#{event.event}")
               events.should.containEql "channel-#{channelName}-start"
               events.should.containEql "channel-#{channelName}-end"
               events.should.containEql "primary-#{primaryRouteName}-start"
@@ -210,7 +210,7 @@ describe 'Events API Integration Tests', ->
 
               seen = false
               for ev in res.body.events
-                if ev.route is 'primary'
+                if ev.type is 'primary'
                   ev.mediator.should.be.exactly 'urn:mediator:test'
                   seen = true
 

@@ -14,7 +14,7 @@ EventsSchema = new Schema
   "created":              type: Date, default: Date.now, expires: '1h'
   "channelID":            type: Schema.Types.ObjectId, required: true
   "transactionID":        type: Schema.Types.ObjectId, required: true
-  "route":                type: String, enum: ['channel', 'primary', 'route', 'orchestration']
+  "type":                 type: String, enum: ['channel', 'primary', 'route', 'orchestration']
   "event":                type: String, enum: ['start', 'end']
   "name":                 String
   "status":               Number

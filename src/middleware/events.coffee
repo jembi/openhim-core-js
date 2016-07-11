@@ -67,7 +67,7 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       channelID: ctx.authorisedChannel._id
       transactionID: ctx.transactionId
       normalizedTimestamp: startTS
-      route: prefix
+      type: prefix
       event: 'start'
       name: route.name
 
@@ -80,7 +80,7 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       channelID: ctx.authorisedChannel._id
       transactionID: ctx.transactionId
       normalizedTimestamp: endTS
-      route: prefix
+      type: prefix
       event: 'end'
       name: route.name
       status: route.response.status
@@ -100,7 +100,7 @@ exports.storeEvents = storeEvents = (ctx, done) ->
       channelID: ctx.authorisedChannel._id
       transactionID: ctx.transactionId
       normalizedTimestamp: startTS
-      route: 'channel'
+      type: 'channel'
       event: 'start'
       name: ctx.authorisedChannel.name
 
@@ -109,7 +109,7 @@ exports.storeEvents = storeEvents = (ctx, done) ->
       channelID: ctx.authorisedChannel._id
       transactionID: ctx.transactionId
       normalizedTimestamp: startTS
-      route: 'primary'
+      type: 'primary'
       event: 'start'
       name: ctx.primaryRoute.name
       mediator: ctx.mediatorResponse?['x-mediator-urn']
@@ -140,7 +140,7 @@ exports.storeEvents = storeEvents = (ctx, done) ->
       channelID: ctx.authorisedChannel._id
       transactionID: ctx.transactionId
       normalizedTimestamp: endTS + normalizationBuffer
-      route: 'primary'
+      type: 'primary'
       event: 'end'
       name: ctx.primaryRoute.name
       status: ctx.response.status
@@ -152,7 +152,7 @@ exports.storeEvents = storeEvents = (ctx, done) ->
       channelID: ctx.authorisedChannel._id
       transactionID: ctx.transactionId
       normalizedTimestamp: endTS + normalizationBuffer
-      route: 'channel'
+      type: 'channel'
       event: 'end'
       name: ctx.authorisedChannel.name
       status: ctx.response.status

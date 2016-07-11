@@ -333,7 +333,7 @@ describe "API Integration Tests", ->
                 Event.find {}, (err, events) ->
                   return done err if err
                   events.length.should.be.exactly 4 #2+2 start/end for each of async route and orchestration
-                  eventRoutes = events.map (ev) -> ev.route
+                  eventRoutes = events.map (ev) -> ev.type
                   eventRoutes.should.containEql 'route'
                   eventRoutes.should.containEql 'orchestration'
                   done()
