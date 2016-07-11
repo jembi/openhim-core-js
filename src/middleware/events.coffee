@@ -157,7 +157,6 @@ exports.storeEvents = storeEvents = (ctx, done) ->
       name: ctx.authorisedChannel.name
       status: ctx.response.status
       statusType: status
-      mediator: ctx.mediatorResponse?['x-mediator-urn']
 
   now = new Date
   event.created = now for event in trxEvents
