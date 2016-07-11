@@ -174,7 +174,7 @@ describe "API Integration Tests", ->
             validateEvents = ->
               Event.find {}, (err, events) ->
                 return done err if err
-                events.length.should.be.exactly 4
+                events.length.should.be.exactly 2
                 for ev in events
                   ev.channelID.toString().should.be.exactly channel._id.toString()
                 done()
@@ -332,9 +332,8 @@ describe "API Integration Tests", ->
               validateEvents = ->
                 Event.find {}, (err, events) ->
                   return done err if err
-                  events.length.should.be.exactly 6 #2+2+2 start/end for each of primary, async route and orchestration
+                  events.length.should.be.exactly 4 #2+2 start/end for each of async route and orchestration
                   eventRoutes = events.map (ev) -> ev.route
-                  eventRoutes.should.containEql 'primary'
                   eventRoutes.should.containEql 'route'
                   eventRoutes.should.containEql 'orchestration'
                   done()

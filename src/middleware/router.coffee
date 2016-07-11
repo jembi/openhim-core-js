@@ -141,6 +141,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
           delete options.headers.host
 
         if route.primary
+          ctx.primaryRoute = route
           promise = sendRequest(ctx, route, options)
           .then (response) ->
             logger.info "executing primary route : #{route.name}"

@@ -94,15 +94,25 @@ exports.storeEvents = storeEvents = (ctx, done) ->
   endTS = formatTS ctx.response.timestamp
   if startTS > endTS then startTS = endTS
 
-  # Transaction end for primary route
-  trxEvents.push
-    channelID: ctx.authorisedChannel._id
-    transactionID: ctx.transactionId
-    normalizedTimestamp: startTS
-    route: 'primary'
-    event: 'start'
-    name: ctx.authorisedChannel.name
-    mediator: ctx.mediatorResponse?['x-mediator-urn']
+  if ctx.primaryRoute
+    # Transaction start for channel
+    trxEvents.push
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      normalizedTimestamp: startTS
+      route: 'channel'
+      event: 'start'
+      name: ctx.authorisedChannel.name
+
+    # Transaction start for primary route
+    trxEvents.push
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      normalizedTimestamp: startTS
+      route: 'primary'
+      event: 'start'
+      name: ctx.primaryRoute.name
+      mediator: ctx.mediatorResponse?['x-mediator-urn']
 
   if ctx.routes
     # find TS difference
@@ -125,16 +135,29 @@ exports.storeEvents = storeEvents = (ctx, done) ->
     status = 'error'
 
   # Transaction end for primary route
-  trxEvents.push
-    channelID: ctx.authorisedChannel._id
-    transactionID: ctx.transactionId
-    normalizedTimestamp: endTS + normalizationBuffer
-    route: 'primary'
-    event: 'end'
-    name: ctx.authorisedChannel.name
-    status: ctx.response.status
-    statusType: status
-    mediator: ctx.mediatorResponse?['x-mediator-urn']
+  if ctx.primaryRoute
+    trxEvents.push
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      normalizedTimestamp: endTS + normalizationBuffer
+      route: 'primary'
+      event: 'end'
+      name: ctx.primaryRoute.name
+      status: ctx.response.status
+      statusType: status
+      mediator: ctx.mediatorResponse?['x-mediator-urn']
+
+    # Transaction end for channel
+    trxEvents.push
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      normalizedTimestamp: endTS + normalizationBuffer
+      route: 'channel'
+      event: 'end'
+      name: ctx.authorisedChannel.name
+      status: ctx.response.status
+      statusType: status
+      mediator: ctx.mediatorResponse?['x-mediator-urn']
 
   now = new Date
   event.created = now for event in trxEvents

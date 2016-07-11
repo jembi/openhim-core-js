@@ -16,6 +16,7 @@ describe 'Events API Integration Tests', ->
   authDetails = {}
 
   channelName = 'TEST DATA - Mock endpoint'
+  primaryRouteName = 'test route'
   secRouteName = 'Test secondary route'
   mockResponse = 'test for events'
 
@@ -30,7 +31,7 @@ describe 'Events API Integration Tests', ->
       allow: [ 'PoC' ]
       routes: [
         {
-          name: 'test route'
+          name: primaryRouteName
           host: 'localhost'
           port: 1232
           primary: true
@@ -100,14 +101,16 @@ describe 'Events API Integration Tests', ->
               return done err if err
 
               res.body.should.have.property 'events'
-              res.body.events.length.should.be.exactly 4
+              res.body.events.length.should.be.exactly 6
 
               for ev in res.body
                 ev.channelID.should.be.exactly channel1._id
 
               events = (res.body.events.map (event) -> "#{event.route}-#{event.name}-#{event.event}")
-              events.should.containEql "primary-#{channelName}-start"
-              events.should.containEql "primary-#{channelName}-end"
+              events.should.containEql "channel-#{channelName}-start"
+              events.should.containEql "channel-#{channelName}-end"
+              events.should.containEql "primary-#{primaryRouteName}-start"
+              events.should.containEql "primary-#{primaryRouteName}-end"
               events.should.containEql "route-#{secRouteName}-start"
               events.should.containEql "route-#{secRouteName}-end"
 
@@ -136,7 +139,7 @@ describe 'Events API Integration Tests', ->
               return done err if err
 
               res.body.should.have.property 'events'
-              res.body.events.length.should.be.exactly 4
+              res.body.events.length.should.be.exactly 6
 
               (res.body.events.map (event) -> event.normalizedTimestamp).reduce (a, b) ->
                 should(a <= b).be.true()
@@ -167,7 +170,7 @@ describe 'Events API Integration Tests', ->
               return done err if err
 
               res.body.should.have.property 'events'
-              res.body.events.length.should.be.exactly 4
+              res.body.events.length.should.be.exactly 6
 
               events = (res.body.events.map (event) -> event.statusType)
               events.should.containEql 'success'

@@ -15,7 +15,7 @@ if [[ -z $server ]]; then
 fi
 
 sync="${server}/heartbeat"
-eventsBase="${server}/visualizer/events"
+eventsBase="${server}/events"
 
 serverNow=`curl -s $sync | jq -M '.now'`
 lastCheck=`node -e 'console.log(Date.now())'`

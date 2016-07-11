@@ -16,6 +16,7 @@ describe 'Visualizer Integration Tests', ->
   authDetails = {}
 
   channelName = 'TEST DATA - Mock endpoint'
+  primaryRouteName = 'test route'
   secRouteName = 'Test secondary route'
   mockResponse = 'test for visualizer'
 
@@ -30,7 +31,7 @@ describe 'Visualizer Integration Tests', ->
       allow: [ 'PoC' ]
       routes: [
         {
-          name: 'test route'
+          name: primaryRouteName
           host: 'localhost'
           port: 1232
           primary: true
@@ -103,10 +104,10 @@ describe 'Visualizer Integration Tests', ->
               res.body.events.length.should.be.exactly 6
 
               events = (res.body.events.map (event) -> "#{event.comp}-#{event.ev}")
-              events.should.containEql "#{channelName}-start"
-              events.should.containEql "#{channelName}-end"
               events.should.containEql "channel-#{channelName}-start"
               events.should.containEql "channel-#{channelName}-end"
+              events.should.containEql "primary-#{primaryRouteName}-start"
+              events.should.containEql "primary-#{primaryRouteName}-end"
               events.should.containEql "route-#{secRouteName}-start"
               events.should.containEql "route-#{secRouteName}-end"
 

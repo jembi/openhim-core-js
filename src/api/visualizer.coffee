@@ -21,26 +21,13 @@ exports.getLatestEvents = (receivedTime) ->
 
     for event in results
       fEvent =
+        comp: "#{event.route}-#{event.name}"
         created: event.created
         ev: event.event
         status: event.statusType
         ts: event.normalizedTimestamp
 
-      if event.route is 'primary'
-        fEvent.comp = event.name
-
-        #add channel event
-        formattedResults.push
-          created: event.created
-          comp: "channel-#{event.name}"
-          ev: event.event
-          status: event.statusType
-          ts: event.normalizedTimestamp
-      else
-        fEvent.comp = "#{event.route}-#{event.name}"
-
       formattedResults.push fEvent
-      
 
     this.body = events: formattedResults
   catch err
