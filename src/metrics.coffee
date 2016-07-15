@@ -1,4 +1,5 @@
 Transaction = require('./model/transactions').Transaction
+logger = require 'winston'
 
 # Calculates transaction metrics
 #
@@ -8,8 +9,8 @@ Transaction = require('./model/transactions').Transaction
 #                   metrics to (required)
 # @transactionFilter {Object} a mongodb filter object to further restrict the
 #                             transactions collection (nullable)
-# @channelIDs {Array} an array of channel IDs to filter by, if not set all
-#                     channels will be considered (nullable)
+# @channelIDs {Array} an array of channel IDs as `ObjectID`s to filter by, if
+#                     not set all channels will be considered (nullable)
 # @timeSeries {String} one of 'minute', 'hour', 'day', 'week', 'month', 'year'.
 #                      If set the metrics will be grouped into a periods of the
 #                      stated duration, otherwise, metrics for the entire period
@@ -58,12 +59,9 @@ Transaction = require('./model/transactions').Transaction
 #   }
 # ]
 exports.calculateMetrics = (startDate, endDate, transactionFilter, channelIDs, timeSeries, groupByChannels) ->
-  console.log 'beginning'
   if not (startDate instanceof Date) or not (endDate instanceof Date)
     return new Promise (resolve, reject) ->
       reject new Error 'startDate and endDate must be provided and be of type Date'
-
-  console.log 'Calc metrics'
 
   match =
     "request.timestamp":
@@ -75,8 +73,6 @@ exports.calculateMetrics = (startDate, endDate, transactionFilter, channelIDs, t
   if channelIDs
     match.channelID =
       $in: channelIDs
-
-  console.log match
 
   group =
     _id: {}
@@ -123,5 +119,4 @@ exports.calculateMetrics = (startDate, endDate, transactionFilter, channelIDs, t
         group._id.year = $year: "$request.timestamp"
 
   pipeline = [ { $match: match }, { $group: group } ]
-  console.log JSON.stringify(pipeline, null, 2)
   return Transaction.aggregate(pipeline).exec()
