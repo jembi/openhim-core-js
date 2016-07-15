@@ -100,17 +100,17 @@ describe "Transaction Reports", ->
     it "should send a  weekly channel report", (done) ->
       sinon.spy(reports, 'fetchWeeklySubscribers')
       reports.sendReports {}, 'weeklyReport', () ->
-        reports.fetchWeeklySubscribers.should.be.called
-        reports.fetchChannelReport.should.be.called
-        reports.sendUserEmail.should.be.called
+        reports.fetchWeeklySubscribers.should.be.called()
+        reports.fetchChannelReport.should.be.called()
+        reports.sendUserEmail.should.be.called()
 
       done()
 
     it "should send a  daily channel report", (done) ->
       sinon.spy(reports, 'fetchDailySubscribers')
       reports.sendReports {}, 'weeklyReport', () ->
-        reports.fetchDailySubscribers.should.be.called
-        reports.fetchChannelReport.should.be.called
-        reports.sendUserEmail.should.be.called
+        reports.fetchDailySubscribers.should.be.called()
+        reports.fetchChannelReport.should.be.called()
+        reports.sendUserEmail.should.be.called()
 
       done()
