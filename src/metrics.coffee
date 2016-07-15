@@ -31,7 +31,7 @@ logger = require 'winston'
 #       year: 2014
 #     },
 #     total: 1,
-#     aveResp: 100,
+#     avgResp: 100,
 #     minResp: 100,
 #     maxResp: 100,
 #     failed: 0,
@@ -48,7 +48,7 @@ logger = require 'winston'
 #         month: 7,
 #         year: 2014 },
 #     total: 1,
-#     aveResp: 200,
+#     avgResp: 200,
 #     minResp: 200,
 #     maxResp: 200,
 #     failed: 0,
@@ -77,7 +77,7 @@ exports.calculateMetrics = (startDate, endDate, transactionFilter, channelIDs, t
   group =
     _id: {}
     total: $sum: 1
-    aveResp: $avg: $subtract: [ "$response.timestamp", "$request.timestamp" ]
+    avgResp: $avg: $subtract: [ "$response.timestamp", "$request.timestamp" ]
     minResp: $min: $subtract: [ "$response.timestamp", "$request.timestamp" ]
     maxResp: $max: $subtract: [ "$response.timestamp", "$request.timestamp" ]
     failed: $sum: $cond: [ $eq: [ "$status", "Failed" ], 1, 0 ]

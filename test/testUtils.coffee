@@ -296,24 +296,24 @@ exports.setupMetricsTransactions = (callback) ->
     _id: "000000000000000000000000"
     channelID: "111111111111111111111111"
     clientID: "42bbe25485e77d8e5daad4b4"
-    request: { path: "/sample/api", method: "GET", timestamp: "2014-06-15T08:10:45.100" }
-    response: { status: "200", timestamp: "2014-06-15T08:10:45.200" }
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-06-15T08:10:45.100Z" }
+    response: { status: "200", timestamp: "2014-06-15T08:10:45.200Z" }
     status: "Completed"
 
   transaction1 = new Transaction
     _id: "111111111111111111111111"
     channelID: "111111111111111111111111"
     clientID: "42bbe25485e77d8e5daad4b4"
-    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T08:10:45.100" }
-    response: { status: "200", timestamp: "2014-07-15T08:10:45.200" }
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T08:10:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-15T08:10:45.200Z" }
     status: "Completed"
 
   transaction2 = new Transaction
     _id: "222222222222222222222222"
     channelID: "111111111111111111111111"
     clientID: "42bbe25485e77d8e5daad4b4"
-    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T14:30:45.100" }
-    response: { status: "200", timestamp: "2014-07-15T14:30:45.300" }
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T14:30:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-15T14:30:45.300Z" }
     status: "Successful"
 
   transaction3 = new Transaction

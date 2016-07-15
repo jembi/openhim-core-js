@@ -1,17 +1,16 @@
-Channel = require('./model/channels').Channel
-User = require('./model/users').User
+EmailTemplate = require('email-templates').EmailTemplate
 logger = require 'winston'
+moment = require "moment"
+path = require('path')
 Q = require 'q'
+
+authorisation = require './api/authorisation'
+Channel = require('./model/channels').Channel
 config = require "./config/config"
 config.reports = config.get('reports')
 contact = require './contact'
 metrics = require './metrics'
-moment = require "moment"
-config = require "./config/config"
-config.reports = config.get('reports')
-EmailTemplate = require('email-templates').EmailTemplate
-path = require('path')
-
+User = require('./model/users').User
 
 # Function Sends the reports
 sendReports = (job, flag, done) ->
@@ -41,10 +40,10 @@ sendReports = (job, flag, done) ->
       do (user) ->
         deferred = Q.defer()
         userKey = user.email
-        metrics.getAllowedChannels user
-        .then (result) ->
+        authorisation.getUserViewableChannels user
+        .then (channels) ->
           usersArray[userIndex] = user
-          usersArray[userIndex].allowedChannels = result
+          usersArray[userIndex].allowedChannels = channels
           for channel in usersArray[userIndex].allowedChannels
             channelMap[channel._id] =
               user: user
@@ -62,7 +61,7 @@ sendReports = (job, flag, done) ->
       for key , obj of channelMap
         innerDeferred = Q.defer()
         do (innerDeferred, key, obj) ->
-          fetchChannelReport obj.channel, obj.user, flag, from, to, (item) ->
+          fetchChannelReport obj.channel, obj.user, flag, from, to, (err, item) ->
             channelReportMap[key] = item
             innerDeferred.resolve()
 
@@ -113,11 +112,11 @@ sendReports = (job, flag, done) ->
 
                 report.data[i].load = (if data.data[0]?.load? then data.data[0].load else 0)
                 report.data[i].avgResp = (if data.data[0]?.avgResp? then Math.round(data.data[0].avgResp) else 0)
-                report.data[i].failed = (if data.statusData[0]?.failed? then data.statusData[0].failed else 0)
-                report.data[i].successful = (if data.statusData[0]?.successful? then data.statusData[0].successful else 0)
-                report.data[i].processing = (if data.statusData[0]?.processing? then data.statusData[0].processing else 0)
-                report.data[i].completed = (if data.statusData[0]?.completed? then data.statusData[0].completed else 0)
-                report.data[i].completedWErrors = (if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0)
+                report.data[i].failed = (if data.data[0]?.failed? then data.data[0].failed else 0)
+                report.data[i].successful = (if data.data[0]?.successful? then data.data[0].successful else 0)
+                report.data[i].processing = (if data.data[0]?.processing? then data.data[0].processing else 0)
+                report.data[i].completed = (if data.data[0]?.completed? then data.data[0].completed else 0)
+                report.data[i].completedWErrors = (if data.data[0]?.completedWErrors? then data.data[0].completedWErrors else 0)
                 report.data[i].loadStyle = (if report.data[i].load > 0 then '' else colorGrey)
                 report.data[i].avgRespStyle = (if report.data[i].avgResp > 0 then '' else colorGrey)
                 report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else colorGrey)
@@ -151,22 +150,15 @@ fetchChannelReport = (channel, user, flag, from, to, callback) ->
   item = {}
 
   logger.info 'fetching ' + flag + ' for #' + channel.name + ' ' + user.email + ' ' + channel._id
-  metrics.fetchChannelMetrics period, channel._id, user,
-    startDate: from
-    endDate: to
 
+  metrics.calculateMetrics from, to, null, [channel._id], period
   .then (data) ->
     item.channel = channel
     item.data = data
-    #Then fetch status metrics
-
-    metrics.fetchChannelMetrics 'status', channel._id, user,
-      startDate: from
-      endDate: to
-
-    .then (statusData) ->
-      item.statusData = statusData
-      callback item
+    callback null, item
+  .catch (err) ->
+    logger.error 'Error calculating metrics: ', err
+    callback err
 
 fetchDailySubscribers = (callback) ->
   User.find { dailyReport: true }, callback
@@ -182,11 +174,11 @@ plainTemplate = (report) ->
                 Channel Name: #{data.channel.name} \r\n
                 Channel Load: #{ if data.data[0]?.load? then data.data[0].load else 0} transactions  \r\n
                 Ave response time: #{ if data.data[0]?.avgResp? then data.data[0].avgResp  else 0 } \r\n
-                Failed:  #{ if data.statusData[0]?.failed? then data.statusData[0].failed  else 0 }  \r\n
-                Successful:  #{ if data.statusData[0]?.successful? then data.statusData[0].successful  else 0 }  \r\n
-                Processing: #{ if data.statusData[0]?.processing? then data.statusData[0].processing  else 0 }  \r\n
-                Completed:  #{ if data.statusData[0]?.completed? then data.statusData[0].completed  else 0 }  \r\n
-                Completed with errors: #{ if data.statusData[0]?.completedWErrors? then data.statusData[0].completedWErrors else 0 } \r\n \r\n
+                Failed:  #{ if data.data[0]?.failed? then data.data[0].failed  else 0 }  \r\n
+                Successful:  #{ if data.data[0]?.successful? then data.data[0].successful  else 0 }  \r\n
+                Processing: #{ if data.data[0]?.processing? then data.data[0].processing  else 0 }  \r\n
+                Completed:  #{ if data.data[0]?.completed? then data.data[0].completed  else 0 }  \r\n
+                Completed with errors: #{ if data.data[0]?.completedWErrors? then data.data[0].completedWErrors else 0 } \r\n \r\n
                 <---------- End Channel -------------------------------------------------> \r\n \r\n
               \r\n
               \r\n

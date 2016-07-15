@@ -20,7 +20,7 @@ describe 'Metrics unit tests', ->
         metrics[0].completed.should.be.exactly 1
         metrics[0].processing.should.be.exactly 1
         metrics[0].completedWErrors.should.be.exactly 1
-        metrics[0].aveResp.should.be.exactly 140
+        metrics[0].avgResp.should.be.exactly 140
         metrics[0].minResp.should.be.exactly 100
         metrics[0].maxResp.should.be.exactly 200
         done()
@@ -36,7 +36,7 @@ describe 'Metrics unit tests', ->
         metrics[0].completed.should.be.exactly 6
         metrics[0].processing.should.be.exactly 1
         metrics[0].completedWErrors.should.be.exactly 1
-        metrics[0].aveResp.should.be.exactly 150
+        metrics[0].avgResp.should.be.exactly 150
         metrics[0].minResp.should.be.exactly 100
         metrics[0].maxResp.should.be.exactly 200
         done()

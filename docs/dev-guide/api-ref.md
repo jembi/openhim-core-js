@@ -656,7 +656,7 @@ The metrics API always returns a a JSON array, even if it is returning just one 
      year: 2014
     },
   total: 1,
-  aveResp: 100,
+  avgResp: 100,
   minResp: 100,
   maxResp: 100,
   failed: 0,
