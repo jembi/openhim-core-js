@@ -5,7 +5,7 @@ config = require "../config/test.json"
 global.testTimeoutFactor = 1
 
 if process.env.TRAVIS is 'true'
-  global.testTimeoutFactor = 12 # this can be changed to 20  once we have mocha test timeouts of greater than 3s on travis
+  global.testTimeoutFactor = 20
 
 dropTestDb = (done) ->
   # ensure that we can only drop the test database
