@@ -104,28 +104,26 @@ sendReports = (job, flag, done) ->
 
           try
             for data, i in report.data
-              do (data) ->
-                colorGrey = 'color: grey;'
-                rowColor = 'background-color: #d9ead3'
-                if i % 2
-                  rowColor = 'background-color: #b6d7a8;'
+              colorGrey = 'color: grey;'
+              rowColor = 'background-color: #d9ead3'
+              if i % 2
+                rowColor = 'background-color: #b6d7a8;'
 
-                report.data[i].load = (if data.data[0]?.load? then data.data[0].load else 0)
-                report.data[i].avgResp = (if data.data[0]?.avgResp? then Math.round(data.data[0].avgResp) else 0)
-                report.data[i].failed = (if data.data[0]?.failed? then data.data[0].failed else 0)
-                report.data[i].successful = (if data.data[0]?.successful? then data.data[0].successful else 0)
-                report.data[i].processing = (if data.data[0]?.processing? then data.data[0].processing else 0)
-                report.data[i].completed = (if data.data[0]?.completed? then data.data[0].completed else 0)
-                report.data[i].completedWErrors = (if data.data[0]?.completedWErrors? then data.data[0].completedWErrors else 0)
-                report.data[i].loadStyle = (if report.data[i].load > 0 then '' else colorGrey)
-                report.data[i].avgRespStyle = (if report.data[i].avgResp > 0 then '' else colorGrey)
-                report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else colorGrey)
-                report.data[i].successfulStyle = (if report.data[i].successful > 0 then '' else colorGrey)
-                report.data[i].processingStyle = (if report.data[i].processing > 0 then '' else colorGrey)
-                report.data[i].completedStyle = (if report.data[i].completed > 0 then 'color: orange;' else colorGrey)
-                report.data[i].completedWErrorsStyle = (if report.data[i].completedWErrors > 0 then 'color: orangered;' else colorGrey)
-                report.data[i].rowColor = rowColor
-
+              report.data[i].total = (if data.data[0]?.total? then data.data[0].total else 0)
+              report.data[i].avgResp = (if data.data[0]?.avgResp? then Math.round(data.data[0].avgResp) else 0)
+              report.data[i].failed = (if data.data[0]?.failed? then data.data[0].failed else 0)
+              report.data[i].successful = (if data.data[0]?.successful? then data.data[0].successful else 0)
+              report.data[i].processing = (if data.data[0]?.processing? then data.data[0].processing else 0)
+              report.data[i].completed = (if data.data[0]?.completed? then data.data[0].completed else 0)
+              report.data[i].completedWErrors = (if data.data[0]?.completedWErrors? then data.data[0].completedWErrors else 0)
+              report.data[i].totalStyle = (if report.data[i].total > 0 then '' else colorGrey)
+              report.data[i].avgRespStyle = (if report.data[i].avgResp > 0 then '' else colorGrey)
+              report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else colorGrey)
+              report.data[i].successfulStyle = (if report.data[i].successful > 0 then '' else colorGrey)
+              report.data[i].processingStyle = (if report.data[i].processing > 0 then '' else colorGrey)
+              report.data[i].completedStyle = (if report.data[i].completed > 0 then 'color: orange;' else colorGrey)
+              report.data[i].completedWErrorsStyle = (if report.data[i].completedWErrors > 0 then 'color: orangered;' else colorGrey)
+              report.data[i].rowColor = rowColor
 
             sendUserEmail report
           catch err
@@ -172,7 +170,7 @@ plainTemplate = (report) ->
     do (data) ->
       text += " \r\n \r\n <---------- Start Channel  #{data.channel.name} ---------------------------> \r\n \r\n
                 Channel Name: #{data.channel.name} \r\n
-                Channel Load: #{ if data.data[0]?.load? then data.data[0].load else 0} transactions  \r\n
+                Channel total: #{ if data.data[0]?.total? then data.data[0].total else 0} transactions  \r\n
                 Ave response time: #{ if data.data[0]?.avgResp? then data.data[0].avgResp  else 0 } \r\n
                 Failed:  #{ if data.data[0]?.failed? then data.data[0].failed  else 0 }  \r\n
                 Successful:  #{ if data.data[0]?.successful? then data.data[0].successful  else 0 }  \r\n

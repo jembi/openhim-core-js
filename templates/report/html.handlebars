@@ -61,7 +61,7 @@
                                                                 Channel
                                                             </th>
                                                             <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading00">
-                                                                Load
+                                                                Total
                                                             </th>
                                                             <th style="border: 1px solid black; background-color: darkgreen; color: white;" scope="col" valign="top" width="10%" class="dataTableHeading" mc:edit="data_table_heading01">
                                                                 Average Response (ms)
@@ -85,7 +85,7 @@
                                                         {{#each data}}
                                                         <tr style="{{rowColor}}">
                                                             <td style="border: 1px solid black" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content00"><strong><a target="_blank" href="{{../consoleURL}}/#/channels">{{this.channel.name}}</a></strong></td>
-                                                            <td style="border: 1px solid black" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content01"><a target="_blank" style="{{loadStyle}}" href="{{../consoleURL}}/#/channels/{{this.channel._id}}">{{this.load}}</a></td>
+                                                            <td style="border: 1px solid black" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content01"><a target="_blank" style="{{totalStyle}}" href="{{../consoleURL}}/#/channels/{{this.channel._id}}">{{this.total}}</a></td>
                                                             <td style="border: 1px solid black" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content02"><a target="_blank" style="{{avgRespStyle}}" href="{{../consoleURL}}/#/channels/{{this.channel._id}}">{{this.avgResp}}</a></td>
                                                             <td style="border: 1px solid black" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content03"><a target="_blank" style="{{failedStyle}}" href="{{../consoleURL}}/#/transactions?txStatus=Failed&amp;txChannel={{this.channel._id}}&amp;startDate={{../from}}&amp;endDate={{../to}}">{{this.failed}}</a></td>
                                                             <td style="border: 1px solid black" valign="top" align="center" class="dataTableContent" mc:edit="data_table_content04"><a target="_blank" style="{{successfulStyle}}" href="{{../consoleURL}}/#/transactions?txStatus=Successful&amp;txChannel={{this.channel._id}}&amp;startDate={{../from}}&amp;endDate={{../to}}">{{this.successful}}</a></td>

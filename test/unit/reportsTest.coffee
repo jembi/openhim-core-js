@@ -1,16 +1,13 @@
 should = require "should"
 sinon = require "sinon"
-http = require "http"
 moment = require "moment"
+mongoose = require 'mongoose'
+
 reports = require "../../lib/reports"
-metrics = require "../../lib/metrics"
 testUtils = require "../testUtils"
 config = require "../../lib/config/config"
 Channel = require("../../lib/model/channels").Channel
 User = require("../../lib/model/users").User
-Transaction = require("../../lib/model/transactions").Transaction
-contact = require "../../lib/contact"
-mongoose = require 'mongoose'
 
 testUser1 = new User
   firstname: 'User'
