@@ -20,7 +20,7 @@ exports.incrementTransactionCount = (ctx, done) ->
     sdc.increment domain + '.channels.' + ctx.authorisedChannel._id + '.statuses.' + transactionStatus # Per Channel Status
 
     if ctx.mediatorResponse?
-#      Check for custom mediator metrics
+      # Check for custom mediator metrics
       if ctx.mediatorResponse.metrics?
 
 
@@ -69,7 +69,6 @@ exports.incrementTransactionCount = (ctx, done) ->
     logger.error error, done
   done()
 
-
 exports.measureTransactionDuration = (ctx, done) ->
   logger.info 'sending durations to statsd for ' + domain + '.' + ctx.authorisedChannel._id
   transactionStatus = ctx.transactionStatus
@@ -98,7 +97,6 @@ exports.measureTransactionDuration = (ctx, done) ->
   catch error
     logger.error error, done
   done()
-
 
 exports.nonPrimaryRouteRequestCount = (ctx, route, done) ->
 

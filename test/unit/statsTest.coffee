@@ -11,10 +11,7 @@ application = config.get 'application'
 os = require "os"
 domain = os.hostname() + '.' + application.name
 
-
-
 describe "Stats Middleware ", ->
-  this.timeout 30000
   s = {}
 
   beforeEach (done) ->
@@ -23,7 +20,6 @@ describe "Stats Middleware ", ->
 
   afterEach ->
     s.stop()
-
 
   channel =
     _id: "ckjhfjwedsnfdsf"
@@ -70,7 +66,6 @@ describe "Stats Middleware ", ->
     metrics : []
   ]
 
-
 #Non Primary routes
   ctx.routes.push
     name: "secondary route"
@@ -105,11 +100,11 @@ describe "Stats Middleware ", ->
         timestamp: 1412257881909
     ]
 
-#    Adding Custom Metrics
+  # Adding Custom Metrics
   ctx.mediatorResponse.metrics.push
-      name: 'my-counter-metric'
-      type: 'counter'
-      value: 1
+    name: 'my-counter-metric'
+    type: 'counter'
+    value: 1
   ctx.mediatorResponse.metrics.push
     name: 'my-gauge-metric'
     type: 'gauge'
@@ -120,7 +115,7 @@ describe "Stats Middleware ", ->
     value: 1522
 
 
-    #Has no groups
+  # Has no groups
   requestTimestamp = (new Date()).toString()
   ctx2 = new Object()
   ctx2.authorisedChannel = channel
@@ -153,8 +148,7 @@ describe "Stats Middleware ", ->
     metrics : []
   ]
 
-
-  #Non Primary routes
+  # Non Primary routes
   ctx2.routes.push
     name: "secondary route"
     request:
@@ -187,7 +181,7 @@ describe "Stats Middleware ", ->
         timestamp: 1412257881909
     ]
 
-  #    Adding Custom Metrics
+  # Adding Custom Metrics
   ctx2.mediatorResponse.metrics.push
     name: 'my-counter-metric'
     type: 'counter'
@@ -201,13 +195,7 @@ describe "Stats Middleware ", ->
     type: 'timer'
     value: 1522
 
-
-
-
-
-
   it "should increment the transaction counter", (done) ->
-    this.timeout = 400000
     stats.incrementTransactionCount ctx, () ->
       stats.incrementTransactionCount ctx2, () ->
         stats.nonPrimaryRouteRequestCount ctx, ctx.routes[0], () ->
@@ -228,26 +216,20 @@ describe "Stats Middleware ", ->
                                       s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c', done
 
   it "Should measure transaction duration", (done) ->
-      ctx.timer = 10
-      stats.measureTransactionDuration ctx, () ->
-        stats.measureTransactionDuration ctx2, () ->
-          stats.nonPrimaryRouteDurations ctx, ctx.routes[0], () ->
-            stats.nonPrimaryRouteDurations ctx2, ctx2.routes[0], () ->
-              s.expectMessage domain + '.channels:10|ms', ->
-                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:5|ms', ->
-                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:5|ms', ->
-                    s.expectMessage domain + '.channels.Successful:10|ms', ->
-                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:10|ms', ->
-                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful:10|ms', ->
-                          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route:10|ms', ->
-                            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms', ->
-                              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.group.Lab API:5|ms', ->
-                                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms', ->
-                                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms', ->
-                                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms', done
-
-
-
-
-
-
+    ctx.timer = 10
+    stats.measureTransactionDuration ctx, () ->
+      stats.measureTransactionDuration ctx2, () ->
+        stats.nonPrimaryRouteDurations ctx, ctx.routes[0], () ->
+          stats.nonPrimaryRouteDurations ctx2, ctx2.routes[0], () ->
+            s.expectMessage domain + '.channels:10|ms', ->
+              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:5|ms', ->
+                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:5|ms', ->
+                  s.expectMessage domain + '.channels.Successful:10|ms', ->
+                    s.expectMessage domain + '.channels.ckjhfjwedsnfdsf:10|ms', ->
+                      s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.statuses.Successful:10|ms', ->
+                        s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route:10|ms', ->
+                          s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms', ->
+                            s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.group.Lab API:5|ms', ->
+                              s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms', ->
+                                s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms', ->
+                                  s.expectMessage domain + '.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms', done
