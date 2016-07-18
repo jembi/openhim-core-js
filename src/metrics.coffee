@@ -17,8 +17,9 @@ logger = require 'winston'
 #                      will be returned (nullabe)
 # @groupByChannel {Boolean} if true the metrics will be grouped by each
 #                           particular channel that returns results (nullable)
-# @returns {Array} an array of metric objects for each grouping (timeseries
-#                  and/or channel) dependingg on the parameters that are set
+# @returns {Promise} that resolves to an array of metric objects for each
+#                    grouping (timeseries and/or channel) depending on the
+#                    parameters that are set
 # e.g. metrics.calculateMetrics new Date("2014-07-15T00:00:00.000Z"),
 # new Date("2014-07-19T00:00:00.000Z"), null, null, 'day', true
 # [
