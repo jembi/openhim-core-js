@@ -5,7 +5,7 @@ config = require "../config/test.json"
 global.testTimeoutFactor = 1
 
 if process.env.TRAVIS is 'true'
-  global.testTimeoutFactor = 20
+  global.testTimeoutFactor = 12
 
 dropTestDb = (done) ->
   # ensure that we can only drop the test database
