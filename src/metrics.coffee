@@ -14,7 +14,7 @@ logger = require 'winston'
 # @timeSeries {String} one of 'minute', 'hour', 'day', 'week', 'month', 'year'.
 #                      If set the metrics will be grouped into a periods of the
 #                      stated duration, otherwise, metrics for the entire period
-#                      will be returned (nullabe)
+#                      will be returned (nullable)
 # @groupByChannel {Boolean} if true the metrics will be grouped by each
 #                           particular channel that returns results (nullable)
 # @returns {Promise} that resolves to an array of metric objects for each

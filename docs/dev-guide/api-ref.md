@@ -629,7 +629,7 @@ The response will be an http status code of `201` if the channels were successfu
 
 ### Metrics resource
 
-This resource enables transaction metrics to be extracted from the OpenHIM in a flexible way. There are various forms of this endpoint depending on the format of the metrics that you want to get out. Metrics will only be returned for the channels that a the API user has access to.
+This resource enables transaction metrics to be extracted from the OpenHIM in a flexible way. There are various forms of this endpoint depending on the format of the metrics that you want to get out. Metrics will only be returned for the channels that the API user has access to.
 
 The base url is `https://<server>:<api_port>/metrics`
 
