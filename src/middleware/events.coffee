@@ -10,14 +10,6 @@ if !config.events
   config.events = config.get('visualizer')
   config.events.normalizationBuffer = config.events.orchestrationTsBufferMillis
 
-statsdServer = config.get 'statsd'
-application = config.get 'application'
-SDC = require 'statsd-client'
-os = require 'os'
-
-domain = "#{os.hostname()}.#{application.name}.appMetrics"
-sdc = new SDC statsdServer
-
 enableTSNormalization = config.events.enableTSNormalization ? false
 if enableTSNormalization is true
   normalizationBuffer = 100
@@ -49,7 +41,6 @@ getTsDiff = ( ctxStartTS, obj ) ->
 
 
 addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
-
   if route?.request?.timestamp? and route?.response?.timestamp?
 
     startTS = formatTS route.request.timestamp
@@ -70,6 +61,7 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       type: prefix
       event: 'start'
       name: route.name
+      mediator: route.mediatorURN
 
     routeStatus = 'success'
     if 500 <= route.response.status <= 599
@@ -83,56 +75,82 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       type: prefix
       event: 'end'
       name: route.name
+      mediator: route.mediatorURN
       status: route.response.status
       statusType: routeStatus
 
-exports.storeEvents = storeEvents = (ctx, done) ->
-  logger.info "Storing events for transaction: #{ctx.transactionId}"
+saveEvents = (trxEvents, callback) ->
+  now = new Date
+  event.created = now for event in trxEvents
+
+  # bypass mongoose for quick batch inserts
+  # index needs to be ensured manually since the collection might not already exist
+  events.Event.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 3600 }, ->
+    events.Event.collection.insert trxEvents, (err) -> return if err then callback err else callback()
+
+createChannelStartEvent = (ctx, done) ->
+  logger.debug "Storing channel start event for transaction: #{ctx.transactionId}"
   trxEvents = []
-
   startTS = formatTS ctx.requestTimestamp
+
+  trxEvents.push
+    channelID: ctx.authorisedChannel._id
+    transactionID: ctx.transactionId
+    normalizedTimestamp: startTS
+    type: 'channel'
+    event: 'start'
+    name: ctx.authorisedChannel.name
+
+  saveEvents trxEvents, done
+
+createChannelEndEvent = (ctx, done) ->
+  logger.debug "Storing channel end event for transaction: #{ctx.transactionId}"
+  trxEvents = []
+  startTS = formatTS ctx.requestTimestamp
+
+  status = 'success'
+  if 500 <= ctx.response.status <= 599
+    status = 'error'
+
   endTS = formatTS ctx.response.timestamp
-  if startTS > endTS then startTS = endTS
+  if endTS < startTS then endTS = startTS
 
-  if ctx.primaryRoute
-    # Transaction start for channel
-    trxEvents.push
-      channelID: ctx.authorisedChannel._id
-      transactionID: ctx.transactionId
-      normalizedTimestamp: startTS
-      type: 'channel'
-      event: 'start'
-      name: ctx.authorisedChannel.name
+  trxEvents.push
+    channelID: ctx.authorisedChannel._id
+    transactionID: ctx.transactionId
+    normalizedTimestamp: endTS + normalizationBuffer
+    type: 'channel'
+    event: 'end'
+    name: ctx.authorisedChannel.name
+    status: ctx.response.status
+    statusType: status
 
-    # Transaction start for primary route
-    trxEvents.push
-      channelID: ctx.authorisedChannel._id
-      transactionID: ctx.transactionId
-      normalizedTimestamp: startTS
-      type: 'primary'
-      event: 'start'
-      name: ctx.primaryRoute.name
-      mediator: ctx.mediatorResponse?['x-mediator-urn']
+  saveEvents trxEvents, done
 
-  if ctx.routes
-    # find TS difference
-    tsDiff = getTsDiff startTS, ctx.routes
+createPrimaryRouteEvents = (ctx, done) ->
+  logger.debug "Storing primary route events for transaction: #{ctx.transactionId}"
+  trxEvents = []
+  startTS = formatTS ctx.requestTimestamp
 
-    for route in ctx.routes
-      addRouteEvents ctx, trxEvents, route, 'route', tsDiff
+  trxEvents.push
+    channelID: ctx.authorisedChannel._id
+    transactionID: ctx.transactionId
+    normalizedTimestamp: startTS
+    type: 'primary'
+    event: 'start'
+    name: ctx.primaryRoute.name
+    mediator: ctx.mediatorResponse?['x-mediator-urn']
 
-      if route.orchestrations
-        # find TS difference
-        tsDiff = getTsDiff startTS, route.orchestrations
-        addRouteEvents ctx, trxEvents, orch, 'orchestration', tsDiff for orch in route.orchestrations
   if ctx.mediatorResponse?.orchestrations?
-    # find TS difference
     tsDiff = getTsDiff startTS, ctx.mediatorResponse.orchestrations
     addRouteEvents ctx, trxEvents, orch, 'orchestration', tsDiff for orch in ctx.mediatorResponse.orchestrations
 
   status = 'success'
   if 500 <= ctx.response.status <= 599
     status = 'error'
+
+  endTS = formatTS ctx.response.timestamp
+  if endTS < startTS then endTS = startTS
 
   # Transaction end for primary route
   if ctx.primaryRoute
@@ -147,32 +165,39 @@ exports.storeEvents = storeEvents = (ctx, done) ->
       statusType: status
       mediator: ctx.mediatorResponse?['x-mediator-urn']
 
-    # Transaction end for channel
-    trxEvents.push
-      channelID: ctx.authorisedChannel._id
-      transactionID: ctx.transactionId
-      normalizedTimestamp: endTS + normalizationBuffer
-      type: 'channel'
-      event: 'end'
-      name: ctx.authorisedChannel.name
-      status: ctx.response.status
-      statusType: status
+  saveEvents trxEvents, done
 
-  now = new Date
-  event.created = now for event in trxEvents
 
-  # bypass mongoose for quick batch inserts
-  # index needs to be ensured manually since the collection might not already exist
-  events.Event.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 3600 }, ->
-    events.Event.collection.insert trxEvents, (err) -> return if err then done err else done()
+exports.storeRouteEvents = storeRouteEvents = (ctx, done) ->
+  logger.debug "Storing route events for transaction: #{ctx.transactionId}"
+  trxEvents = []
+
+  startTS = formatTS ctx.requestTimestamp
+
+  if ctx.routes
+    # find TS difference
+    tsDiff = getTsDiff startTS, ctx.routes
+
+    for route in ctx.routes
+      addRouteEvents ctx, trxEvents, route, 'route', tsDiff
+
+      if route.orchestrations
+        # find TS difference
+        tsDiff = getTsDiff startTS, route.orchestrations
+        addRouteEvents ctx, trxEvents, orch, 'orchestration', tsDiff for orch in route.orchestrations
+
+    saveEvents trxEvents, done
 
 
 exports.koaMiddleware = (next) ->
-  yield next
-
-  startTime = new Date() if statsdServer.enabled
   ctx = this
-  do (ctx) ->
-    f = -> storeEvents ctx, ->
-    setTimeout f, 0
-  sdc.timing "#{domain}.eventsMiddleware", startTime if statsdServer.enabled
+
+  runAsync = (method) ->
+    do (ctx) ->
+      f = -> method ctx, (err) -> logger.warn err if err
+      setTimeout f, 0
+
+  runAsync createChannelStartEvent
+  yield next
+  runAsync createPrimaryRouteEvents
+  runAsync createChannelEndEvent
