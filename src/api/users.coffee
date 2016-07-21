@@ -259,7 +259,7 @@ exports.addUser = ->
 
     contact.contactUser 'email', userData.email, 'OpenHIM Console Profile', plainMessage, htmlMessage, (err) ->
       if err
-        logger.error 'The email could not be sent to the user via the API #{err}'
+        logger.error "The email could not be sent to the user via the API #{err}"
       else
         logger.info 'The email has been sent to the new user'
 
@@ -336,7 +336,7 @@ exports.removeUser = (email) ->
 
   # Test if the user is root@openhim.org
   if email is 'root@openhim.org'
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is OpenHIM root, User cannot be deleted through the API", 'info'
+    utils.logAndSetResponse this, 403, "User root@openhim.org is OpenHIM root, User cannot be deleted through the API", 'info'
     return
 
   try
