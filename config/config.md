@@ -123,7 +123,7 @@ The following config option are provided by the OpenHIM. All of these options ha
     "enableTSNormalization": true
   },
   "statsd": {
-    // Rather use a statsd server for reporting metrics
+    // Report application metrics and transaction metrics to a statsd server
     "enabled": false,
     // The location of the statsd server (the default port must be used)
     "host": "127.0.0.1"

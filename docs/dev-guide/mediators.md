@@ -19,7 +19,7 @@ For maximum reusability and modifiability, we suggest that mediators be split in
 
 Each mediator should consist of a **normalisation** sub-components, a **orchestration** sub-component and a **de-normalisation** sub-component. The purpose of each of these are described below.
 
-_Note: These description are taken the [published thesis](http://www.cair.za.net/research/outputs/open-health-information-mediator-architecture-enabling-interoperability-low-middle) of Ryan Crichton: 'The Open Health Information Mediator: an Architecture for Enabling Interoperability in Low to Middle Income Countries'_
+_Note: These descriptions are taken the [published thesis](http://www.cair.za.net/research/outputs/open-health-information-mediator-architecture-enabling-interoperability-low-middle) of Ryan Crichton: 'The Open Health Information Mediator: an Architecture for Enabling Interoperability in Low to Middle Income Countries'_
 
 ### Normalisation sub-component
 

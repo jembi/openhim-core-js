@@ -4,6 +4,7 @@ server = require '../../lib/server'
 Audit = require('../../lib/model/audits').Audit
 testUtils = require '../testUtils'
 auth = testUtils.auth
+logger = require 'winston'
 
 describe "API Integration Tests", ->
 
@@ -40,6 +41,8 @@ describe "API Integration Tests", ->
             validateAudit = ->
               Audit.find {}, (err, audits) ->
                 return done err if err
+                if audits.length > 1
+                  logger.error JSON.stringify audits, null, 2
                 audits.length.should.be.exactly 1
                 audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal '0' # success
                 audits[0].eventIdentification.eventTypeCode.code.should.be.equal '110122'
@@ -65,6 +68,8 @@ describe "API Integration Tests", ->
             validateAudit = ->
               Audit.find {}, (err, audits) ->
                 return done err if err
+                if audits.length > 1
+                  logger.error JSON.stringify audits, null, 2
                 audits.length.should.be.exactly 1
                 audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal '8' # failure
                 audits[0].eventIdentification.eventTypeCode.code.should.be.equal '110122'
@@ -90,6 +95,8 @@ describe "API Integration Tests", ->
             validateAudit = ->
               Audit.find {}, (err, audits) ->
                 return done err if err
+                if audits.length > 0
+                  logger.error JSON.stringify audits, null, 2
                 audits.length.should.be.exactly 0
                 done()
             setTimeout validateAudit, 150 * global.testTimeoutFactor
@@ -109,6 +116,8 @@ describe "API Integration Tests", ->
             validateAudit = ->
               Audit.find {}, (err, audits) ->
                 return done err if err
+                if audits.length > 1
+                  logger.error JSON.stringify audits, null, 2
                 audits.length.should.be.exactly 1
                 audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal '8' # failure
                 audits[0].eventIdentification.eventTypeCode.code.should.be.equal '110122'
@@ -134,6 +143,8 @@ describe "API Integration Tests", ->
             validateAudit = ->
               Audit.find {}, (err, audits) ->
                 return done err if err
+                if audits.length > 0
+                  logger.error JSON.stringify audits, null, 2
                 audits.length.should.be.exactly 0
                 done()
             setTimeout validateAudit, 150 * global.testTimeoutFactor
@@ -153,6 +164,8 @@ describe "API Integration Tests", ->
             validateAudit = ->
               Audit.find {}, (err, audits) ->
                 return done err if err
+                if audits.length > 1
+                  logger.error JSON.stringify audits, null, 2
                 audits.length.should.be.exactly 1
                 audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal '0' # success
                 audits[0].eventIdentification.eventTypeCode.code.should.be.equal '110122'

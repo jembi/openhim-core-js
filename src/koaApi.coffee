@@ -18,7 +18,6 @@ metrics = require './api/metrics'
 keystore = require './api/keystore'
 serverRestart = require './api/restart'
 audits = require './api/audits'
-statsd = require './api/statsd'
 config = require './config/config'
 heartbeat = require './api/heartbeat'
 certificateAuthority = require './api/certificateAuthority'
@@ -93,11 +92,12 @@ exports.setupApp = (done) ->
   app.use route.put '/tasks/:taskId', tasks.updateTask
   app.use route.delete '/tasks/:taskId', tasks.removeTask
 
-  # -- New metrics Routes --
-  app.use route.get '/metrics', if config.statsd.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
-  app.use route.get '/metrics/status', if config.statsd.enabled then statsd.fetchGlobalStatusMetrics else metrics.getGlobalStatusMetrics
-  app.use route.get '/metrics/:type/:channelId', if config.statsd.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
-  app.use route.get '/metrics/load-time', if config.statsd.enabled then statsd.retrieveAverageLoadTimePerHour else metrics.getGlobalLoadTimeMetrics
+  app.use route.get '/metrics', -> metrics.getMetrics.call this, false
+  app.use route.get '/metrics/channels', -> metrics.getMetrics.call this, true
+  app.use route.get '/metrics/channels/:channelID', (channelID) -> metrics.getMetrics.call this, true, null, channelID
+  app.use route.get '/metrics/timeseries/:timeSeries', (timeSeries) -> metrics.getMetrics.call this, false, timeSeries
+  app.use route.get '/metrics/timeseries/:timeSeries/channels', (timeSeries) -> metrics.getMetrics.call this, true, timeSeries
+  app.use route.get '/metrics/timeseries/:timeSeries/channels/:channelID', (timeSeries, channelID) -> metrics.getMetrics.call this, true, timeSeries, channelID
 
   app.use route.get '/mediators', mediators.getAllMediators
   app.use route.get '/mediators/:uuid', mediators.getMediator
