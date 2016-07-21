@@ -11,7 +11,6 @@ transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
 contactGroups = require './api/contactGroups'
-visualizer = require './api/visualizer'
 events = require './api/events'
 Q = require 'q'
 mediators = require './api/mediators'
@@ -93,11 +92,6 @@ exports.setupApp = (done) ->
   app.use route.get '/tasks/:taskId', tasks.getTask
   app.use route.put '/tasks/:taskId', tasks.updateTask
   app.use route.delete '/tasks/:taskId', tasks.removeTask
-
-  # DEPRECATED use /events/:receivedTime
-  app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
-  # DEPRECATED use /heartbeat
-  app.use route.get '/visualizer/sync', visualizer.sync
 
   # -- New metrics Routes --
   app.use route.get '/metrics', if config.statsd.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
