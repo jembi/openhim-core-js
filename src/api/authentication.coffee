@@ -15,7 +15,7 @@ himSourceID = config.auditing.auditEvents.auditSourceID
 # /transactions is treated as a special case - see below
 auditingExemptPaths = [
   /\/tasks/
-  /\/visualizer.*/
+  /\/events.*/
   /\/metrics.*/
   /\/mediators\/.*\/heartbeat/
   /\/audits/
