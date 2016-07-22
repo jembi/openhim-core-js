@@ -5,11 +5,6 @@ messageStore = require '../middleware/messageStore'
 config = require "../config/config"
 config.events = config.get('events')
 
-if !config.events
-  # maybe we're using outdated config
-  config.events = config.get('visualizer')
-  config.events.normalizationBuffer = config.events.orchestrationTsBufferMillis
-
 statsdServer = config.get 'statsd'
 application = config.get 'application'
 SDC = require 'statsd-client'
