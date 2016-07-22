@@ -296,13 +296,20 @@ exports.findTransactionByClientId = (clientId) ->
 
 generateEvents = (transaction) ->
   Channel.findById transaction.channelID, (err, channel) ->
-    events.storeEvents {
-      transactionId: transaction._id
-      requestTimestamp: transaction.request.timestamp
-      response: transaction.response
-      authorisedChannel: channel
-      routes: transaction.routes
-      }, ->
+    #events.storeEvents {
+      #transactionId: transaction._id
+      #requestTimestamp: transaction.request.timestamp
+      #response: transaction.response
+      #authorisedChannel: channel
+      #routes: transaction.routes
+      #}, ->
+    logger.debug "Storing events for transaction: #{transaction._id}"
+
+    trxEvents = []
+    done = (err) -> logger.error err if err
+
+    events.createRouteEvents trxEvents, transaction._id, transaction.request.requestTimestamp, channel, transaction.routes
+    events.saveEvents trxEvents, done
 
 updateTransactionMetrics = (updates, doc) ->
   if updates['$push']?.routes?

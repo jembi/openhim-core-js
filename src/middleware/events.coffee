@@ -144,21 +144,17 @@ createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, route
     mediator: mediatorURN
 
 
-exports.createAndSaveRouteEvents = (transactionId, requestTimestamp, channel, routes, callback) ->
-  trxEvents = []
-
+exports.createRouteEvents = (dst, transactionId, requestTimestamp, channel, routes, callback) ->
   startTS = formatTS requestTimestamp
   tsDiff = calculateEarliestRouteDiff startTS, routes
 
   for route in routes
-    createRouteEvents trxEvents, transactionId, channel, route, 'route', tsDiff
+    createRouteEvents dst, transactionId, channel, route, 'route', tsDiff
 
     if route.orchestrations
       # find TS difference
       tsDiff = calculateEarliestRouteDiff startTS, route.orchestrations
-      createRouteEvents trxEvents, transactionId, channel, orch, 'orchestration', tsDiff for orch in route.orchestrations
-
-  saveEvents trxEvents, callback
+      createRouteEvents dst, transactionId, channel, orch, 'orchestration', tsDiff for orch in route.orchestrations
 
 
 exports.koaMiddleware = (next) ->
@@ -178,7 +174,7 @@ exports.koaMiddleware = (next) ->
   yield next
 
   runAsync (ctx, done) ->
-    logger.debug "Storing channel and primary routes end events for transaction: #{ctx.transactionId}"
+    logger.debug "Storing channel end and primary routes events for transaction: #{ctx.transactionId}"
 
     if ctx.mediatorResponse?
       response = ctx.mediatorResponse
