@@ -200,7 +200,10 @@ sendRequestToRoutes = (ctx, routes, next) ->
     (Q.all promises).then ->
       messageStore.setFinalStatus ctx, ->
         logger.info "All routes completed for transaction: #{ctx.transactionId.toString()}"
-        events.storeRouteEvents ctx, (err) -> logger.warn err if err
+        if ctx.routes
+          logger.debug "Storing route events for transaction: #{ctx.transactionId}"
+          done = (err) -> logger.error err if err
+          events.createAndSaveRouteEvents ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, done
 
 
 # function to build fresh promise for transactions routes

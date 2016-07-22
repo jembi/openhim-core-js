@@ -13,68 +13,22 @@ else
 
 formatTS = (ts) -> moment(new Date(ts)).valueOf()
 
-# function to get the TimeStamp difference
-getTsDiff = ( ctxStartTS, obj ) ->
-  # default TS
+# Determine the difference between baseTS and the earliest timestamp
+# present in a collection of routes (buffered for normalization)
+calculateEarliestRouteDiff = (baseTS, routes) ->
   earliestTS = 0
 
-  # foreach record in object
-  for record in obj
-    # get request timestamp
-    ts = formatTS record.request.timestamp
-
-    # if TS earlier then update
+  for route in routes
+    ts = formatTS route.request.timestamp
     if earliestTS < ts then earliestTS = ts
 
-  # ctxStartTS minus earlistTS to get TS diff
-  tsDiff = ctxStartTS - earliestTS
-
-  # add buffer
+  tsDiff = baseTS - earliestTS
   tsDiff += normalizationBuffer
 
   return tsDiff
 
 
-addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
-  if route?.request?.timestamp? and route?.response?.timestamp?
-
-    startTS = formatTS route.request.timestamp
-    endTS = formatTS route.response.timestamp
-
-    # add tsDiff if normalization enabled
-    if enableTSNormalization is true
-      startTS = startTS + tsDiff
-      endTS = endTS + tsDiff
-
-    if startTS > endTS then startTS = endTS
-
-    # Transaction start for route
-    dst.push
-      channelID: ctx.authorisedChannel._id
-      transactionID: ctx.transactionId
-      normalizedTimestamp: startTS
-      type: prefix
-      event: 'start'
-      name: route.name
-      mediator: route.mediatorURN
-
-    routeStatus = 'success'
-    if 500 <= route.response.status <= 599
-      routeStatus = 'error'
-
-    # Transaction end for route
-    dst.push
-      channelID: ctx.authorisedChannel._id
-      transactionID: ctx.transactionId
-      normalizedTimestamp: endTS
-      type: prefix
-      event: 'end'
-      name: route.name
-      mediator: route.mediatorURN
-      status: route.response.status
-      statusType: routeStatus
-
-saveEvents = (trxEvents, callback) ->
+exports.saveEvents = saveEvents = (trxEvents, callback) ->
   now = new Date
   event.created = now for event in trxEvents
 
@@ -83,105 +37,128 @@ saveEvents = (trxEvents, callback) ->
   events.Event.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 3600 }, ->
     events.Event.collection.insert trxEvents, (err) -> return if err then callback err else callback()
 
-createChannelStartEvent = (ctx, done) ->
-  logger.debug "Storing channel start event for transaction: #{ctx.transactionId}"
-  trxEvents = []
-  startTS = formatTS ctx.requestTimestamp
+createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment) ->
+  if route?.request?.timestamp? and route?.response?.timestamp?
+    startTS = formatTS route.request.timestamp
+    endTS = formatTS route.response.timestamp
 
-  trxEvents.push
-    channelID: ctx.authorisedChannel._id
-    transactionID: ctx.transactionId
+    if enableTSNormalization is true
+      startTS = startTS + tsAdjustment
+      endTS = endTS + tsAdjustment
+
+    if startTS > endTS then startTS = endTS
+
+    dst.push
+      channelID: channel._id
+      transactionID: transactionId
+      normalizedTimestamp: startTS
+      type: type
+      event: 'start'
+      name: route.name
+      mediator: route.mediatorURN
+
+    routeStatus = 'success'
+    if 500 <= route.response.status <= 599
+      routeStatus = 'error'
+
+    dst.push
+      channelID: channel._id
+      transactionID: transactionId
+      normalizedTimestamp: endTS
+      type: type
+      event: 'end'
+      name: route.name
+      mediator: route.mediatorURN
+      status: route.response.status
+      statusType: routeStatus
+
+createChannelStartEvent = (dst, transactionId, requestTimestamp, channel, callback) ->
+  startTS = formatTS requestTimestamp
+
+  dst.push
+    channelID: channel._id
+    transactionID: transactionId
     normalizedTimestamp: startTS
     type: 'channel'
     event: 'start'
-    name: ctx.authorisedChannel.name
+    name: channel.name
 
-  saveEvents trxEvents, done
-
-createChannelEndEvent = (ctx, done) ->
-  logger.debug "Storing channel end event for transaction: #{ctx.transactionId}"
-  trxEvents = []
-  startTS = formatTS ctx.requestTimestamp
+createChannelEndEvent = (dst, transactionId, requestTimestamp, channel, response, callback) ->
+  startTS = formatTS requestTimestamp
 
   status = 'success'
-  if 500 <= ctx.response.status <= 599
+  if 500 <= response.status <= 599
     status = 'error'
 
-  endTS = formatTS ctx.response.timestamp
+  endTS = formatTS response.timestamp
   if endTS < startTS then endTS = startTS
 
-  trxEvents.push
-    channelID: ctx.authorisedChannel._id
-    transactionID: ctx.transactionId
+  dst.push
+    channelID: channel._id
+    transactionID: transactionId
     normalizedTimestamp: endTS + normalizationBuffer
     type: 'channel'
     event: 'end'
-    name: ctx.authorisedChannel.name
-    status: ctx.response.status
+    name: channel.name
+    status: response.status
     statusType: status
 
-  saveEvents trxEvents, done
+createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, route, response, callback) ->
+  startTS = formatTS requestTimestamp
 
-createPrimaryRouteEvents = (ctx, done) ->
-  logger.debug "Storing primary route events for transaction: #{ctx.transactionId}"
-  trxEvents = []
-  startTS = formatTS ctx.requestTimestamp
+  mediatorURN = response?['x-mediator-urn']
+  if mediatorURN
+    orchestrations = response.orchestrations
+    response = response.response
 
-  trxEvents.push
-    channelID: ctx.authorisedChannel._id
-    transactionID: ctx.transactionId
+  dst.push
+    channelID: channel._id
+    transactionID: transactionId
     normalizedTimestamp: startTS
     type: 'primary'
     event: 'start'
-    name: ctx.primaryRoute.name
-    mediator: ctx.mediatorResponse?['x-mediator-urn']
+    name: route.name
+    mediator: mediatorURN
 
-  if ctx.mediatorResponse?.orchestrations?
-    tsDiff = getTsDiff startTS, ctx.mediatorResponse.orchestrations
-    addRouteEvents ctx, trxEvents, orch, 'orchestration', tsDiff for orch in ctx.mediatorResponse.orchestrations
+  if orchestrations
+    tsDiff = calculateEarliestRouteDiff startTS, orchestrations
+    createRouteEvents trxEvents, transactionId, channel, orch, 'orchestration', tsDiff for orch in orchestrations
 
   status = 'success'
-  if 500 <= ctx.response.status <= 599
+  if 500 <= response.status <= 599
     status = 'error'
 
-  endTS = formatTS ctx.response.timestamp
+  endTS = formatTS response.timestamp
   if endTS < startTS then endTS = startTS
 
   # Transaction end for primary route
-  if ctx.primaryRoute
-    trxEvents.push
-      channelID: ctx.authorisedChannel._id
-      transactionID: ctx.transactionId
-      normalizedTimestamp: endTS + normalizationBuffer
-      type: 'primary'
-      event: 'end'
-      name: ctx.primaryRoute.name
-      status: ctx.response.status
-      statusType: status
-      mediator: ctx.mediatorResponse?['x-mediator-urn']
-
-  saveEvents trxEvents, done
+  dst.push
+    channelID: channel._id
+    transactionID: transactionId
+    normalizedTimestamp: endTS + normalizationBuffer
+    type: 'primary'
+    event: 'end'
+    name: route.name
+    status: response.status
+    statusType: status
+    mediator: mediatorURN
 
 
-exports.storeRouteEvents = storeRouteEvents = (ctx, done) ->
-  logger.debug "Storing route events for transaction: #{ctx.transactionId}"
+exports.createAndSaveRouteEvents = (transactionId, requestTimestamp, channel, routes, callback) ->
   trxEvents = []
 
-  startTS = formatTS ctx.requestTimestamp
+  startTS = formatTS requestTimestamp
+  tsDiff = calculateEarliestRouteDiff startTS, routes
 
-  if ctx.routes
-    # find TS difference
-    tsDiff = getTsDiff startTS, ctx.routes
+  for route in routes
+    createRouteEvents trxEvents, transactionId, channel, route, 'route', tsDiff
 
-    for route in ctx.routes
-      addRouteEvents ctx, trxEvents, route, 'route', tsDiff
+    if route.orchestrations
+      # find TS difference
+      tsDiff = calculateEarliestRouteDiff startTS, route.orchestrations
+      createRouteEvents trxEvents, transactionId, channel, orch, 'orchestration', tsDiff for orch in route.orchestrations
 
-      if route.orchestrations
-        # find TS difference
-        tsDiff = getTsDiff startTS, route.orchestrations
-        addRouteEvents ctx, trxEvents, orch, 'orchestration', tsDiff for orch in route.orchestrations
-
-    saveEvents trxEvents, done
+  saveEvents trxEvents, callback
 
 
 exports.koaMiddleware = (next) ->
@@ -189,10 +166,27 @@ exports.koaMiddleware = (next) ->
 
   runAsync = (method) ->
     do (ctx) ->
-      f = -> method ctx, (err) -> logger.warn err if err
+      f = -> method ctx, (err) -> logger.err err if err
       setTimeout f, 0
 
-  runAsync createChannelStartEvent
+  runAsync (ctx, done) ->
+    logger.debug "Storing channel start event for transaction: #{ctx.transactionId}"
+    trxEvents = []
+    createChannelStartEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel
+    saveEvents trxEvents, done
+
   yield next
-  runAsync createPrimaryRouteEvents
-  runAsync createChannelEndEvent
+
+  runAsync (ctx, done) ->
+    logger.debug "Storing channel and primary routes end events for transaction: #{ctx.transactionId}"
+
+    if ctx.mediatorResponse?
+      response = ctx.mediatorResponse
+    else
+      response = ctx.response
+
+    trxEvents = []
+
+    createPrimaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute, response
+    createChannelEndEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.response
+    saveEvents trxEvents, done
