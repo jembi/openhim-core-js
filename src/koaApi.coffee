@@ -11,7 +11,7 @@ transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
 contactGroups = require './api/contactGroups'
-visualizer = require './api/visualizer'
+events = require './api/events'
 Q = require 'q'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
@@ -92,9 +92,6 @@ exports.setupApp = (done) ->
   app.use route.put '/tasks/:taskId', tasks.updateTask
   app.use route.delete '/tasks/:taskId', tasks.removeTask
 
-  app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
-  app.use route.get '/visualizer/sync', visualizer.sync
-
   app.use route.get '/metrics', -> metrics.getMetrics.call this, false
   app.use route.get '/metrics/channels', -> metrics.getMetrics.call this, true
   app.use route.get '/metrics/channels/:channelID', (channelID) -> metrics.getMetrics.call this, true, null, channelID
@@ -134,6 +131,9 @@ exports.setupApp = (done) ->
 
   # Logs endpoint
   app.use route.get '/logs', logs.getLogs
+
+  # Events endpoint
+  app.use route.get '/events/:receivedTime', events.getLatestEvents
 
   # Return the result
   done(app)

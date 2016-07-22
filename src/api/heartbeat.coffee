@@ -21,6 +21,7 @@ exports.getHeartbeat = ->
       else
         result.mediators[mediator.urn] = null
 
+    result.now = Date.now()
     this.body = result
   catch e
     utils.logAndSetResponse this, 500, "Error: #{e}", 'error'

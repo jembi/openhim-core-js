@@ -70,11 +70,8 @@
     "dailyReportAt": "0 7 * * *",
     "weeklyReportAt": "0 7 * * 1"
   },
-  "visualizer": {
-    "enableVisualizer": true,
-    "minimumEventPeriodMillis": 100,
-    "enableTSNormalization": true,
-    "orchestrationTSBufferMillis": 100
+  "events": {
+    "enableTSNormalization": true
   },
   "statsd": {
     "enabled": false,

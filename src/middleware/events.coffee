@@ -3,7 +3,7 @@ logger = require 'winston'
 events = require '../model/events'
 messageStore = require '../middleware/messageStore'
 config = require "../config/config"
-config.visualizer = config.get('visualizer')
+config.events = config.get('events')
 
 statsdServer = config.get 'statsd'
 application = config.get 'application'
@@ -13,13 +13,11 @@ os = require 'os'
 domain = "#{os.hostname()}.#{application.name}.appMetrics"
 sdc = new SDC statsdServer
 
-minEvPeriod = config.visualizer.minimumEventPeriodMillis ? 100
-
-enableTSNormalization = config.visualizer.enableTSNormalization ? false
+enableTSNormalization = config.events.enableTSNormalization ? false
 if enableTSNormalization is true
-  orchestrationTsBufferMillis = config.visualizer.orchestrationTsBufferMillis ? 100
+  normalizationBuffer = 100
 else
-  orchestrationTsBufferMillis = 0
+  normalizationBuffer = 0
 
 formatTS = (ts) -> moment(new Date(ts)).valueOf()
 
@@ -39,8 +37,8 @@ getTsDiff = ( ctxStartTS, obj ) ->
   # ctxStartTS minus earlistTS to get TS diff
   tsDiff = ctxStartTS - earliestTS
 
-  # add visualizer buffer
-  tsDiff += orchestrationTsBufferMillis
+  # add buffer
+  tsDiff += normalizationBuffer
 
   return tsDiff
 
@@ -58,15 +56,13 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
       endTS = endTS + tsDiff
 
     if startTS > endTS then startTS = endTS
-    # round a sub MIN ms response to MIN ms
-    if endTS-startTS<minEvPeriod then endTS = startTS+minEvPeriod
 
     # Transaction start for route
     dst.push
       channelID: ctx.authorisedChannel._id
       transactionID: ctx.transactionId
-      visualizerTimestamp: startTS
-      route: prefix
+      normalizedTimestamp: startTS
+      type: prefix
       event: 'start'
       name: route.name
 
@@ -78,12 +74,12 @@ addRouteEvents = (ctx, dst, route, prefix, tsDiff) ->
     dst.push
       channelID: ctx.authorisedChannel._id
       transactionID: ctx.transactionId
-      visualizerTimestamp: endTS
-      route: prefix
+      normalizedTimestamp: endTS
+      type: prefix
       event: 'end'
       name: route.name
       status: route.response.status
-      visualizerStatus: routeStatus
+      statusType: routeStatus
 
 exports.storeEvents = storeEvents = (ctx, done) ->
   logger.info "Storing events for transaction: #{ctx.transactionId}"
@@ -92,17 +88,26 @@ exports.storeEvents = storeEvents = (ctx, done) ->
   startTS = formatTS ctx.requestTimestamp
   endTS = formatTS ctx.response.timestamp
   if startTS > endTS then startTS = endTS
-  # round a sub MIN ms response to MIN ms
-  if endTS-startTS<minEvPeriod then endTS = startTS+minEvPeriod
 
-  # Transaction end for primary route
-  trxEvents.push
-    channelID: ctx.authorisedChannel._id
-    transactionID: ctx.transactionId
-    visualizerTimestamp: startTS
-    route: 'primary'
-    event: 'start'
-    name: ctx.authorisedChannel.name
+  if ctx.primaryRoute
+    # Transaction start for channel
+    trxEvents.push
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      normalizedTimestamp: startTS
+      type: 'channel'
+      event: 'start'
+      name: ctx.authorisedChannel.name
+
+    # Transaction start for primary route
+    trxEvents.push
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      normalizedTimestamp: startTS
+      type: 'primary'
+      event: 'start'
+      name: ctx.primaryRoute.name
+      mediator: ctx.mediatorResponse?['x-mediator-urn']
 
   if ctx.routes
     # find TS difference
@@ -125,15 +130,28 @@ exports.storeEvents = storeEvents = (ctx, done) ->
     status = 'error'
 
   # Transaction end for primary route
-  trxEvents.push
-    channelID: ctx.authorisedChannel._id
-    transactionID: ctx.transactionId
-    visualizerTimestamp: endTS + orchestrationTsBufferMillis
-    route: 'primary'
-    event: 'end'
-    name: ctx.authorisedChannel.name
-    status: ctx.response.status
-    visualizerStatus: status
+  if ctx.primaryRoute
+    trxEvents.push
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      normalizedTimestamp: endTS + normalizationBuffer
+      type: 'primary'
+      event: 'end'
+      name: ctx.primaryRoute.name
+      status: ctx.response.status
+      statusType: status
+      mediator: ctx.mediatorResponse?['x-mediator-urn']
+
+    # Transaction end for channel
+    trxEvents.push
+      channelID: ctx.authorisedChannel._id
+      transactionID: ctx.transactionId
+      normalizedTimestamp: endTS + normalizationBuffer
+      type: 'channel'
+      event: 'end'
+      name: ctx.authorisedChannel.name
+      status: ctx.response.status
+      statusType: status
 
   now = new Date
   event.created = now for event in trxEvents
