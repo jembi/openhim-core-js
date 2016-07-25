@@ -87,7 +87,7 @@ describe 'Events API Integration Tests', ->
             # Create mock endpoint to forward requests to
             mockServer = testUtils.createMockMediatorServer 200, mockResponse, 1232, ->
               mockServer2 = testUtils.createMockMediatorServer 200, mockResponse, 1233, ->
-                slowMockServer = testUtils.createSlowMockMediatorServer 150*global.testTimeoutFactor, 200, mockResponse, 1234, -> done()
+                slowMockServer = testUtils.createSlowMockMediatorServer 400*global.testTimeoutFactor, 200, mockResponse, 1234, -> done()
 
   after (done) ->
     Channel.remove { name: 'TEST DATA - Mock endpoint' }, ->
@@ -274,7 +274,7 @@ describe 'Events API Integration Tests', ->
 
               done()
 
-        setTimeout validate, 1100 * global.testTimeoutFactor
+        setTimeout validate, 800 * global.testTimeoutFactor
 
   it 'should add mediator info for slow secondary routes', (done) ->
     startTime = new Date()
@@ -309,4 +309,4 @@ describe 'Events API Integration Tests', ->
 
               done()
 
-        setTimeout validate, 1100 * global.testTimeoutFactor
+        setTimeout validate, 800 * global.testTimeoutFactor
