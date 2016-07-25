@@ -32,7 +32,10 @@ exports.getMetrics = (groupChannels, timeSeries, channelID) ->
 
   if m[0]?._id?.year? # if there are time components
     m = m.map (item) ->
-      item.timestamp = moment(item._id)
+      date = Object.assign {}, item._id
+      # adapt for moment (month starting at 0)
+      if date.month then date.month = date.month - 1
+      item.timestamp = moment(date)
       return item
 
   this.body = m
