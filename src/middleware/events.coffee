@@ -2,8 +2,13 @@ moment = require 'moment'
 logger = require 'winston'
 events = require '../model/events'
 messageStore = require '../middleware/messageStore'
-config = require "../config/config"
+config = require '../config/config'
 config.events = config.get('events')
+
+if !config.events
+  # maybe we're using outdated config
+  config.events = config.get('visualizer')
+  config.events.normalizationBuffer = config.events.orchestrationTsBufferMillis
 
 enableTSNormalization = config.events.enableTSNormalization ? false
 if enableTSNormalization is true
@@ -11,7 +16,7 @@ if enableTSNormalization is true
 else
   normalizationBuffer = 0
 
-formatTS = (ts) -> moment(new Date(ts)).valueOf()
+timestampAsMillis = (ts) -> moment(new Date(ts)).valueOf()
 
 # Determine the difference between baseTS and the earliest timestamp
 # present in a collection of routes (buffered for normalization)
@@ -19,13 +24,19 @@ calculateEarliestRouteDiff = (baseTS, routes) ->
   earliestTS = 0
 
   for route in routes
-    ts = formatTS route.request.timestamp
+    ts = timestampAsMillis route.request.timestamp
     if earliestTS < ts then earliestTS = ts
 
   tsDiff = baseTS - earliestTS
   tsDiff += normalizationBuffer
 
   return tsDiff
+
+determineStatusType = (statusCode) ->
+  status = 'success'
+  if 500 <= statusCode <= 599
+    status = 'error'
+  return status
 
 
 exports.saveEvents = saveEvents = (trxEvents, callback) ->
@@ -37,10 +48,11 @@ exports.saveEvents = saveEvents = (trxEvents, callback) ->
   events.Event.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 3600 }, ->
     events.Event.collection.insert trxEvents, (err) -> return if err then callback err else callback()
 
+
 createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment) ->
   if route?.request?.timestamp? and route?.response?.timestamp?
-    startTS = formatTS route.request.timestamp
-    endTS = formatTS route.response.timestamp
+    startTS = timestampAsMillis route.request.timestamp
+    endTS = timestampAsMillis route.response.timestamp
 
     if enableTSNormalization is true
       startTS = startTS + tsAdjustment
@@ -57,10 +69,6 @@ createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment) ->
       name: route.name
       mediator: route.mediatorURN
 
-    routeStatus = 'success'
-    if 500 <= route.response.status <= 599
-      routeStatus = 'error'
-
     dst.push
       channelID: channel._id
       transactionID: transactionId
@@ -70,27 +78,21 @@ createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment) ->
       name: route.name
       mediator: route.mediatorURN
       status: route.response.status
-      statusType: routeStatus
+      statusType: determineStatusType route.response.status
 
-createChannelStartEvent = (dst, transactionId, requestTimestamp, channel, callback) ->
-  startTS = formatTS requestTimestamp
-
+createChannelStartEvent = (dst, transactionId, requestTimestamp, channel) ->
   dst.push
     channelID: channel._id
     transactionID: transactionId
-    normalizedTimestamp: startTS
+    normalizedTimestamp: timestampAsMillis requestTimestamp
     type: 'channel'
     event: 'start'
     name: channel.name
 
-createChannelEndEvent = (dst, transactionId, requestTimestamp, channel, response, callback) ->
-  startTS = formatTS requestTimestamp
+createChannelEndEvent = (dst, transactionId, requestTimestamp, channel, response) ->
+  startTS = timestampAsMillis requestTimestamp
 
-  status = 'success'
-  if 500 <= response.status <= 599
-    status = 'error'
-
-  endTS = formatTS response.timestamp
+  endTS = timestampAsMillis response.timestamp
   if endTS < startTS then endTS = startTS
 
   dst.push
@@ -101,15 +103,10 @@ createChannelEndEvent = (dst, transactionId, requestTimestamp, channel, response
     event: 'end'
     name: channel.name
     status: response.status
-    statusType: status
+    statusType: determineStatusType response.status
 
-createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, route, response, callback) ->
-  startTS = formatTS requestTimestamp
-
-  mediatorURN = response?['x-mediator-urn']
-  if mediatorURN
-    orchestrations = response.orchestrations
-    response = response.response
+createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, routeName, mediatorURN, response) ->
+  startTS = timestampAsMillis requestTimestamp
 
   dst.push
     channelID: channel._id
@@ -117,35 +114,33 @@ createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, route
     normalizedTimestamp: startTS
     type: 'primary'
     event: 'start'
-    name: route.name
+    name: routeName
     mediator: mediatorURN
 
-  if orchestrations
+  endTS = timestampAsMillis response.timestamp
+  if endTS < startTS then endTS = startTS
+
+  dst.push
+    channelID: channel._id
+    transactionID: transactionId
+    normalizedTimestamp: endTS + normalizationBuffer
+    type: 'primary'
+    event: 'end'
+    name: routeName
+    status: response.status
+    statusType: determineStatusType response.status
+    mediator: mediatorURN
+
+
+createOrchestrationEvents = (dst, transactionId, requestTimestamp, channel, orchestrations) ->
+  if requestTimestamp
+    startTS = timestampAsMillis requestTimestamp
     tsDiff = calculateEarliestRouteDiff startTS, orchestrations
-    createRouteEvents trxEvents, transactionId, channel, orch, 'orchestration', tsDiff for orch in orchestrations
 
-  status = 'success'
-  if 500 <= response.status <= 599
-    status = 'error'
+  createRouteEvents dst, transactionId, channel, orch, 'orchestration', tsDiff for orch in orchestrations
 
-  endTS = formatTS response.timestamp
-  if endTS < startTS then endTS = startTS
-
-  # Transaction end for primary route
-  dst.push
-    channelID: channel._id
-    transactionID: transactionId
-    normalizedTimestamp: endTS + normalizationBuffer
-    type: 'primary'
-    event: 'end'
-    name: route.name
-    status: response.status
-    statusType: status
-    mediator: mediatorURN
-
-
-exports.createRouteEvents = (dst, transactionId, requestTimestamp, channel, routes, callback) ->
-  startTS = formatTS requestTimestamp
+exports.createSecondaryRouteEvents = createSecondaryRouteEvents = (dst, transactionId, requestTimestamp, channel, routes) ->
+  startTS = timestampAsMillis requestTimestamp
   tsDiff = calculateEarliestRouteDiff startTS, routes
 
   for route in routes
@@ -155,6 +150,22 @@ exports.createRouteEvents = (dst, transactionId, requestTimestamp, channel, rout
       # find TS difference
       tsDiff = calculateEarliestRouteDiff startTS, route.orchestrations
       createRouteEvents dst, transactionId, channel, orch, 'orchestration', tsDiff for orch in route.orchestrations
+
+
+exports.createTransactionEvents = (dst, transaction, channel) ->
+  getPrimaryRouteName = () ->
+    for r in channel.routes
+      if r.primary then return r.name
+    return null
+
+  timestamp = if transaction.request?.timestamp then transaction.request.timestamp else new Date()
+
+  if transaction.request and transaction.response
+    createPrimaryRouteEvents dst, transaction._id, timestamp, channel, getPrimaryRouteName(), null, transaction.response
+  if transaction.orchestrations
+    createOrchestrationEvents dst, transaction._id, timestamp, channel, transaction.orchestrations
+  if transaction.routes
+    createSecondaryRouteEvents dst, transaction._id, timestamp, channel, transaction.routes
 
 
 exports.koaMiddleware = (next) ->
@@ -176,13 +187,13 @@ exports.koaMiddleware = (next) ->
   runAsync (ctx, done) ->
     logger.debug "Storing channel end and primary routes events for transaction: #{ctx.transactionId}"
 
-    if ctx.mediatorResponse?
-      response = ctx.mediatorResponse
-    else
-      response = ctx.response
-
     trxEvents = []
 
-    createPrimaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute, response
+    mediatorURN = ctx.mediatorResponse?['x-mediator-urn']
+    orchestrations = ctx.mediatorResponse?.orchestrations
+
+    createPrimaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute.name, mediatorURN, ctx.response
+    if orchestrations
+      createOrchestrationEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, orchestrations
     createChannelEndEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.response
     saveEvents trxEvents, done

@@ -187,7 +187,7 @@ exports.addTransaction = ->
     this.status = 201
     logger.info "User #{this.authenticated.email} created transaction with id #{tx.id}"
 
-    generateEvents tx
+    generateEvents tx, tx.channelID
   catch e
     utils.logAndSetResponse this, 500, "Could not add a transaction via the API: #{e}", 'error'
 
@@ -294,22 +294,18 @@ exports.findTransactionByClientId = (clientId) ->
     utils.logAndSetResponse this, 500, "Could not get transaction by clientID via the API: #{e}", 'error'
 
 
-generateEvents = (transaction) ->
-  Channel.findById transaction.channelID, (err, channel) ->
-    #events.storeEvents {
-      #transactionId: transaction._id
-      #requestTimestamp: transaction.request.timestamp
-      #response: transaction.response
-      #authorisedChannel: channel
-      #routes: transaction.routes
-      #}, ->
+generateEvents = (transaction, channelID) ->
+  Channel.findById channelID, (err, channel) ->
     logger.debug "Storing events for transaction: #{transaction._id}"
 
     trxEvents = []
     done = (err) -> logger.error err if err
 
-    events.createRouteEvents trxEvents, transaction._id, transaction.request.requestTimestamp, channel, transaction.routes
-    events.saveEvents trxEvents, done
+    events.createTransactionEvents trxEvents, transaction, channel
+
+    if trxEvents.length > 0
+      events.saveEvents trxEvents, done
+
 
 updateTransactionMetrics = (updates, doc) ->
   if updates['$push']?.routes?
@@ -386,7 +382,7 @@ exports.updateTransaction = (transactionId) ->
     logger.info "User #{this.authenticated.email} updated transaction with id #{transactionId}"
 
     transactions.Transaction.findById transactionId, (err, doc) ->
-      generateEvents doc
+      generateEvents updates, doc.channelID
       updateTransactionMetrics updates, doc
 
   catch e

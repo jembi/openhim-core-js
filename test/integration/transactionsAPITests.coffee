@@ -174,10 +174,21 @@ describe "API Integration Tests", ->
             validateEvents = ->
               Event.find {}, (err, events) ->
                 return done err if err
-                events.length.should.be.exactly 2
+
+                # expect 8: start+end for primary route, secondary route and orchestration
+                events.length.should.be.exactly 6
                 for ev in events
                   ev.channelID.toString().should.be.exactly channel._id.toString()
+
+                evs = (events.map (event) -> "#{event.type}-#{event.name}-#{event.event}")
+                evs.should.containEql "primary-test route-start"
+                evs.should.containEql "primary-test route-end"
+                evs.should.containEql "route-dummy-route-start"
+                evs.should.containEql "route-dummy-route-end"
+                evs.should.containEql "orchestration-dummy-orchestration-start"
+                evs.should.containEql "orchestration-dummy-orchestration-end"
                 done()
+
             setTimeout validateEvents, 100 * global.testTimeoutFactor
 
     describe "*updateTransaction()", ->
@@ -293,30 +304,22 @@ describe "API Integration Tests", ->
           reqUp.body = "<HTTP body update>"
           reqUp.method = "PUT"
           updates =
-            request: reqUp
             status: "Failed"
-            clientID: "777777777777777777777777"
-            $push: {
-              routes : {
-                "name": "async",
-                "orchestrations": [
-                  {
-                    "name": "test",
-                    "request": {
-                      "method": "POST",
-                      "body": "data",
-                      "timestamp": 1425897647329
-                    },
-                    "response": {
-                      "status": 500,
-                      "body": "OK",
-                      "timestamp": 1425897688016
-                    }
-                  }
-                ]
+            "orchestrations": [
+              {
+                "name": "test",
+                "request": {
+                  "method": "POST",
+                  "body": "data",
+                  "timestamp": 1425897647329
+                },
+                "response": {
+                  "status": 500,
+                  "body": "OK",
+                  "timestamp": 1425897688016
+                }
               }
-            }
-
+            ]
 
           request("https://localhost:8080")
             .put("/transactions/#{transactionId}")
@@ -332,11 +335,19 @@ describe "API Integration Tests", ->
               validateEvents = ->
                 Event.find {}, (err, events) ->
                   return done err if err
-                  events.length.should.be.exactly 4 #2+2 start/end for each of async route and orchestration
-                  eventRoutes = events.map (ev) -> ev.type
-                  eventRoutes.should.containEql 'route'
-                  eventRoutes.should.containEql 'orchestration'
+
+                  # events should only be generated for the updated fields
+                  events.length.should.be.exactly 2
+                  for ev in events
+                    ev.channelID.toString().should.be.exactly channel._id.toString()
+
+                  evs = (events.map (event) -> "#{event.type}-#{event.name}-#{event.event}")
+
+                  evs.should.containEql "orchestration-test-start"
+                  evs.should.containEql "orchestration-test-end"
+
                   done()
+
               setTimeout validateEvents, 100 * global.testTimeoutFactor
 
     describe "*getTransactions()", ->

@@ -204,10 +204,10 @@ sendRequestToRoutes = (ctx, routes, next) ->
         if ctx.routes
           logger.debug "Storing route events for transaction: #{ctx.transactionId}"
 
-          trxEvents = []
           done = (err) -> logger.error err if err
+          trxEvents = []
 
-          events.createRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes
+          events.createSecondaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes
           events.saveEvents trxEvents, done
 
 
