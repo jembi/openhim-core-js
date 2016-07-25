@@ -274,7 +274,7 @@ describe 'Events API Integration Tests', ->
 
               done()
 
-        setTimeout validate, 1000 * global.testTimeoutFactor
+        setTimeout validate, 2000 * global.testTimeoutFactor
 
   it 'should add mediator info for slow secondary routes', (done) ->
     startTime = new Date()
@@ -309,4 +309,4 @@ describe 'Events API Integration Tests', ->
 
               done()
 
-        setTimeout validate, 1000 * global.testTimeoutFactor
+        setTimeout validate, 2000 * global.testTimeoutFactor
