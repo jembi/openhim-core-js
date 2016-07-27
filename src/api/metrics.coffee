@@ -6,6 +6,7 @@ mongoose = require 'mongoose'
 authorisation = require './authorisation'
 Q = require 'q'
 metrics = require "../metrics"
+_ = require 'lodash'
 
 # all in one getMetrics generator function for metrics API
 exports.getMetrics = (groupChannels, timeSeries, channelID) ->
@@ -32,7 +33,7 @@ exports.getMetrics = (groupChannels, timeSeries, channelID) ->
 
   if m[0]?._id?.year? # if there are time components
     m = m.map (item) ->
-      date = Object.assign {}, item._id
+      date = _.assign {}, item._id
       # adapt for moment (month starting at 0)
       if date.month then date.month = date.month - 1
       item.timestamp = moment(date)
