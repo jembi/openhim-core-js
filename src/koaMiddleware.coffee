@@ -70,9 +70,6 @@ exports.setupApp = (done) ->
     flush: require("zlib").Z_SYNC_FLUSH
   )
 
-  # Events
-  app.use events.koaMiddleware
-
   # Proxy
   app.use proxy.koaMiddleware
 
@@ -81,6 +78,9 @@ exports.setupApp = (done) ->
 
   # URL rewriting middleware
   app.use rewrite.koaMiddleware
+
+  # Events
+  app.use events.koaMiddleware
 
   # Call router
   app.use router.koaMiddleware
@@ -103,14 +103,14 @@ exports.rerunApp = (done) ->
   # Update original transaction with reruned transaction ID
   app.use rerunUpdateTransactionTask.koaMiddleware
 
-  # Events
-  app.use events.koaMiddleware
-
   # Persist message middleware
   app.use messageStore.koaMiddleware
 
   # Authorisation middleware
   app.use authorisation.koaMiddleware
+
+  # Events
+  app.use events.koaMiddleware
 
   # Call router
   app.use router.koaMiddleware
@@ -127,14 +127,14 @@ exports.tcpApp = (done) ->
   # TCP bypass authentication middlware
   app.use tcpBypassAuthentication.koaMiddleware
 
-  # Events
-  app.use events.koaMiddleware
-
   # Proxy
   app.use proxy.koaMiddleware
 
   # Persist message middleware
   app.use messageStore.koaMiddleware
+
+  # Events
+  app.use events.koaMiddleware
 
   # Call router
   app.use router.koaMiddleware
@@ -153,11 +153,11 @@ exports.pollingApp = (done) ->
   # Polling bypass authorisation middleware
   app.use pollingBypassAuthorisation.koaMiddleware
 
-  # Events
-  app.use events.koaMiddleware
-
   # Persist message middleware
   app.use messageStore.koaMiddleware
+
+  # Events
+  app.use events.koaMiddleware
 
   # Call router
   app.use router.koaMiddleware

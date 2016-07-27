@@ -132,6 +132,19 @@ exports.createMockMediatorServer = (resStatusCode, mediatorResponse, port, callb
 
   mockServer.listen port, -> callback mockServer
 
+exports.createSlowMockMediatorServer = (delay, resStatusCode, resBody, port, callback, requestCallback) ->
+  requestCallback = requestCallback || ->
+    # Create mock endpoint to forward requests to
+  mockServer = http.createServer (req, res) ->
+    respond = ->
+      res.writeHead resStatusCode, {"Content-Type": "application/json+openhim; charset=utf-8"}
+      res.end JSON.stringify resBody
+    setTimeout respond, delay
+
+  mockServer.listen port, -> callback mockServer
+  mockServer.on "request", requestCallback
+  return mockServer
+
 exports.rootUser =
   firstname: 'Admin'
   surname: 'User'

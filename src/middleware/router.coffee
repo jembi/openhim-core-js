@@ -13,6 +13,7 @@ cookie = require 'cookie'
 fs = require 'fs'
 utils = require '../utils'
 messageStore = require '../middleware/messageStore'
+events = require '../middleware/events'
 stats = require "../stats"
 statsdServer = config.get 'statsd'
 application = config.get 'application'
@@ -196,9 +197,18 @@ sendRequestToRoutes = (ctx, routes, next) ->
 
 
         promises.push promise
+
     (Q.all promises).then ->
       messageStore.setFinalStatus ctx, ->
         logger.info "All routes completed for transaction: #{ctx.transactionId.toString()}"
+        if ctx.routes
+          logger.debug "Storing route events for transaction: #{ctx.transactionId}"
+
+          done = (err) -> logger.error err if err
+          trxEvents = []
+
+          events.createSecondaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes
+          events.saveEvents trxEvents, done
 
 
 # function to build fresh promise for transactions routes
@@ -219,6 +229,7 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
     if response.headers?['content-type']?.indexOf('application/json+openhim') > -1
       # handle mediator reponse
       responseObj = JSON.parse response.body
+      routeObj.mediatorURN = responseObj['x-mediator-urn']
       routeObj.orchestrations = responseObj.orchestrations
       routeObj.properties = responseObj.properties
       routeObj.metrics = responseObj.metrics if responseObj.metrics
