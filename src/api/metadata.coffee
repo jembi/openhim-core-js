@@ -42,8 +42,11 @@ exports.getMetadata = () ->
     for key of collections
       exportObject[key] = yield collections[key].find().exec()
     this.body = [exportObject]
+    this.status = 200
   catch e
     utils.logAndSetResponse this, 500, "Could not fetch specified metadata via the API #{e}", 'error'
+    this.body = e.message
+    this.status = 400
 
 
 # API endpoint that inserts metadata from import
@@ -58,6 +61,7 @@ exports.insertMetadata = () ->
     insertObject = this.request.body
     
     for key of insertObject
+      return throw new Error "Invalid Import Object" if key not of collections
       insertDocuments = insertObject[key]
       for doc in insertDocuments
         try
@@ -84,8 +88,11 @@ exports.insertMetadata = () ->
           }
         
     this.body = returnObject
+    this.status = 201
   catch e
     utils.logAndSetResponse this, 500, "Could not fetch all users via the API #{e}", 'error'
+    this.body = e.message
+    this.status = 400
 
 
 # API endpoint that updates metadata from import
@@ -100,6 +107,7 @@ exports.updateMetadata = () ->
     updateObject = this.request.body
     
     for key of updateObject
+      return throw new Error "Invalid Import Object" if key not of collections
       updateDocuments = updateObject[key]
       for doc in updateDocuments
         name = doc.name
@@ -127,5 +135,8 @@ exports.updateMetadata = () ->
           }
         
     this.body = returnObject
+    this.status = 201
   catch e
     utils.logAndSetResponse this, 500, "Could not fetch all users via the API #{e}", 'error'
+    this.body = e.message
+    this.status = 400
