@@ -29,15 +29,6 @@ exports.getMetadata = () ->
     exportObject = {}
     params = this.request.query
     
-    # Return selected documents from selected collections for export
-    if params.selected == 'true'
-      for key of params
-        if collections[key]
-          ids = params[key]
-          ids = [ids] if typeof ids is 'string'
-          exportObject[key] = yield collections[key].find({ _id: { $in: ids } }).exec()
-      return this.body = [exportObject]
-    
     # Return all documents from all collections for export
     for key of collections
       exportObject[key] = yield collections[key].find().exec()
