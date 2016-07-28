@@ -19,26 +19,23 @@ collections =
 
 
 #Function to remove properties from export object
-# removeProperties = (obj) ->
-#   propertyID = '_id'
-#   propertyV = '__v'
-#   
-#   for prop of obj
-#     if (prop == propertyID || prop == propertyV)
-#       delete obj[prop]
-#     else if ( typeof obj[prop] == 'object' || obj[prop] instanceof Array )
-#       console.log('new')
-#       console.log(prop)
-#       console.log(obj[prop])
-#       removeProperties(obj[prop])
-#   return obj
+removeProperties = (obj) ->
+  propertyID = '_id'
+  propertyV = '__v'
+  
+  for prop of obj
+    if (prop == propertyID || prop == propertyV)
+      delete obj[prop]
+    else if ( typeof obj[prop] == 'object' || obj[prop] instanceof Array )
+      removeProperties(obj[prop])
+  return obj
 
 
 # Function to return unique identifier key and value for a collection
 getUniqueIdentifierForCollection = (collection, doc) ->
   switch collection
-    when 'Channels' then uidKey = 'name'; uid = doc.name  
-    when 'Clients' then uidKey = 'clientID'; uid = doc.clientID  
+    when 'Channels' then uidKey = 'name'; uid = doc.name
+    when 'Clients' then uidKey = 'clientID'; uid = doc.clientID
     when 'Mediators' then uidKey = 'urn'; uid = doc.urn
     when 'Users' then uidKey = 'email'; uid = doc.email
     when 'ContactGroups' then uidKey = 'groups'; uid = doc.groups
@@ -70,12 +67,10 @@ exports.getMetadata = () ->
     
     # Return all documents from all collections for export
     for col of collections
-      exportObject[col] = yield collections[col].find().exec()
-    
-    # for col of exportObject
-    #   for doc of exportObject[col]
-    #     if exportObject[col][doc]._id
-    #       exportObject[col][doc] = removeProperties exportObject[col][doc]
+      exportObject[col] = yield collections[col].find().lean().exec()
+      for doc of exportObject[col]
+        if exportObject[col][doc]._id
+          exportObject[col][doc] = removeProperties exportObject[col][doc]
 
     this.body = [exportObject]
     this.status = 200
