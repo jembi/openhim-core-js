@@ -18,7 +18,7 @@ collections =
   ContactGroups: ContactGroup
 
 
-# Function to remove properties from export object
+#Function to remove properties from export object
 # removeProperties = (obj) ->
 #   propertyID = '_id'
 #   propertyV = '__v'
@@ -27,12 +27,15 @@ collections =
 #     if (prop == propertyID || prop == propertyV)
 #       delete obj[prop]
 #     else if ( typeof obj[prop] == 'object' || obj[prop] instanceof Array )
+#       console.log('new')
+#       console.log(prop)
+#       console.log(obj[prop])
 #       removeProperties(obj[prop])
 #   return obj
 
 
 # Function to return unique identifier key and value for a collection
-getUniqueIdentifierForCollection = (collection) ->
+getUniqueIdentifierForCollection = (collection, doc) ->
   switch collection
     when 'Channels' then uidKey = 'name'; uid = doc.name  
     when 'Clients' then uidKey = 'clientID'; uid = doc.clientID  
@@ -44,6 +47,7 @@ getUniqueIdentifierForCollection = (collection) ->
   return returnObj
 
 
+# Build response object
 buildResponseObject = (model, doc, status, message, uid) ->
   return {
     model: model
@@ -71,8 +75,7 @@ exports.getMetadata = () ->
     # for col of exportObject
     #   for doc of exportObject[col]
     #     if exportObject[col][doc]._id
-    #       console.log(exportObject[col][doc])
-          # exportObject[col][doc] = removeProperties exportObject[col][doc]
+    #       exportObject[col][doc] = removeProperties exportObject[col][doc]
 
     this.body = [exportObject]
     this.status = 200
@@ -95,9 +98,10 @@ exports.validateMetadata = () ->
     for key of insertObject
       return throw new Error "Invalid Import Object" if key not of collections
       insertDocuments = insertObject[key]
-      uidObj = getUniqueIdentifierForCollection key
       for doc in insertDocuments
         try
+          uidObj = getUniqueIdentifierForCollection key, doc
+          uid = uidObj[Object.keys(uidObj)[0]]
           result = yield collections[key].find(uidObj).exec()
           if result and result.length > 0 and result[0]._id
             status = 'Conflict'
@@ -105,11 +109,11 @@ exports.validateMetadata = () ->
             status = 'Valid'
           
           logger.info "User #{this.authenticated.email} successfully inserted #{key} with unique identifier #{uid}"
-          returnObject.successes.push buildResponseObject key, doc, status, 'Ok', uidObj[uidKey]
+          returnObject.successes.push buildResponseObject key, doc, status, 'Ok', uid
           
         catch e
           logger.error "Failed to insert #{key} with unique identifier #{uid}. #{e.message}"
-          returnObject.errors.push buildResponseObject key, doc, 'Invalid', e.message, uidObj[uidKey]
+          returnObject.errors.push buildResponseObject key, doc, 'Invalid', e.message, uid
         
     this.body = returnObject
     this.status = 201
@@ -133,9 +137,10 @@ exports.upsertMetadata = () ->
     for key of insertObject
       return throw new Error "Invalid Import Object" if key not of collections
       insertDocuments = insertObject[key]
-      uidObj = getUniqueIdentifierForCollection key
       for doc in insertDocuments
         try
+          uidObj = getUniqueIdentifierForCollection key, doc
+          uid = uidObj[Object.keys(uidObj)[0]]
           result = yield collections[key].find(uidObj).exec()
           if result and result.length > 0 and result[0]._id
             delete doc._id if doc._id
@@ -147,11 +152,11 @@ exports.upsertMetadata = () ->
             status = 'Successfully Inserted'
           
           logger.info "User #{this.authenticated.email} successfully inserted #{key} with unique identifier #{uid}"
-          returnObject.successes.push buildResponseObject key, doc, status, 'Ok', uidObj[uidKey]
+          returnObject.successes.push buildResponseObject key, doc, status, 'Ok', uid
           
         catch e
           logger.error "Failed to insert #{key} with unique identifier #{uid}. #{e.message}"
-          returnObject.errors.push buildResponseObject key, doc, 'Error', e.message, uidObj[uidKey]
+          returnObject.errors.push buildResponseObject key, doc, 'Error', e.message, uid
         
     this.body = returnObject
     this.status = 201
