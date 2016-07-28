@@ -784,3 +784,99 @@ returns 200 ok with `{ master: <core-uptime>, mediators: { <urn>: <mediator-upti
 Returns the server uptime in seconds. Includes a list of all registered mediators and if heartbeats have been received for them, will include their uptimes as well.
 
 Note that this is a public endpoint that does not require any authorization. It is convenient for integrating with external monitoring tools.
+
+### Metadata resource
+
+The metadata resource allows the user to export and import Channels, Clients, Mediators, Users and ContactGroups.
+
+#### Export Metadata
+
+`Get /metadata` Returns `200` and an object with the following format:
+
+```js
+[
+  {
+    "Channels": [
+      { ChannelObject1 }
+    ]
+    "Clients": [
+      { ClientObject1 },
+      { ClientObject2 }
+    ],
+    "Mediators": [],
+    "Users": [],
+    "ContactGroups:": []
+  }
+]
+```
+
+#### Validate Metadata
+
+`Post /metadata/validate` Returns `201` and an object with the following format:
+
+```js
+{
+  "successes": [
+    {
+      model: 'Channel'
+      record: { ChannelObject1 }
+      status: 'Valid'
+      message: 'Ok'
+      uid: ChannelObject1.name
+    }, {
+      model: 'Client'
+      record: { ClientObject1 }
+      status: 'Conflict'
+      message: 'Ok'
+      uid: ClientObject1.ClientId
+    },
+    //...
+  ],
+  "errors": [
+    {
+      model: 'Client'
+      record: { ClientObject2 }
+      status: 'Error'
+      message: e.message
+      uid: ClientObject2.ClientId
+    },
+    //...
+  ]
+}
+```
+
+
+#### Import Metadata
+
+`Post /metadata` Returns `201` and an object with the following format:
+
+```js
+{
+  "successes": [
+    {
+      model: 'Channel'
+      record: { ChannelObject1 }
+      status: 'Successfully Imported'
+      message: 'Ok'
+      uid: ChannelObject1.name
+    }, {
+      model: 'Client'
+      record: { ClientObject1 }
+      status: 'Successfully Updated'
+      message: 'Ok'
+      uid: ClientObject1.ClientId
+    },
+    //...
+  ],
+  "errors": [
+    {
+      model: 'Client'
+      record: { ClientObject2 }
+      status: 'Error'
+      message: e.message
+      uid: ClientObject2.ClientId
+    },
+    //...
+  ]
+}
+```

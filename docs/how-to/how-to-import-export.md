@@ -1,7 +1,7 @@
 How to export/import Server Configuration
 -----------------------------------------
 
-**Note:** This can now be done directly from the OpenHIM console which may be easier.
+**Note:** This can now be done directly from the OpenHIM console which may be easier. See [here](https://github.com/jembi/openhim-core-js/blob/master/docs/dev-guide/api-ref.md#metadata-resource).
 
 ### Exporting
 
