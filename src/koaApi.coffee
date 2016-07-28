@@ -122,8 +122,8 @@ exports.setupApp = (done) ->
   
   # Metadata endpoints
   app.use route.get '/metadata', metadata.getMetadata
-  app.use route.post '/metadata', metadata.insertMetadata
-  app.use route.put '/metadata', metadata.updateMetadata
+  app.use route.get '/metadata/validate', metadata.validateMetadata
+  app.use route.post '/metadata', metadata.upsertMetadata
 
   # Server restart endpoint
   app.use route.post '/restart', serverRestart.restart

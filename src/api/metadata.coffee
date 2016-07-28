@@ -18,6 +18,41 @@ collections =
   ContactGroups: ContactGroup
 
 
+# Function to remove properties from export object
+# removeProperties = (obj) ->
+#   propertyID = '_id'
+#   propertyV = '__v'
+#   
+#   for prop of obj
+#     if (prop == propertyID || prop == propertyV)
+#       delete obj[prop]
+#     else if ( typeof obj[prop] == 'object' || obj[prop] instanceof Array )
+#       removeProperties(obj[prop])
+#   return obj
+
+
+# Function to return unique identifier key and value for a collection
+getUniqueIdentifierForCollection = (collection) ->
+  switch collection
+    when 'Channels' then uidKey = 'name'; uid = doc.name  
+    when 'Clients' then uidKey = 'clientID'; uid = doc.clientID  
+    when 'Mediators' then uidKey = 'urn'; uid = doc.urn
+    when 'Users' then uidKey = 'email'; uid = doc.email
+    when 'ContactGroups' then uidKey = 'groups'; uid = doc.groups
+  returnObj = {}
+  returnObj[uidKey] = uid
+  return returnObj
+
+
+buildResponseObject = (model, doc, status, message, uid) ->
+  return {
+    model: model
+    record: doc
+    status: status
+    message: message
+    uid: uid
+  }
+
 # API endpoint that returns metadata for export
 exports.getMetadata = () ->
   # Test if the user is authorised
@@ -30,8 +65,15 @@ exports.getMetadata = () ->
     params = this.request.query
     
     # Return all documents from all collections for export
-    for key of collections
-      exportObject[key] = yield collections[key].find().exec()
+    for col of collections
+      exportObject[col] = yield collections[col].find().exec()
+    
+    # for col of exportObject
+    #   for doc of exportObject[col]
+    #     if exportObject[col][doc]._id
+    #       console.log(exportObject[col][doc])
+          # exportObject[col][doc] = removeProperties exportObject[col][doc]
+
     this.body = [exportObject]
     this.status = 200
   catch e
@@ -39,9 +81,8 @@ exports.getMetadata = () ->
     this.body = e.message
     this.status = 400
 
-
-# API endpoint that inserts metadata from import
-exports.insertMetadata = () ->
+# API endpoint that checks for conflicts between import object and database
+exports.validateMetadata = () ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
     utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getUsers denied.", 'info'
@@ -54,29 +95,21 @@ exports.insertMetadata = () ->
     for key of insertObject
       return throw new Error "Invalid Import Object" if key not of collections
       insertDocuments = insertObject[key]
+      uidObj = getUniqueIdentifierForCollection key
       for doc in insertDocuments
         try
-          name = doc.name
-          if key == 'Users'
-            name = doc.firstname + ' ' + doc.surname
-            delete doc.tokenType if doc.tokenType == null
-          doc = new collections[key] doc
-          result = yield Q.ninvoke doc, 'save'
-          logger.info "User #{this.authenticated.email} successfully inserted #{key}"
-          returnObject.successes.push {
-            model: key
-            record: doc
-            status: "Successful"
-            message: "Successfully inserted #{key} with name #{name}"
-          }
+          result = yield collections[key].find(uidObj).exec()
+          if result and result.length > 0 and result[0]._id
+            status = 'Conflict'
+          else
+            status = 'Valid'
+          
+          logger.info "User #{this.authenticated.email} successfully inserted #{key} with unique identifier #{uid}"
+          returnObject.successes.push buildResponseObject key, doc, status, 'Ok', uidObj[uidKey]
+          
         catch e
-          logger.error "Failed to insert #{key} with name #{name}. #{e.message}"
-          returnObject.errors.push {
-            model: key
-            record: doc
-            status: "Error"
-            message: e.message
-          }
+          logger.error "Failed to insert #{key} with unique identifier #{uid}. #{e.message}"
+          returnObject.errors.push buildResponseObject key, doc, 'Invalid', e.message, uidObj[uidKey]
         
     this.body = returnObject
     this.status = 201
@@ -86,8 +119,8 @@ exports.insertMetadata = () ->
     this.status = 400
 
 
-# API endpoint that updates metadata from import
-exports.updateMetadata = () ->
+# API endpoint that updates or inserts metadata from import
+exports.upsertMetadata = () ->
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
     utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getUsers denied.", 'info'
@@ -95,35 +128,30 @@ exports.updateMetadata = () ->
   
   try
     returnObject = {"errors":[], "successes":[]}
-    updateObject = this.request.body
+    insertObject = this.request.body
     
-    for key of updateObject
+    for key of insertObject
       return throw new Error "Invalid Import Object" if key not of collections
-      updateDocuments = updateObject[key]
-      for doc in updateDocuments
-        name = doc.name
-        if key == 'Users'
-          name = doc.firstname + ' ' + doc.surname
-          delete doc.tokenType if doc.tokenType == null
-        docId = doc._id
-        delete doc._id if doc._id
+      insertDocuments = insertObject[key]
+      uidObj = getUniqueIdentifierForCollection key
+      for doc in insertDocuments
         try
-          yield collections[key].findByIdAndUpdate(docId, doc).exec()
-          logger.info "User #{this.authenticated.email} updated #{key} with id #{docId}"
-          returnObject.successes.push {
-            model: key
-            record: doc
-            status: "Successful"
-            message: "Successfully updated #{key} with name #{name}"
-          }
+          result = yield collections[key].find(uidObj).exec()
+          if result and result.length > 0 and result[0]._id
+            delete doc._id if doc._id
+            yield collections[key].findByIdAndUpdate(result[0]._id, doc).exec()
+            status = 'Successfully Updated'
+          else
+            doc = new collections[key] doc
+            result = yield Q.ninvoke doc, 'save'
+            status = 'Successfully Inserted'
+          
+          logger.info "User #{this.authenticated.email} successfully inserted #{key} with unique identifier #{uid}"
+          returnObject.successes.push buildResponseObject key, doc, status, 'Ok', uidObj[uidKey]
+          
         catch e
-          logger.error "Failed to update #{key} with name #{name}. #{e.message}"
-          returnObject.errors.push {
-            model: key
-            record: doc
-            status: "Error"
-            message: e.message
-          }
+          logger.error "Failed to insert #{key} with unique identifier #{uid}. #{e.message}"
+          returnObject.errors.push buildResponseObject key, doc, 'Error', e.message, uidObj[uidKey]
         
     this.body = returnObject
     this.status = 201
