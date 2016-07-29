@@ -105,11 +105,11 @@ exports.validateMetadata = () ->
             return throw new Error "Validation failed: #{error}" if error
             status = 'Valid'
           
-          logger.info "User #{this.authenticated.email} successfully inserted #{key} with unique identifier #{uid}"
+          logger.info "User #{this.authenticated.email} successfully validated #{key}"
           returnObject.successes.push buildResponseObject key, doc, status, 'Ok', uid
           
         catch e
-          logger.error "Failed to insert #{key} with unique identifier #{uid}. #{e.message}"
+          logger.error "Failed to validate #{key} with unique identifier #{uid}. #{e.message}"
           returnObject.errors.push buildResponseObject key, doc, 'Invalid', e.message, uid
         
     this.body = returnObject
@@ -147,7 +147,7 @@ exports.upsertMetadata = () ->
             result = yield Q.ninvoke doc, 'save'
             status = 'Successfully Inserted'
           
-          logger.info "User #{this.authenticated.email} successfully inserted #{key} with unique identifier #{uid}"
+          logger.info "User #{this.authenticated.email} #{status} #{key} with unique identifier #{uid}"
           returnObject.successes.push buildResponseObject key, doc, status, 'Ok', uid
           
         catch e
