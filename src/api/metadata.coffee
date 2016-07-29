@@ -75,9 +75,8 @@ exports.getMetadata = () ->
     this.body = [exportObject]
     this.status = 200
   catch e
-    utils.logAndSetResponse this, 500, "Could not fetch specified metadata via the API #{e}", 'error'
     this.body = e.message
-    this.status = 400
+    utils.logAndSetResponse this, 500, "Could not fetch specified metadata via the API #{e}", 'error'
 
 # API endpoint that checks for conflicts between import object and database
 exports.validateMetadata = () ->
@@ -91,16 +90,21 @@ exports.validateMetadata = () ->
     insertObject = this.request.body
     
     for key of insertObject
-      return throw new Error "Invalid Import Object" if key not of collections
+      return utils.logAndSetResponse this, 400, "Could not fetch all users via the API: 'Invalid Request Body'", 'error' if key not of collections
       insertDocuments = insertObject[key]
       for doc in insertDocuments
         try
           uidObj = getUniqueIdentifierForCollection key, doc
           uid = uidObj[Object.keys(uidObj)[0]]
+
+          
           result = yield collections[key].find(uidObj).exec()
           if result and result.length > 0 and result[0]._id
             status = 'Conflict'
           else
+            doc = new collections[key] doc
+            error = doc.validateSync()
+            return throw new Error "Validation failed: #{error}" if error
             status = 'Valid'
           
           logger.info "User #{this.authenticated.email} successfully inserted #{key} with unique identifier #{uid}"
@@ -113,9 +117,8 @@ exports.validateMetadata = () ->
     this.body = returnObject
     this.status = 201
   catch e
-    utils.logAndSetResponse this, 500, "Could not fetch all users via the API #{e}", 'error'
     this.body = e.message
-    this.status = 400
+    utils.logAndSetResponse this, 500, "Could not fetch all users via the API #{e}", 'error'
 
 
 # API endpoint that updates or inserts metadata from import
@@ -130,7 +133,7 @@ exports.upsertMetadata = () ->
     insertObject = this.request.body
     
     for key of insertObject
-      return throw new Error "Invalid Import Object" if key not of collections
+      return utils.logAndSetResponse this, 400, "Could not fetch all users via the API: 'Invalid Request Body'", 'error' if key not of collections
       insertDocuments = insertObject[key]
       for doc in insertDocuments
         try
@@ -156,6 +159,5 @@ exports.upsertMetadata = () ->
     this.body = returnObject
     this.status = 201
   catch e
-    utils.logAndSetResponse this, 500, "Could not fetch all users via the API #{e}", 'error'
     this.body = e.message
-    this.status = 400
+    utils.logAndSetResponse this, 500, "Could not fetch all users via the API #{e}", 'error'
