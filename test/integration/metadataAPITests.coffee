@@ -13,22 +13,22 @@ auth = require("../testUtils").auth
 
 
 sampleMetadata =
-  Channels: [
+  Channels: [{
       name: "TestChannel1"
       urlPattern: "test/sample"
       allow: [ "PoC", "Test1", "Test2" ]
       routes: [{ name: "test route", host: "localhost", port: 9876, primary: true }]
       txViewAcl: "group1"
-  ]
-  Clients: [
+  }]
+  Clients: [{
     clientID: "YUIAIIIICIIAIA"
     clientDomain: "him.jembi.org"
     name: "OpenMRS Ishmael instance"
     roles: ["OpenMRS_PoC", "PoC"]
     passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
     certFingerprint: "23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC"
-  ]
-  Mediators: [
+  }]
+  Mediators: [{
     urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED"
     version: "1.0.0"
     name: "Save Encounter Mediator"
@@ -41,8 +41,8 @@ sampleMetadata =
       allow: []
       routes: [{name: 'Save Encounter 1', host: 'localhost', port: '8005', type: 'http'}]
     }]
-  ]
-  Users: [
+  }]
+  Users: [{
     firstname: 'Namey'
     surname: 'mcTestName'
     email: 'r..@jembi.org'
@@ -50,8 +50,8 @@ sampleMetadata =
     passwordHash: '796a5a8e-4e44-4d9f-9e04-c27ec6374ffa'
     passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7'
     groups: [ 'admin', 'RHIE' ]
-  ]
-  ContactGroups: [
+  }]
+  ContactGroups: [{
     group: "Group 1"
     users: [
       { user: 'User 1', method: 'sms', maxAlerts: 'no max' },
@@ -61,7 +61,7 @@ sampleMetadata =
       { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
       { user: 'User 6', method: 'email', maxAlerts: '1 per day' }
     ]
-  ]
+  }]
 
 authDetails = {}
 
@@ -268,24 +268,6 @@ describe "API Integration Tests", ->
             else
               res.body.errors.length.should.equal 1
               res.body.successes.length.should.equal 4
-              done()
-      
-      it  "should fail while validating invalid metadata and return status 400 - bad request", (done) ->
-        testMetadata = {}
-        testMetadata = JSON.parse JSON.stringify sampleMetadata
-        testMetadata.invalidCollection = [{"fakeChannel"}]
-        request("https://localhost:8080")
-          .post("/metadata/validate")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(testMetadata)
-          .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
               done()
                 
       it  "should fail to validate invalid metadata and return status 400 - bad request", (done) ->

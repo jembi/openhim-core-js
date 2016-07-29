@@ -96,8 +96,6 @@ exports.validateMetadata = () ->
         try
           uidObj = getUniqueIdentifierForCollection key, doc
           uid = uidObj[Object.keys(uidObj)[0]]
-
-          
           result = yield collections[key].find(uidObj).exec()
           if result and result.length > 0 and result[0]._id
             status = 'Conflict'
