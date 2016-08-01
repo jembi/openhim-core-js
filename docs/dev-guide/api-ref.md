@@ -825,13 +825,13 @@ The import checks for conflicts in the database and either updates or inserts ba
       model: 'Channel'
       record: { ChannelObject1 }
       status: 'Valid'
-      message: 'Ok'
+      message: ''
       uid: 'ChannelName'
     }, {
       model: 'Client'
       record: { ClientObject1 }
       status: 'Conflict'
-      message: 'Ok'
+      message: ''
       uid: "ClientId"
     }, {
       model: 'Client'
