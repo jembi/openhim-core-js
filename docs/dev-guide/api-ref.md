@@ -787,7 +787,11 @@ Note that this is a public endpoint that does not require any authorization. It 
 
 ### Metadata resource
 
-The metadata resource allows the user to export and import Channels, Clients, Mediators, Users and ContactGroups.
+The metadata resource allows the user to export and import Channels, Clients, Mediators, Users and ContactGroups.  
+
+Use `GET` to retrieve all available metadata, and `POST` to import metadata.  
+
+The import checks for conflicts in the database and either updates or inserts based on the result.  For more control over the import, the validate endpoint accepts the same payload as the import endpoint and returns a validation status per metadata record.
 
 #### Export Metadata
 
@@ -816,29 +820,25 @@ The metadata resource allows the user to export and import Channels, Clients, Me
 
 ```js
 {
-  "successes": [
+  "rows": [
     {
       model: 'Channel'
       record: { ChannelObject1 }
       status: 'Valid'
       message: 'Ok'
-      uid: ChannelObject1.name
+      uid: 'ChannelName'
     }, {
       model: 'Client'
       record: { ClientObject1 }
       status: 'Conflict'
       message: 'Ok'
-      uid: ClientObject1.ClientId
-    },
-    //...
-  ],
-  "errors": [
-    {
+      uid: "ClientId"
+    }, {
       model: 'Client'
       record: { ClientObject2 }
       status: 'Error'
-      message: e.message
-      uid: ClientObject2.ClientId
+      message: 'Error Message'
+      uid: 'ClientId'
     },
     //...
   ]
@@ -852,29 +852,25 @@ The metadata resource allows the user to export and import Channels, Clients, Me
 
 ```js
 {
-  "successes": [
+  "rows": [
     {
       model: 'Channel'
       record: { ChannelObject1 }
-      status: 'Successfully Imported'
-      message: 'Ok'
-      uid: ChannelObject1.name
+      status: 'Inserted'
+      message: ''
+      uid: 'ChannelName'
     }, {
       model: 'Client'
       record: { ClientObject1 }
-      status: 'Successfully Updated'
-      message: 'Ok'
-      uid: ClientObject1.ClientId
-    },
-    //...
-  ],
-  "errors": [
-    {
+      status: 'Updated'
+      message: ''
+      uid: 'ClientId'
+    }, {
       model: 'Client'
       record: { ClientObject2 }
       status: 'Error'
-      message: e.message
-      uid: ClientObject2.ClientId
+      message: 'Error Message'
+      uid: 'ClientId'
     },
     //...
   ]
