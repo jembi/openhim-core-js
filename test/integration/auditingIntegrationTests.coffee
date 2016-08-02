@@ -11,9 +11,7 @@ testAuditMessage = require('../unit/auditingTest').testAuditMessage
 describe "Auditing Integration Tests", ->
 
 
-  beforeEach (done) -> 
-    Audit.remove ->
-      server.start auditUDPPort: 5050, auditTlsPort: 5051, auditTcpPort: 5052, done
+  beforeEach (done) -> Audit.remove {}, -> server.start auditUDPPort: 5050, auditTlsPort: 5051, auditTcpPort: 5052, -> done()
 
   afterEach (done) -> server.stop -> done()
 
@@ -53,8 +51,9 @@ describe "Auditing Integration Tests", ->
 
       client = tls.connect 5051, 'localhost', options, ->
         messagePrependlength = "#{testAuditMessage.length} #{testAuditMessage}"
-        client.write messagePrependlength
-        client.end()
+        client.write messagePrependlength, (err) ->
+          return done err if err
+          client.end()
 
       client.on 'end', -> Audit.find {}, (err, audits) ->
         return done err if err
@@ -86,8 +85,9 @@ describe "Auditing Integration Tests", ->
     it "should send TCP audit messages and save (valid)", (done) ->
       client = net.connect 5052, 'localhost', ->
         messagePrependlength = testAuditMessage.length + ' ' + testAuditMessage
-        client.write messagePrependlength
-        client.end()
+        client.write messagePrependlength, (err) ->
+          return done err if err
+          client.end()
 
       client.on 'end', -> Audit.find {}, (err, audits) ->
         return done err if err
@@ -100,8 +100,9 @@ describe "Auditing Integration Tests", ->
     it "should send TCP audit message and NOT save (Invalid)", (done) ->
       client = net.connect 5052, 'localhost', ->
         # testAuditMessage does not have message length with space prepended
-        client.write testAuditMessage
-        client.end()
+        client.write testAuditMessage, (err) ->
+          return done err if err
+          client.end()
 
       client.on 'end', -> Audit.find {}, (err, audits) ->
         return done err if err
