@@ -69,166 +69,652 @@ authDetails = {}
 describe "API Integration Tests", ->
 
   describe "Metadata REST Api Testing", ->
-
+    
     before (done) ->
-      auth.setupTestUsers (err) ->
-        server.start apiPort: 8080, ->
+      server.start apiPort: 8080, ->
+        auth.setupTestUsers (err) ->
           authDetails = auth.getAuthDetails()
           done()
 
     after (done) ->
-      auth.cleanupTestUsers (err) ->
-        User.remove ->
+        server.stop ->
+          auth.cleanupTestUsers (err) ->
+            done()
+    
+    
+    # GET TESTS
+    describe "*getMetadata", ->
+      
+      describe "Channels", ->
+        
+        beforeEach (done) ->
+          (new Channel sampleMetadata.Channels[0]).save (err, channel) ->
+            return done err if err
+            done()
+            
+        afterEach (done) ->
+          Channel.remove ->
+            done()
+      
+        it  "should fetch channels and return status 200", (done) ->
+          request("https://localhost:8080")
+            .get("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                res.body[0].Channels.length.should.equal 1
+                res.body[0].Channels[0].should.have.property "urlPattern", "test/sample"
+                done()
+      
+      describe "Clients", ->
+        
+        beforeEach (done) ->
+          (new Client sampleMetadata.Clients[0]).save (err, client) ->
+            return done err if err
+            done()
+        
+        afterEach (done) ->
+          Client.remove ->
+            done()
+        
+        it  "should fetch clients and return status 200", (done) ->
+          request("https://localhost:8080")
+            .get("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                res.body[0].Clients.length.should.equal 1
+                res.body[0].Clients[0].should.have.property "name", "OpenMRS Ishmael instance"
+                done()
+      
+      describe "Mediators", ->
+        
+        beforeEach (done) ->
+          (new Mediator sampleMetadata.Mediators[0]).save (err, mediator) ->
+            return done err if err
+            done()
+        
+        afterEach (done) ->
+          Mediator.remove ->
+            done()
+        
+        it  "should fetch mediators and return status 200", (done) ->
+          request("https://localhost:8080")
+            .get("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                res.body[0].Mediators.length.should.equal 1
+                res.body[0].Mediators[0].should.have.property "name", "Save Encounter Mediator"
+                done()
+      
+      describe "Users", ->
+        
+        beforeEach (done) ->
+          (new User sampleMetadata.Users[0]).save (err, user) ->
+            return done err if err
+            done()
+        
+        afterEach (done) ->
+          User.remove ->
+            auth.setupTestUsers (err) ->
+              authDetails = auth.getAuthDetails()
+              done()
+        
+        it  "should fetch users and return status 200", (done) ->
+          request("https://localhost:8080")
+            .get("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                res.body[0].Users.length.should.equal 4 # Due to 3 auth test users
+                done()
+      
+      describe "ContactGroups", ->
+        
+        beforeEach (done) ->
+          (new ContactGroup sampleMetadata.ContactGroups[0]).save (err, cg) ->
+            return done err if err
+            done()
+        
+        afterEach (done) ->
+          ContactGroup.remove ->
+            done()
+        
+        it  "should fetch contact groups and return status 200", (done) ->
+          request("https://localhost:8080")
+            .get("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                res.body[0].ContactGroups.length.should.equal 1
+                res.body[0].ContactGroups[0].should.have.property "group", "Group 1"
+                done()
+      
+      describe "Other Get Metadata", ->
+        
+        it  "should not allow a non admin user to get metadata", (done) ->
+          request("https://localhost:8080")
+            .get("/metadata")
+            .set("auth-username", testUtils.nonRootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(403)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()  
+        
+        it  "should return 404 if not found", (done) ->
+          request("https://localhost:8080")
+            .get("/metadata/bleh")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(sampleMetadata)
+            .expect(404)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()   
+    
+    
+    
+    # IMPORT TESTS
+    describe "*importMetadata", ->
+      
+      describe "Channels", ->
+        testMetadata = {}
+         
+        beforeEach (done) ->
+          testMetadata =
+            Channels: JSON.parse JSON.stringify sampleMetadata.Channels
+          done()
+        
+        afterEach (done) ->
+          Channel.remove ->
+            done()
+      
+        it  "should insert a channel and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              
+              res.body.rows[0].should.have.property "status", "Inserted"
+              Channel.findOne { name: "TestChannel1" }, (err, channel) ->
+                return done err if err
+                channel.should.have.property "urlPattern", "test/sample"
+                channel.allow.should.have.length 3
+                done()
+          
+        it  "should update a channel and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, resp) ->
+              return done err if err
+              testMetadata.Channels[0].urlPattern = "sample/test"
+              request("https://localhost:8080")
+                .post("/metadata")
+                .set("auth-username", testUtils.rootUser.email)
+                .set("auth-ts", authDetails.authTS)
+                .set("auth-salt", authDetails.authSalt)
+                .set("auth-token", authDetails.authToken)
+                .send(testMetadata)
+                .expect(201)
+                .end (err, res) ->
+                  return done err if err
+                  
+                  res.body.rows[0].should.have.property "status", "Updated"
+                  Channel.findOne { name: "TestChannel1" }, (err, channel) ->
+                    return done err if err
+                    channel.should.have.property "urlPattern", "sample/test"
+                    channel.allow.should.have.length 3
+                    done()
+        
+        it  "should fail to insert a Channel and return 201", (done) ->
+          testMetadata.Channels = [{"fakeChannel"}]
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              res.body.rows[0].should.have.property "status", "Error"
+              done()
+      
+      describe "Clients", ->
+        testMetadata = {}
+        
+        beforeEach (done) ->
+          testMetadata =
+            Clients: JSON.parse JSON.stringify sampleMetadata.Clients
+          done()
+        
+        afterEach (done) ->
+          Client.remove ->
+            done()
+      
+        it  "should insert a client and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              
+              res.body.rows[0].should.have.property "status", "Inserted"
+              Client.findOne { clientID: "YUIAIIIICIIAIA" }, (err, client) ->
+                return done err if err
+                client.should.have.property "name", "OpenMRS Ishmael instance"
+                done()
+          
+        it  "should update a client and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, resp) ->
+              return done err if err
+              testMetadata.Clients[0].name = "Test Update"
+              request("https://localhost:8080")
+                .post("/metadata")
+                .set("auth-username", testUtils.rootUser.email)
+                .set("auth-ts", authDetails.authTS)
+                .set("auth-salt", authDetails.authSalt)
+                .set("auth-token", authDetails.authToken)
+                .send(testMetadata)
+                .expect(201)
+                .end (err, res) ->
+                  return done err if err
+                  
+                  res.body.rows[0].should.have.property "status", "Updated"
+                  Client.findOne { clientID: "YUIAIIIICIIAIA" }, (err, client) ->
+                    return done err if err
+                    client.should.have.property "name", "Test Update"
+                    done()
+        
+        it  "should fail to insert a Client and return 201", (done) ->
+          testMetadata.Clients = [{"fakeClient"}]
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              res.body.rows[0].should.have.property "status", "Error"
+              done()
+      
+      
+      describe "Mediators", ->
+        testMetadata = {}
+        
+        beforeEach (done) ->
+          testMetadata =
+            Mediators: JSON.parse JSON.stringify sampleMetadata.Mediators
+          done()
+        
+        afterEach (done) ->
+          Mediator.remove ->
+            done()
+      
+        it  "should insert a mediator and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              
+              res.body.rows[0].should.have.property "status", "Inserted"
+              Mediator.findOne { urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) ->
+                return done err if err
+                mediator.should.have.property "name", "Save Encounter Mediator"
+                done()
+          
+        it  "should update a mediator and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, resp) ->
+              return done err if err
+              testMetadata.Mediators[0].name = "Updated Encounter Mediator"
+              request("https://localhost:8080")
+                .post("/metadata")
+                .set("auth-username", testUtils.rootUser.email)
+                .set("auth-ts", authDetails.authTS)
+                .set("auth-salt", authDetails.authSalt)
+                .set("auth-token", authDetails.authToken)
+                .send(testMetadata)
+                .expect(201)
+                .end (err, res) ->
+                  return done err if err
+                  
+                  res.body.rows[0].should.have.property "status", "Updated"
+                  Mediator.findOne { urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) ->
+                    return done err if err
+                    mediator.should.have.property "name", "Updated Encounter Mediator"
+                    done()
+        
+        it  "should fail to insert a mediator and return 201", (done) ->
+          testMetadata.Mediators = [{"fakeMediator"}]
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              res.body.rows[0].should.have.property "status", "Error"
+              done()
+      
+      describe "Users", ->
+        testMetadata = {}
+        
+        beforeEach (done) ->
+          testMetadata =
+            Users: JSON.parse JSON.stringify sampleMetadata.Users
+          done()
+        
+        afterEach (done) ->
+          User.remove ->
+            auth.setupTestUsers (err) ->
+              authDetails = auth.getAuthDetails()
+              done()
+      
+        it  "should insert a user and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              
+              res.body.rows[0].should.have.property "status", "Inserted"
+              User.findOne { email: "r..@jembi.org" }, (err, user) ->
+                return done err if err
+                user.should.have.property "firstname", "Namey"
+                done()
+          
+        it  "should update a user and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, resp) ->
+              return done err if err
+              testMetadata.Users[0].firstname = "updatedNamey"
+              request("https://localhost:8080")
+                .post("/metadata")
+                .set("auth-username", testUtils.rootUser.email)
+                .set("auth-ts", authDetails.authTS)
+                .set("auth-salt", authDetails.authSalt)
+                .set("auth-token", authDetails.authToken)
+                .send(testMetadata)
+                .expect(201)
+                .end (err, res) ->
+                  return done err if err
+                  
+                  res.body.rows[0].should.have.property "status", "Updated"
+                  User.findOne { email: "r..@jembi.org" }, (err, user) ->
+                    return done err if err
+                    user.should.have.property "firstname", "updatedNamey"
+                    done()
+        
+        it  "should fail to insert a user and return 201", (done) ->
+          testMetadata.Users = [{"fakeUser"}]
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              res.body.rows[0].should.have.property "status", "Error"
+              done()
+      
+      describe "ContactGroups", ->
+        testMetadata = {}
+        
+        beforeEach (done) ->
+          testMetadata =
+            ContactGroups: JSON.parse JSON.stringify sampleMetadata.ContactGroups
+          done()
+        
+        afterEach (done) ->
+          ContactGroup.remove ->
+            done()
+      
+        it  "should insert a contactGroup and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              
+              res.body.rows[0].should.have.property "status", "Inserted"
+              ContactGroup.findOne { group: "Group 1" }, (err, cg) ->
+                return done err if err
+                cg.users.should.have.length 6
+                done()
+          
+        it  "should update a contactGroup and return 201", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, resp) ->
+              return done err if err
+              testMetadata.ContactGroups[0].users.push { user: 'User 6', method: 'email', maxAlerts: '1 per day' }
+              request("https://localhost:8080")
+                .post("/metadata")
+                .set("auth-username", testUtils.rootUser.email)
+                .set("auth-ts", authDetails.authTS)
+                .set("auth-salt", authDetails.authSalt)
+                .set("auth-token", authDetails.authToken)
+                .send(testMetadata)
+                .expect(201)
+                .end (err, res) ->
+                  return done err if err
+                  
+                  res.body.rows[0].should.have.property "status", "Updated"
+                  ContactGroup.findOne { group: "Group 1" }, (err, cg) ->
+                    return done err if err
+                    cg.users.should.have.length 7
+                    done()
+        
+        it  "should fail to insert a ContactGroup and return 201", (done) ->
+          testMetadata.ContactGroups = [{"fakeContactGroup"}]
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              res.body.rows[0].should.have.property "status", "Error"
+              done()
+      
+      describe "Full Metadata Import", ->
+        
+        after (done) ->
           Channel.remove ->
             Client.remove ->
               Mediator.remove ->
                 ContactGroup.remove ->
-                  server.stop ->
-                    done()
-
-    describe "*upsertMetadata", ->
-
-      it  "should insert valid metadata and return status 201 - metadata created", (done) ->
-        request("https://localhost:8080")
-          .post("/metadata")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(sampleMetadata)
-          .expect(201)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.errors.length.should.equal 0
-              res.body.successes.length.should.equal 5
-              done()
-      
-      it  "should insert partially valid metadata and return status 201 - metadata created", (done) ->
-        testMetadata = {}
-        testMetadata = JSON.parse JSON.stringify sampleMetadata
-        testMetadata.Channels = [{"fakeChannel"}]
-        request("https://localhost:8080")
-          .post("/metadata")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(testMetadata)
-          .expect(201)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.errors.length.should.equal 1
-              res.body.successes.length.should.equal 4
-              done()
+                  User.remove ->
+                    auth.setupTestUsers (err) ->
+                      authDetails = auth.getAuthDetails()
+                      done()
+        
+        it  "should ignore invalid metadata, insert valid metadata and return 201", (done) ->
+          testMetadata = {}
+          testMetadata = JSON.parse JSON.stringify sampleMetadata
+          testMetadata.Channels = [{"InvalidChannel"}]
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              
+              Channel.findOne { name: "TestChannel1" }, (err, channel) ->
+                noChannel = if channel then 'false' else 'true'
+                noChannel.should.equal 'true'
                 
-      it  "should fail to insert invalid metadata and return status 400 - bad request", (done) ->
-        testMetadata = {}
-        testMetadata = JSON.parse JSON.stringify sampleMetadata
-        testMetadata.InvalidField = { "name": "value" }
-        request("https://localhost:8080")
-          .post("/metadata")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(testMetadata)
-          .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
+                Client.findOne { clientID: "YUIAIIIICIIAIA" }, (err, client) ->
+                  return done err if err
+                  client.should.have.property "name", "OpenMRS Ishmael instance"
+                  
+                  Mediator.findOne { urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) ->
+                    return done err if err
+                    mediator.should.have.property "name", "Save Encounter Mediator"
+                    
+                    User.findOne { email: "r..@jembi.org" }, (err, user) ->
+                      return done err if err
+                      user.should.have.property "firstname", "Namey"
+                      
+                      ContactGroup.findOne { group: "Group 1" }, (err, cg) ->
+                        return done err if err
+                        cg.users.should.have.length 6
+                        done()
+        
+      describe "Bad metadata import requests", ->
+        
+        it  "should not allow a non admin user to insert metadata", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata")
+            .set("auth-username", testUtils.nonRootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(sampleMetadata)
+            .expect(403)
+            .end (err, res) ->
+              return done err if err
               done()
-      
-      it  "should not allow a non admin user to insert metadata", (done) ->
-        request("https://localhost:8080")
-          .post("/metadata")
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(sampleMetadata)
-          .expect(403)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()  
-      
-      it  "should return 404 if not found", (done) ->
-        request("https://localhost:8080")
-          .post("/metadata/bleh")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(sampleMetadata)
-          .expect(404)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+        
+        it  "should return 404 if not found", (done) ->
+          request("https://localhost:8080")
+            .post("/metadata/bleh")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(sampleMetadata)
+            .expect(404)
+            .end (err, res) ->
+              return done err if err
+              done()   
 
 
-    describe "*getMetadata", ->
 
-      it  "should fetch metadata and return status 200 - Ok", (done) ->
-        request("https://localhost:8080")
-          .get("/metadata")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(sampleMetadata)
-          .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              res.body[0].Channels.length.should.equal 1
-              res.body[0].Clients.length.should.equal 1
-              res.body[0].Users.length.should.equal 4
-              res.body[0].Mediators.length.should.equal 1
-              res.body[0].ContactGroups.length.should.equal 1
-              done()
-      
-      it  "should not allow a non admin user to get metadata", (done) ->
-        request("https://localhost:8080")
-          .get("/metadata")
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(sampleMetadata)
-          .expect(403)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()  
-      
-      it  "should return 404 if not found", (done) ->
-        request("https://localhost:8080")
-          .get("/metadata/bleh")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(sampleMetadata)
-          .expect(404)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()      
-                
+
+    # POST TO VALIDATE METADATA TESTS
     describe "*validateMetadata", ->
-
-      it  "should validate metadata and return status 201 - metadata validated", (done) ->
+    
+      it  "should validate metadata and return status 201", (done) ->
         request("https://localhost:8080")
           .post("/metadata/validate")
           .set("auth-username", testUtils.rootUser.email)
@@ -238,22 +724,23 @@ describe "API Integration Tests", ->
           .send(sampleMetadata)
           .expect(201)
           .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.errors.length.should.equal 0
-              res.body.successes.length.should.equal 5
-              done()
+            return done err if err
+            
+            statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
+            for row in res.body.rows
+              statusCheckObj[row.status] = statusCheckObj[row.status] + 1
+              
+            statusCheckObj.Valid.should.equal 5
+            statusCheckObj.Conflict.should.equal 0
+            statusCheckObj.Error.should.equal 0
+            done()
       
-      it  "should validate partially valid metadata and return status 201 - metadata successfully validated", (done) ->
+      
+      it  "should validate partially valid metadata and return status 201", (done) ->
         testMetadata = {}
         testMetadata = JSON.parse JSON.stringify sampleMetadata
-        testMetadata.Channels = [{
-            name: "TestChannel2"
-            allow: [ "PoC", "Test1", "Test2" ]
-            routes: [{ name: "test route", host: "localhost", port: 9876, primary: true }]
-            txViewAcl: "group1"
-        }]
+        testMetadata.Channels = [{ "Invalid Channel" }]
+        
         request("https://localhost:8080")
           .post("/metadata/validate")
           .set("auth-username", testUtils.rootUser.email)
@@ -263,30 +750,45 @@ describe "API Integration Tests", ->
           .send(testMetadata)
           .expect(201)
           .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.errors.length.should.equal 1
-              res.body.successes.length.should.equal 4
-              done()
-                
-      it  "should fail to validate invalid metadata and return status 400 - bad request", (done) ->
+            return done err if err
+            
+            statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
+            for row in res.body.rows
+              statusCheckObj[row.status] = statusCheckObj[row.status] + 1
+              
+            statusCheckObj.Valid.should.equal 4
+            statusCheckObj.Conflict.should.equal 0
+            statusCheckObj.Error.should.equal 1
+            done()
+      
+      
+      it  "should validate metadata with conflicts and return status 201", (done) ->
         testMetadata = {}
         testMetadata = JSON.parse JSON.stringify sampleMetadata
-        testMetadata.InvalidField = { "name": "value" }
-        request("https://localhost:8080")
-          .post("/metadata/validate")
-          .set("auth-username", testUtils.rootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .send(testMetadata)
-          .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+        
+        (new Channel sampleMetadata.Channels[0]).save (err, channel) ->
+          return done err if err
+          request("https://localhost:8080")
+            .post("/metadata/validate")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(testMetadata)
+            .expect(201)
+            .end (err, res) ->
+              return done err if err
+              
+              statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
+              for row in res.body.rows
+                statusCheckObj[row.status] = statusCheckObj[row.status] + 1
+                
+              statusCheckObj.Valid.should.equal 4
+              statusCheckObj.Conflict.should.equal 1
+              statusCheckObj.Error.should.equal 0
+              Channel.remove ->
+                done()
+      
       
       it  "should not allow a non admin user to validate metadata", (done) ->
         request("https://localhost:8080")
@@ -298,10 +800,9 @@ describe "API Integration Tests", ->
           .send(sampleMetadata)
           .expect(403)
           .end (err, res) ->
-            if err
-              done err
-            else
-              done()  
+            return done err if err
+            done()  
+      
       
       it  "should return 404 if not found", (done) ->
         request("https://localhost:8080")
@@ -313,10 +814,8 @@ describe "API Integration Tests", ->
           .send(sampleMetadata)
           .expect(404)
           .end (err, res) ->
-            if err
-              done err
-            else
-              done()         
+            return done err if err
+            done()         
                 
                 
                 
