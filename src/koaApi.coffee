@@ -22,7 +22,7 @@ config = require './config/config'
 heartbeat = require './api/heartbeat'
 certificateAuthority = require './api/certificateAuthority'
 logs = require './api/logs'
-
+metadata = require './api/metadata'
 
 exports.setupApp = (done) ->
 
@@ -116,8 +116,13 @@ exports.setupApp = (done) ->
   app.use route.post '/keystore/ca/cert', keystore.addTrustedCert
   app.use route.get '/keystore/validity', keystore.verifyServerKeys
   app.use route.post '/keystore/passphrase', keystore.setServerPassphrase
+  
+  # Metadata endpoints
+  app.use route.get '/metadata', metadata.getMetadata
+  app.use route.post '/metadata/validate', metadata.validateMetadata
+  app.use route.post '/metadata', metadata.importMetadata
 
-  # server restart endpoint
+  # Server restart endpoint
   app.use route.post '/restart', serverRestart.restart
 
   # AuditRecord endpoint
