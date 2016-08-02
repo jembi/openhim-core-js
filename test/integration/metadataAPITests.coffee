@@ -281,7 +281,7 @@ describe "API Integration Tests", ->
             .end (err, res) ->
               return done err if err
               
-              res.body.rows[0].should.have.property "status", "Inserted"
+              res.body[0].should.have.property "status", "Inserted"
               Channel.findOne { name: "TestChannel1" }, (err, channel) ->
                 return done err if err
                 channel.should.have.property "urlPattern", "test/sample"
@@ -311,7 +311,7 @@ describe "API Integration Tests", ->
                 .end (err, res) ->
                   return done err if err
                   
-                  res.body.rows[0].should.have.property "status", "Updated"
+                  res.body[0].should.have.property "status", "Updated"
                   Channel.findOne { name: "TestChannel1" }, (err, channel) ->
                     return done err if err
                     channel.should.have.property "urlPattern", "sample/test"
@@ -330,7 +330,7 @@ describe "API Integration Tests", ->
             .expect(201)
             .end (err, res) ->
               return done err if err
-              res.body.rows[0].should.have.property "status", "Error"
+              res.body[0].should.have.property "status", "Error"
               done()
       
       describe "Clients", ->
@@ -357,7 +357,7 @@ describe "API Integration Tests", ->
             .end (err, res) ->
               return done err if err
               
-              res.body.rows[0].should.have.property "status", "Inserted"
+              res.body[0].should.have.property "status", "Inserted"
               Client.findOne { clientID: "YUIAIIIICIIAIA" }, (err, client) ->
                 return done err if err
                 client.should.have.property "name", "OpenMRS Ishmael instance"
@@ -386,7 +386,7 @@ describe "API Integration Tests", ->
                 .end (err, res) ->
                   return done err if err
                   
-                  res.body.rows[0].should.have.property "status", "Updated"
+                  res.body[0].should.have.property "status", "Updated"
                   Client.findOne { clientID: "YUIAIIIICIIAIA" }, (err, client) ->
                     return done err if err
                     client.should.have.property "name", "Test Update"
@@ -404,7 +404,7 @@ describe "API Integration Tests", ->
             .expect(201)
             .end (err, res) ->
               return done err if err
-              res.body.rows[0].should.have.property "status", "Error"
+              res.body[0].should.have.property "status", "Error"
               done()
       
       
@@ -432,7 +432,7 @@ describe "API Integration Tests", ->
             .end (err, res) ->
               return done err if err
               
-              res.body.rows[0].should.have.property "status", "Inserted"
+              res.body[0].should.have.property "status", "Inserted"
               Mediator.findOne { urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) ->
                 return done err if err
                 mediator.should.have.property "name", "Save Encounter Mediator"
@@ -461,7 +461,7 @@ describe "API Integration Tests", ->
                 .end (err, res) ->
                   return done err if err
                   
-                  res.body.rows[0].should.have.property "status", "Updated"
+                  res.body[0].should.have.property "status", "Updated"
                   Mediator.findOne { urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) ->
                     return done err if err
                     mediator.should.have.property "name", "Updated Encounter Mediator"
@@ -479,7 +479,7 @@ describe "API Integration Tests", ->
             .expect(201)
             .end (err, res) ->
               return done err if err
-              res.body.rows[0].should.have.property "status", "Error"
+              res.body[0].should.have.property "status", "Error"
               done()
       
       describe "Users", ->
@@ -508,7 +508,7 @@ describe "API Integration Tests", ->
             .end (err, res) ->
               return done err if err
               
-              res.body.rows[0].should.have.property "status", "Inserted"
+              res.body[0].should.have.property "status", "Inserted"
               User.findOne { email: "r..@jembi.org" }, (err, user) ->
                 return done err if err
                 user.should.have.property "firstname", "Namey"
@@ -537,7 +537,7 @@ describe "API Integration Tests", ->
                 .end (err, res) ->
                   return done err if err
                   
-                  res.body.rows[0].should.have.property "status", "Updated"
+                  res.body[0].should.have.property "status", "Updated"
                   User.findOne { email: "r..@jembi.org" }, (err, user) ->
                     return done err if err
                     user.should.have.property "firstname", "updatedNamey"
@@ -555,7 +555,7 @@ describe "API Integration Tests", ->
             .expect(201)
             .end (err, res) ->
               return done err if err
-              res.body.rows[0].should.have.property "status", "Error"
+              res.body[0].should.have.property "status", "Error"
               done()
       
       describe "ContactGroups", ->
@@ -582,7 +582,7 @@ describe "API Integration Tests", ->
             .end (err, res) ->
               return done err if err
               
-              res.body.rows[0].should.have.property "status", "Inserted"
+              res.body[0].should.have.property "status", "Inserted"
               ContactGroup.findOne { group: "Group 1" }, (err, cg) ->
                 return done err if err
                 cg.users.should.have.length 6
@@ -611,7 +611,7 @@ describe "API Integration Tests", ->
                 .end (err, res) ->
                   return done err if err
                   
-                  res.body.rows[0].should.have.property "status", "Updated"
+                  res.body[0].should.have.property "status", "Updated"
                   ContactGroup.findOne { group: "Group 1" }, (err, cg) ->
                     return done err if err
                     cg.users.should.have.length 7
@@ -629,7 +629,7 @@ describe "API Integration Tests", ->
             .expect(201)
             .end (err, res) ->
               return done err if err
-              res.body.rows[0].should.have.property "status", "Error"
+              res.body[0].should.have.property "status", "Error"
               done()
       
       describe "Full Metadata Import", ->
@@ -727,8 +727,8 @@ describe "API Integration Tests", ->
             return done err if err
             
             statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
-            for row in res.body.rows
-              statusCheckObj[row.status] = statusCheckObj[row.status] + 1
+            for doc in res.body
+              statusCheckObj[doc.status] = statusCheckObj[doc.status] + 1
               
             statusCheckObj.Valid.should.equal 5
             statusCheckObj.Conflict.should.equal 0
@@ -753,8 +753,8 @@ describe "API Integration Tests", ->
             return done err if err
             
             statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
-            for row in res.body.rows
-              statusCheckObj[row.status] = statusCheckObj[row.status] + 1
+            for doc in res.body
+              statusCheckObj[doc.status] = statusCheckObj[doc.status] + 1
               
             statusCheckObj.Valid.should.equal 4
             statusCheckObj.Conflict.should.equal 0
@@ -780,8 +780,8 @@ describe "API Integration Tests", ->
               return done err if err
               
               statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
-              for row in res.body.rows
-                statusCheckObj[row.status] = statusCheckObj[row.status] + 1
+              for doc in res.body
+                statusCheckObj[doc.status] = statusCheckObj[doc.status] + 1
                 
               statusCheckObj.Valid.should.equal 4
               statusCheckObj.Conflict.should.equal 1

@@ -85,7 +85,7 @@ handleMetadataPost = (action, that) ->
     return utils.logAndSetResponse that, 403, "User #{that.authenticated.email} is not an admin, API access to importMetadata denied.", 'info'
 
   try
-    returnObject = { rows:[] }
+    returnObject = []
     insertObject = that.request.body
     
     for key of insertObject
@@ -120,11 +120,11 @@ handleMetadataPost = (action, that) ->
               status = 'Valid'
           
           logger.info "User #{that.authenticated.email} performed #{action} action on #{key}, got #{status}"
-          returnObject.rows.push buildResponseObject key, doc, status, '', uid
+          returnObject.push buildResponseObject key, doc, status, '', uid
           
         catch e
           logger.error "Failed to #{action} #{key} with unique identifier #{uid}. #{e.message}"
-          returnObject.rows.push buildResponseObject key, doc, 'Error', e.message, uid
+          returnObject.push buildResponseObject key, doc, 'Error', e.message, uid
         
     that.body = returnObject
     that.status = 201

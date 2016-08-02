@@ -819,30 +819,28 @@ The import checks for conflicts in the database and either updates or inserts ba
 `Post /metadata/validate` Returns `201` and an object with the following format:
 
 ```js
-{
-  "rows": [
-    {
-      model: 'Channel'
-      record: { ChannelObject1 }
-      status: 'Valid'
-      message: ''
-      uid: 'ChannelName'
-    }, {
-      model: 'Client'
-      record: { ClientObject1 }
-      status: 'Conflict'
-      message: ''
-      uid: "ClientId"
-    }, {
-      model: 'Client'
-      record: { ClientObject2 }
-      status: 'Error'
-      message: 'Error Message'
-      uid: 'ClientId'
-    },
-    //...
-  ]
-}
+[
+  {
+    model: 'Channel'
+    record: { ChannelObject1 }
+    status: 'Valid'
+    message: ''
+    uid: 'ChannelName'
+  }, {
+    model: 'Client'
+    record: { ClientObject1 }
+    status: 'Conflict'
+    message: ''
+    uid: "ClientId"
+  }, {
+    model: 'Client'
+    record: { ClientObject2 }
+    status: 'Error'
+    message: 'Error Message'
+    uid: 'ClientId'
+  },
+  //...
+]
 ```
 
 
@@ -851,28 +849,26 @@ The import checks for conflicts in the database and either updates or inserts ba
 `Post /metadata` Returns `201` and an object with the following format:
 
 ```js
-{
-  "rows": [
-    {
-      model: 'Channel'
-      record: { ChannelObject1 }
-      status: 'Inserted'
-      message: ''
-      uid: 'ChannelName'
-    }, {
-      model: 'Client'
-      record: { ClientObject1 }
-      status: 'Updated'
-      message: ''
-      uid: 'ClientId'
-    }, {
-      model: 'Client'
-      record: { ClientObject2 }
-      status: 'Error'
-      message: 'Error Message'
-      uid: 'ClientId'
-    },
-    //...
-  ]
-}
+[
+  {
+    model: 'Channel'
+    record: { ChannelObject1 }
+    status: 'Inserted'
+    message: ''
+    uid: 'ChannelName'
+  }, {
+    model: 'Client'
+    record: { ClientObject1 }
+    status: 'Updated'
+    message: ''
+    uid: 'ClientId'
+  }, {
+    model: 'Client'
+    record: { ClientObject2 }
+    status: 'Error'
+    message: 'Error Message'
+    uid: 'ClientId'
+  },
+  //...
+]
 ```
