@@ -19,7 +19,7 @@ collections =
 
 
 #Function to remove properties from export object
-exports.removeProperties = (obj) ->
+removeProperties = (obj) ->
   propertyID = '_id'
   propertyV = '__v'
 
@@ -27,12 +27,12 @@ exports.removeProperties = (obj) ->
     if (prop == propertyID || prop == propertyV)
       delete obj[prop]
     else if ( typeof obj[prop] == 'object' || obj[prop] instanceof Array )
-      exports.removeProperties(obj[prop])
+      removeProperties(obj[prop])
   return obj
 
 
 # Function to return unique identifier key and value for a collection
-exports.getUniqueIdentifierForCollection = (collection, doc) ->
+getUniqueIdentifierForCollection = (collection, doc) ->
   switch collection
     when 'Channels' then uidKey = 'name'; uid = doc.name
     when 'Clients' then uidKey = 'clientID'; uid = doc.clientID
@@ -45,7 +45,7 @@ exports.getUniqueIdentifierForCollection = (collection, doc) ->
 
 
 # Build response object
-exports.buildResponseObject = (model, doc, status, message, uid) ->
+buildResponseObject = (model, doc, status, message, uid) ->
   return {
     model: model
     record: doc
@@ -70,7 +70,7 @@ exports.getMetadata = () ->
       exportObject[col] = yield collections[col].find().lean().exec()
       for doc in exportObject[col]
         if doc._id
-          doc = exports.removeProperties doc
+          doc = removeProperties doc
 
     this.body = [exportObject]
     this.status = 200
@@ -95,7 +95,7 @@ handleMetadataPost = (action, that) ->
           if key not of collections
             throw new Error "Invalid Collection in Import Object"
           
-          uidObj = exports.getUniqueIdentifierForCollection key, doc
+          uidObj = getUniqueIdentifierForCollection key, doc
           uid = uidObj[Object.keys(uidObj)[0]]
           result = yield collections[key].find(uidObj).exec()
           
@@ -120,11 +120,11 @@ handleMetadataPost = (action, that) ->
               status = 'Valid'
           
           logger.info "User #{that.authenticated.email} performed #{action} action on #{key}, got #{status}"
-          returnObject.rows.push exports.buildResponseObject key, doc, status, '', uid
+          returnObject.rows.push buildResponseObject key, doc, status, '', uid
           
         catch e
           logger.error "Failed to #{action} #{key} with unique identifier #{uid}. #{e.message}"
-          returnObject.rows.push exports.buildResponseObject key, doc, 'Error', e.message, uid
+          returnObject.rows.push buildResponseObject key, doc, 'Error', e.message, uid
         
     that.body = returnObject
     that.status = 201
@@ -140,3 +140,8 @@ exports.importMetadata = () ->
 # API endpoint that checks for conflicts between import object and database
 exports.validateMetadata = () ->
   handleMetadataPost 'validate', this
+
+if process.env.NODE_ENV == "test"
+  exports.buildResponseObject = buildResponseObject
+  exports.getUniqueIdentifierForCollection = getUniqueIdentifierForCollection
+  exports.removeProperties = removeProperties
