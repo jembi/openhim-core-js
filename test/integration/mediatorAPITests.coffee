@@ -22,7 +22,7 @@ describe "API Integration Tests", ->
           type: 'http'
         }
       ]
-      defaultChannelConfig: [
+      defaultChannelConfig: [{
         name: "Save Encounter 1"
         urlPattern: "/encounters"
         type: 'http'
@@ -35,7 +35,7 @@ describe "API Integration Tests", ->
             type: 'http'
           }
         ]
-      ,
+      }, {
         name: "Save Encounter 2"
         urlPattern: "/encounters2"
         type: 'http'
@@ -48,7 +48,7 @@ describe "API Integration Tests", ->
             type: 'http'
           }
         ]
-      ]
+      }]
 
     mediator2 =
       urn: "urn:uuid:25ABAB99-23BF-4AAB-8832-7E07E4EA5902"
@@ -1145,7 +1145,8 @@ describe "API Integration Tests", ->
               done()
 
       it 'should add all channels in the defaultChannelConfig property', (done) ->
-        new Mediator(mediator1).save ->
+        new Mediator(mediator1).save (err) ->
+          return done err if err
           request("https://localhost:8080")
             .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
             .set("auth-username", testUtils.rootUser.email)
@@ -1155,15 +1156,13 @@ describe "API Integration Tests", ->
             .send([])
             .expect(201)
             .end (err, res) ->
-              if err
-                done err
-              else
-                Channel.find {}, (err, channels) ->
-                  done err if err
-                  channels.length.should.be.exactly 2
-                  channels[0].name.should.be.exactly 'Save Encounter 1'
-                  channels[1].name.should.be.exactly 'Save Encounter 2'
-                  done()
+              return done err if err
+              Channel.find {}, (err, channels) ->
+                return done err if err
+                channels.length.should.be.exactly 2
+                channels[0].name.should.be.exactly 'Save Encounter 1'
+                channels[1].name.should.be.exactly 'Save Encounter 2'
+                done()
 
       it 'should add selected channels in the defaultChannelConfig property if the body is set (save one)', (done) ->
         new Mediator(mediator1).save ->
