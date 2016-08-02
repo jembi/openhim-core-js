@@ -11,7 +11,9 @@ testAuditMessage = require('../unit/auditingTest').testAuditMessage
 describe "Auditing Integration Tests", ->
 
 
-  beforeEach (done) -> Audit.remove {}, -> server.start auditUDPPort: 5050, auditTlsPort: 5051, auditTcpPort: 5052, -> done()
+  beforeEach (done) -> 
+    Audit.remove ->
+      server.start auditUDPPort: 5050, auditTlsPort: 5051, auditTcpPort: 5052, done
 
   afterEach (done) -> server.stop -> done()
 
