@@ -22,7 +22,7 @@ describe "API Integration Tests", ->
           type: 'http'
         }
       ]
-      defaultChannelConfig: [{
+      defaultChannelConfig: [
         name: "Save Encounter 1"
         urlPattern: "/encounters"
         type: 'http'
@@ -35,7 +35,7 @@ describe "API Integration Tests", ->
             type: 'http'
           }
         ]
-      }, {
+      ,
         name: "Save Encounter 2"
         urlPattern: "/encounters2"
         type: 'http'
@@ -48,7 +48,7 @@ describe "API Integration Tests", ->
             type: 'http'
           }
         ]
-      }]
+      ]
 
     mediator2 =
       urn: "urn:uuid:25ABAB99-23BF-4AAB-8832-7E07E4EA5902"
