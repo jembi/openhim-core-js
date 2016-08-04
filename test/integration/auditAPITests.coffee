@@ -222,7 +222,7 @@ describe "API Integration Tests", ->
                       newAudits[1].participantObjectIdentification.length.should.be.exactly 1
                       newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
                     done()
-                , 10 * global.testTimeoutFactor
+                , 100 * global.testTimeoutFactor
 
       it "should NOT generate an 'audit log used' audit when using basic (default) representation", (done) ->
         audit = new Audit auditData
@@ -328,7 +328,7 @@ describe "API Integration Tests", ->
                       newAudits[1].participantObjectIdentification.length.should.be.exactly 1
                       newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
                     done()
-                , 10 * global.testTimeoutFactor
+                , 100 * global.testTimeoutFactor
 
 
     describe "*getAuditsFilterOptions", ->
