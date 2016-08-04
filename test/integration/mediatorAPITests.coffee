@@ -1160,10 +1160,9 @@ describe "API Integration Tests", ->
               Channel.find {}, (err, channels) ->
                 return done err if err
                 channels.length.should.be.exactly 2
-                channelX = true if channels[0].name is 'Save Encounter 1' or 'Save Encounter 2'
-                channelY = true if channels[1].name is 'Save Encounter 1' or 'Save Encounter 2'
-                channelY.should.be true
-                channelX.should.be true
+                channelNames = channels.map (channel) -> channel.name
+                channelNames.should.containEql 'Save Encounter 1'
+                channelNames.should.containEql 'Save Encounter 2'
                 done()
 
       it 'should add selected channels in the defaultChannelConfig property if the body is set (save one)', (done) ->
@@ -1203,10 +1202,9 @@ describe "API Integration Tests", ->
                 Channel.find {}, (err, channels) ->
                   done err if err
                   channels.length.should.be.exactly 2
-                  channelX = true if channels[0].name is 'Save Encounter 1' or 'Save Encounter 2'
-                  channelY = true if channels[1].name is 'Save Encounter 1' or 'Save Encounter 2'
-                  channelY.should.be true
-                  channelX.should.be true
+                  channelNames = channels.map (channel) -> channel.name
+                  channelNames.should.containEql 'Save Encounter 1'
+                  channelNames.should.containEql 'Save Encounter 2'
                   done()
 
       it 'should return a 400 when a channel from the request body isn\'t found', (done) ->
