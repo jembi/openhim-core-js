@@ -45,6 +45,7 @@ createRerunTask = (transactionIDs, callback) ->
 
 autoRetryTask = (job, done) ->
   _taskStart = new Date()
+  transactionsToRerun = []
 
   getChannels (err, results) ->
     promises = []
@@ -56,17 +57,16 @@ autoRetryTask = (job, done) ->
         findTransactions channel, (err, results) ->
           if err
             logger.error err
-            deferred.resolve()
           else if results? and results.length>0
-            createRerunTask (results.map((r) -> r._id)), -> deferred.resolve()
-          else
-            deferred.resolve()
+            transactionsToRerun.push tid for tid in (results.map((r) -> r._id))
+          deferred.resolve()
 
         promises.push deferred.promise
 
     (Q.all promises).then ->
-      logger.debug "Auto retry task total time: #{new Date()-_taskStart} ms"
-      done()
+      createRerunTask transactionsToRerun, ->
+        logger.debug "Auto retry task total time: #{new Date()-_taskStart} ms"
+        done()
 
 
 setupAgenda = (agenda) ->

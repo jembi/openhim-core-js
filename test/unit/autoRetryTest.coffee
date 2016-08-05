@@ -16,6 +16,13 @@ retryChannel = new Channel
   autoRetryEnabled: true
   autoRetryPeriodMinutes: 60
 
+retryChannel2 = new Channel
+  name: 'retry-test-2'
+  urlPattern: '/test/2'
+  allow: '*'
+  autoRetryEnabled: true
+  autoRetryPeriodMinutes: 60
+
 noRetryChannel = new Channel
   name: 'no-retry-test'
   urlPattern: '/test'
@@ -73,12 +80,25 @@ retryTransaction4 = new Transaction
   status: 'Successful'
   autoRetry: false
 
+retryTransaction5 = new Transaction
+  request: {
+    path: '/sample/api',
+    method: 'GET',
+    timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
+  }
+  status: 'Failed'
+  autoRetry: true
+  error:
+    message: 'Connection refused'
+
 
 describe "Auto Retry Task", ->
   afterEach (done) ->
     Channel.remove {}, -> Transaction.remove {}, -> Task.remove {}, ->
       retryChannel.isNew = true
       delete retryChannel._id
+      retryChannel2.isNew = true
+      delete retryChannel2._id
       noRetryChannel.isNew = true
       delete noRetryChannel._id
       disabledChannel.isNew = true
@@ -198,4 +218,17 @@ describe "Auto Retry Task", ->
               results.length.should.be.exactly 1
               results[0].transactions.length.should.be.exactly 1
               results[0].transactions[0].tid.should.be.exactly retryTransaction1._id.toString()
+              done()
+
+    it "should create a single task for all transactions", (done) ->
+      retryChannel.save -> retryChannel2.save ->
+        retryTransaction1.channelID = retryChannel._id
+        retryTransaction5.channelID = retryChannel2._id
+        retryTransaction1.save -> retryTransaction5.save ->
+          autoRetry.autoRetryTask null, () ->
+            Task.find {}, (err, results) ->
+              results.length.should.be.exactly 1
+              results[0].transactions.length.should.be.exactly 2
+              results[0].transactions[0].tid.should.be.exactly retryTransaction1._id.toString()
+              results[0].transactions[1].tid.should.be.exactly retryTransaction5._id.toString()
               done()
