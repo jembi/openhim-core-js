@@ -23,6 +23,7 @@ heartbeat = require './api/heartbeat'
 certificateAuthority = require './api/certificateAuthority'
 logs = require './api/logs'
 metadata = require './api/metadata'
+visualizers = require './api/visualizers'
 
 exports.setupApp = (done) ->
 
@@ -139,6 +140,9 @@ exports.setupApp = (done) ->
 
   # Events endpoint
   app.use route.get '/events/:receivedTime', events.getLatestEvents
+
+  # Visualizer endpoint
+  app.use route.get '/visualizers/', visualizers.getAllVisualizers
 
   # Return the result
   done(app)
