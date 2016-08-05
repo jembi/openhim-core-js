@@ -872,3 +872,85 @@ The import checks for conflicts in the database and either updates or inserts ba
   //...
 ]
 ```
+
+### Visualizer resource
+
+The visualizer resource allows the user to manage the visualizers that are present in the system. Visualizers are only accessible by admin users and all saved visualizers can be viewed by all admin users.
+
+#### Get visualizers
+
+`GET /visualizers`
+
+This request will return a `200` response code and an array of visualizer objects conforming to the [visualizer schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/visualizer.coffee).
+
+E.g.
+
+```js
+[
+  {
+    "_id": "57a4a09078ae562b26d5b2b0",
+    "name": "Visualizer1",
+    "__v": 0,
+    "time": {
+      "updatePeriod": 200
+    },
+    "size": {
+      "padding": 20,
+      "height": 400,
+      "width": 1000,
+      "responsive": true
+    },
+    "color": {
+      "text": "#4a4254",
+      "error": "#a84b5c",
+      "active": "#10e057",
+      "inactive": "#c8cacf"
+    },
+    "mediators": [
+      {
+        "mediator": "urn:mediator:fhir-proxy",
+        "name": "OpenHIM Mediator FHIR Proxy",
+        "display": "OpenHIM Mediator FHIR Proxy",
+        "_id": "57a4a09078ae562b26d5b2b2"
+      },
+      {
+        "mediator": "urn:mediator:shell-script",
+        "name": "OpenHIM Shell Script Mediator",
+        "display": "OpenHIM Shell Script Mediator",
+        "_id": "57a4a09078ae562b26d5b2b1"
+      }
+    ],
+    "channels": [
+      {
+        "eventType": "channel",
+        "eventName": "FHIR Proxy",
+        "display": "FHIR Proxy",
+        "_id": "57a4a09078ae562b26d5b2b4"
+      },
+      {
+        "eventType": "channel",
+        "eventName": "Echo",
+        "display": "Echo",
+        "_id": "57a4a09078ae562b26d5b2b3"
+      }
+    ],
+    "components": [
+      {
+        "eventType": "primary",
+        "eventName": "OpenHIM Mediator FHIR Proxy Route",
+        "display": "FHIR Server",
+        "_id": "57a4a09078ae562b26d5b2b6"
+      },
+      {
+        "eventType": "primary",
+        "eventName": "echo",
+        "display": "Echo",
+        "_id": "57a4a09078ae562b26d5b2b5"
+      }
+    ]
+  },
+  {
+    ...
+  }
+]
+```
