@@ -86,7 +86,9 @@ exports.storeResponse = (ctx, done) ->
     # reset request body - primary route
     res.body = ''
 
-  update = { response: res }
+  update =
+    response: res
+    error: ctx.error
 
   # Set status from mediator
   if ctx.mediatorResponse?.status?
@@ -129,9 +131,10 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
     transactionId = ctx.transactionId.toString()
 
   transactions.Transaction.findById transactionId, (err, tx) ->
+    update = {}
+
     if ctx.mediatorResponse?.status?
       logger.info "The transaction status has been set to #{ctx.mediatorResponse.status} by the mediator"
-      callback tx
     else
       routeFailures = false
       routeSuccess = true
@@ -159,19 +162,18 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
       ctx.transactionStatus = tx.status
 
       logger.info "Final status for transaction #{tx._id} : #{tx.status}"
-      update = {
-        status: tx.status
-        internalServerError: ctx.internalServerError
-        internalServerErrorMessage: ctx.internalServerErrorMessage
-        internalServerErrorStack: ctx.internalServerErrorStack
-      }
-      transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err,tx) ->
-        tx.save
-        callback tx
+      update.status = tx.status
 
-        if config.statsd.enabled
-          stats.incrementTransactionCount ctx, ->
-          stats.measureTransactionDuration ctx, ->
+    if ctx.autoRetry? then update.autoRetry = ctx.autoRetry
+
+    if !update then return callback tx # nothing to do
+
+    transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err,tx) ->
+      callback tx
+
+      if config.statsd.enabled
+        stats.incrementTransactionCount ctx, ->
+        stats.measureTransactionDuration ctx, ->
 
 
 

@@ -36,8 +36,9 @@ retryTransaction1 = new Transaction
     timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
   }
   status: 'Failed'
-  internalServerError: true
-  internalServerErrorMessage: 'Connection refused'
+  autoRetry: true
+  error:
+    message: 'Connection refused'
 
 retryTransaction2 = new Transaction
   request: {
@@ -46,8 +47,9 @@ retryTransaction2 = new Transaction
     timestamp: new Date()
   }
   status: 'Failed'
-  internalServerError: true
-  internalServerErrorMessage: 'Connection refused'
+  autoRetry: true
+  error:
+    message: 'Connection refused'
 
 retryTransaction3 = new Transaction
   request: {
@@ -56,8 +58,9 @@ retryTransaction3 = new Transaction
     timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
   }
   status: 'Failed'
-  internalServerError: true
-  internalServerErrorMessage: 'Connection refused'
+  autoRetry: true
+  error:
+    message: 'Connection refused'
   childIDs: ['bbb908908ccc98cc1d0888aa']
   wasRerun: true
 
@@ -68,7 +71,7 @@ retryTransaction4 = new Transaction
     timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
   }
   status: 'Successful'
-  internalServerError: false
+  autoRetry: false
 
 
 describe "Auto Retry Task", ->
