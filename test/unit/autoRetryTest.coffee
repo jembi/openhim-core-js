@@ -232,3 +232,10 @@ describe "Auto Retry Task", ->
               results[0].transactions[0].tid.should.be.exactly retryTransaction1._id.toString()
               results[0].transactions[1].tid.should.be.exactly retryTransaction5._id.toString()
               done()
+
+    it "should only create a task if there are transactions to rerun", (done) ->
+      retryChannel.save -> retryChannel2.save ->
+        autoRetry.autoRetryTask null, () ->
+          Task.find {}, (err, results) ->
+            results.length.should.be.exactly 0
+            done()

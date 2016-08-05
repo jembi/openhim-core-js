@@ -64,9 +64,12 @@ autoRetryTask = (job, done) ->
         promises.push deferred.promise
 
     (Q.all promises).then ->
-      createRerunTask transactionsToRerun, ->
+      end = ->
         logger.debug "Auto retry task total time: #{new Date()-_taskStart} ms"
         done()
+      if transactionsToRerun.length > 0
+        createRerunTask transactionsToRerun, end
+      else end()
 
 
 setupAgenda = (agenda) ->
