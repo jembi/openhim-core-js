@@ -3,6 +3,8 @@ server = require "../server"
 connectionDefault = server.connectionDefault
 Schema = mongoose.Schema
 
+exports.eventTypes = ['channel', 'primary', 'route', 'orchestration']
+
 # Active transaction events
 #
 # A short term collection for functions that require 'live' analysis of transactions
@@ -14,7 +16,7 @@ EventsSchema = new Schema
   "created":              type: Date, default: Date.now, expires: '1h'
   "channelID":            type: Schema.Types.ObjectId, required: true
   "transactionID":        type: Schema.Types.ObjectId, required: true
-  "type":                 type: String, enum: ['channel', 'primary', 'route', 'orchestration']
+  "type":                 type: String, enum: exports.EventTypes
   "event":                type: String, enum: ['start', 'end']
   "name":                 String
   "status":               Number
