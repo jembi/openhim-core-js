@@ -1145,7 +1145,8 @@ describe "API Integration Tests", ->
               done()
 
       it 'should add all channels in the defaultChannelConfig property', (done) ->
-        new Mediator(mediator1).save ->
+        new Mediator(mediator1).save (err) ->
+          return done err if err
           request("https://localhost:8080")
             .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
             .set("auth-username", testUtils.rootUser.email)
@@ -1155,15 +1156,14 @@ describe "API Integration Tests", ->
             .send([])
             .expect(201)
             .end (err, res) ->
-              if err
-                done err
-              else
-                Channel.find {}, (err, channels) ->
-                  done err if err
-                  channels.length.should.be.exactly 2
-                  channels[0].name.should.be.exactly 'Save Encounter 1'
-                  channels[1].name.should.be.exactly 'Save Encounter 2'
-                  done()
+              return done err if err
+              Channel.find {}, (err, channels) ->
+                return done err if err
+                channels.length.should.be.exactly 2
+                channelNames = channels.map (channel) -> channel.name
+                channelNames.should.containEql 'Save Encounter 1'
+                channelNames.should.containEql 'Save Encounter 2'
+                done()
 
       it 'should add selected channels in the defaultChannelConfig property if the body is set (save one)', (done) ->
         new Mediator(mediator1).save ->
@@ -1202,8 +1202,9 @@ describe "API Integration Tests", ->
                 Channel.find {}, (err, channels) ->
                   done err if err
                   channels.length.should.be.exactly 2
-                  channels[0].name.should.be.exactly 'Save Encounter 1'
-                  channels[1].name.should.be.exactly 'Save Encounter 2'
+                  channelNames = channels.map (channel) -> channel.name
+                  channelNames.should.containEql 'Save Encounter 1'
+                  channelNames.should.containEql 'Save Encounter 2'
                   done()
 
       it 'should return a 400 when a channel from the request body isn\'t found', (done) ->

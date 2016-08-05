@@ -6,70 +6,37 @@ mongoose = require 'mongoose'
 authorisation = require './authorisation'
 Q = require 'q'
 metrics = require "../metrics"
+_ = require 'lodash'
 
-########################################################################
-# getGlobalLoadTimeMetrics() function for generating aggregated global Metrics #
-########################################################################
+# all in one getMetrics generator function for metrics API
+exports.getMetrics = (groupChannels, timeSeries, channelID) ->
+  logger.debug "Called getMetrics(#{groupChannels}, #{timeSeries}, #{channelID})"
+  channels = yield authorisation.getUserViewableChannels this.authenticated
+  channelIDs = channels.map (c) -> return c._id
+  if typeof channelID is 'string' and not (channelID in (channelIDs.map (id) -> id.toString()) )
+    this.status = 401
+    return
+  else if typeof channelID is 'string'
+    channelIDs = [mongoose.Types.ObjectId(channelID)]
 
-exports.getGlobalLoadTimeMetrics =  ->
-  filtersObject = this.request.query
-  userRequesting = this.authenticated
-  results = yield metrics.fetchGlobalLoadTimeMetrics userRequesting, filtersObject
-  this.body = []
+  query = this.request.query
+  logger.debug "Metrics query object: #{JSON.stringify query}"
+  startDate = query.startDate
+  delete query.startDate
+  endDate = query.endDate
+  delete query.endDate
 
-  for result, i in results
-    this.body.push
-      load: result.load
-      avgResp: results[i].avgResp
-      timestamp: moment.utc([
-        result._id.year
-        result._id.month - 1
-        result._id.day
-        result._id.hour
-      ]).format()
-  return
+  if Object.keys(query).length is 0
+    query = null
 
-################################################################################################
-# getGlobalStatusMetrics() function for generating aggregated Transaction Status Metrics #
-################################################################################################
+  m = yield metrics.calculateMetrics new Date(startDate), new Date(endDate), query, channelIDs, timeSeries, groupChannels
 
-exports.getGlobalStatusMetrics = ->
-  filtersObject = this.request.query
-  userRequesting = this.authenticated
-  results = yield metrics.fetchGlobalStatusMetrics userRequesting, filtersObject
-  this.body = results
-  return
+  if m[0]?._id?.year? # if there are time components
+    m = m.map (item) ->
+      date = _.assign {}, item._id
+      # adapt for moment (month starting at 0)
+      if date.month then date.month = date.month - 1
+      item.timestamp = moment(date)
+      return item
 
-##########################################################################
-# getChannelMetrics() function for generating aggregated channel Metrics #
-##########################################################################
-
-exports.getChannelMetrics = (time, channelId) ->
-  filtersObject = this.request.query
-  userRequesting = this.authenticated
-  results = yield metrics.fetchChannelMetrics time, channelId, userRequesting, filtersObject
-  if time is 'status'
-    this.body = results
-  else
-    this.body = []
-    #format the message to show what the console expects
-
-    for result, i in results
-      if !result._id.minute
-        result._id.minute = '00'
-      if !result._id.hour
-        result._id.hour = '00'
-      if !result._id.day
-        result._id.day = '1'
-      this.body.push
-        load: result.load
-        avgResp: result.avgResp
-        timestamp: moment.utc([
-          result._id.year
-          result._id.month - 1
-          result._id.day
-          result._id.hour
-          result._id.minute
-        ]).format()
-
-  return
+  this.body = m

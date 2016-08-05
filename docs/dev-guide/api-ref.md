@@ -629,89 +629,46 @@ The response will be an http status code of `201` if the channels were successfu
 
 ### Metrics resource
 
-#### Global Metrics
+This resource enables transaction metrics to be extracted from the OpenHIM in a flexible way. There are various forms of this endpoint depending on the format of the metrics that you want to get out. Metrics will only be returned for the channels that the API user has access to.
 
-`https://<server>:<api_port>/metrics`
+The base url is `https://<server>:<api_port>/metrics`
 
-`/metrics`
+All calls to the metrics API **MUST** include request parameter with both the start date and end date for the metrics query. E.g. `/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z`
 
-This fetches global load and transaction duration metrics for all channels that the logged in user has permissions to view.
+There are a few diffferent forms of this endpoint that returns metrics broken down in different ways:
 
-These are fetched from either aggregating transaction data from MongoDB or from an instance of the statd metrics service. This depends on the configuration of the HIM in question.
+* Use `/metrics` to get overall metrics about every transaction.
+* Use `/metrics/channels` to get metrics broken down by each channel.
+* Use `/metrics/channels/:channelID` to get metrics for a specific channel.
+* Use `/metrics/timeseries/:timeSeries` to get overall metrics returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
+* Use `/metrics/timeseries/:timeSeries/channels` to get metrics broken down by each channel returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
+* Use `/metrics/timeseries/:timeSeries/channels/:channelID` to get metrics for a specific channel returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
 
-`/metrics/status`
+The metrics API always returns a JSON array, even if it is returning just one metrics object. It retuns a `200` response along with the metrics array. A `401` response will be returned if a specified channel doesn't exist. Each metrics object in the array has the following format:
 
-This breaks down the global load metrics by channel and buy status, where the status, could either be 'Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)'
-
-#### Channel Metrics
-
-`/metrics/[type]/[channelId]
-
-When [type] is status you may expect a response like this
-
-```json
-[  
-   {  
-      "_id":{  
-         "channelID":"542530aef4e8c76f482bced9"
-      },
-      "failed":409,
-      "successful":280,
-      "processing":0,
-      "completed":0,
-      "completedWErrors":0
-   }
-]
+```js
+{
+  _id: {
+     channelID: '222222222222222222222222', // Only if breaking down by channels
+     day: 15,  // Only the approporiate time components will be returned when
+     week: 28, // breaking down in time series, these will not appear if not
+     month: 7, // breaking down by time series.
+     year: 2014
+    },
+  total: 1,
+  avgResp: 100,
+  minResp: 100,
+  maxResp: 100,
+  failed: 0,
+  successful: 0,
+  processing: 0,
+  completed: 1,
+  completedWErrors: 0,
+  timestamp: '2014-08-14T22:00:00.000Z' // This will appear only for time series
+                                        // data as a convenience. It represents
+                                        // the start of this time series period
+}
 ```
-
-When [type] is hour, day, or month you may expect a response like this
-
-```json
-[  
-   {  
-      "load":1118,
-      "avgResp":48223.69219653179,
-      "timestamp":"2015-02-19T00:00:00.000Z"
-   },
-   {  
-      "load":1725,
-      "avgResp":31724.939194741168,
-      "timestamp":"2015-02-20T00:00:00.000Z"
-   },
-   {  
-      "load":1710,
-      "avgResp":34803.78491859469,
-      "timestamp":"2015-02-21T00:00:00.000Z"
-   },
-   {  
-      "load":1580,
-      "avgResp":19637.350119904077,
-      "timestamp":"2015-02-22T00:00:00.000Z"
-   },
-   {  
-      "load":1637,
-      "avgResp":24750.785830618894,
-      "timestamp":"2015-02-23T00:00:00.000Z"
-   },
-   {  
-      "load":1704,
-      "avgResp":31745.67877786953,
-      "timestamp":"2015-02-24T00:00:00.000Z"
-   },
-   {  
-      "load":1828,
-      "avgResp":41017.4289276808,
-      "timestamp":"2015-02-25T00:00:00.000Z"
-   },
-   {  
-      "load":689,
-      "avgResp":37255.648590021694,
-      "timestamp":"2015-02-26T00:00:00.000Z"
-   }
-]
-```
-
-If you have any questions that are not covered in this guide, please [submit an issue](https://github.com/jembi/openhim-core-js/issues/new) with the 'documentation' label and we will strive to add it to this page.
 
 ### Keystore resource
 
@@ -827,3 +784,91 @@ returns 200 ok with `{ master: <core-uptime>, mediators: { <urn>: <mediator-upti
 Returns the server uptime in seconds. Includes a list of all registered mediators and if heartbeats have been received for them, will include their uptimes as well.
 
 Note that this is a public endpoint that does not require any authorization. It is convenient for integrating with external monitoring tools.
+
+### Metadata resource
+
+The metadata resource allows the user to export and import Channels, Clients, Mediators, Users and ContactGroups.  
+
+Use `GET` to retrieve all available metadata, and `POST` to import metadata.  
+
+The import checks for conflicts in the database and either updates or inserts based on the result.  For more control over the import, the validate endpoint accepts the same payload as the import endpoint and returns a validation status per metadata record.
+
+#### Export Metadata
+
+`Get /metadata` Returns `200` and an object with the following format:
+
+```js
+[
+  {
+    "Channels": [
+      { ChannelObject1 }
+    ]
+    "Clients": [
+      { ClientObject1 },
+      { ClientObject2 }
+    ],
+    "Mediators": [],
+    "Users": [],
+    "ContactGroups:": []
+  }
+]
+```
+
+#### Validate Metadata
+
+`Post /metadata/validate` Returns `201` and an object with the following format:
+
+```js
+[
+  {
+    model: 'Channel'
+    record: { ChannelObject1 }
+    status: 'Valid'
+    message: ''
+    uid: 'ChannelName'
+  }, {
+    model: 'Client'
+    record: { ClientObject1 }
+    status: 'Conflict'
+    message: ''
+    uid: "ClientId"
+  }, {
+    model: 'Client'
+    record: { ClientObject2 }
+    status: 'Error'
+    message: 'Error Message'
+    uid: 'ClientId'
+  },
+  //...
+]
+```
+
+
+#### Import Metadata
+
+`Post /metadata` Returns `201` and an object with the following format:
+
+```js
+[
+  {
+    model: 'Channel'
+    record: { ChannelObject1 }
+    status: 'Inserted'
+    message: ''
+    uid: 'ChannelName'
+  }, {
+    model: 'Client'
+    record: { ClientObject1 }
+    status: 'Updated'
+    message: ''
+    uid: 'ClientId'
+  }, {
+    model: 'Client'
+    record: { ClientObject2 }
+    status: 'Error'
+    message: 'Error Message'
+    uid: 'ClientId'
+  },
+  //...
+]
+```

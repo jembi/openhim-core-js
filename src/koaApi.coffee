@@ -11,19 +11,18 @@ transactions = require './api/transactions'
 channels = require './api/channels'
 tasks = require './api/tasks'
 contactGroups = require './api/contactGroups'
-visualizer = require './api/visualizer'
+events = require './api/events'
 Q = require 'q'
 mediators = require './api/mediators'
 metrics = require './api/metrics'
 keystore = require './api/keystore'
 serverRestart = require './api/restart'
 audits = require './api/audits'
-statsd = require './api/statsd'
 config = require './config/config'
 heartbeat = require './api/heartbeat'
 certificateAuthority = require './api/certificateAuthority'
 logs = require './api/logs'
-
+metadata = require './api/metadata'
 
 exports.setupApp = (done) ->
 
@@ -93,14 +92,12 @@ exports.setupApp = (done) ->
   app.use route.put '/tasks/:taskId', tasks.updateTask
   app.use route.delete '/tasks/:taskId', tasks.removeTask
 
-  app.use route.get '/visualizer/events/:receivedTime', visualizer.getLatestEvents
-  app.use route.get '/visualizer/sync', visualizer.sync
-
-  # -- New metrics Routes --
-  app.use route.get '/metrics', if config.statsd.enabled then statsd.retrieveTransactionCountPerHour else metrics.getGlobalLoadTimeMetrics
-  app.use route.get '/metrics/status', if config.statsd.enabled then statsd.fetchGlobalStatusMetrics else metrics.getGlobalStatusMetrics
-  app.use route.get '/metrics/:type/:channelId', if config.statsd.enabled then statsd.retrieveChannelMetrics else metrics.getChannelMetrics
-  app.use route.get '/metrics/load-time', if config.statsd.enabled then statsd.retrieveAverageLoadTimePerHour else metrics.getGlobalLoadTimeMetrics
+  app.use route.get '/metrics', -> metrics.getMetrics.call this, false
+  app.use route.get '/metrics/channels', -> metrics.getMetrics.call this, true
+  app.use route.get '/metrics/channels/:channelID', (channelID) -> metrics.getMetrics.call this, true, null, channelID
+  app.use route.get '/metrics/timeseries/:timeSeries', (timeSeries) -> metrics.getMetrics.call this, false, timeSeries
+  app.use route.get '/metrics/timeseries/:timeSeries/channels', (timeSeries) -> metrics.getMetrics.call this, true, timeSeries
+  app.use route.get '/metrics/timeseries/:timeSeries/channels/:channelID', (timeSeries, channelID) -> metrics.getMetrics.call this, true, timeSeries, channelID
 
   app.use route.get '/mediators', mediators.getAllMediators
   app.use route.get '/mediators/:uuid', mediators.getMediator
@@ -119,8 +116,13 @@ exports.setupApp = (done) ->
   app.use route.post '/keystore/ca/cert', keystore.addTrustedCert
   app.use route.get '/keystore/validity', keystore.verifyServerKeys
   app.use route.post '/keystore/passphrase', keystore.setServerPassphrase
+  
+  # Metadata endpoints
+  app.use route.get '/metadata', metadata.getMetadata
+  app.use route.post '/metadata/validate', metadata.validateMetadata
+  app.use route.post '/metadata', metadata.importMetadata
 
-  # server restart endpoint
+  # Server restart endpoint
   app.use route.post '/restart', serverRestart.restart
 
   # AuditRecord endpoint
@@ -134,6 +136,9 @@ exports.setupApp = (done) ->
 
   # Logs endpoint
   app.use route.get '/logs', logs.getLogs
+
+  # Events endpoint
+  app.use route.get '/events/:receivedTime', events.getLatestEvents
 
   # Return the result
   done(app)

@@ -15,17 +15,17 @@ describe "API Integration Tests", ->
 
   describe "Audits REST Api testing", ->
 
-    auditData = 
+    auditData =
       rawMessage:  'This will be the raw ATNA message that gets received to be used as a backup reference'
       eventIdentification:
         eventDateTime: '2015-02-20T15:38:25.282Z'
         eventOutcomeIndicator: '0'
         eventActionCode: 'E'
-        eventID: 
+        eventID:
           code: '110112'
           displayName: 'Query'
           codeSystemName: 'DCM'
-        eventTypeCode: 
+        eventTypeCode:
           code: 'ITI-9'
           displayName: 'PIX Query'
           codeSystemName: 'IHE Transactions'
@@ -37,7 +37,7 @@ describe "API Integration Tests", ->
             userIsRequestor: 'false'
             networkAccessPointID: 'localhost'
             networkAccessPointTypeCode: '1'
-            roleIDCode: 
+            roleIDCode:
               code: '110152'
               displayName: 'Destination'
               codeSystemName: 'DCM'
@@ -47,13 +47,13 @@ describe "API Integration Tests", ->
             userIsRequestor: 'false'
             networkAccessPointID: 'localhost'
             networkAccessPointTypeCode: '1'
-            roleIDCode: 
+            roleIDCode:
               code: '110152'
               displayName: 'Destination'
               codeSystemName: 'DCM'
           }
         ]
-      auditSourceIdentification: 
+      auditSourceIdentification:
         auditSourceID: 'openhim'
       participantObjectIdentification:
         [
@@ -61,7 +61,7 @@ describe "API Integration Tests", ->
             participantObjectID: '975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO'
             participantObjectTypeCode: '1'
             participantObjectTypeCodeRole: '1'
-            participantObjectIDTypeCode: 
+            participantObjectIDTypeCode:
               code: '2'
               displayName: 'PatientNumber'
               codeSystemName: 'RFC-3881'
@@ -69,12 +69,12 @@ describe "API Integration Tests", ->
             participantObjectID: 'dca6c09e-cc92-4bc5-8741-47bd938fa405'
             participantObjectTypeCode: '2'
             participantObjectTypeCodeRole: '24'
-            participantObjectIDTypeCode: 
+            participantObjectIDTypeCode:
               code: 'ITI-9'
               displayName: 'PIX Query'
               codeSystemName: 'IHE Transactions'
             participantObjectQuery: 'TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAyMjAxNTM4MjUrMDIwMHx8UUJQXlEyM15RQlBfUTIxfDEwMDQxYWQ5LTkyNDAtNDEyNS04ZDMwLWZiYzczNGEwOTMwMXxQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXw1OTRhNDVkYS0zOTY5LTQzOTAtODE2Ni01MjhkZDFmNWU0ZTF8NzZjYzc2NWE0NDJmNDEwXl5eJjEuMy42LjEuNC4xLjIxMzY3LjIwMDUuMy43JklTT15QSXxeXl5FQ0lEJkVDSUQmSVNPXlBJDVJDUHxJDQ=='
-            participantObjectDetail: 
+            participantObjectDetail:
               type: 'MSH-10'
               value: 'MTAwNDFhZDktOTI0MC00MTI1LThkMzAtZmJjNzM0YTA5MzAx'
           }
@@ -96,7 +96,7 @@ describe "API Integration Tests", ->
     beforeEach ->
       authDetails = auth.getAuthDetails()
 
-    
+
     describe "*addAudit()", ->
 
       it  "should add a audit and return status 201 - audit created", (done) ->
@@ -209,18 +209,20 @@ describe "API Integration Tests", ->
               if err
                 done err
               else
-                Audit.find {}, (err, newAudits) ->
-                  return done err if err
-                  newAudits.length.should.be.exactly 2
+                setTimeout ->
+                  Audit.find {}, (err, newAudits) ->
+                    return done err if err
+                    newAudits.length.should.be.exactly 2
 
-                  if newAudits[0].eventIdentification.eventID.displayName is 'Audit Log Used'
-                    newAudits[0].participantObjectIdentification.length.should.be.exactly 1
-                    newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
-                  else
-                    newAudits[1].eventIdentification.eventID.displayName is 'Audit Log Used'
-                    newAudits[1].participantObjectIdentification.length.should.be.exactly 1
-                    newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
-                  done()
+                    if newAudits[0].eventIdentification.eventID.displayName is 'Audit Log Used'
+                      newAudits[0].participantObjectIdentification.length.should.be.exactly 1
+                      newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
+                    else
+                      newAudits[1].eventIdentification.eventID.displayName is 'Audit Log Used'
+                      newAudits[1].participantObjectIdentification.length.should.be.exactly 1
+                      newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
+                    done()
+                , 100 * global.testTimeoutFactor
 
       it "should NOT generate an 'audit log used' audit when using basic (default) representation", (done) ->
         audit = new Audit auditData
@@ -313,18 +315,20 @@ describe "API Integration Tests", ->
               if err
                 done err
               else
-                Audit.find {}, (err, newAudits) ->
-                  return done err if err
-                  newAudits.length.should.be.exactly 2
+                setTimeout ->
+                  Audit.find {}, (err, newAudits) ->
+                    return done err if err
+                    newAudits.length.should.be.exactly 2
 
-                  if newAudits[0].eventIdentification.eventID.displayName is 'Audit Log Used'
-                    newAudits[0].participantObjectIdentification.length.should.be.exactly 1
-                    newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
-                  else
-                    newAudits[1].eventIdentification.eventID.displayName is 'Audit Log Used'
-                    newAudits[1].participantObjectIdentification.length.should.be.exactly 1
-                    newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
-                  done()
+                    if newAudits[0].eventIdentification.eventID.displayName is 'Audit Log Used'
+                      newAudits[0].participantObjectIdentification.length.should.be.exactly 1
+                      newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
+                    else
+                      newAudits[1].eventIdentification.eventID.displayName is 'Audit Log Used'
+                      newAudits[1].participantObjectIdentification.length.should.be.exactly 1
+                      newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly "https://localhost:8080/audits/#{result._id}"
+                    done()
+                , 100 * global.testTimeoutFactor
 
 
     describe "*getAuditsFilterOptions", ->
@@ -364,7 +368,7 @@ describe "API Integration Tests", ->
         audit = new Audit auditData
         audit.save (err, result)->
           should.not.exist(err)
-          
+
           request("https://localhost:8080")
             .get("/audits-filter-options")
             .set("auth-username", testUtils.nonRootUser.email)
@@ -377,5 +381,3 @@ describe "API Integration Tests", ->
                 done err
               else
                 done()
-
-    

@@ -117,22 +117,13 @@ The following config option are provided by the OpenHIM. All of these options ha
     // To enable daily and weekly reporting
     "enableReports": true
   },
-  "visualizer": {
-    // To enable the visualizer API
-    "enableVisualizer": true,
-    // The minimum duration to use for the event. If the event's duration is
-    // less than this specified period, then the end time will be adjusted
-    // in order to match
-    "minimumEventPeriodMillis": 100,
-    // Should orchestration and route timestamps be normalized to the
-    // transaction time. This may be useful if you have mediators running on
-    // other servers
-    "enableTSNormalization": true,
-    // A buffer period for orchestration timestamps
-    "orchestrationTSBufferMillis": 100
+  "events": {
+    // Should event timestamps be normalized to the transaction time.
+    // This will be useful if you have mediators running on other servers
+    "enableTSNormalization": true
   },
   "statsd": {
-    // Rather use a statsd server for reporting metrics
+    // Report application metrics and transaction metrics to a statsd server
     "enabled": false,
     // The location of the statsd server (the default port must be used)
     "host": "127.0.0.1"

@@ -3,6 +3,7 @@ https = require "https"
 net = require "net"
 tls = require "tls"
 fs = require "fs"
+Transaction = require('../lib/model/transactions').Transaction
 User = require('../lib/model/users').User
 Keystore = require('../lib/model/keystore').Keystore
 crypto = require "crypto"
@@ -130,6 +131,19 @@ exports.createMockMediatorServer = (resStatusCode, mediatorResponse, port, callb
     res.end JSON.stringify mediatorResponse
 
   mockServer.listen port, -> callback mockServer
+
+exports.createSlowMockMediatorServer = (delay, resStatusCode, resBody, port, callback, requestCallback) ->
+  requestCallback = requestCallback || ->
+    # Create mock endpoint to forward requests to
+  mockServer = http.createServer (req, res) ->
+    respond = ->
+      res.writeHead resStatusCode, {"Content-Type": "application/json+openhim; charset=utf-8"}
+      res.end JSON.stringify resBody
+    setTimeout respond, delay
+
+  mockServer.listen port, -> callback mockServer
+  mockServer.on "request", requestCallback
+  return mockServer
 
 exports.rootUser =
   firstname: 'Admin'
@@ -289,3 +303,114 @@ exports.setupTestKeystore = (serverCert, serverKey, ca, callback) ->
 exports.cleanupTestKeystore = (callback) ->
   Keystore.remove {}, ->
     callback()
+
+exports.setupMetricsTransactions = (callback) ->
+  transaction0 = new Transaction # 1 month before the rest
+    _id: "000000000000000000000000"
+    channelID: "111111111111111111111111"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-06-15T08:10:45.100Z" }
+    response: { status: "200", timestamp: "2014-06-15T08:10:45.200Z" }
+    status: "Completed"
+
+  transaction1 = new Transaction
+    _id: "111111111111111111111111"
+    channelID: "111111111111111111111111"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T08:10:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-15T08:10:45.200Z" }
+    status: "Completed"
+
+  transaction2 = new Transaction
+    _id: "222222222222222222222222"
+    channelID: "111111111111111111111111"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T14:30:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-15T14:30:45.300Z" }
+    status: "Successful"
+
+  transaction3 = new Transaction
+    _id: "333333333333333333333333"
+    channelID: "222222222222222222222222"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-15T19:46:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-15T19:46:45.200Z" }
+    status: "Completed"
+
+  transaction4 = new Transaction
+    _id: "444444444444444444444444"
+    channelID: "111111111111111111111111"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T09:15:45.100Z" }
+    response: { status: "404", timestamp: "2014-07-16T09:15:45.300Z" }
+    status: "Failed"
+
+  transaction5 = new Transaction
+    _id: "555555555555555555555555"
+    channelID: "222222222222222222222222"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T13:30:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-16T13:30:45.200Z" }
+    status: "Completed"
+
+  transaction6 = new Transaction
+    _id: "666666666666666666666666"
+    channelID: "222222222222222222222222"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-16T16:10:39.100Z" }
+    response: { status: "200", timestamp: "2014-07-16T16:10:39.300Z" }
+    status: "Completed"
+
+  transaction7 = new Transaction
+    _id: "777777777777777777777777"
+    channelID: "111111111111111111111111"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-17T14:45:20.100Z" }
+    response: { status: "200", timestamp: "2014-07-17T14:45:20.200Z" }
+    status: "Completed with error(s)"
+
+  transaction8 = new Transaction
+    _id: "888888888888888888888888"
+    channelID: "222222222222222222222222"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-17T19:21:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-17T19:21:45.300Z" }
+    status: "Completed"
+
+  transaction9 = new Transaction
+    _id: "999999999999999999999999"
+    channelID: "111111111111111111111111"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-18T11:17:45.100Z" }
+    response: { status: "404", timestamp: "2014-07-18T11:17:45.200Z" }
+    status: "Processing"
+
+  transaction10 = new Transaction
+    _id: "101010101010101010101010"
+    channelID: "222222222222222222222222"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-18T11:25:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-18T11:25:45.300Z" }
+    status: "Completed"
+
+  transaction11 = new Transaction # 1 year after the rest
+    _id: "111110101010101010101111"
+    channelID: "222222222222222222222222"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2015-07-18T13:25:45.100Z" }
+    response: { status: "200", timestamp: "2015-07-18T13:25:45.300Z" }
+    status: "Completed"
+
+  transaction0.save (err) ->
+    transaction1.save (err) ->
+      transaction2.save (err) ->
+        transaction3.save (err) ->
+          transaction4.save (err) ->
+            transaction5.save (err) ->
+              transaction6.save (err) ->
+                transaction7.save (err) ->
+                  transaction8.save (err) ->
+                    transaction9.save (err) ->
+                      transaction10.save (err) ->
+                        transaction11.save (err) ->
+                          callback()

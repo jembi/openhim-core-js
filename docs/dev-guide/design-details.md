@@ -25,7 +25,7 @@ The Koa framework also gives us some convenience ctx.request and ctx.respose obj
 
 The OpenHIM-core will use Koa middleware to act on HTTP requests and Responses. Koa allows you to setup a stack of middleware, each middleware is called in order and gets an opportunity to do something with the request (going down the stack) and is then suspended. Once the end of the stack is reached Koa traverses back up the stack allowing each middelware to do something with the response.
 
-Each row in the diagram representing the OepnHIM-core is a middleware component. Each of the components of the OpenHIM-core will be described further in the following sections. The OpenHIM-core will also have a REST API that will allow a web UI to be created for easy of management.
+Each row in the diagram representing the OpenHIM-core is a middleware component. Each of the components of the OpenHIM-core will be described further in the following sections. The OpenHIM-core will also have a REST API that will allow a web UI to be created for easy of management.
 
 ![](/_static/design/OpenHIM-js-design.png)
 
@@ -47,7 +47,7 @@ The two main workflows that we wish to enable for authentication and authorizati
 
 ### Authentication
 
-Client details for authentication are stored in the MongoDB database is the following format. Either a password or a certificate (in binary form) is stored in this structure depending on whether the user chooses to use PKI or HTTP basic auth to authenticate clients.
+Client details for authentication are stored in the MongoDB database in the following format. Either a password or a certificate (in binary form) is stored in this structure depending on whether the user chooses to use PKI or HTTP basic auth to authenticate clients.
 
 The OpenHIM application should allow new clients to be added and managed with the following details:
 
@@ -70,7 +70,7 @@ When authentication is set to HTTP basic auth then Koa middleware is setup to in
 
 When the authentication method is set to PKI then the node http server must be setup to use https and it must be set to trust only clients that have a certificate that it knows of (is stored in a client's details). The domain of a client (identified in its certificate) will be used to map a request received from a client to its details as stored by the OpenHIM (shown above).
 
-To help perform the authentication the [passport.js](http://passportjs.org/) module will be use. This provides us with middleware for a number of different authentication schemes. There is also [Koa middleware available for passport](https://github.com/rkusa/koa-passport).
+To help perform the authentication the [passport.js](http://passportjs.org/) module will be used. This provides us with middleware for a number of different authentication schemes. There is also [Koa middleware available for passport](https://github.com/rkusa/koa-passport).
 
 ### Authorization
 
@@ -78,7 +78,7 @@ The OpenHIM only performs simple authorisation based on the path that is being r
 
 ## Message persistence
 
-Each request and response will be persisted so that it can be logged and so that error'd transaction may be re-run. This persistence occurs at two stages. Firstly, once a request is authenticated and authorised and secondly once a response has been received from the external service. All the metadata about a transaction is stored in a single document in MongoDB. The relevant sections are just updated as new information is received. The structure of this information is shown below.
+Each request and response will be persisted so that it can be logged and so that the erroneous transaction may be re-run. This persistence occurs at two stages. Firstly, once a request is authenticated and authorised and secondly once a response has been received from the external service. All the metadata about a transaction is stored in a single document in MongoDB. The relevant sections are just updated as new information is received. The structure of this information is shown below.
 
 In addition the ability to store orchestration steps exists in the structure. We anticipate exposing a web service to enable mediators to report requests and responses that they make to/receive from external services and have these stored alongside the actual transaction.
 
@@ -132,13 +132,13 @@ In addition the ability to store orchestration steps exists in the structure. We
 
 ## Router
 
-The router allows request to be forwarded to one or more external services (these could be mediators or an actual HIE component). It does this by allowing the user to configure a number of channels. Each channel matches a certain path and contains a number of routes on which to forward requests. Request may be forwarded to multiple routes however there can only be one **primary route**. The primary route is a the route whose response is returned back to the service requester making use of the OpenHIM.
+The router allows requests to be forwarded to one or more external services (these could be mediators or an actual HIE component). It does this by allowing the user to configure a number of channels. Each channel matches a certain path and contains a number of routes on which to forward requests. Request may be forwarded to multiple routes however there can only be one **primary route**. The primary route is a the route whose response is returned back to the service requester making use of the OpenHIM.
 
-Channel will be able to be added, removed and updated dynamically as the application is running.
+Channels may be added, removed or updated dynamically as the application is running.
 
-Channel may be access controlled via the 'allow' field. This field will specify a list of users or groups that are allowed to send requests to that channel. If a channel receives a request from an un-authorised source it will return an error.
+A channel may be access controlled via the 'allow' field. This field will specify a list of users or groups that are allowed to send requests to that channel. If a channel receives a request from an un-authorised source it will return an error.
 
-A custom router will have to be developed that can route according to these rules. The router can be build using the node.js functions provides to make HTTP request and responses can be relayed using the .pipe() function.
+A custom router will have to be developed that can route according to these rules. The router can be built using the node.js functions provided to make HTTP requests and responses can be relayed using the .pipe() function.
 
 ```js
 [
@@ -187,7 +187,7 @@ A custom router will have to be developed that can route according to these rule
 
 ## Restful API
 
-The OpenHIM must also expose a restful API that enables it to be configured and to allow access to the transaction that it has logged. This restful API will drive a web application that can allow the OpenHIM to be configured and will allow allow transaction to be viewed and monitored.
+The OpenHIM must also expose a restful API that enables it to be configured and to allow access to the logged transations. This restful API will drive a web application that can allow the OpenHIM to be configured and will allow transactions to be viewed and monitored.
 
 The API must supply CRUD access to the following constructs:
 
@@ -200,7 +200,7 @@ It should also allow for the following actions:
 *   single and batch re-processing of transactions
 *   querying for monitoring statistics
 
-The API reference as it current exist can be [found here](/dev-guide/api-ref.html).
+The API reference as it currently exists can be [found here](/dev-guide/api-ref.html).
 
 ### API Authentication
 
