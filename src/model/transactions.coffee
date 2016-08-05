@@ -57,5 +57,5 @@ TransactionSchema = new Schema
 
 TransactionSchema.index "request.timestamp"
 
-#compile schema into Model
+# Compile schema into Model
 exports.Transaction = connectionDefault.model 'Transaction', TransactionSchema
