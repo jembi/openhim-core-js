@@ -37,6 +37,7 @@ retryTransaction1 = new Transaction
   }
   status: 'Failed'
   internalServerError: true
+  internalServerErrorMessage: 'Connection refused'
 
 retryTransaction2 = new Transaction
   request: {
@@ -46,6 +47,7 @@ retryTransaction2 = new Transaction
   }
   status: 'Failed'
   internalServerError: true
+  internalServerErrorMessage: 'Connection refused'
 
 retryTransaction3 = new Transaction
   request: {
@@ -55,6 +57,7 @@ retryTransaction3 = new Transaction
   }
   status: 'Failed'
   internalServerError: true
+  internalServerErrorMessage: 'Connection refused'
   childIDs: ['bbb908908ccc98cc1d0888aa']
   wasRerun: true
 

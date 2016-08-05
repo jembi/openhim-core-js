@@ -162,6 +162,8 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
       update = {
         status: tx.status
         internalServerError: ctx.internalServerError
+        internalServerErrorMessage: ctx.internalServerErrorMessage
+        internalServerErrorStack: ctx.internalServerErrorStack
       }
       transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err,tx) ->
         tx.save

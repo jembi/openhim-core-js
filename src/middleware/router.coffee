@@ -96,7 +96,9 @@ handleServerError = (ctx, err) ->
   ctx.response.timestamp = new Date()
   ctx.response.body = "An internal server error occurred"
   ctx.internalServerError = true
-  logger.error "Internal server error occured: #{err} "
+  ctx.internalServerErrorMessage = err.message
+  ctx.internalServerErrorStack = err.stack if err.stack
+  logger.error "[#{ctx.transactionId.toString()}] Internal server error occured: #{err}"
   logger.error "#{err.stack}" if err.stack
 
 
