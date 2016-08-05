@@ -106,7 +106,7 @@ handleServerError = (ctx, err, route) ->
       message: err.message
       stack: err.stack if err.stack
 
-  logger.error "[#{ctx.transactionId.toString()}] Internal server error occured: #{err}"
+  logger.error "[#{ctx.transactionId?.toString()}] Internal server error occured: #{err}"
   logger.error "#{err.stack}" if err.stack
 
 
