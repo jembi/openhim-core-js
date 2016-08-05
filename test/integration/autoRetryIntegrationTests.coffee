@@ -240,3 +240,80 @@ describe "Auto Retry Integration Tests", ->
                   trx.error.stack.should.be.exactly mediatorResponse.error.stack
                   done()
               ), 150 * global.testTimeoutFactor
+
+  describe "All routes failed auto retry tests", ->
+    channel1 = new Channel
+      name: "TEST DATA - Both will break channel"
+      urlPattern: "^/test/nowhere$"
+      allow: [ "PoC" ]
+      routes: [
+            name: "unavailable route 1"
+            host: "localhost"
+            port: 9999
+            primary: true
+          ,
+            name: "unavailable route 2"
+            host: "localhost"
+            port: 9988
+          ]
+
+    before (done) ->
+      config.authentication.enableMutualTLSAuthentication = false
+      config.authentication.enableBasicAuthentication = true
+
+      channel1.save (err) ->
+        testAppDoc =
+          clientID: "testApp"
+          clientDomain: "test-client.jembi.org"
+          name: "TEST Client"
+          roles:
+            [
+              "OpenMRS_PoC"
+              "PoC"
+            ]
+          passwordAlgorithm: "sha512"
+          passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea"
+          passwordSalt: "1234567890"
+          cert: ""
+
+        client = new Client testAppDoc
+        client.save -> done()
+
+    after (done) ->
+      Channel.remove { name: "TEST DATA - Both will break channel" }, ->
+        Client.remove { clientID: "testApp" }, ->
+          Transaction.remove {}, ->
+            done()
+
+    beforeEach (done) -> Transaction.remove {}, done
+
+    afterEach (done) ->
+      server.stop ->
+        done()
+
+
+    it "should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes", (done) ->
+      server.start httpPort: 5001, ->
+        request("http://localhost:5001")
+          .get("/test/nowhere")
+          .auth("testApp", "password")
+          .expect(500)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              setTimeout ( ->
+                Transaction.findOne {}, (err, trx) ->
+                  return done err if err
+                  trx.should.have.property 'autoRetry'
+                  trx.autoRetry.should.be.true()
+                  trx.should.have.property 'error'
+                  trx.error.should.have.property 'message'
+                  trx.error.should.have.property 'stack'
+                  (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
+                  trx.routes[0].should.have.property 'error'
+                  trx.routes[0].error.should.have.property 'message'
+                  trx.routes[0].error.should.have.property 'stack'
+                  (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
+                  done()
+              ), 150 * global.testTimeoutFactor

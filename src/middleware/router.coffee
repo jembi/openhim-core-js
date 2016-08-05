@@ -92,16 +92,15 @@ setCookiesOnContext = (ctx, value) ->
       ctx.cookies.set p_key,p_val,c_opts
 
 handleServerError = (ctx, err, route) ->
-  ctx.response.status = 500
-  ctx.response.timestamp = new Date()
-  ctx.response.body = "An internal server error occurred"
-
   ctx.autoRetry = true
   if route
     route.error =
       message: err.message
       stack: err.stack if err.stack
   else
+    ctx.response.status = 500
+    ctx.response.timestamp = new Date()
+    ctx.response.body = "An internal server error occurred"
     # primary route error
     ctx.error =
       message: err.message
