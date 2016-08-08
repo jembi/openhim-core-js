@@ -1,15 +1,21 @@
 currentCoreVersion = require('../../package.json').version
-versionsObject = require '../../config/versions.json'
+aboutInfoObject = require '../../config/about.json'
 
 logger = require 'winston'
+utils = require '../utils'
+authorisation = require './authorisation'
 
-exports.getAboutInformation = () ->  
+exports.getAboutInformation = () ->
+  
+  if not authorisation.inGroup 'admin', this.authenticated
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addClient denied.", 'info'
+  
   try
-    versionsObject.currentCoreVersion = currentCoreVersion
-    result = yield versionsObject
-    this.body = versionsObject
+    aboutInfoObject.currentCoreVersion = currentCoreVersion
+
+    logger.info "User #{this.authenticated.email} successfully fetched 'about' information"
+    this.body = yield aboutInfoObject
     this.status = 200
-    logger.info "Successfully sent version info"
   catch e
     this.body = e.message
-    utils.logAndSetResponse this, 500, "Could not fetch version info via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not fetch 'about' info via the API #{e}", 'error'

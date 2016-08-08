@@ -1,0 +1,11 @@
+{
+  "releases": [
+    {
+      "consoleVersion": "1.7.0",
+      "minimumCoreVersion": "3.0.0"
+    }, {
+      "consoleVersion": "1.6.0",
+      "minimumCoreVersion": "2.0.0"
+    }
+  ]
+}
