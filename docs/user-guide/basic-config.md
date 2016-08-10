@@ -89,7 +89,7 @@ There are many fields that you may supply and these are spread over a number of 
     * **Store Request Body** - Select whether or not to store the request body.
         * **Note** - If a transaction is made through a POST/PUT/PATCH method and request body is NOT saved, then the transaction cannot be rerun.
     * **Store Response Body** - Select whether or not to store the response body.
-    * **Auto Retry** - A feature that allows the OpenHIM to periodically resend failed transactions. Only transactions that have failed due to an connection type error, e.g. if a server is unavailable, or an internal OpenHIM error will be retried. I.e. if a target server responds with a status of 500, then that transaction won't be retried since the transaction was delivered by the OpenHIM.
+    * **Auto Retry** - A feature that allows the OpenHIM to periodically resend failed transactions. Only transactions that have failed due to a connection type error, e.g. if a server is unavailable, or an internal OpenHIM error will be retried. I.e. if a target server responds with a status of 500, then that transaction won't be retried since the transaction was delivered by the OpenHIM.
         * **Automatically resend failed transactions** - Enable/disable auto retry for the channel.
         * **How often** - A minimum period to wait (in minutes) before retrying a transaction.
     * **URL Rewriting enabled** - URL rewriting allows the OpenHIM to look for URLs in a response and rewrite them so that they point to the correct location.

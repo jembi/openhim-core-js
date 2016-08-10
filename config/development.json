@@ -6,17 +6,6 @@
   "logger": {
     "level": "debug"
   },
-  "router": {
-    "externalHostname": "localhost",
-    "httpPort": 5001,
-    "httpsPort": 5000,
-    "timeout": 5000
-  },
-  "api": {
-    "enabled" : true,
-    "httpsPort": 8080,
-    "authWindowSeconds": 360
-  },
   "statsd": {
     "host": "127.0.0.1"
   },
