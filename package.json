@@ -67,7 +67,7 @@
     "mongodb": "^2.1.19",
     "rewire": "^2.5.1",
     "serve-static": "^1.9.3",
-    "should": "^9.0.0",
+    "should": "^11.0.0",
     "sinon": "^1.12.2",
     "sinon-es6": "^0.0.3",
     "supertest": "1.2.0"
