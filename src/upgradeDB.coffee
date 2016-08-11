@@ -1,11 +1,25 @@
 dbVersion = require('./model/dbVersion').dbVersion
 Keystore = require('./model/keystore').Keystore
 Client = require('./model/clients').Client
+User = require('./model/users').User
+Visualizer = require('./model/visualizer').Visualizer
 logger = require 'winston'
 pem = require 'pem'
 Q = require 'q'
 
-# push new upgrade functions to this array
+dedupName = (name, names, num) ->
+  if num
+    newName = "#{name} #{num}"
+  else
+    newName = name
+  if newName in names
+    if not num
+      num = 1
+    return dedupName(name, names, ++num)
+  else
+    return newName
+
+# push new upgrade functions to this array, function must return a promise
 # Warning: only add new function below existing functions, order matters!
 upgradeFuncs = []
 
@@ -13,7 +27,7 @@ upgradeFuncs.push
   description: "Ensure that all certs have a fingerprint property"
   func: ->
     defer = Q.defer()
-    
+
     Keystore.findOne (err, keystore) ->
       return defer.resolve() if not keystore
 
@@ -41,7 +55,7 @@ upgradeFuncs.push
   description: "Convert clients link to certs via their domain to use the cert fingerprint instead"
   func: ->
     defer = Q.defer()
-    
+
     Client.find (err, clients) ->
       if err?
         logger.error "Couldn't fetch all clients to upgrade db: #{err}"
@@ -62,19 +76,54 @@ upgradeFuncs.push
               if client.clientDomain is cert.commonName and not client.certFingerprint?
                 client.certFingerprint = cert.fingerprint
                 break
-          
+
           do (clientDefer) ->
             client.save (err) ->
               if err?
                 logger.error "Couldn't save client #{client.clientID} while upgrading db: #{err}"
                 return clientDefer.reject()
-                  
+
               clientDefer.resolve()
 
         Q.all(promises).then ->
           defer.resolve()
 
     return defer.promise
+
+upgradeFuncs.push
+  description: "Migrate visualizer setting from a user's profile to a shared collection"
+  func: ->
+    defer = Q.defer()
+    User.find (err, users) ->
+      if err
+        return Q.defer().reject(err)
+      visNames = []
+      promises = []
+      users.forEach (user) ->
+        userDefer = Q.defer()
+        promises.push userDefer
+
+        vis = user.settings.visualizer
+        name = "#{user.firstname} #{user.surname}'s visualizer"
+        name = dedupName name, visNames
+        vis.name = name
+        visNames.push name
+
+        vis = new Visualizer vis
+        logger.debug "Migrating visualizer from user profile #{user.email}, using viualizer name '#{name}'"
+        vis.save (err, vis) ->
+          if err
+            return userDefer.reject()
+          else
+            return userDefer.resolve()
+
+      Q.all(promises).then ->
+        defer.resolve()
+      .catch (err) ->
+        defer.reject err
+
+    return defer.promise
+
 
 # add new upgrade functions here ^^
 
@@ -95,6 +144,7 @@ runUpgradeFunc = (i, dbVer) ->
 if process.env.NODE_ENV == "test"
   exports.upgradeFuncs = upgradeFuncs
   exports.runUpgradeFunc = runUpgradeFunc
+  exports.dedupName = dedupName
 
 exports.upgradeDb = (callback) ->
   dbVersion.findOne (err, dbVer) ->
