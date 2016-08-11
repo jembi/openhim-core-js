@@ -24,7 +24,7 @@ describe "API Integration Tests", ->
     
     describe "*getAboutInformation", ->
   
-      it  "should fetch core version, an array of release versions and return status 200", (done) ->
+      it  "should fetch core version and return status 200", (done) ->
         request("https://localhost:8080")
           .get("/about")
           .set("auth-username", testUtils.rootUser.email)
@@ -36,24 +36,8 @@ describe "API Integration Tests", ->
             if err
               done err
             else
-              res.body.currentCoreVersion.split('.').length.should.equal 3
-              res.body.releases[0].consoleVersion.should.equal '1.7.0'
-              res.body.releases[0].minimumCoreVersion.should.equal '3.0.0'
+              res.body.should.have.property "currentCoreVersion"
               done()
-      
-      it  "should not allow a non admin user to get about information", (done) ->
-        request("https://localhost:8080")
-          .get("/about")
-          .set("auth-username", testUtils.nonRootUser.email)
-          .set("auth-ts", authDetails.authTS)
-          .set("auth-salt", authDetails.authSalt)
-          .set("auth-token", authDetails.authToken)
-          .expect(403)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()  
       
       it  "should return 404 if not found", (done) ->
         request("https://localhost:8080")
