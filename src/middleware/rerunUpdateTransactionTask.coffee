@@ -12,6 +12,19 @@ os = require 'os'
 domain = "#{os.hostname()}.#{application.name}.appMetrics"
 sdc = new SDC statsdServer
 
+exports.setAttemptNumber = (ctx, done) ->
+  Transaction.findOne { _id: ctx.parentID }, (err, transaction) ->
+    ctx.currentAttempt = 1
+    if transaction.autoRetryAttempt?
+      ctx.currentAttempt = transaction.autoRetryAttempt + 1
+    transaction.save (err, tx) ->
+      if err
+        logger.error "Original transaction #{transaction._id} could not be updated: #{err}"
+      else
+        logger.debug "Original transaction ##{tx._id} Updated successfully with attempt number"
+
+      done null
+
 exports.updateOriginalTransaction = (ctx, done) ->
   Transaction.findOne { _id: ctx.parentID }, (err, transaction) ->
     transaction.childIDs.push ctx.transactionId
@@ -19,12 +32,11 @@ exports.updateOriginalTransaction = (ctx, done) ->
     
     transaction.save (err, tx) ->
       if err
-        logger.info('Original transaction #' + transaction._id + ' could not be updated: ' + err)
+        logger.error "Original transaction #{transaction._id} could not be updated: #{err}"
       else
-        logger.info('Original transaction #' + tx._id + ' - Updated successfully with childID')
+        logger.debug "Original transaction #{tx._id} - Updated successfully with childID"
 
       done null, transaction
-
 
 exports.updateTask = (ctx, done) ->
   Task.findOne { _id: ctx.taskID }, (err, task) ->
@@ -35,9 +47,9 @@ exports.updateTask = (ctx, done) ->
 
     task.save (err, task) ->
       if err
-        logger.info('Rerun Task #' + ctx.taskID + ' could not be updated: ' + err)
+        logger.info "Rerun Task #{ctx.taskID} could not be updated: #{err}"
       else
-        logger.info('Rerun Task #' + ctx.taskID + ' - Updated successfully with rerun transaction details.')
+        logger.info "Rerun Task #{ctx.taskID} - Updated successfully with rerun transaction details."
 
       done null, task
 
@@ -45,6 +57,11 @@ exports.updateTask = (ctx, done) ->
 # Koa middleware for updating original transaction with childID
 ###
 exports.koaMiddleware = (next) ->
+  startTime = new Date() if statsdServer.enabled
+  setAttemptNumber = Q.denodeify exports.setAttemptNumber
+  yield setAttemptNumber this
+  sdc.timing "#{domain}.rerunUpdateTransactionMiddleware.setAttemptNumber", startTime if statsdServer.enabled
+
   # do intial yield for koa to come back to this function with updated ctx object
   yield next
   startTime = new Date() if statsdServer.enabled

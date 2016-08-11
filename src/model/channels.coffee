@@ -63,6 +63,7 @@ ChannelDef =
   "rewriteUrlsConfig":      [RewriteRuleDef]
   "autoRetryEnabled":       type: Boolean, default: false
   "autoRetryPeriodMinutes": type: Number, default: 60, min: 1
+  "autoRetryMaxAttempts":   type: Number, min: 0 # 0 means unlimited
 
 # Expose the route schema
 exports.RouteDef = RouteDef

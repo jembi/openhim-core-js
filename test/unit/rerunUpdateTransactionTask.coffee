@@ -17,6 +17,9 @@ ctx2 =
   taskID: "53e34b915d0180cf6eef2d01"
   transactionStatus: "Successfull"
 
+ctx3 =
+  parentID: "53e096fea0af310568333333"
+
 transaction1 = new Transaction
   _id: "53e096fea0af3105689acd6a"
   channelID: "53bbe25485e66d8e5daad4a2"
@@ -52,6 +55,21 @@ transaction2 = new Transaction
   ]
   status: "Completed"
 
+transaction3 = new Transaction
+  _id: "53e096fea0af310568333333"
+  channelID: "53bbe25485e66d8e5daad4a2"
+  clientID: "42bbe25485e77d8e5daad4b4"
+  request: {
+    path: "/sample/api",
+    headers: { authorization: "Basic dGVzdDp0ZXN0", "user-agent": "curl/7.35.0", host: "localhost:5001" },
+    querystring: "param=hello",
+    body: "",
+    method: "GET",
+    timestamp: "2014-07-15T08:10:45.109Z"
+  }
+  status: "Completed"
+  autoRetryAttempt: 5
+
 task1 = new Task
   _id: "53e34b915d0180cf6eef2d01"
   created: "2014-07-15T07:49:26.238Z"
@@ -68,8 +86,9 @@ describe "rerunUpdateTransactionTask middleware", ->
   before (done) ->
     transaction1.save ->
       transaction2.save (err) ->
-        task1.save ->
-          done()
+        transaction3.save (err) ->
+          task1.save ->
+            done()
 
   after (done) ->
     Transaction.remove {}, ->
@@ -141,3 +160,17 @@ describe "rerunUpdateTransactionTask middleware", ->
         task.transactions[0].rerunStatus.should.be.eql "Successfull"
         done()
   
+  describe "setAttemptNumber", ->
+    it "should add an initial attempt number to the ctx", (done) ->
+      delete ctx.currentAttempt
+      rerunUpdateTransactionTask.setAttemptNumber ctx, (err) ->
+        ctx.should.have.property 'currentAttempt'
+        ctx.currentAttempt.should.be.exactly 1
+        done()
+
+    it "should increment the attempt number if it exists on the parent transaction", (done) ->
+      delete ctx3.currentAttempt
+      rerunUpdateTransactionTask.setAttemptNumber ctx3, (err) ->
+        ctx3.should.have.property 'currentAttempt'
+        ctx3.currentAttempt.should.be.exactly 6
+        done()
