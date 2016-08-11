@@ -23,6 +23,7 @@ heartbeat = require './api/heartbeat'
 certificateAuthority = require './api/certificateAuthority'
 logs = require './api/logs'
 metadata = require './api/metadata'
+about = require './api/about'
 
 exports.setupApp = (done) ->
 
@@ -139,6 +140,9 @@ exports.setupApp = (done) ->
 
   # Events endpoint
   app.use route.get '/events/:receivedTime', events.getLatestEvents
+  
+  # Version endpoint
+  app.use route.get '/about', about.getAboutInformation
 
   # Return the result
   done(app)
