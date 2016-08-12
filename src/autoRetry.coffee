@@ -1,5 +1,3 @@
-config = require "./config/config"
-config.alerts = config.get('alerts')
 logger = require "winston"
 moment = require 'moment'
 Q = require 'q'
@@ -7,8 +5,6 @@ Channels = require('./model/channels')
 Channel = Channels.Channel
 Transaction = require('./model/transactions').Transaction
 Task = require('./model/tasks').Task
-authorisation = require('./middleware/authorisation')
-utils = require './utils'
 
 
 getChannels = (callback) -> Channel.find autoRetryEnabled: true, status: 'enabled', callback
