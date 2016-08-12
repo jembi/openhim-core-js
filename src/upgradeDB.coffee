@@ -97,25 +97,32 @@ upgradeFuncs.push
     User.find (err, users) ->
       if err
         return Q.defer().reject(err)
+
       visNames = []
       promises = []
       users.forEach (user) ->
-        userDefer = Q.defer()
-        promises.push userDefer
+        if user.settings?.visualizer?
+          userDefer = Q.defer()
+          promises.push userDefer.promise
 
-        vis = user.settings.visualizer
-        name = "#{user.firstname} #{user.surname}'s visualizer"
-        name = dedupName name, visNames
-        vis.name = name
-        visNames.push name
+          vis = user.settings.visualizer
+          name = "#{user.firstname} #{user.surname}'s visualizer"
+          name = dedupName name, visNames
+          vis.name = name
+          visNames.push name
 
-        vis = new Visualizer vis
-        logger.debug "Migrating visualizer from user profile #{user.email}, using viualizer name '#{name}'"
-        vis.save (err, vis) ->
-          if err
-            return userDefer.reject()
-          else
-            return userDefer.resolve()
+          vis = new Visualizer vis
+          logger.debug "Migrating visualizer from user profile #{user.email}, using viualizer name '#{name}'"
+          vis.save (err, vis) ->
+            if err
+              logger.error "Error migrating visualizer from user profile #{user.email}: #{err.stack}"
+              return userDefer.reject()
+
+            # delete the visualizer settings from this user profile
+            user.set 'settings.visualizer', null
+            user.save (err, user) ->
+              if err then return userDefer.reject()
+              return userDefer.resolve()
 
       Q.all(promises).then ->
         defer.resolve()
@@ -123,7 +130,6 @@ upgradeFuncs.push
         defer.reject err
 
     return defer.promise
-
 
 # add new upgrade functions here ^^
 

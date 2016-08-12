@@ -5,6 +5,7 @@ Client = require('../../lib/model/clients').Client
 User = require('../../lib/model/users').User
 Visualizer = require('../../lib/model/visualizer').Visualizer
 Q = require 'q'
+should = require 'should'
 
 describe 'Upgrade DB Tests', ->
 
@@ -187,6 +188,11 @@ describe 'Upgrade DB Tests', ->
               display: 'OpenHIM Mediator FHIR Proxy'
           ]
 
+    before (done) ->
+      User.remove () ->
+        Visualizer.remove () ->
+          done()
+
     beforeEach (done) ->
       user = new User userObj1
       user.save (err) ->
@@ -229,6 +235,23 @@ describe 'Upgrade DB Tests', ->
               done()
           .catch (err) ->
             done err
+
+    it 'should remove the users visualizer setting from their profile', (done) ->
+      upgradeFunc().then ->
+        User.findOne { email: "test1@user.org" }, (err, user) ->
+          should.not.exist user.settings.visualizer
+          done()
+
+    it 'should ignore users that don\'t have a settings.visualizer or settings set', (done) ->
+      User.find (err, users) ->
+        users[0].set 'settings.visualizer', null
+        users[1].set 'settings', null
+        users[0].save (err) ->
+          users[1].save (err) ->
+            upgradeFunc().then ->
+              done()
+            .catch (err) ->
+              done err
 
   describe 'dedupName()', ->
 
