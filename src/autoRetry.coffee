@@ -1,5 +1,3 @@
-config = require "./config/config"
-config.alerts = config.get('alerts')
 logger = require "winston"
 moment = require 'moment'
 Q = require 'q'
@@ -7,8 +5,6 @@ Channels = require('./model/channels')
 Channel = Channels.Channel
 Transaction = require('./model/transactions').Transaction
 Task = require('./model/tasks').Task
-authorisation = require('./middleware/authorisation')
-utils = require './utils'
 
 
 getChannels = (callback) -> Channel.find autoRetryEnabled: true, status: 'enabled', callback
@@ -45,6 +41,7 @@ createRerunTask = (transactionIDs, callback) ->
 
 autoRetryTask = (job, done) ->
   _taskStart = new Date()
+  transactionsToRerun = []
 
   getChannels (err, results) ->
     promises = []
@@ -56,17 +53,19 @@ autoRetryTask = (job, done) ->
         findTransactions channel, (err, results) ->
           if err
             logger.error err
-            deferred.resolve()
           else if results? and results.length>0
-            createRerunTask (results.map((r) -> r._id)), -> deferred.resolve()
-          else
-            deferred.resolve()
+            transactionsToRerun.push tid for tid in (results.map((r) -> r._id))
+          deferred.resolve()
 
         promises.push deferred.promise
 
     (Q.all promises).then ->
-      logger.debug "Auto retry task total time: #{new Date()-_taskStart} ms"
-      done()
+      end = ->
+        logger.debug "Auto retry task total time: #{new Date()-_taskStart} ms"
+        done()
+      if transactionsToRerun.length > 0
+        createRerunTask transactionsToRerun, end
+      else end()
 
 
 setupAgenda = (agenda) ->
