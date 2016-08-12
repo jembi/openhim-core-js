@@ -10,6 +10,7 @@ AlertSchema = new Schema
   "method":       type: String, required: true
   "timestamp":    type: Date, required: true, default: Date.now, expires: '1d'
   "channelID":    type: String, required: true
+  "condition":    type: String, required: true
   "status":       type: String, required: true
   "alertStatus":  type: String, required: true, enum: ["Failed", "Completed"]
  

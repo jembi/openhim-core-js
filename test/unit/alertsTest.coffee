@@ -177,7 +177,7 @@ describe "Transaction Alerts", ->
     it "should return transactions that match an exact status", (done) ->
       testTransactions[0].save (err) ->
         return done err if err
-        alerts.findTransactionsMatchingStatus testChannel._id, "404", dateFrom, null, (err, results) ->
+        alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "404" }, dateFrom, (err, results) ->
           results.length.should.be.exactly 1
           results[0]._id.equals(testTransactions[0]._id).should.be.true
           done()
@@ -185,7 +185,7 @@ describe "Transaction Alerts", ->
     it "should return transactions that have a matching status in a route response", (done) ->
       testTransactions[1].save (err) ->
         return done err if err
-        alerts.findTransactionsMatchingStatus testChannel._id, "404", dateFrom, null, (err, results) ->
+        alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "404" }, dateFrom, (err, results) ->
           results.length.should.be.exactly 1
           results[0]._id.equals(testTransactions[1]._id).should.be.true
           done()
@@ -196,7 +196,7 @@ describe "Transaction Alerts", ->
         return done err if err
         testTransactions[6].save (err) ->
           return done err if err
-          alerts.findTransactionsMatchingStatus testChannel._id, "404", dateFrom, null, (err, results) ->
+          alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "404" }, dateFrom, (err, results) ->
             results.length.should.be.exactly 1
             results[0]._id.equals(testTransactions[0]._id).should.be.true
             done()
@@ -205,7 +205,7 @@ describe "Transaction Alerts", ->
       testTransactions[0].save (err) ->
         return done err if err
         newFrom = moment().add(1, 'days').toDate()
-        alerts.findTransactionsMatchingStatus testChannel._id, "404", newFrom, null, (err, results) ->
+        alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "404" }, newFrom, (err, results) ->
           results.length.should.be.exactly 0
           done()
 
@@ -221,7 +221,7 @@ describe "Transaction Alerts", ->
               return done err if err
               testTransactions[6].save (err) ->
                 return done err if err
-                alerts.findTransactionsMatchingStatus testChannel._id, "4xx", dateFrom, null, (err, results) ->
+                alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "4xx" }, dateFrom, (err, results) ->
                   results.length.should.be.exactly 3
                   resultIDs = results.map (result) -> result._id
                   resultIDs.should.containEql testTransactions[0]._id
@@ -237,7 +237,7 @@ describe "Transaction Alerts", ->
           return done err if err
           testTransactions[3].save (err) ->
             return done err if err
-            alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+            alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "500", failureRate: testFailureRate }, dateFrom, (err, results) ->
               # only one 500 transaction, but failureRate is 50%
               results.length.should.be.exactly 0
               done()
@@ -251,7 +251,7 @@ describe "Transaction Alerts", ->
             return done err if err
             testTransactions[4].save (err) ->
               return done err if err
-              alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+              alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "500", failureRate: testFailureRate }, dateFrom, (err, results) ->
                 results.length.should.be.exactly 2
                 resultIDs = results.map (result) -> result._id
                 resultIDs.should.containEql testTransactions[3]._id
@@ -269,7 +269,7 @@ describe "Transaction Alerts", ->
               return done err if err
               testTransactions[5].save (err) ->
                 return done err if err
-                alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+                alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "500", failureRate: testFailureRate }, dateFrom, (err, results) ->
                   results.length.should.be.exactly 3
                   resultIDs = results.map (result) -> result._id
                   resultIDs.should.containEql testTransactions[3]._id
@@ -282,6 +282,7 @@ describe "Transaction Alerts", ->
         user: 'one@openhim.org'
         method: 'email'
         channelID: testChannel._id
+        condition: 'status'
         status: '500'
         alertStatus: 'Completed'
       alert.save (err) ->
@@ -293,7 +294,7 @@ describe "Transaction Alerts", ->
               return done err if err
               testTransactions[4].save (err) ->
                 return done err if err
-                alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+                alerts.findTransactionsMatchingStatus testChannel._id, { condition: 'status', status: "500", failureRate: testFailureRate }, dateFrom, (err, results) ->
                   results.length.should.be.exactly 0
                   done()
 

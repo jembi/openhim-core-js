@@ -16,46 +16,90 @@ utils = require './utils'
 
 trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
 
-plainTemplate = (transactions, channelName, status) ->
+statusPlainTemplate = (transactions, channel, alert) ->
   """
   OpenHIM Transactions Alert
 
-  The following transaction(s) have completed with status #{status} on the OpenHIM instance running on #{config.alerts.himInstance}:
-  Channel - #{channelName}
+  The following transaction(s) have completed with status #{alert.status} on the OpenHIM instance running on #{config.alerts.himInstance}:
+  Channel - #{channel.name}
   #{(transactions.map (trx) -> trxURL trx).join '\n'}
 
   """
 
-htmlTemplate = (transactions, channelName, status) ->
-  alert = """
+statusHtmlTemplate = (transactions, channel, alert) ->
+  text = """
     <html>
       <head></head>
       <body>
         <h1>OpenHIM Transactions Alert</h1>
         <div>
-          <p>The following transaction(s) have completed with status <b>#{status}</b> on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
+          <p>The following transaction(s) have completed with status <b>#{alert.status}</b> on the OpenHIM instance running on <b>#{config.alerts.himInstance}</b>:</p>
           <table>
-            <tr><td>Channel - <b>#{channelName}</b></td></td>\n
+            <tr><td>Channel - <b>#{channel.name}</b></td></td>\n
     """
-  alert += (transactions.map (trx) -> "        <tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'
-  alert += '\n'
-  alert += """
+  text += (transactions.map (trx) -> "        <tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'
+  text += '\n'
+  text += """
           </table>
         </div>
       </body>
     </html>
     """
 
-smsTemplate = (transactions, channelName, status) ->
-  alert = "Alert - "
+statusSmsTemplate = (transactions, channel, alert) ->
+  text = "Alert - "
   if transactions.length > 1
-    alert += "#{transactions.length} transactions have"
+    text += "#{transactions.length} transactions have"
   else if transactions.length is 1
-    alert += "1 transaction has"
+    text += "1 transaction has"
   else
-    alert += "no transactions have"
+    text += "no transactions have"
 
-  alert += " completed with status #{status} on the OpenHIM running on #{config.alerts.himInstance} (#{channelName})"
+  text += " completed with status #{alert.status} on the OpenHIM running on #{config.alerts.himInstance} (#{channel.name})"
+
+
+maxRetriesPlainTemplate = (transactions, channel, alert) ->
+  """
+  OpenHIM Transactions Alert - #{config.alerts.himInstance}
+
+  The following transaction(s) have been retried #{channel.autoRetryMaxAttempts} times, but are still failing:
+
+  Channel - #{channel.name}
+  #{(transactions.map (trx) -> trxURL trx).join '\n'}
+
+  Please note that they will not be retried any further by the OpenHIM automatically.
+  """
+
+maxRetriesHtmlTemplate = (transactions, channel, alert) ->
+  text = """
+    <html>
+      <head></head>
+      <body>
+        <h1>OpenHIM Transactions Alert - #{config.alerts.himInstance}</h1>
+        <div>
+          <p>The following transaction(s) have been retried #{channel.autoRetryMaxAttempts} times, but are still failing:</p>
+          <table>
+            <tr><td>Channel - <b>#{channel.name}</b></td></td>\n
+    """
+  text += (transactions.map (trx) -> "        <tr><td><a href='#{trxURL trx}'>#{trxURL trx}</a></td></tr>").join '\n'
+  text += '\n'
+  text += """
+          </table>
+          <p>Please note that they will not be retried any further by the OpenHIM automatically.</p>
+        </div>
+      </body>
+    </html>
+    """
+
+maxRetriesSmsTemplate = (transactions, channel, alert) ->
+  text = "Alert - "
+  if transactions.length > 1
+    text += "#{transactions.length} transactions have"
+  else if transactions.length is 1
+    text += "1 transaction has"
+
+  text += " been retried #{channel.autoRetryMaxAttempts} times but are still failing on the OpenHIM on #{config.alerts.himInstance} (#{channel.name})"
+
 
 getAllChannels = (callback) -> Channel.find {}, callback
 
@@ -79,11 +123,12 @@ countTotalTransactionsForChannel = (channelID, dateFrom, callback) ->
     event: 'end'
   }, callback
 
-findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
+findOneAlert = (channelID, alert, dateFrom, user, alertStatus, callback) ->
   criteria = {
     timestamp: { "$gte": dateFrom }
     channelID: channelID
-    status: status
+    condition: alert.condition
+    status: if alert.condition is 'auto-retry-max-attempted' then '500' else alert.status
     alertStatus: alertStatus
   }
   criteria.user = user if user
@@ -92,19 +137,27 @@ findOneAlert = (channelID, status, dateFrom, user, alertStatus, callback) ->
     .exec callback
 
 
-findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, callback) ->
-  pat = /\dxx/.exec status
-  if pat
-    statusMatch = "$gte": status[0]*100, "$lt": status[0]*100+100
+findTransactionsMatchingCondition = (channelID, alert, dateFrom, callback) ->
+  if not alert.condition or alert.condition is 'status'
+    findTransactionsMatchingStatus channelID, alert, dateFrom, callback
+  else if alert.condition is 'auto-retry-max-attempted'
+    findTransactionsMaxRetried channelID, alert, dateFrom, callback
   else
-    statusMatch = status
+    callback new Error "Unsupported condition '#{alert.condition}'"
+
+findTransactionsMatchingStatus = (channelID, alert, dateFrom, callback) ->
+  pat = /\dxx/.exec alert.status
+  if pat
+    statusMatch = "$gte": alert.status[0]*100, "$lt": alert.status[0]*100+100
+  else
+    statusMatch = alert.status
 
   dateToCheck = dateFrom
   # check last hour when using failureRate
-  dateToCheck = moment().subtract(1, 'hours').toDate() if failureRate?
+  dateToCheck = moment().subtract(1, 'hours').toDate() if alert.failureRate?
 
   findTransactions channelID, dateToCheck, statusMatch, (err, results) ->
-    if not err and results? and failureRate?
+    if not err and results? and alert.failureRate?
       # Get count of total transactions and work out failure ratio
       _countStart = new Date()
       countTotalTransactionsForChannel channelID, dateToCheck, (err, count) ->
@@ -113,11 +166,11 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
         return callback err, null if err
 
         failureRatio = results.length/count*100.0
-        if failureRatio >= failureRate
-          findOneAlert channelID, status, dateToCheck, null, 'Completed', (err, alert) ->
+        if failureRatio >= alert.failureRate
+          findOneAlert channelID, alert, dateToCheck, null, 'Completed', (err, userAlert) ->
             return callback err, null if err
             # Has an alert already been sent this last hour?
-            if alert?
+            if userAlert?
               callback err, []
             else
               callback err, utils.uniqArray results
@@ -125,6 +178,9 @@ findTransactionsMatchingStatus = (channelID, status, dateFrom, failureRate, call
           callback err, []
     else
       callback err, results
+
+findTransactionsMaxRetried = (channelID, alert, dateFrom, callback) ->
+  callback()
 
 calcDateFromForUser = (user) ->
   if user.maxAlerts is '1 per hour'
@@ -134,7 +190,7 @@ calcDateFromForUser = (user) ->
   else
     null
 
-userAlreadyReceivedAlert = (channelID, status, user, callback) ->
+userAlreadyReceivedAlert = (channelID, alert, user, callback) ->
   if not user.maxAlerts or user.maxAlerts is 'no max'
     # user gets all alerts
     callback null, false
@@ -142,42 +198,52 @@ userAlreadyReceivedAlert = (channelID, status, user, callback) ->
     dateFrom = calcDateFromForUser user
     return callback "Unsupported option 'maxAlerts=#{user.maxAlerts}'" if not dateFrom
 
-    findOneAlert channelID, status, dateFrom, user.user, 'Completed', (err, alert) ->
-      callback err ? null, if alert then true else false
+    findOneAlert channelID, alert, dateFrom, user.user, 'Completed', (err, userAlert) ->
+      callback err ? null, if userAlert then true else false
 
 # Setup the list of transactions for alerting.
 #
 # Fetch earlier transactions if a user is setup with maxAlerts.
 # If the user has no maxAlerts limit, then the transactions object is returned as is.
-getTransactionsForAlert = (channelID, status, user, transactions, callback) ->
+getTransactionsForAlert = (channelID, alert, user, transactions, callback) ->
   if not user.maxAlerts or user.maxAlerts is 'no max'
     callback null, transactions
   else
     dateFrom = calcDateFromForUser user
     return callback "Unsupported option 'maxAlerts=#{user.maxAlerts}'" if not dateFrom
 
-    findTransactionsMatchingStatus channelID, status, dateFrom, null, callback
+    findTransactionsMatchingCondition channelID, alert, dateFrom, callback
 
-sendAlert = (channel, status, user, transactions, contactHandler, done) ->
+sendAlert = (channel, alert, user, transactions, contactHandler, done) ->
   User.findOne { email: user.user }, (err, dbUser) ->
     return done err if err
     return done "Cannot send alert: Unknown user '#{user.user}'" if not dbUser
 
-    userAlreadyReceivedAlert channel._id, status, user, (err, received) ->
+    userAlreadyReceivedAlert channel._id, alert, user, (err, received) ->
       return done err, true if err
       return done null, true if received
 
       logger.info "Sending alert for user '#{user.user}' using method '#{user.method}'"
 
-      getTransactionsForAlert channel._id, status, user, transactions, (err, transactionsForAlert) ->
+      getTransactionsForAlert channel._id, alert.status, user, transactions, (err, transactionsForAlert) ->
         if user.method is 'email'
-          plainMsg = plainTemplate transactionsForAlert, channel.name, status
-          htmlMsg = htmlTemplate transactionsForAlert, channel.name, status
+          plainTemplate = statusPlainTemplate
+          htmlTemplate = statusHtmlTemplate
+          if alert.condition is 'auto-retry-max-attempted'
+            plainTemplate = maxRetriesPlainTemplate
+            htmlTemplate = maxRetriesHtmlTemplate
+
+          plainMsg = plainTemplate transactionsForAlert, channel, alert
+          htmlMsg = htmlTemplate transactionsForAlert, channel, alert
           contactHandler 'email', user.user, 'OpenHIM Alert', plainMsg, htmlMsg, done
         else if user.method is 'sms'
           return done "Cannot send alert: MSISDN not specified for user '#{user.user}'" if not dbUser.msisdn
 
-          smsMsg = smsTemplate transactionsForAlert, channel.name, status
+          smsTemplate = statusSmsTemplate
+          if alert.condition is 'auto-retry-max-attempted'
+            smsTemplate = maxRetriesSmsTemplate
+
+          smsMsg = smsTemplate transactionsForAlert, channel.name, alert.status
           contactHandler 'sms', dbUser.msisdn, 'OpenHIM Alert', smsMsg, null, done
         else
           return done "Unknown method '#{user.method}' specified for user '#{user.user}'"
@@ -191,7 +257,8 @@ afterSendAlert = (err, channelID, alert, user, transactions, skipSave, done) ->
       user: user.user
       method: user.method
       channelID: channelID
-      status: alert.status
+      condition: alert.condition
+      status: if alert.condition is 'auto-retry-max-attempted' then '500' else alert.status
       alertStatus: if err then 'Failed' else 'Completed'
 
     alert.save (err) ->
@@ -223,7 +290,7 @@ sendAlerts = (channel, alert, transactions, contactHandler, done) ->
           for user in result.users
             do (user) ->
               groupUserDefer = Q.defer()
-              sendAlert channel, alert.status, user, transactions, contactHandler, (err, skipSave) ->
+              sendAlert channel, alert, user, transactions, contactHandler, (err, skipSave) ->
                 afterSendAlert err, channel._id, alert, user, transactions, skipSave, -> groupUserDefer.resolve()
               groupUserPromises.push groupUserDefer.promise
 
@@ -234,7 +301,7 @@ sendAlerts = (channel, alert, transactions, contactHandler, done) ->
     for user in alert.users
       do (user) ->
         userDefer = Q.defer()
-        sendAlert channel, alert.status, user, transactions, contactHandler, (err, skipSave) ->
+        sendAlert channel, alert, user, transactions, contactHandler, (err, skipSave) ->
           afterSendAlert err, channel._id, alert, user, transactions, skipSave, -> userDefer.resolve()
         promises.push userDefer.promise
 
@@ -260,7 +327,7 @@ alertingTask = (job, contactHandler, done) ->
             deferred = Q.defer()
 
             _findStart = new Date()
-            findTransactionsMatchingStatus channel._id, alert.status, lastAlertDate, alert.failureRate, (err, results) ->
+            findTransactionsMatchingCondition channel._id, alert, lastAlertDate, (err, results) ->
               logger.debug ".findTransactionsMatchingStatus: #{new Date()-_findStart} ms"
 
               if err
