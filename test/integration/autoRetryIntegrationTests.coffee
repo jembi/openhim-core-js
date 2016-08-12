@@ -5,6 +5,7 @@ config.authentication = config.get('authentication')
 Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
+Event = require("../../lib/model/events").Event
 testUtils = require "../testUtils"
 server = require "../../lib/server"
 autoRetry = require "../../lib/autoRetry"
@@ -70,11 +71,9 @@ describe "Auto Retry Integration Tests", ->
           Transaction.remove {}, ->
             done()
 
-    beforeEach (done) -> Transaction.remove {}, done
+    beforeEach (done) -> Transaction.remove {}, -> Event.remove {}, done
 
-    afterEach (done) ->
-      server.stop ->
-        done()
+    afterEach (done) -> server.stop -> done()
 
 
     it "should mark transaction as available to auto retry if an internal server error occurs", (done) ->
@@ -149,6 +148,34 @@ describe "Auto Retry Integration Tests", ->
                       transactions[1].autoRetryAttempt.should.be.exactly 1
                       # should not be eligible to retry
                       transactions[1].autoRetry.should.be.false()
+                      done()
+                  ), 150 * global.testTimeoutFactor
+              ), 150 * global.testTimeoutFactor
+
+    it "should contain the attempt number in transaction events", (done) ->
+      server.start { httpPort: 5001, rerunHttpPort: 7786 }, ->
+        request("http://localhost:5001")
+          .get("/test/nowhere")
+          .auth("testApp", "password")
+          .expect(500)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              setTimeout ( ->
+                # manually trigger rerun
+                autoRetry.autoRetryTask null, ->
+                  tasks.findAndProcessAQueuedTask()
+
+                  setTimeout ( ->
+                    Event.find {}, (err, events) ->
+                      return done err if err
+                      prouteEvents = events.filter (ev) -> ev.type is 'primary' and ev.event is 'end'
+
+                      # original transaction
+                      should(prouteEvents[0].autoRetryAttempt).be.null()
+                      # retried transaction
+                      prouteEvents[1].autoRetryAttempt.should.be.exactly 1
                       done()
                   ), 150 * global.testTimeoutFactor
               ), 150 * global.testTimeoutFactor
