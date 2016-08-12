@@ -23,7 +23,7 @@ findTransactions = (channel, callback) ->
       ,
         channelID: channel._id
       ,
-        internalServerError: true
+        autoRetry: true
       ,
         wasRerun: false
     ]
