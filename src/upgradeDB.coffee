@@ -116,12 +116,12 @@ upgradeFuncs.push
           vis.save (err, vis) ->
             if err
               logger.error "Error migrating visualizer from user profile #{user.email}: #{err.stack}"
-              return userDefer.reject()
+              return userDefer.reject err
 
             # delete the visualizer settings from this user profile
             user.set 'settings.visualizer', null
             user.save (err, user) ->
-              if err then return userDefer.reject()
+              if err then return userDefer.reject err
               return userDefer.resolve()
 
       Q.all(promises).then ->
@@ -145,6 +145,8 @@ runUpgradeFunc = (i, dbVer) ->
       logger.error err if err?
       logger.info "  \u2713 Done."
       defer.resolve()
+  .catch (err) ->
+    defer.reject err
   return defer.promise
 
 if process.env.NODE_ENV == "test"
@@ -163,7 +165,7 @@ exports.upgradeDb = (callback) ->
     if dbVer.version < (upgradeFuncs.length - 1)
       logger.info 'Upgrading the database...'
       promise = null
-      # call each database upgrade fucntion sequentially
+      # call each database upgrade function sequentially
       for i in [(dbVer.version + 1)..(upgradeFuncs.length - 1)]
         do (i) ->
           if not promise?
@@ -174,6 +176,9 @@ exports.upgradeDb = (callback) ->
       promise.then ->
         logger.info 'Completed database upgrade'
         callback()
+      .catch (err) ->
+        logger.error "There was an error upgrading your database, you will need to fix this manually to continue. #{err.stack}"
+        process.exit()
     else
       logger.info 'No database upgrades needed'
       callback()
