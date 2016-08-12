@@ -1,6 +1,7 @@
 transactions = require "../model/transactions"
 logger = require "winston"
 Q = require "q"
+_ = require 'lodash'
 
 config = require '../config/config'
 statsdServer = config.get 'statsd'
@@ -177,7 +178,7 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
       else
         update.autoRetry = false
 
-    if !update then return callback tx # nothing to do
+    if _.isEmpty update then return callback tx # nothing to do
 
     transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err,tx) ->
       callback tx
