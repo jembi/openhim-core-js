@@ -24,6 +24,7 @@ certificateAuthority = require './api/certificateAuthority'
 logs = require './api/logs'
 metadata = require './api/metadata'
 visualizers = require './api/visualizers'
+about = require './api/about'
 
 exports.setupApp = (done) ->
 
@@ -117,7 +118,7 @@ exports.setupApp = (done) ->
   app.use route.post '/keystore/ca/cert', keystore.addTrustedCert
   app.use route.get '/keystore/validity', keystore.verifyServerKeys
   app.use route.post '/keystore/passphrase', keystore.setServerPassphrase
-  
+
   # Metadata endpoints
   app.use route.get '/metadata', metadata.getMetadata
   app.use route.post '/metadata/validate', metadata.validateMetadata
@@ -140,6 +141,9 @@ exports.setupApp = (done) ->
 
   # Events endpoint
   app.use route.get '/events/:receivedTime', events.getLatestEvents
+
+  # Version endpoint
+  app.use route.get '/about', about.getAboutInformation
 
   # Visualizer endpoint
   app.use route.get '/visualizers/', visualizers.getAllVisualizers

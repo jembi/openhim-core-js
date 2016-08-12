@@ -44,6 +44,7 @@ numCPUs = require('os').cpus().length
 nconf = require 'nconf'
 atna = require 'atna-audit'
 os = require 'os'
+currentVersion = require('../package.json').version
 
 User = require('./model/users').User
 Keystore = require('./model/keystore').Keystore
@@ -87,6 +88,7 @@ if cluster.isMaster and not module.parent
   if typeof clusterSize isnt 'number' or clusterSize % 1 isnt 0 or clusterSize < 1
     throw new Error "invalid --cluster argument entered: #{clusterArg}. Please enter a positive number or 'auto'."
 
+  logger.info "Running OpenHIM Core JS version #{currentVersion}"
   logger.info "Clustering the OpenHIM with #{clusterSize} workers..."
 
   addWorker = () ->

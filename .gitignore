@@ -15,3 +15,4 @@ packaging/builds
 .otto
 *.log
 Vagrantfile
+.DS_Store

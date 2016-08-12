@@ -41,69 +41,81 @@ describe "Auditing Integration Tests", ->
         setTimeout checkAudits, 100 * global.testTimeoutFactor
 
   describe "TLS Audit Server", ->
-
+  
     it "should send TLS audit messages and save (valid)", (done) ->
-
+  
       options =
         cert: fs.readFileSync "test/resources/trust-tls/cert1.pem"
         key:  fs.readFileSync "test/resources/trust-tls/key1.pem"
         ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
-
+  
       client = tls.connect 5051, 'localhost', options, ->
         messagePrependlength = "#{testAuditMessage.length} #{testAuditMessage}"
-        client.write messagePrependlength
-        client.end()
-
-      client.on 'end', -> Audit.find {}, (err, audits) ->
-        return done err if err
-
-        # message fields already validate heavily in unit test, just perform basic check
-        audits.length.should.be.exactly 2 # 1 extra due to automatic actor start audit
-        audits[1].rawMessage.should.be.exactly testAuditMessage
-        done()
-
+        client.write messagePrependlength, (err) ->
+          return done err if err
+          client.end()
+  
+      client.on 'end', ->
+        checkAudits = -> Audit.find {}, (err, audits) ->
+          return done err if err
+        
+          # message fields already validate heavily in unit test, just perform basic check
+          audits.length.should.be.exactly 2 # 1 extra due to automatic actor start audit
+          audits[1].rawMessage.should.be.exactly testAuditMessage
+          done()
+        setTimeout checkAudits, 100 * global.testTimeoutFactor
+  
     it "should send TLS audit messages and NOT save (Invalid)", (done) ->
-
+  
       options =
         cert: fs.readFileSync "test/resources/trust-tls/cert1.pem"
         key:  fs.readFileSync "test/resources/trust-tls/key1.pem"
         ca: [ fs.readFileSync "test/resources/server-tls/cert.pem" ]
-
+  
       client = tls.connect 5051, 'localhost', options, ->
-        client.write testAuditMessage
-        client.end()
-
-      client.on 'end', -> Audit.find {}, (err, audits) ->
-        return done err if err
-
-        # message fields already validate heavily in unit test, just perform basic check
-        audits.length.should.be.exactly 1 # 1 extra due to automatic actor start audit
-        done()
-
+        client.write testAuditMessage, (err) ->
+          return done err if err
+          client.end()
+  
+      client.on 'end', ->
+        checkAudits = -> Audit.find {}, (err, audits) ->
+          return done err if err
+  
+          # message fields already validate heavily in unit test, just perform basic check
+          audits.length.should.be.exactly 1 # 1 extra due to automatic actor start audit
+          done()
+        setTimeout checkAudits, 100 * global.testTimeoutFactor
+  
   describe "TCP Audit Server", ->
     it "should send TCP audit messages and save (valid)", (done) ->
       client = net.connect 5052, 'localhost', ->
         messagePrependlength = testAuditMessage.length + ' ' + testAuditMessage
-        client.write messagePrependlength
-        client.end()
-
-      client.on 'end', -> Audit.find {}, (err, audits) ->
-        return done err if err
-
-        # message fields already validate heavily in unit test, just perform basic check
-        audits.length.should.be.exactly 2  # 1 extra due to automatic actor start audit
-        audits[1].rawMessage.should.be.exactly testAuditMessage
-        done()
-
+        client.write messagePrependlength, (err) ->
+          return done err if err
+          client.end()
+  
+      client.on 'end', ->
+        checkAudits = -> Audit.find {}, (err, audits) ->
+          return done err if err
+  
+          # message fields already validate heavily in unit test, just perform basic check
+          audits.length.should.be.exactly 2  # 1 extra due to automatic actor start audit
+          audits[1].rawMessage.should.be.exactly testAuditMessage
+          done()
+        setTimeout checkAudits, 100 * global.testTimeoutFactor
+  
     it "should send TCP audit message and NOT save (Invalid)", (done) ->
       client = net.connect 5052, 'localhost', ->
         # testAuditMessage does not have message length with space prepended
-        client.write testAuditMessage
-        client.end()
-
-      client.on 'end', -> Audit.find {}, (err, audits) ->
-        return done err if err
-
-        # message fields already validate heavily in unit test, just perform basic check
-        audits.length.should.be.exactly 1 # 1 extra due to automatic actor start audit
-        done()
+        client.write testAuditMessage, (err) ->
+          return done err if err
+          client.end()
+  
+      client.on 'end', ->
+        checkAudits = -> Audit.find {}, (err, audits) ->
+          return done err if err
+  
+          # message fields already validate heavily in unit test, just perform basic check
+          audits.length.should.be.exactly 1 # 1 extra due to automatic actor start audit
+          done()
+        setTimeout checkAudits, 100 * global.testTimeoutFactor
