@@ -20,6 +20,9 @@ ctx2 =
 ctx3 =
   parentID: "53e096fea0af310568333333"
 
+ctx4 =
+  parentID: "53e096fea0af310568444444"
+
 transaction1 = new Transaction
   _id: "53e096fea0af3105689acd6a"
   channelID: "53bbe25485e66d8e5daad4a2"
@@ -68,6 +71,22 @@ transaction3 = new Transaction
     timestamp: "2014-07-15T08:10:45.109Z"
   }
   status: "Completed"
+  autoRetry: true
+
+transaction4 = new Transaction
+  _id: "53e096fea0af310568444444"
+  channelID: "53bbe25485e66d8e5daad4a2"
+  clientID: "42bbe25485e77d8e5daad4b4"
+  request: {
+    path: "/sample/api",
+    headers: { authorization: "Basic dGVzdDp0ZXN0", "user-agent": "curl/7.35.0", host: "localhost:5001" },
+    querystring: "param=hello",
+    body: "",
+    method: "GET",
+    timestamp: "2014-07-15T08:10:45.109Z"
+  }
+  status: "Completed"
+  autoRetry: true
   autoRetryAttempt: 5
 
 task1 = new Task
@@ -87,8 +106,9 @@ describe "rerunUpdateTransactionTask middleware", ->
     transaction1.save ->
       transaction2.save (err) ->
         transaction3.save (err) ->
-          task1.save ->
-            done()
+          transaction4.save (err) ->
+            task1.save ->
+              done()
 
   after (done) ->
     Transaction.remove {}, ->
@@ -161,16 +181,22 @@ describe "rerunUpdateTransactionTask middleware", ->
         done()
   
   describe "setAttemptNumber", ->
-    it "should add an initial attempt number to the ctx", (done) ->
+    it "should not set the attempt number if the parent transaction was not an autoretry", (done) ->
       delete ctx.currentAttempt
       rerunUpdateTransactionTask.setAttemptNumber ctx, (err) ->
-        ctx.should.have.property 'currentAttempt'
-        ctx.currentAttempt.should.be.exactly 1
+        ctx.should.not.have.property 'currentAttempt'
         done()
 
-    it "should increment the attempt number if it exists on the parent transaction", (done) ->
+    it "should add an initial attempt number to the ctx", (done) ->
       delete ctx3.currentAttempt
       rerunUpdateTransactionTask.setAttemptNumber ctx3, (err) ->
         ctx3.should.have.property 'currentAttempt'
-        ctx3.currentAttempt.should.be.exactly 6
+        ctx3.currentAttempt.should.be.exactly 1
+        done()
+
+    it "should increment the attempt number if it exists on the parent transaction", (done) ->
+      delete ctx4.currentAttempt
+      rerunUpdateTransactionTask.setAttemptNumber ctx4, (err) ->
+        ctx4.should.have.property 'currentAttempt'
+        ctx4.currentAttempt.should.be.exactly 6
         done()

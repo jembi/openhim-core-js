@@ -14,9 +14,11 @@ sdc = new SDC statsdServer
 
 exports.setAttemptNumber = (ctx, done) ->
   Transaction.findOne { _id: ctx.parentID }, (err, transaction) ->
-    ctx.currentAttempt = 1
-    if transaction.autoRetryAttempt?
-      ctx.currentAttempt = transaction.autoRetryAttempt + 1
+    if transaction.autoRetry
+      if transaction.autoRetryAttempt?
+        ctx.currentAttempt = transaction.autoRetryAttempt + 1
+      else
+        ctx.currentAttempt = 1
     transaction.save (err, tx) ->
       if err
         logger.error "Original transaction #{transaction._id} could not be updated: #{err}"
