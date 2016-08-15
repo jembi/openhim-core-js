@@ -367,7 +367,7 @@ describe "Transaction Alerts", ->
           return done err if err
           alerts.findTransactionsMaxRetried autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) ->
             results.length.should.be.exactly 1
-            results[0]._id.equals(testTransactions[9]._id).should.be.true()
+            results[0].transactionID.equals(testTransactions[9].transactionID).should.be.true()
             done()
 
 
