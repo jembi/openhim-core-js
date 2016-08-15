@@ -21,7 +21,7 @@ RouteDef =
 
 # Channel alerts
 #
-# Types of alert conditions are supported:
+# The following alert conditions are supported:
 # * status: match on a specific transaction status (404, 5xx). Supports failure rates.
 # * auto-retry-max-attempted: triggers when a failing transaction has reach the max number of auto retries
 #
