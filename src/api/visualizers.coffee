@@ -29,6 +29,6 @@ exports.removeVisualizer = (name) ->
       return utils.logAndSetResponse this, 404, "Could not find visualizer with #{name}", 'info'
 
     this.body = "Successfully removed visualizer with name #{name}"
-    logger.info "User #{this.authenticated.name} removed visualizer #{name}"
+    logger.info "User #{this.authenticated.email} removed visualizer #{name}"
   catch e
     utils.logAndSetResponse this, 500, "Could not remove visualizer #{name} via the API #{e}", 'error'
