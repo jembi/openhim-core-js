@@ -54,6 +54,9 @@ exports.storeTransaction = (ctx, done) ->
     tx.parentID = ctx.parentID
     tx.taskID = ctx.taskID
 
+  if ctx.currentAttempt
+    tx.autoRetryAttempt = ctx.currentAttempt
+
   # check if channel request body is false and remove - or if request body is empty
   if ctx.authorisedChannel.requestBody == false || tx.request.body == ''
     # reset request body
@@ -165,7 +168,15 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
       logger.info "Final status for transaction #{tx._id} : #{tx.status}"
       update.status = tx.status
 
-    if ctx.autoRetry? then update.autoRetry = ctx.autoRetry
+    reachedMaxAttempts = -> ctx.authorisedChannel.autoRetryMaxAttempts? and
+      ctx.authorisedChannel.autoRetryMaxAttempts > 0 and
+      tx.autoRetryAttempt >= ctx.authorisedChannel.autoRetryMaxAttempts
+
+    if ctx.autoRetry?
+      if not reachedMaxAttempts()
+        update.autoRetry = ctx.autoRetry
+      else
+        update.autoRetry = false
 
     if _.isEmpty update then return callback tx # nothing to do
 

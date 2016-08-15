@@ -19,11 +19,18 @@ RouteDef =
   "status":             type: String, default: 'enabled', enum: ['enabled', 'disabled']
   "forwardAuthHeader":  type: Boolean, default: false
 
+# Channel alerts
+#
+# The following alert conditions are supported:
+# * status: match on a specific transaction status (404, 5xx). Supports failure rates.
+# * auto-retry-max-attempted: triggers when a failing transaction has reach the max number of auto retries
+#
 AlertsDef =
-  "status":       type: String, required: true
+  "condition":    type: String, default: 'status', enum: ['status', 'auto-retry-max-attempted']
+  "status":       type: String
+  "failureRate":  Number
   "groups":       [Schema.Types.ObjectId]
   "users":        [ContactUserDef]
-  "failureRate":  Number
 
 RewriteRuleDef =
   "fromHost":       type: String, required: true
@@ -63,6 +70,7 @@ ChannelDef =
   "rewriteUrlsConfig":      [RewriteRuleDef]
   "autoRetryEnabled":       type: Boolean, default: false
   "autoRetryPeriodMinutes": type: Number, default: 60, min: 1
+  "autoRetryMaxAttempts":   type: Number, min: 0 # 0 means unlimited
 
 # Expose the route schema
 exports.RouteDef = RouteDef

@@ -21,5 +21,6 @@ EventsSchema = new Schema
   "statusType":           type: String, enum: ['success', 'error']  # status string supported by visualizer (e.g. 'error' is red)
   "normalizedTimestamp":  String
   "mediator":             String
+  "autoRetryAttempt":     Number
  
 exports.Event = connectionDefault.model 'Event', EventsSchema

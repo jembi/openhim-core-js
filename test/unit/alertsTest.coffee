@@ -57,10 +57,12 @@ testChannel = new Channel
   allow: '*'
   alerts: [
     {
+      condition: 'status'
       status: "404"
       groups: ['aaa908908bbb98cc1d0809ee']
     }
     {
+      condition: 'status'
       status: '5xx'
       groups: ['bbb908908ccc98cc1d0888aa']
       users: [ { user: 'two@openhim.org', method: 'sms' } ]
@@ -74,11 +76,26 @@ disabledChannel = new Channel
   allow: '*'
   alerts: [
     {
+      condition: 'status'
       status: "404"
       groups: ['aaa908908bbb98cc1d0809ee']
     }
   ]
   status: 'disabled'
+
+autoRetryChannel = new Channel
+  name: 'autoretry'
+  urlPattern: '/autoretry'
+  allow: '*'
+  autoRetryEnabled: true
+  autoRetryPeriodMinutes: 1
+  autoRetryMaxAttempts: 3
+  alerts: [
+    {
+      condition: 'auto-retry-max-attempted'
+      groups: ['aaa908908bbb98cc1d0809ee']
+    }
+  ]
 
 testTransactions = [
   # 0
@@ -136,6 +153,30 @@ testTransactions = [
     route: 'primary'
     event: 'end'
     status: 404
+
+  # 8
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa8'
+    route: 'primary'
+    event: 'end'
+    status: 500
+    autoRetryAttempt: 2
+
+  # 9
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa9'
+    route: 'primary'
+    event: 'end'
+    status: 500
+    autoRetryAttempt: 3
+
+  # 10 - channel event for 9
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa9'
+    route: 'channel'
+    event: 'end'
+    status: 500
+    autoRetryAttempt: 3
 ]
 
 dateFrom = new Date()
@@ -146,12 +187,16 @@ describe "Transaction Alerts", ->
   before (done) ->
     Event.ensureIndexes ->
       Alert.ensureIndexes ->
-        testUser1.save -> testUser2.save -> testGroup1.save -> testGroup2.save -> testChannel.save -> disabledChannel.save ->
-          for testTransaction in testTransactions
-            testTransaction.channelID = testChannel._id
-          testTransactions[6].channelID = "000000000000000000000000" # a channel id that doesn't exist
-          testTransactions[7].channelID = disabledChannel._id
-          done()
+        testUser1.save -> testUser2.save -> testGroup1.save -> testGroup2.save ->
+          testChannel.save -> disabledChannel.save -> autoRetryChannel.save ->
+            for testTransaction in testTransactions
+              testTransaction.channelID = testChannel._id
+            testTransactions[6].channelID = "000000000000000000000000" # a channel id that doesn't exist
+            testTransactions[7].channelID = disabledChannel._id
+            testTransactions[8].channelID = autoRetryChannel._id
+            testTransactions[9].channelID = autoRetryChannel._id
+            testTransactions[10].channelID = autoRetryChannel._id
+            done()
 
   after (done) ->
     User.remove {}, -> ContactGroup.remove {}, -> Channel.remove {}, -> done()
@@ -177,17 +222,17 @@ describe "Transaction Alerts", ->
     it "should return transactions that match an exact status", (done) ->
       testTransactions[0].save (err) ->
         return done err if err
-        alerts.findTransactionsMatchingStatus testChannel._id, "404", dateFrom, null, (err, results) ->
+        alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "404" }, dateFrom, (err, results) ->
           results.length.should.be.exactly 1
-          results[0]._id.equals(testTransactions[0]._id).should.be.true
+          results[0]._id.equals(testTransactions[0]._id).should.be.true()
           done()
 
     it "should return transactions that have a matching status in a route response", (done) ->
       testTransactions[1].save (err) ->
         return done err if err
-        alerts.findTransactionsMatchingStatus testChannel._id, "404", dateFrom, null, (err, results) ->
+        alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "404" }, dateFrom, (err, results) ->
           results.length.should.be.exactly 1
-          results[0]._id.equals(testTransactions[1]._id).should.be.true
+          results[0]._id.equals(testTransactions[1]._id).should.be.true()
           done()
 
     it "should only return transactions for the requested channel", (done) ->
@@ -196,16 +241,16 @@ describe "Transaction Alerts", ->
         return done err if err
         testTransactions[6].save (err) ->
           return done err if err
-          alerts.findTransactionsMatchingStatus testChannel._id, "404", dateFrom, null, (err, results) ->
+          alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "404" }, dateFrom, (err, results) ->
             results.length.should.be.exactly 1
-            results[0]._id.equals(testTransactions[0]._id).should.be.true
+            results[0]._id.equals(testTransactions[0]._id).should.be.true()
             done()
 
     it "should not return transactions that occur before dateFrom", (done) ->
       testTransactions[0].save (err) ->
         return done err if err
         newFrom = moment().add(1, 'days').toDate()
-        alerts.findTransactionsMatchingStatus testChannel._id, "404", newFrom, null, (err, results) ->
+        alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "404" }, newFrom, (err, results) ->
           results.length.should.be.exactly 0
           done()
 
@@ -221,7 +266,7 @@ describe "Transaction Alerts", ->
               return done err if err
               testTransactions[6].save (err) ->
                 return done err if err
-                alerts.findTransactionsMatchingStatus testChannel._id, "4xx", dateFrom, null, (err, results) ->
+                alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "4xx" }, dateFrom, (err, results) ->
                   results.length.should.be.exactly 3
                   resultIDs = results.map (result) -> result._id
                   resultIDs.should.containEql testTransactions[0]._id
@@ -237,7 +282,7 @@ describe "Transaction Alerts", ->
           return done err if err
           testTransactions[3].save (err) ->
             return done err if err
-            alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+            alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "500", failureRate: testFailureRate }, dateFrom, (err, results) ->
               # only one 500 transaction, but failureRate is 50%
               results.length.should.be.exactly 0
               done()
@@ -251,7 +296,7 @@ describe "Transaction Alerts", ->
             return done err if err
             testTransactions[4].save (err) ->
               return done err if err
-              alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+              alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "500", failureRate: testFailureRate }, dateFrom, (err, results) ->
                 results.length.should.be.exactly 2
                 resultIDs = results.map (result) -> result._id
                 resultIDs.should.containEql testTransactions[3]._id
@@ -269,7 +314,7 @@ describe "Transaction Alerts", ->
               return done err if err
               testTransactions[5].save (err) ->
                 return done err if err
-                alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+                alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "500", failureRate: testFailureRate }, dateFrom, (err, results) ->
                   results.length.should.be.exactly 3
                   resultIDs = results.map (result) -> result._id
                   resultIDs.should.containEql testTransactions[3]._id
@@ -282,6 +327,7 @@ describe "Transaction Alerts", ->
         user: 'one@openhim.org'
         method: 'email'
         channelID: testChannel._id
+        condition: 'status'
         status: '500'
         alertStatus: 'Completed'
       alert.save (err) ->
@@ -293,9 +339,36 @@ describe "Transaction Alerts", ->
               return done err if err
               testTransactions[4].save (err) ->
                 return done err if err
-                alerts.findTransactionsMatchingStatus testChannel._id, "500", dateFrom, testFailureRate, (err, results) ->
+                alerts.findTransactionsMatchingStatus testChannel, { condition: 'status', status: "500", failureRate: testFailureRate }, dateFrom, (err, results) ->
                   results.length.should.be.exactly 0
                   done()
+
+
+  describe ".findTransactionsMaxRetried", ->
+    it "should not return transactions have not reached max retries", (done) ->
+      testTransactions[8].save (err) ->
+        return done err if err
+        alerts.findTransactionsMaxRetried autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) ->
+          results.length.should.be.exactly 0
+          done()
+
+    it "should return transactions have reached max retries", (done) ->
+      testTransactions[9].save (err) ->
+        return done err if err
+        alerts.findTransactionsMaxRetried autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) ->
+          results.length.should.be.exactly 1
+          results[0]._id.equals(testTransactions[9]._id).should.be.true()
+          done()
+
+    it "should not return duplicate transaction IDs where multiple events exist for the same transaction", (done) ->
+      testTransactions[9].save (err) ->
+        return done err if err
+        testTransactions[10].save (err) ->
+          return done err if err
+          alerts.findTransactionsMaxRetried autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) ->
+            results.length.should.be.exactly 1
+            results[0].transactionID.equals(testTransactions[9].transactionID).should.be.true()
+            done()
 
 
   describe ".alertingTask", ->
@@ -331,9 +404,9 @@ describe "Transaction Alerts", ->
       testTransactions[0].save (err) ->
         return done err if err
         alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
-          contactSpy.calledTwice.should.be.true
-          contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
-          contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
+          contactSpy.calledTwice.should.be.true()
+          contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
+          contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
           done()
 
     it "should store an alert log item in mongo for each alert generated", (done) ->
@@ -341,7 +414,7 @@ describe "Transaction Alerts", ->
       testTransactions[0].save (err) ->
         return done err if err
         alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
-          contactSpy.called.should.be.true
+          contactSpy.called.should.be.true()
           Alert.find {}, (err, results) ->
             return done err if err
             results.length.should.be.exactly 2
@@ -357,9 +430,9 @@ describe "Transaction Alerts", ->
         testTransactions[4].save (err) ->
           return done err if err
           alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
-            contactSpy.calledTwice.should.be.true
-            contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
-            contactSpy.withArgs('sms', testUser2.msisdn, 'OpenHIM Alert', sinon.match.string, null).calledOnce.should.be.true
+            contactSpy.calledTwice.should.be.true()
+            contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
+            contactSpy.withArgs('sms', testUser2.msisdn, 'OpenHIM Alert', sinon.match.string, null).calledOnce.should.be.true()
             done()
 
     it "should not send alerts to users with a maxAlerts restriction if they've already received an alert for the same day", (done) ->
@@ -367,11 +440,11 @@ describe "Transaction Alerts", ->
       testTransactions[0].save (err) ->
         return done err if err
         alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
-          contactSpy.calledTwice.should.be.true
+          contactSpy.calledTwice.should.be.true()
           secondSpy = sinon.spy()
           alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
-            secondSpy.calledOnce.should.be.true
-            secondSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
+            secondSpy.calledOnce.should.be.true()
+            secondSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
             done()
 
     it "should send alerts to users if an alert for the same day was already attempted but it failed", (done) ->
@@ -379,12 +452,12 @@ describe "Transaction Alerts", ->
       testTransactions[0].save (err) ->
         return done err if err
         alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy, "Test Failure"), ->
-          contactSpy.calledTwice.should.be.true
+          contactSpy.calledTwice.should.be.true()
           secondSpy = sinon.spy()
           alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(secondSpy), ->
-            secondSpy.calledTwice.should.be.true
-            secondSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
-            secondSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true
+            secondSpy.calledTwice.should.be.true()
+            secondSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
+            secondSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
             done()
 
     it "should not generate alerts for disabled channels", (done) ->
@@ -395,7 +468,7 @@ describe "Transaction Alerts", ->
           return done err if err
 
           alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
-            contactSpy.called.should.be.true
+            contactSpy.called.should.be.true()
             Alert.find {}, (err, results) ->
               return done err if err
               results.length.should.be.exactly 2
@@ -408,3 +481,13 @@ describe "Transaction Alerts", ->
               resultChannels.should.containEql testChannel._id.toHexString()
               resultChannels.should.not.containEql disabledChannel._id.toHexString()
               done()
+
+    it "should contact users when there are matching max auto retried transactions", (done) ->
+      contactSpy = sinon.spy()
+      testTransactions[9].save (err) ->
+        return done err if err
+        alerts.alertingTask buildJobStub(dateFrom), mockContactHandler(contactSpy), ->
+          contactSpy.calledTwice.should.be.true()
+          contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
+          contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
+          done()

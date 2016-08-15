@@ -223,7 +223,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
           done = (err) -> logger.error err if err
           trxEvents = []
 
-          events.createSecondaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes
+          events.createSecondaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt
           events.saveEvents trxEvents, done
 
 

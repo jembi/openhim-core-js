@@ -44,20 +44,21 @@ RouteMetadataDef =
 
 # Trasnaction schema
 TransactionSchema = new Schema
-  "clientID":       Schema.Types.ObjectId
-  "clientIP":       String
-  "parentID":       Schema.Types.ObjectId
-  "childIDs":       [Schema.Types.ObjectId]
-  "channelID":      type: Schema.Types.ObjectId, index: true
-  "request":        RequestDef
-  "response":       ResponseDef
-  "routes":         [RouteMetadataDef]
-  "orchestrations": [OrchestrationMetadataDef]
-  "properties":     Object
-  "canRerun":       type: Boolean, default: true
-  "autoRetry":      type: Boolean, default: false # auto rerun this transaction (e.g. if error'd)
-  "wasRerun":       type: Boolean, default: false
-  "error":          ErrorDetailsDef
+  "clientID":           Schema.Types.ObjectId
+  "clientIP":           String
+  "parentID":           Schema.Types.ObjectId
+  "childIDs":           [Schema.Types.ObjectId]
+  "channelID":          type: Schema.Types.ObjectId, index: true
+  "request":            RequestDef
+  "response":           ResponseDef
+  "routes":             [RouteMetadataDef]
+  "orchestrations":     [OrchestrationMetadataDef]
+  "properties":         Object
+  "canRerun":           type: Boolean, default: true
+  "autoRetry":          type: Boolean, default: false # auto rerun this transaction (e.g. if error'd)
+  "autoRetryAttempt":   Number
+  "wasRerun":           type: Boolean, default: false
+  "error":              ErrorDetailsDef
   "status":
     type:     String
     required: true

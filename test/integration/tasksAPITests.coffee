@@ -183,22 +183,14 @@ describe "API Integration Tests", ->
     authDetails = {}
 
     before (done) ->
-      task1.save ->
-        task2.save ->
-          task3.save (err) ->
-            transaction1.save ->
-              transaction2.save ->
-                transaction3.save ->
-                  transaction4.save ->
-                    transaction5.save ->
-                      transaction6.save ->
-                        channel.save ->
-                          channel2.save ->
-                            channel3.save ->
-                              channel4.save ->
-                                auth.setupTestUsers ->
-                                  server.start apiPort: 8080, ->
-                                    done()
+      Task.remove {}, ->
+        task1.save -> task2.save -> task3.save (err) ->
+          transaction1.save -> transaction2.save -> transaction3.save ->
+            transaction4.save -> transaction5.save -> transaction6.save ->
+              channel.save -> channel2.save -> channel3.save -> channel4.save ->
+                auth.setupTestUsers ->
+                  server.start apiPort: 8080, ->
+                    done()
 
     after (done) ->
       server.stop ->

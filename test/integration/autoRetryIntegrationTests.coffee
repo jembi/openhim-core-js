@@ -5,8 +5,11 @@ config.authentication = config.get('authentication')
 Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
+Event = require("../../lib/model/events").Event
 testUtils = require "../testUtils"
 server = require "../../lib/server"
+autoRetry = require "../../lib/autoRetry"
+tasks = require "../../lib/tasks"
 
 describe "Auto Retry Integration Tests", ->
 
@@ -21,12 +24,30 @@ describe "Auto Retry Integration Tests", ->
             port: 9999
             primary: true
           ]
+      autoRetryEnabled: true
+      autoRetryPeriodMinutes: 1
+      autoRetryMaxAttempts: 2
+
+    channel2 = new Channel
+      name: "TEST DATA - Will break channel - attempt once"
+      urlPattern: "^/test/nowhere/2$"
+      allow: [ "PoC" ]
+      routes: [
+            name: "unavailable route"
+            host: "localhost"
+            port: 9999
+            primary: true
+          ]
+      autoRetryEnabled: true
+      autoRetryPeriodMinutes: 1
+      autoRetryMaxAttempts: 1
+
 
     before (done) ->
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      channel1.save (err) ->
+      channel1.save () -> channel2.save () ->
         testAppDoc =
           clientID: "testApp"
           clientDomain: "test-client.jembi.org"
@@ -50,11 +71,9 @@ describe "Auto Retry Integration Tests", ->
           Transaction.remove {}, ->
             done()
 
-    beforeEach (done) -> Transaction.remove {}, done
+    beforeEach (done) -> Transaction.remove {}, -> Event.remove {}, done
 
-    afterEach (done) ->
-      server.stop ->
-        done()
+    afterEach (done) -> server.stop -> done()
 
 
     it "should mark transaction as available to auto retry if an internal server error occurs", (done) ->
@@ -77,6 +96,88 @@ describe "Auto Retry Integration Tests", ->
                   trx.error.should.have.property 'stack'
                   (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
                   done()
+              ), 150 * global.testTimeoutFactor
+
+    it "should auto retry a failed transaction", (done) ->
+      server.start { httpPort: 5001, rerunHttpPort: 7786 }, ->
+        request("http://localhost:5001")
+          .get("/test/nowhere")
+          .auth("testApp", "password")
+          .expect(500)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              setTimeout ( ->
+                # manually trigger rerun
+                autoRetry.autoRetryTask null, ->
+                  tasks.findAndProcessAQueuedTask()
+
+                  setTimeout ( ->
+                    Transaction.find {}, (err, transactions) ->
+                      return done err if err
+                      transactions.length.should.be.exactly 2
+                      transactions[0].childIDs[0].toString().should.be.equal transactions[1]._id.toString()
+                      transactions[1].autoRetryAttempt.should.be.exactly 1
+                      # failed so should be eligible to rerun again
+                      transactions[1].autoRetry.should.be.true()
+                      done()
+                  ), 150 * global.testTimeoutFactor
+              ), 150 * global.testTimeoutFactor
+
+    it "should not auto retry a transaction that has reached the max retry limit", (done) ->
+      server.start { httpPort: 5001, rerunHttpPort: 7786 }, ->
+        request("http://localhost:5001")
+          .get("/test/nowhere/2")
+          .auth("testApp", "password")
+          .expect(500)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              setTimeout ( ->
+                # manually trigger rerun
+                autoRetry.autoRetryTask null, ->
+                  tasks.findAndProcessAQueuedTask()
+
+                  setTimeout ( ->
+                    Transaction.find {}, (err, transactions) ->
+                      return done err if err
+                      transactions.length.should.be.exactly 2
+                      transactions[0].childIDs[0].toString().should.be.equal transactions[1]._id.toString()
+                      transactions[1].autoRetryAttempt.should.be.exactly 1
+                      # should not be eligible to retry
+                      transactions[1].autoRetry.should.be.false()
+                      done()
+                  ), 150 * global.testTimeoutFactor
+              ), 150 * global.testTimeoutFactor
+
+    it "should contain the attempt number in transaction events", (done) ->
+      server.start { httpPort: 5001, rerunHttpPort: 7786 }, ->
+        request("http://localhost:5001")
+          .get("/test/nowhere")
+          .auth("testApp", "password")
+          .expect(500)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              setTimeout ( ->
+                # manually trigger rerun
+                autoRetry.autoRetryTask null, ->
+                  tasks.findAndProcessAQueuedTask()
+
+                  setTimeout ( ->
+                    Event.find {}, (err, events) ->
+                      return done err if err
+                      prouteEvents = events.filter (ev) -> ev.type is 'primary' and ev.event is 'end'
+
+                      # original transaction
+                      should(prouteEvents[0].autoRetryAttempt).be.null()
+                      # retried transaction
+                      prouteEvents[1].autoRetryAttempt.should.be.exactly 1
+                      done()
+                  ), 150 * global.testTimeoutFactor
               ), 150 * global.testTimeoutFactor
 
   describe "Secondary route auto retry tests", ->
