@@ -53,7 +53,7 @@ describe 'API Integration Tests', ->
           name: 'OpenHIM Shell Script Mediator'
           display: 'OpenHIM Shell Script Mediator'
       ]
-    
+
     authDetails = {}
 
     before (done) ->
@@ -107,7 +107,7 @@ describe 'API Integration Tests', ->
                   ('Visualizer2' in names).should.be.true()
                   done()
 
-      it 'should return a 401 response if the user is not an admin', (done) ->
+      it 'should return a 403 response if the user is not an admin', (done) ->
         request 'https://localhost:8080'
           .get '/visualizers'
           .set('auth-username', testUtils.nonRootUser.email)
@@ -120,7 +120,7 @@ describe 'API Integration Tests', ->
               done err
             else
               done()
-      
+
       it 'should return an empty array if there are no visualizers', (done) ->
         request 'https://localhost:8080'
           .get '/visualizers'
@@ -135,4 +135,62 @@ describe 'API Integration Tests', ->
             else
               res.body.should.be.an.Array()
               res.body.length.should.be.exactly 0
+              done()
+
+    describe '*removeVisualizer(name)', ->
+
+      it 'should sucessfully remove a visualizer', (done) ->
+        vis1 = _.assign {}, visObj
+        vis1.name = 'Root\'s Visualizer 1'
+        vis1 = new Visualizer vis1
+        vis2 = _.assign {}, visObj
+        vis2.name = 'Root\'s Visualizer 2'
+        vis2 = new Visualizer vis2
+
+        vis1.save (err) ->
+          return done err if err
+          vis2.save (err) ->
+            return done err if err
+
+            request 'https://localhost:8080'
+              .del '/visualizers/Root\'s Visualizer 1'
+              .set('auth-username', testUtils.rootUser.email)
+              .set('auth-ts', authDetails.authTS)
+              .set('auth-salt', authDetails.authSalt)
+              .set('auth-token', authDetails.authToken)
+              .expect(200)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  Visualizer.find (err, visualizers) ->
+                    visualizers.length.should.be.exactly 1
+                    done()
+
+      it 'should return a 403 response if the user is not an admin', (done) ->
+        request 'https://localhost:8080'
+          .delete '/visualizers/somename'
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+
+      it 'should return a 404 when the visualizer doesn\'t exist', (done) ->
+        request 'https://localhost:8080'
+          .delete '/visualizers/idontexist'
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(404)
+          .end (err, res) ->
+            if err
+              done err
+            else
               done()
