@@ -15,7 +15,7 @@ utils = require './utils'
 _ = require 'lodash'
 
 
-trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx._id}"
+trxURL = (trx) -> "#{config.alerts.consoleURL}/#/transactions/#{trx.transactionID}"
 
 statusTemplate = (transactions, channel, alert) ->
   plain: ->
@@ -76,7 +76,7 @@ maxRetriesTemplate = (transactions, channel, alert) ->
         <body>
           <h1>OpenHIM Transactions Alert - #{config.alerts.himInstance}</h1>
           <div>
-            <p>The following transaction(s) have been retried #{channel.autoRetryMaxAttempts} times, but are still failing:</p>
+            <p>The following transaction(s) have been retried <b>#{channel.autoRetryMaxAttempts}</b> times, but are still failing:</p>
             <table>
               <tr><td>Channel - <b>#{channel.name}</b></td></td>\n
       """
