@@ -101,7 +101,7 @@ exports.userPasswordResetRequest = (email) ->
 
     consoleURL = config.alerts.consoleURL
     setPasswordLink = "#{consoleURL}/#/set-password/#{token}"
-    
+
     # Send email to user to reset password
     plainMessage = passwordResetPlainMessageTemplate user.firstname, setPasswordLink
     htmlMessage = passwordResetHtmlMessageTemplate user.firstname, setPasswordLink
@@ -115,7 +115,7 @@ exports.userPasswordResetRequest = (email) ->
     this.body = "Successfully set user token/expiry for password reset."
     this.status = 201
     logger.info "User updated token/expiry for password reset #{email}"
-  
+
   catch e
     utils.logAndSetResponse this, 500, "Could not update user with email #{email} via the API #{e}", 'error'
 

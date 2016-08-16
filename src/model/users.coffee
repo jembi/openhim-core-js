@@ -18,9 +18,9 @@ UserSchema = new Schema
   "token":              String
   "tokenType":
     type:     String
-    enum:     ['newUser', 'existingUser']
+    enum:     ['newUser', 'existingUser', null] # null is needed as we used nulls to clear to token and tokenType
   "expiry":             Date
   "locked":             Boolean
-  
+
 #compile the User Schema into a Model
 exports.User = connectionDefault.model 'User', UserSchema

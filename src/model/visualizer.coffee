@@ -30,9 +30,9 @@ VisualizerSchema = new Schema
     "height":               type: Number, default: 400
     "padding":              type: Number, default: 20
   "time":
-    "updatePeriod":         type: Number, default: 200,
-    "minDisplayPeriod":     type: Number, default: 500,
-    "maxSpeed":             type: Number, default: 5,
+    "updatePeriod":         type: Number, default: 200
+    "minDisplayPeriod":     type: Number, default: 500
+    "maxSpeed":             type: Number, default: 5
     "maxTimeout":           type: Number, default: 5000
 
 # Compile schema into Model
