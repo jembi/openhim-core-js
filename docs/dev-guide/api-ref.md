@@ -75,7 +75,7 @@ The response status code will be `200` if successful and the response body will 
 
 with a json body representing the channel to be added. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.coffee).
 
-The response code will be `201` is successful.
+The response code will be `201` if successful.
 
 #### Fetch a specific channel
 
@@ -125,7 +125,7 @@ The response status code will be `200` if successful and the response body will 
 
 with a json body representing the client to be added. See the [clients schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.coffee).
 
-The response code will be `201` is successful.
+The response code will be `201` if successful.
 
 #### Fetch a specific client
 
@@ -331,7 +331,7 @@ The response status code will be `200` if successful and the response body will 
 
 with a json body representing the user to be added. See the [users schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.coffee).
 
-The response code will be `201` is successful.
+The response code will be `201` if successful.
 
 #### Fetch a specific user by email address
 
@@ -394,7 +394,7 @@ The following query parameters are supported:
 
 with a json body representing the transaction to be added. See the [transactions schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.coffee).
 
-The response code will be `201` is successful.
+The response code will be `201` if successful.
 
 #### Fetch a specific transaction
 
@@ -446,7 +446,7 @@ The response status code will be `200` if successful and the response body will 
 
 with a json body representing the group to be added. See the [contact groups schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/contactGroups.coffee).
 
-The response code will be `201` is successful.
+The response code will be `201` if successful.
 
 #### Fetch a specific group
 
@@ -550,7 +550,7 @@ The response status code will be `200` if successful and the response body will 
 
 with a json body representing the mediator to be added. See the [mediators schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
 
-The response code will be `201` is successful.
+The response code will be `201` if successful.
 
 #### Fetch a specific mediator
 
@@ -877,13 +877,7 @@ The import checks for conflicts in the database and either updates or inserts ba
 
 The visualizer resource allows the user to manage the visualizers that are present in the system. Visualizers are only accessible by admin users and all saved visualizers can be viewed by all admin users.
 
-#### Get visualizers
-
-`GET /visualizers`
-
-This request will return a `200` response code and an array of visualizer objects conforming to the [visualizer schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/visualizer.coffee).
-
-E.g.
+An example visualizer object conforming to the [visualizer schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/visualizer.coffee):
 
 ```js
 [
@@ -954,3 +948,39 @@ E.g.
   }
 ]
 ```
+
+#### Fetch all visualizers
+
+`GET /visualizers`
+
+This request will return a `200` response code and an array of visualizer objects. 
+
+#### Fetch a specific visualizer by name
+
+`GET /visualizers/:name`
+
+This request will return a `200` response code and a visualizer object.
+
+#### Add new visualizer
+
+`POST /visualizers`
+
+with a json body representing the new visualizer to be added.
+
+The response status code will be `201` if successful.
+
+#### Update an existing visualizer by name
+
+`PUT /visualizers/:name`
+
+with a json body representing the changes to the visualizer.
+
+The response status code will be `200` if successful.
+
+#### Delete an existing visualizer by name
+
+`DELETE /visualizers/:name`
+
+Remove an existing visualizer.
+
+The response status code will be `200` if successful.
