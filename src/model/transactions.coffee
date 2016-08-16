@@ -69,14 +69,3 @@ TransactionSchema.index "request.timestamp"
 
 #compile schema into Model
 exports.Transaction = connectionDefault.model 'Transaction', TransactionSchema
-
-exports.Transaction.collection.createIndex({
-  'request.timestamp': 1
-  channelID: 1
-},
-{
-  name: 'transaction.autoRetry'
-  partialFilterExpression:
-    autoRetry: true
-    wasRerun: false
-})

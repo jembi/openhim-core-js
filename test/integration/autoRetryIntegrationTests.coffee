@@ -5,6 +5,7 @@ config.authentication = config.get('authentication')
 Channel = require("../../lib/model/channels").Channel
 Client = require("../../lib/model/clients").Client
 Transaction = require("../../lib/model/transactions").Transaction
+AutoRetry = require("../../lib/model/autoRetry").AutoRetry
 Event = require("../../lib/model/events").Event
 testUtils = require "../testUtils"
 server = require "../../lib/server"
@@ -68,10 +69,10 @@ describe "Auto Retry Integration Tests", ->
     after (done) ->
       Channel.remove { name: "TEST DATA - Will break channel" }, ->
         Client.remove { clientID: "testApp" }, ->
-          Transaction.remove {}, ->
+          Transaction.remove {}, -> AutoRetry.remove {}, ->
             done()
 
-    beforeEach (done) -> Transaction.remove {}, -> Event.remove {}, done
+    beforeEach (done) -> Transaction.remove {}, -> AutoRetry.remove {}, -> Event.remove {}, done
 
     afterEach (done) -> server.stop -> done()
 
@@ -96,6 +97,26 @@ describe "Auto Retry Integration Tests", ->
                   trx.error.should.have.property 'stack'
                   (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
                   done()
+              ), 150 * global.testTimeoutFactor
+
+    it "should push an auto retry transaction to the auto retry queue", (done) ->
+      server.start httpPort: 5001, ->
+        request("http://localhost:5001")
+          .get("/test/nowhere")
+          .auth("testApp", "password")
+          .expect(500)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              setTimeout ( ->
+                Transaction.findOne {}, (err, trx) ->
+                  return done err if err
+                  AutoRetry.findOne {}, (err, autoRetry) ->
+                    return done err if err
+                    autoRetry.transactionID.toString().should.be.equal trx._id.toString()
+                    autoRetry.channelID.toString().should.be.equal channel1._id.toString()
+                    done()
               ), 150 * global.testTimeoutFactor
 
     it "should auto retry a failed transaction", (done) ->

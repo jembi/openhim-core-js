@@ -3,29 +3,30 @@ moment = require 'moment'
 Q = require 'q'
 Channels = require('./model/channels')
 Channel = Channels.Channel
-Transaction = require('./model/transactions').Transaction
+AutoRetry = require('./model/autoRetry').AutoRetry
 Task = require('./model/tasks').Task
 
 
 getChannels = (callback) -> Channel.find autoRetryEnabled: true, status: 'enabled', callback
 
-findTransactions = (channel, callback) ->
+popTransactions = (channel, callback) ->
   to = moment().subtract channel.autoRetryPeriodMinutes-1, 'minutes'
 
   query =
     $and: [
-        'request.timestamp':
-          $lte: to.toDate()
-      ,
         channelID: channel._id
       ,
-        autoRetry: true
-      ,
-        wasRerun: false
+        'requestTimestamp':
+          $lte: to.toDate()
     ]
 
-  logger.debug "Executing query transactions.find(#{JSON.stringify query})"
-  Transaction.find query, _id: 1, callback
+  logger.debug "Executing query autoRetry.findAndRemove(#{JSON.stringify query})"
+  AutoRetry.find query, (err, transactions) ->
+    return callback err if err
+    return callback null, [] if transactions.length is 0
+    AutoRetry.remove _id: $in: (transactions.map (t) -> t._id), (err) ->
+      return callback err if err
+      callback null, transactions
 
 createRerunTask = (transactionIDs, callback) ->
   logger.info "Rerunning failed transactions: #{transactionIDs}"
@@ -50,11 +51,11 @@ autoRetryTask = (job, done) ->
       do (channel) ->
         deferred = Q.defer()
 
-        findTransactions channel, (err, results) ->
+        popTransactions channel, (err, results) ->
           if err
             logger.error err
           else if results? and results.length>0
-            transactionsToRerun.push tid for tid in (results.map((r) -> r._id))
+            transactionsToRerun.push tid for tid in (results.map((r) -> r.transactionID))
           deferred.resolve()
 
         promises.push deferred.promise
@@ -77,6 +78,6 @@ exports.setupAgenda = setupAgenda
 
 if process.env.NODE_ENV is "test"
   exports.getChannels = getChannels
-  exports.findTransactions = findTransactions
+  exports.popTransactions = popTransactions
   exports.createRerunTask = createRerunTask
   exports.autoRetryTask = autoRetryTask
