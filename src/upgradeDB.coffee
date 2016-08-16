@@ -102,27 +102,28 @@ upgradeFuncs.push
       promises = []
       users.forEach (user) ->
         if user.settings?.visualizer?
-          userDefer = Q.defer()
-          promises.push userDefer.promise
-
           vis = user.settings.visualizer
-          name = "#{user.firstname} #{user.surname}'s visualizer"
-          name = dedupName name, visNames
-          vis.name = name
-          visNames.push name
+          if vis.components.length > 0 or vis.mediators.length > 0 or vis.channels.length > 0
+            userDefer = Q.defer()
+            promises.push userDefer.promise
 
-          vis = new Visualizer vis
-          logger.debug "Migrating visualizer from user profile #{user.email}, using viualizer name '#{name}'"
-          vis.save (err, vis) ->
-            if err
-              logger.error "Error migrating visualizer from user profile #{user.email}: #{err.stack}"
-              return userDefer.reject err
+            name = "#{user.firstname} #{user.surname}'s visualizer"
+            name = dedupName name, visNames
+            vis.name = name
+            visNames.push name
 
-            # delete the visualizer settings from this user profile
-            user.set 'settings.visualizer', null
-            user.save (err, user) ->
-              if err then return userDefer.reject err
-              return userDefer.resolve()
+            vis = new Visualizer vis
+            logger.debug "Migrating visualizer from user profile #{user.email}, using visualizer name '#{name}'"
+            vis.save (err, vis) ->
+              if err
+                logger.error "Error migrating visualizer from user profile #{user.email}: #{err.stack}"
+                return userDefer.reject err
+
+              # delete the visualizer settings from this user profile
+              user.set 'settings.visualizer', null
+              user.save (err, user) ->
+                if err then return userDefer.reject err
+                return userDefer.resolve()
 
       Q.all(promises).then ->
         defer.resolve()

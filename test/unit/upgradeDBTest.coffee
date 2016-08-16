@@ -187,6 +187,30 @@ describe 'Upgrade DB Tests', ->
               name: 'OpenHIM Mediator FHIR Proxy'
               display: 'OpenHIM Mediator FHIR Proxy'
           ]
+    userObj3 =
+      firstname: "Test"
+      surname: "User3"
+      email: "test3@user.org"
+      settings:
+        visualizer:
+          color:
+            inactive: '#c8cacf'
+            active: '#10e057'
+            error: '#a84b5c'
+            text: '#4a4254'
+          size:
+            responsive: true
+            width: 1000
+            height: 400
+            paddin: 20
+          time:
+            updatePeriod: 200
+            maxSpeed: 5
+            maxTimeout: 5000
+            minDisplayPeriod: 500
+          components: []
+          channels: []
+          mediators: []
 
     before (done) ->
       User.remove () ->
@@ -249,9 +273,22 @@ describe 'Upgrade DB Tests', ->
         users[0].save (err) ->
           users[1].save (err) ->
             upgradeFunc().then ->
-              done()
+              Visualizer.find (err, visualizers) ->
+                visualizers.length.should.be.exactly 0
+                done()
             .catch (err) ->
               done err
+
+    it 'should ignore users that have visualizer settings with no mediators, components or channels', (done) ->
+      user = new User userObj3
+      user.save (err) ->
+        if err then done err
+        upgradeFunc().then ->
+          Visualizer.find (err, visualizers) ->
+            visualizers.length.should.be.exactly 2 # third user is skipped
+            done()
+        .catch (err) ->
+          done err
 
   describe 'dedupName()', ->
 
