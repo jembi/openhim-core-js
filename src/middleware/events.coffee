@@ -49,7 +49,7 @@ exports.saveEvents = saveEvents = (trxEvents, callback) ->
     events.Event.collection.insert trxEvents, (err) -> return if err then callback err else callback()
 
 
-createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment) ->
+createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment, autoRetryAttempt) ->
   if route?.request?.timestamp? and route?.response?.timestamp?
     startTS = timestampAsMillis route.request.timestamp
     endTS = timestampAsMillis route.response.timestamp
@@ -68,6 +68,7 @@ createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment) ->
       event: 'start'
       name: route.name
       mediator: route.mediatorURN
+      autoRetryAttempt: autoRetryAttempt
 
     dst.push
       channelID: channel._id
@@ -79,8 +80,9 @@ createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment) ->
       mediator: route.mediatorURN
       status: route.response.status
       statusType: determineStatusType route.response.status
+      autoRetryAttempt: autoRetryAttempt
 
-createChannelStartEvent = (dst, transactionId, requestTimestamp, channel) ->
+createChannelStartEvent = (dst, transactionId, requestTimestamp, channel, autoRetryAttempt) ->
   dst.push
     channelID: channel._id
     transactionID: transactionId
@@ -88,8 +90,9 @@ createChannelStartEvent = (dst, transactionId, requestTimestamp, channel) ->
     type: 'channel'
     event: 'start'
     name: channel.name
+    autoRetryAttempt: autoRetryAttempt
 
-createChannelEndEvent = (dst, transactionId, requestTimestamp, channel, response) ->
+createChannelEndEvent = (dst, transactionId, requestTimestamp, channel, response, autoRetryAttempt) ->
   startTS = timestampAsMillis requestTimestamp
 
   endTS = timestampAsMillis response.timestamp
@@ -104,8 +107,9 @@ createChannelEndEvent = (dst, transactionId, requestTimestamp, channel, response
     name: channel.name
     status: response.status
     statusType: determineStatusType response.status
+    autoRetryAttempt: autoRetryAttempt
 
-createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, routeName, mediatorURN, response) ->
+createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, routeName, mediatorURN, response, autoRetryAttempt) ->
   startTS = timestampAsMillis requestTimestamp
 
   dst.push
@@ -116,6 +120,7 @@ createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, route
     event: 'start'
     name: routeName
     mediator: mediatorURN
+    autoRetryAttempt: autoRetryAttempt
 
   endTS = timestampAsMillis response.timestamp
   if endTS < startTS then endTS = startTS
@@ -130,6 +135,7 @@ createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, route
     status: response.status
     statusType: determineStatusType response.status
     mediator: mediatorURN
+    autoRetryAttempt: autoRetryAttempt
 
 
 createOrchestrationEvents = (dst, transactionId, requestTimestamp, channel, orchestrations) ->
@@ -179,7 +185,7 @@ exports.koaMiddleware = (next) ->
   runAsync (ctx, done) ->
     logger.debug "Storing channel start event for transaction: #{ctx.transactionId}"
     trxEvents = []
-    createChannelStartEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel
+    createChannelStartEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.currentAttempt
     saveEvents trxEvents, done
 
   yield next
@@ -192,8 +198,8 @@ exports.koaMiddleware = (next) ->
     mediatorURN = ctx.mediatorResponse?['x-mediator-urn']
     orchestrations = ctx.mediatorResponse?.orchestrations
 
-    createPrimaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute.name, mediatorURN, ctx.response
+    createPrimaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute.name, mediatorURN, ctx.response, ctx.currentAttempt
     if orchestrations
-      createOrchestrationEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, orchestrations
-    createChannelEndEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.response
+      createOrchestrationEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, orchestrations, ctx.currentAttempt
+    createChannelEndEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.response, ctx.currentAttempt
     saveEvents trxEvents, done

@@ -21,12 +21,17 @@ ResponseDef =
   "body":       String
   "timestamp":  Date
 
+ErrorDetailsDef =
+  "message": String
+  "stack":   String
+
 # OrchestrationMetadata Schema
 OrchestrationMetadataDef =
   "name" :      type: String, required: true
   "group" :     String
   "request":    type: RequestDef, required: false # this is needed to prevent Validation error, see https://github.com/jembi/openhim-console/issues/356#issuecomment-188708443
   "response":   ResponseDef
+  "error":      ErrorDetailsDef
 
 # Route Schema
 RouteMetadataDef =
@@ -34,21 +39,26 @@ RouteMetadataDef =
   "request":        RequestDef
   "response":       ResponseDef
   "orchestrations": [OrchestrationMetadataDef]
-  "properties":      Object
+  "properties":     Object
+  "error":          ErrorDetailsDef
 
 # Trasnaction schema
 TransactionSchema = new Schema
-  "clientID":       Schema.Types.ObjectId
-  "clientIP":       String
-  "parentID":       Schema.Types.ObjectId
-  "childIDs":       [Schema.Types.ObjectId]
-  "channelID":      type: Schema.Types.ObjectId, index: true
-  "request":        RequestDef
-  "response":       ResponseDef
-  "routes":         [RouteMetadataDef]
-  "orchestrations": [OrchestrationMetadataDef]
-  "properties":     Object
-  "canRerun":       type: Boolean, default: true
+  "clientID":           Schema.Types.ObjectId
+  "clientIP":           String
+  "parentID":           Schema.Types.ObjectId
+  "childIDs":           [Schema.Types.ObjectId]
+  "channelID":          type: Schema.Types.ObjectId, index: true
+  "request":            RequestDef
+  "response":           ResponseDef
+  "routes":             [RouteMetadataDef]
+  "orchestrations":     [OrchestrationMetadataDef]
+  "properties":         Object
+  "canRerun":           type: Boolean, default: true
+  "autoRetry":          type: Boolean, default: false # auto rerun this transaction (e.g. if error'd)
+  "autoRetryAttempt":   Number
+  "wasRerun":           type: Boolean, default: false
+  "error":              ErrorDetailsDef
   "status":
     type:     String
     required: true

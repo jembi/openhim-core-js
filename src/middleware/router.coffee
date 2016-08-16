@@ -91,11 +91,22 @@ setCookiesOnContext = (ctx, value) ->
     for p_key,p_val of c_vals
       ctx.cookies.set p_key,p_val,c_opts
 
-handleServerError = (ctx, err) ->
-  ctx.response.status = 500
-  ctx.response.timestamp = new Date()
-  ctx.response.body = "An internal server error occurred"
-  logger.error "Internal server error occured: #{err} "
+handleServerError = (ctx, err, route) ->
+  ctx.autoRetry = true
+  if route
+    route.error =
+      message: err.message
+      stack: err.stack if err.stack
+  else
+    ctx.response.status = 500
+    ctx.response.timestamp = new Date()
+    ctx.response.body = "An internal server error occurred"
+    # primary route error
+    ctx.error =
+      message: err.message
+      stack: err.stack if err.stack
+
+  logger.error "[#{ctx.transactionId?.toString()}] Internal server error occured: #{err}"
   logger.error "#{err.stack}" if err.stack
 
 
@@ -150,6 +161,11 @@ sendRequestToRoutes = (ctx, routes, next) ->
               # handle mediator reponse
               responseObj = JSON.parse response.body
               ctx.mediatorResponse = responseObj
+
+              if responseObj.error?
+                ctx.autoRetry = true
+                ctx.error = responseObj.error
+
               # then set koa response from responseObj.response
               setKoaResponse ctx, responseObj.response
             else
@@ -207,7 +223,7 @@ sendRequestToRoutes = (ctx, routes, next) ->
           done = (err) -> logger.error err if err
           trxEvents = []
 
-          events.createSecondaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes
+          events.createSecondaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt
           events.saveEvents trxEvents, done
 
 
@@ -242,7 +258,10 @@ buildNonPrimarySendRequestPromise = (ctx, route, options, path) ->
     return routeObj
   .fail (reason) ->
     # on failure
-    handleServerError ctx, reason
+    routeObj = {}
+    routeObj.name = route.name
+    handleServerError ctx, reason, routeObj
+    return routeObj
 
 sendRequest = (ctx, route, options) ->
   if route.type is 'tcp' or route.type is 'mllp'

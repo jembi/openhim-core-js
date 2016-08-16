@@ -1,5 +1,6 @@
 Task = require('../model/tasks').Task
 Transaction = require('../model/transactions').Transaction
+AutoRetry = require('../model/autoRetry').AutoRetry
 Channels = require('../model/channels')
 Channel = Channels.Channel
 Q = require 'q'
@@ -139,6 +140,9 @@ exports.addTask = ->
 
       # All ok! So set the result
       utils.logAndSetResponse this, 201, "User #{this.authenticated.email} created task with id #{task.id}", 'info'
+
+      # Clear the transactions out of the auto retry queue, in case they're in there
+      AutoRetry.remove transactionID: $in: transactions.tids, (err) -> logger.err err if err
     else
       # rerun task creation not allowed
       utils.logAndSetResponse this, 403, "Insufficient permissions prevents this rerun task from being created", 'error'

@@ -1,6 +1,8 @@
 transactions = require "../model/transactions"
 logger = require "winston"
 Q = require "q"
+_ = require 'lodash'
+AutoRetry = require('../model/autoRetry').AutoRetry
 
 config = require '../config/config'
 statsdServer = config.get 'statsd'
@@ -53,6 +55,9 @@ exports.storeTransaction = (ctx, done) ->
     tx.parentID = ctx.parentID
     tx.taskID = ctx.taskID
 
+  if ctx.currentAttempt
+    tx.autoRetryAttempt = ctx.currentAttempt
+
   # check if channel request body is false and remove - or if request body is empty
   if ctx.authorisedChannel.requestBody == false || tx.request.body == ''
     # reset request body
@@ -86,7 +91,9 @@ exports.storeResponse = (ctx, done) ->
     # reset request body - primary route
     res.body = ''
 
-  update = { response: res }
+  update =
+    response: res
+    error: ctx.error
 
   # Set status from mediator
   if ctx.mediatorResponse?.status?
@@ -129,9 +136,10 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
     transactionId = ctx.transactionId.toString()
 
   transactions.Transaction.findById transactionId, (err, tx) ->
+    update = {}
+
     if ctx.mediatorResponse?.status?
       logger.info "The transaction status has been set to #{ctx.mediatorResponse.status} by the mediator"
-      callback tx
     else
       routeFailures = false
       routeSuccess = true
@@ -159,13 +167,36 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
       ctx.transactionStatus = tx.status
 
       logger.info "Final status for transaction #{tx._id} : #{tx.status}"
-      transactions.Transaction.findByIdAndUpdate transactionId, {status: tx.status}, { },  (err,tx) ->
-        tx.save
-        callback tx
+      update.status = tx.status
 
-        if config.statsd.enabled
-          stats.incrementTransactionCount ctx, ->
-          stats.measureTransactionDuration ctx, ->
+    reachedMaxAttempts = -> ctx.authorisedChannel.autoRetryMaxAttempts? and
+      ctx.authorisedChannel.autoRetryMaxAttempts > 0 and
+      tx.autoRetryAttempt >= ctx.authorisedChannel.autoRetryMaxAttempts
+
+    if ctx.autoRetry?
+      if not reachedMaxAttempts()
+        update.autoRetry = ctx.autoRetry
+      else
+        update.autoRetry = false
+
+    if _.isEmpty update then return callback tx # nothing to do
+
+    transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err,tx) ->
+      callback tx
+
+      # queue for autoRetry
+      if update.autoRetry
+        retry = new AutoRetry
+          transactionID: tx._id
+          channelID: tx.channelID
+          requestTimestamp: tx.request.timestamp
+        retry.save (err) ->
+          if err
+            logger.error "Failed to queue transaction #{tx._id} for auto retry: #{err}"
+
+      if config.statsd.enabled
+        stats.incrementTransactionCount ctx, ->
+        stats.measureTransactionDuration ctx, ->
 
 
 

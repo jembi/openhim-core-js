@@ -19,11 +19,18 @@ RouteDef =
   "status":             type: String, default: 'enabled', enum: ['enabled', 'disabled']
   "forwardAuthHeader":  type: Boolean, default: false
 
+# Channel alerts
+#
+# The following alert conditions are supported:
+# * status: match on a specific transaction status (404, 5xx). Supports failure rates.
+# * auto-retry-max-attempted: triggers when a failing transaction has reach the max number of auto retries
+#
 AlertsDef =
-  "status":       type: String, required: true
+  "condition":    type: String, default: 'status', enum: ['status', 'auto-retry-max-attempted']
+  "status":       type: String
+  "failureRate":  Number
   "groups":       [Schema.Types.ObjectId]
   "users":        [ContactUserDef]
-  "failureRate":  Number
 
 RewriteRuleDef =
   "fromHost":       type: String, required: true
@@ -33,34 +40,37 @@ RewriteRuleDef =
   "pathTransform":  String
 
 ChannelDef =
-  "name":               type: String, required: true
-  "description":        String
-  "urlPattern":         type: String, required: true
-  "type":               type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
-  "priority":           type: Number, min: 1
-  "tcpPort":            type: Number, min: 0, max: 65536
-  "tcpHost":            String
-  "pollingSchedule":    String
-  "requestBody":        Boolean
-  "responseBody":       Boolean
-  "allow":              [type: String, required: true]
-  "whitelist" :         [String]
-  "authType":           type: String, default: 'private', enum: ['private', 'public']
-  "routes":             [RouteDef]
-  "matchContentTypes":  [String]
-  "matchContentRegex":  String
-  "matchContentXpath":  String
-  "matchContentJson":   String
-  "matchContentValue":  String
-  "properties":         [Object]
-  "txViewAcl":          [String]
-  "txViewFullAcl":      [String]
-  "txRerunAcl":         [String]
-  "alerts":             [AlertsDef]
-  "status":             type: String, default: 'enabled', enum: ['enabled', 'disabled', 'deleted']
-  "rewriteUrls":        type: Boolean, default: false
-  "addAutoRewriteRules": type: Boolean, default: true
-  "rewriteUrlsConfig":  [RewriteRuleDef]
+  "name":                   type: String, required: true
+  "description":            String
+  "urlPattern":             type: String, required: true
+  "type":                   type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
+  "priority":               type: Number, min: 1
+  "tcpPort":                type: Number, min: 0, max: 65536
+  "tcpHost":                String
+  "pollingSchedule":        String
+  "requestBody":            Boolean
+  "responseBody":           Boolean
+  "allow":                  [type: String, required: true]
+  "whitelist" :             [String]
+  "authType":               type: String, default: 'private', enum: ['private', 'public']
+  "routes":                 [RouteDef]
+  "matchContentTypes":      [String]
+  "matchContentRegex":      String
+  "matchContentXpath":      String
+  "matchContentJson":       String
+  "matchContentValue":      String
+  "properties":             [Object]
+  "txViewAcl":              [String]
+  "txViewFullAcl":          [String]
+  "txRerunAcl":             [String]
+  "alerts":                 [AlertsDef]
+  "status":                 type: String, default: 'enabled', enum: ['enabled', 'disabled', 'deleted']
+  "rewriteUrls":            type: Boolean, default: false
+  "addAutoRewriteRules":     type: Boolean, default: true
+  "rewriteUrlsConfig":      [RewriteRuleDef]
+  "autoRetryEnabled":       type: Boolean, default: false
+  "autoRetryPeriodMinutes": type: Number, default: 60, min: 1
+  "autoRetryMaxAttempts":   type: Number, min: 0 # 0 means unlimited
 
 # Expose the route schema
 exports.RouteDef = RouteDef

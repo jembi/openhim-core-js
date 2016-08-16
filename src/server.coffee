@@ -57,6 +57,7 @@ tcpAdapter = require './tcpAdapter'
 auditing = require './auditing'
 tasks = require './tasks'
 upgradeDB = require './upgradeDB'
+autoRetry = require './autoRetry'
 
 clusterArg = nconf.get 'cluster'
 
@@ -236,6 +237,7 @@ else
     agenda.on "ready", () ->
       alerts.setupAgenda agenda if config.alerts.enableAlerts
       reports.setupAgenda agenda if config.reports.enableReports
+      autoRetry.setupAgenda agenda
       if config.polling.enabled
         polling.setupAgenda agenda, ->
           # give workers a change to setup agenda tasks
