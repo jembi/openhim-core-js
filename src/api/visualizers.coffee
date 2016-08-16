@@ -1,3 +1,4 @@
+logger = require 'winston'
 Visualizer = require('../model/visualizer').Visualizer
 authorisation = require './authorisation'
 Q = require 'q'
@@ -39,4 +40,21 @@ exports.addNewVisualizer = ->
   catch err
     # Error! So inform the user
     utils.logAndSetResponse this, 400, "Could not add visualizer via the API: #{err}", 'error'
-  
+
+exports.removeVisualizer = (name) ->
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeVisualizer denied.", 'info'
+    return
+
+  name = unescape name
+
+  try
+    v = yield Visualizer.findOneAndRemove(name: name).exec()
+    if not v
+      return utils.logAndSetResponse this, 404, "Could not find visualizer with #{name}", 'info'
+
+    this.body = "Successfully removed visualizer with name #{name}"
+    logger.info "User #{this.authenticated.email} removed visualizer #{name}"
+  catch e
+    utils.logAndSetResponse this, 500, "Could not remove visualizer #{name} via the API #{e}", 'error'
