@@ -5,8 +5,9 @@ moment = require "moment"
 autoRetry = require "../../lib/autoRetry"
 testUtils = require "../testUtils"
 Channel = require("../../lib/model/channels").Channel
-Transaction = require("../../lib/model/transactions").Transaction
+AutoRetry = require("../../lib/model/autoRetry").AutoRetry
 Task = require("../../lib/model/tasks").Task
+ObjectId = require('mongoose').Types.ObjectId
 
 
 retryChannel = new Channel
@@ -36,65 +37,22 @@ disabledChannel = new Channel
   autoRetryEnabled: true
   status: 'disabled'
 
-retryTransaction1 = new Transaction
-  request: {
-    path: '/sample/api',
-    method: 'GET',
-    timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
-  }
-  status: 'Failed'
-  autoRetry: true
-  error:
-    message: 'Connection refused'
+retryTransaction1 = new AutoRetry
+  transactionID: ObjectId '53e096fea0af3105689aaaaa'
+  requestTimestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
 
-retryTransaction2 = new Transaction
-  request: {
-    path: '/sample/api',
-    method: 'GET',
-    timestamp: new Date()
-  }
-  status: 'Failed'
-  autoRetry: true
-  error:
-    message: 'Connection refused'
+retryTransaction2 = new AutoRetry
+  transactionID: ObjectId '53e096fea0af3105689bbbbb'
+  requestTimestamp: new Date()
 
-retryTransaction3 = new Transaction
-  request: {
-    path: '/sample/api',
-    method: 'GET',
-    timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
-  }
-  status: 'Failed'
-  autoRetry: true
-  error:
-    message: 'Connection refused'
-  childIDs: ['bbb908908ccc98cc1d0888aa']
-  wasRerun: true
-
-retryTransaction4 = new Transaction
-  request: {
-    path: '/sample/api',
-    method: 'GET',
-    timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
-  }
-  status: 'Successful'
-  autoRetry: false
-
-retryTransaction5 = new Transaction
-  request: {
-    path: '/sample/api',
-    method: 'GET',
-    timestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
-  }
-  status: 'Failed'
-  autoRetry: true
-  error:
-    message: 'Connection refused'
+retryTransaction3 = new AutoRetry
+  transactionID: ObjectId '53e096fea0af3105689ccccc'
+  requestTimestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
 
 
 describe "Auto Retry Task", ->
   afterEach (done) ->
-    Channel.remove {}, -> Transaction.remove {}, -> Task.remove {}, ->
+    Channel.remove {}, -> AutoRetry.remove {}, -> Task.remove {}, ->
       retryChannel.isNew = true
       delete retryChannel._id
       retryChannel2.isNew = true
@@ -109,8 +67,6 @@ describe "Auto Retry Task", ->
       delete retryTransaction2._id
       retryTransaction3.isNew = true
       delete retryTransaction3._id
-      retryTransaction4.isNew = true
-      delete retryTransaction4._id
       done()
 
 
@@ -138,12 +94,12 @@ describe "Auto Retry Task", ->
           results[0]._id.equals(retryChannel._id).should.be.true
           done()
 
-  describe ".findTransactions", ->
+  describe ".popTransactions", ->
     it "should return transactions that can be retried", (done) ->
       retryChannel.save ->
         retryTransaction1.channelID = retryChannel._id
         retryTransaction1.save ->
-          autoRetry.findTransactions retryChannel, (err, results) ->
+          autoRetry.popTransactions retryChannel, (err, results) ->
             results.length.should.be.exactly 1
             results[0]._id.equals(retryTransaction1._id).should.be.true
             done()
@@ -153,41 +109,8 @@ describe "Auto Retry Task", ->
         retryTransaction1.channelID = retryChannel._id
         retryTransaction2.channelID = retryChannel._id
         retryTransaction1.save -> retryTransaction2.save ->
-          autoRetry.findTransactions retryChannel, (err, results) ->
+          autoRetry.popTransactions retryChannel, (err, results) ->
             # should not return retryTransaction2 (too new)
-            results.length.should.be.exactly 1
-            results[0]._id.equals(retryTransaction1._id).should.be.true
-            done()
-
-    it "should not return transactions that have already been rerun", (done) ->
-      retryChannel.save ->
-        retryTransaction1.channelID = retryChannel._id
-        retryTransaction3.channelID = retryChannel._id
-        retryTransaction1.save -> retryTransaction3.save ->
-          autoRetry.findTransactions retryChannel, (err, results) ->
-            # should not return retryTransaction3 (already rerun)
-            results.length.should.be.exactly 1
-            results[0]._id.equals(retryTransaction1._id).should.be.true
-            done()
-
-    it "should efficiently project the results as only the _id is required", (done) ->
-      retryChannel.save ->
-        retryTransaction1.channelID = retryChannel._id
-        retryTransaction1.save ->
-          autoRetry.findTransactions retryChannel, (err, results) ->
-            results.length.should.be.exactly 1
-            should.exist results[0]._id
-            should.not.exist results[0].request.url
-            should.not.exist results[0].path
-            done()
-
-    it "should not return transactions that succeeded", (done) ->
-      retryChannel.save ->
-        retryTransaction1.channelID = retryChannel._id
-        retryTransaction4.channelID = retryChannel._id
-        retryTransaction1.save -> retryTransaction4.save ->
-          autoRetry.findTransactions retryChannel, (err, results) ->
-            # should not return retryTransaction4 (succeeded)
             results.length.should.be.exactly 1
             results[0]._id.equals(retryTransaction1._id).should.be.true
             done()
@@ -197,12 +120,12 @@ describe "Auto Retry Task", ->
       retryChannel.save ->
         retryTransaction1.channelID = retryChannel._id
         retryTransaction1.save ->
-          autoRetry.createRerunTask [retryTransaction1._id], (err) ->
+          autoRetry.createRerunTask [retryTransaction1.transactionID], (err) ->
             return done err if err
             Task.find {}, (err, results) ->
               results.length.should.be.exactly 1
               results[0].transactions.length.should.be.exactly 1
-              results[0].transactions[0].tid.should.be.exactly retryTransaction1._id.toString()
+              results[0].transactions[0].tid.should.be.exactly retryTransaction1.transactionID.toString()
               results[0].totalTransactions.should.be.exactly 1
               results[0].remainingTransactions.should.be.exactly 1
               results[0].user.should.be.exactly 'internal'
@@ -217,20 +140,21 @@ describe "Auto Retry Task", ->
             Task.find {}, (err, results) ->
               results.length.should.be.exactly 1
               results[0].transactions.length.should.be.exactly 1
-              results[0].transactions[0].tid.should.be.exactly retryTransaction1._id.toString()
+              results[0].transactions[0].tid.should.be.exactly retryTransaction1.transactionID.toString()
               done()
 
     it "should create a single task for all transactions", (done) ->
       retryChannel.save -> retryChannel2.save ->
         retryTransaction1.channelID = retryChannel._id
-        retryTransaction5.channelID = retryChannel2._id
-        retryTransaction1.save -> retryTransaction5.save ->
+        retryTransaction3.channelID = retryChannel2._id
+        retryTransaction1.save -> retryTransaction3.save ->
           autoRetry.autoRetryTask null, () ->
             Task.find {}, (err, results) ->
               results.length.should.be.exactly 1
               results[0].transactions.length.should.be.exactly 2
-              results[0].transactions[0].tid.should.be.exactly retryTransaction1._id.toString()
-              results[0].transactions[1].tid.should.be.exactly retryTransaction5._id.toString()
+              tids = results[0].transactions.map (t) -> t.tid
+              tids.should.containEql retryTransaction1.transactionID.toString()
+              tids.should.containEql retryTransaction3.transactionID.toString()
               done()
 
     it "should only create a task if there are transactions to rerun", (done) ->

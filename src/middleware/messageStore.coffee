@@ -2,6 +2,7 @@ transactions = require "../model/transactions"
 logger = require "winston"
 Q = require "q"
 _ = require 'lodash'
+AutoRetry = require('../model/autoRetry').AutoRetry
 
 config = require '../config/config'
 statsdServer = config.get 'statsd'
@@ -182,6 +183,16 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
 
     transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err,tx) ->
       callback tx
+
+      # queue for autoRetry
+      if update.autoRetry
+        retry = new AutoRetry
+          transactionID: tx._id
+          channelID: tx.channelID
+          requestTimestamp: tx.request.timestamp
+        retry.save (err) ->
+          if err
+            logger.error "Failed to queue transaction #{tx._id} for auto retry: #{err}"
 
       if config.statsd.enabled
         stats.incrementTransactionCount ctx, ->
