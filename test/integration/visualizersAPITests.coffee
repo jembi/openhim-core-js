@@ -74,7 +74,7 @@ describe 'API Integration Tests', ->
       Visualizer.remove {}, ->
         done()
 
-    describe '*getAllVisualizers()', ->
+    describe '*getVisualizers()', ->
 
       it 'should return a 200 response with a list of saved visualizers', (done) ->
         vis1 = _.assign {}, visObj
@@ -97,15 +97,14 @@ describe 'API Integration Tests', ->
               .set('auth-token', authDetails.authToken)
               .expect(200)
               .end (err, res) ->
-                if err
-                  done err
-                else
-                  res.body.should.be.an.Array()
-                  res.body.length.should.be.exactly 2
-                  names = res.body.map (vis) -> vis.name
-                  ('Visualizer1' in names).should.be.true()
-                  ('Visualizer2' in names).should.be.true()
-                  done()
+                return done err if err
+                
+                res.body.should.be.an.Array()
+                res.body.length.should.be.exactly 2
+                names = res.body.map (vis) -> vis.name
+                ('Visualizer1' in names).should.be.true()
+                ('Visualizer2' in names).should.be.true()
+                done()
 
       it 'should return a 403 response if the user is not an admin', (done) ->
         request 'https://localhost:8080'
@@ -116,10 +115,8 @@ describe 'API Integration Tests', ->
           .set('auth-token', authDetails.authToken)
           .expect(403)
           .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+            return done err if err
+            done()
 
       it 'should return an empty array if there are no visualizers', (done) ->
         request 'https://localhost:8080'
@@ -130,13 +127,190 @@ describe 'API Integration Tests', ->
           .set('auth-token', authDetails.authToken)
           .expect(200)
           .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.should.be.an.Array()
-              res.body.length.should.be.exactly 0
+            return done err if err
+            
+            res.body.should.be.an.Array()
+            res.body.length.should.be.exactly 0
+            done()
+
+
+    describe '*getVisualizer(name)', ->
+
+      it 'should return a 200 response with a specific visualizer', (done) ->
+        vis1 = _.assign {}, visObj
+        vis1.name = 'Visualizer1'
+        vis1 = new Visualizer vis1
+        vis2 = _.assign {}, visObj
+        vis2.name = 'Visualizer2'
+        vis2 = new Visualizer vis2
+
+        vis1.save (err) ->
+          return done err if err
+          vis2.save (err) ->
+            return done err if err
+
+            request 'https://localhost:8080'
+              .get '/visualizers/Visualizer1'
+              .set('auth-username', testUtils.rootUser.email)
+              .set('auth-ts', authDetails.authTS)
+              .set('auth-salt', authDetails.authSalt)
+              .set('auth-token', authDetails.authToken)
+              .expect(200)
+              .end (err, res) ->
+                return done err if err
+                
+                res.body.should.be.an.Object()
+                res.body.should.have.property("name", "Visualizer1")
+                done()
+
+      it 'should return a 403 response if the user is not an admin', (done) ->
+        request 'https://localhost:8080'
+          .get '/visualizers/Visualizer1'
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(403)
+          .end (err, res) ->
+            return done err if err
+            done()
+
+      it 'should return 404 with message if no visualizers match the name', (done) ->
+        request 'https://localhost:8080'
+          .get '/visualizers/Visualizer1'
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(404)
+          .end (err, res) ->
+            return done err if err
+            
+            res.text.should.equal "Visualizer with name Visualizer1 could not be found."
+            done()
+
+
+    describe '*addVisualizer()', ->
+
+      it 'should add a visualizer and return a 201 response', (done) ->
+        request 'https://localhost:8080'
+          .post '/visualizers'
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(_.assign {}, visObj)
+          .expect(201)
+          .end (err, res) ->
+            return done err if err
+            
+            Visualizer.findOne { name: "Visualizer1" }, (err, vis) ->
+              return done err if err
               done()
 
+      it 'should return a 403 response if the user is not an admin', (done) ->
+        request 'https://localhost:8080'
+          .post '/visualizers'
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(_.assign {}, visObj)
+          .expect(403)
+          .end (err, res) ->
+            return done err if err
+            done()
+
+      it 'should return 404 if no request object is sent', (done) ->
+        request 'https://localhost:8080'
+          .post '/visualizers'
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send()
+          .expect(404)
+          .end (err, res) ->
+            return done err if err
+            
+            res.text.should.equal "Cannot Add Visualizer, no request object"
+            done()
+
+
+    describe '*updateVisualizer(name)', ->
+
+      it 'should update a specific visualizer and return a 200 response', (done) ->
+        vis1 = _.assign {}, visObj
+        vis1.name = 'Visualizer1'
+        vis1 = new Visualizer vis1
+        
+        visUpdate = _.assign {}, visObj
+        visUpdate.name = 'VisualizerUpdate1'
+        visUpdate.color.inactive = '#11111'
+        
+        vis1.save (err) ->
+          return done err if err
+
+          request 'https://localhost:8080'
+            .put '/visualizers/Visualizer1'
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .send(visUpdate)
+            .expect(200)
+            .end (err, res) ->
+              return done err if err
+              
+              Visualizer.findOne { name: "VisualizerUpdate1" }, (err, vis) ->
+                return done err if err
+                vis.color.should.have.property "inactive", "#11111"
+                done()
+
+      it 'should return a 403 response if the user is not an admin', (done) ->
+        request 'https://localhost:8080'
+          .put '/visualizers/Visualizer1'
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(_.assign {}, visObj)
+          .expect(403)
+          .end (err, res) ->
+            return done err if err
+            done()
+
+      it 'should return 404 if no request object is sent', (done) ->
+        request 'https://localhost:8080'
+          .put '/visualizers/Visualizer1'
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send()
+          .expect(404)
+          .end (err, res) ->
+            return done err if err
+            
+            res.text.should.equal "Cannot Update Visualizer with name Visualizer1, no request object"
+            done()
+
+      it 'should return 404 if no visualizers match the name', (done) ->
+        request 'https://localhost:8080'
+          .put '/visualizers/Visualizer1'
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(_.assign {}, visObj)
+          .expect(404)
+          .end (err, res) ->
+            return done err if err
+            
+            res.text.should.equal "Cannot Update Visualizer with name Visualizer1, Visualizer1 does not exist"
+            done()
+  
+  
     describe '*removeVisualizer(name)', ->
 
       it 'should sucessfully remove a visualizer', (done) ->
@@ -160,12 +334,11 @@ describe 'API Integration Tests', ->
               .set('auth-token', authDetails.authToken)
               .expect(200)
               .end (err, res) ->
-                if err
-                  done err
-                else
-                  Visualizer.find (err, visualizers) ->
-                    visualizers.length.should.be.exactly 1
-                    done()
+                return done err if err
+                
+                Visualizer.find (err, visualizers) ->
+                  visualizers.length.should.be.exactly 1
+                  done()
 
       it 'should return a 403 response if the user is not an admin', (done) ->
         request 'https://localhost:8080'
@@ -176,10 +349,8 @@ describe 'API Integration Tests', ->
           .set('auth-token', authDetails.authToken)
           .expect(403)
           .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+            return done err if err
+            done()
 
       it 'should return a 404 when the visualizer doesn\'t exist', (done) ->
         request 'https://localhost:8080'
@@ -190,7 +361,5 @@ describe 'API Integration Tests', ->
           .set('auth-token', authDetails.authToken)
           .expect(404)
           .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+            return done err if err
+            done()
