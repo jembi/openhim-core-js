@@ -177,6 +177,14 @@ testTransactions = [
     event: 'end'
     status: 500
     autoRetryAttempt: 3
+
+  # 11
+  new Event
+    transactionID: 'aaa908908bbb98cc1daaaaa9'
+    route: 'primary'
+    event: 'end'
+    status: 200
+    autoRetryAttempt: 3
 ]
 
 dateFrom = new Date()
@@ -196,6 +204,7 @@ describe "Transaction Alerts", ->
             testTransactions[8].channelID = autoRetryChannel._id
             testTransactions[9].channelID = autoRetryChannel._id
             testTransactions[10].channelID = autoRetryChannel._id
+            testTransactions[11].channelID = autoRetryChannel._id
             done()
 
   after (done) ->
@@ -358,6 +367,13 @@ describe "Transaction Alerts", ->
         alerts.findTransactionsMaxRetried autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) ->
           results.length.should.be.exactly 1
           results[0]._id.equals(testTransactions[9]._id).should.be.true()
+          done()
+
+    it "should not return successful transactions that have reached max retries", (done) ->
+      testTransactions[11].save (err) ->
+        return done err if err
+        alerts.findTransactionsMaxRetried autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) ->
+          results.length.should.be.exactly 0
           done()
 
     it "should not return duplicate transaction IDs where multiple events exist for the same transaction", (done) ->

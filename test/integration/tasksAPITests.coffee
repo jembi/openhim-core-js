@@ -3,12 +3,14 @@ request = require "supertest"
 server = require "../../lib/server"
 Task = require("../../lib/model/tasks").Task
 Transaction = require("../../lib/model/transactions").Transaction
+AutoRetry = require("../../lib/model/autoRetry").AutoRetry
 Channel = require("../../lib/model/channels").Channel
 testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 
 config = require("../../lib/config/config")
 MongoClient = require("mongodb").MongoClient
+ObjectId = require('mongoose').Types.ObjectId
 
 describe "API Integration Tests", ->
 
@@ -393,6 +395,46 @@ describe "API Integration Tests", ->
                 task.transactions.should.have.length 3
                 task.should.have.property "remainingTransactions", 3
                 done()
+
+      it 'should clear the transactions in a new task out of the auto retry queue', (done) ->
+        newTask =
+          tids: [ "888888888888888888888888", "999999999999999999999999" ]
+
+        AutoRetry.remove {}, (err) ->
+          return done err if err
+
+          retry1 = new AutoRetry
+            transactionID: ObjectId '888888888888888888888888'
+            channelID: ObjectId '222222222222222222222222'
+            requestTimestamp: new Date()
+          retry2 = new AutoRetry
+            transactionID: ObjectId '999999999999999999999999'
+            channelID: ObjectId '222222222222222222222222'
+            requestTimestamp: new Date()
+          retry3 = new AutoRetry
+            transactionID: ObjectId '111119999999999999999999'
+            channelID: ObjectId '222222222222222222222222'
+            requestTimestamp: new Date()
+          retry1.save -> retry2.save -> retry3.save ->
+            request("https://localhost:8080")
+              .post("/tasks")
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .send(newTask)
+              .expect(201)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  setTimeout ( ->
+                    AutoRetry.find {}, (err, results) ->
+                      results.length.should.be.exactly 1
+                      # retry3 not in task
+                      results[0].transactionID.toString().should.be.equal retry3.transactionID.toString()
+                      done()
+                  ), 100 * global.testTimeoutFactor
 
     describe '*getTask(taskId)', ->
 

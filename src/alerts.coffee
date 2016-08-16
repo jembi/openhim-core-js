@@ -182,6 +182,7 @@ findTransactionsMaxRetried = (channel, alert, dateFrom, callback) ->
       created: $gte: dateFrom
       channelID: channel._id
       event: 'end'
+      status: 500
       autoRetryAttempt: channel.autoRetryMaxAttempts
     }, { 'transactionID' }
     .hint created: 1
