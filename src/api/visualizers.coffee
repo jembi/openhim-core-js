@@ -1,34 +1,111 @@
-logger = require 'winston'
 Visualizer = require('../model/visualizer').Visualizer
 authorisation = require './authorisation'
+Q = require 'q'
 utils = require '../utils'
+logger = require 'winston'
 
-exports.getAllVisualizers = ->
+
+# Endpoint that returns all visualizers
+exports.getVisualizers = ->
+  
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getAllVisualizers denied.", 'info'
-    return
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getVisualizers denied.", 'info'
 
   try
-    v = yield Visualizer.find().exec()
-    this.body = v
+    this.body = yield Visualizer.find().exec()
   catch err
     utils.logAndSetResponse this, 500, "Could not fetch visualizers via the API: #{err}", 'error'
 
-exports.removeVisualizer = (name) ->
+
+
+# Endpoint that returns specific visualizer by visualizerId
+exports.getVisualizer = (visualizerId) ->
+  
   # Must be admin
   if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeVisualizer denied.", 'info'
-    return
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getVisualizer denied.", 'info'
+  
+  visualizerId = unescape visualizerId
+  
+  try
+    result = yield Visualizer.findById(visualizerId).exec()
+    if not result
+      this.body = "Visualizer with _id #{visualizerId} could not be found."
+      this.status = 404
+    else
+      this.body = result
+  catch err
+    utils.logAndSetResponse this, 500, "Could not fetch visualizer via the API: #{err}", 'error'
 
-  name = unescape name
+
+
+# Endpoint to add new visualizer
+exports.addVisualizer = ->
+  
+  # Must be admin user
+  if not authorisation.inGroup 'admin', this.authenticated
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addVisualizer denied.", 'info'
+
+  visualizerData = this.request.body
+  if not visualizerData
+    return utils.logAndSetResponse this, 404, "Cannot Add Visualizer, no request object", 'info'
 
   try
-    v = yield Visualizer.findOneAndRemove(name: name).exec()
-    if not v
-      return utils.logAndSetResponse this, 404, "Could not find visualizer with #{name}", 'info'
+    visualizer = new Visualizer visualizerData
+    result = yield Q.ninvoke visualizer, 'save'
 
-    this.body = "Successfully removed visualizer with name #{name}"
-    logger.info "User #{this.authenticated.email} removed visualizer #{name}"
+    this.body = 'Visualizer successfully created'
+    this.status = 201
+    logger.info 'User %s created visualizer with id %s', this.authenticated.email, visualizer.id
+  catch err
+    utils.logAndSetResponse this, 500, "Could not add visualizer via the API: #{err}", 'error'
+
+
+
+# Endpoint to update specific visualizer by visualizerId
+exports.updateVisualizer = (visualizerId) ->
+  
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateVisualizer denied.", 'info'
+
+  visualizerData = this.request.body
+  if not visualizerData
+    return utils.logAndSetResponse this, 404, "Cannot Update Visualizer with _id #{visualizerId}, no request object", 'info'
+  
+  visualizerId = unescape visualizerId
+  
+  # Ignore _id if it exists, a user shouldn't be able to update the internal id
+  delete visualizerData._id if visualizerData._id
+  
+  try
+    result = yield Visualizer.findByIdAndUpdate(visualizerId, visualizerData).exec()
+    if not result
+      return utils.logAndSetResponse this, 404, "Cannot Update Visualizer with _id #{visualizerId}, does not exist", 'info'
+      
+    this.body = "Successfully updated visualizer with _id #{visualizerId}"
+    logger.info "User #{this.authenticated.email} updated visualizer with _id #{visualizerId}"
   catch e
-    utils.logAndSetResponse this, 500, "Could not remove visualizer #{name} via the API #{e}", 'error'
+    utils.logAndSetResponse this, 500, "Could not update visualizer with _id #{visualizerId} via the API #{e}", 'error'
+
+
+
+# Endpoint to remove specific visualizer by visualizerId
+exports.removeVisualizer = (visualizerId) ->
+  
+  # Must be admin
+  if not authorisation.inGroup 'admin', this.authenticated
+    return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeVisualizer denied.", 'info'
+
+  visualizerId = unescape visualizerId
+
+  try
+    v = yield Visualizer.findByIdAndRemove(visualizerId).exec()
+    if not v
+      return utils.logAndSetResponse this, 404, "Could not find visualizer with _id #{visualizerId}", 'info'
+
+    this.body = "Successfully removed visualizer with _id #{visualizerId}"
+    logger.info "User #{this.authenticated.email} removed visualizer with _id #{visualizerId}"
+  catch e
+    utils.logAndSetResponse this, 500, "Could not remove visualizer with _id #{visualizerId} via the API #{e}", 'error'
