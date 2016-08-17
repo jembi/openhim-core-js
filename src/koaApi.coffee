@@ -147,10 +147,10 @@ exports.setupApp = (done) ->
 
   # Visualizer endpoint
   app.use route.get '/visualizers', visualizers.getVisualizers
-  app.use route.get '/visualizers/:name', visualizers.getVisualizer
+  app.use route.get '/visualizers/:visualizerId', visualizers.getVisualizer
   app.use route.post '/visualizers', visualizers.addVisualizer
-  app.use route.put '/visualizers/:name', visualizers.updateVisualizer
-  app.use route.delete '/visualizers/:name', visualizers.removeVisualizer
+  app.use route.put '/visualizers/:visualizerId', visualizers.updateVisualizer
+  app.use route.delete '/visualizers/:visualizerId', visualizers.removeVisualizer
 
   # Return the result
   done(app)

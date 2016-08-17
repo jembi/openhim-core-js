@@ -134,7 +134,7 @@ describe 'API Integration Tests', ->
             done()
 
 
-    describe '*getVisualizer(name)', ->
+    describe '*getVisualizer(visualizerId)', ->
 
       it 'should return a 200 response with a specific visualizer', (done) ->
         vis1 = _.assign {}, visObj
@@ -150,7 +150,7 @@ describe 'API Integration Tests', ->
             return done err if err
 
             request 'https://localhost:8080'
-              .get '/visualizers/Visualizer1'
+              .get '/visualizers/' + vis1._id
               .set('auth-username', testUtils.rootUser.email)
               .set('auth-ts', authDetails.authTS)
               .set('auth-salt', authDetails.authSalt)
@@ -165,7 +165,7 @@ describe 'API Integration Tests', ->
 
       it 'should return a 403 response if the user is not an admin', (done) ->
         request 'https://localhost:8080'
-          .get '/visualizers/Visualizer1'
+          .get '/visualizers/111111111111111111111111'
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -175,9 +175,9 @@ describe 'API Integration Tests', ->
             return done err if err
             done()
 
-      it 'should return 404 with message if no visualizers match the name', (done) ->
+      it 'should return 404 with message if no visualizers match the _id', (done) ->
         request 'https://localhost:8080'
-          .get '/visualizers/Visualizer1'
+          .get '/visualizers/111111111111111111111111'
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -186,7 +186,7 @@ describe 'API Integration Tests', ->
           .end (err, res) ->
             return done err if err
             
-            res.text.should.equal "Visualizer with name Visualizer1 could not be found."
+            res.text.should.equal "Visualizer with _id 111111111111111111111111 could not be found."
             done()
 
 
@@ -237,7 +237,7 @@ describe 'API Integration Tests', ->
             done()
 
 
-    describe '*updateVisualizer(name)', ->
+    describe '*updateVisualizer(visualizerId)', ->
 
       it 'should update a specific visualizer and return a 200 response', (done) ->
         vis1 = _.assign {}, visObj
@@ -252,7 +252,7 @@ describe 'API Integration Tests', ->
           return done err if err
 
           request 'https://localhost:8080'
-            .put '/visualizers/Visualizer1'
+            .put '/visualizers/' + vis1._id
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
             .set('auth-salt', authDetails.authSalt)
@@ -269,7 +269,7 @@ describe 'API Integration Tests', ->
 
       it 'should return a 403 response if the user is not an admin', (done) ->
         request 'https://localhost:8080'
-          .put '/visualizers/Visualizer1'
+          .put '/visualizers/111111111111111111111111'
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -282,7 +282,7 @@ describe 'API Integration Tests', ->
 
       it 'should return 404 if no request object is sent', (done) ->
         request 'https://localhost:8080'
-          .put '/visualizers/Visualizer1'
+          .put '/visualizers/111111111111111111111111'
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -292,12 +292,12 @@ describe 'API Integration Tests', ->
           .end (err, res) ->
             return done err if err
             
-            res.text.should.equal "Cannot Update Visualizer with name Visualizer1, no request object"
+            res.text.should.equal "Cannot Update Visualizer with _id 111111111111111111111111, no request object"
             done()
 
-      it 'should return 404 if no visualizers match the name', (done) ->
+      it 'should return 404 if no visualizers match the _id', (done) ->
         request 'https://localhost:8080'
-          .put '/visualizers/Visualizer1'
+          .put '/visualizers/111111111111111111111111'
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -307,11 +307,11 @@ describe 'API Integration Tests', ->
           .end (err, res) ->
             return done err if err
             
-            res.text.should.equal "Cannot Update Visualizer with name Visualizer1, Visualizer1 does not exist"
+            res.text.should.equal "Cannot Update Visualizer with _id 111111111111111111111111, does not exist"
             done()
   
   
-    describe '*removeVisualizer(name)', ->
+    describe '*removeVisualizer(visualizerId)', ->
 
       it 'should sucessfully remove a visualizer', (done) ->
         vis1 = _.assign {}, visObj
@@ -327,7 +327,7 @@ describe 'API Integration Tests', ->
             return done err if err
 
             request 'https://localhost:8080'
-              .del '/visualizers/Root\'s Visualizer 1'
+              .del '/visualizers/' + vis1._id
               .set('auth-username', testUtils.rootUser.email)
               .set('auth-ts', authDetails.authTS)
               .set('auth-salt', authDetails.authSalt)
@@ -342,7 +342,7 @@ describe 'API Integration Tests', ->
 
       it 'should return a 403 response if the user is not an admin', (done) ->
         request 'https://localhost:8080'
-          .delete '/visualizers/somename'
+          .delete '/visualizers/111111111111111111111111'
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -354,7 +354,7 @@ describe 'API Integration Tests', ->
 
       it 'should return a 404 when the visualizer doesn\'t exist', (done) ->
         request 'https://localhost:8080'
-          .delete '/visualizers/idontexist'
+          .delete '/visualizers/111111111111111111111111'
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
