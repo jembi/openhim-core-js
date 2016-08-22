@@ -385,6 +385,7 @@ The following query parameters are supported:
   * `simpledetails`: minimal transaction information, but with more fields than simple
   * `bulkrerun`: minimal transaction information required in order to determine rerun status
   * `full`: Full transaction information
+  * `fulltruncate`: The same as full except that large transaction bodies will be truncated
 * `channelID`: Only return transactions that are linked to the specified channel
 * `filters`: Advanced filters specified as an object. Transaction fields can be specified based on the [transaction schema](https://github.com/jembi/openhim-core-js/blob/2920608ac3911b1374c9256cd48ad1cfff0626d8/src/model/transactions.coffee#L40-L56). For example, in order to filter by response status 200 and a property called `prop` with a value `val`, the following query could be used: `/transactions?filterLimit=100&filterPage=0&filters=%7B%22response.status%22:%22200%22,%22properties%22:%7B%22prop%22:%22val%22%7D%7D`
 

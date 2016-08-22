@@ -11,6 +11,7 @@ statsd_client = require "statsd-client"
 statsd_server = config.get 'statsd'
 sdc = new statsd_client statsd_server
 application = config.get 'application'
+apiConf = config.get 'api'
 os = require "os"
 timer = new Date()
 domain = os.hostname() + '.' + application.name
@@ -31,6 +32,9 @@ getProjectionObject = (filterRepresentation) ->
     when "full"
       # view all transaction data
       return {}
+    when "fulltruncate"
+      # same as full
+      return {}
     when "bulkrerun"
       # view only 'bulkrerun' properties
       return { "_id": 1, "childIDs": 1, "canRerun": 1, "channelID": 1 }
@@ -40,6 +44,21 @@ getProjectionObject = (filterRepresentation) ->
       return { "request.body": 0, "request.headers": 0, "response.body": 0, "response.headers": 0, orchestrations: 0, routes: 0 }
 
 
+truncateTransactionDetails = (trx) ->
+  truncateSize = apiConf.truncateSize ? 20000
+
+  trunc = (t) ->
+    if t.request?.body? and t.request.body.length > truncateSize
+      t.request.body = t.request.body[...truncateSize] + apiConf.truncateAppend
+    if t.response?.body? and t.response.body.length > truncateSize
+      t.response.body = t.response.body[...truncateSize] + apiConf.truncateAppend
+  trunc trx
+
+  if trx.routes?
+    trunc r for r in trx.routes
+
+  if trx.orchestrations?
+    trunc o for o in trx.orchestrations
 
 
 ###
@@ -164,6 +183,9 @@ exports.getTransactions = ->
       .sort 'request.timestamp': -1
       .exec()
 
+    if filterRepresentation is 'fulltruncate'
+      truncateTransactionDetails trx for trx in this.body
+
   catch e
     utils.logAndSetResponse this, 500, "Could not retrieve transactions via the API: #{e}", 'error'
 
@@ -238,6 +260,8 @@ exports.getTransactionById = (transactionId) ->
     projectionFiltersObject = getProjectionObject filterRepresentation
 
     result = yield transactions.Transaction.findById(transactionId, projectionFiltersObject).exec()
+    if result and filterRepresentation is 'fulltruncate'
+      truncateTransactionDetails result
 
     # Test if the result if valid
     if not result

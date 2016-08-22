@@ -6,6 +6,13 @@
   "logger": {
     "level": "error"
   },
+  "api": {
+    "enabled" : true,
+    "httpsPort": 8080,
+    "authWindowSeconds": 10,
+    "truncateSize": 10,
+    "truncateAppend": "\n[truncated ...]"
+  },
   "statsd": {
     "enabled": true,
     "host": "localhost"
