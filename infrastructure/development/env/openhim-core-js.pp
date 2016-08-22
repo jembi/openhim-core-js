@@ -15,6 +15,10 @@ package { "build-essential":
     ensure => "installed",
 }
 
+package { "libkrb5-dev":
+    ensure => "installed",
+}
+
 package { "git":
     ensure => "installed",
 }
