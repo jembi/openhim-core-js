@@ -20,7 +20,7 @@
     "enabled" : true,
     "httpsPort": 8080,
     "authWindowSeconds": 10,
-    "truncateSize": 20000,
+    "truncateSize": 15000,
     "truncateAppend": "\n[truncated ...]"
   },
   "rerun": {

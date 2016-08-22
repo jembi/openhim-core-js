@@ -45,13 +45,14 @@ getProjectionObject = (filterRepresentation) ->
 
 
 truncateTransactionDetails = (trx) ->
-  truncateSize = apiConf.truncateSize ? 20000
+  truncateSize = apiConf.truncateSize ? 15000
+  truncateAppend = apiConf.truncateAppend ? "\n[truncated ...]"
 
   trunc = (t) ->
     if t.request?.body? and t.request.body.length > truncateSize
-      t.request.body = t.request.body[...truncateSize] + apiConf.truncateAppend
+      t.request.body = t.request.body[...truncateSize] + truncateAppend
     if t.response?.body? and t.response.body.length > truncateSize
-      t.response.body = t.response.body[...truncateSize] + apiConf.truncateAppend
+      t.response.body = t.response.body[...truncateSize] + truncateAppend
   trunc trx
 
   if trx.routes?
