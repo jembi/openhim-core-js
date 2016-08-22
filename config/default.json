@@ -19,7 +19,9 @@
   "api": {
     "enabled" : true,
     "httpsPort": 8080,
-    "authWindowSeconds": 10
+    "authWindowSeconds": 10,
+    "truncateSize": 15000,
+    "truncateAppend": "\n[truncated ...]"
   },
   "rerun": {
     "httpPort": 7786,

@@ -8,6 +8,7 @@ testUtils = require "../testUtils"
 auth = require("../testUtils").auth
 FakeServer = require "../fakeTcpServer"
 config = require '../../lib/config/config'
+apiConf = config.get 'api'
 Event = require("../../lib/model/events").Event
 application = config.get 'application'
 os = require "os"
@@ -372,7 +373,7 @@ describe "API Integration Tests", ->
                   res.body.length.should.equal countBefore + 1
                   done()
 
-      it "should call getTransactions with filter paramaters ", (done) ->
+      it "should call getTransactions with filter parameters ", (done) ->
 
         obj =
           filterPage: 0
@@ -410,7 +411,7 @@ describe "API Integration Tests", ->
                   res.body.length.should.equal countBefore + 1
                   done()
 
-      it "should call getTransactions with filter paramaters (Different filters)", (done) ->
+      it "should call getTransactions with filter parameters (Different filters)", (done) ->
 
         obj =
           filterPage: 0
@@ -451,7 +452,7 @@ describe "API Integration Tests", ->
                   res.body.length.should.equal countBefore + 1
                   done()
 
-      it "should call getTransactions with filter paramaters (Different filters - return no results)", (done) ->
+      it "should call getTransactions with filter parameters (Different filters - return no results)", (done) ->
 
         obj =
           filterPage: 0
@@ -561,6 +562,32 @@ describe "API Integration Tests", ->
               .expect(403)
               .end (err, res) -> done()
 
+      it "should truncate transaction details if filterRepresentation is fulltruncate ", (done) ->
+        Transaction.count {}, (err, countBefore) ->
+
+          tx = new Transaction transactionData
+          tx.save (error, result) ->
+            should.not.exist (error)
+            request("https://localhost:8080")
+              .get("/transactions?filterRepresentation=fulltruncate")
+              .set("auth-username", testUtils.rootUser.email)
+              .set("auth-ts", authDetails.authTS)
+              .set("auth-salt", authDetails.authSalt)
+              .set("auth-token", authDetails.authToken)
+              .expect(200)
+              .end (err, res) ->
+                if err
+                  done err
+                else
+                  res.body.length.should.equal countBefore + 1
+                  res.body[countBefore].request.body.should.equal "<HTTP body#{apiConf.truncateAppend}"
+                  res.body[countBefore].response.body.should.equal "<HTTP resp#{apiConf.truncateAppend}"
+                  res.body[countBefore].routes[0].request.body.should.equal "<HTTP body#{apiConf.truncateAppend}"
+                  res.body[countBefore].routes[0].response.body.should.equal "<HTTP resp#{apiConf.truncateAppend}"
+                  res.body[countBefore].orchestrations[0].request.body.should.equal "<HTTP body#{apiConf.truncateAppend}"
+                  res.body[countBefore].orchestrations[0].response.body.should.equal "<HTTP resp#{apiConf.truncateAppend}"
+                  done()
+
     describe "*getTransactionById (transactionId)", ->
 
       it "should fetch a transaction by ID - admin user", (done) ->
@@ -638,6 +665,31 @@ describe "API Integration Tests", ->
                 res.body.request.querystring.should.equal "param1=value1&param2=value2"
                 should.not.exist(res.body.request.body)
                 res.body.request.method.should.equal "POST"
+                done()
+
+      it "should truncate a large body if filterRepresentation is 'fulltruncate'", (done) ->
+        # transactionData body lengths > config.truncateSize
+        tx = new Transaction transactionData
+        tx.save (err, result)->
+          should.not.exist(err)
+          transactionId = result._id
+          request("https://localhost:8080")
+            .get("/transactions/#{transactionId}?filterRepresentation=fulltruncate")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                res.body.request.body.should.equal "<HTTP body#{apiConf.truncateAppend}"
+                res.body.response.body.should.equal "<HTTP resp#{apiConf.truncateAppend}"
+                res.body.routes[0].request.body.should.equal "<HTTP body#{apiConf.truncateAppend}"
+                res.body.routes[0].response.body.should.equal "<HTTP resp#{apiConf.truncateAppend}"
+                res.body.orchestrations[0].request.body.should.equal "<HTTP body#{apiConf.truncateAppend}"
+                res.body.orchestrations[0].response.body.should.equal "<HTTP resp#{apiConf.truncateAppend}"
                 done()
 
     describe "*findTransactionByClientId (clientId)", ->

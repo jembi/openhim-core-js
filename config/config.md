@@ -46,7 +46,12 @@ The following config option are provided by the OpenHIM. All of these options ha
     "httpsPort": 8080,
     // API request are only valid for a particular window once made, this is
     // the size of that window in seconds
-    "authWindowSeconds": 10
+    "authWindowSeconds": 10,
+    // Certain API endpoints allow for details to be truncated, e.g. transactions with very large bodies
+    // This setting sets the size to truncate to (number of characters)
+    "truncateSize": 15000,
+    // A message to append to detail strings that have been truncated
+    "truncateAppend": "\n[truncated ...]"
   },
   "rerun": {
     // The port that the transaction re-run processor runs on, this port is
