@@ -10,6 +10,7 @@ FakeServer = require "../fakeTcpServer"
 config = require '../../lib/config/config'
 apiConf = config.get 'api'
 Event = require("../../lib/model/events").Event
+AutoRetry = require('../../lib/model/autoRetry').AutoRetry
 application = config.get 'application'
 os = require "os"
 domain = os.hostname() + '.' + application.name
@@ -93,6 +94,9 @@ describe "API Integration Tests", ->
           ]
       txViewAcl: [ "not-for-non-root" ]
       txViewFullAcl: []
+      autoRetryEnabled: true
+      autoRetryPeriodMinutes: 60
+      autoRetryMaxAttempts: 5
 
     before (done) ->
       auth.setupTestUsers (err) ->
@@ -350,6 +354,62 @@ describe "API Integration Tests", ->
                   done()
 
               setTimeout validateEvents, 100 * global.testTimeoutFactor
+
+      it 'should queue a transaction for auto retry', (done) ->
+        transactionData.channelID = channel2._id
+        tx = new Transaction transactionData
+        tx.save (err, result) ->
+          should.not.exist(err)
+          transactionId = result._id
+          updates =
+            status: "Failed"
+            error:
+              message: "Error message"
+              stack: "stack\nstack\nstack"
+
+          request("https://localhost:8080")
+            .put("/transactions/#{transactionId}")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(updates)
+            .expect(200)
+            .end (err, res) ->
+              return done err if err
+              Transaction.findById transactionId, (err, tx) ->
+                tx.autoRetry.should.be.true()
+                AutoRetry.findOne transactionID: transactionId, (err, queueItem) ->
+                  queueItem.should.be.ok()
+                  queueItem.channelID.toString().should.be.exactly channel2._id.toString()
+                  done()
+
+      it 'should not queue a transaction for auto retry when max retries have been reached', (done) ->
+        transactionData.autoRetryAttempt = 5
+        transactionData.channelID = channel2._id
+        tx = new Transaction transactionData
+        tx.save (err, result) ->
+          should.not.exist(err)
+          transactionId = result._id
+          updates =
+            status: "Failed"
+            error:
+              message: "Error message"
+              stack: "stack\nstack\nstack"
+
+          request("https://localhost:8080")
+            .put("/transactions/#{transactionId}")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(updates)
+            .expect(200)
+            .end (err, res) ->
+              return done err if err
+              Transaction.findById transactionId, (err, tx) ->
+                tx.autoRetry.should.be.false()
+                done()
 
     describe "*getTransactions()", ->
 
