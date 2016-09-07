@@ -6,6 +6,19 @@ Channel = Channels.Channel
 AutoRetry = require('./model/autoRetry').AutoRetry
 Task = require('./model/tasks').Task
 
+exports.reachedMaxAttempts = (tx, channel) ->
+  return channel.autoRetryMaxAttempts? and
+  channel.autoRetryMaxAttempts > 0 and
+  tx.autoRetryAttempt >= channel.autoRetryMaxAttempts
+
+exports.queueForRetry = (tx) ->
+  retry = new AutoRetry
+    transactionID: tx._id
+    channelID: tx.channelID
+    requestTimestamp: tx.request.timestamp
+  retry.save (err) ->
+    if err
+      logger.error "Failed to queue transaction #{tx._id} for auto retry: #{err}"
 
 getChannels = (callback) -> Channel.find autoRetryEnabled: true, status: 'enabled', callback
 

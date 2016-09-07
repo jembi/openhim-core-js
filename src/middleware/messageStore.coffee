@@ -3,6 +3,7 @@ logger = require "winston"
 Q = require "q"
 _ = require 'lodash'
 AutoRetry = require('../model/autoRetry').AutoRetry
+autoRetryUtils = require '../autoRetry'
 
 config = require '../config/config'
 statsdServer = config.get 'statsd'
@@ -169,30 +170,20 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
       logger.info "Final status for transaction #{tx._id} : #{tx.status}"
       update.status = tx.status
 
-    reachedMaxAttempts = -> ctx.authorisedChannel.autoRetryMaxAttempts? and
-      ctx.authorisedChannel.autoRetryMaxAttempts > 0 and
-      tx.autoRetryAttempt >= ctx.authorisedChannel.autoRetryMaxAttempts
-
     if ctx.autoRetry?
-      if not reachedMaxAttempts()
+      if not autoRetryUtils.reachedMaxAttempts tx, ctx.authorisedChannel
         update.autoRetry = ctx.autoRetry
       else
         update.autoRetry = false
 
     if _.isEmpty update then return callback tx # nothing to do
 
-    transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err,tx) ->
+    transactions.Transaction.findByIdAndUpdate transactionId, update, { },  (err, tx) ->
       callback tx
 
       # queue for autoRetry
       if update.autoRetry
-        retry = new AutoRetry
-          transactionID: tx._id
-          channelID: tx.channelID
-          requestTimestamp: tx.request.timestamp
-        retry.save (err) ->
-          if err
-            logger.error "Failed to queue transaction #{tx._id} for auto retry: #{err}"
+        autoRetryUtils.queueForRetry tx
 
       if config.statsd.enabled
         stats.incrementTransactionCount ctx, ->
