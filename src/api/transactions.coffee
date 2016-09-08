@@ -2,6 +2,7 @@ transactions = require '../model/transactions'
 events = require '../middleware/events'
 Channel = require('../model/channels').Channel
 Client = require('../model/clients').Client
+autoRetryUtils = require '../autoRetry'
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
@@ -15,6 +16,16 @@ apiConf = config.get 'api'
 os = require "os"
 timer = new Date()
 domain = os.hostname() + '.' + application.name
+
+hasError = (updates) ->
+  if updates.error? then return true
+  if updates.routes?
+    error = false
+    updates.routes.forEach (route) ->
+      if route.error then error = true
+  if error then return true
+  if updates.$push?.routes?.error? then return true
+  return false
 
 getChannelIDsArray = (channels) ->
   channelIDs = []
@@ -83,7 +94,7 @@ exports.getTransactions = ->
 
     #determine skip amount
     filterSkip = filterPage*filterLimit
-    
+
     # get filters object
     filters = if filtersObject.filters? then JSON.parse filtersObject.filters else {}
 
@@ -111,7 +122,7 @@ exports.getTransactions = ->
     # parse date to get it into the correct format for querying
     if filters['request.timestamp']
       filters['request.timestamp'] = JSON.parse filters['request.timestamp']
- 
+
 
     ### Transaction Filters ###
     # build RegExp for transaction request path filter
@@ -174,7 +185,7 @@ exports.getTransactions = ->
     if filters['orchestrations.response.status'] && utils.statusCodePatternMatch( filters['orchestrations.response.status'] )
       filters['orchestrations.response.status'] = "$gte": filters['orchestrations.response.status'][0]*100, "$lt": filters['orchestrations.response.status'][0]*100+100
 
-    
+
 
     # execute the query
     this.body = yield transactions.Transaction
@@ -401,21 +412,28 @@ exports.updateTransaction = (transactionId) ->
   updates = this.request.body
 
   try
-    yield transactions.Transaction.findByIdAndUpdate(transactionId, updates).exec()
+    if hasError updates
+      tx = yield transactions.Transaction.findById(transactionId).exec()
+      channel = yield Channel.findById(tx.channelID).exec()
+      if not autoRetryUtils.reachedMaxAttempts tx, channel
+        updates.autoRetry = true
+        autoRetryUtils.queueForRetry tx
+
+    tx = yield transactions.Transaction.findByIdAndUpdate(transactionId, updates, new: true).exec()
+
     this.body = "Transaction with ID: #{transactionId} successfully updated"
     this.status = 200
     logger.info "User #{this.authenticated.email} updated transaction with id #{transactionId}"
 
-    transactions.Transaction.findById transactionId, (err, doc) ->
-      generateEvents updates, doc.channelID
-      updateTransactionMetrics updates, doc
+    generateEvents updates, tx.channelID
+    updateTransactionMetrics updates, tx
 
   catch e
     utils.logAndSetResponse this, 500, "Could not update transaction via the API: #{e}", 'error'
 
 
 ###
-#Removes a transaction
+# Removes a transaction
 ###
 exports.removeTransaction = (transactionId) ->
 

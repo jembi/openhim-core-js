@@ -134,18 +134,23 @@ describe 'Metrics unit tests', ->
       p = metrics.calculateMetrics new Date("2014-07-15T00:00:00.000Z"), new Date("2014-07-19T00:00:00.000Z"), null, null, 'day', true
       p.then (metrics) ->
         metrics.length.should.be.exactly 8
-        metrics[0]._id.channelID.toString().should.be.exactly '111111111111111111111111'
-        metrics[0]._id.day.should.be.exactly 18
-        metrics[0]._id.week.should.be.exactly 28
-        metrics[0]._id.month.should.be.exactly 7
-        metrics[0]._id.year.should.be.exactly 2014
-        metrics[0].total.should.be.exactly 1
-        metrics[2]._id.channelID.toString().should.be.exactly '222222222222222222222222'
-        metrics[2]._id.day.should.be.exactly 18
-        metrics[2]._id.week.should.be.exactly 28
-        metrics[2]._id.month.should.be.exactly 7
-        metrics[2]._id.year.should.be.exactly 2014
-        metrics[2].total.should.be.exactly 1
+        m1 = metrics.find (m) ->
+          return m._id.channelID.toString() is '111111111111111111111111' and
+          m._id.day is 18 and
+          m._id.week is 28 and
+          m._id.month is 7 and
+          m._id.year is 2014
+        should.exist(m1)
+        m1.total.should.be.exactly 1
+
+        m2 = metrics.find (m) ->
+          return m._id.channelID.toString() is '222222222222222222222222'
+          m._id.day is 18
+          m._id.week is 28
+          m._id.month is 7
+          m._id.year is 2014
+        should.exist(m2)
+        m2.total.should.be.exactly 1
         done()
       .catch (err) ->
         done err
