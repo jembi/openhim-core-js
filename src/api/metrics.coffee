@@ -36,7 +36,7 @@ exports.getMetrics = (groupChannels, timeSeries, channelID) ->
       date = _.assign {}, item._id
       # adapt for moment (month starting at 0)
       if date.month then date.month = date.month - 1
-      item.timestamp = moment(date)
+      item.timestamp = moment.utc(date)
       return item
 
   this.body = m

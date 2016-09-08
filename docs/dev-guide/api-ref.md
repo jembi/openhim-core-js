@@ -653,7 +653,7 @@ The metrics API always returns a JSON array, even if it is returning just one me
      channelID: '222222222222222222222222', // Only if breaking down by channels
      day: 15,  // Only the approporiate time components will be returned when
      week: 28, // breaking down in time series, these will not appear if not
-     month: 7, // breaking down by time series.
+     month: 7, // breaking down by time series. These are always UTC values.
      year: 2014
     },
   total: 1,
@@ -954,7 +954,7 @@ An example visualizer object conforming to the [visualizer schema](https://githu
 
 `GET /visualizers`
 
-This request will return a `200` response code and an array of visualizer objects. 
+This request will return a `200` response code and an array of visualizer objects.
 
 #### Fetch a specific visualizer by mongo id
 
