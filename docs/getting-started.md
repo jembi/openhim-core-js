@@ -27,13 +27,15 @@ Installing the OpenHIM-core
 3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an OpenHIM-core binary to your PATH.
 4. Start the server by executing `openhim-core` from anywhere.
 
-To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default settings:
+To make use of your own custom configurations you have two options. One, you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default settings:
 
 ```sh
 wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/default.json
 # edit default.json, then
 openhim-core --conf=path/to/default.json
 ```
+
+Or two, you can use environment variables to set specific parameters. Environment variables use an _ as a separater for nested keys. For example, to change the port that the API listens on and to change the ports that the router listens on you could do the following: `api_httpsPort=8081 router_httpsPort=50456 router_httpPort=50457 npm start`. **Note**: the environment variables are case sensitive.
 
 For more information about the config options, [click here](https://github.com/jembi/openhim-core-js/blob/master/config/config.md).
 
