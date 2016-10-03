@@ -11,6 +11,7 @@ config.reports = config.get('reports')
 contact = require './contact'
 metrics = require './metrics'
 User = require('./model/users').User
+utils = require './utils'
 
 # Function Sends the reports
 sendReports = (job, flag, done) ->
@@ -203,8 +204,8 @@ setupAgenda = (agenda) ->
   agenda.define 'send daily channel metrics', (job, done) ->
     sendReports job, 'dailyReport', done
 
-  agenda.every config.reports.weeklyReportAt, 'send weekly channel metrics'
-  agenda.every config.reports.dailyReportAt, 'send daily channel metrics'
+  agenda.every config.reports.weeklyReportAt, 'send weekly channel metrics', null, { timezone: utils.serverTimeZone() }
+  agenda.every config.reports.dailyReportAt, 'send daily channel metrics', null, { timezone: utils.serverTimeZone() }
 
 
 exports.setupAgenda = setupAgenda

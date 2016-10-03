@@ -97,7 +97,7 @@ if cluster.isMaster and not module.parent
 
     worker.on 'message', (msg) ->
 
-      logger.debug "Message recieved from worker #{worker.id}", msg
+      logger.debug "Message received from worker #{worker.id}", msg
       if msg.type is 'restart-all'
         # restart all workers
         logger.debug "Restarting all workers..."

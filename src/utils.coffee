@@ -3,6 +3,7 @@ config = require './config/config'
 config.caching = config.get('caching')
 Channel = require("./model/channels").Channel
 Keystore = require("./model/keystore").Keystore
+momentTZ = require 'moment-timezone'
 
 # function to log errors and return response
 exports.logAndSetResponse = (ctx, status, msg, logLevel) ->
@@ -65,3 +66,10 @@ exports.uniqArray = (arr) ->
 
 # thanks to https://coffeescript-cookbook.github.io/chapters/arrays/check-type-is-array
 exports.typeIsArray = Array.isArray || ( value ) -> return {}.toString.call( value ) is '[object Array]'
+
+# get the server timezone
+exports.serverTimeZone = () ->
+  timezone = momentTZ.tz.guess()
+  logger.info "Server Timezone: " + timezone
+  return momentTZ.tz.guess()
+exports.serverTimeZone()
