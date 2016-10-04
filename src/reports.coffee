@@ -204,8 +204,8 @@ setupAgenda = (agenda) ->
   agenda.define 'send daily channel metrics', (job, done) ->
     sendReports job, 'dailyReport', done
 
-  agenda.every config.reports.weeklyReportAt, 'send weekly channel metrics', null, { timezone: utils.serverTimeZone() }
-  agenda.every config.reports.dailyReportAt, 'send daily channel metrics', null, { timezone: utils.serverTimeZone() }
+  agenda.every config.reports.weeklyReportAt, 'send weekly channel metrics', null, { timezone: utils.serverTimezone() }
+  agenda.every config.reports.dailyReportAt, 'send daily channel metrics', null, { timezone: utils.serverTimezone() }
 
 
 exports.setupAgenda = setupAgenda

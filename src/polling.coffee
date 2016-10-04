@@ -28,7 +28,7 @@ exports.registerPollingChannel = (channel, callback) ->
       request options, ->
         done()
 
-    exports.agendaGlobal.every channel.pollingSchedule, "polling-job-#{channel._id}", null, { timezone: utils.serverTimeZone() }
+    exports.agendaGlobal.every channel.pollingSchedule, "polling-job-#{channel._id}", null, { timezone: utils.serverTimezone() }
 
     callback null
 

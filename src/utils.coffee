@@ -68,8 +68,6 @@ exports.uniqArray = (arr) ->
 exports.typeIsArray = Array.isArray || ( value ) -> return {}.toString.call( value ) is '[object Array]'
 
 # get the server timezone
-exports.serverTimeZone = () ->
+exports.serverTimezone = () ->
   timezone = momentTZ.tz.guess()
-  logger.info "Server Timezone: " + timezone
   return momentTZ.tz.guess()
-exports.serverTimeZone()

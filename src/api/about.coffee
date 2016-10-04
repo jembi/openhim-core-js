@@ -6,7 +6,7 @@ utils = require '../utils'
 exports.getAboutInformation = () ->
   
   try
-    this.body = yield { currentCoreVersion: currentCoreVersion }
+    this.body = yield { currentCoreVersion: currentCoreVersion, serverTimezone: utils.serverTimezone() }
     this.status = 200
     logger.info "User #{this.authenticated.email} successfully fetched 'about' information"
   catch e
