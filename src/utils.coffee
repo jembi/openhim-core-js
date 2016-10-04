@@ -69,5 +69,4 @@ exports.typeIsArray = Array.isArray || ( value ) -> return {}.toString.call( val
 
 # get the server timezone
 exports.serverTimezone = () ->
-  timezone = momentTZ.tz.guess()
   return momentTZ.tz.guess()
