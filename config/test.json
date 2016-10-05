@@ -25,5 +25,10 @@
   },
   "agenda": {
     "startupDelay": 0
+  },
+  "certificates": {
+    "watchCert": false,
+    "watchCertPath": "/path/to/certificates/folder",
+    "watchKeyPath": "/path/to/keys/folder"
   }
 }

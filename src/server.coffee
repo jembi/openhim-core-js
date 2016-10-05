@@ -18,6 +18,7 @@ config.polling = config.get('polling')
 config.reports = config.get('reports')
 config.auditing = config.get('auditing')
 config.agenda = config.get('agenda')
+config.certificates = config.get('certificates')
 
 himSourceID = config.get('auditing').auditEvents.auditSourceID
 
@@ -200,8 +201,24 @@ else
     groups: [ 'admin' ]
     # password = 'openhim-password'
 
+  # if certificate watch option is enabled
+  if config.certificates.watchCert is true
+    try
+      certFile = fs.readFileSync config.certificates.watchCertPath
+      keyFile = fs.readFileSync config.certificates.watchKeyPath
+      logger.info "Certificates watch folder is enabled: CertPath: #{config.certificates.watchCertPath} - KeyPath: #{config.certificates.watchKeyPath}"
+    catch err
+      if err.code is 'ENOENT'
+        logger.error "Certificate: #{err.message}"
+      else
+        throw err
+  else
+    logger.info "Certificates watch folder is disabled"
+    certFile = fs.readFileSync "#{appRoot}/resources/certs/default/cert.pem"
+    keyFile = fs.readFileSync "#{appRoot}/resources/certs/default/key.pem"
+
   defaultKeystore =
-    key: fs.readFileSync "#{appRoot}/resources/certs/default/key.pem"
+    key: keyFile
     cert:
       country: 'ZA'
       state: 'KZN'
@@ -213,7 +230,7 @@ else
       validity:
         start: 1423810077000
         end: 3151810077000
-      data: fs.readFileSync "#{appRoot}/resources/certs/default/cert.pem"
+      data: certFile
     ca: []
 
   # Job scheduler

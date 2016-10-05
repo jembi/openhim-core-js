@@ -121,5 +121,10 @@
   },
   "agenda": {
     "startupDelay": 500
+  },
+  "certificates": {
+    "watchCert": false,
+    "watchCertPath": "/path/to/certificates/folder/cert.pem",
+    "watchKeyPath": "/path/to/keys/folder/key.pem"
   }
 }
