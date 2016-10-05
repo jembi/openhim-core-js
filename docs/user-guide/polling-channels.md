@@ -22,3 +22,5 @@ in cron format (ie. 0 4 * * * ) or in a descriptive format (ie. 5 minutes). See
 for a more complete description of this format. From there you may configure the
 rest of the channel as usual and add routes for each external system that is to
 be triggered.
+
+**NB** When using cron format, it is important to note that the servers' timezone will be used to action the trigger

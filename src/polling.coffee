@@ -5,8 +5,8 @@ config = require './config/config'
 config.polling = config.get('polling')
 logger = require 'winston'
 Q = require 'q'
-logger = require 'winston'
 authorisation = require './middleware/authorisation'
+utils = require './utils'
 
 exports.agendaGlobal = null
 
@@ -28,7 +28,7 @@ exports.registerPollingChannel = (channel, callback) ->
       request options, ->
         done()
 
-    exports.agendaGlobal.every channel.pollingSchedule, "polling-job-#{channel._id}"
+    exports.agendaGlobal.every channel.pollingSchedule, "polling-job-#{channel._id}", null, { timezone: utils.serverTimezone() }
 
     callback null
 
