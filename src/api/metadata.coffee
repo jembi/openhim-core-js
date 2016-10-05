@@ -3,6 +3,7 @@ Client = require('../model/clients').Client
 Mediator = require('../model/mediators').Mediator
 User = require('../model/users').User
 ContactGroup = require('../model/contactGroups').ContactGroup
+Keystore = require('../model/keystore').Keystore
 
 Q = require 'q'
 logger = require 'winston'
@@ -16,6 +17,7 @@ collections =
   Mediators: Mediator
   Users: User
   ContactGroups: ContactGroup
+  Keystore: Keystore
 
 
 #Function to remove properties from export object
@@ -95,9 +97,14 @@ handleMetadataPost = (action, that) ->
           if key not of collections
             throw new Error "Invalid Collection in Import Object"
           
-          uidObj = getUniqueIdentifierForCollection key, doc
-          uid = uidObj[Object.keys(uidObj)[0]]
-          result = yield collections[key].find(uidObj).exec()
+          # Keystore model does not have a uid other than _id and may not contain more than one entry
+          if key is 'Keystore'
+            result = yield collections[key].find().exec()
+            uid = ''
+          else
+            uidObj = getUniqueIdentifierForCollection key, doc
+            uid = uidObj[Object.keys(uidObj)[0]]
+            result = yield collections[key].find(uidObj).exec()
           
           if action is 'import'
             if result and result.length > 0 and result[0]._id
