@@ -27,5 +27,10 @@
         "port": 5052
       }
     }
+  },
+  "certificateManagement": {
+    "watchFSForCert": true,
+    "certPath": "resources/certs/default/cert.pem",
+    "keyPath": "resources/certs/default/key.pem"
   }
 }
