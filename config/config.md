@@ -186,6 +186,17 @@ The following config option are provided by the OpenHIM. All of these options ha
   "agenda": {
     // How long to wait before starting up the async task processor
     "startupDelay": 500
+  },
+  "certificateManagement": {
+    // Toggle whether to watch the file systems for the server certificate to
+    // use or to manage certifcates manually. If enables whenever certifcate
+    // changes are detected then the new certificate is loaded and the server
+    // user automatically restarted.
+    "watchFSForCert": false,
+    // The path to the server certificate (only used if watchFSForCert is enabled)
+    "certPath": "/etc/letsencrypt/live/openhim.jembi.org/cert.pem",
+    // The path to the server key (only used if watchFSForCert is enabled)
+    "keyPath": "/etc/letsencrypt/live/openhim.jembi.org/privkey.pem"
   }
 }
 ```
