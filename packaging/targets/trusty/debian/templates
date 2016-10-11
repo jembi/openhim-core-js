@@ -1,0 +1,14 @@
+Template: openhim-core-js/watch-fs-for-cert
+Type: boolean
+Default: false
+Description: Do you want this installation of the OpenHIM to watch a particular folder for it's certificate and key? (this works well with letsencrypt.org for free secure certificates)
+
+Template: openhim-core-js/certPath
+Type: string
+Default: /etc/letsencrypt/live/<your_server_dns>/cert.pem
+Description: What is the absolute path to the server certificate in .pem format?
+
+Template: openhim-core-js/keyPath
+Type: string
+Default: /etc/letsencrypt/live/<your_server_dns>/privkey.pem
+Description: What is the absolute path to the server key in .pem format?
