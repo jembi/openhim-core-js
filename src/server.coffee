@@ -58,6 +58,7 @@ auditing = require './auditing'
 tasks = require './tasks'
 upgradeDB = require './upgradeDB'
 autoRetry = require './autoRetry'
+certificateWatcher = require './certificateWatcher'
 
 clusterArg = nconf.get 'cluster'
 
@@ -238,6 +239,7 @@ else
       alerts.setupAgenda agenda if config.alerts.enableAlerts
       reports.setupAgenda agenda if config.reports.enableReports
       autoRetry.setupAgenda agenda
+      certificateWatcher.setupAgenda agenda, config.certificateManagement
       if config.polling.enabled
         polling.setupAgenda agenda, ->
           # give workers a change to setup agenda tasks
