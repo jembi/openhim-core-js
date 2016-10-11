@@ -58,6 +58,7 @@ auditing = require './auditing'
 tasks = require './tasks'
 upgradeDB = require './upgradeDB'
 autoRetry = require './autoRetry'
+certificateWatcher = require './certificateWatcher'
 
 clusterArg = nconf.get 'cluster'
 
@@ -97,7 +98,7 @@ if cluster.isMaster and not module.parent
 
     worker.on 'message', (msg) ->
 
-      logger.debug "Message recieved from worker #{worker.id}", msg
+      logger.debug "Message received from worker #{worker.id}", msg
       if msg.type is 'restart-all'
         # restart all workers
         logger.debug "Restarting all workers..."
@@ -238,6 +239,7 @@ else
       alerts.setupAgenda agenda if config.alerts.enableAlerts
       reports.setupAgenda agenda if config.reports.enableReports
       autoRetry.setupAgenda agenda
+      certificateWatcher.setupAgenda agenda, config.certificateManagement if config.certificateManagement.watchFSForCert
       if config.polling.enabled
         polling.setupAgenda agenda, ->
           # give workers a change to setup agenda tasks

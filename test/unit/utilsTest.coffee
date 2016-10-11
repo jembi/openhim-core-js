@@ -19,3 +19,8 @@ describe "Utils", ->
       result = utils.statusCodePatternMatch '200'
       result.should.be.false
       done()
+
+    it "should return server timezone", (done) ->
+      result = utils.serverTimezone()
+      should.exist(result)
+      done()
