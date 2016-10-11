@@ -15,10 +15,8 @@ setupAgenda = (agenda, certificateManagement) ->
   #define agenda job to execute
   agenda.define 'restart the server', (job, done) -> restartTheServer agenda, job, done
 
-  # certFile = certificateManagement.certPath
-  # keyFile = certificateManagement.keyPath
-  certFile = '/openhim-core-js/resources/certsTest/default/cert.pem'
-  keyFile = '/openhim-core-js/resources/certsTest/default/key.pem'
+  certFile = certificateManagement.certPath
+  keyFile = certificateManagement.keyPath
   paths = [certFile, keyFile]
   watcher = chokidar.watch(paths, {
     usePolling: true,
@@ -33,7 +31,6 @@ setupAgenda = (agenda, certificateManagement) ->
           logger.info 'Certificate/Key has been updated, restart the server'
       return
   )
-
 
 exports.setupAgenda = setupAgenda
 
