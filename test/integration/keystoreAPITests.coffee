@@ -7,6 +7,8 @@ Keystore = require('../../lib/model/keystore').Keystore
 sinon = require "sinon"
 fs = require 'fs'
 path = require 'path'
+config = require "../../lib/config/config"
+config.certificateManagement = config.get('certificateManagement')
 
 describe 'API Integration Tests', ->
 
@@ -199,6 +201,24 @@ describe 'API Integration Tests', ->
           .set("auth-token", authDetails.authToken)
           .send(postData)
           .expect(403)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              done()
+    
+    it "Should return 400 if watchFSForCert option is true when adding a cert.", (done) ->
+      testUtils.setupTestKeystore (keystore) ->
+        config.certificateManagement.watchFSForCert = true
+        postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
+        request("https://localhost:8080")
+          .post("/keystore/cert")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(postData)
+          .expect(400)
           .end (err, res) ->
             if err
               done err
@@ -480,4 +500,4 @@ describe 'API Integration Tests', ->
               done err
             else
               res.body.valid.should.be.exactly false
-              done()  
+              done()
