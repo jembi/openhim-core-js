@@ -4,7 +4,7 @@
     "atnaUrl": "mongodb://localhost/openhim-test"
   },
   "logger": {
-    "level": "error"
+    "level": "debug"
   },
   "api": {
     "enabled" : true,
@@ -25,5 +25,10 @@
   },
   "agenda": {
     "startupDelay": 0
+  },
+  "certificateManagement": {
+    "watchFSForCert": true,
+    "certPath": "test/resources/certificate-watcher/test.crt",
+    "keyPath": "test/resources/certificate-watcher/test.key"
   }
 }

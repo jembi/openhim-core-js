@@ -1369,3 +1369,27 @@ describe "e2e Integration Tests", ->
                 done err
               else
                 done()
+
+
+
+  describe "Certificate Watcher", ->
+
+    it "Should Listen for certificate changes and restart the server with new certificate", (done) ->
+      
+      testUtils.setupTestKeystore (keystore) ->
+
+        # change the certificate file
+        fs.writeFile 'test/resources/certificate-watcher/test.crt', 'New certificate content. should trigger certificate reload', (err) ->
+          if err
+            return console.log(err)
+        fs.createReadStream('test/resources/certificate-watcher/testBackup.crt').pipe(fs.createWriteStream('test/resources/certificate-watcher/test.crt'));
+
+        setTimeout (->
+          Keystore.findOne {}, (err, keystore) ->
+            done(err) if err
+            # keystore.cert.cert.should.be.exactly 'New certificate content. should trigger certificate reload'
+            done()
+          return
+        ), 3000
+
+        
