@@ -18,6 +18,7 @@ config.polling = config.get('polling')
 config.reports = config.get('reports')
 config.auditing = config.get('auditing')
 config.agenda = config.get('agenda')
+config.certificateManagement = config.get('certificateManagement')
 
 himSourceID = config.get('auditing').auditEvents.auditSourceID
 
@@ -143,6 +144,8 @@ if cluster.isMaster and not module.parent
     cluster.on 'listening', (worker, address) ->
       logger.debug "worker #{worker.id} is now connected to #{address.address}:#{address.port}"
 else
+  ### Setup Worker ###
+
   # configure worker logger
   logger.add logger.transports.Console,
     colorize: true
@@ -201,22 +204,6 @@ else
     groups: [ 'admin' ]
     # password = 'openhim-password'
 
-  defaultKeystore =
-    key: fs.readFileSync "#{appRoot}/resources/certs/default/key.pem"
-    cert:
-      country: 'ZA'
-      state: 'KZN'
-      locality: 'Durban'
-      organization: 'OpenHIM Default Certificate'
-      organizationUnit: 'Default'
-      commonName: '*.openhim.org'
-      emailAddress: 'openhim-implementers@googlegroups.com'
-      validity:
-        start: 1423810077000
-        end: 3151810077000
-      data: fs.readFileSync "#{appRoot}/resources/certs/default/cert.pem"
-    ca: []
-
   # Job scheduler
   agenda = null
 
@@ -234,7 +221,7 @@ else
 
     agenda.on "complete", (job)->
       logger.info "Job " + job.attrs.name + " has completed"
-      
+
     agenda.on "ready", () ->
       alerts.setupAgenda agenda if config.alerts.enableAlerts
       reports.setupAgenda agenda if config.reports.enableReports
@@ -330,18 +317,61 @@ else
       else
         callback()
 
-  # Ensure that a default keystore always exists
+  # Ensure that a default keystore always exists and is up to date
   ensureKeystore = (callback) ->
-    Keystore.findOne {}, (err, keystore) ->
-      if not keystore?
-        keystore = new Keystore defaultKeystore
-        keystore.save (err, keystore) ->
-          if err
-            logger.error "Could not save keystore: " + err
-            return callback err
 
-          logger.info "Default keystore created."
-          callback()
+    getServerCertDetails = (cert, callback) ->
+      pem.readCertificateInfo cert, (err, certInfo) ->
+        if err
+          logger.error err.stack
+          return callback err
+        pem.getFingerprint cert, (err, fingerprint) ->
+          if err
+            logger.error err.stack
+            return callback err
+          certInfo.data = cert
+          certInfo.fingerprint = fingerprint.fingerprint
+          callback certInfo
+
+    Keystore.findOne {}, (err, keystore) ->
+      if err
+        logger.error err.stack
+        return callback err
+      if not keystore? # set default keystore
+        if config.certificateManagement.watchFSForCert # use cert from filesystem
+          certPath = config.certificateManagement.certPath
+          keyPath = config.certificateManagement.keyPath
+        else # use default self-signed certs
+          certPath = "#{appRoot}/resources/certs/default/cert.pem"
+          keyPath = "#{appRoot}/resources/certs/default/key.pem"
+
+        cert = fs.readFileSync certPath
+        getServerCertDetails cert, (certInfo) ->
+          keystore = new Keystore
+            cert: certInfo
+            key: fs.readFileSync keyPath
+            ca: []
+
+          keystore.save (err, keystore) ->
+            if err
+              logger.error "Could not save keystore: " + err.stack
+              return callback err
+
+            logger.info "Default keystore created."
+            callback()
+      else if config.certificateManagement.watchFSForCert # update cert to latest
+        cert = fs.readFileSync config.certificateManagement.certPath
+        getServerCertDetails cert, (certInfo) ->
+          keystore.cert = certInfo
+          keystore.key = fs.readFileSync config.certificateManagement.keyPath
+
+          keystore.save (err, keystore) ->
+            if err
+              logger.error "Could not save keystore: " + err.stack
+              return callback err
+
+            logger.info "Updated keystore with cert and key from filesystem."
+            callback()
       else
         callback()
 
@@ -700,3 +730,6 @@ else
 
       # listen for response from master
       process.on 'message', processEvent
+
+if process.env.NODE_ENV is 'test'
+  exports.ensureKeystore = ensureKeystore
