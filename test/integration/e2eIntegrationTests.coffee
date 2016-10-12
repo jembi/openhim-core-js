@@ -1382,14 +1382,18 @@ describe "e2e Integration Tests", ->
         fs.writeFile 'test/resources/certificate-watcher/test.crt', 'New certificate content. should trigger certificate reload', (err) ->
           if err
             return console.log(err)
-        fs.createReadStream('test/resources/certificate-watcher/testBackup.crt').pipe(fs.createWriteStream('test/resources/certificate-watcher/test.crt'));
+        
 
         setTimeout (->
           Keystore.findOne {}, (err, keystore) ->
+            console.log(keystore)
             done(err) if err
-            # keystore.cert.cert.should.be.exactly 'New certificate content. should trigger certificate reload'
+            keystore.cert.data.should.be.exactly 'New certificate content. should trigger certificate reload'
+
+            # reset the certificate
+            fs.createReadStream('test/resources/certificate-watcher/testBackup.crt').pipe(fs.createWriteStream('test/resources/certificate-watcher/test.crt'));
             done()
           return
-        ), 3000
+        ), 1000
         
         
