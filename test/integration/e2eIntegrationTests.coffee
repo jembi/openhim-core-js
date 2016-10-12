@@ -1383,15 +1383,13 @@ describe "e2e Integration Tests", ->
           if err
             return console.log(err)
         
-
         setTimeout (->
+          # reset the certificate
+          fs.createReadStream('test/resources/certificate-watcher/testBackup.crt').pipe(fs.createWriteStream('test/resources/certificate-watcher/test.crt'));
+
           Keystore.findOne {}, (err, keystore) ->
-            console.log(keystore)
             done(err) if err
             keystore.cert.data.should.be.exactly 'New certificate content. should trigger certificate reload'
-
-            # reset the certificate
-            fs.createReadStream('test/resources/certificate-watcher/testBackup.crt').pipe(fs.createWriteStream('test/resources/certificate-watcher/test.crt'));
             done()
           return
         ), 1000
