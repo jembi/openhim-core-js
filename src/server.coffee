@@ -46,6 +46,7 @@ nconf = require 'nconf'
 atna = require 'atna-audit'
 os = require 'os'
 currentVersion = require('../package.json').version
+chokidar = require 'chokidar'
 
 User = require('./model/users').User
 Keystore = require('./model/keystore').Keystore
@@ -59,9 +60,24 @@ auditing = require './auditing'
 tasks = require './tasks'
 upgradeDB = require './upgradeDB'
 autoRetry = require './autoRetry'
-certificateWatcher = require './certificateWatcher'
 
 clusterArg = nconf.get 'cluster'
+
+exports.setupCertificateWatcher = () ->
+  certFile = config.certificateManagement.certPath
+  keyFile = config.certificateManagement.keyPath
+  watcher = chokidar.watch([certFile, keyFile], {
+    usePolling: true
+  }).on('ready', ->
+    logger.info 'Certificate/Key watch paths:', watcher.getWatched()
+    watcher.on 'change', (path, stats) ->
+      if stats
+        for id, worker of cluster.workers
+          logger.debug "Restarting worker #{worker.id}..."
+          worker.send
+            type: 'restart'
+      return
+  )
 
 # Configure clustering if relevent
 if cluster.isMaster and not module.parent
@@ -143,6 +159,10 @@ if cluster.isMaster and not module.parent
 
     cluster.on 'listening', (worker, address) ->
       logger.debug "worker #{worker.id} is now connected to #{address.address}:#{address.port}"
+
+  # setup watcher if watchFSForCert is enabled
+  if config.certificateManagement.watchFSForCert
+    exports.setupCertificateWatcher()
 else
   ### Setup Worker ###
 
@@ -226,7 +246,6 @@ else
       alerts.setupAgenda agenda if config.alerts.enableAlerts
       reports.setupAgenda agenda if config.reports.enableReports
       autoRetry.setupAgenda agenda
-      certificateWatcher.setupAgenda agenda, config.certificateManagement if config.certificateManagement.watchFSForCert
       if config.polling.enabled
         polling.setupAgenda agenda, ->
           # give workers a change to setup agenda tasks

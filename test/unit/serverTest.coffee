@@ -41,6 +41,25 @@ describe 'Server tests', ->
             (moment().isBefore future).should.be.true
             done()
 
+    it 'should start a server when a certificate/key has changed', (done) ->
+
+      future = moment().add '5', 's'
+      config.certificateManagement.certPath = 'test/resources/certificate-watcher/test.key'
+      config.certificateManagement.certPath = 'test/resources/certificate-watcher/test.key'
+      server.setupCertificateWatcher config
+
+      # change the certificate file
+      fs.writeFile 'test/resources/certificate-watcher/test.crt', 'New certificate content. should trigger certificate reload', (err) ->
+        if err
+          return console.log(err)
+      # reload original cert
+      fs.createReadStream('test/resources/certificate-watcher/testBackup.crt').pipe(fs.createWriteStream('test/resources/certificate-watcher/test.crt'));
+
+      server.restartServer ->
+        (moment().isBefore future).should.be.true
+        done()
+      
+
   describe '.ensureKeystore()', ->
 
     it 'should create a default keystore when none exists using default certs', (done) ->
