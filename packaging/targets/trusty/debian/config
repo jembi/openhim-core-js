@@ -1,0 +1,13 @@
+#!/bin/bash
+
+. /usr/share/debconf/confmodule
+
+db_input high openhim-core-js/watch-fs-for-cert || true
+db_go || true
+
+db_get openhim-core-js/watch-fs-for-cert
+if [ "$RET" = "true" ]; then
+  db_input high openhim-core-js/certPath || true
+  db_input high openhim-core-js/keyPath || true
+  db_go || true
+fi

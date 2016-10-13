@@ -5,6 +5,8 @@ authorisation = require './authorisation'
 pem = require 'pem'
 
 utils = require "../utils"
+config = require "../config/config"
+config.certificateManagement = config.get('certificateManagement')
 
 exports.getServerCert = ->
   # Must be admin
@@ -13,7 +15,8 @@ exports.getServerCert = ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().select('cert').exec()
+    keystoreDoc = yield Keystore.findOne().lean('cert').exec()
+    keystoreDoc.cert.watchFSForCert = config.certificateManagement.watchFSForCert
     this.body = keystoreDoc.cert
   catch err
     utils.logAndSetResponse this, 500, "Could not fetch the server cert via the API: #{err}", 'error'
@@ -64,6 +67,10 @@ exports.setServerCert = ->
   # Must be admin
   if authorisation.inGroup('admin', this.authenticated) is false
     utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to setServerCert by id denied.", 'info'
+    return
+
+  if config.certificateManagement.watchFSForCert
+    utils.logAndSetResponse this, 400, "Failed to upload server certificate: Uploading of certificate while watchFSForCert is true is not allowed.", "info"
     return
 
   try
