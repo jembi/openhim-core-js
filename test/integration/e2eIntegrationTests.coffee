@@ -1374,24 +1374,29 @@ describe "e2e Integration Tests", ->
 
   describe "Certificate Watcher", ->
 
+    afterEach (done) ->
+      server.stop ->
+        done()
+
     it "Should Listen for certificate changes and restart the server with new certificate", (done) ->
-      
-      testUtils.setupTestKeystore (keystore) ->
 
-        # change the certificate file
-        fs.writeFile 'test/resources/certificate-watcher/test.crt', 'New certificate content. should trigger certificate reload', (err) ->
-          if err
-            return console.log(err)
-        
-        setTimeout (->
-          # reset the certificate
-          fs.createReadStream('test/resources/certificate-watcher/testBackup.crt').pipe(fs.createWriteStream('test/resources/certificate-watcher/test.crt'));
+      server.start httpPort: 5001, httpsPort: 5000, ->
+        testUtils.setupTestKeystore (keystore) ->
 
-          Keystore.findOne {}, (err, keystore) ->
-            done(err) if err
-            keystore.cert.data.should.be.exactly 'New certificate content. should trigger certificate reload'
-            done()
-          return
-        ), 1000
+          # change the certificate file
+          fs.writeFile 'test/resources/certificate-watcher/test.crt', 'New certificate content. should trigger certificate reload', (err) ->
+            if err
+              return console.log(err)
+          
+          setTimeout (->
+            # reset the certificate
+            fs.createReadStream('test/resources/certificate-watcher/testBackup.crt').pipe(fs.createWriteStream('test/resources/certificate-watcher/test.crt'));
+
+            Keystore.findOne {}, (err, keystore) ->
+              done(err) if err
+              keystore.cert.data.should.be.exactly 'New certificate content. should trigger certificate reload'
+              done()
+            return
+          ), 1500
         
         
