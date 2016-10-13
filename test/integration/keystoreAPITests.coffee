@@ -221,8 +221,10 @@ describe 'API Integration Tests', ->
           .expect(400)
           .end (err, res) ->
             if err
+              config.certificateManagement.watchFSForCert = false
               done err
             else
+              config.certificateManagement.watchFSForCert = false
               done()
 
     it "Should add a new server key", (done) ->
