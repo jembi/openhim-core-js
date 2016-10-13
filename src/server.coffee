@@ -46,6 +46,7 @@ nconf = require 'nconf'
 atna = require 'atna-audit'
 os = require 'os'
 currentVersion = require('../package.json').version
+chokidar = require 'chokidar'
 
 User = require('./model/users').User
 Keystore = require('./model/keystore').Keystore
@@ -61,6 +62,21 @@ upgradeDB = require './upgradeDB'
 autoRetry = require './autoRetry'
 
 clusterArg = nconf.get 'cluster'
+
+exports.setupCertificateWatcher = () ->
+  certFile = config.certificateManagement.certPath
+  keyFile = config.certificateManagement.keyPath
+  watcher = chokidar.watch([certFile, keyFile], {
+    usePolling: true
+  }).on('ready', ->
+    logger.info 'Certificate/Key watch paths:', watcher.getWatched()
+    watcher.on 'change', (path, stats) ->
+      for id, worker of cluster.workers
+        logger.debug "Restarting worker #{worker.id}..."
+        worker.send
+          type: 'restart'
+      return
+  )
 
 # Configure clustering if relevent
 if cluster.isMaster and not module.parent
@@ -142,6 +158,10 @@ if cluster.isMaster and not module.parent
 
     cluster.on 'listening', (worker, address) ->
       logger.debug "worker #{worker.id} is now connected to #{address.address}:#{address.port}"
+
+  # setup watcher if watchFSForCert is enabled
+  if config.certificateManagement.watchFSForCert
+    exports.setupCertificateWatcher()
 else
   ### Setup Worker ###
 

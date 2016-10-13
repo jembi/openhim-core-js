@@ -40,6 +40,7 @@ describe 'Server tests', ->
           server.restartServer ->
             (moment().isBefore future).should.be.true
             done()
+      
 
   describe '.ensureKeystore()', ->
 
