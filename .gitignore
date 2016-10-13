@@ -17,5 +17,7 @@ packaging/builds
 *.log
 Vagrantfile
 .DS_Store
+.vscode
+
 coverage
 .nyc_output
