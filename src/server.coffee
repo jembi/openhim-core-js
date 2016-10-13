@@ -71,11 +71,10 @@ exports.setupCertificateWatcher = () ->
   }).on('ready', ->
     logger.info 'Certificate/Key watch paths:', watcher.getWatched()
     watcher.on 'change', (path, stats) ->
-      if stats
-        for id, worker of cluster.workers
-          logger.debug "Restarting worker #{worker.id}..."
-          worker.send
-            type: 'restart'
+      for id, worker of cluster.workers
+        logger.debug "Restarting worker #{worker.id}..."
+        worker.send
+          type: 'restart'
       return
   )
 
