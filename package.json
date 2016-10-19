@@ -72,7 +72,7 @@
     "should": "^9.0.0",
     "sinon": "^1.12.2",
     "sinon-es6": "^0.0.3",
-    "supertest": "1.2.0"
+    "supertest": "2.0.1"
   },
   "scripts": {
     "prepublish": "grunt build",
