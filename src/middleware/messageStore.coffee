@@ -15,6 +15,11 @@ os = require 'os'
 domain = "#{os.hostname()}.#{application.name}.appMetrics"
 sdc = new SDC statsdServer
 
+# Max size allowed for ALL bodies in the transaction together
+#
+# Use max 15 MiB leaving 1 MiB available for the transaction metadata
+exports.MAX_BODIES_SIZE = MAX_BODIES_SIZE = 15*1024*1024
+
 exports.transactionStatus = transactionStatus =
   PROCESSING: 'Processing'
   SUCCESSFUL: 'Successful'
@@ -29,6 +34,23 @@ copyMapWithEscapedReservedCharacters = (map) ->
       k = k.replace('.', '\uff0e').replace('$', '\uff04')
     escapedMap[k] = v
   return escapedMap
+
+enforceMaxBodiesSize = (ctx, tx) ->
+  enforced = false
+
+  # running total for all bodies
+  ctx.totalBodyLength = 0 if !ctx.totalBodyLength?
+
+  len = Buffer.byteLength tx.body
+  if ctx.totalBodyLength + len > MAX_BODIES_SIZE
+    len = Math.max 0, MAX_BODIES_SIZE - ctx.totalBodyLength
+    tx.body = tx.body[...len]
+    enforced = true
+    logger.warn 'Truncated body for storage as it exceeds limits'
+
+  ctx.totalBodyLength += len
+  return enforced
+
 
 exports.storeTransaction = (ctx, done) ->
   logger.info 'Storing request metadata for inbound transaction'
@@ -67,6 +89,8 @@ exports.storeTransaction = (ctx, done) ->
     if ctx.method == 'POST' or ctx.method == 'PUT' or ctx.method == 'PATCH'
       tx.canRerun = false
 
+  if enforceMaxBodiesSize ctx, tx.request then tx.canRerun = false
+
   tx.save (err, tx) ->
     if err
       logger.error 'Could not save transaction metadata: ' + err
@@ -96,12 +120,19 @@ exports.storeResponse = (ctx, done) ->
     response: res
     error: ctx.error
 
+  enforceMaxBodiesSize ctx, update.response
+
   # Set status from mediator
   if ctx.mediatorResponse?.status?
     update.status = ctx.mediatorResponse.status
 
   if ctx.mediatorResponse
-    update.orchestrations = ctx.mediatorResponse.orchestrations if ctx.mediatorResponse.orchestrations
+    if ctx.mediatorResponse.orchestrations
+      update.orchestrations = ctx.mediatorResponse.orchestrations
+      for orch in update.orchestrations
+        if orch.request?.body? then enforceMaxBodiesSize ctx, orch.request
+        if orch.response?.body? then enforceMaxBodiesSize ctx, orch.response
+
     update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
 
   transactions.Transaction.findOneAndUpdate { _id: ctx.transactionId }, update , { runValidators: true }, (err, tx) ->
@@ -114,13 +145,16 @@ exports.storeResponse = (ctx, done) ->
     logger.info "stored primary response for #{tx._id}"
     return done()
 
-exports.storeNonPrimaryResponse = (ctx, routeObject, done) ->
+exports.storeNonPrimaryResponse = (ctx, route, done) ->
   # check if channel response body is false and remove
   if ctx.authorisedChannel.responseBody == false
-    routeObject.response.body = ''
+    route.response.body = ''
 
   if ctx.transactionId?
-    transactions.Transaction.findByIdAndUpdate ctx.transactionId, {$push: { "routes": routeObject } } , (err,tx) ->
+    if route.request?.body? then enforceMaxBodiesSize ctx, route.request
+    if route.response?.body? then enforceMaxBodiesSize ctx, route.response
+
+    transactions.Transaction.findByIdAndUpdate ctx.transactionId, {$push: { "routes": route } } , (err,tx) ->
 
       if err
         logger.error err

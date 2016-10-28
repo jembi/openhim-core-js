@@ -64,28 +64,29 @@ describe "MessageStore", ->
   res.body = "<HTTP response>"
   res.timestamp = new Date()
 
-  ctx = new Object()
-  ctx.host = 'localhost:5000'
-  ctx.path = "/api/test/request"
-  ctx.header =
-    headerName: "headerValue"
-    "Content-Type": "application/json"
-    "Content-Length": "9313219921"
-
-  ctx.querystring = "param1=value1&param2=value2"
-  ctx.body = "<HTTP body>"
-  ctx.method = "POST"
-
-  ctx.status = "Processing"
-  ctx.authenticated = new Object()
-  ctx.authenticated._id = new ObjectId "313233343536373839319999"
-
-  ctx.authorisedChannel = new Object()
-  ctx.authorisedChannel.requestBody = true
-  ctx.authorisedChannel.responseBody = true
-
+  ctx = null
 
   beforeEach (done) ->
+    ctx = new Object()
+    ctx.host = 'localhost:5000'
+    ctx.path = "/api/test/request"
+    ctx.header =
+      headerName: "headerValue"
+      "Content-Type": "application/json"
+      "Content-Length": "9313219921"
+
+    ctx.querystring = "param1=value1&param2=value2"
+    ctx.body = "<HTTP body>"
+    ctx.method = "POST"
+
+    ctx.status = "Processing"
+    ctx.authenticated = new Object()
+    ctx.authenticated._id = new ObjectId "313233343536373839319999"
+
+    ctx.authorisedChannel = new Object()
+    ctx.authorisedChannel.requestBody = true
+    ctx.authorisedChannel.responseBody = true
+
     Transaction.remove {}, ->
       Channel.remove {}, ->
         (new Channel channel1).save (err, ch1) ->
@@ -108,7 +109,7 @@ describe "MessageStore", ->
         should.not.exist(error)
         Transaction.findOne { '_id': result._id }, (error, trans) ->
           should.not.exist(error)
-          (trans != null).should.be.true
+          (trans != null).should.be.true()
           trans.clientID.toString().should.equal "313233343536373839319999"
           trans.status.should.equal "Processing"
           trans.status.should.not.equal "None"
@@ -131,10 +132,24 @@ describe "MessageStore", ->
         should.not.exist(error)
         Transaction.findOne { '_id': result._id }, (error, trans) ->
           should.not.exist(error)
-          (trans != null).should.be.true
+          (trans != null).should.be.true()
           trans.request.headers['dot．header'].should.equal '123'
           trans.request.headers['dollar＄header'].should.equal '124'
           ctx.header['X-OpenHIM-TransactionID'].should.equal result._id.toString()
+          done()
+
+    it "should truncate the request body if it exceeds storage limits", (done) ->
+      ctx.body = ''
+      # generate a big body
+      ctx.body += '1234567890' for i in [0...2000*1024]
+
+      messageStore.storeTransaction ctx, (error, result) ->
+        should.not.exist(error)
+        Transaction.findOne { '_id': result._id }, (error, trans) ->
+          should.not.exist(error)
+          (trans != null).should.be.true()
+          trans.request.body.length.should.be.exactly messageStore.MAX_BODIES_SIZE
+          trans.canRerun.should.be.false()
           done()
 
   describe ".storeResponse", ->
@@ -187,7 +202,7 @@ describe "MessageStore", ->
           messageStore.setFinalStatus ctx, ->
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
               should.not.exist(err3)
-              (trans != null).should.true
+              (trans != null).should.be.true()
               trans.response.status.should.equal 201
               trans.response.headers.testHeader.should.equal "value"
               trans.response.body.should.equal "<HTTP response body>"
@@ -205,7 +220,7 @@ describe "MessageStore", ->
           messageStore.storeNonPrimaryResponse ctx, route, ->
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
               should.not.exist(err3)
-              (trans != null).should.true
+              (trans != null).should.be.true()
               trans.routes.length.should.be.exactly 1
               trans.routes[0].name.should.equal "route1"
               trans.routes[0].response.status.should.equal 200
@@ -249,7 +264,7 @@ describe "MessageStore", ->
                 should.not.exist(err2)
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                   should.not.exist(err3)
-                  (trans != null).should.true
+                  (trans != null).should.be.true()
                   trans.status.should.be.exactly "Successful"
                   done()
 
@@ -271,7 +286,7 @@ describe "MessageStore", ->
                 should.not.exist(err2)
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                   should.not.exist(err3)
-                  (trans != null).should.true
+                  (trans != null).should.be.true()
                   trans.status.should.be.exactly "Failed"
                   done()
 
@@ -293,7 +308,7 @@ describe "MessageStore", ->
                 should.not.exist(err2)
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                   should.not.exist(err3)
-                  (trans != null).should.be.true
+                  (trans != null).should.be.true()
                   trans.status.should.be.exactly "Completed with error(s)"
                   done()
 
@@ -316,7 +331,7 @@ describe "MessageStore", ->
                 should.not.exist(err2)
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                   should.not.exist(err3)
-                  (trans != null).should.true
+                  (trans != null).should.be.true()
                   trans.status.should.be.exactly "Completed"
                   done()
 
@@ -338,7 +353,7 @@ describe "MessageStore", ->
                 should.not.exist(err2)
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                   should.not.exist(err3)
-                  (trans != null).should.true
+                  (trans != null).should.be.true()
                   trans.status.should.be.exactly "Completed"
                   done()
                   
@@ -360,7 +375,7 @@ describe "MessageStore", ->
                 should.not.exist(err2)
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                   should.not.exist(err3)
-                  (trans != null).should.true
+                  (trans != null).should.be.true()
                   trans.status.should.be.exactly "Completed"
                   done()
                   
@@ -382,7 +397,7 @@ describe "MessageStore", ->
                 should.not.exist(err2)
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                   should.not.exist(err3)
-                  (trans != null).should.true
+                  (trans != null).should.be.true()
                   trans.status.should.be.exactly "Completed"
                   done()
 
@@ -405,7 +420,7 @@ describe "MessageStore", ->
           should.not.exist(err2)
           Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
             should.not.exist(err3)
-            (trans != null).should.true
+            (trans != null).should.be.true()
             trans.response.headers['dot．header'].should.equal '123'
             trans.response.headers['dollar＄header'].should.equal '124'
             done()
@@ -420,7 +435,7 @@ describe "MessageStore", ->
         should.not.exist(error)
         Transaction.findOne { '_id': result._id }, (error, trans) ->
           should.not.exist(error)
-          (trans != null).should.be.true
+          (trans != null).should.be.true()
           trans.clientID.toString().should.equal "313233343536373839319999"
           trans.channelID.toString().should.equal channel1._id.toString()
           trans.status.should.equal "Processing"
@@ -440,7 +455,87 @@ describe "MessageStore", ->
           should.not.exist(err2)
           Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
             should.not.exist(err3)
-            (trans != null).should.true
+            (trans != null).should.be.true()
             trans.response.status.should.equal 201
             trans.response.body.should.equal ""
             done()
+
+    it "should truncate the response body if it exceeds storage limits", (done) ->
+      ctx.response = createResponse 201
+      ctx.response.body = ''
+      ctx.response.body += '1234567890' for i in [0...2000*1024]
+
+      messageStore.storeTransaction ctx, (err, storedTrans) ->
+        ctx.transactionId = storedTrans._id
+        messageStore.storeResponse ctx, (err2) ->
+          should.not.exist(err2)
+          messageStore.setFinalStatus ctx, ->
+            Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+              should.not.exist(err3)
+              (trans != null).should.be.true()
+              expectedLen = messageStore.MAX_BODIES_SIZE - ctx.body.length
+              trans.response.body.length.should.be.exactly expectedLen
+              done()
+
+    it "should truncate the response body for orchestrations if it exceeds storage limits", (done) ->
+      ctx.response = createResponse 201
+      ctx.mediatorResponse =
+        orchestrations: [
+          name: 'orch1'
+          request:
+            host: "localhost"
+            port: "4466"
+            path: "/test"
+            body: "orch body"
+            timestamp: new Date()
+          response:
+            status: 201
+            timestamp: new Date()
+        ,
+          name: 'orch2'
+          request:
+            host: "localhost"
+            port: "4466"
+            path: "/test"
+            timestamp: new Date()
+          response:
+            status: 200
+            headers:
+              test: "test"
+            timestamp: new Date()
+        ]
+      ctx.mediatorResponse.orchestrations[1].response.body += '1234567890' for i in [0...2000*1024]
+
+      messageStore.storeTransaction ctx, (err, storedTrans) ->
+        ctx.transactionId = storedTrans._id
+        messageStore.storeResponse ctx, (err2) ->
+          should.not.exist(err2)
+          messageStore.setFinalStatus ctx, ->
+            Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+              should.not.exist(err3)
+              (trans != null).should.be.true()
+              expectedLen = messageStore.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
+                ctx.mediatorResponse.orchestrations[0].request.body.length
+              trans.orchestrations[1].response.body.length.should.be.exactly expectedLen
+              done()
+
+    it "should truncate the response body for routes if they exceed storage limits", (done) ->
+      ctx.response = createResponse 201
+      ctx.routes = []
+      ctx.routes.push createRoute "route1", 201
+      ctx.routes.push createRoute "route2", 200
+      ctx.routes[1].response.body += '1234567890' for i in [0...2000*1024]
+
+      messageStore.storeTransaction ctx, (err, storedTrans) ->
+        ctx.transactionId = storedTrans._id
+        messageStore.storeResponse ctx, (err2) ->
+          messageStore.storeNonPrimaryResponse ctx, ctx.routes[0], ->
+            messageStore.storeNonPrimaryResponse ctx, ctx.routes[1], ->
+              messageStore.setFinalStatus ctx, ->
+                Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
+                  should.not.exist(err3)
+                  (trans != null).should.be.true()
+                  expectedLen = messageStore.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
+                    ctx.routes[0].response.body.length
+                  trans.routes[1].response.body.length.should.be.exactly expectedLen
+                  done()
