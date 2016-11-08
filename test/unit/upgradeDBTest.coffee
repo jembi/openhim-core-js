@@ -212,6 +212,76 @@ describe 'Upgrade DB Tests', ->
           channels: []
           mediators: []
 
+    # from structure for Console v1.6.0
+    userObj4 =
+      settings:
+        list: {}
+        visualizer:
+          time:
+            maxTimeout: 5000
+            maxSpeed: 5
+            updatePeriod: 200
+          size:
+            padding: 20
+            height: 400
+            width: 1000
+            responsive: true
+          color:
+            text: "000000"
+            error: "d43f3a"
+            active: "4cae4c"
+            inactive: "CCCCCC"
+          endpoints: [
+              desc: "Test Channel"
+              event: "channel-test"
+          ]
+          components: [
+              desc: "Test"
+              event: "test"
+            ,
+              desc: "Test Route"
+              event: "route-testroute"
+          ]
+        filter:
+          limit: 100
+      email: "test4@user.org"
+      firstname: "Test"
+      surname: "User4"
+      groups: [
+        "admin"
+      ]
+
+    # from structure for Console v1.6.0
+    userObj5 =
+      settings:
+        list: {}
+        visualizer:
+          time:
+            maxTimeout: 5000
+            maxSpeed: 5
+            updatePeriod: 200
+          size:
+            padding: 20
+            height: 400
+            width: 1000
+            responsive: true
+          color:
+            text: "000000"
+            error: "d43f3a"
+            active: "4cae4c"
+            inactive: "CCCCCC"
+          endpoints: []
+          components: []
+        filter:
+          limit: 100
+      email: "test5@user.org"
+      firstname: "Test"
+      surname: "User5"
+      groups: [
+        "admin"
+      ]
+
+
     before (done) ->
       User.remove () ->
         Visualizer.remove () ->
@@ -286,6 +356,44 @@ describe 'Upgrade DB Tests', ->
         upgradeFunc().then ->
           Visualizer.find (err, visualizers) ->
             visualizers.length.should.be.exactly 2 # third user is skipped
+            done()
+        .catch (err) ->
+          done err
+
+    it 'should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)', (done) ->
+      user = new User userObj4
+      user.save (err) ->
+        if err then done err
+        upgradeFunc().then ->
+          Visualizer.find (err, visualizers) ->
+            visualizers.length.should.be.exactly 3
+
+            visualizers[2].time.minDisplayPeriod.should.be.exactly 100
+            visualizers[2].mediators.length.should.be.exactly 0
+
+            visualizers[2].channels.length.should.be.exactly 1
+            visualizers[2].channels[0].eventType.should.be.equal 'channel'
+            visualizers[2].channels[0].eventName.should.be.equal 'test'
+            visualizers[2].channels[0].display.should.be.equal 'Test Channel'
+
+            visualizers[2].components.length.should.be.exactly 2
+            visualizers[2].components[0].eventType.should.be.equal 'channel'
+            visualizers[2].components[0].eventName.should.be.equal 'test'
+            visualizers[2].components[0].display.should.be.equal 'Test'
+            visualizers[2].components[1].eventType.should.be.equal 'route'
+            visualizers[2].components[1].eventName.should.be.equal 'testroute'
+            visualizers[2].components[1].display.should.be.equal 'Test Route'
+            done()
+        .catch (err) ->
+          done err
+
+    it 'should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)', (done) ->
+      user = new User userObj5
+      user.save (err) ->
+        if err then done err
+        upgradeFunc().then ->
+          Visualizer.find (err, visualizers) ->
+            visualizers.length.should.be.exactly 2
             done()
         .catch (err) ->
           done err
