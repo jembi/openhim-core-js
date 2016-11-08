@@ -2,17 +2,31 @@ logger = require "winston"
 nodemailer = require "nodemailer"
 request = require "request"
 config = require "./config/config"
+config.email = config.get('email')
 config.nodemailer = config.get('nodemailer')
 config.smsGateway = config.get('smsGateway')
 
 exports.sendEmail = (contactAddress, title, messagePlain, messageHTML, callback) ->
 
+  nodemailerConfig = null
+  fromAddress = null
+
+  if config.email
+    nodemailerConfig = config.email.nodemailer
+    fromAddress = config.email.fromAddress
+  else if config.nodemailer
+    # Support old config format for backwards compatibility
+    nodemailerConfig = config.nodemailer
+    fromAddress = nodemailerConfig.auth.user
+  else
+    return callback new Error "No email config found"
+
   logger.info "Sending email to '#{contactAddress}' using service " +
-    "#{config.nodemailer.service} - #{config.nodemailer.auth.user}"
-  smtpTransport = nodemailer.createTransport config.nodemailer
+    "#{nodemailerConfig.service} - #{fromAddress}"
+  smtpTransport = nodemailer.createTransport nodemailerConfig
 
   smtpTransport.sendMail {
-    from: config.nodemailer.auth.user
+    from: fromAddress
     to: contactAddress
     subject: title
     text: messagePlain
