@@ -132,6 +132,7 @@ describe 'API Integration Tests', ->
           .get("/password-reset-request/r..@jembi.org")
           .expect(500)
           .end (err, res) ->
+            stubContact.restore()
             if err
               done err
             else

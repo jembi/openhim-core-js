@@ -91,12 +91,16 @@ The following config option are provided by the OpenHIM. All of these options ha
     "enableMutualTLSAuthentication": true,
     "enableBasicAuthentication": true
   },
-  "nodemailer": {
-    // The nodemailer service to use see: https://github.com/andris9/Nodemailer
-    "service": "Gmail",
-    "auth": {
-      "user": "user@gmail.com",
-      "pass": "password"
+  "email": {
+    // The address to use in the "from" field of the emails
+    "fromAddress": "address@example.com",
+    "nodemailer": {
+      // The nodemailer service to use see: https://github.com/andris9/Nodemailer
+      "service": "Gmail",
+      "auth": {
+        "user": "user@gmail.com",
+        "pass": "password"
+      }
     }
   },
   "smsGateway": {
