@@ -90,6 +90,37 @@ upgradeFuncs.push
 
     return defer.promise
 
+# Adapt visualizer from an old version (core 2.0.0, console 1.6.0 and earlier)
+#
+# We follow the same migration strategy as console:
+# https://github.com/jembi/openhim-console/blob/1047b49db2050bafa6b4797e3788fa716d1760b3/app/scripts/controllers/profile.js#L83-L109
+adaptOldVisualizerStructure = (visualizer) ->
+  visualizer.channels = []
+  visualizer.mediators = []
+  visualizer.time.minDisplayPeriod = 100
+
+  if visualizer.endpoints
+    for endpoint in visualizer.endpoints
+      visualizer.channels.push
+        eventType: 'channel'
+        eventName: endpoint.event.replace 'channel-', ''
+        display: endpoint.desc
+    delete visualizer.endpoints
+
+  if visualizer.components
+    for component in visualizer.components
+      split = component.event.split '-'
+      if split.length > 1
+        component.eventType = split[0]
+        component.eventName = split[1]
+      else
+        component.eventType = 'channel'
+        component.eventName = component.event
+      component.display = component.desc
+      delete component.event
+      delete component.desc
+
+
 upgradeFuncs.push
   description: "Migrate visualizer setting from a user's profile to a shared collection"
   func: ->
@@ -103,9 +134,12 @@ upgradeFuncs.push
       users.forEach (user) ->
         if user.settings?.visualizer?
           vis = user.settings.visualizer
-          if vis.components.length > 0 or vis.mediators.length > 0 or vis.channels.length > 0
+          if vis.components?.length > 0 or vis.mediators?.length > 0 or vis.channels?.length > 0 or vis.endpoints?.length > 0
             userDefer = Q.defer()
             promises.push userDefer.promise
+
+            if vis.endpoints # old version
+              adaptOldVisualizerStructure vis
 
             name = "#{user.firstname} #{user.surname}'s visualizer"
             name = dedupName name, visNames
