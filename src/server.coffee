@@ -273,7 +273,7 @@ else
     httpServer = http.createServer app.callback()
 
     # set the socket timeout
-    httpServer.setTimeout config.router.timeout, ->
+    httpServer.setTimeout +config.router.timeout, ->
       logger.info "HTTP socket timeout reached"
 
     httpServer.listen httpPort, bindAddress, ->
@@ -301,7 +301,7 @@ else
       httpsServer = https.createServer options, app.callback()
 
       # set the socket timeout
-      httpsServer.setTimeout config.router.timeout, ->
+      httpsServer.setTimeout +config.router.timeout, ->
         logger.info "HTTPS socket timeout reached"
 
       httpsServer.listen httpsPort, bindAddress, ->
