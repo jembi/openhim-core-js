@@ -351,7 +351,7 @@ sendHttpRequest = (ctx, route, options) ->
 
   routeReq.on "clientError", (err) -> defered.reject err
 
-  routeReq.setTimeout config.router.timeout, -> defered.reject "Request Timed Out"
+  routeReq.setTimeout +config.router.timeout, -> defered.reject "Request Timed Out"
 
   if ctx.request.method == "POST" || ctx.request.method == "PUT"
     routeReq.write ctx.body
