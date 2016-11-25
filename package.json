@@ -48,7 +48,7 @@
     "semver": "^5.1.0",
     "source-map-support": "^0.4.0",
     "ssl-root-cas": "^1.1.10",
-    "statsd-client": "^0.2.2",
+    "statsd-client": "^0.2.4",
     "winston": "^2.2.0",
     "winston-mongodb": "^1.4.0",
     "xml2js": "^0.4.5",
