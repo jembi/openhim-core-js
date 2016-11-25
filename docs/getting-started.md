@@ -17,6 +17,36 @@ When installing the console, it will ask you for the host and port of the OpenHI
 
 These packages will install the OpenHIM-core using NPM for the OpenHIM user, add the OpenHIM-core as a service and install the console to nginx. You can find the core log file here `/var/log/upstart/openhim-core.log` and may stop and start the OpenHIM-core with `sudo start openhim-core` or `sudo stop openhim-core`.
 
+You should use the OpenHIM with a proper TLS certificate to secure your server. The easiest way to do this on a public server is to generate a free letsencrypt certificate. You can do this by following the commands below:
+
+```sh
+# These commands assume you are running as the root user
+# fetch letsencrypt certbot script and make it executable
+$ wget https://dl.eff.org/certbot-auto
+$ chmod a+x certbot-auto
+
+# Install certbot dependencies - if this fails and you have a small amount of ram then you may need to add a swapfile
+$ ./certbot-auto
+$ ./certbot-auto certonly --webroot -w /usr/share/openhim-console -d <your_hostname>
+
+# allow the openhim the ability to read the generated certificate and key
+$ chmod 750 /etc/letsencrypt/live/
+$ chmod 750 /etc/letsencrypt/archive/
+$ chown :openhim /etc/letsencrypt/live/ /etc/letsencrypt/archive/
+
+# Change your OpenHIM cert config in /etc/openhim/config.json to (or enter these details when asked during the OpenHIM installation)
+"certificateManagement": {
+  "watchFSForCert": true,
+  "certPath": "/etc/letsencrypt/live/<your_hostname>/fullchain.pem",
+  "keyPath": "/etc/letsencrypt/live/<your_hostname>/privkey.pem"
+}
+
+# setup auto renewal of the certificate
+$ crontab -e
+# append the following line at the end of your crontab
+0 0 * * * /root/certbot-auto renew --no-self-upgrade >> /var/log/letsencrypt-renewal.log
+```
+
 If you don't have ubuntu or want to install manually, follow the steps below.
 
 Installing the OpenHIM-core
