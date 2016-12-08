@@ -50,7 +50,7 @@
     "ssl-root-cas": "^1.1.10",
     "statsd-client": "^0.2.2",
     "winston": "^2.2.0",
-    "winston-mongodb": "^1.4.0",
+    "winston-mongodb": "^1.6.2",
     "xml2js": "^0.4.5",
     "xmldom": "^0.1.19",
     "xpath": "0.0.23"
