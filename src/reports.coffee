@@ -93,8 +93,10 @@ sendReports = (job, flag, done) ->
         # Iterate over reports and send the emails
         for key, report of reportMap
           if flag == 'dailyReport'
+            report.type = 'Daily'
             report.isDaily = true
           else
+            report.type = 'Weekly'
             report.isDaily = false
 
           report.instance = config.alerts.himInstance
