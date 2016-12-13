@@ -93,21 +93,3 @@ describe "Transaction Reports", ->
         item.data[0].should.have.property 'avgResp', 100
         item.data[0].should.have.property 'completed', 1
         done()
-
-    it "should send a  weekly channel report", (done) ->
-      sinon.spy(reports, 'fetchWeeklySubscribers')
-      reports.sendReports {}, 'weeklyReport', () ->
-        reports.fetchWeeklySubscribers.should.be.called()
-        reports.fetchChannelReport.should.be.called()
-        reports.sendUserEmail.should.be.called()
-
-      done()
-
-    it "should send a  daily channel report", (done) ->
-      sinon.spy(reports, 'fetchDailySubscribers')
-      reports.sendReports {}, 'weeklyReport', () ->
-        reports.fetchDailySubscribers.should.be.called()
-        reports.fetchChannelReport.should.be.called()
-        reports.sendUserEmail.should.be.called()
-
-      done()
