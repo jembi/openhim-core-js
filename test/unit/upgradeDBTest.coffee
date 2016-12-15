@@ -305,10 +305,13 @@ describe 'Upgrade DB Tests', ->
         Visualizer.find (err, visualizers) ->
           if err then return done err
           visualizers.length.should.be.exactly 2
-          visualizers[0].name.should.be.exactly "Test User1's visualizer"
-          visualizers[0].components.length.should.be.exactly 2
-          visualizers[1].name.should.be.exactly "Test User2's visualizer"
-          visualizers[1].components.length.should.be.exactly 1
+          names = visualizers.map((v) -> v.name)
+          idx1 = names.indexOf("Test User1's visualizer")
+          idx2 = names.indexOf("Test User2's visualizer")
+          idx1.should.be.above -1
+          visualizers[idx1].components.length.should.be.exactly 2
+          idx2.should.be.above -1
+          visualizers[idx2].components.length.should.be.exactly 1
           done()
       .catch (err) ->
         done err
@@ -322,10 +325,13 @@ describe 'Upgrade DB Tests', ->
             Visualizer.find (err, visualizers) ->
               if err then return done err
               visualizers.length.should.be.exactly 2
-              visualizers[0].name.should.be.exactly "Test User1's visualizer"
-              visualizers[0].components.length.should.be.exactly 2
-              visualizers[1].name.should.be.exactly "Test User1's visualizer 2"
-              visualizers[1].components.length.should.be.exactly 1
+              names = visualizers.map((v) -> v.name)
+              idx1 = names.indexOf("Test User1's visualizer")
+              idx2 = names.indexOf("Test User1's visualizer 2")
+              idx1.should.be.above -1
+              visualizers[idx1].components.length.should.be.exactly 2
+              idx2.should.be.above -1
+              visualizers[idx2].components.length.should.be.exactly 1
               done()
           .catch (err) ->
             done err
@@ -368,21 +374,24 @@ describe 'Upgrade DB Tests', ->
           Visualizer.find (err, visualizers) ->
             visualizers.length.should.be.exactly 3
 
-            visualizers[2].time.minDisplayPeriod.should.be.exactly 100
-            visualizers[2].mediators.length.should.be.exactly 0
+            names = visualizers.map((v) -> v.name)
+            idx = names.indexOf("Test User4's visualizer")
 
-            visualizers[2].channels.length.should.be.exactly 1
-            visualizers[2].channels[0].eventType.should.be.equal 'channel'
-            visualizers[2].channels[0].eventName.should.be.equal 'test'
-            visualizers[2].channels[0].display.should.be.equal 'Test Channel'
+            visualizers[idx].time.minDisplayPeriod.should.be.exactly 100
+            visualizers[idx].mediators.length.should.be.exactly 0
 
-            visualizers[2].components.length.should.be.exactly 2
-            visualizers[2].components[0].eventType.should.be.equal 'channel'
-            visualizers[2].components[0].eventName.should.be.equal 'test'
-            visualizers[2].components[0].display.should.be.equal 'Test'
-            visualizers[2].components[1].eventType.should.be.equal 'route'
-            visualizers[2].components[1].eventName.should.be.equal 'testroute'
-            visualizers[2].components[1].display.should.be.equal 'Test Route'
+            visualizers[idx].channels.length.should.be.exactly 1
+            visualizers[idx].channels[0].eventType.should.be.equal 'channel'
+            visualizers[idx].channels[0].eventName.should.be.equal 'test'
+            visualizers[idx].channels[0].display.should.be.equal 'Test Channel'
+
+            visualizers[idx].components.length.should.be.exactly 2
+            visualizers[idx].components[0].eventType.should.be.equal 'channel'
+            visualizers[idx].components[0].eventName.should.be.equal 'test'
+            visualizers[idx].components[0].display.should.be.equal 'Test'
+            visualizers[idx].components[1].eventType.should.be.equal 'route'
+            visualizers[idx].components[1].eventName.should.be.equal 'testroute'
+            visualizers[idx].components[1].display.should.be.equal 'Test Route'
             done()
         .catch (err) ->
           done err
