@@ -157,8 +157,12 @@ exports.addRole = ->
   try
     chResult = yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
     clResult = yield Client.find({roles: {$in: [role.name]}}, {clientID: 1 }).exec()
-    if chResult?.length > 0 or clResults?.length > 0
+    if chResult?.length > 0 or clResult?.length > 0
       return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
+
+    clientConflict = yield Client.find({ clientID: role.name }, { clientID: 1 }).exec()
+    if clientConflict?.length > 0
+      return utils.logAndSetResponse this, 409, "A clientID conflicts with role name '#{role.name}'. A role name cannot be the same as a clientID.", 'info'
 
     if role.channels
       chCriteria = buildFindChannelByIdOrNameCriteria this, role
@@ -202,6 +206,10 @@ exports.updateRole = (name) ->
       clients = yield Client.find({roles: {$in: [role.name]}}, {name: 1 }).exec()
       if channels?.length > 0 or clients?.length > 0
         return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
+
+      clientConflict = yield Client.find({ clientID: role.name }, { clientID: 1 }).exec()
+      if clientConflict?.length > 0
+        return utils.logAndSetResponse this, 409, "A clientID conflicts with role name '#{role.name}'. A role name cannot be the same as a clientID.", 'info'
 
     if role.channels
       chCriteria = buildFindChannelByIdOrNameCriteria this, role

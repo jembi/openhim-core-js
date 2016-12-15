@@ -1,4 +1,5 @@
 Client = require('../model/clients').Client
+Channel = require('../model/channels').Channel
 Q = require 'q'
 logger = require 'winston'
 authorisation = require './authorisation'
@@ -16,10 +17,16 @@ exports.addClient = () ->
 
   clientData = this.request.body
 
+  if clientData.clientID
+    chResult = yield Channel.find({allow: {$in: [clientData.clientID]}}, {name: 1 }).exec()
+    clResult = yield Client.find({roles: {$in: [clientData.clientID]}}, {clientID: 1 }).exec()
+    if chResult?.length > 0 or clResult?.length > 0
+      return utils.logAndSetResponse this, 409, "A role name conflicts with clientID '#{clientData.clientID}'. A role name cannot be the same as a clientID.", 'info'
+
   try
     client = new Client clientData
     result = yield Q.ninvoke client, 'save'
-    
+
     logger.info "User #{this.authenticated.email} created client with id #{client.id}"
     this.body = 'Client successfully created'
     this.status = 201
@@ -96,6 +103,12 @@ exports.updateClient = (clientId) ->
   # Ignore _id if it exists, a user shouldn't be able to update the internal id
   delete clientData._id if clientData._id
 
+  if clientData.clientID
+    chResult = yield Channel.find({allow: {$in: [clientData.clientID]}}, {name: 1 }).exec()
+    clResult = yield Client.find({roles: {$in: [clientData.clientID]}}, {clientID: 1 }).exec()
+    if chResult?.length > 0 or clResult?.length > 0
+      return utils.logAndSetResponse this, 409, "A role name conflicts with clientID '#{clientData.clientID}'. A role name cannot be the same as a clientID.", 'info'
+
   try
     yield Client.findByIdAndUpdate(clientId, clientData).exec()
     logger.info "User #{this.authenticated.email} updated client with id #{clientId}"
@@ -106,7 +119,7 @@ exports.updateClient = (clientId) ->
     this.status = 500
 
 exports.removeClient = (clientId) ->
- 
+
   # Test if the user is authorised
   if not authorisation.inGroup 'admin', this.authenticated
     utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeClient denied.", 'info'
