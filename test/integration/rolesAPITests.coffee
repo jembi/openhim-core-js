@@ -499,6 +499,18 @@ describe 'API Integration Tests', ->
               mapId(clients).should.containEql "#{client2._id}"
               done()
 
+      it 'should reject a role that conflicts with a clientID', (done) ->
+        request('https://localhost:8080')
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send
+            name: 'client1'
+            channels: [_id: "#{channel1._id}"]
+          .expect(409)
+          .end (err, res) -> done err
 
     describe '*updateRole()', ->
 
@@ -704,6 +716,17 @@ describe 'API Integration Tests', ->
           .expect(400)
           .end (err, res) -> done err
 
+      it 'should reject a role that conflicts with a clientID', (done) ->
+        request('https://localhost:8080')
+          .put('/roles/role1')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send
+            name: 'client1'
+          .expect(409)
+          .end (err, res) -> done err
 
     describe '*deleteRole()', ->
 

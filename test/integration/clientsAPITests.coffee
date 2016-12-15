@@ -79,6 +79,25 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it  "should reject a client that conflicts with a role", (done) ->
+        client = new Client testAppDoc
+        client.save ->
+          conflict = Object.assign({}, testAppDoc)
+          conflict.clientID = "PoC"
+          request("https://localhost:8080")
+            .post("/clients")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(conflict)
+            .expect(409)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
+
     describe "*getClient(_id)", ->
       clientTest =
         clientID: "testClient"
@@ -360,6 +379,24 @@ describe "API Integration Tests", ->
             else
               done()
 
+      it  "should reject a client that conflicts with a role", (done) ->
+        client = new Client testAppDoc
+        client.save ->
+          conflict = { clientID: "PoC" }
+          request("https://localhost:8080")
+            .put("/clients/" + client._id)
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(conflict)
+            .expect(409)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                done()
+
     describe "*removeClient", ->
       it  "should remove an client with specified clientID", (done) ->
         docTestRemove =
@@ -371,7 +408,7 @@ describe "API Integration Tests", ->
               "analysis_POC"
             ]
           passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
-          
+
         client = new Client docTestRemove
         client.save (error, testDoc) ->
           should.not.exist(error)
