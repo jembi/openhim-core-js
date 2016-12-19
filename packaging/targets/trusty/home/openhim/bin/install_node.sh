@@ -12,13 +12,10 @@ cd $HOME
 
 # Install NVM
 echo "Installing node version manager for "$USERNAME" user ..."
-$CURL -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.1/install.sh | bash | $SH > /dev/null
+$CURL -o- https://raw.githubusercontent.com/creationix/nvm/v0.32.1/install.sh | $SH > /dev/null
 . $HOME/.nvm/nvm.sh
 
 # Install node
-echo "Installing node.js LTS via nvm ..."
-nvm install --lts
-nvm alias default lts/*
-nvm use default
+nvm install --lts || true
 
 exit 0

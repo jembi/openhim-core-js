@@ -22,6 +22,7 @@ fi
 
 chown -R $USERNAME:$USERNAME $HOME/bin
 chown -R $USERNAME:$USERNAME $HOME/bin/install_node.sh
+chmod +x /usr/share/openhim-core/bin/openhim-core.js
 
 # Fetch OpenHIM config file
 mkdir /etc/openhim/ || true
