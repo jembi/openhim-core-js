@@ -7,11 +7,14 @@ This quickest an easiest way to install the OpenHIM on ubuntu is to use our deb 
 
 If you would like to install the OpenHIM manually, read on.
 
-## Install Node.js 0.12.x
+## Install Node.js
 
-_As per [https://nodesource.com/blog/nodejs-v012-iojs-and-the-nodesource-linux-repositories](https://nodesource.com/blog/nodejs-v012-iojs-and-the-nodesource-linux-repositories)_ The first required dependency is Node.js. You should at least be running version 0.12, which isn't available in the official Ubuntu repositories in 14.04\. Therefore we need to use an alternative source:
+_As per [https://nodesource.com/blog/nodejs-v012-iojs-and-the-nodesource-linux-repositories](https://nodesource.com/blog/nodejs-v012-iojs-and-the-nodesource-linux-repositories)_ The first required dependency is Node.js. You should at least be running version 4. We can use NVM to get the latest node versions.
 
-`$ curl -sL https://deb.nodesource.com/setup_0.12 | sudo bash - sudo apt-get install nodejs`
+```sh
+$ wget -qO- https://raw.githubusercontent.com/creationix/nvm/v0.32.1/install.sh | bash
+$ nvm install --lts
+```
 
 ## Install MongoDB 3.0
 

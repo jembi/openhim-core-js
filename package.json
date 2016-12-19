@@ -8,7 +8,7 @@
   },
   "license": "MPL-2.0",
   "engines": {
-    "node": ">=0.12.0"
+    "node": ">=4"
   },
   "dependencies": {
     "agenda": "^0.8.1",
