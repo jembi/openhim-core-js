@@ -11,20 +11,20 @@ You can use vagrant if you would want to get up and running quickly with a dev e
 Clone the `https://github.com/jembi/openhim-core-js.git` repository.
 
 Ensure you have the following installed:
-* [Node.js](http://nodejs.org/) 0.12.0 or greater
+* [Node.js](http://nodejs.org/) v4 or greater
 * [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt-get install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
 
-The OpenHIM core makes use of the [Koa framework](http://koajs.com/), which requires node version 0.12.0 or greater. Node also has to be run with the `--harmony` flag for Koa to work as it needs generator support.
+The OpenHIM core makes use of the [Koa framework](http://koajs.com/), which requires node version 4 or greater.
 
 The easiest way to use the latest version of node is to install [`nvm`](https://github.com/creationix/nvm). On Ubuntu, you can install using the install script but you have to add `[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh # This loads NVM` to the end of your `~/.bashrc` file as well.
 
 Once `nvm `is installed, run the following:
 
-`nvm install 0.12`
+`nvm install --lts`
 
-`nvm alias default 0.12`
+`nvm alias default lts/*`
 
-The latest version of node 0.12 should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
+The latest LTS version of node should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
 
 `npm install`
 
@@ -71,4 +71,4 @@ Note all changes will be automatically applied to the webapp and the page will b
 
 For unit testing we are using [mocha](http://visionmedia.github.io/mocha/) with [chai.js](http://chaijs.com/api/bdd/) for assertions. We are using the BDD `should` style for chai as it more closely resembles the unit testing style that is being used for the [OpenHIM-core component](https://github.com/jembi/openhim-core-js)
 
-This code was scaffolded using [Yeoman](http://yeoman.io/) and the [angular generator](https://github.com/yeoman/generator-angular). You can find more detials about the commands available by looking at the docs of those tools.
+This code was scaffolded using [Yeoman](http://yeoman.io/) and the [angular generator](https://github.com/yeoman/generator-angular). You can find more details about the commands available by looking at the docs of those tools.
