@@ -3,6 +3,7 @@ node_js:
   - "4"
   - "6"
 addons:
+  srcclr: true
   apt:
     sources:
       - mongodb-3.2-precise
