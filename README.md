@@ -3,6 +3,8 @@
 OpenHIM Core Component
 ======================
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/jembi/openhim-core-js.svg)](https://greenkeeper.io/)
+
 The OpenHIM core component is responsible for providing a single entry-point into an HIE as well as providing the following key features:
 
 * Point of service client authentication and authorization
