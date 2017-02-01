@@ -23,8 +23,8 @@ sendReports = (job, flag, done) ->
     from = moment().subtract(1, 'days').startOf('day').toDate()
     to = moment().subtract(1, 'days').endOf('day').toDate()
   else
-    from = moment().subtract(1, 'days').startOf('isoWeek').toDate()
-    to = moment().subtract(1, 'days').endOf('isoWeek').toDate()
+    from = moment().startOf('isoWeek').subtract(1, 'weeks').toDate()
+    to = moment().endOf('isoWeek').subtract(1, 'weeks').toDate()
 
   # Select the right subscribers for the report
   if flag == 'dailyReport'
@@ -111,14 +111,26 @@ sendReports = (job, flag, done) ->
               rowColor = 'background-color: #d9ead3'
               if i % 2
                 rowColor = 'background-color: #b6d7a8;'
+              
+              totals =
+                total: 0
+                avgResp: 0
+                failed: 0
+                successful: 0
+                processing: 0
+                completed: 0
+                completedWErrors: 0
 
-              report.data[i].total = (if data.data[0]?.total? then data.data[0].total else 0)
-              report.data[i].avgResp = (if data.data[0]?.avgResp? then Math.round(data.data[0].avgResp) else 0)
-              report.data[i].failed = (if data.data[0]?.failed? then data.data[0].failed else 0)
-              report.data[i].successful = (if data.data[0]?.successful? then data.data[0].successful else 0)
-              report.data[i].processing = (if data.data[0]?.processing? then data.data[0].processing else 0)
-              report.data[i].completed = (if data.data[0]?.completed? then data.data[0].completed else 0)
-              report.data[i].completedWErrors = (if data.data[0]?.completedWErrors? then data.data[0].completedWErrors else 0)
+              data.data.forEach (val, index) ->
+                for key, value of totals
+                  if key is 'avgResp'
+                    totals[key] += (if data.data[index]?[key]? then Math.round(data.data[index][key])/1000 else 0)
+                  else
+                    totals[key] += (if data.data[index]?[key]? then data.data[index][key] else 0)
+              
+              for key, value of totals
+                report.data[i][key] = totals[key]
+              
               report.data[i].totalStyle = (if report.data[i].total > 0 then '' else colorGrey)
               report.data[i].avgRespStyle = (if report.data[i].avgResp > 0 then '' else colorGrey)
               report.data[i].failedStyle = (if report.data[i].failed > 0 then 'color: red;' else colorGrey)
