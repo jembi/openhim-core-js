@@ -101,90 +101,90 @@ testTransactions = [
   # 0
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa0'
-    route: 'primary'
     event: 'end'
     status: 404
+    type: 'channel'
 
   # 1
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa1'
-    route: 'route'
     event: 'end'
     status: 404
+    type: 'channel'
 
   # 2
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa2'
-    route: 'primary'
     event: 'end'
     status: 400
+    type: 'channel'
 
   # 3
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa3'
-    route: 'primary'
     event: 'end'
     status: 500
+    type: 'channel'
 
   # 4
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa4'
-    route: 'primary'
     event: 'end'
     status: 500
+    type: 'channel'
 
   # 5
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa5'
-    route: 'primary'
     event: 'end'
     status: 500
+    type: 'channel'
 
   # 6
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa6'
-    route: 'primary'
     event: 'end'
     status: 404
+    type: 'channel'
 
   # 7
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa7'
-    route: 'primary'
     event: 'end'
     status: 404
+    type: 'channel'
 
   # 8
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa8'
-    route: 'primary'
     event: 'end'
     status: 500
     autoRetryAttempt: 2
+    type: 'channel'
 
   # 9
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa9'
-    route: 'primary'
     event: 'end'
     status: 500
     autoRetryAttempt: 3
+    type: 'channel'
 
   # 10 - channel event for 9
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa9'
-    route: 'channel'
     event: 'end'
     status: 500
     autoRetryAttempt: 3
+    type: 'channel'
 
   # 11
   new Event
     transactionID: 'aaa908908bbb98cc1daaaaa9'
-    route: 'primary'
     event: 'end'
     status: 200
     autoRetryAttempt: 3
+    type: 'channel'
 ]
 
 dateFrom = new Date()
