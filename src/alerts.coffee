@@ -109,6 +109,7 @@ findTransactions = (channel, dateFrom, status, callback) ->
       channelID: channel._id
       event: 'end'
       status: status
+      type: 'channel'
     }, { 'transactionID' }
     .hint created: 1
     .exec callback
@@ -117,6 +118,7 @@ countTotalTransactionsForChannel = (channel, dateFrom, callback) ->
   Event.count {
     created: $gte: dateFrom
     channelID: channel._id
+    type: 'channel'
     event: 'end'
   }, callback
 
@@ -182,6 +184,7 @@ findTransactionsMaxRetried = (channel, alert, dateFrom, callback) ->
       created: $gte: dateFrom
       channelID: channel._id
       event: 'end'
+      type: 'channel'
       status: 500
       autoRetryAttempt: channel.autoRetryMaxAttempts
     }, { 'transactionID' }
