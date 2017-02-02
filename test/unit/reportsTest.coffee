@@ -85,7 +85,7 @@ describe "Transaction Reports", ->
         done()
 
   describe "Reports", ->
-    it "should return a channel Report", (done) ->
+    it "should return a daily channel Report", (done) ->
       from = moment('2014-07-15').startOf('day').toDate()
       to = moment('2014-07-15').endOf('day').toDate()
       reports.fetchChannelReport channel2, testUser1, 'dailyReport', from, to, (err, item) ->
@@ -93,3 +93,20 @@ describe "Transaction Reports", ->
         item.data[0].should.have.property 'avgResp', 100
         item.data[0].should.have.property 'completed', 1
         done()
+        
+    it "should return a weekly channel Report", (done) ->
+      date = '2014-07-22'
+      from = moment(date).startOf('isoWeek').subtract(1, 'weeks').toDate()
+      to = moment(date).endOf('isoWeek').subtract(1, 'weeks').toDate()
+      reports.fetchChannelReport channel2, testUser1, 'weeklyReport', from, to, (err, item) ->
+        item.data[0].should.have.property 'total', 1
+        item.data[0].should.have.property 'failed', 1
+        item.data[1].should.have.property 'total', 5
+        item.data[1].should.have.property 'completed', 5
+        
+        totals = reports.calculateTotalsFromGrouping item
+        totals.should.have.property 'total', 6
+        totals.should.have.property 'failed', 1
+        totals.should.have.property 'completed', 5
+        done()
+        

@@ -112,22 +112,7 @@ sendReports = (job, flag, done) ->
               if i % 2
                 rowColor = 'background-color: #b6d7a8;'
               
-              totals =
-                total: 0
-                avgResp: 0
-                failed: 0
-                successful: 0
-                processing: 0
-                completed: 0
-                completedWErrors: 0
-
-              data.data.forEach (val, index) ->
-                for key, value of totals
-                  if key is 'avgResp'
-                    totals[key] += (if data.data[index]?[key]? then Math.round(data.data[index][key])/1000 else 0)
-                  else
-                    totals[key] += (if data.data[index]?[key]? then data.data[index][key] else 0)
-              
+              totals = calculateTotalsFromGrouping(data)
               for key, value of totals
                 report.data[i][key] = totals[key]
               
@@ -147,6 +132,25 @@ sendReports = (job, flag, done) ->
 
         done()
 
+calculateTotalsFromGrouping = (data) ->
+  totals =
+    total: 0
+    avgResp: 0
+    failed: 0
+    successful: 0
+    processing: 0
+    completed: 0
+    completedWErrors: 0
+
+  data.data.forEach (val, index) ->
+    for key, value of totals
+      if key is 'avgResp'
+        totals[key] += (if data.data[index]?[key]? then Math.round(data.data[index][key])/1000 else 0)
+      else
+        totals[key] += (if data.data[index]?[key]? then data.data[index][key] else 0)
+  
+  return totals
+  
 
 sendUserEmail = (report) ->
   report.date = new Date().toString()
@@ -230,3 +234,4 @@ if process.env.NODE_ENV == "test"
   exports.fetchWeeklySubscribers = fetchWeeklySubscribers
   exports.fetchChannelReport = fetchChannelReport
   exports.sendUserEmail = sendUserEmail
+  exports.calculateTotalsFromGrouping = calculateTotalsFromGrouping
