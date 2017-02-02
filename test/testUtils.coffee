@@ -400,6 +400,14 @@ exports.setupMetricsTransactions = (callback) ->
     request: { path: "/sample/api", method: "GET", timestamp: "2015-07-18T13:25:45.100Z" }
     response: { status: "200", timestamp: "2015-07-18T13:25:45.300Z" }
     status: "Completed"
+    
+  transaction12 = new Transaction # A Sunday
+    _id: "111110101010101010102222"
+    channelID: "222222222222222222222222"
+    clientID: "42bbe25485e77d8e5daad4b4"
+    request: { path: "/sample/api", method: "GET", timestamp: "2014-07-20T13:25:45.100Z" }
+    response: { status: "200", timestamp: "2014-07-20T13:25:45.300Z" }
+    status: "Failed"
 
   transaction0.save (err) ->
     transaction1.save (err) ->
@@ -413,4 +421,5 @@ exports.setupMetricsTransactions = (callback) ->
                     transaction9.save (err) ->
                       transaction10.save (err) ->
                         transaction11.save (err) ->
-                          callback()
+                          transaction12.save (err) ->
+                            callback()
