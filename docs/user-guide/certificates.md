@@ -1,14 +1,14 @@
-Certificates
+Certificates & Keystore
 ============
 
-The OpenHIM has a built in capability to manage TLS certificates. You can upload a certificate and key that you have bought from a certificate authority such as Thwate or you can even generate your own self signed certificate to use in your private OpenHIM implementation. Both mechanisms are secure, however we suggest you purchase a certificate from a trusted certificate authority so save you some pain with self signed certificates.
+The OpenHIM has a built in capability to manage TLS certificates and keys through its keystore. You can upload a certificate and key that you have bought from a certificate authority such as Thwate or you can even generate your own self signed certificate to use in your private OpenHIM implementation. Both mechanisms are secure, however we suggest you purchase a certificate from a trusted certificate authority to save you some pain with self signed certificates.
 
 The OpenHIM also allows you to trust particular certificates. This allows you to specify exactly which client or external hosts you trust and it ties in with the OpenHIMs authentication mechanism for clients.
 
-Server certificate
+Server certificate & key
 ------------------
 
-To upload an OpenHIM server certificate simple drag and drop the certificate and key on the correct boxes on the certificates page. You will be asked to restart the OpenHIM for this to take effect. The OpenHIM will also warn you if the key and certificate pair that you have uploaded do not match. DO NOT restart the server if these don't match. It will prevent the server from being able to startup correctly and you will have to fix this manually in the database. If your key requires a passphrase be sure to submit that in the field provided as well.
+To upload an OpenHIM server certificate simply drag and drop the certificate and key on the correct boxes on the certificates page. You will be asked to restart the OpenHIM for this to take effect. The OpenHIM will also warn you if the key and certificate pair that you have uploaded do not match. DO NOT restart the server if these don't match. It will prevent the server from being able to startup correctly and you will have to fix this manually in the database. If your key requires a passphrase be sure to submit that in the field provided as well.
 
 ### Generating a server certificate
 
