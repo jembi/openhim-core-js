@@ -5,6 +5,7 @@ messageStore = require "../../lib/middleware/messageStore"
 Transaction = require("../../lib/model/transactions").Transaction
 ObjectId = require('mongoose').Types.ObjectId
 Channel = require("../../lib/model/channels").Channel
+utils = require("../../lib/utils")
 
 
 transactionId = null
@@ -148,7 +149,7 @@ describe "MessageStore", ->
         Transaction.findOne { '_id': result._id }, (error, trans) ->
           should.not.exist(error)
           (trans != null).should.be.true()
-          trans.request.body.length.should.be.exactly messageStore.MAX_BODIES_SIZE
+          trans.request.body.length.should.be.exactly utils.MAX_BODIES_SIZE
           trans.canRerun.should.be.false()
           done()
 
@@ -473,7 +474,7 @@ describe "MessageStore", ->
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
               should.not.exist(err3)
               (trans != null).should.be.true()
-              expectedLen = messageStore.MAX_BODIES_SIZE - ctx.body.length
+              expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length
               trans.response.body.length.should.be.exactly expectedLen
               done()
 
@@ -514,7 +515,7 @@ describe "MessageStore", ->
             Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
               should.not.exist(err3)
               (trans != null).should.be.true()
-              expectedLen = messageStore.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
+              expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
                 ctx.mediatorResponse.orchestrations[0].request.body.length
               trans.orchestrations[1].response.body.length.should.be.exactly expectedLen
               done()
@@ -535,7 +536,7 @@ describe "MessageStore", ->
                 Transaction.findOne { '_id': storedTrans._id }, (err3, trans) ->
                   should.not.exist(err3)
                   (trans != null).should.be.true()
-                  expectedLen = messageStore.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
+                  expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
                     ctx.routes[0].response.body.length
                   trans.routes[1].response.body.length.should.be.exactly expectedLen
                   done()

@@ -4,6 +4,7 @@ Q = require "q"
 _ = require 'lodash'
 AutoRetry = require('../model/autoRetry').AutoRetry
 autoRetryUtils = require '../autoRetry'
+utils = require('../utils')
 
 config = require '../config/config'
 statsdServer = config.get 'statsd'
@@ -14,11 +15,6 @@ os = require 'os'
 
 domain = "#{os.hostname()}.#{application.name}.appMetrics"
 sdc = new SDC statsdServer
-
-# Max size allowed for ALL bodies in the transaction together
-#
-# Use max 15 MiB leaving 1 MiB available for the transaction metadata
-exports.MAX_BODIES_SIZE = MAX_BODIES_SIZE = 15*1024*1024
 
 exports.transactionStatus = transactionStatus =
   PROCESSING: 'Processing'
@@ -35,22 +31,7 @@ copyMapWithEscapedReservedCharacters = (map) ->
     escapedMap[k] = v
   return escapedMap
 
-enforceMaxBodiesSize = (ctx, tx) ->
-  enforced = false
-
-  # running total for all bodies
-  ctx.totalBodyLength = 0 if !ctx.totalBodyLength?
-
-  len = Buffer.byteLength tx.body
-  if ctx.totalBodyLength + len > MAX_BODIES_SIZE
-    len = Math.max 0, MAX_BODIES_SIZE - ctx.totalBodyLength
-    tx.body = tx.body[...len]
-    enforced = true
-    logger.warn 'Truncated body for storage as it exceeds limits'
-
-  ctx.totalBodyLength += len
-  return enforced
-
+enforceMaxBodiesSize = utils.enforceMaxBodiesSize
 
 exports.storeTransaction = (ctx, done) ->
   logger.info 'Storing request metadata for inbound transaction'

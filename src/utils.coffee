@@ -70,3 +70,26 @@ exports.typeIsArray = Array.isArray || ( value ) -> return {}.toString.call( val
 # get the server timezone
 exports.serverTimezone = () ->
   return momentTZ.tz.guess()
+
+
+# Max size allowed for ALL bodies in the transaction together
+#
+# Use max 15 MiB leaving 1 MiB available for the transaction metadata
+mbs = config.api.maxBodiesSizeMB
+exports.MAX_BODIES_SIZE = MAX_BODIES_SIZE = if mbs <= 15 then mbs*1024*1024 else 15*1024*1024
+
+exports.enforceMaxBodiesSize = (ctx, tx) ->
+  enforced = false
+
+  # running total for all bodies
+  ctx.totalBodyLength = 0 if !ctx.totalBodyLength?
+
+  len = Buffer.byteLength tx.body
+  if ctx.totalBodyLength + len > MAX_BODIES_SIZE
+    len = Math.max 0, MAX_BODIES_SIZE - ctx.totalBodyLength
+    tx.body = tx.body[...len]
+    enforced = true
+    logger.warn 'Truncated body for storage as it exceeds limits'
+
+  ctx.totalBodyLength += len
+  return enforced

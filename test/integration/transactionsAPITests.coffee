@@ -14,6 +14,7 @@ AutoRetry = require('../../lib/model/autoRetry').AutoRetry
 application = config.get 'application'
 os = require "os"
 domain = os.hostname() + '.' + application.name
+utils = require "../../lib/utils"
 
 describe "API Integration Tests", ->
 
@@ -147,6 +148,55 @@ describe "API Integration Tests", ->
                 newTransaction.request.body.should.equal "<HTTP body request>"
                 newTransaction.request.method.should.equal "POST"
                 done()
+
+      it  "should add a transaction and truncate the large response body", (done) ->
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        td.request.body = ''
+        td.response.body = ''
+        td.response.body += '1234567890' for i in [0...2*1024*1024]
+        request("https://localhost:8080")
+          .post("/transactions")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(td)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Transaction.findOne { clientID: "999999999999999999999999" }, (error, newTransaction) ->
+                should.not.exist (error)
+                (newTransaction != null).should.be.true
+                newTransaction.response.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                newTransaction.canRerun.should.be.true
+                done()
+
+      it  "should add a transaction and truncate the large request body", (done) ->
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        td.request.body = ''
+        td.request.body += '1234567890' for i in [0...2*1024*1024]
+        request("https://localhost:8080")
+          .post("/transactions")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(td)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Transaction.findOne { clientID: "999999999999999999999999" }, (error, newTransaction) ->
+                should.not.exist (error)
+                (newTransaction != null).should.be.true
+                newTransaction.request.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                newTransaction.canRerun.should.be.false
+                done()    
 
       it  "should only allow admin users to add transactions", (done) ->
         request("https://localhost:8080")

@@ -214,6 +214,9 @@ exports.addTransaction = ->
   # Get the values to use
   transactionData = this.request.body
   tx = new transactions.Transaction transactionData
+  
+  if utils.enforceMaxBodiesSize transactionData, tx.request then tx.canRerun = false
+  if tx.response then utils.enforceMaxBodiesSize transactionData, tx.response
 
   try
     # Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
