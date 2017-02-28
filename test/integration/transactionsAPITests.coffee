@@ -16,6 +16,14 @@ os = require "os"
 domain = os.hostname() + '.' + application.name
 utils = require "../../lib/utils"
 
+clearTransactionBodies = (t) ->
+  t.request.body =''
+  t.response.body = ''
+  t.routes[0].request.body = ''
+  t.routes[0].response.body = ''
+  t.orchestrations[0].request.body = ''
+  t.orchestrations[0].response.body = ''
+
 describe "API Integration Tests", ->
 
   beforeEach (done) -> Transaction.remove {}, -> done()
@@ -24,6 +32,9 @@ describe "API Integration Tests", ->
 
 
   describe "Transactions REST Api testing", ->
+    largeBody = ''
+    largeBody += '1234567890' for i in [0...2*1024*1024]
+    
     transactionId = null
     requ =
       path: "/api/test"
@@ -153,8 +164,8 @@ describe "API Integration Tests", ->
         td = JSON.parse JSON.stringify transactionData
         td.channelID = channel._id
         td.request.body = ''
-        td.response.body = ''
-        td.response.body += '1234567890' for i in [0...2*1024*1024]
+        respBody = largeBody
+        td.response.body = respBody
         request("https://localhost:8080")
           .post("/transactions")
           .set("auth-username", testUtils.rootUser.email)
@@ -177,8 +188,8 @@ describe "API Integration Tests", ->
       it  "should add a transaction and truncate the large request body", (done) ->
         td = JSON.parse JSON.stringify transactionData
         td.channelID = channel._id
-        td.request.body = ''
-        td.request.body += '1234567890' for i in [0...2*1024*1024]
+        reqBody = largeBody
+        td.request.body = reqBody
         request("https://localhost:8080")
           .post("/transactions")
           .set("auth-username", testUtils.rootUser.email)
@@ -196,7 +207,119 @@ describe "API Integration Tests", ->
                 (newTransaction != null).should.be.true
                 newTransaction.request.body.length.should.be.exactly utils.MAX_BODIES_SIZE
                 newTransaction.canRerun.should.be.false
-                done()    
+                done()
+                
+      it  "should add a transaction and truncate the routes request body", (done) ->
+        # Given
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        td.routes[0].request.body = largeBody
+        
+        # When
+        request("https://localhost:8080")
+          .post("/transactions")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(td)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              # Then
+              Transaction.findOne { clientID: "999999999999999999999999" }, (error, newTransaction) ->
+                should.not.exist (error)
+                (newTransaction != null).should.be.true
+                newTransaction.routes[0].request.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                newTransaction.canRerun.should.be.true
+                done()
+      
+      it  "should add a transaction and truncate the routes response body", (done) ->
+        # Given
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        td.routes[0].response.body = largeBody
+        
+        # When
+        request("https://localhost:8080")
+          .post("/transactions")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(td)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              # Then
+              Transaction.findOne { clientID: "999999999999999999999999" }, (error, newTransaction) ->
+                should.not.exist (error)
+                (newTransaction != null).should.be.true
+                newTransaction.routes[0].response.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                newTransaction.canRerun.should.be.true
+                done()
+                
+      it  "should add a transaction and truncate the orchestrations request body", (done) ->
+        # Given
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        td.orchestrations[0].request.body = largeBody
+        
+        # When
+        request("https://localhost:8080")
+          .post("/transactions")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(td)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              # Then
+              Transaction.findOne { clientID: "999999999999999999999999" }, (error, newTransaction) ->
+                should.not.exist (error)
+                (newTransaction != null).should.be.true
+                newTransaction.orchestrations[0].request.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                newTransaction.canRerun.should.be.true
+                done()
+      
+      it  "should add a transaction and truncate the orchestrations response body", (done) ->
+        # Given
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        td.orchestrations[0].response.body = largeBody
+        
+        # When
+        request("https://localhost:8080")
+          .post("/transactions")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(td)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              # Then
+              Transaction.findOne { clientID: "999999999999999999999999" }, (error, newTransaction) ->
+                should.not.exist (error)
+                (newTransaction != null).should.be.true
+                newTransaction.orchestrations[0].response.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                newTransaction.canRerun.should.be.true
+                done() 
 
       it  "should only allow admin users to add transactions", (done) ->
         request("https://localhost:8080")
@@ -247,6 +370,15 @@ describe "API Integration Tests", ->
             setTimeout validateEvents, 100 * global.testTimeoutFactor
 
     describe "*updateTransaction()", ->
+      
+      requestUpdate =
+        path: "/api/test/updated"
+        headers:
+          "Content-Type": "text/javascript"
+          "Access-Control": "authentication-required"
+        querystring: 'updated=value'
+        body: "<HTTP body update>"
+        method: "PUT"
 
       s = {}
       beforeEach (done) ->
@@ -261,16 +393,8 @@ describe "API Integration Tests", ->
         tx.save (err, result) ->
           should.not.exist(err)
           transactionId = result._id
-          reqUp = new Object()
-          reqUp.path = "/api/test/updated"
-          reqUp.headers =
-            "Content-Type": "text/javascript"
-            "Access-Control": "authentication-required"
-          reqUp.querystring = 'updated=value'
-          reqUp.body = "<HTTP body update>"
-          reqUp.method = "PUT"
           updates =
-            request: reqUp
+            request: requestUpdate
             status: "Completed"
             clientID: "777777777777777777777777"
             $push: {
@@ -293,7 +417,6 @@ describe "API Integration Tests", ->
                 ]
               }
             }
-
 
           request("https://localhost:8080")
             .put("/transactions/#{transactionId}")
@@ -325,6 +448,127 @@ describe "API Integration Tests", ->
 
                   done()
 
+      it "should update transaction with large update request body", (done) ->
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        tx = new Transaction td
+        tx.save (err, result) ->
+          should.not.exist(err)
+          transactionId = result._id
+          
+          reqUp = JSON.parse JSON.stringify requestUpdate
+          reqUp.body = largeBody
+          
+          updates =
+            request: reqUp
+            status: "Completed"
+            clientID: "777777777777777777777777"
+      
+          request("https://localhost:8080")
+            .put("/transactions/#{transactionId}")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(updates)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Transaction.findOne { "_id": transactionId }, (error, updatedTrans) ->
+                  should.not.exist(error)
+                  (updatedTrans != null).should.be.true
+                  updatedTrans.request.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                  updatedTrans.canRerun.should.be.false
+                  done()
+                  
+      it "should update transaction with large update response body", (done) ->
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        tx = new Transaction td
+        tx.save (err, result) ->
+          should.not.exist(err)
+          transactionId = result._id
+          
+          updates =
+            response:
+              headers: ''
+              timestamp: new Date()
+              body: largeBody
+              status: 200
+            status: "Completed"
+            clientID: "777777777777777777777777"
+      
+          request("https://localhost:8080")
+            .put("/transactions/#{transactionId}")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(updates)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Transaction.findOne { "_id": transactionId }, (error, updatedTrans) ->
+                  should.not.exist(error)
+                  (updatedTrans != null).should.be.true
+                  updatedTrans.response.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                  updatedTrans.canRerun.should.be.true
+                  done()
+                  
+      it "should update transaction with large routes orchestrations request body", (done) ->
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        tx = new Transaction td
+        tx.save (err, result) ->
+          should.not.exist(err)
+          transactionId = result._id
+          
+          requestBody = largeBody
+          
+          updates =
+            status: "Completed"
+            clientID: "777777777777777777777777"
+            $push: 
+              routes : 
+                name: "async",
+                orchestrations: [
+                  name: "test",
+                  request: 
+                    method: "POST",
+                    body: requestBody,
+                    timestamp: 1425897647329
+                  response:
+                    status: 201,
+                    body: "",
+                    timestamp: 1425897688016
+                ]
+      
+          request("https://localhost:8080")
+            .put("/transactions/#{transactionId}")
+            .set("auth-username", testUtils.rootUser.email)
+            .set("auth-ts", authDetails.authTS)
+            .set("auth-salt", authDetails.authSalt)
+            .set("auth-token", authDetails.authToken)
+            .send(updates)
+            .expect(200)
+            .end (err, res) ->
+              if err
+                done err
+              else
+                Transaction.findOne { "_id": transactionId }, (error, updatedTrans) ->
+                  should.not.exist(error)
+                  (updatedTrans != null).should.be.true
+                  updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly utils.MAX_BODIES_SIZE
+                  updatedTrans.canRerun.should.be.true
+                  done()
+
       it "should only allow admin user to update a transaction", (done) ->
         tx = new Transaction transactionData
         tx.save (err, result) ->
@@ -350,14 +594,6 @@ describe "API Integration Tests", ->
         tx.save (err, result) ->
           should.not.exist(err)
           transactionId = result._id
-          reqUp = new Object()
-          reqUp.path = "/api/test/updated"
-          reqUp.headers =
-            "Content-Type": "text/javascript"
-            "Access-Control": "authentication-required"
-          reqUp.querystring = 'updated=value'
-          reqUp.body = "<HTTP body update>"
-          reqUp.method = "PUT"
           updates =
             status: "Failed"
             "orchestrations": [

@@ -201,6 +201,33 @@ exports.getTransactions = ->
   catch e
     utils.logAndSetResponse this, 500, "Could not retrieve transactions via the API: #{e}", 'error'
 
+recursivelySearchObject = (ctx, obj, ws, repeat) ->
+  if Array.isArray obj
+    obj.forEach (value) ->
+      if value && typeof value is 'object'
+        if ws.has(value) then return
+        ws.add(value)
+        repeat(ctx, value, ws)
+  else
+    if obj && typeof obj is 'object'
+      for k, value of obj
+        if value && typeof value is 'object'
+          if ws.has(value) then return
+          ws.add(value)
+          repeat(ctx, value, ws)
+
+enforceMaxBodiesSize = (ctx, obj, ws) ->
+  if obj.request && typeof obj.request.body is 'string'
+    if utils.enforceMaxBodiesSize(ctx, obj.request) && ctx.PrimaryRequest then obj.canRerun = false
+  ctx.PrimaryRequest = false
+  if obj.response && typeof obj.response.body is 'string' then utils.enforceMaxBodiesSize(ctx, obj.response)
+  recursivelySearchObject(ctx, obj, ws, enforceMaxBodiesSize)
+
+
+calculateTransactionBodiesByteLength = (l, obj, ws) ->
+  if obj.body && typeof obj.body is 'string' then l += Buffer.byteLength obj.body
+  recursivelySearchObject(l, obj, ws, calculateTransactionBodiesByteLength)
+
 ###
 # Adds an transaction
 ###
@@ -211,14 +238,14 @@ exports.addTransaction = ->
     utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addTransaction denied.", 'info'
     return
 
-  # Get the values to use
-  transactionData = this.request.body
-  tx = new transactions.Transaction transactionData
-  
-  if utils.enforceMaxBodiesSize transactionData, tx.request then tx.canRerun = false
-  if tx.response then utils.enforceMaxBodiesSize transactionData, tx.response
-
   try
+    # Get the values to use
+    transactionData = this.request.body
+    ctx = { primaryRequest: true }
+    enforceMaxBodiesSize ctx, transactionData, new WeakSet()
+  
+    tx = new transactions.Transaction transactionData
+    
     # Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Q.ninvoke tx, "save"
     this.status = 201
@@ -421,7 +448,16 @@ exports.updateTransaction = (transactionId) ->
       if not autoRetryUtils.reachedMaxAttempts tx, channel
         updates.autoRetry = true
         autoRetryUtils.queueForRetry tx
+    
+    transactionToUpdate = yield transactions.Transaction.findOne({ _id: transactionId }).exec()
+    bodiesLength = 0
+    calculateTransactionBodiesByteLength bodiesLength, transactionToUpdate, new WeakSet()
 
+    ctx =
+      totalBodyLength: bodiesLength
+      primaryRequest: true
+    enforceMaxBodiesSize ctx, updates, new WeakSet()
+    
     tx = yield transactions.Transaction.findByIdAndUpdate(transactionId, updates, new: true).exec()
 
     this.body = "Transaction with ID: #{transactionId} successfully updated"

@@ -4,6 +4,7 @@ config.caching = config.get('caching')
 Channel = require("./model/channels").Channel
 Keystore = require("./model/keystore").Keystore
 momentTZ = require 'moment-timezone'
+uties = require('util')
 
 # function to log errors and return response
 exports.logAndSetResponse = (ctx, status, msg, logLevel) ->
