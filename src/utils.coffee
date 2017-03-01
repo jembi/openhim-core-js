@@ -78,6 +78,8 @@ exports.serverTimezone = () ->
 # Use max 15 MiB leaving 1 MiB available for the transaction metadata
 mbs = config.api.maxBodiesSizeMB
 exports.MAX_BODIES_SIZE = MAX_BODIES_SIZE = if mbs <= 15 then mbs*1024*1024 else 15*1024*1024
+ta = config.api.truncateAppend
+tal = Buffer.byteLength ta
 
 exports.enforceMaxBodiesSize = (ctx, tx) ->
   enforced = false
@@ -88,7 +90,10 @@ exports.enforceMaxBodiesSize = (ctx, tx) ->
   len = Buffer.byteLength tx.body
   if ctx.totalBodyLength + len > MAX_BODIES_SIZE
     len = Math.max 0, MAX_BODIES_SIZE - ctx.totalBodyLength
-    tx.body = tx.body[...len]
+    if len > tal
+      tx.body = tx.body[...len-tal] + ta
+    else
+      tx.body = ta
     enforced = true
     logger.warn 'Truncated body for storage as it exceeds limits'
 

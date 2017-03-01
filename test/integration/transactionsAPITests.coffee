@@ -209,6 +209,35 @@ describe "API Integration Tests", ->
                 newTransaction.canRerun.should.be.false
                 done()
                 
+      it  "should add a transaction and add the correct truncate message", (done) ->
+        td = JSON.parse JSON.stringify transactionData
+        td.channelID = channel._id
+        len = 15*1024*1024
+        bod = ''
+        bod += '1' for i in [0...len]
+        bod = bod[...len-4]
+        td.request.body = bod
+        td.response.body = largeBody
+        request("https://localhost:8080")
+          .post("/transactions")
+          .set("auth-username", testUtils.rootUser.email)
+          .set("auth-ts", authDetails.authTS)
+          .set("auth-salt", authDetails.authSalt)
+          .set("auth-token", authDetails.authToken)
+          .send(td)
+          .expect(201)
+          .end (err, res) ->
+            if err
+              done err
+            else
+              Transaction.findOne { clientID: "999999999999999999999999" }, (error, newTransaction) ->
+                should.not.exist (error)
+                (newTransaction != null).should.be.true
+                newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE - 4)
+                newTransaction.response.body.length.should.be.exactly Buffer.byteLength config.api.truncateAppend
+                newTransaction.canRerun.should.be.false
+                done()
+                
       it  "should add a transaction and truncate the routes request body", (done) ->
         # Given
         td = JSON.parse JSON.stringify transactionData
