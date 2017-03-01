@@ -72,7 +72,7 @@ exports.serverTimezone = () ->
   return momentTZ.tz.guess()
 
 # Max size allowed for ALL bodies in the transaction together
-# Use min 1 to allow enough bodies and max 15 MiB leaving 1 MiB available for the transaction metadata
+# Use min 1 to allow space for all routes on a transation and max 15 MiB leaving 1 MiB available for the transaction metadata
 mbs = config.api.maxBodiesSizeMB
 exports.MAX_BODIES_SIZE = MAX_BODIES_SIZE = if 1 <= mbs <= 15 then mbs*1024*1024 else 15*1024*1024
 appendText = config.api.truncateAppend
