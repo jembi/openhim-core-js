@@ -212,7 +212,8 @@ describe "API Integration Tests", ->
       it  "should add a transaction and add the correct truncate message", (done) ->
         td = JSON.parse JSON.stringify transactionData
         td.channelID = channel._id
-        len = 15*1024*1024
+        mbs = config.api.maxBodiesSizeMB
+        len = if 1 <= mbs <= 15 then mbs*1024*1024 else 15*1024*1024
         bod = ''
         bod += '1' for i in [0...len]
         bod = bod[...len-4]
@@ -521,7 +522,6 @@ describe "API Integration Tests", ->
         tx.save (err, result) ->
           should.not.exist(err)
           transactionId = result._id
-          
           updates =
             response:
               headers: ''
@@ -558,9 +558,6 @@ describe "API Integration Tests", ->
         tx.save (err, result) ->
           should.not.exist(err)
           transactionId = result._id
-          
-          requestBody = largeBody
-          
           updates =
             status: "Completed"
             clientID: "777777777777777777777777"
@@ -571,7 +568,7 @@ describe "API Integration Tests", ->
                   name: "test",
                   request: 
                     method: "POST",
-                    body: requestBody,
+                    body: largeBody,
                     timestamp: 1425897647329
                   response:
                     status: 201,

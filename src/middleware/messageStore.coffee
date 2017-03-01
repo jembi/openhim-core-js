@@ -31,7 +31,6 @@ copyMapWithEscapedReservedCharacters = (map) ->
     escapedMap[k] = v
   return escapedMap
 
-enforceMaxBodiesSize = utils.enforceMaxBodiesSize
 
 exports.storeTransaction = (ctx, done) ->
   logger.info 'Storing request metadata for inbound transaction'
@@ -70,7 +69,7 @@ exports.storeTransaction = (ctx, done) ->
     if ctx.method == 'POST' or ctx.method == 'PUT' or ctx.method == 'PATCH'
       tx.canRerun = false
 
-  if enforceMaxBodiesSize ctx, tx.request then tx.canRerun = false
+  if utils.enforceMaxBodiesSize ctx, tx.request then tx.canRerun = false
 
   tx.save (err, tx) ->
     if err
@@ -101,7 +100,7 @@ exports.storeResponse = (ctx, done) ->
     response: res
     error: ctx.error
 
-  enforceMaxBodiesSize ctx, update.response
+  utils.enforceMaxBodiesSize ctx, update.response
 
   # Set status from mediator
   if ctx.mediatorResponse?.status?
@@ -111,8 +110,8 @@ exports.storeResponse = (ctx, done) ->
     if ctx.mediatorResponse.orchestrations
       update.orchestrations = ctx.mediatorResponse.orchestrations
       for orch in update.orchestrations
-        if orch.request?.body? then enforceMaxBodiesSize ctx, orch.request
-        if orch.response?.body? then enforceMaxBodiesSize ctx, orch.response
+        if orch.request?.body? then utils.enforceMaxBodiesSize ctx, orch.request
+        if orch.response?.body? then utils.enforceMaxBodiesSize ctx, orch.response
 
     update.properties = ctx.mediatorResponse.properties if ctx.mediatorResponse.properties
 
@@ -132,8 +131,8 @@ exports.storeNonPrimaryResponse = (ctx, route, done) ->
     route.response.body = ''
 
   if ctx.transactionId?
-    if route.request?.body? then enforceMaxBodiesSize ctx, route.request
-    if route.response?.body? then enforceMaxBodiesSize ctx, route.response
+    if route.request?.body? then utils.enforceMaxBodiesSize ctx, route.request
+    if route.response?.body? then utils.enforceMaxBodiesSize ctx, route.response
 
     transactions.Transaction.findByIdAndUpdate ctx.transactionId, {$push: { "routes": route } } , (err,tx) ->
 

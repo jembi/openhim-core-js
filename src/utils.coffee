@@ -4,7 +4,6 @@ config.caching = config.get('caching')
 Channel = require("./model/channels").Channel
 Keystore = require("./model/keystore").Keystore
 momentTZ = require 'moment-timezone'
-uties = require('util')
 
 # function to log errors and return response
 exports.logAndSetResponse = (ctx, status, msg, logLevel) ->
@@ -72,14 +71,12 @@ exports.typeIsArray = Array.isArray || ( value ) -> return {}.toString.call( val
 exports.serverTimezone = () ->
   return momentTZ.tz.guess()
 
-
 # Max size allowed for ALL bodies in the transaction together
-#
-# Use max 15 MiB leaving 1 MiB available for the transaction metadata
+# Use min 1 to allow enough bodies and max 15 MiB leaving 1 MiB available for the transaction metadata
 mbs = config.api.maxBodiesSizeMB
-exports.MAX_BODIES_SIZE = MAX_BODIES_SIZE = if mbs <= 15 then mbs*1024*1024 else 15*1024*1024
-ta = config.api.truncateAppend
-tal = Buffer.byteLength ta
+exports.MAX_BODIES_SIZE = MAX_BODIES_SIZE = if 1 <= mbs <= 15 then mbs*1024*1024 else 15*1024*1024
+appendText = config.api.truncateAppend
+appendTextLength = Buffer.byteLength appendText
 
 exports.enforceMaxBodiesSize = (ctx, tx) ->
   enforced = false
@@ -90,10 +87,10 @@ exports.enforceMaxBodiesSize = (ctx, tx) ->
   len = Buffer.byteLength tx.body
   if ctx.totalBodyLength + len > MAX_BODIES_SIZE
     len = Math.max 0, MAX_BODIES_SIZE - ctx.totalBodyLength
-    if len > tal
-      tx.body = tx.body[...len-tal] + ta
+    if len > appendTextLength
+      tx.body = tx.body[...len-appendTextLength] + appendText
     else
-      tx.body = ta
+      tx.body = appendText
     enforced = true
     logger.warn 'Truncated body for storage as it exceeds limits'
 

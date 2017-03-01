@@ -450,11 +450,11 @@ exports.updateTransaction = (transactionId) ->
         autoRetryUtils.queueForRetry tx
     
     transactionToUpdate = yield transactions.Transaction.findOne({ _id: transactionId }).exec()
-    bodiesLength = 0
-    calculateTransactionBodiesByteLength bodiesLength, transactionToUpdate, new WeakSet()
+    transactionBodiesLength = 0
+    calculateTransactionBodiesByteLength transactionBodiesLength, transactionToUpdate, new WeakSet()
 
     ctx =
-      totalBodyLength: bodiesLength
+      totalBodyLength: transactionBodiesLength
       primaryRequest: true
     enforceMaxBodiesSize ctx, updates, new WeakSet()
     

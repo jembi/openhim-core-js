@@ -31,7 +31,7 @@ exports.setupApp = (done) ->
   # Create an instance of the koa-server and add a body-parser
   app = koa()
   app.use cors()
-  limitMB = config.api.maxPayloadMB || 16
+  limitMB = config.api.maxPayloadSizeMB || 16
   app.use bodyParser({ limit: limitMB*1024*1024 })
 
   # Expose uptime server stats route before the auth middleware so that it is publically accessible
