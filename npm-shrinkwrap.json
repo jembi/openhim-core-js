@@ -1,6 +1,6 @@
 {
   "name": "openhim-core",
-  "version": "3.3.1",
+  "version": "3.4.0",
   "dependencies": {
     "abab": {
       "version": "1.0.3",
