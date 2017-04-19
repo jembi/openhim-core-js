@@ -81,9 +81,9 @@ Next, you need to pull down the latest release of the web app and deploy it to a
 
 ```sh
 1. Download: wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz
-2. Create the /var/www/ path (**If it does not already exist:**) : sudo mkdir www
+2. Create the /var/www/ path (If it does not already exist : sudo mkdir www
 3. Navigate to the path /var/www/
-4. Create the /var/www/html path (**If it does not already exist:**) : sudo mkdir html
+4. Create the /var/www/html path (If it does not already exist) : sudo mkdir html
 5. tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/html
 ```
 
@@ -100,12 +100,13 @@ Next, and this step is _vital_, you need to configure the console to point to yo
   "loginBanner": ""     // add text here that you want to appear on the login screen, if any.
 }
 ```
-
+```sh
 Make sure you have the latest Apache server installed:
 sudo apt-get install apache2
 
 Make sure the apache service is up and running:
 sudo service apache2 status
+```
 
 Now, navigate to your web server and you should see the OpenHIM-console load (eg. `http://localhost/`) and login. The default username and password are:
 
