@@ -80,17 +80,20 @@ First ensure that you have the OpenHIM-core server up and running. The console c
 Next, you need to pull down the latest release of the web app and deploy it to a web server (replace the X's in the below command to the [latest release](https://github.com/jembi/openhim-console/releases/latest)):
 
 ```sh
-1. Download: wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz
-2. Create the /var/www/ path (If it does not already exist : sudo mkdir www
-3. Navigate to the path /var/www/
-4. Create the /var/www/html path (If it does not already exist) : sudo mkdir html
-5. tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/html
+1. Get the latest release : wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz
+2. Navigate to the path /var
+3. Create the /var/www/ path (If it does not already exist) : sudo mkdir www
+4. Navigate to the path /var/www/
+5. Create the /var/www/html path (If it does not already exist) : sudo mkdir html
+6. Export the contents of the download : tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/html
 ```
 
 Next, and this step is _vital_, you need to configure the console to point to your OpenHIM-core server. Locate `config/default.js` in the folder you extracted the OpenHIM console to and edit it as follows:
 
 ```js
 {
+  "version": "x.x.x", //Replace the x's with the latest release
+  "minimumCoreVersion": "3.4.0",
   "protocol": "https",
   "host": "localhost",  // change this to the hostname for your OpenHIM-core server (This hostname _MUST_ be publically accessible)
   "port": 8080,         // change this to the API port of the OpenHIM-core server, default is 8080 (This port _MUST_ be publically accessible)
@@ -98,6 +101,8 @@ Next, and this step is _vital_, you need to configure the console to point to yo
   "footerTitle": "OpenHIM Administration Console", // You may change this to customise the footer of the OpenHIM-console instance
   "footerPoweredBy": "<a href='http://openhim.org/' target='_blank'>Powered by OpenHIM</a>",
   "loginBanner": ""     // add text here that you want to appear on the login screen, if any.
+  "mediatorLastHeartbeatWarningSeconds": 60,
+  "mediatorLastHeartbeatDangerSeconds": 120
 }
 ```
 
