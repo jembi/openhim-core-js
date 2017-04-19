@@ -54,8 +54,9 @@ Installing the OpenHIM-core
 
 1. Install the latest stable [Node.js](http://nodejs.org/) v4 or greater. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
 2. Install and start [MongoDB](http://www.mongodb.org/) 2.6 or greater.
-3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an OpenHIM-core binary to your PATH.
-4. Start the server by executing `openhim-core` from anywhere.
+3. Install Git apt-get install git
+4. Install the OpenHIM-core package globally: `sudo npm install openhim-core -g`, this will also install an OpenHIM-core binary to your PATH.
+5. Start the server by executing `openhim-core` from anywhere.
 
 To make use of your own custom configurations you have two options. One, you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default settings:
 
@@ -79,8 +80,11 @@ First ensure that you have the OpenHIM-core server up and running. The console c
 Next, you need to pull down the latest release of the web app and deploy it to a web server (replace the X's in the below command to the [latest release](https://github.com/jembi/openhim-console/releases/latest)):
 
 ```sh
-wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz
-tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/
+1. Download: wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz
+2. Create the /var/www/ path (**If it does not already exist:**) : sudo mkdir www
+3. Navigate to the path /var/www/
+4. Create the /var/www/html path (**If it does not already exist:**) : sudo mkdir html
+5. tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/html
 ```
 
 Next, and this step is _vital_, you need to configure the console to point to your OpenHIM-core server. Locate `config/default.js` in the folder you extracted the OpenHIM console to and edit it as follows:
@@ -96,6 +100,12 @@ Next, and this step is _vital_, you need to configure the console to point to yo
   "loginBanner": ""     // add text here that you want to appear on the login screen, if any.
 }
 ```
+
+Make sure you have the latest Apache server installed:
+sudo apt-get install apache2
+
+Make sure the apache service is up and running:
+sudo service apache2 status
 
 Now, navigate to your web server and you should see the OpenHIM-console load (eg. `http://localhost/`) and login. The default username and password are:
 
