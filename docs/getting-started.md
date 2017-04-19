@@ -100,6 +100,8 @@ Next, and this step is _vital_, you need to configure the console to point to yo
   "loginBanner": ""     // add text here that you want to appear on the login screen, if any.
 }
 ```
+
+Next, it is important to ensure that your OpenHIM Admin Console is able to communicate with the OpenHIM-Core. 
 ```sh
 Make sure you have the latest Apache server installed:
 sudo apt-get install apache2
