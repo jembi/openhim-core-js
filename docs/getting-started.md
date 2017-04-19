@@ -106,7 +106,8 @@ Next, and this step is _vital_, you need to configure the console to point to yo
 }
 ```
 
-Next, it is important to ensure that your OpenHIM Admin Console is able to communicate with the OpenHIM-Core. 
+Ensure that your OpenHIM Admin Console is able to communicate with the OpenHIM-Core.
+------------------------------------------------------------------------------------
 ```sh
 Make sure you have the latest Apache server installed:
 sudo apt-get install apache2
