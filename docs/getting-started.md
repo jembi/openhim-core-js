@@ -3,7 +3,7 @@ Getting started
 
 To get started we will show you how to install the OpenHIM along with the admin console for easy configuration.
 
-If you are on Ubuntu installing the OpenHIM is very easy as we provide a debian package in the openhie PPA. Just execute the following commands:
+If you are on Ubuntu installing the OpenHIM is very easy as we provide a debian package in the openhie PPA. Currently the packages are only built for Ubuntu 14.04 but we hope to support the latest LTS soon. Just execute the following commands:
 
 ```sh
 $ sudo add-apt-repository ppa:openhie/release
