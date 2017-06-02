@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import utils from '../utils';
 import server from '../server';
 import { Mediator } from '../model/mediators';

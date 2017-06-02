@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 let numberOfPrimaryRoutes, transformPath;
 import util from 'util';
 import zlib from 'zlib';

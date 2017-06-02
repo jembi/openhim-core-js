@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import Q from "q";
 import xpath from "xpath";
 import { DOMParser as dom } from "xmldom";

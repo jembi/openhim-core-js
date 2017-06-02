@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import fs from "fs";
 import should from "should";
 import sinon from "sinon";

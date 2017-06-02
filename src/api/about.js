@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { version as currentCoreVersion } from '../../package.json';
 
 import logger from 'winston';

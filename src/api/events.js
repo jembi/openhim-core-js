@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { Event } from '../model/events';
 import authorisation from './authorisation';
 import utils from "../utils";

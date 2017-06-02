@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import transactions from '../model/transactions';
 import events from '../middleware/events';
 import { Channel } from '../model/channels';

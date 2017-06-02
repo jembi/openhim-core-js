@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import should from "should";
 import request from "supertest";
 import { Client } from "../../lib/model/clients";

@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import should from 'should';
 import moment from 'moment';
 import fs from 'fs';

@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 let MAX_BODIES_SIZE;
 import logger from 'winston';
 import config from './config/config';

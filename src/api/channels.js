@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import Channels from '../model/channels';
 let { Channel } = Channels;
 import { Transaction } from '../model/transactions';

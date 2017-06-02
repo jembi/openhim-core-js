@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { dbVersion } from './model/dbVersion';
 import { Keystore } from './model/keystore';
 import { Client } from './model/clients';

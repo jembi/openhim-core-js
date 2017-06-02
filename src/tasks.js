@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { Task as TaskModel } from './model/tasks';
 import { Channel } from './model/channels';
 import Q from "q";

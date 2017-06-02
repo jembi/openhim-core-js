@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import koa from 'koa';
 import router from './middleware/router';
 import messageStore from './middleware/messageStore';

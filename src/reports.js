@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { EmailTemplate } from 'email-templates';
 import logger from 'winston';
 import moment from "moment";

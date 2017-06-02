@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { Visualizer } from '../model/visualizer';
 import authorisation from './authorisation';
 import Q from 'q';

@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { Client } from '../model/clients';
 import { Channel } from '../model/channels';
 import Q from 'q';

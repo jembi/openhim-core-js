@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { Task } from '../model/tasks';
 import { Transaction } from '../model/transactions';
 import { AutoRetry } from '../model/autoRetry';

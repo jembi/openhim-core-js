@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 Error.stackTraceLimit = Infinity;
 let fs = require("fs");
 let should = require("should");

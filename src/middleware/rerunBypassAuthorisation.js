@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import auth from 'basic-auth';
 import { Channel } from '../model/channels';
 import logger from 'winston';

@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import { User } from '../model/users';
 import crypto from 'crypto';
 import logger from 'winston';

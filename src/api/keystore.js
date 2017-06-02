@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 let getCertKeyStatus;
 import { Keystore } from '../model/keystore';
 import Q from 'q';

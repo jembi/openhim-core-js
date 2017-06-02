@@ -1,3 +1,5 @@
+// TODO: This file was created by bulk-decaffeinate.
+// Sanity-check the conversion and remove this comment.
 import upgradeDB from '../../lib/upgradeDB';
 import testUtils from '../testUtils';
 import { Keystore } from '../../lib/model/keystore';
