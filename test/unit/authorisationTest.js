@@ -1,206 +1,243 @@
-should = require "should"
-sinon = require "sinon"
-rewire = require "rewire"
-authorisation = rewire "../../lib/middleware/authorisation"
-Channel = require("../../lib/model/channels").Channel
+import should from "should";
+import sinon from "sinon";
+import rewire from "rewire";
+let authorisation = rewire("../../lib/middleware/authorisation");
+let { Channel } = require("../../lib/model/channels");
 
-truthy = -> return true
-falsey = -> return false
+let truthy = () => true;
+let falsey = () => false;
 
-describe "Authorisation middleware", ->
+describe("Authorisation middleware", function() {
 
-  describe ".authorise(ctx, done)", ->
+  describe(".authorise(ctx, done)", function() {
 
-    it "should allow a request if the client is authorised to use the channel by role", (done) ->
-      # Setup a channel for the mock endpoint
-      channel = new Channel
-        name: "Authorisation mock channel 1"
-        urlPattern: "test/authorisation"
-        allow: [ "PoC", "Test1", "Test2" ]
-        routes: [
-              name: "test route"
-              host: "localhost"
-              port: 9876
+    it("should allow a request if the client is authorised to use the channel by role", function(done) {
+      // Setup a channel for the mock endpoint
+      let channel = new Channel({
+        name: "Authorisation mock channel 1",
+        urlPattern: "test/authorisation",
+        allow: [ "PoC", "Test1", "Test2" ],
+        routes: [{
+              name: "test route",
+              host: "localhost",
+              port: 9876,
               primary: true
-            ]
+            }
+            ]});
 
-      # Setup test data, will need authentication mechanisms to set ctx.authenticated
-      ctx = {}
-      ctx.authenticated =
-        clientID: "Musha_OpenMRS"
-        domain: "poc1.jembi.org"
-        name: "OpenMRS Musha instance"
-        roles: [ "OpenMRS_PoC", "PoC" ]
-        passwordHash: ""
+      // Setup test data, will need authentication mechanisms to set ctx.authenticated
+      let ctx = {};
+      ctx.authenticated = {
+        clientID: "Musha_OpenMRS",
+        domain: "poc1.jembi.org",
+        name: "OpenMRS Musha instance",
+        roles: [ "OpenMRS_PoC", "PoC" ],
+        passwordHash: "",
         cert: ""
-      ctx.matchingChannel = channel
-      ctx.request = {}
-      ctx.request.url = "test/authorisation"
-      ctx.request.path = "test/authorisation"
-      ctx.response = {}
-      authorisation.authorise ctx, ->
-        ctx.authorisedChannel.should.exist
-        done()
+      };
+      ctx.matchingChannel = channel;
+      ctx.request = {};
+      ctx.request.url = "test/authorisation";
+      ctx.request.path = "test/authorisation";
+      ctx.response = {};
+      return authorisation.authorise(ctx, function() {
+        ctx.authorisedChannel.should.exist;
+        return done();
+      });
+    });
 
-    it "should deny a request if the client is NOT authorised to use the channel by role", (done) ->
-      # Setup a channel for the mock endpoint
-      channel = new Channel
-        name: "Authorisation mock channel 2"
-        urlPattern: "test/authorisation"
-        allow: [ "Something-else" ]
-        routes: [
-              name: "test route"
-              host: "localhost"
-              port: 9876
+    it("should deny a request if the client is NOT authorised to use the channel by role", function(done) {
+      // Setup a channel for the mock endpoint
+      let channel = new Channel({
+        name: "Authorisation mock channel 2",
+        urlPattern: "test/authorisation",
+        allow: [ "Something-else" ],
+        routes: [{
+              name: "test route",
+              host: "localhost",
+              port: 9876,
               primary: true
-            ]
+            }
+            ]});
 
-      # Setup test data, will need authentication mechanisms to set ctx.authenticated
-      ctx = {}
-      ctx.authenticated =
-        clientID: "Musha_OpenMRS"
-        domain: "poc1.jembi.org"
-        name: "OpenMRS Musha instance"
-        roles: [ "OpenMRS_PoC", "PoC" ]
-        passwordHash: ""
+      // Setup test data, will need authentication mechanisms to set ctx.authenticated
+      let ctx = {};
+      ctx.authenticated = {
+        clientID: "Musha_OpenMRS",
+        domain: "poc1.jembi.org",
+        name: "OpenMRS Musha instance",
+        roles: [ "OpenMRS_PoC", "PoC" ],
+        passwordHash: "",
         cert: ""
-      ctx.matchingChannel = channel
-      ctx.request = {}
-      ctx.request.url = "test/authorisation"
-      ctx.request.path = "test/authorisation"
-      ctx.response = {}
-      ctx.set = ->
-      authorisation.authorise ctx, ->
-        (ctx.authorisedChannel == undefined).should.be.true
-        ctx.response.status.should.be.exactly 401
-        done()
+      };
+      ctx.matchingChannel = channel;
+      ctx.request = {};
+      ctx.request.url = "test/authorisation";
+      ctx.request.path = "test/authorisation";
+      ctx.response = {};
+      ctx.set = function() {};
+      return authorisation.authorise(ctx, function() {
+        (ctx.authorisedChannel === undefined).should.be.true;
+        ctx.response.status.should.be.exactly(401);
+        return done();
+      });
+    });
 
-    it "should allow a request if the client is authorised to use the channel by clientID", (done) ->
-      # Setup a channel for the mock endpoint
-      channel = new Channel
-        name: "Authorisation mock channel 3"
-        urlPattern: "test/authorisation"
-        allow: [ "Test1", "Musha_OpenMRS", "Test2" ]
-        routes: [
-              name: "test route"
-              host: "localhost"
-              port: 9876
+    return it("should allow a request if the client is authorised to use the channel by clientID", function(done) {
+      // Setup a channel for the mock endpoint
+      let channel = new Channel({
+        name: "Authorisation mock channel 3",
+        urlPattern: "test/authorisation",
+        allow: [ "Test1", "Musha_OpenMRS", "Test2" ],
+        routes: [{
+              name: "test route",
+              host: "localhost",
+              port: 9876,
               primary: true
-            ]
+            }
+            ]});
 
-      # Setup test data, will need authentication mechanisms to set ctx.authenticated
-      ctx = {}
-      ctx.authenticated =
-        clientID: "Musha_OpenMRS"
-        domain: "poc1.jembi.org"
-        name: "OpenMRS Musha instance"
-        roles: [ "OpenMRS_PoC", "PoC" ]
-        passwordHash: ""
+      // Setup test data, will need authentication mechanisms to set ctx.authenticated
+      let ctx = {};
+      ctx.authenticated = {
+        clientID: "Musha_OpenMRS",
+        domain: "poc1.jembi.org",
+        name: "OpenMRS Musha instance",
+        roles: [ "OpenMRS_PoC", "PoC" ],
+        passwordHash: "",
         cert: ""
-      ctx.matchingChannel = channel
-      ctx.request = {}
-      ctx.request.url = "test/authorisation"
-      ctx.request.path = "test/authorisation"
-      ctx.response = {}
-      authorisation.authorise ctx, ->
-        ctx.authorisedChannel.should.exist
-        done()
+      };
+      ctx.matchingChannel = channel;
+      ctx.request = {};
+      ctx.request.url = "test/authorisation";
+      ctx.request.path = "test/authorisation";
+      ctx.response = {};
+      return authorisation.authorise(ctx, function() {
+        ctx.authorisedChannel.should.exist;
+        return done();
+      });
+    });
+  });
 
-  describe '.genAuthAudit', ->
+  describe('.genAuthAudit', () =>
 
-    it 'should generate an audit with the remoteAddress included', ->
-      audit = authorisation.genAuthAudit '1.2.3.4'
-      audit.should.be.ok()
-      audit.should.match /ParticipantObjectID="1\.2\.3\.4"/
+    it('should generate an audit with the remoteAddress included', function() {
+      let audit = authorisation.genAuthAudit('1.2.3.4');
+      audit.should.be.ok();
+      return audit.should.match(/ParticipantObjectID="1\.2\.3\.4"/);
+    })
+  );
 
-  describe '.authoriseClient', ->
+  describe('.authoriseClient', function() {
 
-    it 'should return true for a valid client, authorised client by role', ->
-      ctx =
-        authenticated:
+    it('should return true for a valid client, authorised client by role', function() {
+      let ctx = {
+        authenticated: {
           roles: [ 'admin', 'test' ]
-      channel =
-        allow: [ 'something', 'admin' ]
-      authoriseClient = authorisation.__get__ 'authoriseClient'
-      actual = authoriseClient channel, ctx
-      actual.should.be.true()
+        }
+      };
+      let channel =
+        {allow: [ 'something', 'admin' ]};
+      let authoriseClient = authorisation.__get__('authoriseClient');
+      let actual = authoriseClient(channel, ctx);
+      return actual.should.be.true();
+    });
 
-    it 'should return false for a invalid client, authorised client by role', ->
-      ctx =
-        authenticated:
+    it('should return false for a invalid client, authorised client by role', function() {
+      let ctx = {
+        authenticated: {
           roles: [ 'admin', 'test' ]
-      channel =
-        allow: [ 'another', 'notme' ]
-      authoriseClient = authorisation.__get__ 'authoriseClient'
-      actual = authoriseClient channel, ctx
-      actual.should.be.false()
+        }
+      };
+      let channel =
+        {allow: [ 'another', 'notme' ]};
+      let authoriseClient = authorisation.__get__('authoriseClient');
+      let actual = authoriseClient(channel, ctx);
+      return actual.should.be.false();
+    });
 
-    it 'should return true for a valid client, authorised client by role', ->
-      ctx =
-        authenticated:
-          roles: [ 'test1', 'test2' ]
+    it('should return true for a valid client, authorised client by role', function() {
+      let ctx = {
+        authenticated: {
+          roles: [ 'test1', 'test2' ],
           clientID: 'client1'
-      channel =
-        allow: [ 'something', 'admin', 'client1' ]
-      authoriseClient = authorisation.__get__ 'authoriseClient'
-      actual = authoriseClient channel, ctx
-      actual.should.be.true()
+        }
+      };
+      let channel =
+        {allow: [ 'something', 'admin', 'client1' ]};
+      let authoriseClient = authorisation.__get__('authoriseClient');
+      let actual = authoriseClient(channel, ctx);
+      return actual.should.be.true();
+    });
 
-    it 'should return false for a invalid client, authorised client by role', ->
-      ctx =
-        authenticated:
-          roles: [ 'test1', 'test2' ]
+    it('should return false for a invalid client, authorised client by role', function() {
+      let ctx = {
+        authenticated: {
+          roles: [ 'test1', 'test2' ],
           clientID: 'client2'
-      channel =
-        allow: [ 'something', 'admin', 'client1' ]
-      authoriseClient = authorisation.__get__ 'authoriseClient'
-      actual = authoriseClient channel, ctx
-      actual.should.be.false()
+        }
+      };
+      let channel =
+        {allow: [ 'something', 'admin', 'client1' ]};
+      let authoriseClient = authorisation.__get__('authoriseClient');
+      let actual = authoriseClient(channel, ctx);
+      return actual.should.be.false();
+    });
 
-    it 'should return false for if there is no authenticated client', ->
-      ctx = {}
-      channel =
-        allow: [ 'something', 'admin', 'client1' ]
-      authoriseClient = authorisation.__get__ 'authoriseClient'
-      actual = authoriseClient channel, ctx
-      actual.should.be.false()
+    it('should return false for if there is no authenticated client', function() {
+      let ctx = {};
+      let channel =
+        {allow: [ 'something', 'admin', 'client1' ]};
+      let authoriseClient = authorisation.__get__('authoriseClient');
+      let actual = authoriseClient(channel, ctx);
+      return actual.should.be.false();
+    });
 
-    it 'should return false if allows is null', ->
-      ctx =
-        authenticated:
-          roles: [ 'test1', 'test2' ]
+    return it('should return false if allows is null', function() {
+      let ctx = {
+        authenticated: {
+          roles: [ 'test1', 'test2' ],
           clientID: 'client2'
-      channel =
-        allow: null
-      authoriseClient = authorisation.__get__ 'authoriseClient'
-      actual = authoriseClient channel, ctx
-      actual.should.be.false()
+        }
+      };
+      let channel =
+        {allow: null};
+      let authoriseClient = authorisation.__get__('authoriseClient');
+      let actual = authoriseClient(channel, ctx);
+      return actual.should.be.false();
+    });
+  });
 
-  describe 'authoriseIP', ->
+  return describe('authoriseIP', function() {
 
-    it 'should return true if the client IP is in the whitelist', ->
-      ctx =
-        ip: '192.168.0.11'
-      channel =
-        whitelist: [ '192.168.0.11' ]
-      authoriseIP = authorisation.__get__ 'authoriseIP'
-      actual = authoriseIP channel, ctx
-      actual.should.be.true()
+    it('should return true if the client IP is in the whitelist', function() {
+      let ctx =
+        {ip: '192.168.0.11'};
+      let channel =
+        {whitelist: [ '192.168.0.11' ]};
+      let authoriseIP = authorisation.__get__('authoriseIP');
+      let actual = authoriseIP(channel, ctx);
+      return actual.should.be.true();
+    });
 
-    it 'should return false if the client IP isnt in the whitelist', ->
-      ctx =
-        ip: '192.168.0.11'
-      channel =
-        whitelist: [ '192.168.0.15' ]
-      authoriseIP = authorisation.__get__ 'authoriseIP'
-      actual = authoriseIP channel, ctx
-      actual.should.be.false()
+    it('should return false if the client IP isnt in the whitelist', function() {
+      let ctx =
+        {ip: '192.168.0.11'};
+      let channel =
+        {whitelist: [ '192.168.0.15' ]};
+      let authoriseIP = authorisation.__get__('authoriseIP');
+      let actual = authoriseIP(channel, ctx);
+      return actual.should.be.false();
+    });
 
-    it 'should return true if there are no whitelist entires', ->
-      ctx =
-        ip: '192.168.0.11'
-      channel =
-        whitelist: null
-      authoriseIP = authorisation.__get__ 'authoriseIP'
-      actual = authoriseIP channel, ctx
-      actual.should.be.true()
+    return it('should return true if there are no whitelist entires', function() {
+      let ctx =
+        {ip: '192.168.0.11'};
+      let channel =
+        {whitelist: null};
+      let authoriseIP = authorisation.__get__('authoriseIP');
+      let actual = authoriseIP(channel, ctx);
+      return actual.should.be.true();
+    });
+  });
+});

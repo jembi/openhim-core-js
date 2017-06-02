@@ -1,32 +1,37 @@
-auth = require 'basic-auth'
-Channel = require('../model/channels').Channel
-logger = require 'winston'
-Transaction = require('../model/transactions').Transaction
-Q = require 'q'
+import auth from 'basic-auth';
+import { Channel } from '../model/channels';
+import logger from 'winston';
+import { Transaction } from '../model/transactions';
+import Q from 'q';
 
-config = require '../config/config'
-statsdServer = config.get 'statsd'
-application = config.get 'application'
-SDC = require 'statsd-client'
-os = require 'os'
+import config from '../config/config';
+let statsdServer = config.get('statsd');
+let application = config.get('application');
+const SDC = require('statsd-client');
+let os = require('os');
 
-domain = "#{os.hostname()}.#{application.name}.appMetrics"
-sdc = new SDC statsdServer
+let domain = `${os.hostname()}.${application.name}.appMetrics`;
+let sdc = new SDC(statsdServer);
 
-exports.authoriseUser = (ctx, done) ->
-  # Use the original transaction's channel to setup the authorised channel
-  Transaction.findOne _id: ctx.parentID, (err, originalTransaction) ->
-    Channel.findOne _id: originalTransaction.channelID, (err, authorisedChannel) ->
-      ctx.authorisedChannel = authorisedChannel
-      done()
+export function authoriseUser(ctx, done) {
+  // Use the original transaction's channel to setup the authorised channel
+  return Transaction.findOne({_id: ctx.parentID}, (err, originalTransaction) =>
+    Channel.findOne({_id: originalTransaction.channelID}, function(err, authorisedChannel) {
+      ctx.authorisedChannel = authorisedChannel;
+      return done();
+    })
+  );
+}
   
 
-###
-# Koa middleware for authentication by basic auth
-###
-exports.koaMiddleware = (next) ->
-  startTime = new Date() if statsdServer.enabled
-  authoriseUser = Q.denodeify exports.authoriseUser
-  {} #TODO:Fix yield authoriseUser this
-  sdc.timing "#{domain}.rerunBypassAuthorisationMiddleware", startTime if statsdServer.enabled
-  {} #TODO:Fix yield next
+/*
+ * Koa middleware for authentication by basic auth
+ */
+export function koaMiddleware(next) {
+  let startTime;
+  if (statsdServer.enabled) { startTime = new Date(); }
+  let authoriseUser = Q.denodeify(exports.authoriseUser);
+  ({}); //TODO:Fix yield authoriseUser this
+  if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthorisationMiddleware`, startTime); }
+  return {}; //TODO:Fix yield next
+}

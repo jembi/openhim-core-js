@@ -1,354 +1,469 @@
-Channel = require('../model/channels').Channel
-Mediator = require('../model/mediators').Mediator
-Q = require 'q'
-logger = require 'winston'
-authorisation = require './authorisation'
-semver = require 'semver'
-atna = require 'atna-audit'
+import { Channel } from '../model/channels';
+import { Mediator } from '../model/mediators';
+import Q from 'q';
+import logger from 'winston';
+import authorisation from './authorisation';
+import semver from 'semver';
+import atna from 'atna-audit';
 
-utils = require "../utils"
-auditing = require '../auditing'
+import utils from "../utils";
+import auditing from '../auditing';
 
-mask = '**********'
+let mask = '**********';
 
-maskPasswords = (defs, config) ->
-  if not config
-    return
+var maskPasswords = function(defs, config) {
+  if (!config) {
+    return;
+  }
 
-  defs.forEach (d) ->
-    if d.type is 'password' and config[d.param]
-      if d.array
-        config[d.param] = config[d.param].map -> mask
-      else
-        config[d.param] = mask
-    if d.type is 'struct' and config[d.param]
-      maskPasswords d.template, config[d.param]
+  return defs.forEach(function(d) {
+    if ((d.type === 'password') && config[d.param]) {
+      if (d.array) {
+        config[d.param] = config[d.param].map(() => mask);
+      } else {
+        config[d.param] = mask;
+      }
+    }
+    if ((d.type === 'struct') && config[d.param]) {
+      return maskPasswords(d.template, config[d.param]);
+    }});
+};
 
-restoreMaskedPasswords = (defs, maskedConfig, config) ->
-  if not maskedConfig or not config
-    return
+var restoreMaskedPasswords = function(defs, maskedConfig, config) {
+  if (!maskedConfig || !config) {
+    return;
+  }
 
-  defs.forEach (d) ->
-    if d.type is 'password' and maskedConfig[d.param] and config[d.param]
-      if d.array
-        maskedConfig[d.param].forEach (p, i) ->
-          if p is mask
-            maskedConfig[d.param][i] = config[d.param][i]
-      else
-        if maskedConfig[d.param] is mask
-          maskedConfig[d.param] = config[d.param]
-    if d.type is 'struct' and maskedConfig[d.param] and config[d.param]
-      restoreMaskedPasswords d.template, maskedConfig[d.param], config[d.param]
+  return defs.forEach(function(d) {
+    if ((d.type === 'password') && maskedConfig[d.param] && config[d.param]) {
+      if (d.array) {
+        maskedConfig[d.param].forEach(function(p, i) {
+          if (p === mask) {
+            return maskedConfig[d.param][i] = config[d.param][i];
+          }});
+      } else {
+        if (maskedConfig[d.param] === mask) {
+          maskedConfig[d.param] = config[d.param];
+        }
+      }
+    }
+    if ((d.type === 'struct') && maskedConfig[d.param] && config[d.param]) {
+      return restoreMaskedPasswords(d.template, maskedConfig[d.param], config[d.param]);
+    }});
+};
 
-exports.getAllMediators = ->
-  # Must be admin
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getAllMediators denied.", 'info'
-    return
+export function getAllMediators() {
+  // Must be admin
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAllMediators denied.`, 'info');
+    return;
+  }
 
-  try
-    m = {} #TODO:Fix yield Mediator.find().exec()
-    maskPasswords m.configDefs, m.config
-    this.body = m
-  catch err
-    logAndSetResponse this, 500, "Could not fetch mediators via the API: #{err}", 'error'
-
-
-
-exports.getMediator = (mediatorURN) ->
-  # Must be admin
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getMediator denied.", 'info'
-    return
-
-  urn = unescape mediatorURN
-
-  try
-    result = {} #TODO:Fix yield Mediator.findOne({ "urn": urn }).exec()
-    if result == null
-      this.status = 404
-    else
-      maskPasswords result.configDefs, result.config
-      this.body = result
-  catch err
-    logAndSetResponse this, 500, "Could not fetch mediator using UUID #{urn} via the API: #{err}", 'error'
-
-constructError = (message, name) ->
-  err = new Error message
-  err.name = name
-  return err
+  try {
+    let m = {}; //TODO:Fix yield Mediator.find().exec()
+    maskPasswords(m.configDefs, m.config);
+    return this.body = m;
+  } catch (err) {
+    return logAndSetResponse(this, 500, `Could not fetch mediators via the API: ${err}`, 'error');
+  }
+}
 
 
-validateConfigDef = (def) ->
-  if def.type is 'struct' and not def.template
-    throw constructError "Must specify a template for struct param '#{def.param}'", 'ValidationError'
 
-  else if def.type is 'struct'
-    for templateItem in def.template
-      if not templateItem.param
-        throw constructError "Must specify field 'param' in template definition for param '#{def.param}'", 'ValidationError'
+export function getMediator(mediatorURN) {
+  // Must be admin
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getMediator denied.`, 'info');
+    return;
+  }
 
-      if not templateItem.type
-        throw constructError "Must specify field 'type' in template definition for param '#{def.param}'", 'ValidationError'
+  let urn = unescape(mediatorURN);
 
-      if templateItem.type is 'struct'
-        throw constructError "May not recursively specify 'struct' in template definitions (param '#{def.param}')", 'ValidationError'
+  try {
+    let result = {}; //TODO:Fix yield Mediator.findOne({ "urn": urn }).exec()
+    if (result === null) {
+      return this.status = 404;
+    } else {
+      maskPasswords(result.configDefs, result.config);
+      return this.body = result;
+    }
+  } catch (err) {
+    return logAndSetResponse(this, 500, `Could not fetch mediator using UUID ${urn} via the API: ${err}`, 'error');
+  }
+}
 
-      validateConfigDef templateItem
-
-  else if def.type is 'option'
-    if not utils.typeIsArray def.values
-      throw constructError "Expected field 'values' to be an array (option param '#{def.param}')", 'ValidationError'
-    if not def.values? or def.values.length is 0
-      throw constructError "Must specify a values array for option param '#{def.param}'", 'ValidationError'
-
-# validations additional to the mongoose schema validation
-validateConfigDefs = (configDefs) ->
-  validateConfigDef def for def in configDefs
+let constructError = function(message, name) {
+  let err = new Error(message);
+  err.name = name;
+  return err;
+};
 
 
-exports.addMediator = ->
-  # Must be admin
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to addMediator denied.", 'info'
-    return
+var validateConfigDef = function(def) {
+  if ((def.type === 'struct') && !def.template) {
+    throw constructError(`Must specify a template for struct param '${def.param}'`, 'ValidationError');
 
-  try
-    mediator = this.request.body
+  } else if (def.type === 'struct') {
+    return (() => {
+      let result = [];
+      for (let templateItem of Array.from(def.template)) {
+        if (!templateItem.param) {
+          throw constructError(`Must specify field 'param' in template definition for param '${def.param}'`, 'ValidationError');
+        }
 
-    if mediator?.endpoints?[0]?.host?
-      mediatorHost = mediator.endpoints[0].host
-    else
-      mediatorHost = 'unknown'
+        if (!templateItem.type) {
+          throw constructError(`Must specify field 'type' in template definition for param '${def.param}'`, 'ValidationError');
+        }
 
-    # audit mediator start
-    audit = atna.appActivityAudit true, mediator.name, mediatorHost, 'system'
-    audit = atna.wrapInSyslog audit
-    auditing.sendAuditEvent audit, ->
-      logger.info "Processed internal mediator start audit for: #{mediator.name} - #{mediator.urn}"
+        if (templateItem.type === 'struct') {
+          throw constructError(`May not recursively specify 'struct' in template definitions (param '${def.param}')`, 'ValidationError');
+        }
 
-    if not mediator.urn
-      throw constructError 'URN is required', 'ValidationError'
-    if not mediator.version or not semver.valid(mediator.version)
-      throw constructError 'Version is required. Must be in SemVer form x.y.z', 'ValidationError'
+        result.push(validateConfigDef(templateItem));
+      }
+      return result;
+    })();
 
-    if mediator.configDefs
-      validateConfigDefs mediator.configDefs
-      if mediator.config?
-        validateConfig mediator.configDefs, mediator.config
+  } else if (def.type === 'option') {
+    if (!utils.typeIsArray(def.values)) {
+      throw constructError(`Expected field 'values' to be an array (option param '${def.param}')`, 'ValidationError');
+    }
+    if ((def.values == null) || (def.values.length === 0)) {
+      throw constructError(`Must specify a values array for option param '${def.param}'`, 'ValidationError');
+    }
+  }
+};
 
-    existing = {} #TODO:Fix yield Mediator.findOne({urn: mediator.urn}).exec()
-    if existing?
-      if semver.gt(mediator.version, existing.version)
-        # update the mediator
-        if mediator.config? and existing.config?
-          # if some config already exists, add only config that didn't exist previously
-          for param, val of mediator.config
-            if existing.config[param]?
-              mediator.config[param] = existing.config[param]
-        {} #TODO:Fix yield Mediator.findByIdAndUpdate(existing._id, mediator).exec()
-    else
-      # this is a new mediator validate and save it
-      if not mediator.endpoints or mediator.endpoints.length < 1
-        throw constructError 'At least 1 endpoint is required', 'ValidationError'
-      {} #TODO:Fix yield Q.ninvoke(new Mediator(mediator), 'save')
-    this.status = 201
-    logger.info "User #{this.authenticated.email} created mediator with urn #{mediator.urn}"
-  catch err
-    if err.name is 'ValidationError'
-      utils.logAndSetResponse this, 400, "Could not add Mediator via the API: #{err}", 'error'
-    else
-      utils.logAndSetResponse this, 500, "Could not add Mediator via the API: #{err}", 'error'
+// validations additional to the mongoose schema validation
+let validateConfigDefs = configDefs => Array.from(configDefs).map((def) => validateConfigDef(def));
 
-exports.removeMediator = (urn) ->
-  # Must be admin
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
-    return
 
-  urn = unescape urn
+export function addMediator() {
+  // Must be admin
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addMediator denied.`, 'info');
+    return;
+  }
 
-  try
-    {} #TODO:Fix yield Mediator.findOneAndRemove({ urn: urn }).exec()
-    this.body = "Mediator with urn #{urn} has been successfully removed by #{this.authenticated.email}"
-    logger.info "Mediator with urn #{urn} has been successfully removed by #{this.authenticated.email}"
-  catch err
-    utils.logAndSetResponse this, 500, "Could not remove Mediator by urn #{urn} via the API: #{err}", 'error'
+  try {
+    let mediatorHost;
+    let mediator = this.request.body;
 
-exports.heartbeat = (urn) ->
-  # Must be admin
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
-    return
+    if (__guard__(__guard__(mediator != null ? mediator.endpoints : undefined, x1 => x1[0]), x => x.host) != null) {
+      mediatorHost = mediator.endpoints[0].host;
+    } else {
+      mediatorHost = 'unknown';
+    }
 
-  urn = unescape urn
+    // audit mediator start
+    let audit = atna.appActivityAudit(true, mediator.name, mediatorHost, 'system');
+    audit = atna.wrapInSyslog(audit);
+    auditing.sendAuditEvent(audit, () => logger.info(`Processed internal mediator start audit for: ${mediator.name} - ${mediator.urn}`));
 
-  try
-    mediator = {} #TODO:Fix yield Mediator.findOne({ urn: urn }).exec()
+    if (!mediator.urn) {
+      throw constructError('URN is required', 'ValidationError');
+    }
+    if (!mediator.version || !semver.valid(mediator.version)) {
+      throw constructError('Version is required. Must be in SemVer form x.y.z', 'ValidationError');
+    }
 
-    if not mediator?
-      this.status = 404
-      return
+    if (mediator.configDefs) {
+      validateConfigDefs(mediator.configDefs);
+      if (mediator.config != null) {
+        validateConfig(mediator.configDefs, mediator.config);
+      }
+    }
 
-    heartbeat = this.request.body
+    let existing = {}; //TODO:Fix yield Mediator.findOne({urn: mediator.urn}).exec()
+    if (existing != null) {
+      if (semver.gt(mediator.version, existing.version)) {
+        // update the mediator
+        if ((mediator.config != null) && (existing.config != null)) {
+          // if some config already exists, add only config that didn't exist previously
+          for (let param in mediator.config) {
+            let val = mediator.config[param];
+            if (existing.config[param] != null) {
+              mediator.config[param] = existing.config[param];
+            }
+          }
+        }
+        ({}); //TODO:Fix yield Mediator.findByIdAndUpdate(existing._id, mediator).exec()
+      }
+    } else {
+      // this is a new mediator validate and save it
+      if (!mediator.endpoints || (mediator.endpoints.length < 1)) {
+        throw constructError('At least 1 endpoint is required', 'ValidationError');
+      }
+      ({}); //TODO:Fix yield Q.ninvoke(new Mediator(mediator), 'save')
+    }
+    this.status = 201;
+    return logger.info(`User ${this.authenticated.email} created mediator with urn ${mediator.urn}`);
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return utils.logAndSetResponse(this, 400, `Could not add Mediator via the API: ${err}`, 'error');
+    } else {
+      return utils.logAndSetResponse(this, 500, `Could not add Mediator via the API: ${err}`, 'error');
+    }
+  }
+}
 
-    if not heartbeat?.uptime?
-      this.status = 400
-      return
+export function removeMediator(urn) {
+  // Must be admin
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info');
+    return;
+  }
 
-    if mediator._configModifiedTS > mediator._lastHeartbeat or heartbeat?.config is true
-      # Return config if it has changed since last heartbeat
-      this.body = mediator.config
-    else
-      this.body = ""
+  urn = unescape(urn);
 
-    # set internal properties
-    if heartbeat?
-      update =
-        _lastHeartbeat: new Date()
+  try {
+    ({}); //TODO:Fix yield Mediator.findOneAndRemove({ urn: urn }).exec()
+    this.body = `Mediator with urn ${urn} has been successfully removed by ${this.authenticated.email}`;
+    return logger.info(`Mediator with urn ${urn} has been successfully removed by ${this.authenticated.email}`);
+  } catch (err) {
+    return utils.logAndSetResponse(this, 500, `Could not remove Mediator by urn ${urn} via the API: ${err}`, 'error');
+  }
+}
+
+export function heartbeat(urn) {
+  // Must be admin
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info');
+    return;
+  }
+
+  urn = unescape(urn);
+
+  try {
+    let mediator = {}; //TODO:Fix yield Mediator.findOne({ urn: urn }).exec()
+
+    if ((mediator == null)) {
+      this.status = 404;
+      return;
+    }
+
+    let heartbeat = this.request.body;
+
+    if (((heartbeat != null ? heartbeat.uptime : undefined) == null)) {
+      this.status = 400;
+      return;
+    }
+
+    if ((mediator._configModifiedTS > mediator._lastHeartbeat) || ((heartbeat != null ? heartbeat.config : undefined) === true)) {
+      // Return config if it has changed since last heartbeat
+      this.body = mediator.config;
+    } else {
+      this.body = "";
+    }
+
+    // set internal properties
+    if (heartbeat != null) {
+      let update = {
+        _lastHeartbeat: new Date(),
         _uptime: heartbeat.uptime
+      };
 
-      {} #TODO:Fix yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
+      ({}); //TODO:Fix yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
+    }
 
-    this.status = 200
-  catch err
-    utils.logAndSetResponse this, 500, "Could not process mediator heartbeat (urn: #{urn}): #{err}", 'error'
-
-
-validateConfigField = (param, def, field) ->
-  switch def.type
-    when 'string'
-      if typeof field isnt 'string'
-        throw constructError "Expected config param #{param} to be a string.", 'ValidationError'
-
-    when 'bigstring'
-      if typeof field isnt 'string'
-        throw constructError "Expected config param #{param} to be a large string.", 'ValidationError'
-
-    when 'number'
-      if typeof field isnt 'number'
-        throw constructError "Expected config param #{param} to be a number.", 'ValidationError'
-
-    when 'bool'
-      if typeof field isnt 'boolean'
-        throw constructError "Expected config param #{param} to be a boolean.", 'ValidationError'
-
-    when 'option'
-      if (def.values.indexOf field) is -1
-        throw constructError "Expected config param #{param} to be one of #{def.values}", 'ValidationError'
-
-    when 'map'
-      if typeof field isnt 'object'
-        throw constructError "Expected config param #{param} to be an object.", 'ValidationError'
-      for k, v of field
-        if typeof v isnt 'string'
-          throw constructError "Expected config param #{param} to only contain string values.", 'ValidationError'
-
-    when 'struct'
-      if typeof field isnt 'object'
-        throw constructError "Expected config param #{param} to be an object.", 'ValidationError'
-      templateFields = (def.template.map (tp) -> tp.param)
-      for paramField of field
-        if paramField not in templateFields
-          throw constructError "Field #{paramField} is not defined in template definition for config param #{param}.", 'ValidationError'
-
-    when 'password'
-      if typeof field isnt 'string'
-        throw constructError "Expected config param #{param} to be a string representing a password.", 'ValidationError'
-
-validateConfig = (configDef, config) ->
-  # reduce to a single true or false value, start assuming valid
-  return Object.keys(config).every (param) ->
-    # find the matching def if there is one
-    matchingDefs = configDef.filter (def) ->
-      return def.param is param
-
-    # fail if there isn't a matching def
-    if matchingDefs.length is 0
-      throw constructError "No config definition found for parameter #{param}", 'ValidationError'
-
-    # validate the param against the defs
-    matchingDefs.map (def) ->
-      if def.array
-        if not utils.typeIsArray config[param]
-          throw constructError "Expected config param #{param} to be an array of type #{def.type}", 'ValidationError'
-
-        for field, i in config[param]
-          validateConfigField "#{param}[#{i}]", def, field
-      else
-        validateConfigField param, def, config[param]
-
-if process.env.NODE_ENV == "test"
-  exports.validateConfig = validateConfig
+    return this.status = 200;
+  } catch (err) {
+    return utils.logAndSetResponse(this, 500, `Could not process mediator heartbeat (urn: ${urn}): ${err}`, 'error');
+  }
+}
 
 
-exports.setConfig = (urn) ->
-  # Must be admin
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
-    return
+let validateConfigField = function(param, def, field) {
+  switch (def.type) {
+    case 'string':
+      if (typeof field !== 'string') {
+        throw constructError(`Expected config param ${param} to be a string.`, 'ValidationError');
+      }
+      break;
 
-  urn = unescape urn
-  config = this.request.body
+    case 'bigstring':
+      if (typeof field !== 'string') {
+        throw constructError(`Expected config param ${param} to be a large string.`, 'ValidationError');
+      }
+      break;
 
-  try
-    mediator = {} #TODO:Fix yield Mediator.findOne({ urn: urn }).exec()
+    case 'number':
+      if (typeof field !== 'number') {
+        throw constructError(`Expected config param ${param} to be a number.`, 'ValidationError');
+      }
+      break;
 
-    if not mediator?
-      this.status = 404
-      this.body = 'No mediator found for this urn.'
-      return
-    try
-      restoreMaskedPasswords mediator.configDefs, config, mediator.config
-      validateConfig mediator.configDefs, config
-    catch err
-      this.status = 400
-      this.body = err.message
-      return
+    case 'bool':
+      if (typeof field !== 'boolean') {
+        throw constructError(`Expected config param ${param} to be a boolean.`, 'ValidationError');
+      }
+      break;
 
-    {} #TODO:Fix yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec()
-    this.status = 200
-  catch err
-    utils.logAndSetResponse this, 500, "Could not set mediator config (urn: #{urn}): #{err}", 'error'
+    case 'option':
+      if ((def.values.indexOf(field)) === -1) {
+        throw constructError(`Expected config param ${param} to be one of ${def.values}`, 'ValidationError');
+      }
+      break;
 
-saveDefaultChannelConfig = (channels) ->
-  promises = []
-  for channel in channels
-    delete channel._id
-    for route in channel.routes
-      delete route._id
-    promises.push new Channel(channel).save()
-  return promises
+    case 'map':
+      if (typeof field !== 'object') {
+        throw constructError(`Expected config param ${param} to be an object.`, 'ValidationError');
+      }
+      return (() => {
+        let result = [];
+        for (let k in field) {
+          let v = field[k];
+          let item;
+          if (typeof v !== 'string') {
+            throw constructError(`Expected config param ${param} to only contain string values.`, 'ValidationError');
+          }
+          result.push(item);
+        }
+        return result;
+      })();
 
-exports.loadDefaultChannels = (urn) ->
-  # Must be admin
-  if not authorisation.inGroup 'admin', this.authenticated
-    utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to removeMediator denied.", 'info'
-    return
+    case 'struct':
+      if (typeof field !== 'object') {
+        throw constructError(`Expected config param ${param} to be an object.`, 'ValidationError');
+      }
+      let templateFields = (def.template.map(tp => tp.param));
+      return (() => {
+        let result1 = [];
+        for (let paramField in field) {
+          let item1;
+          if (!Array.from(templateFields).includes(paramField)) {
+            throw constructError(`Field ${paramField} is not defined in template definition for config param ${param}.`, 'ValidationError');
+          }
+          result1.push(item1);
+        }
+        return result1;
+      })();
 
-  urn = unescape urn
-  channels = this.request.body
+    case 'password':
+      if (typeof field !== 'string') {
+        throw constructError(`Expected config param ${param} to be a string representing a password.`, 'ValidationError');
+      }
+      break;
+  }
+};
 
-  try
-    mediator = {} #TODO:Fix yield Mediator.findOne({ urn: urn }).lean().exec()
+var validateConfig = (configDef, config) =>
+  // reduce to a single true or false value, start assuming valid
+  Object.keys(config).every(function(param) {
+    // find the matching def if there is one
+    let matchingDefs = configDef.filter(def => def.param === param);
 
-    if not mediator?
-      this.status = 404
-      this.body = 'No mediator found for this urn.'
-      return
+    // fail if there isn't a matching def
+    if (matchingDefs.length === 0) {
+      throw constructError(`No config definition found for parameter ${param}`, 'ValidationError');
+    }
 
-    if not channels? or channels.length is 0
-      {} #TODO:Fix yield Q.all saveDefaultChannelConfig(mediator.defaultChannelConfig)
-    else
-      filteredChannelConfig = mediator.defaultChannelConfig.filter (channel) ->
-        return channel.name in channels
-      if filteredChannelConfig.length < channels.length
-        utils.logAndSetResponse this, 400, "Could not load mediator default channel config, one or more channels in the request body not found in the mediator config (urn: #{urn})", 'error'
-        return
-      else
-        {} #TODO:Fix yield Q.all saveDefaultChannelConfig(filteredChannelConfig)
+    // validate the param against the defs
+    return matchingDefs.map(function(def) {
+      if (def.array) {
+        if (!utils.typeIsArray(config[param])) {
+          throw constructError(`Expected config param ${param} to be an array of type ${def.type}`, 'ValidationError');
+        }
 
-    this.status = 201
-  catch err
-    logger.debug err.stack
-    utils.logAndSetResponse this, 500, "Could not load mediator default channel config (urn: #{urn}): #{err}", 'error'
+        return Array.from(config[param]).map((field, i) =>
+          validateConfigField(`${param}[${i}]`, def, field));
+      } else {
+        return validateConfigField(param, def, config[param]);
+      }});})
+;
+
+if (process.env.NODE_ENV === "test") {
+  exports.validateConfig = validateConfig;
+}
+
+
+export function setConfig(urn) {
+  // Must be admin
+  let err;
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info');
+    return;
+  }
+
+  urn = unescape(urn);
+  let config = this.request.body;
+
+  try {
+    let mediator = {}; //TODO:Fix yield Mediator.findOne({ urn: urn }).exec()
+
+    if ((mediator == null)) {
+      this.status = 404;
+      this.body = 'No mediator found for this urn.';
+      return;
+    }
+    try {
+      restoreMaskedPasswords(mediator.configDefs, config, mediator.config);
+      validateConfig(mediator.configDefs, config);
+    } catch (error) {
+      err = error;
+      this.status = 400;
+      this.body = err.message;
+      return;
+    }
+
+    ({}); //TODO:Fix yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec()
+    return this.status = 200;
+  } catch (error1) {
+    err = error1;
+    return utils.logAndSetResponse(this, 500, `Could not set mediator config (urn: ${urn}): ${err}`, 'error');
+  }
+}
+
+let saveDefaultChannelConfig = function(channels) {
+  let promises = [];
+  for (let channel of Array.from(channels)) {
+    delete channel._id;
+    for (let route of Array.from(channel.routes)) {
+      delete route._id;
+    }
+    promises.push(new Channel(channel).save());
+  }
+  return promises;
+};
+
+export function loadDefaultChannels(urn) {
+  // Must be admin
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info');
+    return;
+  }
+
+  urn = unescape(urn);
+  let channels = this.request.body;
+
+  try {
+    let mediator = {}; //TODO:Fix yield Mediator.findOne({ urn: urn }).lean().exec()
+
+    if ((mediator == null)) {
+      this.status = 404;
+      this.body = 'No mediator found for this urn.';
+      return;
+    }
+
+    if ((channels == null) || (channels.length === 0)) {
+      ({}); //TODO:Fix yield Q.all saveDefaultChannelConfig(mediator.defaultChannelConfig)
+    } else {
+      let filteredChannelConfig = mediator.defaultChannelConfig.filter(channel => Array.from(channels).includes(channel.name));
+      if (filteredChannelConfig.length < channels.length) {
+        utils.logAndSetResponse(this, 400, `Could not load mediator default channel config, one or more channels in the request body not found in the mediator config (urn: ${urn})`, 'error');
+        return;
+      } else {
+        ({}); //TODO:Fix yield Q.all saveDefaultChannelConfig(filteredChannelConfig)
+      }
+    }
+
+    return this.status = 201;
+  } catch (err) {
+    logger.debug(err.stack);
+    return utils.logAndSetResponse(this, 500, `Could not load mediator default channel config (urn: ${urn}): ${err}`, 'error');
+  }
+}
+
+function __guard__(value, transform) {
+  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
+}

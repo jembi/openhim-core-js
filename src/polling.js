@@ -1,53 +1,65 @@
-Channels = require('./model/channels')
-Channel = Channels.Channel
-request = require 'request'
-config = require './config/config'
-config.polling = config.get('polling')
-logger = require 'winston'
-Q = require 'q'
-authorisation = require './middleware/authorisation'
-utils = require './utils'
+let removePollingChannel;
+import Channels from './model/channels';
+let { Channel } = Channels;
+import request from 'request';
+import config from './config/config';
+config.polling = config.get('polling');
+let logger = require('winston');
+const Q = require('q');
+let authorisation = require('./middleware/authorisation');
+let utils = require('./utils');
 
-exports.agendaGlobal = null
+export let agendaGlobal = null;
 
-exports.registerPollingChannel = (channel, callback) ->
-  logger.info "Registering polling channel: #{channel._id}"
-  return callback new Error 'no polling schedule set on this channel' if not channel.pollingSchedule
+export function registerPollingChannel(channel, callback) {
+  logger.info(`Registering polling channel: ${channel._id}`);
+  if (!channel.pollingSchedule) { return callback(new Error('no polling schedule set on this channel')); }
 
-  exports.agendaGlobal.cancel { name: "polling-job-#{channel._id}" }, (err) ->
-    return callback err if err
-    exports.agendaGlobal.define "polling-job-#{channel._id}", (job, done) ->
-      logger.info "Polling channel #{channel._id}"
+  return exports.agendaGlobal.cancel({ name: `polling-job-${channel._id}` }, function(err) {
+    if (err) { return callback(err); }
+    exports.agendaGlobal.define(`polling-job-${channel._id}`, function(job, done) {
+      logger.info(`Polling channel ${channel._id}`);
 
-      options =
-        url: "http://#{config.polling.host}:#{config.polling.pollingPort}/trigger"
-        headers:
-          'channel-id': channel._id
+      let options = {
+        url: `http://${config.polling.host}:${config.polling.pollingPort}/trigger`,
+        headers: {
+          'channel-id': channel._id,
           'X-OpenHIM-LastRunAt': job.attrs.lastRunAt
+        }
+      };
 
-      request options, ->
-        done()
+      return request(options, () => done());
+    });
 
-    exports.agendaGlobal.every channel.pollingSchedule, "polling-job-#{channel._id}", null, { timezone: utils.serverTimezone() }
+    exports.agendaGlobal.every(channel.pollingSchedule, `polling-job-${channel._id}`, null, { timezone: utils.serverTimezone() });
 
-    callback null
+    return callback(null);
+  });
+}
 
-exports.removePollingChannel = removePollingChannel = (channel, callback) ->
-  logger.info "Removing polling schedule for channel: #{channel._id}"
-  exports.agendaGlobal.cancel { name: "polling-job-#{channel._id}" }, (err) ->
-    return callback err if err
-    callback null
+let removePollingChannel$1 = (removePollingChannel = function(channel, callback) {
+  logger.info(`Removing polling schedule for channel: ${channel._id}`);
+  return exports.agendaGlobal.cancel({ name: `polling-job-${channel._id}` }, function(err) {
+    if (err) { return callback(err); }
+    return callback(null);
+  });
+});
 
-exports.setupAgenda = (agenda, callback) ->
-  logger.info "Starting polling server..."
-  registerPollingChannelPromise = Q.denodeify exports.registerPollingChannel
-  exports.agendaGlobal = agenda
-  Channel.find { type: 'polling' }, (err, channels) ->
-    return err if err
+export { removePollingChannel$1 as removePollingChannel };
+export function setupAgenda(agenda, callback) {
+  logger.info("Starting polling server...");
+  let registerPollingChannelPromise = Q.denodeify(exports.registerPollingChannel);
+  exports.agendaGlobal = agenda;
+  return Channel.find({ type: 'polling' }, function(err, channels) {
+    if (err) { return err; }
 
-    promises = []
-    for channel in channels
-      if Channels.isChannelEnabled channel
-        promises.push registerPollingChannelPromise channel
+    let promises = [];
+    for (let channel of Array.from(channels)) {
+      if (Channels.isChannelEnabled(channel)) {
+        promises.push(registerPollingChannelPromise(channel));
+      }
+    }
 
-    (Q.all promises).done callback
+    return (Q.all(promises)).done(callback);
+  });
+}

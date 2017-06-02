@@ -1,10 +1,12 @@
-mongoose = require 'mongoose'
-server = require '../server'
-connectionDefault = server.connectionDefault
-Schema = mongoose.Schema
+import mongoose from 'mongoose';
+import server from '../server';
+let { connectionDefault } = server;
+let { Schema } = mongoose;
 
-dbVersion = new Schema
-  version:      Number
+let dbVersion = new Schema({
+  version:      Number,
   lastUpdated:  Date
+});
 
-exports.dbVersion = connectionDefault.model 'dbVersion', dbVersion
+let dbVersion$1 = connectionDefault.model('dbVersion', dbVersion);
+export { dbVersion$1 as dbVersion };

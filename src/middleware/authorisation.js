@@ -1,69 +1,85 @@
-Q = require "q"
-logger = require "winston"
-atna = require 'atna-audit'
-config = require '../config/config'
-config.authentication = config.get('authentication')
-utils = require '../utils'
-auditing = require '../auditing'
+import Q from "q";
+import logger from "winston";
+import atna from 'atna-audit';
+import config from '../config/config';
+config.authentication = config.get('authentication');
+let utils = require('../utils');
+let auditing = require('../auditing');
 
-statsdServer = config.get 'statsd'
-application = config.get 'application'
-himSourceID = config.get('auditing').auditEvents.auditSourceID
-SDC = require 'statsd-client'
-os = require 'os'
+let statsdServer = config.get('statsd');
+let application = config.get('application');
+let himSourceID = config.get('auditing').auditEvents.auditSourceID;
+const SDC = require('statsd-client');
+let os = require('os');
 
-domain = "#{os.hostname()}.#{application.name}.appMetrics"
-sdc = new SDC statsdServer
+let domain = `${os.hostname()}.${application.name}.appMetrics`;
+let sdc = new SDC(statsdServer);
 
-genAuthAudit = (remoteAddress) ->
-  audit = atna.nodeAuthentication remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE
-  audit = atna.wrapInSyslog audit
-  return audit
+let genAuthAudit = function(remoteAddress) {
+  let audit = atna.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE);
+  audit = atna.wrapInSyslog(audit);
+  return audit;
+};
 
-authoriseClient = (channel, ctx) ->
-  if ctx.authenticated? and channel.allow?
-    if ctx.authenticated.roles?
-      for role in channel.allow
-        if role in ctx.authenticated.roles
-          return true
-    if ctx.authenticated.clientID in channel.allow
-      return true
+let authoriseClient = function(channel, ctx) {
+  if ((ctx.authenticated != null) && (channel.allow != null)) {
+    if (ctx.authenticated.roles != null) {
+      for (let role of Array.from(channel.allow)) {
+        if (Array.from(ctx.authenticated.roles).includes(role)) {
+          return true;
+        }
+      }
+    }
+    if (Array.from(channel.allow).includes(ctx.authenticated.clientID)) {
+      return true;
+    }
+  }
 
-  return false
+  return false;
+};
 
-authoriseIP = (channel, ctx) ->
-  if channel.whitelist?.length > 0
-    return ctx.ip in channel.whitelist
-  else
-    return true # whitelist auth not required
+let authoriseIP = function(channel, ctx) {
+  if ((channel.whitelist != null ? channel.whitelist.length : undefined) > 0) {
+    return Array.from(channel.whitelist).includes(ctx.ip);
+  } else {
+    return true; // whitelist auth not required
+  }
+};
 
-exports.authorise = (ctx, done) ->
+export function authorise(ctx, done) {
 
-  channel = ctx.matchingChannel
+  let channel = ctx.matchingChannel;
 
-  if channel? and authoriseIP(channel, ctx) and (channel.authType is 'public' or authoriseClient(channel, ctx))
-    # authorisation succeeded
-    ctx.authorisedChannel = channel
-    logger.info "The request, '#{ctx.request.path}' is authorised to access #{ctx.authorisedChannel.name}"
-  else
-    # authorisation failed
-    ctx.response.status = 401
-    if config.authentication.enableBasicAuthentication
-      ctx.set "WWW-Authenticate", "Basic"
-    logger.info "The request, '#{ctx.request.path}', is not authorised to access any channels."
-    auditing.sendAuditEvent genAuthAudit(ctx.ip), -> logger.debug 'Processed nodeAuthentication audit'
+  if ((channel != null) && authoriseIP(channel, ctx) && ((channel.authType === 'public') || authoriseClient(channel, ctx))) {
+    // authorisation succeeded
+    ctx.authorisedChannel = channel;
+    logger.info(`The request, '${ctx.request.path}' is authorised to access ${ctx.authorisedChannel.name}`);
+  } else {
+    // authorisation failed
+    ctx.response.status = 401;
+    if (config.authentication.enableBasicAuthentication) {
+      ctx.set("WWW-Authenticate", "Basic");
+    }
+    logger.info(`The request, '${ctx.request.path}', is not authorised to access any channels.`);
+    auditing.sendAuditEvent(genAuthAudit(ctx.ip), () => logger.debug('Processed nodeAuthentication audit'));
+  }
 
-  done()
+  return done();
+}
 
-exports.koaMiddleware = (next) ->
-  startTime = new Date() if statsdServer.enabled
-  authorise = Q.denodeify exports.authorise
-  {} #TODO:Fix yield authorise this
-  if this.authorisedChannel?
-    sdc.timing "#{domain}.authorisationMiddleware", startTime if statsdServer.enabled
-    {} #TODO:Fix yield next
+export function koaMiddleware(next) {
+  let startTime;
+  if (statsdServer.enabled) { startTime = new Date(); }
+  let authorise = Q.denodeify(exports.authorise);
+  ({}); //TODO:Fix yield authorise this
+  if (this.authorisedChannel != null) {
+    if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime); }
+    return {}; //TODO:Fix yield next
+  }
+}
 
-# export private functions for unit testing
-# note: you cant spy on these method because of this :(
-if process.env.NODE_ENV == "test"
-  exports.genAuthAudit = genAuthAudit
+// export private functions for unit testing
+// note: you cant spy on these method because of this :(
+if (process.env.NODE_ENV === "test") {
+  exports.genAuthAudit = genAuthAudit;
+}

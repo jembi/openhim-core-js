@@ -1,28 +1,32 @@
-Q = require "q"
-Channel = require("../model/channels").Channel
-logger = require "winston"
+import Q from "q";
+import { Channel } from "../model/channels";
+import logger from "winston";
 
-config = require '../config/config'
-statsdServer = config.get 'statsd'
-application = config.get 'application'
-SDC = require 'statsd-client'
-os = require 'os'
+import config from '../config/config';
+let statsdServer = config.get('statsd');
+let application = config.get('application');
+const SDC = require('statsd-client');
+let os = require('os');
 
-domain = "#{os.hostname()}.#{application.name}.appMetrics"
-sdc = new SDC statsdServer
+let domain = `${os.hostname()}.${application.name}.appMetrics`;
+let sdc = new SDC(statsdServer);
 
-exports.authoriseUser = (ctx, done) ->
+export function authoriseUser(ctx, done) {
 
-  Channel.findOne { _id: ctx.request.header['channel-id'] }, (err, channel) ->
-    ctx.authorisedChannel = channel
-    done null, channel
+  return Channel.findOne({ _id: ctx.request.header['channel-id'] }, function(err, channel) {
+    ctx.authorisedChannel = channel;
+    return done(null, channel);
+  });
+}
 
-###
-# Koa middleware for bypassing authorisation for polling
-###
-exports.koaMiddleware = (next) ->
-  startTime = new Date() if statsdServer.enabled
-  authoriseUser = Q.denodeify exports.authoriseUser
-  {} #TODO:Fix yield authoriseUser this
-  sdc.timing "#{domain}.pollingBypassAuthorisationMiddleware", startTime if statsdServer.enabled
-  {} #TODO:Fix yield next
+/*
+ * Koa middleware for bypassing authorisation for polling
+ */
+export function koaMiddleware(next) {
+  let startTime;
+  if (statsdServer.enabled) { startTime = new Date(); }
+  let authoriseUser = Q.denodeify(exports.authoriseUser);
+  ({}); //TODO:Fix yield authoriseUser this
+  if (statsdServer.enabled) { sdc.timing(`${domain}.pollingBypassAuthorisationMiddleware`, startTime); }
+  return {}; //TODO:Fix yield next
+}

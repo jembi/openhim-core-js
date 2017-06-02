@@ -1,181 +1,222 @@
-http = require 'http'
-net = require 'net'
-tls = require 'tls'
-config = require "./config/config"
-config.tcpAdapter = config.get('tcpAdapter')
-logger = require "winston"
-Channels = require('./model/channels')
-Channel = Channels.Channel
-Q = require "q"
-tlsAuthentication = require "./middleware/tlsAuthentication"
-authorisation = require "./middleware/authorisation"
+import http from 'http';
+import net from 'net';
+import tls from 'tls';
+import config from "./config/config";
+config.tcpAdapter = config.get('tcpAdapter');
+let logger = require("winston");
+let Channels = require('./model/channels');
+let { Channel } = Channels;
+const Q = require("q");
+let tlsAuthentication = require("./middleware/tlsAuthentication");
+let authorisation = require("./middleware/authorisation");
 
-tcpServers = []
+let tcpServers = [];
 
-newKey = 0
-datastore = {}
+let newKey = 0;
+let datastore = {};
 
-process.on 'message', (msg) ->
-  if msg.type is 'start-tcp-channel'
-    logger.debug "Recieved message to start tcp channel: #{msg.channelID}"
-    exports.startupTCPServer msg.channelID, ->
-  else if msg.type is 'stop-tcp-channel'
-    logger.debug "Recieved message to stop tcp channel: #{msg.channelID}"
-    exports.stopServerForChannel msg.channelID, ->
+process.on('message', function(msg) {
+  if (msg.type === 'start-tcp-channel') {
+    logger.debug(`Recieved message to start tcp channel: ${msg.channelID}`);
+    return exports.startupTCPServer(msg.channelID, function() {});
+  } else if (msg.type === 'stop-tcp-channel') {
+    logger.debug(`Recieved message to stop tcp channel: ${msg.channelID}`);
+    return exports.stopServerForChannel(msg.channelID, function() {});
+  }
+});
 
-exports.popTransaction = (key) ->
-  res = datastore["#{key}"]
-  delete datastore["#{key}"]
-  return res
+export function popTransaction(key) {
+  let res = datastore[`${key}`];
+  delete datastore[`${key}`];
+  return res;
+}
 
-startListening = (channel, tcpServer, host, port, callback) ->
-  tcpServer.listen port, host, ->
-    tcpServers.push { channelID: channel._id, server: tcpServer }
-    callback null
-  tcpServer.on 'error', (err) ->
-    logger.error err + ' Host: ' + host + ' Port: ' + port
+let startListening = function(channel, tcpServer, host, port, callback) {
+  tcpServer.listen(port, host, function() {
+    tcpServers.push({ channelID: channel._id, server: tcpServer });
+    return callback(null);
+  });
+  return tcpServer.on('error', err => logger.error(err + ' Host: ' + host + ' Port: ' + port));
+};
 
-exports.notifyMasterToStartTCPServer = (channelID, callback) ->
-  logger.debug "Sending message to master to start tcp channel: #{channelID}"
-  process.send
-    type: 'start-tcp-channel'
-    channelID: channelID
+export function notifyMasterToStartTCPServer(channelID, callback) {
+  logger.debug(`Sending message to master to start tcp channel: ${channelID}`);
+  return process.send({
+    type: 'start-tcp-channel',
+    channelID
+  });
+}
 
-exports.startupTCPServer = (channelID, callback) ->
-  for existingServer in tcpServers
-    # server already running for channel
-    return callback null if existingServer.channelID.equals channelID
+export function startupTCPServer(channelID, callback) {
+  for (let existingServer of Array.from(tcpServers)) {
+    // server already running for channel
+    if (existingServer.channelID.equals(channelID)) { return callback(null); }
+  }
 
-  handler = (sock) ->
-    Channel.findById channelID, (err, channel) ->
-      return logger.error err if err
-      sock.on 'data', (data) -> adaptSocketRequest channel, sock, "#{data}"
-      sock.on 'error', (err) -> logger.error err
+  let handler = sock =>
+    Channel.findById(channelID, function(err, channel) {
+      if (err) { return logger.error(err); }
+      sock.on('data', data => adaptSocketRequest(channel, sock, `${data}`));
+      return sock.on('error', err => logger.error(err));
+    })
+  ;
 
-  Channel.findById channelID, (err, channel) ->
-    host = channel.tcpHost or '0.0.0.0'
-    port = channel.tcpPort
+  return Channel.findById(channelID, function(err, channel) {
+    let host = channel.tcpHost || '0.0.0.0';
+    let port = channel.tcpPort;
 
-    return callback "Channel #{channel.name} (#{channel._id}): TCP port not defined" if not port
+    if (!port) { return callback(`Channel ${channel.name} (${channel._id}): TCP port not defined`); }
 
-    if channel.type is 'tls'
-      tlsAuthentication.getServerOptions true, (err, options) ->
-        return callback err if err
+    if (channel.type === 'tls') {
+      return tlsAuthentication.getServerOptions(true, function(err, options) {
+        if (err) { return callback(err); }
 
-        tcpServer = tls.createServer options, handler
-        startListening channel, tcpServer, host, port, (err) ->
-          if err
-            callback err
-          else
-            logger.info "Channel #{channel.name} (#{channel._id}): TLS server listening on port #{port}"
-            callback null
-    else if channel.type is 'tcp'
-      tcpServer = net.createServer handler
-      startListening channel, tcpServer, host, port, (err) ->
-        if err
-          callback err
-        else
-          logger.info "Channel #{channel.name} (#{channel._id}): TCP server listening on port #{port}"
-          callback null
-    else
-      return callback "Cannot handle #{channel.type} channels"
-
-
-# Startup a TCP server for each TCP channel
-exports.startupServers = (callback) ->
-  Channel.find { $or: [ {type: 'tcp'}, {type: 'tls'} ] }, (err, channels) ->
-    return callback err if err
-
-    promises = []
-
-    for channel in channels
-      do (channel) ->
-        if Channels.isChannelEnabled channel
-          defer = Q.defer()
-
-          exports.startupTCPServer channel._id, (err) ->
-            return callback err if err
-            defer.resolve()
-
-          promises.push defer.promise
-
-    (Q.all promises).then -> callback null
+        let tcpServer = tls.createServer(options, handler);
+        return startListening(channel, tcpServer, host, port, function(err) {
+          if (err) {
+            return callback(err);
+          } else {
+            logger.info(`Channel ${channel.name} (${channel._id}): TLS server listening on port ${port}`);
+            return callback(null);
+          }
+        });
+      });
+    } else if (channel.type === 'tcp') {
+      let tcpServer = net.createServer(handler);
+      return startListening(channel, tcpServer, host, port, function(err) {
+        if (err) {
+          return callback(err);
+        } else {
+          logger.info(`Channel ${channel.name} (${channel._id}): TCP server listening on port ${port}`);
+          return callback(null);
+        }
+      });
+    } else {
+      return callback(`Cannot handle ${channel.type} channels`);
+    }
+  });
+}
 
 
-adaptSocketRequest = (channel, sock, socketData) ->
-  options =
-    hostname: config.tcpAdapter.httpReceiver.host
-    port: config.tcpAdapter.httpReceiver.httpPort
-    path: '/'
+// Startup a TCP server for each TCP channel
+export function startupServers(callback) {
+  return Channel.find({ $or: [ {type: 'tcp'}, {type: 'tls'} ] }, function(err, channels) {
+    if (err) { return callback(err); }
+
+    let promises = [];
+
+    for (let channel of Array.from(channels)) {
+      (function(channel) {
+        if (Channels.isChannelEnabled(channel)) {
+          let defer = Q.defer();
+
+          exports.startupTCPServer(channel._id, function(err) {
+            if (err) { return callback(err); }
+            return defer.resolve();
+          });
+
+          return promises.push(defer.promise);
+        }
+      })(channel);
+    }
+
+    return (Q.all(promises)).then(() => callback(null));
+  });
+}
+
+
+var adaptSocketRequest = function(channel, sock, socketData) {
+  let options = {
+    hostname: config.tcpAdapter.httpReceiver.host,
+    port: config.tcpAdapter.httpReceiver.httpPort,
+    path: '/',
     method: 'POST'
-  req = http.request options, (res) ->
-    response = ''
-    res.on 'data', (data) -> response += data
-    res.on 'end', ->
-      if sock.writable
-        sock.write response
+  };
+  let req = http.request(options, function(res) {
+    let response = '';
+    res.on('data', data => response += data);
+    return res.on('end', function() {
+      if (sock.writable) {
+        return sock.write(response);
+      }
+    });
+  });
 
-  req.on "error", (err) -> logger.error err
+  req.on("error", err => logger.error(err));
 
-  # don't write the actual data to the http receiver
-  # instead send a reference through (see popTransaction)
-  datastore["#{newKey}"] = {}
-  datastore["#{newKey}"].data = socketData
-  datastore["#{newKey}"].channel = channel
-  req.write "#{newKey}"
+  // don't write the actual data to the http receiver
+  // instead send a reference through (see popTransaction)
+  datastore[`${newKey}`] = {};
+  datastore[`${newKey}`].data = socketData;
+  datastore[`${newKey}`].channel = channel;
+  req.write(`${newKey}`);
 
-  newKey++
-  # in case we've been running for a couple thousand years
-  newKey = 0 if newKey is Number.MAX_VALUE
+  newKey++;
+  // in case we've been running for a couple thousand years
+  if (newKey === Number.MAX_VALUE) { newKey = 0; }
 
-  req.end()
-
-
-stopTCPServers = (servers, callback) ->
-  promises = []
-
-  for server in servers
-    do (server) ->
-      defer = Q.defer()
-
-      server.server.close (err) ->
-        if err
-          logger.error "Could not close tcp server: #{err}"
-          defer.reject err
-        else
-          logger.info "Channel #{server.channelID}: Stopped TCP/TLS server"
-          defer.resolve()
-
-      promises.push defer.promise
-
-  (Q.all promises).then -> callback()
-
-exports.stopServers = (callback) ->
-  stopTCPServers tcpServers, ->
-    tcpServers = []
-    callback()
-
-exports.notifyMasterToStopTCPServer = (channelID, callback) ->
-  logger.debug "Sending message to master to stop tcp channel: #{channelID}"
-  process.send
-    type: 'stop-tcp-channel'
-    channelID: channelID
-
-exports.stopServerForChannel = (channelID, callback) ->
-  server = null
-  notStoppedTcpServers = []
-  for serverDetails in tcpServers
-    if serverDetails.channelID.equals channelID
-      server = serverDetails
-    else
-      # push all except the server we're stopping
-      notStoppedTcpServers.push serverDetails
-
-  return callback "Server for channel #{channelID} not running" if not server
-
-  tcpServers = notStoppedTcpServers
-  stopTCPServers [server], callback
+  return req.end();
+};
 
 
-if process.env.NODE_ENV == "test"
-  exports.tcpServers = tcpServers
+let stopTCPServers = function(servers, callback) {
+  let promises = [];
+
+  for (let server of Array.from(servers)) {
+    (function(server) {
+      let defer = Q.defer();
+
+      server.server.close(function(err) {
+        if (err) {
+          logger.error(`Could not close tcp server: ${err}`);
+          return defer.reject(err);
+        } else {
+          logger.info(`Channel ${server.channelID}: Stopped TCP/TLS server`);
+          return defer.resolve();
+        }
+      });
+
+      return promises.push(defer.promise);
+    })(server);
+  }
+
+  return (Q.all(promises)).then(() => callback());
+};
+
+export function stopServers(callback) {
+  return stopTCPServers(tcpServers, function() {
+    tcpServers = [];
+    return callback();
+  });
+}
+
+export function notifyMasterToStopTCPServer(channelID, callback) {
+  logger.debug(`Sending message to master to stop tcp channel: ${channelID}`);
+  return process.send({
+    type: 'stop-tcp-channel',
+    channelID
+  });
+}
+
+export function stopServerForChannel(channelID, callback) {
+  let server = null;
+  let notStoppedTcpServers = [];
+  for (let serverDetails of Array.from(tcpServers)) {
+    if (serverDetails.channelID.equals(channelID)) {
+      server = serverDetails;
+    } else {
+      // push all except the server we're stopping
+      notStoppedTcpServers.push(serverDetails);
+    }
+  }
+
+  if (!server) { return callback(`Server for channel ${channelID} not running`); }
+
+  tcpServers = notStoppedTcpServers;
+  return stopTCPServers([server], callback);
+}
+
+
+if (process.env.NODE_ENV === "test") {
+  exports.tcpServers = tcpServers;
+}

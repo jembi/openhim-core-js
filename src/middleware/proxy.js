@@ -1,28 +1,35 @@
-logger = require "winston"
-Q = require "q"
+let setupProxyHeaders;
+import logger from "winston";
+import Q from "q";
 
-config = require '../config/config'
-statsdServer = config.get 'statsd'
-application = config.get 'application'
-SDC = require 'statsd-client'
-os = require 'os'
+import config from '../config/config';
+let statsdServer = config.get('statsd');
+let application = config.get('application');
+const SDC = require('statsd-client');
+let os = require('os');
 
-domain = "#{os.hostname()}.#{application.name}.appMetrics"
-sdc = new SDC statsdServer
+let domain = `${os.hostname()}.${application.name}.appMetrics`;
+let sdc = new SDC(statsdServer);
 
-exports.setupProxyHeaders = setupProxyHeaders = (ctx) ->
-  # Headers
-  setOrAppendHeader = (ctx, header, value) ->
-    return if not value
-    if ctx.header[header]
-      ctx.header[header] = "#{ctx.header[header]}, #{value}"
-    else
-      ctx.header[header] = "#{value}"
-  setOrAppendHeader ctx, 'X-Forwarded-For', ctx.request.ip
-  setOrAppendHeader ctx, 'X-Forwarded-Host', ctx.request.host
+let setupProxyHeaders$1 = (setupProxyHeaders = function(ctx) {
+  // Headers
+  let setOrAppendHeader = function(ctx, header, value) {
+    if (!value) { return; }
+    if (ctx.header[header]) {
+      return ctx.header[header] = `${ctx.header[header]}, ${value}`;
+    } else {
+      return ctx.header[header] = `${value}`;
+    }
+  };
+  setOrAppendHeader(ctx, 'X-Forwarded-For', ctx.request.ip);
+  return setOrAppendHeader(ctx, 'X-Forwarded-Host', ctx.request.host);
+});
 
-exports.koaMiddleware = (next) ->
-  startTime = new Date() if statsdServer.enabled
-  exports.setupProxyHeaders this
-  sdc.timing "#{domain}.proxyHeadersMiddleware", startTime if statsdServer.enabled
-  {} #TODO:Fix yield next
+export { setupProxyHeaders$1 as setupProxyHeaders };
+export function koaMiddleware(next) {
+  let startTime;
+  if (statsdServer.enabled) { startTime = new Date(); }
+  exports.setupProxyHeaders(this);
+  if (statsdServer.enabled) { sdc.timing(`${domain}.proxyHeadersMiddleware`, startTime); }
+  return {}; //TODO:Fix yield next
+}

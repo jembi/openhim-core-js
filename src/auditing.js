@@ -1,159 +1,209 @@
-logger = require 'winston'
-syslogParser = require('glossy').Parse
-parseString = require('xml2js').parseString
-firstCharLowerCase = require('xml2js').processors.firstCharLowerCase
-Audit = require('./model/audits').Audit
-AuditMeta = require('./model/audits').AuditMeta
-tlsAuthentication = require "./middleware/tlsAuthentication"
-dgram = require 'dgram'
-tls = require 'tls'
-net = require 'net'
-config = require "./config/config"
-config.auditing = config.get('auditing')
+let processAudit, processAuditMeta;
+import logger from 'winston';
+import { Parse as syslogParser } from 'glossy';
+import { parseString } from 'xml2js';
+let { firstCharLowerCase } = require('xml2js').processors;
+import { Audit } from './model/audits';
+import { AuditMeta } from './model/audits';
+import tlsAuthentication from "./middleware/tlsAuthentication";
+import dgram from 'dgram';
+import tls from 'tls';
+import net from 'net';
+import config from "./config/config";
+config.auditing = config.get('auditing');
 
 
-parseAuditRecordFromXML = (xml, callback) ->
-  # DICOM mappers
-  csdCodeToCode = (name) -> if name is 'csd-code' then 'code' else name
-  originalTextToDisplayName = (name) -> if name is 'originalText' then 'displayName' else name
+let parseAuditRecordFromXML = function(xml, callback) {
+  // DICOM mappers
+  let csdCodeToCode = function(name) { if (name === 'csd-code') { return 'code'; } else { return name; } };
+  let originalTextToDisplayName = function(name) { if (name === 'originalText') { return 'displayName'; } else { return name; } };
 
-  options =
+  let options = {
     mergeAttrs: true,
-    explicitArray: false
-    tagNameProcessors: [firstCharLowerCase]
+    explicitArray: false,
+    tagNameProcessors: [firstCharLowerCase],
     attrNameProcessors: [firstCharLowerCase, csdCodeToCode, originalTextToDisplayName]
+  };
 
-  parseString xml, options, (err, result) ->
-    return callback err if err
+  return parseString(xml, options, function(err, result) {
+    if (err) { return callback(err); }
 
-    if not result?.auditMessage
-      return callback new Error 'Document is not a valid AuditMessage'
+    if (!(result != null ? result.auditMessage : undefined)) {
+      return callback(new Error('Document is not a valid AuditMessage'));
+    }
 
-    audit = {}
+    let audit = {};
 
-    if result.auditMessage.eventIdentification
-      audit.eventIdentification = result.auditMessage.eventIdentification
+    if (result.auditMessage.eventIdentification) {
+      audit.eventIdentification = result.auditMessage.eventIdentification;
+    }
 
-    audit.activeParticipant = []
-    if result.auditMessage.activeParticipant
-      # xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
-      if result.auditMessage.activeParticipant instanceof Array
-        for ap in result.auditMessage.activeParticipant
-          audit.activeParticipant.push ap
-      else
-        audit.activeParticipant.push result.auditMessage.activeParticipant
+    audit.activeParticipant = [];
+    if (result.auditMessage.activeParticipant) {
+      // xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
+      if (result.auditMessage.activeParticipant instanceof Array) {
+        for (let ap of Array.from(result.auditMessage.activeParticipant)) {
+          audit.activeParticipant.push(ap);
+        }
+      } else {
+        audit.activeParticipant.push(result.auditMessage.activeParticipant);
+      }
+    }
 
-    if result.auditMessage.auditSourceIdentification
-      audit.auditSourceIdentification = result.auditMessage.auditSourceIdentification
+    if (result.auditMessage.auditSourceIdentification) {
+      audit.auditSourceIdentification = result.auditMessage.auditSourceIdentification;
+    }
 
-    audit.participantObjectIdentification = []
-    if result.auditMessage.participantObjectIdentification
-      # xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
-      if result.auditMessage.participantObjectIdentification instanceof Array
-        for poi in result.auditMessage.participantObjectIdentification
-          audit.participantObjectIdentification.push poi
-      else
-        audit.participantObjectIdentification.push result.auditMessage.participantObjectIdentification
+    audit.participantObjectIdentification = [];
+    if (result.auditMessage.participantObjectIdentification) {
+      // xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
+      if (result.auditMessage.participantObjectIdentification instanceof Array) {
+        for (let poi of Array.from(result.auditMessage.participantObjectIdentification)) {
+          audit.participantObjectIdentification.push(poi);
+        }
+      } else {
+        audit.participantObjectIdentification.push(result.auditMessage.participantObjectIdentification);
+      }
+    }
 
-    callback null, audit
-
-
-codeInArray = (code, arr) -> (code in arr.map (a) -> a.code)
-
-exports.processAuditMeta = processAuditMeta = (audit, callback) ->
-  AuditMeta.findOne {}, (err, auditMeta) ->
-    if err
-      logger.error err
-      return callback()
-
-    if not auditMeta then auditMeta = new AuditMeta()
-
-    if audit.eventIdentification?.eventTypeCode?.code and not codeInArray audit.eventIdentification.eventTypeCode.code, auditMeta.eventType
-      auditMeta.eventType.push audit.eventIdentification.eventTypeCode
-
-    if audit.eventIdentification?.eventID?.code and not codeInArray audit.eventIdentification.eventID.code, auditMeta.eventID
-      auditMeta.eventID.push audit.eventIdentification.eventID
-
-    if audit.activeParticipant
-      for activeParticipant in audit.activeParticipant
-        if activeParticipant.roleIDCode?.code and not codeInArray activeParticipant.roleIDCode.code, auditMeta.activeParticipantRoleID
-          auditMeta.activeParticipantRoleID.push activeParticipant.roleIDCode
-
-    if audit.participantObjectIdentification
-      for participantObject in audit.participantObjectIdentification
-        if participantObject.participantObjectIDTypeCode?.code and not codeInArray participantObject.participantObjectIDTypeCode.code, auditMeta.participantObjectIDTypeCode
-          auditMeta.participantObjectIDTypeCode.push participantObject.participantObjectIDTypeCode
-
-    if audit.auditSourceIdentification?.auditSourceID and audit.auditSourceIdentification.auditSourceID not in auditMeta.auditSourceID
-      auditMeta.auditSourceID.push audit.auditSourceIdentification.auditSourceID
-
-    auditMeta.save (err) ->
-      if err then logger.error err
-      callback()
+    return callback(null, audit);
+  });
+};
 
 
-exports.processAudit = processAudit = (msg, callback=(->)) ->
-  parsedMsg = syslogParser.parse(msg)
+let codeInArray = function(code, arr) { let needle;
+return ((needle = code, Array.from(arr.map(a => a.code)).includes(needle))); };
 
-  if not parsedMsg or not parsedMsg.message
-    logger.info 'Invalid message received'
-    return callback()
+let processAuditMeta$1 = (processAuditMeta = (audit, callback) =>
+  AuditMeta.findOne({}, function(err, auditMeta) {
+    if (err) {
+      logger.error(err);
+      return callback();
+    }
 
-  parseAuditRecordFromXML parsedMsg.message, (xmlErr, result) ->
-    audit = new Audit result
+    if (!auditMeta) { auditMeta = new AuditMeta(); }
 
-    audit.rawMessage = msg
-    audit.syslog = parsedMsg
-    delete audit.syslog.originalMessage
-    delete audit.syslog.message
+    if (__guard__(audit.eventIdentification != null ? audit.eventIdentification.eventTypeCode : undefined, x => x.code) && !codeInArray(audit.eventIdentification.eventTypeCode.code, auditMeta.eventType)) {
+      auditMeta.eventType.push(audit.eventIdentification.eventTypeCode);
+    }
 
-    audit.save (saveErr) ->
-      if saveErr then logger.error "An error occurred while processing the audit entry: #{saveErr}"
-      if xmlErr then logger.info "Failed to parse message as an AuditMessage XML document: #{xmlErr}"
+    if (__guard__(audit.eventIdentification != null ? audit.eventIdentification.eventID : undefined, x1 => x1.code) && !codeInArray(audit.eventIdentification.eventID.code, auditMeta.eventID)) {
+      auditMeta.eventID.push(audit.eventIdentification.eventID);
+    }
 
-      processAuditMeta audit, callback
+    if (audit.activeParticipant) {
+      for (let activeParticipant of Array.from(audit.activeParticipant)) {
+        if ((activeParticipant.roleIDCode != null ? activeParticipant.roleIDCode.code : undefined) && !codeInArray(activeParticipant.roleIDCode.code, auditMeta.activeParticipantRoleID)) {
+          auditMeta.activeParticipantRoleID.push(activeParticipant.roleIDCode);
+        }
+      }
+    }
 
+    if (audit.participantObjectIdentification) {
+      for (let participantObject of Array.from(audit.participantObjectIdentification)) {
+        if ((participantObject.participantObjectIDTypeCode != null ? participantObject.participantObjectIDTypeCode.code : undefined) && !codeInArray(participantObject.participantObjectIDTypeCode.code, auditMeta.participantObjectIDTypeCode)) {
+          auditMeta.participantObjectIDTypeCode.push(participantObject.participantObjectIDTypeCode);
+        }
+      }
+    }
 
-sendUDPAudit = (msg, callback) ->
-  client = dgram.createSocket('udp4')
-  client.send msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, (err) ->
-    client.close()
-    callback err
+    if ((audit.auditSourceIdentification != null ? audit.auditSourceIdentification.auditSourceID : undefined) && !Array.from(auditMeta.auditSourceID).includes(audit.auditSourceIdentification.auditSourceID)) {
+      auditMeta.auditSourceID.push(audit.auditSourceIdentification.auditSourceID);
+    }
 
-sendTLSAudit = (msg, callback) ->
-  tlsAuthentication.getServerOptions true, (err, options) ->
-    return callback err if err
-
-    client = tls.connect config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, ->
-      if not client.authorized then return callback client.authorizationError
-
-      client.write "#{msg.length} #{msg}"
-      client.end()
-
-    client.on 'error', (err) -> logger.error err
-    client.on 'close', -> callback()
-
-sendTCPAudit = (msg, callback) ->
-  client = net.connect config.auditing.auditEvents.port, config.auditing.auditEvents.host, ->
-    client.write "#{msg.length} #{msg}"
-    client.end()
-
-  client.on 'error', (err) -> logger.error
-  client.on 'close', -> callback()
+    return auditMeta.save(function(err) {
+      if (err) { logger.error(err); }
+      return callback();
+    });
+  })
+);
 
 
-# Send an audit event
-exports.sendAuditEvent = (msg, callback=(->)) ->
-  done = (err) ->
-    if err then logger.error err
-    callback()
+export { processAuditMeta$1 as processAuditMeta };
+let processAudit$1 = (processAudit = function(msg, callback) {
+  if (callback == null) { callback = function() {}; }
+  let parsedMsg = syslogParser.parse(msg);
 
-  if not config.auditing?.auditEvents?
-    return done new Error 'Unable to record audit event: Missing config.auditing.auditEvents'
+  if (!parsedMsg || !parsedMsg.message) {
+    logger.info('Invalid message received');
+    return callback();
+  }
 
-  switch config.auditing.auditEvents.interface
-    when 'internal' then processAudit msg, done
-    when 'udp' then sendUDPAudit msg, done
-    when 'tls' then sendTLSAudit msg, done
-    when 'tcp' then sendTCPAudit msg, done
-    else done new Error "Invalid audit event interface '#{config.auditing.auditEvents.interface}'"
+  return parseAuditRecordFromXML(parsedMsg.message, function(xmlErr, result) {
+    let audit = new Audit(result);
+
+    audit.rawMessage = msg;
+    audit.syslog = parsedMsg;
+    delete audit.syslog.originalMessage;
+    delete audit.syslog.message;
+
+    return audit.save(function(saveErr) {
+      if (saveErr) { logger.error(`An error occurred while processing the audit entry: ${saveErr}`); }
+      if (xmlErr) { logger.info(`Failed to parse message as an AuditMessage XML document: ${xmlErr}`); }
+
+      return processAuditMeta(audit, callback);
+    });
+  });
+});
+
+
+export { processAudit$1 as processAudit };
+let sendUDPAudit = function(msg, callback) {
+  let client = dgram.createSocket('udp4');
+  return client.send(msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, function(err) {
+    client.close();
+    return callback(err);
+  });
+};
+
+let sendTLSAudit = (msg, callback) =>
+  tlsAuthentication.getServerOptions(true, function(err, options) {
+    if (err) { return callback(err); }
+
+    var client = tls.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, function() {
+      if (!client.authorized) { return callback(client.authorizationError); }
+
+      client.write(`${msg.length} ${msg}`);
+      return client.end();
+    });
+
+    client.on('error', err => logger.error(err));
+    return client.on('close', () => callback());
+  })
+;
+
+let sendTCPAudit = function(msg, callback) {
+  var client = net.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, function() {
+    client.write(`${msg.length} ${msg}`);
+    return client.end();
+  });
+
+  client.on('error', err => logger.error);
+  return client.on('close', () => callback());
+};
+
+
+// Send an audit event
+export function sendAuditEvent(msg, callback) {
+  if (callback == null) { callback = function() {}; }
+  let done = function(err) {
+    if (err) { logger.error(err); }
+    return callback();
+  };
+
+  if (((config.auditing != null ? config.auditing.auditEvents : undefined) == null)) {
+    return done(new Error('Unable to record audit event: Missing config.auditing.auditEvents'));
+  }
+
+  switch (config.auditing.auditEvents.interface) {
+    case 'internal': return processAudit(msg, done);
+    case 'udp': return sendUDPAudit(msg, done);
+    case 'tls': return sendTLSAudit(msg, done);
+    case 'tcp': return sendTCPAudit(msg, done);
+    default: return done(new Error(`Invalid audit event interface '${config.auditing.auditEvents.interface}'`));
+  }
+}
+
+function __guard__(value, transform) {
+  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
+}

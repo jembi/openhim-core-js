@@ -1,205 +1,254 @@
-moment = require 'moment'
-logger = require 'winston'
-events = require '../model/events'
-messageStore = require '../middleware/messageStore'
-config = require '../config/config'
-config.events = config.get('events')
+let createSecondaryRouteEvents, normalizationBuffer, saveEvents;
+import moment from 'moment';
+import logger from 'winston';
+import events from '../model/events';
+import messageStore from '../middleware/messageStore';
+import config from '../config/config';
+config.events = config.get('events');
 
-if !config.events
-  # maybe we're using outdated config
-  config.events = config.get('visualizer')
-  config.events.normalizationBuffer = config.events.orchestrationTsBufferMillis
+if (!config.events) {
+  // maybe we're using outdated config
+  config.events = config.get('visualizer');
+  config.events.normalizationBuffer = config.events.orchestrationTsBufferMillis;
+}
 
-enableTSNormalization = config.events.enableTSNormalization ? false
-if enableTSNormalization is true
-  normalizationBuffer = 100
-else
-  normalizationBuffer = 0
+let enableTSNormalization = config.events.enableTSNormalization != null ? config.events.enableTSNormalization : false;
+if (enableTSNormalization === true) {
+  normalizationBuffer = 100;
+} else {
+  normalizationBuffer = 0;
+}
 
-timestampAsMillis = (ts) -> moment(new Date(ts)).valueOf()
+let timestampAsMillis = ts => moment(new Date(ts)).valueOf();
 
-# Determine the difference between baseTS and the earliest timestamp
-# present in a collection of routes (buffered for normalization)
-calculateEarliestRouteDiff = (baseTS, routes) ->
-  earliestTS = 0
+// Determine the difference between baseTS and the earliest timestamp
+// present in a collection of routes (buffered for normalization)
+let calculateEarliestRouteDiff = function(baseTS, routes) {
+  let earliestTS = 0;
 
-  for route in routes
-    ts = timestampAsMillis route.request.timestamp
-    if earliestTS < ts then earliestTS = ts
+  for (let route of Array.from(routes)) {
+    let ts = timestampAsMillis(route.request.timestamp);
+    if (earliestTS < ts) { earliestTS = ts; }
+  }
 
-  tsDiff = baseTS - earliestTS
-  tsDiff += normalizationBuffer
+  let tsDiff = baseTS - earliestTS;
+  tsDiff += normalizationBuffer;
 
-  return tsDiff
+  return tsDiff;
+};
 
-determineStatusType = (statusCode) ->
-  status = 'success'
-  if 500 <= statusCode <= 599
-    status = 'error'
-  return status
-
-
-exports.saveEvents = saveEvents = (trxEvents, callback) ->
-  now = new Date
-  event.created = now for event in trxEvents
-
-  # bypass mongoose for quick batch inserts
-  # index needs to be ensured manually since the collection might not already exist
-  events.Event.collection.ensureIndex { created: 1 }, { expireAfterSeconds: 3600 }, ->
-    events.Event.collection.insert trxEvents, (err) -> return if err then callback err else callback()
+let determineStatusType = function(statusCode) {
+  let status = 'success';
+  if (500 <= statusCode && statusCode <= 599) {
+    status = 'error';
+  }
+  return status;
+};
 
 
-createRouteEvents = (dst, transactionId, channel, route, type, tsAdjustment, autoRetryAttempt) ->
-  if route?.request?.timestamp? and route?.response?.timestamp?
-    startTS = timestampAsMillis route.request.timestamp
-    endTS = timestampAsMillis route.response.timestamp
+let saveEvents$1 = (saveEvents = function(trxEvents, callback) {
+  let now = new Date;
+  for (let event of Array.from(trxEvents)) { event.created = now; }
 
-    if enableTSNormalization is true
-      startTS = startTS + tsAdjustment
-      endTS = endTS + tsAdjustment
-
-    if startTS > endTS then startTS = endTS
-
-    dst.push
-      channelID: channel._id
-      transactionID: transactionId
-      normalizedTimestamp: startTS
-      type: type
-      event: 'start'
-      name: route.name
-      mediator: route.mediatorURN
-      autoRetryAttempt: autoRetryAttempt
-
-    dst.push
-      channelID: channel._id
-      transactionID: transactionId
-      normalizedTimestamp: endTS
-      type: type
-      event: 'end'
-      name: route.name
-      mediator: route.mediatorURN
-      status: route.response.status
-      statusType: determineStatusType route.response.status
-      autoRetryAttempt: autoRetryAttempt
-
-createChannelStartEvent = (dst, transactionId, requestTimestamp, channel, autoRetryAttempt) ->
-  dst.push
-    channelID: channel._id
-    transactionID: transactionId
-    normalizedTimestamp: timestampAsMillis requestTimestamp
-    type: 'channel'
-    event: 'start'
-    name: channel.name
-    autoRetryAttempt: autoRetryAttempt
-
-createChannelEndEvent = (dst, transactionId, requestTimestamp, channel, response, autoRetryAttempt) ->
-  startTS = timestampAsMillis requestTimestamp
-
-  endTS = timestampAsMillis response.timestamp
-  if endTS < startTS then endTS = startTS
-
-  dst.push
-    channelID: channel._id
-    transactionID: transactionId
-    normalizedTimestamp: endTS + normalizationBuffer
-    type: 'channel'
-    event: 'end'
-    name: channel.name
-    status: response.status
-    statusType: determineStatusType response.status
-    autoRetryAttempt: autoRetryAttempt
-
-createPrimaryRouteEvents = (dst, transactionId, requestTimestamp, channel, routeName, mediatorURN, response, autoRetryAttempt) ->
-  startTS = timestampAsMillis requestTimestamp
-
-  dst.push
-    channelID: channel._id
-    transactionID: transactionId
-    normalizedTimestamp: startTS
-    type: 'primary'
-    event: 'start'
-    name: routeName
-    mediator: mediatorURN
-    autoRetryAttempt: autoRetryAttempt
-
-  endTS = timestampAsMillis response.timestamp
-  if endTS < startTS then endTS = startTS
-
-  dst.push
-    channelID: channel._id
-    transactionID: transactionId
-    normalizedTimestamp: endTS + normalizationBuffer
-    type: 'primary'
-    event: 'end'
-    name: routeName
-    status: response.status
-    statusType: determineStatusType response.status
-    mediator: mediatorURN
-    autoRetryAttempt: autoRetryAttempt
+  // bypass mongoose for quick batch inserts
+  // index needs to be ensured manually since the collection might not already exist
+  return events.Event.collection.ensureIndex({ created: 1 }, { expireAfterSeconds: 3600 }, () => events.Event.collection.insert(trxEvents, err => err ? callback(err) : callback()));
+});
 
 
-createOrchestrationEvents = (dst, transactionId, requestTimestamp, channel, orchestrations) ->
-  if requestTimestamp
-    startTS = timestampAsMillis requestTimestamp
-    tsDiff = calculateEarliestRouteDiff startTS, orchestrations
+export { saveEvents$1 as saveEvents };
+let createRouteEvents = function(dst, transactionId, channel, route, type, tsAdjustment, autoRetryAttempt) {
+  if ((__guard__(route != null ? route.request : undefined, x => x.timestamp) != null) && (__guard__(route != null ? route.response : undefined, x1 => x1.timestamp) != null)) {
+    let startTS = timestampAsMillis(route.request.timestamp);
+    let endTS = timestampAsMillis(route.response.timestamp);
 
-  createRouteEvents dst, transactionId, channel, orch, 'orchestration', tsDiff for orch in orchestrations
+    if (enableTSNormalization === true) {
+      startTS = startTS + tsAdjustment;
+      endTS = endTS + tsAdjustment;
+    }
 
-exports.createSecondaryRouteEvents = createSecondaryRouteEvents = (dst, transactionId, requestTimestamp, channel, routes) ->
-  startTS = timestampAsMillis requestTimestamp
-  tsDiff = calculateEarliestRouteDiff startTS, routes
+    if (startTS > endTS) { startTS = endTS; }
 
-  for route in routes
-    createRouteEvents dst, transactionId, channel, route, 'route', tsDiff
+    dst.push({
+      channelID: channel._id,
+      transactionID: transactionId,
+      normalizedTimestamp: startTS,
+      type,
+      event: 'start',
+      name: route.name,
+      mediator: route.mediatorURN,
+      autoRetryAttempt
+    });
 
-    if route.orchestrations
-      # find TS difference
-      tsDiff = calculateEarliestRouteDiff startTS, route.orchestrations
-      createRouteEvents dst, transactionId, channel, orch, 'orchestration', tsDiff for orch in route.orchestrations
+    return dst.push({
+      channelID: channel._id,
+      transactionID: transactionId,
+      normalizedTimestamp: endTS,
+      type,
+      event: 'end',
+      name: route.name,
+      mediator: route.mediatorURN,
+      status: route.response.status,
+      statusType: determineStatusType(route.response.status),
+      autoRetryAttempt
+    });
+  }
+};
+
+let createChannelStartEvent = (dst, transactionId, requestTimestamp, channel, autoRetryAttempt) =>
+  dst.push({
+    channelID: channel._id,
+    transactionID: transactionId,
+    normalizedTimestamp: timestampAsMillis(requestTimestamp),
+    type: 'channel',
+    event: 'start',
+    name: channel.name,
+    autoRetryAttempt
+  })
+;
+
+let createChannelEndEvent = function(dst, transactionId, requestTimestamp, channel, response, autoRetryAttempt) {
+  let startTS = timestampAsMillis(requestTimestamp);
+
+  let endTS = timestampAsMillis(response.timestamp);
+  if (endTS < startTS) { endTS = startTS; }
+
+  return dst.push({
+    channelID: channel._id,
+    transactionID: transactionId,
+    normalizedTimestamp: endTS + normalizationBuffer,
+    type: 'channel',
+    event: 'end',
+    name: channel.name,
+    status: response.status,
+    statusType: determineStatusType(response.status),
+    autoRetryAttempt
+  });
+};
+
+let createPrimaryRouteEvents = function(dst, transactionId, requestTimestamp, channel, routeName, mediatorURN, response, autoRetryAttempt) {
+  let startTS = timestampAsMillis(requestTimestamp);
+
+  dst.push({
+    channelID: channel._id,
+    transactionID: transactionId,
+    normalizedTimestamp: startTS,
+    type: 'primary',
+    event: 'start',
+    name: routeName,
+    mediator: mediatorURN,
+    autoRetryAttempt
+  });
+
+  let endTS = timestampAsMillis(response.timestamp);
+  if (endTS < startTS) { endTS = startTS; }
+
+  return dst.push({
+    channelID: channel._id,
+    transactionID: transactionId,
+    normalizedTimestamp: endTS + normalizationBuffer,
+    type: 'primary',
+    event: 'end',
+    name: routeName,
+    status: response.status,
+    statusType: determineStatusType(response.status),
+    mediator: mediatorURN,
+    autoRetryAttempt
+  });
+};
 
 
-exports.createTransactionEvents = (dst, transaction, channel) ->
-  getPrimaryRouteName = () ->
-    for r in channel.routes
-      if r.primary then return r.name
-    return null
+let createOrchestrationEvents = function(dst, transactionId, requestTimestamp, channel, orchestrations) {
+  let tsDiff;
+  if (requestTimestamp) {
+    let startTS = timestampAsMillis(requestTimestamp);
+    tsDiff = calculateEarliestRouteDiff(startTS, orchestrations);
+  }
 
-  timestamp = if transaction.request?.timestamp then transaction.request.timestamp else new Date()
+  return Array.from(orchestrations).map((orch) => createRouteEvents(dst, transactionId, channel, orch, 'orchestration', tsDiff));
+};
 
-  if transaction.request and transaction.response
-    createPrimaryRouteEvents dst, transaction._id, timestamp, channel, getPrimaryRouteName(), null, transaction.response
-  if transaction.orchestrations
-    createOrchestrationEvents dst, transaction._id, timestamp, channel, transaction.orchestrations
-  if transaction.routes
-    createSecondaryRouteEvents dst, transaction._id, timestamp, channel, transaction.routes
+let createSecondaryRouteEvents$1 = (createSecondaryRouteEvents = function(dst, transactionId, requestTimestamp, channel, routes) {
+  let startTS = timestampAsMillis(requestTimestamp);
+  let tsDiff = calculateEarliestRouteDiff(startTS, routes);
+
+  return (() => {
+    let result = [];
+    for (let route of Array.from(routes)) {
+      let item;
+      createRouteEvents(dst, transactionId, channel, route, 'route', tsDiff);
+
+      if (route.orchestrations) {
+        // find TS difference
+        tsDiff = calculateEarliestRouteDiff(startTS, route.orchestrations);
+        item = Array.from(route.orchestrations).map((orch) => createRouteEvents(dst, transactionId, channel, orch, 'orchestration', tsDiff));
+      }
+      result.push(item);
+    }
+    return result;
+  })();
+});
 
 
-exports.koaMiddleware = (next) ->
-  ctx = this
+export { createSecondaryRouteEvents$1 as createSecondaryRouteEvents };
+export function createTransactionEvents(dst, transaction, channel) {
+  let getPrimaryRouteName = function() {
+    for (let r of Array.from(channel.routes)) {
+      if (r.primary) { return r.name; }
+    }
+    return null;
+  };
 
-  runAsync = (method) ->
-    do (ctx) ->
-      f = -> method ctx, (err) -> logger.err err if err
-      setTimeout f, 0
+  let timestamp = (transaction.request != null ? transaction.request.timestamp : undefined) ? transaction.request.timestamp : new Date();
 
-  runAsync (ctx, done) ->
-    logger.debug "Storing channel start event for transaction: #{ctx.transactionId}"
-    trxEvents = []
-    createChannelStartEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.currentAttempt
-    saveEvents trxEvents, done
+  if (transaction.request && transaction.response) {
+    createPrimaryRouteEvents(dst, transaction._id, timestamp, channel, getPrimaryRouteName(), null, transaction.response);
+  }
+  if (transaction.orchestrations) {
+    createOrchestrationEvents(dst, transaction._id, timestamp, channel, transaction.orchestrations);
+  }
+  if (transaction.routes) {
+    return createSecondaryRouteEvents(dst, transaction._id, timestamp, channel, transaction.routes);
+  }
+}
 
-  {} #TODO:Fix yield next
 
-  runAsync (ctx, done) ->
-    logger.debug "Storing channel end and primary routes events for transaction: #{ctx.transactionId}"
+export function koaMiddleware(next) {
+  let ctx = this;
 
-    trxEvents = []
+  let runAsync = method =>
+    (function(ctx) {
+      let f = () => method(ctx, function(err) { if (err) { return logger.err(err); } });
+      return setTimeout(f, 0);
+    })(ctx)
+  ;
 
-    mediatorURN = ctx.mediatorResponse?['x-mediator-urn']
-    orchestrations = ctx.mediatorResponse?.orchestrations
+  runAsync(function(ctx, done) {
+    logger.debug(`Storing channel start event for transaction: ${ctx.transactionId}`);
+    let trxEvents = [];
+    createChannelStartEvent(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.currentAttempt);
+    return saveEvents(trxEvents, done);
+  });
 
-    createPrimaryRouteEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute.name, mediatorURN, ctx.response, ctx.currentAttempt
-    if orchestrations
-      createOrchestrationEvents trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, orchestrations, ctx.currentAttempt
-    createChannelEndEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.response, ctx.currentAttempt
-    saveEvents trxEvents, done
+  ({}); //TODO:Fix yield next
+
+  return runAsync(function(ctx, done) {
+    logger.debug(`Storing channel end and primary routes events for transaction: ${ctx.transactionId}`);
+
+    let trxEvents = [];
+
+    let mediatorURN = ctx.mediatorResponse != null ? ctx.mediatorResponse['x-mediator-urn'] : undefined;
+    let orchestrations = ctx.mediatorResponse != null ? ctx.mediatorResponse.orchestrations : undefined;
+
+    createPrimaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute.name, mediatorURN, ctx.response, ctx.currentAttempt);
+    if (orchestrations) {
+      createOrchestrationEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, orchestrations, ctx.currentAttempt);
+    }
+    createChannelEndEvent(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.response, ctx.currentAttempt);
+    return saveEvents(trxEvents, done);
+  });
+}
+
+function __guard__(value, transform) {
+  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
+}

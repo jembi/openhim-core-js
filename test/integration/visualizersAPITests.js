@@ -1,365 +1,426 @@
-should = require 'should'
-request = require 'supertest'
-_ = require 'lodash'
-server = require '../../lib/server'
-testUtils = require '../testUtils'
-Visualizer = require('../../lib/model/visualizer').Visualizer
-auth = require('../testUtils').auth
+import should from 'should';
+import request from 'supertest';
+import _ from 'lodash';
+import server from '../../lib/server';
+import testUtils from '../testUtils';
+import { Visualizer } from '../../lib/model/visualizer';
+import { auth } from '../testUtils';
 
-describe 'API Integration Tests', ->
-  describe 'Visualizers REST API testing', ->
+describe('API Integration Tests', () =>
+  describe('Visualizers REST API testing', function() {
 
-    visObj =
-      name: 'TestVisualizer'
-      components: [
-          eventType: 'primary'
-          eventName: 'OpenHIM Mediator FHIR Proxy Route'
+    let visObj = {
+      name: 'TestVisualizer',
+      components: [{
+          eventType: 'primary',
+          eventName: 'OpenHIM Mediator FHIR Proxy Route',
           display: 'FHIR Server'
-        ,
-          eventType: 'primary'
-          eventName: 'echo'
+        }
+        , {
+          eventType: 'primary',
+          eventName: 'echo',
           display: 'Echo'
-      ]
-      color:
-        inactive: '#c8cacf'
-        active: '#10e057'
-        error: '#a84b5c'
+        }
+      ],
+      color: {
+        inactive: '#c8cacf',
+        active: '#10e057',
+        error: '#a84b5c',
         text: '#4a4254'
-      size:
-        responsive: true
-        width: 1000
-        height: 400
+      },
+      size: {
+        responsive: true,
+        width: 1000,
+        height: 400,
         paddin: 20
-      time:
-        updatePeriod: 200
-        maxSpeed: 5
-        maxTimeout: 5000
+      },
+      time: {
+        updatePeriod: 200,
+        maxSpeed: 5,
+        maxTimeout: 5000,
         minDisplayPeriod: 500
-      channels: [
-          eventType: 'channel'
-          eventName: 'FHIR Proxy'
+      },
+      channels: [{
+          eventType: 'channel',
+          eventName: 'FHIR Proxy',
           display: 'FHIR Proxy'
-        ,
-          eventType: 'channel'
-          eventName: 'Echo'
+        }
+        , {
+          eventType: 'channel',
+          eventName: 'Echo',
           display: 'Echo'
-      ]
-      mediators: [
-          mediator: 'urn:mediator:fhir-proxy'
-          name: 'OpenHIM Mediator FHIR Proxy'
+        }
+      ],
+      mediators: [{
+          mediator: 'urn:mediator:fhir-proxy',
+          name: 'OpenHIM Mediator FHIR Proxy',
           display: 'OpenHIM Mediator FHIR Proxy'
-        ,
-          mediator: 'urn:mediator:shell-script'
-          name: 'OpenHIM Shell Script Mediator'
+        }
+        , {
+          mediator: 'urn:mediator:shell-script',
+          name: 'OpenHIM Shell Script Mediator',
           display: 'OpenHIM Shell Script Mediator'
+        }
       ]
+    };
 
-    authDetails = {}
+    let authDetails = {};
 
-    before (done) ->
-      Visualizer.remove {}, ->
-        auth.setupTestUsers () ->
-          server.start apiPort: 8080, ->
-            done()
+    before(done =>
+      Visualizer.remove({}, () =>
+        auth.setupTestUsers(() =>
+          server.start({apiPort: 8080}, () => done())
+        )
+      )
+    );
 
-    after (done) ->
-      server.stop ->
-        auth.cleanupTestUsers ->
-          done()
+    after(done =>
+      server.stop(() =>
+        auth.cleanupTestUsers(() => done())
+      )
+    );
 
-    beforeEach ->
-      authDetails = auth.getAuthDetails()
+    beforeEach(() => authDetails = auth.getAuthDetails());
 
-    afterEach (done) ->
-      Visualizer.remove {}, ->
-        done()
+    afterEach(done =>
+      Visualizer.remove({}, () => done())
+    );
 
-    describe '*getVisualizers()', ->
+    describe('*getVisualizers()', function() {
 
-      it 'should return a 200 response with a list of saved visualizers', (done) ->
-        vis1 = _.assign {}, visObj
-        vis1.name = 'Visualizer1'
-        vis1 = new Visualizer vis1
-        vis2 = _.assign {}, visObj
-        vis2.name = 'Visualizer2'
-        vis2 = new Visualizer vis2
+      it('should return a 200 response with a list of saved visualizers', function(done) {
+        let vis1 = _.assign({}, visObj);
+        vis1.name = 'Visualizer1';
+        vis1 = new Visualizer(vis1);
+        let vis2 = _.assign({}, visObj);
+        vis2.name = 'Visualizer2';
+        vis2 = new Visualizer(vis2);
 
-        vis1.save (err) ->
-          return done err if err
-          vis2.save (err) ->
-            return done err if err
+        return vis1.save(function(err) {
+          if (err) { return done(err); }
+          return vis2.save(function(err) {
+            if (err) { return done(err); }
 
-            request 'https://localhost:8080'
-              .get '/visualizers'
+            return request('https://localhost:8080')
+              .get('/visualizers')
               .set('auth-username', testUtils.rootUser.email)
               .set('auth-ts', authDetails.authTS)
               .set('auth-salt', authDetails.authSalt)
               .set('auth-token', authDetails.authToken)
               .expect(200)
-              .end (err, res) ->
-                return done err if err
+              .end(function(err, res) {
+                if (err) { return done(err); }
                 
-                res.body.should.be.an.Array()
-                res.body.length.should.be.exactly 2
-                names = res.body.map (vis) -> vis.name
-                ('Visualizer1' in names).should.be.true()
-                ('Visualizer2' in names).should.be.true()
-                done()
+                res.body.should.be.an.Array();
+                res.body.length.should.be.exactly(2);
+                let names = res.body.map(vis => vis.name);
+                (Array.from(names).includes('Visualizer1')).should.be.true();
+                (Array.from(names).includes('Visualizer2')).should.be.true();
+                return done();
+            });
+          });
+        });
+      });
 
-      it 'should return a 403 response if the user is not an admin', (done) ->
-        request 'https://localhost:8080'
-          .get '/visualizers'
+      it('should return a 403 response if the user is not an admin', done =>
+        request('https://localhost:8080')
+          .get('/visualizers')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(403)
-          .end (err, res) ->
-            return done err if err
-            done()
+          .end(function(err, res) {
+            if (err) { return done(err); }
+            return done();
+        })
+      );
 
-      it 'should return an empty array if there are no visualizers', (done) ->
-        request 'https://localhost:8080'
-          .get '/visualizers'
+      return it('should return an empty array if there are no visualizers', done =>
+        request('https://localhost:8080')
+          .get('/visualizers')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-          .end (err, res) ->
-            return done err if err
+          .end(function(err, res) {
+            if (err) { return done(err); }
             
-            res.body.should.be.an.Array()
-            res.body.length.should.be.exactly 0
-            done()
+            res.body.should.be.an.Array();
+            res.body.length.should.be.exactly(0);
+            return done();
+        })
+      );
+    });
 
 
-    describe '*getVisualizer(visualizerId)', ->
+    describe('*getVisualizer(visualizerId)', function() {
 
-      it 'should return a 200 response with a specific visualizer', (done) ->
-        vis1 = _.assign {}, visObj
-        vis1.name = 'Visualizer1'
-        vis1 = new Visualizer vis1
-        vis2 = _.assign {}, visObj
-        vis2.name = 'Visualizer2'
-        vis2 = new Visualizer vis2
+      it('should return a 200 response with a specific visualizer', function(done) {
+        let vis1 = _.assign({}, visObj);
+        vis1.name = 'Visualizer1';
+        vis1 = new Visualizer(vis1);
+        let vis2 = _.assign({}, visObj);
+        vis2.name = 'Visualizer2';
+        vis2 = new Visualizer(vis2);
 
-        vis1.save (err) ->
-          return done err if err
-          vis2.save (err) ->
-            return done err if err
+        return vis1.save(function(err) {
+          if (err) { return done(err); }
+          return vis2.save(function(err) {
+            if (err) { return done(err); }
 
-            request 'https://localhost:8080'
-              .get '/visualizers/' + vis1._id
+            return request('https://localhost:8080')
+              .get(`/visualizers/${vis1._id}`)
               .set('auth-username', testUtils.rootUser.email)
               .set('auth-ts', authDetails.authTS)
               .set('auth-salt', authDetails.authSalt)
               .set('auth-token', authDetails.authToken)
               .expect(200)
-              .end (err, res) ->
-                return done err if err
+              .end(function(err, res) {
+                if (err) { return done(err); }
                 
-                res.body.should.be.an.Object()
-                res.body.should.have.property("name", "Visualizer1")
-                done()
+                res.body.should.be.an.Object();
+                res.body.should.have.property("name", "Visualizer1");
+                return done();
+            });
+          });
+        });
+      });
 
-      it 'should return a 403 response if the user is not an admin', (done) ->
-        request 'https://localhost:8080'
-          .get '/visualizers/111111111111111111111111'
+      it('should return a 403 response if the user is not an admin', done =>
+        request('https://localhost:8080')
+          .get('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(403)
-          .end (err, res) ->
-            return done err if err
-            done()
+          .end(function(err, res) {
+            if (err) { return done(err); }
+            return done();
+        })
+      );
 
-      it 'should return 404 with message if no visualizers match the _id', (done) ->
-        request 'https://localhost:8080'
-          .get '/visualizers/111111111111111111111111'
+      return it('should return 404 with message if no visualizers match the _id', done =>
+        request('https://localhost:8080')
+          .get('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(404)
-          .end (err, res) ->
-            return done err if err
+          .end(function(err, res) {
+            if (err) { return done(err); }
             
-            res.text.should.equal "Visualizer with _id 111111111111111111111111 could not be found."
-            done()
+            res.text.should.equal("Visualizer with _id 111111111111111111111111 could not be found.");
+            return done();
+        })
+      );
+    });
 
 
-    describe '*addVisualizer()', ->
+    describe('*addVisualizer()', function() {
 
-      it 'should add a visualizer and return a 201 response', (done) ->
-        request 'https://localhost:8080'
-          .post '/visualizers'
+      it('should add a visualizer and return a 201 response', done =>
+        request('https://localhost:8080')
+          .post('/visualizers')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(_.assign {}, visObj)
+          .send(_.assign({}, visObj))
           .expect(201)
-          .end (err, res) ->
-            return done err if err
+          .end(function(err, res) {
+            if (err) { return done(err); }
             
-            Visualizer.findOne { name: "Visualizer1" }, (err, vis) ->
-              return done err if err
-              done()
+            return Visualizer.findOne({ name: "Visualizer1" }, function(err, vis) {
+              if (err) { return done(err); }
+              return done();
+            });
+        })
+      );
 
-      it 'should return a 403 response if the user is not an admin', (done) ->
-        request 'https://localhost:8080'
-          .post '/visualizers'
+      it('should return a 403 response if the user is not an admin', done =>
+        request('https://localhost:8080')
+          .post('/visualizers')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(_.assign {}, visObj)
+          .send(_.assign({}, visObj))
           .expect(403)
-          .end (err, res) ->
-            return done err if err
-            done()
+          .end(function(err, res) {
+            if (err) { return done(err); }
+            return done();
+        })
+      );
 
-      it 'should return 404 if no request object is sent', (done) ->
-        request 'https://localhost:8080'
-          .post '/visualizers'
+      return it('should return 404 if no request object is sent', done =>
+        request('https://localhost:8080')
+          .post('/visualizers')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send()
           .expect(404)
-          .end (err, res) ->
-            return done err if err
+          .end(function(err, res) {
+            if (err) { return done(err); }
             
-            res.text.should.equal "Cannot Add Visualizer, no request object"
-            done()
+            res.text.should.equal("Cannot Add Visualizer, no request object");
+            return done();
+        })
+      );
+    });
 
 
-    describe '*updateVisualizer(visualizerId)', ->
+    describe('*updateVisualizer(visualizerId)', function() {
 
-      it 'should update a specific visualizer and return a 200 response', (done) ->
-        vis1 = _.assign {}, visObj
-        vis1.name = 'Visualizer1'
-        vis1 = new Visualizer vis1
+      it('should update a specific visualizer and return a 200 response', function(done) {
+        let vis1 = _.assign({}, visObj);
+        vis1.name = 'Visualizer1';
+        vis1 = new Visualizer(vis1);
         
-        visUpdate = _.assign {}, visObj
-        visUpdate.name = 'VisualizerUpdate1'
-        visUpdate.color.inactive = '#11111'
+        let visUpdate = _.assign({}, visObj);
+        visUpdate.name = 'VisualizerUpdate1';
+        visUpdate.color.inactive = '#11111';
         
-        vis1.save (err) ->
-          return done err if err
+        return vis1.save(function(err) {
+          if (err) { return done(err); }
 
-          request 'https://localhost:8080'
-            .put '/visualizers/' + vis1._id
+          return request('https://localhost:8080')
+            .put(`/visualizers/${vis1._id}`)
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
             .set('auth-salt', authDetails.authSalt)
             .set('auth-token', authDetails.authToken)
             .send(visUpdate)
             .expect(200)
-            .end (err, res) ->
-              return done err if err
+            .end(function(err, res) {
+              if (err) { return done(err); }
               
-              Visualizer.findOne { name: "VisualizerUpdate1" }, (err, vis) ->
-                return done err if err
-                vis.color.should.have.property "inactive", "#11111"
-                done()
+              return Visualizer.findOne({ name: "VisualizerUpdate1" }, function(err, vis) {
+                if (err) { return done(err); }
+                vis.color.should.have.property("inactive", "#11111");
+                return done();
+              });
+          });
+        });
+      });
 
-      it 'should return a 403 response if the user is not an admin', (done) ->
-        request 'https://localhost:8080'
-          .put '/visualizers/111111111111111111111111'
+      it('should return a 403 response if the user is not an admin', done =>
+        request('https://localhost:8080')
+          .put('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(_.assign {}, visObj)
+          .send(_.assign({}, visObj))
           .expect(403)
-          .end (err, res) ->
-            return done err if err
-            done()
+          .end(function(err, res) {
+            if (err) { return done(err); }
+            return done();
+        })
+      );
 
-      it 'should return 404 if no request object is sent', (done) ->
-        request 'https://localhost:8080'
-          .put '/visualizers/111111111111111111111111'
+      it('should return 404 if no request object is sent', done =>
+        request('https://localhost:8080')
+          .put('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send()
           .expect(404)
-          .end (err, res) ->
-            return done err if err
+          .end(function(err, res) {
+            if (err) { return done(err); }
             
-            res.text.should.equal "Cannot Update Visualizer with _id 111111111111111111111111, no request object"
-            done()
+            res.text.should.equal("Cannot Update Visualizer with _id 111111111111111111111111, no request object");
+            return done();
+        })
+      );
 
-      it 'should return 404 if no visualizers match the _id', (done) ->
-        request 'https://localhost:8080'
-          .put '/visualizers/111111111111111111111111'
+      return it('should return 404 if no visualizers match the _id', done =>
+        request('https://localhost:8080')
+          .put('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(_.assign {}, visObj)
+          .send(_.assign({}, visObj))
           .expect(404)
-          .end (err, res) ->
-            return done err if err
+          .end(function(err, res) {
+            if (err) { return done(err); }
             
-            res.text.should.equal "Cannot Update Visualizer with _id 111111111111111111111111, does not exist"
-            done()
+            res.text.should.equal("Cannot Update Visualizer with _id 111111111111111111111111, does not exist");
+            return done();
+        })
+      );
+    });
   
   
-    describe '*removeVisualizer(visualizerId)', ->
+    return describe('*removeVisualizer(visualizerId)', function() {
 
-      it 'should sucessfully remove a visualizer', (done) ->
-        vis1 = _.assign {}, visObj
-        vis1.name = 'Root\'s Visualizer 1'
-        vis1 = new Visualizer vis1
-        vis2 = _.assign {}, visObj
-        vis2.name = 'Root\'s Visualizer 2'
-        vis2 = new Visualizer vis2
+      it('should sucessfully remove a visualizer', function(done) {
+        let vis1 = _.assign({}, visObj);
+        vis1.name = 'Root\'s Visualizer 1';
+        vis1 = new Visualizer(vis1);
+        let vis2 = _.assign({}, visObj);
+        vis2.name = 'Root\'s Visualizer 2';
+        vis2 = new Visualizer(vis2);
 
-        vis1.save (err) ->
-          return done err if err
-          vis2.save (err) ->
-            return done err if err
+        return vis1.save(function(err) {
+          if (err) { return done(err); }
+          return vis2.save(function(err) {
+            if (err) { return done(err); }
 
-            request 'https://localhost:8080'
-              .del '/visualizers/' + vis1._id
+            return request('https://localhost:8080')
+              .del(`/visualizers/${vis1._id}`)
               .set('auth-username', testUtils.rootUser.email)
               .set('auth-ts', authDetails.authTS)
               .set('auth-salt', authDetails.authSalt)
               .set('auth-token', authDetails.authToken)
               .expect(200)
-              .end (err, res) ->
-                return done err if err
+              .end(function(err, res) {
+                if (err) { return done(err); }
                 
-                Visualizer.find (err, visualizers) ->
-                  visualizers.length.should.be.exactly 1
-                  done()
+                return Visualizer.find(function(err, visualizers) {
+                  visualizers.length.should.be.exactly(1);
+                  return done();
+                });
+            });
+          });
+        });
+      });
 
-      it 'should return a 403 response if the user is not an admin', (done) ->
-        request 'https://localhost:8080'
-          .delete '/visualizers/111111111111111111111111'
+      it('should return a 403 response if the user is not an admin', done =>
+        request('https://localhost:8080')
+          .delete('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(403)
-          .end (err, res) ->
-            return done err if err
-            done()
+          .end(function(err, res) {
+            if (err) { return done(err); }
+            return done();
+        })
+      );
 
-      it 'should return a 404 when the visualizer doesn\'t exist', (done) ->
-        request 'https://localhost:8080'
-          .delete '/visualizers/111111111111111111111111'
+      return it('should return a 404 when the visualizer doesn\'t exist', done =>
+        request('https://localhost:8080')
+          .delete('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(404)
-          .end (err, res) ->
-            return done err if err
-            done()
+          .end(function(err, res) {
+            if (err) { return done(err); }
+            return done();
+        })
+      );
+    });
+  })
+);

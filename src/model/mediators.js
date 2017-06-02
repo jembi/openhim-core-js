@@ -1,34 +1,42 @@
-mongoose = require "mongoose"
-server = require "../server"
-connectionDefault = server.connectionDefault
-Schema = mongoose.Schema
-RouteDef = require('./channels').RouteDef
-ChannelDef = require('./channels').ChannelDef
+let configDef;
+import mongoose from "mongoose";
+import server from "../server";
+let { connectionDefault } = server;
+let { Schema } = mongoose;
+import { RouteDef } from './channels';
+import { ChannelDef } from './channels';
 
-exports.configParamTypes = [ 'string', 'bool', 'number', 'option', 'bigstring', 'map', 'struct', 'password' ]
+export let configParamTypes = [ 'string', 'bool', 'number', 'option', 'bigstring', 'map', 'struct', 'password' ];
 
-exports.configDef = configDef =
-  "param":        String
-  "displayName":  String
-  "description":  String
-  "type":         type: String, enum: exports.configParamTypes
-  "values":       [ type: String ]
-  "template":     { type: Array }
+let configDef$1 = (configDef = {
+  "param":        String,
+  "displayName":  String,
+  "description":  String,
+  "type": {         type: String, enum: exports.configParamTypes
+},
+  "values":       [ {type: String} ],
+  "template":     { type: Array },
   "array":        Boolean
+});
 
-# The properties prefixed with an '_' are internally used properties and shouldn't be set by the user
-MediatorSchema = new Schema
-  "urn":                    type: String, required: true, unique: true
-  "version":                type: String, required: true
-  "name":                   type: String, required: true
-  "description":            String
-  "endpoints":              [RouteDef]
-  "defaultChannelConfig":   [ChannelDef]
-  "configDefs":             [configDef]
-  "config":                 Object
-  "_configModifiedTS":      Date
-  "_uptime":                Number
+// The properties prefixed with an '_' are internally used properties and shouldn't be set by the user
+export { configDef$1 as configDef };
+let MediatorSchema = new Schema({
+  "urn": {                    type: String, required: true, unique: true
+},
+  "version": {                type: String, required: true
+},
+  "name": {                   type: String, required: true
+},
+  "description":            String,
+  "endpoints":              [RouteDef],
+  "defaultChannelConfig":   [ChannelDef],
+  "configDefs":             [configDef],
+  "config":                 Object,
+  "_configModifiedTS":      Date,
+  "_uptime":                Number,
   "_lastHeartbeat":         Date
+});
 
-# Model for describing a collection of mediators that have registered themselves with core
-exports.Mediator = connectionDefault.model 'Mediator', MediatorSchema
+// Model for describing a collection of mediators that have registered themselves with core
+export let Mediator = connectionDefault.model('Mediator', MediatorSchema);

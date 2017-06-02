@@ -1,73 +1,86 @@
-should = require "should"
-request = require "supertest"
-server = require "../../lib/server"
-tcpAdapter = require "../../lib/tcpAdapter"
-polling = require "../../lib/polling"
-Channel = require("../../lib/model/channels").Channel
-Transaction = require("../../lib/model/transactions").Transaction
-testUtils = require "../testUtils"
-auth = require("../testUtils").auth
-sinon = require "sinon"
+import should from "should";
+import request from "supertest";
+import server from "../../lib/server";
+import tcpAdapter from "../../lib/tcpAdapter";
+import polling from "../../lib/polling";
+import { Channel } from "../../lib/model/channels";
+import { Transaction } from "../../lib/model/transactions";
+import testUtils from "../testUtils";
+import { auth } from "../testUtils";
+import sinon from "sinon";
 
-describe "API Integration Tests", ->
+describe("API Integration Tests", () =>
 
-  describe 'Channels REST Api testing', ->
+  describe('Channels REST Api testing', function() {
 
-    channel1 = {
-      name: "TestChannel1"
-      urlPattern: "test/sample"
-      allow: [ "PoC", "Test1", "Test2" ]
-      routes: [
-            name: "test route"
-            host: "localhost"
-            port: 9876
+    let channel1 = {
+      name: "TestChannel1",
+      urlPattern: "test/sample",
+      allow: [ "PoC", "Test1", "Test2" ],
+      routes: [{
+            name: "test route",
+            host: "localhost",
+            port: 9876,
             primary: true
-          ]
+          }
+          ],
       txViewAcl: "aGroup"
-    }
+    };
 
-    channel2 = {
-      name: "TestChannel2"
-      urlPattern: "test/sample"
-      allow: [ "PoC", "Test1", "Test2" ]
-      routes: [
-            name: "test route"
-            host: "localhost"
-            port: 9876
+    let channel2 = {
+      name: "TestChannel2",
+      urlPattern: "test/sample",
+      allow: [ "PoC", "Test1", "Test2" ],
+      routes: [{
+            name: "test route",
+            host: "localhost",
+            port: 9876,
             primary: true
-          ]
+          }
+          ],
       txViewAcl: "group1"
-    }
+    };
 
-    authDetails = {}
+    let authDetails = {};
 
-    before (done) ->
-      auth.setupTestUsers (err) ->
-        return done err if err
-        server.start apiPort: 8080, tcpHttpReceiverPort: 7787, ->
-          authDetails = auth.getAuthDetails()
-          done()
+    before(done =>
+      auth.setupTestUsers(function(err) {
+        if (err) { return done(err); }
+        return server.start({apiPort: 8080, tcpHttpReceiverPort: 7787}, function() {
+          authDetails = auth.getAuthDetails();
+          return done();
+        });
+      })
+    );
 
-    after (done) ->
-      Transaction.remove {}, ->
-        Channel.remove {}, ->
-          server.stop ->
-            auth.cleanupTestUsers ->
-              done()
+    after(done =>
+      Transaction.remove({}, () =>
+        Channel.remove({}, () =>
+          server.stop(() =>
+            auth.cleanupTestUsers(() => done())
+          )
+        )
+      )
+    );
 
-    beforeEach (done) ->
-      Transaction.remove {}, ->
-        Channel.remove {}, ->
-          (new Channel channel1).save (err, ch1) ->
-            channel1._id = ch1._id
-            (new Channel channel2).save (err, ch2) ->
-              channel2._id = ch2._id
-              done()
+    beforeEach(done =>
+      Transaction.remove({}, () =>
+        Channel.remove({}, () =>
+          (new Channel(channel1)).save(function(err, ch1) {
+            channel1._id = ch1._id;
+            return (new Channel(channel2)).save(function(err, ch2) {
+              channel2._id = ch2._id;
+              return done();
+            });
+          })
+        )
+      )
+    );
 
 
-    describe '*getChannels()', ->
+    describe('*getChannels()', function() {
 
-      it 'should fetch all channels', (done) ->
+      it('should fetch all channels', done =>
 
         request("https://localhost:8080")
           .get("/channels")
@@ -76,14 +89,17 @@ describe "API Integration Tests", ->
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.length.should.be.eql 2
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              res.body.length.should.be.eql(2);
+              return done();
+            }
+        })
+      );
 
-      it 'should only allow non root user to fetch channel that they are allowed to view', (done) ->
+      return it('should only allow non root user to fetch channel that they are allowed to view', done =>
         request("https://localhost:8080")
           .get("/channels")
           .set("auth-username", testUtils.nonRootUser.email)
@@ -91,29 +107,35 @@ describe "API Integration Tests", ->
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.length.should.be.eql 1
-              res.body[0].name.should.be.eql 'TestChannel2'
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              res.body.length.should.be.eql(1);
+              res.body[0].name.should.be.eql('TestChannel2');
+              return done();
+            }
+        })
+      );
+    });
 
-    describe '*addChannel()', ->
+    describe('*addChannel()', function() {
 
-      it 'should add a new channel', (done) ->
-        newChannel =
-          name: "NewChannel"
-          urlPattern: "test/sample"
-          allow: [ "PoC", "Test1", "Test2" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                port: 9876
+      it('should add a new channel', function(done) {
+        let newChannel = {
+          name: "NewChannel",
+          urlPattern: "test/sample",
+          allow: [ "PoC", "Test1", "Test2" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
+              }
               ]
+        };
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -121,27 +143,33 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(newChannel)
           .expect(201)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              Channel.findOne { name: "NewChannel" }, (err, channel) ->
-                channel.should.have.property "urlPattern", "test/sample"
-                channel.allow.should.have.length 3
-                done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return Channel.findOne({ name: "NewChannel" }, function(err, channel) {
+                channel.should.have.property("urlPattern", "test/sample");
+                channel.allow.should.have.length(3);
+                return done();
+              });
+            }
+        });
+      });
 
-      it 'should reject a channel without a name', (done) ->
-        newChannel =
-          urlPattern: "test/sample"
-          allow: [ "PoC", "Test1", "Test2" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                port: 9876
+      it('should reject a channel without a name', function(done) {
+        let newChannel = {
+          urlPattern: "test/sample",
+          allow: [ "PoC", "Test1", "Test2" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
+              }
               ]
+        };
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -149,26 +177,31 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(newChannel)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should reject invalid channels with invalid pathTransform', (done) ->
-        invalidChannel =
-          name: "InvalidChannel"
-          urlPattern: "test/sample"
-          allow: [ "PoC", "Test1", "Test2" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                pathTransform: "invalid"
-                port: 9876
+      it('should reject invalid channels with invalid pathTransform', function(done) {
+        let invalidChannel = {
+          name: "InvalidChannel",
+          urlPattern: "test/sample",
+          allow: [ "PoC", "Test1", "Test2" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                pathTransform: "invalid",
+                port: 9876,
                 primary: true
+              }
               ]
+        };
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -176,27 +209,32 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(invalidChannel)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should reject channels containing both path and pathTransform', (done) ->
-        invalidChannel =
-          name: "InvalidChannel"
-          urlPattern: "test/sample"
-          allow: [ "PoC", "Test1", "Test2" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                path: "/target"
-                pathTransform: "s/foo/bar"
-                port: 9876
+      it('should reject channels containing both path and pathTransform', function(done) {
+        let invalidChannel = {
+          name: "InvalidChannel",
+          urlPattern: "test/sample",
+          allow: [ "PoC", "Test1", "Test2" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                path: "/target",
+                pathTransform: "s/foo/bar",
+                port: 9876,
                 primary: true
+              }
               ]
+        };
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -204,16 +242,19 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(invalidChannel)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should not allow a non admin user to add a channel', (done) ->
-        newChannel = {}
+      it('should not allow a non admin user to add a channel', function(done) {
+        let newChannel = {};
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -221,31 +262,36 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(newChannel)
           .expect(403)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should notify master to startup TCP server if the new channel is of type "tcp"', (done) ->
-        tcpChannel =
-          name: "TCPTestChannel-Add"
-          urlPattern: "/"
-          allow: [ 'tcp' ]
-          type: 'tcp'
-          tcpHost: '0.0.0.0'
-          tcpPort: 3600
-          routes: [
-                name: "TcpRoute"
-                host: "localhost"
-                port: 9876
-                primary: true
+      it('should notify master to startup TCP server if the new channel is of type "tcp"', function(done) {
+        let tcpChannel = {
+          name: "TCPTestChannel-Add",
+          urlPattern: "/",
+          allow: [ 'tcp' ],
+          type: 'tcp',
+          tcpHost: '0.0.0.0',
+          tcpPort: 3600,
+          routes: [{
+                name: "TcpRoute",
+                host: "localhost",
+                port: 9876,
+                primary: true,
                 type: "tcp"
+              }
               ]
+        };
 
-        stub = sinon.stub tcpAdapter, 'notifyMasterToStartTCPServer'
+        let stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer');
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -253,34 +299,39 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(tcpChannel)
           .expect(201)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              stub.should.be.calledOnce
-              stub.restore()
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              stub.should.be.calledOnce;
+              stub.restore();
+              return done();
+            }
+        });
+      });
 
-      it 'should NOT notify master to startup TCP server if the new channel is of type "tcp" but is disabled', (done) ->
-        tcpChannelDisabled =
-          name: "TCPTestChannel-Add-Disabled"
-          urlPattern: "/"
-          allow: [ 'tcp' ]
-          type: 'tcp'
-          tcpHost: '0.0.0.0'
-          tcpPort: 3601
-          routes: [
-                name: "TcpRoute"
-                host: "localhost"
-                port: 9876
-                primary: true
+      it('should NOT notify master to startup TCP server if the new channel is of type "tcp" but is disabled', function(done) {
+        let tcpChannelDisabled = {
+          name: "TCPTestChannel-Add-Disabled",
+          urlPattern: "/",
+          allow: [ 'tcp' ],
+          type: 'tcp',
+          tcpHost: '0.0.0.0',
+          tcpPort: 3601,
+          routes: [{
+                name: "TcpRoute",
+                host: "localhost",
+                port: 9876,
+                primary: true,
                 type: "tcp"
-              ]
+              }
+              ],
           status: 'disabled'
+        };
 
-        stub = sinon.stub tcpAdapter, 'notifyMasterToStartTCPServer'
+        let stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer');
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -288,31 +339,36 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(tcpChannelDisabled)
           .expect(201)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              stub.should.not.be.called
-              stub.restore()
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              stub.should.not.be.called;
+              stub.restore();
+              return done();
+            }
+        });
+      });
 
-      it 'should register the channel with the polling service if of type "polling"', (done) ->
-        pollChannel =
-          name: "POLLINGTestChannel-Add"
-          urlPattern: "/trigger"
-          allow: [ 'polling' ]
-          type: 'polling'
-          pollingSchedule: '5 * * * *'
-          routes: [
-                name: "PollRoute"
-                host: "localhost"
-                port: 9876
+      it('should register the channel with the polling service if of type "polling"', function(done) {
+        let pollChannel = {
+          name: "POLLINGTestChannel-Add",
+          urlPattern: "/trigger",
+          allow: [ 'polling' ],
+          type: 'polling',
+          pollingSchedule: '5 * * * *',
+          routes: [{
+                name: "PollRoute",
+                host: "localhost",
+                port: 9876,
                 primary: true
+              }
               ]
+        };
 
-        spy = sinon.spy polling, 'registerPollingChannel'
+        let spy = sinon.spy(polling, 'registerPollingChannel');
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -320,35 +376,40 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(pollChannel)
           .expect(201)
-          .end (err, res) ->
-            spy.restore()
-            if err
-              done err
-            else
-              spy.calledOnce.should.be.true
-              spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Add'
-              spy.getCall(0).args[0].should.have.property 'urlPattern', '/trigger'
-              spy.getCall(0).args[0].should.have.property 'type', 'polling'
-              done()
+          .end(function(err, res) {
+            spy.restore();
+            if (err) {
+              return done(err);
+            } else {
+              spy.calledOnce.should.be.true;
+              spy.getCall(0).args[0].should.have.property('name', 'POLLINGTestChannel-Add');
+              spy.getCall(0).args[0].should.have.property('urlPattern', '/trigger');
+              spy.getCall(0).args[0].should.have.property('type', 'polling');
+              return done();
+            }
+        });
+      });
 
-      it 'should NOT register the channel with the polling service if of type "polling" but is disabled', (done) ->
-        pollChannelDisabled =
-          name: "POLLINGTestChannel-Add-Disabled"
-          urlPattern: "/trigger"
-          allow: [ 'polling' ]
-          type: 'polling'
-          pollingSchedule: '5 * * * *'
-          routes: [
-                name: "PollRoute"
-                host: "localhost"
-                port: 9876
+      it('should NOT register the channel with the polling service if of type "polling" but is disabled', function(done) {
+        let pollChannelDisabled = {
+          name: "POLLINGTestChannel-Add-Disabled",
+          urlPattern: "/trigger",
+          allow: [ 'polling' ],
+          type: 'polling',
+          pollingSchedule: '5 * * * *',
+          routes: [{
+                name: "PollRoute",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ]
+              }
+              ],
           status: 'disabled'
+        };
 
-        spy = sinon.spy polling, 'registerPollingChannel'
+        let spy = sinon.spy(polling, 'registerPollingChannel');
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -356,26 +417,31 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(pollChannelDisabled)
           .expect(201)
-          .end (err, res) ->
-            spy.restore()
-            if err
-              done err
-            else
-              spy.callCount.should.be.exactly 0
-              done()
+          .end(function(err, res) {
+            spy.restore();
+            if (err) {
+              return done(err);
+            } else {
+              spy.callCount.should.be.exactly(0);
+              return done();
+            }
+        });
+      });
 
-      it 'should reject a channel without a primary route', (done) ->
-        newChannel =
-          name: 'no-primary-route-test'
-          urlPattern: "test/sample"
-          allow: [ "PoC", "Test1", "Test2" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
+      it('should reject a channel without a primary route', function(done) {
+        let newChannel = {
+          name: 'no-primary-route-test',
+          urlPattern: "test/sample",
+          allow: [ "PoC", "Test1", "Test2" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
                 port: 9876
+              }
               ]
+        };
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -383,32 +449,36 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(newChannel)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should reject a channel with multiple primary routes', (done) ->
-        newChannel =
-          name: 'mulitple-primary-route-test'
-          urlPattern: "test/sample"
-          allow: [ "PoC", "Test1", "Test2" ]
+      it('should reject a channel with multiple primary routes', function(done) {
+        let newChannel = {
+          name: 'mulitple-primary-route-test',
+          urlPattern: "test/sample",
+          allow: [ "PoC", "Test1", "Test2" ],
           routes: [
               {
-                name: "test route"
-                host: "localhost"
-                port: 9876
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
               }, {
-                name: "test route 2"
-                host: "localhost"
-                port: 9877
+                name: "test route 2",
+                host: "localhost",
+                port: 9877,
                 primary: true
               }
             ]
+        };
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -416,33 +486,37 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(newChannel)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should accept a channel with one enabled primary route but multiple disabled primary routes', (done) ->
-        newChannel =
-          name: 'disabled-primary-route-test'
-          urlPattern: "test/sample"
-          allow: [ "PoC", "Test1", "Test2" ]
+      it('should accept a channel with one enabled primary route but multiple disabled primary routes', function(done) {
+        let newChannel = {
+          name: 'disabled-primary-route-test',
+          urlPattern: "test/sample",
+          allow: [ "PoC", "Test1", "Test2" ],
           routes: [
               {
-                name: "test route"
-                host: "localhost"
-                port: 9876
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
               }, {
-                name: "test route 2"
-                host: "localhost"
-                port: 9877
-                primary: true
+                name: "test route 2",
+                host: "localhost",
+                port: 9877,
+                primary: true,
                 status: 'disabled'
               }
             ]
+        };
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -450,26 +524,31 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(newChannel)
           .expect(201)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should reject a channel with a priority below 1', (done) ->
-        newChannel =
-          name: "Channel-Priority--1"
-          urlPattern: "test/sample"
-          priority: -1
-          allow: [ "PoC", "Test1", "Test2" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                port: 9876
+      return it('should reject a channel with a priority below 1', function(done) {
+        let newChannel = {
+          name: "Channel-Priority--1",
+          urlPattern: "test/sample",
+          priority: -1,
+          allow: [ "PoC", "Test1", "Test2" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
+              }
               ]
+        };
 
-        request("https://localhost:8080")
+        return request("https://localhost:8080")
           .post("/channels")
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
@@ -477,66 +556,79 @@ describe "API Integration Tests", ->
           .set("auth-token", authDetails.authToken)
           .send(newChannel)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
+    });
 
-    describe '*getChannel(channelId)', ->
+    describe('*getChannel(channelId)', function() {
 
-      it 'should fetch a specific channel by id', (done) ->
+      it('should fetch a specific channel by id', done =>
 
         request("https://localhost:8080")
-          .get("/channels/" + channel1._id)
+          .get(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.should.have.property "name", "TestChannel1"
-              res.body.should.have.property "urlPattern", "test/sample"
-              res.body.allow.should.have.length 3
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              res.body.should.have.property("name", "TestChannel1");
+              res.body.should.have.property("urlPattern", "test/sample");
+              res.body.allow.should.have.length(3);
+              return done();
+            }
+        })
+      );
 
-      it 'should not allow a non admin user from fetching a channel they dont have access to by name', (done) ->
+      it('should not allow a non admin user from fetching a channel they dont have access to by name', done =>
 
         request("https://localhost:8080")
-          .get("/channels/" + channel1._id)
+          .get(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(403)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        })
+      );
 
-      it 'should allow a non admin user to fetch a channel they have access to by name', (done) ->
+      it('should allow a non admin user to fetch a channel they have access to by name', done =>
 
         request("https://localhost:8080")
-          .get("/channels/" + channel2._id)
+          .get(`/channels/${channel2._id}`)
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              res.body.should.have.property "name", "TestChannel2"
-              res.body.should.have.property "urlPattern", "test/sample"
-              res.body.allow.should.have.length 3
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              res.body.should.have.property("name", "TestChannel2");
+              res.body.should.have.property("urlPattern", "test/sample");
+              res.body.allow.should.have.length(3);
+              return done();
+            }
+        })
+      );
 
-      it 'should return a 404 if that channel doesnt exist', (done) ->
+      return it('should return a 404 if that channel doesnt exist', done =>
 
         request("https://localhost:8080")
           .get("/channels/999999999999999999999999")
@@ -545,480 +637,575 @@ describe "API Integration Tests", ->
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(404)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        })
+      );
+    });
 
-    describe '*updateChannel(channelId)', ->
+    describe('*updateChannel(channelId)', function() {
 
-      it 'should update a specific channel by id', (done) ->
+      it('should update a specific channel by id', function(done) {
 
-        updates =
-          _id: "thisShouldBeIgnored"
-          urlPattern: "test/changed"
-          allow: [ "PoC", "Test1", "Test2", "another" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                port: 9876
+        let updates = {
+          _id: "thisShouldBeIgnored",
+          urlPattern: "test/changed",
+          allow: [ "PoC", "Test1", "Test2", "another" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ,
-                name: "test route2"
-                host: "localhost"
+              }
+              , {
+                name: "test route2",
+                host: "localhost",
                 port: 8899
+              }
               ]
+        };
 
-        request("https://localhost:8080")
-          .put("/channels/" + channel1._id)
+        return request("https://localhost:8080")
+          .put(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .send(updates)
           .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              Channel.findOne { name: "TestChannel1" }, (err, channel) ->
-                channel.should.have.property "name", "TestChannel1"
-                channel.should.have.property "urlPattern", "test/changed"
-                channel.allow.should.have.length 4
-                channel.routes.should.have.length 2
-                done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return Channel.findOne({ name: "TestChannel1" }, function(err, channel) {
+                channel.should.have.property("name", "TestChannel1");
+                channel.should.have.property("urlPattern", "test/changed");
+                channel.allow.should.have.length(4);
+                channel.routes.should.have.length(2);
+                return done();
+              });
+            }
+        });
+      });
 
-      it 'should not allow a non admin user to update a channel', (done) ->
+      it('should not allow a non admin user to update a channel', function(done) {
 
-        updates = {}
+        let updates = {};
 
-        request("https://localhost:8080")
-          .put("/channels/" + channel1._id)
+        return request("https://localhost:8080")
+          .put(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .send(updates)
           .expect(403)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should notify master to startup a TCP server if the type is set to "tcp"', (done) ->
-        httpChannel = new Channel
-          name: "TestChannelForTCPUpdate"
-          urlPattern: "/"
-          allow: [ "test" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                port: 9876
+      it('should notify master to startup a TCP server if the type is set to "tcp"', function(done) {
+        let httpChannel = new Channel({
+          name: "TestChannelForTCPUpdate",
+          urlPattern: "/",
+          allow: [ "test" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ]
+              }
+              ],
           txViewAcl: "group1"
+        });
 
-        changeToTCP = {
-          type: 'tcp'
-          tcpHost: '0.0.0.0'
+        let changeToTCP = {
+          type: 'tcp',
+          tcpHost: '0.0.0.0',
           tcpPort: 3601
-        }
+        };
 
-        stub = sinon.stub tcpAdapter, 'notifyMasterToStartTCPServer'
+        let stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer');
 
-        httpChannel.save ->
+        return httpChannel.save(() =>
           request("https://localhost:8080")
-            .put("/channels/" + httpChannel._id)
+            .put(`/channels/${httpChannel._id}`)
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
             .send(changeToTCP)
             .expect(200)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                stub.should.be.calledOnce
-                stub.restore()
-                done()
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              } else {
+                stub.should.be.calledOnce;
+                stub.restore();
+                return done();
+              }
+          })
+        );
+      });
 
-      it 'should NOT notify master to startup a TCP server if the type is set to "tcp" but it is disabled', (done) ->
-        httpChannel = new Channel
-          name: "TestChannelForTCPUpdate-Disabled"
-          urlPattern: "/"
-          allow: [ "test" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                port: 9876
+      it('should NOT notify master to startup a TCP server if the type is set to "tcp" but it is disabled', function(done) {
+        let httpChannel = new Channel({
+          name: "TestChannelForTCPUpdate-Disabled",
+          urlPattern: "/",
+          allow: [ "test" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ]
+              }
+              ],
           txViewAcl: "group1"
+        });
 
-        changeToTCPDisabled = {
-          type: 'tcp'
-          tcpHost: '0.0.0.0'
-          tcpPort: 3603
+        let changeToTCPDisabled = {
+          type: 'tcp',
+          tcpHost: '0.0.0.0',
+          tcpPort: 3603,
           status: 'disabled'
-        }
+        };
 
-        startStub = sinon.stub tcpAdapter, 'notifyMasterToStartTCPServer'
-        stopStub = sinon.stub tcpAdapter, 'notifyMasterToStopTCPServer'
+        let startStub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer');
+        let stopStub = sinon.stub(tcpAdapter, 'notifyMasterToStopTCPServer');
 
-        httpChannel.save ->
+        return httpChannel.save(() =>
           request("https://localhost:8080")
-            .put("/channels/" + httpChannel._id)
+            .put(`/channels/${httpChannel._id}`)
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
             .send(changeToTCPDisabled)
             .expect(200)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                startStub.should.not.be.called
-                stopStub.should.be.calledOnce
-                startStub.restore()
-                stopStub.restore()
-                done()
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              } else {
+                startStub.should.not.be.called;
+                stopStub.should.be.calledOnce;
+                startStub.restore();
+                stopStub.restore();
+                return done();
+              }
+          })
+        );
+      });
 
-      it 'should register the updated channel with the polling service if of type "polling"', (done) ->
-        pollChannel = new Channel
-          name: "POLLINGTestChannel-Update"
-          urlPattern: "/trigger"
-          allow: [ 'polling' ]
-          type: 'polling'
-          pollingSchedule: '5 * * * *'
-          routes: [
-                name: "PollRoute"
-                host: "localhost"
-                port: 9876
+      it('should register the updated channel with the polling service if of type "polling"', function(done) {
+        let pollChannel = new Channel({
+          name: "POLLINGTestChannel-Update",
+          urlPattern: "/trigger",
+          allow: [ 'polling' ],
+          type: 'polling',
+          pollingSchedule: '5 * * * *',
+          routes: [{
+                name: "PollRoute",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ]
+              }
+              ]});
 
-        spy = sinon.spy polling, 'registerPollingChannel'
+        let spy = sinon.spy(polling, 'registerPollingChannel');
 
-        pollChannel.save ->
+        return pollChannel.save(() =>
           request("https://localhost:8080")
-            .put("/channels/" + pollChannel._id)
+            .put(`/channels/${pollChannel._id}`)
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
             .send(pollChannel)
             .expect(200)
-            .end (err, res) ->
-              spy.restore()
-              if err
-                done err
-              else
-                spy.calledOnce.should.be.true
-                spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Update'
-                spy.getCall(0).args[0].should.have.property 'urlPattern', '/trigger'
-                spy.getCall(0).args[0].should.have.property 'type', 'polling'
-                spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
-                done()
+            .end(function(err, res) {
+              spy.restore();
+              if (err) {
+                return done(err);
+              } else {
+                spy.calledOnce.should.be.true;
+                spy.getCall(0).args[0].should.have.property('name', 'POLLINGTestChannel-Update');
+                spy.getCall(0).args[0].should.have.property('urlPattern', '/trigger');
+                spy.getCall(0).args[0].should.have.property('type', 'polling');
+                spy.getCall(0).args[0].should.have.property('_id', pollChannel._id);
+                return done();
+              }
+          })
+        );
+      });
 
-      it 'should NOT register the updated channel with the polling service if of type "polling" but it is disabled', (done) ->
-        pollChannel = new Channel
-          name: "POLLINGTestChannel-Update-Disabled"
-          urlPattern: "/trigger"
-          allow: [ 'polling' ]
-          type: 'polling'
-          pollingSchedule: '5 * * * *'
-          routes: [
-                name: "PollRoute"
-                host: "localhost"
-                port: 9876
+      it('should NOT register the updated channel with the polling service if of type "polling" but it is disabled', function(done) {
+        let pollChannel = new Channel({
+          name: "POLLINGTestChannel-Update-Disabled",
+          urlPattern: "/trigger",
+          allow: [ 'polling' ],
+          type: 'polling',
+          pollingSchedule: '5 * * * *',
+          routes: [{
+                name: "PollRoute",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ]
+              }
+              ],
           status: 'disabled'
+        });
 
-        spy = sinon.spy polling, 'registerPollingChannel'
+        let spy = sinon.spy(polling, 'registerPollingChannel');
 
-        pollChannel.save ->
+        return pollChannel.save(() =>
           request("https://localhost:8080")
-            .put("/channels/" + pollChannel._id)
+            .put(`/channels/${pollChannel._id}`)
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
             .send(pollChannel)
             .expect(200)
-            .end (err, res) ->
-              spy.restore()
-              if err
-                done err
-              else
-                spy.callCount.should.be.exactly 0
-                done()
+            .end(function(err, res) {
+              spy.restore();
+              if (err) {
+                return done(err);
+              } else {
+                spy.callCount.should.be.exactly(0);
+                return done();
+              }
+          })
+        );
+      });
 
-      it 'should reject an update with no primary routes', (done) ->
-        updates =
-          urlPattern: "test/changed"
-          allow: [ "PoC", "Test1", "Test2", "another" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
+      it('should reject an update with no primary routes', function(done) {
+        let updates = {
+          urlPattern: "test/changed",
+          allow: [ "PoC", "Test1", "Test2", "another" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
                 port: 9876
-              ,
-                name: "test route2"
-                host: "localhost"
+              }
+              , {
+                name: "test route2",
+                host: "localhost",
                 port: 8899
+              }
               ]
+        };
 
-        request("https://localhost:8080")
-          .put("/channels/" + channel1._id)
+        return request("https://localhost:8080")
+          .put(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .send(updates)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should reject an update with multiple primary routes', (done) ->
-        updates =
-          urlPattern: "test/changed"
-          allow: [ "PoC", "Test1", "Test2", "another" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                port: 9876
+      it('should reject an update with multiple primary routes', function(done) {
+        let updates = {
+          urlPattern: "test/changed",
+          allow: [ "PoC", "Test1", "Test2", "another" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ,
-                name: "test route2"
-                host: "localhost"
-                port: 8899
+              }
+              , {
+                name: "test route2",
+                host: "localhost",
+                port: 8899,
                 primary: true
+              }
               ]
+        };
 
-        request("https://localhost:8080")
-          .put("/channels/" + channel1._id)
+        return request("https://localhost:8080")
+          .put(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .send(updates)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should accept an update with one primary route and multiple disabled primary routes', (done) ->
-        updates =
-          urlPattern: "test/changed"
-          allow: [ "PoC", "Test1", "Test2", "another" ]
-          routes: [
-                name: "test route"
-                host: "localhost"
-                port: 9876
+      it('should accept an update with one primary route and multiple disabled primary routes', function(done) {
+        let updates = {
+          urlPattern: "test/changed",
+          allow: [ "PoC", "Test1", "Test2", "another" ],
+          routes: [{
+                name: "test route",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ,
-                name: "test route2"
-                host: "localhost"
-                port: 8899
-                primary: true
+              }
+              , {
+                name: "test route2",
+                host: "localhost",
+                port: 8899,
+                primary: true,
                 status: 'disabled'
+              }
               ]
+        };
 
-        request("https://localhost:8080")
-          .put("/channels/" + channel1._id)
+        return request("https://localhost:8080")
+          .put(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .send(updates)
           .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should NOT update a channel with a priority below 1', (done) ->
+      return it('should NOT update a channel with a priority below 1', function(done) {
 
-        updates =
-          urlPattern: "test/changed"
+        let updates = {
+          urlPattern: "test/changed",
           priority: -1
+        };
 
-        request("https://localhost:8080")
-          .put("/channels/" + channel1._id)
+        return request("https://localhost:8080")
+          .put(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .send(updates)
           .expect(400)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              Channel.findOne { name: "TestChannel1" }, (err, channel) ->
-                channel.should.have.property "urlPattern", "test/sample"
-                done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return Channel.findOne({ name: "TestChannel1" }, function(err, channel) {
+                channel.should.have.property("urlPattern", "test/sample");
+                return done();
+              });
+            }
+        });
+      });
+    });
 
-    describe '*removeChannel(channelId)', ->
+    describe('*removeChannel(channelId)', function() {
 
-      it 'should remove a specific channel by name', (done) ->
-        Transaction.find { channelID: channel1._id }, (err, trx) ->
-          # there can't be any linked transactions
-          trx.length.should.be.exactly 0
+      it('should remove a specific channel by name', done =>
+        Transaction.find({ channelID: channel1._id }, function(err, trx) {
+          // there can't be any linked transactions
+          trx.length.should.be.exactly(0);
 
-          request("https://localhost:8080")
-            .del("/channels/" + channel1._id)
+          return request("https://localhost:8080")
+            .del(`/channels/${channel1._id}`)
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
             .expect(200)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                Channel.find { name: "TestChannel1" }, (err, channels) ->
-                  channels.should.have.length 0
-                  done()
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              } else {
+                return Channel.find({ name: "TestChannel1" }, function(err, channels) {
+                  channels.should.have.length(0);
+                  return done();
+                });
+              }
+          });
+        })
+      );
 
-      it 'should only allow an admin user to remove a channel', (done) ->
+      it('should only allow an admin user to remove a channel', done =>
 
         request("https://localhost:8080")
-          .del("/channels/" + channel1._id)
+          .del(`/channels/${channel1._id}`)
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(403)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        })
+      );
 
-      it 'should remove polling schedule if the channel is of type "polling"', (done) ->
+      it('should remove polling schedule if the channel is of type "polling"', function(done) {
 
-        pollChannel = new Channel
-          name: "POLLINGTestChannel-Remove"
-          urlPattern: "/trigger"
-          allow: [ 'polling' ]
-          type: 'polling'
-          pollingSchedule: '5 * * * *'
-          routes: [
-                name: "PollRoute"
-                host: "localhost"
-                port: 9876
+        let pollChannel = new Channel({
+          name: "POLLINGTestChannel-Remove",
+          urlPattern: "/trigger",
+          allow: [ 'polling' ],
+          type: 'polling',
+          pollingSchedule: '5 * * * *',
+          routes: [{
+                name: "PollRoute",
+                host: "localhost",
+                port: 9876,
                 primary: true
-              ]
+              }
+              ]});
 
-        spy = sinon.spy polling, 'removePollingChannel'
+        let spy = sinon.spy(polling, 'removePollingChannel');
 
-        Transaction.find { channelID: channel1._id }, (err, trx) ->
-          # there can't be any linked transactions
-          trx.length.should.be.exactly 0
+        return Transaction.find({ channelID: channel1._id }, function(err, trx) {
+          // there can't be any linked transactions
+          trx.length.should.be.exactly(0);
 
-          pollChannel.save ->
+          return pollChannel.save(() =>
             request("https://localhost:8080")
-              .del("/channels/" + pollChannel._id)
+              .del(`/channels/${pollChannel._id}`)
               .set("auth-username", testUtils.rootUser.email)
               .set("auth-ts", authDetails.authTS)
               .set("auth-salt", authDetails.authSalt)
               .set("auth-token", authDetails.authToken)
               .expect(200)
-              .end (err, res) ->
-                spy.restore()
-                if err
-                  done err
-                else
-                  spy.calledOnce.should.be.true
-                  spy.getCall(0).args[0].should.have.property 'name', 'POLLINGTestChannel-Remove'
-                  spy.getCall(0).args[0].should.have.property '_id', pollChannel._id
-                  done()
+              .end(function(err, res) {
+                spy.restore();
+                if (err) {
+                  return done(err);
+                } else {
+                  spy.calledOnce.should.be.true;
+                  spy.getCall(0).args[0].should.have.property('name', 'POLLINGTestChannel-Remove');
+                  spy.getCall(0).args[0].should.have.property('_id', pollChannel._id);
+                  return done();
+                }
+            })
+          );
+        });
+      });
 
-      it 'should NOT remove a specific channel if any transactions are linked to it but mark the status as deleted', (done) ->
-        trx = new Transaction
-          clientID: channel1._id #not really but anyway
-          channelID: channel1._id
-          request:
-            path: '/test/remove'
-            method: 'GET'
+      return it('should NOT remove a specific channel if any transactions are linked to it but mark the status as deleted', function(done) {
+        let trx = new Transaction({
+          clientID: channel1._id, //not really but anyway
+          channelID: channel1._id,
+          request: {
+            path: '/test/remove',
+            method: 'GET',
             timestamp: new Date()
+          },
           status: 'Successful'
+        });
 
-        trx.save (err) ->
-          return done err if err
+        return trx.save(function(err) {
+          if (err) { return done(err); }
 
-          request("https://localhost:8080")
-            .del("/channels/" + channel1._id)
+          return request("https://localhost:8080")
+            .del(`/channels/${channel1._id}`)
             .set("auth-username", testUtils.rootUser.email)
             .set("auth-ts", authDetails.authTS)
             .set("auth-salt", authDetails.authSalt)
             .set("auth-token", authDetails.authToken)
             .expect(200)
-            .end (err, res) ->
-              if err
-                done err
-              else
-                Channel.find { name: "TestChannel1" }, (err, channels) ->
-                  channels.should.have.length 1
-                  channels[0].status.should.exist
-                  channels[0].status.should.be.equal 'deleted'
-                  done()
+            .end(function(err, res) {
+              if (err) {
+                return done(err);
+              } else {
+                return Channel.find({ name: "TestChannel1" }, function(err, channels) {
+                  channels.should.have.length(1);
+                  channels[0].status.should.exist;
+                  channels[0].status.should.be.equal('deleted');
+                  return done();
+                });
+              }
+          });
+        });
+      });
+    });
 
-    describe '*manuallyPollChannel', ->
+    return describe('*manuallyPollChannel', function() {
 
-      it 'should manually poll a channel', (done) ->
+      it('should manually poll a channel', done =>
 
         request("https://localhost:8080")
-          .post("/channels/" + channel1._id + "/trigger")
+          .post(`/channels/${channel1._id}/trigger`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(200)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        })
+      );
 
-      it 'should reject a manually polled channel - channel not found', (done) ->
-        mongoose = require('mongoose');
-        invalidId = mongoose.Types.ObjectId('4eeeeeeeeeeeeeeeebbbbbb2');
-        request("https://localhost:8080")
-          .post("/channels/" + invalidId + "/trigger")
+      it('should reject a manually polled channel - channel not found', function(done) {
+        let mongoose = require('mongoose');
+        let invalidId = mongoose.Types.ObjectId('4eeeeeeeeeeeeeeeebbbbbb2');
+        return request("https://localhost:8080")
+          .post(`/channels/${invalidId}/trigger`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(404)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        });
+      });
 
-      it 'should not allow a non admin user from manually polling a channel they do not have access to', (done) ->
+      return it('should not allow a non admin user from manually polling a channel they do not have access to', done =>
 
         request("https://localhost:8080")
-          .post("/channels/" + channel1._id + "/trigger")
+          .post(`/channels/${channel1._id}/trigger`)
           .set("auth-username", testUtils.nonRootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
           .expect(403)
-          .end (err, res) ->
-            if err
-              done err
-            else
-              done()
+          .end(function(err, res) {
+            if (err) {
+              return done(err);
+            } else {
+              return done();
+            }
+        })
+      );
+    });
+  })
+);

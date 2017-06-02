@@ -1,31 +1,33 @@
-mongoose = require "mongoose"
-server = require "../server"
-connectionDefault = server.connectionDefault
-Schema = mongoose.Schema
+import mongoose from "mongoose";
+import server from "../server";
+let { connectionDefault } = server;
+let { Schema } = mongoose;
 
-certificate =
-  country:          String
-  state:            String
-  locality:         String
-  organization:     String
-  organizationUnit: String
-  commonName:       String
-  emailAddress:     String
-  validity:
-    start:          Date
+let certificate = {
+  country:          String,
+  state:            String,
+  locality:         String,
+  organization:     String,
+  organizationUnit: String,
+  commonName:       String,
+  emailAddress:     String,
+  validity: {
+    start:          Date,
     end:            Date
-  data:             String
+  },
+  data:             String,
   fingerprint:      String
+};
 
 
-CertificateSchema = new Schema certificate
+let CertificateSchema = new Schema(certificate);
 
-KeystoreSchema = new Schema
-  key:    String
-  passphrase: String
-  cert:   certificate
-  ca:     [certificate]
+let KeystoreSchema = new Schema({
+  key:    String,
+  passphrase: String,
+  cert:   certificate,
+  ca:     [certificate]});
 
-# Model for storing the server key and cert as well as trusted certificates
-exports.Keystore = connectionDefault.model 'Keystore', KeystoreSchema
-exports.Certificate = connectionDefault.model 'Certificate', CertificateSchema
+// Model for storing the server key and cert as well as trusted certificates
+export let Keystore = connectionDefault.model('Keystore', KeystoreSchema);
+export let Certificate = connectionDefault.model('Certificate', CertificateSchema);

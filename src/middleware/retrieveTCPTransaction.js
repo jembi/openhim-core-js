@@ -1,21 +1,23 @@
-tcpAdapter = require '../tcpAdapter'
+import tcpAdapter from '../tcpAdapter';
 
-config = require '../config/config'
-statsdServer = config.get 'statsd'
-application = config.get 'application'
-SDC = require 'statsd-client'
-os = require 'os'
+import config from '../config/config';
+let statsdServer = config.get('statsd');
+let application = config.get('application');
+const SDC = require('statsd-client');
+let os = require('os');
 
-domain = "#{os.hostname()}.#{application.name}.appMetrics"
-sdc = new SDC statsdServer
+let domain = `${os.hostname()}.${application.name}.appMetrics`;
+let sdc = new SDC(statsdServer);
 
-exports.koaMiddleware = (next) ->
-  startTime = new Date() if statsdServer.enabled
-  # the body contains the key
-  transaction = tcpAdapter.popTransaction this.body
+export function koaMiddleware(next) {
+  let startTime;
+  if (statsdServer.enabled) { startTime = new Date(); }
+  // the body contains the key
+  let transaction = tcpAdapter.popTransaction(this.body);
 
-  this.body = transaction.data
-  this.authorisedChannel = transaction.channel
+  this.body = transaction.data;
+  this.authorisedChannel = transaction.channel;
 
-  sdc.timing "#{domain}.retrieveTCPTransactionMiddleware", startTime if statsdServer.enabled
-  {} #TODO:Fix yield next
+  if (statsdServer.enabled) { sdc.timing(`${domain}.retrieveTCPTransactionMiddleware`, startTime); }
+  return {}; //TODO:Fix yield next
+}

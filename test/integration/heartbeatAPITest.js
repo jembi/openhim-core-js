@@ -1,44 +1,45 @@
-should = require 'should'
-request = require 'supertest'
-server = require '../../lib/server'
-Channel = require('../../lib/model/channels').Channel
-Mediator = require('../../lib/model/mediators').Mediator
-testUtils = require '../testUtils'
-auth = require('../testUtils').auth
+import should from 'should';
+import request from 'supertest';
+import server from '../../lib/server';
+import { Channel } from '../../lib/model/channels';
+import { Mediator } from '../../lib/model/mediators';
+import testUtils from '../testUtils';
+import { auth } from '../testUtils';
 
-describe 'API Integration Tests', ->
-  describe 'Heartbeat REST API testing', ->
+describe('API Integration Tests', () =>
+  describe('Heartbeat REST API testing', function() {
 
-    mediator1 =
-      urn: 'urn:mediator:awesome-test-mediator'
-      version: '1.0.0'
-      name: 'Awesome Test Mediator'
-      description: 'This is a test mediator. It is awesome.'
+    let mediator1 = {
+      urn: 'urn:mediator:awesome-test-mediator',
+      version: '1.0.0',
+      name: 'Awesome Test Mediator',
+      description: 'This is a test mediator. It is awesome.',
       endpoints: [
         {
-          name: 'The Endpoint'
-          host: 'localhost'
-          port: '9000'
+          name: 'The Endpoint',
+          host: 'localhost',
+          port: '9000',
           type: 'http'
         }
       ]
+    };
 
-    authDetails = {}
+    let authDetails = {};
 
-    before (done) ->
-      auth.setupTestUsers (err) ->
-        return done err if err
-        server.start apiPort: 8080, done
+    before(done =>
+      auth.setupTestUsers(function(err) {
+        if (err) { return done(err); }
+        return server.start({apiPort: 8080}, done);
+      })
+    );
 
-    after (done) ->
-      server.stop -> auth.cleanupTestUsers done
+    after(done => server.stop(() => auth.cleanupTestUsers(done)));
 
-    beforeEach ->
-      authDetails = auth.getAuthDetails()
+    beforeEach(() => authDetails = auth.getAuthDetails());
 
-    afterEach (done) -> Mediator.remove {}, done
+    afterEach(done => Mediator.remove({}, done));
 
-    registerMediator = (done) ->
+    let registerMediator = done =>
       request("https://localhost:8080")
         .post("/mediators")
         .set("auth-username", testUtils.rootUser.email)
@@ -47,101 +48,126 @@ describe 'API Integration Tests', ->
         .set("auth-token", authDetails.authToken)
         .send(mediator1)
         .expect(201)
-        .end done
+        .end(done)
+    ;
 
-    describe '*getHeartbeat()', ->
-      it 'should fetch the heartbeat without requiring authentication', (done) ->
+    return describe('*getHeartbeat()', function() {
+      it('should fetch the heartbeat without requiring authentication', done =>
         request("https://localhost:8080")
           .get("/heartbeat")
           .expect(200)
-          .end (err, res) ->
-            return done err if err
-            done()
+          .end(function(err, res) {
+            if (err) { return done(err); }
+            return done();
+        })
+      );
 
-      it 'should return core uptime', (done) ->
+      it('should return core uptime', done =>
         request("https://localhost:8080")
           .get("/heartbeat")
           .expect(200)
-          .end (err, res) ->
-            return done err if err
-            res.body.should.have.property('master').and.be.a.Number()
-            done()
+          .end(function(err, res) {
+            if (err) { return done(err); }
+            res.body.should.have.property('master').and.be.a.Number();
+            return done();
+        })
+      );
 
-      it 'should include known mediators in response', (done) ->
-        registerMediator (err, res) ->
-          return done err if err
+      it('should include known mediators in response', done =>
+        registerMediator(function(err, res) {
+          if (err) { return done(err); }
 
-          request("https://localhost:8080")
+          return request("https://localhost:8080")
             .get("/heartbeat")
             .expect(200)
-            .end (err, res) ->
-              return done err if err
-              res.body.should.have.property('mediators')
-              res.body.mediators.should.have.property mediator1.urn
-              done()
+            .end(function(err, res) {
+              if (err) { return done(err); }
+              res.body.should.have.property('mediators');
+              res.body.mediators.should.have.property(mediator1.urn);
+              return done();
+          });
+        })
+      );
 
-      it 'should set the uptime to null if no heartbeats received from mediator', (done) ->
-        registerMediator (err, res) ->
-          return done err if err
+      it('should set the uptime to null if no heartbeats received from mediator', done =>
+        registerMediator(function(err, res) {
+          if (err) { return done(err); }
 
-          request("https://localhost:8080")
+          return request("https://localhost:8080")
             .get("/heartbeat")
             .expect(200)
-            .end (err, res) ->
-              return done err if err
-              res.body.should.have.property('mediators')
-              should(res.body.mediators[mediator1.urn]).be.null()
-              done()
+            .end(function(err, res) {
+              if (err) { return done(err); }
+              res.body.should.have.property('mediators');
+              should(res.body.mediators[mediator1.urn]).be.null();
+              return done();
+          });
+        })
+      );
 
-      sendUptime = (done) ->
+      let sendUptime = done =>
         request("https://localhost:8080")
-          .post("/mediators/#{mediator1.urn}/heartbeat")
+          .post(`/mediators/${mediator1.urn}/heartbeat`)
           .set("auth-username", testUtils.rootUser.email)
           .set("auth-ts", authDetails.authTS)
           .set("auth-salt", authDetails.authSalt)
           .set("auth-token", authDetails.authToken)
-          .send(
+          .send({
             "uptime": 200
-          )
+          })
           .expect(200)
-          .end done
+          .end(done)
+      ;
 
-      it 'should include the mediator uptime', (done) ->
-        registerMediator (err, res) ->
-          return done err if err
+      it('should include the mediator uptime', done =>
+        registerMediator(function(err, res) {
+          if (err) { return done(err); }
 
-          sendUptime (err, res) ->
-            return done err if err
+          return sendUptime(function(err, res) {
+            if (err) { return done(err); }
 
-            request("https://localhost:8080")
+            return request("https://localhost:8080")
               .get("/heartbeat")
               .expect(200)
-              .end (err, res) ->
-                return done err if err
-                res.body.should.have.property('mediators')
-                res.body.mediators[mediator1.urn].should.be.exactly 200
-                done()
+              .end(function(err, res) {
+                if (err) { return done(err); }
+                res.body.should.have.property('mediators');
+                res.body.mediators[mediator1.urn].should.be.exactly(200);
+                return done();
+            });
+          });
+        })
+      );
 
-      it 'should NOT include the mediator uptime if the last heartbeat was received more than a minute ago', (done) ->
-        registerMediator (err, res) ->
-          return done err if err
+      return it('should NOT include the mediator uptime if the last heartbeat was received more than a minute ago', done =>
+        registerMediator(function(err, res) {
+          if (err) { return done(err); }
 
-          sendUptime (err, res) ->
-            return done err if err
+          return sendUptime(function(err, res) {
+            if (err) { return done(err); }
 
-            now = new Date()
-            prev = new Date()
-            update =
-              _configModifiedTS: now
+            let now = new Date();
+            let prev = new Date();
+            let update = {
+              _configModifiedTS: now,
               _lastHeartbeat: new Date(prev.setMinutes(now.getMinutes() - 5))
-            Mediator.findOneAndUpdate urn: mediator1.urn, update, (err) ->
-              return done err if err
+            };
+            return Mediator.findOneAndUpdate({urn: mediator1.urn}, update, function(err) {
+              if (err) { return done(err); }
 
-              request("https://localhost:8080")
+              return request("https://localhost:8080")
                 .get("/heartbeat")
                 .expect(200)
-                .end (err, res) ->
-                  return done err if err
-                  res.body.should.have.property('mediators')
-                  should(res.body.mediators[mediator1.urn]).be.null()
-                  done()
+                .end(function(err, res) {
+                  if (err) { return done(err); }
+                  res.body.should.have.property('mediators');
+                  should(res.body.mediators[mediator1.urn]).be.null();
+                  return done();
+              });
+            });
+          });
+        })
+      );
+    });
+  })
+);

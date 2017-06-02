@@ -1,11 +1,15 @@
-mongoose = require 'mongoose'
-server = require '../server'
-connectionDefault = server.connectionDefault
-Schema = mongoose.Schema
+import mongoose from 'mongoose';
+import server from '../server';
+let { connectionDefault } = server;
+let { Schema } = mongoose;
 
-AutoRetrySchema = new Schema
-  "transactionID":    type: Schema.Types.ObjectId, required: true
-  "channelID":        type: Schema.Types.ObjectId, required: true
-  "requestTimestamp": type: Date, required: true
+let AutoRetrySchema = new Schema({
+  "transactionID": {    type: Schema.Types.ObjectId, required: true
+},
+  "channelID": {        type: Schema.Types.ObjectId, required: true
+},
+  "requestTimestamp": { type: Date, required: true
+}
+});
 
-exports.AutoRetry = connectionDefault.model 'AutoRetry', AutoRetrySchema
+export let AutoRetry = connectionDefault.model('AutoRetry', AutoRetrySchema);

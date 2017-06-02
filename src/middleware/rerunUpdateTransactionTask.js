@@ -1,75 +1,93 @@
-Q = require "q"
-Transaction = require("../model/transactions").Transaction
-Task = require("../model/tasks").Task
-logger = require "winston"
+import Q from "q";
+import { Transaction } from "../model/transactions";
+import { Task } from "../model/tasks";
+import logger from "winston";
 
-config = require '../config/config'
-statsdServer = config.get 'statsd'
-application = config.get 'application'
-SDC = require 'statsd-client'
-os = require 'os'
+import config from '../config/config';
+let statsdServer = config.get('statsd');
+let application = config.get('application');
+const SDC = require('statsd-client');
+let os = require('os');
 
-domain = "#{os.hostname()}.#{application.name}.appMetrics"
-sdc = new SDC statsdServer
+let domain = `${os.hostname()}.${application.name}.appMetrics`;
+let sdc = new SDC(statsdServer);
 
-exports.setAttemptNumber = (ctx, done) ->
-  Transaction.findOne { _id: ctx.parentID }, (err, transaction) ->
-    if transaction.autoRetry
-      if transaction.autoRetryAttempt?
-        ctx.currentAttempt = transaction.autoRetryAttempt + 1
-      else
-        ctx.currentAttempt = 1
-    transaction.save (err, tx) ->
-      if err
-        logger.error "Original transaction #{transaction._id} could not be updated: #{err}"
-      else
-        logger.debug "Original transaction ##{tx._id} Updated successfully with attempt number"
+export function setAttemptNumber(ctx, done) {
+  return Transaction.findOne({ _id: ctx.parentID }, function(err, transaction) {
+    if (transaction.autoRetry) {
+      if (transaction.autoRetryAttempt != null) {
+        ctx.currentAttempt = transaction.autoRetryAttempt + 1;
+      } else {
+        ctx.currentAttempt = 1;
+      }
+    }
+    return transaction.save(function(err, tx) {
+      if (err) {
+        logger.error(`Original transaction ${transaction._id} could not be updated: ${err}`);
+      } else {
+        logger.debug(`Original transaction #${tx._id} Updated successfully with attempt number`);
+      }
 
-      done null
+      return done(null);
+    });
+  });
+}
 
-exports.updateOriginalTransaction = (ctx, done) ->
-  Transaction.findOne { _id: ctx.parentID }, (err, transaction) ->
-    transaction.childIDs.push ctx.transactionId
-    transaction.wasRerun = true
+export function updateOriginalTransaction(ctx, done) {
+  return Transaction.findOne({ _id: ctx.parentID }, function(err, transaction) {
+    transaction.childIDs.push(ctx.transactionId);
+    transaction.wasRerun = true;
     
-    transaction.save (err, tx) ->
-      if err
-        logger.error "Original transaction #{transaction._id} could not be updated: #{err}"
-      else
-        logger.debug "Original transaction #{tx._id} - Updated successfully with childID"
+    return transaction.save(function(err, tx) {
+      if (err) {
+        logger.error(`Original transaction ${transaction._id} could not be updated: ${err}`);
+      } else {
+        logger.debug(`Original transaction ${tx._id} - Updated successfully with childID`);
+      }
 
-      done null, transaction
+      return done(null, transaction);
+    });
+  });
+}
 
-exports.updateTask = (ctx, done) ->
-  Task.findOne { _id: ctx.taskID }, (err, task) ->
-    task.transactions.forEach (tx) ->
-      if tx.tid == ctx.parentID
-        tx.rerunID = ctx.transactionId
-        tx.rerunStatus = ctx.transactionStatus
+export function updateTask(ctx, done) {
+  return Task.findOne({ _id: ctx.taskID }, function(err, task) {
+    task.transactions.forEach(function(tx) {
+      if (tx.tid === ctx.parentID) {
+        tx.rerunID = ctx.transactionId;
+        return tx.rerunStatus = ctx.transactionStatus;
+      }
+    });
 
-    task.save (err, task) ->
-      if err
-        logger.info "Rerun Task #{ctx.taskID} could not be updated: #{err}"
-      else
-        logger.info "Rerun Task #{ctx.taskID} - Updated successfully with rerun transaction details."
+    return task.save(function(err, task) {
+      if (err) {
+        logger.info(`Rerun Task ${ctx.taskID} could not be updated: ${err}`);
+      } else {
+        logger.info(`Rerun Task ${ctx.taskID} - Updated successfully with rerun transaction details.`);
+      }
 
-      done null, task
+      return done(null, task);
+    });
+  });
+}
 
-###
-# Koa middleware for updating original transaction with childID
-###
-exports.koaMiddleware = (next) ->
-  startTime = new Date() if statsdServer.enabled
-  setAttemptNumber = Q.denodeify exports.setAttemptNumber
-  {} #TODO:Fix yield setAttemptNumber this
-  sdc.timing "#{domain}.rerunUpdateTransactionMiddleware.setAttemptNumber", startTime if statsdServer.enabled
+/*
+ * Koa middleware for updating original transaction with childID
+ */
+export function koaMiddleware(next) {
+  let startTime;
+  if (statsdServer.enabled) { startTime = new Date(); }
+  let setAttemptNumber = Q.denodeify(exports.setAttemptNumber);
+  ({}); //TODO:Fix yield setAttemptNumber this
+  if (statsdServer.enabled) { sdc.timing(`${domain}.rerunUpdateTransactionMiddleware.setAttemptNumber`, startTime); }
 
-  # do intial {} #TODO:Fix yield for koa to come back to this function with updated ctx object
-  {} #TODO:Fix yield next
-  startTime = new Date() if statsdServer.enabled
-  updateOriginalTransaction = Q.denodeify exports.updateOriginalTransaction
-  {} #TODO:Fix yield updateOriginalTransaction this
+  // do intial {} #TODO:Fix yield for koa to come back to this function with updated ctx object
+  ({}); //TODO:Fix yield next
+  if (statsdServer.enabled) { startTime = new Date(); }
+  let updateOriginalTransaction = Q.denodeify(exports.updateOriginalTransaction);
+  ({}); //TODO:Fix yield updateOriginalTransaction this
 
-  updateTask = Q.denodeify exports.updateTask
-  {} #TODO:Fix yield updateTask this
-  sdc.timing "#{domain}.rerunUpdateTransactionMiddleware", startTime if statsdServer.enabled
+  let updateTask = Q.denodeify(exports.updateTask);
+  ({}); //TODO:Fix yield updateTask this
+  if (statsdServer.enabled) { return sdc.timing(`${domain}.rerunUpdateTransactionMiddleware`, startTime); }
+}
