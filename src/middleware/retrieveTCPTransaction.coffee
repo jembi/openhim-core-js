@@ -18,4 +18,4 @@ exports.koaMiddleware = (next) ->
   this.authorisedChannel = transaction.channel
 
   sdc.timing "#{domain}.retrieveTCPTransactionMiddleware", startTime if statsdServer.enabled
-  yield next
+  #TODO:Fix yield next

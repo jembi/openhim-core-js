@@ -101,7 +101,7 @@ exports.getTransactions = ->
     # Test if the user is authorised
     if not authorisation.inGroup 'admin', this.authenticated
       # if not an admin, restrict by transactions that this user can view
-      channels = yield authorisation.getUserViewableChannels this.authenticated
+      channels = #TODO:Fix yield authorisation.getUserViewableChannels this.authenticated
 
       if not filtersObject.channelID
         filters.channelID = $in: getChannelIDsArray channels
@@ -188,7 +188,7 @@ exports.getTransactions = ->
 
 
     # execute the query
-    this.body = yield transactions.Transaction
+    this.body = #TODO:Fix yield transactions.Transaction
       .find filters, projectionFiltersObject
       .skip filterSkip
       .limit parseInt filterLimit
@@ -247,7 +247,7 @@ exports.addTransaction = ->
     tx = new transactions.Transaction transactionData
     
     # Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
-    yield Q.ninvoke tx, "save"
+    #TODO:Fix yield Q.ninvoke tx, "save"
     this.status = 201
     logger.info "User #{this.authenticated.email} created transaction with id #{tx.id}"
 
@@ -277,7 +277,7 @@ exports.getTransactionById = (transactionId) ->
     # if user NOT admin, determine their representation privileges.
     if not authorisation.inGroup 'admin', this.authenticated
       # retrieve transaction channelID
-      txChannelID = yield transactions.Transaction.findById(transactionId, channelID: 1, _id: 0).exec()
+      txChannelID = #TODO:Fix yield transactions.Transaction.findById(transactionId, channelID: 1, _id: 0).exec()
       if txChannelID?.length is 0
         this.body = "Could not find transaction with ID: #{transactionId}"
         this.status = 404
@@ -287,7 +287,7 @@ exports.getTransactionById = (transactionId) ->
         filterRepresentation = 'simpledetails'
 
         # get channel.txViewFullAcl information by channelID
-        channel = yield Channel.findById(txChannelID.channelID, txViewFullAcl: 1, _id: 0).exec()
+        channel = #TODO:Fix yield Channel.findById(txChannelID.channelID, txViewFullAcl: 1, _id: 0).exec()
 
         # loop through user groups
         for group in this.authenticated.groups
@@ -301,7 +301,7 @@ exports.getTransactionById = (transactionId) ->
     # get projection object
     projectionFiltersObject = getProjectionObject filterRepresentation
 
-    result = yield transactions.Transaction.findById(transactionId, projectionFiltersObject).exec()
+    result = #TODO:Fix yield transactions.Transaction.findById(transactionId, projectionFiltersObject).exec()
     if result and filterRepresentation is 'fulltruncate'
       truncateTransactionDetails result
 
@@ -311,7 +311,7 @@ exports.getTransactionById = (transactionId) ->
       this.status = 404
     # Test if the user is authorised
     else if not authorisation.inGroup 'admin', this.authenticated
-      channels = yield authorisation.getUserViewableChannels this.authenticated
+      channels = #TODO:Fix yield authorisation.getUserViewableChannels this.authenticated
       if getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0
         this.body = result
       else
@@ -343,7 +343,7 @@ exports.findTransactionByClientId = (clientId) ->
     # Test if the user is authorised
     if not authorisation.inGroup 'admin', this.authenticated
       # if not an admin, restrict by transactions that this user can view
-      channels = yield authorisation.getUserViewableChannels this.authenticated
+      channels = #TODO:Fix yield authorisation.getUserViewableChannels this.authenticated
 
       filtersObject.channelID = $in: getChannelIDsArray channels
 
@@ -351,7 +351,7 @@ exports.findTransactionByClientId = (clientId) ->
       filterRepresentation = ''
 
     # execute the query
-    this.body = yield transactions.Transaction
+    this.body = #TODO:Fix yield transactions.Transaction
       .find filtersObject, projectionFiltersObject
       .sort 'request.timestamp': -1
       .exec()
@@ -443,13 +443,13 @@ exports.updateTransaction = (transactionId) ->
 
   try
     if hasError updates
-      tx = yield transactions.Transaction.findById(transactionId).exec()
-      channel = yield Channel.findById(tx.channelID).exec()
+      tx = #TODO:Fix yield transactions.Transaction.findById(transactionId).exec()
+      channel = #TODO:Fix yield Channel.findById(tx.channelID).exec()
       if not autoRetryUtils.reachedMaxAttempts tx, channel
         updates.autoRetry = true
         autoRetryUtils.queueForRetry tx
     
-    transactionToUpdate = yield transactions.Transaction.findOne({ _id: transactionId }).exec()
+    transactionToUpdate = #TODO:Fix yield transactions.Transaction.findOne({ _id: transactionId }).exec()
     transactionBodiesLength = 0
     calculateTransactionBodiesByteLength transactionBodiesLength, transactionToUpdate, new WeakSet()
 
@@ -458,7 +458,7 @@ exports.updateTransaction = (transactionId) ->
       primaryRequest: true
     enforceMaxBodiesSize ctx, updates, new WeakSet()
     
-    tx = yield transactions.Transaction.findByIdAndUpdate(transactionId, updates, new: true).exec()
+    tx = #TODO:Fix yield transactions.Transaction.findByIdAndUpdate(transactionId, updates, new: true).exec()
 
     this.body = "Transaction with ID: #{transactionId} successfully updated"
     this.status = 200
@@ -485,7 +485,7 @@ exports.removeTransaction = (transactionId) ->
   transactionId = unescape transactionId
 
   try
-    yield transactions.Transaction.findByIdAndRemove(transactionId).exec()
+    #TODO:Fix yield transactions.Transaction.findByIdAndRemove(transactionId).exec()
     this.body = 'Transaction successfully deleted'
     this.status = 200
     logger.info "User #{this.authenticated.email} removed transaction with id #{transactionId}"

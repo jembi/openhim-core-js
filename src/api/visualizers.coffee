@@ -13,7 +13,7 @@ exports.getVisualizers = ->
     return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getVisualizers denied.", 'info'
 
   try
-    this.body = yield Visualizer.find().exec()
+    this.body = #TODO:Fix yield Visualizer.find().exec()
   catch err
     utils.logAndSetResponse this, 500, "Could not fetch visualizers via the API: #{err}", 'error'
 
@@ -29,7 +29,7 @@ exports.getVisualizer = (visualizerId) ->
   visualizerId = unescape visualizerId
   
   try
-    result = yield Visualizer.findById(visualizerId).exec()
+    result = #TODO:Fix yield Visualizer.findById(visualizerId).exec()
     if not result
       this.body = "Visualizer with _id #{visualizerId} could not be found."
       this.status = 404
@@ -53,7 +53,7 @@ exports.addVisualizer = ->
 
   try
     visualizer = new Visualizer visualizerData
-    result = yield Q.ninvoke visualizer, 'save'
+    result = #TODO:Fix yield Q.ninvoke visualizer, 'save'
 
     this.body = 'Visualizer successfully created'
     this.status = 201
@@ -80,7 +80,7 @@ exports.updateVisualizer = (visualizerId) ->
   delete visualizerData._id if visualizerData._id
   
   try
-    result = yield Visualizer.findByIdAndUpdate(visualizerId, visualizerData).exec()
+    result = #TODO:Fix yield Visualizer.findByIdAndUpdate(visualizerId, visualizerData).exec()
     if not result
       return utils.logAndSetResponse this, 404, "Cannot Update Visualizer with _id #{visualizerId}, does not exist", 'info'
       
@@ -101,7 +101,7 @@ exports.removeVisualizer = (visualizerId) ->
   visualizerId = unescape visualizerId
 
   try
-    v = yield Visualizer.findByIdAndRemove(visualizerId).exec()
+    v = #TODO:Fix yield Visualizer.findByIdAndRemove(visualizerId).exec()
     if not v
       return utils.logAndSetResponse this, 404, "Could not find visualizer with _id #{visualizerId}", 'info'
 

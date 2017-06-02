@@ -128,7 +128,7 @@ if process.env.NODE_ENV == "test"
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   if this.authenticated?
-    yield next
+    #TODO:Fix yield next
   else
     if this.req.client.authorized is true
       cert = this.req.connection.getPeerCertificate true
@@ -136,7 +136,7 @@ exports.koaMiddleware = (next) ->
 
       # lookup client by cert fingerprint and set them as the authenticated user
       try
-        this.authenticated = yield clientLookup cert.fingerprint, cert.subject.CN, cert.issuer.CN
+        this.authenticated = #TODO:Fix yield clientLookup cert.fingerprint, cert.subject.CN, cert.issuer.CN
       catch err
         logger.error "Failed to lookup client: #{err}"
 
@@ -145,14 +145,14 @@ exports.koaMiddleware = (next) ->
           this.header['X-OpenHIM-ClientID'] = this.authenticated.clientID
         sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
         this.authenticationType = 'tls'
-        yield next
+        #TODO:Fix yield next
       else
         this.authenticated = null
         logger.info "Certificate Authentication Failed: the certificate's fingerprint #{cert.fingerprint} did not match any client's certFingerprint attribute, trying next auth mechanism if any..."
         sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
-        yield next
+        #TODO:Fix yield next
     else
       this.authenticated = null
       logger.info "Could NOT authenticate via TLS: #{this.req.client.authorizationError}, trying next auth mechanism if any..."
       sdc.timing "#{domain}.tlsAuthenticationMiddleware", startTime if statsdServer.enabled
-      yield next
+      #TODO:Fix yield next

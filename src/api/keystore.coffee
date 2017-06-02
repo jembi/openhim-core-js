@@ -15,7 +15,7 @@ exports.getServerCert = ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().lean('cert').exec()
+    keystoreDoc = #TODO:Fix yield Keystore.findOne().lean('cert').exec()
     keystoreDoc.cert.watchFSForCert = config.certificateManagement.watchFSForCert
     this.body = keystoreDoc.cert
   catch err
@@ -28,7 +28,7 @@ exports.getCACerts = ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().select('ca').exec()
+    keystoreDoc = #TODO:Fix yield Keystore.findOne().select('ca').exec()
     this.body = keystoreDoc.ca
   catch err
     utils.logAndSetResponse this, 500, "Could not fetch the ca certs trusted by this server via the API: #{err}", 'error'
@@ -40,7 +40,7 @@ exports.getCACert = (certId) ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().select('ca').exec()
+    keystoreDoc = #TODO:Fix yield Keystore.findOne().select('ca').exec()
     cert = keystoreDoc.ca.id(certId)
 
     this.body = cert
@@ -55,9 +55,9 @@ exports.setServerPassphrase = ->
 
   try
     passphrase = this.request.body.passphrase
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = #TODO:Fix yield Keystore.findOne().exec()
     keystoreDoc.passphrase = passphrase
-    yield Q.ninvoke keystoreDoc, 'save'
+    #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
     this.status = 201
 
   catch err
@@ -79,18 +79,18 @@ exports.setServerCert = ->
     readCertificateInfo = Q.denodeify pem.readCertificateInfo
     getFingerprint = Q.denodeify pem.getFingerprint
     try
-      certInfo = yield readCertificateInfo cert
-      fingerprint = yield getFingerprint cert
+      certInfo = #TODO:Fix yield readCertificateInfo cert
+      fingerprint = #TODO:Fix yield getFingerprint cert
     catch err
       return utils.logAndSetResponse this, 400, "Could not add server cert via the API: #{err}", 'error'
     certInfo.data = cert
     certInfo.fingerprint = fingerprint.fingerprint
 
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = #TODO:Fix yield Keystore.findOne().exec()
     keystoreDoc.cert = certInfo
     keystoreDoc.passphrase = passphrase
 
-    yield Q.ninvoke keystoreDoc, 'save'
+    #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
     this.status = 201
   catch err
     utils.logAndSetResponse this, 500, "Could not add server cert via the API: #{err}", 'error'
@@ -104,10 +104,10 @@ exports.setServerKey = ->
   try
     key = this.request.body.key
     passphrase = this.request.body.passphrase
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = #TODO:Fix yield Keystore.findOne().exec()
     keystoreDoc.key = key
     keystoreDoc.passphrase = passphrase
-    yield Q.ninvoke keystoreDoc, 'save'
+    #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
     this.status = 201
   catch err
     utils.logAndSetResponse this, 500, "Could not add server key via the API: #{err}", 'error'
@@ -134,7 +134,7 @@ exports.addTrustedCert = ->
         certs.push ((cert.join "\n") + "\n")
         cert = []
 
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = #TODO:Fix yield Keystore.findOne().exec()
     readCertificateInfo = Q.denodeify pem.readCertificateInfo
     getFingerprint = Q.denodeify pem.getFingerprint
 
@@ -143,8 +143,8 @@ exports.addTrustedCert = ->
 
     for cert in certs
       try
-        certInfo = yield readCertificateInfo cert
-        fingerprint = yield getFingerprint cert
+        certInfo = #TODO:Fix yield readCertificateInfo cert
+        fingerprint = #TODO:Fix yield getFingerprint cert
       catch err
         invalidCert = true
         continue
@@ -152,7 +152,7 @@ exports.addTrustedCert = ->
       certInfo.fingerprint = fingerprint.fingerprint
       keystoreDoc.ca.push certInfo
 
-    yield Q.ninvoke keystoreDoc, 'save'
+    #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
 
     if invalidCert
       utils.logAndSetResponse this, 400, "Failed to add one more cert, are they valid? #{err}", 'error'
@@ -168,9 +168,9 @@ exports.removeCACert = (certId) ->
     return
 
   try
-    keystoreDoc = yield Keystore.findOne().exec()
+    keystoreDoc = #TODO:Fix yield Keystore.findOne().exec()
     keystoreDoc.ca.id(certId).remove()
-    yield Q.ninvoke keystoreDoc, 'save'
+    #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
     this.status = 200
   catch err
     utils.logAndSetResponse this, 500, "Could not remove ca cert by id via the API: #{err}", 'error'
@@ -183,7 +183,7 @@ exports.verifyServerKeys = ->
 
   try
     try
-      result = yield Q.nfcall getCertKeyStatus
+      result = #TODO:Fix yield Q.nfcall getCertKeyStatus
     catch err
       return utils.logAndSetResponse this, 400, "Could not verify certificate and key, are they valid? #{err}", 'error'
 

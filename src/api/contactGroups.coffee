@@ -19,7 +19,7 @@ exports.addContactGroup = ->
 
   try
     contactGroup = new ContactGroup contactGroupData
-    result = yield Q.ninvoke(contactGroup, 'save')
+    result = #TODO:Fix yield Q.ninvoke(contactGroup, 'save')
 
     utils.logAndSetResponse this, 201, "Contact Group successfully created", 'info'
   catch err
@@ -39,7 +39,7 @@ exports.getContactGroup = (contactGroupId) ->
   contactGroupId = unescape contactGroupId
 
   try
-    result = yield ContactGroup.findById(contactGroupId).exec()
+    result = #TODO:Fix yield ContactGroup.findById(contactGroupId).exec()
 
     if result == null
       this.body = "Contact Group with id '#{contactGroupId}' could not be found."
@@ -68,7 +68,7 @@ exports.updateContactGroup = (contactGroupId) ->
     delete contactGroupData._id
 
   try
-    yield ContactGroup.findByIdAndUpdate(contactGroupId, contactGroupData).exec()
+    #TODO:Fix yield ContactGroup.findByIdAndUpdate(contactGroupId, contactGroupData).exec()
     this.body = "Successfully updated contact group."
     logger.info "User #{this.authenticated.email} updated contact group with id #{contactGroupId}"
   catch err
@@ -90,7 +90,7 @@ exports.removeContactGroup = (contactGroupId) ->
 
   try
     # find out if there are any alerts associated with this group
-    linkedAlerts = yield Channel.find({
+    linkedAlerts = #TODO:Fix yield Channel.find({
       alerts :{
         $elemMatch :{
           groups: {
@@ -103,7 +103,7 @@ exports.removeContactGroup = (contactGroupId) ->
       this.status = 409
       this.body = linkedAlerts
     else
-      yield ContactGroup.findByIdAndRemove(contactGroupId).exec()
+      #TODO:Fix yield ContactGroup.findByIdAndRemove(contactGroupId).exec()
       this.body = "Successfully removed contact group with ID '#{contactGroupId}'"
       logger.info "User #{this.authenticated.email} removed contact group with id #{contactGroupId}"
   catch err
@@ -122,6 +122,6 @@ exports.getContactGroups = ->
     return
 
   try
-    this.body = yield ContactGroup.find().exec()
+    this.body = #TODO:Fix yield ContactGroup.find().exec()
   catch err
     utils.logAndSetResponse this, 500, "Could not fetch all Contact Group via the API: #{err}", 'error'

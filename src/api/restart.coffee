@@ -24,7 +24,7 @@ exports.restart = (next) ->
   try
     emailAddr = this.authenticated.email
 
-    result = yield Q.nfcall KeystoreAPI.getCertKeyStatus
+    result = #TODO:Fix yield Q.nfcall KeystoreAPI.getCertKeyStatus
 
     # valid certificate/key
     if result

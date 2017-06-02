@@ -23,6 +23,6 @@ exports.authoriseUser = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   authoriseUser = Q.denodeify exports.authoriseUser
-  yield authoriseUser this
+  #TODO:Fix yield authoriseUser this
   sdc.timing "#{domain}.pollingBypassAuthorisationMiddleware", startTime if statsdServer.enabled
-  yield next
+  #TODO:Fix yield next

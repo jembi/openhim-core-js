@@ -25,4 +25,4 @@ exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   exports.setupProxyHeaders this
   sdc.timing "#{domain}.proxyHeadersMiddleware", startTime if statsdServer.enabled
-  yield next
+  #TODO:Fix yield next

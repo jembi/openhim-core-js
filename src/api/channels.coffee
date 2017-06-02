@@ -27,7 +27,7 @@ isPathValid = (channel) ->
 ###
 exports.getChannels = ->
   try
-    this.body = yield authorisation.getUserViewableChannels this.authenticated
+    this.body = #TODO:Fix yield authorisation.getUserViewableChannels this.authenticated
   catch err
     utils.logAndSetResponse this, 500, "Could not fetch all channels via the API: #{err}", 'error'
 
@@ -74,7 +74,7 @@ exports.addChannel = ->
       this.status = 400
       return
 
-    result = yield Q.ninvoke channel, 'save'
+    result = #TODO:Fix yield Q.ninvoke channel, 'save'
 
     # All ok! So set the result
     this.body = 'Channel successfully created'
@@ -100,12 +100,12 @@ exports.getChannel = (channelId) ->
     accessDenied = false
     # if admin allow acces to all channels otherwise restrict result set
     if authorisation.inGroup('admin', this.authenticated) is false
-      result = yield Channel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec()
-      adminResult = yield Channel.findById(id).exec()
+      result = #TODO:Fix yield Channel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec()
+      adminResult = #TODO:Fix yield Channel.findById(id).exec()
       if adminResult?
         accessDenied = true
     else
-      result = yield Channel.findById(id).exec()
+      result = #TODO:Fix yield Channel.findById(id).exec()
 
     # Test if the result if valid
     if result is null
@@ -177,7 +177,7 @@ exports.updateChannel = (channelId) ->
       return
 
   try
-    channel = yield Channel.findByIdAndUpdate(id, channelData).exec()
+    channel = #TODO:Fix yield Channel.findByIdAndUpdate(id, channelData).exec()
 
     # All ok! So set the result
     this.body = 'The channel was successfully updated'
@@ -210,15 +210,15 @@ exports.removeChannel = (channelId) ->
   id = unescape channelId
 
   try
-    numExistingTransactions = yield Transaction.count({ channelID: id }).exec()
+    numExistingTransactions = #TODO:Fix yield Transaction.count({ channelID: id }).exec()
 
     # Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
     if numExistingTransactions is 0
       # safe to remove
-      channel = yield Channel.findByIdAndRemove(id).exec()
+      channel = #TODO:Fix yield Channel.findByIdAndRemove(id).exec()
     else
       # not safe to remove. just flag as deleted
-      channel = yield Channel.findByIdAndUpdate(id, { status: 'deleted' }).exec()
+      channel = #TODO:Fix yield Channel.findByIdAndUpdate(id, { status: 'deleted' }).exec()
 
     # All ok! So set the result
     this.body = 'The channel was successfully deleted'
@@ -246,7 +246,7 @@ exports.triggerChannel = (channelId) ->
   this.status = 200
 
   try
-    channel = yield Channel.findById(id).exec()
+    channel = #TODO:Fix yield Channel.findById(id).exec()
 
     # Test if the result if valid
     if channel is null

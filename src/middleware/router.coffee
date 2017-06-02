@@ -482,6 +482,6 @@ exports.route = (ctx, next) ->
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   route = Q.denodeify exports.route
-  yield route this
+  #TODO:Fix yield route this
   sdc.timing "#{domain}.routerMiddleware", startTime if statsdServer.enabled
-  yield next
+  #TODO:Fix yield next

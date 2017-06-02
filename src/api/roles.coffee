@@ -55,8 +55,8 @@ exports.getRoles = ->
     return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getRoles denied.", 'info'
 
   try
-    channels = yield Channel.find({}, {name: 1, allow: 1 }).exec()
-    clients = yield Client.find({}, {clientID: 1, roles: 1 }).exec()
+    channels = #TODO:Fix yield Channel.find({}, {name: 1, allow: 1 }).exec()
+    clients = #TODO:Fix yield Client.find({}, {clientID: 1, roles: 1 }).exec()
 
     this.body = filterRolesFromChannels channels, clients
   catch e
@@ -71,8 +71,8 @@ exports.getRole = (name) ->
     return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to getRole denied.", 'info'
 
   try
-    channels = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
-    clients = yield Client.find({ roles: $in: [name]}, {clientID: 1 }).exec()
+    channels = #TODO:Fix yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
+    clients = #TODO:Fix yield Client.find({ roles: $in: [name]}, {clientID: 1 }).exec()
     if (channels is null or channels.length is 0) and (clients is null or clients.length is 0)
       utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
     else
@@ -155,12 +155,12 @@ exports.addRole = ->
     return utils.logAndSetResponse this, 400, 'Must specify at least one channel or client to link the role to', 'info'
 
   try
-    chResult = yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
-    clResult = yield Client.find({roles: {$in: [role.name]}}, {clientID: 1 }).exec()
+    chResult = #TODO:Fix yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
+    clResult = #TODO:Fix yield Client.find({roles: {$in: [role.name]}}, {clientID: 1 }).exec()
     if chResult?.length > 0 or clResult?.length > 0
       return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
 
-    clientConflict = yield Client.find({ clientID: role.name }, { clientID: 1 }).exec()
+    clientConflict = #TODO:Fix yield Client.find({ clientID: role.name }, { clientID: 1 }).exec()
     if clientConflict?.length > 0
       return utils.logAndSetResponse this, 409, "A clientID conflicts with role name '#{role.name}'. A role name cannot be the same as a clientID.", 'info'
 
@@ -173,9 +173,9 @@ exports.addRole = ->
       return if not clCriteria
 
     if role.channels
-      yield Channel.update(chCriteria, { $push: allow: role.name }, { multi: true }).exec()
+      #TODO:Fix yield Channel.update(chCriteria, { $push: allow: role.name }, { multi: true }).exec()
     if role.clients
-      yield Client.update(clCriteria, { $push: roles: role.name }, { multi: true }).exec()
+      #TODO:Fix yield Client.update(clCriteria, { $push: roles: role.name }, { multi: true }).exec()
 
     logger.info "User #{this.authenticated.email} setup role '#{role.name}'"
     this.body = 'Role successfully created'
@@ -195,19 +195,19 @@ exports.updateRole = (name) ->
 
   try
     # request validity checks
-    chResult = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
-    clResult = yield Client.find({roles: {$in: [name]}}, {clientID: 1 }).exec()
+    chResult = #TODO:Fix yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
+    clResult = #TODO:Fix yield Client.find({roles: {$in: [name]}}, {clientID: 1 }).exec()
     if (chResult is null or chResult.length is 0) and (clResult is null or clResult.length is 0)
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 
     if role.name
       # do check here but only perform rename updates later after channel/client updates
-      channels = yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
-      clients = yield Client.find({roles: {$in: [role.name]}}, {name: 1 }).exec()
+      channels = #TODO:Fix yield Channel.find({allow: {$in: [role.name]}}, {name: 1 }).exec()
+      clients = #TODO:Fix yield Client.find({roles: {$in: [role.name]}}, {name: 1 }).exec()
       if channels?.length > 0 or clients?.length > 0
         return utils.logAndSetResponse this, 400, "Role with name '#{role.name}' already exists.", 'info'
 
-      clientConflict = yield Client.find({ clientID: role.name }, { clientID: 1 }).exec()
+      clientConflict = #TODO:Fix yield Client.find({ clientID: role.name }, { clientID: 1 }).exec()
       if clientConflict?.length > 0
         return utils.logAndSetResponse this, 409, "A clientID conflicts with role name '#{role.name}'. A role name cannot be the same as a clientID.", 'info'
 
@@ -221,25 +221,25 @@ exports.updateRole = (name) ->
     # update channels
     if role.channels
       # clear role from existing
-      yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
+      #TODO:Fix yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
       # set role on channels
       if role.channels.length > 0
-        yield Channel.update(chCriteria, { $push: allow: name }, { multi: true }).exec()
+        #TODO:Fix yield Channel.update(chCriteria, { $push: allow: name }, { multi: true }).exec()
 
     # update clients
     if role.clients
       # clear role from existing
-      yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
+      #TODO:Fix yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
       # set role on clients
       if role.clients?.length > 0
-        yield Client.update(clCriteria, { $push: roles: name }, { multi: true }).exec()
+        #TODO:Fix yield Client.update(clCriteria, { $push: roles: name }, { multi: true }).exec()
 
     # rename role
     if role.name
-      yield Channel.update({ allow: $in: [name] }, { $push: allow: role.name }, { multi: true }).exec()
-      yield Channel.update({ allow: $in: [name] }, { $pull: allow: name }, { multi: true }).exec()
-      yield Client.update({ roles: $in: [name] }, { $push: roles: role.name }, { multi: true }).exec()
-      yield Client.update({ roles: $in: [name] }, { $pull: roles: name }, { multi: true }).exec()
+      #TODO:Fix yield Channel.update({ allow: $in: [name] }, { $push: allow: role.name }, { multi: true }).exec()
+      #TODO:Fix yield Channel.update({ allow: $in: [name] }, { $pull: allow: name }, { multi: true }).exec()
+      #TODO:Fix yield Client.update({ roles: $in: [name] }, { $push: roles: role.name }, { multi: true }).exec()
+      #TODO:Fix yield Client.update({ roles: $in: [name] }, { $pull: roles: name }, { multi: true }).exec()
 
     logger.info "User #{this.authenticated.email} updated role with name '#{name}'"
     this.body = 'Successfully updated role'
@@ -256,13 +256,13 @@ exports.deleteRole = (name) ->
     return utils.logAndSetResponse this, 403, "User #{this.authenticated.email} is not an admin, API access to updateRole denied.", 'info'
 
   try
-    channels = yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
-    clients = yield Client.find({ roles: $in: [name]}, {clientID: 1 }).exec()
+    channels = #TODO:Fix yield Channel.find({allow: {$in: [name]}}, {name: 1 }).exec()
+    clients = #TODO:Fix yield Client.find({ roles: $in: [name]}, {clientID: 1 }).exec()
     if (channels is null or channels.length is 0) and (clients is null or clients.length is 0)
       return utils.logAndSetResponse this, 404, "Role with name '#{name}' could not be found.", 'info'
 
-    yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
-    yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
+    #TODO:Fix yield Channel.update({}, { $pull: allow: name }, { multi: true }).exec()
+    #TODO:Fix yield Client.update({}, { $pull: roles: name }, { multi: true }).exec()
 
     logger.info "User #{this.authenticated.email} deleted role with name '#{name}'"
     this.body = 'Successfully deleted role'

@@ -47,7 +47,7 @@ exports.getAllMediators = ->
     return
 
   try
-    m = yield Mediator.find().exec()
+    m = #TODO:Fix yield Mediator.find().exec()
     maskPasswords m.configDefs, m.config
     this.body = m
   catch err
@@ -64,7 +64,7 @@ exports.getMediator = (mediatorURN) ->
   urn = unescape mediatorURN
 
   try
-    result = yield Mediator.findOne({ "urn": urn }).exec()
+    result = #TODO:Fix yield Mediator.findOne({ "urn": urn }).exec()
     if result == null
       this.status = 404
     else
@@ -137,7 +137,7 @@ exports.addMediator = ->
       if mediator.config?
         validateConfig mediator.configDefs, mediator.config
 
-    existing = yield Mediator.findOne({urn: mediator.urn}).exec()
+    existing = #TODO:Fix yield Mediator.findOne({urn: mediator.urn}).exec()
     if existing?
       if semver.gt(mediator.version, existing.version)
         # update the mediator
@@ -146,12 +146,12 @@ exports.addMediator = ->
           for param, val of mediator.config
             if existing.config[param]?
               mediator.config[param] = existing.config[param]
-        yield Mediator.findByIdAndUpdate(existing._id, mediator).exec()
+        #TODO:Fix yield Mediator.findByIdAndUpdate(existing._id, mediator).exec()
     else
       # this is a new mediator validate and save it
       if not mediator.endpoints or mediator.endpoints.length < 1
         throw constructError 'At least 1 endpoint is required', 'ValidationError'
-      yield Q.ninvoke(new Mediator(mediator), 'save')
+      #TODO:Fix yield Q.ninvoke(new Mediator(mediator), 'save')
     this.status = 201
     logger.info "User #{this.authenticated.email} created mediator with urn #{mediator.urn}"
   catch err
@@ -169,7 +169,7 @@ exports.removeMediator = (urn) ->
   urn = unescape urn
 
   try
-    yield Mediator.findOneAndRemove({ urn: urn }).exec()
+    #TODO:Fix yield Mediator.findOneAndRemove({ urn: urn }).exec()
     this.body = "Mediator with urn #{urn} has been successfully removed by #{this.authenticated.email}"
     logger.info "Mediator with urn #{urn} has been successfully removed by #{this.authenticated.email}"
   catch err
@@ -184,7 +184,7 @@ exports.heartbeat = (urn) ->
   urn = unescape urn
 
   try
-    mediator = yield Mediator.findOne({ urn: urn }).exec()
+    mediator = #TODO:Fix yield Mediator.findOne({ urn: urn }).exec()
 
     if not mediator?
       this.status = 404
@@ -208,7 +208,7 @@ exports.heartbeat = (urn) ->
         _lastHeartbeat: new Date()
         _uptime: heartbeat.uptime
 
-      yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
+      #TODO:Fix yield Mediator.findByIdAndUpdate(mediator._id, update).exec()
 
     this.status = 200
   catch err
@@ -292,7 +292,7 @@ exports.setConfig = (urn) ->
   config = this.request.body
 
   try
-    mediator = yield Mediator.findOne({ urn: urn }).exec()
+    mediator = #TODO:Fix yield Mediator.findOne({ urn: urn }).exec()
 
     if not mediator?
       this.status = 404
@@ -306,7 +306,7 @@ exports.setConfig = (urn) ->
       this.body = err.message
       return
 
-    yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec()
+    #TODO:Fix yield Mediator.findOneAndUpdate({ urn: urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec()
     this.status = 200
   catch err
     utils.logAndSetResponse this, 500, "Could not set mediator config (urn: #{urn}): #{err}", 'error'
@@ -330,7 +330,7 @@ exports.loadDefaultChannels = (urn) ->
   channels = this.request.body
 
   try
-    mediator = yield Mediator.findOne({ urn: urn }).lean().exec()
+    mediator = #TODO:Fix yield Mediator.findOne({ urn: urn }).lean().exec()
 
     if not mediator?
       this.status = 404
@@ -338,7 +338,7 @@ exports.loadDefaultChannels = (urn) ->
       return
 
     if not channels? or channels.length is 0
-      yield Q.all saveDefaultChannelConfig(mediator.defaultChannelConfig)
+      #TODO:Fix yield Q.all saveDefaultChannelConfig(mediator.defaultChannelConfig)
     else
       filteredChannelConfig = mediator.defaultChannelConfig.filter (channel) ->
         return channel.name in channels
@@ -346,7 +346,7 @@ exports.loadDefaultChannels = (urn) ->
         utils.logAndSetResponse this, 400, "Could not load mediator default channel config, one or more channels in the request body not found in the mediator config (urn: #{urn})", 'error'
         return
       else
-        yield Q.all saveDefaultChannelConfig(filteredChannelConfig)
+        #TODO:Fix yield Q.all saveDefaultChannelConfig(filteredChannelConfig)
 
     this.status = 201
   catch err

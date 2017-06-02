@@ -23,7 +23,7 @@ exports.authenticate = (email) ->
   email = unescape email
 
   try
-    user = yield User.findOne(email: email).exec()
+    user = #TODO:Fix yield User.findOne(email: email).exec()
 
     if not user
       utils.logAndSetResponse this, 404, "Could not find user by email #{email}", 'info'
@@ -91,7 +91,7 @@ exports.userPasswordResetRequest = (email) ->
     expiry: expiry
 
   try
-    user = yield User.findOneAndUpdate(email: email, updateUserTokenExpiry).exec()
+    user = #TODO:Fix yield User.findOneAndUpdate(email: email, updateUserTokenExpiry).exec()
 
     if not user
       this.body = "Tried to request password reset for invalid email address: #{email}"
@@ -107,7 +107,7 @@ exports.userPasswordResetRequest = (email) ->
     htmlMessage = passwordResetHtmlMessageTemplate user.firstname, setPasswordLink
 
     sendEmail = Q.denodeify contact.contactUser
-    sendEmailError = yield sendEmail 'email', email, 'OpenHIM Console Password Reset', plainMessage, htmlMessage
+    sendEmailError = #TODO:Fix yield sendEmail 'email', email, 'OpenHIM Console Password Reset', plainMessage, htmlMessage
     if sendEmailError
       utils.logAndSetResponse this, 500, "Could not send email to user via the API #{e}", 'error'
 
@@ -132,7 +132,7 @@ exports.getUserByToken = (token) ->
   try
     projectionRestriction = "email": 1, "firstname": 1, "surname": 1, "msisdn": 1, "token": 1, "tokenType": 1, "locked": 1, "expiry": 1, "_id": 0
 
-    result = yield User.findOne(token: token, projectionRestriction).exec()
+    result = #TODO:Fix yield User.findOne(token: token, projectionRestriction).exec()
     if not result
       this.body = "User with token #{token} could not be found."
       this.status = 404
@@ -155,7 +155,7 @@ exports.updateUserByToken = (token) ->
 
   try
     # first try get new user details to check expiry date
-    userDataExpiry = yield User.findOne(token: token).exec()
+    userDataExpiry = #TODO:Fix yield User.findOne(token: token).exec()
 
     if not userDataExpiry
       this.body = "User with token #{token} could not be found."
@@ -192,7 +192,7 @@ exports.updateUserByToken = (token) ->
     userUpdateObj.msisdn = msisdn
 
   try
-    yield User.findOneAndUpdate(token: token, userUpdateObj).exec()
+    #TODO:Fix yield User.findOneAndUpdate(token: token, userUpdateObj).exec()
     this.body = "Successfully set new user password."
     logger.info "User updated by token #{token}"
   catch e
@@ -250,7 +250,7 @@ exports.addUser = ->
 
   try
     user = new User userData
-    result = yield Q.ninvoke user, 'save'
+    result = #TODO:Fix yield Q.ninvoke user, 'save'
 
     # Send email to new user to set password
 
@@ -283,7 +283,7 @@ exports.getUser = (email) ->
     return
 
   try
-    result = yield User.findOne(email: email).exec()
+    result = #TODO:Fix yield User.findOne(email: email).exec()
     if not result
       this.body = "User with email #{email} could not be found."
       this.status = 404
@@ -318,7 +318,7 @@ exports.updateUser = (email) ->
   if userData._id then delete userData._id
 
   try
-    yield User.findOneAndUpdate(email: email, userData).exec()
+    #TODO:Fix yield User.findOneAndUpdate(email: email, userData).exec()
     this.body = "Successfully updated user."
     logger.info "User #{this.authenticated.email} updated user #{userData.email}"
   catch e
@@ -340,7 +340,7 @@ exports.removeUser = (email) ->
     return
 
   try
-    yield User.findOneAndRemove(email: email).exec()
+    #TODO:Fix yield User.findOneAndRemove(email: email).exec()
     this.body = "Successfully removed user with email #{email}"
     logger.info "User #{this.authenticated.email} removed user #{email}"
   catch e
@@ -354,6 +354,6 @@ exports.getUsers = ->
     return
 
   try
-    this.body = yield User.find().exec()
+    this.body = #TODO:Fix yield User.find().exec()
   catch e
     utils.logAndSetResponse this, 500, "Could not fetch all users via the API #{e}", 'error'

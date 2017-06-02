@@ -69,7 +69,7 @@ exports.getMetadata = () ->
     
     # Return all documents from all collections for export
     for col of collections
-      exportObject[col] = yield collections[col].find().lean().exec()
+      exportObject[col] = #TODO:Fix yield collections[col].find().lean().exec()
       for doc in exportObject[col]
         if doc._id
           doc = removeProperties doc
@@ -99,21 +99,21 @@ handleMetadataPost = (action, that) ->
           
           # Keystore model does not have a uid other than _id and may not contain more than one entry
           if key is 'Keystore'
-            result = yield collections[key].find().exec()
+            result = #TODO:Fix yield collections[key].find().exec()
             uid = ''
           else
             uidObj = getUniqueIdentifierForCollection key, doc
             uid = uidObj[Object.keys(uidObj)[0]]
-            result = yield collections[key].find(uidObj).exec()
+            result = #TODO:Fix yield collections[key].find(uidObj).exec()
           
           if action is 'import'
             if result and result.length > 0 and result[0]._id
               delete doc._id if doc._id
-              yield collections[key].findByIdAndUpdate(result[0]._id, doc).exec()
+              #TODO:Fix yield collections[key].findByIdAndUpdate(result[0]._id, doc).exec()
               status = 'Updated'
             else
               doc = new collections[key] doc
-              result = yield Q.ninvoke doc, 'save'
+              result = #TODO:Fix yield Q.ninvoke doc, 'save'
               status = 'Inserted'
           
           if action is 'validate'

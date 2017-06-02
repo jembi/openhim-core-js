@@ -128,9 +128,9 @@ if process.env.NODE_ENV is 'test'
 
 exports.koaMiddleware = (next) ->
   # do nothing to the request
-  yield next
+  #TODO:Fix yield next
   # on response rewrite urls
   if this.authorisedChannel.rewriteUrls
     rewrite = Q.denodeify rewriteUrls
-    this.response.body =  yield rewrite this.response.body.toString(), this.authorisedChannel, this.authenticationType
+    this.response.body =  #TODO:Fix yield rewrite this.response.body.toString(), this.authorisedChannel, this.authenticationType
     winston.info "Rewrote url in the response of transaction: #{this.transactionId}"
