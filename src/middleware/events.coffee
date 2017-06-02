@@ -188,7 +188,7 @@ exports.koaMiddleware = (next) ->
     createChannelStartEvent trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.currentAttempt
     saveEvents trxEvents, done
 
-  #TODO:Fix yield next
+  {} #TODO:Fix yield next
 
   runAsync (ctx, done) ->
     logger.debug "Storing channel end and primary routes events for transaction: #{ctx.transactionId}"

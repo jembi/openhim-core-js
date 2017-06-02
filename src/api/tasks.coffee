@@ -69,10 +69,10 @@ exports.getTasks = ->
     # exclude transactions object from tasks list
     projectionFiltersObject = { 'transactions': 0 }
 
-    this.body = #TODO:Fix yield Task.find({}).exec()
+    this.body = {} #TODO:Fix yield Task.find({}).exec()
 
     # execute the query
-    this.body = #TODO:Fix yield Task
+    this.body = {} #TODO:Fix yield Task
       .find filters, projectionFiltersObject
       .skip filterSkip
       .limit parseInt filterLimit
@@ -120,12 +120,12 @@ exports.addTask = ->
 
     # check rerun permission and whether to create the rerun task
     isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
-    allowRerunTaskCreation = #TODO:Fix yield isRerunPermsValid( this.authenticated, transactions )
+    allowRerunTaskCreation = {} #TODO:Fix yield isRerunPermsValid( this.authenticated, transactions )
 
     # the rerun task may be created
     if allowRerunTaskCreation == true
       areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid)
-      trxChannelsValid = #TODO:Fix yield areTrxChannelsValid(transactions)
+      trxChannelsValid = {} #TODO:Fix yield areTrxChannelsValid(transactions)
 
       if !trxChannelsValid
         utils.logAndSetResponse this, 400, 'Cannot queue task as there are transactions with disabled or deleted channels', 'info'
@@ -136,7 +136,7 @@ exports.addTask = ->
       taskObject.totalTransactions = transactionsArr.length
 
       task = new Task(taskObject)
-      result = #TODO:Fix yield Q.ninvoke(task, 'save')
+      result = {} #TODO:Fix yield Q.ninvoke(task, 'save')
 
       # All ok! So set the result
       utils.logAndSetResponse this, 201, "User #{this.authenticated.email} created task with id #{task.id}", 'info'
@@ -218,7 +218,7 @@ exports.getTask = (taskId) ->
     # get filters object
     filters = JSON.parse filtersObject.filters
 
-    result = #TODO:Fix yield Task.findById(taskId).lean().exec()
+    result = {} #TODO:Fix yield Task.findById(taskId).lean().exec()
     tempTransactions = result.transactions
 
 
@@ -269,7 +269,7 @@ exports.updateTask = (taskId) ->
   delete taskData._id if taskData._id?
 
   try
-    #TODO:Fix yield Task.findOneAndUpdate({ _id: taskId }, taskData).exec()
+    {} #TODO:Fix yield Task.findOneAndUpdate({ _id: taskId }, taskData).exec()
 
     # All ok! So set the result
     this.body = 'The Task was successfully updated'
@@ -293,7 +293,7 @@ exports.removeTask = (taskId) ->
 
   try
     # Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    #TODO:Fix yield Task.remove({ _id: taskId }).exec()
+    {} #TODO:Fix yield Task.remove({ _id: taskId }).exec()
 
     # All ok! So set the result
     this.body = 'The Task was successfully deleted'

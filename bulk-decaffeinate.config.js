@@ -3,6 +3,5 @@ module.export = {
         "src/**/*.coffee",
         "test/**/*.coffee",
     ],
-    mochaEnvFilePattern : "test/**/*.coffee",
-    decaffeinateArgs : ["--keep-commonjs"]
+    mochaEnvFilePattern : "test/**/*.coffee"
 };

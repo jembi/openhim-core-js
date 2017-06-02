@@ -61,15 +61,15 @@ exports.updateTask = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   setAttemptNumber = Q.denodeify exports.setAttemptNumber
-  #TODO:Fix yield setAttemptNumber this
+  {} #TODO:Fix yield setAttemptNumber this
   sdc.timing "#{domain}.rerunUpdateTransactionMiddleware.setAttemptNumber", startTime if statsdServer.enabled
 
-  # do intial #TODO:Fix yield for koa to come back to this function with updated ctx object
-  #TODO:Fix yield next
+  # do intial {} #TODO:Fix yield for koa to come back to this function with updated ctx object
+  {} #TODO:Fix yield next
   startTime = new Date() if statsdServer.enabled
   updateOriginalTransaction = Q.denodeify exports.updateOriginalTransaction
-  #TODO:Fix yield updateOriginalTransaction this
+  {} #TODO:Fix yield updateOriginalTransaction this
 
   updateTask = Q.denodeify exports.updateTask
-  #TODO:Fix yield updateTask this
+  {} #TODO:Fix yield updateTask this
   sdc.timing "#{domain}.rerunUpdateTransactionMiddleware", startTime if statsdServer.enabled

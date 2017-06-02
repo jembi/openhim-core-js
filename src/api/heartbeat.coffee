@@ -7,9 +7,9 @@ Q = require 'q'
 exports.getHeartbeat = ->
   try
     uptime = Q.denodeify( server.getUptime )
-    result = #TODO:Fix yield uptime
+    result = {} #TODO:Fix yield uptime
 
-    mediators = #TODO:Fix yield Mediator.find().exec()
+    mediators = {} #TODO:Fix yield Mediator.find().exec()
     for mediator in mediators
       if not result.mediators then result.mediators = {}
 

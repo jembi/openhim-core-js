@@ -61,7 +61,7 @@ exports.authenticate = (next) ->
     auditAuthFailure()
     return
 
-  user = #TODO:Fix yield User.findOne(email: email).exec()
+  user = {} #TODO:Fix yield User.findOne(email: email).exec()
   this.authenticated = user
 
   if not user
@@ -82,20 +82,20 @@ exports.authenticate = (next) ->
     if this.path is '/transactions'
       if not this.query.filterRepresentation or this.query.filterRepresentation isnt 'full'
         # exempt from auditing success
-        #TODO:Fix yield next
+        {} #TODO:Fix yield next
         return
     else
       for pathTest in auditingExemptPaths
         if pathTest.test this.path
           # exempt from auditing success
-          #TODO:Fix yield next
+          {} #TODO:Fix yield next
           return
 
     # send audit
     audit = atna.userLoginAudit atna.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(','), user.groups.join(',')
     audit = atna.wrapInSyslog audit
     auditing.sendAuditEvent audit, -> logger.debug 'Processed internal audit'
-    #TODO:Fix yield next
+    {} #TODO:Fix yield next
   else
     # not authenticated - token mismatch
     logger.info "API token did not match expected value, denying access to API, the request was made by #{email} from #{this.request.host}"

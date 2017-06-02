@@ -18,14 +18,14 @@ exports.addClient = () ->
   clientData = this.request.body
 
   if clientData.clientID
-    chResult = #TODO:Fix yield Channel.find({allow: {$in: [clientData.clientID]}}, {name: 1 }).exec()
-    clResult = #TODO:Fix yield Client.find({roles: {$in: [clientData.clientID]}}, {clientID: 1 }).exec()
+    chResult = {} #TODO:Fix yield Channel.find({allow: {$in: [clientData.clientID]}}, {name: 1 }).exec()
+    clResult = {} #TODO:Fix yield Client.find({roles: {$in: [clientData.clientID]}}, {clientID: 1 }).exec()
     if chResult?.length > 0 or clResult?.length > 0
       return utils.logAndSetResponse this, 409, "A role name conflicts with clientID '#{clientData.clientID}'. A role name cannot be the same as a clientID.", 'info'
 
   try
     client = new Client clientData
-    result = #TODO:Fix yield Q.ninvoke client, 'save'
+    result = {} #TODO:Fix yield Q.ninvoke client, 'save'
 
     logger.info "User #{this.authenticated.email} created client with id #{client.id}"
     this.body = 'Client successfully created'
@@ -59,7 +59,7 @@ exports.getClient = (clientId, property) ->
   clientId = unescape clientId
 
   try
-    result = #TODO:Fix yield Client.findById(clientId, projectionRestriction).exec()
+    result = {} #TODO:Fix yield Client.findById(clientId, projectionRestriction).exec()
     if result is null
       utils.logAndSetResponse this, 404, "Client with id #{clientId} could not be found.", 'info'
     else
@@ -80,7 +80,7 @@ exports.findClientByDomain = (clientDomain) ->
   clientDomain = unescape clientDomain
 
   try
-    result = #TODO:Fix yield Client.findOne(clientDomain: clientDomain).exec()
+    result = {} #TODO:Fix yield Client.findOne(clientDomain: clientDomain).exec()
     if result is null
       utils.logAndSetResponse this, 404, "Could not find client with clientDomain #{clientDomain}", 'info'
     else
@@ -104,13 +104,13 @@ exports.updateClient = (clientId) ->
   delete clientData._id if clientData._id
 
   if clientData.clientID
-    chResult = #TODO:Fix yield Channel.find({allow: {$in: [clientData.clientID]}}, {name: 1 }).exec()
-    clResult = #TODO:Fix yield Client.find({roles: {$in: [clientData.clientID]}}, {clientID: 1 }).exec()
+    chResult = {} #TODO:Fix yield Channel.find({allow: {$in: [clientData.clientID]}}, {name: 1 }).exec()
+    clResult = {} #TODO:Fix yield Client.find({roles: {$in: [clientData.clientID]}}, {clientID: 1 }).exec()
     if chResult?.length > 0 or clResult?.length > 0
       return utils.logAndSetResponse this, 409, "A role name conflicts with clientID '#{clientData.clientID}'. A role name cannot be the same as a clientID.", 'info'
 
   try
-    #TODO:Fix yield Client.findByIdAndUpdate(clientId, clientData).exec()
+    {} #TODO:Fix yield Client.findByIdAndUpdate(clientId, clientData).exec()
     logger.info "User #{this.authenticated.email} updated client with id #{clientId}"
     this.body = 'Successfully updated client.'
   catch e
@@ -128,7 +128,7 @@ exports.removeClient = (clientId) ->
   clientId = unescape clientId
 
   try
-    #TODO:Fix yield Client.findByIdAndRemove(clientId).exec()
+    {} #TODO:Fix yield Client.findByIdAndRemove(clientId).exec()
     this.body = "Successfully removed client with ID #{clientId}"
     logger.info "User #{this.authenticated.email} removed client with id #{clientId}"
   catch e
@@ -144,7 +144,7 @@ exports.getClients = () ->
     return
 
   try
-    this.body = #TODO:Fix yield Client.find().exec()
+    this.body = {} #TODO:Fix yield Client.find().exec()
   catch e
     logger.error "Could not fetch all clients via the API: #{e.message}"
     this.message = e.message

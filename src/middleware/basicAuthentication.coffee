@@ -70,11 +70,11 @@ exports.authenticateUser = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   if this.authenticated?
-    #TODO:Fix yield next
+    {} #TODO:Fix yield next
   else
     authenticateUser = Q.denodeify exports.authenticateUser
-    #TODO:Fix yield authenticateUser this
+    {} #TODO:Fix yield authenticateUser this
     if this.authenticated?.clientID?
       this.header['X-OpenHIM-ClientID'] = this.authenticated.clientID
     sdc.timing "#{domain}.basicAuthMiddleware", startTime if statsdServer.enabled
-    #TODO:Fix yield next
+    {} #TODO:Fix yield next

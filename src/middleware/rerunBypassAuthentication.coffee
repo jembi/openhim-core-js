@@ -28,15 +28,15 @@ exports.authenticateUser = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   authenticateUser = Q.denodeify exports.authenticateUser
-  #TODO:Fix yield authenticateUser this
+  {} #TODO:Fix yield authenticateUser this
 
   if this.authenticated?
     sdc.timing "#{domain}.rerunBypassAuthenticationMiddleware", startTime if statsdServer.enabled
-    #TODO:Fix yield next
+    {} #TODO:Fix yield next
   else
     this.authenticated =
       ip : '127.0.0.1'
     # This is a public channel, allow rerun
     sdc.timing "#{domain}.rerunBypassAuthenticationMiddleware", startTime if statsdServer.enabled
-    #TODO:Fix yield next
+    {} #TODO:Fix yield next
 

@@ -11,7 +11,7 @@ _ = require 'lodash'
 # all in one getMetrics generator function for metrics API
 exports.getMetrics = (groupChannels, timeSeries, channelID) ->
   logger.debug "Called getMetrics(#{groupChannels}, #{timeSeries}, #{channelID})"
-  channels = #TODO:Fix yield authorisation.getUserViewableChannels this.authenticated
+  channels = {} #TODO:Fix yield authorisation.getUserViewableChannels this.authenticated
   channelIDs = channels.map (c) -> return c._id
   if typeof channelID is 'string' and not (channelID in (channelIDs.map (id) -> id.toString()) )
     this.status = 401
@@ -29,7 +29,7 @@ exports.getMetrics = (groupChannels, timeSeries, channelID) ->
   if Object.keys(query).length is 0
     query = null
 
-  m = #TODO:Fix yield metrics.calculateMetrics new Date(startDate), new Date(endDate), query, channelIDs, timeSeries, groupChannels
+  m = {} #TODO:Fix yield metrics.calculateMetrics new Date(startDate), new Date(endDate), query, channelIDs, timeSeries, groupChannels
 
   if m[0]?._id?.year? # if there are time components
     m = m.map (item) ->

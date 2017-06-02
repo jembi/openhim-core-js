@@ -51,8 +51,8 @@ exports.addAudit = ->
 
   try
     audit = new Audit auditData
-    result = #TODO:Fix yield Q.ninvoke audit, 'save'
-    #TODO:Fix yield Q.ninvoke auditing, 'processAuditMeta', audit
+    result = {} #TODO:Fix yield Q.ninvoke audit, 'save'
+    {} #TODO:Fix yield Q.ninvoke auditing, 'processAuditMeta', audit
     
     logger.info "User #{this.authenticated.email} created audit with id #{audit.id}"
     this.body = 'Audit successfully created'
@@ -116,7 +116,7 @@ exports.getAudits = ->
         filters['participantObjectIdentification.participantObjectID'] = new RegExp "#{participantObjectID}"
 
     # execute the query
-    this.body = #TODO:Fix yield Audit
+    this.body = {} #TODO:Fix yield Audit
       .find filters, projectionFiltersObject
       .skip filterSkip
       .limit parseInt filterLimit
@@ -148,7 +148,7 @@ exports.getAuditById = (auditId) ->
     # get projection object
     projectionFiltersObject = getProjectionObject 'full'
 
-    result = #TODO:Fix yield Audit.findById(auditId, projectionFiltersObject).exec()
+    result = {} #TODO:Fix yield Audit.findById(auditId, projectionFiltersObject).exec()
 
     # Test if the result if valid
     if not result
@@ -176,7 +176,7 @@ exports.getAuditsFilterOptions = ->
     return
 
   try
-    this.body = #TODO:Fix yield AuditMeta.findOne({}).exec()
+    this.body = {} #TODO:Fix yield AuditMeta.findOne({}).exec()
   catch e
     utils.logAndSetResponse this, 500, "Could not retrieve audits filter options via the API: #{e}", 'error'
 

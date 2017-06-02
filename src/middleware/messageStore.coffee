@@ -208,9 +208,9 @@ exports.setFinalStatus = setFinalStatus = (ctx, callback) ->
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   saveTransaction = Q.denodeify exports.storeTransaction
-  #TODO:Fix yield saveTransaction this
+  {} #TODO:Fix yield saveTransaction this
   sdc.timing "#{domain}.messageStoreMiddleware.storeTransaction", startTime if statsdServer.enabled
-  #TODO:Fix yield next
+  {} #TODO:Fix yield next
   startTime = new Date() if statsdServer.enabled
   exports.storeResponse this, ->
   sdc.timing "#{domain}.messageStoreMiddleware.storeResponse", startTime if statsdServer.enabled

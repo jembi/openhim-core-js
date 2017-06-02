@@ -58,10 +58,10 @@ exports.authorise = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   authorise = Q.denodeify exports.authorise
-  #TODO:Fix yield authorise this
+  {} #TODO:Fix yield authorise this
   if this.authorisedChannel?
     sdc.timing "#{domain}.authorisationMiddleware", startTime if statsdServer.enabled
-    #TODO:Fix yield next
+    {} #TODO:Fix yield next
 
 # export private functions for unit testing
 # note: you cant spy on these method because of this :(

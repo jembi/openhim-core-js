@@ -10,7 +10,7 @@ exports.getLatestEvents = (receivedTime) ->
 
   try
     rtDate = new Date(Number(receivedTime))
-    results = #TODO:Fix yield Event.find({ 'created': { '$gte': rtDate } }).sort({ 'normalizedTimestamp': 1 }).exec()
+    results = {} #TODO:Fix yield Event.find({ 'created': { '$gte': rtDate } }).sort({ 'normalizedTimestamp': 1 }).exec()
     this.body = events: results
   catch err
     utils.logAndSetResponse this, 500, "Could not fetch the latest events via the API: #{err}", 'error'

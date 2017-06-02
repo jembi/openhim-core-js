@@ -18,25 +18,25 @@ exports.generateCert = ->
   options = this.request.body
   if options.type is 'server'
     logger.info 'Generating server cert'
-    result = #TODO:Fix yield generateServerCert options
+    result = {} #TODO:Fix yield generateServerCert options
   else
     logger.info 'Generating client cert'
-    result = #TODO:Fix yield generateClientCert options
+    result = {} #TODO:Fix yield generateClientCert options
   this.status = 201
   this.body = result
 
 generateClientCert = (options) ->
-  keystoreDoc = #TODO:Fix yield Keystore.findOne().exec()
+  keystoreDoc = {} #TODO:Fix yield Keystore.findOne().exec()
 
   # Set additional options
   options.selfSigned = true
 
   # Attempt to create the certificate
   try
-    this.body = #TODO:Fix yield createCertificate options
-    certInfo = #TODO:Fix yield extractCertMetadata this.body.certificate
+    this.body = {} #TODO:Fix yield createCertificate options
+    certInfo = {} #TODO:Fix yield extractCertMetadata this.body.certificate
     keystoreDoc.ca.push certInfo
-    #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
+    {} #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
     #Add the new certficate to the keystore
     this.status = 201
     logger.info 'Client certificate created'
@@ -45,13 +45,13 @@ generateClientCert = (options) ->
   this.body
 
 generateServerCert = (options) ->
-  keystoreDoc = #TODO:Fix yield Keystore.findOne().exec()
+  keystoreDoc = {} #TODO:Fix yield Keystore.findOne().exec()
   options.selfSigned = true
   try
-    this.body = #TODO:Fix yield createCertificate options
-    keystoreDoc.cert = #TODO:Fix yield extractCertMetadata this.body.certificate
+    this.body = {} #TODO:Fix yield createCertificate options
+    keystoreDoc.cert = {} #TODO:Fix yield extractCertMetadata this.body.certificate
     keystoreDoc.key = this.body.key
-    #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
+    {} #TODO:Fix yield Q.ninvoke keystoreDoc, 'save'
     #Add the new certficate to the keystore
     this.status = 201
     logger.info 'Server certificate created'
@@ -76,8 +76,8 @@ createCertificate = (options) ->
   return deferred.promise
 
 extractCertMetadata = (cert) ->
-  certInfo = #TODO:Fix yield readCertificateInfo cert
-  fingerprint = #TODO:Fix yield getFingerprint cert
+  certInfo = {} #TODO:Fix yield readCertificateInfo cert
+  fingerprint = {} #TODO:Fix yield getFingerprint cert
   certInfo.data = this.body.certificate
   certInfo.fingerprint = fingerprint.fingerprint
   return certInfo

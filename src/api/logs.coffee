@@ -31,7 +31,7 @@ exports.getLogs = ->
     start: (parseInt query.start) || 0
     limit: 100000 # limit: 0 doesn't work :/
 
-  results = #TODO:Fix yield Q.ninvoke logger, 'query', options
+  results = {} #TODO:Fix yield Q.ninvoke logger, 'query', options
   results = results.mongodb
 
   if query.level?

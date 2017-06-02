@@ -115,7 +115,7 @@ matchRequest = (ctx, done) ->
 exports.koaMiddleware = (next) ->
   startTime = new Date() if statsdServer.enabled
   matchReq = Q.denodeify matchRequest
-  match = #TODO:Fix yield matchReq this
+  match = {} #TODO:Fix yield matchReq this
 
   if match?
     logger.info "The channel that matches the request #{this.request.path} is: #{match.name}"
@@ -124,7 +124,7 @@ exports.koaMiddleware = (next) ->
     logger.info "No channel matched the request #{this.request.path}"
 
   sdc.timing "#{domain}.authorisationMiddleware", startTime if statsdServer.enabled
-  #TODO:Fix yield next
+  {} #TODO:Fix yield next
 
 # export private functions for unit testing
 # note: you cant spy on these method because of this :(
