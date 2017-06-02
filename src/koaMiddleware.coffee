@@ -34,7 +34,7 @@ compress = require 'koa-compress'
 
 rawBodyReader = (next) ->
   startTime = new Date() if config.statsd.enabled
-  body = {} #TODO:Fix yield getRawBody this.req,
+  body = {}, #TODO:Fix yield getRawBody this.req,
     length: this.length,
     encoding: this.charset
 
