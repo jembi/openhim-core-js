@@ -14,6 +14,7 @@ module.exports = {
         "no-restricted-syntax": 0,
         "no-loop-func": 0,
         "import/prefer-default-export" : 0,
+		"no-plusplus":0,
         "no-shadow": 0, //TODO : Enable this rule
         "no-param-reassign": 0, //TODO : Enable this rule
         "func-names" : 0, //TODO : Enable this rule,
@@ -23,5 +24,6 @@ module.exports = {
 		"camelcase" :0, //TODO : Enable this rule,
 		"no-multi-assign" : 0, //TODO : Enable this rule,
 		"import/no-mutable-exports" : 0, //TODO : Enable this rule, 
+		"guard-for-in" : 0, //TODO : Enable this rule, 
     }
 };
