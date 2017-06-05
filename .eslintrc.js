@@ -25,6 +25,8 @@ module.exports = {
 		"camelcase" :0, //TODO : Enable this rule,
 		"no-multi-assign" : 0, //TODO : Enable this rule,
 		"import/no-mutable-exports" : 0, //TODO : Enable this rule, 
+		"consistent-return": 0, //TODO : Enable this rule
 		"guard-for-in" : 0, //TODO : Enable this rule, 
+		"arrow-parens" : 0, //TODO : Enable this rule, 
     }
 };
