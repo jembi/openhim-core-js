@@ -1,211 +1,213 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-let processAudit, processAuditMeta;
-import logger from 'winston';
-import { Parse as syslogParser } from 'glossy';
-import { parseString } from 'xml2js';
-let { firstCharLowerCase } = require('xml2js').processors;
-import { Audit } from './model/audits';
-import { AuditMeta } from './model/audits';
+import logger from "winston";
+import { Parse as syslogParser } from "glossy";
+import { parseString } from "xml2js";
+import dgram from "dgram";
+import tls from "tls";
+import net from "net";
+
+import { Audit, AuditMeta } from "./model/audits";
 import tlsAuthentication from "./middleware/tlsAuthentication";
-import dgram from 'dgram';
-import tls from 'tls';
-import net from 'net';
 import config from "./config/config";
-config.auditing = config.get('auditing');
+
+config.auditing = config.get("auditing");
+let processAudit;
+let processAuditMeta;
+
+const { firstCharLowerCase } = require("xml2js").processors;
+
+function parseAuditRecordFromXML(xml, callback) {
+	// DICOM mappers
+	function csdCodeToCode(name) { if (name === "csd-code") { return "code"; } return name; }
+	function originalTextToDisplayName(name) { if (name === "originalText") { return "displayName"; } return name; }
+
+	const options = {
+		mergeAttrs: true,
+		explicitArray: false,
+		tagNameProcessors: [firstCharLowerCase],
+		attrNameProcessors: [firstCharLowerCase, csdCodeToCode, originalTextToDisplayName],
+	};
+
+	return parseString(xml, options, (err, result) => {
+		if (err) { return callback(err); }
+
+		if (!(result != null ? result.auditMessage : undefined)) {
+			return callback(new Error("Document is not a valid AuditMessage"));
+		}
+
+		const audit = {};
+
+		if (result.auditMessage.eventIdentification) {
+			audit.eventIdentification = result.auditMessage.eventIdentification;
+		}
+
+		audit.activeParticipant = [];
+		if (result.auditMessage.activeParticipant) {
+			// xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
+			if (result.auditMessage.activeParticipant instanceof Array) {
+				for (const ap of Array.from(result.auditMessage.activeParticipant)) {
+					audit.activeParticipant.push(ap);
+				}
+			} else {
+				audit.activeParticipant.push(result.auditMessage.activeParticipant);
+			}
+		}
+
+		if (result.auditMessage.auditSourceIdentification) {
+			audit.auditSourceIdentification = result.auditMessage.auditSourceIdentification;
+		}
+
+		audit.participantObjectIdentification = [];
+		if (result.auditMessage.participantObjectIdentification) {
+			// xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
+			if (result.auditMessage.participantObjectIdentification instanceof Array) {
+				for (const poi of Array.from(result.auditMessage.participantObjectIdentification)) {
+					audit.participantObjectIdentification.push(poi);
+				}
+			} else {
+				audit.participantObjectIdentification.push(result.auditMessage.participantObjectIdentification);
+			}
+		}
+
+		return callback(null, audit);
+	});
+}
 
 
- function parseAuditRecordFromXML(xml, callback) {
-  // DICOM mappers
-   function csdCodeToCode(name) { if (name === 'csd-code') { return 'code'; } else { return name; } };
-   function originalTextToDisplayName(name) { if (name === 'originalText') { return 'displayName'; } else { return name; } };
+function codeInArray(code, arr) {
+	let needle;
+	return ((needle = code, Array.from(arr.map(a => a.code)).includes(needle)));
+}
 
-  let options = {
-    mergeAttrs: true,
-    explicitArray: false,
-    tagNameProcessors: [firstCharLowerCase],
-    attrNameProcessors: [firstCharLowerCase, csdCodeToCode, originalTextToDisplayName]
-  };
+const processAuditMeta$1 = (processAuditMeta = (audit, callback) =>
+	AuditMeta.findOne({}, (err, auditMeta) => {
+		if (err) {
+			logger.error(err);
+			return callback();
+		}
 
-  return parseString(xml, options, function(err, result) {
-    if (err) { return callback(err); }
+		if (!auditMeta) { auditMeta = new AuditMeta(); }
 
-    if (!(result != null ? result.auditMessage : undefined)) {
-      return callback(new Error('Document is not a valid AuditMessage'));
-    }
+		if (__guard__(audit.eventIdentification != null ? audit.eventIdentification.eventTypeCode : undefined, x => x.code) && !codeInArray(audit.eventIdentification.eventTypeCode.code, auditMeta.eventType)) {
+			auditMeta.eventType.push(audit.eventIdentification.eventTypeCode);
+		}
 
-    let audit = {};
+		if (__guard__(audit.eventIdentification != null ? audit.eventIdentification.eventID : undefined, x1 => x1.code) && !codeInArray(audit.eventIdentification.eventID.code, auditMeta.eventID)) {
+			auditMeta.eventID.push(audit.eventIdentification.eventID);
+		}
 
-    if (result.auditMessage.eventIdentification) {
-      audit.eventIdentification = result.auditMessage.eventIdentification;
-    }
+		if (audit.activeParticipant) {
+			for (const activeParticipant of Array.from(audit.activeParticipant)) {
+				if ((activeParticipant.roleIDCode != null ? activeParticipant.roleIDCode.code : undefined) && !codeInArray(activeParticipant.roleIDCode.code, auditMeta.activeParticipantRoleID)) {
+					auditMeta.activeParticipantRoleID.push(activeParticipant.roleIDCode);
+				}
+			}
+		}
 
-    audit.activeParticipant = [];
-    if (result.auditMessage.activeParticipant) {
-      // xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
-      if (result.auditMessage.activeParticipant instanceof Array) {
-        for (let ap of Array.from(result.auditMessage.activeParticipant)) {
-          audit.activeParticipant.push(ap);
-        }
-      } else {
-        audit.activeParticipant.push(result.auditMessage.activeParticipant);
-      }
-    }
+		if (audit.participantObjectIdentification) {
+			for (const participantObject of Array.from(audit.participantObjectIdentification)) {
+				if ((participantObject.participantObjectIDTypeCode != null ? participantObject.participantObjectIDTypeCode.code : undefined) && !codeInArray(participantObject.participantObjectIDTypeCode.code, auditMeta.participantObjectIDTypeCode)) {
+					auditMeta.participantObjectIDTypeCode.push(participantObject.participantObjectIDTypeCode);
+				}
+			}
+		}
 
-    if (result.auditMessage.auditSourceIdentification) {
-      audit.auditSourceIdentification = result.auditMessage.auditSourceIdentification;
-    }
+		if ((audit.auditSourceIdentification != null ? audit.auditSourceIdentification.auditSourceID : undefined) && !Array.from(auditMeta.auditSourceID).includes(audit.auditSourceIdentification.auditSourceID)) {
+			auditMeta.auditSourceID.push(audit.auditSourceIdentification.auditSourceID);
+		}
 
-    audit.participantObjectIdentification = [];
-    if (result.auditMessage.participantObjectIdentification) {
-      // xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
-      if (result.auditMessage.participantObjectIdentification instanceof Array) {
-        for (let poi of Array.from(result.auditMessage.participantObjectIdentification)) {
-          audit.participantObjectIdentification.push(poi);
-        }
-      } else {
-        audit.participantObjectIdentification.push(result.auditMessage.participantObjectIdentification);
-      }
-    }
-
-    return callback(null, audit);
-  });
-};
-
-
- function codeInArray(code, arr) { let needle;
-return ((needle = code, Array.from(arr.map(a => a.code)).includes(needle))); };
-
-let processAuditMeta$1 = (processAuditMeta = (audit, callback) =>
-  AuditMeta.findOne({}, function(err, auditMeta) {
-    if (err) {
-      logger.error(err);
-      return callback();
-    }
-
-    if (!auditMeta) { auditMeta = new AuditMeta(); }
-
-    if (__guard__(audit.eventIdentification != null ? audit.eventIdentification.eventTypeCode : undefined, x => x.code) && !codeInArray(audit.eventIdentification.eventTypeCode.code, auditMeta.eventType)) {
-      auditMeta.eventType.push(audit.eventIdentification.eventTypeCode);
-    }
-
-    if (__guard__(audit.eventIdentification != null ? audit.eventIdentification.eventID : undefined, x1 => x1.code) && !codeInArray(audit.eventIdentification.eventID.code, auditMeta.eventID)) {
-      auditMeta.eventID.push(audit.eventIdentification.eventID);
-    }
-
-    if (audit.activeParticipant) {
-      for (let activeParticipant of Array.from(audit.activeParticipant)) {
-        if ((activeParticipant.roleIDCode != null ? activeParticipant.roleIDCode.code : undefined) && !codeInArray(activeParticipant.roleIDCode.code, auditMeta.activeParticipantRoleID)) {
-          auditMeta.activeParticipantRoleID.push(activeParticipant.roleIDCode);
-        }
-      }
-    }
-
-    if (audit.participantObjectIdentification) {
-      for (let participantObject of Array.from(audit.participantObjectIdentification)) {
-        if ((participantObject.participantObjectIDTypeCode != null ? participantObject.participantObjectIDTypeCode.code : undefined) && !codeInArray(participantObject.participantObjectIDTypeCode.code, auditMeta.participantObjectIDTypeCode)) {
-          auditMeta.participantObjectIDTypeCode.push(participantObject.participantObjectIDTypeCode);
-        }
-      }
-    }
-
-    if ((audit.auditSourceIdentification != null ? audit.auditSourceIdentification.auditSourceID : undefined) && !Array.from(auditMeta.auditSourceID).includes(audit.auditSourceIdentification.auditSourceID)) {
-      auditMeta.auditSourceID.push(audit.auditSourceIdentification.auditSourceID);
-    }
-
-    return auditMeta.save(function(err) {
-      if (err) { logger.error(err); }
-      return callback();
-    });
-  })
+		return auditMeta.save((err) => {
+			if (err) { logger.error(err); }
+			return callback();
+		});
+	})
 );
 
 
 export { processAuditMeta$1 as processAuditMeta };
-let processAudit$1 = (processAudit = function(msg, callback) {
-  if (callback == null) { callback = function() {}; }
-  let parsedMsg = syslogParser.parse(msg);
+const processAudit$1 = (processAudit = function (msg, callback) {
+	if (callback == null) { callback = function () { }; }
+	const parsedMsg = syslogParser.parse(msg);
 
-  if (!parsedMsg || !parsedMsg.message) {
-    logger.info('Invalid message received');
-    return callback();
-  }
+	if (!parsedMsg || !parsedMsg.message) {
+		logger.info("Invalid message received");
+		return callback();
+	}
 
-  return parseAuditRecordFromXML(parsedMsg.message, function(xmlErr, result) {
-    let audit = new Audit(result);
+	return parseAuditRecordFromXML(parsedMsg.message, (xmlErr, result) => {
+		const audit = new Audit(result);
 
-    audit.rawMessage = msg;
-    audit.syslog = parsedMsg;
-    delete audit.syslog.originalMessage;
-    delete audit.syslog.message;
+		audit.rawMessage = msg;
+		audit.syslog = parsedMsg;
+		delete audit.syslog.originalMessage;
+		delete audit.syslog.message;
 
-    return audit.save(function(saveErr) {
-      if (saveErr) { logger.error(`An error occurred while processing the audit entry: ${saveErr}`); }
-      if (xmlErr) { logger.info(`Failed to parse message as an AuditMessage XML document: ${xmlErr}`); }
+		return audit.save((saveErr) => {
+			if (saveErr) { logger.error(`An error occurred while processing the audit entry: ${saveErr}`); }
+			if (xmlErr) { logger.info(`Failed to parse message as an AuditMessage XML document: ${xmlErr}`); }
 
-      return processAuditMeta(audit, callback);
-    });
-  });
+			return processAuditMeta(audit, callback);
+		});
+	});
 });
 
 
 export { processAudit$1 as processAudit };
- function sendUDPAudit(msg, callback) {
-  let client = dgram.createSocket('udp4');
-  return client.send(msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, function(err) {
-    client.close();
-    return callback(err);
-  });
-};
+function sendUDPAudit(msg, callback) {
+	const client = dgram.createSocket("udp4");
+	return client.send(msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, (err) => {
+		client.close();
+		return callback(err);
+	});
+}
 
-let sendTLSAudit = (msg, callback) =>
-  tlsAuthentication.getServerOptions(true, function(err, options) {
-    if (err) { return callback(err); }
+const sendTLSAudit = (msg, callback) =>
+	tlsAuthentication.getServerOptions(true, (err, options) => {
+		if (err) { return callback(err); }
 
-    var client = tls.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, function() {
-      if (!client.authorized) { return callback(client.authorizationError); }
+		const client = tls.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, () => {
+			if (!client.authorized) { return callback(client.authorizationError); }
 
-      client.write(`${msg.length} ${msg}`);
-      return client.end();
-    });
+			client.write(`${msg.length} ${msg}`);
+			return client.end();
+		});
 
-    client.on('error', err => logger.error(err));
-    return client.on('close', () => callback());
-  })
-;
+		client.on("error", err => logger.error(err));
+		return client.on("close", () => callback());
+	})
+	;
 
- function sendTCPAudit(msg, callback) {
-  var client = net.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, function() {
-    client.write(`${msg.length} ${msg}`);
-    return client.end();
-  });
+function sendTCPAudit(msg, callback) {
+	const client = net.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, () => {
+		client.write(`${msg.length} ${msg}`);
+		return client.end();
+	});
 
-  client.on('error', err => logger.error);
-  return client.on('close', () => callback());
-};
+	client.on("error", err => logger.error);
+	return client.on("close", () => callback());
+}
 
 
 // Send an audit event
 export function sendAuditEvent(msg, callback) {
-  if (callback == null) { callback = function() {}; }
-   function done(err) {
-    if (err) { logger.error(err); }
-    return callback();
-  };
+	if (callback == null) { callback = function () { }; }
+	function done(err) {
+		if (err) { logger.error(err); }
+		return callback();
+	}
 
-  if (((config.auditing != null ? config.auditing.auditEvents : undefined) == null)) {
-    return done(new Error('Unable to record audit event: Missing config.auditing.auditEvents'));
-  }
+	if (((config.auditing != null ? config.auditing.auditEvents : undefined) == null)) {
+		return done(new Error("Unable to record audit event: Missing config.auditing.auditEvents"));
+	}
 
-  switch (config.auditing.auditEvents.interface) {
-    case 'internal': return processAudit(msg, done);
-    case 'udp': return sendUDPAudit(msg, done);
-    case 'tls': return sendTLSAudit(msg, done);
-    case 'tcp': return sendTCPAudit(msg, done);
-    default: return done(new Error(`Invalid audit event interface '${config.auditing.auditEvents.interface}'`));
-  }
+	switch (config.auditing.auditEvents.interface) {
+		case "internal": return processAudit(msg, done);
+		case "udp": return sendUDPAudit(msg, done);
+		case "tls": return sendTLSAudit(msg, done);
+		case "tcp": return sendTCPAudit(msg, done);
+		default: return done(new Error(`Invalid audit event interface '${config.auditing.auditEvents.interface}'`));
+	}
 }
 
 function __guard__(value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined;
+	return (typeof value !== "undefined" && value !== null) ? transform(value) : undefined;
 }

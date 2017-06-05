@@ -8,7 +8,7 @@ module.exports = {
         "quotes": ["warn", "double"],
         "space-before-function-paren": 0,
         "max-len": 0,
-        "indent": ["error", "tab"],
+        "indent": 0,
         "no-tabs": 0,
         "no-underscore-dangle": 0,
         "no-restricted-syntax": 0,
@@ -16,6 +16,7 @@ module.exports = {
         "import/prefer-default-export" : 0,
         "no-shadow": 0, //TODO : Enable this rule
         "no-param-reassign": 0, //TODO : Enable this rule
-        "func-names" : 0 //TODO : Enable this rule
+        "func-names" : 0, //TODO : Enable this rule,
+		"no-unused-vars" : 0 //TODO : Enable this rule
     }
 };
