@@ -74,8 +74,7 @@ function parseAuditRecordFromXML(xml, callback) {
 
 
 function codeInArray(code, arr) {
-	let needle;
-	return ((needle = code, Array.from(arr.map(a => a.code)).includes(needle)));
+	return arr.map(a => a.code).includes(code);
 }
 
 const processAuditMeta$1 = (processAuditMeta = (audit, callback) =>

@@ -17,6 +17,10 @@ module.exports = {
         "no-shadow": 0, //TODO : Enable this rule
         "no-param-reassign": 0, //TODO : Enable this rule
         "func-names" : 0, //TODO : Enable this rule,
-		"no-unused-vars" : 0 //TODO : Enable this rule
+		"no-unused-vars" : 0, //TODO : Enable this rule,
+		"import/no-named-as-default-member" : 0, //TODO : Enable this rule,
+		"no-use-before-define" :0, //TODO : Enable this rule
+		"camelcase" :0, //TODO : Enable this rule,
+		"no-multi-assign" : 0
     }
 };
