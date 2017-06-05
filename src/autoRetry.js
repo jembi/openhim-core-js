@@ -29,7 +29,7 @@ export function queueForRetry(tx) {
 
 let getChannels = callback => Channel.find({autoRetryEnabled: true, status: 'enabled'}, callback);
 
-let popTransactions = function(channel, callback) {
+ function popTransactions(channel, callback) {
   let to = moment().subtract(channel.autoRetryPeriodMinutes-1, 'minutes');
 
   let query = {
@@ -54,7 +54,7 @@ let popTransactions = function(channel, callback) {
   });
 };
 
-let createRerunTask = function(transactionIDs, callback) {
+ function createRerunTask(transactionIDs, callback) {
   logger.info(`Rerunning failed transactions: ${transactionIDs}`);
   let task = new Task({
     transactions: (transactionIDs.map(t => ({tid: t})) ),
@@ -69,7 +69,7 @@ let createRerunTask = function(transactionIDs, callback) {
   });
 };
 
-let autoRetryTask = function(job, done) {
+ function autoRetryTask(job, done) {
   let _taskStart = new Date();
   let transactionsToRerun = [];
 
@@ -94,7 +94,7 @@ let autoRetryTask = function(job, done) {
     }
 
     return (Q.all(promises)).then(function() {
-      let end = function() {
+       function end() {
         logger.debug(`Auto retry task total time: ${new Date()-_taskStart} ms`);
         return done();
       };
@@ -106,7 +106,7 @@ let autoRetryTask = function(job, done) {
 };
 
 
-let setupAgenda = function(agenda) {
+ function setupAgenda(agenda) {
   agenda.define('auto retry failed transactions', (job, done) => autoRetryTask(job, done));
   return agenda.every('1 minutes', 'auto retry failed transactions');
 };

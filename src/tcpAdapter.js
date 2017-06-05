@@ -33,7 +33,7 @@ export function popTransaction(key) {
   return res;
 }
 
-let startListening = function(channel, tcpServer, host, port, callback) {
+ function startListening(channel, tcpServer, host, port, callback) {
   tcpServer.listen(port, host, function() {
     tcpServers.push({ channelID: channel._id, server: tcpServer });
     return callback(null);
@@ -161,7 +161,7 @@ var adaptSocketRequest = function(channel, sock, socketData) {
 };
 
 
-let stopTCPServers = function(servers, callback) {
+ function stopTCPServers(servers, callback) {
   let promises = [];
 
   for (let server of Array.from(servers)) {

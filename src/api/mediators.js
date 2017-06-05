@@ -94,7 +94,7 @@ export function getMediator(mediatorURN) {
   }
 }
 
-let constructError = function(message, name) {
+ function constructError(message, name) {
   let err = new Error(message);
   err.name = name;
   return err;
@@ -275,7 +275,7 @@ export function heartbeat(urn) {
 }
 
 
-let validateConfigField = function(param, def, field) {
+ function validateConfigField(param, def, field) {
   switch (def.type) {
     case 'string':
       if (typeof field !== 'string') {
@@ -416,7 +416,7 @@ export function setConfig(urn) {
   }
 }
 
-let saveDefaultChannelConfig = function(channels) {
+ function saveDefaultChannelConfig(channels) {
   let promises = [];
   for (let channel of Array.from(channels)) {
     delete channel._id;

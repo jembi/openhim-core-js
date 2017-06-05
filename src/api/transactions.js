@@ -19,7 +19,7 @@ let os = require("os");
 let timer = new Date();
 let domain = os.hostname() + '.' + application.name;
 
-let hasError = function(updates) {
+ function hasError(updates) {
   let error;
   if (updates.error != null) { return true; }
   if (updates.routes != null) {
@@ -33,7 +33,7 @@ let hasError = function(updates) {
   return false;
 };
 
-let getChannelIDsArray = function(channels) {
+ function getChannelIDsArray(channels) {
   let channelIDs = [];
   for (let channel of Array.from(channels)) {
     channelIDs.push(channel._id.toString());
@@ -43,7 +43,7 @@ let getChannelIDsArray = function(channels) {
 
 
 // function to construct projection object
-let getProjectionObject = function(filterRepresentation) {
+ function getProjectionObject(filterRepresentation) {
   switch (filterRepresentation) {
     case "simpledetails":
       // view minimum required data for transaction details view
@@ -65,11 +65,11 @@ let getProjectionObject = function(filterRepresentation) {
 };
 
 
-let truncateTransactionDetails = function(trx) {
+ function truncateTransactionDetails(trx) {
   let truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000;
   let truncateAppend = apiConf.truncateAppend != null ? apiConf.truncateAppend : "\n[truncated ...]";
 
-  let trunc = function(t) {
+   function trunc(t) {
     if (((t.request != null ? t.request.body : undefined) != null) && (t.request.body.length > truncateSize)) {
       t.request.body = t.request.body.slice(0, truncateSize) + truncateAppend;
     }
@@ -237,7 +237,7 @@ export function getTransactions() {
   }
 }
 
-let recursivelySearchObject = function(ctx, obj, ws, repeat) {
+ function recursivelySearchObject(ctx, obj, ws, repeat) {
   if (Array.isArray(obj)) {
     return obj.forEach(function(value) {
       if (value && (typeof value === 'object')) {
@@ -427,7 +427,7 @@ var generateEvents = (transaction, channelID) =>
     logger.debug(`Storing events for transaction: ${transaction._id}`);
 
     let trxEvents = [];
-    let done = function(err) { if (err) { return logger.error(err); } };
+     function done(err) { if (err) { return logger.error(err); } };
 
     events.createTransactionEvents(trxEvents, transaction, channel);
 
@@ -438,7 +438,7 @@ var generateEvents = (transaction, channelID) =>
 ;
 
 
-let updateTransactionMetrics = function(updates, doc) {
+ function updateTransactionMetrics(updates, doc) {
   if ((updates['$push'] != null ? updates['$push'].routes : undefined) != null) {
     return (() => {
       let result = [];

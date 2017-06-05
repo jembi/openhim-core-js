@@ -15,7 +15,7 @@ let sdc = new SDC(statsdServer);
 
 let setupProxyHeaders$1 = (setupProxyHeaders = function(ctx) {
   // Headers
-  let setOrAppendHeader = function(ctx, header, value) {
+   function setOrAppendHeader(ctx, header, value) {
     if (!value) { return; }
     if (ctx.header[header]) {
       return ctx.header[header] = `${ctx.header[header]}, ${value}`;

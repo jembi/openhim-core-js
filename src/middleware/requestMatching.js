@@ -19,7 +19,7 @@ let os = require('os');
 let domain = `${os.hostname()}.${application.name}.appMetrics`;
 let sdc = new SDC(statsdServer);
 
-let matchContent = function(channel, ctx) {
+ function matchContent(channel, ctx) {
   if (channel.matchContentRegex) {
     return matchRegex(channel.matchContentRegex, ctx.body);
   } else if (channel.matchContentXpath && channel.matchContentValue) {
@@ -70,7 +70,7 @@ var getJSONValByString = function(jsonObj, jsonPath) {
   return jsonObj;
 };
 
-let extractContentType = function(ctHeader) {
+ function extractContentType(ctHeader) {
   let index = ctHeader.indexOf(';');
   if (index !== -1) {
     return ctHeader.substring(0, index).trim();
@@ -79,12 +79,12 @@ let extractContentType = function(ctHeader) {
   }
 };
 
-let matchUrlPattern = function(channel, ctx) {
+ function matchUrlPattern(channel, ctx) {
   let pat = new RegExp(channel.urlPattern);
   return pat.test(ctx.request.path);
 };
 
-let matchContentTypes = function(channel, ctx) {
+ function matchContentTypes(channel, ctx) {
   if ((channel.matchContentTypes != null ? channel.matchContentTypes.length : undefined) > 0) {
     if (ctx.request.header && ctx.request.header['content-type']) {
       let ct = extractContentType(ctx.request.header['content-type']);

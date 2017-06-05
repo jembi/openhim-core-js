@@ -56,18 +56,16 @@
     "xpath": "0.0.23"
   },
   "devDependencies": {
-    "coffee-script": "^1.9.1",
-    "coffeelint": "1.15.7",
+    "babel-cli": "^6.24.1",
+    "babel-preset-env": "^1.5.1",
+    "babel-register": "^6.24.1",
+    "eslint": "^3.19.0",
+    "eslint-config-airbnb-base": "^11.2.0",
+    "eslint-plugin-import": "^2.3.0",
     "finalhandler": "^0.4.0",
-    "grunt": "^1.0.1",
-    "grunt-cli": "^1.0.0",
-    "grunt-coffeelint": "^0.0.16",
-    "grunt-contrib-clean": "^1.0.0",
-    "grunt-contrib-coffee": "^1.0.0",
-    "grunt-contrib-watch": "^1.0.0",
-    "grunt-mocha-cli": "^2.1.0",
     "mocha": "^2.5.0",
     "rewire": "^2.5.1",
+    "rimraf": "^2.6.1",
     "serve-static": "^1.9.3",
     "should": "^9.0.0",
     "sinon": "^1.12.2",
@@ -75,9 +73,13 @@
     "supertest": "1.2.0"
   },
   "scripts": {
-    "prepublish": "grunt build",
-    "test": "grunt test",
-    "start": "grunt build && node --harmony lib/server.js"
+    "build": "babel src --out-dir lib -s",
+    "build:watch": "npm run build -- -w",
+    "prepare": "npm run build",
+    "lint" : "eslint src/ test/",
+    "lint:fix" : "eslint --fix src/ test/",
+    "test": "mocha --require babel-register src/**/*.js test/**/*.js",
+    "start": "node --harmony lib/server.js"
   },
   "repository": {
     "type": "git",

@@ -16,7 +16,7 @@ import config from '../config/config';
 config.polling = config.get('polling');
 let request = require('request');
 
-let isPathValid = function(channel) {
+ function isPathValid(channel) {
   if (channel.routes != null) {
     for (let route of Array.from(channel.routes)) {
       // There cannot be both path and pathTranform. pathTransform must be valid
@@ -39,7 +39,7 @@ export function getChannels() {
   }
 }
 
-let processPostAddTriggers = function(channel) {
+ function processPostAddTriggers(channel) {
   if (channel.type && Channels.isChannelEnabled(channel)) {
     if (((channel.type === 'tcp') || (channel.type === 'tls')) && server.isTcpHttpReceiverRunning()) {
       return tcpAdapter.notifyMasterToStartTCPServer(channel._id, function(err) { if (err) { return logger.error(err); } });
@@ -148,7 +148,7 @@ export function getChannel(channelId) {
   }
 }
 
-let processPostUpdateTriggers = function(channel) {
+ function processPostUpdateTriggers(channel) {
   if (channel.type) {
     if (((channel.type === 'tcp') || (channel.type === 'tls')) && server.isTcpHttpReceiverRunning()) {
       if (Channels.isChannelEnabled(channel)) {
@@ -227,7 +227,7 @@ export function updateChannel(channelId) {
   }
 }
 
-let processPostDeleteTriggers = function(channel) {
+ function processPostDeleteTriggers(channel) {
   if (channel.type) {
     if (((channel.type === 'tcp') || (channel.type === 'tls')) && server.isTcpHttpReceiverRunning()) {
       return tcpAdapter.notifyMasterToStopTCPServer(channel._id, function(err) { if (err) { return logger.error(err); } });

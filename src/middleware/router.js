@@ -41,7 +41,7 @@ export { numberOfPrimaryRoutes$1 as numberOfPrimaryRoutes };
 let containsMultiplePrimaries = routes => numberOfPrimaryRoutes(routes) > 1;
 
 
-let setKoaResponse = function(ctx, response) {
+ function setKoaResponse(ctx, response) {
 
   // Try and parse the status to an int if it is a string
   let err;
@@ -136,7 +136,7 @@ var setCookiesOnContext = function(ctx, value) {
   })();
 };
 
-let handleServerError = function(ctx, err, route) {
+ function handleServerError(ctx, err, route) {
   ctx.autoRetry = true;
   if (route) {
     route.error = {
@@ -159,7 +159,7 @@ let handleServerError = function(ctx, err, route) {
 };
 
 
-let sendRequestToRoutes = function(ctx, routes, next) {
+ function sendRequestToRoutes(ctx, routes, next) {
   let promises = [];
   let promise = {};
   ctx.timer = new Date;
@@ -286,7 +286,7 @@ let sendRequestToRoutes = function(ctx, routes, next) {
         if (ctx.routes) {
           logger.debug(`Storing route events for transaction: ${ctx.transactionId}`);
 
-          let done = function(err) { if (err) { return logger.error(err); } };
+           function done(err) { if (err) { return logger.error(err); } };
           let trxEvents = [];
 
           events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt);
@@ -347,7 +347,7 @@ var sendRequest = function(ctx, route, options) {
   }
 };
 
-let obtainCharset = function(headers) {
+ function obtainCharset(headers) {
   let contentType = headers['content-type'] || '';
   let matches =  contentType.match(/charset=([^;,\r\n]+)/i);
   if (matches && matches[1]) {

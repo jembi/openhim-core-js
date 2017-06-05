@@ -40,7 +40,7 @@ var removeProperties = function(obj) {
 
 
 // Function to return unique identifier key and value for a collection
-let getUniqueIdentifierForCollection = function(collection, doc) {
+ function getUniqueIdentifierForCollection(collection, doc) {
   let uid, uidKey;
   switch (collection) {
     case 'Channels': uidKey = 'name'; uid = doc.name; break;
@@ -97,7 +97,7 @@ export function getMetadata() {
 }
 
 
-let handleMetadataPost = function(action, that) {
+ function handleMetadataPost(action, that) {
   // Test if the user is authorised
   let e;
   if (!authorisation.inGroup('admin', that.authenticated)) {

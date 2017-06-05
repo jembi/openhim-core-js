@@ -16,7 +16,7 @@ import utils from '../utils';
 // Function to check if rerun task creation is valid #
 //####################################################
 
-let isRerunPermissionsValid = function(user, transactions, callback) {
+ function isRerunPermissionsValid(user, transactions, callback) {
 
   // if 'admin' - set rerun permissions to true
   if (authorisation.inGroup("admin", user) === true) {
@@ -184,7 +184,7 @@ export function addTask() {
 
 
 // function to build filtered transactions
-let buildFilteredTransactionsArray = function(filters, transactions) {
+ function buildFilteredTransactionsArray(filters, transactions) {
 
   // set tempTransactions array to return
   let tempTransactions = [];

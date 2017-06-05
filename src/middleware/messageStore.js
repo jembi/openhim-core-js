@@ -28,7 +28,7 @@ let transactionStatus$1 = (transactionStatus = {
 });
 
 export { transactionStatus$1 as transactionStatus };
-let copyMapWithEscapedReservedCharacters = function(map) {
+ function copyMapWithEscapedReservedCharacters(map) {
   let escapedMap = {};
   for (let k in map) {
     let v = map[k];

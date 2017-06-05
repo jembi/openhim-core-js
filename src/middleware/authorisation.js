@@ -17,13 +17,13 @@ let os = require('os');
 let domain = `${os.hostname()}.${application.name}.appMetrics`;
 let sdc = new SDC(statsdServer);
 
-let genAuthAudit = function(remoteAddress) {
+ function genAuthAudit(remoteAddress) {
   let audit = atna.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE);
   audit = atna.wrapInSyslog(audit);
   return audit;
 };
 
-let authoriseClient = function(channel, ctx) {
+ function authoriseClient(channel, ctx) {
   if ((ctx.authenticated != null) && (channel.allow != null)) {
     if (ctx.authenticated.roles != null) {
       for (let role of Array.from(channel.allow)) {
@@ -40,7 +40,7 @@ let authoriseClient = function(channel, ctx) {
   return false;
 };
 
-let authoriseIP = function(channel, ctx) {
+ function authoriseIP(channel, ctx) {
   if ((channel.whitelist != null ? channel.whitelist.length : undefined) > 0) {
     return Array.from(channel.whitelist).includes(ctx.ip);
   } else {

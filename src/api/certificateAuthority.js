@@ -31,7 +31,7 @@ export function generateCert() {
   return this.body = result;
 }
 
-let generateClientCert = function(options) {
+ function generateClientCert(options) {
   let keystoreDoc = {}; //TODO:Fix yield Keystore.findOne().exec()
 
   // Set additional options
@@ -52,7 +52,7 @@ let generateClientCert = function(options) {
   return this.body;
 };
 
-let generateServerCert = function(options) {
+ function generateServerCert(options) {
   let keystoreDoc = {}; //TODO:Fix yield Keystore.findOne().exec()
   options.selfSigned = true;
   try {
@@ -70,7 +70,7 @@ let generateServerCert = function(options) {
   return this.body;
 };
 
-let createCertificate = function(options) {
+ function createCertificate(options) {
   let deferred = Q.defer();
   pem.createCertificate(options, function(err, cert) {
     let response;
@@ -90,7 +90,7 @@ let createCertificate = function(options) {
   return deferred.promise;
 };
 
-let extractCertMetadata = function(cert) {
+ function extractCertMetadata(cert) {
   let certInfo = {}; //TODO:Fix yield readCertificateInfo cert
   let fingerprint = {}; //TODO:Fix yield getFingerprint cert
   certInfo.data = this.body.certificate;

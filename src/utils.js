@@ -20,12 +20,12 @@ let cacheValueStore = {};
 
 let { refreshMillis } = config.caching;
 
-let getCachedValues = function(store, callback) {
+ function getCachedValues(store, callback) {
   let lastCheck = cacheValueStore[`${store}`] != null ? cacheValueStore[`${store}`].lastCheck : undefined;
 
   if (!config.caching.enabled || (lastCheck == null) || (((new Date)-lastCheck) > refreshMillis)) {
 
-    let handler = function(err, results) {
+     function handler(err, results) {
       if (err) { return callback(err); }
 
       if (config.caching.enabled) {

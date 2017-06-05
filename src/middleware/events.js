@@ -25,7 +25,7 @@ let timestampAsMillis = ts => moment(new Date(ts)).valueOf();
 
 // Determine the difference between baseTS and the earliest timestamp
 // present in a collection of routes (buffered for normalization)
-let calculateEarliestRouteDiff = function(baseTS, routes) {
+ function calculateEarliestRouteDiff(baseTS, routes) {
   let earliestTS = 0;
 
   for (let route of Array.from(routes)) {
@@ -39,7 +39,7 @@ let calculateEarliestRouteDiff = function(baseTS, routes) {
   return tsDiff;
 };
 
-let determineStatusType = function(statusCode) {
+ function determineStatusType(statusCode) {
   let status = 'success';
   if (500 <= statusCode && statusCode <= 599) {
     status = 'error';
@@ -59,7 +59,7 @@ let saveEvents$1 = (saveEvents = function(trxEvents, callback) {
 
 
 export { saveEvents$1 as saveEvents };
-let createRouteEvents = function(dst, transactionId, channel, route, type, tsAdjustment, autoRetryAttempt) {
+ function createRouteEvents(dst, transactionId, channel, route, type, tsAdjustment, autoRetryAttempt) {
   if ((__guard__(route != null ? route.request : undefined, x => x.timestamp) != null) && (__guard__(route != null ? route.response : undefined, x1 => x1.timestamp) != null)) {
     let startTS = timestampAsMillis(route.request.timestamp);
     let endTS = timestampAsMillis(route.response.timestamp);
@@ -109,7 +109,7 @@ let createChannelStartEvent = (dst, transactionId, requestTimestamp, channel, au
   })
 ;
 
-let createChannelEndEvent = function(dst, transactionId, requestTimestamp, channel, response, autoRetryAttempt) {
+ function createChannelEndEvent(dst, transactionId, requestTimestamp, channel, response, autoRetryAttempt) {
   let startTS = timestampAsMillis(requestTimestamp);
 
   let endTS = timestampAsMillis(response.timestamp);
@@ -128,7 +128,7 @@ let createChannelEndEvent = function(dst, transactionId, requestTimestamp, chann
   });
 };
 
-let createPrimaryRouteEvents = function(dst, transactionId, requestTimestamp, channel, routeName, mediatorURN, response, autoRetryAttempt) {
+ function createPrimaryRouteEvents(dst, transactionId, requestTimestamp, channel, routeName, mediatorURN, response, autoRetryAttempt) {
   let startTS = timestampAsMillis(requestTimestamp);
 
   dst.push({
@@ -160,7 +160,7 @@ let createPrimaryRouteEvents = function(dst, transactionId, requestTimestamp, ch
 };
 
 
-let createOrchestrationEvents = function(dst, transactionId, requestTimestamp, channel, orchestrations) {
+ function createOrchestrationEvents(dst, transactionId, requestTimestamp, channel, orchestrations) {
   let tsDiff;
   if (requestTimestamp) {
     let startTS = timestampAsMillis(requestTimestamp);
@@ -194,7 +194,7 @@ let createSecondaryRouteEvents$1 = (createSecondaryRouteEvents = function(dst, t
 
 export { createSecondaryRouteEvents$1 as createSecondaryRouteEvents };
 export function createTransactionEvents(dst, transaction, channel) {
-  let getPrimaryRouteName = function() {
+   function getPrimaryRouteName() {
     for (let r of Array.from(channel.routes)) {
       if (r.primary) { return r.name; }
     }

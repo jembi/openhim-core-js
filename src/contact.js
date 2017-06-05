@@ -39,7 +39,7 @@ export function sendEmail(contactAddress, title, messagePlain, messageHTML, call
   }, (error, response) => callback(error != null ? error : null));
 }
 
-let sendSMS = function(contactAddress, message, callback) {
+ function sendSMS(contactAddress, message, callback) {
   if (config.smsGateway.provider === 'clickatell') {
     return sendSMS_Clickatell(contactAddress, message, callback);
   } else {

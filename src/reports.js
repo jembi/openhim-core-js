@@ -16,7 +16,7 @@ let { User } = require('./model/users');
 let utils = require('./utils');
 
 // Function Sends the reports
-let sendReports = function(job, flag, done) {
+ function sendReports(job, flag, done) {
   let fetchUsers, from, to;
   let reportMap = {};
   let channelReportMap = {};
@@ -266,7 +266,7 @@ var renderTemplate = function(templateName, templateData, callback) {
 var afterEmail = callback => logger.info('email sent..');
 
 
-let setupAgenda = function(agenda) {
+ function setupAgenda(agenda) {
   agenda.define('send weekly channel metrics', (job, done) => sendReports(job, 'weeklyReport', done));
 
   agenda.define('send daily channel metrics', (job, done) => sendReports(job, 'dailyReport', done));

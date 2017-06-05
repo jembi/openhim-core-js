@@ -34,7 +34,7 @@ let sdc = new SDC(config.statsd);
 
 let compress = require('koa-compress');
 
-let rawBodyReader = function(next) {
+ function rawBodyReader(next) {
   let startTime;
   if (config.statsd.enabled) { startTime = new Date(); }
   /*body =  #TODO:Fix yield getRawBody this.req,

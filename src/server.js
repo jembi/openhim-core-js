@@ -128,7 +128,7 @@ if (cluster.isMaster && !module.parent) {
   logger.info(`Running OpenHIM Core JS version ${currentVersion}`);
   logger.info(`Clustering the OpenHIM with ${clusterSize} workers...`);
 
-  let addWorker = function() {
+   function addWorker() {
     let worker = cluster.fork();
 
     return worker.on('message', function(msg) {
@@ -248,7 +248,7 @@ if (cluster.isMaster && !module.parent) {
   let activeTcpConnections = {};
   let activePollingConnections = {};
 
-  let trackConnection = function(map, socket) {
+   function trackConnection(map, socket) {
     // save active socket
     let id = uuid.v4();
     map[id] = socket;
@@ -279,7 +279,7 @@ if (cluster.isMaster && !module.parent) {
   // Job scheduler
   let agenda = null;
 
-  let startAgenda = function() {
+   function startAgenda() {
     let defer = Q.defer();
     agenda = new Agenda({
       db: {
@@ -317,7 +317,7 @@ if (cluster.isMaster && !module.parent) {
     return defer.promise;
   };
 
-  let stopAgenda = function() {
+   function stopAgenda() {
     let defer = Q.defer();
     agenda.stop(function() {
       defer.resolve();
@@ -326,7 +326,7 @@ if (cluster.isMaster && !module.parent) {
     return defer.promise;
   };
 
-  let startHttpServer = function(httpPort, bindAddress, app) {
+   function startHttpServer(httpPort, bindAddress, app) {
     let deferred = Q.defer();
 
     httpServer = http.createServer(app.callback());
@@ -350,7 +350,7 @@ if (cluster.isMaster && !module.parent) {
     return deferred.promise;
   };
 
-  let startHttpsServer = function(httpsPort, bindAddress, app) {
+   function startHttpsServer(httpsPort, bindAddress, app) {
     let deferred = Q.defer();
 
     let mutualTLS = config.authentication.enableMutualTLSAuthentication;
@@ -473,7 +473,7 @@ if (cluster.isMaster && !module.parent) {
     });
   };
 
-  let startApiServer = function(apiPort, bindAddress, app) {
+   function startApiServer(apiPort, bindAddress, app) {
     let deferred = Q.defer();
 
     // mutualTLS not applicable for the API - set false
@@ -493,7 +493,7 @@ if (cluster.isMaster && !module.parent) {
     return deferred.promise;
   };
 
-  let startTCPServersAndHttpReceiver = function(tcpHttpReceiverPort, app) {
+   function startTCPServersAndHttpReceiver(tcpHttpReceiverPort, app) {
     let defer = Q.defer();
 
     tcpHttpReceiver = http.createServer(app.callback());
@@ -510,7 +510,7 @@ if (cluster.isMaster && !module.parent) {
     return defer.promise;
   };
 
-  let startRerunServer = function(httpPort, app) {
+   function startRerunServer(httpPort, app) {
     let deferredHttp = Q.defer();
 
     rerunServer = http.createServer(app.callback());
@@ -524,7 +524,7 @@ if (cluster.isMaster && !module.parent) {
     return deferredHttp.promise;
   };
 
-  let startPollingServer = function(pollingPort, app) {
+   function startPollingServer(pollingPort, app) {
     let defer = Q.defer();
 
     pollingServer = http.createServer(app.callback());
@@ -539,7 +539,7 @@ if (cluster.isMaster && !module.parent) {
     return defer.promise;
   };
 
-  let startAuditUDPServer = function(auditUDPPort, bindAddress) {
+   function startAuditUDPServer(auditUDPPort, bindAddress) {
     let defer = Q.defer();
 
     auditUDPServer = dgram.createSocket('udp4');
@@ -575,11 +575,11 @@ if (cluster.isMaster && !module.parent) {
   };
 
   // function to start the TCP/TLS Audit server
-  let startAuditTcpTlsServer = function(type, auditPort, bindAddress) {
+   function startAuditTcpTlsServer(type, auditPort, bindAddress) {
     let defer = Q.defer();
 
     // data handler
-    let handler = function(sock) {
+     function handler(sock) {
       let message = "";
       let length = 0;
 
@@ -707,7 +707,7 @@ if (cluster.isMaster && !module.parent) {
 
 
   // wait for any running tasks before trying to stop anything
-  let stopTasksProcessor = function(callback) {
+   function stopTasksProcessor(callback) {
     if (tasks.isRunning()) {
       return tasks.stop(callback);
     } else {
@@ -719,7 +719,7 @@ if (cluster.isMaster && !module.parent) {
     let socket;
     let promises = [];
 
-    let stopServer = function(server, serverType) {
+     function stopServer(server, serverType) {
       let deferred = Q.defer();
 
       server.close(function() {

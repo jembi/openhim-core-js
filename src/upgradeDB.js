@@ -123,7 +123,7 @@ upgradeFuncs.push({
 //
 // We follow the same migration strategy as console:
 // https://github.com/jembi/openhim-console/blob/1047b49db2050bafa6b4797e3788fa716d1760b3/app/scripts/controllers/profile.js#L83-L109
-let adaptOldVisualizerStructure = function(visualizer) {
+ function adaptOldVisualizerStructure(visualizer) {
   visualizer.channels = [];
   visualizer.mediators = [];
   visualizer.time.minDisplayPeriod = 100;
@@ -216,7 +216,7 @@ upgradeFuncs.push({
 
 // add new upgrade functions here ^^
 
-let runUpgradeFunc = function(i, dbVer) {
+ function runUpgradeFunc(i, dbVer) {
   logger.info(`  \u2022 Running update: ${upgradeFuncs[i].description}...`);
   let defer = Q.defer();
   // run upgrade function

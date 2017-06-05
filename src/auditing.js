@@ -15,10 +15,10 @@ import config from "./config/config";
 config.auditing = config.get('auditing');
 
 
-let parseAuditRecordFromXML = function(xml, callback) {
+ function parseAuditRecordFromXML(xml, callback) {
   // DICOM mappers
-  let csdCodeToCode = function(name) { if (name === 'csd-code') { return 'code'; } else { return name; } };
-  let originalTextToDisplayName = function(name) { if (name === 'originalText') { return 'displayName'; } else { return name; } };
+   function csdCodeToCode(name) { if (name === 'csd-code') { return 'code'; } else { return name; } };
+   function originalTextToDisplayName(name) { if (name === 'originalText') { return 'displayName'; } else { return name; } };
 
   let options = {
     mergeAttrs: true,
@@ -73,7 +73,7 @@ let parseAuditRecordFromXML = function(xml, callback) {
 };
 
 
-let codeInArray = function(code, arr) { let needle;
+ function codeInArray(code, arr) { let needle;
 return ((needle = code, Array.from(arr.map(a => a.code)).includes(needle))); };
 
 let processAuditMeta$1 = (processAuditMeta = (audit, callback) =>
@@ -150,7 +150,7 @@ let processAudit$1 = (processAudit = function(msg, callback) {
 
 
 export { processAudit$1 as processAudit };
-let sendUDPAudit = function(msg, callback) {
+ function sendUDPAudit(msg, callback) {
   let client = dgram.createSocket('udp4');
   return client.send(msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, function(err) {
     client.close();
@@ -174,7 +174,7 @@ let sendTLSAudit = (msg, callback) =>
   })
 ;
 
-let sendTCPAudit = function(msg, callback) {
+ function sendTCPAudit(msg, callback) {
   var client = net.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, function() {
     client.write(`${msg.length} ${msg}`);
     return client.end();
@@ -188,7 +188,7 @@ let sendTCPAudit = function(msg, callback) {
 // Send an audit event
 export function sendAuditEvent(msg, callback) {
   if (callback == null) { callback = function() {}; }
-  let done = function(err) {
+   function done(err) {
     if (err) { logger.error(err); }
     return callback();
   };

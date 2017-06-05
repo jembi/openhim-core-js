@@ -16,7 +16,7 @@ import utils from '../utils';
  */
 
 
-let filterRolesFromChannels = function(channels, clients) {
+ function filterRolesFromChannels(channels, clients) {
   let cl, permission;
   let rolesMap = {}; // K: permission, V: channels, clients that share permission
 
@@ -111,7 +111,7 @@ export function getRole(name) {
 }
 
 
-let buildFindChannelByIdOrNameCriteria = function(ctx, role) {
+ function buildFindChannelByIdOrNameCriteria(ctx, role) {
   let criteria = {};
   let ids = [];
   let names = [];
@@ -146,7 +146,7 @@ let buildFindChannelByIdOrNameCriteria = function(ctx, role) {
   return criteria;
 };
 
-let buildFindClientByIdOrClientIDCriteria = function(ctx, role) {
+ function buildFindClientByIdOrClientIDCriteria(ctx, role) {
   let criteria = {};
   let ids = [];
   let clientIDs = [];

@@ -5,7 +5,7 @@ import nconf from "nconf";
 /*
  * Define the default constructor
  */
-let Config = function() {
+ function Config() {
 
   // Define the variables to use
   let environment = undefined;

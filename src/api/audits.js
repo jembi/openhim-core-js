@@ -16,7 +16,7 @@ let himSourceID = config.get('auditing').auditEvents.auditSourceID;
 
 
 // function to construct projection object
-let getProjectionObject = function(filterRepresentation) {
+ function getProjectionObject(filterRepresentation) {
   switch (filterRepresentation) {
     case "simpledetails":
       // view minimum required data for audit details view
@@ -33,7 +33,7 @@ let getProjectionObject = function(filterRepresentation) {
  
 
 // Audit the audit record retrieval
-let auditLogUsed = function(auditId, outcome, user) {
+ function auditLogUsed(auditId, outcome, user) {
   let groups = user.groups.join(',');
   let uri = `https://${config.router.externalHostname}:${config.api.httpsPort}/audits/${auditId}`;
   let audit = atna.auditLogUsedAudit(outcome, himSourceID, os.hostname(), user.email, groups, groups, uri);

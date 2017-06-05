@@ -34,7 +34,7 @@ export function authenticate(next) {
   let authSalt = header['auth-salt'];
   let authToken = header['auth-token'];
 
-  let auditAuthFailure = function() {
+   function auditAuthFailure() {
     let audit = atna.userLoginAudit(atna.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email);
     audit = atna.wrapInSyslog(audit);
     return auditing.sendAuditEvent(audit, () => logger.debug('Processed internal audit'));

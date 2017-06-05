@@ -19,7 +19,7 @@ let sdc = new SDC(statsdServer);
 
 let bcryptCompare = (pass, client, callback) => bcrypt.compare(pass, client.passwordHash, callback);
 
-let cryptoCompare = function(pass, client, callback) {
+ function cryptoCompare(pass, client, callback) {
   let hash = crypto.createHash(client.passwordAlgorithm);
   hash.update(pass);
   hash.update(client.passwordSalt);
@@ -30,7 +30,7 @@ let cryptoCompare = function(pass, client, callback) {
   }
 };
 
-let comparePasswordWithClientHash = function(pass, client, callback) {
+ function comparePasswordWithClientHash(pass, client, callback) {
   let needle;
   if ((needle = client.passwordAlgorithm, Array.from(crypto.getHashes()).includes(needle))) {
     return cryptoCompare(pass, client, callback);
