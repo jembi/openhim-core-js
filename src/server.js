@@ -193,7 +193,7 @@ if (cluster.isMaster && !module.parent) {
 			logger.warn(`worker ${worker.process.pid} died`);
 			if (!worker.suicide) {
 				// respawn
-				return addWorker();
+				addWorker();
 			}
 		});
 
@@ -306,11 +306,10 @@ if (cluster.isMaster && !module.parent) {
 					}
 						, config.agenda.startupDelay),
 				);
-			} else {
-				// Start agenda anyway for the other servers
-				agenda.start();
-				return defer.resolve();
 			}
+			// Start agenda anyway for the other servers
+			agenda.start();
+			return defer.resolve();
 		});
 
 		return defer.promise;
@@ -393,11 +392,9 @@ if (cluster.isMaster && !module.parent) {
 					logger.info("Root user created.");
 					return callback();
 				});
-			} else {
-				return callback();
 			}
-		})
-		;
+			return callback();
+		});
 
 	// Ensure that a default keystore always exists and is up to date
 	ensureKeystore = function (callback) {
@@ -470,9 +467,8 @@ if (cluster.isMaster && !module.parent) {
 						return callback();
 					});
 				});
-			} else {
-				return callback();
 			}
+			return callback();
 		});
 	};
 
@@ -562,10 +558,9 @@ if (cluster.isMaster && !module.parent) {
 			if (err.code === "EADDRINUSE") {
 				// ignore to allow only 1 worker to bind (workaround for: https://github.com/joyent/node/issues/9261)
 				return defer.resolve();
-			} else {
-				logger.error(`UDP Audit server error: ${err}`, err);
-				return defer.reject(err);
 			}
+			logger.error(`UDP Audit server error: ${err}`, err);
+			return defer.reject(err);
 		});
 
 		auditUDPServer.bind({
@@ -599,7 +594,7 @@ if (cluster.isMaster && !module.parent) {
 					const lengthValue = message.substr(0, lengthIndex);
 
 					// remove white spaces
-					length = parseInt(lengthValue.trim());
+					length = parseInt(lengthValue.trim(), 10);
 
 					// update message to remove length - add one extra character to remove the space
 					message = message.substr(lengthIndex + 1);
@@ -618,7 +613,7 @@ if (cluster.isMaster && !module.parent) {
 
 					// reset message and length variables
 					message = "";
-					return length = 0;
+					length = 0;
 				}
 			});
 
@@ -627,7 +622,9 @@ if (cluster.isMaster && !module.parent) {
 
 		if (type === "TLS") {
 			tlsAuthentication.getServerOptions(true, (err, options) => {
-				if (err) { return callback(err); }
+				if (err) {
+					return defer.reject(err);
+				}
 
 				auditTlsServer = tls.createServer(options, handler);
 				return auditTlsServer.listen(auditPort, bindAddress, () => {
@@ -655,7 +652,8 @@ if (cluster.isMaster && !module.parent) {
 			if (ports.httpPort || ports.httpsPort) {
 				koaMiddleware.setupApp((app) => {
 					if (ports.httpPort) { promises.push(startHttpServer(ports.httpPort, bindAddress, app)); }
-					if (ports.httpsPort) { return promises.push(startHttpsServer(ports.httpsPort, bindAddress, app)); }
+					if (ports.httpsPort) { promises.push(startHttpsServer(ports.httpsPort, bindAddress, app)); }
+					return promises;
 				});
 			}
 
@@ -714,8 +712,7 @@ if (cluster.isMaster && !module.parent) {
 			return tasks.stop(callback);
 		}
 		return callback();
-
-	};
+	}
 
 	exports.stop = (stop = done => stopTasksProcessor(() => {
 		let socket;
@@ -746,7 +743,9 @@ if (cluster.isMaster && !module.parent) {
 			try {
 				auditUDPServer.close();
 				logger.info("Stopped Audit UDP server");
-			} catch (err) { }
+			} catch (err) {
+				logger.error("Failed to stop auditUDServer with err:", err);
+			}
 		}
 		// ignore errors when shutting down the server, sometimes its already stopped
 
@@ -759,27 +758,27 @@ if (cluster.isMaster && !module.parent) {
 		}
 
 		// close active connection so that servers can stop
-		for (var key in activeHttpConnections) {
+		for (const key in activeHttpConnections) {
 			socket = activeHttpConnections[key];
 			socket.destroy();
 		}
-		for (key in activeHttpsConnections) {
+		for (const key in activeHttpsConnections) {
 			socket = activeHttpsConnections[key];
 			socket.destroy();
 		}
-		for (key in activeApiConnections) {
+		for (const key in activeApiConnections) {
 			socket = activeApiConnections[key];
 			socket.destroy();
 		}
-		for (key in activeRerunConnections) {
+		for (const key in activeRerunConnections) {
 			socket = activeRerunConnections[key];
 			socket.destroy();
 		}
-		for (key in activeTcpConnections) {
+		for (const key in activeTcpConnections) {
 			socket = activeTcpConnections[key];
 			socket.destroy();
 		}
-		for (key in activePollingConnections) {
+		for (const key in activePollingConnections) {
 			socket = activePollingConnections[key];
 			socket.destroy();
 		}
@@ -835,7 +834,7 @@ if (cluster.isMaster && !module.parent) {
 			// restart on message
 			return process.on("message", (msg) => {
 				if (msg.type === "restart") {
-					return exports.restartServer();
+					exports.restartServer();
 				}
 			});
 		});
@@ -847,11 +846,11 @@ if (cluster.isMaster && !module.parent) {
 			ports = null;
 		}
 
-		if ((typeof port === "undefined" || port === null)) {
+		if ((typeof port === "undefined" || ports === null)) {
 			ports = lookupServerPorts();
 		}
 
-		return exports.stop(() => exports.start(ports, () => { if (done) { return done(); } }));
+		return exports.stop(() => exports.start(ports, () => { if (done) { done(); } }));
 	};
 
 	exports.startRestartServerTimeout = function (done) {
@@ -877,33 +876,32 @@ if (cluster.isMaster && !module.parent) {
 
 	// function to return process uptimes
 	exports.getUptime = function (callback) {
-
 		if (cluster.isMaster) {
 			// send reponse back to API request
-			let uptime =
+			const uptime =
 				{ master: process.uptime() };
 			return callback(null, uptime);
 		}
 		// send request to master
 		process.send({
-			type: 'get-uptime'
+			type: "get-uptime"
 		});
 
-		var processEvent = function (uptime) {
-			if (uptime.type === 'get-uptime') {
+		const processEvent = function (uptime) {
+			if (uptime.type === "get-uptime") {
 				uptime =
 					{ master: uptime.masterUptime };
 
 				// remove eventListner
-				process.removeListener('message', processEvent);
+				process.removeListener("message", processEvent);
 
 				// send reponse back to API request
-				return callback(null, uptime);
+				callback(null, uptime);
 			}
 		};
 
 		// listen for response from master
-		return process.on('message', processEvent);
+		return process.on("message", processEvent);
 	};
 }
 
