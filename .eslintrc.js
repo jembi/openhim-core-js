@@ -21,6 +21,7 @@ module.exports = {
 		"import/no-named-as-default-member" : 0, //TODO : Enable this rule,
 		"no-use-before-define" :0, //TODO : Enable this rule
 		"camelcase" :0, //TODO : Enable this rule,
-		"no-multi-assign" : 0
+		"no-multi-assign" : 0, //TODO : Enable this rule,
+		"import/no-mutable-exports" : 0, //TODO : Enable this rule, 
     }
 };
