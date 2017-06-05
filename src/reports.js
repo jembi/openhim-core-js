@@ -249,7 +249,7 @@ Completed with errors: ${((data.data[0] != null ? data.data[0].completedWErrors 
 };
 
 function renderTemplate(templateName, templateData, callback) {
-	const templateDir = `${this.appRoot}/templates/${templateName}`; // TODO : this.appRoot needs to be checked out
+	const templateDir = `${global.appRoot}/templates/${templateName}`;
 	const template = new EmailTemplate(templateDir);
 	return template.render(templateData, (err, result) => {
 		if (err) {
