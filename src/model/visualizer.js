@@ -1,61 +1,74 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
 import mongoose from "mongoose";
 import server from "../server";
 import events from "./events";
-let { connectionDefault } = server;
-let { Schema } = mongoose;
 
-let EventLinkDef = {
-  "eventType": {  type: String, enum: events.eventTypes
-},
-  "eventName":  String,
-  "display":    String
+const { connectionDefault } = server;
+const { Schema } = mongoose;
+
+const EventLinkDef = {
+	eventType: {
+		type: String, enum: events.eventTypes
+	},
+	eventName: String,
+	display: String
 };
 
-let MediatorLinkDef = {
-  'mediator':   String, // mediator URN
-  'name':       String,
-  'display':    String
+const MediatorLinkDef = {
+	mediator: String, // mediator URN
+	name: String,
+	display: String
 };
 
-let VisualizerSchema = new Schema({
-  "name": {                   type: String, required: true, unique: true
-},
-  "components":             [EventLinkDef],
-  "channels":               [EventLinkDef],
-  "mediators":              [MediatorLinkDef],
-  "color": {
-    "inactive": {             type: String, default: "#cccccc"
-  },
-    "active": {               type: String, default: "#4cae4c"
-  },
-    "error": {                type: String, default: "#d43f3a"
-  },
-    "text": {                 type: String, default: "#000000"
-  }
-  },
-  "size": {
-    "responsive": {           type: Boolean, default: true
-  },
-    "width": {                type: Number, default: 1000
-  },
-    "height": {               type: Number, default: 400
-  },
-    "padding": {              type: Number, default: 20
-  }
-  },
-  "time": {
-    "updatePeriod": {         type: Number, default: 200
-  },
-    "minDisplayPeriod": {     type: Number, default: 500
-  },
-    "maxSpeed": {             type: Number, default: 5
-  },
-    "maxTimeout": {           type: Number, default: 5000
-  }
-  }
+const VisualizerSchema = new Schema({
+	name: {
+		type: String, required: true, unique: true
+	},
+	components: [EventLinkDef],
+	channels: [EventLinkDef],
+	mediators: [MediatorLinkDef],
+	color: {
+		inactive: {
+			type: String, default: "#cccccc"
+		},
+		active: {
+			type: String, default: "#4cae4c"
+		},
+		error: {
+			type: String, default: "#d43f3a"
+		},
+		text: {
+			type: String, default: "#000000"
+		}
+	},
+	size: {
+		responsive: {
+			type: Boolean, default: true
+		},
+		width: {
+			type: Number, default: 1000
+		},
+		height: {
+			type: Number, default: 400
+		},
+		padding: {
+			type: Number, default: 20
+		}
+	},
+	time: {
+		updatePeriod: {
+			type: Number, default: 200
+		},
+		minDisplayPeriod: {
+			type: Number, default: 500
+		},
+		maxSpeed: {
+			type: Number, default: 5
+		},
+		maxTimeout: {
+			type: Number, default: 5000
+		}
+	}
 });
 
 // Compile schema into Model
-export let Visualizer = connectionDefault.model('Visualizer', VisualizerSchema);
+export const Visualizer = connectionDefault.model("Visualizer", VisualizerSchema);

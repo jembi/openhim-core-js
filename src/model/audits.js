@@ -1,82 +1,83 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
 import mongoose from "mongoose";
 import server from "../server";
-let { connectionATNA } = server;
-let { Schema } = mongoose;
 
-let codeTypeDef = {
-  "code":           String,
-  "displayName":    String,
-  "codeSystemName": String
+const { connectionATNA } = server;
+const { Schema } = mongoose;
+
+const codeTypeDef = {
+	code: String,
+	displayName: String,
+	codeSystemName: String
 };
 
-let syslogDef = {
-  "prival":     Number,
-  "facilityID": Number,
-  "severityID": Number,
-  "facility":   String,
-  "severity":   String,
-  "type":       { type: String },
-  "time":       Date,
-  "host":       String,
-  "appName":    String,
-  "pid":        String,
-  "msgID":      String
+const syslogDef = {
+	prival: Number,
+	facilityID: Number,
+	severityID: Number,
+	facility: String,
+	severity: String,
+	type: { type: String },
+	time: Date,
+	host: String,
+	appName: String,
+	pid: String,
+	msgID: String
 };
 
-let ActiveParticipantDef = {
-  "userID":                     String,
-  "alternativeUserID":          String,
-  "userIsRequestor":            String,
-  "networkAccessPointID":       String,
-  "networkAccessPointTypeCode": String,
-  "roleIDCode":                 codeTypeDef
-};
-  
-
-let ParticipantObjectIdentificationDef = {
-  "participantObjectID":            String,
-  "participantObjectTypeCode":      String,
-  "participantObjectTypeCodeRole":  String,
-  "participantObjectIDTypeCode":    codeTypeDef,
-  "participantObjectQuery":         String,
-  "participantObjectDetail": {
-    "type":   { type: String },
-    "value":  String
-  }
+const ActiveParticipantDef = {
+	userID: String,
+	alternativeUserID: String,
+	userIsRequestor: String,
+	networkAccessPointID: String,
+	networkAccessPointTypeCode: String,
+	roleIDCode: codeTypeDef
 };
 
 
-let AuditRecordSchema = new Schema({
-  "rawMessage":                       String,
-  "syslog":                           syslogDef,
-  "eventIdentification": {
-    "eventDateTime": {          type: Date, required: true, default: Date.now, index: true
-  },
-    "eventOutcomeIndicator":  String,
-    "eventActionCode":        String,
-    "eventID":                codeTypeDef,
-    "eventTypeCode":          codeTypeDef
-  },
-  "activeParticipant":                [ActiveParticipantDef],
-  "auditSourceIdentification": {
-    "auditSourceID":          String,
-    "auditEnterpriseSiteID":  String,
-    "auditSourceTypeCode":    codeTypeDef
-  },
-  "participantObjectIdentification":  [ParticipantObjectIdentificationDef]});
+const ParticipantObjectIdentificationDef = {
+	participantObjectID: String,
+	participantObjectTypeCode: String,
+	participantObjectTypeCodeRole: String,
+	participantObjectIDTypeCode: codeTypeDef,
+	participantObjectQuery: String,
+	participantObjectDetail: {
+		type: { type: String },
+		value: String
+	}
+};
 
-// keeps track of unique codes for various fields found in the audits collection
-let AuditMetaRecordSchema = new Schema({
-  "eventType":                    [codeTypeDef],
-  "eventID":                      [codeTypeDef],
-  "activeParticipantRoleID":      [codeTypeDef],
-  "participantObjectIDTypeCode":  [codeTypeDef],
-  "auditSourceID":                [String]
-}, {
-  "collection": "auditMeta"
+
+const AuditRecordSchema = new Schema({
+	rawMessage: String,
+	syslog: syslogDef,
+	eventIdentification: {
+		eventDateTime: {
+			type: Date, required: true, default: Date.now, index: true
+		},
+		eventOutcomeIndicator: String,
+		eventActionCode: String,
+		eventID: codeTypeDef,
+		eventTypeCode: codeTypeDef
+	},
+	activeParticipant: [ActiveParticipantDef],
+	auditSourceIdentification: {
+		auditSourceID: String,
+		auditEnterpriseSiteID: String,
+		auditSourceTypeCode: codeTypeDef
+	},
+	participantObjectIdentification: [ParticipantObjectIdentificationDef]
 });
 
-export let Audit = connectionATNA.model('Audit', AuditRecordSchema);
-export let AuditMeta = connectionATNA.model('AuditMeta', AuditMetaRecordSchema);
+// keeps track of unique codes for various fields found in the audits collection
+const AuditMetaRecordSchema = new Schema({
+	eventType: [codeTypeDef],
+	eventID: [codeTypeDef],
+	activeParticipantRoleID: [codeTypeDef],
+	participantObjectIDTypeCode: [codeTypeDef],
+	auditSourceID: [String]
+}, {
+		collection: "auditMeta"
+	});
+
+export const Audit = connectionATNA.model("Audit", AuditRecordSchema);
+export const AuditMeta = connectionATNA.model("AuditMeta", AuditMetaRecordSchema);

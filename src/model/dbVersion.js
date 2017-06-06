@@ -1,14 +1,12 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-import mongoose from 'mongoose';
-import server from '../server';
-let { connectionDefault } = server;
-let { Schema } = mongoose;
+import mongoose from "mongoose";
+import server from "../server";
 
-let dbVersion = new Schema({
-  version:      Number,
-  lastUpdated:  Date
+const { connectionDefault } = server;
+const { Schema } = mongoose;
+
+const dbVersionSchema = new Schema({
+	version: Number,
+	lastUpdated: Date
 });
 
-let dbVersion$1 = connectionDefault.model('dbVersion', dbVersion);
-export { dbVersion$1 as dbVersion };
+const dbVersion = connectionDefault.model("dbVersion", dbVersionSchema);
