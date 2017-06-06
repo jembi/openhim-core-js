@@ -1,25 +1,23 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-import tcpAdapter from '../tcpAdapter';
-
-import config from '../config/config';
-let statsdServer = config.get('statsd');
-let application = config.get('application');
 import SDC from "statsd-client";
 import os from "os";
+import tcpAdapter from "../tcpAdapter";
+import config from "../config/config";
 
-let domain = `${os.hostname()}.${application.name}.appMetrics`;
-let sdc = new SDC(statsdServer);
+const statsdServer = config.get("statsd");
+const application = config.get("application");
 
-export function koaMiddleware(next) {
-  let startTime;
-  if (statsdServer.enabled) { startTime = new Date(); }
-  // the body contains the key
-  let transaction = tcpAdapter.popTransaction(this.body);
+const domain = `${os.hostname()}.${application.name}.appMetrics`;
+const sdc = new SDC(statsdServer);
 
-  this.body = transaction.data;
-  this.authorisedChannel = transaction.channel;
+export function* koaMiddleware(next) {
+	let startTime;
+	if (statsdServer.enabled) { startTime = new Date(); }
+	// the body contains the key
+	const transaction = tcpAdapter.popTransaction(this.body);
 
-  if (statsdServer.enabled) { sdc.timing(`${domain}.retrieveTCPTransactionMiddleware`, startTime); }
-  return {}; //TODO:Fix yield next
+	this.body = transaction.data;
+	this.authorisedChannel = transaction.channel;
+
+	if (statsdServer.enabled) { sdc.timing(`${domain}.retrieveTCPTransactionMiddleware`, startTime); }
+	return yield next;
 }
