@@ -17,7 +17,6 @@ export function logAndSetResponse(ctx, status, msg, logLevel) {
 	return status;
 }
 
-
 const cacheValueStore = {};
 
 const { refreshMillis } = config.caching;
@@ -41,11 +40,13 @@ function getCachedValues(store, callback) {
 		// TODO make this more generic (had issues passing Channel.find as a param [higher order function])
 		if (store === "channels") {
 			return Channel.find({}).sort({ priority: 1 }).exec((err, channels) => {
-				if (err) { return handler(err); }
+				if (err) {
+					return handler(err);
+				}
 				const noPriorityChannels = [];
 				const sortedChannels = [];
 				channels.forEach((channel) => {
-					if ((channel.priority == null)) {
+					if (channel.priority == null) {
 						return noPriorityChannels.push(channel);
 					} else {
 						return sortedChannels.push(channel);
