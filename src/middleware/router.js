@@ -20,8 +20,8 @@ let events = require('../middleware/events');
 let stats = require("../stats");
 let statsdServer = config.get('statsd');
 let application = config.get('application');
-const SDC = require('statsd-client');
-let os = require('os');
+import SDC from "statsd-client";
+import os from "os";
 
 let domain = `${os.hostname()}.${application.name}.appMetrics`;
 let sdc = new SDC(statsdServer);

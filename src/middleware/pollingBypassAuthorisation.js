@@ -24,7 +24,7 @@ export function authoriseUser(ctx, done) {
 export function* koaMiddleware(next) {
 	let startTime;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	const authoriseUser = Q.denodeify(exports.authoriseUser);
+	const authoriseUser = Q.denodeify(authoriseUser);
 	yield authoriseUser(this);
 	if (statsdServer.enabled) { sdc.timing(`${domain}.pollingBypassAuthorisationMiddleware`, startTime); }
 	return yield next;
