@@ -268,7 +268,7 @@ export function* addUser() {
 
 	try {
 		const user = new User(userData);
-		const result = yield Q.ninvoke(user, 'save');
+		const result = yield Q.ninvoke(user, "save");
 
 		// Send email to new user to set password
 
