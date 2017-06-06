@@ -19,6 +19,7 @@ module.exports = {
 		"no-else-return":0,
 		"new-cap":0,
 		"no-return-assign":0,
+		"no-continue":0,
         "no-shadow": 0, //TODO : Enable this rule
         "no-param-reassign": 0, //TODO : Enable this rule
         "func-names" : 0, //TODO : Enable this rule,
