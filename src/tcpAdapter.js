@@ -127,7 +127,7 @@ export function startupServers(callback) {
 }
 
 
-var adaptSocketRequest = function(channel, sock, socketData) {
+function adaptSocketRequest (channel, sock, socketData) {
   let options = {
     hostname: config.tcpAdapter.httpReceiver.host,
     port: config.tcpAdapter.httpReceiver.httpPort,

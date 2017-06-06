@@ -102,7 +102,7 @@ if (process.env.NODE_ENV === "test") {
   exports.setKoaResponse = setKoaResponse;
 }
 
-var setCookiesOnContext = function(ctx, value) {
+function setCookiesOnContext (ctx, value) {
   logger.info('Setting cookies on context');
   return (() => {
     let result = [];
@@ -337,7 +337,7 @@ var buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
   })
 ;
 
-var sendRequest = function(ctx, route, options) {
+function sendRequest (ctx, route, options) {
   if ((route.type === 'tcp') || (route.type === 'mllp')) {
     logger.info('Routing socket request');
     return sendSocketRequest(ctx, route, options);
@@ -365,7 +365,7 @@ var sendRequest = function(ctx, route, options) {
  *    headers: <http_headers_object>
  *    timestamp: <the time the response was recieved>
  */
-var sendHttpRequest = function(ctx, route, options) {
+function sendHttpRequest (ctx, route, options) {
   let defered = Q.defer();
   let response = {};
 
@@ -458,7 +458,7 @@ var sendHttpRequest = function(ctx, route, options) {
  *
  * Supports both normal and MLLP sockets
  */
-var sendSocketRequest = function(ctx, route, options) {
+function sendSocketRequest (ctx, route, options) {
   let mllpEndChar = String.fromCharCode(0o034);
 
   let defered = Q.defer();
@@ -521,7 +521,7 @@ var sendSocketRequest = function(ctx, route, options) {
   return defered.promise;
 };
 
-var getDestinationPath = function(route, requestPath) {
+function getDestinationPath (route, requestPath) {
   if (route.path) {
     return route.path;
   } else if (route.pathTransform) {

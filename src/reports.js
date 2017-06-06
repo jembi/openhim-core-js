@@ -228,7 +228,7 @@ const fetchDailySubscribers = callback => User.find({ dailyReport: true }, callb
 
 const fetchWeeklySubscribers = callback => User.find({ weeklyReport: true }, callback);
 
-const plainTemplate = function (report) {
+function plainTemplate (report) {
 	let text = `Generated on: ${new Date().toString()}`;
 	for (const data of Array.from(report.data)) {
 		text += ` \r\n \r\n <---------- Start Channel  ${data.channel.name} ---------------------------> \r\n \r\n \

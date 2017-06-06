@@ -13,7 +13,7 @@ import auditing from '../auditing';
 
 let mask = '**********';
 
-var maskPasswords = function(defs, config) {
+function maskPasswords (defs, config) {
   if (!config) {
     return;
   }
@@ -31,7 +31,7 @@ var maskPasswords = function(defs, config) {
     }});
 };
 
-var restoreMaskedPasswords = function(defs, maskedConfig, config) {
+function restoreMaskedPasswords (defs, maskedConfig, config) {
   if (!maskedConfig || !config) {
     return;
   }
@@ -101,7 +101,7 @@ export function getMediator(mediatorURN) {
 };
 
 
-var validateConfigDef = function(def) {
+function validateConfigDef (def) {
   if ((def.type === 'struct') && !def.template) {
     throw constructError(`Must specify a template for struct param '${def.param}'`, 'ValidationError');
 

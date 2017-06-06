@@ -24,7 +24,7 @@ let collections = {
 
 
 //Function to remove properties from export object
-var removeProperties = function(obj) {
+function removeProperties (obj) {
   let propertyID = '_id';
   let propertyV = '__v';
 

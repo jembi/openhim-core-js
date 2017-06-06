@@ -88,7 +88,7 @@ export function getServerOptions(mutualTLS, done) {
  * recursively walk up the certificate chain and look for clients with certificates
  * higher in the chain.
  */
-var clientLookup = function(fingerprint, subjectCN, issuerCN) {
+function clientLookup (fingerprint, subjectCN, issuerCN) {
   logger.debug(`Looking up client linked to cert with fingerprint ${fingerprint} with subject ${subjectCN} and issuer ${issuerCN}`);
   let deferred = Q.defer();
 

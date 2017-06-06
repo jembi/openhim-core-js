@@ -1,5 +1,3 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
 import Q from "q";
 import logger from "winston";
 import http from "http";
@@ -89,8 +87,7 @@ const finalizeTaskRound = (task, callback) =>
 		}
 
 		return task.save(err => callback(err));
-	})
-	;
+	});
 
 // Process a task.
 //
@@ -184,8 +181,7 @@ const rerunTransaction = (transactionID, taskID, callback) =>
 				});
 			}
 		});
-	})
-	;
+	});
 
 
 const rerunGetTransaction = (transactionID, callback) =>
@@ -210,7 +206,7 @@ const rerunGetTransaction = (transactionID, callback) =>
 // Construct HTTP options to be sent #
 // ####################################
 
-const rerunSetHTTPRequestOptions = function (transaction, taskID, callback) {
+function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
 	if (transaction === null) {
 		const err = new Error("An empty Transaction object was supplied. Aborting HTTP options configuration");
 		return callback(err, null);
@@ -237,7 +233,7 @@ const rerunSetHTTPRequestOptions = function (transaction, taskID, callback) {
 	}
 
 	return callback(null, options);
-};
+}
 
 // ####################################
 // Construct HTTP options to be sent #
@@ -248,7 +244,7 @@ const rerunSetHTTPRequestOptions = function (transaction, taskID, callback) {
 // Function for sending HTTP Request #
 // ####################################
 
-const rerunHttpRequestSend = function (options, transaction, callback) {
+function rerunHttpRequestSend (options, transaction, callback) {
 	let err;
 	if (options === null) {
 		err = new Error("An empty 'Options' object was supplied. Aborting HTTP Send Request");
@@ -305,10 +301,10 @@ const rerunHttpRequestSend = function (options, transaction, callback) {
 		req.write(transaction.request.body);
 	}
 	return req.end();
-};
+}
 
 
-const rerunTcpRequestSend = function (channel, transaction, callback) {
+function rerunTcpRequestSend (channel, transaction, callback) {
 	const response = {
 		body: "",
 		transaction: {}
@@ -344,7 +340,7 @@ const rerunTcpRequestSend = function (channel, transaction, callback) {
 
 		return callback(err, response);
 	});
-};
+}
 
 // ########################################################
 // Export these functions when in the "test" environment #

@@ -9,7 +9,7 @@ import logger from 'winston';
 import pem from 'pem';
 import Q from 'q';
 
-var dedupName = function(name, names, num) {
+function dedupName (name, names, num) {
   let newName;
   if (num) {
     newName = `${name} ${num}`;

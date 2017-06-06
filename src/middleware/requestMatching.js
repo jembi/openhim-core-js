@@ -36,18 +36,18 @@ let sdc = new SDC(statsdServer);
   }
 };
 
-var matchRegex = function(regexPat, body) {
+function matchRegex (regexPat, body) {
   let regex = new RegExp(regexPat);
   return regex.test(body.toString());
 };
 
-var matchXpath = function(xpathStr, val, xml) {
+function matchXpath (xpathStr, val, xml) {
   let doc = new dom().parseFromString(xml.toString());
   let xpathVal = xpath.select(xpathStr, doc).toString();
   return val === xpathVal;
 };
 
-var matchJsonPath = function(jsonPath, val, json) {
+function matchJsonPath (jsonPath, val, json) {
   let jsonObj = JSON.parse(json.toString());
   let jsonVal = getJSONValByString(jsonObj, jsonPath);
   return val === jsonVal.toString();
@@ -55,7 +55,7 @@ var matchJsonPath = function(jsonPath, val, json) {
 
 // taken from http://stackoverflow.com/a/6491621/588776
 // readbility improved from the stackoverflow answer
-var getJSONValByString = function(jsonObj, jsonPath) {
+function getJSONValByString (jsonObj, jsonPath) {
   jsonPath = jsonPath.replace(/\[(\w+)\]/g, '.$1');  // convert indexes to properties
   jsonPath = jsonPath.replace(/^\./, '');            // strip a leading dot
   let parts = jsonPath.split('.');

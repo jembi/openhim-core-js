@@ -260,7 +260,7 @@ export function getTransactions() {
   }
 };
 
-var enforceMaxBodiesSize = function(ctx, obj, ws) {
+function enforceMaxBodiesSize (ctx, obj, ws) {
   if (obj.request && (typeof obj.request.body === 'string')) {
     if (utils.enforceMaxBodiesSize(ctx, obj.request) && ctx.PrimaryRequest) { obj.canRerun = false; }
   }
@@ -270,7 +270,7 @@ var enforceMaxBodiesSize = function(ctx, obj, ws) {
 };
 
 
-var calculateTransactionBodiesByteLength = function(l, obj, ws) {
+function calculateTransactionBodiesByteLength (l, obj, ws) {
   if (obj.body && (typeof obj.body === 'string')) { l += Buffer.byteLength(obj.body); }
   return recursivelySearchObject(l, obj, ws, calculateTransactionBodiesByteLength);
 };
