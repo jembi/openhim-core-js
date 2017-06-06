@@ -16,6 +16,7 @@ module.exports = {
         "import/prefer-default-export" : 0,
 		"no-plusplus":0,
 		"comma-dangle" : 0,
+		"no-else-return":0,
         "no-shadow": 0, //TODO : Enable this rule
         "no-param-reassign": 0, //TODO : Enable this rule
         "func-names" : 0, //TODO : Enable this rule,
