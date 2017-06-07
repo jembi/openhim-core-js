@@ -2,9 +2,9 @@
 
 import should from "should";
 import request from "supertest";
-import rerunUpdateTransactionTask from "../../lib/middleware/rerunUpdateTransactionTask";
-import { Transaction } from "../../lib/model/transactions";
-import { Task } from "../../lib/model/tasks";
+import rerunUpdateTransactionTask from "../../src/middleware/rerunUpdateTransactionTask";
+import { Transaction } from "../../src/model/transactions";
+import { Task } from "../../src/model/tasks";
 
 const { ObjectId } = require("mongoose").Types;
 

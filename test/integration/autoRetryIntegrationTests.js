@@ -2,16 +2,16 @@
 
 import should from "should";
 import request from "supertest";
-import { Channel } from "../../lib/model/channels";
-import { Client } from "../../lib/model/clients";
-import { Transaction } from "../../lib/model/transactions";
-import { AutoRetry } from "../../lib/model/autoRetry";
-import { Event } from "../../lib/model/events";
+import { Channel } from "../../src/model/channels";
+import { Client } from "../../src/model/clients";
+import { Transaction } from "../../src/model/transactions";
+import { AutoRetry } from "../../src/model/autoRetry";
+import { Event } from "../../src/model/events";
 import testUtils from "../testUtils";
-import server from "../../lib/server";
-import autoRetry from "../../lib/autoRetry";
-import tasks from "../../lib/tasks";
-import config from "../../lib/config/config";
+import server from "../../src/server";
+import autoRetry from "../../src/autoRetry";
+import tasks from "../../src/tasks";
+import config from "../../src/config/config";
 
 config.authentication = config.get("authentication");
 

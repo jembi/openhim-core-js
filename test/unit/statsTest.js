@@ -5,10 +5,10 @@ import should from "should";
 import sinon from "sinon";
 import http from "http";
 import os from "os";
-import stats from "../../lib/stats";
+import stats from "../../src/stats";
 import testUtils from "../testUtils";
 import FakeServer from "../fakeTcpServer";
-import config from "../../lib/config/config";
+import config from "../../src/config/config";
 
 const application = config.get("application");
 const timer = new Date();

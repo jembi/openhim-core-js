@@ -5,10 +5,10 @@ import fs from "fs";
 import should from "should";
 import sinon from "sinon";
 import http from "http";
-import router from "../../lib/middleware/router";
+import router from "../../src/middleware/router";
 import testUtils from "../testUtils";
-import { Keystore, Certificate } from "../../lib/model/keystore";
-import { Channel } from "../../lib/model/channels";
+import { Keystore, Certificate } from "../../src/model/keystore";
+import { Channel } from "../../src/model/channels";
 
 Error.stackTraceLimit = Infinity;
 

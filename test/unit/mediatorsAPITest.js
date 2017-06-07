@@ -3,7 +3,7 @@
 import should from "should";
 import rewire from "rewire";
 
-const mediators = rewire("../../lib/api/mediators");
+const mediators = rewire("../../src/api/mediators");
 
 describe("Mediator API unit tests", () => {
 	describe(".validateConfig()", () => {

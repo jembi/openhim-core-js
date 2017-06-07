@@ -5,11 +5,11 @@ import should from "should";
 import request from "supertest";
 import sinon from "sinon";
 import mongoose from "mongoose";
-import server from "../../lib/server";
-import tcpAdapter from "../../lib/tcpAdapter";
-import polling from "../../lib/polling";
-import { Channel } from "../../lib/model/channels";
-import { Transaction } from "../../lib/model/transactions";
+import server from "../../src/server";
+import tcpAdapter from "../../src/tcpAdapter";
+import polling from "../../src/polling";
+import { Channel } from "../../src/model/channels";
+import { Transaction } from "../../src/model/transactions";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

@@ -3,9 +3,9 @@
 
 import should from "should";
 import request from "supertest";
-import server from "../../lib/server";
-import { Channel } from "../../lib/model/channels";
-import { Mediator } from "../../lib/model/mediators";
+import server from "../../src/server";
+import { Channel } from "../../src/model/channels";
+import { Mediator } from "../../src/model/mediators";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

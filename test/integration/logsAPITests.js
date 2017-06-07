@@ -4,7 +4,7 @@ import should from "should";
 import request from "supertest";
 import logger from "winston";
 import mongoose from "mongoose";
-import server from "../../lib/server";
+import server from "../../src/server";
 import testUtils from "../testUtils";
 import config from "../../config/test.json";
 

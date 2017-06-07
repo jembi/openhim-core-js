@@ -3,12 +3,12 @@
 
 import Q from "q";
 import should from "should";
-import upgradeDB from "../../lib/upgradeDB";
+import upgradeDB from "../../src/upgradeDB";
 import testUtils from "../testUtils";
-import { Keystore } from "../../lib/model/keystore";
-import { Client } from "../../lib/model/clients";
-import { User } from "../../lib/model/users";
-import { Visualizer } from "../../lib/model/visualizer";
+import { Keystore } from "../../src/model/keystore";
+import { Client } from "../../src/model/clients";
+import { User } from "../../src/model/users";
+import { Visualizer } from "../../src/model/visualizer";
 
 describe("Upgrade DB Tests", () => {
 	describe(".upgradeDB", () => {

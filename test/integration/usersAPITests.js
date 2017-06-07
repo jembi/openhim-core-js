@@ -4,9 +4,9 @@ import should from "should";
 import request from "supertest";
 import sinon from "sinon";
 import moment from "moment";
-import server from "../../lib/server";
-import contact from "../../lib/contact";
-import { User } from "../../lib/model/users";
+import server from "../../src/server";
+import contact from "../../src/contact";
+import { User } from "../../src/model/users";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

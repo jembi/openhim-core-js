@@ -2,11 +2,11 @@
 
 import should from "should";
 import request from "supertest";
-import { Channel } from "../../lib/model/channels";
-import { Client } from "../../lib/model/clients";
+import { Channel } from "../../src/model/channels";
+import { Client } from "../../src/model/clients";
 import testUtils from "../testUtils";
-import server from "../../lib/server";
-import config from "../../lib/config/config";
+import server from "../../src/server";
+import config from "../../src/config/config";
 
 config.authentication = config.get("authentication");
 config.tlsClientLookup = config.get("tlsClientLookup");

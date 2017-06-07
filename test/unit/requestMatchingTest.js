@@ -3,8 +3,8 @@
 import should from "should";
 import rewire from "rewire";
 
-const requestMatching = rewire("../../lib/middleware/requestMatching");
-const { Channel } = require("../../lib/model/channels");
+const requestMatching = rewire("../../src/middleware/requestMatching");
+const { Channel } = require("../../src/model/channels");
 
 const truthy = () => true;
 const falsey = () => false;

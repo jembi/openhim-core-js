@@ -6,14 +6,14 @@ import net from "net";
 import tls from "tls";
 import fs from "fs";
 import sinon from "sinon";
-import { Channel } from "../../lib/model/channels";
-import { Client } from "../../lib/model/clients";
-import { Transaction } from "../../lib/model/transactions";
-import { Certificate } from "../../lib/model/keystore";
+import { Channel } from "../../src/model/channels";
+import { Client } from "../../src/model/clients";
+import { Transaction } from "../../src/model/transactions";
+import { Certificate } from "../../src/model/keystore";
 import testUtils from "../testUtils";
-import server from "../../lib/server";
-import config from "../../lib/config/config";
-import stats from "../../lib/stats";
+import server from "../../src/server";
+import config from "../../src/config/config";
+import stats from "../../src/stats";
 
 describe("TCP/TLS/MLLP Integration Tests", () => {
 	const testMessage = "This is an awesome test message!";

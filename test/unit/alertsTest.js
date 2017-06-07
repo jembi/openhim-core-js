@@ -4,14 +4,14 @@ import should from "should";
 import sinon from "sinon";
 import http from "http";
 import moment from "moment";
-import alerts from "../../lib/alerts";
+import alerts from "../../src/alerts";
 import testUtils from "../testUtils";
-import { Channel } from "../../lib/model/channels";
-import { User } from "../../lib/model/users";
-import { ContactGroup } from "../../lib/model/contactGroups";
-import { Event } from "../../lib/model/events";
-import { Alert } from "../../lib/model/alerts";
-import config from "../../lib/config/config";
+import { Channel } from "../../src/model/channels";
+import { User } from "../../src/model/users";
+import { ContactGroup } from "../../src/model/contactGroups";
+import { Event } from "../../src/model/events";
+import { Alert } from "../../src/model/alerts";
+import config from "../../src/config/config";
 
 config.alerts = config.get("alerts");
 

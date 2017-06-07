@@ -4,16 +4,16 @@
 import should from "should";
 import request from "supertest";
 import os from "os";
-import utils from "../../lib/utils";
-import { Transaction } from "../../lib/model/transactions";
-import { Channel } from "../../lib/model/channels";
-import { User } from "../../lib/model/users";
-import server from "../../lib/server";
+import utils from "../../src/utils";
+import { Transaction } from "../../src/model/transactions";
+import { Channel } from "../../src/model/channels";
+import { User } from "../../src/model/users";
+import server from "../../src/server";
 import testUtils from "../testUtils";
 import FakeServer from "../fakeTcpServer";
-import config from "../../lib/config/config";
-import { Event } from "../../lib/model/events";
-import { AutoRetry } from "../../lib/model/autoRetry";
+import config from "../../src/config/config";
+import { Event } from "../../src/model/events";
+import { AutoRetry } from "../../src/model/autoRetry";
 
 const { auth } = testUtils;
 const domain = `${os.hostname()}.${application.name}`;

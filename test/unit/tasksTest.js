@@ -2,11 +2,11 @@
 
 import should from "should";
 import request from "supertest";
-import server from "../../lib/server";
-import { Transaction } from "../../lib/model/transactions";
-import { Task } from "../../lib/model/tasks";
-import { Channel } from "../../lib/model/channels";
-import tasks from "../../lib/tasks";
+import server from "../../src/server";
+import { Transaction } from "../../src/model/transactions";
+import { Task } from "../../src/model/tasks";
+import { Channel } from "../../src/model/channels";
+import tasks from "../../src/tasks";
 import testUtils from "../testUtils";
 
 const { ObjectId } = require("mongoose").Types;

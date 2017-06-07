@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 
 import should from "should";
-import { Visualizer } from "../../lib/model/visualizer";
+import { Visualizer } from "../../src/model/visualizer";
 
 describe("Visualizer Model Tests", () => {
 	const visObj = {

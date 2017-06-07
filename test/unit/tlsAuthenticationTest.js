@@ -4,11 +4,11 @@
 import fs from "fs";
 import should from "should";
 import sinon from "sinon";
-import tlsAuthentication from "../../lib/middleware/tlsAuthentication";
-import { Client } from "../../lib/model/clients";
+import tlsAuthentication from "../../src/middleware/tlsAuthentication";
+import { Client } from "../../src/model/clients";
 import testUtils from "../testUtils";
-import { Keystore } from "../../lib/model/keystore";
-import config from "../../lib/config/config";
+import { Keystore } from "../../src/model/keystore";
+import config from "../../src/config/config";
 
 config.tlsClientLookup = config.get("tlsClientLookup");
 

@@ -10,9 +10,9 @@ import logger from "winston";
 import Q from "q";
 import finalhandler from "finalhandler";
 import serveStatic from "serve-static";
-import { Transaction } from "../lib/model/transactions";
-import { User } from "../lib/model/users";
-import { Keystore } from "../lib/model/keystore";
+import { Transaction } from "../src/model/transactions";
+import { User } from "../src/model/users";
+import { Keystore } from "../src/model/keystore";
 
 export function createMockServer(resStatusCode, resBody, port, callback, requestCallback) {
 	requestCallback = requestCallback || function () { };

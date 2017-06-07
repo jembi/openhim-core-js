@@ -2,7 +2,7 @@
 /* eslint no-unused-expressions:0 */
 import should from "should";
 import mongoose from "mongoose";
-import metrics from "../../lib/metrics";
+import metrics from "../../src/metrics";
 import testUtils from "../../test/testUtils";
 
 describe("Metrics unit tests", () =>

@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from "should";
-import utils from "../../lib/utils";
+import utils from "../../src/utils";
 
 describe("Utils", () =>
 

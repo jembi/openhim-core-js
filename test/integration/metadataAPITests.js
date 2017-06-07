@@ -4,13 +4,13 @@
 import should from "should";
 import request from "supertest";
 
-import { Channel } from "../../lib/model/channels";
-import { Client } from "../../lib/model/clients";
-import { Mediator } from "../../lib/model/mediators";
-import { User } from "../../lib/model/users";
-import { ContactGroup } from "../../lib/model/contactGroups";
+import { Channel } from "../../src/model/channels";
+import { Client } from "../../src/model/clients";
+import { Mediator } from "../../src/model/mediators";
+import { User } from "../../src/model/users";
+import { ContactGroup } from "../../src/model/contactGroups";
 
-import server from "../../lib/server";
+import server from "../../src/server";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

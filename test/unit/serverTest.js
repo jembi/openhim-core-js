@@ -4,10 +4,10 @@
 import should from "should";
 import moment from "moment";
 import fs from "fs";
-import server from "../../lib/server";
+import server from "../../src/server";
 import testUtils from "../testUtils";
-import { Keystore } from "../../lib/model/keystore";
-import config from "../../lib/config/config";
+import { Keystore } from "../../src/model/keystore";
+import config from "../../src/config/config";
 
 config.certificateManagement = config.get("certificateManagement");
 

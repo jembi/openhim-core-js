@@ -6,9 +6,9 @@ import sinon from "sinon";
 import fs from "fs";
 import path from "path";
 import testUtils from "../testUtils";
-import server from "../../lib/server";
-import { Keystore } from "../../lib/model/keystore";
-import config from "../../lib/config/config";
+import server from "../../src/server";
+import { Keystore } from "../../src/model/keystore";
+import config from "../../src/config/config";
 
 const { auth } = testUtils;
 config.certificateManagement = config.get("certificateManagement");

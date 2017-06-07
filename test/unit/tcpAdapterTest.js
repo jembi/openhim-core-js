@@ -3,8 +3,8 @@
 
 import should from "should";
 import sinon from "sinon";
-import tcpAdapter from "../../lib/tcpAdapter";
-import { Channel } from "../../lib/model/channels";
+import tcpAdapter from "../../src/tcpAdapter";
+import { Channel } from "../../src/model/channels";
 
 describe("TCP adapter tests", () => {
 	const testChannel = new Channel({

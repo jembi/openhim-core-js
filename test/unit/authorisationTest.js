@@ -4,9 +4,9 @@
 import should from "should";
 import sinon from "sinon";
 import rewire from "rewire";
-import { Channel } from "../../lib/model/channels";
+import { Channel } from "../../src/model/channels";
 
-const authorisation = rewire("../../lib/middleware/authorisation");
+const authorisation = rewire("../../src/middleware/authorisation");
 
 const truthy = () => true;
 const falsey = () => false;

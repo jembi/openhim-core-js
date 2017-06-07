@@ -3,9 +3,9 @@
 
 import should from "should";
 import request from "supertest";
-import { ContactGroup } from "../../lib/model/contactGroups";
-import { Channel } from "../../lib/model/channels";
-import server from "../../lib/server";
+import { ContactGroup } from "../../src/model/contactGroups";
+import { Channel } from "../../src/model/channels";
+import server from "../../src/server";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

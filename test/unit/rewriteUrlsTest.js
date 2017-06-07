@@ -4,8 +4,8 @@ import should from "should";
 import sinon from "sinon";
 import xpath from "xpath";
 import { DOMParser as dom } from "xmldom";
-import rewriteUrls from "../../lib/middleware/rewriteUrls";
-import utils from "../../lib/utils";
+import rewriteUrls from "../../src/middleware/rewriteUrls";
+import utils from "../../src/utils";
 
 describe("Rewrite URLs middleware", () => {
 	describe(".invertPathTransform", () =>

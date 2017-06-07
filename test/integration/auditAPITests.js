@@ -3,8 +3,8 @@
 
 import should from "should";
 import request from "supertest";
-import server from "../../lib/server";
-import { Audit, AuditMeta } from "../../lib/model/audits";
+import server from "../../src/server";
+import { Audit, AuditMeta } from "../../src/model/audits";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

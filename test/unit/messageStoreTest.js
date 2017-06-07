@@ -4,10 +4,10 @@ import should from "should";
 import sinon from "sinon";
 import http from "http";
 import { Types } from "mongoose";
-import messageStore from "../../lib/middleware/messageStore";
-import { Transaction } from "../../lib/model/transactions";
-import { Channel } from "../../lib/model/channels";
-import utils from "../../lib/utils";
+import messageStore from "../../src/middleware/messageStore";
+import { Transaction } from "../../src/model/transactions";
+import { Channel } from "../../src/model/channels";
+import utils from "../../src/utils";
 
 const { ObjectId } = Types;
 const transactionId = null;

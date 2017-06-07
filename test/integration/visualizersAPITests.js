@@ -3,8 +3,8 @@
 import should from "should";
 import request from "supertest";
 import _ from "lodash";
-import server from "../../lib/server";
-import { Visualizer } from "../../lib/model/visualizer";
+import server from "../../src/server";
+import { Visualizer } from "../../src/model/visualizer";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

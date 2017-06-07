@@ -4,10 +4,10 @@
 import should from "should";
 import sinon from "sinon";
 import request from "supertest";
-import { Transaction } from "../../lib/model/transactions";
-import { Channel } from "../../lib/model/channels";
-import { User } from "../../lib/model/users";
-import server from "../../lib/server";
+import { Transaction } from "../../src/model/transactions";
+import { Channel } from "../../src/model/channels";
+import { User } from "../../src/model/users";
+import server from "../../src/server";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

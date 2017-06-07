@@ -2,9 +2,9 @@
 
 import should from "should";
 import sinon from "sinon";
-import authorisation from "../../lib/api/authorisation";
-import { Channel } from "../../lib/model/channels";
-import { User } from "../../lib/model/users";
+import authorisation from "../../src/api/authorisation";
+import { Channel } from "../../src/model/channels";
+import { User } from "../../src/model/users";
 
 describe("API authorisation test", () => {
   const user = new User({

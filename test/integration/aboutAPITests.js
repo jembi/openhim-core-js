@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 import should from "should";
 import request from "supertest";
-import server from "../../lib/server";
+import server from "../../src/server";
 import testUtils from "../testUtils";
 
 const { auth } = testUtils;

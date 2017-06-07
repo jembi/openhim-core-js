@@ -4,8 +4,8 @@
 import should from "should";
 import sinon from "sinon";
 import nodemailer from "nodemailer";
-import contact from "../../lib/contact";
-import config from "../../lib/config/config";
+import contact from "../../src/contact";
+import config from "../../src/config/config";
 
 config.email = config.get("email");
 config.smsGateway = config.get("smsGateway");

@@ -2,11 +2,11 @@
 
 import should from "should";
 import request from "supertest";
-import { Transaction } from "../../lib/model/transactions";
-import { Channel } from "../../lib/model/channels";
+import { Transaction } from "../../src/model/transactions";
+import { Channel } from "../../src/model/channels";
 import testUtils from "../testUtils";
-import config from "../../lib/config/config";
-import server from "../../lib/server";
+import config from "../../src/config/config";
+import server from "../../src/server";
 
 const { auth } = testUtils;
 

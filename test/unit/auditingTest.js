@@ -4,10 +4,10 @@ a/* eslint-env mocha, node */
 import should from "should";
 import dgram from "dgram";
 import fs from "fs";
-import auditing from "../../lib/auditing";
-import { Audit, AuditMeta } from "../../lib/model/audits";
+import auditing from "../../src/auditing";
+import { Audit, AuditMeta } from "../../src/model/audits";
 import testUtils from "../testUtils";
-import config from "../../lib/config/config";
+import config from "../../src/config/config";
 
 config.auditing = config.get("auditing");
 let testAudit;

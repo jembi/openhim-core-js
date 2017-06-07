@@ -7,8 +7,8 @@ import sinon from "sinon";
 import fs from "fs";
 import path from "path";
 import testUtils from "../testUtils";
-import server from "../../lib/server";
-import { Keystore, Certificate } from "../../lib/model/keystore";
+import server from "../../src/server";
+import { Keystore, Certificate } from "../../src/model/keystore";
 
 const { auth } = testUtils;
 

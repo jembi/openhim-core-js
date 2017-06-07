@@ -6,11 +6,11 @@ import sinon from "sinon";
 import moment from "moment";
 import mongoose from "mongoose";
 
-import reports from "../../lib/reports";
+import reports from "../../src/reports";
 import testUtils from "../testUtils";
-import config from "../../lib/config/config";
-import { Channel } from "../../lib/model/channels";
-import { User } from "../../lib/model/users";
+import config from "../../src/config/config";
+import { Channel } from "../../src/model/channels";
+import { User } from "../../src/model/users";
 
 const testUser1 = new User({
   firstname: "User",

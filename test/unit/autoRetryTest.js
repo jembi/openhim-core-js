@@ -6,11 +6,11 @@ import sinon from "sinon";
 import http from "http";
 import moment from "moment";
 import { Types } from "mongoose";
-import autoRetry from "../../lib/autoRetry";
+import autoRetry from "../../src/autoRetry";
 import testUtils from "../testUtils";
-import { Channel } from "../../lib/model/channels";
-import { AutoRetry } from "../../lib/model/autoRetry";
-import { Task } from "../../lib/model/tasks";
+import { Channel } from "../../src/model/channels";
+import { AutoRetry } from "../../src/model/autoRetry";
+import { Task } from "../../src/model/tasks";
 
 const { ObjectId } = Types;
 
