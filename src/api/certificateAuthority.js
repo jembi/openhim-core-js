@@ -88,7 +88,7 @@ function createCertificate(options) {
 }
 
 function* extractCertMetadata(cert) {
-	const certInfo = ield readCertificateInfo(cert);
+	const certInfo = yield readCertificateInfo(cert);
 	const fingerprint = yield getFingerprint(cert);
 	certInfo.data = this.body.certificate;
 	certInfo.fingerprint = fingerprint.fingerprint;
@@ -96,4 +96,3 @@ function* extractCertMetadata(cert) {
 }
 
 const getRandomInt = (min, max) => Math.floor(Math.random() * ((max - min) + 1)) + min;
-

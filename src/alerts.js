@@ -137,8 +137,7 @@ const findTransactions = (channel, dateFrom, status, callback) =>
 			type: "channel",
 		}, { transactionID: "transactionID" })
 		.hint({ created: 1 })
-		.exec(callback)
-	;
+		.exec(callback);
 
 const countTotalTransactionsForChannel = (channel, dateFrom, callback) =>
 	Event.count({
@@ -148,8 +147,7 @@ const countTotalTransactionsForChannel = (channel, dateFrom, callback) =>
 		channelID: channel._id,
 		type: "channel",
 		event: "end",
-	}, callback)
-	;
+	}, callback);
 
 function findOneAlert(channel, alert, dateFrom, user, alertStatus, callback) {
 	const criteria = {

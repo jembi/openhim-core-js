@@ -1,5 +1,3 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
 import SDC from "statsd-client";
 import logger from "winston";
 import os from "os";

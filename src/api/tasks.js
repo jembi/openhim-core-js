@@ -45,7 +45,7 @@ function isRerunPermissionsValid(user, transactions, callback) {
 // #####################################
 // Retrieves the list of active tasks #
 // #####################################
-export function getTasks() {
+export function* getTasks() {
 	// Must be admin
 	if (!authorisation.inGroup("admin", this.authenticated)) {
 		utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getTasks denied.`, "info");
@@ -73,10 +73,10 @@ export function getTasks() {
 		// exclude transactions object from tasks list
 		const projectionFiltersObject = { transactions: 0 };
 
-		this.body = {}; // TODO:Fix yield Task.find({}).exec()
+		this.body = yield Task.find({}).exec();
 
 		// execute the query
-		return this.body = {} // TODO:Fix yield Task
+		return this.body = yield Task
 			.find(filters, projectionFiltersObject)
 			.skip(filterSkip)
 			.limit(parseInt(filterLimit, 10))
@@ -108,7 +108,7 @@ const areTransactionChannelsValid = (transactions, callback) =>
 // ####################################################
 // Creates a new Task
 // ####################################################
-export function addTask() {
+export function* addTask() {
 	// Get the values to use
 	const transactions = this.request.body;
 	try {
@@ -130,12 +130,12 @@ export function addTask() {
 
 		// check rerun permission and whether to create the rerun task
 		const isRerunPermsValid = Q.denodeify(isRerunPermissionsValid);
-		const allowRerunTaskCreation = {}; // TODO:Fix yield isRerunPermsValid( this.authenticated, transactions )
+		const allowRerunTaskCreation = yield isRerunPermsValid(this.authenticated, transactions);
 
 		// the rerun task may be created
 		if (allowRerunTaskCreation === true) {
 			const areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid);
-			const trxChannelsValid = {}; // TODO:Fix yield areTrxChannelsValid(transactions)
+			const trxChannelsValid = yield areTrxChannelsValid(transactions);
 
 			if (!trxChannelsValid) {
 				utils.logAndSetResponse(this, 400, "Cannot queue task as there are transactions with disabled or deleted channels", "info");
@@ -147,7 +147,7 @@ export function addTask() {
 			taskObject.totalTransactions = transactionsArr.length;
 
 			const task = new Task(taskObject);
-			const result = {}; // TODO:Fix yield Q.ninvoke(task, 'save')
+			const result = yield Q.ninvoke(task, "save");
 
 			// All ok! So set the result
 			utils.logAndSetResponse(this, 201, `User ${this.authenticated.email} created task with id ${task.id}`, "info");
@@ -217,7 +217,7 @@ function buildFilteredTransactionsArray(filters, transactions) {
 	return tempTransactions;
 }
 
-export function getTask(taskId) {
+export function* getTask(taskId) {
 	// Get the values to use
 	taskId = unescape(taskId);
 
@@ -234,7 +234,7 @@ export function getTask(taskId) {
 		// get filters object
 		const filters = JSON.parse(filtersObject.filters);
 
-		const result = {}; // TODO:Fix yield Task.findById(taskId).lean().exec()
+		const result = yield Task.findById(taskId).lean().exec();
 		let tempTransactions = result.transactions;
 
 

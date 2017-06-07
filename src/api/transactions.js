@@ -214,7 +214,7 @@ export function* getTransactions() {
 
 
 		// execute the query
-		this.body = {} // TODO:Fix yield transactions.Transaction
+		this.body = yield transactions.Transaction
 			.find(filters, projectionFiltersObject)
 			.skip(filterSkip)
 			.limit(parseInt(filterLimit, 10))

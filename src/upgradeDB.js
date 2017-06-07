@@ -1,5 +1,3 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
 import logger from "winston";
 import pem from "pem";
 import Q from "q";

@@ -5,7 +5,6 @@ import { Keystore } from "./model/keystore";
 import config from "./config/config";
 
 config.caching = config.get("caching");
-let MAX_BODIES_SIZE;
 
 
 // function to log errors and return response
@@ -73,17 +72,17 @@ export function statusCodePatternMatch(string, callback) { return /\dxx/.test(st
 
 // returns an array with no duplicates
 export function uniqArray(arr) {
-	const dict = {};
-	// TODO : Double check this functions
-	for (const k of Array.from(arr)) { dict[k] = k; }
-	return ((() => {
-		const result = [];
-		for (const k in dict) {
-			const v = dict[k];
-			result.push(v);
-		}
-		return result;
-	})());
+	const dict = arr.reduce((p, c) => {
+		p[c] = c;
+		return p;
+	}, {});
+
+	const result = [];
+	for (const k in dict) {
+		const v = dict[k];
+		result.push(v);
+	}
+	return result;
 }
 
 // thanks to https://coffeescript-cookbook.github.io/chapters/arrays/check-type-is-array
@@ -97,8 +96,8 @@ export function serverTimezone() {
 // Max size allowed for ALL bodies in the transaction together
 // Use min 1 to allow space for all routes on a transation and max 15 MiB leaving 1 MiB available for the transaction metadata
 const mbs = config.api.maxBodiesSizeMB;
-const MAX_BODIES_SIZE$1 = (MAX_BODIES_SIZE = mbs >= 1 && mbs <= 15 ? mbs * 1024 * 1024 : 15 * 1024 * 1024);
-export { MAX_BODIES_SIZE$1 as MAX_BODIES_SIZE };
+export const MAX_BODIES_SIZE = mbs >= 1 && mbs <= 15 ? mbs * 1024 * 1024 : 15 * 1024 * 1024;
+
 const appendText = config.api.truncateAppend;
 const appendTextLength = Buffer.byteLength(appendText);
 

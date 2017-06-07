@@ -243,7 +243,7 @@ function processPostDeleteTriggers(channel) {
 /*
  * Deletes a specific channels details
  */
-export function removeChannel(channelId) {
+export function* removeChannel(channelId) {
 	// Test if the user is authorised
 	if (authorisation.inGroup("admin", this.authenticated) === false) {
 		utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeChannel denied.`, "info");
@@ -255,15 +255,15 @@ export function removeChannel(channelId) {
 
 	try {
 		let channel;
-		const numExistingTransactions = {}; // TODO:Fix yield Transaction.count({ channelID: id }).exec()
+		const numExistingTransactions = yield Transaction.count({ channelID: id }).exec();
 
 		// Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
 		if (numExistingTransactions === 0) {
 			// safe to remove
-			channel = {}; // TODO:Fix yield Channel.findByIdAndRemove(id).exec()
+			channel = yield Channel.findByIdAndRemove(id).exec();
 		} else {
 			// not safe to remove. just flag as deleted
-			channel = {}; // TODO:Fix yield Channel.findByIdAndUpdate(id, { status: 'deleted' }).exec()
+			channel = yield Channel.findByIdAndUpdate(id, { status: "deleted" }).exec();
 		}
 
 		// All ok! So set the result
@@ -280,7 +280,7 @@ export function removeChannel(channelId) {
 /*
  * Manually Triggers Polling Channel
  */
-export function triggerChannel(channelId) {
+export function* triggerChannel(channelId) {
 	// Test if the user is authorised
 	if (authorisation.inGroup("admin", this.authenticated) === false) {
 		utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeChannel denied.`, "info");
@@ -294,7 +294,7 @@ export function triggerChannel(channelId) {
 	this.status = 200;
 
 	try {
-		const channel = {}; // TODO:Fix yield Channel.findById(id).exec()
+		const channel = yield Channel.findById(id).exec();
 
 		// Test if the result if valid
 		if (channel === null) {
