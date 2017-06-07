@@ -1,11 +1,11 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
-import dgram from 'dgram';
+/* eslint-env mocha */
+
+import dgram from "dgram";
 
 // A small fake UDP-server.
 //
 
-let FakeServer = function(options) {
+const FakeServer = function(options) {
   options = options || {};
   this.port = options.port || 8125;
   this._socket = undefined;
@@ -16,11 +16,10 @@ let FakeServer = function(options) {
 // Start the server and listen for messages.
 //
 FakeServer.prototype.start = function(cb) {
-  let that = this;
+  const that = this;
   this._socket = dgram.createSocket("udp4");
-  this._socket.on("message", function(msg, rinfo) {
-
-    msg.toString().split("\n").forEach(function(part) {
+  this._socket.on("message", (msg, rinfo) => {
+    msg.toString().split("\n").forEach((part) => {
       that._packetsReceived.push(part);
     });
 
@@ -43,60 +42,51 @@ FakeServer.prototype.stop = function() {
 // Expect `message` to arrive and call `cb` if/when it does.
 //
 FakeServer.prototype.expectMessage = function(message, cb) {
-  let that = this;
+  const that = this;
   this._expectedPackets.push({
     message,
     callback: cb
   });
 
-  process.nextTick(function() {
+  process.nextTick(() => {
     that.checkMessages();
   });
-
 };
 
 // Expect `message` to arrive and call `cb` if/when it does.
 //
 FakeServer.prototype.expectMessageRegex = function(message, cb) {
-  let that = this;
+  const that = this;
   this._expectedPackets.push({
     message,
     callback: cb
   });
 
-  process.nextTick(function() {
+  process.nextTick(() => {
     that.checkMessages(true);
   });
-
 };
 
 
 // Check for expected messages.
 //
-FakeServer.prototype.checkMessages = function(regex){
-
-  let that = this;
-  this._expectedPackets.forEach(function(details, detailIndex) {
-
+FakeServer.prototype.checkMessages = function(regex) {
+  const that = this;
+  this._expectedPackets.forEach((details, detailIndex) => {
     let i;
     if (regex) {
       // Is it in there?
       i = that._packetsReceived.indexOf(details.message);
       if (i !== -1) {
-
         // Remove message and the listener from their respective lists
         that._packetsReceived.splice(i, 1);
         that._expectedPackets.splice(detailIndex, 1);
         return details.callback();
       }
-
-
-
     } else {
       // Is it in there?
       i = that._packetsReceived.indexOf(details.message);
       if (i !== -1) {
-
         // Remove message and the listener from their respective lists
         that._packetsReceived.splice(i, 1);
         that._expectedPackets.splice(detailIndex, 1);
@@ -104,7 +94,6 @@ FakeServer.prototype.checkMessages = function(regex){
       }
     }
   });
-
 };
 
 export default FakeServer;

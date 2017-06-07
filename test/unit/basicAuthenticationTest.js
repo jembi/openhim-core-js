@@ -1,25 +1,25 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
+/* eslint-env mocha */
+
 import should from "should";
 import request from "supertest";
-import basicAuthentication from '../../lib/middleware/basicAuthentication';
+import basicAuthentication from "../../lib/middleware/basicAuthentication";
 import { Client } from "../../lib/model/clients";
 
-let buildEmptyCtx = function() {
-  let ctx = {};
+const buildEmptyCtx = function() {
+  const ctx = {};
   ctx.req = {};
   ctx.req.headers = {};
   return ctx;
 };
 
-let buildCtx = function(user, pass) {
-  let authDetails = new Buffer(`${user}:${pass}`).toString("base64");
-  let ctx = buildEmptyCtx();
+const buildCtx = function(user, pass) {
+  const authDetails = new Buffer(`${user}:${pass}`).toString("base64");
+  const ctx = buildEmptyCtx();
   ctx.req.headers.authorization = `basic ${authDetails}`;
   return ctx;
 };
 
-let bcryptClient = {
+const bcryptClient = {
   clientID: "user",
   clientDomain: "openhim.jembi.org",
   name: "TEST basic auth client",
@@ -32,7 +32,7 @@ let bcryptClient = {
   cert: ""
 };
 
-let shaClient = {
+const shaClient = {
   clientID: "user",
   clientDomain: "openhim.jembi.org",
   name: "TEST basic auth client",
@@ -47,15 +47,15 @@ let shaClient = {
 };
 
 
-describe("Basic Auth", function() {
+describe("Basic Auth", () => {
   before(done => Client.remove({}, done));
 
   afterEach(done => Client.remove({}, done));
 
   describe("with no credentials", () =>
-    it("ctx.authenticated should not exist", function(done) {
-      let ctx = buildEmptyCtx();
-      return basicAuthentication.authenticateUser(ctx, function() {
+    it("ctx.authenticated should not exist", (done) => {
+      const ctx = buildEmptyCtx();
+      return basicAuthentication.authenticateUser(ctx, () => {
         ({}.should.not.equal(ctx.authenticated));
         return done();
       });
@@ -63,21 +63,21 @@ describe("Basic Auth", function() {
   );
 
   describe("with unknown user", () =>
-    it("ctx.authenticated should not exist", function(done) {
-      let ctx = buildCtx("incorrect_user", "incorrect_password");
-      return basicAuthentication.authenticateUser(ctx, function() {
+    it("ctx.authenticated should not exist", (done) => {
+      const ctx = buildCtx("incorrect_user", "incorrect_password");
+      return basicAuthentication.authenticateUser(ctx, () => {
         ({}.should.not.equal(ctx.authenticated));
         return done();
       });
     })
   );
-  
+
   describe("default algorithm (bcrypt) with correct credentials", () =>
-    it("ctx.authenticated should exist and contain the client object from the database ", function(done) {
-      let client = new Client(bcryptClient);
-      return client.save(function(error, newAppDoc) {
-        let ctx = buildCtx("user", "password");
-        return basicAuthentication.authenticateUser(ctx, function() {
+    it("ctx.authenticated should exist and contain the client object from the database ", (done) => {
+      const client = new Client(bcryptClient);
+      return client.save((error, newAppDoc) => {
+        const ctx = buildCtx("user", "password");
+        return basicAuthentication.authenticateUser(ctx, () => {
           should.exist(ctx.authenticated);
           should.exist(ctx.authenticated.clientID);
           ctx.authenticated.clientID.should.equal(bcryptClient.clientID);
@@ -86,13 +86,13 @@ describe("Basic Auth", function() {
       });
     })
   );
-  
+
   describe("default algorithm (bcrypt) with incorrect credentials", () =>
-    it("ctx.authenticated should not exist", function(done) {
-      let client = new Client(bcryptClient);
-      return client.save(function(error, newAppDoc) {
-        let ctx = buildCtx("user", "incorrectPassword");
-        return basicAuthentication.authenticateUser(ctx, function() {
+    it("ctx.authenticated should not exist", (done) => {
+      const client = new Client(bcryptClient);
+      return client.save((error, newAppDoc) => {
+        const ctx = buildCtx("user", "incorrectPassword");
+        return basicAuthentication.authenticateUser(ctx, () => {
           should.not.exist(ctx.authenticated);
           return done();
         });
@@ -101,11 +101,11 @@ describe("Basic Auth", function() {
   );
 
   describe("crypto algorithm (sha) with correct credentials", () =>
-    it("ctx.authenticated should exist and contain the client object from the database ", function(done) {
-      let client = new Client(shaClient);
-      return client.save(function(error, newAppDoc) {
-        let ctx = buildCtx("user", "password");
-        return basicAuthentication.authenticateUser(ctx, function() {
+    it("ctx.authenticated should exist and contain the client object from the database ", (done) => {
+      const client = new Client(shaClient);
+      return client.save((error, newAppDoc) => {
+        const ctx = buildCtx("user", "password");
+        return basicAuthentication.authenticateUser(ctx, () => {
           should.exist(ctx.authenticated);
           should.exist(ctx.authenticated.clientID);
           ctx.authenticated.clientID.should.equal(shaClient.clientID);
@@ -116,11 +116,11 @@ describe("Basic Auth", function() {
   );
 
   return describe("crypto algorithm (sha) with incorrect credentials", () =>
-    it("ctx.authenticated should not exist", function(done) {
-      let client = new Client(shaClient);
-      return client.save(function(error, newAppDoc) {
-        let ctx = buildCtx("user", "incorrectPassword");
-        return basicAuthentication.authenticateUser(ctx, function() {
+    it("ctx.authenticated should not exist", (done) => {
+      const client = new Client(shaClient);
+      return client.save((error, newAppDoc) => {
+        const ctx = buildCtx("user", "incorrectPassword");
+        return basicAuthentication.authenticateUser(ctx, () => {
           should.not.exist(ctx.authenticated);
           return done();
         });

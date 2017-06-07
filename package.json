@@ -46,7 +46,6 @@
     "raw-body": "^2.1.2",
     "request": "^2.72.0",
     "semver": "^5.1.0",
-    "source-map-support": "^0.4.0",
     "ssl-root-cas": "^1.1.10",
     "statsd-client": "^0.2.2",
     "winston": "^2.2.0",
@@ -76,8 +75,8 @@
     "build": "babel src --out-dir lib -s",
     "build:watch": "npm run build -- -w",
     "prepare": "npm run build",
-    "lint" : "eslint src/ test/",
-    "lint:fix" : "eslint --fix src/ test/",
+    "lint": "eslint src/ test/",
+    "lint:fix": "eslint --fix src/ test/",
     "test": "mocha --require babel-register src/**/*.js test/**/*.js",
     "start": "node --harmony lib/server.js"
   },

@@ -1,526 +1,529 @@
-// TODO: This file was created by bulk-decaffeinate.
-// Sanity-check the conversion and remove this comment.
+/* eslint-env mocha */
+
 import should from "should";
 import request from "supertest";
+import { Channel } from "../../lib/model/channels";
+import { Client } from "../../lib/model/clients";
+import { Transaction } from "../../lib/model/transactions";
+import { AutoRetry } from "../../lib/model/autoRetry";
+import { Event } from "../../lib/model/events";
+import testUtils from "../testUtils";
+import server from "../../lib/server";
+import autoRetry from "../../lib/autoRetry";
+import tasks from "../../lib/tasks";
 import config from "../../lib/config/config";
-config.authentication = config.get('authentication');
-let { Channel } = require("../../lib/model/channels");
-let { Client } = require("../../lib/model/clients");
-let { Transaction } = require("../../lib/model/transactions");
-let { AutoRetry } = require("../../lib/model/autoRetry");
-let { Event } = require("../../lib/model/events");
-let testUtils = require("../testUtils");
-let server = require("../../lib/server");
-let autoRetry = require("../../lib/autoRetry");
-let tasks = require("../../lib/tasks");
 
-describe("Auto Retry Integration Tests", function() {
+config.authentication = config.get("authentication");
 
-  describe("Primary route auto retry tests", function() {
-    let channel1 = new Channel({
-      name: "TEST DATA - Will break channel",
-      urlPattern: "^/test/nowhere$",
-      allow: [ "PoC" ],
-      routes: [{
-            name: "unavailable route",
-            host: "localhost",
-            port: 9999,
-            primary: true
-          }
-          ],
-      autoRetryEnabled: true,
-      autoRetryPeriodMinutes: 1,
-      autoRetryMaxAttempts: 2
-    });
+describe("Auto Retry Integration Tests", () => {
+	describe("Primary route auto retry tests", () => {
+		const channel1 = new Channel({
+			name: "TEST DATA - Will break channel",
+			urlPattern: "^/test/nowhere$",
+			allow: ["PoC"],
+			routes: [{
+				name: "unavailable route",
+				host: "localhost",
+				port: 9999,
+				primary: true
+			}
+			],
+			autoRetryEnabled: true,
+			autoRetryPeriodMinutes: 1,
+			autoRetryMaxAttempts: 2
+		});
 
-    let channel2 = new Channel({
-      name: "TEST DATA - Will break channel - attempt once",
-      urlPattern: "^/test/nowhere/2$",
-      allow: [ "PoC" ],
-      routes: [{
-            name: "unavailable route",
-            host: "localhost",
-            port: 9999,
-            primary: true
-          }
-          ],
-      autoRetryEnabled: true,
-      autoRetryPeriodMinutes: 1,
-      autoRetryMaxAttempts: 1
-    });
+		const channel2 = new Channel({
+			name: "TEST DATA - Will break channel - attempt once",
+			urlPattern: "^/test/nowhere/2$",
+			allow: ["PoC"],
+			routes: [{
+				name: "unavailable route",
+				host: "localhost",
+				port: 9999,
+				primary: true
+			}
+			],
+			autoRetryEnabled: true,
+			autoRetryPeriodMinutes: 1,
+			autoRetryMaxAttempts: 1
+		});
 
 
-    before(function(done) {
-      config.authentication.enableMutualTLSAuthentication = false;
-      config.authentication.enableBasicAuthentication = true;
+		before((done) => {
+			config.authentication.enableMutualTLSAuthentication = false;
+			config.authentication.enableBasicAuthentication = true;
 
-      return channel1.save(() => channel2.save(function() {
-        let testAppDoc = {
-          clientID: "testApp",
-          clientDomain: "test-client.jembi.org",
-          name: "TEST Client",
-          roles:
-            [
-              "OpenMRS_PoC",
-              "PoC"
-            ],
-          passwordAlgorithm: "sha512",
-          passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea",
-          passwordSalt: "1234567890",
-          cert: ""
-        };
+			return channel1.save(() => channel2.save(() => {
+				const testAppDoc = {
+					clientID: "testApp",
+					clientDomain: "test-client.jembi.org",
+					name: "TEST Client",
+					roles:
+					[
+						"OpenMRS_PoC",
+						"PoC"
+					],
+					passwordAlgorithm: "sha512",
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea",
+					passwordSalt: "1234567890",
+					cert: ""
+				};
 
-        let client = new Client(testAppDoc);
-        return client.save(() => done());
-      })
-       );
-    });
+				const client = new Client(testAppDoc);
+				return client.save(() => done());
+			})
+			);
+		});
 
-    after(done =>
-      Channel.remove({ name: "TEST DATA - Will break channel" }, () =>
-        Client.remove({ clientID: "testApp" }, () =>
-          Transaction.remove({}, () => AutoRetry.remove({}, () => done())
-           )
-        )
-      )
-    );
+		after(done =>
+			Channel.remove({ name: "TEST DATA - Will break channel" }, () =>
+				Client.remove({ clientID: "testApp" }, () =>
+					Transaction.remove({}, () => AutoRetry.remove({}, () => done())
+					)
+				)
+			)
+		);
 
-    beforeEach(done => Transaction.remove({}, () => AutoRetry.remove({}, () => Event.remove({}, done))));
+		beforeEach(done => Transaction.remove({}, () => AutoRetry.remove({}, () => Event.remove({}, done))));
 
-    afterEach(done => server.stop(() => done()));
-
-
-    it("should mark transaction as available to auto retry if an internal server error occurs", done =>
-      server.start({httpPort: 5001}, () =>
-        request("http://localhost:5001")
-          .get("/test/nowhere")
-          .auth("testApp", "password")
-          .expect(500)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            } else {
-              return setTimeout(( () =>
-                Transaction.findOne({}, function(err, trx) {
-                  if (err) { return done(err); }
-                  trx.should.have.property('autoRetry');
-                  trx.autoRetry.should.be.true();
-                  trx.should.have.property('error');
-                  trx.error.should.have.property('message');
-                  trx.error.should.have.property('stack');
-                  (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true();
-                  return done();
-              })
-              ), 150 * global.testTimeoutFactor);
-            }
-        })
-      )
-    );
-
-    it("should push an auto retry transaction to the auto retry queue", done =>
-      server.start({httpPort: 5001}, () =>
-        request("http://localhost:5001")
-          .get("/test/nowhere")
-          .auth("testApp", "password")
-          .expect(500)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            } else {
-              return setTimeout(( () =>
-                Transaction.findOne({}, function(err, trx) {
-                  if (err) { return done(err); }
-                  return AutoRetry.findOne({}, function(err, autoRetry) {
-                    if (err) { return done(err); }
-                    autoRetry.transactionID.toString().should.be.equal(trx._id.toString());
-                    autoRetry.channelID.toString().should.be.equal(channel1._id.toString());
-                    return done();
-                });
-              })
-              ), 150 * global.testTimeoutFactor);
-            }
-        })
-      )
-    );
-
-    it("should auto retry a failed transaction", done =>
-      server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
-        request("http://localhost:5001")
-          .get("/test/nowhere")
-          .auth("testApp", "password")
-          .expect(500)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            } else {
-              return setTimeout(( () =>
-                // manually trigger rerun
-                autoRetry.autoRetryTask(null, function() {
-                  tasks.findAndProcessAQueuedTask();
-
-                  return setTimeout(( () =>
-                    Transaction.find({}, function(err, transactions) {
-                      if (err) { return done(err); }
-                      transactions.length.should.be.exactly(2);
-                      transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString());
-                      transactions[1].autoRetryAttempt.should.be.exactly(1);
-                      // failed so should be eligible to rerun again
-                      transactions[1].autoRetry.should.be.true();
-                      return done();
-                  })
-                  ), 150 * global.testTimeoutFactor);
-              })
-              ), 150 * global.testTimeoutFactor);
-            }
-        })
-      )
-    );
-
-    it("should not auto retry a transaction that has reached the max retry limit", done =>
-      server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
-        request("http://localhost:5001")
-          .get("/test/nowhere/2")
-          .auth("testApp", "password")
-          .expect(500)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            } else {
-              return setTimeout(( () =>
-                // manually trigger rerun
-                autoRetry.autoRetryTask(null, function() {
-                  tasks.findAndProcessAQueuedTask();
-
-                  return setTimeout(( () =>
-                    Transaction.find({}, function(err, transactions) {
-                      if (err) { return done(err); }
-                      transactions.length.should.be.exactly(2);
-                      transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString());
-                      transactions[1].autoRetryAttempt.should.be.exactly(1);
-                      // should not be eligible to retry
-                      transactions[1].autoRetry.should.be.false();
-                      return done();
-                  })
-                  ), 150 * global.testTimeoutFactor);
-              })
-              ), 150 * global.testTimeoutFactor);
-            }
-        })
-      )
-    );
-
-    return it("should contain the attempt number in transaction events", done =>
-      server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
-        request("http://localhost:5001")
-          .get("/test/nowhere")
-          .auth("testApp", "password")
-          .expect(500)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            } else {
-              return setTimeout(( () =>
-                // manually trigger rerun
-                autoRetry.autoRetryTask(null, function() {
-                  tasks.findAndProcessAQueuedTask();
-
-                  return setTimeout(( () =>
-                    Event.find({}, function(err, events) {
-                      if (err) { return done(err); }
-                      let prouteEvents = events.filter(ev => (ev.type === 'primary') && (ev.event === 'end'));
-
-                      // original transaction
-                      should(prouteEvents[0].autoRetryAttempt).be.null();
-                      // retried transaction
-                      prouteEvents[1].autoRetryAttempt.should.be.exactly(1);
-                      return done();
-                  })
-                  ), 150 * global.testTimeoutFactor);
-              })
-              ), 150 * global.testTimeoutFactor);
-            }
-        })
-      )
-    );
-  });
-
-  describe("Secondary route auto retry tests", function() {
-    let mockServer1 = null;
-
-    let channel1 = new Channel({
-      name: "TEST DATA - Secondary route will break channel",
-      urlPattern: "^/test/nowhere$",
-      allow: [ "PoC" ],
-      routes: [{
-            name: "available route",
-            host: "localhost",
-            port: 1233,
-            primary: true
-          }
-          , {
-            name: "unavailable route",
-            host: "localhost",
-            port: 9999
-          }
-          ]});
-
-    before(function(done) {
-      config.authentication.enableMutualTLSAuthentication = false;
-      config.authentication.enableBasicAuthentication = true;
-
-      return channel1.save(function(err) {
-        let testAppDoc = {
-          clientID: "testApp",
-          clientDomain: "test-client.jembi.org",
-          name: "TEST Client",
-          roles:
-            [
-              "OpenMRS_PoC",
-              "PoC"
-            ],
-          passwordAlgorithm: "sha512",
-          passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea",
-          passwordSalt: "1234567890",
-          cert: ""
-        };
-
-        let client = new Client(testAppDoc);
-        return client.save(() => mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => done()));
-      });
-    });
-
-    after(done =>
-      Channel.remove({ name: "TEST DATA - Secondary route will break channel" }, () =>
-        Client.remove({ clientID: "testApp" }, () =>
-          Transaction.remove({}, () =>
-            mockServer1.close(() => done())
-          )
-        )
-      )
-    );
-
-    beforeEach(done => Transaction.remove({}, done));
-
-    afterEach(done =>
-      server.stop(() => done())
-    );
+		afterEach(done => server.stop(() => done()));
 
 
-    return it("should mark transaction as available to auto retry if an internal server error occurs on a secondary route", done =>
-      server.start({httpPort: 5001}, () =>
-        request("http://localhost:5001")
-          .get("/test/nowhere")
-          .auth("testApp", "password")
-          .expect(200)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            } else {
-              return setTimeout(( () =>
-                Transaction.findOne({}, function(err, trx) {
-                  if (err) { return done(err); }
-                  trx.should.have.property('autoRetry');
-                  trx.autoRetry.should.be.true();
-                  trx.routes[0].should.have.property('error');
-                  trx.routes[0].error.should.have.property('message');
-                  trx.routes[0].error.should.have.property('stack');
-                  (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true();
-                  return done();
-              })
-              ), 150 * global.testTimeoutFactor);
-            }
-        })
-      )
-    );
-  });
+		it("should mark transaction as available to auto retry if an internal server error occurs", done =>
+			server.start({ httpPort: 5001 }, () =>
+				request("http://localhost:5001")
+					.get("/test/nowhere")
+					.auth("testApp", "password")
+					.expect(500)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return setTimeout((() =>
+								Transaction.findOne({}, (err, trx) => {
+									if (err) { return done(err); }
+									trx.should.have.property("autoRetry");
+									trx.autoRetry.should.be.true();
+									trx.should.have.property("error");
+									trx.error.should.have.property("message");
+									trx.error.should.have.property("stack");
+									(trx.error.message.indexOf("ECONNREFUSED") > -1).should.be.true();
+									return done();
+								})
+							), 150 * global.testTimeoutFactor);
+						}
+					})
+			)
+		);
 
-  describe("Mediator auto retry tests", function() {
-    let mockServer1 = null;
+		it("should push an auto retry transaction to the auto retry queue", done =>
+			server.start({ httpPort: 5001 }, () =>
+				request("http://localhost:5001")
+					.get("/test/nowhere")
+					.auth("testApp", "password")
+					.expect(500)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return setTimeout((() =>
+								Transaction.findOne({}, (err, trx) => {
+									if (err) { return done(err); }
+									return AutoRetry.findOne({}, (err, autoRetry) => {
+										if (err) { return done(err); }
+										autoRetry.transactionID.toString().should.be.equal(trx._id.toString());
+										autoRetry.channelID.toString().should.be.equal(channel1._id.toString());
+										return done();
+									});
+								})
+							), 150 * global.testTimeoutFactor);
+						}
+					})
+			)
+		);
 
-    let channel1 = new Channel({
-      name: "TEST DATA - Mediator has error channel",
-      urlPattern: "^/test/nowhere$",
-      allow: [ "PoC" ],
-      routes: [{
-            name: "mediator route",
-            host: "localhost",
-            port: 1233,
-            primary: true
-          }
-          ]});
+		it("should auto retry a failed transaction", done =>
+			server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
+				request("http://localhost:5001")
+					.get("/test/nowhere")
+					.auth("testApp", "password")
+					.expect(500)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return setTimeout((() =>
+								// manually trigger rerun
+								autoRetry.autoRetryTask(null, () => {
+									tasks.findAndProcessAQueuedTask();
 
-    let mediatorResponse = {
-      'x-mediator-urn': 'urn:mediator:test',
-      status: 'Failed',
-      response: {
-        status: 500,
-        body: 'Internal server error',
-        timestamp: new Date()
-      },
-      error: {
-        message: 'Connection refused',
-        stack: 'thething@line23'
-      }
-    };
+									return setTimeout((() =>
+										Transaction.find({}, (err, transactions) => {
+											if (err) { return done(err); }
+											transactions.length.should.be.exactly(2);
+											transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString());
+											transactions[1].autoRetryAttempt.should.be.exactly(1);
+											// failed so should be eligible to rerun again
+											transactions[1].autoRetry.should.be.true();
+											return done();
+										})
+									), 150 * global.testTimeoutFactor);
+								})
+							), 150 * global.testTimeoutFactor);
+						}
+					})
+			)
+		);
 
-    before(function(done) {
-      config.authentication.enableMutualTLSAuthentication = false;
-      config.authentication.enableBasicAuthentication = true;
+		it("should not auto retry a transaction that has reached the max retry limit", done =>
+			server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
+				request("http://localhost:5001")
+					.get("/test/nowhere/2")
+					.auth("testApp", "password")
+					.expect(500)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return setTimeout((() =>
+								// manually trigger rerun
+								autoRetry.autoRetryTask(null, () => {
+									tasks.findAndProcessAQueuedTask();
 
-      return channel1.save(function(err) {
-        let testAppDoc = {
-          clientID: "testApp",
-          clientDomain: "test-client.jembi.org",
-          name: "TEST Client",
-          roles:
-            [
-              "OpenMRS_PoC",
-              "PoC"
-            ],
-          passwordAlgorithm: "sha512",
-          passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea",
-          passwordSalt: "1234567890",
-          cert: ""
-        };
+									return setTimeout((() =>
+										Transaction.find({}, (err, transactions) => {
+											if (err) { return done(err); }
+											transactions.length.should.be.exactly(2);
+											transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString());
+											transactions[1].autoRetryAttempt.should.be.exactly(1);
+											// should not be eligible to retry
+											transactions[1].autoRetry.should.be.false();
+											return done();
+										})
+									), 150 * global.testTimeoutFactor);
+								})
+							), 150 * global.testTimeoutFactor);
+						}
+					})
+			)
+		);
 
-        let client = new Client(testAppDoc);
-        return client.save(() => mockServer1 = testUtils.createMockMediatorServer(200, mediatorResponse, 1233, () => done()));
-      });
-    });
+		return it("should contain the attempt number in transaction events", done =>
+			server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
+				request("http://localhost:5001")
+					.get("/test/nowhere")
+					.auth("testApp", "password")
+					.expect(500)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return setTimeout((() =>
+								// manually trigger rerun
+								autoRetry.autoRetryTask(null, () => {
+									tasks.findAndProcessAQueuedTask();
 
-    after(done =>
-      Channel.remove({ name: "TEST DATA - Mediator has error channel" }, () =>
-        Client.remove({ clientID: "testApp" }, () =>
-          Transaction.remove({}, () =>
-            mockServer1.close(() => done())
-          )
-        )
-      )
-    );
+									return setTimeout((() =>
+										Event.find({}, (err, events) => {
+											if (err) { return done(err); }
+											const prouteEvents = events.filter(ev => (ev.type === "primary") && (ev.event === "end"));
 
-    beforeEach(done => Transaction.remove({}, done));
+											// original transaction
+											should(prouteEvents[0].autoRetryAttempt).be.null();
+											// retried transaction
+											prouteEvents[1].autoRetryAttempt.should.be.exactly(1);
+											return done();
+										})
+									), 150 * global.testTimeoutFactor);
+								})
+							), 150 * global.testTimeoutFactor);
+						}
+					})
+			)
+		);
+	});
 
-    afterEach(done =>
-      server.stop(() => done())
-    );
+	describe("Secondary route auto retry tests", () => {
+		let mockServer1 = null;
 
+		const channel1 = new Channel({
+			name: "TEST DATA - Secondary route will break channel",
+			urlPattern: "^/test/nowhere$",
+			allow: ["PoC"],
+			routes: [{
+				name: "available route",
+				host: "localhost",
+				port: 1233,
+				primary: true
+			},
+			{
+				name: "unavailable route",
+				host: "localhost",
+				port: 9999
+			}
+			]
+		});
 
-    return it("should mark transaction as available to auto retry if an internal server error occurs in a mediator", done =>
-      server.start({httpPort: 5001}, () =>
-        request("http://localhost:5001")
-          .get("/test/nowhere")
-          .auth("testApp", "password")
-          .expect(500)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            } else {
-              return setTimeout(( () =>
-                Transaction.findOne({}, function(err, trx) {
-                  if (err) { return done(err); }
-                  trx.should.have.property('autoRetry');
-                  trx.autoRetry.should.be.true();
-                  trx.should.have.property('error');
-                  trx.error.should.have.property('message');
-                  trx.error.message.should.be.exactly(mediatorResponse.error.message);
-                  trx.error.should.have.property('stack');
-                  trx.error.stack.should.be.exactly(mediatorResponse.error.stack);
-                  return done();
-              })
-              ), 150 * global.testTimeoutFactor);
-            }
-        })
-      )
-    );
-  });
+		before((done) => {
+			config.authentication.enableMutualTLSAuthentication = false;
+			config.authentication.enableBasicAuthentication = true;
 
-  return describe("All routes failed auto retry tests", function() {
-    let channel1 = new Channel({
-      name: "TEST DATA - Both will break channel",
-      urlPattern: "^/test/nowhere$",
-      allow: [ "PoC" ],
-      routes: [{
-            name: "unavailable route 1",
-            host: "localhost",
-            port: 9999,
-            primary: true
-          }
-          , {
-            name: "unavailable route 2",
-            host: "localhost",
-            port: 9988
-          }
-          ]});
+			return channel1.save((err) => {
+				const testAppDoc = {
+					clientID: "testApp",
+					clientDomain: "test-client.jembi.org",
+					name: "TEST Client",
+					roles:
+					[
+						"OpenMRS_PoC",
+						"PoC"
+					],
+					passwordAlgorithm: "sha512",
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea",
+					passwordSalt: "1234567890",
+					cert: ""
+				};
 
-    before(function(done) {
-      config.authentication.enableMutualTLSAuthentication = false;
-      config.authentication.enableBasicAuthentication = true;
+				const client = new Client(testAppDoc);
+				return client.save(() => mockServer1 = testUtils.createMockServer(200, "target1", 1233, () => done()));
+			});
+		});
 
-      return channel1.save(function(err) {
-        let testAppDoc = {
-          clientID: "testApp",
-          clientDomain: "test-client.jembi.org",
-          name: "TEST Client",
-          roles:
-            [
-              "OpenMRS_PoC",
-              "PoC"
-            ],
-          passwordAlgorithm: "sha512",
-          passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea",
-          passwordSalt: "1234567890",
-          cert: ""
-        };
+		after(done =>
+			Channel.remove({ name: "TEST DATA - Secondary route will break channel" }, () =>
+				Client.remove({ clientID: "testApp" }, () =>
+					Transaction.remove({}, () =>
+						mockServer1.close(() => done())
+					)
+				)
+			)
+		);
 
-        let client = new Client(testAppDoc);
-        return client.save(() => done());
-      });
-    });
+		beforeEach(done => Transaction.remove({}, done));
 
-    after(done =>
-      Channel.remove({ name: "TEST DATA - Both will break channel" }, () =>
-        Client.remove({ clientID: "testApp" }, () =>
-          Transaction.remove({}, () => done())
-        )
-      )
-    );
-
-    beforeEach(done => Transaction.remove({}, done));
-
-    afterEach(done =>
-      server.stop(() => done())
-    );
+		afterEach(done =>
+			server.stop(() => done())
+		);
 
 
-    return it("should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes", done =>
-      server.start({httpPort: 5001}, () =>
-        request("http://localhost:5001")
-          .get("/test/nowhere")
-          .auth("testApp", "password")
-          .expect(500)
-          .end(function(err, res) {
-            if (err) {
-              return done(err);
-            } else {
-              return setTimeout(( () =>
-                Transaction.findOne({}, function(err, trx) {
-                  if (err) { return done(err); }
-                  trx.should.have.property('autoRetry');
-                  trx.autoRetry.should.be.true();
-                  trx.should.have.property('error');
-                  trx.error.should.have.property('message');
-                  trx.error.should.have.property('stack');
-                  (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true();
-                  trx.routes[0].should.have.property('error');
-                  trx.routes[0].error.should.have.property('message');
-                  trx.routes[0].error.should.have.property('stack');
-                  (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true();
-                  return done();
-              })
-              ), 150 * global.testTimeoutFactor);
-            }
-        })
-      )
-    );
-  });
+		return it("should mark transaction as available to auto retry if an internal server error occurs on a secondary route", done =>
+			server.start({ httpPort: 5001 }, () =>
+				request("http://localhost:5001")
+					.get("/test/nowhere")
+					.auth("testApp", "password")
+					.expect(200)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return setTimeout((() =>
+								Transaction.findOne({}, (err, trx) => {
+									if (err) { return done(err); }
+									trx.should.have.property("autoRetry");
+									trx.autoRetry.should.be.true();
+									trx.routes[0].should.have.property("error");
+									trx.routes[0].error.should.have.property("message");
+									trx.routes[0].error.should.have.property("stack");
+									(trx.routes[0].error.message.indexOf("ECONNREFUSED") > -1).should.be.true();
+									return done();
+								})
+							), 150 * global.testTimeoutFactor);
+						}
+					})
+			)
+		);
+	});
+
+	describe("Mediator auto retry tests", () => {
+		let mockServer1 = null;
+
+		const channel1 = new Channel({
+			name: "TEST DATA - Mediator has error channel",
+			urlPattern: "^/test/nowhere$",
+			allow: ["PoC"],
+			routes: [{
+				name: "mediator route",
+				host: "localhost",
+				port: 1233,
+				primary: true
+			}
+			]
+		});
+
+		const mediatorResponse = {
+			"x-mediator-urn": "urn:mediator:test",
+			status: "Failed",
+			response: {
+				status: 500,
+				body: "Internal server error",
+				timestamp: new Date()
+			},
+			error: {
+				message: "Connection refused",
+				stack: "thething@line23"
+			}
+		};
+
+		before((done) => {
+			config.authentication.enableMutualTLSAuthentication = false;
+			config.authentication.enableBasicAuthentication = true;
+
+			return channel1.save((err) => {
+				const testAppDoc = {
+					clientID: "testApp",
+					clientDomain: "test-client.jembi.org",
+					name: "TEST Client",
+					roles:
+					[
+						"OpenMRS_PoC",
+						"PoC"
+					],
+					passwordAlgorithm: "sha512",
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea",
+					passwordSalt: "1234567890",
+					cert: ""
+				};
+
+				const client = new Client(testAppDoc);
+				return client.save(() => mockServer1 = testUtils.createMockMediatorServer(200, mediatorResponse, 1233, () => done()));
+			});
+		});
+
+		after(done =>
+			Channel.remove({ name: "TEST DATA - Mediator has error channel" }, () =>
+				Client.remove({ clientID: "testApp" }, () =>
+					Transaction.remove({}, () =>
+						mockServer1.close(() => done())
+					)
+				)
+			)
+		);
+
+		beforeEach(done => Transaction.remove({}, done));
+
+		afterEach(done =>
+			server.stop(() => done())
+		);
+
+
+		return it("should mark transaction as available to auto retry if an internal server error occurs in a mediator", done =>
+			server.start({ httpPort: 5001 }, () =>
+				request("http://localhost:5001")
+					.get("/test/nowhere")
+					.auth("testApp", "password")
+					.expect(500)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return setTimeout((() =>
+								Transaction.findOne({}, (err, trx) => {
+									if (err) { return done(err); }
+									trx.should.have.property("autoRetry");
+									trx.autoRetry.should.be.true();
+									trx.should.have.property("error");
+									trx.error.should.have.property("message");
+									trx.error.message.should.be.exactly(mediatorResponse.error.message);
+									trx.error.should.have.property("stack");
+									trx.error.stack.should.be.exactly(mediatorResponse.error.stack);
+									return done();
+								})
+							), 150 * global.testTimeoutFactor);
+						}
+					})
+			)
+		);
+	});
+
+	return describe("All routes failed auto retry tests", () => {
+		const channel1 = new Channel({
+			name: "TEST DATA - Both will break channel",
+			urlPattern: "^/test/nowhere$",
+			allow: ["PoC"],
+			routes: [{
+				name: "unavailable route 1",
+				host: "localhost",
+				port: 9999,
+				primary: true
+			},
+			{
+				name: "unavailable route 2",
+				host: "localhost",
+				port: 9988
+			}
+			]
+		});
+
+		before((done) => {
+			config.authentication.enableMutualTLSAuthentication = false;
+			config.authentication.enableBasicAuthentication = true;
+
+			return channel1.save((err) => {
+				const testAppDoc = {
+					clientID: "testApp",
+					clientDomain: "test-client.jembi.org",
+					name: "TEST Client",
+					roles:
+					[
+						"OpenMRS_PoC",
+						"PoC"
+					],
+					passwordAlgorithm: "sha512",
+					passwordHash: "28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea",
+					passwordSalt: "1234567890",
+					cert: ""
+				};
+
+				const client = new Client(testAppDoc);
+				return client.save(() => done());
+			});
+		});
+
+		after(done =>
+			Channel.remove({ name: "TEST DATA - Both will break channel" }, () =>
+				Client.remove({ clientID: "testApp" }, () =>
+					Transaction.remove({}, () => done())
+				)
+			)
+		);
+
+		beforeEach(done => Transaction.remove({}, done));
+
+		afterEach(done =>
+			server.stop(() => done())
+		);
+
+
+		return it("should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes", done =>
+			server.start({ httpPort: 5001 }, () =>
+				request("http://localhost:5001")
+					.get("/test/nowhere")
+					.auth("testApp", "password")
+					.expect(500)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return setTimeout((() =>
+								Transaction.findOne({}, (err, trx) => {
+									if (err) { return done(err); }
+									trx.should.have.property("autoRetry");
+									trx.autoRetry.should.be.true();
+									trx.should.have.property("error");
+									trx.error.should.have.property("message");
+									trx.error.should.have.property("stack");
+									(trx.error.message.indexOf("ECONNREFUSED") > -1).should.be.true();
+									trx.routes[0].should.have.property("error");
+									trx.routes[0].error.should.have.property("message");
+									trx.routes[0].error.should.have.property("stack");
+									(trx.routes[0].error.message.indexOf("ECONNREFUSED") > -1).should.be.true();
+									return done();
+								})
+							), 150 * global.testTimeoutFactor);
+						}
+					})
+			)
+		);
+	});
 });
