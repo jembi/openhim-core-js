@@ -10,7 +10,7 @@ import { ContactGroup } from "./model/contactGroups";
 import { Alert } from "./model/alerts";
 import { User } from "./model/users";
 import utils from "./utils";
-import Channels from "./model/channels";
+import * as Channels from "./model/channels";
 
 config.alerts = config.get("alerts");
 const { Channel } = Channels;

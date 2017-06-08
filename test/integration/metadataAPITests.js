@@ -10,8 +10,8 @@ import { Mediator } from "../../src/model/mediators";
 import { User } from "../../src/model/users";
 import { ContactGroup } from "../../src/model/contactGroups";
 
-import server from "../../src/server";
-import testUtils from "../testUtils";
+import * as server from "../../src/server";
+import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
 

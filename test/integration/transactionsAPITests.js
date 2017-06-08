@@ -8,19 +8,18 @@ import utils from "../../src/utils";
 import { Transaction } from "../../src/model/transactions";
 import { Channel } from "../../src/model/channels";
 import { User } from "../../src/model/users";
-import server from "../../src/server";
-import testUtils from "../testUtils";
+import * as server from "../../src/server";
+import * as testUtils from "../testUtils";
 import FakeServer from "../fakeTcpServer";
 import { config } from "../../src/config";
 import { Event } from "../../src/model/events";
 import { AutoRetry } from "../../src/model/autoRetry";
 
+const apiConf = config.get("api");
+const application = config.get("application");
+
 const { auth } = testUtils;
 const domain = `${os.hostname()}.${application.name}`;
-
-const apiConf = config.get("api");
-
-const application = config.get("application");
 
 const clearTransactionBodies = function (t) {
 	t.request.body = "";

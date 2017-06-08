@@ -3,14 +3,14 @@ import logger from "winston";
 import moment from "moment";
 import path from "path";
 import Q from "q";
-
-import authorisation from "./api/authorisation";
+import { path as appRoot } from "app-root-path";
+import * as authorisation from "./api/authorisation";
 import { Channel } from "./model/channels";
 import { config } from "./config";
-import contact from "./contact";
-import metrics from "./metrics";
+import * as contact from "./contact";
+import * as metrics from "./metrics";
 import { User } from "./model/users";
-import utils from "./utils";
+import * as utils from "./utils";
 
 config.reports = config.get("reports");
 
@@ -249,7 +249,7 @@ Completed with errors: ${((data.data[0] != null ? data.data[0].completedWErrors 
 }
 
 function renderTemplate(templateName, templateData, callback) {
-	const templateDir = `${global.appRoot}/templates/${templateName}`;
+	const templateDir = `${appRoot}/templates/${templateName}`;
 	const template = new EmailTemplate(templateDir);
 	return template.render(templateData, (err, result) => {
 		if (err) {

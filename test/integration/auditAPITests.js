@@ -3,9 +3,9 @@
 
 import should from "should";
 import request from "supertest";
-import server from "../../src/server";
+import * as server from "../../src/server";
 import { Audit, AuditMeta } from "../../src/model/audits";
-import testUtils from "../testUtils";
+import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
 

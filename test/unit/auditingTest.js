@@ -3,9 +3,9 @@
 import should from "should";
 import dgram from "dgram";
 import fs from "fs";
-import auditing from "../../src/auditing";
+import * as auditing from "../../src/auditing";
 import { Audit, AuditMeta } from "../../src/model/audits";
-import testUtils from "../testUtils";
+import * as testUtils from "../testUtils";
 import { config } from "../../src/config";
 
 config.auditing = config.get("auditing");

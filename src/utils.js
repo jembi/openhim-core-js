@@ -5,6 +5,7 @@ import { Keystore } from "./model/keystore";
 import { config } from "./config";
 
 config.caching = config.get("caching");
+config.api = config.get("api");
 
 
 // function to log errors and return response

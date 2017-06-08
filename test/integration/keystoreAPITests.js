@@ -5,8 +5,8 @@ import request from "supertest";
 import sinon from "sinon";
 import fs from "fs";
 import path from "path";
-import testUtils from "../testUtils";
-import server from "../../src/server";
+import * as testUtils from "../testUtils";
+import * as server from "../../src/server";
 import { Keystore } from "../../src/model/keystore";
 import { config } from "../../src/config";
 

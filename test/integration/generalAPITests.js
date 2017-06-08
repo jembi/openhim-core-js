@@ -3,7 +3,7 @@
 import should from "should";
 import request from "supertest";
 import crypto from "crypto";
-import server from "../../src/server";
+import * as server from "../../src/server";
 import { User } from "../../src/model/users";
 
 describe("API Integration Tests", () =>

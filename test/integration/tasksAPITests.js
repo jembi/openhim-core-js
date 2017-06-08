@@ -4,12 +4,12 @@ import should from "should";
 import request from "supertest";
 import { MongoClient } from "mongodb";
 import { Types } from "mongoose";
-import server from "../../src/server";
+import * as server from "../../src/server";
 import { Task } from "../../src/model/tasks";
 import { Transaction } from "../../src/model/transactions";
 import { AutoRetry } from "../../src/model/autoRetry";
 import { Channel } from "../../src/model/channels";
-import testUtils from "../testUtils";
+import * as testUtils from "../testUtils";
 import { config } from "../../src/config";
 
 const { auth } = testUtils;

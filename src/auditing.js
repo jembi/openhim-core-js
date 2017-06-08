@@ -6,7 +6,7 @@ import tls from "tls";
 import net from "net";
 
 import { Audit, AuditMeta } from "./model/audits";
-import tlsAuthentication from "./middleware/tlsAuthentication";
+import * as tlsAuthentication from "./middleware/tlsAuthentication";
 import { config } from "./config";
 
 config.auditing = config.get("auditing");

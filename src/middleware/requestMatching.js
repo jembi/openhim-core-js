@@ -7,7 +7,7 @@ import os from "os";
 import { config } from "../config";
 import utils from "../utils";
 import auditing from "../auditing";
-import Channels from "../model/channels";
+import * as Channels from "../model/channels";
 
 const { Channel } = Channels;
 

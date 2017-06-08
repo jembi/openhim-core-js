@@ -3,7 +3,7 @@ import moment from "moment";
 import Q from "q";
 import { AutoRetry } from "./model/autoRetry";
 import { Task } from "./model/tasks";
-import Channels from "./model/channels";
+import * as Channels from "./model/channels";
 
 const { Channel } = Channels;
 

@@ -6,8 +6,8 @@ import tls from "tls";
 import net from "net";
 import dgram from "dgram";
 import { Audit } from "../../src/model/audits";
-import server from "../../src/server";
-import testUtils from "../testUtils";
+import * as server from "../../src/server";
+import * as testUtils from "../testUtils";
 import { testAuditMessage } from "../unit/auditingTest";
 
 describe("Auditing Integration Tests", () => {

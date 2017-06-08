@@ -1,6 +1,6 @@
 /* eslint-env mocha */
 import mongoose from "mongoose";
-import { config } from "../config/test.json";
+import * as config from "../config/test.json";
 
 global.testTimeoutFactor = 1;
 

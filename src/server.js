@@ -17,20 +17,21 @@ import logger from "winston";
 import "winston-mongodb";
 import Agenda from "agenda";
 import mongoose from "mongoose";
+import { path as appRoot } from "app-root-path";
 
-import koaMiddleware from "./koaMiddleware";
-import koaApi from "./koaApi";
-import tlsAuthentication from "./middleware/tlsAuthentication";
+import * as koaMiddleware from "./koaMiddleware";
+import * as koaApi from "./koaApi";
+import * as tlsAuthentication from "./middleware/tlsAuthentication";
 import { User } from "./model/users";
 import { Keystore } from "./model/keystore";
-import alerts from "./alerts";
-import reports from "./reports";
-import polling from "./polling";
-import tcpAdapter from "./tcpAdapter";
-import auditing from "./auditing";
-import tasks from "./tasks";
-import upgradeDB from "./upgradeDB";
-import autoRetry from "./autoRetry";
+import * as alerts from "./alerts";
+import * as reports from "./reports";
+import * as polling from "./polling";
+import * as tcpAdapter from "./tcpAdapter";
+import * as auditing from "./auditing";
+import * as tasks from "./tasks";
+import * as upgradeDB from "./upgradeDB";
+import * as autoRetry from "./autoRetry";
 import { config } from "./config";
 
 config.mongo = config.get("mongo");
@@ -53,9 +54,6 @@ const currentVersion = require("../package.json").version;
 const numCPUs = require("os").cpus().length;
 
 let ensureKeystore;
-
-// Set app root global
-global.appRoot = path.join(path.resolve(__dirname), "..");
 
 logger.remove(logger.transports.Console);
 
@@ -426,8 +424,8 @@ if (cluster.isMaster && !module.parent) {
 					({ certPath } = config.certificateManagement);
 					({ keyPath } = config.certificateManagement);
 				} else { // use default self-signed certs
-					certPath = `${global.appRoot}/resources/certs/default/cert.pem`;
-					keyPath = `${global.appRoot}/resources/certs/default/key.pem`;
+					certPath = `${appRoot}/resources/certs/default/cert.pem`;
+					keyPath = `${appRoot}/resources/certs/default/key.pem`;
 				}
 
 				cert = fs.readFileSync(certPath);

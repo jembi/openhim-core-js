@@ -1,4 +1,5 @@
 import nconf from "nconf";
+import { path as appRoot } from "app-root-path";
 
 /*
  * Define the default constructor
@@ -17,12 +18,12 @@ function Config() {
 	// environment override
 	if (environment) {
 		// appRoot is a global var - set in server.cofee
-		nconf.file("environmentOverride", `${global.appRoot}/config/${environment}.json`);
+		nconf.file("environmentOverride", `${appRoot}/config/${environment}.json`);
 	}
 
 	// load the default config file
 	// appRoot is a global var - set in server.cofee
-	nconf.file("default", `${global.appRoot}/config/default.json`);
+	nconf.file("default", `${appRoot}/config/default.json`);
 
 	// Return the result
 }

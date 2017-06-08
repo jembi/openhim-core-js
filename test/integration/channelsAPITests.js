@@ -5,12 +5,12 @@ import should from "should";
 import request from "supertest";
 import sinon from "sinon";
 import mongoose from "mongoose";
-import server from "../../src/server";
+import * as server from "../../src/server";
 import tcpAdapter from "../../src/tcpAdapter";
 import polling from "../../src/polling";
 import { Channel } from "../../src/model/channels";
 import { Transaction } from "../../src/model/transactions";
-import testUtils from "../testUtils";
+import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
 

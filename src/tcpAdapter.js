@@ -5,7 +5,7 @@ import net from "net";
 import tls from "tls";
 import logger from "winston";
 import Q from "q";
-import Channels from "./model/channels";
+import * as Channels from "./model/channels";
 import tlsAuthentication from "./middleware/tlsAuthentication";
 import authorisation from "./middleware/authorisation";
 import { config } from "./config";

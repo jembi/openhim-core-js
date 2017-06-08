@@ -4,10 +4,10 @@ import should from "should";
 import request from "supertest";
 import sinon from "sinon";
 import moment from "moment";
-import server from "../../src/server";
+import * as server from "../../src/server";
 import contact from "../../src/contact";
 import { User } from "../../src/model/users";
-import testUtils from "../testUtils";
+import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
 

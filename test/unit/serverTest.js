@@ -4,8 +4,9 @@
 import should from "should";
 import moment from "moment";
 import fs from "fs";
-import server from "../../src/server";
-import testUtils from "../testUtils";
+import { path as appRoot } from "app-root-path";
+import * as server from "../../src/server";
+import * as testUtils from "../testUtils";
 import { Keystore } from "../../src/model/keystore";
 import { config } from "../../src/config";
 
@@ -70,8 +71,8 @@ describe("Server tests", () => {
 
 		it("should create a default keystore when none exists using cert from file system certs", (done) => {
 			config.certificateManagement.watchFSForCert = true;
-			config.certificateManagement.certPath = `${global.appRoot}/test/resources/server-tls/cert.pem`;
-			config.certificateManagement.keyPath = `${global.appRoot}/test/resources/server-tls/key.pem`;
+			config.certificateManagement.certPath = `${appRoot}/test/resources/server-tls/cert.pem`;
+			config.certificateManagement.keyPath = `${appRoot}/test/resources/server-tls/key.pem`;
 			return Keystore.findOneAndRemove({}, () =>
 				server.ensureKeystore((err) => {
 					should.not.exist(err);
@@ -89,15 +90,15 @@ describe("Server tests", () => {
 
 		it("should update an existing keystore with cert from filesystem", (done) => {
 			config.certificateManagement.watchFSForCert = true;
-			config.certificateManagement.certPath = `${global.appRoot}/resources/certs/default/cert.pem`;
-			config.certificateManagement.keyPath = `${global.appRoot}/resources/certs/default/key.pem`;
+			config.certificateManagement.certPath = `${appRoot}/resources/certs/default/cert.pem`;
+			config.certificateManagement.keyPath = `${appRoot}/resources/certs/default/key.pem`;
 			return testUtils.setupTestKeystore((keystore) => {
 				keystore.cert.organization.should.be.exactly("Jembi Health Systems NPC");
 				return server.ensureKeystore((err) => {
 					should.not.exist(err);
 					return Keystore.findOne({}, (err, keystore) => {
 						keystore.cert.organization.should.be.exactly("OpenHIM Default Certificate");
-						keystore.cert.data.should.be.exactly((fs.readFileSync(`${global.appRoot}/resources/certs/default/cert.pem`)).toString());
+						keystore.cert.data.should.be.exactly((fs.readFileSync(`${appRoot}/resources/certs/default/cert.pem`)).toString());
 						return done();
 					});
 				});

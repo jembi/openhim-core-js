@@ -1,6 +1,6 @@
 import { Schema } from "mongoose";
 import { connectionDefault } from "../config";
-import events from "./events";
+import * as events from "./events";
 
 const EventLinkDef = {
 	eventType: {

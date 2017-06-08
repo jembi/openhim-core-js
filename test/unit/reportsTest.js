@@ -7,7 +7,7 @@ import moment from "moment";
 import mongoose from "mongoose";
 
 import reports from "../../src/reports";
-import testUtils from "../testUtils";
+import * as testUtils from "../testUtils";
 import { config } from "../../src/config";
 import { Channel } from "../../src/model/channels";
 import { User } from "../../src/model/users";

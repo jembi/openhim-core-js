@@ -2,10 +2,10 @@
 
 import should from "should";
 import request from "supertest";
-import server from "../../src/server";
+import * as server from "../../src/server";
 import { Channel } from "../../src/model/channels";
 import { Client } from "../../src/model/clients";
-import testUtils from "../testUtils";
+import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
 

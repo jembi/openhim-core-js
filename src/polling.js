@@ -2,7 +2,7 @@ import request from "request";
 import logger from "winston";
 import Q from "q";
 
-import Channels from "./model/channels";
+import * as Channels from "./model/channels";
 import { config } from "./config";
 import authorisation from "./middleware/authorisation";
 import utils from "./utils";

@@ -1,7 +1,7 @@
 import moment from "moment";
 import Q from "q";
 import utils from "../utils";
-import server from "../server";
+import * as server from "../server";
 import { Mediator } from "../model/mediators";
 
 export function* getHeartbeat() {

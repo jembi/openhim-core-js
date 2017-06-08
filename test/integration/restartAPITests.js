@@ -7,8 +7,8 @@ import request from "supertest";
 import { Transaction } from "../../src/model/transactions";
 import { Channel } from "../../src/model/channels";
 import { User } from "../../src/model/users";
-import server from "../../src/server";
-import testUtils from "../testUtils";
+import * as server from "../../src/server";
+import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
 

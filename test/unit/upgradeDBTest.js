@@ -3,8 +3,8 @@
 
 import Q from "q";
 import should from "should";
-import upgradeDB from "../../src/upgradeDB";
-import testUtils from "../testUtils";
+import * as upgradeDB from "../../src/upgradeDB";
+import * as testUtils from "../testUtils";
 import { Keystore } from "../../src/model/keystore";
 import { Client } from "../../src/model/clients";
 import { User } from "../../src/model/users";

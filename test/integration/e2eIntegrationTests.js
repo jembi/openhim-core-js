@@ -10,8 +10,8 @@ import { Channel } from "../../src/model/channels";
 import { Client } from "../../src/model/clients";
 import { Transaction } from "../../src/model/transactions";
 import { Keystore } from "../../src/model/keystore";
-import testUtils from "../testUtils";
-import server from "../../src/server";
+import * as testUtils from "../testUtils";
+import * as server from "../../src/server";
 import { config } from "../../src/config";
 
 config.authentication = config.get("authentication");

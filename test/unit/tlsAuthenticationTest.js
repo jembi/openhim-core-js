@@ -6,7 +6,7 @@ import should from "should";
 import sinon from "sinon";
 import tlsAuthentication from "../../src/middleware/tlsAuthentication";
 import { Client } from "../../src/model/clients";
-import testUtils from "../testUtils";
+import * as testUtils from "../testUtils";
 import { Keystore } from "../../src/model/keystore";
 import { config } from "../../src/config";
 

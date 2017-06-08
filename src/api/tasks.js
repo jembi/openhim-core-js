@@ -4,7 +4,7 @@ import logger from "winston";
 import { Task } from "../model/tasks";
 import { Transaction } from "../model/transactions";
 import { AutoRetry } from "../model/autoRetry";
-import Channels from "../model/channels";
+import * as Channels from "../model/channels";
 import authorisation from "./authorisation";
 import utils from "../utils";
 
