@@ -159,7 +159,7 @@ export function* getAuditById(auditId) {
 		// get projection object
 		const projectionFiltersObject = getProjectionObject("full");
 
-		const result = yield Audit.findById(auditId, projectionFiltersObject).exec()
+		const result = yield Audit.findById(auditId, projectionFiltersObject).exec();
 
 		// Test if the result if valid
 		if (!result) {

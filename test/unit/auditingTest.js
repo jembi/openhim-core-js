@@ -1,6 +1,5 @@
-a/* eslint-env mocha, node */
+/* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
-
 import should from "should";
 import dgram from "dgram";
 import fs from "fs";

@@ -1,9 +1,7 @@
-
-config.alerts = config.get("alerts");
-
 import logger from "winston";
 import moment from "moment";
 import Q from "q";
+import _ from "lodash";
 
 import contact from "./contact";
 import { config } from "./config";
@@ -12,9 +10,9 @@ import { ContactGroup } from "./model/contactGroups";
 import { Alert } from "./model/alerts";
 import { User } from "./model/users";
 import utils from "./utils";
-import _ from "lodash";
 import Channels from "./model/channels";
 
+config.alerts = config.get("alerts");
 const { Channel } = Channels;
 
 

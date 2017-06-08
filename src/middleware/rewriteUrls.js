@@ -1,9 +1,9 @@
 import url from "url";
 import winston from "winston";
 import Q from "q";
-import { Channel } from "../../lib/model/channels";
-import utils from "../../lib/utils";
-import router from "../../lib/middleware/router";
+import { Channel } from "../model/channels";
+import utils from "../utils";
+import router from "../middleware/router";
 import { config } from "../config";
 
 const routerConf = config.get("router");

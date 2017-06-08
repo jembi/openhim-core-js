@@ -78,7 +78,7 @@ const finalizeTaskRound = (task, callback) =>
 			task.status = "Queued";
 			logger.info(`Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remaining`);
 		} else if (task.remainingTransactions === 0) {
-			task.status = 'Completed';
+			task.status = "Completed";
 			task.completedDate = new Date();
 			logger.info(`Round completed for rerun task #${task._id} - Task completed`);
 		} else {
@@ -206,7 +206,7 @@ const rerunGetTransaction = (transactionID, callback) =>
 // Construct HTTP options to be sent #
 // ####################################
 
-function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
+function rerunSetHTTPRequestOptions(transaction, taskID, callback) {
 	if (transaction === null) {
 		const err = new Error("An empty Transaction object was supplied. Aborting HTTP options configuration");
 		return callback(err, null);
@@ -244,7 +244,7 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
 // Function for sending HTTP Request #
 // ####################################
 
-function rerunHttpRequestSend (options, transaction, callback) {
+function rerunHttpRequestSend(options, transaction, callback) {
 	let err;
 	if (options === null) {
 		err = new Error("An empty 'Options' object was supplied. Aborting HTTP Send Request");
@@ -304,7 +304,7 @@ function rerunHttpRequestSend (options, transaction, callback) {
 }
 
 
-function rerunTcpRequestSend (channel, transaction, callback) {
+function rerunTcpRequestSend(channel, transaction, callback) {
 	const response = {
 		body: "",
 		transaction: {}

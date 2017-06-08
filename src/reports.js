@@ -246,7 +246,7 @@ Completed with errors: ${((data.data[0] != null ? data.data[0].completedWErrors 
 `;
 	}
 	return text;
-};
+}
 
 function renderTemplate(templateName, templateData, callback) {
 	const templateDir = `${global.appRoot}/templates/${templateName}`;
