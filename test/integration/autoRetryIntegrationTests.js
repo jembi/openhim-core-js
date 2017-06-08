@@ -11,7 +11,7 @@ import testUtils from "../testUtils";
 import server from "../../src/server";
 import autoRetry from "../../src/autoRetry";
 import tasks from "../../src/tasks";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 
 config.authentication = config.get("authentication");
 

@@ -3,7 +3,7 @@ import logger from "winston";
 import atna from "atna-audit";
 import os from "os";
 import { User } from "../model/users";
-import config from "../config/config";
+import { config } from "../config";
 import auditing from "../auditing";
 
 config.api = config.get("api");

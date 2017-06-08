@@ -3,7 +3,7 @@ import logger from "winston";
 import Q from "q";
 
 import Channels from "./model/channels";
-import config from "./config/config";
+import { config } from "./config";
 import authorisation from "./middleware/authorisation";
 import utils from "./utils";
 

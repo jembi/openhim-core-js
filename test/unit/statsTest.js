@@ -8,7 +8,7 @@ import os from "os";
 import stats from "../../src/stats";
 import testUtils from "../testUtils";
 import FakeServer from "../fakeTcpServer";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 
 const application = config.get("application");
 const timer = new Date();

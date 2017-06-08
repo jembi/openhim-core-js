@@ -5,7 +5,7 @@ import SDC from "statsd-client";
 import os from "os";
 import { Channel } from "../model/channels";
 import { Transaction } from "../model/transactions";
-import config from "../config/config";
+import { config } from "../config";
 
 const statsdServer = config.get("statsd");
 const application = config.get("application");

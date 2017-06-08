@@ -1,8 +1,6 @@
-import mongoose from "mongoose";
-import server from "../server";
+import { Schema } from "mongoose";
+import { connectionDefault } from "../config";
 
-const { connectionDefault } = server;
-const { Schema } = mongoose;
 
 export const eventTypes = ["channel", "primary", "route", "orchestration"];
 

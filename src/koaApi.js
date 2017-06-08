@@ -18,7 +18,7 @@ import metrics from "./api/metrics";
 import keystore from "./api/keystore";
 import serverRestart from "./api/restart";
 import audits from "./api/audits";
-import config from "./config/config";
+import { config } from "./config";
 import heartbeat from "./api/heartbeat";
 import certificateAuthority from "./api/certificateAuthority";
 import logs from "./api/logs";

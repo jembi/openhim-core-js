@@ -10,7 +10,7 @@ import cookie from "cookie";
 import fs from "fs";
 import SDC from "statsd-client";
 import os from "os";
-import config from "../config/config";
+import { config } from "../config";
 import utils from "../utils";
 import messageStore from "../middleware/messageStore";
 import events from "../middleware/events";

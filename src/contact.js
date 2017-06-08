@@ -1,9 +1,8 @@
 import logger from "winston";
 import nodemailer from "nodemailer";
 import request from "request";
-import config from "./config/config";
+import { config } from "./config";
 
-let contactUser;
 config.email = config.get("email");
 config.nodemailer = config.get("nodemailer");
 config.smsGateway = config.get("smsGateway");
@@ -63,12 +62,11 @@ const escapeSpaces = str => str.replace(" ", "+");
  * The contents of the message should be passed via messagePlain.
  * messageHTML is optional and is only used by the 'email' method.
  */
-const contactUser$1 = (contactUser = function (method, contactAddress, title, messagePlain, messageHTML, callback) {
+export function contactUser(method, contactAddress, title, messagePlain, messageHTML, callback) {
 	if (method === "email") {
 		return exports.sendEmail(contactAddress, title, messagePlain, messageHTML, callback);
 	} else if (method === "sms") {
 		return sendSMS(contactAddress, messagePlain, callback);
 	}
 	return callback(`Unknown contact method '${method}'`);
-});
-export { contactUser$1 as contactUser };
+}

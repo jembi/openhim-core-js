@@ -7,7 +7,7 @@ import net from "net";
 
 import { Audit, AuditMeta } from "./model/audits";
 import tlsAuthentication from "./middleware/tlsAuthentication";
-import config from "./config/config";
+import { config } from "./config";
 
 config.auditing = config.get("auditing");
 let processAudit;

@@ -35,4 +35,4 @@ Config.prototype.get = key => nconf.get(key);
 /*
  * This function constructs a new instanse of this class
  */
-export default new Config();
+export const config = new Config();

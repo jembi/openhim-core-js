@@ -2,7 +2,7 @@ import moment from "moment";
 import logger from "winston";
 import events from "../model/events";
 import messageStore from "../middleware/messageStore";
-import config from "../config/config";
+import { config } from "../config";
 
 config.events = config.get("events");
 let normalizationBuffer;

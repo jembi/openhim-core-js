@@ -31,7 +31,7 @@ import auditing from "./auditing";
 import tasks from "./tasks";
 import upgradeDB from "./upgradeDB";
 import autoRetry from "./autoRetry";
-import config from "./config/config";
+import { config } from "./config";
 
 config.mongo = config.get("mongo");
 config.authentication = config.get("authentication");
@@ -56,9 +56,6 @@ let ensureKeystore;
 
 // Set app root global
 global.appRoot = path.join(path.resolve(__dirname), "..");
-
-export const connectionDefault = mongoose.createConnection(config.mongo.url);
-export const connectionATNA = mongoose.createConnection(config.mongo.atnaUrl);
 
 logger.remove(logger.transports.Console);
 

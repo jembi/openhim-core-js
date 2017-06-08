@@ -7,7 +7,7 @@ import fs from "fs";
 import server from "../../src/server";
 import testUtils from "../testUtils";
 import { Keystore } from "../../src/model/keystore";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 
 config.certificateManagement = config.get("certificateManagement");
 

@@ -10,7 +10,7 @@ import server from "../server";
 import polling from "../polling";
 import routerMiddleware from "../middleware/router";
 import utils from "../utils";
-import config from "../config/config";
+import { config } from "../config";
 
 const { Channel } = Channels;
 const { ObjectId } = Types;

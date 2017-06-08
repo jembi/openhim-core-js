@@ -11,7 +11,7 @@ import { User } from "../../src/model/users";
 import server from "../../src/server";
 import testUtils from "../testUtils";
 import FakeServer from "../fakeTcpServer";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 import { Event } from "../../src/model/events";
 import { AutoRetry } from "../../src/model/autoRetry";
 

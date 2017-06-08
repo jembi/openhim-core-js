@@ -8,7 +8,7 @@ import os from "os";
 import { Client } from "../model/clients";
 import { Keystore } from "../model/keystore";
 import utils from "../utils";
-import config from "../config/config";
+import { config } from "../config";
 
 config.tlsClientLookup = config.get("tlsClientLookup");
 const statsdServer = config.get("statsd");

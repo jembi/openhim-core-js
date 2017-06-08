@@ -7,7 +7,7 @@ import os from "os";
 import { User } from "../model/users";
 import authorisation from "./authorisation";
 import contact from "../contact";
-import config from "../config/config";
+import { config } from "../config";
 import utils from "../utils";
 import auditing from "../auditing";
 

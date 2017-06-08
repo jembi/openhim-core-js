@@ -4,7 +4,7 @@ import pem from "pem";
 import { Keystore } from "../model/keystore";
 import authorisation from "./authorisation";
 import utils from "../utils";
-import config from "../config/config";
+import { config } from "../config";
 
 config.certificateManagement = config.get("certificateManagement");
 

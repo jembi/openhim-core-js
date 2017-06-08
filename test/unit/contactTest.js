@@ -5,7 +5,7 @@ import should from "should";
 import sinon from "sinon";
 import nodemailer from "nodemailer";
 import contact from "../../src/contact";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 
 config.email = config.get("email");
 config.smsGateway = config.get("smsGateway");

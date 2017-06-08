@@ -2,7 +2,7 @@ import logger from "winston";
 import Q from "q";
 import authorisation from "../api/authorisation";
 import server from "../server";
-import config from "../config/config";
+import { config } from "../config";
 import { Keystore } from "../model/keystore";
 import KeystoreAPI from "../api/keystore";
 import utils from "../utils";

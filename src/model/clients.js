@@ -1,8 +1,5 @@
-import mongoose from "mongoose";
-import server from "../server";
-
-const { connectionDefault } = server;
-const { Schema } = mongoose;
+import { Schema } from "mongoose";
+import { connectionDefault } from "../config";
 
 const ClientSchema = new Schema({
 	clientID: {

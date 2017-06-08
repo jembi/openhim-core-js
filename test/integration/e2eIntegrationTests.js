@@ -12,7 +12,7 @@ import { Transaction } from "../../src/model/transactions";
 import { Keystore } from "../../src/model/keystore";
 import testUtils from "../testUtils";
 import server from "../../src/server";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 
 config.authentication = config.get("authentication");
 config.tlsClientLookup = config.get("tlsClientLookup");

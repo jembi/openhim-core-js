@@ -2,7 +2,7 @@ import momentTZ from "moment-timezone";
 import logger from "winston";
 import { Channel } from "./model/channels";
 import { Keystore } from "./model/keystore";
-import config from "./config/config";
+import { config } from "./config";
 
 config.caching = config.get("caching");
 

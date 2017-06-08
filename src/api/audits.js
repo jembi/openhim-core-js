@@ -6,7 +6,7 @@ import { Audit, AuditMeta } from "../model/audits";
 import authorisation from "./authorisation";
 import utils from "../utils";
 import auditing from "../auditing";
-import config from "../config/config";
+import { config } from "../config";
 
 config.router = config.get("router");
 config.api = config.get("api");

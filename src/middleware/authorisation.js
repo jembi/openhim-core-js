@@ -5,7 +5,7 @@ import SDC from "statsd-client";
 import os from "os";
 import utils from "../utils";
 import auditing from "../auditing";
-import config from "../config/config";
+import { config } from "../config";
 
 config.authentication = config.get("authentication");
 const statsdServer = config.get("statsd");

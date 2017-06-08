@@ -10,7 +10,7 @@ import { Transaction } from "../../src/model/transactions";
 import { AutoRetry } from "../../src/model/autoRetry";
 import { Channel } from "../../src/model/channels";
 import testUtils from "../testUtils";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 
 const { auth } = testUtils;
 const { ObjectId } = Types;

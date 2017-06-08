@@ -1,19 +1,19 @@
-import config from "./config/config";
 
 config.alerts = config.get("alerts");
 
-const logger = require("winston");
-const contact = require("./contact");
-const moment = require("moment");
-const Q = require("q");
+import logger from "winston";
+import moment from "moment";
+import Q from "q";
 
-const { Event } = require("./model/events");
-const { ContactGroup } = require("./model/contactGroups");
-const { Alert } = require("./model/alerts");
-const { User } = require("./model/users");
-const utils = require("./utils");
-const _ = require("lodash");
-const Channels = require("./model/channels");
+import contact from "./contact";
+import { config } from "./config";
+import { Event } from "./model/events";
+import { ContactGroup } from "./model/contactGroups";
+import { Alert } from "./model/alerts";
+import { User } from "./model/users";
+import utils from "./utils";
+import _ from "lodash";
+import Channels from "./model/channels";
 
 const { Channel } = Channels;
 

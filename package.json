@@ -78,8 +78,7 @@
 		"prepare": "npm run build",
 		"lint": "eslint src/ test/",
 		"lint:fix": "eslint --fix src/ test/",
-		"test": "mocha --require babel-register src/**/*.js test/**/*.js",
-		"test:unit": "mocha --require babel-register test/unit/**/*.js",
+		"test": "export  mocha --require babel-register src/**/*.js test/**/*.js",
 		"start": "node --harmony lib/server.js"
 	},
 	"repository": {

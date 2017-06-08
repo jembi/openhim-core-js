@@ -6,7 +6,7 @@ import logger from "winston";
 import mongoose from "mongoose";
 import server from "../../src/server";
 import testUtils from "../testUtils";
-import config from "../../config/test.json";
+import { config } from "../../config/test.json";
 
 const { auth } = testUtils;
 

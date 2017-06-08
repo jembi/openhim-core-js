@@ -8,7 +8,7 @@ import Q from "q";
 import Channels from "./model/channels";
 import tlsAuthentication from "./middleware/tlsAuthentication";
 import authorisation from "./middleware/authorisation";
-import config from "./config/config";
+import { config } from "./config";
 
 config.tcpAdapter = config.get("tcpAdapter");
 const { Channel } = Channels;

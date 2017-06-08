@@ -4,7 +4,7 @@ import { DOMParser as dom } from "xmldom";
 import logger from "winston";
 import SDC from "statsd-client";
 import os from "os";
-import config from "../config/config";
+import { config } from "../config";
 import utils from "../utils";
 import auditing from "../auditing";
 import Channels from "../model/channels";

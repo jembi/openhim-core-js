@@ -1,10 +1,6 @@
-
-import mongoose from "mongoose";
-import server from "../server";
+import { Schema } from "mongoose";
+import { connectionDefault } from "../config";
 import { RouteDef, ChannelDef } from "./channels";
-
-const { connectionDefault } = server;
-const { Schema } = mongoose;
 
 export const configParamTypes = ["string", "bool", "number", "option", "bigstring", "map", "struct", "password"];
 

@@ -1,8 +1,5 @@
-import mongoose from "mongoose";
-import server from "../server";
-
-const { connectionDefault } = server;
-const { Schema } = mongoose;
+import { Schema } from "mongoose";
+import { connectionDefault } from "../config";
 
 // A collection for keeping a day-long log of any alerts that got sent out to users
 // It is used for the user max-alert policies

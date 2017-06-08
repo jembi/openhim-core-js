@@ -23,7 +23,7 @@ import pollingBypassAuthentication from "./middleware/pollingBypassAuthenticatio
 import events from "./middleware/events";
 import proxy from "./middleware/proxy";
 import rewrite from "./middleware/rewriteUrls";
-import config from "./config/config";
+import { config } from "./config";
 import tcpAdapter from "./tcpAdapter";
 
 config.authentication = config.get("authentication");

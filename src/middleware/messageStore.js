@@ -7,7 +7,7 @@ import transactions from "../model/transactions";
 import { AutoRetry } from "../model/autoRetry";
 import autoRetryUtils from "../autoRetry";
 import utils from "../utils";
-import config from "../config/config";
+import { config } from "../config";
 import stats from "../stats";
 
 const statsdServer = config.get("statsd");

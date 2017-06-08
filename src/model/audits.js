@@ -1,8 +1,5 @@
-import mongoose from "mongoose";
-import server from "../server";
-
-const { connectionATNA } = server;
-const { Schema } = mongoose;
+import { Schema } from "mongoose";
+import { connectionATNA } from "../config";
 
 const codeTypeDef = {
 	code: String,

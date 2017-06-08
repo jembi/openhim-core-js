@@ -2,7 +2,7 @@ import logger from "winston";
 import Q from "q";
 import SDC from "statsd-client";
 import os from "os";
-import config from "../config/config";
+import { config } from "../config";
 
 const statsdServer = config.get("statsd");
 const application = config.get("application");

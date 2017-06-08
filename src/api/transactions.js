@@ -9,7 +9,7 @@ import { Client } from "../model/clients";
 import autoRetryUtils from "../autoRetry";
 import authorisation from "./authorisation";
 import utils from "../utils";
-import config from "../config/config";
+import { config } from "../config";
 
 const statsd_server = config.get("statsd");
 const sdc = new statsd_client(statsd_server);

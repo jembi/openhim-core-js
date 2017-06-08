@@ -6,7 +6,7 @@ import { Channel } from "../../src/model/channels";
 import { Client } from "../../src/model/clients";
 import testUtils from "../testUtils";
 import server from "../../src/server";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 
 config.authentication = config.get("authentication");
 config.tlsClientLookup = config.get("tlsClientLookup");

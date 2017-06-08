@@ -1,9 +1,6 @@
-import mongoose from "mongoose";
-import server from "../server";
+import { Schema } from "mongoose";
+import { connectionDefault } from "../config";
 import events from "./events";
-
-const { connectionDefault } = server;
-const { Schema } = mongoose;
 
 const EventLinkDef = {
 	eventType: {

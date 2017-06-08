@@ -4,7 +4,7 @@ import Q from "q";
 import { Channel } from "../../lib/model/channels";
 import utils from "../../lib/utils";
 import router from "../../lib/middleware/router";
-import config from "../config/config";
+import { config } from "../config";
 
 const routerConf = config.get("router");
 

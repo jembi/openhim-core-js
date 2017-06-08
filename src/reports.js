@@ -6,7 +6,7 @@ import Q from "q";
 
 import authorisation from "./api/authorisation";
 import { Channel } from "./model/channels";
-import config from "./config/config";
+import { config } from "./config";
 import contact from "./contact";
 import metrics from "./metrics";
 import { User } from "./model/users";

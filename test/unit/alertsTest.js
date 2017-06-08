@@ -11,7 +11,7 @@ import { User } from "../../src/model/users";
 import { ContactGroup } from "../../src/model/contactGroups";
 import { Event } from "../../src/model/events";
 import { Alert } from "../../src/model/alerts";
-import config from "../../src/config/config";
+import { config } from "../../src/config";
 
 config.alerts = config.get("alerts");
 
