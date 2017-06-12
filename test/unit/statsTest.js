@@ -5,7 +5,7 @@ import should from "should";
 import sinon from "sinon";
 import http from "http";
 import os from "os";
-import stats from "../../src/stats";
+import * as stats from "../../src/stats";
 import * as testUtils from "../testUtils";
 import FakeServer from "../fakeTcpServer";
 import { config } from "../../src/config";

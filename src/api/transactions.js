@@ -2,13 +2,13 @@ import Q from "q";
 import logger from "winston";
 import statsd_client from "statsd-client";
 import os from "os";
-import transactions from "../model/transactions";
-import events from "../middleware/events";
+import * as transactions from "../model/transactions";
+import * as events from "../middleware/events";
 import { Channel } from "../model/channels";
 import { Client } from "../model/clients";
-import autoRetryUtils from "../autoRetry";
-import authorisation from "./authorisation";
-import utils from "../utils";
+import * as autoRetryUtils from "../autoRetry";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
 import { config } from "../config";
 
 const statsd_server = config.get("statsd");

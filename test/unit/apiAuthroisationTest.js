@@ -2,7 +2,7 @@
 
 import should from "should";
 import sinon from "sinon";
-import authorisation from "../../src/api/authorisation";
+import * as authorisation from "../../src/api/authorisation";
 import { Channel } from "../../src/model/channels";
 import { User } from "../../src/model/users";
 

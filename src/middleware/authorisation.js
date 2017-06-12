@@ -3,8 +3,8 @@ import logger from "winston";
 import atna from "atna-audit";
 import SDC from "statsd-client";
 import os from "os";
-import utils from "../utils";
-import auditing from "../auditing";
+import * as utils from "../utils";
+import * as auditing from "../auditing";
 import { config } from "../config";
 
 config.authentication = config.get("authentication");

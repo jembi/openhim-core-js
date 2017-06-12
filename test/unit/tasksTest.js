@@ -6,7 +6,7 @@ import * as server from "../../src/server";
 import { Transaction } from "../../src/model/transactions";
 import { Task } from "../../src/model/tasks";
 import { Channel } from "../../src/model/channels";
-import tasks from "../../src/tasks";
+import * as tasks from "../../src/tasks";
 import * as testUtils from "../testUtils";
 
 const { ObjectId } = require("mongoose").Types;
@@ -72,6 +72,8 @@ describe("Rerun Task Tests", () => {
 		)
 	);
 
+	beforeEach((done) => testUtils.cleanupMockServers().then(done).catch(done));
+
 	afterEach(done =>
 		Transaction.remove({}, () =>
 			Task.remove({}, () => done())
@@ -96,7 +98,7 @@ describe("Rerun Task Tests", () => {
 			});
 		});
 
-		return it("should run rerunGetTaskTransactionsData() and return transaction not found error", (done) => {
+		it("should run rerunGetTaskTransactionsData() and return transaction not found error", (done) => {
 			const transactionID = "aaaaaaaaaabbbbbbbbbbcccc";
 
 			// run the tasks function and check results
@@ -127,7 +129,7 @@ describe("Rerun Task Tests", () => {
 		});
 
 
-		return it("should run rerunSetHTTPRequestOptions() and return error if no Transaction object supplied", (done) => {
+		it("should run rerunSetHTTPRequestOptions() and return error if no Transaction object supplied", (done) => {
 			const taskID = "53c4dd063b8cb04d2acf0adc";
 			const transaction = null;
 			return tasks.rerunSetHTTPRequestOptions(transaction, taskID, (err, options) => {
@@ -193,7 +195,7 @@ describe("Rerun Task Tests", () => {
 		});
 
 
-		return it("should run rerunHttpRequestSend() and return 500 Internal Server Error", done =>
+		it("should run rerunHttpRequestSend() and return 500 Internal Server Error", done =>
 
 			server = testUtils.createMockServer(200, "Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871", 5252, () => {
 				const transactionID = "53bfbccc6a2b417f6cd14871";
@@ -238,7 +240,7 @@ describe("Rerun Task Tests", () => {
 		)
 	);
 
-	return describe("*findAndProcessAQueuedTask()", () => {
+	describe("*findAndProcessAQueuedTask()", () => {
 		it("should find the next available queued task and process its next round", done =>
 			server = testUtils.createMockServer(200, "Mock response", 7786, () => {
 				tasks.findAndProcessAQueuedTask();

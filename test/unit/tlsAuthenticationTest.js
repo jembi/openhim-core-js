@@ -4,7 +4,7 @@
 import fs from "fs";
 import should from "should";
 import sinon from "sinon";
-import tlsAuthentication from "../../src/middleware/tlsAuthentication";
+import * as tlsAuthentication from "../../src/middleware/tlsAuthentication";
 import { Client } from "../../src/model/clients";
 import * as testUtils from "../testUtils";
 import { Keystore } from "../../src/model/keystore";

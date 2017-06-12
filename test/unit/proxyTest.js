@@ -3,7 +3,7 @@
 import should from "should";
 import sinon from "sinon";
 import http from "http";
-import proxy from "../../src/middleware/proxy";
+import * as proxy from "../../src/middleware/proxy";
 
 describe("Proxy", () => {
   const ctx = {};

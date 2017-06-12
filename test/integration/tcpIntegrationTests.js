@@ -13,7 +13,7 @@ import { Certificate } from "../../src/model/keystore";
 import * as testUtils from "../testUtils";
 import * as server from "../../src/server";
 import { config } from "../../src/config";
-import stats from "../../src/stats";
+import * as stats from "../../src/stats";
 
 describe("TCP/TLS/MLLP Integration Tests", () => {
 	const testMessage = "This is an awesome test message!";

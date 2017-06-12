@@ -1,6 +1,6 @@
 import moment from "moment";
 import Q from "q";
-import utils from "../utils";
+import * as utils from "../utils";
 import * as server from "../server";
 import { Mediator } from "../model/mediators";
 

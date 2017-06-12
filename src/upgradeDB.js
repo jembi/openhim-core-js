@@ -210,67 +210,45 @@ upgradeFuncs.push({
 	}
 });
 
-// add new upgrade functions here ^^
-
-function runUpgradeFunc(i, dbVer) {
-	logger.info(`  \u2022 Running update: ${upgradeFuncs[i].description}...`);
-	const defer = Q.defer();
-	// run upgrade function
-	upgradeFuncs[i].func().then(() => {
-		// update the datbase version
-		dbVer.version = i;
-		dbVer.lastUpdated = new Date();
-		return dbVer.save((err) => {
-			if (err != null) { logger.error(err); }
-			logger.info("  \u2713 Done.");
-			return defer.resolve();
-		});
-	}).catch(err => defer.reject(err));
-	return defer.promise;
-}
-
 if (process.env.NODE_ENV === "test") {
 	exports.upgradeFuncs = upgradeFuncs;
-	exports.runUpgradeFunc = runUpgradeFunc;
 	exports.dedupName = dedupName;
 }
 
-export function upgradeDb(callback) {
-	return dbVersion.findOne((err, dbVer) => {
-		if (dbVer === null) {
-			dbVer = new dbVersion({
-				version: -1,
-				lastUpdated: new Date()
-			});
+async function upgradeDbInternal() {
+	try {
+		const dbVer = (await dbVersion.findOne()) || new dbVersion({ version: 0, lastUpdated: new Date() });
+		const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version);
+
+		for (const upgradeFunc of upgradeFuncsToRun) {
+			await upgradeFunc.func();
+			dbVer.version++;
+			dbVer.lastUpdated = new Date();
+			await dbVer.save();
 		}
 
-		// check if the database version need to be upgraded
-		if (dbVer.version < (upgradeFuncs.length - 1)) {
-			logger.info("Upgrading the database...");
-			let promise = null;
-			// call each database upgrade function sequentially
-			for (let start = dbVer.version + 1, i = start, end = upgradeFuncs.length - 1, asc = start <= end; asc ? i <= end : i >= end; asc ? i++ : i--) {
-				if ((promise == null)) {
-					promise = runUpgradeFunc(i, dbVer);
-				} else {
-					promise = promise.then(() => runUpgradeFunc(i, dbVer));
-				}
-
-				return promise;
-			}
-
-			return promise.then(() => {
-				logger.info("Completed database upgrade");
-				return callback();
-			}).catch((err) => {
-				logger.error(`There was an error upgrading your database, you will need to fix this manually to continue. ${err.stack}`);
-				return process.exit();
-			});
-		} else {
+		if (upgradeFuncsToRun.length === 0) {
 			logger.info("No database upgrades needed");
-			return callback();
+		} else {
+			logger.info("Completed database upgrade");
 		}
-	});
+	} catch (err) {
+		logger.error(`There was an error upgrading your database, you will need to fix this manually to continue. ${err.stack}`);
+	}
+}
+
+export function upgradeDb(callback) {
+	return upgradeDbInternal()
+		.then((...values) => {
+			if (callback) {
+				callback(...(values || []));
+			}
+		})
+		.catch(err => {
+			if (callback) {
+				callback(err);
+			}
+		});
 }
 
 if (!module.parent) {

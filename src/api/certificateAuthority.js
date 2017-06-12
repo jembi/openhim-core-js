@@ -2,8 +2,8 @@ import Q from "q";
 import logger from "winston";
 import pem from "pem";
 import { Keystore, Certificate } from "../model/keystore";
-import utils from "../utils";
-import authorisation from "./authorisation";
+import * as utils from "../utils";
+import * as authorisation from "./authorisation";
 
 const readCertificateInfo = Q.denodeify(pem.readCertificateInfo);
 const getFingerprint = Q.denodeify(pem.getFingerprint);

@@ -1,7 +1,7 @@
 import Q from "q";
 import logger from "winston";
-import authorisation from "./authorisation";
-import utils from "../utils";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
 import { Channel } from "../model/channels";
 import { Client } from "../model/clients";
 import { Mediator } from "../model/mediators";

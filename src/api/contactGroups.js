@@ -1,10 +1,10 @@
 import Q from "q";
 import logger from "winston";
 import { ContactGroup } from "../model/contactGroups";
-import authorisation from "./authorisation";
+import * as authorisation from "./authorisation";
 import { Channel } from "../model/channels";
 
-import utils from "../utils";
+import * as utils from "../utils";
 
 export function* addContactGroup() {
 	// Must be admin

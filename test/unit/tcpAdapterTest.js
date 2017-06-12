@@ -3,7 +3,7 @@
 
 import should from "should";
 import sinon from "sinon";
-import tcpAdapter from "../../src/tcpAdapter";
+import * as tcpAdapter from "../../src/tcpAdapter";
 import { Channel } from "../../src/model/channels";
 
 describe("TCP adapter tests", () => {

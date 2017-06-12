@@ -63,7 +63,7 @@ describe("API Metrics Tests", () =>
 
 		beforeEach(() => authDetails = auth.getAuthDetails());
 
-		return describe("*getMetrics()", () => {
+		describe("*getMetrics()", () => {
 			it("should fetch metrics and return a 200", done =>
 				request("https://localhost:8080")
 					.get("/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z")
@@ -113,7 +113,6 @@ describe("API Metrics Tests", () =>
 					.expect(200)
 					.end((err, res) => {
 						if (err) {
-							console.log(err.stack);
 							return done(err);
 						} else {
 							res.body.length.should.be.exactly(1);
@@ -176,7 +175,6 @@ describe("API Metrics Tests", () =>
 					.expect(200)
 					.end((err, res) => {
 						if (err) {
-							console.log(err.stack);
 							return done(err);
 						} else {
 							res.body.length.should.be.exactly(4);
@@ -219,7 +217,6 @@ describe("API Metrics Tests", () =>
 					.expect(401)
 					.end((err, res) => {
 						if (err) {
-							console.log(err.stack);
 							return done(err);
 						} else {
 							return done();

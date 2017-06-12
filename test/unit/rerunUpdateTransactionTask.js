@@ -2,7 +2,7 @@
 
 import should from "should";
 import request from "supertest";
-import rerunUpdateTransactionTask from "../../src/middleware/rerunUpdateTransactionTask";
+import * as rerunUpdateTransactionTask from "../../src/middleware/rerunUpdateTransactionTask";
 import { Transaction } from "../../src/model/transactions";
 import { Task } from "../../src/model/tasks";
 

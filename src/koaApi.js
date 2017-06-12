@@ -3,7 +3,7 @@ import route from "koa-route";
 import cors from "koa-cors";
 import bodyParser from "koa-body-parser";
 import Q from "q";
-import router from "./middleware/router";
+import * as router from "./middleware/router";
 import * as authentication from "./api/authentication";
 import * as users from "./api/users";
 import * as clients from "./api/clients";

@@ -1,5 +1,5 @@
 import logger from "winston";
-import utils from "../utils";
+import * as utils from "../utils";
 import { version as currentCoreVersion } from "../../package.json";
 
 export function* getAboutInformation() {

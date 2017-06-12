@@ -1,6 +1,6 @@
 import SDC from "statsd-client";
 import os from "os";
-import tcpAdapter from "../tcpAdapter";
+import * as tcpAdapter from "../tcpAdapter";
 import { config } from "../config";
 
 const statsdServer = config.get("statsd");

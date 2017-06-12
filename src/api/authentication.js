@@ -4,7 +4,7 @@ import atna from "atna-audit";
 import os from "os";
 import { User } from "../model/users";
 import { config } from "../config";
-import auditing from "../auditing";
+import * as auditing from "../auditing";
 
 config.api = config.get("api");
 config.auditing = config.get("auditing");

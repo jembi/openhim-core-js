@@ -148,7 +148,7 @@ describe("Request Matching middleware", () => {
 			return revert();
 		});
 
-		return it("should pass the channel and ctx to the matchFunctions", () => {
+		it("should pass the channel and ctx to the matchFunctions", () => {
 			const hasParams = (channel, ctx) => (channel != null) && (ctx != null);
 			const revert = requestMatching.__set__("matchFunctions", [hasParams]);
 			const matchChannel = requestMatching.__get__("matchChannel");

@@ -14,6 +14,20 @@ import { Transaction } from "../src/model/transactions";
 import { User } from "../src/model/users";
 import { Keystore } from "../src/model/keystore";
 
+const MOCK_SERVERS = [];
+
+export async function cleanupMockServers() {
+	try {
+		const promises = MOCK_SERVERS.map(ms => new Promise((resolve) => {
+			ms.close(() => resolve());
+		}));
+		await Promise.all(promises);
+	} finally {
+		MOCK_SERVERS.length = 0;
+	}
+}
+
+
 export function createMockServer(resStatusCode, resBody, port, callback, requestCallback) {
 	requestCallback = requestCallback || function () { };
 	// Create mock endpoint to forward requests to
@@ -21,14 +35,14 @@ export function createMockServer(resStatusCode, resBody, port, callback, request
 		res.writeHead(resStatusCode, { "Content-Type": "text/plain" });
 		return res.end(resBody);
 	});
-
+	MOCK_SERVERS.push(mockServer);
 	mockServer.listen(port, () => callback(mockServer));
 	mockServer.on("request", requestCallback);
 	return mockServer;
 }
 
 export function createMockServerForPost(successStatusCode, errStatusCode, bodyToMatch) {
-	return http.createServer((req, res) =>
+	const mockServer = http.createServer((req, res) =>
 		req.on("data", (chunk) => {
 			if (chunk.toString() === bodyToMatch) {
 				res.writeHead(successStatusCode, { "Content-Type": "text/plain" });
@@ -39,6 +53,8 @@ export function createMockServerForPost(successStatusCode, errStatusCode, bodyTo
 			}
 		})
 	);
+	MOCK_SERVERS.push(mockServer);
+	return mockServer;
 }
 
 export function createStaticServer(path, port, callback) {
@@ -55,6 +71,7 @@ export function createStaticServer(path, port, callback) {
 		const done = finalhandler(req, res);
 		serve(req, res, done);
 	});
+	MOCK_SERVERS.push(server);
 	// Listen
 	return server.listen(port, "localhost", () => callback(server));
 }
@@ -85,6 +102,7 @@ export function createMockHTTPSServerWithMutualAuth(resStatusCode, resBody, port
 		res.writeHead(resStatusCode, { "Content-Type": "text/plain" });
 		return res.end(`Secured ${resBody}`);
 	});
+	MOCK_SERVERS.push(mockServer);
 
 	mockServer.listen(port, () => callback(mockServer));
 	return mockServer.on("request", requestCallback);
@@ -99,6 +117,7 @@ export function createMockTCPServer(port, expected, matchResponse, nonMatchRespo
 			return sock.write(response);
 		})
 	);
+	MOCK_SERVERS.push(server);
 
 	return server.listen(port, "localhost", () => callback(server));
 }
@@ -130,6 +149,7 @@ export function createMockTLSServerWithMutualAuth(port, expected, matchResponse,
 			return sock.write(response);
 		})
 	);
+	MOCK_SERVERS.push(server);
 
 	return server.listen(port, "localhost", () => callback(server));
 }
@@ -147,23 +167,25 @@ export function createMockHTTPRespondingPostServer(port, expected, matchResponse
 			return res.end();
 		})
 	);
+	MOCK_SERVERS.push(server);
 
 	return server.listen(port, "localhost", () => callback(server));
 }
 
-export function createMockMediatorServer(resStatusCode, mediatorResponse, port, callback) {
-	const requestCallback = requestCallback || function () { };
+export function createMockMediatorServer(resStatusCode, mediatorResponse, port, callback, requestCallback = () => { }) {
 	// Create mock endpoint to forward requests to
 	const mockServer = http.createServer((req, res) => {
 		res.writeHead(resStatusCode, { "Content-Type": "application/json+openhim; charset=utf-8" });
 		return res.end(JSON.stringify(mediatorResponse));
 	});
+	MOCK_SERVERS.push(mockServer);
 
-	return mockServer.listen(port, () => callback(mockServer));
+	mockServer.listen(port, () => callback(mockServer));
+	mockServer.on("request", requestCallback);
+	return mockServer;
 }
 
-export function createSlowMockMediatorServer(delay, resStatusCode, resBody, port, callback, requestCallback) {
-	requestCallback = requestCallback || function () { };
+export function createSlowMockMediatorServer(delay, resStatusCode, resBody, port, callback, requestCallback = () => { }) {
 	// Create mock endpoint to forward requests to
 	const mockServer = http.createServer((req, res) => {
 		const respond = function () {
@@ -172,6 +194,7 @@ export function createSlowMockMediatorServer(delay, resStatusCode, resBody, port
 		};
 		return setTimeout(respond, delay);
 	});
+	MOCK_SERVERS.push(mockServer);
 
 	mockServer.listen(port, () => callback(mockServer));
 	mockServer.on("request", requestCallback);
@@ -213,8 +236,7 @@ exports.auth.setupTestUsers = done =>
 				return done();
 			}
 		});
-	})
-	;
+	});
 
 // auth detail are the same between the to users
 exports.auth.getAuthDetails = function () {
@@ -250,7 +272,7 @@ exports.auth.cleanupTestUsers = done =>
 	;
 
 export function createMockServerForPostWithReturn(successStatusCode, errStatusCode, bodyToMatch) {
-	return http.createServer((req, res) => {
+	const mockServer = http.createServer((req, res) => {
 		let acceptEncoding = req.headers["accept-encoding"];
 
 		if (!acceptEncoding) {
@@ -286,6 +308,8 @@ export function createMockServerForPostWithReturn(successStatusCode, errStatusCo
 			}
 		});
 	});
+	MOCK_SERVERS.push(mockServer);
+	return mockServer;
 }
 
 /*

@@ -2,8 +2,8 @@ import url from "url";
 import winston from "winston";
 import Q from "q";
 import { Channel } from "../model/channels";
-import utils from "../utils";
-import router from "../middleware/router";
+import * as utils from "../utils";
+import * as router from "../middleware/router";
 import { config } from "../config";
 
 const routerConf = config.get("router");
@@ -63,7 +63,7 @@ export function fetchRewriteConfig(channel, authType, callback) {
 						}
 
 						// add 'virtual' rewrite config after any user defined config that has been set
-						return rwConfig.push({
+						rwConfig.push({
 							fromHost: route.host,
 							toHost: routerConf.externalHostname,
 							fromPort: route.port,
@@ -73,7 +73,6 @@ export function fetchRewriteConfig(channel, authType, callback) {
 					}
 				}
 			}
-
 			return callback(null, rwConfig);
 		});
 	} else {

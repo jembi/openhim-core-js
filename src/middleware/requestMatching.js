@@ -5,8 +5,8 @@ import logger from "winston";
 import SDC from "statsd-client";
 import os from "os";
 import { config } from "../config";
-import utils from "../utils";
-import auditing from "../auditing";
+import * as utils from "../utils";
+import * as auditing from "../auditing";
 import * as Channels from "../model/channels";
 
 const { Channel } = Channels;
@@ -102,7 +102,9 @@ function matchContentTypes(channel, ctx) {
 	}
 }
 
-const matchFunctions = [
+// Needs to be mutable for testing
+// eslint-disable-next-line
+let matchFunctions = [
 	matchUrlPattern,
 	matchContent,
 	matchContentTypes

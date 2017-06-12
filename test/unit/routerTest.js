@@ -5,7 +5,7 @@ import fs from "fs";
 import should from "should";
 import sinon from "sinon";
 import http from "http";
-import router from "../../src/middleware/router";
+import * as router from "../../src/middleware/router";
 import * as testUtils from "../testUtils";
 import { Keystore, Certificate } from "../../src/model/keystore";
 import { Channel } from "../../src/model/channels";

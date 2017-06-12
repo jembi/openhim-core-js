@@ -27,7 +27,7 @@ describe("API Integration Tests", () =>
 		);
 
 
-		return describe("*getAboutInformation", () => {
+		describe("*getAboutInformation", () => {
 			it("should fetch core version and return status 200", done =>
 				request("https://localhost:8080")
 					.get("/about")
@@ -46,7 +46,7 @@ describe("API Integration Tests", () =>
 					})
 			);
 
-			return it("should return 404 if not found", done =>
+			it("should return 404 if not found", done =>
 				request("https://localhost:8080")
 					.get("/about/bleh")
 					.set("auth-username", testUtils.rootUser.email)

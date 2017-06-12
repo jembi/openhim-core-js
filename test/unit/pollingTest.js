@@ -2,7 +2,7 @@
 /* eslint no-unused-expressions:0 */
 import should from "should";
 import sinon from "sinon";
-import polling from "../../src/polling";
+import * as polling from "../../src/polling";
 import { Channel } from "../../src/model/channels";
 
 describe("Polling tests", () => {

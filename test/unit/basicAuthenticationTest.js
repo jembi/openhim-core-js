@@ -2,7 +2,7 @@
 
 import should from "should";
 import request from "supertest";
-import basicAuthentication from "../../src/middleware/basicAuthentication";
+import * as basicAuthentication from "../../src/middleware/basicAuthentication";
 import { Client } from "../../src/model/clients";
 
 const buildEmptyCtx = function() {

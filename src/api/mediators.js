@@ -4,9 +4,9 @@ import semver from "semver";
 import atna from "atna-audit";
 import { Channel } from "../model/channels";
 import { Mediator } from "../model/mediators";
-import authorisation from "./authorisation";
-import utils from "../utils";
-import auditing from "../auditing";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
+import * as auditing from "../auditing";
 
 const mask = "**********";
 

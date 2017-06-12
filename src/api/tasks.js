@@ -5,8 +5,8 @@ import { Task } from "../model/tasks";
 import { Transaction } from "../model/transactions";
 import { AutoRetry } from "../model/autoRetry";
 import * as Channels from "../model/channels";
-import authorisation from "./authorisation";
-import utils from "../utils";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
 
 const { Channel } = Channels;
 
@@ -153,7 +153,7 @@ export function* addTask() {
 			utils.logAndSetResponse(this, 201, `User ${this.authenticated.email} created task with id ${task.id}`, "info");
 
 			// Clear the transactions out of the auto retry queue, in case they're in there
-			return AutoRetry.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.err(err); } });
+			return AutoRetry.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err); } });
 		} else {
 			// rerun task creation not allowed
 			return utils.logAndSetResponse(this, 403, "Insufficient permissions prevents this rerun task from being created", "error");

@@ -1,8 +1,8 @@
 import logger from "winston";
 import { Channel } from "../model/channels";
 import { Client } from "../model/clients";
-import authorisation from "./authorisation";
-import utils from "../utils";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
 
 /*
  * Roles is a virtual API; virtual in the sense that it is not linked

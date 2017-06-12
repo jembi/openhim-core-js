@@ -3,9 +3,9 @@ import logger from "winston";
 import atna from "atna-audit";
 import os from "os";
 import { Audit, AuditMeta } from "../model/audits";
-import authorisation from "./authorisation";
-import utils from "../utils";
-import auditing from "../auditing";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
+import * as auditing from "../auditing";
 import { config } from "../config";
 
 config.router = config.get("router");

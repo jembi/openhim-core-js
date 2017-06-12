@@ -1,11 +1,11 @@
 import logger from "winston";
 import Q from "q";
-import authorisation from "../api/authorisation";
+import * as authorisation from "../api/authorisation";
 import * as server from "../server";
 import { config } from "../config";
 import { Keystore } from "../model/keystore";
-import KeystoreAPI from "../api/keystore";
-import utils from "../utils";
+import * as KeystoreAPI from "../api/keystore";
+import * as utils from "../utils";
 
 config.router = config.get("router");
 config.api = config.get("api");

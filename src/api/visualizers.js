@@ -1,8 +1,8 @@
 import Q from "q";
 import logger from "winston";
 import { Visualizer } from "../model/visualizer";
-import authorisation from "./authorisation";
-import utils from "../utils";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
 
 // Endpoint that returns all visualizers
 export function* getVisualizers() {

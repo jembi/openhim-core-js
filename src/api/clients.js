@@ -2,8 +2,8 @@ import Q from "q";
 import logger from "winston";
 import { Client } from "../model/clients";
 import { Channel } from "../model/channels";
-import authorisation from "./authorisation";
-import utils from "../utils";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
 
 /*
  * Adds a client

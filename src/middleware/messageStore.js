@@ -3,12 +3,12 @@ import os from "os";
 import logger from "winston";
 import Q from "q";
 import _ from "lodash";
-import transactions from "../model/transactions";
+import * as transactions from "../model/transactions";
 import { AutoRetry } from "../model/autoRetry";
-import autoRetryUtils from "../autoRetry";
-import utils from "../utils";
+import * as autoRetryUtils from "../autoRetry";
+import * as utils from "../utils";
 import { config } from "../config";
-import stats from "../stats";
+import * as stats from "../stats";
 
 const statsdServer = config.get("statsd");
 const application = config.get("application");
@@ -251,12 +251,12 @@ export function setFinalStatus(ctx, callback) {
 export function* koaMiddleware(next) {
 	let startTime;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	const saveTransaction = Q.denodeify(exports.storeTransaction);
+	const saveTransaction = Q.denodeify(storeTransaction);
 	yield saveTransaction(this);
 	if (statsdServer.enabled) { sdc.timing(`${domain}.messageStoreMiddleware.storeTransaction`, startTime); }
 	yield next;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	exports.storeResponse(this, () => { });
+	storeResponse(this, () => { });
 	if (statsdServer.enabled) { return sdc.timing(`${domain}.messageStoreMiddleware.storeResponse`, startTime); }
 }
 

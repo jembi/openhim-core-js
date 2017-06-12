@@ -5,8 +5,8 @@ import net from "net";
 
 import { Task as TaskModel } from "./model/tasks";
 import { Channel } from "./model/channels";
-import { Transation as TransactionModel } from "./model/transactions";
-import rerunMiddleware from "./middleware/rerunUpdateTransactionTask";
+import { Transaction as TransactionModel } from "./model/transactions";
+import * as rerunMiddleware from "./middleware/rerunUpdateTransactionTask";
 import { config } from "./config";
 
 config.rerun = config.get("rerun");

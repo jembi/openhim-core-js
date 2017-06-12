@@ -1,7 +1,7 @@
 import moment from "moment";
 import logger from "winston";
-import events from "../model/events";
-import messageStore from "../middleware/messageStore";
+import * as events from "../model/events";
+import * as messageStore from "../middleware/messageStore";
 import { config } from "../config";
 
 config.events = config.get("events");
@@ -214,7 +214,7 @@ export function* koaMiddleware(next) {
 	const ctx = this;
 
 	const runAsync = method => {
-		const f = () => method(ctx, (err) => { if (err) { return logger.err(err); } });
+		const f = () => method(ctx, (err) => { if (err) { return logger.error(err); } });
 		return setTimeout(f, 0);
 	};
 
@@ -227,7 +227,7 @@ export function* koaMiddleware(next) {
 
 	yield next;
 
-	return runAsync((ctx, done) => {
+	runAsync((ctx, done) => {
 		logger.debug(`Storing channel end and primary routes events for transaction: ${ctx.transactionId}`);
 
 		const trxEvents = [];

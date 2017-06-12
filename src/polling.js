@@ -4,8 +4,8 @@ import Q from "q";
 
 import * as Channels from "./model/channels";
 import { config } from "./config";
-import authorisation from "./middleware/authorisation";
-import utils from "./utils";
+import * as authorisation from "./middleware/authorisation";
+import * as utils from "./utils";
 
 const { Channel } = Channels;
 config.polling = config.get("polling");

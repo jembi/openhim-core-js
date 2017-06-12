@@ -5,11 +5,11 @@ import randtoken from "rand-token";
 import atna from "atna-audit";
 import os from "os";
 import { User } from "../model/users";
-import authorisation from "./authorisation";
-import contact from "../contact";
+import * as authorisation from "./authorisation";
+import * as contact from "../contact";
 import { config } from "../config";
-import utils from "../utils";
-import auditing from "../auditing";
+import * as utils from "../utils";
+import * as auditing from "../auditing";
 
 config.newUserExpiry = config.get("newUserExpiry");
 config.userPasswordResetExpiry = config.get("userPasswordResetExpiry");

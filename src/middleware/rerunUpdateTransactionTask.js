@@ -77,17 +77,19 @@ export function updateTask(ctx, done) {
 export function* koaMiddleware(next) {
 	let startTime;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	const setAttemptNumber = Q.denodeify(exports.setAttemptNumber);
-	yield setAttemptNumber(this);
+	const setAttempt = Q.denodeify(setAttemptNumber);
+	yield setAttempt(this);
 	if (statsdServer.enabled) { sdc.timing(`${domain}.rerunUpdateTransactionMiddleware.setAttemptNumber`, startTime); }
 
 	// do intial yield for koa to come back to this function with updated ctx object
 	yield next;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	const updateOriginalTransaction = Q.denodeify(exports.updateOriginalTransaction);
+	const updateOriginalTransaction = Q.denodeify(updateOriginalTransaction);
 	yield updateOriginalTransaction(this);
 
-	const updateTask = Q.denodeify(exports.updateTask);
+	const updateTask = Q.denodeify(updateTask);
 	yield updateTask(this);
-	if (statsdServer.enabled) { return sdc.timing(`${domain}.rerunUpdateTransactionMiddleware`, startTime); }
+	if (statsdServer.enabled) {
+		sdc.timing(`${domain}.rerunUpdateTransactionMiddleware`, startTime);
+	}
 }

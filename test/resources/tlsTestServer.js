@@ -13,8 +13,6 @@ const options = {
 	ca: fs.readFileSync(path.resolve(appRoot, "resources/certs/default/cert.pem"))
 };
 
-console.log(options);
-
 const mockServer = https.createServer(options, (req, res) => {
 	console.log(`Recieved request: ${req.url}`);
 	res.writeHead(200, { "Content-Type": "text/plain" });

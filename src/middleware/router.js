@@ -11,10 +11,10 @@ import fs from "fs";
 import SDC from "statsd-client";
 import os from "os";
 import { config } from "../config";
-import utils from "../utils";
-import messageStore from "../middleware/messageStore";
-import events from "../middleware/events";
-import stats from "../stats";
+import * as utils from "../utils";
+import * as messageStore from "../middleware/messageStore";
+import * as events from "../middleware/events";
+import * as stats from "../stats";
 
 config.mongo = config.get("mongo");
 config.router = config.get("router");
@@ -535,7 +535,7 @@ function getDestinationPath(route, requestPath) {
  *
  * Slashes can be escaped as \/
  */
-function transformPath(path, expression) {
+export function transformPath(path, expression) {
 	// replace all \/'s with a temporary ':' char so that we don't split on those
 	// (':' is safe for substitution since it cannot be part of the path)
 	let fromRegex;

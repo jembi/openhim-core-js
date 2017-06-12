@@ -5,8 +5,8 @@ import Q from "q";
 import _ from "lodash";
 import { Transaction } from "../model/transactions";
 import { Channel } from "../model/channels";
-import authorisation from "./authorisation";
-import metrics from "../metrics";
+import * as authorisation from "./authorisation";
+import * as metrics from "../metrics";
 
 // all in one getMetrics generator function for metrics API
 export function* getMetrics(groupChannels, timeSeries, channelID) {
@@ -14,11 +14,12 @@ export function* getMetrics(groupChannels, timeSeries, channelID) {
 	logger.debug(`Called getMetrics(${groupChannels}, ${timeSeries}, ${channelID})`);
 	const channels = yield authorisation.getUserViewableChannels(this.authenticated);
 	let channelIDs = channels.map(c => c._id);
-	if (typeof channelID === "string" && channelIDs.map(id => id.toString().includes(channelID))) {
-		this.status = 401;
-		return;
-	} else if (typeof channelID === "string") {
-		channelIDs = [mongoose.Types.ObjectId(channelID)];
+	if (typeof channelID === "string") {
+		if (channelIDs.map(id => id.toString()).includes(channelID)) {
+			channelIDs = [mongoose.Types.ObjectId(channelID)];
+		} else {
+			this.status = 401;
+		}
 	}
 
 	let { query } = this.request;

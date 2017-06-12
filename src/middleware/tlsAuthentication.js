@@ -7,7 +7,7 @@ import SDC from "statsd-client";
 import os from "os";
 import { Client } from "../model/clients";
 import { Keystore } from "../model/keystore";
-import utils from "../utils";
+import * as utils from "../utils";
 import { config } from "../config";
 
 config.tlsClientLookup = config.get("tlsClientLookup");

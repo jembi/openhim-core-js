@@ -1,8 +1,8 @@
 import logger from "winston";
 import moment from "moment";
 import Q from "q";
-import authorisation from "./authorisation";
-import utils from "../utils";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
 
 const levels = {
 	debug: 1,

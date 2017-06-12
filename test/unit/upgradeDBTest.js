@@ -7,6 +7,7 @@ import * as upgradeDB from "../../src/upgradeDB";
 import * as testUtils from "../testUtils";
 import { Keystore } from "../../src/model/keystore";
 import { Client } from "../../src/model/clients";
+import { dbVersion } from "../../src/model/dbVersion";
 import { User } from "../../src/model/users";
 import { Visualizer } from "../../src/model/visualizer";
 
@@ -14,6 +15,18 @@ describe("Upgrade DB Tests", () => {
 	describe(".upgradeDB", () => {
 		let func1Complete = false;
 		let func2Complete = false;
+
+		async function cleanUpgrade(done) {
+			try {
+				await dbVersion.remove();
+				done();
+			} catch (err) {
+				done(err);
+			}
+		}
+
+		beforeEach(cleanUpgrade);
+		afterEach(cleanUpgrade);
 
 		const mockUpgradeFunc1 = function () {
 			const defer = Q.defer();
@@ -36,7 +49,7 @@ describe("Upgrade DB Tests", () => {
 			return defer.promise;
 		};
 
-		return it("should run each upgrade function sequentially", (done) => {
+		it("should run each upgrade function sequentially", (done) => {
 			upgradeDB.upgradeFuncs.length = 0;
 			upgradeDB.upgradeFuncs.push({
 				description: "mock func 1",

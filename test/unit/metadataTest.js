@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 
 import should from "should";
-import metadata from "../../src/api/metadata";
+import * as metadata from "../../src/api/metadata";
 
 describe("Metadata Functions", () => {
 	describe(".removeProperties", () =>

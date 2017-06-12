@@ -6,8 +6,8 @@ import tls from "tls";
 import logger from "winston";
 import Q from "q";
 import * as Channels from "./model/channels";
-import tlsAuthentication from "./middleware/tlsAuthentication";
-import authorisation from "./middleware/authorisation";
+import * as tlsAuthentication from "./middleware/tlsAuthentication";
+import * as authorisation from "./middleware/authorisation";
 import { config } from "./config";
 
 config.tcpAdapter = config.get("tcpAdapter");

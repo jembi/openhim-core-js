@@ -9,8 +9,8 @@ import { AutoRetry } from "../../src/model/autoRetry";
 import { Event } from "../../src/model/events";
 import * as testUtils from "../testUtils";
 import * as server from "../../src/server";
-import autoRetry from "../../src/autoRetry";
-import tasks from "../../src/tasks";
+import * as autoRetry from "../../src/autoRetry";
+import * as tasks from "../../src/tasks";
 import { config } from "../../src/config";
 
 config.authentication = config.get("authentication");
@@ -118,7 +118,7 @@ describe("Auto Retry Integration Tests", () => {
 		);
 
 		it("should push an auto retry transaction to the auto retry queue", done =>
-			server.start({ httpPort: 5001 }, () =>
+			server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
 				request("http://localhost:5001")
 					.get("/test/nowhere")
 					.auth("testApp", "password")
@@ -209,7 +209,7 @@ describe("Auto Retry Integration Tests", () => {
 			)
 		);
 
-		return it("should contain the attempt number in transaction events", done =>
+		it("should contain the attempt number in transaction events", done =>
 			server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
 				request("http://localhost:5001")
 					.get("/test/nowhere")
@@ -307,7 +307,7 @@ describe("Auto Retry Integration Tests", () => {
 		);
 
 
-		return it("should mark transaction as available to auto retry if an internal server error occurs on a secondary route", done =>
+		it("should mark transaction as available to auto retry if an internal server error occurs on a secondary route", done =>
 			server.start({ httpPort: 5001 }, () =>
 				request("http://localhost:5001")
 					.get("/test/nowhere")
@@ -407,7 +407,7 @@ describe("Auto Retry Integration Tests", () => {
 		);
 
 
-		return it("should mark transaction as available to auto retry if an internal server error occurs in a mediator", done =>
+		it("should mark transaction as available to auto retry if an internal server error occurs in a mediator", done =>
 			server.start({ httpPort: 5001 }, () =>
 				request("http://localhost:5001")
 					.get("/test/nowhere")
@@ -495,7 +495,7 @@ describe("Auto Retry Integration Tests", () => {
 		);
 
 
-		return it("should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes", done =>
+		it("should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes", done =>
 			server.start({ httpPort: 5001 }, () =>
 				request("http://localhost:5001")
 					.get("/test/nowhere")

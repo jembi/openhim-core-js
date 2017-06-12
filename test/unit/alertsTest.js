@@ -4,7 +4,7 @@ import should from "should";
 import sinon from "sinon";
 import http from "http";
 import moment from "moment";
-import alerts from "../../src/alerts";
+import * as alerts from "../../src/alerts";
 import * as testUtils from "../testUtils";
 import { Channel } from "../../src/model/channels";
 import { User } from "../../src/model/users";

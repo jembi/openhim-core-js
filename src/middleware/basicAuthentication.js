@@ -28,7 +28,6 @@ function cryptoCompare(pass, client, callback) {
 }
 
 function comparePasswordWithClientHash(pass, client, callback) {
-	let needle;
 	if (Array.from(crypto.getHashes()).includes(client.passwordAlgorithm)) {
 		return cryptoCompare(pass, client, callback);
 	} else {

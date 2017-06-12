@@ -3,13 +3,13 @@ import moment from "moment";
 import Q from "q";
 import _ from "lodash";
 
-import contact from "./contact";
+import * as contact from "./contact";
 import { config } from "./config";
 import { Event } from "./model/events";
 import { ContactGroup } from "./model/contactGroups";
 import { Alert } from "./model/alerts";
 import { User } from "./model/users";
-import utils from "./utils";
+import * as utils from "./utils";
 import * as Channels from "./model/channels";
 
 config.alerts = config.get("alerts");

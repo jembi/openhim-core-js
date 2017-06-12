@@ -253,7 +253,7 @@ function renderTemplate(templateName, templateData, callback) {
 	const template = new EmailTemplate(templateDir);
 	return template.render(templateData, (err, result) => {
 		if (err) {
-			logger.err(err);
+			logger.error(err);
 		}
 		return callback(result.html.toString());
 	});

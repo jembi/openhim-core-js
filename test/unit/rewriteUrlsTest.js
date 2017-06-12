@@ -4,10 +4,15 @@ import should from "should";
 import sinon from "sinon";
 import xpath from "xpath";
 import { DOMParser as dom } from "xmldom";
-import rewriteUrls from "../../src/middleware/rewriteUrls";
-import utils from "../../src/utils";
+import * as rewriteUrls from "../../src/middleware/rewriteUrls";
+import * as utils from "../../src/utils";
 
 describe("Rewrite URLs middleware", () => {
+	beforeEach(() => {
+		sinon.restore(rewriteUrls);
+		sinon.restore(utils);
+	});
+
 	describe(".invertPathTransform", () =>
 
 		it("should invert various path transforms", () => {
@@ -70,6 +75,7 @@ describe("Rewrite URLs middleware", () => {
 			currentChannel.addAutoRewriteRules = true;
 			const stub = sinon.stub(utils, "getAllChannelsInPriorityOrder");
 			stub.callsArgWith(0, null, [currentChannel, channel1, channel2]);
+
 			return rewriteUrls.fetchRewriteConfig(currentChannel, "tls", (err, rewriteConfig) => {
 				rewriteConfig.should.have.length(4);
 				rewriteConfig[0].fromHost.should.be.exactly("from.org");
@@ -84,12 +90,11 @@ describe("Rewrite URLs middleware", () => {
 				rewriteConfig[3].fromHost.should.be.exactly("route4.org");
 				rewriteConfig[3].toHost.should.be.exactly("localhost");
 				should.not.exist(rewriteConfig[3].pathTransform);
-				stub.restore();
 				return done();
 			});
 		});
 
-		return it("should fetch the rewrite config for the current channel and EXCLUDE virtual defaults", (done) => {
+		it("should fetch the rewrite config for the current channel and EXCLUDE virtual defaults", (done) => {
 			currentChannel.addAutoRewriteRules = false;
 			const stub = sinon.stub(utils, "getAllChannelsInPriorityOrder");
 			stub.callsArgWith(0, null, [currentChannel, channel1, channel2]);
@@ -98,13 +103,12 @@ describe("Rewrite URLs middleware", () => {
 				rewriteConfig[0].fromHost.should.be.exactly("from.org");
 				rewriteConfig[0].toHost.should.be.exactly("to.org");
 				rewriteConfig[0].pathTransform.should.be.exactly("s/some/transform/");
-				stub.restore();
 				return done();
 			});
 		});
 	});
 
-	return describe(".rewriteUrls", () => {
+	describe(".rewriteUrls", () => {
 		const channel = {
 			rewriteUrls: true,
 			rewriteUrlsConfig: {
@@ -160,7 +164,6 @@ describe("Rewrite URLs middleware", () => {
 				newResponse.href.should.be.exactly("http://to.org:5001/test1");
 				newResponse.obj.href.should.be.exactly("https://toWithTransform.org:5000/that");
 				newResponse.obj3.fullUrl.should.be.exactly("https://toWithTransform.org:5000/that");
-				stub.restore();
 				return done();
 			});
 		});
@@ -179,7 +182,6 @@ describe("Rewrite URLs middleware", () => {
 			return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), channel, "tls", (err, newResponse) => {
 				newResponse = JSON.parse(newResponse);
 				newResponse.obj2.href.should.be.exactly("/test1/to/xyz");
-				stub.restore();
 				return done();
 			});
 		});
@@ -195,7 +197,7 @@ describe("Rewrite URLs middleware", () => {
 </someTags>\
 `;
 
-		return it("should rewrite hrefs in XML", (done) => {
+		it("should rewrite hrefs in XML", (done) => {
 			const stub = sinon.stub(rewriteUrls, "fetchRewriteConfig");
 			stub.callsArgWith(2, null, [{
 				fromHost: "from.org",
@@ -220,7 +222,6 @@ describe("Rewrite URLs middleware", () => {
 				href1.should.be.exactly("http://to.org:5001/test1");
 				href2.should.be.exactly("https://toWithTransform.org:5000/that");
 				src.should.be.exactly("http://to.org:5001/image");
-				stub.restore();
 				return done();
 			});
 		});

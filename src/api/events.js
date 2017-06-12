@@ -1,6 +1,6 @@
 import { Event } from "../model/events";
-import authorisation from "./authorisation";
-import utils from "../utils";
+import * as authorisation from "./authorisation";
+import * as utils from "../utils";
 
 export function* getLatestEvents(receivedTime) {
 	if (!authorisation.inGroup("admin", this.authenticated)) {

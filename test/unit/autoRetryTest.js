@@ -6,7 +6,7 @@ import sinon from "sinon";
 import http from "http";
 import moment from "moment";
 import { Types } from "mongoose";
-import autoRetry from "../../src/autoRetry";
+import * as autoRetry from "../../src/autoRetry";
 import * as testUtils from "../testUtils";
 import { Channel } from "../../src/model/channels";
 import { AutoRetry } from "../../src/model/autoRetry";

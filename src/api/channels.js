@@ -4,12 +4,12 @@ import logger from "winston";
 import request from "request";
 import * as Channels from "../model/channels";
 import { Transaction } from "../model/transactions";
-import authorisation from "./authorisation";
-import tcpAdapter from "../tcpAdapter";
+import * as authorisation from "./authorisation";
+import * as tcpAdapter from "../tcpAdapter";
 import * as server from "../server";
-import polling from "../polling";
-import routerMiddleware from "../middleware/router";
-import utils from "../utils";
+import * as polling from "../polling";
+import * as routerMiddleware from "../middleware/router";
+import * as utils from "../utils";
 import { config } from "../config";
 
 const { Channel } = Channels;

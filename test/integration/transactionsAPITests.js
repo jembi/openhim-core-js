@@ -4,7 +4,7 @@
 import should from "should";
 import request from "supertest";
 import os from "os";
-import utils from "../../src/utils";
+import * as utils from "../../src/utils";
 import { Transaction } from "../../src/model/transactions";
 import { Channel } from "../../src/model/channels";
 import { User } from "../../src/model/users";

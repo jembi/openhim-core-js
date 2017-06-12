@@ -2,8 +2,8 @@
 /* eslint no-unused-expressions:0 */
 import should from "should";
 import mongoose from "mongoose";
-import metrics from "../../src/metrics";
-import testUtils from "../../test/testUtils";
+import * as metrics from "../../src/metrics";
+import * as testUtils from "../../test/testUtils";
 
 describe("Metrics unit tests", () =>
 

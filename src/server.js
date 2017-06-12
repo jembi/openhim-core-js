@@ -34,6 +34,8 @@ import * as upgradeDB from "./upgradeDB";
 import * as autoRetry from "./autoRetry";
 import { config } from "./config";
 
+mongoose.Promise = Q.Promise;
+
 config.mongo = config.get("mongo");
 config.authentication = config.get("authentication");
 config.router = config.get("router");
@@ -49,7 +51,6 @@ config.agenda = config.get("agenda");
 config.certificateManagement = config.get("certificateManagement");
 
 const himSourceID = config.get("auditing").auditEvents.auditSourceID;
-
 const currentVersion = require("../package.json").version;
 const numCPUs = require("os").cpus().length;
 
@@ -91,8 +92,8 @@ if (cluster.isMaster && !module.parent) {
 		timestamp: true,
 		label: "master",
 		level: config.logger.level,
-	},
-	);
+	});
+
 	if (config.logger.logToDB === true) {
 		logger.add(logger.transports.MongoDB, {
 			db: config.mongo.url,
@@ -100,8 +101,7 @@ if (cluster.isMaster && !module.parent) {
 			level: "debug",
 			capped: config.logger.capDBLogs,
 			cappedSize: config.logger.capSize,
-		},
-		);
+		});
 	}
 
 	if ((clusterArg == null)) {
