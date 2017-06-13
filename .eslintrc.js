@@ -24,6 +24,7 @@ module.exports = {
 		"no-multi-str":0,
 		"no-new-object":0,
 		"no-await-in-loop":0,
+		"no-case-declarations":0,
         "no-shadow": 0, //TODO : Enable this rule
         "no-param-reassign": 0, //TODO : Enable this rule
         "func-names" : 0, //TODO : Enable this rule,

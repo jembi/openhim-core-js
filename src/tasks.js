@@ -14,24 +14,27 @@ config.rerun = config.get("rerun");
 let live = false;
 let activeTasks = 0;
 
-const findAndProcessAQueuedTask = () =>
-	TaskModel.findOneAndUpdate({ status: "Queued" }, { status: "Processing" }, { new: true }, (err, task) => {
-		if (err) {
-			return logger.error(`An error occurred while looking for rerun tasks: ${err}`);
-		} else if (task) {
-			activeTasks++;
-			processNextTaskRound(task, (err) => {
-				if (err) { logger.error(`An error occurred while processing rerun task ${task._id}: ${err}`); }
-				activeTasks--;
-				// task has finished its current round, pick up the next one
-				if (live) { return findAndProcessAQueuedTask(); }
-			});
+// TODO : This needs to be converted to an event emitter or an observable
+export async function findAndProcessAQueuedTask() {
+	let task;
+	try {
+		task = await TaskModel.findOneAndUpdate({ status: "Queued" }, { status: "Processing" }, { new: true });
 
-			// task has started processing, pick up the next one
-			if (live) { return findAndProcessAQueuedTask(); }
+		activeTasks++;
+		await processNextTaskRound(task);
+		activeTasks--;
+		// task has finished its current round, pick up the next one
+		if (live) {
+			return findAndProcessAQueuedTask();
 		}
-	})
-	;
+	} catch (err) {
+		if (task != null) {
+			logger.error(`An error occurred while looking for rerun tasks: ${err}`);
+		} else {
+			logger.error(`An error occurred while processing rerun task ${task._id}: ${err}`);
+		}
+	}
+}
 
 function rerunTaskProcessor() {
 	if (live) {
@@ -67,27 +70,22 @@ export function stop(callback) {
 export function isRunning() { return live; }
 
 
-const finalizeTaskRound = (task, callback) =>
-	// get latest status in case it has been changed
-	TaskModel.findOne({ _id: task._id }, { status: 1 }, (err, result) => {
-		if (err) { return callback(err); }
+async function finalizeTaskRound(task) {
+	const result = await TaskModel.findOne({ _id: task._id }, { status: 1 });
+	if (result.status === "Processing" && task.remainingTransactions !== 0) {
+		task.status = "Queued";
+		logger.info(`Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remaining`);
+	} else if (task.remainingTransactions === 0) {
+		task.status = "Completed";
+		task.completedDate = new Date();
+		logger.info(`Round completed for rerun task #${task._id} - Task completed`);
+	} else {
+		task.status = result.status;
+		logger.info(`Round completed for rerun task #${task._id} - Task has been ${result.status}`);
+	}
 
-		// Only queue the task if still in 'Processing'
-		// (the status could have been changed to paused or cancelled)
-		if ((result.status === "Processing") && (task.remainingTransactions !== 0)) {
-			task.status = "Queued";
-			logger.info(`Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remaining`);
-		} else if (task.remainingTransactions === 0) {
-			task.status = "Completed";
-			task.completedDate = new Date();
-			logger.info(`Round completed for rerun task #${task._id} - Task completed`);
-		} else {
-			task.status = result.status;
-			logger.info(`Round completed for rerun task #${task._id} - Task has been ${result.status}`);
-		}
-
-		return task.save(err => callback(err));
-	});
+	await task.save();
+}
 
 // Process a task.
 //
@@ -100,7 +98,7 @@ const finalizeTaskRound = (task, callback) =>
 //
 // This model allows the instance the get updated information regarding the task in between rounds:
 // i.e. if the server has been stopped, if the task has been paused, etc.
-function processNextTaskRound(task, callback) {
+async function processNextTaskRound(task) {
 	logger.debug(`Processing next task round: total transactions = ${task.totalTransactions}, remainingTransactions = ${task.remainingTransactions}`);
 	const promises = [];
 	const nextI = task.transactions.length - task.remainingTransactions;
@@ -127,22 +125,20 @@ function processNextTaskRound(task, callback) {
 
 		transaction.tstatus = "Processing";
 
-		return promises.push(defer.promise);
+		promises.push(defer.promise);
 	}
 
-	return (Q.all(promises)).then(() =>
-		// Save task once transactions have been updated
-		task.save((err) => {
-			if (err != null) {
-				logger.error(`Failed to save current task while processing round: taskID=${task._id}, err=${err}`, err);
-			}
-			return finalizeTaskRound(task, callback);
-		})
-	);
+	await Q.all(promises);
+	try {
+		await task.save();
+	} catch (err) {
+		logger.error(`Failed to save current task while processing round: taskID=${task._id}, err=${err}`, err);
+	}
+	return finalizeTaskRound(task);
 }
 
 
-const rerunTransaction = (transactionID, taskID, callback) =>
+function rerunTransaction(transactionID, taskID, callback) {
 	rerunGetTransaction(transactionID, (err, transaction) => {
 		if (err) { return callback(err); }
 
@@ -182,9 +178,9 @@ const rerunTransaction = (transactionID, taskID, callback) =>
 			}
 		});
 	});
+}
 
-
-const rerunGetTransaction = (transactionID, callback) =>
+function rerunGetTransaction(transactionID, callback) {
 	TransactionModel.findById(transactionID, (err, transaction) => {
 		if ((transaction == null)) {
 			return callback((new Error(`Transaction ${transactionID} could not be found`)), null);
@@ -198,9 +194,8 @@ const rerunGetTransaction = (transactionID, callback) =>
 
 		// send the transactions data in callback
 		return callback(null, transaction);
-	})
-	;
-
+	});
+}
 
 // ####################################
 // Construct HTTP options to be sent #

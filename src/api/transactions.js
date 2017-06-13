@@ -425,87 +425,72 @@ function generateEvents(transaction, channelID) {
 
 
 function updateTransactionMetrics(updates, doc) {
-	if ((updates.$push != null ? updates.$push.routes : undefined) != null) {
-		return (() => {
-			const result = [];
-			for (const k in updates.$push) {
-				const route = updates.$push[k];
-				result.push((function (route) {
-					let metric;
-					if (route.metrics != null) {
-						for (metric of Array.from(route.metrics)) {
-							if (metric.type === "counter") {
-								logger.debug(`incrementing mediator counter  ${metric.name}`);
-								sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`);
-							}
+	if (updates.$push == null || updates.$push.routes === null) {
+		return;
+	}
+	for (const route of updates.$push) {
+		if (route.metrics != null) {
+			for (const metric of Array.from(route.metrics)) {
+				if (metric.type === "counter") {
+					logger.debug(`incrementing mediator counter  ${metric.name}`);
+					sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`);
+				}
 
-							if (metric.type === "timer") {
-								logger.debug(`incrementing mediator timer  ${metric.name}`);
-								sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`, metric.value);
-							}
+				if (metric.type === "timer") {
+					logger.debug(`incrementing mediator timer  ${metric.name}`);
+					sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`, metric.value);
+				}
 
-							if (metric.type === "gauge") {
-								logger.debug(`incrementing mediator gauge  ${metric.name}`);
-								sdc.gauge(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`, metric.value);
-							}
-						}
+				if (metric.type === "gauge") {
+					logger.debug(`incrementing mediator gauge  ${metric.name}`);
+					sdc.gauge(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`, metric.value);
+				}
+			}
+		}
+
+		for (const orchestration of route) {
+			const orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp;
+			const orchestrationStatus = orchestration.response.status;
+			let orchestrationName = orchestration.name;
+			if (orchestration.group) {
+				orchestrationName = `${orchestration.group}.${orchestration.name}`; // Namespace it by group
+			}
+
+			/*
+			 * Update timers
+			 */
+			logger.debug("updating async route timers");
+			sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`, orchestrationDuration);
+			sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`, orchestrationDuration);
+
+			/*
+			 * Update counters
+			 */
+			logger.debug("updating async route counters");
+			sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`);
+			sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`);
+
+			if (orchestration.metrics != null) {
+				for (const metric of Array.from(orchestration.metrics)) {
+					if (metric.type === "counter") {
+						logger.debug(`incrementing ${route.name} orchestration counter ${metric.name}`);
+						sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
 					}
 
-					return Array.from(route.orchestrations).map((orchestration) =>
-						(function (orchestration) {
-							const orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp;
-							const orchestrationStatus = orchestration.response.status;
-							let orchestrationName = orchestration.name;
-							if (orchestration.group) {
-								orchestrationName = `${orchestration.group}.${orchestration.name}`; // Namespace it by group
-							}
+					if (metric.type === "timer") {
+						logger.debug(`incrementing ${route.name} orchestration timer ${metric.name}`);
+						sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
+					}
 
-							/*
-							 * Update timers
-							 */
-							logger.debug("updating async route timers");
-							sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`, orchestrationDuration);
-							sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`, orchestrationDuration);
-
-							/*
-							 * Update counters
-							 */
-							logger.debug("updating async route counters");
-							sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`);
-							sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`);
-
-							if (orchestration.metrics != null) {
-								return (() => {
-									const result1 = [];
-									for (metric of Array.from(orchestration.metrics)) {
-										let item;
-										if (metric.type === "counter") {
-											logger.debug(`incrementing ${route.name} orchestration counter ${metric.name}`);
-											sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
-										}
-
-										if (metric.type === "timer") {
-											logger.debug(`incrementing ${route.name} orchestration timer ${metric.name}`);
-											sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
-										}
-
-										if (metric.type === "gauge") {
-											logger.debug(`incrementing ${route.name} orchestration gauge ${metric.name}`);
-											item = sdc.gauge(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
-										}
-										result1.push(item);
-									}
-									return result1;
-								})();
-							}
-						}(orchestration)));
-				})(route));
+					if (metric.type === "gauge") {
+						logger.debug(`incrementing ${route.name} orchestration gauge ${metric.name}`);
+						sdc.gauge(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
+					}
+				}
 			}
-			return result;
-		})();
+		}
 	}
 }
-
 
 /*
  * Updates a transaction record specified by transactionId

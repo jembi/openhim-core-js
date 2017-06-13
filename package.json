@@ -69,8 +69,7 @@
 		"rimraf": "^2.6.1",
 		"serve-static": "^1.9.3",
 		"should": "^9.0.0",
-		"sinon": "^1.12.2",
-		"sinon-es6": "^0.0.3",
+		"sinon": "^2.3.4",
 		"supertest": "1.2.0"
 	},
 	"scripts": {

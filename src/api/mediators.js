@@ -102,25 +102,19 @@ function validateConfigDef(def) {
 	if (def.type === "struct" && !def.template) {
 		throw constructError(`Must specify a template for struct param '${def.param}'`, "ValidationError");
 	} else if (def.type === "struct") {
-		return (() => {
-			const result = [];
-			for (const templateItem of Array.from(def.template)) {
-				if (!templateItem.param) {
-					throw constructError(`Must specify field 'param' in template definition for param '${def.param}'`, "ValidationError");
-				}
-
-				if (!templateItem.type) {
-					throw constructError(`Must specify field 'type' in template definition for param '${def.param}'`, "ValidationError");
-				}
-
-				if (templateItem.type === "struct") {
-					throw constructError(`May not recursively specify 'struct' in template definitions (param '${def.param}')`, "ValidationError");
-				}
-
-				result.push(validateConfigDef(templateItem));
+		for (const templateItem of Array.from(def.template)) {
+			if (!templateItem.param) {
+				throw constructError(`Must specify field 'param' in template definition for param '${def.param}'`, "ValidationError");
 			}
-			return result;
-		})();
+
+			if (!templateItem.type) {
+				throw constructError(`Must specify field 'type' in template definition for param '${def.param}'`, "ValidationError");
+			}
+
+			if (templateItem.type === "struct") {
+				throw constructError(`May not recursively specify 'struct' in template definitions (param '${def.param}')`, "ValidationError");
+			}
+		}
 	} else if (def.type === "option") {
 		if (!utils.typeIsArray(def.values)) {
 			throw constructError(`Expected field 'values' to be an array (option param '${def.param}')`, "ValidationError");
@@ -302,38 +296,30 @@ function validateConfigField(param, def, field) {
 			}
 			break;
 
-		case "map": {
+		case "map":
 			if (typeof field !== "object") {
 				throw constructError(`Expected config param ${param} to be an object.`, "ValidationError");
 			}
-			const result = [];
 			for (const k in field) {
 				const v = field[k];
-				let item;
 				if (typeof v !== "string") {
 					throw constructError(`Expected config param ${param} to only contain string values.`, "ValidationError");
 				}
-				result.push(item);
 			}
-			return result;
-		}
+			break;
 
-		case "struct": {
+		case "struct":
 			if (typeof field !== "object") {
 				throw constructError(`Expected config param ${param} to be an object.`, "ValidationError");
 			}
 			const templateFields = (def.template.map(tp => tp.param));
 
-			const result = [];
 			for (const paramField in field) {
-				let item1;
 				if (!Array.from(templateFields).includes(paramField)) {
 					throw constructError(`Field ${paramField} is not defined in template definition for config param ${param}.`, "ValidationError");
 				}
-				result.push(item1);
 			}
-			return result;
-		}
+			break;
 
 
 		case "password":

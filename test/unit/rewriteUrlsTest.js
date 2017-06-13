@@ -8,11 +8,10 @@ import * as rewriteUrls from "../../src/middleware/rewriteUrls";
 import * as utils from "../../src/utils";
 
 describe("Rewrite URLs middleware", () => {
-	beforeEach(() => {
-		sinon.restore(rewriteUrls);
-		sinon.restore(utils);
+	const sandbox = sinon.sandbox.create();
+	afterEach(() => {
+		sandbox.restore();
 	});
-
 	describe(".invertPathTransform", () =>
 
 		it("should invert various path transforms", () => {
@@ -73,7 +72,7 @@ describe("Rewrite URLs middleware", () => {
 
 		it("should fetch the rewrite config for the current channel and INCLUDE virtual defaults", (done) => {
 			currentChannel.addAutoRewriteRules = true;
-			const stub = sinon.stub(utils, "getAllChannelsInPriorityOrder");
+			const stub = sandbox.stub(utils, "getAllChannelsInPriorityOrder");
 			stub.callsArgWith(0, null, [currentChannel, channel1, channel2]);
 
 			return rewriteUrls.fetchRewriteConfig(currentChannel, "tls", (err, rewriteConfig) => {
@@ -96,7 +95,7 @@ describe("Rewrite URLs middleware", () => {
 
 		it("should fetch the rewrite config for the current channel and EXCLUDE virtual defaults", (done) => {
 			currentChannel.addAutoRewriteRules = false;
-			const stub = sinon.stub(utils, "getAllChannelsInPriorityOrder");
+			const stub = sandbox.stub(utils, "getAllChannelsInPriorityOrder");
 			stub.callsArgWith(0, null, [currentChannel, channel1, channel2]);
 			return rewriteUrls.fetchRewriteConfig(currentChannel, "tls", (err, rewriteConfig) => {
 				rewriteConfig.should.have.length(1);
@@ -111,13 +110,13 @@ describe("Rewrite URLs middleware", () => {
 	describe(".rewriteUrls", () => {
 		const channel = {
 			rewriteUrls: true,
-			rewriteUrlsConfig: {
+			rewriteUrlsConfig: [{
 				fromHost: "from.org",
 				toHost: "to.org",
 				fromPort: 80,
 				toPort: 5001,
 				pathTransform: "s/some/transform/"
-			},
+			}],
 			routes: [{
 				primary: true,
 				host: "route0.org",
@@ -143,43 +142,47 @@ describe("Rewrite URLs middleware", () => {
 		};
 
 		it("should rewrite absolute hrefs in JSON", (done) => {
-			const stub = sinon.stub(rewriteUrls, "fetchRewriteConfig");
-			stub.callsArgWith(2, null, [{
-				fromHost: "from.org",
-				toHost: "to.org",
-				fromPort: 80,
-				toPort: 5001
-			},
-			{
-				fromHost: "fromWithTransform.org",
-				toHost: "toWithTransform.org",
-				pathTransform: "s/this/that/",
-				fromPort: 8080,
-				toPort: 5000
-			}
-			]);
+			const rewiredChannel = Object.assign({}, channel, {
+				rewriteUrlsConfig: [
+					{
+						fromHost: "fromWithTransform.org",
+						toHost: "toWithTransform.org",
+						pathTransform: "s/this/that/",
+						fromPort: 8080,
+						toPort: 5000
+					},
+					{
+						fromHost: "from.org",
+						toHost: "to.org",
+						fromPort: 80,
+						toPort: 5001
+					}
+				]
+			});
 
-			return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), channel, "tls", (err, newResponse) => {
+			return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), rewiredChannel, "tls", (err, newResponse) => {
 				newResponse = JSON.parse(newResponse);
-				newResponse.href.should.be.exactly("http://to.org:5001/test1");
 				newResponse.obj.href.should.be.exactly("https://toWithTransform.org:5000/that");
+				newResponse.href.should.be.exactly("http://to.org:5001/test1");
 				newResponse.obj3.fullUrl.should.be.exactly("https://toWithTransform.org:5000/that");
 				return done();
 			});
 		});
 
 		it("should rewrite relative hrefs in JSON", (done) => {
-			const stub = sinon.stub(rewriteUrls, "fetchRewriteConfig");
-			stub.callsArgWith(2, null, [{
-				fromHost: "route0.org",
-				toHost: "route0To.org",
-				pathTransform: "s/from/to",
-				fromPort: 5555,
-				toPort: 5001
-			}
-			]);
+			const rewiredChannel = Object.assign({}, channel, {
+				rewriteUrlsConfig: [
+					{
+						fromHost: "route0.org",
+						toHost: "route0To.org",
+						pathTransform: "s/from/to",
+						fromPort: 5555,
+						toPort: 5001
+					}
+				]
+			});
 
-			return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), channel, "tls", (err, newResponse) => {
+			return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), rewiredChannel, "tls", (err, newResponse) => {
 				newResponse = JSON.parse(newResponse);
 				newResponse.obj2.href.should.be.exactly("/test1/to/xyz");
 				return done();
@@ -193,28 +196,28 @@ describe("Rewrite URLs middleware", () => {
   <tag2>
     <child href="http://fromWithTransform.org:8080/this"></child>
   </tag2>
-  <img src="http://from.org/image">
+  <img src="http://from.org/image" />
 </someTags>\
 `;
 
 		it("should rewrite hrefs in XML", (done) => {
-			const stub = sinon.stub(rewriteUrls, "fetchRewriteConfig");
-			stub.callsArgWith(2, null, [{
-				fromHost: "from.org",
-				toHost: "to.org",
-				fromPort: 80,
-				toPort: 5001
-			},
-			{
-				fromHost: "fromWithTransform.org",
-				toHost: "toWithTransform.org",
-				pathTransform: "s/this/that/",
-				fromPort: 8080,
-				toPort: 5000
-			}
-			]);
+			const rewiredChannel = Object.assign({}, channel, {
+				rewriteUrlsConfig: [{
+					fromHost: "from.org",
+					toHost: "to.org",
+					fromPort: 80,
+					toPort: 5001
+				},
+				{
+					fromHost: "fromWithTransform.org",
+					toHost: "toWithTransform.org",
+					pathTransform: "s/this/that/",
+					fromPort: 8080,
+					toPort: 5000
+				}]
+			});
 
-			return rewriteUrls.rewriteUrls(xmlResponse, channel, "tls", (err, newResponse) => {
+			return rewriteUrls.rewriteUrls(xmlResponse, rewiredChannel, "tls", (err, newResponse) => {
 				const doc = new dom().parseFromString(newResponse);
 				const href1 = xpath.select("string(//someTags/tag1/@href)", doc);
 				const href2 = xpath.select("string(//someTags/tag2/child/@href)", doc);

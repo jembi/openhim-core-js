@@ -2,12 +2,14 @@
 
 import should from "should";
 import request from "supertest";
+import * as q from "q";
 import * as server from "../../src/server";
 import { Transaction } from "../../src/model/transactions";
 import { Task } from "../../src/model/tasks";
 import { Channel } from "../../src/model/channels";
 import * as tasks from "../../src/tasks";
 import * as testUtils from "../testUtils";
+
 
 const { ObjectId } = require("mongoose").Types;
 
@@ -241,70 +243,43 @@ describe("Rerun Task Tests", () => {
 	);
 
 	describe("*findAndProcessAQueuedTask()", () => {
-		it("should find the next available queued task and process its next round", done =>
-			server = testUtils.createMockServer(200, "Mock response", 7786, () => {
-				tasks.findAndProcessAQueuedTask();
-				const validateTask = () =>
-					Task.findOne({ _id: task1._id }, (err, task) => {
-						// only processed one round, task should be back in queued status with one transaction processed
-						task.status.should.be.equal("Queued");
-						task.remainingTransactions.should.be.equal(2);
-						task.transactions[0].tstatus.should.be.equal("Completed");
-						task.transactions[1].tstatus.should.be.equal("Queued");
-						task.transactions[2].tstatus.should.be.equal("Queued");
-						return server.close(() => done());
-					})
-					;
+		it("should find the next available queued task and process its next round", async () => {
+			await testUtils.createMockServerPromised(200, "Mock response", 7786);
+			await tasks.findAndProcessAQueuedTask();
 
-				return setTimeout(validateTask, 100 * global.testTimeoutFactor);
-			})
-		);
+			const task = await Task.findOne({ _id: task1._id });
+			task.status.should.be.equal("Queued");
+			task.remainingTransactions.should.be.equal(2);
+			task.transactions[0].tstatus.should.be.equal("Completed");
+			task.transactions[1].tstatus.should.be.equal("Queued");
+			task.transactions[2].tstatus.should.be.equal("Queued");
+		});
 
-		it("should process X transactions where X is the batch size", done =>
-			Task.update({ _id: task1._id }, { batchSize: 2 }, (err) => {
-				if (err) { return done(err); }
+		it("should process X transactions where X is the batch size", async () => {
+			await testUtils.createMockServerPromised(200, "Mock response", 7786);
+			await Task.update({ _id: task1._id }, { batchSize: 2 });
+			await tasks.findAndProcessAQueuedTask();
 
-				return server = testUtils.createMockServer(200, "Mock response", 7786, () => {
-					tasks.findAndProcessAQueuedTask();
-					const validateTask = () =>
-						Task.findOne({ _id: task1._id }, (err, task) => {
-							// only processed one round, task should be back in queued status with two transactions processed
-							task.status.should.be.equal("Queued");
-							task.remainingTransactions.should.be.equal(1);
-							task.transactions[0].tstatus.should.be.equal("Completed");
-							task.transactions[1].tstatus.should.be.equal("Failed"); // non-existent
-							task.transactions[2].tstatus.should.be.equal("Queued");
-							return server.close(() => done());
-						})
-						;
+			const task = await Task.findOne({ _id: task1._id });
+			task.status.should.be.equal("Queued");
+			task.remainingTransactions.should.be.equal(1);
+			task.transactions[0].tstatus.should.be.equal("Completed");
+			task.transactions[1].tstatus.should.be.equal("Failed"); // non-existent
+			task.transactions[2].tstatus.should.be.equal("Queued");
+		});
 
-					return setTimeout(validateTask, 100 * global.testTimeoutFactor);
-				});
-			})
-		);
+		it("should complete a queued task after all its transactions are finished", async () => {
+			await testUtils.createMockServerPromised(200, "Mock response", 7786);
+			await Task.update({ _id: task1._id }, { batchSize: 3 });
+			await tasks.findAndProcessAQueuedTask();
 
-		it("should complete a queued task after all its transactions are finished", done =>
-			Task.update({ _id: task1._id }, { batchSize: 3 }, (err) => {
-				if (err) { return done(err); }
-
-				return server = testUtils.createMockServer(200, "Mock response", 7786, () => {
-					tasks.findAndProcessAQueuedTask();
-					const validateTask = () =>
-						Task.findOne({ _id: task1._id }, (err, task) => {
-							// After one round, task should be in completed status with three transactions processed
-							task.status.should.be.equal("Completed");
-							task.remainingTransactions.should.be.equal(0);
-							task.transactions[0].tstatus.should.be.equal("Completed");
-							task.transactions[1].tstatus.should.be.equal("Failed"); // non-existent
-							task.transactions[2].tstatus.should.be.equal("Failed"); // non-existent
-							return server.close(() => done());
-						})
-						;
-
-					return setTimeout(validateTask, 100 * global.testTimeoutFactor);
-				});
-			})
-		);
+			const task = await Task.findOne({ _id: task1._id });
+			task.status.should.be.equal("Completed");
+			task.remainingTransactions.should.be.equal(0);
+			task.transactions[0].tstatus.should.be.equal("Completed");
+			task.transactions[1].tstatus.should.be.equal("Failed"); // non-existent
+			task.transactions[2].tstatus.should.be.equal("Failed"); // non-existent
+		});
 
 		it("should not process a paused task", done =>
 			Task.update({ _id: task1._id }, { status: "Paused" }, (err) => {
@@ -329,7 +304,7 @@ describe("Rerun Task Tests", () => {
 			})
 		);
 
-		return it("should not process a cancelled task", done =>
+		it("should not process a cancelled task", done =>
 			Task.update({ _id: task1._id }, { status: "Cancelled" }, (err) => {
 				if (err) { return done(err); }
 

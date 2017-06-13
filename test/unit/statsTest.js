@@ -5,6 +5,7 @@ import should from "should";
 import sinon from "sinon";
 import http from "http";
 import os from "os";
+import * as q from "q";
 import * as stats from "../../src/stats";
 import * as testUtils from "../testUtils";
 import FakeServer from "../fakeTcpServer";
@@ -232,43 +233,40 @@ describe("Stats Middleware ", () => {
 		value: 1522
 	});
 
-	it("should increment the transaction counter", done =>
-		stats.incrementTransactionCount(ctx, () =>
-			stats.incrementTransactionCount(ctx2, () =>
-				stats.nonPrimaryRouteRequestCount(ctx, ctx.routes[0], () =>
-					stats.nonPrimaryRouteRequestCount(ctx2, ctx2.routes[0], () =>
-						s.expectMessage(`${domain}.channels:1|c`, () =>
-							s.expectMessage(`${domain}.channels.Successful:1|c`, () =>
-								s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf:1|c`, () =>
-									s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:1|c`, () =>
-										s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:1|c`, () =>
-											s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API:1|c`, () =>
-												s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API.statusCodes.200:1|c`, () =>
-													s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-counter-metric:1|c`, () =>
-														s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-gauge-metric:11|g`, () =>
-															s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-timer-metric:1522|ms`, () =>
-																s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:1|c`, () =>
-																	s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:1|c`, () =>
-																		s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c`, () => s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c`, done))
-																	)
-																)
-															)
-														)
-													)
-												)
-											)
-										)
-									)
-								)
-							)
-						)
-					)
-				)
-			)
-		)
-	);
+	it("should increment the transaction counter", async (done) => {
+		try {
+			const incrementTransactionCount = q.nbind(stats.incrementTransactionCount, stats);
+			const nonPrimaryRouteRequestCount = q.nbind(stats.nonPrimaryRouteRequestCount, stats);
+			const expectMessage = q.nbind(s.expectMessage, s);
 
-	return it("Should measure transaction duration", (done) => {
+			await incrementTransactionCount(ctx);
+			await incrementTransactionCount(ctx2);
+
+			await nonPrimaryRouteRequestCount(ctx, ctx.routes[0]);
+			await nonPrimaryRouteRequestCount(ctx2, ctx2.routes[0]);
+
+			await expectMessage(`${domain}.channels:1|c`);
+			await expectMessage(`${domain}.channels.Successful:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API.statusCodes.200:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-counter-metric:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-gauge-metric:11|g`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-timer-metric:1522|ms`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c`);
+			await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c`);
+			done();
+		} catch (err) {
+			done(err);
+		}
+	});
+
+	// TODO : Fix this test
+	it("Should measure transaction duration", (done) => {
 		ctx.timer = 10;
 		return stats.measureTransactionDuration(ctx, () =>
 			stats.measureTransactionDuration(ctx2, () =>
@@ -284,7 +282,8 @@ describe("Stats Middleware ", () => {
 													s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms`, () =>
 														s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.group.Lab API:5|ms`, () =>
 															s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms`, () =>
-																s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms`, () => s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms`, done))
+																s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms`,
+																	() => s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms`, done))
 															)
 														)
 													)

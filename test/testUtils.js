@@ -28,6 +28,26 @@ export async function cleanupMockServers() {
 }
 
 
+export function createMockServerPromised(resStatusCode, resBody, port, requestCallback = () => { }) {
+	requestCallback = requestCallback || function () { };
+	// Create mock endpoint to forward requests to
+	const mockServer = http.createServer((req, res) => {
+		res.writeHead(resStatusCode, { "Content-Type": "text/plain" });
+		return res.end(resBody);
+	});
+	MOCK_SERVERS.push(mockServer);
+	mockServer.on("request", requestCallback);
+	return new Promise((resolve, reject) => {
+		mockServer.listen(port, (err) => {
+			if (err) {
+				return reject(err);
+			}
+
+			return resolve(mockServer);
+		});
+	});
+}
+
 export function createMockServer(resStatusCode, resBody, port, callback, requestCallback) {
 	requestCallback = requestCallback || function () { };
 	// Create mock endpoint to forward requests to

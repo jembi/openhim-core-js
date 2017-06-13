@@ -56,36 +56,30 @@ export function incrementTransactionCount(ctx, done) {
 					sdc.increment(`${domain}.channels.${ctx.authorisedChannel._id}.statuses.${transactionStatus}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`);
 
 					if (orchestration.metrics != null) {
-						return (() => {
-							const result = [];
-							for (metric of Array.from(orchestration.metrics)) {
-								let item;
-								if (metric.type === "counter") {
-									logger.info(`incrementing orchestration counter ${metric.name}`);
-									sdc.increment(`${domain}.channels.${ctx.authorisedChannel._id}.${ctx.mediatorResponse.properties.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
-								}
-
-								if (metric.type === "timer") {
-									logger.info(`incrementing orchestration timer ${metric.name}`);
-									sdc.timing(`${domain}.channels.${ctx.authorisedChannel._id}.${ctx.mediatorResponse.properties.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
-								}
-
-								if (metric.type === "gauge") {
-									logger.info(`incrementing orchestration gauge ${metric.name}`);
-									item = sdc.gauge(`${domain}.channels.${ctx.authorisedChannel._id}.${ctx.mediatorResponse.properties.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
-								}
-								result.push(item);
+						for (metric of Array.from(orchestration.metrics)) {
+							if (metric.type === "counter") {
+								logger.info(`incrementing orchestration counter ${metric.name}`);
+								sdc.increment(`${domain}.channels.${ctx.authorisedChannel._id}.${ctx.mediatorResponse.properties.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
 							}
-							return result;
-						})();
+
+							if (metric.type === "timer") {
+								logger.info(`incrementing orchestration timer ${metric.name}`);
+								sdc.timing(`${domain}.channels.${ctx.authorisedChannel._id}.${ctx.mediatorResponse.properties.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
+							}
+
+							if (metric.type === "gauge") {
+								logger.info(`incrementing orchestration gauge ${metric.name}`);
+								sdc.gauge(`${domain}.channels.${ctx.authorisedChannel._id}.${ctx.mediatorResponse.properties.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
+							}
+						}
 					}
 				}
 			}
 		}
+		return done();
 	} catch (error) {
 		logger.error(error, done);
 	}
-	return done();
 }
 
 export function measureTransactionDuration(ctx, done) {

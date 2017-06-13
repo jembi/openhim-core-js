@@ -270,7 +270,7 @@ function sendRequestToRoutes(ctx, routes, next) {
 			}
 
 
-			return promises.push(promise);
+			promises.push(promise);
 		}
 
 		return (Q.all(promises)).then(() =>
