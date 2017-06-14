@@ -10,26 +10,25 @@ const getFingerprint = Q.denodeify(pem.getFingerprint);
 
 export function* generateCert() {
 	// Must be admin
+	const ctx = this;
 	let result;
-	if (authorisation.inGroup("admin", this.authenticated) === false) {
-		utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getServerKey by id denied.`, "info");
+	if (authorisation.inGroup("admin", ctx.authenticated) === false) {
+		utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getServerKey by id denied.`, "info");
 		return;
 	}
-
-	const options = this.request.body;
+	const { request: { body: options } } = ctx;
 	if (options.type === "server") {
 		logger.info("Generating server cert");
-		result = yield generateServerCert(options);
+		result = yield generateServerCert(options, ctx);
 	} else {
 		logger.info("Generating client cert");
-		result = yield generateClientCert(options);
+		result = yield generateClientCert(options, ctx);
 	}
-	this.status = 201;
-	this.body = result;
-	return this.body;
+	ctx.status = 201;
+	return ctx.body = result;
 }
 
-function* generateClientCert(options) {
+function* generateClientCert(options, ctx) {
 	const keystoreDoc = yield Keystore.findOne().exec();
 
 	// Set additional options
@@ -37,34 +36,34 @@ function* generateClientCert(options) {
 
 	// Attempt to create the certificate
 	try {
-		this.body = yield createCertificate(options);
-		const certInfo = yield extractCertMetadata(this.body.certificate);
+		ctx.body = yield createCertificate(options);
+		const certInfo = yield extractCertMetadata(ctx.body.certificate, ctx);
 		keystoreDoc.ca.push(certInfo);
 		yield Q.ninvoke(keystoreDoc, "save");
 		// Add the new certficate to the keystore
-		this.status = 201;
+		ctx.status = 201;
 		logger.info("Client certificate created");
 	} catch (err) {
-		utils.logAndSetResponse(this, "internal server error", `Could not create a client cert via the API: ${err}`, "error");
+		utils.logAndSetResponse(ctx, "internal server error", `Could not create a client cert via the API: ${err}`, "error");
 	}
-	return this.body;
+	return ctx.body;
 }
 
-function* generateServerCert(options) {
+function* generateServerCert(options, ctx) {
 	const keystoreDoc = yield Keystore.findOne().exec();
 	options.selfSigned = true;
 	try {
-		this.body = yield createCertificate(options);
-		keystoreDoc.cert = yield extractCertMetadata(this.body.certificate);
-		keystoreDoc.key = this.body.key;
+		ctx.body = yield createCertificate(options);
+		keystoreDoc.cert = yield extractCertMetadata(ctx.body.certificate, ctx);
+		keystoreDoc.key = ctx.body.key;
 		yield Q.ninvoke(keystoreDoc, "save");
 		// Add the new certficate to the keystore
-		this.status = 201;
+		ctx.status = 201;
 		logger.info("Server certificate created");
 	} catch (err) {
-		utils.logAndSetResponse(this, "internal server error", `Could not create a client cert via the API: ${err}`, "error");
+		utils.logAndSetResponse(ctx, "internal server error", `Could not create a client cert via the API: ${err}`, "error");
 	}
-	return this.body;
+	return ctx.body;
 }
 
 function createCertificate(options) {
@@ -87,10 +86,10 @@ function createCertificate(options) {
 	return deferred.promise;
 }
 
-function* extractCertMetadata(cert) {
+function* extractCertMetadata(cert, ctx) {
 	const certInfo = yield readCertificateInfo(cert);
 	const fingerprint = yield getFingerprint(cert);
-	certInfo.data = this.body.certificate;
+	certInfo.data = ctx.body.certificate;
 	certInfo.fingerprint = fingerprint.fingerprint;
 	return certInfo;
 }

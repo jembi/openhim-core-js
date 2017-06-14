@@ -10,11 +10,31 @@ import logger from "winston";
 import Q from "q";
 import finalhandler from "finalhandler";
 import serveStatic from "serve-static";
+import { MongoClient } from "mongodb";
+import { config } from "../src/config";
 import { Transaction } from "../src/model/transactions";
 import { User } from "../src/model/users";
 import { Keystore } from "../src/model/keystore";
 
+Q.longStackSupport = true;
+
 const MOCK_SERVERS = [];
+const { url: dbUrl } = config.get("mongo");
+
+export async function clearDb() {
+	const client = new MongoClient();
+	const db = await client.connect(dbUrl);
+	const collections = await db.collections();
+	await Promise.all(collections.map(async col => {
+		try {
+			await col.drop();
+		} catch (err) {
+			console.warn("clearDb problem", err);
+		}
+	}));
+	await db.close();
+	await Q.delay(150);
+}
 
 export async function cleanupMockServers() {
 	try {

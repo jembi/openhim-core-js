@@ -288,7 +288,7 @@ export function* addTransaction() {
 		this.status = 201;
 		logger.info(`User ${this.authenticated.email} created transaction with id ${tx.id}`);
 
-		return generateEvents(tx, tx.channelID);
+		yield generateEvents(tx, tx.channelID);
 	} catch (e) {
 		return utils.logAndSetResponse(this, 500, `Could not add a transaction via the API: ${e}`, "error");
 	}
@@ -408,19 +408,20 @@ export function* findTransactionByClientId(clientId) {
 }
 
 
-function generateEvents(transaction, channelID) {
-	return Channel.findById(channelID, (err, channel) => {
+async function generateEvents(transaction, channelID) {
+	try {
 		logger.debug(`Storing events for transaction: ${transaction._id}`);
+		const channel = await Channel.findById(channelID);
 
 		const trxEvents = [];
-		function done(err) { if (err) { return logger.error(err); } }
-
 		events.createTransactionEvents(trxEvents, transaction, channel);
 
 		if (trxEvents.length > 0) {
-			return events.saveEvents(trxEvents, done);
+			await Q.nfcall(events.saveEvents, trxEvents);
 		}
-	});
+	} catch (err) {
+		logger.error(err);
+	}
 }
 
 
@@ -428,7 +429,8 @@ function updateTransactionMetrics(updates, doc) {
 	if (updates.$push == null || updates.$push.routes === null) {
 		return;
 	}
-	for (const route of updates.$push) {
+	for (const k in updates.$push) {
+		const route = updates.$push[k];
 		if (route.metrics != null) {
 			for (const metric of Array.from(route.metrics)) {
 				if (metric.type === "counter") {
@@ -448,7 +450,7 @@ function updateTransactionMetrics(updates, doc) {
 			}
 		}
 
-		for (const orchestration of route) {
+		for (const orchestration of route.orchestrations) {
 			const orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp;
 			const orchestrationStatus = orchestration.response.status;
 			let orchestrationName = orchestration.name;
@@ -532,7 +534,7 @@ export function* updateTransaction(transactionId) {
 		this.status = 200;
 		logger.info(`User ${this.authenticated.email} updated transaction with id ${transactionId}`);
 
-		generateEvents(updates, tx.channelID);
+		yield generateEvents(updates, tx.channelID);
 		return updateTransactionMetrics(updates, tx);
 	} catch (e) {
 		return utils.logAndSetResponse(this, 500, `Could not update transaction via the API: ${e}`, "error");

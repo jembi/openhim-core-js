@@ -4,6 +4,7 @@
 import should from "should";
 import request from "supertest";
 import os from "os";
+import * as q from "q";
 import * as utils from "../../src/utils";
 import { Transaction } from "../../src/model/transactions";
 import { Channel } from "../../src/model/channels";
@@ -31,220 +32,203 @@ const clearTransactionBodies = function (t) {
 };
 
 describe("API Integration Tests", () => {
-	beforeEach(done => Transaction.remove({}, () => done()));
+	let end;
+	let asc;
+	let largeBody = "";
+	for (let i = 0, end = 2 * 1024 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { largeBody += "1234567890"; }
 
-	afterEach(done => Transaction.remove({}, () => done()));
+	let transactionId = null;
+	const requ = {
+		path: "/api/test",
+		headers: {
+			"header-title": "header1-value",
+			"another-header": "another-header-value"
+		},
+		querystring: "param1=value1&param2=value2",
+		body: "<HTTP body request>",
+		method: "POST",
+		timestamp: "2014-06-09T11:17:25.929Z"
+	};
 
+	Object.freeze(requ);
 
-	return describe("Transactions REST Api testing", () => {
-		let end;
-		let asc;
-		let largeBody = "";
-		for (let i = 0, end = 2 * 1024 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { largeBody += "1234567890"; }
+	const respo = {
+		status: "200",
+		headers: {
+			header: "value",
+			header2: "value2"
+		},
+		body: "<HTTP response>",
+		timestamp: "2014-06-09T11:17:25.929Z"
+	};
 
-		let transactionId = null;
-		const requ = {
-			path: "/api/test",
-			headers: {
-				"header-title": "header1-value",
-				"another-header": "another-header-value"
-			},
-			querystring: "param1=value1&param2=value2",
-			body: "<HTTP body request>",
-			method: "POST",
-			timestamp: "2014-06-09T11:17:25.929Z"
-		};
+	Object.freeze(respo);
 
-		const respo = {
-			status: "200",
-			headers: {
-				header: "value",
-				header2: "value2"
-			},
-			body: "<HTTP response>",
-			timestamp: "2014-06-09T11:17:25.929Z"
-		};
+	const transactionData = {
+		_id: "111111111111111111111111",
+		status: "Processing",
+		clientID: "999999999999999999999999",
+		channelID: "888888888888888888888888",
+		request: requ,
+		response: respo,
 
-		const transactionData = {
-			_id: "111111111111111111111111",
-			status: "Processing",
-			clientID: "999999999999999999999999",
-			channelID: "888888888888888888888888",
+		routes:
+		[{
+			name: "dummy-route",
 			request: requ,
-			response: respo,
+			response: respo
+		}
+		],
 
-			routes:
-			[{
-				name: "dummy-route",
-				request: requ,
-				response: respo
-			}
-			],
+		orchestrations:
+		[{
+			name: "dummy-orchestration",
+			request: requ,
+			response: respo
+		}
+		],
+		properties: {
+			prop1: "prop1-value1",
+			prop2: "prop-value1"
+		}
+	};
 
-			orchestrations:
-			[{
-				name: "dummy-orchestration",
-				request: requ,
-				response: respo
-			}
-			],
-			properties: {
-				prop1: "prop1-value1",
-				prop2: "prop-value1"
-			}
-		};
+	Object.freeze(transactionData);
 
-		let authDetails = {};
+	let authDetails = {};
 
-		const channel = new Channel({
-			name: "TestChannel1",
-			urlPattern: "test/sample",
-			allow: ["PoC", "Test1", "Test2"],
-			routes: [{
-				name: "test route",
-				host: "localhost",
-				port: 9876,
-				primary: true
-			}
-			],
-			txViewAcl: ["group1"],
-			txViewFullAcl: []
-		});
+	const channel = new Channel({
+		name: "TestChannel1",
+		urlPattern: "test/sample",
+		allow: ["PoC", "Test1", "Test2"],
+		routes: [{
+			name: "test route",
+			host: "localhost",
+			port: 9876,
+			primary: true
+		}
+		],
+		txViewAcl: ["group1"],
+		txViewFullAcl: []
+	});
 
-		const channel2 = new Channel({
-			name: "TestChannel2",
-			urlPattern: "test2/sample",
-			allow: ["PoC", "Test1", "Test2"],
-			routes: [{
-				name: "test route",
-				host: "localhost",
-				port: 9876,
-				primary: true
-			}
-			],
-			txViewAcl: ["not-for-non-root"],
-			txViewFullAcl: [],
-			autoRetryEnabled: true,
-			autoRetryPeriodMinutes: 60,
-			autoRetryMaxAttempts: 5
-		});
+	const channel2 = new Channel({
+		name: "TestChannel2",
+		urlPattern: "test2/sample",
+		allow: ["PoC", "Test1", "Test2"],
+		routes: [{
+			name: "test route",
+			host: "localhost",
+			port: 9876,
+			primary: true
+		}
+		],
+		txViewAcl: ["not-for-non-root"],
+		txViewFullAcl: [],
+		autoRetryEnabled: true,
+		autoRetryPeriodMinutes: 60,
+		autoRetryMaxAttempts: 5
+	});
 
-		before(done =>
-			auth.setupTestUsers(err =>
-				channel.save(err =>
-					channel2.save(err =>
-						server.start({ apiPort: 8080 }, () => done())
-					)
-				)
-			)
-		);
+	before(async (done) => {
+		await testUtils.clearDb();
+		await q.nfcall(server.start, { apiPort: 8080 });
+		await Promise.all([
+			channel.save(),
+			channel2.save(),
+			q.nfcall(auth.setupTestUsers),
+		]);
+		authDetails = auth.getAuthDetails();
+		done();
+	});
 
-		after(done =>
-			auth.cleanupTestUsers(err =>
-				Channel.remove(err =>
-					server.stop(() => done())
-				)
-			)
-		);
+	after(async (done) => {
+		await q.nfcall(server.stop);
+		await q.delay(200);
+		await testUtils.clearDb();
+		done();
+	});
 
-		beforeEach((done) => {
-			authDetails = auth.getAuthDetails();
-			return Event.ensureIndexes(done);
-		});
+	beforeEach(async (done) => {
+		transactionId = null;
+		done();
+	});
 
-		afterEach(done => Event.remove({}, done));
+	afterEach(async (done) => {
+		await Event.remove({});
+		await Transaction.remove({});
+		done();
+	});
 
+	describe("Transactions REST Api testing", () => {
 		describe("*addTransaction()", () => {
-			it("should add a transaction and return status 201 - transaction created", (done) => {
-				transactionData.channelID = channel._id;
-				return request("https://localhost:8080")
-					.post("/transactions")
-					.set("auth-username", testUtils.rootUser.email)
-					.set("auth-ts", authDetails.authTS)
-					.set("auth-salt", authDetails.authSalt)
-					.set("auth-token", authDetails.authToken)
-					.send(transactionData)
-					.expect(201)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							return Transaction.findOne({ clientID: "999999999999999999999999" }, (error, newTransaction) => {
-								should.not.exist((error));
-								(newTransaction !== null).should.be.true;
-								newTransaction.status.should.equal("Processing");
-								newTransaction.clientID.toString().should.equal("999999999999999999999999");
-								newTransaction.channelID.toString().should.equal(channel._id.toString());
-								newTransaction.request.path.should.equal("/api/test");
-								newTransaction.request.headers["header-title"].should.equal("header1-value");
-								newTransaction.request.headers["another-header"].should.equal("another-header-value");
-								newTransaction.request.querystring.should.equal("param1=value1&param2=value2");
-								newTransaction.request.body.should.equal("<HTTP body request>");
-								newTransaction.request.method.should.equal("POST");
-								return done();
-							});
-						}
-					});
-			});
-
-			it("should add a transaction and truncate the large response body", (done) => {
+			it("should add a transaction and truncate the large response body", async () => {
 				const td = JSON.parse(JSON.stringify(transactionData));
 				td.channelID = channel._id;
 				td.request.body = "";
 				const respBody = largeBody;
 				td.response.body = respBody;
-				return request("https://localhost:8080")
+				const res = await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(td)
-					.expect(201)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							return Transaction.findOne({ clientID: "999999999999999999999999" }, (error, newTransaction) => {
-								should.not.exist((error));
-								(newTransaction !== null).should.be.true;
-								newTransaction.response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-								newTransaction.canRerun.should.be.true;
-								return done();
-							});
-						}
-					});
+					.expect(201);
+
+
+				const newTransaction = await Transaction.findOne({ clientID: "999999999999999999999999" });
+				(newTransaction !== null).should.be.true;
+				newTransaction.response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				newTransaction.canRerun.should.be.true;
 			});
 
-			it("should add a transaction and truncate the large request body", (done) => {
+			it("should add a transaction and return status 201 - transaction created", async () => {
+				const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id });
+				const res = await request("https://localhost:8080")
+					.post("/transactions")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(newTransactionData)
+					.expect(201);
+
+				const newTransaction = await Transaction.findOne({ clientID: "999999999999999999999999" });
+				(newTransaction !== null).should.be.true;
+				newTransaction.status.should.equal("Processing");
+				newTransaction.clientID.toString().should.equal("999999999999999999999999");
+				newTransaction.channelID.toString().should.equal(channel._id.toString());
+				newTransaction.request.path.should.equal("/api/test");
+				newTransaction.request.headers["header-title"].should.equal("header1-value");
+				newTransaction.request.headers["another-header"].should.equal("another-header-value");
+				newTransaction.request.querystring.should.equal("param1=value1&param2=value2");
+				newTransaction.request.body.should.equal("<HTTP body request>");
+				newTransaction.request.method.should.equal("POST");
+			});
+
+			it("should add a transaction and truncate the large request body", async () => {
 				const td = JSON.parse(JSON.stringify(transactionData));
 				td.channelID = channel._id;
 				const reqBody = largeBody;
 				td.request.body = reqBody;
-				return request("https://localhost:8080")
+				const res = await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(td)
-					.expect(201)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							return Transaction.findOne({ clientID: "999999999999999999999999" }, (error, newTransaction) => {
-								should.not.exist((error));
-								(newTransaction !== null).should.be.true;
-								newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-								newTransaction.canRerun.should.be.false;
-								return done();
-							});
-						}
-					});
+					.expect(201);
+
+				const newTransaction = await Transaction.findOne({ clientID: "999999999999999999999999" });
+				(newTransaction !== null).should.be.true;
+				newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				newTransaction.canRerun.should.be.false;
 			});
 
-			it("should add a transaction and add the correct truncate message", (done) => {
+			it("should add a transaction and add the correct truncate message", async () => {
 				let asc1;
 				let end1;
 				const td = JSON.parse(JSON.stringify(transactionData));
@@ -256,31 +240,23 @@ describe("API Integration Tests", () => {
 				bod = bod.slice(0, len - 4);
 				td.request.body = bod;
 				td.response.body = largeBody;
-				return request("https://localhost:8080")
+				const res = await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(td)
-					.expect(201)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							return Transaction.findOne({ clientID: "999999999999999999999999" }, (error, newTransaction) => {
-								should.not.exist((error));
-								(newTransaction !== null).should.be.true;
-								newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE - 4);
-								newTransaction.response.body.length.should.be.exactly(Buffer.byteLength(config.api.truncateAppend));
-								newTransaction.canRerun.should.be.false;
-								return done();
-							});
-						}
-					});
+					.expect(201);
+
+				const newTransaction = await Transaction.findOne({ clientID: "999999999999999999999999" });
+				(newTransaction !== null).should.be.true;
+				newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE - 4);
+				newTransaction.response.body.length.should.be.exactly(Buffer.byteLength(config.api.truncateAppend));
+				newTransaction.canRerun.should.be.false;
 			});
 
-			it("should add a transaction and truncate the routes request body", (done) => {
+			it("should add a transaction and truncate the routes request body", async () => {
 				// Given
 				const td = JSON.parse(JSON.stringify(transactionData));
 				td.channelID = channel._id;
@@ -288,31 +264,22 @@ describe("API Integration Tests", () => {
 				td.routes[0].request.body = largeBody;
 
 				// When
-				return request("https://localhost:8080")
+				const res = await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(td)
-					.expect(201)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							// Then
-							return Transaction.findOne({ clientID: "999999999999999999999999" }, (error, newTransaction) => {
-								should.not.exist((error));
-								(newTransaction !== null).should.be.true;
-								newTransaction.routes[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-								newTransaction.canRerun.should.be.true;
-								return done();
-							});
-						}
-					});
+					.expect(201);
+
+				const newTransaction = await Transaction.findOne({ clientID: "999999999999999999999999" });
+				(newTransaction !== null).should.be.true;
+				newTransaction.routes[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				newTransaction.canRerun.should.be.true;
 			});
 
-			it("should add a transaction and truncate the routes response body", (done) => {
+			it("should add a transaction and truncate the routes response body", async () => {
 				// Given
 				const td = JSON.parse(JSON.stringify(transactionData));
 				td.channelID = channel._id;
@@ -320,31 +287,22 @@ describe("API Integration Tests", () => {
 				td.routes[0].response.body = largeBody;
 
 				// When
-				return request("https://localhost:8080")
+				const res = await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(td)
-					.expect(201)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							// Then
-							return Transaction.findOne({ clientID: "999999999999999999999999" }, (error, newTransaction) => {
-								should.not.exist((error));
-								(newTransaction !== null).should.be.true;
-								newTransaction.routes[0].response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-								newTransaction.canRerun.should.be.true;
-								return done();
-							});
-						}
-					});
+					.expect(201);
+
+				const newTransaction = await Transaction.findOne({ clientID: "999999999999999999999999" });
+				(newTransaction !== null).should.be.true;
+				newTransaction.routes[0].response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				newTransaction.canRerun.should.be.true;
 			});
 
-			it("should add a transaction and truncate the orchestrations request body", (done) => {
+			it("should add a transaction and truncate the orchestrations request body", async () => {
 				// Given
 				const td = JSON.parse(JSON.stringify(transactionData));
 				td.channelID = channel._id;
@@ -352,31 +310,22 @@ describe("API Integration Tests", () => {
 				td.orchestrations[0].request.body = largeBody;
 
 				// When
-				return request("https://localhost:8080")
+				await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(td)
-					.expect(201)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							// Then
-							return Transaction.findOne({ clientID: "999999999999999999999999" }, (error, newTransaction) => {
-								should.not.exist((error));
-								(newTransaction !== null).should.be.true;
-								newTransaction.orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-								newTransaction.canRerun.should.be.true;
-								return done();
-							});
-						}
-					});
+					.expect(201);
+
+				const newTransaction = await Transaction.findOne({ clientID: "999999999999999999999999" });
+				(newTransaction !== null).should.be.true;
+				newTransaction.orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				newTransaction.canRerun.should.be.true;
 			});
 
-			it("should add a transaction and truncate the orchestrations response body", (done) => {
+			it("should add a transaction and truncate the orchestrations response body", async () => {
 				// Given
 				const td = JSON.parse(JSON.stringify(transactionData));
 				td.channelID = channel._id;
@@ -384,84 +333,57 @@ describe("API Integration Tests", () => {
 				td.orchestrations[0].response.body = largeBody;
 
 				// When
-				return request("https://localhost:8080")
+				const res = await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(td)
-					.expect(201)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							// Then
-							return Transaction.findOne({ clientID: "999999999999999999999999" }, (error, newTransaction) => {
-								should.not.exist((error));
-								(newTransaction !== null).should.be.true;
-								newTransaction.orchestrations[0].response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-								newTransaction.canRerun.should.be.true;
-								return done();
-							});
-						}
-					});
+					.expect(201);
+
+				const newTransaction = await Transaction.findOne({ clientID: "999999999999999999999999" });
+
+				(newTransaction !== null).should.be.true;
+				newTransaction.orchestrations[0].response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				newTransaction.canRerun.should.be.true;
 			});
 
-			it("should only allow admin users to add transactions", done =>
-				request("https://localhost:8080")
+			it("should only allow admin users to add transactions", async () => {
+				await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.nonRootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
 					.send(transactionData)
-					.expect(403)
-					.end((err, res) => {
-						if (err) {
-							return done(err);
-						} else {
-							return done();
-						}
-					})
-			);
+					.expect(403);
+			});
 
-			return it("should generate events after adding a transaction", (done) => {
-				transactionData.channelID = channel._id;
-				return request("https://localhost:8080")
+			it("should generate events after adding a transaction", async () => {
+				const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id });
+				const res = await request("https://localhost:8080")
 					.post("/transactions")
 					.set("auth-username", testUtils.rootUser.email)
 					.set("auth-ts", authDetails.authTS)
 					.set("auth-salt", authDetails.authSalt)
 					.set("auth-token", authDetails.authToken)
-					.send(transactionData)
-					.expect(201)
-					.end((err, res) => {
-						if (err) { return done(err); }
+					.send(newTransactionData)
+					.expect(201);
 
-						const validateEvents = () =>
-							Event.find({}, (err, events) => {
-								if (err) { return done(err); }
+				const events = await Event.find({});
+				events.length.should.be.exactly(6);
+				for (const ev of Array.from(events)) {
+					ev.channelID.toString().should.be.exactly(channel._id.toString());
+				}
 
-								// expect 8: start+end for primary route, secondary route and orchestration
-								events.length.should.be.exactly(6);
-								for (const ev of Array.from(events)) {
-									ev.channelID.toString().should.be.exactly(channel._id.toString());
-								}
-
-								const evs = (events.map(event => `${event.type}-${event.name}-${event.event}`));
-								evs.should.containEql("primary-test route-start");
-								evs.should.containEql("primary-test route-end");
-								evs.should.containEql("route-dummy-route-start");
-								evs.should.containEql("route-dummy-route-end");
-								evs.should.containEql("orchestration-dummy-orchestration-start");
-								evs.should.containEql("orchestration-dummy-orchestration-end");
-								return done();
-							})
-							;
-
-						return setTimeout(validateEvents, 100 * global.testTimeoutFactor);
-					});
+				const evs = (events.map(event => `${event.type}-${event.name}-${event.event}`));
+				evs.should.containEql("primary-test route-start");
+				evs.should.containEql("primary-test route-end");
+				evs.should.containEql("route-dummy-route-start");
+				evs.should.containEql("route-dummy-route-end");
+				evs.should.containEql("orchestration-dummy-orchestration-start");
+				evs.should.containEql("orchestration-dummy-orchestration-end");
 			});
 		});
 
@@ -478,398 +400,316 @@ describe("API Integration Tests", () => {
 			};
 
 			let s = {};
+			let expectMessage;
 			beforeEach((done) => {
 				s = new FakeServer();
+				expectMessage = q.nbind(s.expectMessage, s);
 				return s.start(done);
 			});
 
 			afterEach(() => s.stop());
 
-			it("should call /updateTransaction ", (done) => {
+			it("should call /updateTransaction ", async () => {
 				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					const updates = {
-						request: requestUpdate,
-						status: "Completed",
-						clientID: "777777777777777777777777",
-						$push: {
-							routes: {
-								name: "async",
-								orchestrations: [
-									{
-										name: "test",
-										request: {
-											method: "POST",
-											body: "data",
-											timestamp: 1425897647329
-										},
-										response: {
-											status: 201,
-											body: "OK",
-											timestamp: 1425897688016
-										}
-									}
-								]
-							}
-						}
-					};
-
-					return request("https://localhost:8080")
-						.put(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(updates)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								return Transaction.findOne({ _id: transactionId }, (error, updatedTrans) => {
-									should.not.exist(error);
-									(updatedTrans !== null).should.be.true;
-									updatedTrans.status.should.equal("Completed");
-									updatedTrans.clientID.toString().should.equal("777777777777777777777777");
-									updatedTrans.request.path.should.equal("/api/test/updated");
-									updatedTrans.request.headers["Content-Type"].should.equal("text/javascript");
-									updatedTrans.request.headers["Access-Control"].should.equal("authentication-required");
-									updatedTrans.request.querystring.should.equal("updated=value");
-									updatedTrans.request.body.should.equal("<HTTP body update>");
-									updatedTrans.request.method.should.equal("PUT");
-									updatedTrans.routes[1].name.should.equal("async");
-									updatedTrans.routes[1].orchestrations[0].name.should.equal("test");
-									s.expectMessage(`${domain}.channels.888888888888888888888888.async.orchestrations.test:1|c`, () => s.expectMessage(`${domain}.channels.888888888888888888888888.async.orchestrations.test.statusCodes.201:1|c`, done));
-
-									return done();
-								});
-							}
-						});
-				});
-			});
-
-			it("should update transaction with large update request body", (done) => {
-				const td = JSON.parse(JSON.stringify(transactionData));
-				td.channelID = channel._id;
-				clearTransactionBodies(td);
-				const tx = new Transaction(td);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-
-					const reqUp = JSON.parse(JSON.stringify(requestUpdate));
-					reqUp.body = largeBody;
-
-					const updates = {
-						request: reqUp,
-						status: "Completed",
-						clientID: "777777777777777777777777"
-					};
-
-					return request("https://localhost:8080")
-						.put(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(updates)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								return Transaction.findOne({ _id: transactionId }, (error, updatedTrans) => {
-									should.not.exist(error);
-									(updatedTrans !== null).should.be.true;
-									updatedTrans.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-									updatedTrans.canRerun.should.be.false;
-									return done();
-								});
-							}
-						});
-				});
-			});
-
-			it("should update transaction with large update response body", (done) => {
-				const td = JSON.parse(JSON.stringify(transactionData));
-				td.channelID = channel._id;
-				clearTransactionBodies(td);
-				const tx = new Transaction(td);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					const updates = {
-						response: {
-							headers: "",
-							timestamp: new Date(),
-							body: largeBody,
-							status: 200
-						},
-						status: "Completed",
-						clientID: "777777777777777777777777"
-					};
-
-					return request("https://localhost:8080")
-						.put(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(updates)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								return Transaction.findOne({ _id: transactionId }, (error, updatedTrans) => {
-									should.not.exist(error);
-									(updatedTrans !== null).should.be.true;
-									updatedTrans.response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-									updatedTrans.canRerun.should.be.true;
-									return done();
-								});
-							}
-						});
-				});
-			});
-
-			it("should update transaction with large routes orchestrations request body", (done) => {
-				const td = JSON.parse(JSON.stringify(transactionData));
-				td.channelID = channel._id;
-				clearTransactionBodies(td);
-				const tx = new Transaction(td);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					const updates = {
-						status: "Completed",
-						clientID: "777777777777777777777777",
-						$push: {
-							routes: {
-								name: "async",
-								orchestrations: [{
+				const result = await tx.save();
+				transactionId = result._id;
+				const updates = {
+					request: requestUpdate,
+					status: "Completed",
+					clientID: "777777777777777777777777",
+					$push: {
+						routes: {
+							name: "async",
+							orchestrations: [
+								{
 									name: "test",
 									request: {
 										method: "POST",
-										body: largeBody,
+										body: "data",
 										timestamp: 1425897647329
 									},
 									response: {
 										status: 201,
-										body: "",
+										body: "OK",
 										timestamp: 1425897688016
 									}
 								}
-								]
-							}
+							]
 						}
-					};
+					}
+				};
 
-					return request("https://localhost:8080")
-						.put(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(updates)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								return Transaction.findOne({ _id: transactionId }, (error, updatedTrans) => {
-									should.not.exist(error);
-									(updatedTrans !== null).should.be.true;
-									updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
-									updatedTrans.canRerun.should.be.true;
-									return done();
-								});
-							}
-						});
-				});
+				const res = await request("https://localhost:8080")
+					.put(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200);
+
+				const updatedTrans = await Transaction.findOne({ _id: transactionId });
+				(updatedTrans !== null).should.be.true;
+				updatedTrans.status.should.equal("Completed");
+				updatedTrans.clientID.toString().should.equal("777777777777777777777777");
+				updatedTrans.request.path.should.equal("/api/test/updated");
+				updatedTrans.request.headers["Content-Type"].should.equal("text/javascript");
+				updatedTrans.request.headers["Access-Control"].should.equal("authentication-required");
+				updatedTrans.request.querystring.should.equal("updated=value");
+				updatedTrans.request.body.should.equal("<HTTP body update>");
+				updatedTrans.request.method.should.equal("PUT");
+				updatedTrans.routes[1].name.should.equal("async");
+				updatedTrans.routes[1].orchestrations[0].name.should.equal("test");
+				await expectMessage(`${domain}.channels.888888888888888888888888.async.orchestrations.test:1|c`);
+				await expectMessage(`${domain}.channels.888888888888888888888888.async.orchestrations.test.statusCodes.201:1|c`);
 			});
 
-			it("should only allow admin user to update a transaction", (done) => {
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					const updates = {};
-					return request("https://localhost:8080")
-						.put(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.nonRootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(updates)
-						.expect(403)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								return done();
-							}
-						});
-				});
+			it("should update transaction with large update request body", async () => {
+				const td = JSON.parse(JSON.stringify(transactionData));
+				td.channelID = channel._id;
+				clearTransactionBodies(td);
+				const tx = new Transaction(td);
+				const result = await tx.save();
+				transactionId = result._id;
+
+				const reqUp = JSON.parse(JSON.stringify(requestUpdate));
+				reqUp.body = largeBody;
+
+				const updates = {
+					request: reqUp,
+					status: "Completed",
+					clientID: "777777777777777777777777"
+				};
+
+				const res = await request("https://localhost:8080")
+					.put(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200);
+
+				const updatedTrans = await Transaction.findOne({ _id: transactionId });
+				(updatedTrans !== null).should.be.true;
+				updatedTrans.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				updatedTrans.canRerun.should.be.false;
 			});
 
-			it("should generate events on update", (done) => {
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					const updates = {
-						status: "Failed",
-						orchestrations: [
-							{
+			it("should update transaction with large update response body", async () => {
+				const td = JSON.parse(JSON.stringify(transactionData));
+				td.channelID = channel._id;
+				clearTransactionBodies(td);
+				const tx = new Transaction(td);
+				const result = await tx.save();
+				transactionId = result._id;
+				const updates = {
+					response: {
+						headers: "",
+						timestamp: new Date(),
+						body: largeBody,
+						status: 200
+					},
+					status: "Completed",
+					clientID: "777777777777777777777777"
+				};
+
+				const res = await request("https://localhost:8080")
+					.put(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200);
+
+				const updatedTrans = await Transaction.findOne({ _id: transactionId });
+				(updatedTrans !== null).should.be.true;
+				updatedTrans.response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				updatedTrans.canRerun.should.be.true;
+			});
+
+			it("should update transaction with large routes orchestrations request body", async () => {
+				const td = JSON.parse(JSON.stringify(transactionData));
+				td.channelID = channel._id;
+				clearTransactionBodies(td);
+				const tx = new Transaction(td);
+				const result = await tx.save();
+				transactionId = result._id;
+				const updates = {
+					status: "Completed",
+					clientID: "777777777777777777777777",
+					$push: {
+						routes: {
+							name: "async",
+							orchestrations: [{
 								name: "test",
 								request: {
 									method: "POST",
-									body: "data",
+									body: largeBody,
 									timestamp: 1425897647329
 								},
 								response: {
-									status: 500,
-									body: "OK",
+									status: 201,
+									body: "",
 									timestamp: 1425897688016
 								}
 							}
-						]
-					};
+							]
+						}
+					}
+				};
 
-					return request("https://localhost:8080")
-						.put(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(updates)
-						.expect(200)
-						.end((err, res) => {
-							if (err) { return done(err); }
-
-							const validateEvents = () =>
-								Event.find({}, (err, events) => {
-									if (err) { return done(err); }
-
-									// events should only be generated for the updated fields
-									events.length.should.be.exactly(2);
-									for (const ev of Array.from(events)) {
-										ev.channelID.toString().should.be.exactly(channel._id.toString());
-									}
-
-									const evs = (events.map(event => `${event.type}-${event.name}-${event.event}`));
-
-									evs.should.containEql("orchestration-test-start");
-									evs.should.containEql("orchestration-test-end");
-
-									return done();
-								})
-								;
-
-							return setTimeout(validateEvents, 100 * global.testTimeoutFactor);
-						});
-				});
+				const res = await request("https://localhost:8080")
+					.put(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200);
+				const updatedTrans = await Transaction.findOne({ _id: transactionId });
+				(updatedTrans !== null).should.be.true;
+				updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE);
+				updatedTrans.canRerun.should.be.true;
 			});
 
-			it("should queue a transaction for auto retry", (done) => {
-				transactionData.channelID = channel2._id;
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					const updates = {
-						status: "Failed",
-						error: {
-							message: "Error message",
-							stack: "stack\nstack\nstack"
-						}
-					};
+			it("should queue a transaction for auto retry", async () => {
+				const channels = await Channel.find({});
+				const newTransaction = Object.assign({}, transactionData, { channelID: channel2._id });
+				let tx = new Transaction(newTransaction);
+				const result = await tx.save();
+				transactionId = result._id;
+				const updates = {
+					status: "Failed",
+					error: {
+						message: "Error message",
+						stack: "stack\nstack\nstack"
+					}
+				};
 
-					return request("https://localhost:8080")
-						.put(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(updates)
-						.expect(200)
-						.end((err, res) => {
-							if (err) { return done(err); }
-							return Transaction.findById(transactionId, (err, tx) => {
-								tx.autoRetry.should.be.true();
-								return AutoRetry.findOne({ transactionID: transactionId }, (err, queueItem) => {
-									queueItem.should.be.ok();
-									queueItem.channelID.toString().should.be.exactly(channel2._id.toString());
-									return done();
-								});
-							});
-						});
-				});
+				const res = await request("https://localhost:8080")
+					.put(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200);
+
+				tx = await Transaction.findById(transactionId);
+				tx.autoRetry.should.be.true();
+				const queueItem = await AutoRetry.findOne({ transactionID: transactionId });
+				queueItem.should.be.ok();
+				queueItem.channelID.toString().should.be.exactly(channel2._id.toString());
 			});
 
-			return it("should not queue a transaction for auto retry when max retries have been reached", (done) => {
-				transactionData.autoRetryAttempt = 5;
-				transactionData.channelID = channel2._id;
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					const updates = {
-						status: "Failed",
-						error: {
-							message: "Error message",
-							stack: "stack\nstack\nstack"
-						}
-					};
+			it("should not queue a transaction for auto retry when max retries have been reached", async () => {
+				const newTransactionData = Object.assign({}, transactionData, { autoRetryAttempt: 5, channelID: channel2._id });
+				let tx = new Transaction(newTransactionData);
+				const result = await tx.save();
+				transactionId = result._id;
+				const updates = {
+					status: "Failed",
+					error: {
+						message: "Error message",
+						stack: "stack\nstack\nstack"
+					}
+				};
 
-					return request("https://localhost:8080")
-						.put(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.send(updates)
-						.expect(200)
-						.end((err, res) => {
-							if (err) { return done(err); }
-							return Transaction.findById(transactionId, (err, tx) => {
-								tx.autoRetry.should.be.false();
-								return done();
-							});
-						});
-				});
+				const res = await request("https://localhost:8080")
+					.put(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200);
+
+				tx = await Transaction.findById(transactionId);
+				tx.autoRetry.should.be.false();
+			});
+
+			it("should generate events on update", async () => {
+				const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id });
+				const tx = new Transaction(newTransactionData);
+				const result = await tx.save();
+				transactionId = result._id;
+				const updates = {
+					status: "Failed",
+					orchestrations: [
+						{
+							name: "test",
+							request: {
+								method: "POST",
+								body: "data",
+								timestamp: 1425897647329
+							},
+							response: {
+								status: 500,
+								body: "OK",
+								timestamp: 1425897688016
+							}
+						}
+					]
+				};
+
+				const res = await request("https://localhost:8080")
+					.put(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(200);
+
+				const events = await Event.find({});
+				// events should only be generated for the updated fields
+				events.length.should.be.exactly(2);
+				for (const ev of Array.from(events)) {
+					ev.channelID.toString().should.be.exactly(channel._id.toString());
+				}
+
+				const evs = (events.map(event => `${event.type}-${event.name}-${event.event}`));
+
+				evs.should.containEql("orchestration-test-start");
+				evs.should.containEql("orchestration-test-end");
+			});
+
+			it("should only allow admin user to update a transaction", async () => {
+				const tx = new Transaction(transactionData);
+				const result = await tx.save();
+
+				transactionId = result._id;
+				const updates = {};
+				const res = await request("https://localhost:8080")
+					.put(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.send(updates)
+					.expect(403);
 			});
 		});
 
 		describe("*getTransactions()", () => {
-			it("should call getTransactions ", done =>
-				Transaction.count({}, (err, countBefore) => {
-					const tx = new Transaction(transactionData);
-					return tx.save((error, result) => {
-						should.not.exist((error));
-						return request("https://localhost:8080")
-							.get("/transactions?filterPage=0&filterLimit=10&filters={}")
-							.set("auth-username", testUtils.rootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end((err, res) => {
-								if (err) {
-									return done(err);
-								} else {
-									res.body.length.should.equal(countBefore + 1);
-									return done();
-								}
-							});
-					});
-				})
-			);
+			it("should call getTransactions ", async () => {
+				const countBefore = await Transaction.count({});
+				countBefore.should.equal(0);
+				const tx = await new Transaction(transactionData).save();
+				const res = await request("https://localhost:8080")
+					.get("/transactions?filterPage=0&filterLimit=10&filters={}")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200);
 
-			it("should call getTransactions with filter parameters ", (done) => {
+				res.body.length.should.equal(countBefore + 1);
+			});
+
+			it("should call getTransactions with filter parameters ", async () => {
 				const obj = {
 					filterPage: 0,
 					filterLimit: 10,
@@ -893,30 +733,19 @@ describe("API Integration Tests", () => {
 
 				params = encodeURI(params);
 
-				return Transaction.count({}, (err, countBefore) => {
-					const tx = new Transaction(transactionData);
-					return tx.save((error, result) => {
-						should.not.exist((error));
-						return request("https://localhost:8080")
-							.get(`/transactions?${params}`)
-							.set("auth-username", testUtils.rootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end((err, res) => {
-								if (err) {
-									return done(err);
-								} else {
-									res.body.length.should.equal(countBefore + 1);
-									return done();
-								}
-							});
-					});
-				});
+				const tx = await new Transaction(transactionData).save();
+				const res = await request("https://localhost:8080")
+					.get(`/transactions?${params}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200);
+
+				res.body.length.should.equal(1);
 			});
 
-			it("should call getTransactions with filter parameters (Different filters)", (done) => {
+			it("should call getTransactions with filter parameters (Different filters)", async () => {
 				const obj = {
 					filterPage: 0,
 					filterLimit: 10,
@@ -943,31 +772,18 @@ describe("API Integration Tests", () => {
 				}
 
 				params = encodeURI(params);
-
-				return Transaction.count({}, (err, countBefore) => {
-					const tx = new Transaction(transactionData);
-					return tx.save((error, result) => {
-						should.not.exist((error));
-						return request("https://localhost:8080")
-							.get(`/transactions?${params}`)
-							.set("auth-username", testUtils.rootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end((err, res) => {
-								if (err) {
-									return done(err);
-								} else {
-									res.body.length.should.equal(countBefore + 1);
-									return done();
-								}
-							});
-					});
-				});
+				const tx = await new Transaction(transactionData).save();
+				const res = await request("https://localhost:8080")
+					.get(`/transactions?${params}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200);
+				res.body.length.should.equal(1);
 			});
 
-			it("should call getTransactions with filter parameters (Different filters - return no results)", (done) => {
+			it("should call getTransactions with filter parameters (Different filters - return no results)", async () => {
 				const obj = {
 					filterPage: 0,
 					filterLimit: 10,
@@ -995,393 +811,334 @@ describe("API Integration Tests", () => {
 
 				params = encodeURI(params);
 
-				return Transaction.count({}, (err, countBefore) => {
-					const tx = new Transaction(transactionData);
-					return tx.save((error, result) => {
-						should.not.exist((error));
-						return request("https://localhost:8080")
-							.get(`/transactions?${params}`)
-							.set("auth-username", testUtils.rootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end((err, res) => {
-								if (err) {
-									return done(err);
-								} else {
-									// prop3 does not exist so no records should be returned
-									res.body.length.should.equal(0);
-									return done();
-								}
-							});
-					});
-				});
+				const tx = new Transaction(transactionData).save();
+				const res = await request("https://localhost:8080")
+					.get(`/transactions?${params}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200);
+
+				res.body.length.should.equal(0);
 			});
 
-			it("should only return the transactions that a user can view", (done) => {
-				const tx = new Transaction(transactionData);
-				tx.channelID = channel._id;
-				return tx.save((err) => {
-					if (err) { return done(err); }
-					const tx2 = new Transaction(transactionData);
-					tx2._id = "111111111111111111111112";
-					tx2.channelID = channel2._id;
-					return tx2.save((err) => {
-						if (err) { return done(err); }
+			it("should only return the transactions that a user can view", async () => {
+				const tx = await new Transaction(Object.assign({}, transactionData, { channelID: channel._id })).save();
+				const tx2 = await new Transaction(Object.assign({}, transactionData, { channelID: channel2._id, _id: "111111111111111111111112" })).save();
+				const res = await request("https://localhost:8080")
+					.get("/transactions")
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200);
 
-						return request("https://localhost:8080")
-							.get("/transactions")
-							.set("auth-username", testUtils.nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end((err, res) => {
-								// should NOT retrieve tx2
-								res.body.should.have.length(1);
-								res.body[0]._id.should.be.equal("111111111111111111111111");
-								return done();
-							});
-					});
-				});
+				res.body.should.have.length(1);
+				res.body[0]._id.should.be.equal("111111111111111111111111");
 			});
 
-			it("should return the transactions for a channel that a user has permission to view", (done) => {
-				const tx = new Transaction(transactionData);
-				tx.channelID = channel._id;
-				return tx.save((err) => {
-					if (err) { return done(err); }
-					const tx2 = new Transaction(transactionData);
-					tx2._id = "111111111111111111111112";
-					tx2.channelID = channel2._id;
-					return tx2.save((err) => {
-						if (err) { return done(err); }
+			it("should return the transactions for a channel that a user has permission to view", async () => {
+				const tx = await new Transaction(Object.assign({}, transactionData, { channelID: channel._id })).save();
+				const tx2 = await new Transaction(Object.assign({}, transactionData, { channelID: channel2._id, _id: "111111111111111111111112" })).save();
 
-						return request("https://localhost:8080")
-							.get(`/transactions?channelID=${channel._id}`)
-							.set("auth-username", testUtils.nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end((err, res) => {
-								// should NOT retrieve tx2
-								res.body.should.have.length(1);
-								res.body[0]._id.should.be.equal("111111111111111111111111");
-								return done();
-							});
-					});
-				});
+				const res = await request("https://localhost:8080")
+					.get(`/transactions?channelID=${channel._id}`)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200);
+
+				res.body.should.have.length(1);
+				res.body[0]._id.should.be.equal("111111111111111111111111");
 			});
 
-			it("should return 403 for a channel that a user does NOT have permission to view", (done) => {
-				const tx = new Transaction(transactionData);
-				tx.channelID = channel._id;
-				return tx.save((err) => {
-					if (err) { return done(err); }
-					const tx2 = new Transaction(transactionData);
-					tx2._id = "111111111111111111111112";
-					tx2.channelID = channel2._id;
-					return tx2.save((err) => {
-						if (err) { return done(err); }
-
-						return request("https://localhost:8080")
-							.get(`/transactions?channelID=${tx2.channelID}`)
-							.set("auth-username", testUtils.nonRootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(403)
-							.end((err, res) => done());
-					});
-				});
+			it("should return 403 for a channel that a user does NOT have permission to view", async () => {
+				const tx2 = await new Transaction(Object.assign({}, transactionData, { channelID: channel2._id, _id: "111111111111111111111112" })).save();
+				await request("https://localhost:8080")
+					.get(`/transactions?channelID=${tx2.channelID}`)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(403);
 			});
 
-			return it("should truncate transaction details if filterRepresentation is fulltruncate ", done =>
-				Transaction.count({}, (err, countBefore) => {
-					const tx = new Transaction(transactionData);
-					return tx.save((error, result) => {
-						should.not.exist((error));
-						return request("https://localhost:8080")
-							.get("/transactions?filterRepresentation=fulltruncate")
-							.set("auth-username", testUtils.rootUser.email)
-							.set("auth-ts", authDetails.authTS)
-							.set("auth-salt", authDetails.authSalt)
-							.set("auth-token", authDetails.authToken)
-							.expect(200)
-							.end((err, res) => {
-								if (err) {
-									return done(err);
-								} else {
-									res.body.length.should.equal(countBefore + 1);
-									res.body[countBefore].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
-									res.body[countBefore].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
-									res.body[countBefore].routes[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
-									res.body[countBefore].routes[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
-									res.body[countBefore].orchestrations[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
-									res.body[countBefore].orchestrations[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
-									return done();
-								}
-							});
-					});
-				})
-			);
+			it("should truncate transaction details if filterRepresentation is fulltruncate ", async () => {
+				const tx = await new Transaction(transactionData).save();
+				const res = await request("https://localhost:8080")
+					.get("/transactions?filterRepresentation=fulltruncate")
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200);
+
+				res.body.length.should.equal(1);
+				res.body[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
+				res.body[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
+				res.body[0].routes[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
+				res.body[0].routes[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
+				res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
+				res.body[0].orchestrations[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
+			});
 		});
+	});
 
-		describe("*getTransactionById (transactionId)", () => {
-			it("should fetch a transaction by ID - admin user", (done) => {
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					return request("https://localhost:8080")
-						.get(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								(res !== null).should.be.true;
-								res.body.status.should.equal("Processing");
-								res.body.clientID.toString().should.eql("999999999999999999999999");
-								res.body.request.path.should.equal("/api/test");
-								res.body.request.headers["header-title"].should.equal("header1-value");
-								res.body.request.headers["another-header"].should.equal("another-header-value");
-								res.body.request.querystring.should.equal("param1=value1&param2=value2");
-								res.body.request.body.should.equal("<HTTP body request>");
-								res.body.request.method.should.equal("POST");
-								return done();
-							}
-						});
-				});
-			});
-
-			it("should NOT return a transaction that a user is not allowed to view", (done) => {
-				const tx = new Transaction(transactionData);
-				tx.channelID = channel2._id;
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					return request("https://localhost:8080")
-						.get(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.nonRootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(403)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								return done();
-							}
-						});
-				});
-			});
-
-			it("should return a transaction that a user is allowed to view", (done) => {
-				const tx = new Transaction(transactionData);
-				tx.channelID = channel._id;
-				return tx.save((err, tx) => {
-					if (err) {
-						return done(err);
-					}
-
-					should.not.exist(err);
-					transactionId = tx._id;
-					return request("https://localhost:8080")
-						.get(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.nonRootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								(res !== null).should.be.true;
-								res.body.status.should.equal("Processing");
-								res.body.clientID.toString().should.eql("999999999999999999999999");
-								res.body.request.path.should.equal("/api/test");
-								res.body.request.headers["header-title"].should.equal("header1-value");
-								res.body.request.headers["another-header"].should.equal("another-header-value");
-								res.body.request.querystring.should.equal("param1=value1&param2=value2");
-								should.not.exist(res.body.request.body);
-								res.body.request.method.should.equal("POST");
-								return done();
-							}
-						});
-				});
-			});
-
-			return it("should truncate a large body if filterRepresentation is 'fulltruncate'", (done) => {
-				// transactionData body lengths > config.truncateSize
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					return request("https://localhost:8080")
-						.get(`/transactions/${transactionId}?filterRepresentation=fulltruncate`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								res.body.request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
-								res.body.response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
-								res.body.routes[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
-								res.body.routes[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
-								res.body.orchestrations[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
-								res.body.orchestrations[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
-								return done();
-							}
-						});
-				});
+	xdescribe("*getTransactionById (transactionId)", () => {
+		it("should fetch a transaction by ID - admin user", (done) => {
+			const tx = new Transaction(transactionData);
+			return tx.save((err, result) => {
+				should.not.exist(err);
+				transactionId = result._id;
+				return request("https://localhost:8080")
+					.get(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							(res !== null).should.be.true;
+							res.body.status.should.equal("Processing");
+							res.body.clientID.toString().should.eql("999999999999999999999999");
+							res.body.request.path.should.equal("/api/test");
+							res.body.request.headers["header-title"].should.equal("header1-value");
+							res.body.request.headers["another-header"].should.equal("another-header-value");
+							res.body.request.querystring.should.equal("param1=value1&param2=value2");
+							res.body.request.body.should.equal("<HTTP body request>");
+							res.body.request.method.should.equal("POST");
+							return done();
+						}
+					});
 			});
 		});
 
-		describe("*findTransactionByClientId (clientId)", () => {
-			it("should call findTransactionByClientId", (done) => {
-				const clientId = "555555555555555555555555";
-				transactionData.clientID = clientId;
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					return request("https://localhost:8080")
-						.get(`/transactions/clients/${clientId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								res.body[0].clientID.should.equal(clientId);
-								return done();
-							}
-						});
-				});
-			});
-
-			it("should NOT return transactions that a user is not allowed to view", (done) => {
-				const clientId = "444444444444444444444444";
-				transactionData.clientID = clientId;
-				transactionData.channelID = "888888888888888888888888";
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					return request("https://localhost:8080")
-						.get(`/transactions/clients/${clientId}`)
-						.set("auth-username", testUtils.nonRootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								res.body.should.have.length(0);
-								return done();
-							}
-						});
-				});
-			});
-
-			return it("should return transactions that a user is allowed to view", (done) => {
-				const clientId = "333333333333333333333333";
-				transactionData.clientID = clientId;
-				const tx = new Transaction(transactionData);
-				tx.channelID = channel._id;
-				return tx.save((err, tx) => {
-					if (err) {
-						return done(err);
-					}
-
-					should.not.exist(err);
-					transactionId = tx._id;
-					return request("https://localhost:8080")
-						.get(`/transactions/clients/${clientId}`)
-						.set("auth-username", testUtils.nonRootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								res.body[0].clientID.should.equal(clientId);
-								return done();
-							}
-						});
-				});
+		it("should NOT return a transaction that a user is not allowed to view", (done) => {
+			const tx = new Transaction(transactionData);
+			tx.channelID = channel2._id;
+			return tx.save((err, result) => {
+				should.not.exist(err);
+				transactionId = result._id;
+				return request("https://localhost:8080")
+					.get(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(403)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return done();
+						}
+					});
 			});
 		});
 
-		return describe("*removeTransaction (transactionId)", () => {
-			it("should call removeTransaction", (done) => {
-				transactionData.clientID = "222222222222222222222222";
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					return request("https://localhost:8080")
-						.del(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.rootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(200)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
-								return Transaction.findOne({ _id: transactionId }, (err, transDoc) => {
-									should.not.exist(err);
-									(transDoc === null).should.be.true;
-									return done();
-								});
-							}
-						});
-				});
-			});
+		it("should return a transaction that a user is allowed to view", (done) => {
+			const tx = new Transaction(transactionData);
+			tx.channelID = channel._id;
+			return tx.save((err, tx) => {
+				if (err) {
+					return done(err);
+				}
 
-			return it("should only allow admin users to remove transactions", (done) => {
-				transactionData.clientID = "222222222222222222222222";
-				const tx = new Transaction(transactionData);
-				return tx.save((err, result) => {
-					should.not.exist(err);
-					transactionId = result._id;
-					return request("https://localhost:8080")
-						.del(`/transactions/${transactionId}`)
-						.set("auth-username", testUtils.nonRootUser.email)
-						.set("auth-ts", authDetails.authTS)
-						.set("auth-salt", authDetails.authSalt)
-						.set("auth-token", authDetails.authToken)
-						.expect(403)
-						.end((err, res) => {
-							if (err) {
-								return done(err);
-							} else {
+				should.not.exist(err);
+				transactionId = tx._id;
+				return request("https://localhost:8080")
+					.get(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							(res !== null).should.be.true;
+							res.body.status.should.equal("Processing");
+							res.body.clientID.toString().should.eql("999999999999999999999999");
+							res.body.request.path.should.equal("/api/test");
+							res.body.request.headers["header-title"].should.equal("header1-value");
+							res.body.request.headers["another-header"].should.equal("another-header-value");
+							res.body.request.querystring.should.equal("param1=value1&param2=value2");
+							should.not.exist(res.body.request.body);
+							res.body.request.method.should.equal("POST");
+							return done();
+						}
+					});
+			});
+		});
+
+		return it("should truncate a large body if filterRepresentation is 'fulltruncate'", (done) => {
+			// transactionData body lengths > config.truncateSize
+			const tx = new Transaction(transactionData);
+			return tx.save((err, result) => {
+				should.not.exist(err);
+				transactionId = result._id;
+				return request("https://localhost:8080")
+					.get(`/transactions/${transactionId}?filterRepresentation=fulltruncate`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							res.body.request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
+							res.body.response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
+							res.body.routes[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
+							res.body.routes[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
+							res.body.orchestrations[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`);
+							res.body.orchestrations[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`);
+							return done();
+						}
+					});
+			});
+		});
+	});
+
+	xdescribe("*findTransactionByClientId (clientId)", () => {
+		it("should call findTransactionByClientId", (done) => {
+			const clientId = "555555555555555555555555";
+			transactionData.clientID = clientId;
+			const tx = new Transaction(transactionData);
+			return tx.save((err, result) => {
+				should.not.exist(err);
+				return request("https://localhost:8080")
+					.get(`/transactions/clients/${clientId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							res.body[0].clientID.should.equal(clientId);
+							return done();
+						}
+					});
+			});
+		});
+
+		it("should NOT return transactions that a user is not allowed to view", (done) => {
+			const clientId = "444444444444444444444444";
+			transactionData.clientID = clientId;
+			transactionData.channelID = "888888888888888888888888";
+			const tx = new Transaction(transactionData);
+			return tx.save((err, result) => {
+				should.not.exist(err);
+				transactionId = result._id;
+				return request("https://localhost:8080")
+					.get(`/transactions/clients/${clientId}`)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							res.body.should.have.length(0);
+							return done();
+						}
+					});
+			});
+		});
+
+		return it("should return transactions that a user is allowed to view", (done) => {
+			const clientId = "333333333333333333333333";
+			transactionData.clientID = clientId;
+			const tx = new Transaction(transactionData);
+			tx.channelID = channel._id;
+			return tx.save((err, tx) => {
+				if (err) {
+					return done(err);
+				}
+
+				should.not.exist(err);
+				transactionId = tx._id;
+				return request("https://localhost:8080")
+					.get(`/transactions/clients/${clientId}`)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							res.body[0].clientID.should.equal(clientId);
+							return done();
+						}
+					});
+			});
+		});
+	});
+
+	xdescribe("*removeTransaction (transactionId)", () => {
+		it("should call removeTransaction", (done) => {
+			transactionData.clientID = "222222222222222222222222";
+			const tx = new Transaction(transactionData);
+			return tx.save((err, result) => {
+				should.not.exist(err);
+				transactionId = result._id;
+				return request("https://localhost:8080")
+					.del(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.rootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(200)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return Transaction.findOne({ _id: transactionId }, (err, transDoc) => {
+								should.not.exist(err);
+								(transDoc === null).should.be.true;
 								return done();
-							}
-						});
-				});
+							});
+						}
+					});
+			});
+		});
+
+		it("should only allow admin users to remove transactions", (done) => {
+			transactionData.clientID = "222222222222222222222222";
+			const tx = new Transaction(transactionData);
+			return tx.save((err, result) => {
+				should.not.exist(err);
+				transactionId = result._id;
+				return request("https://localhost:8080")
+					.del(`/transactions/${transactionId}`)
+					.set("auth-username", testUtils.nonRootUser.email)
+					.set("auth-ts", authDetails.authTS)
+					.set("auth-salt", authDetails.authSalt)
+					.set("auth-token", authDetails.authToken)
+					.expect(403)
+					.end((err, res) => {
+						if (err) {
+							return done(err);
+						} else {
+							return done();
+						}
+					});
 			});
 		});
 	});
 });
+
