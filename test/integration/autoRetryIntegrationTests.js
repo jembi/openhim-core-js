@@ -50,7 +50,8 @@ describe("Auto Retry Integration Tests", () => {
 		});
 
 
-		before((done) => {
+		before(async (done) => {
+			await testUtils.dropTestDb();
 			config.authentication.enableMutualTLSAuthentication = false;
 			config.authentication.enableBasicAuthentication = true;
 
