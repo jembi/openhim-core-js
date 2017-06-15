@@ -236,9 +236,9 @@ describe("Auto Retry Integration Tests", () => {
 											prouteEvents[1].autoRetryAttempt.should.be.exactly(1);
 											return done();
 										})
-									), 150 * global.testTimeoutFactor);
+									), 250 * global.testTimeoutFactor);
 								})
-							), 150 * global.testTimeoutFactor);
+							), 250 * global.testTimeoutFactor);
 						}
 					})
 			)
