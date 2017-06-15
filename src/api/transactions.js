@@ -323,7 +323,7 @@ export function* getTransactionById(transactionId) {
 				return;
 			} else {
 				// assume user is not allowed to view all content - show only 'simpledetails'
-				filterRepresentation = "simpledet{ails";
+				filterRepresentation = "simpledetails";
 
 				// get channel.txViewFullAcl information by channelID
 				const channel = yield Channel.findById(txChannelID.channelID, { txViewFullAcl: 1 }, { _id: 0 }).exec();
