@@ -79,7 +79,7 @@
 		"prepare": "npm run build",
 		"lint": "eslint src/ test/",
 		"lint:fix": "eslint --fix src/ test/",
-		"test": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha -t 4000 --require babel-register test/**/*.js",
+		"test": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha -t 16000 --require babel-register test/**/*.js",
 		"test:unit": "cross-env NODE_ENV=test mocha --require babel-register test/unit/**/*.js",
 		"test:int": "cross-env mocha -t 4000 --require babel-register test/integration/**/*.js",
 		"start": "node --harmony lib/server.js"
