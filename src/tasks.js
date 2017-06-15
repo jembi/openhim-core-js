@@ -20,15 +20,17 @@ export async function findAndProcessAQueuedTask() {
 	try {
 		task = await TaskModel.findOneAndUpdate({ status: "Queued" }, { status: "Processing" }, { new: true });
 
-		activeTasks++;
-		await processNextTaskRound(task);
-		activeTasks--;
+		if (task != null) {
+			activeTasks++;
+			await processNextTaskRound(task);
+			activeTasks--;
+		}
 		// task has finished its current round, pick up the next one
 		if (live) {
 			return findAndProcessAQueuedTask();
 		}
 	} catch (err) {
-		if (task != null) {
+		if (task == null) {
 			logger.error(`An error occurred while looking for rerun tasks: ${err}`);
 		} else {
 			logger.error(`An error occurred while processing rerun task ${task._id}: ${err}`);

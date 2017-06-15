@@ -131,7 +131,7 @@ describe("API Integration Tests", () => {
 	});
 
 	before(async (done) => {
-		await testUtils.clearDb();
+		await testUtils.dropTestDb();
 		await q.nfcall(server.start, { apiPort: 8080 });
 		await Promise.all([
 			channel.save(),
@@ -143,7 +143,7 @@ describe("API Integration Tests", () => {
 	after(async (done) => {
 		await q.nfcall(server.stop);
 		await q.delay(50);
-		await testUtils.clearDb();
+		await testUtils.dropTestDb();
 		done();
 	});
 
