@@ -73,7 +73,7 @@
 		"supertest": "^3.0.0"
 	},
 	"scripts": {
-		"build": "babel src --out-dir lib -s",
+		"build": "npm run clean; babel src --out-dir lib -s",
 		"build:watch": "npm run build -- -w",
 		"clean": "rimraf lib/",
 		"prepare": "npm run build",
@@ -81,7 +81,7 @@
 		"lint:fix": "eslint --fix src/ test/",
 		"test": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha -t 4000 --require babel-register test/**/*.js",
 		"test:unit": "cross-env NODE_ENV=test mocha --require babel-register test/unit/**/*.js",
-		"test:int": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha -t 4000 --require babel-register test/integration/**/*.js",
+		"test:int": "cross-env mocha -t 4000 --require babel-register test/integration/**/*.js",
 		"start": "node --harmony lib/server.js"
 	},
 	"repository": {
