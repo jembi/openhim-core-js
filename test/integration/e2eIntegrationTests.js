@@ -1082,18 +1082,25 @@ describe("e2e Integration Tests", () => {
 			)
 		);
 
-		return describe("mediator response processing", () => {
+		describe("mediator response processing", () => {
 			it("should return the specified mediator response element as the actual response", done =>
 				server.start({ httpPort: 5001 }, () =>
 					request("http://localhost:5001")
 						.get("/test/mediator")
 						.auth("mediatorTestApp", "password")
 						.expect(200)
-						.expect(mediatorResponse.response.body, done)
+						.end((err, res) => {
+							if (err) {
+								done(err);
+							}
+
+							res.body.toString().should.equal(mediatorResponse.response.body);
+							done();
+						})
 				)
 			);
 
-			return it("should setup the correct metadata on the transaction as specified by the mediator response", done =>
+			it("should setup the correct metadata on the transaction as specified by the mediator response", done =>
 				server.start({ httpPort: 5001 }, () =>
 					request("http://localhost:5001")
 						.get("/test/mediator")

@@ -165,7 +165,7 @@ function sendRequestToRoutes(ctx, routes, next) {
 
 	return utils.getKeystore((err, keystore) => {
 		for (const route of Array.from(routes)) {
-			if (!isRouteEnabled(route)) { return; } // continue
+			if (!isRouteEnabled(route)) { continue; }
 
 			const path = getDestinationPath(route, ctx.path);
 			const options = {
