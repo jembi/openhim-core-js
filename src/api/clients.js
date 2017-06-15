@@ -67,7 +67,7 @@ export function* getClient(clientId, property) {
 	clientId = unescape(clientId);
 
 	try {
-		const result = {}; yield Client.findById(clientId, projectionRestriction).exec();
+		const result = yield Client.findById(clientId, projectionRestriction).exec();
 		if (result === null) {
 			return utils.logAndSetResponse(this, 404, `Client with id ${clientId} could not be found.`, "info");
 		} else {
