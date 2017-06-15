@@ -30,8 +30,8 @@ export function authenticateUser(ctx, done) {
 export function* koaMiddleware(next) {
 	let startTime;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	const authenticateUser = Q.denodeify(exports.authenticateUser);
-	yield authenticateUser(this);
+	const _authenticateUser = Q.denodeify(authenticateUser);
+	yield _authenticateUser(this);
 
 	if (this.authenticated != null) {
 		if (statsdServer.enabled) { sdc.timing(`${domain}.pollingBypassAuthenticationMiddleware`, startTime); }

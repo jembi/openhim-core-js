@@ -84,11 +84,11 @@ export function* koaMiddleware(next) {
 	// do intial yield for koa to come back to this function with updated ctx object
 	yield next;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	const updateOriginalTransaction = Q.denodeify(updateOriginalTransaction);
-	yield updateOriginalTransaction(this);
+	const _updateOriginalTransaction = Q.denodeify(updateOriginalTransaction);
+	yield _updateOriginalTransaction(this);
 
-	const updateTask = Q.denodeify(updateTask);
-	yield updateTask(this);
+	const _updateTask = Q.denodeify(updateTask);
+	yield _updateTask(this);
 	if (statsdServer.enabled) {
 		sdc.timing(`${domain}.rerunUpdateTransactionMiddleware`, startTime);
 	}

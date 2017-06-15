@@ -48,7 +48,7 @@ export function removePollingChannel(channel, callback) {
 
 export function setupAgenda(agenda, callback) {
 	logger.info("Starting polling server...");
-	const registerPollingChannelPromise = Q.denodeify(exports.registerPollingChannel);
+	const registerPollingChannelPromise = Q.denodeify(registerPollingChannel);
 	agendaGlobal = agenda;
 	return Channel.find({ type: "polling" }, (err, channels) => {
 		if (err) { return err; }

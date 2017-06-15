@@ -83,8 +83,8 @@ export function* koaMiddleware(next) {
 	if (this.authenticated != null) {
 		return yield next;
 	} else {
-		const authenticateUser = Q.denodeify(exports.authenticateUser);
-		yield authenticateUser(this);
+		const _authenticateUser = Q.denodeify(authenticateUser);
+		yield _authenticateUser(this);
 		if ((this.authenticated != null ? this.authenticated.clientID : undefined) != null) {
 			this.header["X-OpenHIM-ClientID"] = this.authenticated.clientID;
 		}

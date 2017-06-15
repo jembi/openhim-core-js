@@ -581,8 +581,8 @@ export function route(ctx, next) {
 export function* koaMiddleware(next) {
 	let startTime;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	const route = Q.denodeify(exports.route);
-	yield route(this);
+	const _route = Q.denodeify(route);
+	yield _route(this);
 	if (statsdServer.enabled) { sdc.timing(`${domain}.routerMiddleware`, startTime); }
 	return yield next;
 }

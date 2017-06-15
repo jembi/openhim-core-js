@@ -69,8 +69,8 @@ export function authorise(ctx, done) {
 export function* koaMiddleware(next) {
 	let startTime;
 	if (statsdServer.enabled) { startTime = new Date(); }
-	const authorise = Q.denodeify(exports.authorise);
-	yield authorise(this);
+	const _authorise = Q.denodeify(authorise);
+	yield _authorise(this);
 	if (this.authorisedChannel != null) {
 		if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime); }
 		return yield next;
