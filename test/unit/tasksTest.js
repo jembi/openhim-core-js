@@ -143,9 +143,8 @@ describe("Rerun Task Tests", () => {
 
 
 	describe("*rerunHttpRequestSend()", () => {
-		it("should run rerunHttpRequestSend() and return a successfull response", done =>
-
-			server = testUtils.createMockServer(200, "Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871", 7786, () => {
+		it("should run rerunHttpRequestSend() and return a successfull response", done => {
+			testUtils.createMockServer(200, "Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871", 7786, () => {
 				const taskID = "53c4dd063b8cb04d2acf0adc";
 				const transactionID = "53bfbccc6a2b417f6cd14871";
 				return Transaction.findOne({ _id: transactionID }, (err, transaction) =>
@@ -161,12 +160,12 @@ describe("Rerun Task Tests", () => {
 							HTTPResponse.should.have.property("body", "Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871");
 							HTTPResponse.should.have.property("status", 200);
 							HTTPResponse.should.have.property("message", "OK");
-							return server.close(() => done());
+							done();
 						})
 					)
 				);
-			})
-		);
+			});
+		});
 
 
 		it("should run rerunHttpRequestSend() and fail when \"options\" is null", (done) => {
@@ -199,7 +198,7 @@ describe("Rerun Task Tests", () => {
 
 		it("should run rerunHttpRequestSend() and return 500 Internal Server Error", done =>
 
-			server = testUtils.createMockServer(200, "Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871", 5252, () => {
+			testUtils.createMockServer(200, "Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871", 5252, () => {
 				const transactionID = "53bfbccc6a2b417f6cd14871";
 				return Transaction.findOne({ _id: transactionID }, (err, transaction) => {
 					const options = {
@@ -213,7 +212,7 @@ describe("Rerun Task Tests", () => {
 						HTTPResponse.transaction.should.have.property("status", "Failed");
 						HTTPResponse.should.have.property("status", 500);
 						HTTPResponse.should.have.property("message", "Internal Server Error");
-						return server.close(() => done());
+						done();
 					});
 				});
 			})
@@ -223,7 +222,7 @@ describe("Rerun Task Tests", () => {
 	describe("*rerunTcpRequestSend()", () =>
 		it("should rerun the tcp request", done =>
 
-			server = testUtils.createMockTCPServer(6000, "this is a test server", "TCP OK", "TCP Not OK", () => {
+			testUtils.createMockTCPServer(6000, "this is a test server", "TCP OK", "TCP Not OK", () => {
 				const channel = {};
 				channel.tcpHost = "127.0.0.1";
 				channel.tcpPort = 6000;
@@ -236,7 +235,7 @@ describe("Rerun Task Tests", () => {
 
 				return tasks.rerunTcpRequestSend(channel, transaction, (err, data) => {
 					data.body.should.be.exactly("TCP OK");
-					return server.close(() => done());
+					done();
 				});
 			})
 		)
