@@ -284,7 +284,7 @@ describe("Rerun Task Tests", () => {
 			Task.update({ _id: task1._id }, { status: "Paused" }, (err) => {
 				if (err) { return done(err); }
 
-				return server = testUtils.createMockServer(200, "Mock response", 7786, () => {
+				testUtils.createMockServer(200, "Mock response", 7786, () => {
 					tasks.findAndProcessAQueuedTask();
 					const validateTask = () =>
 						Task.findOne({ _id: task1._id }, (err, task) => {
@@ -294,7 +294,7 @@ describe("Rerun Task Tests", () => {
 							task.transactions[0].tstatus.should.be.equal("Queued");
 							task.transactions[1].tstatus.should.be.equal("Queued");
 							task.transactions[2].tstatus.should.be.equal("Queued");
-							return server.close(() => done());
+							done();
 						})
 						;
 
@@ -307,7 +307,7 @@ describe("Rerun Task Tests", () => {
 			Task.update({ _id: task1._id }, { status: "Cancelled" }, (err) => {
 				if (err) { return done(err); }
 
-				return server = testUtils.createMockServer(200, "Mock response", 7786, () => {
+				testUtils.createMockServer(200, "Mock response", 7786, () => {
 					tasks.findAndProcessAQueuedTask();
 					const validateTask = () =>
 						Task.findOne({ _id: task1._id }, (err, task) => {
@@ -317,7 +317,7 @@ describe("Rerun Task Tests", () => {
 							task.transactions[0].tstatus.should.be.equal("Queued");
 							task.transactions[1].tstatus.should.be.equal("Queued");
 							task.transactions[2].tstatus.should.be.equal("Queued");
-							return server.close(() => done());
+							done();
 						})
 						;
 
