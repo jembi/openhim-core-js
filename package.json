@@ -24,7 +24,7 @@
     "glossy": "^0.1.7",
     "handlebars": "^4.0.5",
     "http-status": "^0.2.2",
-    "koa": "1.2.0",
+    "koa": "1.2.2",
     "koa-basic-auth": "^2.0.0",
     "koa-body-parser": "^1.1.0",
     "koa-compress": "^1.0.9",
