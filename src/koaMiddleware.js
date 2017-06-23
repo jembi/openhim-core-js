@@ -34,141 +34,141 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(config.statsd);
 
 function* rawBodyReader(next) {
-	let startTime;
-	if (config.statsd.enabled) { startTime = new Date(); }
-	const body = yield getRawBody(this.req);
-	const { length, charset: encoding } = this;
+    let startTime;
+    if (config.statsd.enabled) { startTime = new Date(); }
+    const body = yield getRawBody(this.req);
+    const { length, charset: encoding } = this;
 
-	if (body) { this.body = body; }
-	if (config.statsd.enabled) { sdc.timing(`${domain}.rawBodyReaderMiddleware`, startTime); }
-	yield next;
+    if (body) { this.body = body; }
+    if (config.statsd.enabled) { sdc.timing(`${domain}.rawBodyReaderMiddleware`, startTime); }
+    yield next;
 }
 
 
 // Primary app
 
 export function setupApp(done) {
-	const app = koa();
+    const app = koa();
 
-	// Basic authentication middleware
-	if (config.authentication.enableBasicAuthentication) {
-		app.use(basicAuthentication.koaMiddleware);
-	}
+    // Basic authentication middleware
+    if (config.authentication.enableBasicAuthentication) {
+        app.use(basicAuthentication.koaMiddleware);
+    }
 
-	// TLS authentication middleware
-	if (config.authentication.enableMutualTLSAuthentication) {
-		app.use(tlsAuthentication.koaMiddleware);
-	}
+    // TLS authentication middleware
+    if (config.authentication.enableMutualTLSAuthentication) {
+        app.use(tlsAuthentication.koaMiddleware);
+    }
 
-	app.use(rawBodyReader);
+    app.use(rawBodyReader);
 
-	// Request Matching middleware
-	app.use(requestMatching.koaMiddleware);
+    // Request Matching middleware
+    app.use(requestMatching.koaMiddleware);
 
-	// Authorisation middleware
-	app.use(authorisation.koaMiddleware);
+    // Authorisation middleware
+    app.use(authorisation.koaMiddleware);
 
-	// Compress response on exit
-	app.use(compress({
-		threshold: 8,
-		flush: Z_SYNC_FLUSH,
-	}),
-	);
+    // Compress response on exit
+    app.use(compress({
+        threshold: 8,
+        flush: Z_SYNC_FLUSH,
+    }),
+    );
 
-	// Proxy
-	app.use(proxy.koaMiddleware);
+    // Proxy
+    app.use(proxy.koaMiddleware);
 
-	// Persist message middleware
-	app.use(messageStore.koaMiddleware);
+    // Persist message middleware
+    app.use(messageStore.koaMiddleware);
 
-	// URL rewriting middleware
-	app.use(rewrite.koaMiddleware);
+    // URL rewriting middleware
+    app.use(rewrite.koaMiddleware);
 
-	// Events
-	app.use(events.koaMiddleware);
+    // Events
+    app.use(events.koaMiddleware);
 
-	// Call router
-	app.use(router.koaMiddleware);
+    // Call router
+    app.use(router.koaMiddleware);
 
-	return done(app);
+    return done(app);
 }
 
 
 // Rerun app that bypasses auth
 export function rerunApp(done) {
-	const app = koa();
+    const app = koa();
 
-	app.use(rawBodyReader);
+    app.use(rawBodyReader);
 
-	// Rerun bypass authentication middlware
-	app.use(rerunBypassAuthentication.koaMiddleware);
+    // Rerun bypass authentication middlware
+    app.use(rerunBypassAuthentication.koaMiddleware);
 
-	// Rerun bypass authorisation middlware
-	app.use(rerunBypassAuthorisation.koaMiddleware);
+    // Rerun bypass authorisation middlware
+    app.use(rerunBypassAuthorisation.koaMiddleware);
 
-	// Update original transaction with rerunned transaction ID
-	app.use(rerunUpdateTransactionTask.koaMiddleware);
+    // Update original transaction with rerunned transaction ID
+    app.use(rerunUpdateTransactionTask.koaMiddleware);
 
-	// Persist message middleware
-	app.use(messageStore.koaMiddleware);
+    // Persist message middleware
+    app.use(messageStore.koaMiddleware);
 
-	// Authorisation middleware
-	app.use(authorisation.koaMiddleware);
+    // Authorisation middleware
+    app.use(authorisation.koaMiddleware);
 
-	// Events
-	app.use(events.koaMiddleware);
+    // Events
+    app.use(events.koaMiddleware);
 
-	// Call router
-	app.use(router.koaMiddleware);
+    // Call router
+    app.use(router.koaMiddleware);
 
-	return done(app);
+    return done(app);
 }
 
 // App for TCP/TLS sockets
 export function tcpApp(done) {
-	const app = koa();
+    const app = koa();
 
-	app.use(rawBodyReader);
-	app.use(retrieveTCPTransaction.koaMiddleware);
+    app.use(rawBodyReader);
+    app.use(retrieveTCPTransaction.koaMiddleware);
 
-	// TCP bypass authentication middlware
-	app.use(tcpBypassAuthentication.koaMiddleware);
+    // TCP bypass authentication middlware
+    app.use(tcpBypassAuthentication.koaMiddleware);
 
-	// Proxy
-	app.use(proxy.koaMiddleware);
+    // Proxy
+    app.use(proxy.koaMiddleware);
 
-	// Persist message middleware
-	app.use(messageStore.koaMiddleware);
+    // Persist message middleware
+    app.use(messageStore.koaMiddleware);
 
-	// Events
-	app.use(events.koaMiddleware);
+    // Events
+    app.use(events.koaMiddleware);
 
-	// Call router
-	app.use(router.koaMiddleware);
+    // Call router
+    app.use(router.koaMiddleware);
 
-	return done(app);
+    return done(app);
 }
 
 // App used by scheduled polling
 export function pollingApp(done) {
-	const app = koa();
+    const app = koa();
 
-	app.use(rawBodyReader);
+    app.use(rawBodyReader);
 
-	// Polling bypass authentication middlware
-	app.use(pollingBypassAuthentication.koaMiddleware);
+    // Polling bypass authentication middlware
+    app.use(pollingBypassAuthentication.koaMiddleware);
 
-	// Polling bypass authorisation middleware
-	app.use(pollingBypassAuthorisation.koaMiddleware);
+    // Polling bypass authorisation middleware
+    app.use(pollingBypassAuthorisation.koaMiddleware);
 
-	// Persist message middleware
-	app.use(messageStore.koaMiddleware);
+    // Persist message middleware
+    app.use(messageStore.koaMiddleware);
 
-	// Events
-	app.use(events.koaMiddleware);
+    // Events
+    app.use(events.koaMiddleware);
 
-	// Call router
-	app.use(router.koaMiddleware);
+    // Call router
+    app.use(router.koaMiddleware);
 
-	return done(app);
+    return done(app);
 }

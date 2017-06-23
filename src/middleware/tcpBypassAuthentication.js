@@ -12,31 +12,31 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(statsdServer);
 
 const dummyClient = new Client({
-	clientID: "DUMMY-TCP-USER",
-	clientDomain: "openhim.org",
-	name: "DUMMY-TCP-USER",
-	roles: ["tcp"]
+    clientID: "DUMMY-TCP-USER",
+    clientDomain: "openhim.org",
+    name: "DUMMY-TCP-USER",
+    roles: ["tcp"]
 });
 
 export function authenticateUser(ctx, done) {
-	ctx.authenticated = dummyClient;
-	return done(null, dummyClient);
+    ctx.authenticated = dummyClient;
+    return done(null, dummyClient);
 }
 
 /*
  * Koa middleware for bypassing authentication for tcp requests
  */
 export function* koaMiddleware(next) {
-	let startTime;
-	if (statsdServer.enabled) { startTime = new Date(); }
-	const _authenticateUser = Q.denodeify(authenticateUser);
-	yield _authenticateUser(this);
+    let startTime;
+    if (statsdServer.enabled) { startTime = new Date(); }
+    const _authenticateUser = Q.denodeify(authenticateUser);
+    yield _authenticateUser(this);
 
-	if (this.authenticated != null) {
-		if (statsdServer.enabled) { sdc.timing(`${domain}.tcpBypassAuthenticationMiddleware`, startTime); }
-		return yield next;
-	} else {
-		this.response.status = 401;
-		if (statsdServer.enabled) { return sdc.timing(`${domain}.tcpBypassAuthenticationMiddleware`, startTime); }
-	}
+    if (this.authenticated != null) {
+        if (statsdServer.enabled) { sdc.timing(`${domain}.tcpBypassAuthenticationMiddleware`, startTime); }
+        return yield next;
+    } else {
+        this.response.status = 401;
+        if (statsdServer.enabled) { return sdc.timing(`${domain}.tcpBypassAuthenticationMiddleware`, startTime); }
+    }
 }

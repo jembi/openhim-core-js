@@ -5,27 +5,27 @@ import { path as appRoot } from "app-root-path";
  * Define the default constructor
  */
 function Config() {
-	// Get the argument-value to use
-	nconf.argv().env("_");
-	const environment = nconf.get("NODE:ENV") || "development";
+    // Get the argument-value to use
+    nconf.argv().env("_");
+    const environment = nconf.get("NODE:ENV") || "development";
 
-	// Load the configuration-values
-	// user specified config override
-	if (nconf.get("conf")) {
-		nconf.file("customConfigOverride", nconf.get("conf"));
-	}
+    // Load the configuration-values
+    // user specified config override
+    if (nconf.get("conf")) {
+        nconf.file("customConfigOverride", nconf.get("conf"));
+    }
 
-	// environment override
-	if (environment) {
-		// appRoot is a global var - set in server.cofee
-		nconf.file("environmentOverride", `${appRoot}/config/${environment}.json`);
-	}
+    // environment override
+    if (environment) {
+        // appRoot is a global var - set in server.cofee
+        nconf.file("environmentOverride", `${appRoot}/config/${environment}.json`);
+    }
 
-	// load the default config file
-	// appRoot is a global var - set in server.cofee
-	nconf.file("default", `${appRoot}/config/default.json`);
+    // load the default config file
+    // appRoot is a global var - set in server.cofee
+    nconf.file("default", `${appRoot}/config/default.json`);
 
-	// Return the result
+    // Return the result
 }
 
 /*

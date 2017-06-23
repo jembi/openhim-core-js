@@ -9,7 +9,6 @@ module.exports = {
         "space-before-function-paren": 0,
         "max-len": 0,
         "indent": 0,
-        "no-tabs": 0,
         "no-underscore-dangle": 0,
         "no-restricted-syntax": 0,
         "no-loop-func": 0,

@@ -14,12 +14,12 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(statsdServer);
 
 export function authenticateUser(ctx, done) {
-	return Client.findOne({ _id: ctx.request.header.clientid }, (err, client) => {
-		ctx.authenticated = client;
-		ctx.parentID = ctx.request.header.parentid;
-		ctx.taskID = ctx.request.header.taskid;
-		return done(null, client);
-	});
+    return Client.findOne({ _id: ctx.request.header.clientid }, (err, client) => {
+        ctx.authenticated = client;
+        ctx.parentID = ctx.request.header.parentid;
+        ctx.taskID = ctx.request.header.taskid;
+        return done(null, client);
+    });
 }
 
 
@@ -27,20 +27,20 @@ export function authenticateUser(ctx, done) {
  * Koa middleware for authentication by basic auth
  */
 export function* koaMiddleware(next) {
-	let startTime;
-	if (statsdServer.enabled) { startTime = new Date(); }
-	const _authenticateUser = Q.denodeify(authenticateUser);
-	yield _authenticateUser(this);
+    let startTime;
+    if (statsdServer.enabled) { startTime = new Date(); }
+    const _authenticateUser = Q.denodeify(authenticateUser);
+    yield _authenticateUser(this);
 
-	if (this.authenticated != null) {
-		if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthenticationMiddleware`, startTime); }
-		return yield next;
-	} else {
-		this.authenticated =
-			{ ip: "127.0.0.1" };
-		// This is a public channel, allow rerun
-		if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthenticationMiddleware`, startTime); }
-		return yield next;
-	}
+    if (this.authenticated != null) {
+        if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthenticationMiddleware`, startTime); }
+        return yield next;
+    } else {
+        this.authenticated =
+            { ip: "127.0.0.1" };
+        // This is a public channel, allow rerun
+        if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthenticationMiddleware`, startTime); }
+        return yield next;
+    }
 }
 

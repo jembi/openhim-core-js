@@ -8,20 +8,20 @@ import { User } from "./model/users";
 import { Visualizer } from "./model/visualizer";
 
 function dedupName(name, names, num) {
-	let newName;
-	if (num) {
-		newName = `${name} ${num}`;
-	} else {
-		newName = name;
-	}
-	if (Array.from(names).includes(newName)) {
-		if (!num) {
-			num = 1;
-		}
-		return dedupName(name, names, ++num);
-	} else {
-		return newName;
-	}
+    let newName;
+    if (num) {
+        newName = `${name} ${num}`;
+    } else {
+        newName = name;
+    }
+    if (Array.from(names).includes(newName)) {
+        if (!num) {
+            num = 1;
+        }
+        return dedupName(name, names, ++num);
+    } else {
+        return newName;
+    }
 }
 
 // push new upgrade functions to this array, function must return a promise
@@ -29,90 +29,90 @@ function dedupName(name, names, num) {
 const upgradeFuncs = [];
 
 upgradeFuncs.push({
-	description: "Ensure that all certs have a fingerprint property",
-	func() {
-		const defer = Q.defer();
+    description: "Ensure that all certs have a fingerprint property",
+    func() {
+        const defer = Q.defer();
 
-		Keystore.findOne((err, keystore) => {
-			if (!keystore) { return defer.resolve(); }
+        Keystore.findOne((err, keystore) => {
+            if (!keystore) { return defer.resolve(); }
 
-			// convert server cert
-			return pem.getFingerprint(keystore.cert.data, (err, obj) => {
-				keystore.cert.fingerprint = obj.fingerprint;
+            // convert server cert
+            return pem.getFingerprint(keystore.cert.data, (err, obj) => {
+                keystore.cert.fingerprint = obj.fingerprint;
 
-				const promises = [];
-				for (let i = 0; i < keystore.ca.length; i++) {
-					const cert = keystore.ca[i];
-					const caDefer = Q.defer();
-					promises.push(caDefer.promise);
-					pem.getFingerprint(cert.data, (err, obj) => {
-						keystore.ca[i].fingerprint = obj.fingerprint;
-						return caDefer.resolve();
-					});
-				}
+                const promises = [];
+                for (let i = 0; i < keystore.ca.length; i++) {
+                    const cert = keystore.ca[i];
+                    const caDefer = Q.defer();
+                    promises.push(caDefer.promise);
+                    pem.getFingerprint(cert.data, (err, obj) => {
+                        keystore.ca[i].fingerprint = obj.fingerprint;
+                        return caDefer.resolve();
+                    });
+                }
 
-				return Q.all(promises).then(() =>
-					keystore.save((err) => {
-						if (err != null) { logger.error(`Failed to save keystore: ${err}`); }
-						return defer.resolve();
-					})
-				);
-			});
-		});
+                return Q.all(promises).then(() =>
+                    keystore.save((err) => {
+                        if (err != null) { logger.error(`Failed to save keystore: ${err}`); }
+                        return defer.resolve();
+                    })
+                );
+            });
+        });
 
-		return defer.promise;
-	}
+        return defer.promise;
+    }
 });
 
 upgradeFuncs.push({
-	description: "Convert clients link to certs via their domain to use the cert fingerprint instead",
-	func() {
-		const defer = Q.defer();
+    description: "Convert clients link to certs via their domain to use the cert fingerprint instead",
+    func() {
+        const defer = Q.defer();
 
-		Client.find((err, clients) => {
-			if (err != null) {
-				logger.error(`Couldn't fetch all clients to upgrade db: ${err}`);
-				return defer.reject();
-			}
+        Client.find((err, clients) => {
+            if (err != null) {
+                logger.error(`Couldn't fetch all clients to upgrade db: ${err}`);
+                return defer.reject();
+            }
 
-			return Keystore.findOne((err, keystore) => {
-				if (err != null) {
-					logger.error(`Couldn't fetch keystore to upgrade db: ${err}`);
-					return defer.reject();
-				}
+            return Keystore.findOne((err, keystore) => {
+                if (err != null) {
+                    logger.error(`Couldn't fetch keystore to upgrade db: ${err}`);
+                    return defer.reject();
+                }
 
-				const promises = [];
-				for (const client of Array.from(clients)) {
-					const clientDefer = Q.defer();
-					promises.push(clientDefer.promise);
+                const promises = [];
+                for (const client of Array.from(clients)) {
+                    const clientDefer = Q.defer();
+                    promises.push(clientDefer.promise);
 
-					if ((keystore != null ? keystore.ca : undefined) != null) {
-						for (const cert of Array.from(keystore.ca)) {
-							if ((client.clientDomain === cert.commonName) && (client.certFingerprint == null)) {
-								client.certFingerprint = cert.fingerprint;
-								break;
-							}
-						}
-					}
+                    if ((keystore != null ? keystore.ca : undefined) != null) {
+                        for (const cert of Array.from(keystore.ca)) {
+                            if ((client.clientDomain === cert.commonName) && (client.certFingerprint == null)) {
+                                client.certFingerprint = cert.fingerprint;
+                                break;
+                            }
+                        }
+                    }
 
-					(clientDefer =>
-						client.save((err) => {
-							if (err != null) {
-								logger.error(`Couldn't save client ${client.clientID} while upgrading db: ${err}`);
-								return clientDefer.reject();
-							}
+                    (clientDefer =>
+                        client.save((err) => {
+                            if (err != null) {
+                                logger.error(`Couldn't save client ${client.clientID} while upgrading db: ${err}`);
+                                return clientDefer.reject();
+                            }
 
-							return clientDefer.resolve();
-						})
-					)(clientDefer);
-				}
+                            return clientDefer.resolve();
+                        })
+                    )(clientDefer);
+                }
 
-				return Q.all(promises).then(() => defer.resolve());
-			});
-		});
+                return Q.all(promises).then(() => defer.resolve());
+            });
+        });
 
-		return defer.promise;
-	}
+        return defer.promise;
+    }
 });
 
 // Adapt visualizer from an old version (core 2.0.0, console 1.6.0 and earlier)
@@ -120,137 +120,137 @@ upgradeFuncs.push({
 // We follow the same migration strategy as console:
 // https://github.com/jembi/openhim-console/blob/1047b49db2050bafa6b4797e3788fa716d1760b3/app/scripts/controllers/profile.js#L83-L109
 function adaptOldVisualizerStructure(visualizer) {
-	visualizer.channels = [];
-	visualizer.mediators = [];
-	visualizer.time.minDisplayPeriod = 100;
+    visualizer.channels = [];
+    visualizer.mediators = [];
+    visualizer.time.minDisplayPeriod = 100;
 
-	if (visualizer.endpoints) {
-		for (const endpoint of Array.from(visualizer.endpoints)) {
-			visualizer.channels.push({
-				eventType: "channel",
-				eventName: endpoint.event.replace("channel-", ""),
-				display: endpoint.desc
-			});
-		}
-		delete visualizer.endpoints;
-	}
+    if (visualizer.endpoints) {
+        for (const endpoint of Array.from(visualizer.endpoints)) {
+            visualizer.channels.push({
+                eventType: "channel",
+                eventName: endpoint.event.replace("channel-", ""),
+                display: endpoint.desc
+            });
+        }
+        delete visualizer.endpoints;
+    }
 
-	if (visualizer.components) {
-		return (() => {
-			const result = [];
-			for (const component of Array.from(visualizer.components)) {
-				const split = component.event.split("-");
-				if (split.length > 1) {
-					component.eventType = split[0];
-					component.eventName = split[1];
-				} else {
-					component.eventType = "channel";
-					component.eventName = component.event;
-				}
-				component.display = component.desc;
-				delete component.event;
-				result.push(delete component.desc);
-			}
-			return result;
-		})();
-	}
+    if (visualizer.components) {
+        return (() => {
+            const result = [];
+            for (const component of Array.from(visualizer.components)) {
+                const split = component.event.split("-");
+                if (split.length > 1) {
+                    component.eventType = split[0];
+                    component.eventName = split[1];
+                } else {
+                    component.eventType = "channel";
+                    component.eventName = component.event;
+                }
+                component.display = component.desc;
+                delete component.event;
+                result.push(delete component.desc);
+            }
+            return result;
+        })();
+    }
 }
 
 
 upgradeFuncs.push({
-	description: "Migrate visualizer setting from a user's profile to a shared collection",
-	func() {
-		const defer = Q.defer();
-		User.find((err, users) => {
-			if (err) {
-				return Q.defer().reject(err);
-			}
+    description: "Migrate visualizer setting from a user's profile to a shared collection",
+    func() {
+        const defer = Q.defer();
+        User.find((err, users) => {
+            if (err) {
+                return Q.defer().reject(err);
+            }
 
-			const visNames = [];
-			const promises = [];
-			users.forEach((user) => {
-				if ((user.settings != null ? user.settings.visualizer : undefined) != null) {
-					let vis = user.settings.visualizer;
-					if (((vis.components != null ? vis.components.length : undefined) > 0) || ((vis.mediators != null ? vis.mediators.length : undefined) > 0) || ((vis.channels != null ? vis.channels.length : undefined) > 0) || ((vis.endpoints != null ? vis.endpoints.length : undefined) > 0)) {
-						const userDefer = Q.defer();
-						promises.push(userDefer.promise);
+            const visNames = [];
+            const promises = [];
+            users.forEach((user) => {
+                if ((user.settings != null ? user.settings.visualizer : undefined) != null) {
+                    let vis = user.settings.visualizer;
+                    if (((vis.components != null ? vis.components.length : undefined) > 0) || ((vis.mediators != null ? vis.mediators.length : undefined) > 0) || ((vis.channels != null ? vis.channels.length : undefined) > 0) || ((vis.endpoints != null ? vis.endpoints.length : undefined) > 0)) {
+                        const userDefer = Q.defer();
+                        promises.push(userDefer.promise);
 
-						if (vis.endpoints) { // old version
-							adaptOldVisualizerStructure(vis);
-						}
+                        if (vis.endpoints) { // old version
+                            adaptOldVisualizerStructure(vis);
+                        }
 
-						let name = `${user.firstname} ${user.surname}'s visualizer`;
-						name = dedupName(name, visNames);
-						vis.name = name;
-						visNames.push(name);
+                        let name = `${user.firstname} ${user.surname}'s visualizer`;
+                        name = dedupName(name, visNames);
+                        vis.name = name;
+                        visNames.push(name);
 
-						vis = new Visualizer(vis);
-						logger.debug(`Migrating visualizer from user profile ${user.email}, using visualizer name '${name}'`);
-						return vis.save((err, vis) => {
-							if (err) {
-								logger.error(`Error migrating visualizer from user profile ${user.email}: ${err.stack}`);
-								return userDefer.reject(err);
-							}
+                        vis = new Visualizer(vis);
+                        logger.debug(`Migrating visualizer from user profile ${user.email}, using visualizer name '${name}'`);
+                        return vis.save((err, vis) => {
+                            if (err) {
+                                logger.error(`Error migrating visualizer from user profile ${user.email}: ${err.stack}`);
+                                return userDefer.reject(err);
+                            }
 
-							// delete the visualizer settings from this user profile
-							user.set("settings.visualizer", null);
-							return user.save((err, user) => {
-								if (err) { return userDefer.reject(err); }
-								return userDefer.resolve();
-							});
-						});
-					}
-				}
-			});
+                            // delete the visualizer settings from this user profile
+                            user.set("settings.visualizer", null);
+                            return user.save((err, user) => {
+                                if (err) { return userDefer.reject(err); }
+                                return userDefer.resolve();
+                            });
+                        });
+                    }
+                }
+            });
 
-			return Q.all(promises).then(() => defer.resolve()).catch(err => defer.reject(err));
-		});
+            return Q.all(promises).then(() => defer.resolve()).catch(err => defer.reject(err));
+        });
 
-		return defer.promise;
-	}
+        return defer.promise;
+    }
 });
 
 if (process.env.NODE_ENV === "test") {
-	exports.upgradeFuncs = upgradeFuncs;
-	exports.dedupName = dedupName;
+    exports.upgradeFuncs = upgradeFuncs;
+    exports.dedupName = dedupName;
 }
 
 async function upgradeDbInternal() {
-	try {
-		const dbVer = (await dbVersion.findOne()) || new dbVersion({ version: 0, lastUpdated: new Date() });
-		const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version);
+    try {
+        const dbVer = (await dbVersion.findOne()) || new dbVersion({ version: 0, lastUpdated: new Date() });
+        const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version);
 
-		for (const upgradeFunc of upgradeFuncsToRun) {
-			await upgradeFunc.func();
-			dbVer.version++;
-			dbVer.lastUpdated = new Date();
-			await dbVer.save();
-		}
+        for (const upgradeFunc of upgradeFuncsToRun) {
+            await upgradeFunc.func();
+            dbVer.version++;
+            dbVer.lastUpdated = new Date();
+            await dbVer.save();
+        }
 
-		if (upgradeFuncsToRun.length === 0) {
-			logger.info("No database upgrades needed");
-		} else {
-			logger.info("Completed database upgrade");
-		}
-	} catch (err) {
-		logger.error(`There was an error upgrading your database, you will need to fix this manually to continue. ${err.stack}`);
-	}
+        if (upgradeFuncsToRun.length === 0) {
+            logger.info("No database upgrades needed");
+        } else {
+            logger.info("Completed database upgrade");
+        }
+    } catch (err) {
+        logger.error(`There was an error upgrading your database, you will need to fix this manually to continue. ${err.stack}`);
+    }
 }
 
 export function upgradeDb(callback) {
-	return upgradeDbInternal()
-		.then((...values) => {
-			if (callback) {
-				callback(...(values || []));
-			}
-		})
-		.catch(err => {
-			if (callback) {
-				callback(err);
-			}
-		});
+    return upgradeDbInternal()
+        .then((...values) => {
+            if (callback) {
+                callback(...(values || []));
+            }
+        })
+        .catch(err => {
+            if (callback) {
+                callback(err);
+            }
+        });
 }
 
 if (!module.parent) {
-	exports.upgradeDb(() => process.exit());
+    exports.upgradeDb(() => process.exit());
 }

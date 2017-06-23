@@ -53,8 +53,8 @@ const testAuditIHE_RFC3881 = `\
          displayName="UserAuthenticated" />
       <EventTypeCode code="110122" codeSystemName="DCM" 
          displayName="Login" />
-	</EventIdentification>
-	
+    </EventIdentification>
+    
    <ActiveParticipant UserID="fe80::5999:d1ef:63de:a8bb%11" 
       UserIsRequestor="true" 
       NetworkAccessPointTypeCode="1" 
@@ -62,14 +62,14 @@ const testAuditIHE_RFC3881 = `\
       <RoleIDCode code="110150" codeSystemName="DCM" 
          displayName="Application" />
    </ActiveParticipant>
-	
+    
    <ActiveParticipant UserID="farley.granger@wb.com" UserIsRequestor="true"/>
-	
+    
    <AuditSourceIdentification AuditEnterpriseSiteID="End User" 
       AuditSourceID="farley.granger@wb.com">
       <AuditSourceTypeCode code="1" />
    </AuditSourceIdentification>
-	
+    
 </AuditMessage>\
 `;
 
@@ -85,19 +85,19 @@ const testAuditIHE_DICOM = `\
       <EventID csd-code="110114" codeSystemName="DCM" originalText="UserAuthenticated" />
       <EventTypeCode csd-code="110122" codeSystemName="DCM" originalText="Login" />
    </EventIdentification>
-	
+    
    <ActiveParticipant UserID="fe80::5999:d1ef:63de:a8bb%11" 
       UserIsRequestor="true" 
       NetworkAccessPointTypeCode="1" 
       NetworkAccessPointID="125.20.175.12">
       <RoleIDCode csd-code="110150" codeSystemName="DCM" originalText="Application" />
    </ActiveParticipant>
-	
+    
    <ActiveParticipant UserID="farley.granger@wb.com" UserIsRequestor="true"/>
-	
+    
    <AuditSourceIdentification code="1" 
       AuditEnterpriseSiteID="End User" AuditSourceID="farley.granger@wb.com"/>
-	
+    
 </AuditMessage>\
 `;
 

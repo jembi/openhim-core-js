@@ -12,15 +12,15 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(statsdServer);
 
 const dummyClient = new Client({
-	clientID: "DUMMY-POLLING-USER",
-	clientDomain: "openhim.org",
-	name: "DUMMY-POLLING-USER",
-	roles: ["polling"]
+    clientID: "DUMMY-POLLING-USER",
+    clientDomain: "openhim.org",
+    name: "DUMMY-POLLING-USER",
+    roles: ["polling"]
 });
 
 export function authenticateUser(ctx, done) {
-	ctx.authenticated = dummyClient;
-	return done(null, dummyClient);
+    ctx.authenticated = dummyClient;
+    return done(null, dummyClient);
 }
 
 
@@ -28,16 +28,16 @@ export function authenticateUser(ctx, done) {
  * Koa middleware for bypassing authentication for polling requests
  */
 export function* koaMiddleware(next) {
-	let startTime;
-	if (statsdServer.enabled) { startTime = new Date(); }
-	const _authenticateUser = Q.denodeify(authenticateUser);
-	yield _authenticateUser(this);
+    let startTime;
+    if (statsdServer.enabled) { startTime = new Date(); }
+    const _authenticateUser = Q.denodeify(authenticateUser);
+    yield _authenticateUser(this);
 
-	if (this.authenticated != null) {
-		if (statsdServer.enabled) { sdc.timing(`${domain}.pollingBypassAuthenticationMiddleware`, startTime); }
-		return yield next;
-	} else {
-		this.response.status = 401;
-		if (statsdServer.enabled) { return sdc.timing(`${domain}.pollingBypassAuthenticationMiddleware`, startTime); }
-	}
+    if (this.authenticated != null) {
+        if (statsdServer.enabled) { sdc.timing(`${domain}.pollingBypassAuthenticationMiddleware`, startTime); }
+        return yield next;
+    } else {
+        this.response.status = 401;
+        if (statsdServer.enabled) { return sdc.timing(`${domain}.pollingBypassAuthenticationMiddleware`, startTime); }
+    }
 }

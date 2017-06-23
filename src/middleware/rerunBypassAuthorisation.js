@@ -14,23 +14,23 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(statsdServer);
 
 export function authoriseUser(ctx, done) {
-	// Use the original transaction's channel to setup the authorised channel
-	return Transaction.findOne({ _id: ctx.parentID }, (err, originalTransaction) =>
-		Channel.findOne({ _id: originalTransaction.channelID }, (err, authorisedChannel) => {
-			ctx.authorisedChannel = authorisedChannel;
-			return done();
-		})
-	);
+    // Use the original transaction's channel to setup the authorised channel
+    return Transaction.findOne({ _id: ctx.parentID }, (err, originalTransaction) =>
+        Channel.findOne({ _id: originalTransaction.channelID }, (err, authorisedChannel) => {
+            ctx.authorisedChannel = authorisedChannel;
+            return done();
+        })
+    );
 }
 
 /*
  * Koa middleware for authentication by basic auth
  */
 export function* koaMiddleware(next) {
-	let startTime;
-	if (statsdServer.enabled) { startTime = new Date(); }
-	const authoriseUser = Q.denodeify(exports.authoriseUser);
-	yield authoriseUser(this);
-	if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthorisationMiddleware`, startTime); }
-	return yield next;
+    let startTime;
+    if (statsdServer.enabled) { startTime = new Date(); }
+    const authoriseUser = Q.denodeify(exports.authoriseUser);
+    yield authoriseUser(this);
+    if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthorisationMiddleware`, startTime); }
+    return yield next;
 }
