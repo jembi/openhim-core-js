@@ -10,9 +10,9 @@ import * as utils from "../utils";
 
 const { Channel } = Channels;
 
-// ####################################################
-// Function to check if rerun task creation is valid #
-// ####################################################
+/**
+ * Function to check if rerun task creation is valid
+ */
 
 function isRerunPermissionsValid(user, transactions, callback) {
     // if 'admin' - set rerun permissions to true
@@ -42,9 +42,9 @@ function isRerunPermissionsValid(user, transactions, callback) {
 }
 
 
-// #####################################
-// Retrieves the list of active tasks #
-// #####################################
+/**
+ * Retrieves the list of active tasks
+ */
 export function* getTasks() {
     // Must be admin
     if (!authorisation.inGroup("admin", this.authenticated)) {
@@ -105,9 +105,9 @@ const areTransactionChannelsValid = (transactions, callback) =>
     ;
 
 
-// ####################################################
-// Creates a new Task
-// ####################################################
+/**
+ * Creates a new Task
+ */
 export function* addTask() {
     // Get the values to use
     const transactions = this.request.body;
@@ -166,9 +166,9 @@ export function* addTask() {
 }
 
 
-// ############################################
-// Retrieves the details for a specific Task #
-// ############################################
+/**
+ * Retrieves the details for a specific Task #
+ */
 
 
 // function to build filtered transactions
@@ -270,9 +270,9 @@ export function* getTask(taskId) {
 }
 
 
-// ##########################################
-// Updates the details for a specific Task #
-// ##########################################
+/**
+ * Updates the details for a specific Task #
+ */
 export function* updateTask(taskId) {
     // Must be admin
     if (!authorisation.inGroup("admin", this.authenticated)) {
@@ -299,9 +299,9 @@ export function* updateTask(taskId) {
 }
 
 
-// ###################################
-// Deletes a specific Tasks details #
-// ###################################
+/**
+ * Deletes a specific Tasks details #
+ */
 export function* removeTask(taskId) {
     // Must be admin
     if (!authorisation.inGroup("admin", this.authenticated)) {

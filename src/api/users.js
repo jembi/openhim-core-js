@@ -44,9 +44,9 @@ export function* authenticate(email) {
 }
 
 
-// ################################
-/* Reset password Functions */
-// ################################
+/**
+ * Reset password Functions
+ */
 
 
 const passwordResetPlainMessageTemplate = (firstname, setPasswordLink) => `\
@@ -129,9 +129,9 @@ export function* userPasswordResetRequest(email) {
 }
 
 
-// ######################################
-/* New User Set Password Functions */
-// ######################################
+/**
+*New User Set Password Functions
+ */
 
 // get the new user details
 export function* getUserByToken(token) {
@@ -216,9 +216,9 @@ export function* updateUserByToken(token) {
 }
 
 
-// ######################################
-/* New User Set Password Functions */
-// ######################################
+/**
+ New User Set Password Functions
+ */
 
 
 const plainMessageTemplate = (firstname, setPasswordLink) => `\

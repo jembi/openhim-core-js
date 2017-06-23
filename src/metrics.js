@@ -1,64 +1,66 @@
 import logger from "winston";
 import { Transaction } from "./model/transactions";
 
-// Calculates transaction metrics
-//
-// @startDate {Date} a timestamp representing the start of the range to calculate
-//                   metrics from (required)
-// @startDate {Date} a timestamp representing the end of the range to calculate
-//                   metrics to (required)
-// @transactionFilter {Object} a mongodb filter object to further restrict the
-//                             transactions collection (nullable)
-// @channelIDs {Array} an array of channel IDs as `ObjectID`s to filter by, if
-//                     not set all channels will be considered (nullable)
-// @timeSeries {String} one of 'minute', 'hour', 'day', 'week', 'month', 'year'.
-//                      If set the metrics will be grouped into a periods of the
-//                      stated duration, otherwise, metrics for the entire period
-//                      will be returned (nullable)
-// @groupByChannel {Boolean} if true the metrics will be grouped by each
-//                           particular channel that returns results (nullable)
-// @returns {Promise} that resolves to an array of metric objects for each
-//                    grouping (timeseries and/or channel) depending on the
-//                    parameters that are set
-// e.g. metrics.calculateMetrics new Date("2014-07-15T00:00:00.000Z"),
-// new Date("2014-07-19T00:00:00.000Z"), null, null, 'day', true
-// [
-//   {
-//     _id: {
-//       channelID: 111111111111111111111111,
-//       day: 18,
-//       week: 28,
-//       month: 7,
-//       year: 2014
-//     },
-//     total: 1,
-//     avgResp: 100,
-//     minResp: 100,
-//     maxResp: 100,
-//     failed: 0,
-//     successful: 0,
-//     processing: 1,
-//     completed: 0,
-//     completedWErrors: 0
-//   }, {
-//     _id:
-//       {
-//         channelID: 222222222222222222222222,
-//         day: 18,
-//         week: 28,
-//         month: 7,
-//         year: 2014 },
-//     total: 1,
-//     avgResp: 200,
-//     minResp: 200,
-//     maxResp: 200,
-//     failed: 0,
-//     successful: 0,
-//     processing: 0,
-//     completed: 1,
-//     completedWErrors: 0
-//   }
-// ]
+/**
+ * Calculates transaction metrics
+ *
+ * @startDate {Date} a timestamp representing the start of the range to calculate
+ *                   metrics from (required)
+ * @startDate {Date} a timestamp representing the end of the range to calculate
+ *                   metrics to (required)
+ * @transactionFilter {Object} a mongodb filter object to further restrict the
+ *                             transactions collection (nullable)
+ * @channelIDs {Array} an array of channel IDs as `ObjectID`s to filter by, if
+ *                     not set all channels will be considered (nullable)
+ * @timeSeries {String} one of 'minute', 'hour', 'day', 'week', 'month', 'year'.
+ *                      If set the metrics will be grouped into a periods of the
+ *                      stated duration, otherwise, metrics for the entire period
+ *                      will be returned (nullable)
+ * @groupByChannel {Boolean} if true the metrics will be grouped by each
+ *                           particular channel that returns results (nullable)
+ * @returns {Promise} that resolves to an array of metric objects for each
+ *                    grouping (timeseries and/or channel) depending on the
+ *                    parameters that are set
+ * e.g. metrics.calculateMetrics new Date("2014-07-15T00:00:00.000Z"),
+ * new Date("2014-07-19T00:00:00.000Z"), null, null, 'day', true
+ * [
+ *   {
+ *     _id: {
+ *       channelID: 111111111111111111111111,
+ *       day: 18,
+ *       week: 28,
+ *       month: 7,
+ *       year: 2014
+ *     },
+ *     total: 1,
+ *     avgResp: 100,
+ *     minResp: 100,
+ *     maxResp: 100,
+ *     failed: 0,
+ *     successful: 0,
+ *     processing: 1,
+ *     completed: 0,
+ *     completedWErrors: 0
+ *   }, {
+ *     _id:
+ *       {
+ *         channelID: 222222222222222222222222,
+ *         day: 18,
+ *         week: 28,
+ *         month: 7,
+ *         year: 2014 },
+ *     total: 1,
+ *     avgResp: 200,
+ *     minResp: 200,
+ *     maxResp: 200,
+ *     failed: 0,
+ *     successful: 0,
+ *     processing: 0,
+ *     completed: 1,
+ *     completedWErrors: 0
+ *   }
+ * ]
+ */
 export function calculateMetrics(startDate, endDate, transactionFilter, channelIDs, timeSeries, groupByChannels) {
     if (!(startDate instanceof Date) || !(endDate instanceof Date)) {
         return Promise.reject(new Error("startDate and endDate must be provided and be of type Date"));

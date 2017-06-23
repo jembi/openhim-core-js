@@ -88,18 +88,19 @@ async function finalizeTaskRound(task) {
 
     await task.save();
 }
-
-// Process a task.
-//
-// Tasks are processed in rounds:
-// Each round consists of processing n transactions where n is between 1 and the task's batchSize,
-// depending on how many transactions are left to process.
-//
-// When a round completes, the task will be marked as 'Queued' if it still has transactions remaining.
-// The next available core instance will then pick up the task again for the next round.
-//
-// This model allows the instance the get updated information regarding the task in between rounds:
-// i.e. if the server has been stopped, if the task has been paused, etc.
+/**
+* Process a task.
+*
+* Tasks are processed in rounds:
+* Each round consists of processing n transactions where n is between 1 and the task's batchSize,
+* depending on how many transactions are left to process.
+*
+* When a round completes, the task will be marked as 'Queued' if it still has transactions remaining.
+* The next available core instance will then pick up the task again for the next round.
+*
+* This model allows the instance the get updated information regarding the task in between rounds:
+* i.e. if the server has been stopped, if the task has been paused, etc.
+*/
 async function processNextTaskRound(task) {
     logger.debug(`Processing next task round: total transactions = ${task.totalTransactions}, remainingTransactions = ${task.remainingTransactions}`);
     const promises = [];
@@ -199,9 +200,9 @@ function rerunGetTransaction(transactionID, callback) {
     });
 }
 
-// ####################################
-// Construct HTTP options to be sent #
-// ####################################
+/**
+ * Construct HTTP options to be sent #
+ */
 
 function rerunSetHTTPRequestOptions(transaction, taskID, callback) {
     if (transaction === null) {
@@ -232,14 +233,14 @@ function rerunSetHTTPRequestOptions(transaction, taskID, callback) {
     return callback(null, options);
 }
 
-// ####################################
-// Construct HTTP options to be sent #
-// ####################################
+/**
+ * Construct HTTP options to be sent #
+ */
 
 
-// ####################################
-// Function for sending HTTP Request #
-// ####################################
+/**
+ * Function for sending HTTP Request #
+ */
 
 function rerunHttpRequestSend(options, transaction, callback) {
     let err;
@@ -339,9 +340,9 @@ function rerunTcpRequestSend(channel, transaction, callback) {
     });
 }
 
-// ########################################################
-// Export these functions when in the "test" environment #
-// ########################################################
+/**
+ * Export these functions when in the "test" environment #
+ */
 
 if (process.env.NODE_ENV === "test") {
     exports.rerunGetTransaction = rerunGetTransaction;
