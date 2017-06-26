@@ -90,8 +90,7 @@ export function* setServerCert() {
     try {
         let certInfo;
         let fingerprint;
-        const { cert } = this.request.body;
-        const { passphrase } = this.request.body;
+        const { cert, passphrase } = this.request.body;
         const readCertificateInfo = Q.denodeify(pem.readCertificateInfo);
         const getFingerprint = Q.denodeify(pem.getFingerprint);
         try {
@@ -124,8 +123,7 @@ export function* setServerKey() {
     }
 
     try {
-        const { key } = this.request.body;
-        const { passphrase } = this.request.body;
+        const { key, passphrase } = this.request.body;
         const keystoreDoc = yield Keystore.findOne().exec();
         keystoreDoc.key = key;
         keystoreDoc.passphrase = passphrase;

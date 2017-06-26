@@ -137,13 +137,11 @@ export function* addMediator() {
     }
 
     try {
-        let mediatorHost;
+        let mediatorHost = "unknown";
         const mediator = this.request.body;
 
-        if (__guard__(__guard__(mediator != null ? mediator.endpoints : undefined, x1 => x1[0]), x => x.host) != null) {
+        if (mediator != null && mediator.endpoints != null && mediator.endpoints.length > 0 && mediator.endpoints[0].host != null) {
             mediatorHost = mediator.endpoints[0].host;
-        } else {
-            mediatorHost = "unknown";
         }
 
         // audit mediator start
@@ -449,8 +447,4 @@ export function* loadDefaultChannels(urn) {
         logger.debug(err.stack);
         return utils.logAndSetResponse(this, 500, `Could not load mediator default channel config (urn: ${urn}): ${err}`, "error");
     }
-}
-
-function __guard__(value, transform) {
-    return (typeof value !== "undefined" && value !== null) ? transform(value) : undefined;
 }

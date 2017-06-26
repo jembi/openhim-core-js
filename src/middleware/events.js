@@ -58,7 +58,7 @@ export function saveEvents(trxEvents, callback) {
 
 
 function createRouteEvents(dst, transactionId, channel, route, type, tsAdjustment, autoRetryAttempt) {
-    if ((__guard__(route != null ? route.request : undefined, x => x.timestamp) != null) && (__guard__(route != null ? route.response : undefined, x1 => x1.timestamp) != null)) {
+    if (route != null && route.request != null && route.request.timestamp != null && route.response != null && route.response.timestamp != null) {
         let startTS = timestampAsMillis(route.request.timestamp);
         let endTS = timestampAsMillis(route.response.timestamp);
 
@@ -242,8 +242,4 @@ export function* koaMiddleware(next) {
         createChannelEndEvent(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.response, ctx.currentAttempt);
         return saveEvents(trxEvents, done);
     });
-}
-
-function __guard__(value, transform) {
-    return (typeof value !== "undefined" && value !== null) ? transform(value) : undefined;
 }

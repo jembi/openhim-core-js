@@ -28,7 +28,9 @@ function hasError(updates) {
         });
     }
     if (error) { return true; }
-    if (__guard__(updates.$push != null ? updates.$push.routes : undefined, x => x.error) != null) { return true; }
+    if (updates.$push != null && updates.$push.routes != null && updates.$push.routes.error != null) {
+        return true;
+    }
     return false;
 }
 
@@ -563,8 +565,4 @@ export function* removeTransaction(transactionId) {
     } catch (e) {
         return utils.logAndSetResponse(this, 500, `Could not remove transaction via the API: ${e}`, "error");
     }
-}
-
-function __guard__(value, transform) {
-    return (typeof value !== "undefined" && value !== null) ? transform(value) : undefined;
 }

@@ -172,7 +172,7 @@ export function storeNonPrimaryResponse(ctx, route, done) {
 
 export function setFinalStatus(ctx, callback) {
     let transactionId = "";
-    if (__guard__(ctx.request != null ? ctx.request.header : undefined, x => x["X-OpenHIM-TransactionID"])) {
+    if (ctx.request != null && ctx.request.header != null && ctx.request.header["X-OpenHIM-TransactionID"] != null) {
         transactionId = ctx.request.header["X-OpenHIM-TransactionID"];
     } else {
         transactionId = ctx.transactionId.toString();
@@ -258,8 +258,4 @@ export function* koaMiddleware(next) {
     if (statsdServer.enabled) { startTime = new Date(); }
     storeResponse(this, () => { });
     if (statsdServer.enabled) { return sdc.timing(`${domain}.messageStoreMiddleware.storeResponse`, startTime); }
-}
-
-function __guard__(value, transform) {
-    return (typeof value !== "undefined" && value !== null) ? transform(value) : undefined;
 }

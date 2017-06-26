@@ -86,11 +86,11 @@ const processAuditMeta$1 = (processAuditMeta = (audit, callback) =>
 
         if (!auditMeta) { auditMeta = new AuditMeta(); }
 
-        if (__guard__(audit.eventIdentification != null ? audit.eventIdentification.eventTypeCode : undefined, x => x.code) && !codeInArray(audit.eventIdentification.eventTypeCode.code, auditMeta.eventType)) {
+        if (audit.eventIdentification != null && audit.eventIdentification.eventTypeCode != null && audit.eventIdentification.eventTypeCode.code && !codeInArray(audit.eventIdentification.eventTypeCode.code, auditMeta.eventType)) {
             auditMeta.eventType.push(audit.eventIdentification.eventTypeCode);
         }
 
-        if (__guard__(audit.eventIdentification != null ? audit.eventIdentification.eventID : undefined, x1 => x1.code) && !codeInArray(audit.eventIdentification.eventID.code, auditMeta.eventID)) {
+        if (audit.eventIdentification != null && audit.eventIdentification.eventID != null && audit.eventIdentification.eventID && !codeInArray(audit.eventIdentification.eventID.code, auditMeta.eventID)) {
             auditMeta.eventID.push(audit.eventIdentification.eventID);
         }
 

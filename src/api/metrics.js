@@ -34,8 +34,7 @@ export function* getMetrics(groupChannels, timeSeries, channelID) {
     }
 
     let m = yield metrics.calculateMetrics(new Date(startDate), new Date(endDate), query, channelIDs, timeSeries, groupChannels);
-
-    if (__guard__(m[0] != null ? m[0]._id : undefined, x => x.year) != null) { // if there are time components
+    if (m != null && m[0] != null && m[0]._id != null && m[0]._id.year != null) {
         m = m.map((item) => {
             const date = _.assign({}, item._id);
             // adapt for moment (month starting at 0)
@@ -46,8 +45,4 @@ export function* getMetrics(groupChannels, timeSeries, channelID) {
     }
 
     return this.body = m;
-}
-
-function __guard__(value, transform) {
-    return (typeof value !== "undefined" && value !== null) ? transform(value) : undefined;
 }

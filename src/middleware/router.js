@@ -59,7 +59,7 @@ function setKoaResponse(ctx, response) {
         ctx.response.header = {};
     }
 
-    if (__guard__(ctx.request != null ? ctx.request.header : undefined, x => x["X-OpenHIM-TransactionID"])) {
+    if (ctx.request != null && ctx.request.header != null && ctx.request.header["X-OpenHIM-TransactionID"] != null) {
         if ((response != null ? response.headers : undefined) != null) {
             response.headers["X-OpenHIM-TransactionID"] = ctx.request.header["X-OpenHIM-TransactionID"];
         }
@@ -206,7 +206,7 @@ function sendRequestToRoutes(ctx, routes, next) {
                 promise = sendRequest(ctx, route, options)
                     .then((response) => {
                         logger.info(`executing primary route : ${route.name}`);
-                        if (__guard__(response.headers != null ? response.headers["content-type"] : undefined, x => x.indexOf("application/json+openhim")) > -1) {
+                        if (response.headers != null && response.headers["content-type"] != null && response.headers["content-type"].indexOf("application/json+openhim") > -1) {
                             // handle mediator reponse
                             const responseObj = JSON.parse(response.body);
                             ctx.mediatorResponse = responseObj;
@@ -310,7 +310,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
                 timestamp: ctx.requestTimestamp
             };
 
-            if (__guard__(response.headers != null ? response.headers["content-type"] : undefined, x => x.indexOf("application/json+openhim")) > -1) {
+            if (response.headers != null && response.headers["content-type"] != null && response.headers["content-type"].indexOf("application/json+openhim") > -1) {
                 // handle mediator reponse
                 const responseObj = JSON.parse(response.body);
                 routeObj.mediatorURN = responseObj["x-mediator-urn"];
@@ -585,8 +585,4 @@ export function* koaMiddleware(next) {
     yield _route(this);
     if (statsdServer.enabled) { sdc.timing(`${domain}.routerMiddleware`, startTime); }
     return yield next;
-}
-
-function __guard__(value, transform) {
-    return (typeof value !== "undefined" && value !== null) ? transform(value) : undefined;
 }
