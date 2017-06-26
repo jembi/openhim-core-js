@@ -17,12 +17,10 @@ function Config() {
 
     // environment override
     if (environment) {
-        // appRoot is a global var - set in server.cofee
         nconf.file("environmentOverride", `${appRoot}/config/${environment}.json`);
     }
 
     // load the default config file
-    // appRoot is a global var - set in server.cofee
     nconf.file("default", `${appRoot}/config/default.json`);
 
     // Return the result

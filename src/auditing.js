@@ -10,9 +10,6 @@ import * as tlsAuthentication from "./middleware/tlsAuthentication";
 import { config } from "./config";
 
 config.auditing = config.get("auditing");
-let processAudit;
-let processAuditMeta;
-
 const { firstCharLowerCase } = require("xml2js").processors;
 
 function parseAuditRecordFromXML(xml, callback) {
@@ -77,8 +74,8 @@ function codeInArray(code, arr) {
     return arr.map(a => a.code).includes(code);
 }
 
-const processAuditMeta$1 = (processAuditMeta = (audit, callback) =>
-    AuditMeta.findOne({}, (err, auditMeta) => {
+export function processAuditMeta(audit, callback) {
+    return AuditMeta.findOne({}, (err, auditMeta) => {
         if (err) {
             logger.error(err);
             return callback();
@@ -118,12 +115,10 @@ const processAuditMeta$1 = (processAuditMeta = (audit, callback) =>
             if (err) { logger.error(err); }
             return callback();
         });
-    })
-);
+    });
+}
 
-
-export { processAuditMeta$1 as processAuditMeta };
-const processAudit$1 = (processAudit = function (msg, callback) {
+export function processAudit(msg, callback) {
     if (callback == null) { callback = function () { }; }
     const parsedMsg = syslogParser.parse(msg);
 
@@ -147,10 +142,8 @@ const processAudit$1 = (processAudit = function (msg, callback) {
             return processAuditMeta(audit, callback);
         });
     });
-});
+}
 
-
-export { processAudit$1 as processAudit };
 function sendUDPAudit(msg, callback) {
     const client = dgram.createSocket("udp4");
     return client.send(msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, (err) => {

@@ -86,8 +86,7 @@ export function* userPasswordResetRequest(email) {
     // set expiry date = true
 
     const token = exports.generateRandomToken();
-    const { duration } = config.userPasswordResetExpiry;
-    const { durationType } = config.userPasswordResetExpiry;
+    const { duration, durationType } = config.userPasswordResetExpiry;
     const expiry = moment().add(duration, durationType).utc().format();
 
     const updateUserTokenExpiry = {
@@ -259,11 +258,10 @@ export function* addUser() {
     userData.tokenType = "newUser";
     userData.locked = true;
 
-    const { duration } = config.newUserExpiry;
-    const { durationType } = config.newUserExpiry;
+    const { duration, durationType } = config.newUserExpiry;
     userData.expiry = moment().add(duration, durationType).utc().format();
 
-    const { consoleURL } = config.alerts;
+    const consoleURL = config.alerts.consoleURL;
     const setPasswordLink = `${consoleURL}/#/set-password/${token}`;
 
     try {
