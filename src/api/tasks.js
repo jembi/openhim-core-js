@@ -167,11 +167,8 @@ export function* addTask() {
 
 
 /**
- * Retrieves the details for a specific Task #
+ * Retrieves the details for a specific Task
  */
-
-
-// function to build filtered transactions
 function buildFilteredTransactionsArray(filters, transactions) {
     // set tempTransactions array to return
     const tempTransactions = [];
@@ -271,7 +268,7 @@ export function* getTask(taskId) {
 
 
 /**
- * Updates the details for a specific Task #
+ * Updates the details for a specific Task
  */
 export function* updateTask(taskId) {
     // Must be admin
@@ -300,7 +297,7 @@ export function* updateTask(taskId) {
 
 
 /**
- * Deletes a specific Tasks details #
+ * Deletes a specific Tasks details
  */
 export function* removeTask(taskId) {
     // Must be admin
