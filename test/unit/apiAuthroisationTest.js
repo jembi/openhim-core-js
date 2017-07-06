@@ -40,12 +40,12 @@ describe("API authorisation test", () => {
       urlPattern: "test/sample",
       allow: ["PoC", "Test1", "Test2"],
       routes: [{
-            name: "test route",
-            host: "localhost",
-            port: 9876,
-            primary: true
-          }
-          ],
+        name: "test route",
+        host: "localhost",
+        port: 9876,
+        primary: true
+      }
+      ],
       txViewAcl: ["group1", "group2"],
       txRerunAcl: ["group2"] });
 
@@ -54,12 +54,12 @@ describe("API authorisation test", () => {
       urlPattern: "test/sample",
       allow: ["PoC", "Test1", "Test2"],
       routes: [{
-            name: "test route",
-            host: "localhost",
-            port: 9876,
-            primary: true
-          }
-          ],
+        name: "test route",
+        host: "localhost",
+        port: 9876,
+        primary: true
+      }
+      ],
       txViewAcl: ["group2", "group3"],
       txRerunAcl: ["group1", "group3"] });
 
@@ -68,12 +68,12 @@ describe("API authorisation test", () => {
       urlPattern: "test/sample",
       allow: ["PoC", "Test1", "Test2"],
       routes: [{
-            name: "test route",
-            host: "localhost",
-            port: 9876,
-            primary: true
-          }
-          ],
+        name: "test route",
+        host: "localhost",
+        port: 9876,
+        primary: true
+      }
+      ],
       txViewAcl: ["group4"],
       txRerunAcl: ["group4"] });
 

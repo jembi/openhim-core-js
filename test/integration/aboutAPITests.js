@@ -9,26 +9,26 @@ const { auth } = testUtils;
 describe("API Integration Tests", () =>
 
     describe("About Information REST Api Testing", () => {
-        let authDetails = {};
+      let authDetails = {};
 
-        before(done =>
+      before(done =>
             server.start({ apiPort: 8080 }, () =>
                 auth.setupTestUsers((err) => {
-                    authDetails = auth.getAuthDetails();
-                    return done();
+                  authDetails = auth.getAuthDetails();
+                  return done();
                 })
             )
         );
 
-        after(done =>
+      after(done =>
             server.stop(() =>
                 auth.cleanupTestUsers(err => done())
             )
         );
 
 
-        describe("*getAboutInformation", () => {
-            it("should fetch core version and return status 200", done =>
+      describe("*getAboutInformation", () => {
+        it("should fetch core version and return status 200", done =>
                 request("https://localhost:8080")
                     .get("/about")
                     .set("auth-username", testUtils.rootUser.email)
@@ -37,16 +37,16 @@ describe("API Integration Tests", () =>
                     .set("auth-token", authDetails.authToken)
                     .expect(200)
                     .end((err, res) => {
-                        if (err) {
-                            return done(err);
-                        } else {
-                            res.body.should.have.property("currentCoreVersion");
-                            return done();
-                        }
+                      if (err) {
+                        return done(err);
+                      } else {
+                        res.body.should.have.property("currentCoreVersion");
+                        return done();
+                      }
                     })
             );
 
-            it("should return 404 if not found", done =>
+        it("should return 404 if not found", done =>
                 request("https://localhost:8080")
                     .get("/about/bleh")
                     .set("auth-username", testUtils.rootUser.email)
@@ -55,13 +55,13 @@ describe("API Integration Tests", () =>
                     .set("auth-token", authDetails.authToken)
                     .expect(404)
                     .end((err, res) => {
-                        if (err) {
-                            return done(err);
-                        } else {
-                            return done();
-                        }
+                      if (err) {
+                        return done(err);
+                      } else {
+                        return done();
+                      }
                     })
             );
-        });
+      });
     })
 );

@@ -15,98 +15,98 @@ const himSourceID = config.auditing.auditEvents.auditSourceID;
 //
 // /transactions is treated as a special case - see below
 const auditingExemptPaths = [
-    /\/tasks/,
-    /\/events.*/,
-    /\/metrics.*/,
-    /\/mediators\/.*\/heartbeat/,
-    /\/audits/,
-    /\/logs/
+  /\/tasks/,
+  /\/events.*/,
+  /\/metrics.*/,
+  /\/mediators\/.*\/heartbeat/,
+  /\/audits/,
+  /\/logs/
 ];
 
 const isUndefOrEmpty = string => (string == null) || (string === "");
 
 export function* authenticate(next) {
-    const { header } = this.request;
-    const email = header["auth-username"];
-    const authTS = header["auth-ts"];
-    const authSalt = header["auth-salt"];
-    const authToken = header["auth-token"];
+  const { header } = this.request;
+  const email = header["auth-username"];
+  const authTS = header["auth-ts"];
+  const authSalt = header["auth-salt"];
+  const authToken = header["auth-token"];
 
-    function auditAuthFailure() {
-        let audit = atna.userLoginAudit(atna.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email);
-        audit = atna.wrapInSyslog(audit);
-        return auditing.sendAuditEvent(audit, () => logger.debug("Processed internal audit"));
-    }
+  function auditAuthFailure() {
+    let audit = atna.userLoginAudit(atna.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email);
+    audit = atna.wrapInSyslog(audit);
+    return auditing.sendAuditEvent(audit, () => logger.debug("Processed internal audit"));
+  }
 
     // if any of the required headers aren't present
-    if (isUndefOrEmpty(email) || isUndefOrEmpty(authTS) || isUndefOrEmpty(authSalt) || isUndefOrEmpty(authToken)) {
-        logger.info(`API request made by ${email} from ${this.request.host} is missing required API authentication headers, denying access`);
-        this.status = 401;
-        auditAuthFailure();
-        return;
-    }
+  if (isUndefOrEmpty(email) || isUndefOrEmpty(authTS) || isUndefOrEmpty(authSalt) || isUndefOrEmpty(authToken)) {
+    logger.info(`API request made by ${email} from ${this.request.host} is missing required API authentication headers, denying access`);
+    this.status = 401;
+    auditAuthFailure();
+    return;
+  }
 
     // check if request is recent
-    const requestDate = new Date(Date.parse(authTS));
+  const requestDate = new Date(Date.parse(authTS));
 
-    const authWindowSeconds = config.api.authWindowSeconds != null ? config.api.authWindowSeconds : 10;
-    const to = new Date();
-    to.setSeconds(to.getSeconds() + authWindowSeconds);
-    const from = new Date();
-    from.setSeconds(from.getSeconds() - authWindowSeconds);
+  const authWindowSeconds = config.api.authWindowSeconds != null ? config.api.authWindowSeconds : 10;
+  const to = new Date();
+  to.setSeconds(to.getSeconds() + authWindowSeconds);
+  const from = new Date();
+  from.setSeconds(from.getSeconds() - authWindowSeconds);
 
-    if ((requestDate < from) || (requestDate > to)) {
+  if ((requestDate < from) || (requestDate > to)) {
         // request expired
-        logger.info(`API request made by ${email} from ${this.request.host} has expired, denying access`);
-        this.status = 401;
-        auditAuthFailure();
-        return;
-    }
+    logger.info(`API request made by ${email} from ${this.request.host} has expired, denying access`);
+    this.status = 401;
+    auditAuthFailure();
+    return;
+  }
 
-    const user = yield User.findOne({ email }).exec();
-    this.authenticated = user;
+  const user = yield User.findOne({ email }).exec();
+  this.authenticated = user;
 
-    if (!user) {
+  if (!user) {
         // not authenticated - user not found
-        logger.info(`No user exists for ${email}, denying access to API, request originated from ${this.request.host}`);
-        this.status = 401;
-        auditAuthFailure();
-        return;
-    }
+    logger.info(`No user exists for ${email}, denying access to API, request originated from ${this.request.host}`);
+    this.status = 401;
+    auditAuthFailure();
+    return;
+  }
 
-    const hash = crypto.createHash("sha512");
-    hash.update(user.passwordHash);
-    hash.update(authSalt);
-    hash.update(authTS);
+  const hash = crypto.createHash("sha512");
+  hash.update(user.passwordHash);
+  hash.update(authSalt);
+  hash.update(authTS);
 
-    if (authToken === hash.digest("hex")) {
+  if (authToken === hash.digest("hex")) {
         // authenticated
 
-        if (this.path === "/transactions") {
-            if (!this.query.filterRepresentation || (this.query.filterRepresentation !== "full")) {
+    if (this.path === "/transactions") {
+      if (!this.query.filterRepresentation || (this.query.filterRepresentation !== "full")) {
                 // exempt from auditing success
-                yield next;
-                return;
-            }
-        } else {
-            for (const pathTest of Array.from(auditingExemptPaths)) {
-                if (pathTest.test(this.path)) {
+        yield next;
+        return;
+      }
+    } else {
+      for (const pathTest of Array.from(auditingExemptPaths)) {
+        if (pathTest.test(this.path)) {
                     // exempt from auditing success
-                    yield next;
-                    return;
-                }
-            }
+          yield next;
+          return;
         }
+      }
+    }
 
         // send audit
-        let audit = atna.userLoginAudit(atna.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(","), user.groups.join(","));
-        audit = atna.wrapInSyslog(audit);
-        auditing.sendAuditEvent(audit, () => logger.debug("Processed internal audit"));
-        return yield next;
-    } else {
+    let audit = atna.userLoginAudit(atna.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(","), user.groups.join(","));
+    audit = atna.wrapInSyslog(audit);
+    auditing.sendAuditEvent(audit, () => logger.debug("Processed internal audit"));
+    return yield next;
+  } else {
         // not authenticated - token mismatch
-        logger.info(`API token did not match expected value, denying access to API, the request was made by ${email} from ${this.request.host}`);
-        this.status = 401;
-        return auditAuthFailure();
-    }
+    logger.info(`API token did not match expected value, denying access to API, the request was made by ${email} from ${this.request.host}`);
+    this.status = 401;
+    return auditAuthFailure();
+  }
 }

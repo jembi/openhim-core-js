@@ -494,11 +494,11 @@ describe("Transaction Alerts", () => {
     };
 
     const mockContactHandler = function(spy, err) {
- if (err == null) { err = null; } return function(method, contactAddress, title, messagePlain, messageHTML, callback) {
-      spy(method, contactAddress, title, messagePlain, messageHTML);
-      return callback(err);
+      if (err == null) { err = null; } return function(method, contactAddress, title, messagePlain, messageHTML, callback) {
+        spy(method, contactAddress, title, messagePlain, messageHTML);
+        return callback(err);
+      };
     };
-};
 
     it("should not contact users if there no matching transactions", (done) => {
       const contactSpy = sinon.spy();

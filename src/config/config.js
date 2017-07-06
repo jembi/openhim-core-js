@@ -6,22 +6,22 @@ import { path as appRoot } from "app-root-path";
  */
 function Config() {
     // Get the argument-value to use
-    nconf.argv().env("_");
-    const environment = nconf.get("NODE:ENV") || "development";
+  nconf.argv().env("_");
+  const environment = nconf.get("NODE:ENV") || "development";
 
     // Load the configuration-values
     // user specified config override
-    if (nconf.get("conf")) {
-        nconf.file("customConfigOverride", nconf.get("conf"));
-    }
+  if (nconf.get("conf")) {
+    nconf.file("customConfigOverride", nconf.get("conf"));
+  }
 
     // environment override
-    if (environment) {
-        nconf.file("environmentOverride", `${appRoot}/config/${environment}.json`);
-    }
+  if (environment) {
+    nconf.file("environmentOverride", `${appRoot}/config/${environment}.json`);
+  }
 
     // load the default config file
-    nconf.file("default", `${appRoot}/config/default.json`);
+  nconf.file("default", `${appRoot}/config/default.json`);
 
     // Return the result
 }
