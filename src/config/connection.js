@@ -1,11 +1,17 @@
 import mongoose from "mongoose";
 import { config } from "./";
-import * as utils from "../utils";
 
 config.mongo = config.get("mongo");
 
-console.log('======================================================================');
-console.log(utils.getExtraMongoConfig());
-console.log('======================================================================');
-export const connectionDefault = mongoose.createConnection(config.mongo.url, utils.getExtraMongoConfig());
+export const connectionDefault = mongoose.createConnection(config.mongo.url, getMongoOptions());
 export const connectionATNA = mongoose.createConnection(config.mongo.atnaUrl);
+
+function getMongoOptions() {
+  return {
+    db: {
+      readPreference: config.mongo.openHIMApiReadPreference,
+      readConcern: { level: config.mongo.openHIMApiReadConcern },
+      w: config.mongo.openHIMApiWriteConcern
+    }
+  };
+}

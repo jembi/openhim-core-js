@@ -123,13 +123,3 @@ export function enforceMaxBodiesSize(ctx, tx) {
   ctx.totalBodyLength += len;
   return enforced;
 }
-
-export function getExtraMongoConfig() {
-  return {
-    db: {
-      readPreference: config.mongo.openHIMApiReadPreference,
-      readConcern: { level: config.mongo.openHIMApiReadConcern },
-      w: config.mongo.openHIMApiWriteConcern
-    }
-  };
-}
