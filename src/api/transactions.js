@@ -262,9 +262,9 @@ function enforceMaxBodiesSize(ctx, obj, ws) {
 }
 
 
-function calculateTransactionBodiesByteLength(l, obj, ws) {
-  if (obj.body && (typeof obj.body === "string")) { l += Buffer.byteLength(obj.body); }
-  return recursivelySearchObject(l, obj, ws, calculateTransactionBodiesByteLength);
+function calculateTransactionBodiesByteLength(lengthObj, obj, ws) {
+  if (obj.body && (typeof obj.body === "string")) { lengthObj.length += Buffer.byteLength(obj.body); }
+  return recursivelySearchObject(lengthObj, obj, ws, calculateTransactionBodiesByteLength);
 }
 
 /*
@@ -521,11 +521,11 @@ export function* updateTransaction(transactionId) {
     }
 
     const transactionToUpdate = yield transactions.Transaction.findOne({ _id: transactionId }).exec();
-    const transactionBodiesLength = 0;
+    const transactionBodiesLength = { length: 0 };
     calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet());
 
     const ctx = {
-      totalBodyLength: transactionBodiesLength,
+      totalBodyLength: transactionBodiesLength.length,
       primaryRequest: true
     };
     enforceMaxBodiesSize(ctx, updates, new WeakSet());
@@ -565,4 +565,9 @@ export function* removeTransaction(transactionId) {
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not remove transaction via the API: ${e}`, "error");
   }
+}
+
+if (process.env.NODE_ENV === 'test') {
+  exports.calculateTransactionBodiesByteLength = calculateTransactionBodiesByteLength
+  exports.updateTransactionMetrics = updateTransactionMetrics
 }
