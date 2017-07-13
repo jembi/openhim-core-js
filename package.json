@@ -21,7 +21,7 @@
     "test:unit": "cross-env NODE_ENV=test mocha --require babel-register test/unit/**/*.js",
     "test:int": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 mocha -t 4000 --require babel-register test/integration/**/*.js",
     "test:load:client": "./test/load-tests/env/start-server.sh && sleep 5 && artillery run -o artillery/load-clients.json test/load-tests/clients.yml && npm stop && artillery report artillery/load-clients.json",
-    "test:load:api": "./test/load-tests/env/start-server.sh && sleep 7 && artillery run -o artillery/load-api.json test/load-tests/api.yml && npm stop && artillery report artillery/load-api.json",
+    "test:load:api": "./test/load-tests/env/start-server.sh && sleep 7 && artillery run -k -o artillery/load-api.json test/load-tests/api.yml && npm stop && artillery report artillery/load-api.json",
     "start": "node --harmony lib/server.js",
     "stop": "pkill -SIGINT Core"
   },
