@@ -2,21 +2,21 @@ import Q from "q";
 import logger from "winston";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
-import { Channel } from "../model/channels";
-import { Client } from "../model/clients";
-import { Mediator } from "../model/mediators";
-import { User } from "../model/users";
-import { ContactGroup } from "../model/contactGroups";
-import { Keystore } from "../model/keystore";
+import { ChannelAPI } from "../model/channels";
+import { ClientAPI } from "../model/clients";
+import { MediatorAPI } from "../model/mediators";
+import { UserAPI } from "../model/users";
+import { ContactGroupAPI } from "../model/contactGroups";
+import { KeystoreModelAPI } from "../model/keystore";
 
 // Map string parameters to collections
 const collections = {
-  Channels: Channel,
-  Clients: Client,
-  Mediators: Mediator,
-  Users: User,
-  ContactGroups: ContactGroup,
-  Keystore
+  Channels: ChannelAPI,
+  Clients: ClientAPI,
+  Mediators: MediatorAPI,
+  Users: UserAPI,
+  ContactGroups: ContactGroupAPI,
+  KeystoreModelAPI
 };
 
 // Function to remove properties from export object

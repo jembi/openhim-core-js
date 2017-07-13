@@ -2,7 +2,7 @@ import crypto from "crypto";
 import logger from "winston";
 import atna from "atna-audit";
 import os from "os";
-import { User } from "../model/users";
+import { UserAPI } from "../model/users";
 import { config } from "../config";
 import * as auditing from "../auditing";
 
@@ -63,7 +63,7 @@ export function* authenticate(next) {
     return;
   }
 
-  const user = yield User.findOne({ email }).exec();
+  const user = yield UserAPI.findOne({ email }).exec();
   this.authenticated = user;
 
   if (!user) {

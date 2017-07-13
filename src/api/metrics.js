@@ -3,8 +3,8 @@ import logger from "winston";
 import mongoose from "mongoose";
 import Q from "q";
 import _ from "lodash";
-import { Transaction } from "../model/transactions";
-import { Channel } from "../model/channels";
+import { TransactionAPI } from "../model/transactions";
+import { ChannelAPI } from "../model/channels";
 import * as authorisation from "./authorisation";
 import * as metrics from "../metrics";
 

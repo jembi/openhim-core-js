@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { connectionAPI } from "../config";
 import { connectionDefault } from "../config";
 import { RouteDef, ChannelDef } from "./channels";
 
@@ -38,4 +39,5 @@ const MediatorSchema = new Schema({
 });
 
 // Model for describing a collection of mediators that have registered themselves with core
+export const MediatorAPI = connectionAPI.model("Mediator", MediatorSchema);
 export const Mediator = connectionDefault.model("Mediator", MediatorSchema);

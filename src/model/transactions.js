@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { connectionAPI } from "../config";
 import { connectionDefault } from "../config";
 
 // Request Schema definition
@@ -89,4 +90,5 @@ const TransactionSchema = new Schema({
 TransactionSchema.index("request.timestamp");
 
 // Compile schema into Model
+export const TransactionAPI = connectionAPI.model("Transaction", TransactionSchema);
 export const Transaction = connectionDefault.model("Transaction", TransactionSchema);

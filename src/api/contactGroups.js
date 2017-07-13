@@ -1,8 +1,8 @@
 import Q from "q";
 import logger from "winston";
-import { ContactGroup } from "../model/contactGroups";
+import { ContactGroupAPI } from "../model/contactGroups";
 import * as authorisation from "./authorisation";
-import { Channel } from "../model/channels";
+import { ChannelAPI } from "../model/channels";
 
 import * as utils from "../utils";
 
@@ -16,7 +16,7 @@ export function* addContactGroup() {
   const contactGroupData = this.request.body;
 
   try {
-    const contactGroup = new ContactGroup(contactGroupData);
+    const contactGroup = new ContactGroupAPI(contactGroupData);
     const result = yield Q.ninvoke(contactGroup, "save");
 
     return utils.logAndSetResponse(this, 201, "Contact Group successfully created", "info");
@@ -36,7 +36,7 @@ export function* getContactGroup(contactGroupId) {
   contactGroupId = unescape(contactGroupId);
 
   try {
-    const result = yield ContactGroup.findById(contactGroupId).exec();
+    const result = yield ContactGroupAPI.findById(contactGroupId).exec();
 
     if (result === null) {
       this.body = `Contact Group with id '${contactGroupId}' could not be found.`;
@@ -65,7 +65,7 @@ export function* updateContactGroup(contactGroupId) {
   }
 
   try {
-    yield ContactGroup.findByIdAndUpdate(contactGroupId, contactGroupData).exec();
+    yield ContactGroupAPI.findByIdAndUpdate(contactGroupId, contactGroupData).exec();
     this.body = "Successfully updated contact group.";
     return logger.info(`User ${this.authenticated.email} updated contact group with id ${contactGroupId}`);
   } catch (err) {
@@ -82,7 +82,7 @@ export function* removeContactGroup(contactGroupId) {
 
   contactGroupId = unescape(contactGroupId);
   try {
-    const linkedAlerts = yield Channel.find({
+    const linkedAlerts = yield ChannelAPI.find({
       alerts: {
         $elemMatch: {
           groups: {
@@ -95,7 +95,7 @@ export function* removeContactGroup(contactGroupId) {
       this.status = 409;
       this.body = linkedAlerts;
     } else {
-      yield ContactGroup.findByIdAndRemove(contactGroupId).exec();
+      yield ContactGroupAPI.findByIdAndRemove(contactGroupId).exec();
       this.body = `Successfully removed contact group with ID '${contactGroupId}'`;
       logger.info(`User ${this.authenticated.email} removed contact group with id ${contactGroupId}`);
     }
@@ -112,7 +112,7 @@ export function* getContactGroups() {
   }
 
   try {
-    return this.body = yield ContactGroup.find().exec();
+    return this.body = yield ContactGroupAPI.find().exec();
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch all Contact Group via the API: ${err}`, "error");
   }

@@ -4,7 +4,7 @@ import moment from "moment";
 import randtoken from "rand-token";
 import atna from "atna-audit";
 import os from "os";
-import { User } from "../model/users";
+import { UserAPI } from "../model/users";
 import * as authorisation from "./authorisation";
 import * as contact from "../contact";
 import { config } from "../config";
@@ -24,7 +24,7 @@ export function* authenticate(email) {
   email = unescape(email);
 
   try {
-    const user = yield User.findOne({ email }).exec();
+    const user = yield UserAPI.findOne({ email }).exec();
 
     if (!user) {
       utils.logAndSetResponse(this, 404, `Could not find user by email ${email}`, "info");
@@ -96,7 +96,7 @@ export function* userPasswordResetRequest(email) {
   };
 
   try {
-    const user = yield User.findOneAndUpdate({ email }, updateUserTokenExpiry).exec();
+    const user = yield UserAPI.findOneAndUpdate({ email }, updateUserTokenExpiry).exec();
 
     if (!user) {
       this.body = `Tried to request password reset for invalid email address: ${email}`;
@@ -139,7 +139,7 @@ export function* getUserByToken(token) {
   try {
     const projectionRestriction = { email: 1, firstname: 1, surname: 1, msisdn: 1, token: 1, tokenType: 1, locked: 1, expiry: 1, _id: 0 };
 
-    const result = yield User.findOne({ token }, projectionRestriction).exec();
+    const result = yield UserAPI.findOne({ token }, projectionRestriction).exec();
     if (!result) {
       this.body = `User with token ${token} could not be found.`;
       return this.status = 404;
@@ -166,7 +166,7 @@ export function* updateUserByToken(token) {
 
   try {
         // first try get new user details to check expiry date
-    userDataExpiry = yield User.findOne({ token }).exec();
+    userDataExpiry = yield UserAPI.findOne({ token }).exec();
 
     if (!userDataExpiry) {
       this.body = `User with token ${token} could not be found.`;
@@ -205,7 +205,7 @@ export function* updateUserByToken(token) {
   }
 
   try {
-    yield User.findOneAndUpdate({ token }, userUpdateObj).exec();
+    yield UserAPI.findOneAndUpdate({ token }, userUpdateObj).exec();
     this.body = "Successfully set new user password.";
     return logger.info(`User updated by token ${token}`);
   } catch (error1) {
@@ -265,7 +265,7 @@ export function* addUser() {
   const setPasswordLink = `${consoleURL}/#/set-password/${token}`;
 
   try {
-    const user = new User(userData);
+    const user = new UserAPI(userData);
     const result = yield Q.ninvoke(user, "save");
 
         // Send email to new user to set password
@@ -303,7 +303,7 @@ export function* getUser(email) {
   }
 
   try {
-    const result = yield User.findOne({ email }).exec();
+    const result = yield UserAPI.findOne({ email }).exec();
     if (!result) {
       this.body = `User with email ${email} could not be found.`;
       return this.status = 404;
@@ -342,7 +342,7 @@ export function* updateUser(email) {
   if (userData._id) { delete userData._id; }
 
   try {
-    yield User.findOneAndUpdate({ email }, userData).exec();
+    yield UserAPI.findOneAndUpdate({ email }, userData).exec();
     this.body = "Successfully updated user.";
     return logger.info(`User ${this.authenticated.email} updated user ${userData.email}`);
   } catch (e) {
@@ -367,7 +367,7 @@ export function* removeUser(email) {
   }
 
   try {
-    yield User.findOneAndRemove({ email }).exec();
+    yield UserAPI.findOneAndRemove({ email }).exec();
     this.body = `Successfully removed user with email ${email}`;
     return logger.info(`User ${this.authenticated.email} removed user ${email}`);
   } catch (e) {
@@ -384,7 +384,7 @@ export function* getUsers() {
   }
 
   try {
-    return this.body = yield User.find().exec();
+    return this.body = yield UserAPI.find().exec();
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not fetch all users via the API ${e}`, "error");
   }

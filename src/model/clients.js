@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { connectionAPI } from "../config";
 import { connectionDefault } from "../config";
 
 const ClientSchema = new Schema({
@@ -25,4 +26,5 @@ const ClientSchema = new Schema({
 });
 
 // compile the Client Schema into a Model
+export const ClientAPI = connectionAPI.model("Client", ClientSchema);
 export const Client = connectionDefault.model("Client", ClientSchema);

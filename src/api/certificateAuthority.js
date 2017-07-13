@@ -1,7 +1,7 @@
 import Q from "q";
 import logger from "winston";
 import pem from "pem";
-import { Keystore, Certificate } from "../model/keystore";
+import { KeystoreModelAPI, CertificateAPI } from "../model/keystore";
 import * as utils from "../utils";
 import * as authorisation from "./authorisation";
 
@@ -29,7 +29,7 @@ export function* generateCert() {
 }
 
 function* generateClientCert(options, ctx) {
-  const keystoreDoc = yield Keystore.findOne().exec();
+  const keystoreDoc = yield KeystoreModelAPI.findOne().exec();
 
     // Set additional options
   options.selfSigned = true;
@@ -50,7 +50,7 @@ function* generateClientCert(options, ctx) {
 }
 
 function* generateServerCert(options, ctx) {
-  const keystoreDoc = yield Keystore.findOne().exec();
+  const keystoreDoc = yield KeystoreModelAPI.findOne().exec();
   options.selfSigned = true;
   try {
     ctx.body = yield createCertificate(options);

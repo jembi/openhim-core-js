@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { connectionAPI } from "../config";
 import { connectionDefault } from "../config";
 
 // A collection for keeping a day-long log of any alerts that got sent out to users
@@ -27,4 +28,5 @@ const AlertSchema = new Schema({
   }
 });
 
+export const AlertAPI = connectionAPI.model("Alert", AlertSchema);
 export const Alert = connectionDefault.model("Alert", AlertSchema);

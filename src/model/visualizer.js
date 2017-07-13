@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { connectionAPI } from "../config";
 import { connectionDefault } from "../config";
 import * as events from "./events";
 
@@ -68,4 +69,5 @@ const VisualizerSchema = new Schema({
 });
 
 // Compile schema into Model
+export const VisualizerAPI = connectionAPI.model("Visualizer", VisualizerSchema);
 export const Visualizer = connectionDefault.model("Visualizer", VisualizerSchema);

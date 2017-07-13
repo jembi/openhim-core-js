@@ -2,8 +2,8 @@
 import Q from "q";
 import logger from "winston";
 import { Task } from "../model/tasks";
-import { Transaction } from "../model/transactions";
-import { AutoRetry } from "../model/autoRetry";
+import { TransactionAPI } from "../model/transactions";
+import { AutoRetryAPI } from "../model/autoRetry";
 import * as Channels from "../model/channels";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
@@ -20,7 +20,7 @@ function isRerunPermissionsValid(user, transactions, callback) {
         // admin user allowed to rerun any transactions
     return callback(null, true);
   } else {
-    return Transaction.distinct("channelID", { _id: { $in: transactions.tids } }, (err, transChannels) =>
+    return TransactionAPI.distinct("channelID", { _id: { $in: transactions.tids } }, (err, transChannels) =>
             Channel.distinct("_id", { txRerunAcl: { $in: user.groups } }, (err, allowedChannels) => {
                 // for each transaction channel found to be rerun
               for (const trx of Array.from(transChannels)) {
@@ -89,7 +89,7 @@ export function* getTasks() {
 
 
 const areTransactionChannelsValid = (transactions, callback) =>
-    Transaction.distinct("channelID", { _id: { $in: transactions.tids } }, (err, trxChannelIDs) => {
+    TransactionAPI.distinct("channelID", { _id: { $in: transactions.tids } }, (err, trxChannelIDs) => {
       if (err) { return callback(err); }
       return Channel.find({ _id: { $in: trxChannelIDs } }, { status: 1 }, (err, trxChannels) => {
         if (err) { return callback(err); }
@@ -153,7 +153,7 @@ export function* addTask() {
       utils.logAndSetResponse(this, 201, `User ${this.authenticated.email} created task with id ${task.id}`, "info");
 
             // Clear the transactions out of the auto retry queue, in case they're in there
-      return AutoRetry.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err); } });
+      return AutoRetryAPI.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err); } });
     } else {
             // rerun task creation not allowed
       return utils.logAndSetResponse(this, 403, "Insufficient permissions prevents this rerun task from being created", "error");

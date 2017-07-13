@@ -4,8 +4,8 @@ import statsd_client from "statsd-client";
 import os from "os";
 import * as transactions from "../model/transactions";
 import * as events from "../middleware/events";
-import { Channel } from "../model/channels";
-import { Client } from "../model/clients";
+import { ChannelAPI } from "../model/channels";
+import { ClientAPI } from "../model/clients";
 import * as autoRetryUtils from "../autoRetry";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
@@ -328,7 +328,7 @@ export function* getTransactionById(transactionId) {
         filterRepresentation = "simpledetails";
 
                 // get channel.txViewFullAcl information by channelID
-        const channel = yield Channel.findById(txChannelID.channelID, { txViewFullAcl: 1 }, { _id: 0 }).exec();
+        const channel = yield ChannelAPI.findById(txChannelID.channelID, { txViewFullAcl: 1 }, { _id: 0 }).exec();
 
                 // loop through user groups
         for (const group of Array.from(this.authenticated.groups)) {
@@ -413,7 +413,7 @@ export function* findTransactionByClientId(clientId) {
 async function generateEvents(transaction, channelID) {
   try {
     logger.debug(`Storing events for transaction: ${transaction._id}`);
-    const channel = await Channel.findById(channelID);
+    const channel = await ChannelAPI.findById(channelID);
 
     const trxEvents = [];
     events.createTransactionEvents(trxEvents, transaction, channel);
@@ -513,7 +513,7 @@ export function* updateTransaction(transactionId) {
     let tx;
     if (hasError(updates)) {
       tx = yield transactions.Transaction.findById(transactionId).exec();
-      const channel = yield Channel.findById(tx.channelID).exec();
+      const channel = yield ChannelAPI.findById(tx.channelID).exec();
       if (!autoRetryUtils.reachedMaxAttempts(tx, channel)) {
         updates.autoRetry = true;
         autoRetryUtils.queueForRetry(tx);

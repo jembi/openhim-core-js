@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { connectionAPI } from "../config";
 import { connectionDefault } from "../config";
 
 
@@ -37,4 +38,5 @@ const EventsSchema = new Schema({
   autoRetryAttempt: Number
 });
 
+export const EventAPI = connectionAPI.model("Event", EventsSchema);
 export const Event = connectionDefault.model("Event", EventsSchema);

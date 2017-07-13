@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { connectionAPI } from "../config";
 import { connectionDefault } from "../config";
 
 const TaskSchema = new Schema({
@@ -46,4 +47,6 @@ const TaskSchema = new Schema({
  * The task object that describes a specific task within the OpenHIM.
  * It provides some metadata describing a task and contains a number of transaction IDs.
  */
+export const TaskAPI = connectionAPI.model("Task", TaskSchema);
 export const Task = connectionDefault.model("Task", TaskSchema);
+

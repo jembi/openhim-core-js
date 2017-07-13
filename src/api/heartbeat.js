@@ -2,14 +2,14 @@ import moment from "moment";
 import Q from "q";
 import * as utils from "../utils";
 import * as server from "../server";
-import { Mediator } from "../model/mediators";
+import { MediatorAPI } from "../model/mediators";
 
 export function* getHeartbeat() {
   try {
     const uptime = Q.denodeify(server.getUptime);
     const result = yield uptime;
 
-    const mediators = yield Mediator.find().exec();
+    const mediators = yield MediatorAPI.find().exec();
     for (const mediator of Array.from(mediators)) {
       if (!result.mediators) { result.mediators = {}; }
 
