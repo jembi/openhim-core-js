@@ -36,8 +36,8 @@ describe("calculateTransactionBodiesByteLength()", () => {
     try {
       transactions.calculateTransactionBodiesByteLength(lengthObj, transaction, new WeakSet())
       lengthObj.length.should.be.exactly(0)
-    } catch (e) {
-      e.should.not.exist()
+    } catch (err) {
+      should.not.exist(err)
     }
   })
 })
@@ -51,8 +51,8 @@ describe("updateTransactionMetrics()", () => {
         }
       }
       transactions.updateTransactionMetrics(updates, {})
-    } catch (e) {
-      e.should.not.exist()
+    } catch (err) {
+      should.not.exist(err)
     }
   })
 })
