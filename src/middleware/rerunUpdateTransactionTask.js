@@ -2,8 +2,8 @@ import Q from "q";
 import logger from "winston";
 import SDC from "statsd-client";
 import os from "os";
-import { Transaction } from "../model/transactions";
-import { Task } from "../model/tasks";
+import { TransactionModel } from "../model/transactions";
+import { TaskModel } from "../model/tasks";
 import { config } from "../config";
 
 const statsdServer = config.get("statsd");
@@ -13,7 +13,7 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(statsdServer);
 
 export function setAttemptNumber(ctx, done) {
-  return Transaction.findOne({ _id: ctx.parentID }, (err, transaction) => {
+  return TransactionModel.findOne({ _id: ctx.parentID }, (err, transaction) => {
     if (transaction.autoRetry) {
       if (transaction.autoRetryAttempt != null) {
         ctx.currentAttempt = transaction.autoRetryAttempt + 1;
@@ -34,7 +34,7 @@ export function setAttemptNumber(ctx, done) {
 }
 
 export function updateOriginalTransaction(ctx, done) {
-  return Transaction.findOne({ _id: ctx.parentID }, (err, transaction) => {
+  return TransactionModel.findOne({ _id: ctx.parentID }, (err, transaction) => {
     transaction.childIDs.push(ctx.transactionId);
     transaction.wasRerun = true;
 
@@ -51,7 +51,7 @@ export function updateOriginalTransaction(ctx, done) {
 }
 
 export function updateTask(ctx, done) {
-  return Task.findOne({ _id: ctx.taskID }, (err, task) => {
+  return TaskModel.findOne({ _id: ctx.taskID }, (err, task) => {
     task.transactions.forEach((tx) => {
       if (tx.tid === ctx.parentID) {
         tx.rerunID = ctx.transactionId;

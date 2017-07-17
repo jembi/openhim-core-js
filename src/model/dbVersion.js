@@ -7,4 +7,4 @@ const dbVersionSchema = new Schema({
 });
 
 export const dbVersionModelAPI = connectionAPI.model("dbVersion", dbVersionSchema);
-export const dbVersion = connectionDefault.model("dbVersion", dbVersionSchema);
+export const dbVersionModel = connectionDefault.model("dbVersion", dbVersionSchema);

@@ -1,11 +1,11 @@
 import logger from "winston";
 import moment from "moment";
 import Q from "q";
-import { AutoRetry } from "./model/autoRetry";
-import { Task } from "./model/tasks";
+import { AutoRetryModel } from "./model/autoRetry";
+import { TaskModel } from "./model/tasks";
 import * as Channels from "./model/channels";
 
-const { Channel } = Channels;
+const { ChannelModel } = Channels;
 
 export function reachedMaxAttempts(tx, channel) {
   return (channel.autoRetryMaxAttempts != null) &&
@@ -14,7 +14,7 @@ export function reachedMaxAttempts(tx, channel) {
 }
 
 export function queueForRetry(tx) {
-  const retry = new AutoRetry({
+  const retry = new AutoRetryModel({
     transactionID: tx._id,
     channelID: tx.channelID,
     requestTimestamp: tx.request.timestamp,
@@ -26,7 +26,7 @@ export function queueForRetry(tx) {
   });
 }
 
-const getChannels = callback => Channel.find({ autoRetryEnabled: true, status: "enabled" }, callback);
+const getChannels = callback => ChannelModel.find({ autoRetryEnabled: true, status: "enabled" }, callback);
 
 function popTransactions(channel, callback) {
   const to = moment().subtract(channel.autoRetryPeriodMinutes - 1, "minutes");
@@ -43,10 +43,10 @@ function popTransactions(channel, callback) {
   };
 
   logger.debug(`Executing query autoRetry.findAndRemove(${JSON.stringify(query)})`);
-  return AutoRetry.find(query, (err, transactions) => {
+  return AutoRetryModel.find(query, (err, transactions) => {
     if (err) { return callback(err); }
     if (transactions.length === 0) { return callback(null, []); }
-    return AutoRetry.remove({ _id: { $in: (transactions.map(t => t._id)) } }, (err) => {
+    return AutoRetryModel.remove({ _id: { $in: (transactions.map(t => t._id)) } }, (err) => {
       if (err) { return callback(err); }
       return callback(null, transactions);
     });
@@ -55,7 +55,7 @@ function popTransactions(channel, callback) {
 
 function createRerunTask(transactionIDs, callback) {
   logger.info(`Rerunning failed transactions: ${transactionIDs}`);
-  const task = new Task({
+  const task = new TaskModel({
     transactions: (transactionIDs.map(t => ({ tid: t }))),
     totalTransactions: transactionIDs.length,
     remainingTransactions: transactionIDs.length,

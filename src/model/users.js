@@ -30,4 +30,4 @@ const UserSchema = new Schema({
 
 // compile the User Schema into a Model
 export const UserModelAPI = connectionAPI.model("User", UserSchema);
-export const User = connectionDefault.model("User", UserSchema);
+export const UserModel = connectionDefault.model("User", UserSchema);

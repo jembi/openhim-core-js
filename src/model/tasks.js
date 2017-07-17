@@ -47,5 +47,5 @@ const TaskSchema = new Schema({
  * It provides some metadata describing a task and contains a number of transaction IDs.
  */
 export const TaskModelAPI = connectionAPI.model("Task", TaskSchema);
-export const Task = connectionDefault.model("Task", TaskSchema);
+export const TaskModel = connectionDefault.model("Task", TaskSchema);
 

@@ -2,7 +2,7 @@ import Q from "q";
 import logger from "winston";
 import SDC from "statsd-client";
 import os from "os";
-import { Client } from "../model/clients";
+import { ClientModel } from "../model/clients";
 import { config } from "../config";
 
 const statsdServer = config.get("statsd");
@@ -11,7 +11,7 @@ const application = config.get("application");
 const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(statsdServer);
 
-const dummyClient = new Client({
+const dummyClient = new ClientModel({
   clientID: "DUMMY-TCP-USER",
   clientDomain: "openhim.org",
   name: "DUMMY-TCP-USER",

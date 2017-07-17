@@ -12,7 +12,7 @@ import * as routerMiddleware from "../middleware/router";
 import * as utils from "../utils";
 import { config } from "../config";
 
-const { Channel } = Channels;
+const { ChannelModel } = Channels;
 const { ObjectId } = Types;
 
 config.polling = config.get("polling");
@@ -66,7 +66,7 @@ export function* addChannel() {
   const channelData = this.request.body;
 
   try {
-    const channel = new Channel(channelData);
+    const channel = new ChannelModel(channelData);
 
     if (!isPathValid(channel)) {
       this.body = "Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]";
@@ -120,13 +120,13 @@ export function* getChannel(channelId) {
     let accessDenied = false;
         // if admin allow acces to all channels otherwise restrict result set
     if (authorisation.inGroup("admin", this.authenticated) === false) {
-      result = yield Channel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec();
-      const adminResult = yield Channel.findById(id).exec();
+      result = yield ChannelModel.findOne({ _id: id, txViewAcl: { $in: this.authenticated.groups } }).exec();
+      const adminResult = yield ChannelModel.findById(id).exec();
       if (adminResult != null) {
         accessDenied = true;
       }
     } else {
-      result = yield Channel.findById(id).exec();
+      result = yield ChannelModel.findById(id).exec();
     }
 
         // Test if the result if valid
@@ -216,7 +216,7 @@ export function* updateChannel(channelId) {
   }
 
   try {
-    const channel = yield Channel.findByIdAndUpdate(id, channelData).exec();
+    const channel = yield ChannelModel.findByIdAndUpdate(id, channelData).exec();
 
         // All ok! So set the result
     this.body = "The channel was successfully updated";
@@ -260,10 +260,10 @@ export function* removeChannel(channelId) {
         // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
     if (numExistingTransactions === 0) {
             // safe to remove
-      channel = yield Channel.findByIdAndRemove(id).exec();
+      channel = yield ChannelModel.findByIdAndRemove(id).exec();
     } else {
             // not safe to remove. just flag as deleted
-      channel = yield Channel.findByIdAndUpdate(id, { status: "deleted" }).exec();
+      channel = yield ChannelModel.findByIdAndUpdate(id, { status: "deleted" }).exec();
     }
 
         // All ok! So set the result
@@ -294,7 +294,7 @@ export function* triggerChannel(channelId) {
   this.status = 200;
 
   try {
-    const channel = yield Channel.findById(id).exec();
+    const channel = yield ChannelModel.findById(id).exec();
 
         // Test if the result if valid
     if (channel === null) {

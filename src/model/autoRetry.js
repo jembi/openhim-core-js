@@ -14,4 +14,4 @@ const AutoRetrySchema = new Schema({
 });
 
 export const AutoRetryModelAPI = connectionAPI.model("AutoRetry", AutoRetrySchema);
-export const AutoRetry = connectionDefault.model("AutoRetry", AutoRetrySchema);
+export const AutoRetryModel = connectionDefault.model("AutoRetry", AutoRetrySchema);

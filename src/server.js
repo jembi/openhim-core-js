@@ -23,8 +23,8 @@ import { path as appRoot } from "app-root-path";
 import * as koaMiddleware from "./koaMiddleware";
 import * as koaApi from "./koaApi";
 import * as tlsAuthentication from "./middleware/tlsAuthentication";
-import { User } from "./model/users";
-import { Keystore } from "./model/keystore";
+import { UserModel } from "./model/users";
+import { KeystoreModel } from "./model/keystore";
 import * as alerts from "./alerts";
 import * as reports from "./reports";
 import * as polling from "./polling";
@@ -376,9 +376,9 @@ if (cluster.isMaster && !module.parent) {
 
     // Ensure that a root user always exists
   const ensureRootUser = callback =>
-        User.findOne({ email: "root@openhim.org" }, (err, user) => {
+        UserModel.findOne({ email: "root@openhim.org" }, (err, user) => {
           if (!user) {
-            user = new User(rootUser);
+            user = new UserModel(rootUser);
             return user.save((err) => {
               if (err) {
                 logger.error(`Could not save root user: ${err}`);
@@ -412,7 +412,7 @@ if (cluster.isMaster && !module.parent) {
             })
             ;
 
-    return Keystore.findOne({}, (err, keystore) => {
+    return KeystoreModel.findOne({}, (err, keystore) => {
       let cert;
       let certPath;
       let keyPath;
@@ -431,7 +431,7 @@ if (cluster.isMaster && !module.parent) {
 
         cert = fs.readFileSync(certPath);
         return getServerCertDetails(cert, (certInfo) => {
-          keystore = new Keystore({
+          keystore = new KeystoreModel({
             cert: certInfo,
             key: fs.readFileSync(keyPath),
             ca: []

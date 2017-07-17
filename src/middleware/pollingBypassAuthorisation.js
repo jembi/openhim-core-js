@@ -2,7 +2,7 @@ import Q from "q";
 import logger from "winston";
 import SDC from "statsd-client";
 import os from "os";
-import { Channel } from "../model/channels";
+import { ChannelModel } from "../model/channels";
 import { config } from "../config";
 
 const statsdServer = config.get("statsd");
@@ -12,7 +12,7 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(statsdServer);
 
 export function authoriseUser(ctx, done) {
-  return Channel.findOne({ _id: ctx.request.header["channel-id"] }, (err, channel) => {
+  return ChannelModel.findOne({ _id: ctx.request.header["channel-id"] }, (err, channel) => {
     ctx.authorisedChannel = channel;
     return done(null, channel);
   });

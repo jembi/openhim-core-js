@@ -4,7 +4,7 @@ import logger from "winston";
 import Q from "q";
 import _ from "lodash";
 import * as transactions from "../model/transactions";
-import { AutoRetry } from "../model/autoRetry";
+import { AutoRetryModel } from "../model/autoRetry";
 import * as autoRetryUtils from "../autoRetry";
 import * as utils from "../utils";
 import { config } from "../config";
@@ -43,7 +43,7 @@ export function storeTransaction(ctx, done) {
 
   const headers = copyMapWithEscapedReservedCharacters(ctx.header);
 
-  const tx = new transactions.Transaction({
+  const tx = new transactions.TransactionModel({
     status: transactionStatus.PROCESSING,
     clientID: (ctx.authenticated != null ? ctx.authenticated._id : undefined),
     channelID: ctx.authorisedChannel._id,
@@ -134,7 +134,7 @@ export function storeResponse(ctx, done) {
     if (ctx.mediatorResponse.properties) { update.properties = ctx.mediatorResponse.properties; }
   }
 
-  return transactions.Transaction.findOneAndUpdate({ _id: ctx.transactionId }, update, { runValidators: true }, (err, tx) => {
+  return transactions.TransactionModel.findOneAndUpdate({ _id: ctx.transactionId }, update, { runValidators: true }, (err, tx) => {
     if (err) {
       logger.error(`Could not save response metadata for transaction: ${ctx.transactionId}. ${err}`);
       return done(err);
@@ -158,7 +158,7 @@ export function storeNonPrimaryResponse(ctx, route, done) {
     if ((route.request != null ? route.request.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.request); }
     if ((route.response != null ? route.response.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.response); }
 
-    return transactions.Transaction.findByIdAndUpdate(ctx.transactionId, { $push: { routes: route } }, (err, tx) => {
+    return transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, { $push: { routes: route } }, (err, tx) => {
       if (err) {
         logger.error(err);
       }
@@ -178,7 +178,7 @@ export function setFinalStatus(ctx, callback) {
     transactionId = ctx.transactionId.toString();
   }
 
-  return transactions.Transaction.findById(transactionId, (err, tx) => {
+  return transactions.TransactionModel.findById(transactionId, (err, tx) => {
     const update = {};
 
     if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
@@ -232,7 +232,7 @@ export function setFinalStatus(ctx, callback) {
 
     if (_.isEmpty(update)) { return callback(tx); } // nothing to do
 
-    return transactions.Transaction.findByIdAndUpdate(transactionId, update, {}, (err, tx) => {
+    return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {}, (err, tx) => {
       callback(tx);
 
             // queue for autoRetry

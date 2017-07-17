@@ -21,4 +21,4 @@ const ContactGroupSchema = new Schema({
 });
 
 export const ContactGroupModelAPI = connectionAPI.model("ContactGroup", ContactGroupSchema);
-export const ContactGroup = connectionDefault.model("ContactGroup", ContactGroupSchema);
+export const ContactGroupModel = connectionDefault.model("ContactGroup", ContactGroupSchema);

@@ -37,4 +37,4 @@ const EventsSchema = new Schema({
 });
 
 export const EventModelAPI = connectionAPI.model("Event", EventsSchema);
-export const Event = connectionDefault.model("Event", EventsSchema);
+export const EventModel = connectionDefault.model("Event", EventsSchema);

@@ -216,7 +216,7 @@ export function* getTransactions() {
 
 
         // execute the query
-    this.body = yield transactions.Transaction
+    this.body = yield transactions.TransactionModel
             .find(filters, projectionFiltersObject)
             .skip(filterSkip)
             .limit(parseInt(filterLimit, 10))
@@ -283,7 +283,7 @@ export function* addTransaction() {
     const ctx = { primaryRequest: true };
     enforceMaxBodiesSize(ctx, transactionData, new WeakSet());
 
-    const tx = new transactions.Transaction(transactionData);
+    const tx = new transactions.TransactionModel(transactionData);
 
         // Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Q.ninvoke(tx, "save");
@@ -318,7 +318,7 @@ export function* getTransactionById(transactionId) {
         // if user NOT admin, determine their representation privileges.
     if (!authorisation.inGroup("admin", this.authenticated)) {
             // retrieve transaction channelID
-      const txChannelID = yield transactions.Transaction.findById(transactionId, { channelID: 1 }, { _id: 0 }).exec();
+      const txChannelID = yield transactions.TransactionModel.findById(transactionId, { channelID: 1 }, { _id: 0 }).exec();
       if ((txChannelID != null ? txChannelID.length : undefined) === 0) {
         this.body = `Could not find transaction with ID: ${transactionId}`;
         this.status = 404;
@@ -346,7 +346,7 @@ export function* getTransactionById(transactionId) {
         // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation);
 
-    const result = yield transactions.Transaction.findById(transactionId, projectionFiltersObject).exec();
+    const result = yield transactions.TransactionModel.findById(transactionId, projectionFiltersObject).exec();
     if (result && (filterRepresentation === "fulltruncate")) {
       truncateTransactionDetails(result);
     }
@@ -400,7 +400,7 @@ export function* findTransactionByClientId(clientId) {
     }
 
         // execute the query
-    return this.body = yield transactions.Transaction
+    return this.body = yield transactions.TransactionModel
             .find(filtersObject, projectionFiltersObject)
             .sort({ "request.timestamp": -1 })
             .exec();
@@ -512,7 +512,7 @@ export function* updateTransaction(transactionId) {
   try {
     let tx;
     if (hasError(updates)) {
-      tx = yield transactions.Transaction.findById(transactionId).exec();
+      tx = yield transactions.TransactionModel.findById(transactionId).exec();
       const channel = yield ChannelModelAPI.findById(tx.channelID).exec();
       if (!autoRetryUtils.reachedMaxAttempts(tx, channel)) {
         updates.autoRetry = true;
@@ -520,7 +520,7 @@ export function* updateTransaction(transactionId) {
       }
     }
 
-    const transactionToUpdate = yield transactions.Transaction.findOne({ _id: transactionId }).exec();
+    const transactionToUpdate = yield transactions.TransactionModel.findOne({ _id: transactionId }).exec();
     const transactionBodiesLength = 0;
     calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet());
 
@@ -530,7 +530,7 @@ export function* updateTransaction(transactionId) {
     };
     enforceMaxBodiesSize(ctx, updates, new WeakSet());
 
-    tx = yield transactions.Transaction.findByIdAndUpdate(transactionId, updates, { new: true }).exec();
+    tx = yield transactions.TransactionModel.findByIdAndUpdate(transactionId, updates, { new: true }).exec();
 
     this.body = `Transaction with ID: ${transactionId} successfully updated`;
     this.status = 200;
@@ -558,7 +558,7 @@ export function* removeTransaction(transactionId) {
   transactionId = unescape(transactionId);
 
   try {
-    yield transactions.Transaction.findByIdAndRemove(transactionId).exec();
+    yield transactions.TransactionModel.findByIdAndRemove(transactionId).exec();
     this.body = "Transaction successfully deleted";
     this.status = 200;
     return logger.info(`User ${this.authenticated.email} removed transaction with id ${transactionId}`);
