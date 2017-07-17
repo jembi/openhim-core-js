@@ -2,20 +2,20 @@ import Q from "q";
 import logger from "winston";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
-import { ChannelAPI } from "../model/channels";
-import { ClientAPI } from "../model/clients";
-import { MediatorAPI } from "../model/mediators";
-import { UserAPI } from "../model/users";
-import { ContactGroupAPI } from "../model/contactGroups";
+import { ChannelModelAPI } from "../model/channels";
+import { ClientModelAPI } from "../model/clients";
+import { MediatorModelAPI } from "../model/mediators";
+import { UserModelAPI } from "../model/users";
+import { ContactGroupModelAPI } from "../model/contactGroups";
 import { KeystoreModelAPI } from "../model/keystore";
 
 // Map string parameters to collections
 const collections = {
-  Channels: ChannelAPI,
-  Clients: ClientAPI,
-  Mediators: MediatorAPI,
-  Users: UserAPI,
-  ContactGroups: ContactGroupAPI,
+  Channels: ChannelModelAPI,
+  Clients: ClientModelAPI,
+  Mediators: MediatorModelAPI,
+  Users: UserModelAPI,
+  ContactGroups: ContactGroupModelAPI,
   KeystoreModelAPI
 };
 

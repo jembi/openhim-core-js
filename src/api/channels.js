@@ -3,7 +3,7 @@ import Q from "q";
 import logger from "winston";
 import request from "request";
 import * as Channels from "../model/channels";
-import { TransactionAPI } from "../model/transactions";
+import { TransactionModelAPI } from "../model/transactions";
 import * as authorisation from "./authorisation";
 import * as tcpAdapter from "../tcpAdapter";
 import * as server from "../server";
@@ -255,7 +255,7 @@ export function* removeChannel(channelId) {
 
   try {
     let channel;
-    const numExistingTransactions = yield TransactionAPI.count({ channelID: id }).exec();
+    const numExistingTransactions = yield TransactionModelAPI.count({ channelID: id }).exec();
 
         // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
     if (numExistingTransactions === 0) {

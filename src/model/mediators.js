@@ -38,5 +38,5 @@ const MediatorSchema = new Schema({
 });
 
 // Model for describing a collection of mediators that have registered themselves with core
-export const MediatorAPI = connectionAPI.model("Mediator", MediatorSchema);
+export const MediatorModelAPI = connectionAPI.model("Mediator", MediatorSchema);
 export const Mediator = connectionDefault.model("Mediator", MediatorSchema);

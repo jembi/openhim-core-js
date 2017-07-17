@@ -1,6 +1,6 @@
 import logger from "winston";
 import Q from "q";
-import { ChannelAPI } from "../model/channels";
+import { ChannelModelAPI } from "../model/channels";
 
 export function inGroup(group, user) {
   return user.groups.indexOf(group) >= 0;
@@ -13,10 +13,10 @@ export function inGroup(group, user) {
 export function getUserViewableChannels(user) {
     // if admin allow all channel
   if (inGroup("admin", user)) {
-    return ChannelAPI.find({}).exec();
+    return ChannelModelAPI.find({}).exec();
   } else {
         // otherwise figure out what this user can view
-    return ChannelAPI.find({ txViewAcl: { $in: user.groups } }).exec();
+    return ChannelModelAPI.find({ txViewAcl: { $in: user.groups } }).exec();
   }
 }
 
@@ -27,9 +27,9 @@ export function getUserViewableChannels(user) {
 export function getUserRerunableChannels(user) {
     // if admin allow all channel
   if (inGroup("admin", user)) {
-    return ChannelAPI.find({}).exec();
+    return ChannelModelAPI.find({}).exec();
   } else {
         // otherwise figure out what this user can rerun
-    return ChannelAPI.find({ txRerunAcl: { $in: user.groups } }).exec();
+    return ChannelModelAPI.find({ txRerunAcl: { $in: user.groups } }).exec();
   }
 }

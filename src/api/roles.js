@@ -1,6 +1,6 @@
 import logger from "winston";
-import { ChannelAPI } from "../model/channels";
-import { ClientAPI } from "../model/clients";
+import { ChannelModelAPI } from "../model/channels";
+import { ClientModelAPI } from "../model/clients";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
 
@@ -71,8 +71,8 @@ export function* getRoles() {
   }
 
   try {
-    const channels = yield ChannelAPI.find({}, { name: 1, allow: 1 }).exec();
-    const clients = yield ClientAPI.find({}, { clientID: 1, roles: 1 }).exec();
+    const channels = yield ChannelModelAPI.find({}, { name: 1, allow: 1 }).exec();
+    const clients = yield ClientModelAPI.find({}, { clientID: 1, roles: 1 }).exec();
 
     return this.body = filterRolesFromChannels(channels, clients);
   } catch (e) {
@@ -90,8 +90,8 @@ export function* getRole(name) {
   }
 
   try {
-    const channels = yield ChannelAPI.find({ allow: { $in: [name] } }, { name: 1 }).exec();
-    const clients = yield ClientAPI.find({ roles: { $in: [name] } }, { clientID: 1 }).exec();
+    const channels = yield ChannelModelAPI.find({ allow: { $in: [name] } }, { name: 1 }).exec();
+    const clients = yield ClientModelAPI.find({ roles: { $in: [name] } }, { clientID: 1 }).exec();
     if ((channels === null || channels.length === 0) && (clients === null || clients.length === 0)) {
       return utils.logAndSetResponse(this, 404, `Role with name '${name}' could not be found.`, "info");
     } else {
@@ -195,13 +195,13 @@ export function* addRole() {
   }
 
   try {
-    const chResult = yield ChannelAPI.find({ allow: { $in: [role.name] } }, { name: 1 }).exec();
-    const clResult = yield ClientAPI.find({ roles: { $in: [role.name] } }, { clientID: 1 }).exec();
+    const chResult = yield ChannelModelAPI.find({ allow: { $in: [role.name] } }, { name: 1 }).exec();
+    const clResult = yield ClientModelAPI.find({ roles: { $in: [role.name] } }, { clientID: 1 }).exec();
     if (((chResult != null ? chResult.length : undefined) > 0) || ((clResult != null ? clResult.length : undefined) > 0)) {
       return utils.logAndSetResponse(this, 400, `Role with name '${role.name}' already exists.`, "info");
     }
 
-    const clientConflict = yield ClientAPI.find({ clientID: role.name }, { clientID: 1 }).exec();
+    const clientConflict = yield ClientModelAPI.find({ clientID: role.name }, { clientID: 1 }).exec();
     if ((clientConflict != null ? clientConflict.length : undefined) > 0) {
       return utils.logAndSetResponse(this, 409, `A clientID conflicts with role name '${role.name}'. A role name cannot be the same as a clientID.`, "info");
     }
@@ -220,10 +220,10 @@ export function* addRole() {
     }
 
     if (role.channels) {
-      yield ChannelAPI.update(chCriteria, { $push: { allow: role.name } }, { multi: true }).exec();
+      yield ChannelModelAPI.update(chCriteria, { $push: { allow: role.name } }, { multi: true }).exec();
     }
     if (role.clients) {
-      yield ClientAPI.update(clCriteria, { $push: { roles: role.name } }, { multi: true }).exec();
+      yield ClientModelAPI.update(clCriteria, { $push: { roles: role.name } }, { multi: true }).exec();
     }
 
     logger.info(`User ${this.authenticated.email} setup role '${role.name}'`);
@@ -249,21 +249,21 @@ export function* updateRole(name) {
         // request validity checks
     let channels;
     let clients;
-    const chResult = yield ChannelAPI.find({ allow: { $in: [name] } }, { name: 1 }).exec();
-    const clResult = yield ClientAPI.find({ roles: { $in: [name] } }, { clientID: 1 }).exec();
+    const chResult = yield ChannelModelAPI.find({ allow: { $in: [name] } }, { name: 1 }).exec();
+    const clResult = yield ClientModelAPI.find({ roles: { $in: [name] } }, { clientID: 1 }).exec();
     if ((chResult === null || chResult.length === 0) && (clResult === null || clResult.length === 0)) {
       return utils.logAndSetResponse(this, 404, `Role with name '${name}' could not be found.`, "info");
     }
 
     if (role.name) {
             // do check here but only perform rename updates later after channel/client updates
-      channels = yield ChannelAPI.find({ allow: { $in: [role.name] } }, { name: 1 }).exec();
-      clients = yield ClientAPI.find({ roles: { $in: [role.name] } }, { name: 1 }).exec();
+      channels = yield ChannelModelAPI.find({ allow: { $in: [role.name] } }, { name: 1 }).exec();
+      clients = yield ClientModelAPI.find({ roles: { $in: [role.name] } }, { name: 1 }).exec();
       if ((channels != null ? channels.length : undefined) > 0 || (clients != null ? clients.length : undefined > 0)) {
         return utils.logAndSetResponse(this, 400, `Role with name '${role.name}' already exists.`, "info");
       }
 
-      const clientConflict = yield ClientAPI.find({ clientID: role.name }, { clientID: 1 }).exec();
+      const clientConflict = yield ClientModelAPI.find({ clientID: role.name }, { clientID: 1 }).exec();
       if (clientConflict != null ? clientConflict.length : undefined > 0) {
         return utils.logAndSetResponse(this, 409, `A clientID conflicts with role name '${role.name}'. A role name cannot be the same as a clientID.`, "info");
       }
@@ -285,29 +285,29 @@ export function* updateRole(name) {
         // update channels
     if (role.channels) {
             // clear role from existing
-      yield ChannelAPI.update({}, { $pull: { allow: name } }, { multi: true }).exec();
+      yield ChannelModelAPI.update({}, { $pull: { allow: name } }, { multi: true }).exec();
             // set role on channels
       if (role.channels.length > 0) {
-        yield ChannelAPI.update(chCriteria, { $push: { allow: name } }, { multi: true }).exec();
+        yield ChannelModelAPI.update(chCriteria, { $push: { allow: name } }, { multi: true }).exec();
       }
     }
 
         // update clients
     if (role.clients) {
             // clear role from existing
-      yield ClientAPI.update({}, { $pull: { roles: name } }, { multi: true }).exec();
+      yield ClientModelAPI.update({}, { $pull: { roles: name } }, { multi: true }).exec();
             // set role on clients
       if ((role.clients != null ? role.clients.length : undefined) > 0) {
-        yield ClientAPI.update(clCriteria, { $push: { roles: name } }, { multi: true }).exec();
+        yield ClientModelAPI.update(clCriteria, { $push: { roles: name } }, { multi: true }).exec();
       }
     }
 
         // rename role
     if (role.name) {
-      yield ChannelAPI.update({ allow: { $in: [name] } }, { $push: { allow: role.name } }, { multi: true }).exec();
-      yield ChannelAPI.update({ allow: { $in: [name] } }, { $pull: { allow: name } }, { multi: true }).exec();
-      yield ClientAPI.update({ roles: { $in: [name] } }, { $push: { roles: role.name } }, { multi: true }).exec();
-      yield ClientAPI.update({ roles: { $in: [name] } }, { $pull: { roles: name } }, { multi: true }).exec();
+      yield ChannelModelAPI.update({ allow: { $in: [name] } }, { $push: { allow: role.name } }, { multi: true }).exec();
+      yield ChannelModelAPI.update({ allow: { $in: [name] } }, { $pull: { allow: name } }, { multi: true }).exec();
+      yield ClientModelAPI.update({ roles: { $in: [name] } }, { $push: { roles: role.name } }, { multi: true }).exec();
+      yield ClientModelAPI.update({ roles: { $in: [name] } }, { $pull: { roles: name } }, { multi: true }).exec();
     }
 
     logger.info(`User ${this.authenticated.email} updated role with name '${name}'`);
@@ -328,14 +328,14 @@ export function* deleteRole(name) {
   }
 
   try {
-    const channels = yield ChannelAPI.find({ allow: { $in: [name] } }, { name: 1 }).exec();
-    const clients = yield ClientAPI.find({ roles: { $in: [name] } }, { clientID: 1 }).exec();
+    const channels = yield ChannelModelAPI.find({ allow: { $in: [name] } }, { name: 1 }).exec();
+    const clients = yield ClientModelAPI.find({ roles: { $in: [name] } }, { clientID: 1 }).exec();
     if ((channels === null || channels.length === 0) && (clients === null || clients.length === 0)) {
       return utils.logAndSetResponse(this, 404, `Role with name '${name}' could not be found.`, "info");
     }
 
-    yield ChannelAPI.update({}, { $pull: { allow: name } }, { multi: true }).exec();
-    yield ClientAPI.update({}, { $pull: { roles: name } }, { multi: true }).exec();
+    yield ChannelModelAPI.update({}, { $pull: { allow: name } }, { multi: true }).exec();
+    yield ClientModelAPI.update({}, { $pull: { roles: name } }, { multi: true }).exec();
 
     logger.info(`User ${this.authenticated.email} deleted role with name '${name}'`);
     return this.body = "Successfully deleted role";

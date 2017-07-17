@@ -25,5 +25,5 @@ const ClientSchema = new Schema({
 });
 
 // compile the Client Schema into a Model
-export const ClientAPI = connectionAPI.model("Client", ClientSchema);
+export const ClientModelAPI = connectionAPI.model("Client", ClientSchema);
 export const Client = connectionDefault.model("Client", ClientSchema);

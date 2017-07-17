@@ -36,5 +36,5 @@ const EventsSchema = new Schema({
   autoRetryAttempt: Number
 });
 
-export const EventAPI = connectionAPI.model("Event", EventsSchema);
+export const EventModelAPI = connectionAPI.model("Event", EventsSchema);
 export const Event = connectionDefault.model("Event", EventsSchema);

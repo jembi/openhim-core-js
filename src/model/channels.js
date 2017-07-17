@@ -137,7 +137,7 @@ export { RouteDef };
 const ChannelSchema = new Schema(ChannelDef);
 ChannelSchema.index("name", { unique: true });
 
-export const ChannelAPI = connectionAPI.model("Channel", ChannelSchema);
+export const ChannelModelAPI = connectionAPI.model("Channel", ChannelSchema);
 export const Channel = connectionDefault.model("Channel", ChannelSchema);
 export { ChannelDef };
 

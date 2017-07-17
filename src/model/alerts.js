@@ -27,5 +27,5 @@ const AlertSchema = new Schema({
   }
 });
 
-export const AlertAPI = connectionAPI.model("Alert", AlertSchema);
+export const AlertModelAPI = connectionAPI.model("Alert", AlertSchema);
 export const Alert = connectionDefault.model("Alert", AlertSchema);

@@ -29,6 +29,6 @@ const KeystoreSchema = new Schema({
 
 // Model for storing the server key and cert as well as trusted certificates
 export const KeystoreModelAPI = connectionAPI.model("Keystore", KeystoreSchema);
-export const CertificateAPI = connectionAPI.model("Certificate", CertificateSchema);
+export const CertificateModelAPI = connectionAPI.model("Certificate", CertificateSchema);
 export const Keystore = connectionDefault.model("Keystore", KeystoreSchema);
 export const Certificate = connectionDefault.model("Certificate", CertificateSchema);

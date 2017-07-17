@@ -89,5 +89,5 @@ const TransactionSchema = new Schema({
 TransactionSchema.index("request.timestamp");
 
 // Compile schema into Model
-export const TransactionAPI = connectionAPI.model("Transaction", TransactionSchema);
+export const TransactionModelAPI = connectionAPI.model("Transaction", TransactionSchema);
 export const Transaction = connectionDefault.model("Transaction", TransactionSchema);
