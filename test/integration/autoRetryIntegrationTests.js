@@ -112,7 +112,7 @@ describe("Auto Retry Integration Tests", () => {
                                   (trx.error.message.indexOf("ECONNREFUSED") > -1).should.be.true();
                                   return done();
                                 })
-                            ), 150 * global.testTimeoutFactor);
+                            ), 1000 * global.testTimeoutFactor);
                       }
                     })
             )
