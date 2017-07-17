@@ -25,9 +25,10 @@ export async function findAndProcessAQueuedTask() {
       await processNextTaskRound(task);
       activeTasks--;
     }
-        // task has finished its current round, pick up the next one
+
+    // task has finished its current round, pick up the next one
     if (live) {
-      return findAndProcessAQueuedTask();
+      setImmediate(findAndProcessAQueuedTask);
     }
   } catch (err) {
     if (task == null) {
@@ -35,6 +36,7 @@ export async function findAndProcessAQueuedTask() {
     } else {
       logger.error(`An error occurred while processing rerun task ${task._id}: ${err}`);
     }
+    activeTasks--;
   }
 }
 
