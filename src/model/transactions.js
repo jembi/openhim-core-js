@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
-import { connectionAPI } from "../config";
-import { connectionDefault } from "../config";
+import { connectionAPI, connectionDefault } from "../config";
 
 // Request Schema definition
 const RequestDef = {

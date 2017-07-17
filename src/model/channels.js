@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
-import { connectionDefault } from "../config";
-import { connectionAPI } from "../config";
+import { connectionAPI, connectionDefault } from "../config";
 import { ContactUserDef } from "./contactGroups";
 
 const RouteDef = {

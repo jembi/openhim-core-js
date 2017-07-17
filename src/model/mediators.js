@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
-import { connectionAPI } from "../config";
-import { connectionDefault } from "../config";
+import { connectionAPI, connectionDefault } from "../config";
 import { RouteDef, ChannelDef } from "./channels";
 
 export const configParamTypes = ["string", "bool", "number", "option", "bigstring", "map", "struct", "password"];
