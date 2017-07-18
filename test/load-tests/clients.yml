@@ -1,0 +1,22 @@
+config:
+  target: "http://localhost:5001"
+  phases:
+    - duration: 10
+      name: 'Low load'
+      arrivalRate: 3
+    - duration: 10
+      name: 'Medium load'
+      arrivalRate: 20
+    - duration: 10
+      name: 'High load'
+      arrivalRate: 50
+  defaults:
+    headers:
+      Authorization: Basic amVtYmk6amVtYmk=
+      
+scenarios:
+  - flow:
+    - post:
+        url: "/example/path"
+        json:
+          test: test
