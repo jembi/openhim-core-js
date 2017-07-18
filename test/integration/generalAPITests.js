@@ -163,7 +163,7 @@ describe("API Integration Tests", () =>
 
                         // create tokenhash
                     let authTS = new Date();
-                    authTS.setSeconds(authTS.getSeconds() - 13);
+                    authTS.setSeconds(authTS.getSeconds() - 53);
                     authTS = authTS.toISOString();
                     const requestsalt = "842cd4a0-1a91-45a7-bf76-c292cb36b2e8";
                     const tokenhash = crypto.createHash("sha512");
