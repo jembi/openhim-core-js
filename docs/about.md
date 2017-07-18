@@ -25,7 +25,7 @@ The mediators are optional, pluggable services that can add extended specific fu
 * Message format adaptation - this allows the transformation of messages received in a certain format into another format (eg. HL7 v2 to HL7 v3 or MHD to XDS.b).
 * Message orchestration - this allows the execution of a business process that may need to call out to other service endpoint on other system. (eg. Enriching a message with a client's unique identifier retrieved from a client registry).
 
-The OpenHIM-core provides a framework to add and mange your own implementation specific mediators in the system.
+The OpenHIM-core provides a framework to add and manage your own implementation specific mediators in the system.
 
 The OpenHIM also comes with an admin console which provides a user friendly interface for configuring and managing an OpenHIM instance.
 
