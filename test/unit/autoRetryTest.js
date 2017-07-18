@@ -8,14 +8,14 @@ import moment from "moment";
 import { Types } from "mongoose";
 import * as autoRetry from "../../src/autoRetry";
 import * as testUtils from "../testUtils";
-import { Channel } from "../../src/model/channels";
-import { AutoRetry } from "../../src/model/autoRetry";
-import { Task } from "../../src/model/tasks";
+import { ChannelModel } from "../../src/model/channels";
+import { AutoRetryModel } from "../../src/model/autoRetry";
+import { TaskModel } from "../../src/model/tasks";
 
 const { ObjectId } = Types;
 
 
-const retryChannel = new Channel({
+const retryChannel = new ChannelModel({
   name: "retry-test",
   urlPattern: "/test",
   allow: "*",
@@ -23,7 +23,7 @@ const retryChannel = new Channel({
   autoRetryPeriodMinutes: 60
 });
 
-const retryChannel2 = new Channel({
+const retryChannel2 = new ChannelModel({
   name: "retry-test-2",
   urlPattern: "/test/2",
   allow: "*",
@@ -31,14 +31,14 @@ const retryChannel2 = new Channel({
   autoRetryPeriodMinutes: 60
 });
 
-const noRetryChannel = new Channel({
+const noRetryChannel = new ChannelModel({
   name: "no-retry-test",
   urlPattern: "/test",
   allow: "*",
   autoRetryEnabled: false
 });
 
-const disabledChannel = new Channel({
+const disabledChannel = new ChannelModel({
   name: "disabled",
   urlPattern: "/disabled",
   allow: "*",
@@ -46,17 +46,17 @@ const disabledChannel = new Channel({
   status: "disabled"
 });
 
-const retryTransaction1 = new AutoRetry({
+const retryTransaction1 = new AutoRetryModel({
   transactionID: ObjectId("53e096fea0af3105689aaaaa"),
   requestTimestamp: moment().subtract(1, "hour").subtract(30, "minutes").toDate()
 });
 
-const retryTransaction2 = new AutoRetry({
+const retryTransaction2 = new AutoRetryModel({
   transactionID: ObjectId("53e096fea0af3105689bbbbb"),
   requestTimestamp: new Date()
 });
 
-const retryTransaction3 = new AutoRetry({
+const retryTransaction3 = new AutoRetryModel({
   transactionID: ObjectId("53e096fea0af3105689ccccc"),
   requestTimestamp: moment().subtract(1, "hour").subtract(30, "minutes").toDate()
 });
@@ -64,7 +64,7 @@ const retryTransaction3 = new AutoRetry({
 
 describe("Auto Retry Task", () => {
   afterEach(done =>
-        Channel.remove({}, () => AutoRetry.remove({}, () => Task.remove({}, () => {
+        ChannelModel.remove({}, () => AutoRetryModel.remove({}, () => TaskModel.remove({}, () => {
           retryChannel.isNew = true;
           delete retryChannel._id;
           retryChannel2.isNew = true;
@@ -160,7 +160,7 @@ describe("Auto Retry Task", () => {
               return retryTransaction1.save(() =>
                     autoRetry.createRerunTask([retryTransaction1.transactionID], (err) => {
                       if (err) { return done(err); }
-                      return Task.find({}, (err, results) => {
+                      return TaskModel.find({}, (err, results) => {
                         results.length.should.be.exactly(1);
                         results[0].transactions.length.should.be.exactly(1);
                         results[0].transactions[0].tid.should.be.exactly(retryTransaction1.transactionID.toString());
@@ -181,7 +181,7 @@ describe("Auto Retry Task", () => {
               retryTransaction1.channelID = retryChannel._id;
               return retryTransaction1.save(() =>
                     autoRetry.autoRetryTask(null, () =>
-                        Task.find({}, (err, results) => {
+                        TaskModel.find({}, (err, results) => {
                           results.length.should.be.exactly(1);
                           results[0].transactions.length.should.be.exactly(1);
                           results[0].transactions[0].tid.should.be.exactly(retryTransaction1.transactionID.toString());
@@ -198,7 +198,7 @@ describe("Auto Retry Task", () => {
               retryTransaction3.channelID = retryChannel2._id;
               return retryTransaction1.save(() => retryTransaction3.save(() =>
                     autoRetry.autoRetryTask(null, () =>
-                        Task.find({}, (err, results) => {
+                        TaskModel.find({}, (err, results) => {
                           results.length.should.be.exactly(1);
                           results[0].transactions.length.should.be.exactly(2);
                           const tids = results[0].transactions.map(t => t.tid);
@@ -216,7 +216,7 @@ describe("Auto Retry Task", () => {
     return it("should only create a task if there are transactions to rerun", done =>
             retryChannel.save(() => retryChannel2.save(() =>
                 autoRetry.autoRetryTask(null, () =>
-                    Task.find({}, (err, results) => {
+                    TaskModel.find({}, (err, results) => {
                       results.length.should.be.exactly(0);
                       return done();
                     })

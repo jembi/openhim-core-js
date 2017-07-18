@@ -4,7 +4,7 @@ import should from "should";
 import dgram from "dgram";
 import fs from "fs";
 import * as auditing from "../../src/auditing";
-import { Audit, AuditMeta } from "../../src/model/audits";
+import { AuditModel, AuditMetaModel } from "../../src/model/audits";
 import * as testUtils from "../testUtils";
 import { config } from "../../src/config";
 
@@ -102,7 +102,7 @@ const testAuditIHE_DICOM = `\
 `;
 
 describe("Auditing", () => {
-  beforeEach(done => Audit.remove({}, () => AuditMeta.remove({}, () => done())));
+  beforeEach(done => AuditModel.remove({}, () => AuditMetaModel.remove({}, () => done())));
 
   describe(".processAudit", () => {
     const validateSyslog = function(syslog) {
@@ -122,7 +122,7 @@ describe("Auditing", () => {
 
     it("should parse audit message and persist it to the database", done =>
       auditing.processAudit(testAudit, () =>
-        Audit.find({}, (err, audits) => {
+        AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
           audits.length.should.be.exactly(1);
 
@@ -189,7 +189,7 @@ describe("Auditing", () => {
       const nonXmlAudit = "<85>1 2015-03-05T12:52:31.358+02:00 Hanness-MBP.jembi.local java 9293 IHE+RFC-3881 - this is a message?>";
 
       return auditing.processAudit(nonXmlAudit, () =>
-        Audit.find({}, (err, audits) => {
+        AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
           audits.length.should.be.exactly(1);
@@ -204,7 +204,7 @@ describe("Auditing", () => {
       const nonXmlAudit = "<85>1 2015-03-05T12:52:31.358+02:00 Hanness-MBP.jembi.local java 9293 IHE+RFC-3881 - <data>data</data>?>";
 
       return auditing.processAudit(nonXmlAudit, () =>
-        Audit.find({}, (err, audits) => {
+        AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
           audits.length.should.be.exactly(1);
@@ -219,7 +219,7 @@ describe("Auditing", () => {
       const badAudit = "this message is a garbage message";
 
       return auditing.processAudit(badAudit, () =>
-        Audit.find({}, (err, audits) => {
+        AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
           audits.length.should.be.exactly(0);
@@ -230,7 +230,7 @@ describe("Auditing", () => {
 
     it("should populate audit meta collection with filter fields", done =>
       auditing.processAudit(testAudit, () =>
-        AuditMeta.findOne({}, (err, auditMeta) => {
+        AuditMetaModel.findOne({}, (err, auditMeta) => {
           if (err) { return done(err); }
 
           auditMeta.eventID.should.exist;
@@ -272,7 +272,7 @@ describe("Auditing", () => {
     return it("should not duplicate filter fields in audit meta collection", done =>
       auditing.processAudit(testAudit, () =>
         auditing.processAudit(testAudit, () =>
-          AuditMeta.findOne({}, (err, auditMeta) => {
+          AuditMetaModel.findOne({}, (err, auditMeta) => {
             if (err) { return done(err); }
 
             auditMeta.eventID.length.should.be.exactly(1);
@@ -333,7 +333,7 @@ describe("Auditing", () => {
 
     it("should parse IHE sample RFC3881 audit message and persist it to the database", done =>
       auditing.processAudit(testAuditIHE_RFC3881, () =>
-        Audit.find({}, (err, audits) => {
+        AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
           audits.length.should.be.exactly(1);
@@ -347,7 +347,7 @@ describe("Auditing", () => {
 
     return it("should parse IHE sample DICOM audit message and persist it to the database", done =>
       auditing.processAudit(testAuditIHE_DICOM, () =>
-        Audit.find({}, (err, audits) => {
+        AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
           audits.length.should.be.exactly(1);
@@ -379,7 +379,7 @@ describe("Auditing", () => {
       config.auditing.auditEvents.interface = "internal";
 
       return auditing.sendAuditEvent(testAudit, () =>
-        Audit.find({}, (err, audits) => {
+        AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
           audits.length.should.be.exactly(1);
           audits[0].rawMessage.should.be.exactly(testAudit);

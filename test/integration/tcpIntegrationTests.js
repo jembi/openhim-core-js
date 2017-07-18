@@ -6,10 +6,10 @@ import net from "net";
 import tls from "tls";
 import fs from "fs";
 import sinon from "sinon";
-import { Channel } from "../../src/model/channels";
-import { Client } from "../../src/model/clients";
-import { Transaction } from "../../src/model/transactions";
-import { Certificate } from "../../src/model/keystore";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { ClientModelAPI } from "../../src/model/clients";
+import { TransactionModelAPI } from "../../src/model/transactions";
+import { CertificateModelAPI } from "../../src/model/keystore";
 import * as testUtils from "../testUtils";
 import * as server from "../../src/server";
 import { config } from "../../src/config";
@@ -23,7 +23,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
   let mockTLSServerWithoutClientCert = null;
   let mockMLLPServer = null;
 
-  const channel1 = new Channel({
+  const channel1 = new ChannelModelAPI({
     name: "TCPIntegrationChannel1",
     urlPattern: "/",
     allow: ["tcp"],
@@ -39,7 +39,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
     }
     ]
   });
-  const channel2 = new Channel({
+  const channel2 = new ChannelModelAPI({
     name: "TCPIntegrationChannel2",
     urlPattern: "/",
     allow: ["tls"],
@@ -55,7 +55,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
     }
     ]
   });
-  const channel3 = new Channel({
+  const channel3 = new ChannelModelAPI({
     name: "TCPIntegrationChannel3",
     urlPattern: "/",
     allow: ["tcp"],
@@ -71,7 +71,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
     }
     ]
   });
-  const channel4 = new Channel({
+  const channel4 = new ChannelModelAPI({
     name: "TCPIntegrationChannel4",
     urlPattern: "/",
     allow: ["tcp"],
@@ -88,7 +88,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
     }
     ]
   });
-  const channel5 = new Channel({
+  const channel5 = new ChannelModelAPI({
     name: "TCPIntegrationChannel5",
     urlPattern: "/",
     allow: ["tcp"],
@@ -105,7 +105,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
     }
     ]
   });
-  const channel6 = new Channel({
+  const channel6 = new ChannelModelAPI({
     name: "MLLPIntegrationChannel1",
     urlPattern: "/",
     allow: ["tcp"],
@@ -122,7 +122,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
     ]
   });
 
-  const secureClient = new Client({
+  const secureClient = new ClientModelAPI({
     clientID: "TlsIntegrationClient",
     clientDomain: "test-client.jembi.org",
     name: "TEST Client",
@@ -155,7 +155,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
 
   before(done =>
         testUtils.setupTestKeystore(null, null, [], (keystore) => {
-          const cert = new Certificate({
+          const cert = new CertificateModelAPI({
             data: fs.readFileSync("test/resources/server-tls/cert.pem")
           });
             // Setup certs for secure channels
@@ -192,11 +192,11 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
         })
     );
 
-  beforeEach(done => Transaction.remove({}, done));
+  beforeEach(done => TransactionModelAPI.remove({}, done));
 
   after(done =>
         testUtils.cleanupTestKeystore(() =>
-            Channel.remove({}, () => Transaction.remove({}, () => Client.remove({}, () => mockTCPServer.close(() => mockHTTPServer.close(() => mockTLSServer.close(() => mockTLSServerWithoutClientCert.close(() => mockMLLPServer.close(done))))))
+            ChannelModelAPI.remove({}, () => TransactionModelAPI.remove({}, () => ClientModelAPI.remove({}, () => mockTCPServer.close(() => mockHTTPServer.close(() => mockTLSServer.close(() => mockTLSServerWithoutClientCert.close(() => mockMLLPServer.close(done))))))
             )
             )
         )
@@ -270,7 +270,7 @@ describe("TCP/TLS/MLLP Integration Tests", () => {
   it("should persist messages", done =>
         server.start({ tcpHttpReceiverPort: 7787 }, () =>
             sendTCPTestMessage(4000, data =>
-                Transaction.find({}, (err, trx) => {
+                TransactionModelAPI.find({}, (err, trx) => {
                   trx.length.should.be.exactly(1);
                   trx[0].channelID.toString().should.be.exactly(channel1._id.toString());
                   trx[0].request.body.should.be.exactly(testMessage);

@@ -2,8 +2,8 @@
 
 import should from "should";
 import request from "supertest";
-import { Channel } from "../../src/model/channels";
-import { Client } from "../../src/model/clients";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { ClientModelAPI } from "../../src/model/clients";
 import * as testUtils from "../testUtils";
 import * as server from "../../src/server";
 import { config } from "../../src/config";
@@ -37,7 +37,7 @@ describe("Events API Integration Tests", () => {
     config.authentication.enableBasicAuthentication = true;
 
         // Setup some test data
-    const channel1 = new Channel({
+    const channel1 = new ChannelModelAPI({
       name: channelName,
       urlPattern: "test/mock",
       allow: ["PoC"],
@@ -55,7 +55,7 @@ describe("Events API Integration Tests", () => {
       ],
       rewriteUrls: true
     });
-    const channel2 = new Channel({
+    const channel2 = new ChannelModelAPI({
       name: `${channelName}-slow`,
       urlPattern: "test/slow",
       allow: ["PoC"],
@@ -89,7 +89,7 @@ describe("Events API Integration Tests", () => {
                 cert: ""
               };
 
-              const client = new Client(testAppDoc);
+              const client = new ClientModelAPI(testAppDoc);
               return client.save((error, newAppDoc) =>
                     auth.setupTestUsers(err =>
                         // Create mock endpoint to forward requests to
@@ -103,8 +103,8 @@ describe("Events API Integration Tests", () => {
   });
 
   after(done =>
-        Channel.remove({ name: "TEST DATA - Mock endpoint" }, () =>
-            Client.remove({ clientID: "testApp" }, () =>
+        ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint" }, () =>
+            ClientModelAPI.remove({ clientID: "testApp" }, () =>
                 auth.cleanupTestUsers(err =>
                     mockServer.close(() => mockServer2.close(done))
                 )

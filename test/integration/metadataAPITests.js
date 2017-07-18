@@ -4,11 +4,11 @@
 import should from "should";
 import request from "supertest";
 
-import { Channel } from "../../src/model/channels";
-import { Client } from "../../src/model/clients";
-import { Mediator } from "../../src/model/mediators";
-import { User } from "../../src/model/users";
-import { ContactGroup } from "../../src/model/contactGroups";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { ClientModelAPI } from "../../src/model/clients";
+import { MediatorModelAPI } from "../../src/model/mediators";
+import { UserModelAPI } from "../../src/model/users";
+import { ContactGroupModelAPI } from "../../src/model/contactGroups";
 
 import * as server from "../../src/server";
 import * as testUtils from "../testUtils";
@@ -93,14 +93,14 @@ describe("API Integration Tests", () =>
       describe("*getMetadata", () => {
         describe("Channels", () => {
           beforeEach(done =>
-                    (new Channel(sampleMetadata.Channels[0])).save((err, channel) => {
+                    (new ChannelModelAPI(sampleMetadata.Channels[0])).save((err, channel) => {
                       if (err) { return done(err); }
                       return done();
                     })
                 );
 
           afterEach(done =>
-                    Channel.remove(() => done())
+                    ChannelModelAPI.remove(() => done())
                 );
 
           return it("should fetch channels and return status 200", done =>
@@ -125,14 +125,14 @@ describe("API Integration Tests", () =>
 
         describe("Clients", () => {
           beforeEach(done =>
-                    (new Client(sampleMetadata.Clients[0])).save((err, client) => {
+                    (new ClientModelAPI(sampleMetadata.Clients[0])).save((err, client) => {
                       if (err) { return done(err); }
                       return done();
                     })
                 );
 
           afterEach(done =>
-                    Client.remove(() => done())
+                    ClientModelAPI.remove(() => done())
                 );
 
           return it("should fetch clients and return status 200", done =>
@@ -157,14 +157,14 @@ describe("API Integration Tests", () =>
 
         describe("Mediators", () => {
           beforeEach(done =>
-                    (new Mediator(sampleMetadata.Mediators[0])).save((err, mediator) => {
+                    (new MediatorModelAPI(sampleMetadata.Mediators[0])).save((err, mediator) => {
                       if (err) { return done(err); }
                       return done();
                     })
                 );
 
           afterEach(done =>
-                    Mediator.remove(() => done())
+                    MediatorModelAPI.remove(() => done())
                 );
 
           return it("should fetch mediators and return status 200", done =>
@@ -189,14 +189,14 @@ describe("API Integration Tests", () =>
 
         describe("Users", () => {
           beforeEach(done =>
-                    (new User(sampleMetadata.Users[0])).save((err, user) => {
+                    (new UserModelAPI(sampleMetadata.Users[0])).save((err, user) => {
                       if (err) { return done(err); }
                       return done();
                     })
                 );
 
           afterEach(done =>
-                    User.remove(() =>
+                    UserModelAPI.remove(() =>
                         auth.setupTestUsers((err) => {
                           authDetails = auth.getAuthDetails();
                           return done();
@@ -225,14 +225,14 @@ describe("API Integration Tests", () =>
 
         describe("ContactGroups", () => {
           beforeEach(done =>
-                    (new ContactGroup(sampleMetadata.ContactGroups[0])).save((err, cg) => {
+                    (new ContactGroupModelAPI(sampleMetadata.ContactGroups[0])).save((err, cg) => {
                       if (err) { return done(err); }
                       return done();
                     })
                 );
 
           afterEach(done =>
-                    ContactGroup.remove(() => done())
+                    ContactGroupModelAPI.remove(() => done())
                 );
 
           return it("should fetch contact groups and return status 200", done =>
@@ -305,7 +305,7 @@ describe("API Integration Tests", () =>
           });
 
           afterEach(done =>
-                    Channel.remove(() => done())
+                    ChannelModelAPI.remove(() => done())
                 );
 
           it("should insert a channel and return 201", done =>
@@ -321,7 +321,7 @@ describe("API Integration Tests", () =>
                           if (err) { return done(err); }
 
                           res.body[0].should.have.property("status", "Inserted");
-                          return Channel.findOne({ name: "TestChannel1" }, (err, channel) => {
+                          return ChannelModelAPI.findOne({ name: "TestChannel1" }, (err, channel) => {
                             if (err) { return done(err); }
                             channel.should.have.property("urlPattern", "test/sample");
                             channel.allow.should.have.length(3);
@@ -354,7 +354,7 @@ describe("API Integration Tests", () =>
                                   if (err) { return done(err); }
 
                                   res.body[0].should.have.property("status", "Updated");
-                                  return Channel.findOne({ name: "TestChannel1" }, (err, channel) => {
+                                  return ChannelModelAPI.findOne({ name: "TestChannel1" }, (err, channel) => {
                                     if (err) { return done(err); }
                                     channel.should.have.property("urlPattern", "sample/test");
                                     channel.allow.should.have.length(3);
@@ -392,7 +392,7 @@ describe("API Integration Tests", () =>
           });
 
           afterEach(done =>
-                    Client.remove(() => done())
+                    ClientModelAPI.remove(() => done())
                 );
 
           it("should insert a client and return 201", done =>
@@ -408,7 +408,7 @@ describe("API Integration Tests", () =>
                           if (err) { return done(err); }
 
                           res.body[0].should.have.property("status", "Inserted");
-                          return Client.findOne({ clientID: "YUIAIIIICIIAIA" }, (err, client) => {
+                          return ClientModelAPI.findOne({ clientID: "YUIAIIIICIIAIA" }, (err, client) => {
                             if (err) { return done(err); }
                             client.should.have.property("name", "OpenMRS Ishmael instance");
                             return done();
@@ -440,7 +440,7 @@ describe("API Integration Tests", () =>
                                   if (err) { return done(err); }
 
                                   res.body[0].should.have.property("status", "Updated");
-                                  return Client.findOne({ clientID: "YUIAIIIICIIAIA" }, (err, client) => {
+                                  return ClientModelAPI.findOne({ clientID: "YUIAIIIICIIAIA" }, (err, client) => {
                                     if (err) { return done(err); }
                                     client.should.have.property("name", "Test Update");
                                     return done();
@@ -478,7 +478,7 @@ describe("API Integration Tests", () =>
           });
 
           afterEach(done =>
-                    Mediator.remove(() => done())
+                    MediatorModelAPI.remove(() => done())
                 );
 
           it("should insert a mediator and return 201", done =>
@@ -494,7 +494,7 @@ describe("API Integration Tests", () =>
                           if (err) { return done(err); }
 
                           res.body[0].should.have.property("status", "Inserted");
-                          return Mediator.findOne({ urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) => {
+                          return MediatorModelAPI.findOne({ urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) => {
                             if (err) { return done(err); }
                             mediator.should.have.property("name", "Save Encounter Mediator");
                             return done();
@@ -526,7 +526,7 @@ describe("API Integration Tests", () =>
                                   if (err) { return done(err); }
 
                                   res.body[0].should.have.property("status", "Updated");
-                                  return Mediator.findOne({ urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) => {
+                                  return MediatorModelAPI.findOne({ urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) => {
                                     if (err) { return done(err); }
                                     mediator.should.have.property("name", "Updated Encounter Mediator");
                                     return done();
@@ -563,7 +563,7 @@ describe("API Integration Tests", () =>
           });
 
           afterEach(done =>
-                    User.remove(() =>
+                    UserModelAPI.remove(() =>
                         auth.setupTestUsers((err) => {
                           authDetails = auth.getAuthDetails();
                           return done();
@@ -584,7 +584,7 @@ describe("API Integration Tests", () =>
                           if (err) { return done(err); }
 
                           res.body[0].should.have.property("status", "Inserted");
-                          return User.findOne({ email: "r..@jembi.org" }, (err, user) => {
+                          return UserModelAPI.findOne({ email: "r..@jembi.org" }, (err, user) => {
                             if (err) { return done(err); }
                             user.should.have.property("firstname", "Namey");
                             return done();
@@ -616,7 +616,7 @@ describe("API Integration Tests", () =>
                                   if (err) { return done(err); }
 
                                   res.body[0].should.have.property("status", "Updated");
-                                  return User.findOne({ email: "r..@jembi.org" }, (err, user) => {
+                                  return UserModelAPI.findOne({ email: "r..@jembi.org" }, (err, user) => {
                                     if (err) { return done(err); }
                                     user.should.have.property("firstname", "updatedNamey");
                                     return done();
@@ -653,7 +653,7 @@ describe("API Integration Tests", () =>
           });
 
           afterEach(done =>
-                    ContactGroup.remove(() => done())
+                    ContactGroupModelAPI.remove(() => done())
                 );
 
           it("should insert a contactGroup and return 201", done =>
@@ -669,7 +669,7 @@ describe("API Integration Tests", () =>
                           if (err) { return done(err); }
 
                           res.body[0].should.have.property("status", "Inserted");
-                          return ContactGroup.findOne({ group: "Group 1" }, (err, cg) => {
+                          return ContactGroupModelAPI.findOne({ group: "Group 1" }, (err, cg) => {
                             if (err) { return done(err); }
                             cg.users.should.have.length(6);
                             return done();
@@ -701,7 +701,7 @@ describe("API Integration Tests", () =>
                                   if (err) { return done(err); }
 
                                   res.body[0].should.have.property("status", "Updated");
-                                  return ContactGroup.findOne({ group: "Group 1" }, (err, cg) => {
+                                  return ContactGroupModelAPI.findOne({ group: "Group 1" }, (err, cg) => {
                                     if (err) { return done(err); }
                                     cg.users.should.have.length(7);
                                     return done();
@@ -730,11 +730,11 @@ describe("API Integration Tests", () =>
 
         describe("Full Metadata Import", () => {
           after(done =>
-                    Channel.remove(() =>
-                        Client.remove(() =>
-                            Mediator.remove(() =>
-                                ContactGroup.remove(() =>
-                                    User.remove(() =>
+                    ChannelModelAPI.remove(() =>
+                        ClientModelAPI.remove(() =>
+                            MediatorModelAPI.remove(() =>
+                                ContactGroupModelAPI.remove(() =>
+                                    UserModelAPI.remove(() =>
                                         auth.setupTestUsers((err) => {
                                           authDetails = auth.getAuthDetails();
                                           return done();
@@ -761,23 +761,23 @@ describe("API Integration Tests", () =>
                         .end((err, res) => {
                           if (err) { return done(err); }
 
-                          return Channel.findOne({ name: "TestChannel1" }, (err, channel) => {
+                          return ChannelModelAPI.findOne({ name: "TestChannel1" }, (err, channel) => {
                             const noChannel = channel ? "false" : "true";
                             noChannel.should.equal("true");
 
-                            return Client.findOne({ clientID: "YUIAIIIICIIAIA" }, (err, client) => {
+                            return ClientModelAPI.findOne({ clientID: "YUIAIIIICIIAIA" }, (err, client) => {
                               if (err) { return done(err); }
                               client.should.have.property("name", "OpenMRS Ishmael instance");
 
-                              return Mediator.findOne({ urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) => {
+                              return MediatorModelAPI.findOne({ urn: "urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED" }, (err, mediator) => {
                                 if (err) { return done(err); }
                                 mediator.should.have.property("name", "Save Encounter Mediator");
 
-                                return User.findOne({ email: "r..@jembi.org" }, (err, user) => {
+                                return UserModelAPI.findOne({ email: "r..@jembi.org" }, (err, user) => {
                                   if (err) { return done(err); }
                                   user.should.have.property("firstname", "Namey");
 
-                                  return ContactGroup.findOne({ group: "Group 1" }, (err, cg) => {
+                                  return ContactGroupModelAPI.findOne({ group: "Group 1" }, (err, cg) => {
                                     if (err) { return done(err); }
                                     cg.users.should.have.length(6);
                                     return done();
@@ -884,7 +884,7 @@ describe("API Integration Tests", () =>
           let testMetadata = {};
           testMetadata = JSON.parse(JSON.stringify(sampleMetadata));
 
-          return (new Channel(sampleMetadata.Channels[0])).save((err, channel) => {
+          return (new ChannelModelAPI(sampleMetadata.Channels[0])).save((err, channel) => {
             if (err) { return done(err); }
             return request("https://localhost:8080")
                         .post("/metadata/validate")
@@ -905,7 +905,7 @@ describe("API Integration Tests", () =>
                           statusCheckObj.Valid.should.equal(4);
                           statusCheckObj.Conflict.should.equal(1);
                           statusCheckObj.Error.should.equal(0);
-                          return Channel.remove(() => done());
+                          return ChannelModelAPI.remove(() => done());
                         });
           });
         });

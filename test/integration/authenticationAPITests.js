@@ -4,7 +4,7 @@ import should from "should";
 import request from "supertest";
 import logger from "winston";
 import * as server from "../../src/server";
-import { Audit } from "../../src/model/audits";
+import { AuditModel } from "../../src/model/audits";
 import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
@@ -21,11 +21,11 @@ describe("API Integration Tests", () =>
             })
         );
 
-      beforeEach(done => Audit.remove({}, done));
+      beforeEach(done => AuditModel.remove({}, done));
 
       after(done =>
             auth.cleanupTestUsers(err =>
-                Audit.remove({}, () =>
+                AuditModel.remove({}, () =>
                     server.stop(() => done())
                 )
             )
@@ -44,7 +44,7 @@ describe("API Integration Tests", () =>
                     return done(err);
                   } else {
                     const validateAudit = () =>
-                            Audit.find({}, (err, audits) => {
+                            AuditModel.find({}, (err, audits) => {
                               if (err) { return done(err); }
                               if (audits.length > 1) {
                                 logger.error(JSON.stringify(audits, null, 2));
@@ -77,7 +77,7 @@ describe("API Integration Tests", () =>
                     return done(err);
                   } else {
                     const validateAudit = () =>
-                            Audit.find({}, (err, audits) => {
+                            AuditModel.find({}, (err, audits) => {
                               if (err) { return done(err); }
                               if (audits.length > 1) {
                                 logger.error(JSON.stringify(audits, null, 2));
@@ -110,7 +110,7 @@ describe("API Integration Tests", () =>
                     return done(err);
                   } else {
                     const validateAudit = () =>
-                            Audit.find({}, (err, audits) => {
+                            AuditModel.find({}, (err, audits) => {
                               if (err) { return done(err); }
                               if (audits.length > 0) {
                                 logger.error(JSON.stringify(audits, null, 2));
@@ -137,7 +137,7 @@ describe("API Integration Tests", () =>
                     return done(err);
                   } else {
                     const validateAudit = () =>
-                            Audit.find({}, (err, audits) => {
+                            AuditModel.find({}, (err, audits) => {
                               if (err) { return done(err); }
                               if (audits.length > 1) {
                                 logger.error(JSON.stringify(audits, null, 2));
@@ -170,7 +170,7 @@ describe("API Integration Tests", () =>
                     return done(err);
                   } else {
                     const validateAudit = () =>
-                            Audit.find({}, (err, audits) => {
+                            AuditModel.find({}, (err, audits) => {
                               if (err) { return done(err); }
                               if (audits.length > 0) {
                                 logger.error(JSON.stringify(audits, null, 2));
@@ -197,7 +197,7 @@ describe("API Integration Tests", () =>
                     return done(err);
                   } else {
                     const validateAudit = () =>
-                            Audit.find({}, (err, audits) => {
+                            AuditModel.find({}, (err, audits) => {
                               if (err) { return done(err); }
                               if (audits.length > 1) {
                                 logger.error(JSON.stringify(audits, null, 2));

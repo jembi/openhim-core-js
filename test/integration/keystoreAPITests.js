@@ -7,7 +7,7 @@ import fs from "fs";
 import path from "path";
 import * as testUtils from "../testUtils";
 import * as server from "../../src/server";
-import { Keystore } from "../../src/model/keystore";
+import { KeystoreModelAPI } from "../../src/model/keystore";
 import { config } from "../../src/config";
 
 const { auth } = testUtils;
@@ -175,7 +175,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           if (err) { done(err); }
                           keystore.cert.data.should.be.exactly(postData.cert);
                           keystore.cert.commonName.should.be.exactly("localhost");
@@ -202,7 +202,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           if (err) { done(err); }
                           keystore.cert.fingerprint.should.be.exactly("35:B1:95:80:45:F6:39:A8:1E:75:E1:B1:16:16:32:EB:12:EA:1A:24");
                           return done();
@@ -293,7 +293,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           if (err) { done(err); }
                           keystore.key.should.be.exactly(postData.key);
                           return done();
@@ -339,7 +339,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           if (err) { done(err); }
                           keystore.ca.should.be.instanceOf(Array).and.have.lengthOf(3);
                           keystore.ca[2].data.should.be.exactly(postData.cert);
@@ -367,7 +367,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           if (err) { done(err); }
                           keystore.ca[2].fingerprint.should.be.exactly("23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54");
                           return done();
@@ -434,7 +434,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           if (err) { done(err); }
                           keystore.ca.should.be.instanceOf(Array).and.have.lengthOf(4);
                           keystore.ca[2].commonName.should.be.exactly("domain.com");
@@ -480,7 +480,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           if (err) { done(err); }
                           keystore.ca.should.be.instanceOf(Array).and.have.lengthOf(1);
                           return done();

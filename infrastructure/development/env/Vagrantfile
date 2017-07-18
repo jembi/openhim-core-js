@@ -8,7 +8,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Use trusty64 base box
   config.vm.box = "ubuntu/trusty64"
   config.vm.provider "virtualbox" do |v|
-    v.customize ["modifyvm", :id, "--memory", 1536]
+    v.customize ["modifyvm", :id, "--memory", 2536]
   end
 
   # Configure port forwarding

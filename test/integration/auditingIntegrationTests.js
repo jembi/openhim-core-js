@@ -5,13 +5,13 @@ import fs from "fs";
 import tls from "tls";
 import net from "net";
 import dgram from "dgram";
-import { Audit } from "../../src/model/audits";
+import { AuditModel } from "../../src/model/audits";
 import * as server from "../../src/server";
 import * as testUtils from "../testUtils";
 import { testAuditMessage } from "../unit/auditingTest";
 
 describe("Auditing Integration Tests", () => {
-  beforeEach(done => Audit.remove({}, () => server.start({ auditUDPPort: 5050, auditTlsPort: 5051, auditTcpPort: 5052 }, () => done())));
+  beforeEach(done => AuditModel.remove({}, () => server.start({ auditUDPPort: 5050, auditTlsPort: 5051, auditTcpPort: 5052 }, () => done())));
 
   afterEach(done => server.stop(() => done()));
 
@@ -27,7 +27,7 @@ describe("Auditing Integration Tests", () => {
 
             if (err) { return done(err); }
 
-            const checkAudits = () => Audit.find({}, (err, audits) => {
+            const checkAudits = () => AuditModel.find({}, (err, audits) => {
               if (err) { return done(err); }
 
                     // message fields already validate heavily in unit test, just perform basic check
@@ -59,7 +59,7 @@ describe("Auditing Integration Tests", () => {
       });
 
       return client.on("end", () => {
-        const checkAudits = () => Audit.find({}, (err, audits) => {
+        const checkAudits = () => AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
                     // message fields already validate heavily in unit test, just perform basic check
@@ -86,7 +86,7 @@ describe("Auditing Integration Tests", () => {
             );
 
       return client.on("end", () => {
-        const checkAudits = () => Audit.find({}, (err, audits) => {
+        const checkAudits = () => AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
                     // message fields already validate heavily in unit test, just perform basic check
@@ -109,7 +109,7 @@ describe("Auditing Integration Tests", () => {
       });
 
       return client.on("end", () => {
-        const checkAudits = () => Audit.find({}, (err, audits) => {
+        const checkAudits = () => AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
                     // message fields already validate heavily in unit test, just perform basic check
@@ -131,7 +131,7 @@ describe("Auditing Integration Tests", () => {
             );
 
       return client.on("end", () => {
-        const checkAudits = () => Audit.find({}, (err, audits) => {
+        const checkAudits = () => AuditModel.find({}, (err, audits) => {
           if (err) { return done(err); }
 
                     // message fields already validate heavily in unit test, just perform basic check

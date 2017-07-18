@@ -3,7 +3,7 @@
 
 import should from "should";
 import request from "supertest";
-import { Client } from "../../src/model/clients";
+import { ClientModelAPI } from "../../src/model/clients";
 import * as server from "../../src/server";
 import * as testUtils from "../testUtils";
 
@@ -41,7 +41,7 @@ describe("API Integration Tests", () =>
       beforeEach(() => authDetails = auth.getAuthDetails());
 
       afterEach(done =>
-            Client.remove(() => done())
+            ClientModelAPI.remove(() => done())
         );
 
       describe("*addClient", () => {
@@ -58,7 +58,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Client.findOne({ clientID: "YUIAIIIICIIAIA" }, (err, client) => {
+                        return ClientModelAPI.findOne({ clientID: "YUIAIIIICIIAIA" }, (err, client) => {
                           client.clientID.should.equal("YUIAIIIICIIAIA");
                           client.clientDomain.should.equal("him.jembi.org");
                           client.name.should.equal("OpenMRS Ishmael instance");
@@ -91,7 +91,7 @@ describe("API Integration Tests", () =>
             );
 
         return it("should reject a client that conflicts with a role", (done) => {
-          const client = new Client(testAppDoc);
+          const client = new ClientModelAPI(testAppDoc);
           return client.save(() => {
             const conflict = Object.assign({}, testAppDoc);
             conflict.clientID = "PoC";
@@ -129,7 +129,7 @@ describe("API Integration Tests", () =>
         let clientId = null;
 
         beforeEach((done) => {
-          const client = new Client(clientTest);
+          const client = new ClientModelAPI(clientTest);
           return client.save((err, client) => {
             clientId = client._id;
             if (err) { done(err); }
@@ -232,7 +232,7 @@ describe("API Integration Tests", () =>
         };
 
         it("should return client with specified clientDomain", (done) => {
-          const client = new Client(clientTest);
+          const client = new ClientModelAPI(clientTest);
           return client.save((error, newApp) => {
             should.not.exist((error));
             return request("https://localhost:8080")
@@ -289,20 +289,20 @@ describe("API Integration Tests", () =>
         };
 
         it("should return all clients ", done =>
-                Client.count((err, countBefore) => {
-                  let client = new Client(testDocument);
+                ClientModelAPI.count((err, countBefore) => {
+                  let client = new ClientModelAPI(testDocument);
                   client.clientID += "1";
                   return client.save((error, testDoc) => {
                     should.not.exist((error));
-                    client = new Client(testDocument);
+                    client = new ClientModelAPI(testDocument);
                     client.clientID += "2";
                     return client.save((error, testDoc) => {
                       should.not.exist(error);
-                      client = new Client(testDocument);
+                      client = new ClientModelAPI(testDocument);
                       client.clientID += "3";
                       return client.save((error, testDoc) => {
                         should.not.exist(error);
-                        client = new Client(testDocument);
+                        client = new ClientModelAPI(testDocument);
                         client.clientID += "4";
                         return client.save((error, testDoc) => {
                           should.not.exist((error));
@@ -359,7 +359,7 @@ describe("API Integration Tests", () =>
         };
 
         it("should update the specified client ", (done) => {
-          const client = new Client(testDocument);
+          const client = new ClientModelAPI(testDocument);
           return client.save((error, testDoc) => {
             should.not.exist((error));
 
@@ -383,7 +383,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Client.findById(client._id, (error, clientDoc) => {
+                            return ClientModelAPI.findById(client._id, (error, clientDoc) => {
                               clientDoc.roles[0].should.equal("clientTest_update");
                               clientDoc.passwordHash.should.equal("$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy");
                               clientDoc.name.should.equal("Devil_may_Cry");
@@ -395,7 +395,7 @@ describe("API Integration Tests", () =>
         });
 
         it("should update successfully if the _id field is present in update, ignoring it", (done) => {
-          const client = new Client(testDocument);
+          const client = new ClientModelAPI(testDocument);
           return client.save((error, testDoc) => {
             should.not.exist((error));
 
@@ -419,7 +419,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Client.findById(client._id, (error, clientDoc) => {
+                            return ClientModelAPI.findById(client._id, (error, clientDoc) => {
                               clientDoc.roles[0].should.equal("clientTest_update");
                               clientDoc.passwordHash.should.equal("$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy");
                               clientDoc.name.should.equal("Devil_may_Cry");
@@ -450,7 +450,7 @@ describe("API Integration Tests", () =>
         });
 
         return it("should reject a client that conflicts with a role", (done) => {
-          const client = new Client(testAppDoc);
+          const client = new ClientModelAPI(testAppDoc);
           return client.save(() => {
             const conflict = { clientID: "PoC" };
             return request("https://localhost:8080")
@@ -485,10 +485,10 @@ describe("API Integration Tests", () =>
             passwordHash: "$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy"
           };
 
-          const client = new Client(docTestRemove);
+          const client = new ClientModelAPI(docTestRemove);
           return client.save((error, testDoc) => {
             should.not.exist(error);
-            return Client.count((err, countBefore) =>
+            return ClientModelAPI.count((err, countBefore) =>
                         request("https://localhost:8080")
                             .del(`/clients/${client._id}`)
                             .set("auth-username", testUtils.rootUser.email)
@@ -500,8 +500,8 @@ describe("API Integration Tests", () =>
                               if (err) {
                                 return done(err);
                               } else {
-                                return Client.count((err, countAfter) =>
-                                        Client.findOne({ clientID: "Jembi_OpenHIE_Instance" }, (error, notFoundDoc) => {
+                                return ClientModelAPI.count((err, countAfter) =>
+                                        ClientModelAPI.findOne({ clientID: "Jembi_OpenHIE_Instance" }, (error, notFoundDoc) => {
                                           (notFoundDoc === null).should.be.true;
                                           (countBefore - 1).should.equal(countAfter);
                                           return done();
