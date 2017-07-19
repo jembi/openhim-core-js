@@ -25,11 +25,6 @@ export async function findAndProcessAQueuedTask() {
       await processNextTaskRound(task);
       activeTasks--;
     }
-
-    // task has finished its current round, pick up the next one
-    if (live) {
-      setImmediate(findAndProcessAQueuedTask);
-    }
   } catch (err) {
     if (task == null) {
       logger.error(`An error occurred while looking for rerun tasks: ${err}`);
@@ -62,7 +57,7 @@ export function stop(callback) {
 
   const waitForActiveTasks = function () {
     if (activeTasks > 0) {
-      return setTimeout(waitForActiveTasks, 100);
+      return setTimeout(waitForActiveTasks, 500);
     }
     logger.info("Stopped rerun task processor");
     return callback();
