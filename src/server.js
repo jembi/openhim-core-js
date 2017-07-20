@@ -86,6 +86,8 @@ export function setupCertificateWatcher() {
 /* eslint no-inner-declarations: 0 */
 // Configure clustering if relevent
 if (cluster.isMaster && !module.parent) {
+  process.title = 'Core'
+  
     // configure master logger
   let clusterSize;
   logger.add(logger.transports.Console, {
