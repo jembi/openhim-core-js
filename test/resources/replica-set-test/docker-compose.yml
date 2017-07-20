@@ -30,7 +30,7 @@ services:
     volumes:
       - ./mongo-volumes/replica3:/data/db
       
-  core:
+  replica-core:
     build: ../../../
     container_name: replica-core
     depends_on: 

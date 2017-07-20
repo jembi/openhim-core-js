@@ -1,9 +1,12 @@
 ## Description
-Fires up a mongo replica set in docker and runs the OpenHIM tests against the replica set.
+Fires up a mongo replica set in docker and runs the OpenHIM tests against the replica set
 
-
-## Clean up
+### Start
 ```
-docker stop replica1 replica2 replica3 replica-core &&
-docker rm replica1 replica2 replica3 replica-core
+npm run test:replica:set
+```
+
+### Clean up
+```
+npm run test:replica:set:cleanup
 ```
