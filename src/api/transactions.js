@@ -262,9 +262,9 @@ function enforceMaxBodiesSize(ctx, obj, ws) {
 }
 
 
-function calculateTransactionBodiesByteLength(l, obj, ws) {
-  if (obj.body && (typeof obj.body === "string")) { l += Buffer.byteLength(obj.body); }
-  return recursivelySearchObject(l, obj, ws, calculateTransactionBodiesByteLength);
+function calculateTransactionBodiesByteLength(lengthObj, obj, ws) {
+  if (obj.body && (typeof obj.body === "string")) { lengthObj.length += Buffer.byteLength(obj.body); }
+  return recursivelySearchObject(lengthObj, obj, ws, calculateTransactionBodiesByteLength);
 }
 
 /*
@@ -452,43 +452,45 @@ function updateTransactionMetrics(updates, doc) {
       }
     }
 
-    for (const orchestration of route.orchestrations) {
-      const orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp;
-      const orchestrationStatus = orchestration.response.status;
-      let orchestrationName = orchestration.name;
-      if (orchestration.group) {
-        orchestrationName = `${orchestration.group}.${orchestration.name}`; // Namespace it by group
-      }
+    if (route.orchestrations) {
+      for (const orchestration of route.orchestrations) {
+        const orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp;
+        const orchestrationStatus = orchestration.response.status;
+        let orchestrationName = orchestration.name;
+        if (orchestration.group) {
+          orchestrationName = `${orchestration.group}.${orchestration.name}`; // Namespace it by group
+        }
 
-            /*
-             * Update timers
-             */
-      logger.debug("updating async route timers");
-      sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`, orchestrationDuration);
-      sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`, orchestrationDuration);
+              /*
+               * Update timers
+               */
+        logger.debug("updating async route timers");
+        sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`, orchestrationDuration);
+        sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`, orchestrationDuration);
 
-            /*
-             * Update counters
-             */
-      logger.debug("updating async route counters");
-      sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`);
-      sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`);
+              /*
+               * Update counters
+               */
+        logger.debug("updating async route counters");
+        sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`);
+        sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`);
 
-      if (orchestration.metrics != null) {
-        for (const metric of Array.from(orchestration.metrics)) {
-          if (metric.type === "counter") {
-            logger.debug(`incrementing ${route.name} orchestration counter ${metric.name}`);
-            sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
-          }
+        if (orchestration.metrics != null) {
+          for (const metric of Array.from(orchestration.metrics)) {
+            if (metric.type === "counter") {
+              logger.debug(`incrementing ${route.name} orchestration counter ${metric.name}`);
+              sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
+            }
 
-          if (metric.type === "timer") {
-            logger.debug(`incrementing ${route.name} orchestration timer ${metric.name}`);
-            sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
-          }
+            if (metric.type === "timer") {
+              logger.debug(`incrementing ${route.name} orchestration timer ${metric.name}`);
+              sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
+            }
 
-          if (metric.type === "gauge") {
-            logger.debug(`incrementing ${route.name} orchestration gauge ${metric.name}`);
-            sdc.gauge(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
+            if (metric.type === "gauge") {
+              logger.debug(`incrementing ${route.name} orchestration gauge ${metric.name}`);
+              sdc.gauge(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value);
+            }
           }
         }
       }
@@ -521,11 +523,11 @@ export function* updateTransaction(transactionId) {
     }
 
     const transactionToUpdate = yield transactions.Transaction.findOne({ _id: transactionId }).exec();
-    const transactionBodiesLength = 0;
+    const transactionBodiesLength = { length: 0 };
     calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet());
 
     const ctx = {
-      totalBodyLength: transactionBodiesLength,
+      totalBodyLength: transactionBodiesLength.length,
       primaryRequest: true
     };
     enforceMaxBodiesSize(ctx, updates, new WeakSet());
@@ -565,4 +567,9 @@ export function* removeTransaction(transactionId) {
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not remove transaction via the API: ${e}`, "error");
   }
+}
+
+if (process.env.NODE_ENV === 'test') {
+  exports.calculateTransactionBodiesByteLength = calculateTransactionBodiesByteLength
+  exports.updateTransactionMetrics = updateTransactionMetrics
 }
