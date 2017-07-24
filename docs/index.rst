@@ -13,6 +13,3 @@ Contents:
    dev-guide/index
    implementations/index
    how-to/index
-   
-   :hidden:
-   Internal-Test
