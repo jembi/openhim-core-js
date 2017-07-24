@@ -9,3 +9,4 @@ Tutorial
    3-creating-a-passthrough-mediator
    4-message-adaption-using-a-mediator
    5-orchestration-with-a-mediator
+   6-Richard
