@@ -1,7 +1,7 @@
 import url from "url";
 import winston from "winston";
 import Q from "q";
-import { Channel } from "../model/channels";
+import { ChannelModel } from "../model/channels";
 import * as utils from "../utils";
 import * as router from "../middleware/router";
 import { config } from "../config";

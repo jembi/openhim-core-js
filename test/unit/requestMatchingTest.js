@@ -4,7 +4,7 @@ import should from "should";
 import rewire from "rewire";
 
 const requestMatching = rewire("../../src/middleware/requestMatching");
-const { Channel } = require("../../src/model/channels");
+const { ChannelModel } = require("../../src/model/channels");
 
 const truthy = () => true;
 const falsey = () => false;
@@ -188,7 +188,7 @@ describe("Request Matching middleware", () => {
     afterEach(() => {
             // remove test channels
       for (const channelName of Array.from(addedChannelNames)) {
-        Channel.remove({ name: channelName }, (err) => { });
+        ChannelModel.remove({ name: channelName }, (err) => { });
       }
 
       return addedChannelNames = [];
@@ -196,7 +196,7 @@ describe("Request Matching middleware", () => {
 
     it("should match if message content matches the channel rules", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Authorisation mock channel 4",
         urlPattern: "test/authorisation",
         allow: ["Test1", "Musha_OpenMRS", "Test2"],
@@ -242,7 +242,7 @@ describe("Request Matching middleware", () => {
 
     it("should NOT match if message content DOES NOT matches the channel rules", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Authorisation mock channel 4",
         urlPattern: "test/authorisation",
         allow: ["Test1", "Musha_OpenMRS", "Test2"],
@@ -289,7 +289,7 @@ describe("Request Matching middleware", () => {
 
     it("should match if message content matches the content-type", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Authorisation mock channel 4",
         urlPattern: "test/authorisation",
         allow: ["Test1", "Musha_OpenMRS", "Test2"],
@@ -338,7 +338,7 @@ describe("Request Matching middleware", () => {
 
     it("should NOT match if message content DOES NOT matches the channel rules", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Authorisation mock channel 4",
         urlPattern: "test/authorisation",
         allow: ["Test1", "Musha_OpenMRS", "Test2"],
@@ -388,7 +388,7 @@ describe("Request Matching middleware", () => {
 
     it("should allow a request if the channel matches and is enabled", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Mock for Channel Status Test (enabled)",
         urlPattern: "test/status/enabled",
         allow: ["PoC", "Test1", "Test2"],
@@ -432,7 +432,7 @@ describe("Request Matching middleware", () => {
 
     it("should NOT allow a request if the channel matchess but is disabled", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Mock for Channel Status Test (disabled)",
         urlPattern: "test/status/disabled",
         allow: ["PoC", "Test1", "Test2"],
@@ -477,7 +477,7 @@ describe("Request Matching middleware", () => {
 
     return it("should NOT allow a request if the channel matches but is deleted", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Mock for Channel Status Test (deleted)",
         urlPattern: "test/status/deleted",
         allow: ["PoC", "Test1", "Test2"],

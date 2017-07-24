@@ -1,6 +1,5 @@
 import { Schema } from "mongoose";
-import { connectionDefault } from "../config";
-
+import { connectionAPI, connectionDefault } from "../config";
 
 export const eventTypes = ["channel", "primary", "route", "orchestration"];
 
@@ -37,4 +36,5 @@ const EventsSchema = new Schema({
   autoRetryAttempt: Number
 });
 
-export const Event = connectionDefault.model("Event", EventsSchema);
+export const EventModelAPI = connectionAPI.model("Event", EventsSchema);
+export const EventModel = connectionDefault.model("Event", EventsSchema);

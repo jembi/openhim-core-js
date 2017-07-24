@@ -3,8 +3,8 @@
 
 import should from "should";
 import request from "supertest";
-import { ContactGroup } from "../../src/model/contactGroups";
-import { Channel } from "../../src/model/channels";
+import { ContactGroupModelAPI } from "../../src/model/contactGroups";
+import { ChannelModelAPI } from "../../src/model/channels";
 import * as server from "../../src/server";
 import * as testUtils from "../testUtils";
 
@@ -40,7 +40,7 @@ describe("API Integration Tests", () =>
       beforeEach(() => authDetails = auth.getAuthDetails());
 
       afterEach(done =>
-            ContactGroup.remove(() => done())
+            ContactGroupModelAPI.remove(() => done())
         );
 
       describe("*addContactGroup", () => {
@@ -57,7 +57,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return ContactGroup.findOne({ group: "Group 1" }, (err, contactGroup) => {
+                        return ContactGroupModelAPI.findOne({ group: "Group 1" }, (err, contactGroup) => {
                           contactGroup.group.should.equal("Group 1");
                           contactGroup.users.length.should.equal(6);
                           contactGroup.users[0].user.should.equal("User 1");
@@ -101,7 +101,7 @@ describe("API Integration Tests", () =>
         let contactGroupId = null;
 
         beforeEach((done) => {
-          const contactGroup = new ContactGroup(contactGroupData);
+          const contactGroup = new ContactGroupModelAPI(contactGroupData);
           return contactGroup.save((err, contactGroup) => {
             contactGroupId = contactGroup._id;
             if (err) { done(err); }
@@ -197,16 +197,16 @@ describe("API Integration Tests", () =>
         };
 
         it("should return all contactGroups ", (done) => {
-          const group1 = new ContactGroup(contactGroupData1);
+          const group1 = new ContactGroupModelAPI(contactGroupData1);
           return group1.save((error, group) => {
             should.not.exist((error));
-            const group2 = new ContactGroup(contactGroupData2);
+            const group2 = new ContactGroupModelAPI(contactGroupData2);
             return group2.save((error, group) => {
               should.not.exist((error));
-              const group3 = new ContactGroup(contactGroupData3);
+              const group3 = new ContactGroupModelAPI(contactGroupData3);
               return group3.save((error, group) => {
                 should.not.exist((error));
-                const group4 = new ContactGroup(contactGroupData4);
+                const group4 = new ContactGroupModelAPI(contactGroupData4);
                 return group4.save((error, group) => {
                   should.not.exist((error));
                   return request("https://localhost:8080")
@@ -260,7 +260,7 @@ describe("API Integration Tests", () =>
         };
 
         it("should update the specified contactGroup ", (done) => {
-          const contactGroup = new ContactGroup(contactGroupData);
+          const contactGroup = new ContactGroupModelAPI(contactGroupData);
           return contactGroup.save((error, contactGroup) => {
             should.not.exist((error));
 
@@ -282,7 +282,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return ContactGroup.findById(contactGroup._id, (error, contactGroup) => {
+                            return ContactGroupModelAPI.findById(contactGroup._id, (error, contactGroup) => {
                               contactGroup.group.should.equal("Group New Name");
                               contactGroup.users.length.should.equal(2);
                               contactGroup.users[0].user.should.equal("User 11111");
@@ -328,10 +328,10 @@ describe("API Integration Tests", () =>
                     { user: "User 5", method: "sms", maxAlerts: "1 per hour" },
                     { user: "User 6", method: "email", maxAlerts: "1 per day" }]
           };
-          const contactGroup = new ContactGroup(contactGroupData);
+          const contactGroup = new ContactGroupModelAPI(contactGroupData);
           return contactGroup.save((error, group) => {
             should.not.exist(error);
-            return ContactGroup.count((err, countBefore) =>
+            return ContactGroupModelAPI.count((err, countBefore) =>
                         request("https://localhost:8080")
                             .del(`/groups/${contactGroup._id}`)
                             .set("auth-username", testUtils.rootUser.email)
@@ -343,8 +343,8 @@ describe("API Integration Tests", () =>
                               if (err) {
                                 return done(err);
                               } else {
-                                return ContactGroup.count((err, countAfter) =>
-                                        ContactGroup.findOne({ group: "Group 1" }, (error, notFoundDoc) => {
+                                return ContactGroupModelAPI.count((err, countAfter) =>
+                                        ContactGroupModelAPI.findOne({ group: "Group 1" }, (error, notFoundDoc) => {
                                           (notFoundDoc === null).should.be.true;
                                           (countBefore - 1).should.equal(countAfter);
                                           return done();
@@ -366,7 +366,7 @@ describe("API Integration Tests", () =>
                     { user: "User 5", method: "sms", maxAlerts: "1 per hour" },
                     { user: "User 6", method: "email", maxAlerts: "1 per day" }]
           };
-          const contactGroup = new ContactGroup(contactGroupData);
+          const contactGroup = new ContactGroupModelAPI(contactGroupData);
           return contactGroup.save((error, group) => {
             const channel1 = {
               name: "TestChannel1XXX",
@@ -391,9 +391,9 @@ describe("API Integration Tests", () =>
                 }
               ]
             };
-            return (new Channel(channel1)).save((err, ch1) => {
+            return (new ChannelModelAPI(channel1)).save((err, ch1) => {
               should.not.exist(error);
-              return ContactGroup.count((err, countBefore) =>
+              return ContactGroupModelAPI.count((err, countBefore) =>
                             request("https://localhost:8080")
                                 .del(`/groups/${contactGroup._id}`)
                                 .set("auth-username", testUtils.rootUser.email)
@@ -405,8 +405,8 @@ describe("API Integration Tests", () =>
                                   if (err) {
                                     return done(err);
                                   } else {
-                                    return ContactGroup.count((err, countAfter) =>
-                                            ContactGroup.findOne({ group: "Group 2" }, (error, notFoundDoc) => {
+                                    return ContactGroupModelAPI.count((err, countAfter) =>
+                                            ContactGroupModelAPI.findOne({ group: "Group 2" }, (error, notFoundDoc) => {
                                               countBefore.should.equal(countAfter);
                                               return done();
                                             })

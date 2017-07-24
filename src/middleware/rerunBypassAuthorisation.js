@@ -3,8 +3,8 @@ import logger from "winston";
 import Q from "q";
 import SDC from "statsd-client";
 import os from "os";
-import { Channel } from "../model/channels";
-import { Transaction } from "../model/transactions";
+import { ChannelModel } from "../model/channels";
+import { TransactionModel } from "../model/transactions";
 import { config } from "../config";
 
 const statsdServer = config.get("statsd");
@@ -15,8 +15,8 @@ const sdc = new SDC(statsdServer);
 
 export function authoriseUser(ctx, done) {
     // Use the original transaction's channel to setup the authorised channel
-  return Transaction.findOne({ _id: ctx.parentID }, (err, originalTransaction) =>
-        Channel.findOne({ _id: originalTransaction.channelID }, (err, authorisedChannel) => {
+  return TransactionModel.findOne({ _id: ctx.parentID }, (err, originalTransaction) =>
+        ChannelModel.findOne({ _id: originalTransaction.channelID }, (err, authorisedChannel) => {
           ctx.authorisedChannel = authorisedChannel;
           return done();
         })

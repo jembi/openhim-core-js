@@ -4,15 +4,15 @@
 import should from "should";
 import request from "supertest";
 import * as server from "../../src/server";
-import { Audit, AuditMeta } from "../../src/model/audits";
+import { AuditModel, AuditMetaModel } from "../../src/model/audits";
 import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
 
 describe("API Integration Tests", () => {
-  beforeEach(done => Audit.remove({}, () => AuditMeta.remove({}, () => done())));
+  beforeEach(done => AuditModel.remove({}, () => AuditMetaModel.remove({}, () => done())));
 
-  afterEach(done => Audit.remove({}, () => AuditMeta.remove({}, () => done())));
+  afterEach(done => AuditModel.remove({}, () => AuditMetaModel.remove({}, () => done())));
 
 
   return describe("Audits REST Api testing", () => {
@@ -123,7 +123,7 @@ describe("API Integration Tests", () => {
                       if (err) {
                         return done(err);
                       } else {
-                        return Audit.findOne({ "eventIdentification.eventDateTime": "2015-02-20T15:38:25.282Z" }, (error, newAudit) => {
+                        return AuditModel.findOne({ "eventIdentification.eventDateTime": "2015-02-20T15:38:25.282Z" }, (error, newAudit) => {
                           should.not.exist((error));
                           (newAudit !== null).should.be.true;
                           newAudit.eventIdentification.eventActionCode.should.equal("E");
@@ -167,8 +167,8 @@ describe("API Integration Tests", () => {
 
     describe("*getAudits()", () => {
       it("should call getAudits ", done =>
-                Audit.count({}, (err, countBefore) => {
-                  const newAudit = new Audit(auditData);
+                AuditModel.count({}, (err, countBefore) => {
+                  const newAudit = new AuditModel(auditData);
                   return newAudit.save((error, result) => {
                     should.not.exist((error));
                     return request("https://localhost:8080")
@@ -198,8 +198,8 @@ describe("API Integration Tests", () => {
         filters["eventIdentification.eventDateTime"] = "{ \"$gte\": \"2015-02-20T00:00:00.000Z\",\"$lte\": \"2015-02-21T00:00:00.000Z\" }";
         filters = JSON.stringify(filters);
 
-        return Audit.count({}, (err, countBefore) => {
-          const audit = new Audit(auditData);
+        return AuditModel.count({}, (err, countBefore) => {
+          const audit = new AuditModel(auditData);
           return audit.save((error, result) => {
             should.not.exist((error));
             return request("https://localhost:8080")
@@ -222,7 +222,7 @@ describe("API Integration Tests", () => {
       });
 
       it("should generate an 'audit log used' audit when using non-basic representation", (done) => {
-        const audit = new Audit(auditData);
+        const audit = new AuditModel(auditData);
         return audit.save((err, result) => {
           if (err) { return done(err); }
 
@@ -238,7 +238,7 @@ describe("API Integration Tests", () => {
                             return done(err);
                           } else {
                             return setTimeout(() =>
-                                    Audit.find({}, (err, newAudits) => {
+                                    AuditModel.find({}, (err, newAudits) => {
                                       if (err) { return done(err); }
                                       newAudits.length.should.be.exactly(2);
 
@@ -260,7 +260,7 @@ describe("API Integration Tests", () => {
       });
 
       return it("should NOT generate an 'audit log used' audit when using basic (default) representation", (done) => {
-        const audit = new Audit(auditData);
+        const audit = new AuditModel(auditData);
         return audit.save((err, result) => {
           if (err) { return done(err); }
 
@@ -275,7 +275,7 @@ describe("API Integration Tests", () => {
                           if (err) {
                             return done(err);
                           } else {
-                            return Audit.find({}, (err, newAudits) => {
+                            return AuditModel.find({}, (err, newAudits) => {
                               if (err) { return done(err); }
                               newAudits.length.should.be.exactly(1);
                               return done();
@@ -289,7 +289,7 @@ describe("API Integration Tests", () => {
 
     describe("*getAuditById (auditId)", () => {
       it("should fetch a audit by ID - admin user", (done) => {
-        const audit = new Audit(auditData);
+        const audit = new AuditModel(auditData);
         return audit.save((err, result) => {
           should.not.exist(err);
           const auditId = result._id;
@@ -326,7 +326,7 @@ describe("API Integration Tests", () => {
       });
 
       it("should NOT return a audit that a user is not allowed to view", (done) => {
-        const audit = new Audit(auditData);
+        const audit = new AuditModel(auditData);
         return audit.save((err, result) => {
           should.not.exist(err);
           const auditId = result._id;
@@ -348,7 +348,7 @@ describe("API Integration Tests", () => {
       });
 
       return it("should generate an 'audit log used' audit", (done) => {
-        const audit = new Audit(auditData);
+        const audit = new AuditModel(auditData);
         return audit.save((err, result) => {
           if (err) { return done(err); }
 
@@ -364,7 +364,7 @@ describe("API Integration Tests", () => {
                             return done(err);
                           } else {
                             return setTimeout(() =>
-                                    Audit.find({}, (err, newAudits) => {
+                                    AuditModel.find({}, (err, newAudits) => {
                                       if (err) { return done(err); }
                                       newAudits.length.should.be.exactly(2);
 
@@ -425,7 +425,7 @@ describe("API Integration Tests", () => {
             );
 
       return it("should NOT return a filter dropdown object if user is not admin", (done) => {
-        const audit = new Audit(auditData);
+        const audit = new AuditModel(auditData);
         return audit.save((err, result) => {
           should.not.exist(err);
 

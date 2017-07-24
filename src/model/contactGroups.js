@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { connectionDefault } from "../config";
+import { connectionAPI, connectionDefault } from "../config";
 
 export const ContactUserDef = {
   user: {
@@ -20,4 +20,5 @@ const ContactGroupSchema = new Schema({
   users: [ContactUserDef]
 });
 
-export const ContactGroup = connectionDefault.model("ContactGroup", ContactGroupSchema);
+export const ContactGroupModelAPI = connectionAPI.model("ContactGroup", ContactGroupSchema);
+export const ContactGroupModel = connectionDefault.model("ContactGroup", ContactGroupSchema);

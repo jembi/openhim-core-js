@@ -7,8 +7,8 @@ import sinon from "sinon";
 import http from "http";
 import * as router from "../../src/middleware/router";
 import * as testUtils from "../testUtils";
-import { Keystore, Certificate } from "../../src/model/keystore";
-import { Channel } from "../../src/model/channels";
+import { KeystoreModel, CertificateModel } from "../../src/model/keystore";
+import { ChannelModel } from "../../src/model/channels";
 
 Error.stackTraceLimit = Infinity;
 
@@ -133,8 +133,8 @@ describe("HTTP Router", () => {
     it("should route an incomming https request to the endpoints specific by the channel config", done =>
             testUtils.createMockHTTPSServerWithMutualAuth(201, "Mock response body\n", 9877, (server) => {
               let keystore;
-              return keystore = Keystore.findOne({}, (err, keystore) => {
-                const cert = new Certificate({
+              return keystore = KeystoreModel.findOne({}, (err, keystore) => {
+                const cert = new CertificateModel({
                   data: fs.readFileSync("test/resources/server-tls/cert.pem")
                 });
                 keystore.ca.push(cert);
@@ -196,7 +196,7 @@ describe("HTTP Router", () => {
                 txViewAcl: "aGroup"
               };
 
-              return (new Channel(channel)).save((err, ch1) => {
+              return (new ChannelModel(channel)).save((err, ch1) => {
                 const ctx = new Object();
                 ctx.authorisedChannel = ch1;
                 ctx.request = new Object();

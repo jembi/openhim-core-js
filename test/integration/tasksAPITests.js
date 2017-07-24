@@ -5,10 +5,10 @@ import request from "supertest";
 import { MongoClient } from "mongodb";
 import { Types } from "mongoose";
 import * as server from "../../src/server";
-import { Task } from "../../src/model/tasks";
-import { Transaction } from "../../src/model/transactions";
-import { AutoRetry } from "../../src/model/autoRetry";
-import { Channel } from "../../src/model/channels";
+import { TaskModelAPI } from "../../src/model/tasks";
+import { TransactionModelAPI } from "../../src/model/transactions";
+import { AutoRetryModelAPI } from "../../src/model/autoRetry";
+import { ChannelModelAPI } from "../../src/model/channels";
 import * as testUtils from "../testUtils";
 import { config } from "../../src/config";
 
@@ -18,7 +18,7 @@ const { ObjectId } = Types;
 describe("API Integration Tests", () =>
 
     describe("Tasks REST Api testing", () => {
-      const task1 = new Task({
+      const task1 = new TaskModelAPI({
         _id: "aaa908908bbb98cc1d0809ee",
         status: "Completed",
         remainingTransactions: 0,
@@ -31,7 +31,7 @@ describe("API Integration Tests", () =>
         completed: "12014-06-18T12:01:00.929Z",
         user: "root@openhim.org"
       });
-      const task2 = new Task({
+      const task2 = new TaskModelAPI({
         _id: "aaa777777bbb66cc5d4444ee",
         status: "Queued",
         remainingTransactions: 3,
@@ -43,7 +43,7 @@ describe("API Integration Tests", () =>
         user: "root@openhim.org"
       });
 
-      const task3 = new Task({
+      const task3 = new TaskModelAPI({
         _id: "bbb777777bbb66cc5d4444ee",
         status: "Paused",
         remainingTransactions: 11,
@@ -88,7 +88,7 @@ describe("API Integration Tests", () =>
         timestamp: "2014-06-09T11:17:25.929Z"
       };
 
-      const transaction1 = new Transaction({
+      const transaction1 = new TransactionModelAPI({
         _id: "888888888888888888888888",
         status: "Successful",
         clientID: "000000000000000000000000",
@@ -96,7 +96,7 @@ describe("API Integration Tests", () =>
         request: requ
       });
 
-      const transaction2 = new Transaction({
+      const transaction2 = new TransactionModelAPI({
         _id: "999999999999999999999999",
         status: "Successful",
         clientID: "000000000000000000000000",
@@ -104,7 +104,7 @@ describe("API Integration Tests", () =>
         request: requ
       });
 
-      const transaction3 = new Transaction({
+      const transaction3 = new TransactionModelAPI({
         _id: "101010101010101010101010",
         status: "Successful",
         clientID: "000000000000000000000000",
@@ -112,7 +112,7 @@ describe("API Integration Tests", () =>
         request: requ
       });
 
-      const transaction4 = new Transaction({
+      const transaction4 = new TransactionModelAPI({
         _id: "112233445566778899101122",
         status: "Successful",
         clientID: "000000000000000000000000",
@@ -120,7 +120,7 @@ describe("API Integration Tests", () =>
         request: requ
       });
 
-      const transaction5 = new Transaction({
+      const transaction5 = new TransactionModelAPI({
         _id: "101010101010101010105555",
         status: "Successful",
         clientID: "000000000000000000000000",
@@ -128,7 +128,7 @@ describe("API Integration Tests", () =>
         request: requ
       });
 
-      const transaction6 = new Transaction({
+      const transaction6 = new TransactionModelAPI({
         _id: "101010101010101010106666",
         status: "Successful",
         clientID: "000000000000000000000000",
@@ -137,7 +137,7 @@ describe("API Integration Tests", () =>
       });
 
 
-      const channel = new Channel({
+      const channel = new ChannelModelAPI({
         _id: "aaaa11111111111111111111",
         name: "TestChannel1",
         urlPattern: "test/sample",
@@ -153,7 +153,7 @@ describe("API Integration Tests", () =>
         txRerunAcl: ["group2"]
       });
 
-      const channel2 = new Channel({
+      const channel2 = new ChannelModelAPI({
         _id: "bbbb22222222222222222222",
         name: "TestChannel2",
         urlPattern: "test/sample2",
@@ -169,7 +169,7 @@ describe("API Integration Tests", () =>
         txRerunAcl: ["group222222222"]
       });
 
-      const channel3 = new Channel({
+      const channel3 = new ChannelModelAPI({
         _id: "cccc33333333333333333333",
         name: "TestChannel3",
         urlPattern: "test/sample3",
@@ -186,7 +186,7 @@ describe("API Integration Tests", () =>
         status: "disabled"
       });
 
-      const channel4 = new Channel({
+      const channel4 = new ChannelModelAPI({
         _id: "dddd44444444444444444444",
         name: "TestChannel4",
         urlPattern: "test/sample4",
@@ -206,7 +206,7 @@ describe("API Integration Tests", () =>
       let authDetails = {};
 
       before(done =>
-            Task.remove({}, () =>
+            TaskModelAPI.remove({}, () =>
                 task1.save(() => task2.save(() => task3.save(err =>
                     transaction1.save(() => transaction2.save(() => transaction3.save(() =>
                         transaction4.save(() => transaction5.save(() => transaction6.save(() =>
@@ -233,9 +233,9 @@ describe("API Integration Tests", () =>
       after(done =>
             server.stop(() =>
                 auth.cleanupTestUsers(() =>
-                    Task.remove({}, () =>
-                        Transaction.remove({}, () =>
-                            Channel.remove({}, () =>
+                    TaskModelAPI.remove({}, () =>
+                        TransactionModelAPI.remove({}, () =>
+                            ChannelModelAPI.remove({}, () =>
                                 MongoClient.connect(config.mongo.url, (err, db) => {
                                   const mongoCollection = db != null ? db.collection("jobs") : undefined;
                                   mongoCollection.drop();
@@ -343,7 +343,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Task.findOne({ $and: [{ transactions: { $elemMatch: { tid: "888888888888888888888888" } } }, { transactions: { $elemMatch: { tid: "999999999999999999999999" } } }, { transactions: { $elemMatch: { tid: "101010101010101010101010" } } }] }, (err, task) => {
+                        return TaskModelAPI.findOne({ $and: [{ transactions: { $elemMatch: { tid: "888888888888888888888888" } } }, { transactions: { $elemMatch: { tid: "999999999999999999999999" } } }, { transactions: { $elemMatch: { tid: "101010101010101010101010" } } }] }, (err, task) => {
                           task.should.have.property("status", "Queued");
                           task.transactions.should.have.length(3);
                           task.should.have.property("remainingTransactions", 3);
@@ -369,7 +369,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Task.findOne({ $and: [{ transactions: { $elemMatch: { tid: "888888888888888888888888" } } }, { transactions: { $elemMatch: { tid: "999999999999999999999999" } } }, { transactions: { $elemMatch: { tid: "101010101010101010101010" } } }] }, (err, task) => {
+                        return TaskModelAPI.findOne({ $and: [{ transactions: { $elemMatch: { tid: "888888888888888888888888" } } }, { transactions: { $elemMatch: { tid: "999999999999999999999999" } } }, { transactions: { $elemMatch: { tid: "101010101010101010101010" } } }] }, (err, task) => {
                           task.should.have.property("status", "Queued");
                           task.transactions.should.have.length(3);
                           task.should.have.property("remainingTransactions", 3);
@@ -461,7 +461,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Task.findOne({ $and: [{ transactions: { $elemMatch: { tid: "222288888888888888888888" } } }, { transactions: { $elemMatch: { tid: "333399999999999999999999" } } }, { transactions: { $elemMatch: { tid: "444410101010101010101010" } } }] }, (err, task) => {
+                        return TaskModelAPI.findOne({ $and: [{ transactions: { $elemMatch: { tid: "222288888888888888888888" } } }, { transactions: { $elemMatch: { tid: "333399999999999999999999" } } }, { transactions: { $elemMatch: { tid: "444410101010101010101010" } } }] }, (err, task) => {
                           task.should.have.property("status", "Paused");
                           task.transactions.should.have.length(3);
                           task.should.have.property("remainingTransactions", 3);
@@ -475,20 +475,20 @@ describe("API Integration Tests", () =>
           const newTask =
                     { tids: ["888888888888888888888888", "999999999999999999999999"] };
 
-          return AutoRetry.remove({}, (err) => {
+          return AutoRetryModelAPI.remove({}, (err) => {
             if (err) { return done(err); }
 
-            const retry1 = new AutoRetry({
+            const retry1 = new AutoRetryModelAPI({
               transactionID: ObjectId("888888888888888888888888"),
               channelID: ObjectId("222222222222222222222222"),
               requestTimestamp: new Date()
             });
-            const retry2 = new AutoRetry({
+            const retry2 = new AutoRetryModelAPI({
               transactionID: ObjectId("999999999999999999999999"),
               channelID: ObjectId("222222222222222222222222"),
               requestTimestamp: new Date()
             });
-            const retry3 = new AutoRetry({
+            const retry3 = new AutoRetryModelAPI({
               transactionID: ObjectId("111119999999999999999999"),
               channelID: ObjectId("222222222222222222222222"),
               requestTimestamp: new Date()
@@ -507,7 +507,7 @@ describe("API Integration Tests", () =>
                                 return done(err);
                               } else {
                                 return setTimeout((() =>
-                                        AutoRetry.find({}, (err, results) => {
+                                        AutoRetryModelAPI.find({}, (err, results) => {
                                           results.length.should.be.exactly(1);
                                             // retry3 not in task
                                           results[0].transactionID.toString().should.be.equal(retry3.transactionID.toString());
@@ -718,7 +718,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Task.findOne({ _id: "aaa777777bbb66cc5d4444ee" }, (err, task) => {
+                        return TaskModelAPI.findOne({ _id: "aaa777777bbb66cc5d4444ee" }, (err, task) => {
                           task.should.have.property("status", "Completed");
                           task.transactions.should.have.length(3);
                           return done();
@@ -762,7 +762,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Task.find({ _id: "aaa777777bbb66cc5d4444ee" }, (err, task) => {
+                        return TaskModelAPI.find({ _id: "aaa777777bbb66cc5d4444ee" }, (err, task) => {
                           task.should.have.length(0);
                           return done();
                         });

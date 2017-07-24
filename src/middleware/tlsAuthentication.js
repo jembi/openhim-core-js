@@ -5,8 +5,8 @@ import pem from "pem";
 import { rootCas as rootCAs } from "ssl-root-cas/latest";
 import SDC from "statsd-client";
 import os from "os";
-import { Client } from "../model/clients";
-import { Keystore } from "../model/keystore";
+import { ClientModel } from "../model/clients";
+import { KeystoreModel } from "../model/keystore";
 import * as utils from "../utils";
 import { config } from "../config";
 
@@ -21,7 +21,7 @@ const sdc = new SDC(statsdServer);
  * Fetches the trusted certificates, callsback with an array of certs.
  */
 export function getTrustedClientCerts(done) {
-  return Keystore.findOne((err, keystore) => {
+  return KeystoreModel.findOne((err, keystore) => {
     if (err) { done(err, null); }
     const certs = rootCAs;
     if (keystore.ca != null) {
@@ -40,7 +40,7 @@ export function getTrustedClientCerts(done) {
  * mutualTLS is a boolean, when true mutual TLS authentication is enabled
  */
 export function getServerOptions(mutualTLS, done) {
-  return Keystore.findOne((err, keystore) => {
+  return KeystoreModel.findOne((err, keystore) => {
     let options;
     if (err) {
       logger.error(`Could not fetch keystore: ${err}`);
@@ -89,7 +89,7 @@ function clientLookup(fingerprint, subjectCN, issuerCN) {
   logger.debug(`Looking up client linked to cert with fingerprint ${fingerprint} with subject ${subjectCN} and issuer ${issuerCN}`);
   const deferred = Q.defer();
 
-  Client.findOne({ certFingerprint: fingerprint }, (err, result) => {
+  ClientModel.findOne({ certFingerprint: fingerprint }, (err, result) => {
     if (err) { deferred.reject(err); }
 
     if (result != null) {

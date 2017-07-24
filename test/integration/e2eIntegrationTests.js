@@ -6,10 +6,10 @@ import https from "https";
 import fs from "fs";
 import request from "supertest";
 import FormData from "form-data";
-import { Channel } from "../../src/model/channels";
-import { Client } from "../../src/model/clients";
-import { Transaction } from "../../src/model/transactions";
-import { Keystore } from "../../src/model/keystore";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { ClientModelAPI } from "../../src/model/clients";
+import { TransactionModelAPI } from "../../src/model/transactions";
+import { KeystoreModelAPI } from "../../src/model/keystore";
 import * as testUtils from "../testUtils";
 import * as server from "../../src/server";
 import { config } from "../../src/config";
@@ -27,7 +27,7 @@ describe("e2e Integration Tests", () => {
         config.authentication.enableBasicAuthentication = false;
 
                 // Setup some test data
-        const channel1 = new Channel({
+        const channel1 = new ChannelModelAPI({
           name: "TEST DATA - Mock endpoint",
           urlPattern: "test/mock",
           allow: ["PoC"],
@@ -66,13 +66,13 @@ describe("e2e Integration Tests", () => {
             certFingerprint: "18:B7:F9:52:FA:37:86:C5:F5:63:DA:8B:FA:E6:6B:4D:FB:A0:27:ED"
           };
 
-          const client1 = new Client(testClientDoc1);
-          const client2 = new Client(testClientDoc2);
+          const client1 = new ClientModelAPI(testClientDoc1);
+          const client2 = new ClientModelAPI(testClientDoc2);
 
-          return Client.remove({}, () => client1.save(() => client2.save(() =>
+          return ClientModelAPI.remove({}, () => client1.save(() => client2.save(() =>
                         // remove default keystore
-                        Keystore.remove({}, () => {
-                          const keystore = new Keystore({
+                        KeystoreModelAPI.remove({}, () => {
+                          const keystore = new KeystoreModelAPI({
                             key: fs.readFileSync("test/resources/server-tls/key.pem"),
                             cert: {
                               data: fs.readFileSync("test/resources/server-tls/cert.pem"),
@@ -106,9 +106,9 @@ describe("e2e Integration Tests", () => {
       });
 
       after(done =>
-                Channel.remove({ name: "TEST DATA - Mock endpoint" }, () =>
-                    Client.remove({ clientID: "testApp" }, () =>
-                        Client.remove({ clientID: "testApp2" }, () =>
+                ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint" }, () =>
+                    ClientModelAPI.remove({ clientID: "testApp" }, () =>
+                        ClientModelAPI.remove({ clientID: "testApp2" }, () =>
                             mockServer.close(() => done())
                         )
                     )
@@ -226,7 +226,7 @@ describe("e2e Integration Tests", () => {
         config.authentication.enableBasicAuthentication = true;
 
                 // Setup some test data
-        const channel1 = new Channel({
+        const channel1 = new ChannelModelAPI({
           name: "TEST DATA - Mock endpoint",
           urlPattern: "test/mock",
           allow: ["PoC"],
@@ -253,7 +253,7 @@ describe("e2e Integration Tests", () => {
             cert: ""
           };
 
-          const client = new Client(testAppDoc);
+          const client = new ClientModelAPI(testAppDoc);
           return client.save((error, newAppDoc) =>
                         mockServer = testUtils.createMockServer(200, "Mock response body 1\n", 1232, () => done())
                     );
@@ -261,8 +261,8 @@ describe("e2e Integration Tests", () => {
       });
 
       after(done =>
-                Channel.remove({ name: "TEST DATA - Mock endpoint" }, () =>
-                    Client.remove({ clientID: "testApp" }, () =>
+                ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint" }, () =>
+                    ClientModelAPI.remove({ clientID: "testApp" }, () =>
                         mockServer.close(() => done())
                     )
                 )
@@ -338,7 +338,7 @@ describe("e2e Integration Tests", () => {
       config.authentication.enableBasicAuthentication = true;
 
             // Setup some test data
-      const channel1 = new Channel({
+      const channel1 = new ChannelModelAPI({
         name: "TEST DATA - Mock endpoint",
         urlPattern: "/test/mock",
         allow: ["PoC"],
@@ -351,7 +351,7 @@ describe("e2e Integration Tests", () => {
         ]
       });
 
-      const channel2 = new Channel({
+      const channel2 = new ChannelModelAPI({
         name: "TEST DATA - Mock With Return endpoint",
         urlPattern: "/gmo",
         allow: ["PoC"],
@@ -364,7 +364,7 @@ describe("e2e Integration Tests", () => {
         ]
       });
 
-      const channel3 = new Channel({
+      const channel3 = new ChannelModelAPI({
         name: "TEST DATA - Mock With Return endpoint public",
         urlPattern: "/public",
         allow: [],
@@ -378,7 +378,7 @@ describe("e2e Integration Tests", () => {
         ]
       });
 
-      const channel4 = new Channel({
+      const channel4 = new ChannelModelAPI({
         name: "TEST DATA - Mock With Return endpoint private - whitelist",
         urlPattern: "/private",
         allow: [],
@@ -393,7 +393,7 @@ describe("e2e Integration Tests", () => {
         ]
       });
 
-      const channel5 = new Channel({
+      const channel5 = new ChannelModelAPI({
         name: "TEST DATA - whitelist but un-authorised",
         urlPattern: "/un-auth",
         allow: ["private"],
@@ -408,7 +408,7 @@ describe("e2e Integration Tests", () => {
         ]
       });
 
-      const channel6 = new Channel({
+      const channel6 = new ChannelModelAPI({
         name: "TEST DATA - whitelist but authorised",
         urlPattern: "/auth",
         allow: ["PoC"],
@@ -444,7 +444,7 @@ describe("e2e Integration Tests", () => {
                                     cert: ""
                                   };
 
-                                  const client = new Client(testAppDoc);
+                                  const client = new ClientModelAPI(testAppDoc);
                                   return client.save((error, newAppDoc) => {
                                         // Create mock endpoint to forward requests to
                                     mockServer = testUtils.createMockServerForPost(201, 400, testDoc);
@@ -461,8 +461,8 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({}, () =>
-                Client.remove({ clientID: "testApp" }, () =>
+            ChannelModelAPI.remove({}, () =>
+                ClientModelAPI.remove({ clientID: "testApp" }, () =>
                     mockServer.close(() =>
                         mockServerWithReturn.close(() => done())
                     )
@@ -617,7 +617,7 @@ describe("e2e Integration Tests", () => {
       config.authentication.enableBasicAuthentication = true;
 
             // Setup some test data
-      const channel1 = new Channel({
+      const channel1 = new ChannelModelAPI({
         name: "TEST DATA - Mock endpoint",
         urlPattern: "test/mock",
         allow: ["PoC"],
@@ -645,7 +645,7 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) =>
                     // Create mock endpoint to forward requests to
                     mockServer = testUtils.createMockServer(201, testDoc, 6262, () => done())
@@ -654,8 +654,8 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock endpoint" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint" }, () =>
+                ClientModelAPI.remove({ clientID: "testApp" }, () =>
                     mockServer.close(() => done())
                 )
             )
@@ -703,7 +703,7 @@ describe("e2e Integration Tests", () => {
       config.authentication.enableBasicAuthentication = true;
 
             // Setup some test data
-      const channel1 = new Channel({
+      const channel1 = new ChannelModelAPI({
         name: "TEST DATA - Mock endpoint",
         urlPattern: "test/mock",
         allow: ["PoC"],
@@ -734,7 +734,7 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) => {
                     // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testXMLDoc);
@@ -745,8 +745,8 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock endpoint" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint" }, () =>
+                ClientModelAPI.remove({ clientID: "testApp" }, () =>
                     mockServer.close(() => done())
                 )
             )
@@ -808,7 +808,7 @@ describe("e2e Integration Tests", () => {
       config.authentication.enableBasicAuthentication = true;
 
             // Setup some test data
-      const channel1 = new Channel({
+      const channel1 = new ChannelModelAPI({
         name: "TEST DATA - Mock endpoint",
         urlPattern: "test/mock",
         allow: ["PoC"],
@@ -839,7 +839,7 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) => {
                     // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testJSONDoc);
@@ -850,8 +850,8 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock endpoint" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint" }, () =>
+                ClientModelAPI.remove({ clientID: "testApp" }, () =>
                     mockServer.close(() => done())
                 )
             )
@@ -907,7 +907,7 @@ describe("e2e Integration Tests", () => {
       config.authentication.enableBasicAuthentication = true;
 
             // Setup some test data
-      const channel1 = new Channel({
+      const channel1 = new ChannelModelAPI({
         name: "TEST DATA - Mock endpoint",
         urlPattern: "test/mock",
         allow: ["PoC"],
@@ -936,7 +936,7 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) => {
                     // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testRegExDoc);
@@ -947,8 +947,8 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock endpoint" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint" }, () =>
+                ClientModelAPI.remove({ clientID: "testApp" }, () =>
                     mockServer.close(() => done())
                 )
             )
@@ -1033,7 +1033,7 @@ describe("e2e Integration Tests", () => {
       config.authentication.enableMutualTLSAuthentication = false;
       config.authentication.enableBasicAuthentication = true;
 
-      const mediatorChannel = new Channel({
+      const mediatorChannel = new ChannelModelAPI({
         name: "TEST DATA - Mock mediator endpoint",
         urlPattern: "test/mediator",
         allow: ["PoC"],
@@ -1061,16 +1061,16 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) => mockServer = testUtils.createMockMediatorServer(200, mediatorResponse, 1244, () => done()));
       });
     });
 
-    beforeEach(done => Transaction.remove({}, done));
+    beforeEach(done => TransactionModelAPI.remove({}, done));
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock mediator endpoint" }, () =>
-                Client.remove({ clientID: "mediatorTestApp" }, () =>
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock mediator endpoint" }, () =>
+                ClientModelAPI.remove({ clientID: "mediatorTestApp" }, () =>
                     mockServer.close(() => done())
                 )
             )
@@ -1078,7 +1078,7 @@ describe("e2e Integration Tests", () => {
 
     afterEach(done =>
             server.stop(() =>
-                Transaction.remove({}, () => done())
+                TransactionModelAPI.remove({}, () => done())
             )
         );
 
@@ -1111,7 +1111,7 @@ describe("e2e Integration Tests", () => {
                             return done(err);
                           } else {
                             return setTimeout((() =>
-                                    Transaction.findOne({}, (err, res) => {
+                                    TransactionModelAPI.findOne({}, (err, res) => {
                                       res.status.should.be.equal(mediatorResponse.status);
                                       res.orchestrations.length.should.be.exactly(1);
                                       res.orchestrations[0].name.should.be.equal(mediatorResponse.orchestrations[0].name);
@@ -1164,7 +1164,7 @@ describe("e2e Integration Tests", () => {
       };
 
             // Setup some test data
-      const channel1 = new Channel({
+      const channel1 = new ChannelModelAPI({
         name: "TEST DATA - Mock endpoint - multipart",
         urlPattern: "/test/multipart",
         allow: ["PoC"],
@@ -1192,7 +1192,7 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) =>
                     mockServer = testUtils.createMockMediatorServer(200, mediatorResponse, 1276, () => done())
                 );
@@ -1200,8 +1200,8 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock endpoint - multipart" }, () =>
-                Client.remove({ clientID: "testAppMultipart" }, () => done())
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint - multipart" }, () =>
+                ClientModelAPI.remove({ clientID: "testAppMultipart" }, () => done())
             )
         );
 
@@ -1249,7 +1249,7 @@ describe("e2e Integration Tests", () => {
       config.authentication.enableBasicAuthentication = true;
 
             // Setup some test data
-      const channel1 = new Channel({
+      const channel1 = new ChannelModelAPI({
         name: "TEST DATA - Mock endpoint",
         urlPattern: "test/mock",
         allow: ["PoC"],
@@ -1278,7 +1278,7 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) =>
                     // Create mock endpoint to forward requests to
                     mockServer = testUtils.createMockServer(201, JSON.stringify(jsonResponse), 1232, () => done())
@@ -1287,8 +1287,8 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock endpoint" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint" }, () =>
+                ClientModelAPI.remove({ clientID: "testApp" }, () =>
                     mockServer.close(() => done())
                 )
             )
@@ -1322,7 +1322,7 @@ describe("e2e Integration Tests", () => {
     let mockServer1 = null;
     let mockServer2 = null;
 
-    const channel1 = new Channel({
+    const channel1 = new ChannelModelAPI({
       name: "TEST DATA - Mock endpoint 1",
       urlPattern: "^/test/channel1$",
       allow: ["PoC"],
@@ -1339,7 +1339,7 @@ describe("e2e Integration Tests", () => {
         }
       ]
     });
-    const channel2 = new Channel({
+    const channel2 = new ChannelModelAPI({
       name: "TEST DATA - Mock endpoint 2",
       urlPattern: "^/test/channel2$",
       allow: ["PoC"],
@@ -1358,7 +1358,7 @@ describe("e2e Integration Tests", () => {
         }
       ]
     });
-    const channel3 = new Channel({
+    const channel3 = new ChannelModelAPI({
       name: "TEST DATA - Mock endpoint 3",
       urlPattern: "^/test/channel3$",
       allow: ["PoC"],
@@ -1399,7 +1399,7 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) =>
                     // Create mock endpoint to forward requests to
                     mockServer1 = testUtils.createMockServer(200, "target1", 1233, () => mockServer2 = testUtils.createMockServer(200, "target2", 1234, () => done()))
@@ -1410,10 +1410,10 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock endpoint 1" }, () =>
-                Channel.remove({ name: "TEST DATA - Mock endpoint 2" }, () =>
-                    Channel.remove({ name: "TEST DATA - Mock endpoint 3" }, () =>
-                        Client.remove({ clientID: "testApp" }, () =>
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint 1" }, () =>
+                ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint 2" }, () =>
+                    ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint 3" }, () =>
+                        ClientModelAPI.remove({ clientID: "testApp" }, () =>
                             mockServer1.close(() =>
                                 mockServer2.close(() => done())
                             )
@@ -1423,9 +1423,9 @@ describe("e2e Integration Tests", () => {
             )
         );
 
-    afterEach(done => server.stop(() => Transaction.remove({}, done)));
+    afterEach(done => server.stop(() => TransactionModelAPI.remove({}, done)));
 
-    beforeEach(done => Transaction.remove({}, done));
+    beforeEach(done => TransactionModelAPI.remove({}, done));
 
     it("should route transactions to routes that have no status specified (default: enabled)", done =>
             server.start({ httpPort: 5001 }, () =>
@@ -1440,7 +1440,7 @@ describe("e2e Integration Tests", () => {
                         res.text.should.be.exactly("target1");
                             // routes are async
                         return setTimeout((() =>
-                                Transaction.findOne({}, (err, trx) => {
+                                TransactionModelAPI.findOne({}, (err, trx) => {
                                   if (err) { return done(err); }
                                   trx.routes.length.should.be.exactly(1);
                                   trx.routes[0].should.have.property("name", "test route 2");
@@ -1466,7 +1466,7 @@ describe("e2e Integration Tests", () => {
                         res.text.should.be.exactly("target2");
                             // routes are async
                         return setTimeout((() =>
-                                Transaction.findOne({}, (err, trx) => {
+                                TransactionModelAPI.findOne({}, (err, trx) => {
                                   if (err) { return done(err); }
                                   trx.routes.length.should.be.exactly(0);
                                   return done();
@@ -1490,7 +1490,7 @@ describe("e2e Integration Tests", () => {
                         res.text.should.be.exactly("target1");
                             // routes are async
                         return setTimeout((() =>
-                                Transaction.findOne({}, (err, trx) => {
+                                TransactionModelAPI.findOne({}, (err, trx) => {
                                   if (err) { return done(err); }
                                   trx.routes.length.should.be.exactly(0);
                                   return done();
@@ -1507,7 +1507,7 @@ describe("e2e Integration Tests", () => {
     let mockServer1 = null;
     let mockServer2 = null;
 
-    const channel1 = new Channel({
+    const channel1 = new ChannelModelAPI({
       name: "TEST DATA - Mock endpoint 1",
       urlPattern: "^/test/undefined/priority$",
       allow: ["PoC"],
@@ -1519,7 +1519,7 @@ describe("e2e Integration Tests", () => {
       }
       ]
     });
-    const channel2 = new Channel({
+    const channel2 = new ChannelModelAPI({
       name: "TEST DATA - Mock endpoint 2",
       urlPattern: "^/.*$",
       priority: 3,
@@ -1532,7 +1532,7 @@ describe("e2e Integration Tests", () => {
       }
       ]
     });
-    const channel3 = new Channel({
+    const channel3 = new ChannelModelAPI({
       name: "TEST DATA - Mock endpoint 3",
       urlPattern: "^/test/mock$",
       priority: 2,
@@ -1566,7 +1566,7 @@ describe("e2e Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModelAPI(testAppDoc);
         return client.save((error, newAppDoc) =>
                     // Create mock endpoint to forward requests to
                     mockServer1 = testUtils.createMockServer(200, "target1", 1233, () => mockServer2 = testUtils.createMockServer(200, "target2", 1234, () => done()))
@@ -1577,11 +1577,11 @@ describe("e2e Integration Tests", () => {
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mock endpoint 1" }, () =>
-                Channel.remove({ name: "TEST DATA - Mock endpoint 2" }, () =>
-                    Channel.remove({ name: "TEST DATA - Mock endpoint 3" }, () =>
-                        Channel.remove({ name: "TEST DATA - Mock endpoint 4" }, () =>
-                            Client.remove({ clientID: "testApp" }, () =>
+            ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint 1" }, () =>
+                ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint 2" }, () =>
+                    ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint 3" }, () =>
+                        ChannelModelAPI.remove({ name: "TEST DATA - Mock endpoint 4" }, () =>
+                            ClientModelAPI.remove({ clientID: "testApp" }, () =>
                                 mockServer1.close(() =>
                                     mockServer2.close(() => done())
                                 )
@@ -1631,7 +1631,7 @@ describe("e2e Integration Tests", () => {
         );
 
     return it("should deny access if multiple channels match but the top priority channel denies access", (done) => {
-      const channel4 = new Channel({
+      const channel4 = new ChannelModelAPI({
         name: "TEST DATA - Mock endpoint 4",
         urlPattern: "^/test/mock$",
         priority: 1,

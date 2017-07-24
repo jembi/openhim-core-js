@@ -3,11 +3,11 @@
 import should from "should";
 import sinon from "sinon";
 import * as authorisation from "../../src/api/authorisation";
-import { Channel } from "../../src/model/channels";
-import { User } from "../../src/model/users";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { UserModelAPI } from "../../src/model/users";
 
 describe("API authorisation test", () => {
-  const user = new User({
+  const user = new UserModelAPI({
     firstname: "Bill",
     surname: "Murray",
     email: "bfm@crazy.net",
@@ -16,7 +16,7 @@ describe("API authorisation test", () => {
     passwordSalt: "22a61686-66f6-483c-a524-185aac251fb0",
     groups: ["HISP", "group2"] });
 
-  const user2 = new User({
+  const user2 = new UserModelAPI({
     firstname: "Random",
     surname: "User",
     email: "someguy@meh.net",
@@ -25,7 +25,7 @@ describe("API authorisation test", () => {
     passwordSalt: "22a61686-66f6-483c-a524-185aac251fb0",
     groups: ["nothing", "here"] });
 
-  const user3 = new User({
+  const user3 = new UserModelAPI({
     firstname: "Random",
     surname: "User",
     email: "someguy@meh.net",
@@ -35,7 +35,7 @@ describe("API authorisation test", () => {
     groups: ["admin"] });
 
   before((done) => {
-    const channel1 = new Channel({
+    const channel1 = new ChannelModelAPI({
       name: "TestChannel1 - api authorisation",
       urlPattern: "test/sample",
       allow: ["PoC", "Test1", "Test2"],
@@ -49,7 +49,7 @@ describe("API authorisation test", () => {
       txViewAcl: ["group1", "group2"],
       txRerunAcl: ["group2"] });
 
-    const channel2 = new Channel({
+    const channel2 = new ChannelModelAPI({
       name: "TestChannel2 - api authorisation",
       urlPattern: "test/sample",
       allow: ["PoC", "Test1", "Test2"],
@@ -63,7 +63,7 @@ describe("API authorisation test", () => {
       txViewAcl: ["group2", "group3"],
       txRerunAcl: ["group1", "group3"] });
 
-    const channel3 = new Channel({
+    const channel3 = new ChannelModelAPI({
       name: "TestChannel3 - api authorisation",
       urlPattern: "test/sample",
       allow: ["PoC", "Test1", "Test2"],
@@ -85,7 +85,7 @@ describe("API authorisation test", () => {
   });
 
   after(done =>
-    Channel.remove({}, () => done())
+    ChannelModelAPI.remove({}, () => done())
   );
 
   describe(".inGroup", () => {

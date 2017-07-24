@@ -4,7 +4,7 @@ import logger from "winston";
 import crypto from "crypto";
 import SDC from "statsd-client";
 import os from "os";
-import { Client } from "../model/clients";
+import { ClientModel } from "../model/clients";
 import { config } from "../config";
 
 const statsdServer = config.get("statsd");
@@ -14,7 +14,7 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`;
 const sdc = new SDC(statsdServer);
 
 export function authenticateUser(ctx, done) {
-  return Client.findOne({ _id: ctx.request.header.clientid }, (err, client) => {
+  return ClientModel.findOne({ _id: ctx.request.header.clientid }, (err, client) => {
     ctx.authenticated = client;
     ctx.parentID = ctx.request.header.parentid;
     ctx.taskID = ctx.request.header.taskid;

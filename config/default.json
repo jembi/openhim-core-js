@@ -5,7 +5,7 @@
     "atnaUrl": "mongodb://localhost/openhim",
     "connectionOptions": {},
     "openHIMApiReadPreference": "primaryPreffered",
-    "openHIMApiWriteConcern": "1",
+    "openHIMApiWriteConcern": 1,
     "openHIMApiReadConcern": "local"
   },
   "logger": {

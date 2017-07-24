@@ -1,5 +1,5 @@
 import logger from "winston";
-import { Transaction } from "./model/transactions";
+import { TransactionModel } from "./model/transactions";
 
 /**
  * Calculates transaction metrics
@@ -155,5 +155,5 @@ export function calculateMetrics(startDate, endDate, transactionFilter, channelI
   }
 
   const pipeline = [{ $match: match }, { $group: group }];
-  return Transaction.aggregate(pipeline).exec();
+  return TransactionModel.aggregate(pipeline).exec();
 }

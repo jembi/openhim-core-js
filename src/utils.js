@@ -1,7 +1,7 @@
 import momentTZ from "moment-timezone";
 import logger from "winston";
-import { Channel } from "./model/channels";
-import { Keystore } from "./model/keystore";
+import { ChannelModel } from "./model/channels";
+import { KeystoreModel } from "./model/keystore";
 import { config } from "./config";
 
 config.caching = config.get("caching");
@@ -39,7 +39,7 @@ function getCachedValues(store, callback) {
 
         // TODO make this more generic (had issues passing Channel.find as a param [higher order function])
     if (store === "channels") {
-      return Channel.find({}).sort({ priority: 1 }).exec((err, channels) => {
+      return ChannelModel.find({}).sort({ priority: 1 }).exec((err, channels) => {
         if (err) {
           return handler(err);
         }
@@ -55,7 +55,7 @@ function getCachedValues(store, callback) {
         return handler(null, sortedChannels.concat(noPriorityChannels));
       });
     } else if (store === "keystore") {
-      return Keystore.findOne({}, handler);
+      return KeystoreModel.findOne({}, handler);
     } else {
       return callback(`Internal error: Invalid store ${store}`);
     }
@@ -122,14 +122,4 @@ export function enforceMaxBodiesSize(ctx, tx) {
 
   ctx.totalBodyLength += len;
   return enforced;
-}
-
-export function getExtraMongoConfig() {
-  return {
-    db: {
-      readPreference: config.mongo.openHIMApiReadPreference,
-      readConcern: { level: config.mongo.openHIMApiReadConcern },
-      w: config.mongo.openHIMApiWriteConcern
-    }
-  };
 }

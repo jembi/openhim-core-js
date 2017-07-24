@@ -9,7 +9,7 @@ import * as utils from "../utils";
 import * as auditing from "../auditing";
 import * as Channels from "../model/channels";
 
-const { Channel } = Channels;
+const { ChannelModel } = Channels;
 
 const statsdServer = config.get("statsd");
 const application = config.get("application");

@@ -4,7 +4,7 @@
 import should from "should";
 import sinon from "sinon";
 import rewire from "rewire";
-import { Channel } from "../../src/model/channels";
+import { ChannelModel } from "../../src/model/channels";
 
 const authorisation = rewire("../../src/middleware/authorisation");
 
@@ -15,7 +15,7 @@ describe("Authorisation middleware", () => {
   describe(".authorise(ctx, done)", () => {
     it("should allow a request if the client is authorised to use the channel by role", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Authorisation mock channel 1",
         urlPattern: "test/authorisation",
         allow: ["PoC", "Test1", "Test2"],
@@ -51,7 +51,7 @@ describe("Authorisation middleware", () => {
 
     it("should deny a request if the client is NOT authorised to use the channel by role", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Authorisation mock channel 2",
         urlPattern: "test/authorisation",
         allow: ["Something-else"],
@@ -89,7 +89,7 @@ describe("Authorisation middleware", () => {
 
     return it("should allow a request if the client is authorised to use the channel by clientID", (done) => {
             // Setup a channel for the mock endpoint
-      const channel = new Channel({
+      const channel = new ChannelModel({
         name: "Authorisation mock channel 3",
         urlPattern: "test/authorisation",
         allow: ["Test1", "Musha_OpenMRS", "Test2"],

@@ -4,9 +4,9 @@
 import should from "should";
 import sinon from "sinon";
 import request from "supertest";
-import { Transaction } from "../../src/model/transactions";
-import { Channel } from "../../src/model/channels";
-import { User } from "../../src/model/users";
+import { TransactionModelAPI } from "../../src/model/transactions";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { UserModelAPI } from "../../src/model/users";
 import * as server from "../../src/server";
 import * as testUtils from "../testUtils";
 
@@ -71,7 +71,7 @@ describe("API Integration Tests", () =>
 
       let authDetails = {};
 
-      const channel = new Channel({
+      const channel = new ChannelModelAPI({
         name: "TestChannel1",
         urlPattern: "test/sample",
         allow: ["PoC", "Test1", "Test2"],
@@ -96,7 +96,7 @@ describe("API Integration Tests", () =>
 
       after(done =>
             auth.cleanupTestUsers(err =>
-                Channel.remove(err =>
+                ChannelModelAPI.remove(err =>
                     server.stop(() => done())
                 )
             )

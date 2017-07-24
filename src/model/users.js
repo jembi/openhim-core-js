@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { connectionDefault } from "../config";
+import { connectionAPI, connectionDefault } from "../config";
 
 const UserSchema = new Schema({
   firstname: {
@@ -29,4 +29,5 @@ const UserSchema = new Schema({
 });
 
 // compile the User Schema into a Model
-export const User = connectionDefault.model("User", UserSchema);
+export const UserModelAPI = connectionAPI.model("User", UserSchema);
+export const UserModel = connectionDefault.model("User", UserSchema);

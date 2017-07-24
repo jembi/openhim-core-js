@@ -3,10 +3,10 @@
 import should from "should";
 import sinon from "sinon";
 import * as polling from "../../src/polling";
-import { Channel } from "../../src/model/channels";
+import { ChannelModel } from "../../src/model/channels";
 
 describe("Polling tests", () => {
-  const testChannel = new Channel({
+  const testChannel = new ChannelModel({
     name: "test",
     urlPattern: "/test",
     allow: "*",
@@ -14,13 +14,13 @@ describe("Polling tests", () => {
     pollingSchedule: "* * * * *"
   });
 
-  const testChannel2 = new Channel({
+  const testChannel2 = new ChannelModel({
     name: "test2",
     urlPattern: "/test2",
     allow: "*"
   });
 
-  const testChannel3 = new Channel({
+  const testChannel3 = new ChannelModel({
     name: "test3",
     urlPattern: "/test4",
     allow: "*",
@@ -28,7 +28,7 @@ describe("Polling tests", () => {
     pollingSchedule: "2 * * * *"
   });
 
-  const disabledChannel = new Channel({
+  const disabledChannel = new ChannelModel({
     name: "disabled",
     urlPattern: "/disabled",
     allow: "*",

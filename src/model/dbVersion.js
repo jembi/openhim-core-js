@@ -1,9 +1,10 @@
 import { Schema } from "mongoose";
-import { connectionDefault } from "../config";
+import { connectionAPI, connectionDefault } from "../config";
 
 const dbVersionSchema = new Schema({
   version: Number,
   lastUpdated: Date
 });
 
-export const dbVersion = connectionDefault.model("dbVersion", dbVersionSchema);
+export const dbVersionModelAPI = connectionAPI.model("dbVersion", dbVersionSchema);
+export const dbVersionModel = connectionDefault.model("dbVersion", dbVersionSchema);

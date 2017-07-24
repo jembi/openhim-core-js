@@ -1,7 +1,7 @@
 import Q from "q";
 import logger from "winston";
-import { Client } from "../model/clients";
-import { Channel } from "../model/channels";
+import { ClientModelAPI } from "../model/clients";
+import { ChannelModelAPI } from "../model/channels";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
 
@@ -18,15 +18,15 @@ export function* addClient() {
   const clientData = this.request.body;
 
   if (clientData.clientID) {
-    const chResult = yield Channel.find({ allow: { $in: [clientData.clientID] } }, { name: 1 }).exec();
-    const clResult = yield Client.find({ roles: { $in: [clientData.clientID] } }, { clientID: 1 }).exec();
+    const chResult = yield ChannelModelAPI.find({ allow: { $in: [clientData.clientID] } }, { name: 1 }).exec();
+    const clResult = yield ClientModelAPI.find({ roles: { $in: [clientData.clientID] } }, { clientID: 1 }).exec();
     if (((chResult != null ? chResult.length : undefined) > 0) || ((clResult != null ? clResult.length : undefined) > 0)) {
       return utils.logAndSetResponse(this, 409, `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`, "info");
     }
   }
 
   try {
-    const client = new Client(clientData);
+    const client = new ClientModelAPI(clientData);
     const result = yield Q.ninvoke(client, "save");
 
     logger.info(`User ${this.authenticated.email} created client with id ${client.id}`);
@@ -67,7 +67,7 @@ export function* getClient(clientId, property) {
   clientId = unescape(clientId);
 
   try {
-    const result = yield Client.findById(clientId, projectionRestriction).exec();
+    const result = yield ClientModelAPI.findById(clientId, projectionRestriction).exec();
     if (result === null) {
       return utils.logAndSetResponse(this, 404, `Client with id ${clientId} could not be found.`, "info");
     } else {
@@ -91,7 +91,7 @@ export function* findClientByDomain(clientDomain) {
   clientDomain = unescape(clientDomain);
 
   try {
-    const result = yield Client.findOne({ clientDomain }).exec();
+    const result = yield ClientModelAPI.findOne({ clientDomain }).exec();
     if (result === null) {
       return utils.logAndSetResponse(this, 404, `Could not find client with clientDomain ${clientDomain}`, "info");
     } else {
@@ -118,15 +118,15 @@ export function* updateClient(clientId) {
   if (clientData._id) { delete clientData._id; }
 
   if (clientData.clientID) {
-    const chResult = yield Channel.find({ allow: { $in: [clientData.clientID] } }, { name: 1 }).exec();
-    const clResult = yield Client.find({ roles: { $in: [clientData.clientID] } }, { clientID: 1 }).exec();
+    const chResult = yield ChannelModelAPI.find({ allow: { $in: [clientData.clientID] } }, { name: 1 }).exec();
+    const clResult = yield ClientModelAPI.find({ roles: { $in: [clientData.clientID] } }, { clientID: 1 }).exec();
     if (((chResult != null ? chResult.length : undefined) > 0) || ((clResult != null ? clResult.length : undefined) > 0)) {
       return utils.logAndSetResponse(this, 409, `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`, "info");
     }
   }
 
   try {
-    yield Client.findByIdAndUpdate(clientId, clientData).exec();
+    yield ClientModelAPI.findByIdAndUpdate(clientId, clientData).exec();
     logger.info(`User ${this.authenticated.email} updated client with id ${clientId}`);
     return this.body = "Successfully updated client.";
   } catch (e) {
@@ -146,7 +146,7 @@ export function* removeClient(clientId) {
   clientId = unescape(clientId);
 
   try {
-    yield Client.findByIdAndRemove(clientId).exec();
+    yield ClientModelAPI.findByIdAndRemove(clientId).exec();
     this.body = `Successfully removed client with ID ${clientId}`;
     return logger.info(`User ${this.authenticated.email} removed client with id ${clientId}`);
   } catch (e) {
@@ -164,7 +164,7 @@ export function* getClients() {
   }
 
   try {
-    return this.body = yield Client.find().exec();
+    return this.body = yield ClientModelAPI.find().exec();
   } catch (e) {
     logger.error(`Could not fetch all clients via the API: ${e.message}`);
     this.message = e.message;

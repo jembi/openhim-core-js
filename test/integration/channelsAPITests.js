@@ -8,8 +8,8 @@ import mongoose from "mongoose";
 import * as server from "../../src/server";
 import * as tcpAdapter from "../../src/tcpAdapter";
 import * as polling from "../../src/polling";
-import { Channel } from "../../src/model/channels";
-import { Transaction } from "../../src/model/transactions";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { TransactionModelAPI } from "../../src/model/transactions";
 import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
@@ -58,8 +58,8 @@ describe("API Integration Tests", () =>
         );
 
       after(done =>
-            Transaction.remove({}, () =>
-                Channel.remove({}, () =>
+            TransactionModelAPI.remove({}, () =>
+                ChannelModelAPI.remove({}, () =>
                     server.stop(() =>
                         auth.cleanupTestUsers(() => done())
                     )
@@ -68,11 +68,11 @@ describe("API Integration Tests", () =>
         );
 
       beforeEach(done =>
-            Transaction.remove({}, () =>
-                Channel.remove({}, () =>
-                    (new Channel(channel1)).save((err, ch1) => {
+            TransactionModelAPI.remove({}, () =>
+                ChannelModelAPI.remove({}, () =>
+                    (new ChannelModelAPI(channel1)).save((err, ch1) => {
                       channel1._id = ch1._id;
-                      return (new Channel(channel2)).save((err, ch2) => {
+                      return (new ChannelModelAPI(channel2)).save((err, ch2) => {
                         channel2._id = ch2._id;
                         return done();
                       });
@@ -149,7 +149,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Channel.findOne({ name: "NewChannel" }, (err, channel) => {
+                        return ChannelModelAPI.findOne({ name: "NewChannel" }, (err, channel) => {
                           channel.should.have.property("urlPattern", "test/sample");
                           channel.allow.should.have.length(3);
                           return done();
@@ -680,7 +680,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Channel.findOne({ name: "TestChannel1" }, (err, channel) => {
+                        return ChannelModelAPI.findOne({ name: "TestChannel1" }, (err, channel) => {
                           channel.should.have.property("name", "TestChannel1");
                           channel.should.have.property("urlPattern", "test/changed");
                           channel.allow.should.have.length(4);
@@ -712,7 +712,7 @@ describe("API Integration Tests", () =>
         });
 
         it("should notify master to startup a TCP server if the type is set to \"tcp\"", (done) => {
-          const httpChannel = new Channel({
+          const httpChannel = new ChannelModelAPI({
             name: "TestChannelForTCPUpdate",
             urlPattern: "/",
             allow: ["test"],
@@ -756,7 +756,7 @@ describe("API Integration Tests", () =>
         });
 
         it("should NOT notify master to startup a TCP server if the type is set to \"tcp\" but it is disabled", (done) => {
-          const httpChannel = new Channel({
+          const httpChannel = new ChannelModelAPI({
             name: "TestChannelForTCPUpdate-Disabled",
             urlPattern: "/",
             allow: ["test"],
@@ -804,7 +804,7 @@ describe("API Integration Tests", () =>
         });
 
         it("should register the updated channel with the polling service if of type \"polling\"", (done) => {
-          const pollChannel = new Channel({
+          const pollChannel = new ChannelModelAPI({
             name: "POLLINGTestChannel-Update",
             urlPattern: "/trigger",
             allow: ["polling"],
@@ -847,7 +847,7 @@ describe("API Integration Tests", () =>
         });
 
         it("should NOT register the updated channel with the polling service if of type \"polling\" but it is disabled", (done) => {
-          const pollChannel = new Channel({
+          const pollChannel = new ChannelModelAPI({
             name: "POLLINGTestChannel-Update-Disabled",
             urlPattern: "/trigger",
             allow: ["polling"],
@@ -1011,7 +1011,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Channel.findOne({ name: "TestChannel1" }, (err, channel) => {
+                        return ChannelModelAPI.findOne({ name: "TestChannel1" }, (err, channel) => {
                           channel.should.have.property("urlPattern", "test/sample");
                           return done();
                         });
@@ -1022,7 +1022,7 @@ describe("API Integration Tests", () =>
 
       describe("*removeChannel(channelId)", () => {
         it("should remove a specific channel by name", done =>
-                Transaction.find({ channelID: channel1._id }, (err, trx) => {
+                TransactionModelAPI.find({ channelID: channel1._id }, (err, trx) => {
                     // there can't be any linked transactions
                   trx.length.should.be.exactly(0);
 
@@ -1037,7 +1037,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Channel.find({ name: "TestChannel1" }, (err, channels) => {
+                            return ChannelModelAPI.find({ name: "TestChannel1" }, (err, channels) => {
                               channels.should.have.length(0);
                               return done();
                             });
@@ -1065,7 +1065,7 @@ describe("API Integration Tests", () =>
             );
 
         it("should remove polling schedule if the channel is of type \"polling\"", (done) => {
-          const pollChannel = new Channel({
+          const pollChannel = new ChannelModelAPI({
             name: "POLLINGTestChannel-Remove",
             urlPattern: "/trigger",
             allow: ["polling"],
@@ -1082,7 +1082,7 @@ describe("API Integration Tests", () =>
 
           const spy = sinon.spy(polling, "removePollingChannel");
 
-          return Transaction.find({ channelID: channel1._id }, (err, trx) => {
+          return TransactionModelAPI.find({ channelID: channel1._id }, (err, trx) => {
                     // there can't be any linked transactions
             trx.length.should.be.exactly(0);
 
@@ -1110,7 +1110,7 @@ describe("API Integration Tests", () =>
         });
 
         return it("should NOT remove a specific channel if any transactions are linked to it but mark the status as deleted", (done) => {
-          const trx = new Transaction({
+          const trx = new TransactionModelAPI({
             clientID: channel1._id, // not really but anyway
             channelID: channel1._id,
             request: {
@@ -1135,7 +1135,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Channel.find({ name: "TestChannel1" }, (err, channels) => {
+                            return ChannelModelAPI.find({ name: "TestChannel1" }, (err, channels) => {
                               channels.should.have.length(1);
                               channels[0].status.should.exist;
                               channels[0].status.should.be.equal("deleted");

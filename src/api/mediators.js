@@ -2,8 +2,8 @@ import Q from "q";
 import logger from "winston";
 import semver from "semver";
 import atna from "atna-audit";
-import { Channel } from "../model/channels";
-import { Mediator } from "../model/mediators";
+import { ChannelModelAPI } from "../model/channels";
+import { MediatorModelAPI } from "../model/mediators";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
 import * as auditing from "../auditing";
@@ -60,7 +60,7 @@ export function* getAllMediators() {
   }
 
   try {
-    const m = yield Mediator.find().exec();
+    const m = yield MediatorModelAPI.find().exec();
     maskPasswords(m.configDefs, m.config);
     return this.body = m;
   } catch (err) {
@@ -79,7 +79,7 @@ export function* getMediator(mediatorURN) {
   const urn = unescape(mediatorURN);
 
   try {
-    const result = yield Mediator.findOne({ urn }).exec();
+    const result = yield MediatorModelAPI.findOne({ urn }).exec();
     if (result === null) {
       return this.status = 404;
     } else {
@@ -163,7 +163,7 @@ export function* addMediator() {
       }
     }
 
-    const existing = yield Mediator.findOne({ urn: mediator.urn }).exec();
+    const existing = yield MediatorModelAPI.findOne({ urn: mediator.urn }).exec();
     if (existing != null) {
       if (semver.gt(mediator.version, existing.version)) {
                 // update the mediator
@@ -176,14 +176,14 @@ export function* addMediator() {
             }
           }
         }
-        yield Mediator.findByIdAndUpdate(existing._id, mediator).exec();
+        yield MediatorModelAPI.findByIdAndUpdate(existing._id, mediator).exec();
       }
     } else {
             // this is a new mediator validate and save it
       if (!mediator.endpoints || (mediator.endpoints.length < 1)) {
         throw constructError("At least 1 endpoint is required", "ValidationError");
       }
-      yield Q.ninvoke(new Mediator(mediator), "save");
+      yield Q.ninvoke(new MediatorModelAPI(mediator), "save");
     }
     this.status = 201;
     return logger.info(`User ${this.authenticated.email} created mediator with urn ${mediator.urn}`);
@@ -206,7 +206,7 @@ export function* removeMediator(urn) {
   urn = unescape(urn);
 
   try {
-    yield Mediator.findOneAndRemove({ urn }).exec();
+    yield MediatorModelAPI.findOneAndRemove({ urn }).exec();
     this.body = `Mediator with urn ${urn} has been successfully removed by ${this.authenticated.email}`;
     return logger.info(`Mediator with urn ${urn} has been successfully removed by ${this.authenticated.email}`);
   } catch (err) {
@@ -224,7 +224,7 @@ export function* heartbeat(urn) {
   urn = unescape(urn);
 
   try {
-    const mediator = yield Mediator.findOne({ urn }).exec();
+    const mediator = yield MediatorModelAPI.findOne({ urn }).exec();
 
     if ((mediator == null)) {
       this.status = 404;
@@ -252,7 +252,7 @@ export function* heartbeat(urn) {
         _uptime: heartbeat.uptime
       };
 
-      yield Mediator.findByIdAndUpdate(mediator._id, update).exec();
+      yield MediatorModelAPI.findByIdAndUpdate(mediator._id, update).exec();
     }
 
     return this.status = 200;
@@ -375,7 +375,7 @@ export function* setConfig(urn) {
   const config = this.request.body;
 
   try {
-    const mediator = yield Mediator.findOne({ urn }).exec();
+    const mediator = yield MediatorModelAPI.findOne({ urn }).exec();
 
     if (mediator == null) {
       this.status = 404;
@@ -392,7 +392,7 @@ export function* setConfig(urn) {
       return;
     }
 
-    yield Mediator.findOneAndUpdate({ urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec();
+    yield MediatorModelAPI.findOneAndUpdate({ urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec();
     return this.status = 200;
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not set mediator config (urn: ${urn}): ${err}`, "error");
@@ -406,7 +406,7 @@ function saveDefaultChannelConfig(channels) {
     for (const route of Array.from(channel.routes)) {
       delete route._id;
     }
-    promises.push(new Channel(channel).save());
+    promises.push(new ChannelModelAPI(channel).save());
   }
   return promises;
 }
@@ -422,7 +422,7 @@ export function* loadDefaultChannels(urn) {
   const channels = this.request.body;
 
   try {
-    const mediator = yield Mediator.findOne({ urn }).lean().exec();
+    const mediator = yield MediatorModelAPI.findOne({ urn }).lean().exec();
 
     if ((mediator == null)) {
       this.status = 404;
