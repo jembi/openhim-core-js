@@ -5,7 +5,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import SDC from "statsd-client";
 import os from "os";
-import { Client } from "../model/clients";
+import { ClientModel } from "../model/clients";
 import { config } from "../config";
 
 const statsdServer = config.get("statsd");
@@ -40,7 +40,7 @@ export function authenticateUser(ctx, done) {
   const user = auth(ctx);
 
   if (user) {
-    return Client.findOne({ clientID: user.name }, (err, client) => {
+    return ClientModel.findOne({ clientID: user.name }, (err, client) => {
       if (err) { return done(err); }
 
       if (client) {

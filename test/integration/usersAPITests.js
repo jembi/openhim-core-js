@@ -6,7 +6,7 @@ import sinon from "sinon";
 import moment from "moment";
 import * as server from "../../src/server";
 import * as contact from "../../src/contact";
-import { User } from "../../src/model/users";
+import { UserModelAPI } from "../../src/model/users";
 import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
@@ -14,7 +14,7 @@ const { auth } = testUtils;
 describe("API Integration Tests", () =>
 
     describe("Users REST Api testing", () => {
-      const user1 = new User({
+      const user1 = new UserModelAPI({
         firstname: "Ryan",
         surname: "Chrichton",
         email: "r..@jembi.org",
@@ -24,7 +24,7 @@ describe("API Integration Tests", () =>
         groups: ["admin", "RHIE"]
       });
 
-      const user2 = new User({
+      const user2 = new UserModelAPI({
         firstname: "Bill",
         surname: "Murray",
         email: "bfm@crazy.net",
@@ -34,7 +34,7 @@ describe("API Integration Tests", () =>
         groups: ["HISP"]
       });
 
-      let newUser = new User({
+      let newUser = new UserModelAPI({
         firstname: "Jane",
         surname: "Doe",
         email: "jane@doe.net",
@@ -45,7 +45,7 @@ describe("API Integration Tests", () =>
         groups: ["HISP"]
       });
 
-      const newUserExpired = new User({
+      const newUserExpired = new UserModelAPI({
         firstname: "John",
         surname: "Smith",
         email: "john@smith.net",
@@ -73,7 +73,7 @@ describe("API Integration Tests", () =>
         );
 
       after(done =>
-            User.remove({}, () =>
+            UserModelAPI.remove({}, () =>
                 auth.cleanupTestUsers(err =>
                     server.stop(() => done())
                 )
@@ -130,7 +130,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return User.findOne({ email: "r..@jembi.org" }, (err, user) => {
+                        return UserModelAPI.findOne({ email: "r..@jembi.org" }, (err, user) => {
                           user.should.have.property("firstname", "Ryan");
                           user.should.have.property("surname", "Chrichton");
                           user.should.have.property("token");
@@ -247,7 +247,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return User.findOne({ email: "jane@doe.net" }, (err, user) => {
+                        return UserModelAPI.findOne({ email: "jane@doe.net" }, (err, user) => {
                           user.should.have.property("firstname", "Jane Sally");
                           user.should.have.property("surname", "Doe");
                           user.should.have.property("passwordHash", "af200ab5-4227-4840-97d1-92ba91206499");
@@ -349,7 +349,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return User.findOne({ email: "bill@newman.com" }, (err, user) => {
+                        return UserModelAPI.findOne({ email: "bill@newman.com" }, (err, user) => {
                           user.should.have.property("firstname", "Bill");
                           user.should.have.property("surname", "Newman");
                           user.groups.should.have.length(1);
@@ -465,7 +465,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return User.findOne({ email: "rg..@jembi.org" }, (err, user) => {
+                        return UserModelAPI.findOne({ email: "rg..@jembi.org" }, (err, user) => {
                           user.should.have.property("surname", "Crichton");
                           user.should.have.property("email", "rg..@jembi.org");
                           user.groups.should.have.length(3);
@@ -513,7 +513,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return User.findOne({ email: testUtils.nonRootUser.email }, (err, user) => {
+                        return UserModelAPI.findOne({ email: testUtils.nonRootUser.email }, (err, user) => {
                           user.should.have.property("surname", "Root-updated");
                           return done();
                         });
@@ -539,7 +539,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return User.findOne({ email: testUtils.nonRootUser.email }, (err, user) => {
+                        return UserModelAPI.findOne({ email: testUtils.nonRootUser.email }, (err, user) => {
                           user.groups.should.be.length(2);
                           user.groups.should.not.containEql("admin");
                           return done();
@@ -562,7 +562,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return User.find({ name: "bfm@crazy.net" }, (err, users) => {
+                        return UserModelAPI.find({ name: "bfm@crazy.net" }, (err, users) => {
                           users.should.have.length(0);
                           return done();
                         });

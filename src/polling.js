@@ -7,7 +7,7 @@ import { config } from "./config";
 import * as authorisation from "./middleware/authorisation";
 import * as utils from "./utils";
 
-const { Channel } = Channels;
+const { ChannelModel } = Channels;
 config.polling = config.get("polling");
 
 export let agendaGlobal = null;
@@ -50,7 +50,7 @@ export function setupAgenda(agenda, callback) {
   logger.info("Starting polling server...");
   const registerPollingChannelPromise = Q.denodeify(registerPollingChannel);
   agendaGlobal = agenda;
-  return Channel.find({ type: "polling" }, (err, channels) => {
+  return ChannelModel.find({ type: "polling" }, (err, channels) => {
     if (err) { return err; }
 
     const promises = [];

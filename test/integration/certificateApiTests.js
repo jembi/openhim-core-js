@@ -8,7 +8,7 @@ import fs from "fs";
 import path from "path";
 import * as testUtils from "../testUtils";
 import * as server from "../../src/server";
-import { Keystore, Certificate } from "../../src/model/keystore";
+import { KeystoreModelAPI, CertificateModelAPI } from "../../src/model/keystore";
 
 const { auth } = testUtils;
 
@@ -62,7 +62,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           const result = JSON.parse(res.text);
                           result.certificate.should.not.be.empty;
                           result.key.should.not.be.empty;
@@ -108,7 +108,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Keystore.findOne({}, (err, keystore) => {
+                        return KeystoreModelAPI.findOne({}, (err, keystore) => {
                           const result = JSON.parse(res.text);
                           result.certificate.should.not.be.empty;
                           result.key.should.not.be.empty;

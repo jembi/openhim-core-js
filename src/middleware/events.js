@@ -53,7 +53,7 @@ export function saveEvents(trxEvents, callback) {
 
     // bypass mongoose for quick batch inserts
     // index needs to be ensured manually since the collection might not already exist
-  return events.Event.collection.ensureIndex({ created: 1 }, { expireAfterSeconds: 3600 }, () => events.Event.collection.insert(trxEvents, err => callback(err)));
+  return events.EventModel.collection.ensureIndex({ created: 1 }, { expireAfterSeconds: 3600 }, () => events.EventModel.collection.insert(trxEvents, err => callback(err)));
 }
 
 

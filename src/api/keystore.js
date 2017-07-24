@@ -1,7 +1,7 @@
 import Q from "q";
 import logger from "winston";
 import pem from "pem";
-import { Keystore } from "../model/keystore";
+import { KeystoreModelAPI } from "../model/keystore";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
 import { config } from "../config";
@@ -16,7 +16,7 @@ export function* getServerCert() {
   }
 
   try {
-    const keystoreDoc = yield Keystore.findOne().lean("cert").exec();
+    const keystoreDoc = yield KeystoreModelAPI.findOne().lean("cert").exec();
     keystoreDoc.cert.watchFSForCert = config.certificateManagement.watchFSForCert;
     return this.body = keystoreDoc.cert;
   } catch (err) {
@@ -32,7 +32,7 @@ export function* getCACerts() {
   }
 
   try {
-    const keystoreDoc = yield Keystore.findOne().select("ca").exec();
+    const keystoreDoc = yield KeystoreModelAPI.findOne().select("ca").exec();
     return this.body = keystoreDoc.ca;
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch the ca certs trusted by this server via the API: ${err}`, "error");
@@ -47,7 +47,7 @@ export function* getCACert(certId) {
   }
 
   try {
-    const keystoreDoc = yield Keystore.findOne().select("ca").exec();
+    const keystoreDoc = yield KeystoreModelAPI.findOne().select("ca").exec();
     const cert = keystoreDoc.ca.id(certId);
 
     return this.body = cert;
@@ -65,7 +65,7 @@ export function* setServerPassphrase() {
 
   try {
     const { passphrase } = this.request.body;
-    const keystoreDoc = yield Keystore.findOne().exec();
+    const keystoreDoc = yield KeystoreModelAPI.findOne().exec();
     keystoreDoc.passphrase = passphrase;
     yield Q.ninvoke(keystoreDoc, "save");
     return this.status = 201;
@@ -103,7 +103,7 @@ export function* setServerCert() {
     certInfo.data = cert;
     certInfo.fingerprint = fingerprint.fingerprint;
 
-    const keystoreDoc = yield Keystore.findOne().exec();
+    const keystoreDoc = yield KeystoreModelAPI.findOne().exec();
     keystoreDoc.cert = certInfo;
     keystoreDoc.passphrase = passphrase;
 
@@ -124,7 +124,7 @@ export function* setServerKey() {
 
   try {
     const { key, passphrase } = this.request.body;
-    const keystoreDoc = yield Keystore.findOne().exec();
+    const keystoreDoc = yield KeystoreModelAPI.findOne().exec();
     keystoreDoc.key = key;
     keystoreDoc.passphrase = passphrase;
     yield Q.ninvoke(keystoreDoc, "save");
@@ -162,7 +162,7 @@ export function* addTrustedCert() {
       }
     }
 
-    const keystoreDoc = yield Keystore.findOne().exec();
+    const keystoreDoc = yield KeystoreModelAPI.findOne().exec();
     const readCertificateInfo = Q.denodeify(pem.readCertificateInfo);
     const getFingerprint = Q.denodeify(pem.getFingerprint);
 
@@ -207,7 +207,7 @@ export function* removeCACert(certId) {
   }
 
   try {
-    const keystoreDoc = yield Keystore.findOne().exec();
+    const keystoreDoc = yield KeystoreModelAPI.findOne().exec();
     keystoreDoc.ca.id(certId).remove();
     yield Q.ninvoke(keystoreDoc, "save");
     return this.status = 200;
@@ -244,7 +244,7 @@ export function* verifyServerKeys() {
 
 
 export function getCertKeyStatus(callback) {
-  return Keystore.findOne((err, keystoreDoc) => {
+  return KeystoreModelAPI.findOne((err, keystoreDoc) => {
     if (err) { return callback(err, null); }
 
         // if the key is encrypted but no passphrase is supplied, return  false instantly

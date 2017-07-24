@@ -3,8 +3,8 @@
 import should from "should";
 import request from "supertest";
 import * as server from "../../src/server";
-import { Channel } from "../../src/model/channels";
-import { Client } from "../../src/model/clients";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { ClientModelAPI } from "../../src/model/clients";
 import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
@@ -84,8 +84,8 @@ describe("API Integration Tests", () =>
         );
 
       after(done =>
-            Client.remove({}, () =>
-                Channel.remove({}, () =>
+            ClientModelAPI.remove({}, () =>
+                ChannelModelAPI.remove({}, () =>
                     server.stop(() =>
                         auth.cleanupTestUsers(() => done())
                     )
@@ -94,19 +94,19 @@ describe("API Integration Tests", () =>
         );
 
       beforeEach(done =>
-            Client.remove({}, () =>
-                (new Client(client1)).save((err, cl1) => {
+            ClientModelAPI.remove({}, () =>
+                (new ClientModelAPI(client1)).save((err, cl1) => {
                   client1._id = cl1._id;
-                  return (new Client(client2)).save((err, cl2) => {
+                  return (new ClientModelAPI(client2)).save((err, cl2) => {
                     client2._id = cl2._id;
-                    return (new Client(client3)).save((err, cl3) => {
+                    return (new ClientModelAPI(client3)).save((err, cl3) => {
                       client3._id = cl3._id;
-                      return (new Client(client4)).save((err, cl4) => {
+                      return (new ClientModelAPI(client4)).save((err, cl4) => {
                         client4._id = cl4._id;
-                        return Channel.remove({}, () =>
-                                    (new Channel(channel1)).save((err, ch1) => {
+                        return ChannelModelAPI.remove({}, () =>
+                                    (new ChannelModelAPI(channel1)).save((err, ch1) => {
                                       channel1._id = ch1._id;
-                                      return (new Channel(channel2)).save((err, ch2) => {
+                                      return (new ChannelModelAPI(channel2)).save((err, ch2) => {
                                         channel2._id = ch2._id;
                                         return done();
                                       });
@@ -205,7 +205,7 @@ describe("API Integration Tests", () =>
             );
 
         it("should fetch all roles if there are only linked clients", done =>
-                Channel.remove({}, () =>
+                ChannelModelAPI.remove({}, () =>
                     request("https://localhost:8080")
                         .get("/roles")
                         .set("auth-username", testUtils.rootUser.email)
@@ -388,7 +388,7 @@ describe("API Integration Tests", () =>
                     .expect(201)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["role4"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["role4"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(2);
                         const mapChId = chns => chns.map(ch => `${ch._id}`);
@@ -422,7 +422,7 @@ describe("API Integration Tests", () =>
                     .expect(201)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Client.find({ roles: { $in: ["role4"] } }, (err, clients) => {
+                      return ClientModelAPI.find({ roles: { $in: ["role4"] } }, (err, clients) => {
                         if (err) { return done(err); }
                         clients.length.should.be.exactly(2);
                         const mapId = arr => arr.map(a => `${a._id}`);
@@ -451,7 +451,7 @@ describe("API Integration Tests", () =>
                     .expect(201)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["role4"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["role4"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(2);
                         const mapChId = chns => chns.map(ch => `${ch._id}`);
@@ -485,7 +485,7 @@ describe("API Integration Tests", () =>
                     .expect(201)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Client.find({ roles: { $in: ["role4"] } }, (err, clients) => {
+                      return ClientModelAPI.find({ roles: { $in: ["role4"] } }, (err, clients) => {
                         if (err) { return done(err); }
                         clients.length.should.be.exactly(2);
                         const mapId = arr => arr.map(a => `${a._id}`);
@@ -577,7 +577,7 @@ describe("API Integration Tests", () =>
                     .expect(201)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Client.find({ roles: { $in: ["role4"] } }, (err, clients) => {
+                      return ClientModelAPI.find({ roles: { $in: ["role4"] } }, (err, clients) => {
                         if (err) { return done(err); }
                         clients.length.should.be.exactly(2);
                         const mapId = arr => arr.map(a => `${a._id}`);
@@ -632,7 +632,7 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["role1"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["role1"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(1);
                         const mapChId = chns => chns.map(ch => `${ch._id}`);
@@ -659,7 +659,7 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Client.find({ roles: { $in: ["role1"] } }, (err, clients) => {
+                      return ClientModelAPI.find({ roles: { $in: ["role1"] } }, (err, clients) => {
                         if (err) { return done(err); }
                         clients.length.should.be.exactly(2);
                         const mapId = arr => arr.map(a => `${a._id}`);
@@ -687,7 +687,7 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["role1"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["role1"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(2);
                         const mapChId = chns => chns.map(ch => `${ch._id}`);
@@ -711,7 +711,7 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["role2"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["role2"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(0);
                         return done();
@@ -732,7 +732,7 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Client.find({ roles: { $in: ["role2"] } }, (err, clients) => {
+                      return ClientModelAPI.find({ roles: { $in: ["role2"] } }, (err, clients) => {
                         if (err) { return done(err); }
                         clients.length.should.be.exactly(1);
                         return done();
@@ -754,10 +754,10 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["role2"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["role2"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(0);
-                        return Client.find({ roles: { $in: ["role2"] } }, (err, clients) => {
+                        return ClientModelAPI.find({ roles: { $in: ["role2"] } }, (err, clients) => {
                           if (err) { return done(err); }
                           clients.length.should.be.exactly(0);
                           return done();
@@ -779,7 +779,7 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["role1"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["role1"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(1);
                         const mapChId = chns => chns.map(ch => `${ch._id}`);
@@ -816,12 +816,12 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["the-new-role-name"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["the-new-role-name"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(1);
                         const mapChId = chns => chns.map(ch => `${ch._id}`);
                         mapChId(channels).should.containEql(`${channel1._id}`);
-                        return Client.find({ roles: { $in: ["the-new-role-name"] } }, (err, clients) => {
+                        return ClientModelAPI.find({ roles: { $in: ["the-new-role-name"] } }, (err, clients) => {
                           if (err) { return done(err); }
                           clients.length.should.be.exactly(2);
                           const mapClId = cls => cls.map(cl => `${cl._id}`);
@@ -887,10 +887,10 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Channel.find({ allow: { $in: ["role2"] } }, (err, channels) => {
+                      return ChannelModelAPI.find({ allow: { $in: ["role2"] } }, (err, channels) => {
                         if (err) { return done(err); }
                         channels.length.should.be.exactly(0);
-                        return Client.find({ roles: { $in: ["role2"] } }, (err, clients) => {
+                        return ClientModelAPI.find({ roles: { $in: ["role2"] } }, (err, clients) => {
                           if (err) { return done(err); }
                           clients.length.should.be.exactly(0);
                           return done();
@@ -909,7 +909,7 @@ describe("API Integration Tests", () =>
                     .expect(200)
                     .end((err, res) => {
                       if (err) { return done(err); }
-                      return Client.find({ roles: { $in: ["other-role"] } }, (err, clients) => {
+                      return ClientModelAPI.find({ roles: { $in: ["other-role"] } }, (err, clients) => {
                         if (err) { return done(err); }
                         clients.length.should.be.exactly(0);
                         return done();

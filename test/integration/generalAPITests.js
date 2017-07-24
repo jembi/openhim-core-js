@@ -4,12 +4,12 @@ import should from "should";
 import request from "supertest";
 import crypto from "crypto";
 import * as server from "../../src/server";
-import { User } from "../../src/model/users";
+import { UserModelAPI } from "../../src/model/users";
 
 describe("API Integration Tests", () =>
 
     describe("General API tests", () => {
-      const user = new User({
+      const user = new UserModelAPI({
         firstname: "Bill",
         surname: "Murray",
         email: "bfm@crazy.net",
@@ -27,7 +27,7 @@ describe("API Integration Tests", () =>
         );
 
       after(done =>
-            User.remove({}, () =>
+            UserModelAPI.remove({}, () =>
                 server.stop(() => done())
             )
         );

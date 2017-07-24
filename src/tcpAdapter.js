@@ -9,7 +9,7 @@ import * as authorisation from "./middleware/authorisation";
 import { config } from "./config";
 
 config.tcpAdapter = config.get("tcpAdapter");
-const { Channel } = Channels;
+const { ChannelModel } = Channels;
 
 let tcpServers = [];
 let newKey = 0;
@@ -54,13 +54,13 @@ export function startupTCPServer(channelID, callback) {
   }
 
   const handler = sock =>
-        Channel.findById(channelID, (err, channel) => {
+        ChannelModel.findById(channelID, (err, channel) => {
           if (err) { return logger.error(err); }
           sock.on("data", data => adaptSocketRequest(channel, sock, `${data}`));
           return sock.on("error", err => logger.error(err));
         });
 
-  return Channel.findById(channelID, (err, channel) => {
+  return ChannelModel.findById(channelID, (err, channel) => {
     const host = channel.tcpHost || "0.0.0.0";
     const port = channel.tcpPort;
 
@@ -99,7 +99,7 @@ export function startupTCPServer(channelID, callback) {
 
 // Startup a TCP server for each TCP channel
 export function startupServers(callback) {
-  return Channel.find({ $or: [{ type: "tcp" }, { type: "tls" }] }, (err, channels) => {
+  return ChannelModel.find({ $or: [{ type: "tcp" }, { type: "tls" }] }, (err, channels) => {
     if (err) { return callback(err); }
 
     const promises = [];

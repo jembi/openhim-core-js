@@ -3,8 +3,8 @@
 import should from "should";
 import request from "supertest";
 import * as server from "../../src/server";
-import { Channel } from "../../src/model/channels";
-import { Mediator } from "../../src/model/mediators";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { MediatorModelAPI } from "../../src/model/mediators";
 import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
@@ -39,7 +39,7 @@ describe("API Integration Tests", () =>
 
       beforeEach(() => authDetails = auth.getAuthDetails());
 
-      afterEach(done => Mediator.remove({}, done));
+      afterEach(done => MediatorModelAPI.remove({}, done));
 
       const registerMediator = done =>
             request("https://localhost:8080")
@@ -154,7 +154,7 @@ describe("API Integration Tests", () =>
                       _configModifiedTS: now,
                       _lastHeartbeat: new Date(prev.setMinutes(now.getMinutes() - 5))
                     };
-                    return Mediator.findOneAndUpdate({ urn: mediator1.urn }, update, (err) => {
+                    return MediatorModelAPI.findOneAndUpdate({ urn: mediator1.urn }, update, (err) => {
                       if (err) { return done(err); }
 
                       return request("https://localhost:8080")

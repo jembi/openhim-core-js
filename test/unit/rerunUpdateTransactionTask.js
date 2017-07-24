@@ -3,8 +3,8 @@
 import should from "should";
 import request from "supertest";
 import * as rerunUpdateTransactionTask from "../../src/middleware/rerunUpdateTransactionTask";
-import { Transaction } from "../../src/model/transactions";
-import { Task } from "../../src/model/tasks";
+import { TransactionModel } from "../../src/model/transactions";
+import { TaskModel } from "../../src/model/tasks";
 
 const { ObjectId } = require("mongoose").Types;
 
@@ -28,7 +28,7 @@ const ctx3 =
 const ctx4 =
     { parentID: "53e096fea0af310568444444" };
 
-const transaction1 = new Transaction({
+const transaction1 = new TransactionModel({
   _id: "53e096fea0af3105689acd6a",
   channelID: "53bbe25485e66d8e5daad4a2",
   clientID: "42bbe25485e77d8e5daad4b4",
@@ -43,7 +43,7 @@ const transaction1 = new Transaction({
   status: "Completed"
 });
 
-const transaction2 = new Transaction({
+const transaction2 = new TransactionModel({
   _id: "53e096fea0af3105689acd6b",
   channelID: "53bbe25485e66d8e5daad4a2",
   clientID: "42bbe25485e77d8e5daad4b4",
@@ -67,7 +67,7 @@ const transaction2 = new Transaction({
   status: "Completed"
 });
 
-const transaction3 = new Transaction({
+const transaction3 = new TransactionModel({
   _id: "53e096fea0af310568333333",
   channelID: "53bbe25485e66d8e5daad4a2",
   clientID: "42bbe25485e77d8e5daad4b4",
@@ -83,7 +83,7 @@ const transaction3 = new Transaction({
   autoRetry: true
 });
 
-const transaction4 = new Transaction({
+const transaction4 = new TransactionModel({
   _id: "53e096fea0af310568444444",
   channelID: "53bbe25485e66d8e5daad4a2",
   clientID: "42bbe25485e77d8e5daad4b4",
@@ -100,7 +100,7 @@ const transaction4 = new Transaction({
   autoRetryAttempt: 5
 });
 
-const task1 = new Task({
+const task1 = new TaskModel({
   _id: "53e34b915d0180cf6eef2d01",
   created: "2014-07-15T07:49:26.238Z",
   remainingTransactions: 2,
@@ -127,8 +127,8 @@ describe("rerunUpdateTransactionTask middleware", () => {
     );
 
   after(done =>
-        Transaction.remove({}, () =>
-            Task.remove({}, () => done())
+        TransactionModel.remove({}, () =>
+            TaskModel.remove({}, () => done())
         )
     );
 
@@ -136,7 +136,7 @@ describe("rerunUpdateTransactionTask middleware", () => {
     it("should update the original transaction with the child ID", (done) => {
             // check data before function execution
       const transactionID = "53e096fea0af3105689acd6a";
-      return Transaction.findOne({ _id: transactionID }, (err, transaction) => {
+      return TransactionModel.findOne({ _id: transactionID }, (err, transaction) => {
         transaction.should.have.property("_id", ObjectId("53e096fea0af3105689acd6a"));
         transaction.should.have.property("channelID", ObjectId("53bbe25485e66d8e5daad4a2"));
         transaction.should.have.property("clientID", ObjectId("42bbe25485e77d8e5daad4b4"));
@@ -158,7 +158,7 @@ describe("rerunUpdateTransactionTask middleware", () => {
     return it("should update the original transaction with the child ID even when there are orchestrations without a request property", (done) => {
             // check data before function execution
       const transactionID = "53e096fea0af3105689acd6b";
-      return Transaction.findOne({ _id: transactionID }, (err, transaction) => {
+      return TransactionModel.findOne({ _id: transactionID }, (err, transaction) => {
         transaction.should.have.property("_id", ObjectId("53e096fea0af3105689acd6b"));
         transaction.should.have.property("channelID", ObjectId("53bbe25485e66d8e5daad4a2"));
         transaction.should.have.property("clientID", ObjectId("42bbe25485e77d8e5daad4b4"));
@@ -183,7 +183,7 @@ describe("rerunUpdateTransactionTask middleware", () => {
         it("should update the task with the rerun ID and status", (done) => {
             // check data before function execution
           const taskID = "53e34b915d0180cf6eef2d01";
-          Task.findOne({ _id: taskID }, (err, task) => {
+          TaskModel.findOne({ _id: taskID }, (err, task) => {
             task.should.have.property("_id", ObjectId("53e34b915d0180cf6eef2d01"));
             task.should.have.property("remainingTransactions", 2);
             task.transactions[0].tid.should.be.eql("53e096fea0af3105689acd6a");

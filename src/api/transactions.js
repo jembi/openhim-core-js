@@ -2,10 +2,10 @@ import Q from "q";
 import logger from "winston";
 import statsd_client from "statsd-client";
 import os from "os";
-import * as transactions from "../model/transactions";
+import { TransactionModelAPI } from "../model/transactions";
 import * as events from "../middleware/events";
-import { Channel } from "../model/channels";
-import { Client } from "../model/clients";
+import { ChannelModelAPI } from "../model/channels";
+import { ClientModelAPI } from "../model/clients";
 import * as autoRetryUtils from "../autoRetry";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
@@ -216,7 +216,7 @@ export function* getTransactions() {
 
 
         // execute the query
-    this.body = yield transactions.Transaction
+    this.body = yield TransactionModelAPI
             .find(filters, projectionFiltersObject)
             .skip(filterSkip)
             .limit(parseInt(filterLimit, 10))
@@ -283,7 +283,7 @@ export function* addTransaction() {
     const ctx = { primaryRequest: true };
     enforceMaxBodiesSize(ctx, transactionData, new WeakSet());
 
-    const tx = new transactions.Transaction(transactionData);
+    const tx = new TransactionModelAPI(transactionData);
 
         // Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Q.ninvoke(tx, "save");
@@ -318,7 +318,7 @@ export function* getTransactionById(transactionId) {
         // if user NOT admin, determine their representation privileges.
     if (!authorisation.inGroup("admin", this.authenticated)) {
             // retrieve transaction channelID
-      const txChannelID = yield transactions.Transaction.findById(transactionId, { channelID: 1 }, { _id: 0 }).exec();
+      const txChannelID = yield TransactionModelAPI.findById(transactionId, { channelID: 1 }, { _id: 0 }).exec();
       if ((txChannelID != null ? txChannelID.length : undefined) === 0) {
         this.body = `Could not find transaction with ID: ${transactionId}`;
         this.status = 404;
@@ -328,7 +328,7 @@ export function* getTransactionById(transactionId) {
         filterRepresentation = "simpledetails";
 
                 // get channel.txViewFullAcl information by channelID
-        const channel = yield Channel.findById(txChannelID.channelID, { txViewFullAcl: 1 }, { _id: 0 }).exec();
+        const channel = yield ChannelModelAPI.findById(txChannelID.channelID, { txViewFullAcl: 1 }, { _id: 0 }).exec();
 
                 // loop through user groups
         for (const group of Array.from(this.authenticated.groups)) {
@@ -346,7 +346,7 @@ export function* getTransactionById(transactionId) {
         // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation);
 
-    const result = yield transactions.Transaction.findById(transactionId, projectionFiltersObject).exec();
+    const result = yield TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec();
     if (result && (filterRepresentation === "fulltruncate")) {
       truncateTransactionDetails(result);
     }
@@ -400,7 +400,7 @@ export function* findTransactionByClientId(clientId) {
     }
 
         // execute the query
-    return this.body = yield transactions.Transaction
+    return this.body = yield TransactionModelAPI
             .find(filtersObject, projectionFiltersObject)
             .sort({ "request.timestamp": -1 })
             .exec();
@@ -413,7 +413,7 @@ export function* findTransactionByClientId(clientId) {
 async function generateEvents(transaction, channelID) {
   try {
     logger.debug(`Storing events for transaction: ${transaction._id}`);
-    const channel = await Channel.findById(channelID);
+    const channel = await ChannelModelAPI.findById(channelID);
 
     const trxEvents = [];
     events.createTransactionEvents(trxEvents, transaction, channel);
@@ -514,16 +514,17 @@ export function* updateTransaction(transactionId) {
   try {
     let tx;
     if (hasError(updates)) {
-      tx = yield transactions.Transaction.findById(transactionId).exec();
-      const channel = yield Channel.findById(tx.channelID).exec();
+      tx = yield TransactionModelAPI.findById(transactionId).exec();
+      const channel = yield ChannelModelAPI.findById(tx.channelID).exec();
       if (!autoRetryUtils.reachedMaxAttempts(tx, channel)) {
         updates.autoRetry = true;
         autoRetryUtils.queueForRetry(tx);
       }
     }
 
-    const transactionToUpdate = yield transactions.Transaction.findOne({ _id: transactionId }).exec();
+    const transactionToUpdate = yield TransactionModelAPI.findOne({ _id: transactionId }).exec();
     const transactionBodiesLength = { length: 0 };
+    
     calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet());
 
     const ctx = {
@@ -532,7 +533,7 @@ export function* updateTransaction(transactionId) {
     };
     enforceMaxBodiesSize(ctx, updates, new WeakSet());
 
-    tx = yield transactions.Transaction.findByIdAndUpdate(transactionId, updates, { new: true }).exec();
+    tx = yield TransactionModelAPI.findByIdAndUpdate(transactionId, updates, { new: true }).exec();
 
     this.body = `Transaction with ID: ${transactionId} successfully updated`;
     this.status = 200;
@@ -560,7 +561,7 @@ export function* removeTransaction(transactionId) {
   transactionId = unescape(transactionId);
 
   try {
-    yield transactions.Transaction.findByIdAndRemove(transactionId).exec();
+    yield TransactionModelAPI.findByIdAndRemove(transactionId).exec();
     this.body = "Transaction successfully deleted";
     this.status = 200;
     return logger.info(`User ${this.authenticated.email} removed transaction with id ${transactionId}`);

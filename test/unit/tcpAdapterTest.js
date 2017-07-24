@@ -4,10 +4,10 @@
 import should from "should";
 import sinon from "sinon";
 import * as tcpAdapter from "../../src/tcpAdapter";
-import { Channel } from "../../src/model/channels";
+import { ChannelModel } from "../../src/model/channels";
 
 describe("TCP adapter tests", () => {
-  const testChannel = new Channel({
+  const testChannel = new ChannelModel({
     name: "test",
     urlPattern: "/test",
     allow: "*",
@@ -16,7 +16,7 @@ describe("TCP adapter tests", () => {
     tcpHost: "localhost"
   });
 
-  const disabledChannel = new Channel({
+  const disabledChannel = new ChannelModel({
     name: "disabled",
     urlPattern: "/disabled",
     allow: "*",
@@ -28,7 +28,7 @@ describe("TCP adapter tests", () => {
 
   before(done => testChannel.save(() => disabledChannel.save(() => done())));
 
-  after(done => tcpAdapter.stopServers(() => Channel.remove({}, done)));
+  after(done => tcpAdapter.stopServers(() => ChannelModel.remove({}, done)));
 
   return describe(".startupServers", () =>
         it("should startup all enabled channels", (done) => {

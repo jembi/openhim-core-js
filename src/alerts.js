@@ -5,15 +5,15 @@ import _ from "lodash";
 
 import * as contact from "./contact";
 import { config } from "./config";
-import { Event } from "./model/events";
-import { ContactGroup } from "./model/contactGroups";
-import { Alert } from "./model/alerts";
-import { User } from "./model/users";
+import { EventModel } from "./model/events";
+import { ContactGroupModel } from "./model/contactGroups";
+import { AlertModel } from "./model/alerts";
+import { UserModel } from "./model/users";
 import * as utils from "./utils";
 import * as Channels from "./model/channels";
 
 config.alerts = config.get("alerts");
-const { Channel } = Channels;
+const { ChannelModel } = Channels;
 
 
 const trxURL = trx => `${config.alerts.consoleURL}/#/transactions/${trx.transactionID}`;
@@ -119,12 +119,12 @@ Please note that they will not be retried any further by the OpenHIM automatical
     ;
 
 
-const getAllChannels = callback => Channel.find({}, callback);
+const getAllChannels = callback => ChannelModel.find({}, callback);
 
-const findGroup = (groupID, callback) => ContactGroup.findOne({ _id: groupID }, callback);
+const findGroup = (groupID, callback) => ContactGroupModel.findOne({ _id: groupID }, callback);
 
 const findTransactions = (channel, dateFrom, status, callback) =>
-    Event
+    EventModel
         .find({
           created: {
             $gte: dateFrom,
@@ -138,7 +138,7 @@ const findTransactions = (channel, dateFrom, status, callback) =>
         .exec(callback);
 
 const countTotalTransactionsForChannel = (channel, dateFrom, callback) =>
-    Event.count({
+    EventModel.count({
       created: {
         $gte: dateFrom,
       },
@@ -156,7 +156,7 @@ function findOneAlert(channel, alert, dateFrom, user, alertStatus, callback) {
     alertStatus,
   };
   if (user) { criteria.user = user; }
-  return Alert
+  return AlertModel
         .findOne(criteria)
         .exec(callback);
 }
@@ -204,7 +204,7 @@ function findTransactionsMatchingStatus(channel, alert, dateFrom, callback) {
 }
 
 const findTransactionsMaxRetried = (channel, alert, dateFrom, callback) =>
-    Event
+    EventModel
         .find({
           created: {
             $gte: dateFrom,
@@ -265,7 +265,7 @@ function getTransactionsForAlert(channel, alert, user, transactions, callback) {
 }
 
 const sendAlert = (channel, alert, user, transactions, contactHandler, done) =>
-    User.findOne({ email: user.user }, (err, dbUser) => {
+    UserModel.findOne({ email: user.user }, (err, dbUser) => {
       if (err) { return done(err); }
       if (!dbUser) { return done(`Cannot send alert: Unknown user '${user.user}'`); }
 
@@ -302,7 +302,7 @@ function afterSendAlert(err, channel, alert, user, transactions, skipSave, done)
   if (err) { logger.error(err); }
 
   if (!skipSave) {
-    alert = new Alert({
+    alert = new AlertModel({
       user: user.user,
       method: user.method,
       channelID: channel._id,

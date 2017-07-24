@@ -2,8 +2,8 @@
 
 import should from "should";
 import request from "supertest";
-import { Transaction } from "../../src/model/transactions";
-import { Channel } from "../../src/model/channels";
+import { TransactionModelAPI } from "../../src/model/transactions";
+import { ChannelModelAPI } from "../../src/model/channels";
 import * as testUtils from "../testUtils";
 import { config } from "../../src/config";
 import * as server from "../../src/server";
@@ -13,7 +13,7 @@ const { auth } = testUtils;
 describe("API Metrics Tests", () =>
 
     describe("OpenHIM Metrics Api testing", () => {
-      const channel1 = new Channel({
+      const channel1 = new ChannelModelAPI({
         _id: "111111111111111111111111",
         name: "Test Channel 11111",
         urlPattern: "test/sample",
@@ -21,7 +21,7 @@ describe("API Metrics Tests", () =>
         routes: [{ name: "test route", host: "localhost", port: 9876 }]
       });
 
-      const channel2 = new Channel({
+      const channel2 = new ChannelModelAPI({
         _id: "222222222222222222222222",
         name: "Test Channel 22222",
         urlPattern: "test/sample",
@@ -34,8 +34,8 @@ describe("API Metrics Tests", () =>
 
       before((done) => {
         config.statsd.enabled = false;
-        return Channel.remove({}, () =>
-                Transaction.remove({}, () =>
+        return ChannelModelAPI.remove({}, () =>
+                TransactionModelAPI.remove({}, () =>
                     channel1.save(err =>
                         channel2.save(err =>
                             testUtils.setupMetricsTransactions(() =>
@@ -54,8 +54,8 @@ describe("API Metrics Tests", () =>
       after(done =>
             server.stop(() =>
                 auth.cleanupTestUsers(() =>
-                    Channel.remove({}, () =>
-                        Transaction.remove({}, () => done())
+                    ChannelModelAPI.remove({}, () =>
+                        TransactionModelAPI.remove({}, () => done())
                     )
                 )
             )

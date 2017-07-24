@@ -1,14 +1,14 @@
 
 import Q from "q";
 import logger from "winston";
-import { Task } from "../model/tasks";
-import { Transaction } from "../model/transactions";
-import { AutoRetry } from "../model/autoRetry";
+import { TaskModelAPI } from "../model/tasks";
+import { TransactionModelAPI } from "../model/transactions";
+import { AutoRetryModelAPI } from "../model/autoRetry";
 import * as Channels from "../model/channels";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
 
-const { Channel } = Channels;
+const { ChannelModelAPI } = Channels;
 
 /**
  * Function to check if rerun task creation is valid
@@ -20,8 +20,8 @@ function isRerunPermissionsValid(user, transactions, callback) {
         // admin user allowed to rerun any transactions
     return callback(null, true);
   } else {
-    return Transaction.distinct("channelID", { _id: { $in: transactions.tids } }, (err, transChannels) =>
-            Channel.distinct("_id", { txRerunAcl: { $in: user.groups } }, (err, allowedChannels) => {
+    return TransactionModelAPI.distinct("channelID", { _id: { $in: transactions.tids } }, (err, transChannels) =>
+            ChannelModelAPI.distinct("_id", { txRerunAcl: { $in: user.groups } }, (err, allowedChannels) => {
                 // for each transaction channel found to be rerun
               for (const trx of Array.from(transChannels)) {
                     // assume transaction channnel is not allowed at first
@@ -73,10 +73,10 @@ export function* getTasks() {
         // exclude transactions object from tasks list
     const projectionFiltersObject = { transactions: 0 };
 
-    this.body = yield Task.find({}).exec();
+    this.body = yield TaskModelAPI.find({}).exec();
 
         // execute the query
-    return this.body = yield Task
+    return this.body = yield TaskModelAPI
             .find(filters, projectionFiltersObject)
             .skip(filterSkip)
             .limit(parseInt(filterLimit, 10))
@@ -89,9 +89,9 @@ export function* getTasks() {
 
 
 const areTransactionChannelsValid = (transactions, callback) =>
-    Transaction.distinct("channelID", { _id: { $in: transactions.tids } }, (err, trxChannelIDs) => {
+    TransactionModelAPI.distinct("channelID", { _id: { $in: transactions.tids } }, (err, trxChannelIDs) => {
       if (err) { return callback(err); }
-      return Channel.find({ _id: { $in: trxChannelIDs } }, { status: 1 }, (err, trxChannels) => {
+      return ChannelModelAPI.find({ _id: { $in: trxChannelIDs } }, { status: 1 }, (err, trxChannels) => {
         if (err) { return callback(err); }
 
         for (const chan of Array.from(trxChannels)) {
@@ -146,14 +146,14 @@ export function* addTask() {
       taskObject.transactions = transactionsArr;
       taskObject.totalTransactions = transactionsArr.length;
 
-      const task = new Task(taskObject);
+      const task = new TaskModelAPI(taskObject);
       const result = yield Q.ninvoke(task, "save");
 
             // All ok! So set the result
       utils.logAndSetResponse(this, 201, `User ${this.authenticated.email} created task with id ${task.id}`, "info");
 
             // Clear the transactions out of the auto retry queue, in case they're in there
-      return AutoRetry.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err); } });
+      return AutoRetryModelAPI.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err); } });
     } else {
             // rerun task creation not allowed
       return utils.logAndSetResponse(this, 403, "Insufficient permissions prevents this rerun task from being created", "error");
@@ -231,7 +231,7 @@ export function* getTask(taskId) {
         // get filters object
     const filters = JSON.parse(filtersObject.filters);
 
-    const result = yield Task.findById(taskId).lean().exec();
+    const result = yield TaskModelAPI.findById(taskId).lean().exec();
     let tempTransactions = result.transactions;
 
 
@@ -285,7 +285,7 @@ export function* updateTask(taskId) {
   if (taskData._id != null) { delete taskData._id; }
 
   try {
-    yield Task.findOneAndUpdate({ _id: taskId }, taskData).exec();
+    yield TaskModelAPI.findOneAndUpdate({ _id: taskId }, taskData).exec();
 
         // All ok! So set the result
     this.body = "The Task was successfully updated";
@@ -311,7 +311,7 @@ export function* removeTask(taskId) {
 
   try {
         // Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    yield Task.remove({ _id: taskId }).exec();
+    yield TaskModelAPI.remove({ _id: taskId }).exec();
 
         // All ok! So set the result
     this.body = "The Task was successfully deleted";

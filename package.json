@@ -22,6 +22,8 @@
     "test:int": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 mocha -t 4000 --require babel-register test/integration/**/*.js",
     "test:load:client": "./test/load-tests/env/clients.sh",
     "test:load:api": "./test/load-tests/env/api.sh",
+    "test:replica:set": "./test/resources/replica-set-test/setup.sh",
+    "test:replica:set:cleanup": "./test/resources/replica-set-test/tear-down.sh",
     "start": "node --harmony lib/server.js",
     "stop": "pkill -SIGINT Core"
   },

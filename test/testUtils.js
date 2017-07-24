@@ -12,9 +12,9 @@ import finalhandler from "finalhandler";
 import serveStatic from "serve-static";
 import { MongoClient } from "mongodb";
 import { config } from "../src/config";
-import { Transaction } from "../src/model/transactions";
-import { User } from "../src/model/users";
-import { Keystore } from "../src/model/keystore";
+import { TransactionModel } from "../src/model/transactions";
+import { UserModel } from "../src/model/users";
+import { KeystoreModel } from "../src/model/keystore";
 
 export * from "./globalConfig";
 
@@ -252,10 +252,10 @@ export const nonRootUser = {
 export const auth = {};
 
 exports.auth.setupTestUsers = done =>
-    (new User(exports.rootUser)).save((err) => {
+    (new UserModel(exports.rootUser)).save((err) => {
       if (err) { return done(err); }
 
-      return (new User(exports.nonRootUser)).save((err) => {
+      return (new UserModel(exports.nonRootUser)).save((err) => {
         if (err) {
           return done(err);
         } else {
@@ -284,10 +284,10 @@ exports.auth.getAuthDetails = function () {
 };
 
 exports.auth.cleanupTestUsers = done =>
-    User.remove({ email: "root@jembi.org" }, (err) => {
+    UserModel.remove({ email: "root@jembi.org" }, (err) => {
       if (err) { return done(err); }
 
-      return User.remove({ email: "nonroot@jembi.org" }, (err) => {
+      return UserModel.remove({ email: "nonroot@jembi.org" }, (err) => {
         if (err) {
           return done(err);
         } else {
@@ -365,7 +365,7 @@ export function setupTestKeystore(serverCert, serverKey, ca, callback) {
   }
 
     // remove any existing keystore
-  return Keystore.remove({}, () =>
+  return KeystoreModel.remove({}, () =>
 
         pem.readCertificateInfo(serverCert, (err, serverCertInfo) => {
           if (err != null) {
@@ -381,7 +381,7 @@ export function setupTestKeystore(serverCert, serverKey, ca, callback) {
             }
             serverCertInfo.fingerprint = serverCertFingerprint.fingerprint;
 
-            const keystore = new Keystore({
+            const keystore = new KeystoreModel({
               key: serverKey,
               cert: serverCertInfo,
               ca: []
@@ -419,11 +419,11 @@ export function setupTestKeystore(serverCert, serverKey, ca, callback) {
 }
 
 export function cleanupTestKeystore(callback) {
-  return Keystore.remove({}, () => callback());
+  return KeystoreModel.remove({}, () => callback());
 }
 
 export function setupMetricsTransactions(callback) {
-  const transaction0 = new Transaction({ // 1 month before the rest
+  const transaction0 = new TransactionModel({ // 1 month before the rest
     _id: "000000000000000000000000",
     channelID: "111111111111111111111111",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -432,7 +432,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed"
   });
 
-  const transaction1 = new Transaction({
+  const transaction1 = new TransactionModel({
     _id: "111111111111111111111111",
     channelID: "111111111111111111111111",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -441,7 +441,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed"
   });
 
-  const transaction2 = new Transaction({
+  const transaction2 = new TransactionModel({
     _id: "222222222222222222222222",
     channelID: "111111111111111111111111",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -450,7 +450,7 @@ export function setupMetricsTransactions(callback) {
     status: "Successful"
   });
 
-  const transaction3 = new Transaction({
+  const transaction3 = new TransactionModel({
     _id: "333333333333333333333333",
     channelID: "222222222222222222222222",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -459,7 +459,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed"
   });
 
-  const transaction4 = new Transaction({
+  const transaction4 = new TransactionModel({
     _id: "444444444444444444444444",
     channelID: "111111111111111111111111",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -468,7 +468,7 @@ export function setupMetricsTransactions(callback) {
     status: "Failed"
   });
 
-  const transaction5 = new Transaction({
+  const transaction5 = new TransactionModel({
     _id: "555555555555555555555555",
     channelID: "222222222222222222222222",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -477,7 +477,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed"
   });
 
-  const transaction6 = new Transaction({
+  const transaction6 = new TransactionModel({
     _id: "666666666666666666666666",
     channelID: "222222222222222222222222",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -486,7 +486,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed"
   });
 
-  const transaction7 = new Transaction({
+  const transaction7 = new TransactionModel({
     _id: "777777777777777777777777",
     channelID: "111111111111111111111111",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -495,7 +495,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed with error(s)"
   });
 
-  const transaction8 = new Transaction({
+  const transaction8 = new TransactionModel({
     _id: "888888888888888888888888",
     channelID: "222222222222222222222222",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -504,7 +504,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed"
   });
 
-  const transaction9 = new Transaction({
+  const transaction9 = new TransactionModel({
     _id: "999999999999999999999999",
     channelID: "111111111111111111111111",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -513,7 +513,7 @@ export function setupMetricsTransactions(callback) {
     status: "Processing"
   });
 
-  const transaction10 = new Transaction({
+  const transaction10 = new TransactionModel({
     _id: "101010101010101010101010",
     channelID: "222222222222222222222222",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -522,7 +522,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed"
   });
 
-  const transaction11 = new Transaction({ // 1 year after the rest
+  const transaction11 = new TransactionModel({ // 1 year after the rest
     _id: "111110101010101010101111",
     channelID: "222222222222222222222222",
     clientID: "42bbe25485e77d8e5daad4b4",
@@ -531,7 +531,7 @@ export function setupMetricsTransactions(callback) {
     status: "Completed"
   });
 
-  const transaction12 = new Transaction({ // A Sunday
+  const transaction12 = new TransactionModel({ // A Sunday
     _id: "111110101010101010102222",
     channelID: "222222222222222222222222",
     clientID: "42bbe25485e77d8e5daad4b4",

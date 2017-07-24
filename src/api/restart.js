@@ -3,7 +3,7 @@ import Q from "q";
 import * as authorisation from "../api/authorisation";
 import * as server from "../server";
 import { config } from "../config";
-import { Keystore } from "../model/keystore";
+import { KeystoreModelAPI } from "../model/keystore";
 import * as KeystoreAPI from "../api/keystore";
 import * as utils from "../utils";
 

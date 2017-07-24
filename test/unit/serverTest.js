@@ -7,7 +7,7 @@ import fs from "fs";
 import { path as appRoot } from "app-root-path";
 import * as server from "../../src/server";
 import * as testUtils from "../testUtils";
-import { Keystore } from "../../src/model/keystore";
+import { KeystoreModel } from "../../src/model/keystore";
 import { config } from "../../src/config";
 
 config.certificateManagement = config.get("certificateManagement");
@@ -55,10 +55,10 @@ describe("Server tests", () => {
 
   return describe(".ensureKeystore()", () => {
     it("should create a default keystore when none exists using default certs", done =>
-            Keystore.findOneAndRemove({}, () =>
+            KeystoreModel.findOneAndRemove({}, () =>
                 server.ensureKeystore((err) => {
                   should.not.exist(err);
-                  return Keystore.findOne({}, (err, keystore) => {
+                  return KeystoreModel.findOne({}, (err, keystore) => {
                     keystore.cert.commonName.should.be.exactly("localhost");
                     keystore.cert.organization.should.be.exactly("OpenHIM Default Certificate");
                     keystore.cert.data.should.be.exactly((fs.readFileSync("resources/certs/default/cert.pem")).toString());
@@ -73,10 +73,10 @@ describe("Server tests", () => {
       config.certificateManagement.watchFSForCert = true;
       config.certificateManagement.certPath = `${appRoot}/test/resources/server-tls/cert.pem`;
       config.certificateManagement.keyPath = `${appRoot}/test/resources/server-tls/key.pem`;
-      return Keystore.findOneAndRemove({}, () =>
+      return KeystoreModel.findOneAndRemove({}, () =>
                 server.ensureKeystore((err) => {
                   should.not.exist(err);
-                  return Keystore.findOne({}, (err, keystore) => {
+                  return KeystoreModel.findOne({}, (err, keystore) => {
                     keystore.cert.commonName.should.be.exactly("localhost");
                     keystore.cert.organization.should.be.exactly("Jembi Health Systems NPC");
                     keystore.cert.emailAddress.should.be.exactly("ryan@jembi.org");
@@ -96,7 +96,7 @@ describe("Server tests", () => {
         keystore.cert.organization.should.be.exactly("Jembi Health Systems NPC");
         return server.ensureKeystore((err) => {
           should.not.exist(err);
-          return Keystore.findOne({}, (err, keystore) => {
+          return KeystoreModel.findOne({}, (err, keystore) => {
             keystore.cert.organization.should.be.exactly("OpenHIM Default Certificate");
             keystore.cert.data.should.be.exactly((fs.readFileSync(`${appRoot}/resources/certs/default/cert.pem`)).toString());
             return done();
@@ -112,7 +112,7 @@ describe("Server tests", () => {
         const before = keystore.cert.data;
         return server.ensureKeystore((err) => {
           should.not.exist(err);
-          return Keystore.findOne({}, (err, keystore) => {
+          return KeystoreModel.findOne({}, (err, keystore) => {
             const after = keystore.cert.data;
             before.should.be.exactly(after);
             return done();

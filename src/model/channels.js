@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { connectionDefault } from "../config";
+import { connectionAPI, connectionDefault } from "../config";
 import { ContactUserDef } from "./contactGroups";
 
 const RouteDef = {
@@ -137,7 +137,8 @@ export { RouteDef };
 const ChannelSchema = new Schema(ChannelDef);
 ChannelSchema.index("name", { unique: true });
 
-export const Channel = connectionDefault.model("Channel", ChannelSchema);
+export const ChannelModelAPI = connectionAPI.model("Channel", ChannelSchema);
+export const ChannelModel = connectionDefault.model("Channel", ChannelSchema);
 export { ChannelDef };
 
 // Is the channel enabled?
