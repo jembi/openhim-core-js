@@ -8,7 +8,7 @@ import * as Channels from "../model/channels";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
 
-const { ChannelModel } = Channels;
+const { ChannelModelAPI } = Channels;
 
 /**
  * Function to check if rerun task creation is valid
@@ -21,7 +21,7 @@ function isRerunPermissionsValid(user, transactions, callback) {
     return callback(null, true);
   } else {
     return TransactionModelAPI.distinct("channelID", { _id: { $in: transactions.tids } }, (err, transChannels) =>
-            ChannelModel.distinct("_id", { txRerunAcl: { $in: user.groups } }, (err, allowedChannels) => {
+            ChannelModelAPI.distinct("_id", { txRerunAcl: { $in: user.groups } }, (err, allowedChannels) => {
                 // for each transaction channel found to be rerun
               for (const trx of Array.from(transChannels)) {
                     // assume transaction channnel is not allowed at first
@@ -91,7 +91,7 @@ export function* getTasks() {
 const areTransactionChannelsValid = (transactions, callback) =>
     TransactionModelAPI.distinct("channelID", { _id: { $in: transactions.tids } }, (err, trxChannelIDs) => {
       if (err) { return callback(err); }
-      return ChannelModel.find({ _id: { $in: trxChannelIDs } }, { status: 1 }, (err, trxChannels) => {
+      return ChannelModelAPI.find({ _id: { $in: trxChannelIDs } }, { status: 1 }, (err, trxChannels) => {
         if (err) { return callback(err); }
 
         for (const chan of Array.from(trxChannels)) {
