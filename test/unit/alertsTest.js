@@ -6,16 +6,16 @@ import http from "http";
 import moment from "moment";
 import * as alerts from "../../src/alerts";
 import * as testUtils from "../testUtils";
-import { Channel } from "../../src/model/channels";
-import { User } from "../../src/model/users";
-import { ContactGroup } from "../../src/model/contactGroups";
-import { Event } from "../../src/model/events";
-import { Alert } from "../../src/model/alerts";
+import { ChannelModel } from "../../src/model/channels";
+import { UserModel } from "../../src/model/users";
+import { ContactGroupModel } from "../../src/model/contactGroups";
+import { EventModel } from "../../src/model/events";
+import { AlertModel } from "../../src/model/alerts";
 import { config } from "../../src/config";
 
 config.alerts = config.get("alerts");
 
-const testUser1 = new User({
+const testUser1 = new UserModel({
   firstname: "User",
   surname: "One",
   email: "one@openhim.org",
@@ -24,7 +24,7 @@ const testUser1 = new User({
   passwordSalt: "22a61686-66f6-483c-a524-185aac251fb0"
 });
 
-const testUser2 = new User({
+const testUser2 = new UserModel({
   firstname: "User",
   surname: "Two",
   email: "two@openhim.org",
@@ -34,7 +34,7 @@ const testUser2 = new User({
   passwordSalt: "22a61686-66f6-483c-a524-185aac251fb0"
 });
 
-const testGroup1 = new ContactGroup({
+const testGroup1 = new ContactGroupModel({
   _id: "aaa908908bbb98cc1d0809ee",
   group: "group1",
   users: [
@@ -49,14 +49,14 @@ const testGroup1 = new ContactGroup({
     }
   ] });
 
-const testGroup2 = new ContactGroup({
+const testGroup2 = new ContactGroupModel({
   _id: "bbb908908ccc98cc1d0888aa",
   group: "group2",
   users: [{ user: "one@openhim.org", method: "email" }] });
 
 const testFailureRate = 50;
 
-const testChannel = new Channel({
+const testChannel = new ChannelModel({
   name: "test",
   urlPattern: "/test",
   allow: "*",
@@ -75,7 +75,7 @@ const testChannel = new Channel({
     }
   ] });
 
-const disabledChannel = new Channel({
+const disabledChannel = new ChannelModel({
   name: "disabled",
   urlPattern: "/disabled",
   allow: "*",
@@ -89,7 +89,7 @@ const disabledChannel = new Channel({
   status: "disabled"
 });
 
-const autoRetryChannel = new Channel({
+const autoRetryChannel = new ChannelModel({
   name: "autoretry",
   urlPattern: "/autoretry",
   allow: "*",
@@ -105,7 +105,7 @@ const autoRetryChannel = new Channel({
 
 const testTransactions = [
   // 0
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa0",
     event: "end",
     status: 404,
@@ -113,7 +113,7 @@ const testTransactions = [
   }),
 
   // 1
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa1",
     event: "end",
     status: 404,
@@ -121,7 +121,7 @@ const testTransactions = [
   }),
 
   // 2
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa2",
     event: "end",
     status: 400,
@@ -129,7 +129,7 @@ const testTransactions = [
   }),
 
   // 3
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa3",
     event: "end",
     status: 500,
@@ -137,7 +137,7 @@ const testTransactions = [
   }),
 
   // 4
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa4",
     event: "end",
     status: 500,
@@ -145,7 +145,7 @@ const testTransactions = [
   }),
 
   // 5
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa5",
     event: "end",
     status: 500,
@@ -153,7 +153,7 @@ const testTransactions = [
   }),
 
   // 6
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa6",
     event: "end",
     status: 404,
@@ -161,7 +161,7 @@ const testTransactions = [
   }),
 
   // 7
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa7",
     event: "end",
     status: 404,
@@ -169,7 +169,7 @@ const testTransactions = [
   }),
 
   // 8
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa8",
     event: "end",
     status: 500,
@@ -178,7 +178,7 @@ const testTransactions = [
   }),
 
   // 9
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa9",
     event: "end",
     status: 500,
@@ -187,7 +187,7 @@ const testTransactions = [
   }),
 
   // 10 - channel event for 9
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa9",
     event: "end",
     status: 500,
@@ -196,7 +196,7 @@ const testTransactions = [
   }),
 
   // 11
-  new Event({
+  new EventModel({
     transactionID: "aaa908908bbb98cc1daaaaa9",
     event: "end",
     status: 200,
@@ -211,8 +211,8 @@ dateFrom.setHours(0, 0, 0, 0);
 
 describe("Transaction Alerts", () => {
   before(done =>
-    Event.ensureIndexes(() =>
-      Alert.ensureIndexes(() =>
+    EventModel.ensureIndexes(() =>
+      AlertModel.ensureIndexes(() =>
         testUser1.save(() => testUser2.save(() => testGroup1.save(() => testGroup2.save(() =>
           testChannel.save(() => disabledChannel.save(() => autoRetryChannel.save(() => {
             for (const testTransaction of Array.from(testTransactions)) {
@@ -236,11 +236,11 @@ describe("Transaction Alerts", () => {
     )
   );
 
-  after(done => User.remove({}, () => ContactGroup.remove({}, () => Channel.remove({}, () => done()))));
+  after(done => UserModel.remove({}, () => ContactGroupModel.remove({}, () => ChannelModel.remove({}, () => done()))));
 
   afterEach(done =>
-    Alert.remove({}, () =>
-      Event.remove({}, () => {
+    AlertModel.remove({}, () =>
+      EventModel.remove({}, () => {
         for (const testTransaction of Array.from(testTransactions)) {
           testTransaction.isNew = true;
           delete testTransaction._id;
@@ -404,7 +404,7 @@ describe("Transaction Alerts", () => {
     );
 
     return it("should not return any transactions when the count is equal/above the failure rate, but an alert has already been sent", (done) => {
-      const alert = new Alert({
+      const alert = new AlertModel({
         user: "one@openhim.org",
         method: "email",
         channelID: testChannel._id,
@@ -538,7 +538,7 @@ describe("Transaction Alerts", () => {
         if (err) { return done(err); }
         return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
           contactSpy.called.should.be.true();
-          return Alert.find({}, (err, results) => {
+          return AlertModel.find({}, (err, results) => {
             if (err) { return done(err); }
             results.length.should.be.exactly(2);
             const resultUsers = results.map(result => result.user);
@@ -608,7 +608,7 @@ describe("Transaction Alerts", () => {
 
           return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
             contactSpy.called.should.be.true();
-            return Alert.find({}, (err, results) => {
+            return AlertModel.find({}, (err, results) => {
               if (err) { return done(err); }
               results.length.should.be.exactly(2);
 

@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 import mongoose from "mongoose";
-import * as config from "../config/test.json";
+import { config } from "../src/config";
+config.mongo = config.get("mongo");
 
 global.testTimeoutFactor = parseInt(process.env.TEST_TIMEOUT_FACTOR, 10) || 1;
 

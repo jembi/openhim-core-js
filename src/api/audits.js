@@ -2,7 +2,7 @@ import Q from "q";
 import logger from "winston";
 import atna from "atna-audit";
 import os from "os";
-import { Audit, AuditMeta } from "../model/audits";
+import { AuditModel, AuditMetaModel } from "../model/audits";
 import * as authorisation from "./authorisation";
 import * as utils from "../utils";
 import * as auditing from "../auditing";
@@ -52,7 +52,7 @@ export function* addAudit() {
   const auditData = this.request.body;
 
   try {
-    const audit = new Audit(auditData);
+    const audit = new AuditModel(auditData);
     const result = yield Q.ninvoke(audit, "save");
     yield Q.ninvoke(auditing, "processAuditMeta", audit);
 
@@ -124,7 +124,7 @@ export function* getAudits() {
     }
 
         // execute the query
-    this.body = yield Audit
+    this.body = yield AuditModel
             .find(filters, projectionFiltersObject)
             .skip(filterSkip)
             .limit(parseInt(filterLimit, 10))
@@ -159,7 +159,7 @@ export function* getAuditById(auditId) {
         // get projection object
     const projectionFiltersObject = getProjectionObject("full");
 
-    const result = yield Audit.findById(auditId, projectionFiltersObject).exec();
+    const result = yield AuditModel.findById(auditId, projectionFiltersObject).exec();
 
         // Test if the result if valid
     if (!result) {
@@ -188,7 +188,7 @@ export function* getAuditsFilterOptions() {
   }
 
   try {
-    this.body = yield AuditMeta.findOne({}).exec();
+    this.body = yield AuditMetaModel.findOne({}).exec();
     return this.body;
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not retrieve audits filter options via the API: ${e}`, "error");

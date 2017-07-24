@@ -9,10 +9,10 @@ import mongoose from "mongoose";
 import * as reports from "../../src/reports";
 import * as testUtils from "../testUtils";
 import { config } from "../../src/config";
-import { Channel } from "../../src/model/channels";
-import { User } from "../../src/model/users";
+import { ChannelModel } from "../../src/model/channels";
+import { UserModel } from "../../src/model/users";
 
-const testUser1 = new User({
+const testUser1 = new UserModel({
   firstname: "User",
   surname: "One",
   email: "one@openhim.org",
@@ -23,7 +23,7 @@ const testUser1 = new User({
   weeklyReport: true
 });
 
-const testUser2 = new User({
+const testUser2 = new UserModel({
   firstname: "User",
   surname: "Two",
   email: "two@openhim.org",
@@ -35,7 +35,7 @@ const testUser2 = new User({
   dailyReport: true
 });
 
-const channel1 = new Channel({
+const channel1 = new ChannelModel({
   name: "Test Channel 11111",
   urlPattern: "test/sample",
   allow: ["PoC", "Test1", "Test2"],
@@ -43,7 +43,7 @@ const channel1 = new Channel({
     { name: "test route", host: "localhost", port: 9876 }
   ] });
 
-const channel2 = new Channel({
+const channel2 = new ChannelModel({
   _id: mongoose.Types.ObjectId("222222222222222222222222"),
   name: "Test Channel 22222",
   urlPattern: "test/sample",
@@ -69,8 +69,8 @@ describe("Transaction Reports", () => {
   );
 
   after(done =>
-    User.remove({}, () =>
-      Channel.remove({}, () => done())
+    UserModel.remove({}, () =>
+      ChannelModel.remove({}, () => done())
     )
   );
 

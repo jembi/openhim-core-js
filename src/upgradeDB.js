@@ -1,11 +1,11 @@
 import logger from "winston";
 import pem from "pem";
 import Q from "q";
-import { dbVersion } from "./model/dbVersion";
-import { Keystore } from "./model/keystore";
-import { Client } from "./model/clients";
-import { User } from "./model/users";
-import { Visualizer } from "./model/visualizer";
+import { dbVersionModel } from "./model/dbVersion";
+import { KeystoreModel } from "./model/keystore";
+import { ClientModel } from "./model/clients";
+import { UserModel } from "./model/users";
+import { VisualizerModel } from "./model/visualizer";
 
 function dedupName(name, names, num) {
   let newName;
@@ -33,7 +33,7 @@ upgradeFuncs.push({
   func() {
     const defer = Q.defer();
 
-    Keystore.findOne((err, keystore) => {
+    KeystoreModel.findOne((err, keystore) => {
       if (!keystore) { return defer.resolve(); }
 
             // convert server cert
@@ -69,13 +69,13 @@ upgradeFuncs.push({
   func() {
     const defer = Q.defer();
 
-    Client.find((err, clients) => {
+    ClientModel.find((err, clients) => {
       if (err != null) {
         logger.error(`Couldn't fetch all clients to upgrade db: ${err}`);
         return defer.reject();
       }
 
-      return Keystore.findOne((err, keystore) => {
+      return KeystoreModel.findOne((err, keystore) => {
         if (err != null) {
           logger.error(`Couldn't fetch keystore to upgrade db: ${err}`);
           return defer.reject();
@@ -161,7 +161,7 @@ upgradeFuncs.push({
   description: "Migrate visualizer setting from a user's profile to a shared collection",
   func() {
     const defer = Q.defer();
-    User.find((err, users) => {
+    UserModel.find((err, users) => {
       if (err) {
         return Q.defer().reject(err);
       }
@@ -184,7 +184,7 @@ upgradeFuncs.push({
             vis.name = name;
             visNames.push(name);
 
-            vis = new Visualizer(vis);
+            vis = new VisualizerModel(vis);
             logger.debug(`Migrating visualizer from user profile ${user.email}, using visualizer name '${name}'`);
             return vis.save((err, vis) => {
               if (err) {
@@ -217,7 +217,7 @@ if (process.env.NODE_ENV === "test") {
 
 async function upgradeDbInternal() {
   try {
-    const dbVer = (await dbVersion.findOne()) || new dbVersion({ version: 0, lastUpdated: new Date() });
+    const dbVer = (await dbVersionModel.findOne()) || new dbVersionModel({ version: 0, lastUpdated: new Date() });
     const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version);
 
     for (const upgradeFunc of upgradeFuncsToRun) {

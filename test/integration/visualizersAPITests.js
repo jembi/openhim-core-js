@@ -4,7 +4,7 @@ import should from "should";
 import request from "supertest";
 import _ from "lodash";
 import * as server from "../../src/server";
-import { Visualizer } from "../../src/model/visualizer";
+import { VisualizerModelAPI } from "../../src/model/visualizer";
 import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
@@ -69,7 +69,7 @@ describe("API Integration Tests", () =>
       let authDetails = {};
 
       before(done =>
-            Visualizer.remove({}, () =>
+            VisualizerModelAPI.remove({}, () =>
                 auth.setupTestUsers(() =>
                     server.start({ apiPort: 8080 }, () => done())
                 )
@@ -85,17 +85,17 @@ describe("API Integration Tests", () =>
       beforeEach(() => authDetails = auth.getAuthDetails());
 
       afterEach(done =>
-            Visualizer.remove({}, () => done())
+            VisualizerModelAPI.remove({}, () => done())
         );
 
       describe("*getVisualizers()", () => {
         it("should return a 200 response with a list of saved visualizers", (done) => {
           let vis1 = _.assign({}, visObj);
           vis1.name = "Visualizer1";
-          vis1 = new Visualizer(vis1);
+          vis1 = new VisualizerModelAPI(vis1);
           let vis2 = _.assign({}, visObj);
           vis2.name = "Visualizer2";
-          vis2 = new Visualizer(vis2);
+          vis2 = new VisualizerModelAPI(vis2);
 
           return vis1.save((err) => {
             if (err) { return done(err); }
@@ -160,10 +160,10 @@ describe("API Integration Tests", () =>
         it("should return a 200 response with a specific visualizer", (done) => {
           let vis1 = _.assign({}, visObj);
           vis1.name = "Visualizer1";
-          vis1 = new Visualizer(vis1);
+          vis1 = new VisualizerModelAPI(vis1);
           let vis2 = _.assign({}, visObj);
           vis2.name = "Visualizer2";
-          vis2 = new Visualizer(vis2);
+          vis2 = new VisualizerModelAPI(vis2);
 
           return vis1.save((err) => {
             if (err) { return done(err); }
@@ -233,7 +233,7 @@ describe("API Integration Tests", () =>
                     .end((err, res) => {
                       if (err) { return done(err); }
 
-                      return Visualizer.findOne({ name: "Visualizer1" }, (err, vis) => {
+                      return VisualizerModelAPI.findOne({ name: "Visualizer1" }, (err, vis) => {
                         if (err) { return done(err); }
                         return done();
                       });
@@ -278,7 +278,7 @@ describe("API Integration Tests", () =>
         it("should update a specific visualizer and return a 200 response", (done) => {
           let vis1 = _.assign({}, visObj);
           vis1.name = "Visualizer1";
-          vis1 = new Visualizer(vis1);
+          vis1 = new VisualizerModelAPI(vis1);
 
           const visUpdate = _.assign({}, visObj);
           visUpdate.name = "VisualizerUpdate1";
@@ -298,7 +298,7 @@ describe("API Integration Tests", () =>
                         .end((err, res) => {
                           if (err) { return done(err); }
 
-                          return Visualizer.findOne({ name: "VisualizerUpdate1" }, (err, vis) => {
+                          return VisualizerModelAPI.findOne({ name: "VisualizerUpdate1" }, (err, vis) => {
                             if (err) { return done(err); }
                             vis.color.should.have.property("inactive", "#11111");
                             return done();
@@ -362,10 +362,10 @@ describe("API Integration Tests", () =>
         it("should sucessfully remove a visualizer", (done) => {
           let vis1 = _.assign({}, visObj);
           vis1.name = "Root's Visualizer 1";
-          vis1 = new Visualizer(vis1);
+          vis1 = new VisualizerModelAPI(vis1);
           let vis2 = _.assign({}, visObj);
           vis2.name = "Root's Visualizer 2";
-          vis2 = new Visualizer(vis2);
+          vis2 = new VisualizerModelAPI(vis2);
 
           return vis1.save((err) => {
             if (err) { return done(err); }
@@ -382,7 +382,7 @@ describe("API Integration Tests", () =>
                             .end((err, res) => {
                               if (err) { return done(err); }
 
-                              return Visualizer.find((err, visualizers) => {
+                              return VisualizerModelAPI.find((err, visualizers) => {
                                 visualizers.length.should.be.exactly(1);
                                 return done();
                               });

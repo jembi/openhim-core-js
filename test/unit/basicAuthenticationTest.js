@@ -3,7 +3,7 @@
 import should from "should";
 import request from "supertest";
 import * as basicAuthentication from "../../src/middleware/basicAuthentication";
-import { Client } from "../../src/model/clients";
+import { ClientModel } from "../../src/model/clients";
 
 const buildEmptyCtx = function() {
   const ctx = {};
@@ -48,9 +48,9 @@ const shaClient = {
 
 
 describe("Basic Auth", () => {
-  before(done => Client.remove({}, done));
+  before(done => ClientModel.remove({}, done));
 
-  afterEach(done => Client.remove({}, done));
+  afterEach(done => ClientModel.remove({}, done));
 
   describe("with no credentials", () =>
     it("ctx.authenticated should not exist", (done) => {
@@ -74,7 +74,7 @@ describe("Basic Auth", () => {
 
   describe("default algorithm (bcrypt) with correct credentials", () =>
     it("ctx.authenticated should exist and contain the client object from the database ", (done) => {
-      const client = new Client(bcryptClient);
+      const client = new ClientModel(bcryptClient);
       return client.save((error, newAppDoc) => {
         const ctx = buildCtx("user", "password");
         return basicAuthentication.authenticateUser(ctx, () => {
@@ -89,7 +89,7 @@ describe("Basic Auth", () => {
 
   describe("default algorithm (bcrypt) with incorrect credentials", () =>
     it("ctx.authenticated should not exist", (done) => {
-      const client = new Client(bcryptClient);
+      const client = new ClientModel(bcryptClient);
       return client.save((error, newAppDoc) => {
         const ctx = buildCtx("user", "incorrectPassword");
         return basicAuthentication.authenticateUser(ctx, () => {
@@ -102,7 +102,7 @@ describe("Basic Auth", () => {
 
   describe("crypto algorithm (sha) with correct credentials", () =>
     it("ctx.authenticated should exist and contain the client object from the database ", (done) => {
-      const client = new Client(shaClient);
+      const client = new ClientModel(shaClient);
       return client.save((error, newAppDoc) => {
         const ctx = buildCtx("user", "password");
         return basicAuthentication.authenticateUser(ctx, () => {
@@ -117,7 +117,7 @@ describe("Basic Auth", () => {
 
   return describe("crypto algorithm (sha) with incorrect credentials", () =>
     it("ctx.authenticated should not exist", (done) => {
-      const client = new Client(shaClient);
+      const client = new ClientModel(shaClient);
       return client.save((error, newAppDoc) => {
         const ctx = buildCtx("user", "incorrectPassword");
         return basicAuthentication.authenticateUser(ctx, () => {

@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { connectionDefault } from "../config";
+import { connectionAPI, connectionDefault } from "../config";
 
 const certificate = {
   country: String,
@@ -28,5 +28,7 @@ const KeystoreSchema = new Schema({
 });
 
 // Model for storing the server key and cert as well as trusted certificates
-export const Keystore = connectionDefault.model("Keystore", KeystoreSchema);
-export const Certificate = connectionDefault.model("Certificate", CertificateSchema);
+export const KeystoreModelAPI = connectionAPI.model("Keystore", KeystoreSchema);
+export const CertificateModelAPI = connectionAPI.model("Certificate", CertificateSchema);
+export const KeystoreModel = connectionDefault.model("Keystore", KeystoreSchema);
+export const CertificateModel = connectionDefault.model("Certificate", CertificateSchema);

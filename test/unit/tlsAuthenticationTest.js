@@ -5,9 +5,9 @@ import fs from "fs";
 import should from "should";
 import sinon from "sinon";
 import * as tlsAuthentication from "../../src/middleware/tlsAuthentication";
-import { Client } from "../../src/model/clients";
+import { ClientModel } from "../../src/model/clients";
 import * as testUtils from "../testUtils";
-import { Keystore } from "../../src/model/keystore";
+import { KeystoreModel } from "../../src/model/keystore";
 import { config } from "../../src/config";
 
 config.tlsClientLookup = config.get("tlsClientLookup");
@@ -64,13 +64,13 @@ describe("tlsAuthentication.coffee", () => {
         certFingerprint: "8F:AB:2A:51:84:F2:ED:1B:13:2B:41:21:8B:78:D4:11:47:84:73:E6"
       };
 
-      const client = new Client(testClientDoc);
+      const client = new ClientModel(testClientDoc);
       return client.save(() => {
         config.tlsClientLookup.type = "in-chain";
         const promise = tlsAuthentication.clientLookup("wont_be_found", "test", "trust2.org");
         return promise.then((result) => {
           result.should.have.property("clientID", client.clientID);
-          return Client.remove({}, () => done());
+          return ClientModel.remove({}, () => done());
         });
       });
     });
@@ -82,7 +82,7 @@ describe("tlsAuthentication.coffee", () => {
     });
 
     return it("should resolve when the keystore.ca is empty", done =>
-            Keystore.findOneAndUpdate({}, { ca: [] }, () => {
+            KeystoreModel.findOneAndUpdate({}, { ca: [] }, () => {
               config.tlsClientLookup.type = "in-chain";
               const promise = tlsAuthentication.clientLookup("you.wont.find.me", "me.either");
               return promise.then(() => done());

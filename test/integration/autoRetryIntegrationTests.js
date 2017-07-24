@@ -2,11 +2,11 @@
 
 import should from "should";
 import request from "supertest";
-import { Channel } from "../../src/model/channels";
-import { Client } from "../../src/model/clients";
-import { Transaction } from "../../src/model/transactions";
-import { AutoRetry } from "../../src/model/autoRetry";
-import { Event } from "../../src/model/events";
+import { ChannelModel } from "../../src/model/channels";
+import { ClientModel } from "../../src/model/clients";
+import { TransactionModel } from "../../src/model/transactions";
+import { AutoRetryModel } from "../../src/model/autoRetry";
+import { EventModel } from "../../src/model/events";
 import * as testUtils from "../testUtils";
 import * as server from "../../src/server";
 import * as autoRetry from "../../src/autoRetry";
@@ -17,7 +17,7 @@ config.authentication = config.get("authentication");
 
 describe("Auto Retry Integration Tests", () => {
   describe("Primary route auto retry tests", () => {
-    const channel1 = new Channel({
+    const channel1 = new ChannelModel({
       name: "TEST DATA - Will break channel",
       urlPattern: "^/test/nowhere$",
       allow: ["PoC"],
@@ -33,7 +33,7 @@ describe("Auto Retry Integration Tests", () => {
       autoRetryMaxAttempts: 2
     });
 
-    const channel2 = new Channel({
+    const channel2 = new ChannelModel({
       name: "TEST DATA - Will break channel - attempt once",
       urlPattern: "^/test/nowhere/2$",
       allow: ["PoC"],
@@ -71,22 +71,22 @@ describe("Auto Retry Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModel(testAppDoc);
         return client.save(() => done());
       })
             );
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Will break channel" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
-                    Transaction.remove({}, () => AutoRetry.remove({}, () => done())
+            ChannelModel.remove({ name: "TEST DATA - Will break channel" }, () =>
+                ClientModel.remove({ clientID: "testApp" }, () =>
+                    TransactionModel.remove({}, () => AutoRetryModel.remove({}, () => done())
                     )
                 )
             )
         );
 
-    beforeEach(done => Transaction.remove({}, () => AutoRetry.remove({}, () => Event.remove({}, done))));
+    beforeEach(done => TransactionModel.remove({}, () => AutoRetryModel.remove({}, () => EventModel.remove({}, done))));
 
     afterEach(done => server.stop(() => done()));
 
@@ -102,7 +102,7 @@ describe("Auto Retry Integration Tests", () => {
                         return done(err);
                       } else {
                         return setTimeout((() =>
-                                Transaction.findOne({}, (err, trx) => {
+                                TransactionModel.findOne({}, (err, trx) => {
                                   if (err) { return done(err); }
                                   trx.should.have.property("autoRetry");
                                   trx.autoRetry.should.be.true();
@@ -129,9 +129,9 @@ describe("Auto Retry Integration Tests", () => {
                         return done(err);
                       } else {
                         return setTimeout((() =>
-                                Transaction.findOne({}, (err, trx) => {
+                                TransactionModel.findOne({}, (err, trx) => {
                                   if (err) { return done(err); }
-                                  return AutoRetry.findOne({}, (err, autoRetry) => {
+                                  return AutoRetryModel.findOne({}, (err, autoRetry) => {
                                     if (err) { return done(err); }
                                     autoRetry.transactionID.toString().should.be.equal(trx._id.toString());
                                     autoRetry.channelID.toString().should.be.equal(channel1._id.toString());
@@ -160,7 +160,7 @@ describe("Auto Retry Integration Tests", () => {
                                   tasks.findAndProcessAQueuedTask();
 
                                   return setTimeout((() =>
-                                        Transaction.find({}, (err, transactions) => {
+                                        TransactionModel.find({}, (err, transactions) => {
                                           if (err) { return done(err); }
                                           transactions.length.should.be.exactly(2);
                                           transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString());
@@ -193,7 +193,7 @@ describe("Auto Retry Integration Tests", () => {
                                   tasks.findAndProcessAQueuedTask();
 
                                   return setTimeout((() =>
-                                        Transaction.find({}, (err, transactions) => {
+                                        TransactionModel.find({}, (err, transactions) => {
                                           if (err) { return done(err); }
                                           transactions.length.should.be.exactly(2);
                                           transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString());
@@ -226,7 +226,7 @@ describe("Auto Retry Integration Tests", () => {
                                   tasks.findAndProcessAQueuedTask();
 
                                   return setTimeout((() =>
-                                        Event.find({}, (err, events) => {
+                                        EventModel.find({}, (err, events) => {
                                           if (err) { return done(err); }
                                           const prouteEvents = events.filter(ev => (ev.type === "primary") && (ev.event === "end"));
 
@@ -248,7 +248,7 @@ describe("Auto Retry Integration Tests", () => {
   describe("Secondary route auto retry tests", () => {
     let mockServer1 = null;
 
-    const channel1 = new Channel({
+    const channel1 = new ChannelModel({
       name: "TEST DATA - Secondary route will break channel",
       urlPattern: "^/test/nowhere$",
       allow: ["PoC"],
@@ -286,22 +286,22 @@ describe("Auto Retry Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModel(testAppDoc);
         return client.save(() => mockServer1 = testUtils.createMockServer(200, "target1", 1233, () => done()));
       });
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Secondary route will break channel" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
-                    Transaction.remove({}, () =>
+            ChannelModel.remove({ name: "TEST DATA - Secondary route will break channel" }, () =>
+                ClientModel.remove({ clientID: "testApp" }, () =>
+                    TransactionModel.remove({}, () =>
                         mockServer1.close(() => done())
                     )
                 )
             )
         );
 
-    beforeEach(done => Transaction.remove({}, done));
+    beforeEach(done => TransactionModel.remove({}, done));
 
     afterEach(done =>
             server.stop(() => done())
@@ -319,7 +319,7 @@ describe("Auto Retry Integration Tests", () => {
                         return done(err);
                       } else {
                         return setTimeout((() =>
-                                Transaction.findOne({}, (err, trx) => {
+                                TransactionModel.findOne({}, (err, trx) => {
                                   if (err) { return done(err); }
                                   trx.should.have.property("autoRetry");
                                   trx.autoRetry.should.be.true();
@@ -339,7 +339,7 @@ describe("Auto Retry Integration Tests", () => {
   describe("Mediator auto retry tests", () => {
     let mockServer1 = null;
 
-    const channel1 = new Channel({
+    const channel1 = new ChannelModel({
       name: "TEST DATA - Mediator has error channel",
       urlPattern: "^/test/nowhere$",
       allow: ["PoC"],
@@ -386,22 +386,22 @@ describe("Auto Retry Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModel(testAppDoc);
         return client.save(() => mockServer1 = testUtils.createMockMediatorServer(200, mediatorResponse, 1233, () => done()));
       });
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Mediator has error channel" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
-                    Transaction.remove({}, () =>
+            ChannelModel.remove({ name: "TEST DATA - Mediator has error channel" }, () =>
+                ClientModel.remove({ clientID: "testApp" }, () =>
+                    TransactionModel.remove({}, () =>
                         mockServer1.close(() => done())
                     )
                 )
             )
         );
 
-    beforeEach(done => Transaction.remove({}, done));
+    beforeEach(done => TransactionModel.remove({}, done));
 
     afterEach(done =>
             server.stop(() => done())
@@ -419,7 +419,7 @@ describe("Auto Retry Integration Tests", () => {
                         return done(err);
                       } else {
                         return setTimeout((() =>
-                                Transaction.findOne({}, (err, trx) => {
+                                TransactionModel.findOne({}, (err, trx) => {
                                   if (err) { return done(err); }
                                   trx.should.have.property("autoRetry");
                                   trx.autoRetry.should.be.true();
@@ -438,7 +438,7 @@ describe("Auto Retry Integration Tests", () => {
   });
 
   return describe("All routes failed auto retry tests", () => {
-    const channel1 = new Channel({
+    const channel1 = new ChannelModel({
       name: "TEST DATA - Both will break channel",
       urlPattern: "^/test/nowhere$",
       allow: ["PoC"],
@@ -476,20 +476,20 @@ describe("Auto Retry Integration Tests", () => {
           cert: ""
         };
 
-        const client = new Client(testAppDoc);
+        const client = new ClientModel(testAppDoc);
         return client.save(() => done());
       });
     });
 
     after(done =>
-            Channel.remove({ name: "TEST DATA - Both will break channel" }, () =>
-                Client.remove({ clientID: "testApp" }, () =>
-                    Transaction.remove({}, () => done())
+            ChannelModel.remove({ name: "TEST DATA - Both will break channel" }, () =>
+                ClientModel.remove({ clientID: "testApp" }, () =>
+                    TransactionModel.remove({}, () => done())
                 )
             )
         );
 
-    beforeEach(done => Transaction.remove({}, done));
+    beforeEach(done => TransactionModel.remove({}, done));
 
     afterEach(done =>
             server.stop(() => done())
@@ -507,7 +507,7 @@ describe("Auto Retry Integration Tests", () => {
                         return done(err);
                       } else {
                         return setTimeout((() =>
-                                Transaction.findOne({}, (err, trx) => {
+                                TransactionModel.findOne({}, (err, trx) => {
                                   if (err) { return done(err); }
                                   trx.should.have.property("autoRetry");
                                   trx.autoRetry.should.be.true();

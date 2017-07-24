@@ -3,9 +3,9 @@ import logger from "winston";
 import http from "http";
 import net from "net";
 
-import { Task as TaskModel } from "./model/tasks";
-import { Channel } from "./model/channels";
-import { Transaction as TransactionModel } from "./model/transactions";
+import { TaskModel } from "./model/tasks";
+import { ChannelModel } from "./model/channels";
+import { TransactionModel } from "./model/transactions";
 import * as rerunMiddleware from "./middleware/rerunUpdateTransactionTask";
 import { config } from "./config";
 
@@ -143,7 +143,7 @@ function rerunTransaction(transactionID, taskID, callback) {
     if (err) { return callback(err); }
 
         // setup the option object for the HTTP Request
-    return Channel.findById(transaction.channelID, (err, channel) => {
+    return ChannelModel.findById(transaction.channelID, (err, channel) => {
       if (err) { return callback(err); }
 
       logger.info(`Rerunning ${channel.type} transaction`);

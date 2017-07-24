@@ -5,7 +5,7 @@ import dgram from "dgram";
 import tls from "tls";
 import net from "net";
 
-import { Audit, AuditMeta } from "./model/audits";
+import { AuditModel, AuditMetaModel } from "./model/audits";
 import * as tlsAuthentication from "./middleware/tlsAuthentication";
 import { config } from "./config";
 
@@ -75,13 +75,13 @@ function codeInArray(code, arr) {
 }
 
 export function processAuditMeta(audit, callback) {
-  return AuditMeta.findOne({}, (err, auditMeta) => {
+  return AuditMetaModel.findOne({}, (err, auditMeta) => {
     if (err) {
       logger.error(err);
       return callback();
     }
 
-    if (!auditMeta) { auditMeta = new AuditMeta(); }
+    if (!auditMeta) { auditMeta = new AuditMetaModel(); }
 
     if (audit.eventIdentification != null && audit.eventIdentification.eventTypeCode != null && audit.eventIdentification.eventTypeCode.code && !codeInArray(audit.eventIdentification.eventTypeCode.code, auditMeta.eventType)) {
       auditMeta.eventType.push(audit.eventIdentification.eventTypeCode);
@@ -128,7 +128,7 @@ export function processAudit(msg, callback) {
   }
 
   return parseAuditRecordFromXML(parsedMsg.message, (xmlErr, result) => {
-    const audit = new Audit(result);
+    const audit = new AuditModel(result);
 
     audit.rawMessage = msg;
     audit.syslog = parsedMsg;

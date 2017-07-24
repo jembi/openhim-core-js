@@ -5,11 +5,11 @@ import path from "path";
 import Q from "q";
 import { path as appRoot } from "app-root-path";
 import * as authorisation from "./api/authorisation";
-import { Channel } from "./model/channels";
+import { ChannelModel } from "./model/channels";
 import { config } from "./config";
 import * as contact from "./contact";
 import * as metrics from "./metrics";
-import { User } from "./model/users";
+import { UserModel } from "./model/users";
 import * as utils from "./utils";
 
 config.reports = config.get("reports");
@@ -224,9 +224,9 @@ function fetchChannelReport(channel, user, flag, from, to, callback) {
         });
 }
 
-const fetchDailySubscribers = callback => User.find({ dailyReport: true }, callback);
+const fetchDailySubscribers = callback => UserModel.find({ dailyReport: true }, callback);
 
-const fetchWeeklySubscribers = callback => User.find({ weeklyReport: true }, callback);
+const fetchWeeklySubscribers = callback => UserModel.find({ weeklyReport: true }, callback);
 
 function plainTemplate (report) {
   let text = `Generated on: ${new Date().toString()}`;

@@ -76,5 +76,5 @@ const AuditMetaRecordSchema = new Schema({
   collection: "auditMeta"
 });
 
-export const Audit = connectionATNA.model("Audit", AuditRecordSchema);
-export const AuditMeta = connectionATNA.model("AuditMeta", AuditMetaRecordSchema);
+export const AuditModel = connectionATNA.model("Audit", AuditRecordSchema);
+export const AuditMetaModel = connectionATNA.model("AuditMeta", AuditMetaRecordSchema);

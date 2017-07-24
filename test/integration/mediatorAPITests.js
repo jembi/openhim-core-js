@@ -4,8 +4,8 @@
 import should from "should";
 import request from "supertest";
 import * as server from "../../src/server";
-import { Channel } from "../../src/model/channels";
-import { Mediator } from "../../src/model/mediators";
+import { ChannelModelAPI } from "../../src/model/channels";
+import { MediatorModelAPI } from "../../src/model/mediators";
 import * as testUtils from "../testUtils";
 
 const { auth } = testUtils;
@@ -91,8 +91,8 @@ describe("API Integration Tests", () =>
       before(done =>
             auth.setupTestUsers((err) => {
               if (err) { return done(err); }
-              return Channel.ensureIndexes(() =>
-                    Mediator.ensureIndexes(() => server.start({ apiPort: 8080 }, done))
+              return ChannelModelAPI.ensureIndexes(() =>
+                    MediatorModelAPI.ensureIndexes(() => server.start({ apiPort: 8080 }, done))
                 );
             })
         );
@@ -101,12 +101,12 @@ describe("API Integration Tests", () =>
 
       beforeEach(() => authDetails = auth.getAuthDetails());
 
-      afterEach(done => Mediator.remove({}, () => Channel.remove({}, done)));
+      afterEach(done => MediatorModelAPI.remove({}, () => ChannelModelAPI.remove({}, done)));
 
       describe("*getAllMediators()", () => {
         it("should fetch all mediators", done =>
-                new Mediator(mediator1).save(() =>
-                    new Mediator(mediator2).save(() =>
+                new MediatorModelAPI(mediator1).save(() =>
+                    new MediatorModelAPI(mediator2).save(() =>
                         request("https://localhost:8080")
                             .get("/mediators")
                             .set("auth-username", testUtils.rootUser.email)
@@ -146,7 +146,7 @@ describe("API Integration Tests", () =>
 
       describe("*getMediator()", () => {
         it("should fetch mediator", done =>
-                new Mediator(mediator1).save(() =>
+                new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .get(`/mediators/${mediator1.urn}`)
                         .set("auth-username", testUtils.rootUser.email)
@@ -250,7 +250,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Mediator.findOne({ urn: mediator1.urn }, (err, res) => {
+                        return MediatorModelAPI.findOne({ urn: mediator1.urn }, (err, res) => {
                           if (err) { return done(err); }
                           should.exist(res);
                           return done();
@@ -291,7 +291,7 @@ describe("API Integration Tests", () =>
             version: "1.0.0",
             name: "Updated Encounter Mediator"
           };
-          return new Mediator(mediator1).save(() =>
+          return new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators")
                         .set("auth-username", testUtils.rootUser.email)
@@ -304,7 +304,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Mediator.find({ urn: mediator1.urn }, (err, res) => {
+                            return MediatorModelAPI.find({ urn: mediator1.urn }, (err, res) => {
                               if (err) { return done(err); }
                               res.length.should.be.exactly(1);
                               res[0].name.should.be.exactly(mediator1.name);
@@ -321,7 +321,7 @@ describe("API Integration Tests", () =>
             version: "0.9.5",
             name: "Updated Encounter Mediator"
           };
-          return new Mediator(mediator1).save(() =>
+          return new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators")
                         .set("auth-username", testUtils.rootUser.email)
@@ -334,7 +334,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Mediator.find({ urn: mediator1.urn }, (err, res) => {
+                            return MediatorModelAPI.find({ urn: mediator1.urn }, (err, res) => {
                               if (err) { return done(err); }
                               res.length.should.be.exactly(1);
                               res[0].name.should.be.exactly(mediator1.name);
@@ -351,7 +351,7 @@ describe("API Integration Tests", () =>
             version: "1.0.1",
             name: "Updated Encounter Mediator"
           };
-          return new Mediator(mediator1).save(() =>
+          return new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators")
                         .set("auth-username", testUtils.rootUser.email)
@@ -364,7 +364,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Mediator.find({ urn: mediator1.urn }, (err, res) => {
+                            return MediatorModelAPI.find({ urn: mediator1.urn }, (err, res) => {
                               if (err) { return done(err); }
                               res.length.should.be.exactly(1);
                               res[0].name.should.be.exactly(updatedMediator.name);
@@ -425,7 +425,7 @@ describe("API Integration Tests", () =>
               param3: true
             }
           };
-          return new Mediator(mediator).save(() =>
+          return new MediatorModelAPI(mediator).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators")
                         .set("auth-username", testUtils.rootUser.email)
@@ -438,7 +438,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Mediator.find({ urn: mediator.urn }, (err, res) => {
+                            return MediatorModelAPI.find({ urn: mediator.urn }, (err, res) => {
                               if (err) { return done(err); }
                               res.length.should.be.exactly(1);
                               res[0].name.should.be.exactly(updatedMediator.name);
@@ -708,7 +708,7 @@ describe("API Integration Tests", () =>
                       if (err) {
                         return done(err);
                       } else {
-                        return Mediator.findOne({ urn: validMediator.urn }, (err, mediator) => {
+                        return MediatorModelAPI.findOne({ urn: validMediator.urn }, (err, mediator) => {
                           mediator.config.should.deepEqual(validMediator.config);
                           mediator.configDefs.should.have.length(2);
                           return done();
@@ -1011,10 +1011,10 @@ describe("API Integration Tests", () =>
             ]
           };
 
-          const mediator = new Mediator(mediatorDelete);
+          const mediator = new MediatorModelAPI(mediatorDelete);
           return mediator.save((error, mediator) => {
             should.not.exist(error);
-            return Mediator.count((err, countBefore) =>
+            return MediatorModelAPI.count((err, countBefore) =>
                         request("https://localhost:8080")
                             .del(`/mediators/${mediator.urn}`)
                             .set("auth-username", testUtils.rootUser.email)
@@ -1026,8 +1026,8 @@ describe("API Integration Tests", () =>
                               if (err) {
                                 return done(err);
                               } else {
-                                return Mediator.count((err, countAfter) =>
-                                        Mediator.findOne({ urn: mediator.urn }, (error, notFoundDoc) => {
+                                return MediatorModelAPI.count((err, countAfter) =>
+                                        MediatorModelAPI.findOne({ urn: mediator.urn }, (error, notFoundDoc) => {
                                           (notFoundDoc === null).should.be.true;
                                           (countBefore - 1).should.equal(countAfter);
                                           return done();
@@ -1060,7 +1060,7 @@ describe("API Integration Tests", () =>
 
       describe("*heartbeat()", () => {
         it("should store uptime and lastHeartbeat then return a 200 status", done =>
-                new Mediator(mediator1).save(() =>
+                new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
                         .set("auth-username", testUtils.rootUser.email)
@@ -1075,7 +1075,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Mediator.findOne({ urn: mediator1.urn }, (err, mediator) => {
+                            return MediatorModelAPI.findOne({ urn: mediator1.urn }, (err, mediator) => {
                               if (err) {
                                 return done(err);
                               }
@@ -1090,7 +1090,7 @@ describe("API Integration Tests", () =>
             );
 
         it("should return config if the config was updated since the last heartbeat", done =>
-                new Mediator(mediator1).save(() => {
+                new MediatorModelAPI(mediator1).save(() => {
                   const now = new Date();
                   const prev = new Date();
                   const update = {
@@ -1101,7 +1101,7 @@ describe("API Integration Tests", () =>
                     _configModifiedTS: now,
                     _lastHeartbeat: new Date(prev.setMinutes(now.getMinutes() - 5))
                   };
-                  return Mediator.findOneAndUpdate({ urn: mediator1.urn }, update, err =>
+                  return MediatorModelAPI.findOneAndUpdate({ urn: mediator1.urn }, update, err =>
                         request("https://localhost:8080")
                             .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
                             .set("auth-username", testUtils.rootUser.email)
@@ -1126,7 +1126,7 @@ describe("API Integration Tests", () =>
             );
 
         it("should return the latest config if the config property in the request is true", done =>
-                new Mediator(mediator1).save(() => {
+                new MediatorModelAPI(mediator1).save(() => {
                   const now = new Date();
                   const update = {
                     config: {
@@ -1136,7 +1136,7 @@ describe("API Integration Tests", () =>
                     _configModifiedTS: now,
                     _lastHeartbeat: now
                   };
-                  return Mediator.findOneAndUpdate({ urn: mediator1.urn }, update, err =>
+                  return MediatorModelAPI.findOneAndUpdate({ urn: mediator1.urn }, update, err =>
                         request("https://localhost:8080")
                             .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
                             .set("auth-username", testUtils.rootUser.email)
@@ -1202,7 +1202,7 @@ describe("API Integration Tests", () =>
             );
 
         return it("should return a 400 if an invalid body is received", done =>
-                new Mediator(mediator1).save(() =>
+                new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat")
                         .set("auth-username", testUtils.rootUser.email)
@@ -1278,7 +1278,7 @@ describe("API Integration Tests", () =>
             type: "string"
           }
           ];
-          return new Mediator(mediator1).save(() =>
+          return new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .put("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
                         .set("auth-username", testUtils.rootUser.email)
@@ -1294,7 +1294,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Mediator.findOne({ urn: mediator1.urn }, (err, mediator) => {
+                            return MediatorModelAPI.findOne({ urn: mediator1.urn }, (err, mediator) => {
                               if (err) {
                                 return done(err);
                               }
@@ -1319,7 +1319,7 @@ describe("API Integration Tests", () =>
             type: "string"
           }
           ];
-          return new Mediator(mediator1).save(() =>
+          return new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .put("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config")
                         .set("auth-username", testUtils.rootUser.email)
@@ -1363,7 +1363,7 @@ describe("API Integration Tests", () =>
             );
 
         it("should add all channels in the defaultChannelConfig property", done =>
-                new Mediator(mediator1).save((err) => {
+                new MediatorModelAPI(mediator1).save((err) => {
                   if (err) { return done(err); }
                   return request("https://localhost:8080")
                         .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
@@ -1375,7 +1375,7 @@ describe("API Integration Tests", () =>
                         .expect(201)
                         .end((err, res) => {
                           if (err) { return done(err); }
-                          return Channel.find({}, (err, channels) => {
+                          return ChannelModelAPI.find({}, (err, channels) => {
                             if (err) { return done(err); }
                             channels.length.should.be.exactly(2);
                             const channelNames = channels.map(channel => channel.name);
@@ -1388,7 +1388,7 @@ describe("API Integration Tests", () =>
             );
 
         it("should add selected channels in the defaultChannelConfig property if the body is set (save one)", done =>
-                new Mediator(mediator1).save(() =>
+                new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
                         .set("auth-username", testUtils.rootUser.email)
@@ -1401,7 +1401,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Channel.find({}, (err, channels) => {
+                            return ChannelModelAPI.find({}, (err, channels) => {
                               if (err) { done(err); }
                               channels.length.should.be.exactly(1);
                               channels[0].name.should.be.exactly("Save Encounter 2");
@@ -1413,7 +1413,7 @@ describe("API Integration Tests", () =>
             );
 
         it("should add selected channels in the defaultChannelConfig property if the body is set (save both)", done =>
-                new Mediator(mediator1).save(() =>
+                new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
                         .set("auth-username", testUtils.rootUser.email)
@@ -1426,7 +1426,7 @@ describe("API Integration Tests", () =>
                           if (err) {
                             return done(err);
                           } else {
-                            return Channel.find({}, (err, channels) => {
+                            return ChannelModelAPI.find({}, (err, channels) => {
                               if (err) { done(err); }
                               channels.length.should.be.exactly(2);
                               const channelNames = channels.map(channel => channel.name);
@@ -1440,7 +1440,7 @@ describe("API Integration Tests", () =>
             );
 
         it("should return a 400 when a channel from the request body isn't found", done =>
-                new Mediator(mediator1).save(() =>
+                new MediatorModelAPI(mediator1).save(() =>
                     request("https://localhost:8080")
                         .post("/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels")
                         .set("auth-username", testUtils.rootUser.email)
