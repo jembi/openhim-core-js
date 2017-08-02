@@ -325,7 +325,7 @@ public class DefaultOrchestrator extends UntypedActor {
         originalRequest = request;
 
         ActorSelection httpConnector = getContext().actorSelection(config.userPathFor("http-connector"));
-        Map <string, string="">headers = new HashMap<>();
+        Map<String, String> headers = new HashMap<String, String>();
         headers.put("Accept", "application/json");
 
         MediatorHTTPRequest serviceRequest = new MediatorHTTPRequest(
