@@ -57,10 +57,12 @@ const RouteMetadataDef = {
 const TransactionSchema = new Schema({
   clientID: Schema.Types.ObjectId,
   clientIP: String,
-  parentID: Schema.Types.ObjectId,
+  parentID: {
+    type: Schema.Types.ObjectId, index: true
+  },
   childIDs: [Schema.Types.ObjectId],
   channelID: {
-    type: Schema.Types.ObjectId, index: true
+    type: Schema.Types.ObjectId
   },
   request: RequestDef,
   response: ResponseDef,
@@ -81,12 +83,14 @@ const TransactionSchema = new Schema({
   status: {
     type: String,
     required: true,
-    index: true,
     enum: ["Processing", "Failed", "Completed", "Successful", "Completed with error(s)"]
   }
 });
 
 TransactionSchema.index("request.timestamp");
+TransactionSchema.index({channelID: 1, "request.timestamp": -1});
+TransactionSchema.index({status: 1, "request.timestamp": -1});
+TransactionSchema.index({childId: 1, "request.timestamp": -1})
 
 // Compile schema into Model
 export const TransactionModelAPI = connectionAPI.model("Transaction", TransactionSchema);
