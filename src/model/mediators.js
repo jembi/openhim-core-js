@@ -1,8 +1,8 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
-import { RouteDef, ChannelDef } from "./channels";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
+import { RouteDef, ChannelDef } from './channels'
 
-export const configParamTypes = ["string", "bool", "number", "option", "bigstring", "map", "struct", "password"];
+export const configParamTypes = ['string', 'bool', 'number', 'option', 'bigstring', 'map', 'struct', 'password']
 
 export const configDef = {
   param: String,
@@ -14,7 +14,7 @@ export const configDef = {
   values: [{ type: String }],
   template: { type: Array },
   array: Boolean
-};
+}
 
 // The properties prefixed with an '_' are internally used properties and shouldn't be set by the user
 const MediatorSchema = new Schema({
@@ -35,8 +35,8 @@ const MediatorSchema = new Schema({
   _configModifiedTS: Date,
   _uptime: Number,
   _lastHeartbeat: Date
-});
+})
 
 // Model for describing a collection of mediators that have registered themselves with core
-export const MediatorModelAPI = connectionAPI.model("Mediator", MediatorSchema);
-export const MediatorModel = connectionDefault.model("Mediator", MediatorSchema);
+export const MediatorModelAPI = connectionAPI.model('Mediator', MediatorSchema)
+export const MediatorModel = connectionDefault.model('Mediator', MediatorSchema)

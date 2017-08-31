@@ -1,79 +1,78 @@
 
-import Q from "q";
-import logger from "winston";
-import { TaskModelAPI } from "../model/tasks";
-import { TransactionModelAPI } from "../model/transactions";
-import { AutoRetryModelAPI } from "../model/autoRetry";
-import * as Channels from "../model/channels";
-import * as authorisation from "./authorisation";
-import * as utils from "../utils";
+import Q from 'q'
+import logger from 'winston'
+import { TaskModelAPI } from '../model/tasks'
+import { TransactionModelAPI } from '../model/transactions'
+import { AutoRetryModelAPI } from '../model/autoRetry'
+import * as Channels from '../model/channels'
+import * as authorisation from './authorisation'
+import * as utils from '../utils'
 
-const { ChannelModelAPI } = Channels;
+const { ChannelModelAPI } = Channels
 
 /**
  * Function to check if rerun task creation is valid
  */
 
-function isRerunPermissionsValid(user, transactions, callback) {
+function isRerunPermissionsValid (user, transactions, callback) {
     // if 'admin' - set rerun permissions to true
-  if (authorisation.inGroup("admin", user) === true) {
+  if (authorisation.inGroup('admin', user) === true) {
         // admin user allowed to rerun any transactions
-    return callback(null, true);
+    return callback(null, true)
   } else {
-    return TransactionModelAPI.distinct("channelID", { _id: { $in: transactions.tids } }, (err, transChannels) =>
-            ChannelModelAPI.distinct("_id", { txRerunAcl: { $in: user.groups } }, (err, allowedChannels) => {
+    return TransactionModelAPI.distinct('channelID', { _id: { $in: transactions.tids } }, (err, transChannels) =>
+            ChannelModelAPI.distinct('_id', { txRerunAcl: { $in: user.groups } }, (err, allowedChannels) => {
                 // for each transaction channel found to be rerun
               for (const trx of Array.from(transChannels)) {
                     // assume transaction channnel is not allowed at first
-                let matchFound = false;
+                let matchFound = false
 
                     // for each user allowed channel to be rerun
                 for (const chan of Array.from(allowedChannels)) {
-                  if (trx.equals(chan)) { matchFound = true; }
+                  if (trx.equals(chan)) { matchFound = true }
                 }
 
                     // if one channel not allowed then rerun NOT allowed
-                if (!matchFound) { return callback(null, false); }
+                if (!matchFound) { return callback(null, false) }
               }
-              return callback(null, true);
+              return callback(null, true)
             })
-        );
+        )
   }
 }
-
 
 /**
  * Retrieves the list of active tasks
  */
-export function* getTasks() {
+export function * getTasks () {
     // Must be admin
-  if (!authorisation.inGroup("admin", this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getTasks denied.`, "info");
-    return;
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getTasks denied.`, 'info')
+    return
   }
 
   try {
-    const filtersObject = this.request.query;
+    const filtersObject = this.request.query
 
         // get limit and page values
-    const { filterLimit } = filtersObject;
-    const { filterPage } = filtersObject;
+    const { filterLimit } = filtersObject
+    const { filterPage } = filtersObject
 
         // determine skip amount
-    const filterSkip = filterPage * filterLimit;
+    const filterSkip = filterPage * filterLimit
 
         // get filters object
-    const filters = JSON.parse(filtersObject.filters);
+    const filters = JSON.parse(filtersObject.filters)
 
         // parse date to get it into the correct format for querying
     if (filters.created) {
-      filters.created = JSON.parse(filters.created);
+      filters.created = JSON.parse(filters.created)
     }
 
         // exclude transactions object from tasks list
-    const projectionFiltersObject = { transactions: 0 };
+    const projectionFiltersObject = { transactions: 0 }
 
-    this.body = yield TaskModelAPI.find({}).exec();
+    this.body = yield TaskModelAPI.find({}).exec()
 
         // execute the query
     return this.body = yield TaskModelAPI
@@ -81,242 +80,235 @@ export function* getTasks() {
             .skip(filterSkip)
             .limit(parseInt(filterLimit, 10))
             .sort({ created: -1 })
-            .exec();
+            .exec()
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not fetch all tasks via the API: ${err}`, "error");
+    return utils.logAndSetResponse(this, 500, `Could not fetch all tasks via the API: ${err}`, 'error')
   }
 }
 
-
 const areTransactionChannelsValid = (transactions, callback) =>
-    TransactionModelAPI.distinct("channelID", { _id: { $in: transactions.tids } }, (err, trxChannelIDs) => {
-      if (err) { return callback(err); }
+    TransactionModelAPI.distinct('channelID', { _id: { $in: transactions.tids } }, (err, trxChannelIDs) => {
+      if (err) { return callback(err) }
       return ChannelModelAPI.find({ _id: { $in: trxChannelIDs } }, { status: 1 }, (err, trxChannels) => {
-        if (err) { return callback(err); }
+        if (err) { return callback(err) }
 
         for (const chan of Array.from(trxChannels)) {
           if (!Channels.isChannelEnabled(chan)) {
-            return callback(null, false);
+            return callback(null, false)
           }
         }
-        return callback(null, true);
-      });
+        return callback(null, true)
+      })
     })
-    ;
-
 
 /**
  * Creates a new Task
  */
-export function* addTask() {
+export function * addTask () {
     // Get the values to use
-  const transactions = this.request.body;
+  const transactions = this.request.body
   try {
-    const taskObject = {};
-    const transactionsArr = [];
-    taskObject.remainingTransactions = transactions.tids.length;
-    taskObject.user = this.authenticated.email;
+    const taskObject = {}
+    const transactionsArr = []
+    taskObject.remainingTransactions = transactions.tids.length
+    taskObject.user = this.authenticated.email
 
     if (transactions.batchSize != null) {
       if (transactions.batchSize <= 0) {
-        return utils.logAndSetResponse(this, 400, "Invalid batch size specified", "info");
+        return utils.logAndSetResponse(this, 400, 'Invalid batch size specified', 'info')
       }
-      taskObject.batchSize = transactions.batchSize;
+      taskObject.batchSize = transactions.batchSize
     }
 
     if (transactions.paused) {
-      taskObject.status = "Paused";
+      taskObject.status = 'Paused'
     }
 
         // check rerun permission and whether to create the rerun task
-    const isRerunPermsValid = Q.denodeify(isRerunPermissionsValid);
-    const allowRerunTaskCreation = yield isRerunPermsValid(this.authenticated, transactions);
+    const isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
+    const allowRerunTaskCreation = yield isRerunPermsValid(this.authenticated, transactions)
 
         // the rerun task may be created
     if (allowRerunTaskCreation === true) {
-      const areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid);
-      const trxChannelsValid = yield areTrxChannelsValid(transactions);
+      const areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid)
+      const trxChannelsValid = yield areTrxChannelsValid(transactions)
 
       if (!trxChannelsValid) {
-        utils.logAndSetResponse(this, 400, "Cannot queue task as there are transactions with disabled or deleted channels", "info");
-        return;
+        utils.logAndSetResponse(this, 400, 'Cannot queue task as there are transactions with disabled or deleted channels', 'info')
+        return
       }
 
-      for (const tid of Array.from(transactions.tids)) { transactionsArr.push({ tid }); }
-      taskObject.transactions = transactionsArr;
-      taskObject.totalTransactions = transactionsArr.length;
+      for (const tid of Array.from(transactions.tids)) { transactionsArr.push({ tid }) }
+      taskObject.transactions = transactionsArr
+      taskObject.totalTransactions = transactionsArr.length
 
-      const task = new TaskModelAPI(taskObject);
-      const result = yield Q.ninvoke(task, "save");
+      const task = new TaskModelAPI(taskObject)
+      const result = yield Q.ninvoke(task, 'save')
 
             // All ok! So set the result
-      utils.logAndSetResponse(this, 201, `User ${this.authenticated.email} created task with id ${task.id}`, "info");
+      utils.logAndSetResponse(this, 201, `User ${this.authenticated.email} created task with id ${task.id}`, 'info')
 
             // Clear the transactions out of the auto retry queue, in case they're in there
-      return AutoRetryModelAPI.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err); } });
+      return AutoRetryModelAPI.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err) } })
     } else {
             // rerun task creation not allowed
-      return utils.logAndSetResponse(this, 403, "Insufficient permissions prevents this rerun task from being created", "error");
+      return utils.logAndSetResponse(this, 403, 'Insufficient permissions prevents this rerun task from being created', 'error')
     }
   } catch (error) {
         // Error! So inform the user
-    const err = error;
-    return utils.logAndSetResponse(this, 500, `Could not add Task via the API: ${err}`, "error");
+    const err = error
+    return utils.logAndSetResponse(this, 500, `Could not add Task via the API: ${err}`, 'error')
   }
 }
-
 
 /**
  * Retrieves the details for a specific Task
  */
-function buildFilteredTransactionsArray(filters, transactions) {
+function buildFilteredTransactionsArray (filters, transactions) {
     // set tempTransactions array to return
-  const tempTransactions = [];
+  const tempTransactions = []
 
-  let i = 0;
+  let i = 0
   while (i < transactions.length) {
         // set filter variable to captured failed filters
-    let filtersFailed = false;
+    let filtersFailed = false
 
     if (filters.tstatus) {
             // if tstatus doesnt equal filter then set filter failed to true
       if (filters.tstatus !== transactions[i].tstatus) {
-        filtersFailed = true;
+        filtersFailed = true
       }
     }
 
     if (filters.rerunStatus) {
             // if rerunStatus doesnt equal filter then set filter failed to true
       if (filters.rerunStatus !== transactions[i].rerunStatus) {
-        filtersFailed = true;
+        filtersFailed = true
       }
     }
 
     if (filters.hasErrors) {
             // if hasErrors filter 'yes' but no hasErrors exist then set filter failed to true
-      if ((filters.hasErrors === "yes") && !transactions[i].hasErrors) {
-        filtersFailed = true;
+      if ((filters.hasErrors === 'yes') && !transactions[i].hasErrors) {
+        filtersFailed = true
                 // if hasErrors filter 'no' but hasErrors does exist then set filter failed to true
-      } else if ((filters.hasErrors === "no") && transactions[i].hasErrors) {
-        filtersFailed = true;
+      } else if ((filters.hasErrors === 'no') && transactions[i].hasErrors) {
+        filtersFailed = true
       }
     }
 
         // add transaction if all filters passed successfully
     if (filtersFailed === false) {
-      tempTransactions.push(transactions[i]);
+      tempTransactions.push(transactions[i])
     }
 
         // increment counter
-    i++;
+    i++
   }
 
-  return tempTransactions;
+  return tempTransactions
 }
 
-export function* getTask(taskId) {
+export function * getTask (taskId) {
     // Get the values to use
-  taskId = unescape(taskId);
+  taskId = unescape(taskId)
 
   try {
-    const filtersObject = this.request.query;
+    const filtersObject = this.request.query
 
         // get limit and page values
-    const { filterLimit } = filtersObject;
-    const { filterPage } = filtersObject;
+    const { filterLimit } = filtersObject
+    const { filterPage } = filtersObject
 
         // determine skip amount
-    const filterSkip = filterPage * filterLimit;
+    const filterSkip = filterPage * filterLimit
 
         // get filters object
-    const filters = JSON.parse(filtersObject.filters);
+    const filters = JSON.parse(filtersObject.filters)
 
-    const result = yield TaskModelAPI.findById(taskId).lean().exec();
-    let tempTransactions = result.transactions;
-
+    const result = yield TaskModelAPI.findById(taskId).lean().exec()
+    let tempTransactions = result.transactions
 
         // are filters present
     if (Object.keys(filters).length > 0) {
-      tempTransactions = buildFilteredTransactionsArray(filters, result.transactions);
+      tempTransactions = buildFilteredTransactionsArray(filters, result.transactions)
     }
 
         // get new transactions filters length
-    const totalFilteredTransactions = tempTransactions.length;
+    const totalFilteredTransactions = tempTransactions.length
 
         // assign new transactions filters length to result property
-    result.totalFilteredTransactions = totalFilteredTransactions;
+    result.totalFilteredTransactions = totalFilteredTransactions
 
         // work out where to slice from and till where
-    const sliceFrom = filterSkip;
-    const sliceTo = filterSkip + parseInt(filterLimit, 10);
+    const sliceFrom = filterSkip
+    const sliceTo = filterSkip + parseInt(filterLimit, 10)
 
         // slice the transactions array to return only the correct amount of records at the correct index
-    result.transactions = tempTransactions.slice(sliceFrom, sliceTo);
+    result.transactions = tempTransactions.slice(sliceFrom, sliceTo)
 
         // Test if the result if valid
     if (result === null) {
             // task not found! So inform the user
-      return utils.logAndSetResponse(this, 404, `We could not find a Task with this ID: ${taskId}.`, "info");
+      return utils.logAndSetResponse(this, 404, `We could not find a Task with this ID: ${taskId}.`, 'info')
     } else {
-      return this.body = result;
+      return this.body = result
     }
         // All ok! So set the result
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not fetch Task by ID {taskId} via the API: ${err}`, "error");
+    return utils.logAndSetResponse(this, 500, `Could not fetch Task by ID {taskId} via the API: ${err}`, 'error')
   }
 }
-
 
 /**
  * Updates the details for a specific Task
  */
-export function* updateTask(taskId) {
+export function * updateTask (taskId) {
     // Must be admin
-  if (!authorisation.inGroup("admin", this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateTask denied.`, "info");
-    return;
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateTask denied.`, 'info')
+    return
   }
 
     // Get the values to use
-  taskId = unescape(taskId);
-  const taskData = this.request.body;
+  taskId = unescape(taskId)
+  const taskData = this.request.body
 
     // Ignore _id if it exists, user cannot change the internal id
-  if (taskData._id != null) { delete taskData._id; }
+  if (taskData._id != null) { delete taskData._id }
 
   try {
-    yield TaskModelAPI.findOneAndUpdate({ _id: taskId }, taskData).exec();
+    yield TaskModelAPI.findOneAndUpdate({ _id: taskId }, taskData).exec()
 
         // All ok! So set the result
-    this.body = "The Task was successfully updated";
-    return logger.info(`User ${this.authenticated.email} updated task with id ${taskId}`);
+    this.body = 'The Task was successfully updated'
+    return logger.info(`User ${this.authenticated.email} updated task with id ${taskId}`)
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not update Task by ID {taskId} via the API: ${err}`, "error");
+    return utils.logAndSetResponse(this, 500, `Could not update Task by ID {taskId} via the API: ${err}`, 'error')
   }
 }
-
 
 /**
  * Deletes a specific Tasks details
  */
-export function* removeTask(taskId) {
+export function * removeTask (taskId) {
     // Must be admin
-  if (!authorisation.inGroup("admin", this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeTask denied.`, "info");
-    return;
+  if (!authorisation.inGroup('admin', this.authenticated)) {
+    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeTask denied.`, 'info')
+    return
   }
 
     // Get the values to use
-  taskId = unescape(taskId);
+  taskId = unescape(taskId)
 
   try {
         // Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    yield TaskModelAPI.remove({ _id: taskId }).exec();
+    yield TaskModelAPI.remove({ _id: taskId }).exec()
 
         // All ok! So set the result
-    this.body = "The Task was successfully deleted";
-    return logger.info(`User ${this.authenticated.email} removed task with id ${taskId}`);
+    this.body = 'The Task was successfully deleted'
+    return logger.info(`User ${this.authenticated.email} removed task with id ${taskId}`)
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not remove Task by ID {taskId} via the API: ${err}`, "error");
+    return utils.logAndSetResponse(this, 500, `Could not remove Task by ID {taskId} via the API: ${err}`, 'error')
   }
 }

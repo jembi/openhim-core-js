@@ -1,6 +1,6 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
-import { ContactUserDef } from "./contactGroups";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
+import { ContactUserDef } from './contactGroups'
 
 const RouteDef = {
   name: {
@@ -19,16 +19,16 @@ const RouteDef = {
   username: String,
   password: String,
   type: {
-    type: String, default: "http", enum: ["http", "tcp", "mllp"]
+    type: String, default: 'http', enum: ['http', 'tcp', 'mllp']
   },
   cert: Schema.Types.ObjectId,
   status: {
-    type: String, default: "enabled", enum: ["enabled", "disabled"]
+    type: String, default: 'enabled', enum: ['enabled', 'disabled']
   },
   forwardAuthHeader: {
     type: Boolean, default: false
   }
-};
+}
 
 // Channel alerts
 //
@@ -38,7 +38,7 @@ const RouteDef = {
 //
 const AlertsDef = {
   condition: {
-    type: String, default: "status", enum: ["status", "auto-retry-max-attempted"]
+    type: String, default: 'status', enum: ['status', 'auto-retry-max-attempted']
   },
   status: {
     type: String
@@ -46,7 +46,7 @@ const AlertsDef = {
   failureRate: Number,
   groups: [Schema.Types.ObjectId],
   users: [ContactUserDef]
-};
+}
 
 const RewriteRuleDef = {
   fromHost: {
@@ -62,7 +62,7 @@ const RewriteRuleDef = {
     type: Number, required: true, default: 80
   },
   pathTransform: String
-};
+}
 
 const ChannelDef = {
   name: {
@@ -73,7 +73,7 @@ const ChannelDef = {
     type: String, required: true
   },
   type: {
-    type: String, default: "http", enum: ["http", "tcp", "tls", "polling"]
+    type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
   },
   priority: {
     type: Number, min: 1
@@ -88,7 +88,7 @@ const ChannelDef = {
   allow: [{ type: String, required: true }],
   whitelist: [String],
   authType: {
-    type: String, default: "private", enum: ["private", "public"]
+    type: String, default: 'private', enum: ['private', 'public']
   },
   routes: [RouteDef],
   matchContentTypes: [String],
@@ -102,7 +102,7 @@ const ChannelDef = {
   txRerunAcl: [String],
   alerts: [AlertsDef],
   status: {
-    type: String, default: "enabled", enum: ["enabled", "disabled", "deleted"]
+    type: String, default: 'enabled', enum: ['enabled', 'disabled', 'deleted']
   },
   rewriteUrls: {
     type: Boolean, default: false
@@ -120,10 +120,10 @@ const ChannelDef = {
   autoRetryMaxAttempts: {
     type: Number, min: 0
   } // 0 means unlimited
-};
+}
 
 // Expose the route schema
-export { RouteDef };
+export { RouteDef }
 
 /*
  * The Channel object that describes a specific channel within the OpenHIM.
@@ -134,13 +134,13 @@ export { RouteDef };
  * A channel also has an allow property. This property should contain a list
  * of users or group that are authroised to send messages to this channel.
  */
-const ChannelSchema = new Schema(ChannelDef);
-ChannelSchema.index("name", { unique: true });
+const ChannelSchema = new Schema(ChannelDef)
+ChannelSchema.index('name', { unique: true })
 
-export const ChannelModelAPI = connectionAPI.model("Channel", ChannelSchema);
-export const ChannelModel = connectionDefault.model("Channel", ChannelSchema);
-export { ChannelDef };
+export const ChannelModelAPI = connectionAPI.model('Channel', ChannelSchema)
+export const ChannelModel = connectionDefault.model('Channel', ChannelSchema)
+export { ChannelDef }
 
 // Is the channel enabled?
 // If there is no status field then the channel IS enabled
-export function isChannelEnabled(channel) { return !channel.status || (channel.status === "enabled"); }
+export function isChannelEnabled (channel) { return !channel.status || (channel.status === 'enabled') }

@@ -1,273 +1,272 @@
 /* eslint-env mocha */
 
-import fs from "fs";
-import should from "should";
-import sinon from "sinon";
-import http from "http";
-import os from "os";
-import * as q from "q";
-import * as stats from "../../src/stats";
-import * as testUtils from "../testUtils";
-import FakeServer from "../fakeTcpServer";
-import { config } from "../../src/config";
+import fs from 'fs'
+import should from 'should'
+import sinon from 'sinon'
+import http from 'http'
+import os from 'os'
+import * as q from 'q'
+import * as stats from '../../src/stats'
+import * as testUtils from '../testUtils'
+import FakeServer from '../fakeTcpServer'
+import { config } from '../../src/config'
 
-const application = config.get("application");
-const timer = new Date();
-const domain = `${os.hostname()}.${application.name}`;
+const application = config.get('application')
+const timer = new Date()
+const domain = `${os.hostname()}.${application.name}`
 
-describe("Stats Middleware ", () => {
-  let s = {};
+describe('Stats Middleware ', () => {
+  let s = {}
 
   beforeEach((done) => {
-    s = new FakeServer();
-    return s.start(done);
-  });
+    s = new FakeServer()
+    return s.start(done)
+  })
 
-  afterEach(() => s.stop());
+  afterEach(() => s.stop())
 
   const channel = {
-    _id: "ckjhfjwedsnfdsf",
-    name: "Mock endpoint",
-    urlPattern: ".+",
+    _id: 'ckjhfjwedsnfdsf',
+    name: 'Mock endpoint',
+    urlPattern: '.+',
     routes: [{
       secured: true,
-      host: "localhost",
+      host: 'localhost',
       port: 9877,
       primary: true,
-      cert: fs.readFileSync("test/resources/server-tls/cert.pem")
+      cert: fs.readFileSync('test/resources/server-tls/cert.pem')
     }
     ]
-  };
+  }
 
-  let requestTimestamp = (new Date()).toString();
-  const ctx = new Object();
-  ctx.authorisedChannel = channel;
-  ctx.request = new Object();
-  ctx.response = new Object();
-  ctx.response.set = function () { };
-  ctx.path = (ctx.request.url = "/test");
-  ctx.request.method = "GET";
-  ctx.requestTimestamp = requestTimestamp;
-  ctx.transactionStatus = "Successful";
-  ctx.routes = [];
-  ctx.mediatorResponse = new Object();
+  let requestTimestamp = (new Date()).toString()
+  const ctx = new Object()
+  ctx.authorisedChannel = channel
+  ctx.request = new Object()
+  ctx.response = new Object()
+  ctx.response.set = function () { }
+  ctx.path = (ctx.request.url = '/test')
+  ctx.request.method = 'GET'
+  ctx.requestTimestamp = requestTimestamp
+  ctx.transactionStatus = 'Successful'
+  ctx.routes = []
+  ctx.mediatorResponse = new Object()
   ctx.mediatorResponse.properties =
-        { name: "primary mediator" };
-  ctx.mediatorResponse.metrics = [];
+        { name: 'primary mediator' }
+  ctx.mediatorResponse.metrics = []
   ctx.mediatorResponse.orchestrations = [{
-    name: "Lab API",
-    group: "group",
+    name: 'Lab API',
+    group: 'group',
     request: {
-      path: "api/patient/lab",
+      path: 'api/patient/lab',
       headers: {
-        "Content-Type": "text/plain"
+        'Content-Type': 'text/plain'
       },
-      body: "<route request>",
-      method: "POST",
+      body: '<route request>',
+      method: 'POST',
       timestamp: 1412257881904
     },
     response: {
-      status: "200",
+      status: '200',
       headers: {},
-      body: "<route response>",
+      body: '<route response>',
       timestamp: 1412257881909
     },
     metrics: []
   }
-  ];
+  ]
 
     // Non Primary routes
   ctx.routes.push({
-    name: "secondary route",
+    name: 'secondary route',
     request: {
-      path: "api/patient/lab",
+      path: 'api/patient/lab',
       headers: {
-        "Content-Type": "text/plain"
+        'Content-Type': 'text/plain'
       },
-      body: "<route request>",
-      method: "POST",
+      body: '<route request>',
+      method: 'POST',
       timestamp: 1412257881904
     },
     response: {
       status: 200,
       headers: {
-        "content-type": "application/json"
+        'content-type': 'application/json'
       },
-      body: "Primary Route Reached",
+      body: 'Primary Route Reached',
       timestamp: 1423489768398
     },
 
     orchestrations: [{
-      name: "Lab API",
-      group: "group",
+      name: 'Lab API',
+      group: 'group',
       request: {
-        path: "api/patient/lab",
+        path: 'api/patient/lab',
         headers: {
-          "Content-Type": "text/plain"
+          'Content-Type': 'text/plain'
         },
-        body: "<route request>",
-        method: "POST",
+        body: '<route request>',
+        method: 'POST',
         timestamp: 1412257881904
       },
       response: {
-        status: "200",
+        status: '200',
         headers: {},
-        body: "<route response>",
+        body: '<route response>',
         timestamp: 1412257881909
       }
     }
     ]
-  });
+  })
 
     // Adding Custom Metrics
   ctx.mediatorResponse.metrics.push({
-    name: "my-counter-metric",
-    type: "counter",
+    name: 'my-counter-metric',
+    type: 'counter',
     value: 1
-  });
+  })
   ctx.mediatorResponse.metrics.push({
-    name: "my-gauge-metric",
-    type: "gauge",
+    name: 'my-gauge-metric',
+    type: 'gauge',
     value: 11
-  });
+  })
   ctx.mediatorResponse.metrics.push({
-    name: "my-timer-metric",
-    type: "timer",
+    name: 'my-timer-metric',
+    type: 'timer',
     value: 1522
-  });
-
+  })
 
     // Has no groups
-  requestTimestamp = (new Date()).toString();
-  const ctx2 = new Object();
-  ctx2.authorisedChannel = channel;
-  ctx2.request = new Object();
-  ctx2.response = new Object();
-  ctx2.response.set = function () { };
-  ctx2.path = (ctx2.request.url = "/test");
-  ctx2.request.method = "GET";
-  ctx2.requestTimestamp = requestTimestamp;
-  ctx2.transactionStatus = "Successful";
-  ctx2.routes = [];
-  ctx2.mediatorResponse = new Object();
+  requestTimestamp = (new Date()).toString()
+  const ctx2 = new Object()
+  ctx2.authorisedChannel = channel
+  ctx2.request = new Object()
+  ctx2.response = new Object()
+  ctx2.response.set = function () { }
+  ctx2.path = (ctx2.request.url = '/test')
+  ctx2.request.method = 'GET'
+  ctx2.requestTimestamp = requestTimestamp
+  ctx2.transactionStatus = 'Successful'
+  ctx2.routes = []
+  ctx2.mediatorResponse = new Object()
   ctx2.mediatorResponse.properties =
-        { name: "primary mediator" };
-  ctx2.mediatorResponse.metrics = [];
+        { name: 'primary mediator' }
+  ctx2.mediatorResponse.metrics = []
   ctx2.mediatorResponse.orchestrations = [{
-    name: "Lab API",
+    name: 'Lab API',
     request: {
-      path: "api/patient/lab",
+      path: 'api/patient/lab',
       headers: {
-        "Content-Type": "text/plain"
+        'Content-Type': 'text/plain'
       },
-      body: "<route request>",
-      method: "POST",
+      body: '<route request>',
+      method: 'POST',
       timestamp: 1412257881904
     },
     response: {
-      status: "200",
+      status: '200',
       headers: {},
-      body: "<route response>",
+      body: '<route response>',
       timestamp: 1412257881909
     },
     metrics: []
   }
-  ];
+  ]
 
     // Non Primary routes
   ctx2.routes.push({
-    name: "secondary route",
+    name: 'secondary route',
     request: {
-      path: "api/patient/lab",
+      path: 'api/patient/lab',
       headers: {
-        "Content-Type": "text/plain"
+        'Content-Type': 'text/plain'
       },
-      body: "<route request>",
-      method: "POST",
+      body: '<route request>',
+      method: 'POST',
       timestamp: 1412257881904
     },
     response: {
       status: 200,
       headers: {
-        "content-type": "application/json"
+        'content-type': 'application/json'
       },
-      body: "Primary Route Reached",
+      body: 'Primary Route Reached',
       timestamp: 1423489768398
     },
 
     orchestrations: [{
-      name: "Lab API",
+      name: 'Lab API',
       request: {
-        path: "api/patient/lab",
+        path: 'api/patient/lab',
         headers: {
-          "Content-Type": "text/plain"
+          'Content-Type': 'text/plain'
         },
-        body: "<route request>",
-        method: "POST",
+        body: '<route request>',
+        method: 'POST',
         timestamp: 1412257881904
       },
       response: {
-        status: "200",
+        status: '200',
         headers: {},
-        body: "<route response>",
+        body: '<route response>',
         timestamp: 1412257881909
       }
     }
     ]
-  });
+  })
 
     // Adding Custom Metrics
   ctx2.mediatorResponse.metrics.push({
-    name: "my-counter-metric",
-    type: "counter",
+    name: 'my-counter-metric',
+    type: 'counter',
     value: 1
-  });
+  })
   ctx2.mediatorResponse.metrics.push({
-    name: "my-gauge-metric",
-    type: "gauge",
+    name: 'my-gauge-metric',
+    type: 'gauge',
     value: 11
-  });
+  })
   ctx2.mediatorResponse.metrics.push({
-    name: "my-timer-metric",
-    type: "timer",
+    name: 'my-timer-metric',
+    type: 'timer',
     value: 1522
-  });
+  })
 
-  it("should increment the transaction counter", async (done) => {
+  it('should increment the transaction counter', async (done) => {
     try {
-      const incrementTransactionCount = q.nbind(stats.incrementTransactionCount, stats);
-      const nonPrimaryRouteRequestCount = q.nbind(stats.nonPrimaryRouteRequestCount, stats);
-      const expectMessage = q.nbind(s.expectMessage, s);
+      const incrementTransactionCount = q.nbind(stats.incrementTransactionCount, stats)
+      const nonPrimaryRouteRequestCount = q.nbind(stats.nonPrimaryRouteRequestCount, stats)
+      const expectMessage = q.nbind(s.expectMessage, s)
 
-      await incrementTransactionCount(ctx);
-      await incrementTransactionCount(ctx2);
+      await incrementTransactionCount(ctx)
+      await incrementTransactionCount(ctx2)
 
-      await nonPrimaryRouteRequestCount(ctx, ctx.routes[0]);
-      await nonPrimaryRouteRequestCount(ctx2, ctx2.routes[0]);
+      await nonPrimaryRouteRequestCount(ctx, ctx.routes[0])
+      await nonPrimaryRouteRequestCount(ctx2, ctx2.routes[0])
 
-      await expectMessage(`${domain}.channels:1|c`);
-      await expectMessage(`${domain}.channels.Successful:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API.statusCodes.200:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-counter-metric:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-gauge-metric:11|g`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-timer-metric:1522|ms`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c`);
-      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c`);
-      done();
+      await expectMessage(`${domain}.channels:1|c`)
+      await expectMessage(`${domain}.channels.Successful:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.group.Lab API.statusCodes.200:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-counter-metric:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-gauge-metric:11|g`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.primary mediator.mediator_metrics.my-timer-metric:1522|ms`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API:1|c`)
+      await expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful.orchestrations.Lab API.statusCodes.200:1|c`)
+      done()
     } catch (err) {
-      done(err);
+      done(err)
     }
-  });
+  })
 
     // TODO : Fix this test
-  it("Should measure transaction duration", (done) => {
-    ctx.timer = 10;
+  it('Should measure transaction duration', (done) => {
+    ctx.timer = 10
     return stats.measureTransactionDuration(ctx, () =>
             stats.measureTransactionDuration(ctx2, () =>
                 stats.nonPrimaryRouteDurations(ctx, ctx.routes[0], () =>
@@ -297,6 +296,6 @@ describe("Stats Middleware ", () => {
                     )
                 )
             )
-        );
-  });
-});
+        )
+  })
+})

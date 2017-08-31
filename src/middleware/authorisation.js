@@ -1,84 +1,84 @@
-import Q from "q";
-import logger from "winston";
-import atna from "atna-audit";
-import SDC from "statsd-client";
-import os from "os";
-import * as utils from "../utils";
-import * as auditing from "../auditing";
-import { config } from "../config";
+import Q from 'q'
+import logger from 'winston'
+import atna from 'atna-audit'
+import SDC from 'statsd-client'
+import os from 'os'
+import * as utils from '../utils'
+import * as auditing from '../auditing'
+import { config } from '../config'
 
-config.authentication = config.get("authentication");
-const statsdServer = config.get("statsd");
-const application = config.get("application");
-const himSourceID = config.get("auditing").auditEvents.auditSourceID;
+config.authentication = config.get('authentication')
+const statsdServer = config.get('statsd')
+const application = config.get('application')
+const himSourceID = config.get('auditing').auditEvents.auditSourceID
 
-const domain = `${os.hostname()}.${application.name}.appMetrics`;
-const sdc = new SDC(statsdServer);
+const domain = `${os.hostname()}.${application.name}.appMetrics`
+const sdc = new SDC(statsdServer)
 
-function genAuthAudit(remoteAddress) {
-  let audit = atna.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE);
-  audit = atna.wrapInSyslog(audit);
-  return audit;
+function genAuthAudit (remoteAddress) {
+  let audit = atna.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE)
+  audit = atna.wrapInSyslog(audit)
+  return audit
 }
 
-function authoriseClient(channel, ctx) {
+function authoriseClient (channel, ctx) {
   if ((ctx.authenticated != null) && (channel.allow != null)) {
     if (ctx.authenticated.roles != null) {
       for (const role of Array.from(channel.allow)) {
         if (Array.from(ctx.authenticated.roles).includes(role)) {
-          return true;
+          return true
         }
       }
     }
     if (Array.from(channel.allow).includes(ctx.authenticated.clientID)) {
-      return true;
+      return true
     }
   }
 
-  return false;
+  return false
 }
 
-function authoriseIP(channel, ctx) {
+function authoriseIP (channel, ctx) {
   if ((channel.whitelist != null ? channel.whitelist.length : undefined) > 0) {
-    return Array.from(channel.whitelist).includes(ctx.ip);
+    return Array.from(channel.whitelist).includes(ctx.ip)
   } else {
-    return true; // whitelist auth not required
+    return true // whitelist auth not required
   }
 }
 
-export function authorise(ctx, done) {
-  const channel = ctx.matchingChannel;
+export function authorise (ctx, done) {
+  const channel = ctx.matchingChannel
 
-  if ((channel != null) && authoriseIP(channel, ctx) && ((channel.authType === "public") || authoriseClient(channel, ctx))) {
+  if ((channel != null) && authoriseIP(channel, ctx) && ((channel.authType === 'public') || authoriseClient(channel, ctx))) {
         // authorisation succeeded
-    ctx.authorisedChannel = channel;
-    logger.info(`The request, '${ctx.request.path}' is authorised to access ${ctx.authorisedChannel.name}`);
+    ctx.authorisedChannel = channel
+    logger.info(`The request, '${ctx.request.path}' is authorised to access ${ctx.authorisedChannel.name}`)
   } else {
         // authorisation failed
-    ctx.response.status = 401;
+    ctx.response.status = 401
     if (config.authentication.enableBasicAuthentication) {
-      ctx.set("WWW-Authenticate", "Basic");
+      ctx.set('WWW-Authenticate', 'Basic')
     }
-    logger.info(`The request, '${ctx.request.path}', is not authorised to access any channels.`);
-    auditing.sendAuditEvent(genAuthAudit(ctx.ip), () => logger.debug("Processed nodeAuthentication audit"));
+    logger.info(`The request, '${ctx.request.path}', is not authorised to access any channels.`)
+    auditing.sendAuditEvent(genAuthAudit(ctx.ip), () => logger.debug('Processed nodeAuthentication audit'))
   }
 
-  return done();
+  return done()
 }
 
-export function* koaMiddleware(next) {
-  let startTime;
-  if (statsdServer.enabled) { startTime = new Date(); }
-  const _authorise = Q.denodeify(authorise);
-  yield _authorise(this);
+export function * koaMiddleware (next) {
+  let startTime
+  if (statsdServer.enabled) { startTime = new Date() }
+  const _authorise = Q.denodeify(authorise)
+  yield _authorise(this)
   if (this.authorisedChannel != null) {
-    if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime); }
-    return yield next;
+    if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime) }
+    return yield next
   }
 }
 
 // export private functions for unit testing
 // note: you cant spy on these method because of this :(
-if (process.env.NODE_ENV === "test") {
-  exports.genAuthAudit = genAuthAudit;
+if (process.env.NODE_ENV === 'test') {
+  exports.genAuthAudit = genAuthAudit
 }

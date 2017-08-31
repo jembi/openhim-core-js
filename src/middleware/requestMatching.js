@@ -1,104 +1,104 @@
-import Q from "q";
-import xpath from "xpath";
-import { DOMParser as dom } from "xmldom";
-import logger from "winston";
-import SDC from "statsd-client";
-import os from "os";
-import { config } from "../config";
-import * as utils from "../utils";
-import * as auditing from "../auditing";
-import * as Channels from "../model/channels";
+import Q from 'q'
+import xpath from 'xpath'
+import { DOMParser as dom } from 'xmldom'
+import logger from 'winston'
+import SDC from 'statsd-client'
+import os from 'os'
+import { config } from '../config'
+import * as utils from '../utils'
+import * as auditing from '../auditing'
+import * as Channels from '../model/channels'
 
-const { ChannelModel } = Channels;
+const { ChannelModel } = Channels
 
-const statsdServer = config.get("statsd");
-const application = config.get("application");
-const himSourceID = config.get("auditing").auditEvents.auditSourceID;
+const statsdServer = config.get('statsd')
+const application = config.get('application')
+const himSourceID = config.get('auditing').auditEvents.auditSourceID
 
-const domain = `${os.hostname()}.${application.name}.appMetrics`;
-const sdc = new SDC(statsdServer);
+const domain = `${os.hostname()}.${application.name}.appMetrics`
+const sdc = new SDC(statsdServer)
 
-function matchContent(channel, ctx) {
+function matchContent (channel, ctx) {
   if (channel.matchContentRegex) {
-    return matchRegex(channel.matchContentRegex, ctx.body);
+    return matchRegex(channel.matchContentRegex, ctx.body)
   } else if (channel.matchContentXpath && channel.matchContentValue) {
-    return matchXpath(channel.matchContentXpath, channel.matchContentValue, ctx.body);
+    return matchXpath(channel.matchContentXpath, channel.matchContentValue, ctx.body)
   } else if (channel.matchContentJson && channel.matchContentValue) {
-    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, ctx.body);
+    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, ctx.body)
   } else if (channel.matchContentXpath || channel.matchContentJson) {
         // if only the match expression is given, deny access
         // this is an invalid channel
-    logger.error(`Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`);
-    return false;
+    logger.error(`Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`)
+    return false
   } else {
-    return true;
+    return true
   }
 }
 
-function matchRegex(regexPat, body) {
-  const regex = new RegExp(regexPat);
-  return regex.test(body.toString());
+function matchRegex (regexPat, body) {
+  const regex = new RegExp(regexPat)
+  return regex.test(body.toString())
 }
 
-function matchXpath(xpathStr, val, xml) {
-  const doc = new dom().parseFromString(xml.toString());
-  const xpathVal = xpath.select(xpathStr, doc).toString();
-  return val === xpathVal;
+function matchXpath (xpathStr, val, xml) {
+  const doc = new dom().parseFromString(xml.toString())
+  const xpathVal = xpath.select(xpathStr, doc).toString()
+  return val === xpathVal
 }
 
-function matchJsonPath(jsonPath, val, json) {
-  const jsonObj = JSON.parse(json.toString());
-  const jsonVal = getJSONValByString(jsonObj, jsonPath);
-  return val === jsonVal.toString();
+function matchJsonPath (jsonPath, val, json) {
+  const jsonObj = JSON.parse(json.toString())
+  const jsonVal = getJSONValByString(jsonObj, jsonPath)
+  return val === jsonVal.toString()
 }
 
 // taken from http://stackoverflow.com/a/6491621/588776
 // readbility improved from the stackoverflow answer
-function getJSONValByString(jsonObj, jsonPath) {
-  jsonPath = jsonPath.replace(/\[(\w+)\]/g, ".$1");  // convert indexes to properties
-  jsonPath = jsonPath.replace(/^\./, "");            // strip a leading dot
-  const parts = jsonPath.split(".");
+function getJSONValByString (jsonObj, jsonPath) {
+  jsonPath = jsonPath.replace(/\[(\w+)\]/g, '.$1')  // convert indexes to properties
+  jsonPath = jsonPath.replace(/^\./, '')            // strip a leading dot
+  const parts = jsonPath.split('.')
   while (parts.length) {
-    const part = parts.shift();
+    const part = parts.shift()
     if (part in jsonObj) {
-      jsonObj = jsonObj[part];
+      jsonObj = jsonObj[part]
     } else {
-      return;
+      return
     }
   }
-  return jsonObj;
+  return jsonObj
 }
 
-function extractContentType(ctHeader) {
-  const index = ctHeader.indexOf(";");
+function extractContentType (ctHeader) {
+  const index = ctHeader.indexOf(';')
   if (index !== -1) {
-    return ctHeader.substring(0, index).trim();
+    return ctHeader.substring(0, index).trim()
   } else {
-    return ctHeader.trim();
+    return ctHeader.trim()
   }
 }
 
-function matchUrlPattern(channel, ctx) {
-  const pat = new RegExp(channel.urlPattern);
-  return pat.test(ctx.request.path);
+function matchUrlPattern (channel, ctx) {
+  const pat = new RegExp(channel.urlPattern)
+  return pat.test(ctx.request.path)
 }
 
-function matchContentTypes(channel, ctx) {
+function matchContentTypes (channel, ctx) {
   if ((channel.matchContentTypes != null ? channel.matchContentTypes.length : undefined) > 0) {
-    if (ctx.request.header && ctx.request.header["content-type"]) {
-      const ct = extractContentType(ctx.request.header["content-type"]);
+    if (ctx.request.header && ctx.request.header['content-type']) {
+      const ct = extractContentType(ctx.request.header['content-type'])
       if (Array.from(channel.matchContentTypes).includes(ct)) {
-        return true;
+        return true
       } else {
                 // deny access to channel if the content type doesnt match
-        return false;
+        return false
       }
     } else {
             // deny access to channel if the content type isnt set
-      return false;
+      return false
     }
   } else {
-    return true; // don't match on content type if this channel doesn't require it
+    return true // don't match on content type if this channel doesn't require it
   }
 }
 
@@ -108,50 +108,50 @@ let matchFunctions = [
   matchUrlPattern,
   matchContent,
   matchContentTypes
-];
+]
 
-const matchChannel = (channel, ctx) => matchFunctions.every(matchFunc => matchFunc(channel, ctx));
+const matchChannel = (channel, ctx) => matchFunctions.every(matchFunc => matchFunc(channel, ctx))
 
-const findMatchingChannel = (channels, ctx) => channels.find(channel => matchChannel(channel, ctx));
+const findMatchingChannel = (channels, ctx) => channels.find(channel => matchChannel(channel, ctx))
 
 const matchRequest = (ctx, done) =>
     utils.getAllChannelsInPriorityOrder((err, channels) => {
       if (err) {
-        ctx.response.status = 500;
-        logger.error("Could not fetch OpenHIM channels", err);
-        return done();
+        ctx.response.status = 500
+        logger.error('Could not fetch OpenHIM channels', err)
+        return done()
       }
 
-      channels = channels.filter(Channels.isChannelEnabled);
+      channels = channels.filter(Channels.isChannelEnabled)
 
-      const match = findMatchingChannel(channels, ctx);
-      return done(null, match);
-    });
+      const match = findMatchingChannel(channels, ctx)
+      return done(null, match)
+    })
 
-export function* koaMiddleware(next) {
-  let startTime;
-  if (statsdServer.enabled) { startTime = new Date(); }
-  const matchReq = Q.denodeify(matchRequest);
-  const match = yield matchReq(this);
+export function * koaMiddleware (next) {
+  let startTime
+  if (statsdServer.enabled) { startTime = new Date() }
+  const matchReq = Q.denodeify(matchRequest)
+  const match = yield matchReq(this)
 
   if (match != null) {
-    logger.info(`The channel that matches the request ${this.request.path} is: ${match.name}`);
-    this.matchingChannel = match;
+    logger.info(`The channel that matches the request ${this.request.path} is: ${match.name}`)
+    this.matchingChannel = match
   } else {
-    logger.info(`No channel matched the request ${this.request.path}`);
+    logger.info(`No channel matched the request ${this.request.path}`)
   }
 
-  if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime); }
-  return yield next;
+  if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime) }
+  return yield next
 }
 
 // export private functions for unit testing
 // note: you cant spy on these method because of this :(
-if (process.env.NODE_ENV === "test") {
-  exports.matchContent = matchContent;
-  exports.matchRegex = matchRegex;
-  exports.matchXpath = matchXpath;
-  exports.matchJsonPath = matchJsonPath;
-  exports.extractContentType = extractContentType;
-  exports.matchRequest = matchRequest;
+if (process.env.NODE_ENV === 'test') {
+  exports.matchContent = matchContent
+  exports.matchRegex = matchRegex
+  exports.matchXpath = matchXpath
+  exports.matchJsonPath = matchJsonPath
+  exports.extractContentType = extractContentType
+  exports.matchRequest = matchRequest
 }

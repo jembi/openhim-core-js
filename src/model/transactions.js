@@ -1,5 +1,5 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
 
 // Request Schema definition
 const RequestDef = {
@@ -13,7 +13,7 @@ const RequestDef = {
   timestamp: {
     type: Date, required: true
   }
-};
+}
 
 // Response Schema definition
 const ResponseDef = {
@@ -21,12 +21,12 @@ const ResponseDef = {
   headers: Object,
   body: String,
   timestamp: Date
-};
+}
 
 const ErrorDetailsDef = {
   message: String,
   stack: String
-};
+}
 
 // OrchestrationMetadata Schema
 const OrchestrationMetadataDef = {
@@ -39,7 +39,7 @@ const OrchestrationMetadataDef = {
   }, // this is needed to prevent Validation error, see https://github.com/jembi/openhim-console/issues/356#issuecomment-188708443
   response: ResponseDef,
   error: ErrorDetailsDef
-};
+}
 
 // Route Schema
 const RouteMetadataDef = {
@@ -51,7 +51,7 @@ const RouteMetadataDef = {
   orchestrations: [OrchestrationMetadataDef],
   properties: Object,
   error: ErrorDetailsDef
-};
+}
 
 // Trasnaction schema
 const TransactionSchema = new Schema({
@@ -83,15 +83,15 @@ const TransactionSchema = new Schema({
   status: {
     type: String,
     required: true,
-    enum: ["Processing", "Failed", "Completed", "Successful", "Completed with error(s)"]
+    enum: ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
   }
-});
+})
 
-TransactionSchema.index("request.timestamp");
-TransactionSchema.index({channelID: 1, "request.timestamp": -1});
-TransactionSchema.index({status: 1, "request.timestamp": -1});
-TransactionSchema.index({childIDs: 1, "request.timestamp": -1})
+TransactionSchema.index('request.timestamp')
+TransactionSchema.index({channelID: 1, 'request.timestamp': -1})
+TransactionSchema.index({status: 1, 'request.timestamp': -1})
+TransactionSchema.index({childIDs: 1, 'request.timestamp': -1})
 
 // Compile schema into Model
-export const TransactionModelAPI = connectionAPI.model("Transaction", TransactionSchema);
-export const TransactionModel = connectionDefault.model("Transaction", TransactionSchema);
+export const TransactionModelAPI = connectionAPI.model('Transaction', TransactionSchema)
+export const TransactionModel = connectionDefault.model('Transaction', TransactionSchema)

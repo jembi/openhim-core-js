@@ -1,21 +1,21 @@
-import url from "url";
-import winston from "winston";
-import Q from "q";
-import { ChannelModel } from "../model/channels";
-import * as utils from "../utils";
-import * as router from "../middleware/router";
-import { config } from "../config";
+import url from 'url'
+import winston from 'winston'
+import Q from 'q'
+import { ChannelModel } from '../model/channels'
+import * as utils from '../utils'
+import * as router from '../middleware/router'
+import { config } from '../config'
 
-const routerConf = config.get("router");
+const routerConf = config.get('router')
 
 // see https://regex101.com/r/lW0cN0/1 for an explanation of this regex
-const invertPathTransform = pathTransform => pathTransform.replace(/s\/(.*?)\/(.*?)(?:$|\/(.*)$)/, "s/$2/$1/$3");
+const invertPathTransform = pathTransform => pathTransform.replace(/s\/(.*?)\/(.*?)(?:$|\/(.*)$)/, 's/$2/$1/$3')
 
-export function fetchRewriteConfig(channel, authType, callback) {
+export function fetchRewriteConfig (channel, authType, callback) {
     // set the user defined rewrite config from current channel
-  let rwConfig = [];
+  let rwConfig = []
   if (channel.rewriteUrlsConfig != null) {
-    rwConfig = rwConfig.concat(channel.rewriteUrlsConfig);
+    rwConfig = rwConfig.concat(channel.rewriteUrlsConfig)
   }
 
   if (channel.addAutoRewriteRules) {
@@ -29,7 +29,7 @@ export function fetchRewriteConfig(channel, authType, callback) {
          */
     return utils.getAllChannelsInPriorityOrder((err, channels) => {
       if (err != null) {
-        return callback(err);
+        return callback(err)
       }
 
       for (channel of Array.from(channels)) {
@@ -49,17 +49,17 @@ export function fetchRewriteConfig(channel, authType, callback) {
                          * the pathTransform on the route (s/ihris/CSD/) and apply it while doing the
                          * rewrite.
                          */
-            let inverseTransform;
-            let toPort;
+            let inverseTransform
+            let toPort
             if (route.pathTransform) {
-              inverseTransform = invertPathTransform(route.pathTransform);
+              inverseTransform = invertPathTransform(route.pathTransform)
             }
 
                         // rewrite to the secure port if tls was used for this transaction
-            if ((authType != null) === "tls") {
-              toPort = routerConf.httpsPort;
+            if ((authType != null) === 'tls') {
+              toPort = routerConf.httpsPort
             } else {
-              toPort = routerConf.httpPort;
+              toPort = routerConf.httpPort
             }
 
                         // add 'virtual' rewrite config after any user defined config that has been set
@@ -69,37 +69,37 @@ export function fetchRewriteConfig(channel, authType, callback) {
               fromPort: route.port,
               toPort,
               pathTransform: inverseTransform || null
-            });
+            })
           }
         }
       }
-      return callback(null, rwConfig);
-    });
+      return callback(null, rwConfig)
+    })
   } else {
-    return callback(null, rwConfig);
+    return callback(null, rwConfig)
   }
 }
 
 const rewriteUrls = (body, channel, authType, callback) =>
     fetchRewriteConfig(channel, authType, (err, rwConfig) => {
       if (err != null) {
-        return callback(err);
+        return callback(err)
       }
 
         // rewrite each found href, src or fullUrl attribute (in JSON or XML)
         // See https://regex101.com/r/uY3fO1/1 for an explanation of this regex
       const newBody = body.replace(/["|']?(?:href|src|fullUrl)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) => {
-        let relativePath;
-        const hrefUrlObj = url.parse(hrefUrl);
+        let relativePath
+        const hrefUrlObj = url.parse(hrefUrl)
 
             // default to using this channel's host if no host so we can match a rewrite rule
         if ((hrefUrlObj.host == null)) {
           for (const route of Array.from(channel.routes)) {
             if (route.primary) {
-              hrefUrlObj.hostname = route.host;
-              hrefUrlObj.port = route.port.toString();
-              relativePath = true;
-              break;
+              hrefUrlObj.hostname = route.host
+              hrefUrlObj.port = route.port.toString()
+              relativePath = true
+              break
             }
           }
         }
@@ -107,56 +107,56 @@ const rewriteUrls = (body, channel, authType, callback) =>
         for (const rewriteRule of Array.from(rwConfig)) {
                 // if we find a matching rewrite rule
           if ((rewriteRule.fromHost.toLowerCase() === hrefUrlObj.hostname) && ((rewriteRule.fromPort.toString() === hrefUrlObj.port) || ((rewriteRule.fromPort === 80) && (hrefUrlObj.port === null)))) {
-            hrefUrlObj.host = null; // so that hostname and port are used separately
-            hrefUrlObj.hostname = rewriteRule.toHost;
-            hrefUrlObj.port = rewriteRule.toPort;
+            hrefUrlObj.host = null // so that hostname and port are used separately
+            hrefUrlObj.hostname = rewriteRule.toHost
+            hrefUrlObj.port = rewriteRule.toPort
 
                     // rewrite protocol depending on the port the rewriteRule uses
             if (hrefUrlObj.protocol) {
               if (rewriteRule.toPort === routerConf.httpsPort) {
-                hrefUrlObj.protocol = "https";
+                hrefUrlObj.protocol = 'https'
               } else {
-                hrefUrlObj.protocol = "http";
+                hrefUrlObj.protocol = 'http'
               }
             }
 
                     // if this rewrite rule requires the path to be transformed then do the transform
             if (rewriteRule.pathTransform) {
-              hrefUrlObj.pathname = router.transformPath(hrefUrlObj.pathname, rewriteRule.pathTransform);
+              hrefUrlObj.pathname = router.transformPath(hrefUrlObj.pathname, rewriteRule.pathTransform)
             }
 
                     // we only run the first matching rule found
-            break;
+            break
           }
         }
 
         if (relativePath) { // remove the host stuff before formating
-          hrefUrlObj.host = null;
-          hrefUrlObj.hostname = null;
-          hrefUrlObj.port = null;
+          hrefUrlObj.host = null
+          hrefUrlObj.hostname = null
+          hrefUrlObj.port = null
         }
 
             // replace the url in the match
-        const replacement = url.format(hrefUrlObj);
-        winston.debug(`Rewriting url ${hrefUrl} as ${replacement}`);
-        return match.replace(hrefUrl, replacement);
-      });
+        const replacement = url.format(hrefUrlObj)
+        winston.debug(`Rewriting url ${hrefUrl} as ${replacement}`)
+        return match.replace(hrefUrl, replacement)
+      })
 
-      return callback(null, newBody);
-    });
+      return callback(null, newBody)
+    })
 
-if (process.env.NODE_ENV === "test") {
-  exports.invertPathTransform = invertPathTransform;
-  exports.rewriteUrls = rewriteUrls;
+if (process.env.NODE_ENV === 'test') {
+  exports.invertPathTransform = invertPathTransform
+  exports.rewriteUrls = rewriteUrls
 }
 
-export function* koaMiddleware(next) {
+export function * koaMiddleware (next) {
     // do nothing to the request
-  yield next;
+  yield next
     // on response rewrite urls
   if (this.authorisedChannel.rewriteUrls) {
-    const rewrite = Q.denodeify(rewriteUrls);
-    this.response.body = yield rewrite(this.response.body.toString(), this.authorisedChannel, this.authenticationType);
-    return winston.info(`Rewrote url in the response of transaction: ${this.transactionId}`);
+    const rewrite = Q.denodeify(rewriteUrls)
+    this.response.body = yield rewrite(this.response.body.toString(), this.authorisedChannel, this.authenticationType)
+    return winston.info(`Rewrote url in the response of transaction: ${this.transactionId}`)
   }
 }

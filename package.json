@@ -89,6 +89,7 @@
     "serve-static": "^1.9.3",
     "should": "^9.0.0",
     "sinon": "^2.3.4",
+    "standard": "^10.0.3",
     "supertest": "^3.0.0"
   },
   "repository": {
