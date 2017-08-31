@@ -174,12 +174,14 @@ export function* getTransactions() {
       delete filters.properties;
     }
 
-        // parse childIDs.0 query to get it into the correct format for querying
-        // .0 is first index of array - used to validate if empty or not
-    if (filters["childIDs.0"]) {
-      filters["childIDs.0"] = JSON.parse(filters["childIDs.0"]);
+        // parse childIDs query to get it into the correct format for querying
+    if (filters["childIDs"]) {
+      filters["childIDs"] = JSON.parse(filters["childIDs"]);
     }
 
+    if (filters["$or"]) {
+      filters["$or"] = JSON.parse(filters["$or"]);
+    }
 
         /* Route Filters */
         // build RegExp for route request path filter
@@ -216,6 +218,7 @@ export function* getTransactions() {
 
 
         // execute the query
+    console.log(filters)
     this.body = yield TransactionModelAPI
             .find(filters, projectionFiltersObject)
             .skip(filterSkip)
@@ -524,7 +527,7 @@ export function* updateTransaction(transactionId) {
 
     const transactionToUpdate = yield TransactionModelAPI.findOne({ _id: transactionId }).exec();
     const transactionBodiesLength = { length: 0 };
-    
+
     calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet());
 
     const ctx = {
