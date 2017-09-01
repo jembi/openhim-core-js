@@ -36,10 +36,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.path = (ctx.request.url = '/test')
         ctx.request.method = 'GET'
@@ -72,10 +72,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.path = (ctx.request.url = '/openhim-logo-green.png')
         ctx.request.method = 'GET'
@@ -115,10 +115,10 @@ describe('HTTP Router', () => {
         }
         ]
       }
-      const ctx = new Object()
+      const ctx = {}
       ctx.authorisedChannel = channel
-      ctx.request = new Object()
-      ctx.response = new Object()
+      ctx.request = {}
+      ctx.response = {}
       ctx.response.set = function () { }
       ctx.path = (ctx.request.url = '/test/multicasting')
       ctx.request.method = 'GET'
@@ -149,10 +149,10 @@ describe('HTTP Router', () => {
               ]
             }
 
-            const ctx = new Object()
+            const ctx = {}
             ctx.authorisedChannel = channel
-            ctx.request = new Object()
-            ctx.response = new Object()
+            ctx.request = {}
+            ctx.response = {}
             ctx.response.set = function () { }
             ctx.path = (ctx.request.url = '/test')
             ctx.request.method = 'GET'
@@ -193,10 +193,10 @@ describe('HTTP Router', () => {
         }
 
         return (new ChannelModel(channel)).save((err, ch1) => {
-          const ctx = new Object()
+          const ctx = {}
           ctx.authorisedChannel = ch1
-          ctx.request = new Object()
-          ctx.response = new Object()
+          ctx.request = {}
+          ctx.response = {}
           ctx.response.set = function () { }
           ctx.path = (ctx.request.url = '/test')
           ctx.authorisedChannel._id = ch1._id
@@ -291,10 +291,10 @@ describe('HTTP Router', () => {
               }
               ]
             }
-            const ctx = new Object()
+            const ctx = {}
             ctx.authorisedChannel = channel
-            ctx.request = new Object()
-            ctx.response = new Object()
+            ctx.request = {}
+            ctx.response = {}
             ctx.request.url = '/test/multi-primary'
             ctx.request.method = 'GET'
             ctx.requestTimestamp = requestTimestamp
@@ -327,10 +327,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.request.url = '/test'
         ctx.request.method = 'POST'
@@ -364,10 +364,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.path = '/test'
         ctx.request.url = '/test?parma1=val1&parma2=val2'
@@ -426,10 +426,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.path = (ctx.request.url = '/test')
         ctx.request.method = 'GET'
         ctx.requestTimestamp = requestTimestamp
@@ -492,10 +492,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = sinon.spy()
         ctx.path = (ctx.request.url = '/test')
         ctx.request.method = 'GET'
@@ -567,10 +567,10 @@ describe('HTTP Router', () => {
             ]
           }
 
-          const ctx = new Object()
+          const ctx = {}
           ctx.authorisedChannel = channel
-          ctx.request = new Object()
-          ctx.response = new Object()
+          ctx.request = {}
+          ctx.response = {}
           ctx.path = (ctx.request.url = '/test')
           ctx.request.method = 'GET'
           ctx.requestTimestamp = requestTimestamp
@@ -636,10 +636,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.path = (ctx.request.url = '/test')
         ctx.request.method = 'GET'
         ctx.requestTimestamp = requestTimestamp
@@ -681,10 +681,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.request.url = '/test'
         ctx.request.method = 'GET'
@@ -716,10 +716,10 @@ describe('HTTP Router', () => {
           }
           ]
         }
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.request.url = '/test'
         ctx.request.method = 'GET'
@@ -750,10 +750,10 @@ describe('HTTP Router', () => {
           }
           ]
         }
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.request.url = '/test'
         ctx.request.method = 'GET'
@@ -786,10 +786,10 @@ describe('HTTP Router', () => {
           }
           ]
         }
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.request.url = '/test'
         ctx.request.method = 'GET'
@@ -823,10 +823,10 @@ describe('HTTP Router', () => {
           ]
         }
 
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.request.url = '/test'
         ctx.request.method = 'GET'
@@ -866,10 +866,10 @@ describe('HTTP Router', () => {
 
     const testPathRedirectionRouting = function (mockServerPort, channel, expectedTargetPath, callback) {
       const setup = function () {
-        const ctx = new Object()
+        const ctx = {}
         ctx.authorisedChannel = channel
-        ctx.request = new Object()
-        ctx.response = new Object()
+        ctx.request = {}
+        ctx.response = {}
         ctx.response.set = function () { }
         ctx.path = (ctx.request.url = '/test')
         ctx.request.method = 'GET'

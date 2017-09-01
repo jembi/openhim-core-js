@@ -46,7 +46,7 @@ describe('MessageStore', () => {
     txViewAcl: 'group1'
   }
 
-  const req = new Object()
+  const req = {}
   req.path = '/api/test/request'
   req.headers = {
     headerName: 'headerValue',
@@ -58,7 +58,7 @@ describe('MessageStore', () => {
   req.method = 'POST'
   req.timestamp = new Date()
 
-  const res = new Object()
+  const res = {}
   res.status = '200'
   res.headers = {
     header: 'value',
@@ -70,7 +70,7 @@ describe('MessageStore', () => {
   let ctx = null
 
   beforeEach((done) => {
-    ctx = new Object()
+    ctx = {}
     ctx.host = 'localhost:5000'
     ctx.path = '/api/test/request'
     ctx.header = {
@@ -84,10 +84,10 @@ describe('MessageStore', () => {
     ctx.method = 'POST'
 
     ctx.status = 'Processing'
-    ctx.authenticated = new Object()
+    ctx.authenticated = {}
     ctx.authenticated._id = new ObjectId('313233343536373839319999')
 
-    ctx.authorisedChannel = new Object()
+    ctx.authorisedChannel = {}
     ctx.authorisedChannel.requestBody = true
     ctx.authorisedChannel.responseBody = true
 

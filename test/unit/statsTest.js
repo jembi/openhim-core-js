@@ -36,17 +36,17 @@ describe('Stats Middleware ', () => {
   }
 
   let requestTimestamp = (new Date()).toString()
-  const ctx = new Object()
+  const ctx = {}
   ctx.authorisedChannel = channel
-  ctx.request = new Object()
-  ctx.response = new Object()
+  ctx.request = {}
+  ctx.response = {}
   ctx.response.set = function () { }
   ctx.path = (ctx.request.url = '/test')
   ctx.request.method = 'GET'
   ctx.requestTimestamp = requestTimestamp
   ctx.transactionStatus = 'Successful'
   ctx.routes = []
-  ctx.mediatorResponse = new Object()
+  ctx.mediatorResponse = {}
   ctx.mediatorResponse.properties =
     {name: 'primary mediator'}
   ctx.mediatorResponse.metrics = []
@@ -134,17 +134,17 @@ describe('Stats Middleware ', () => {
 
   // Has no groups
   requestTimestamp = (new Date()).toString()
-  const ctx2 = new Object()
+  const ctx2 = {}
   ctx2.authorisedChannel = channel
-  ctx2.request = new Object()
-  ctx2.response = new Object()
+  ctx2.request = {}
+  ctx2.response = {}
   ctx2.response.set = function () { }
   ctx2.path = (ctx2.request.url = '/test')
   ctx2.request.method = 'GET'
   ctx2.requestTimestamp = requestTimestamp
   ctx2.transactionStatus = 'Successful'
   ctx2.routes = []
-  ctx2.mediatorResponse = new Object()
+  ctx2.mediatorResponse = {}
   ctx2.mediatorResponse.properties =
     {name: 'primary mediator'}
   ctx2.mediatorResponse.metrics = []
