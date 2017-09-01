@@ -154,7 +154,9 @@ describe('MessageStore', () => {
     return it('should truncate the request body if it exceeds storage limits', (done) => {
       ctx.body = ''
       // generate a big body
-      for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { ctx.body += '1234567890' }
+      for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) {
+        ctx.body += '1234567890'
+      }
 
       return messageStore.storeTransaction(ctx, (error, result) => {
         should.not.exist(error)
@@ -195,7 +197,7 @@ describe('MessageStore', () => {
         header: {
           testHeader: 'value'
         },
-        body: new Buffer('<HTTP response body>'),
+        body: Buffer.from('<HTTP response body>'),
         timestamp: new Date()
       })
 
@@ -343,34 +345,35 @@ describe('MessageStore', () => {
       })
     })
 
-    it('should set the status to completed with errors if the primary route return a status in 2xx or 4xx but one or more routes return 5xx', (done) => {
-      ctx.response = createResponse(404)
-      ctx.routes = []
-      ctx.routes.push(createRoute('route1', 201))
-      ctx.routes.push(createRoute('route2', 501))
+    it('should set the status to completed with errors if the primary route return a status in 2xx or 4xx but one or more routes return 5xx',
+      (done) => {
+        ctx.response = createResponse(404)
+        ctx.routes = []
+        ctx.routes.push(createRoute('route1', 201))
+        ctx.routes.push(createRoute('route2', 501))
 
-      return messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        ctx.request = storedTrans.request
-        ctx.request.header = {}
-        ctx.transactionId = storedTrans._id
-        ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-        return messageStore.storeResponse(ctx, err2 =>
-          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-              messageStore.setFinalStatus(ctx, () => {
-                should.not.exist(err2)
-                return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
-                  should.not.exist(err3);
-                  (trans !== null).should.be.true()
-                  trans.status.should.be.exactly('Completed with error(s)')
-                  return done()
+        return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+          ctx.request = storedTrans.request
+          ctx.request.header = {}
+          ctx.transactionId = storedTrans._id
+          ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
+          return messageStore.storeResponse(ctx, err2 =>
+            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
+              messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
+                messageStore.setFinalStatus(ctx, () => {
+                  should.not.exist(err2)
+                  return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                    should.not.exist(err3);
+                    (trans !== null).should.be.true()
+                    trans.status.should.be.exactly('Completed with error(s)')
+                    return done()
+                  })
                 })
-              })
+              )
             )
           )
-        )
+        })
       })
-    })
 
     it('should set the status to completed if any route returns a status in 4xx (test 1)', (done) => {
       ctx.response = createResponse(201)
@@ -495,7 +498,7 @@ describe('MessageStore', () => {
           'dot.header': '123',
           dollar$header: '124'
         },
-        body: new Buffer('<HTTP response body>'),
+        body: Buffer.from('<HTTP response body>'),
         timestamp: new Date()
       })
 
@@ -558,7 +561,9 @@ describe('MessageStore', () => {
     it('should truncate the response body if it exceeds storage limits', (done) => {
       ctx.response = createResponse(201)
       ctx.response.body = ''
-      for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { ctx.response.body += '1234567890' }
+      for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) {
+        ctx.response.body += '1234567890'
+      }
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
         ctx.transactionId = storedTrans._id
@@ -612,7 +617,9 @@ describe('MessageStore', () => {
         }
         ]
       }
-      for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { ctx.mediatorResponse.orchestrations[1].response.body += '1234567890' }
+      for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) {
+        ctx.mediatorResponse.orchestrations[1].response.body += '1234567890'
+      }
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
         ctx.transactionId = storedTrans._id
@@ -637,7 +644,9 @@ describe('MessageStore', () => {
       ctx.routes = []
       ctx.routes.push(createRoute('route1', 201))
       ctx.routes.push(createRoute('route2', 200))
-      for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { ctx.routes[1].response.body += '1234567890' }
+      for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) {
+        ctx.routes[1].response.body += '1234567890'
+      }
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
         ctx.transactionId = storedTrans._id

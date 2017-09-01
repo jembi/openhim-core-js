@@ -12,7 +12,7 @@ const buildEmptyCtx = function () {
 }
 
 const buildCtx = function (user, pass) {
-  const authDetails = new Buffer(`${user}:${pass}`).toString('base64')
+  const authDetails = Buffer.from(`${user}:${pass}`).toString('base64')
   const ctx = buildEmptyCtx()
   ctx.req.headers.authorization = `basic ${authDetails}`
   return ctx

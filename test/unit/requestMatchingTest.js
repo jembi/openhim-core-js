@@ -12,26 +12,36 @@ const falsey = () => false
 describe('Request Matching middleware', () => {
   describe('.matchReg(regexPat, body)', () => {
     it('should return true if the regex pattern finds a match in the body', () => {
-      (requestMatching.matchRegex('123', new Buffer('aaa123aaa'))).should.be.true
-      return (requestMatching.matchRegex('functionId:\\s[a-z]{3}\\d{3}\\s', new Buffer('data: xyz\\nfunctionId: abc123\n'))).should.be.true
+      (requestMatching.matchRegex('123', Buffer.from('aaa123aaa'))).should.be.true
+      return (requestMatching.matchRegex('functionId:\\s[a-z]{3}\\d{3}\\s', Buffer
+        .from('data: xyz\\nfunctionId: abc123\n'))).should.be.true
     })
 
     return it('should return false if the regex pattern DOES NOT find a match in the body', () => {
-      (requestMatching.matchRegex('123', new Buffer('aaa124aaa'))).should.be.false
-      return (requestMatching.matchRegex('functionId:\\s[a-z]{3}\\d{3}\\s', new Buffer('data: xyz\\nfunctionId: somethingelse\n'))).should.be.false
+      (requestMatching.matchRegex('123', Buffer.from('aaa124aaa'))).should.be.false
+      return (requestMatching.matchRegex('functionId:\\s[a-z]{3}\\d{3}\\s', Buffer
+        .from('data: xyz\\nfunctionId: somethingelse\n'))).should.be.false
     })
   })
 
   describe('.matchXpath(xpath, val, xml)', () => {
-    it('should return true if the xpath value matches', () => (requestMatching.matchXpath('string(/root/function/@uuid)', 'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', new Buffer('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.true)
+    it('should return true if the xpath value matches', () => (requestMatching.matchXpath('string(/root/function/@uuid)',
+      'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', Buffer
+        .from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.true)
 
-    return it('should return false if the xpath value DOES NOT match', () => (requestMatching.matchXpath('string(/root/function/@uuid)', 'not-correct', new Buffer('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.false)
+    return it('should return false if the xpath value DOES NOT match', () => (requestMatching
+      .matchXpath('string(/root/function/@uuid)', 'not-correct',
+        Buffer.from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.false)
   })
 
   describe('.matchJsonPath(xpath, val, xml)', () => {
-    it('should return true if the json path value matches', () => (requestMatching.matchJsonPath('metadata.function.id', 'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', new Buffer('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}'))).should.be.true)
+    it('should return true if the json path value matches', () => (requestMatching.matchJsonPath('metadata.function.id',
+      'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1',
+      Buffer.from('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}'))).should.be.true)
 
-    return it('should return false if the json path value DOES NOT match', () => (requestMatching.matchJsonPath('metadata.function.id', 'not-correct', new Buffer('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}'))).should.be.false)
+    return it('should return false if the json path value DOES NOT match', () => (
+      requestMatching.matchJsonPath('metadata.function.id', 'not-correct',
+        Buffer.from('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}'))).should.be.false)
   })
 
   describe('.matchContent(channel, ctx)', () => {
@@ -54,18 +64,24 @@ describe('Request Matching middleware', () => {
       {matchContentJson: 'function.uuid'}
 
     it('should call the correct matcher', () => {
-      requestMatching.matchContent(channelRegex, {body: new Buffer('--------123456------')}).should.be.true
-      requestMatching.matchContent(channelXpath, {body: new Buffer('<function><uuid>123456789</uuid></function>')}).should.be.true
-      requestMatching.matchContent(channelJson, {body: new Buffer('{"function": {"uuid": "123456789"}}')}).should.be.true
+      requestMatching.matchContent(channelRegex, {body: Buffer.from('--------123456------')}).should.be.true
+      requestMatching.matchContent(channelXpath, {body: Buffer.from('<function><uuid>123456789</uuid></function>')})
+        .should.be.true
+      requestMatching.matchContent(channelJson, {body: Buffer.from('{"function": {"uuid": "123456789"}}')})
+        .should.be.true
 
-      requestMatching.matchContent(channelRegex, {body: new Buffer('--------1234aaa56------')}).should.be.false
-      requestMatching.matchContent(channelXpath, {body: new Buffer('<function><uuid>1234aaa56789</uuid></function>')}).should.be.false
-      return requestMatching.matchContent(channelJson, {body: new Buffer('{"function": {"uuid": "1234aaa56789"}}')}).should.be.false
+      requestMatching.matchContent(channelRegex, {body: Buffer.from('--------1234aaa56------')}).should.be.false
+      requestMatching.matchContent(channelXpath, {body: Buffer.from('<function><uuid>1234aaa56789</uuid></function>')})
+        .should.be.false
+      return requestMatching.matchContent(channelJson, {body: Buffer.from('{"function": {"uuid": "1234aaa56789"}}')})
+        .should.be.false
     })
 
-    it('should return true if no matching properties are present', () => requestMatching.matchContent(noMatchChannel, {body: new Buffer('someBody')}).should.be.true)
+    it('should return true if no matching properties are present', () => requestMatching.matchContent(noMatchChannel,
+      {body: Buffer.from('someBody')}).should.be.true)
 
-    return it('should return false for invalid channel configs', () => requestMatching.matchContent(channelInvalid, {body: new Buffer('someBody')}).should.be.false)
+    return it('should return false for invalid channel configs', () => requestMatching.matchContent(channelInvalid,
+      {body: Buffer.from('someBody')}).should.be.false)
   })
 
   describe('.extractContentType', () =>
@@ -95,13 +111,15 @@ describe('Request Matching middleware', () => {
   describe('.matchContentTypes', () => {
     it('should match correct content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({matchContentTypes: ['text/plain', 'something/else']}, {request: {header: {'content-type': 'text/plain'}}})
+      const actual = matchContentTypes({matchContentTypes: ['text/plain', 'something/else']}, {request: {header:
+        {'content-type': 'text/plain'}}})
       return actual.should.be.true()
     })
 
     it('should not match incorrect content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({matchContentTypes: ['text/plain']}, {request: {header: {'content-type': 'application/json'}}})
+      const actual = matchContentTypes({matchContentTypes: ['text/plain']}, {request: {header:
+        {'content-type': 'application/json'}}})
       return actual.should.be.false()
     })
 
