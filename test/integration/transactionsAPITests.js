@@ -18,7 +18,7 @@ import { AutoRetryModelAPI } from '../../src/model/autoRetry'
 const apiConf = config.get('api')
 const application = config.get('application')
 
-const { auth } = testUtils
+const {auth} = testUtils
 const domain = `${os.hostname()}.${application.name}`
 
 const clearTransactionBodies = function (t) {
@@ -69,16 +69,14 @@ describe('API Integration Tests', () => {
     request: requ,
     response: respo,
 
-    routes:
-    [{
+    routes: [{
       name: 'dummy-route',
       request: requ,
       response: respo
     }
     ],
 
-    orchestrations:
-    [{
+    orchestrations: [{
       name: 'dummy-orchestration',
       request: requ,
       response: respo
@@ -129,7 +127,7 @@ describe('API Integration Tests', () => {
 
   before(async (done) => {
     await testUtils.dropTestDb()
-    await q.nfcall(server.start, { apiPort: 8080 })
+    await q.nfcall(server.start, {apiPort: 8080})
     await Promise.all([
       channel.save(),
       channel2.save()
@@ -167,32 +165,32 @@ describe('API Integration Tests', () => {
         const respBody = largeBody
         td.response.body = respBody
         const res = await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(td)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(td)
+          .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModelAPI.findOne({clientID: '999999999999999999999999'});
         (newTransaction !== null).should.be.true
         newTransaction.response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         newTransaction.canRerun.should.be.true
       })
 
       it('should add a transaction and return status 201 - transaction created', async () => {
-        const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
+        const newTransactionData = Object.assign({}, transactionData, {channelID: channel._id})
         const res = await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(newTransactionData)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(newTransactionData)
+          .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModelAPI.findOne({clientID: '999999999999999999999999'});
         (newTransaction !== null).should.be.true
         newTransaction.status.should.equal('Processing')
         newTransaction.clientID.toString().should.equal('999999999999999999999999')
@@ -211,15 +209,15 @@ describe('API Integration Tests', () => {
         const reqBody = largeBody
         td.request.body = reqBody
         const res = await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(td)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(td)
+          .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModelAPI.findOne({clientID: '999999999999999999999999'});
         (newTransaction !== null).should.be.true
         newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         newTransaction.canRerun.should.be.false
@@ -236,15 +234,15 @@ describe('API Integration Tests', () => {
         td.request.body = bod
         td.response.body = largeBody
         const res = await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(td)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(td)
+          .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModelAPI.findOne({clientID: '999999999999999999999999'});
         (newTransaction !== null).should.be.true
         newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE - 4)
         newTransaction.response.body.length.should.be.exactly(Buffer.byteLength(config.api.truncateAppend))
@@ -252,92 +250,92 @@ describe('API Integration Tests', () => {
       })
 
       it('should add a transaction and truncate the routes request body', async () => {
-                // Given
+        // Given
         const td = JSON.parse(JSON.stringify(transactionData))
         td.channelID = channel._id
         clearTransactionBodies(td)
         td.routes[0].request.body = largeBody
 
-                // When
+        // When
         const res = await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(td)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(td)
+          .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModelAPI.findOne({clientID: '999999999999999999999999'});
         (newTransaction !== null).should.be.true
         newTransaction.routes[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         newTransaction.canRerun.should.be.true
       })
 
       it('should add a transaction and truncate the routes response body', async () => {
-                // Given
+        // Given
         const td = JSON.parse(JSON.stringify(transactionData))
         td.channelID = channel._id
         clearTransactionBodies(td)
         td.routes[0].response.body = largeBody
 
-                // When
+        // When
         const res = await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(td)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(td)
+          .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModelAPI.findOne({clientID: '999999999999999999999999'});
         (newTransaction !== null).should.be.true
         newTransaction.routes[0].response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         newTransaction.canRerun.should.be.true
       })
 
       it('should add a transaction and truncate the orchestrations request body', async () => {
-                // Given
+        // Given
         const td = JSON.parse(JSON.stringify(transactionData))
         td.channelID = channel._id
         clearTransactionBodies(td)
         td.orchestrations[0].request.body = largeBody
 
-                // When
+        // When
         await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(td)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(td)
+          .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModelAPI.findOne({clientID: '999999999999999999999999'});
         (newTransaction !== null).should.be.true
         newTransaction.orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         newTransaction.canRerun.should.be.true
       })
 
       it('should add a transaction and truncate the orchestrations response body', async () => {
-                // Given
+        // Given
         const td = JSON.parse(JSON.stringify(transactionData))
         td.channelID = channel._id
         clearTransactionBodies(td)
         td.orchestrations[0].response.body = largeBody
 
-                // When
+        // When
         const res = await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(td)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(td)
+          .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModelAPI.findOne({clientID: '999999999999999999999999'});
 
         (newTransaction !== null).should.be.true
         newTransaction.orchestrations[0].response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
@@ -346,25 +344,25 @@ describe('API Integration Tests', () => {
 
       it('should only allow admin users to add transactions', async () => {
         await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(transactionData)
-                    .expect(403)
+          .post('/transactions')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(transactionData)
+          .expect(403)
       })
 
       it('should generate events after adding a transaction', async () => {
-        const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
+        const newTransactionData = Object.assign({}, transactionData, {channelID: channel._id})
         const res = await request('https://localhost:8080')
-                    .post('/transactions')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(newTransactionData)
-                    .expect(201)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(newTransactionData)
+          .expect(201)
 
         const events = await EventModelAPI.find({})
         events.length.should.be.exactly(6)
@@ -435,15 +433,15 @@ describe('API Integration Tests', () => {
         }
 
         const res = await request('https://localhost:8080')
-                    .put(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(updates)
-                    .expect(200)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
 
-        const updatedTrans = await TransactionModelAPI.findOne({ _id: transactionId });
+        const updatedTrans = await TransactionModelAPI.findOne({_id: transactionId});
         (updatedTrans !== null).should.be.true
         updatedTrans.status.should.equal('Completed')
         updatedTrans.clientID.toString().should.equal('777777777777777777777777')
@@ -477,15 +475,15 @@ describe('API Integration Tests', () => {
         }
 
         const res = await request('https://localhost:8080')
-                    .put(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(updates)
-                    .expect(200)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
 
-        const updatedTrans = await TransactionModelAPI.findOne({ _id: transactionId });
+        const updatedTrans = await TransactionModelAPI.findOne({_id: transactionId});
         (updatedTrans !== null).should.be.true
         updatedTrans.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         updatedTrans.canRerun.should.be.false
@@ -510,15 +508,15 @@ describe('API Integration Tests', () => {
         }
 
         const res = await request('https://localhost:8080')
-                    .put(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(updates)
-                    .expect(200)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
 
-        const updatedTrans = await TransactionModelAPI.findOne({ _id: transactionId });
+        const updatedTrans = await TransactionModelAPI.findOne({_id: transactionId});
         (updatedTrans !== null).should.be.true
         updatedTrans.response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         updatedTrans.canRerun.should.be.true
@@ -556,14 +554,14 @@ describe('API Integration Tests', () => {
         }
 
         const res = await request('https://localhost:8080')
-                    .put(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(updates)
-                    .expect(200)
-        const updatedTrans = await TransactionModelAPI.findOne({ _id: transactionId });
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+        const updatedTrans = await TransactionModelAPI.findOne({_id: transactionId});
         (updatedTrans !== null).should.be.true
         updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         updatedTrans.canRerun.should.be.true
@@ -571,7 +569,7 @@ describe('API Integration Tests', () => {
 
       it('should queue a transaction for auto retry', async () => {
         const channels = await ChannelModelAPI.find({})
-        const newTransaction = Object.assign({}, transactionData, { channelID: channel2._id })
+        const newTransaction = Object.assign({}, transactionData, {channelID: channel2._id})
         let tx = new TransactionModelAPI(newTransaction)
         const result = await tx.save()
         transactionId = result._id
@@ -584,23 +582,23 @@ describe('API Integration Tests', () => {
         }
 
         const res = await request('https://localhost:8080')
-                    .put(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(updates)
-                    .expect(200)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
 
         tx = await TransactionModelAPI.findById(transactionId)
         tx.autoRetry.should.be.true()
-        const queueItem = await AutoRetryModelAPI.findOne({ transactionID: transactionId })
+        const queueItem = await AutoRetryModelAPI.findOne({transactionID: transactionId})
         queueItem.should.be.ok()
         queueItem.channelID.toString().should.be.exactly(channel2._id.toString())
       })
 
       it('should not queue a transaction for auto retry when max retries have been reached', async () => {
-        const newTransactionData = Object.assign({}, transactionData, { autoRetryAttempt: 5, channelID: channel2._id })
+        const newTransactionData = Object.assign({}, transactionData, {autoRetryAttempt: 5, channelID: channel2._id})
         let tx = new TransactionModelAPI(newTransactionData)
         const result = await tx.save()
         transactionId = result._id
@@ -613,20 +611,20 @@ describe('API Integration Tests', () => {
         }
 
         const res = await request('https://localhost:8080')
-                    .put(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(updates)
-                    .expect(200)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
 
         tx = await TransactionModelAPI.findById(transactionId)
         tx.autoRetry.should.be.false()
       })
 
       it('should generate events on update', async () => {
-        const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
+        const newTransactionData = Object.assign({}, transactionData, {channelID: channel._id})
         const tx = new TransactionModelAPI(newTransactionData)
         const result = await tx.save()
         transactionId = result._id
@@ -650,16 +648,16 @@ describe('API Integration Tests', () => {
         }
 
         const res = await request('https://localhost:8080')
-                    .put(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(updates)
-                    .expect(200)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
 
         const events = await EventModelAPI.find({})
-                // events should only be generated for the updated fields
+        // events should only be generated for the updated fields
         events.length.should.be.exactly(2)
         for (const ev of Array.from(events)) {
           ev.channelID.toString().should.be.exactly(channel._id.toString())
@@ -678,13 +676,13 @@ describe('API Integration Tests', () => {
         transactionId = result._id
         const updates = {}
         const res = await request('https://localhost:8080')
-                    .put(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(updates)
-                    .expect(403)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(403)
       })
     })
 
@@ -694,12 +692,12 @@ describe('API Integration Tests', () => {
         countBefore.should.equal(0)
         const tx = await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
-                    .get('/transactions?filterPage=0&filterLimit=10&filters={}')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get('/transactions?filterPage=0&filterLimit=10&filters={}')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body.length.should.equal(countBefore + 1)
       })
@@ -730,12 +728,12 @@ describe('API Integration Tests', () => {
 
         const tx = await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions?${params}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get(`/transactions?${params}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body.length.should.equal(1)
       })
@@ -769,12 +767,12 @@ describe('API Integration Tests', () => {
         params = encodeURI(params)
         const tx = await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions?${params}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get(`/transactions?${params}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
         res.body.length.should.equal(1)
       })
 
@@ -808,67 +806,76 @@ describe('API Integration Tests', () => {
 
         const tx = new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions?${params}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get(`/transactions?${params}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body.length.should.equal(0)
       })
 
       it('should only return the transactions that a user can view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel._id })).save()
-        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel2._id, _id: '111111111111111111111112' })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel._id})).save()
+        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, {
+          channelID: channel2._id,
+          _id: '111111111111111111111112'
+        })).save()
         const res = await request('https://localhost:8080')
-                    .get('/transactions')
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get('/transactions')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body.should.have.length(1)
         res.body[0]._id.should.be.equal('111111111111111111111111')
       })
 
       it('should return the transactions for a channel that a user has permission to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel._id })).save()
-        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel2._id, _id: '111111111111111111111112' })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel._id})).save()
+        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, {
+          channelID: channel2._id,
+          _id: '111111111111111111111112'
+        })).save()
 
         const res = await request('https://localhost:8080')
-                    .get(`/transactions?channelID=${channel._id}`)
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get(`/transactions?channelID=${channel._id}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body.should.have.length(1)
         res.body[0]._id.should.be.equal('111111111111111111111111')
       })
 
       it('should return 403 for a channel that a user does NOT have permission to view', async () => {
-        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel2._id, _id: '111111111111111111111112' })).save()
+        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, {
+          channelID: channel2._id,
+          _id: '111111111111111111111112'
+        })).save()
         await request('https://localhost:8080')
-                    .get(`/transactions?channelID=${tx2.channelID}`)
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(403)
+          .get(`/transactions?channelID=${tx2.channelID}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(403)
       })
 
       it('should truncate transaction details if filterRepresentation is fulltruncate ', async () => {
         const tx = await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
-                    .get('/transactions?filterRepresentation=fulltruncate')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get('/transactions?filterRepresentation=fulltruncate')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body.length.should.equal(1)
         res.body[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`)
@@ -884,12 +891,12 @@ describe('API Integration Tests', () => {
       it('should fetch a transaction by ID - admin user', async () => {
         const tx = await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions/${tx._id}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200);
+          .get(`/transactions/${tx._id}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200);
 
         (res !== null).should.be.true
         res.body.status.should.equal('Processing')
@@ -903,25 +910,25 @@ describe('API Integration Tests', () => {
       })
 
       it('should NOT return a transaction that a user is not allowed to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel2._id })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel2._id})).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions/${tx._id}`)
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(403)
+          .get(`/transactions/${tx._id}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(403)
       })
 
       it('should return a transaction that a user is allowed to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel._id })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel._id})).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions/${tx._id}`)
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200);
+          .get(`/transactions/${tx._id}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200);
 
         (res !== null).should.be.true
         res.body.status.should.equal('Processing')
@@ -934,16 +941,16 @@ describe('API Integration Tests', () => {
         res.body.request.method.should.equal('POST')
       })
 
-      it("should truncate a large body if filterRepresentation is 'fulltruncate'", async () => {
-                // transactionData body lengths > config.truncateSize
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel._id })).save()
+      it('should truncate a large body if filterRepresentation is \'fulltruncate\'', async () => {
+        // transactionData body lengths > config.truncateSize
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel._id})).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions/${tx._id}?filterRepresentation=fulltruncate`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get(`/transactions/${tx._id}?filterRepresentation=fulltruncate`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body.request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`)
         res.body.response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`)
@@ -956,38 +963,44 @@ describe('API Integration Tests', () => {
 
     describe('*findTransactionByClientId (clientId)', () => {
       it('should call findTransactionByClientId', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { clientID: '555555555555555555555555' })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {clientID: '555555555555555555555555'})).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions/clients/${tx.clientID}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get(`/transactions/clients/${tx.clientID}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
         res.body[0].clientID.should.equal(tx.clientID.toString())
       })
 
       it('should NOT return transactions that a user is not allowed to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { clientID: '444444444444444444444444', channelID: channel2._id })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {
+          clientID: '444444444444444444444444',
+          channelID: channel2._id
+        })).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions/clients/${tx.clientID}`)
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get(`/transactions/clients/${tx.clientID}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
         res.body.should.have.length(0)
       })
 
       it('should return transactions that a user is allowed to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { clientID: '444444444444444444444444', channelID: channel._id })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {
+          clientID: '444444444444444444444444',
+          channelID: channel._id
+        })).save()
         const res = await request('https://localhost:8080')
-                    .get(`/transactions/clients/${tx.clientID}`)
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .get(`/transactions/clients/${tx.clientID}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body[0].clientID.should.equal(tx.clientID.toString())
       })
@@ -995,28 +1008,28 @@ describe('API Integration Tests', () => {
 
     describe('*removeTransaction (transactionId)', () => {
       it('should call removeTransaction', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {clientID: '222222222222222222222222'})).save()
         const res = await request('https://localhost:8080')
-                    .del(`/transactions/${tx._id}`)
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(200)
+          .del(`/transactions/${tx._id}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         const txFound = await TransactionModelAPI.findById(tx._id);
         (txFound == null).should.be.true
       })
 
       it('should only allow admin users to remove transactions', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
+        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {clientID: '222222222222222222222222'})).save()
         const res = await request('https://localhost:8080')
-                    .del(`/transactions/${transactionId}`)
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .expect(403)
+          .del(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(403)
       })
     })
   })

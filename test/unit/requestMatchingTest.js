@@ -4,7 +4,7 @@ import should from 'should'
 import rewire from 'rewire'
 
 const requestMatching = rewire('../../src/middleware/requestMatching')
-const { ChannelModel } = require('../../src/model/channels')
+const {ChannelModel} = require('../../src/model/channels')
 
 const truthy = () => true
 const falsey = () => false
@@ -36,7 +36,7 @@ describe('Request Matching middleware', () => {
 
   describe('.matchContent(channel, ctx)', () => {
     const channelRegex =
-            { matchContentRegex: /\d{6}/ }
+      {matchContentRegex: /\d{6}/}
 
     const channelXpath = {
       matchContentXpath: 'string(/function/uuid)',
@@ -51,43 +51,43 @@ describe('Request Matching middleware', () => {
     const noMatchChannel = {}
 
     const channelInvalid =
-            { matchContentJson: 'function.uuid' }
+      {matchContentJson: 'function.uuid'}
 
     it('should call the correct matcher', () => {
-      requestMatching.matchContent(channelRegex, { body: new Buffer('--------123456------') }).should.be.true
-      requestMatching.matchContent(channelXpath, { body: new Buffer('<function><uuid>123456789</uuid></function>') }).should.be.true
-      requestMatching.matchContent(channelJson, { body: new Buffer('{"function": {"uuid": "123456789"}}') }).should.be.true
+      requestMatching.matchContent(channelRegex, {body: new Buffer('--------123456------')}).should.be.true
+      requestMatching.matchContent(channelXpath, {body: new Buffer('<function><uuid>123456789</uuid></function>')}).should.be.true
+      requestMatching.matchContent(channelJson, {body: new Buffer('{"function": {"uuid": "123456789"}}')}).should.be.true
 
-      requestMatching.matchContent(channelRegex, { body: new Buffer('--------1234aaa56------') }).should.be.false
-      requestMatching.matchContent(channelXpath, { body: new Buffer('<function><uuid>1234aaa56789</uuid></function>') }).should.be.false
-      return requestMatching.matchContent(channelJson, { body: new Buffer('{"function": {"uuid": "1234aaa56789"}}') }).should.be.false
+      requestMatching.matchContent(channelRegex, {body: new Buffer('--------1234aaa56------')}).should.be.false
+      requestMatching.matchContent(channelXpath, {body: new Buffer('<function><uuid>1234aaa56789</uuid></function>')}).should.be.false
+      return requestMatching.matchContent(channelJson, {body: new Buffer('{"function": {"uuid": "1234aaa56789"}}')}).should.be.false
     })
 
-    it('should return true if no matching properties are present', () => requestMatching.matchContent(noMatchChannel, { body: new Buffer('someBody') }).should.be.true)
+    it('should return true if no matching properties are present', () => requestMatching.matchContent(noMatchChannel, {body: new Buffer('someBody')}).should.be.true)
 
-    return it('should return false for invalid channel configs', () => requestMatching.matchContent(channelInvalid, { body: new Buffer('someBody') }).should.be.false)
+    return it('should return false for invalid channel configs', () => requestMatching.matchContent(channelInvalid, {body: new Buffer('someBody')}).should.be.false)
   })
 
   describe('.extractContentType', () =>
 
-        it('should extract a correct content-type', () => {
-          requestMatching.extractContentType('text/xml; charset=utf-8').should.be.exactly('text/xml')
-          requestMatching.extractContentType('text/xml').should.be.exactly('text/xml')
-          requestMatching.extractContentType('   text/xml ').should.be.exactly('text/xml')
-          return requestMatching.extractContentType('text/xml;').should.be.exactly('text/xml')
-        })
-    )
+    it('should extract a correct content-type', () => {
+      requestMatching.extractContentType('text/xml; charset=utf-8').should.be.exactly('text/xml')
+      requestMatching.extractContentType('text/xml').should.be.exactly('text/xml')
+      requestMatching.extractContentType('   text/xml ').should.be.exactly('text/xml')
+      return requestMatching.extractContentType('text/xml;').should.be.exactly('text/xml')
+    })
+  )
 
   describe('.matchUrlPattern', () => {
     it('should match a url pattern', () => {
       const matchUrlPattern = requestMatching.__get__('matchUrlPattern')
-      const actual = matchUrlPattern({ urlPattern: '^test\\d+$' }, { request: { path: 'test123' } })
+      const actual = matchUrlPattern({urlPattern: '^test\\d+$'}, {request: {path: 'test123'}})
       return actual.should.be.true()
     })
 
     return it('should reject an invalid match', () => {
       const matchUrlPattern = requestMatching.__get__('matchUrlPattern')
-      const actual = matchUrlPattern({ urlPattern: '^test\\d+$' }, { request: { path: 'test12aaa3' } })
+      const actual = matchUrlPattern({urlPattern: '^test\\d+$'}, {request: {path: 'test12aaa3'}})
       return actual.should.be.false()
     })
   })
@@ -95,37 +95,37 @@ describe('Request Matching middleware', () => {
   describe('.matchContentTypes', () => {
     it('should match correct content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({ matchContentTypes: ['text/plain', 'something/else'] }, { request: { header: { 'content-type': 'text/plain' } } })
+      const actual = matchContentTypes({matchContentTypes: ['text/plain', 'something/else']}, {request: {header: {'content-type': 'text/plain'}}})
       return actual.should.be.true()
     })
 
     it('should not match incorrect content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({ matchContentTypes: ['text/plain'] }, { request: { header: { 'content-type': 'application/json' } } })
+      const actual = matchContentTypes({matchContentTypes: ['text/plain']}, {request: {header: {'content-type': 'application/json'}}})
       return actual.should.be.false()
     })
 
     it('should return true if there is no matching criteria set (property doesnt exist)', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({}, { request: { header: { 'content-type': 'application/json' } } })
+      const actual = matchContentTypes({}, {request: {header: {'content-type': 'application/json'}}})
       return actual.should.be.true()
     })
 
     it('should return true if there is no matching criteria set (null)', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({ matchContentTypes: null }, { request: { header: { 'content-type': 'application/json' } } })
+      const actual = matchContentTypes({matchContentTypes: null}, {request: {header: {'content-type': 'application/json'}}})
       return actual.should.be.true()
     })
 
     it('should return true if there is no matching criteria set (undefined)', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({ matchContentTypes: undefined }, { request: { header: { 'content-type': 'application/json' } } })
+      const actual = matchContentTypes({matchContentTypes: undefined}, {request: {header: {'content-type': 'application/json'}}})
       return actual.should.be.true()
     })
 
     return it('should return true if there is no matching criteria set (empty)', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({ matchContentTypes: [] }, { request: { header: { 'content-type': 'application/json' } } })
+      const actual = matchContentTypes({matchContentTypes: []}, {request: {header: {'content-type': 'application/json'}}})
       return actual.should.be.true()
     })
   })
@@ -185,16 +185,16 @@ describe('Request Matching middleware', () => {
     let addedChannelNames = []
 
     afterEach(() => {
-            // remove test channels
+      // remove test channels
       for (const channelName of Array.from(addedChannelNames)) {
-        ChannelModel.remove({ name: channelName }, (err) => { })
+        ChannelModel.remove({name: channelName}, (err) => { })
       }
 
       addedChannelNames = []
     })
 
     it('should match if message content matches the channel rules', (done) => {
-            // Setup a channel for the mock endpoint
+      // Setup a channel for the mock endpoint
       const channel = new ChannelModel({
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
@@ -216,7 +216,7 @@ describe('Request Matching middleware', () => {
           return done(err)
         }
 
-                // Setup test data, will need authentication mechanisms to set ctx.authenticated
+        // Setup test data, will need authentication mechanisms to set ctx.authenticated
         const ctx = {}
         ctx.body = validTestBody
         ctx.authenticated = {
@@ -240,7 +240,7 @@ describe('Request Matching middleware', () => {
     })
 
     it('should NOT match if message content DOES NOT matches the channel rules', (done) => {
-            // Setup a channel for the mock endpoint
+      // Setup a channel for the mock endpoint
       const channel = new ChannelModel({
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
@@ -262,7 +262,7 @@ describe('Request Matching middleware', () => {
           return done(err)
         }
 
-                // Setup test data, will need authentication mechanisms to set ctx.authenticated
+        // Setup test data, will need authentication mechanisms to set ctx.authenticated
         const ctx = {}
         ctx.body = invalidTestBody
         ctx.authenticated = {
@@ -287,7 +287,7 @@ describe('Request Matching middleware', () => {
     })
 
     it('should match if message content matches the content-type', (done) => {
-            // Setup a channel for the mock endpoint
+      // Setup a channel for the mock endpoint
       const channel = new ChannelModel({
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
@@ -310,7 +310,7 @@ describe('Request Matching middleware', () => {
           return done(err)
         }
 
-                // Setup test data, will need authentication mechanisms to set ctx.authenticated
+        // Setup test data, will need authentication mechanisms to set ctx.authenticated
         const ctx = {}
         ctx.body = validTestBody
         ctx.authenticated = {
@@ -336,7 +336,7 @@ describe('Request Matching middleware', () => {
     })
 
     it('should NOT match if message content DOES NOT matches the channel rules', (done) => {
-            // Setup a channel for the mock endpoint
+      // Setup a channel for the mock endpoint
       const channel = new ChannelModel({
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
@@ -359,7 +359,7 @@ describe('Request Matching middleware', () => {
           return done(err)
         }
 
-                // Setup test data, will need authentication mechanisms to set ctx.authenticated
+        // Setup test data, will need authentication mechanisms to set ctx.authenticated
         const ctx = {}
         ctx.body = invalidTestBody
         ctx.authenticated = {
@@ -386,7 +386,7 @@ describe('Request Matching middleware', () => {
     })
 
     it('should allow a request if the channel matches and is enabled', (done) => {
-            // Setup a channel for the mock endpoint
+      // Setup a channel for the mock endpoint
       const channel = new ChannelModel({
         name: 'Mock for Channel Status Test (enabled)',
         urlPattern: 'test/status/enabled',
@@ -407,7 +407,7 @@ describe('Request Matching middleware', () => {
           return done(err)
         }
 
-                // Setup test data, will need authentication mechanisms to set ctx.authenticated
+        // Setup test data, will need authentication mechanisms to set ctx.authenticated
         const ctx = {}
         ctx.authenticated = {
           clientID: 'Musha_OpenMRS',
@@ -430,7 +430,7 @@ describe('Request Matching middleware', () => {
     })
 
     it('should NOT allow a request if the channel matchess but is disabled', (done) => {
-            // Setup a channel for the mock endpoint
+      // Setup a channel for the mock endpoint
       const channel = new ChannelModel({
         name: 'Mock for Channel Status Test (disabled)',
         urlPattern: 'test/status/disabled',
@@ -451,7 +451,7 @@ describe('Request Matching middleware', () => {
           return done(err)
         }
 
-                // Setup test data, will need authentication mechanisms to set ctx.authenticated
+        // Setup test data, will need authentication mechanisms to set ctx.authenticated
         const ctx = {}
         ctx.authenticated = {
           clientID: 'Musha_OpenMRS',
@@ -475,7 +475,7 @@ describe('Request Matching middleware', () => {
     })
 
     return it('should NOT allow a request if the channel matches but is deleted', (done) => {
-            // Setup a channel for the mock endpoint
+      // Setup a channel for the mock endpoint
       const channel = new ChannelModel({
         name: 'Mock for Channel Status Test (deleted)',
         urlPattern: 'test/status/deleted',
@@ -496,7 +496,7 @@ describe('Request Matching middleware', () => {
           return done(err)
         }
 
-                // Setup test data, will need authentication mechanisms to set ctx.authenticated
+        // Setup test data, will need authentication mechanisms to set ctx.authenticated
         const ctx = {}
         ctx.authenticated = {
           clientID: 'Musha_OpenMRS',

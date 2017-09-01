@@ -13,9 +13,9 @@ export function sendEmail (contactAddress, title, messagePlain, messageHTML, cal
 
   if (config.email) {
     nodemailerConfig = config.email.nodemailer;
-    ({ fromAddress } = config.email)
+    ({fromAddress} = config.email)
   } else if (config.nodemailer) {
-        // Support old config format for backwards compatibility
+    // Support old config format for backwards compatibility
     nodemailerConfig = config.nodemailer
     fromAddress = nodemailerConfig.auth.user
   } else {
@@ -45,8 +45,8 @@ function sendSMS (contactAddress, message, callback) {
 function sendSMSClickatell (contactAddress, message, callback) {
   logger.info(`Sending SMS to '${contactAddress}' using Clickatell`)
   return request(`http://api.clickatell.com/http/sendmsg?api_id=${config.smsGateway.config.apiID}&` +
-        `user=${config.smsGateway.config.user}&password=${config.smsGateway.config.pass}&` +
-        `to=${contactAddress}&text=${escapeSpaces(message)}`, (err, response, body) => {
+    `user=${config.smsGateway.config.user}&password=${config.smsGateway.config.pass}&` +
+    `to=${contactAddress}&text=${escapeSpaces(message)}`, (err, response, body) => {
     if (body != null) { logger.info(`Received response from Clickatell: ${body}`) }
     return callback(err != null ? err : null)
   })

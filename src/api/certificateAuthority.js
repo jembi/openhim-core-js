@@ -9,14 +9,14 @@ const readCertificateInfo = Q.denodeify(pem.readCertificateInfo)
 const getFingerprint = Q.denodeify(pem.getFingerprint)
 
 export function * generateCert () {
-    // Must be admin
+  // Must be admin
   const ctx = this
   let result
   if (authorisation.inGroup('admin', ctx.authenticated) === false) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getServerKey by id denied.`, 'info')
     return
   }
-  const { request: { body: options } } = ctx
+  const {request: {body: options}} = ctx
   if (options.type === 'server') {
     logger.info('Generating server cert')
     result = yield generateServerCert(options, ctx)
@@ -31,16 +31,16 @@ export function * generateCert () {
 function * generateClientCert (options, ctx) {
   const keystoreDoc = yield KeystoreModelAPI.findOne().exec()
 
-    // Set additional options
+  // Set additional options
   options.selfSigned = true
 
-    // Attempt to create the certificate
+  // Attempt to create the certificate
   try {
     ctx.body = yield createCertificate(options)
     const certInfo = yield extractCertMetadata(ctx.body.certificate, ctx)
     keystoreDoc.ca.push(certInfo)
     yield Q.ninvoke(keystoreDoc, 'save')
-        // Add the new certficate to the keystore
+    // Add the new certificate to the keystore
     ctx.status = 201
     logger.info('Client certificate created')
   } catch (err) {
@@ -57,7 +57,7 @@ function * generateServerCert (options, ctx) {
     keystoreDoc.cert = yield extractCertMetadata(ctx.body.certificate, ctx)
     keystoreDoc.key = ctx.body.key
     yield Q.ninvoke(keystoreDoc, 'save')
-        // Add the new certficate to the keystore
+    // Add the new certificate to the keystore
     ctx.status = 201
     logger.info('Server certificate created')
   } catch (err) {
@@ -72,7 +72,7 @@ function createCertificate (options) {
     let response
     if (err) {
       response =
-                { err }
+        {err}
       return deferred.resolve(response)
     } else {
       response = {

@@ -8,7 +8,7 @@ import { config } from '../config'
 import * as utils from '../utils'
 import * as Channels from '../model/channels'
 
-const { ChannelModel } = Channels
+const {ChannelModel} = Channels
 
 const statsdServer = config.get('statsd')
 const application = config.get('application')
@@ -25,8 +25,8 @@ function matchContent (channel, ctx) {
   } else if (channel.matchContentJson && channel.matchContentValue) {
     return matchJsonPath(channel.matchContentJson, channel.matchContentValue, ctx.body)
   } else if (channel.matchContentXpath || channel.matchContentJson) {
-        // if only the match expression is given, deny access
-        // this is an invalid channel
+    // if only the match expression is given, deny access
+    // this is an invalid channel
     logger.error(`Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`)
     return false
   } else {
@@ -89,11 +89,11 @@ function matchContentTypes (channel, ctx) {
       if (Array.from(channel.matchContentTypes).includes(ct)) {
         return true
       } else {
-                // deny access to channel if the content type doesnt match
+        // deny access to channel if the content type doesnt match
         return false
       }
     } else {
-            // deny access to channel if the content type isnt set
+      // deny access to channel if the content type isnt set
       return false
     }
   } else {
@@ -114,18 +114,18 @@ const matchChannel = (channel, ctx) => matchFunctions.every(matchFunc => matchFu
 const findMatchingChannel = (channels, ctx) => channels.find(channel => matchChannel(channel, ctx))
 
 const matchRequest = (ctx, done) =>
-    utils.getAllChannelsInPriorityOrder((err, channels) => {
-      if (err) {
-        ctx.response.status = 500
-        logger.error('Could not fetch OpenHIM channels', err)
-        return done()
-      }
+  utils.getAllChannelsInPriorityOrder((err, channels) => {
+    if (err) {
+      ctx.response.status = 500
+      logger.error('Could not fetch OpenHIM channels', err)
+      return done()
+    }
 
-      channels = channels.filter(Channels.isChannelEnabled)
+    channels = channels.filter(Channels.isChannelEnabled)
 
-      const match = findMatchingChannel(channels, ctx)
-      return done(null, match)
-    })
+    const match = findMatchingChannel(channels, ctx)
+    return done(null, match)
+  })
 
 export function * koaMiddleware (next) {
   let startTime

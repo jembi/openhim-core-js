@@ -86,7 +86,7 @@ export function setupCertificateWatcher () {
 if (cluster.isMaster && !module.parent) {
   process.title = 'Core'
 
-    // configure master logger
+  // configure master logger
   let clusterSize
   logger.add(logger.transports.Console, {
     colorize: true,
@@ -129,7 +129,7 @@ if (cluster.isMaster && !module.parent) {
       let id
       logger.debug(`Message received from worker ${worker.id}`, msg)
       if (msg.type === 'restart-all') {
-                // restart all workers
+        // restart all workers
         logger.debug('Restarting all workers...')
         return (() => {
           const result = []
@@ -143,7 +143,7 @@ if (cluster.isMaster && !module.parent) {
           return result
         })()
       } else if (msg.type === 'start-tcp-channel') {
-                // start tcp channel on all workers
+        // start tcp channel on all workers
         logger.info(`Starting TCP channel for channel: ${msg.channelID}`)
         return (() => {
           const result1 = []
@@ -155,7 +155,7 @@ if (cluster.isMaster && !module.parent) {
           return result1
         })()
       } else if (msg.type === 'stop-tcp-channel') {
-                // stop tcp channel on all workers
+        // stop tcp channel on all workers
         logger.info(`Stopping TCP channel for channel: ${msg.channelID}`)
         return (() => {
           const result2 = []
@@ -167,7 +167,7 @@ if (cluster.isMaster && !module.parent) {
           return result2
         })()
       } else if (msg.type === 'get-uptime') {
-                // send response back to worker requesting uptime
+        // send response back to worker requesting uptime
         return worker.send({
           type: 'get-uptime',
           masterUptime: process.uptime()
@@ -178,9 +178,9 @@ if (cluster.isMaster && !module.parent) {
     })
   }
 
-    // upgrade the database if needed
+  // upgrade the database if needed
   upgradeDB.upgradeDb(() => {
-        // start all workers
+    // start all workers
     for (let i = 1, end = clusterSize, asc = end >= 1; asc ? i <= end : i >= end; asc ? i++ : i--) {
       addWorker()
     }
@@ -188,7 +188,7 @@ if (cluster.isMaster && !module.parent) {
     cluster.on('exit', (worker, code, signal) => {
       logger.warn(`worker ${worker.process.pid} died`)
       if (!worker.suicide) {
-                // respawn
+        // respawn
         addWorker()
       }
     })
@@ -198,14 +198,14 @@ if (cluster.isMaster && !module.parent) {
     return cluster.on('listening', (worker, address) => logger.debug(`worker ${worker.id} is now connected to ${address.address}:${address.port}`))
   })
 
-    // setup watcher if watchFSForCert is enabled
+  // setup watcher if watchFSForCert is enabled
   if (config.certificateManagement.watchFSForCert) {
     exports.setupCertificateWatcher()
   }
 } else {
-    /* Setup Worker */
+  /* Setup Worker */
 
-    // configure worker logger
+  // configure worker logger
   let stop
   logger.add(logger.transports.Console, {
     colorize: true,
@@ -213,7 +213,7 @@ if (cluster.isMaster && !module.parent) {
     label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined,
     level: config.logger.level
   }
-    )
+  )
   if (config.logger.logToDB === true) {
     logger.add(logger.transports.MongoDB, {
       db: config.mongo.url,
@@ -222,7 +222,7 @@ if (cluster.isMaster && !module.parent) {
       capped: config.logger.capDBLogs,
       cappedSize: config.logger.capSize
     }
-        )
+    )
   }
 
   let httpServer = null
@@ -244,17 +244,17 @@ if (cluster.isMaster && !module.parent) {
   const activePollingConnections = {}
 
   function trackConnection (map, socket) {
-        // save active socket
+    // save active socket
     const id = uuid.v4()
     map[id] = socket
 
-        // remove socket once it closes
+    // remove socket once it closes
     socket.on('close', () => {
       map[id] = null
       return delete map[id]
     })
 
-        // log any socket errors
+    // log any socket errors
     return socket.on('error', err => logger.error(err))
   }
 
@@ -269,9 +269,9 @@ if (cluster.isMaster && !module.parent) {
     passwordSalt: 'd9bcb40e-ae65-478f-962e-5e5e5e7d0a01',
     groups: ['admin']
   }
-    // password = 'openhim-password'
+  // password = 'openhim-password'
 
-    // Job scheduler
+  // Job scheduler
   let agenda = null
 
   function startAgenda () {
@@ -294,16 +294,16 @@ if (cluster.isMaster && !module.parent) {
       autoRetry.setupAgenda(agenda)
       if (config.polling.enabled) {
         return polling.setupAgenda(agenda, () =>
-                    // give workers a change to setup agenda tasks
-                    setTimeout(() => {
-                      agenda.start()
-                      defer.resolve()
-                      return logger.info('Started agenda job scheduler')
-                    }
-                        , config.agenda.startupDelay)
-                )
+          // give workers a change to setup agenda tasks
+          setTimeout(() => {
+            agenda.start()
+            defer.resolve()
+            return logger.info('Started agenda job scheduler')
+          }
+            , config.agenda.startupDelay)
+        )
       }
-            // Start agenda anyway for the other servers
+      // Start agenda anyway for the other servers
       agenda.start()
       return defer.resolve()
     })
@@ -325,7 +325,7 @@ if (cluster.isMaster && !module.parent) {
 
     httpServer = http.createServer(app.callback())
 
-        // set the socket timeout
+    // set the socket timeout
     httpServer.setTimeout(+config.router.timeout, () => logger.info('HTTP socket timeout reached'))
 
     httpServer.listen(httpPort, bindAddress, () => {
@@ -333,10 +333,10 @@ if (cluster.isMaster && !module.parent) {
       return deferred.resolve()
     })
 
-        // listen for server error
+    // listen for server error
     httpServer.on('error', err => logger.error(`An httpServer error occured: ${err}`))
 
-        // listen for client error
+    // listen for client error
     httpServer.on('clientError', err => logger.error(`An httpServer clientError occured: ${err}`))
 
     httpServer.on('connection', socket => trackConnection(activeHttpConnections, socket))
@@ -354,7 +354,7 @@ if (cluster.isMaster && !module.parent) {
       }
       httpsServer = https.createServer(options, app.callback())
 
-            // set the socket timeout
+      // set the socket timeout
       httpsServer.setTimeout(+config.router.timeout, () => logger.info('HTTPS socket timeout reached'))
 
       httpsServer.listen(httpsPort, bindAddress, () => {
@@ -362,10 +362,10 @@ if (cluster.isMaster && !module.parent) {
         return deferred.resolve()
       })
 
-            // listen for server error
+      // listen for server error
       httpsServer.on('error', err => logger.error(`An httpsServer error occured: ${err}`))
 
-            // listen for client error
+      // listen for client error
       httpsServer.on('clientError', err => logger.error(`An httpsServer clientError occured: ${err}`))
 
       return httpsServer.on('secureConnection', socket => trackConnection(activeHttpsConnections, socket))
@@ -374,42 +374,42 @@ if (cluster.isMaster && !module.parent) {
     return deferred.promise
   }
 
-    // Ensure that a root user always exists
+  // Ensure that a root user always exists
   const ensureRootUser = callback =>
-        UserModel.findOne({ email: 'root@openhim.org' }, (err, user) => {
-          if (!user) {
-            user = new UserModel(rootUser)
-            return user.save((err) => {
-              if (err) {
-                logger.error(`Could not save root user: ${err}`)
-                return callback(err)
-              }
-
-              logger.info('Root user created.')
-              return callback()
-            })
+    UserModel.findOne({email: 'root@openhim.org'}, (err, user) => {
+      if (!user) {
+        user = new UserModel(rootUser)
+        return user.save((err) => {
+          if (err) {
+            logger.error(`Could not save root user: ${err}`)
+            return callback(err)
           }
+
+          logger.info('Root user created.')
           return callback()
         })
+      }
+      return callback()
+    })
 
-    // Ensure that a default keystore always exists and is up to date
+  // Ensure that a default keystore always exists and is up to date
   ensureKeystore = function (callback) {
     const getServerCertDetails = (cert, callback) =>
-            pem.readCertificateInfo(cert, (err, certInfo) => {
-              if (err) {
-                logger.error(err.stack)
-                return callback(err)
-              }
-              return pem.getFingerprint(cert, (err, fingerprint) => {
-                if (err) {
-                  logger.error(err.stack)
-                  return callback(err)
-                }
-                certInfo.data = cert
-                certInfo.fingerprint = fingerprint.fingerprint
-                return callback(certInfo)
-              })
-            })
+      pem.readCertificateInfo(cert, (err, certInfo) => {
+        if (err) {
+          logger.error(err.stack)
+          return callback(err)
+        }
+        return pem.getFingerprint(cert, (err, fingerprint) => {
+          if (err) {
+            logger.error(err.stack)
+            return callback(err)
+          }
+          certInfo.data = cert
+          certInfo.fingerprint = fingerprint.fingerprint
+          return callback(certInfo)
+        })
+      })
 
     return KeystoreModel.findOne({}, (err, keystore) => {
       let cert
@@ -421,8 +421,8 @@ if (cluster.isMaster && !module.parent) {
       }
       if ((keystore == null)) { // set default keystore
         if (config.certificateManagement.watchFSForCert) { // use cert from filesystem
-          ({ certPath } = config.certificateManagement);
-          ({ keyPath } = config.certificateManagement)
+          ({certPath} = config.certificateManagement);
+          ({keyPath} = config.certificateManagement)
         } else { // use default self-signed certs
           certPath = `${appRoot}/resources/certs/default/cert.pem`
           keyPath = `${appRoot}/resources/certs/default/key.pem`
@@ -470,7 +470,7 @@ if (cluster.isMaster && !module.parent) {
   function startApiServer (apiPort, bindAddress, app) {
     const deferred = Q.defer()
 
-        // mutualTLS not applicable for the API - set false
+    // mutualTLS not applicable for the API - set false
     const mutualTLS = false
     tlsAuthentication.getServerOptions(mutualTLS, (err, options) => {
       if (err) { logger.error(`Could not fetch https server options: ${err}`) }
@@ -551,7 +551,7 @@ if (cluster.isMaster && !module.parent) {
 
     auditUDPServer.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
-                // ignore to allow only 1 worker to bind (workaround for: https://github.com/joyent/node/issues/9261)
+        // ignore to allow only 1 worker to bind (workaround for: https://github.com/joyent/node/issues/9261)
         return defer.resolve()
       }
       logger.error(`UDP Audit server error: ${err}`, err)
@@ -567,31 +567,31 @@ if (cluster.isMaster && !module.parent) {
     return defer.promise
   }
 
-    // function to start the TCP/TLS Audit server
+  // function to start the TCP/TLS Audit server
   function startAuditTcpTlsServer (type, auditPort, bindAddress) {
     const defer = Q.defer()
 
-        // data handler
+    // data handler
     function handler (sock) {
       let message = ''
       let length = 0
 
       sock.on('data', (data) => {
-                // convert to string and concatenate
+        // convert to string and concatenate
         message += data.toString()
 
-                // check if length is is still zero and first occurannce of space
+        // check if length is is still zero and first occurannce of space
         if ((length === 0) && (message.indexOf(' ') !== -1)) {
-                    // get index of end of message length
+          // get index of end of message length
           const lengthIndex = message.indexOf(' ')
 
-                    // source message length
+          // source message length
           const lengthValue = message.substr(0, lengthIndex)
 
-                    // remove white spaces
+          // remove white spaces
           length = parseInt(lengthValue.trim(), 10)
 
-                    // update message to remove length - add one extra character to remove the space
+          // update message to remove length - add one extra character to remove the space
           message = message.substr(lengthIndex + 1)
         }
 
@@ -601,12 +601,12 @@ if (cluster.isMaster && !module.parent) {
         }
 
         logger.debug(`Length prefix is: ${length} and message length so far is ${Buffer.byteLength(message)}`)
-                // if sourced length equals message length then full message received
+        // if sourced length equals message length then full message received
         if (length === Buffer.byteLength(message)) {
           logger.info(`[Auditing ${type}] Received message from ${sock.remoteAddress}`)
           auditing.processAudit(message, () => logger.info(`[Auditing ${type}] Processed audit`))
 
-                    // reset message and length variables
+          // reset message and length variables
           message = ''
           length = 0
         }
@@ -700,7 +700,7 @@ if (cluster.isMaster && !module.parent) {
     })
   }
 
-    // wait for any running tasks before trying to stop anything
+  // wait for any running tasks before trying to stop anything
   function stopTasksProcessor (callback) {
     if (tasks.isRunning()) {
       return tasks.stop(callback)
@@ -741,7 +741,7 @@ if (cluster.isMaster && !module.parent) {
         logger.error('Failed to stop auditUDServer with err:', err)
       }
     }
-        // ignore errors when shutting down the server, sometimes its already stopped
+    // ignore errors when shutting down the server, sometimes its already stopped
 
     if (tcpHttpReceiver) {
       promises.push(stopServer(tcpHttpReceiver, 'TCP HTTP Receiver'))
@@ -751,7 +751,7 @@ if (cluster.isMaster && !module.parent) {
       promises.push(defer.promise)
     }
 
-        // close active connection so that servers can stop
+    // close active connection so that servers can stop
     for (const key in activeHttpConnections) {
       socket = activeHttpConnections[key]
       socket.destroy()
@@ -801,30 +801,30 @@ if (cluster.isMaster && !module.parent) {
   }))
 
   const lookupServerPorts = () =>
-        ({
-          httpPort: config.router.httpPort,
-          httpsPort: config.router.httpsPort,
-          apiPort: config.api.httpsPort,
-          rerunHttpPort: config.rerun.httpPort,
-          tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort,
-          pollingPort: config.polling.pollingPort,
-          auditUDPPort: config.auditing.servers.udp.enabled ? config.auditing.servers.udp.port : undefined,
-          auditTlsPort: config.auditing.servers.tls.enabled ? config.auditing.servers.tls.port : undefined,
-          auditTcpPort: config.auditing.servers.tcp.enabled ? config.auditing.servers.tcp.port : undefined
-        })
+    ({
+      httpPort: config.router.httpPort,
+      httpsPort: config.router.httpsPort,
+      apiPort: config.api.httpsPort,
+      rerunHttpPort: config.rerun.httpPort,
+      tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort,
+      pollingPort: config.polling.pollingPort,
+      auditUDPPort: config.auditing.servers.udp.enabled ? config.auditing.servers.udp.port : undefined,
+      auditTlsPort: config.auditing.servers.tls.enabled ? config.auditing.servers.tls.port : undefined,
+      auditTcpPort: config.auditing.servers.tcp.enabled ? config.auditing.servers.tcp.port : undefined
+    })
 
   if (!module.parent) {
-        // start the server
+    // start the server
     const ports = lookupServerPorts()
 
     exports.start(ports, () => {
-            // setup shutdown listeners
+      // setup shutdown listeners
       process.on('exit', stop)
-            // interrupt signal, e.g. ctrl-c
+      // interrupt signal, e.g. ctrl-c
       process.on('SIGINT', () => stop(process.exit))
-            // terminate signal
+      // terminate signal
       process.on('SIGTERM', () => stop(process.exit))
-            // restart on message
+      // restart on message
       return process.on('message', (msg) => {
         if (msg.type === 'restart') {
           exports.restartServer()
@@ -848,34 +848,34 @@ if (cluster.isMaster && !module.parent) {
 
   exports.startRestartServerTimeout = function (done) {
     if (cluster.isMaster) {
-            // restart myself in 2s
+      // restart myself in 2s
       setTimeout(() => {
         logger.debug('Master restarting itself...')
         return exports.restartServer()
       }
-                , 2000)
+        , 2000)
     } else {
-            // notify master to restart all workers in 2s
+      // notify master to restart all workers in 2s
       setTimeout(() => {
         logger.debug('Sending restart cluster message...')
         return process.send({
           type: 'restart-all'
         })
       }
-                , 2000)
+        , 2000)
     }
     return done()
   }
 
-    // function to return process uptimes
+  // function to return process uptimes
   exports.getUptime = function (callback) {
     if (cluster.isMaster) {
-            // send reponse back to API request
+      // send reponse back to API request
       const uptime =
-                { master: process.uptime() }
+        {master: process.uptime()}
       return callback(null, uptime)
     }
-        // send request to master
+    // send request to master
     process.send({
       type: 'get-uptime'
     })
@@ -883,17 +883,17 @@ if (cluster.isMaster && !module.parent) {
     const processEvent = function (uptime) {
       if (uptime.type === 'get-uptime') {
         uptime =
-                    { master: uptime.masterUptime }
+          {master: uptime.masterUptime}
 
-                // remove eventListner
+        // remove eventListner
         process.removeListener('message', processEvent)
 
-                // send reponse back to API request
+        // send reponse back to API request
         callback(null, uptime)
       }
     }
 
-        // listen for response from master
+    // listen for response from master
     return process.on('message', processEvent)
   }
 }

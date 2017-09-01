@@ -16,7 +16,7 @@ config.tcpAdapter = config.get('tcpAdapter')
  * restart the server
  */
 export function * restart (next) {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (authorisation.inGroup('admin', this.authenticated) === false) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to restart the server denied.`, 'info')
     return
@@ -27,15 +27,15 @@ export function * restart (next) {
 
     const result = yield Q.nfcall(KeystoreAPI.getCertKeyStatus)
 
-        // valid certificate/key
+    // valid certificate/key
     if (result) {
       server.startRestartServerTimeout(() => logger.info(`User ${emailAddr} has requested a Server Restart. Proceeding to restart servers...`))
 
-            // All ok! So set the result
+      // All ok! So set the result
       this.body = 'Server being restarted'
       this.status = 200
     } else {
-            // Not valid
+      // Not valid
       logger.info(`User ${emailAddr} has requested a Server Restart with invalid certificate details. Cancelling restart...`)
       this.body = 'Certificates and Key did not match. Cancelling restart...'
       this.status = 400

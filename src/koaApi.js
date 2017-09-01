@@ -25,26 +25,26 @@ import * as visualizers from './api/visualizers'
 import * as about from './api/about'
 
 export function setupApp (done) {
-    // Create an instance of the koa-server and add a body-parser
+  // Create an instance of the koa-server and add a body-parser
   const app = koa()
   app.use(cors())
   const limitMB = config.api.maxPayloadSizeMB || 16
-  app.use(bodyParser({ limit: limitMB * 1024 * 1024 }))
+  app.use(bodyParser({limit: limitMB * 1024 * 1024}))
 
-    // Expose uptime server stats route before the auth middleware so that it is publicly accessible
+  // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
 
-    // Expose the set-user-password route before the auth middleware so that it is publicly accessible
+  // Expose the set-user-password route before the auth middleware so that it is publicly accessible
   app.use(route.get('/password-reset-request/:email', users.userPasswordResetRequest))
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
 
-    // Expose the authenticate route before the auth middleware so that it is publicly accessible
+  // Expose the authenticate route before the auth middleware so that it is publicly accessible
   app.use(route.get('/authenticate/:username', users.authenticate))
-    // Authenticate the API request
+  // Authenticate the API request
   app.use(authentication.authenticate)
 
-    // Define the api routes
+  // Define the api routes
   app.use(route.get('/users', users.getUsers))
   app.use(route.get('/users/:email', users.getUser))
   app.use(route.post('/users', users.addUser))
@@ -116,39 +116,39 @@ export function setupApp (done) {
   app.use(route.get('/keystore/validity', keystore.verifyServerKeys))
   app.use(route.post('/keystore/passphrase', keystore.setServerPassphrase))
 
-    // Metadata endpoints
+  // Metadata endpoints
   app.use(route.get('/metadata', metadata.getMetadata))
   app.use(route.post('/metadata/validate', metadata.validateMetadata))
   app.use(route.post('/metadata', metadata.importMetadata))
 
-    // Server restart endpoint
+  // Server restart endpoint
   app.use(route.post('/restart', serverRestart.restart))
 
-    // AuditRecord endpoint
+  // AuditRecord endpoint
   app.use(route.post('/audits', audits.addAudit))
   app.use(route.get('/audits', audits.getAudits))
   app.use(route.get('/audits/:auditId', audits.getAuditById))
   app.use(route.get('/audits-filter-options', audits.getAuditsFilterOptions))
 
-    // Ceritficates endpoint
+  // Ceritficates endpoint
   app.use(route.post('/certificates', certificateAuthority.generateCert))
 
-    // Logs endpoint
+  // Logs endpoint
   app.use(route.get('/logs', logs.getLogs))
 
-    // Events endpoint
+  // Events endpoint
   app.use(route.get('/events/:receivedTime', events.getLatestEvents))
 
-    // Version endpoint
+  // Version endpoint
   app.use(route.get('/about', about.getAboutInformation))
 
-    // Visualizer endpoint
+  // Visualizer endpoint
   app.use(route.get('/visualizers', visualizers.getVisualizers))
   app.use(route.get('/visualizers/:visualizerId', visualizers.getVisualizer))
   app.use(route.post('/visualizers', visualizers.addVisualizer))
   app.use(route.put('/visualizers/:visualizerId', visualizers.updateVisualizer))
   app.use(route.delete('/visualizers/:visualizerId', visualizers.removeVisualizer))
 
-    // Return the result
+  // Return the result
   return done(app)
 }

@@ -22,8 +22,7 @@ const bcryptClient = {
   clientID: 'user',
   clientDomain: 'openhim.jembi.org',
   name: 'TEST basic auth client',
-  roles:
-  [
+  roles: [
     'PoC'
   ],
   passwordAlgorithm: 'bcrypt',
@@ -35,8 +34,7 @@ const shaClient = {
   clientID: 'user',
   clientDomain: 'openhim.jembi.org',
   name: 'TEST basic auth client',
-  roles:
-  [
+  roles: [
     'PoC'
   ],
   passwordAlgorithm: 'sha512',

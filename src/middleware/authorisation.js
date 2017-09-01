@@ -49,11 +49,11 @@ export function authorise (ctx, done) {
   const channel = ctx.matchingChannel
 
   if ((channel != null) && authoriseIP(channel, ctx) && ((channel.authType === 'public') || authoriseClient(channel, ctx))) {
-        // authorisation succeeded
+    // authorisation succeeded
     ctx.authorisedChannel = channel
     logger.info(`The request, '${ctx.request.path}' is authorised to access ${ctx.authorisedChannel.name}`)
   } else {
-        // authorisation failed
+    // authorisation failed
     ctx.response.status = 401
     if (config.authentication.enableBasicAuthentication) {
       ctx.set('WWW-Authenticate', 'Basic')

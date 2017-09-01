@@ -9,7 +9,7 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)
 
 export function setupProxyHeaders (ctx) {
-    // Headers
+  // Headers
   function setOrAppendHeader (ctx, header, value) {
     if (!value) { return }
     if (ctx.header[header]) {
@@ -18,6 +18,7 @@ export function setupProxyHeaders (ctx) {
       ctx.header[header] = `${value}`
     }
   }
+
   setOrAppendHeader(ctx, 'X-Forwarded-For', ctx.request.ip)
   return setOrAppendHeader(ctx, 'X-Forwarded-Host', ctx.request.host)
 }

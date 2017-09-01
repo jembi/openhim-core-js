@@ -7,7 +7,7 @@ config.events = config.get('events')
 let normalizationBuffer
 
 if (!config.events) {
-    // maybe we're using outdated config
+  // maybe we're using outdated config
   config.events = config.get('visualizer')
   config.events.normalizationBuffer = config.events.orchestrationTsBufferMillis
 }
@@ -49,9 +49,9 @@ export function saveEvents (trxEvents, callback) {
   const now = new Date()
   for (const event of Array.from(trxEvents)) { event.created = now }
 
-    // bypass mongoose for quick batch inserts
-    // index needs to be ensured manually since the collection might not already exist
-  return events.EventModel.collection.ensureIndex({ created: 1 }, { expireAfterSeconds: 3600 }, () => events.EventModel.collection.insert(trxEvents, err => callback(err)))
+  // bypass mongoose for quick batch inserts
+  // index needs to be ensured manually since the collection might not already exist
+  return events.EventModel.collection.ensureIndex({created: 1}, {expireAfterSeconds: 3600}, () => events.EventModel.collection.insert(trxEvents, err => callback(err)))
 }
 
 function createRouteEvents (dst, transactionId, channel, route, type, tsAdjustment, autoRetryAttempt) {
@@ -174,7 +174,7 @@ export function createSecondaryRouteEvents (dst, transactionId, requestTimestamp
     createRouteEvents(dst, transactionId, channel, route, 'route', tsDiff)
 
     if (route.orchestrations) {
-            // find TS difference
+      // find TS difference
       tsDiff = calculateEarliestRouteDiff(startTS, route.orchestrations)
       item = Array.from(route.orchestrations).map((orch) => createRouteEvents(dst, transactionId, channel, orch, 'orchestration', tsDiff))
     }

@@ -7,7 +7,7 @@ import { ChannelModelAPI } from '../model/channels'
 import * as utils from '../utils'
 
 export function * addContactGroup () {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addContactGroup denied.`, 'info')
     return
@@ -26,7 +26,7 @@ export function * addContactGroup () {
 }
 
 export function * getContactGroup (contactGroupId) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getContactGroup denied.`, 'info')
     return
@@ -49,7 +49,7 @@ export function * getContactGroup (contactGroupId) {
 }
 
 export function * updateContactGroup (contactGroupId) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateContactGroup denied.`, 'info')
     return
@@ -58,7 +58,7 @@ export function * updateContactGroup (contactGroupId) {
   contactGroupId = unescape(contactGroupId)
   const contactGroupData = this.request.body
 
-    // Ignore _id if it exists, a user shouldnt be able to update the internal id
+  // Ignore _id if it exists, a user shouldnt be able to update the internal id
   if (contactGroupData._id) {
     delete contactGroupData._id
   }
@@ -73,7 +73,7 @@ export function * updateContactGroup (contactGroupId) {
 }
 
 export function * removeContactGroup (contactGroupId) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeContactGroup denied.`, 'info')
     return
@@ -104,7 +104,7 @@ export function * removeContactGroup (contactGroupId) {
 }
 
 export function * getContactGroups () {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getContactGroups denied.`, 'info')
     return

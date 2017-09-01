@@ -18,11 +18,11 @@ export function * getMetrics (groupChannels, timeSeries, channelID) {
     }
   }
 
-  let { query } = this.request
+  let {query} = this.request
   logger.debug(`Metrics query object: ${JSON.stringify(query)}`)
-  const { startDate } = query
+  const {startDate} = query
   delete query.startDate
-  const { endDate } = query
+  const {endDate} = query
   delete query.endDate
 
   if (Object.keys(query).length === 0) {
@@ -33,7 +33,7 @@ export function * getMetrics (groupChannels, timeSeries, channelID) {
   if (m != null && m[0] != null && m[0]._id != null && m[0]._id.year != null) {
     m = m.map((item) => {
       const date = _.assign({}, item._id)
-            // adapt for moment (month starting at 0)
+      // adapt for moment (month starting at 0)
       if (date.month) { date.month -= 1 }
       item.timestamp = moment.utc(date)
       return item

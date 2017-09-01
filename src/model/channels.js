@@ -85,7 +85,7 @@ const ChannelDef = {
   pollingSchedule: String,
   requestBody: Boolean,
   responseBody: Boolean,
-  allow: [{ type: String, required: true }],
+  allow: [{type: String, required: true}],
   whitelist: [String],
   authType: {
     type: String, default: 'private', enum: ['private', 'public']
@@ -135,7 +135,7 @@ export { RouteDef }
  * of users or group that are authroised to send messages to this channel.
  */
 const ChannelSchema = new Schema(ChannelDef)
-ChannelSchema.index('name', { unique: true })
+ChannelSchema.index('name', {unique: true})
 
 export const ChannelModelAPI = connectionAPI.model('Channel', ChannelSchema)
 export const ChannelModel = connectionDefault.model('Channel', ChannelSchema)

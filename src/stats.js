@@ -12,7 +12,7 @@ const sdc = new SDC(statsdServer)
 
 export function incrementTransactionCount (ctx, done) {
   logger.info(`sending counts to statsd for ${domain}.${ctx.authorisedChannel._id}`)
-  const { transactionStatus } = ctx
+  const {transactionStatus} = ctx
   try {
     sdc.increment(`${domain}.channels`) // Overall Counter
     sdc.increment(`${domain}.channels.${transactionStatus}`) // Overall Transaction Status
@@ -20,7 +20,7 @@ export function incrementTransactionCount (ctx, done) {
     sdc.increment(`${domain}.channels.${ctx.authorisedChannel._id}.statuses.${transactionStatus}`) // Per Channel Status
 
     if (ctx.mediatorResponse != null) {
-            // Check for custom mediator metrics
+      // Check for custom mediator metrics
       let metric
       if (ctx.mediatorResponse.metrics != null) {
         for (metric of Array.from(ctx.mediatorResponse.metrics)) {
@@ -82,7 +82,7 @@ export function incrementTransactionCount (ctx, done) {
 
 export function measureTransactionDuration (ctx, done) {
   logger.info(`sending durations to statsd for ${domain}.${ctx.authorisedChannel._id}`)
-  const { transactionStatus } = ctx
+  const {transactionStatus} = ctx
 
   try {
     sdc.timing(`${domain}.channels`, ctx.timer) // Overall Timer
@@ -149,7 +149,7 @@ export function nonPrimaryRouteRequestCount (ctx, route, done) {
       sdc.increment(`${domain}.channels.${ctx.authorisedChannel._id}.nonPrimaryRoutes.${route.name}.statusCodes.${route.response.status}.orchestrations.${orchestrationName}`)
       sdc.increment(`${domain}.channels.${ctx.authorisedChannel._id}.nonPrimaryRoutes.${route.name}.statusCodes.${route.response.status}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`)
 
-            // Log custom orchestration metrics
+      // Log custom orchestration metrics
       if (orchestration.metrics != null) {
         return (() => {
           const result = []

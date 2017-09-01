@@ -68,11 +68,11 @@ export function storeTransaction (ctx, done) {
     tx.autoRetryAttempt = ctx.currentAttempt
   }
 
-    // check if channel request body is false and remove - or if request body is empty
+  // check if channel request body is false and remove - or if request body is empty
   if ((ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
-        // reset request body
+    // reset request body
     tx.request.body = ''
-        // check if method is POST|PUT|PATCH - rerun not possible without request body
+    // check if method is POST|PUT|PATCH - rerun not possible without request body
     if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
       tx.canRerun = false
     }
@@ -102,9 +102,9 @@ export function storeResponse (ctx, done) {
     timestamp: ctx.response.timestamp
   }
 
-    // check if channel response body is false and remove
+  // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
-        // reset request body - primary route
+    // reset request body - primary route
     res.body = ''
   }
 
@@ -115,7 +115,7 @@ export function storeResponse (ctx, done) {
 
   utils.enforceMaxBodiesSize(ctx, update.response)
 
-    // Set status from mediator
+  // Set status from mediator
   if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
     update.status = ctx.mediatorResponse.status
   }
@@ -132,7 +132,7 @@ export function storeResponse (ctx, done) {
     if (ctx.mediatorResponse.properties) { update.properties = ctx.mediatorResponse.properties }
   }
 
-  return transactions.TransactionModel.findOneAndUpdate({ _id: ctx.transactionId }, update, { runValidators: true }, (err, tx) => {
+  return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
     if (err) {
       logger.error(`Could not save response metadata for transaction: ${ctx.transactionId}. ${err}`)
       return done(err)
@@ -147,7 +147,7 @@ export function storeResponse (ctx, done) {
 }
 
 export function storeNonPrimaryResponse (ctx, route, done) {
-    // check if channel response body is false and remove
+  // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
     route.response.body = ''
   }
@@ -156,7 +156,7 @@ export function storeNonPrimaryResponse (ctx, route, done) {
     if ((route.request != null ? route.request.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.request) }
     if ((route.response != null ? route.response.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.response) }
 
-    return transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, { $push: { routes: route } }, (err, tx) => {
+    return transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {
       if (err) {
         logger.error(err)
       }
@@ -208,7 +208,7 @@ export function setFinalStatus (ctx, callback) {
         }
       }
 
-            // In all other cases mark as completed
+      // In all other cases mark as completed
       if (tx.status === 'Processing') {
         tx.status = transactionStatus.COMPLETED
       }
@@ -232,7 +232,7 @@ export function setFinalStatus (ctx, callback) {
     return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {}, (err, tx) => {
       callback(tx)
 
-            // queue for autoRetry
+      // queue for autoRetry
       if (update.autoRetry) {
         autoRetryUtils.queueForRetry(tx)
       }

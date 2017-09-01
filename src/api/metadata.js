@@ -39,11 +39,26 @@ function getUniqueIdentifierForCollection (collection, doc) {
   let uid
   let uidKey
   switch (collection) {
-    case 'Channels': uidKey = 'name'; uid = doc.name; break
-    case 'Clients': uidKey = 'clientID'; uid = doc.clientID; break
-    case 'Mediators': uidKey = 'urn'; uid = doc.urn; break
-    case 'Users': uidKey = 'email'; uid = doc.email; break
-    case 'ContactGroups': uidKey = 'groups'; uid = doc.groups; break
+    case 'Channels':
+      uidKey = 'name'
+      uid = doc.name
+      break
+    case 'Clients':
+      uidKey = 'clientID'
+      uid = doc.clientID
+      break
+    case 'Mediators':
+      uidKey = 'urn'
+      uid = doc.urn
+      break
+    case 'Users':
+      uidKey = 'email'
+      uid = doc.email
+      break
+    case 'ContactGroups':
+      uidKey = 'groups'
+      uid = doc.groups
+      break
     default:
       logger.debug(`Unhandeled case for ${collection} in getUniqueIdentifierForCollection`)
       break
@@ -66,7 +81,7 @@ function buildResponseObject (model, doc, status, message, uid) {
 
 // API endpoint that returns metadata for export
 export function * getMetadata () {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', this.authenticated)) {
     return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getMetadata denied.`, 'info')
   }
@@ -75,7 +90,7 @@ export function * getMetadata () {
     const exportObject = {}
     const params = this.request.query
 
-        // Return all documents from all collections for export
+    // Return all documents from all collections for export
     for (const col in collections) {
       exportObject[col] = yield collections[col].find().lean().exec()
       for (let doc of Array.from(exportObject[col])) {
@@ -94,7 +109,7 @@ export function * getMetadata () {
 }
 
 function * handleMetadataPost (action, that) {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', that.authenticated)) {
     return utils.logAndSetResponse(that, 403, `User ${that.authenticated.email} is not an admin, API access to importMetadata denied.`, 'info')
   }
@@ -115,7 +130,7 @@ function * handleMetadataPost (action, that) {
             throw new Error('Invalid Collection in Import Object')
           }
 
-                    // Keystore model does not have a uid other than _id and may not contain more than one entry
+          // Keystore model does not have a uid other than _id and may not contain more than one entry
           if (key === 'Keystore') {
             result = yield collections[key].find().exec()
             uid = ''

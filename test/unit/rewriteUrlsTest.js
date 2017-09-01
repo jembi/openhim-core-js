@@ -14,13 +14,13 @@ describe('Rewrite URLs middleware', () => {
   })
   describe('.invertPathTransform', () =>
 
-        it('should invert various path transforms', () => {
-          rewriteUrls.invertPathTransform('s/one/two/').should.be.exactly('s/two/one/')
-          rewriteUrls.invertPathTransform('s/one/two').should.be.exactly('s/two/one/')
-          rewriteUrls.invertPathTransform('s/one/two/g').should.be.exactly('s/two/one/g')
-          return rewriteUrls.invertPathTransform('s/one/two/gi').should.be.exactly('s/two/one/gi')
-        })
-    )
+    it('should invert various path transforms', () => {
+      rewriteUrls.invertPathTransform('s/one/two/').should.be.exactly('s/two/one/')
+      rewriteUrls.invertPathTransform('s/one/two').should.be.exactly('s/two/one/')
+      rewriteUrls.invertPathTransform('s/one/two/g').should.be.exactly('s/two/one/g')
+      return rewriteUrls.invertPathTransform('s/one/two/gi').should.be.exactly('s/two/one/gi')
+    })
+  )
 
   describe('.fetchRewriteConfig', () => {
     const currentChannel = {

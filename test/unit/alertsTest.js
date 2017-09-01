@@ -44,12 +44,14 @@ const testGroup1 = new ContactGroupModel({
       method: 'email',
       maxAlerts: '1 per day'
     }
-  ] })
+  ]
+})
 
 const testGroup2 = new ContactGroupModel({
   _id: 'bbb908908ccc98cc1d0888aa',
   group: 'group2',
-  users: [{ user: 'one@openhim.org', method: 'email' }] })
+  users: [{user: 'one@openhim.org', method: 'email'}]
+})
 
 const testFailureRate = 50
 
@@ -67,10 +69,11 @@ const testChannel = new ChannelModel({
       condition: 'status',
       status: '5xx',
       groups: ['bbb908908ccc98cc1d0888aa'],
-      users: [{ user: 'two@openhim.org', method: 'sms' }],
+      users: [{user: 'two@openhim.org', method: 'sms'}],
       failureRate: testFailureRate
     }
-  ] })
+  ]
+})
 
 const disabledChannel = new ChannelModel({
   name: 'disabled',
@@ -98,7 +101,8 @@ const autoRetryChannel = new ChannelModel({
       condition: 'auto-retry-max-attempted',
       groups: ['aaa908908bbb98cc1d0809ee']
     }
-  ] })
+  ]
+})
 
 const testTransactions = [
   // 0
@@ -210,24 +214,24 @@ describe('Transaction Alerts', () => {
     EventModel.ensureIndexes(() =>
       AlertModel.ensureIndexes(() =>
         testUser1.save(() => testUser2.save(() => testGroup1.save(() => testGroup2.save(() =>
-          testChannel.save(() => disabledChannel.save(() => autoRetryChannel.save(() => {
-            for (const testTransaction of Array.from(testTransactions)) {
-              testTransaction.channelID = testChannel._id
-            }
-            testTransactions[6].channelID = '000000000000000000000000' // a channel id that doesn't exist
-            testTransactions[7].channelID = disabledChannel._id
-            testTransactions[8].channelID = autoRetryChannel._id
-            testTransactions[9].channelID = autoRetryChannel._id
-            testTransactions[10].channelID = autoRetryChannel._id
-            testTransactions[11].channelID = autoRetryChannel._id
-            return done()
-          })
-           )
-           )
+            testChannel.save(() => disabledChannel.save(() => autoRetryChannel.save(() => {
+              for (const testTransaction of Array.from(testTransactions)) {
+                testTransaction.channelID = testChannel._id
+              }
+              testTransactions[6].channelID = '000000000000000000000000' // a channel id that doesn't exist
+              testTransactions[7].channelID = disabledChannel._id
+              testTransactions[8].channelID = autoRetryChannel._id
+              testTransactions[9].channelID = autoRetryChannel._id
+              testTransactions[10].channelID = autoRetryChannel._id
+              testTransactions[11].channelID = autoRetryChannel._id
+              return done()
+            })
+              )
+            )
+          )
+          )
+          )
         )
-         )
-         )
-         )
       )
     )
   )
@@ -261,7 +265,10 @@ describe('Transaction Alerts', () => {
     it('should return transactions that match an exact status', done =>
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '404' }, dateFrom, (err, results) => {
+        return alerts.findTransactionsMatchingStatus(testChannel, {
+          condition: 'status',
+          status: '404'
+        }, dateFrom, (err, results) => {
           results.length.should.be.exactly(1)
           results[0]._id.equals(testTransactions[0]._id).should.be.true()
           return done()
@@ -272,7 +279,10 @@ describe('Transaction Alerts', () => {
     it('should return transactions that have a matching status in a route response', done =>
       testTransactions[1].save((err) => {
         if (err) { return done(err) }
-        return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '404' }, dateFrom, (err, results) => {
+        return alerts.findTransactionsMatchingStatus(testChannel, {
+          condition: 'status',
+          status: '404'
+        }, dateFrom, (err, results) => {
           results.length.should.be.exactly(1)
           results[0]._id.equals(testTransactions[1]._id).should.be.true()
           return done()
@@ -286,7 +296,10 @@ describe('Transaction Alerts', () => {
         if (err) { return done(err) }
         return testTransactions[6].save((err) => {
           if (err) { return done(err) }
-          return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '404' }, dateFrom, (err, results) => {
+          return alerts.findTransactionsMatchingStatus(testChannel, {
+            condition: 'status',
+            status: '404'
+          }, dateFrom, (err, results) => {
             results.length.should.be.exactly(1)
             results[0]._id.equals(testTransactions[0]._id).should.be.true()
             return done()
@@ -299,7 +312,10 @@ describe('Transaction Alerts', () => {
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
         const newFrom = moment().add(1, 'days').toDate()
-        return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '404' }, newFrom, (err, results) => {
+        return alerts.findTransactionsMatchingStatus(testChannel, {
+          condition: 'status',
+          status: '404'
+        }, newFrom, (err, results) => {
           results.length.should.be.exactly(0)
           return done()
         })
@@ -318,7 +334,10 @@ describe('Transaction Alerts', () => {
               if (err) { return done(err) }
               return testTransactions[6].save((err) => {
                 if (err) { return done(err) }
-                return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '4xx' }, dateFrom, (err, results) => {
+                return alerts.findTransactionsMatchingStatus(testChannel, {
+                  condition: 'status',
+                  status: '4xx'
+                }, dateFrom, (err, results) => {
                   results.length.should.be.exactly(3)
                   const resultIDs = results.map(result => result._id)
                   resultIDs.should.containEql(testTransactions[0]._id)
@@ -341,7 +360,11 @@ describe('Transaction Alerts', () => {
           if (err) { return done(err) }
           return testTransactions[3].save((err) => {
             if (err) { return done(err) }
-            return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '500', failureRate: testFailureRate }, dateFrom, (err, results) => {
+            return alerts.findTransactionsMatchingStatus(testChannel, {
+              condition: 'status',
+              status: '500',
+              failureRate: testFailureRate
+            }, dateFrom, (err, results) => {
               // only one 500 transaction, but failureRate is 50%
               results.length.should.be.exactly(0)
               return done()
@@ -360,7 +383,11 @@ describe('Transaction Alerts', () => {
             if (err) { return done(err) }
             return testTransactions[4].save((err) => {
               if (err) { return done(err) }
-              return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '500', failureRate: testFailureRate }, dateFrom, (err, results) => {
+              return alerts.findTransactionsMatchingStatus(testChannel, {
+                condition: 'status',
+                status: '500',
+                failureRate: testFailureRate
+              }, dateFrom, (err, results) => {
                 results.length.should.be.exactly(2)
                 const resultIDs = results.map(result => result._id)
                 resultIDs.should.containEql(testTransactions[3]._id)
@@ -384,7 +411,11 @@ describe('Transaction Alerts', () => {
               if (err) { return done(err) }
               return testTransactions[5].save((err) => {
                 if (err) { return done(err) }
-                return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '500', failureRate: testFailureRate }, dateFrom, (err, results) => {
+                return alerts.findTransactionsMatchingStatus(testChannel, {
+                  condition: 'status',
+                  status: '500',
+                  failureRate: testFailureRate
+                }, dateFrom, (err, results) => {
                   results.length.should.be.exactly(3)
                   const resultIDs = results.map(result => result._id)
                   resultIDs.should.containEql(testTransactions[3]._id)
@@ -417,7 +448,11 @@ describe('Transaction Alerts', () => {
               if (err) { return done(err) }
               return testTransactions[4].save((err) => {
                 if (err) { return done(err) }
-                return alerts.findTransactionsMatchingStatus(testChannel, { condition: 'status', status: '500', failureRate: testFailureRate }, dateFrom, (err, results) => {
+                return alerts.findTransactionsMatchingStatus(testChannel, {
+                  condition: 'status',
+                  status: '500',
+                  failureRate: testFailureRate
+                }, dateFrom, (err, results) => {
                   results.length.should.be.exactly(0)
                   return done()
                 })
@@ -488,7 +523,8 @@ describe('Transaction Alerts', () => {
     }
 
     const mockContactHandler = function (spy, err) {
-      if (err == null) { err = null } return function (method, contactAddress, title, messagePlain, messageHTML, callback) {
+      if (err == null) { err = null }
+      return function (method, contactAddress, title, messagePlain, messageHTML, callback) {
         spy(method, contactAddress, title, messagePlain, messageHTML)
         return callback(err)
       }
@@ -560,7 +596,7 @@ describe('Transaction Alerts', () => {
       })
     })
 
-    it("should not send alerts to users with a maxAlerts restriction if they've already received an alert for the same day", (done) => {
+    it('should not send alerts to users with a maxAlerts restriction if they\'ve already received an alert for the same day', (done) => {
       const contactSpy = sinon.spy()
       return testTransactions[0].save((err) => {
         if (err) { return done(err) }

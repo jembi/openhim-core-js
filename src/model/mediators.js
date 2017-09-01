@@ -11,8 +11,8 @@ export const configDef = {
   type: {
     type: String, enum: exports.configParamTypes
   },
-  values: [{ type: String }],
-  template: { type: Array },
+  values: [{type: String}],
+  template: {type: Array},
   array: Boolean
 }
 

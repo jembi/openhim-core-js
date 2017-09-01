@@ -63,7 +63,7 @@ describe('Polling tests', () => {
       polling.setupAgenda(agendaSpy)
       return polling.registerPollingChannel(testChannel, () => {
         agendaSpy.cancel.calledOnce.should.be.true
-        agendaSpy.cancel.getCall(0).args[0].should.eql({ name: `polling-job-${testChannel._id}` })
+        agendaSpy.cancel.getCall(0).args[0].should.eql({name: `polling-job-${testChannel._id}`})
         return done()
       })
     })
@@ -96,7 +96,7 @@ describe('Polling tests', () => {
       polling.setupAgenda(agendaSpy)
       return polling.removePollingChannel(testChannel, (err) => {
         agendaSpy.cancel.calledOnce.should.be.true
-        agendaSpy.cancel.getCall(0).args[0].should.eql({ name: `polling-job-${testChannel._id}` })
+        agendaSpy.cancel.getCall(0).args[0].should.eql({name: `polling-job-${testChannel._id}`})
         return done()
       })
     })

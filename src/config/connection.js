@@ -11,7 +11,7 @@ function getMongoOptions () {
   return {
     db: {
       readPreference: config.mongo.openHIMApiReadPreference,
-      readConcern: { level: config.mongo.openHIMApiReadConcern },
+      readConcern: {level: config.mongo.openHIMApiReadConcern},
       w: config.mongo.openHIMApiWriteConcern
     }
   }

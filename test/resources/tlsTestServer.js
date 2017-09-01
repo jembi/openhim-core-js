@@ -2,7 +2,7 @@
 const https = require('https')
 const fs = require('fs')
 const path = require('path')
-const { path: appRoot } = require('app-root-path')
+const {path: appRoot} = require('app-root-path')
 
 const options = {
   key: fs.readFileSync(path.resolve(__dirname, 'trust-tls/key1.pem')),
@@ -15,7 +15,7 @@ const options = {
 
 const mockServer = https.createServer(options, (req, res) => {
   console.log(`Recieved request: ${req.url}`)
-  res.writeHead(200, { 'Content-Type': 'text/plain' })
+  res.writeHead(200, {'Content-Type': 'text/plain'})
   res.end('secured Response')
 })
 

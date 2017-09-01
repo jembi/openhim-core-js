@@ -12,7 +12,7 @@ const sdc = new SDC(statsdServer)
 export function * koaMiddleware (next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-    // the body contains the key
+  // the body contains the key
   const transaction = tcpAdapter.popTransaction(this.body)
 
   this.body = transaction.data

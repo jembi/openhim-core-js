@@ -12,7 +12,8 @@ describe('API authorisation test', () => {
     passwordAlgorithm: 'sha512',
     passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e',
     passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
-    groups: ['HISP', 'group2'] })
+    groups: ['HISP', 'group2']
+  })
 
   const user2 = new UserModelAPI({
     firstname: 'Random',
@@ -21,7 +22,8 @@ describe('API authorisation test', () => {
     passwordAlgorithm: 'sha512',
     passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e',
     passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
-    groups: ['nothing', 'here'] })
+    groups: ['nothing', 'here']
+  })
 
   const user3 = new UserModelAPI({
     firstname: 'Random',
@@ -30,7 +32,8 @@ describe('API authorisation test', () => {
     passwordAlgorithm: 'sha512',
     passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e',
     passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
-    groups: ['admin'] })
+    groups: ['admin']
+  })
 
   before((done) => {
     const channel1 = new ChannelModelAPI({
@@ -45,7 +48,8 @@ describe('API authorisation test', () => {
       }
       ],
       txViewAcl: ['group1', 'group2'],
-      txRerunAcl: ['group2'] })
+      txRerunAcl: ['group2']
+    })
 
     const channel2 = new ChannelModelAPI({
       name: 'TestChannel2 - api authorisation',
@@ -59,7 +63,8 @@ describe('API authorisation test', () => {
       }
       ],
       txViewAcl: ['group2', 'group3'],
-      txRerunAcl: ['group1', 'group3'] })
+      txRerunAcl: ['group1', 'group3']
+    })
 
     const channel3 = new ChannelModelAPI({
       name: 'TestChannel3 - api authorisation',
@@ -73,7 +78,8 @@ describe('API authorisation test', () => {
       }
       ],
       txViewAcl: ['group4'],
-      txRerunAcl: ['group4'] })
+      txRerunAcl: ['group4']
+    })
 
     return channel1.save(() =>
       channel2.save(() =>
@@ -109,7 +115,7 @@ describe('API authorisation test', () => {
         }
         return done()
       }
-      , err => done(err))
+        , err => done(err))
     })
 
     it('should return an empty array when there are no channel that a user can view', (done) => {
@@ -122,7 +128,7 @@ describe('API authorisation test', () => {
         }
         return done()
       }
-      , err => done(err))
+        , err => done(err))
     })
 
     return it('should return all channels for viewing if a user is in the admin group', (done) => {
@@ -135,7 +141,7 @@ describe('API authorisation test', () => {
         }
         return done()
       }
-      , err => done(err))
+        , err => done(err))
     })
   })
 
@@ -150,7 +156,7 @@ describe('API authorisation test', () => {
         }
         return done()
       }
-      , err => done(err))
+        , err => done(err))
     })
 
     it('should return an empty array when there are no channel that a user can rerun', (done) => {
@@ -163,7 +169,7 @@ describe('API authorisation test', () => {
         }
         return done()
       }
-      , err => done(err))
+        , err => done(err))
     })
 
     return it('should return all channels for rerunning if a user is in the admin group', (done) => {
@@ -176,7 +182,7 @@ describe('API authorisation test', () => {
         }
         return done()
       }
-      , err => done(err))
+        , err => done(err))
     })
   })
 })

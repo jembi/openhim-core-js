@@ -16,15 +16,15 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
 function getProjectionObject (filterRepresentation) {
   switch (filterRepresentation) {
     case 'simpledetails':
-            // view minimum required data for audit details view
+      // view minimum required data for audit details view
       return {}
     case 'full':
-            // view all audit data
+      // view all audit data
       return {}
     default:
-            // no filterRepresentation supplied - simple view
-            // view minimum required data for audits
-      return { participantObjectIdentification: 0, activeParticipant: 0, rawMessage: 0 }
+      // no filterRepresentation supplied - simple view
+      // view minimum required data for audits
+      return {participantObjectIdentification: 0, activeParticipant: 0, rawMessage: 0}
   }
 }
 
@@ -41,7 +41,7 @@ function auditLogUsed (auditId, outcome, user) {
  * Adds a Audit
  */
 export function * addAudit () {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addAudit denied.`, 'info')
     return
@@ -69,7 +69,7 @@ export function * addAudit () {
  * Retrieves the list of Audits
  */
 export function * getAudits () {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAudits denied.`, 'info')
     return
@@ -79,20 +79,20 @@ export function * getAudits () {
     let filters
     const filtersObject = this.request.query
 
-        // get limit and page values
+    // get limit and page values
     const filterLimit = filtersObject.filterLimit != null ? filtersObject.filterLimit : 0
     const filterPage = filtersObject.filterPage != null ? filtersObject.filterPage : 0
-    const { filterRepresentation } = filtersObject
+    const {filterRepresentation} = filtersObject
 
-        // remove limit/page/filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
+    // remove limit/page/filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
     delete filtersObject.filterLimit
     delete filtersObject.filterPage
     delete filtersObject.filterRepresentation
 
-        // determine skip amount
+    // determine skip amount
     const filterSkip = filterPage * filterLimit
 
-        // get projection object
+    // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
     if (filtersObject.filters != null) {
@@ -101,18 +101,18 @@ export function * getAudits () {
       filters = {}
     }
 
-        // parse date to get it into the correct format for querying
+    // parse date to get it into the correct format for querying
     if (filters['eventIdentification.eventDateTime']) {
       filters['eventIdentification.eventDateTime'] = JSON.parse(filters['eventIdentification.eventDateTime'])
     }
 
     if (filters['participantObjectIdentification.participantObjectID']) {
-            // filter by AND on same property for patientID and objectID
+      // filter by AND on same property for patientID and objectID
       if (filters['participantObjectIdentification.participantObjectID'].type) {
         const patientID = new RegExp(filters['participantObjectIdentification.participantObjectID'].patientID)
         const objectID = new RegExp(filters['participantObjectIdentification.participantObjectID'].objectID)
-        filters.$and = [{ 'participantObjectIdentification.participantObjectID': patientID }, { 'participantObjectIdentification.participantObjectID': objectID }]
-                // remove participantObjectIdentification.participantObjectID property as we create a new '$and' operator
+        filters.$and = [{'participantObjectIdentification.participantObjectID': patientID}, {'participantObjectIdentification.participantObjectID': objectID}]
+        // remove participantObjectIdentification.participantObjectID property as we create a new '$and' operator
         delete filters['participantObjectIdentification.participantObjectID']
       } else {
         const participantObjectID = JSON.parse(filters['participantObjectIdentification.participantObjectID'])
@@ -120,18 +120,18 @@ export function * getAudits () {
       }
     }
 
-        // execute the query
+    // execute the query
     this.body = yield AuditModel
-            .find(filters, projectionFiltersObject)
-            .skip(filterSkip)
-            .limit(parseInt(filterLimit, 10))
-            .sort({ 'eventIdentification.eventDateTime': -1 })
-            .exec()
+      .find(filters, projectionFiltersObject)
+      .skip(filterSkip)
+      .limit(parseInt(filterLimit, 10))
+      .sort({'eventIdentification.eventDateTime': -1})
+      .exec()
 
-        // audit each retrieved record, but only for non-basic representation requests
+    // audit each retrieved record, but only for non-basic representation requests
     if ((filterRepresentation === 'full') || (filterRepresentation === 'simpledetails')) {
       return Array.from(this.body).map((record) =>
-                auditLogUsed(record._id, atna.OUTCOME_SUCCESS, this.authenticated))
+        auditLogUsed(record._id, atna.OUTCOME_SUCCESS, this.authenticated))
     }
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not retrieve audits via the API: ${e}`, 'error')
@@ -142,22 +142,22 @@ export function * getAudits () {
  * Retrieves the details for a specific Audit Record
  */
 export function * getAuditById (auditId) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAuditById denied.`, 'info')
     return
   }
 
-    // Get the values to use
+  // Get the values to use
   auditId = unescape(auditId)
 
   try {
-        // get projection object
+    // get projection object
     const projectionFiltersObject = getProjectionObject('full')
 
     const result = yield AuditModel.findById(auditId, projectionFiltersObject).exec()
 
-        // Test if the result if valid
+    // Test if the result if valid
     if (!result) {
       this.body = `Could not find audits record with ID: ${auditId}`
       this.status = 404
@@ -176,7 +176,7 @@ export function * getAuditById (auditId) {
  * construct audit filtering dropdown options
  */
 export function * getAuditsFilterOptions () {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAudits denied.`, 'info')
     return

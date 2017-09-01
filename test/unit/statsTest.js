@@ -48,7 +48,7 @@ describe('Stats Middleware ', () => {
   ctx.routes = []
   ctx.mediatorResponse = new Object()
   ctx.mediatorResponse.properties =
-        { name: 'primary mediator' }
+    {name: 'primary mediator'}
   ctx.mediatorResponse.metrics = []
   ctx.mediatorResponse.orchestrations = [{
     name: 'Lab API',
@@ -72,7 +72,7 @@ describe('Stats Middleware ', () => {
   }
   ]
 
-    // Non Primary routes
+  // Non Primary routes
   ctx.routes.push({
     name: 'secondary route',
     request: {
@@ -115,7 +115,7 @@ describe('Stats Middleware ', () => {
     ]
   })
 
-    // Adding Custom Metrics
+  // Adding Custom Metrics
   ctx.mediatorResponse.metrics.push({
     name: 'my-counter-metric',
     type: 'counter',
@@ -132,7 +132,7 @@ describe('Stats Middleware ', () => {
     value: 1522
   })
 
-    // Has no groups
+  // Has no groups
   requestTimestamp = (new Date()).toString()
   const ctx2 = new Object()
   ctx2.authorisedChannel = channel
@@ -146,7 +146,7 @@ describe('Stats Middleware ', () => {
   ctx2.routes = []
   ctx2.mediatorResponse = new Object()
   ctx2.mediatorResponse.properties =
-        { name: 'primary mediator' }
+    {name: 'primary mediator'}
   ctx2.mediatorResponse.metrics = []
   ctx2.mediatorResponse.orchestrations = [{
     name: 'Lab API',
@@ -169,7 +169,7 @@ describe('Stats Middleware ', () => {
   }
   ]
 
-    // Non Primary routes
+  // Non Primary routes
   ctx2.routes.push({
     name: 'secondary route',
     request: {
@@ -211,7 +211,7 @@ describe('Stats Middleware ', () => {
     ]
   })
 
-    // Adding Custom Metrics
+  // Adding Custom Metrics
   ctx2.mediatorResponse.metrics.push({
     name: 'my-counter-metric',
     type: 'counter',
@@ -260,38 +260,38 @@ describe('Stats Middleware ', () => {
     }
   })
 
-    // TODO : Fix this test
+  // TODO : Fix this test
   it('Should measure transaction duration', (done) => {
     ctx.timer = 10
     return stats.measureTransactionDuration(ctx, () =>
-            stats.measureTransactionDuration(ctx2, () =>
-                stats.nonPrimaryRouteDurations(ctx, ctx.routes[0], () =>
-                    stats.nonPrimaryRouteDurations(ctx2, ctx2.routes[0], () =>
-                        s.expectMessage(`${domain}.channels:10|ms`, () =>
-                            s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:5|ms`, () =>
-                                s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:5|ms`, () =>
-                                    s.expectMessage(`${domain}.channels.Successful:10|ms`, () =>
-                                        s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf:10|ms`, () =>
-                                            s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful:10|ms`, () =>
-                                                s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route:10|ms`, () =>
-                                                    s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms`, () =>
-                                                        s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.group.Lab API:5|ms`, () =>
-                                                            s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms`, () =>
-                                                                s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms`,
-                                                                    () => s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms`, done))
-                                                            )
-                                                        )
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
+      stats.measureTransactionDuration(ctx2, () =>
+        stats.nonPrimaryRouteDurations(ctx, ctx.routes[0], () =>
+          stats.nonPrimaryRouteDurations(ctx2, ctx2.routes[0], () =>
+            s.expectMessage(`${domain}.channels:10|ms`, () =>
+              s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API:5|ms`, () =>
+                s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.group.Lab API.statusCodes.200:5|ms`, () =>
+                  s.expectMessage(`${domain}.channels.Successful:10|ms`, () =>
+                    s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf:10|ms`, () =>
+                      s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.statuses.Successful:10|ms`, () =>
+                        s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route:10|ms`, () =>
+                          s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.statusCodes.200:10|ms`, () =>
+                            s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.group.Lab API:5|ms`, () =>
+                              s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API:5|ms`, () =>
+                                s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.orchestrations.Lab API.statusCodes.200:5|ms`,
+                                  () => s.expectMessage(`${domain}.channels.ckjhfjwedsnfdsf.nonPrimaryRoutes.secondary route.orchestrations.Lab API:5|ms`, done))
+                              )
                             )
+                          )
                         )
+                      )
                     )
+                  )
                 )
+              )
             )
+          )
         )
+      )
+    )
   })
 })

@@ -38,8 +38,9 @@ const channel1 = new ChannelModel({
   urlPattern: 'test/sample',
   allow: ['PoC', 'Test1', 'Test2'],
   routes: [
-    { name: 'test route', host: 'localhost', port: 9876 }
-  ] })
+    {name: 'test route', host: 'localhost', port: 9876}
+  ]
+})
 
 const channel2 = new ChannelModel({
   _id: mongoose.Types.ObjectId('222222222222222222222222'),
@@ -47,8 +48,9 @@ const channel2 = new ChannelModel({
   urlPattern: 'test/sample',
   allow: ['PoC', 'Test1', 'Test2'],
   routes: [
-    { name: 'test route', host: 'localhost', port: 9876 }
-  ] })
+    {name: 'test route', host: 'localhost', port: 9876}
+  ]
+})
 
 const dateFrom = new Date()
 dateFrom.setHours(0, 0, 0, 0)

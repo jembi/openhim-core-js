@@ -30,7 +30,7 @@ function sendReports (job, flag, done) {
     to = moment().endOf('isoWeek').subtract(1, 'weeks').toDate()
   }
 
-    // Select the right subscribers for the report
+  // Select the right subscribers for the report
   if (flag === 'dailyReport') {
     fetchUsers = fetchDailySubscribers
   }
@@ -47,36 +47,35 @@ function sendReports (job, flag, done) {
       const deferred = Q.defer()
       userKey = user.email
       authorisation.getUserViewableChannels(user)
-                .then((channels) => {
-                  usersArray[userIndex] = user
-                  usersArray[userIndex].allowedChannels = channels
-                  for (const channel of Array.from(usersArray[userIndex].allowedChannels)) {
-                    channelMap[channel._id] = {
-                      user,
-                      channel
-                    }
-                  }
+        .then((channels) => {
+          usersArray[userIndex] = user
+          usersArray[userIndex].allowedChannels = channels
+          for (const channel of Array.from(usersArray[userIndex].allowedChannels)) {
+            channelMap[channel._id] = {
+              user,
+              channel
+            }
+          }
 
-                  userIndex++
-                  return deferred.resolve()
-                })
+          userIndex++
+          return deferred.resolve()
+        })
 
       return promises.push(deferred.promise)
     }
 
-        // Loop through the enriched user array
+    // Loop through the enriched user array
     const innerPromises = []
     return (Q.all(promises)).then(() => {
-            // Pre-Fetch report data into Channel Map
+      // Pre-Fetch report data into Channel Map
       for (const key in channelMap) {
         const obj = channelMap[key]
         const innerDeferred = Q.defer();
         ((innerDeferred, key, obj) =>
-                    fetchChannelReport(obj.channel, obj.user, flag, from, to, (err, item) => {
-                      channelReportMap[key] = item
-                      return innerDeferred.resolve()
-                    })
-                )(innerDeferred, key, obj)
+          fetchChannelReport(obj.channel, obj.user, flag, from, to, (err, item) => {
+            channelReportMap[key] = item
+            return innerDeferred.resolve()
+          }))(innerDeferred, key, obj)
 
         innerPromises.push(innerDeferred.promise)
       }
@@ -86,19 +85,19 @@ function sendReports (job, flag, done) {
           userKey = user.email
           for (const channel of Array.from(user.allowedChannels)) {
             if (reportMap[userKey]) {
-                            // Do nothing since object already exists
+              // Do nothing since object already exists
             } else {
-                            // Create the object
+              // Create the object
               reportMap[userKey] = {
                 email: user.email,
                 data: []
               }
             }
 
-                        // If report has been fetched get it from the map
+            // If report has been fetched get it from the map
             if (channelReportMap[channel._id]) {
               const data = channelReportMap[channel._id]
-                            // add report - always add if the channel is enabled (treating undefined status as enabled), otherwise only if there is data
+              // add report - always add if the channel is enabled (treating undefined status as enabled), otherwise only if there is data
               if ((data.channel.status == null) || (data.channel.status === 'enabled') || (data.data.length !== 0)) {
                 return reportMap[userKey].data.push(data)
               }
@@ -108,7 +107,7 @@ function sendReports (job, flag, done) {
           }
         }
 
-                // Iterate over reports and send the emails
+        // Iterate over reports and send the emails
         for (const key in reportMap) {
           const report = reportMap[key]
           if (flag === 'dailyReport') {
@@ -175,19 +174,19 @@ function calculateTotalsFromGrouping (data) {
   }
 
   data.data.forEach((val, index) =>
-        (() => {
-          const result = []
-          for (const key in totals) {
-            const value = totals[key]
-            if (key === 'avgResp') {
-              result.push(totals[key] += (((data.data[index] != null ? data.data[index][key] : undefined) != null) ? Math.round(data.data[index][key]) / 1000 : 0))
-            } else {
-              result.push(totals[key] += (((data.data[index] != null ? data.data[index][key] : undefined) != null) ? data.data[index][key] : 0))
-            }
-          }
-          return result
-        })()
-    )
+    (() => {
+      const result = []
+      for (const key in totals) {
+        const value = totals[key]
+        if (key === 'avgResp') {
+          result.push(totals[key] += (((data.data[index] != null ? data.data[index][key] : undefined) != null) ? Math.round(data.data[index][key]) / 1000 : 0))
+        } else {
+          result.push(totals[key] += (((data.data[index] != null ? data.data[index][key] : undefined) != null) ? data.data[index][key] : 0))
+        }
+      }
+      return result
+    })()
+  )
 
   return totals
 }
@@ -210,19 +209,19 @@ function fetchChannelReport (channel, user, flag, from, to, callback) {
   logger.info(`fetching ${flag} for #${channel.name} ${user.email} ${channel._id}`)
 
   return metrics.calculateMetrics(from, to, null, [channel._id], period)
-        .then((data) => {
-          item.channel = channel
-          item.data = data
-          return callback(null, item)
-        }).catch((err) => {
-          logger.error('Error calculating metrics: ', err)
-          return callback(err)
-        })
+    .then((data) => {
+      item.channel = channel
+      item.data = data
+      return callback(null, item)
+    }).catch((err) => {
+      logger.error('Error calculating metrics: ', err)
+      return callback(err)
+    })
 }
 
-const fetchDailySubscribers = callback => UserModel.find({ dailyReport: true }, callback)
+const fetchDailySubscribers = callback => UserModel.find({dailyReport: true}, callback)
 
-const fetchWeeklySubscribers = callback => UserModel.find({ weeklyReport: true }, callback)
+const fetchWeeklySubscribers = callback => UserModel.find({weeklyReport: true}, callback)
 
 function plainTemplate (report) {
   let text = `Generated on: ${new Date().toString()}`
@@ -262,8 +261,8 @@ export function setupAgenda (agenda) {
 
   agenda.define('send daily channel metrics', (job, done) => sendReports(job, 'dailyReport', done))
 
-  agenda.every(config.reports.weeklyReportAt, 'send weekly channel metrics', null, { timezone: utils.serverTimezone() })
-  return agenda.every(config.reports.dailyReportAt, 'send daily channel metrics', null, { timezone: utils.serverTimezone() })
+  agenda.every(config.reports.weeklyReportAt, 'send weekly channel metrics', null, {timezone: utils.serverTimezone()})
+  return agenda.every(config.reports.dailyReportAt, 'send daily channel metrics', null, {timezone: utils.serverTimezone()})
 }
 
 if (process.env.NODE_ENV === 'test') {

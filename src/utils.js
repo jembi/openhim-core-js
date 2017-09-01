@@ -18,7 +18,7 @@ export function logAndSetResponse (ctx, status, msg, logLevel) {
 
 const cacheValueStore = {}
 
-const { refreshMillis } = config.caching
+const {refreshMillis} = config.caching
 
 function getCachedValues (store, callback) {
   const lastCheck = cacheValueStore[`${store}`] != null ? cacheValueStore[`${store}`].lastCheck : undefined
@@ -36,9 +36,9 @@ function getCachedValues (store, callback) {
       return callback(null, results)
     }
 
-        // TODO make this more generic (had issues passing Channel.find as a param [higher order function])
+    // TODO make this more generic (had issues passing Channel.find as a param [higher order function])
     if (store === 'channels') {
-      return ChannelModel.find({}).sort({ priority: 1 }).exec((err, channels) => {
+      return ChannelModel.find({}).sort({priority: 1}).exec((err, channels) => {
         if (err) {
           return handler(err)
         }
@@ -104,7 +104,7 @@ const appendTextLength = Buffer.byteLength(appendText)
 export function enforceMaxBodiesSize (ctx, tx) {
   let enforced = false
 
-    // running total for all bodies
+  // running total for all bodies
   if ((ctx.totalBodyLength == null)) { ctx.totalBodyLength = 0 }
 
   let len = Buffer.byteLength(tx.body)

@@ -11,7 +11,7 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)
 
 export function authenticateUser (ctx, done) {
-  return ClientModel.findOne({ _id: ctx.request.header.clientid }, (err, client) => {
+  return ClientModel.findOne({_id: ctx.request.header.clientid}, (err, client) => {
     ctx.authenticated = client
     ctx.parentID = ctx.request.header.parentid
     ctx.taskID = ctx.request.header.taskid
@@ -33,8 +33,8 @@ export function * koaMiddleware (next) {
     return yield next
   } else {
     this.authenticated =
-            { ip: '127.0.0.1' }
-        // This is a public channel, allow rerun
+      {ip: '127.0.0.1'}
+    // This is a public channel, allow rerun
     if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthenticationMiddleware`, startTime) }
     return yield next
   }

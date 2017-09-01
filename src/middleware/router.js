@@ -36,7 +36,7 @@ export function numberOfPrimaryRoutes (routes) {
 const containsMultiplePrimaries = routes => numberOfPrimaryRoutes(routes) > 1
 
 function setKoaResponse (ctx, response) {
-    // Try and parse the status to an int if it is a string
+  // Try and parse the status to an int if it is a string
   let err
   if (typeof response.status === 'string') {
     try {
@@ -65,7 +65,9 @@ function setKoaResponse (ctx, response) {
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
-      case 'set-cookie': result.push(setCookiesOnContext(ctx, value)); break
+      case 'set-cookie':
+        result.push(setCookiesOnContext(ctx, value))
+        break
       case 'location':
         if ((response.status >= 300) && (response.status < 400)) {
           result.push(ctx.response.redirect(value))
@@ -73,10 +75,12 @@ function setKoaResponse (ctx, response) {
           result.push(ctx.response.set(key, value))
         }
         break
-      case 'content-type': result.push(ctx.response.type = value); break
+      case 'content-type':
+        result.push(ctx.response.type = value)
+        break
       default:
         try {
-                    // Strip the content and transfer encoding headers
+          // Strip the content and transfer encoding headers
           if ((key !== 'content-encoding') && (key !== 'transfer-encoding')) {
             result.push(ctx.response.set(key, value))
           }
@@ -99,22 +103,35 @@ function setCookiesOnContext (ctx, value) {
   for (let cValue = 0; cValue < value.length; cValue++) {
     let pVal
     const cKey = value[cValue]
-    const cOpts = { path: false, httpOnly: false } // clear out default values in cookie module
+    const cOpts = {path: false, httpOnly: false} // clear out default values in cookie module
     const cVals = {}
     const object = cookie.parse(cKey)
     for (const pKey in object) {
       pVal = object[pKey]
       const pKeyL = pKey.toLowerCase()
       switch (pKeyL) {
-        case 'max-age': cOpts.maxage = parseInt(pVal, 10); break
-        case 'expires': cOpts.expires = new Date(pVal); break
-        case 'path': case 'domain': case 'secure': case 'signed': case 'overwrite': cOpts[pKeyL] = pVal; break
-        case 'httponly': cOpts.httpOnly = pVal; break
-        default: cVals[pKey] = pVal
+        case 'max-age':
+          cOpts.maxage = parseInt(pVal, 10)
+          break
+        case 'expires':
+          cOpts.expires = new Date(pVal)
+          break
+        case 'path':
+        case 'domain':
+        case 'secure':
+        case 'signed':
+        case 'overwrite':
+          cOpts[pKeyL] = pVal
+          break
+        case 'httponly':
+          cOpts.httpOnly = pVal
+          break
+        default:
+          cVals[pKey] = pVal
       }
     }
 
-        // TODO : Refactor this code when possible
+    // TODO : Refactor this code when possible
     result.push((() => {
       const result1 = []
       for (const pKey in cVals) {
@@ -138,7 +155,7 @@ function handleServerError (ctx, err, route) {
     ctx.response.status = 500
     ctx.response.timestamp = new Date()
     ctx.response.body = 'An internal server error occurred'
-        // primary route error
+    // primary route error
     ctx.error = {
       message: err.message,
       stack: err.stack ? err.stack : undefined
@@ -199,132 +216,132 @@ function sendRequestToRoutes (ctx, routes, next) {
       if (route.primary) {
         ctx.primaryRoute = route
         promise = sendRequest(ctx, route, options)
-                    .then((response) => {
-                      logger.info(`executing primary route : ${route.name}`)
-                      if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-                            // handle mediator reponse
-                        const responseObj = JSON.parse(response.body)
-                        ctx.mediatorResponse = responseObj
+          .then((response) => {
+            logger.info(`executing primary route : ${route.name}`)
+            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+              // handle mediator reponse
+              const responseObj = JSON.parse(response.body)
+              ctx.mediatorResponse = responseObj
 
-                        if (responseObj.error != null) {
-                          ctx.autoRetry = true
-                          ctx.error = responseObj.error
-                        }
+              if (responseObj.error != null) {
+                ctx.autoRetry = true
+                ctx.error = responseObj.error
+              }
 
-                            // then set koa response from responseObj.response
-                        return setKoaResponse(ctx, responseObj.response)
-                      } else {
-                        return setKoaResponse(ctx, response)
-                      }
-                    }).then(() => {
-                      logger.info('primary route completed')
-                      return next()
-                    }).fail((reason) => {
-                        // on failure
-                      handleServerError(ctx, reason)
-                      return next()
-                    })
+              // then set koa response from responseObj.response
+              return setKoaResponse(ctx, responseObj.response)
+            } else {
+              return setKoaResponse(ctx, response)
+            }
+          }).then(() => {
+            logger.info('primary route completed')
+            return next()
+          }).fail((reason) => {
+            // on failure
+            handleServerError(ctx, reason)
+            return next()
+          })
       } else {
         logger.info(`executing non primary: ${route.name}`)
         promise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
-                    .then((routeObj) => {
-                      logger.info(`Storing non primary route responses ${route.name}`)
+          .then((routeObj) => {
+            logger.info(`Storing non primary route responses ${route.name}`)
 
-                      try {
-                        if (((routeObj != null ? routeObj.name : undefined) == null)) {
-                          routeObj =
-                                    { name: route.name }
-                        }
+            try {
+              if (((routeObj != null ? routeObj.name : undefined) == null)) {
+                routeObj =
+                  {name: route.name}
+              }
 
-                        if (((routeObj != null ? routeObj.response : undefined) == null)) {
-                          routeObj.response = {
-                            status: 500,
-                            timestamp: ctx.requestTimestamp
-                          }
-                        }
+              if (((routeObj != null ? routeObj.response : undefined) == null)) {
+                routeObj.response = {
+                  status: 500,
+                  timestamp: ctx.requestTimestamp
+                }
+              }
 
-                        if (((routeObj != null ? routeObj.request : undefined) == null)) {
-                          routeObj.request = {
-                            host: options.hostname,
-                            port: options.port,
-                            path,
-                            headers: ctx.request.header,
-                            querystring: ctx.request.querystring,
-                            method: ctx.request.method,
-                            timestamp: ctx.requestTimestamp
-                          }
-                        }
+              if (((routeObj != null ? routeObj.request : undefined) == null)) {
+                routeObj.request = {
+                  host: options.hostname,
+                  port: options.port,
+                  path,
+                  headers: ctx.request.header,
+                  querystring: ctx.request.querystring,
+                  method: ctx.request.method,
+                  timestamp: ctx.requestTimestamp
+                }
+              }
 
-                        return messageStore.storeNonPrimaryResponse(ctx, routeObj, () =>
-                                stats.nonPrimaryRouteRequestCount(ctx, routeObj, () => stats.nonPrimaryRouteDurations(ctx, routeObj, () => { }))
-                            )
-                      } catch (err) {
-                        return logger.error(err)
-                      }
-                    })
+              return messageStore.storeNonPrimaryResponse(ctx, routeObj, () =>
+                stats.nonPrimaryRouteRequestCount(ctx, routeObj, () => stats.nonPrimaryRouteDurations(ctx, routeObj, () => { }))
+              )
+            } catch (err) {
+              return logger.error(err)
+            }
+          })
       }
 
       promises.push(promise)
     }
 
     return (Q.all(promises)).then(() =>
-            messageStore.setFinalStatus(ctx, () => {
-              logger.info(`All routes completed for transaction: ${ctx.transactionId.toString()}`)
-              if (ctx.routes) {
-                logger.debug(`Storing route events for transaction: ${ctx.transactionId}`)
-                const done = (err) => {
-                  if (err) {
-                    return logger.error(err)
-                  }
-                }
-                const trxEvents = []
+      messageStore.setFinalStatus(ctx, () => {
+        logger.info(`All routes completed for transaction: ${ctx.transactionId.toString()}`)
+        if (ctx.routes) {
+          logger.debug(`Storing route events for transaction: ${ctx.transactionId}`)
+          const done = (err) => {
+            if (err) {
+              return logger.error(err)
+            }
+          }
+          const trxEvents = []
 
-                events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
-                return events.saveEvents(trxEvents, done)
-              }
-            })
-        )
+          events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
+          return events.saveEvents(trxEvents, done)
+        }
+      })
+    )
   })
 }
 
 // function to build fresh promise for transactions routes
 const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
-    sendRequest(ctx, route, options)
-        .then((response) => {
-          const routeObj = {}
-          routeObj.name = route.name
-          routeObj.request = {
-            host: options.hostname,
-            port: options.port,
-            path,
-            headers: ctx.request.header,
-            querystring: ctx.request.querystring,
-            method: ctx.request.method,
-            timestamp: ctx.requestTimestamp
-          }
+  sendRequest(ctx, route, options)
+    .then((response) => {
+      const routeObj = {}
+      routeObj.name = route.name
+      routeObj.request = {
+        host: options.hostname,
+        port: options.port,
+        path,
+        headers: ctx.request.header,
+        querystring: ctx.request.querystring,
+        method: ctx.request.method,
+        timestamp: ctx.requestTimestamp
+      }
 
-          if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-                // handle mediator reponse
-            const responseObj = JSON.parse(response.body)
-            routeObj.mediatorURN = responseObj['x-mediator-urn']
-            routeObj.orchestrations = responseObj.orchestrations
-            routeObj.properties = responseObj.properties
-            if (responseObj.metrics) { routeObj.metrics = responseObj.metrics }
-            routeObj.response = responseObj.response
-          } else {
-            routeObj.response = response
-          }
+      if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+        // handle mediator reponse
+        const responseObj = JSON.parse(response.body)
+        routeObj.mediatorURN = responseObj['x-mediator-urn']
+        routeObj.orchestrations = responseObj.orchestrations
+        routeObj.properties = responseObj.properties
+        if (responseObj.metrics) { routeObj.metrics = responseObj.metrics }
+        routeObj.response = responseObj.response
+      } else {
+        routeObj.response = response
+      }
 
-          if (!ctx.routes) { ctx.routes = [] }
-          ctx.routes.push(routeObj)
-          return routeObj
-        }).fail((reason) => {
-            // on failure
-          const routeObj = {}
-          routeObj.name = route.name
-          handleServerError(ctx, reason, routeObj)
-          return routeObj
-        })
+      if (!ctx.routes) { ctx.routes = [] }
+      ctx.routes.push(routeObj)
+      return routeObj
+    }).fail((reason) => {
+    // on failure
+      const routeObj = {}
+      routeObj.name = route.name
+      handleServerError(ctx, reason, routeObj)
+      return routeObj
+    })
 
 function sendRequest (ctx, route, options) {
   if ((route.type === 'tcp') || (route.type === 'mllp')) {
@@ -391,7 +408,7 @@ function sendHttpRequest (ctx, route, options) {
     const bufs = []
     routeRes.on('data', chunk => bufs.push(chunk))
 
-        // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+    // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
     return routeRes.on('end', () => {
       response.timestamp = new Date()
       const charset = obtainCharset(routeRes.headers)
@@ -528,8 +545,8 @@ function getDestinationPath (route, requestPath) {
  * Slashes can be escaped as \/
  */
 export function transformPath (path, expression) {
-    // replace all \/'s with a temporary ':' char so that we don't split on those
-    // (':' is safe for substitution since it cannot be part of the path)
+  // replace all \/'s with a temporary ':' char so that we don't split on those
+  // (':' is safe for substitution since it cannot be part of the path)
   let fromRegex
   const sExpression = expression.replace(/\\\//g, ':')
   const sub = sExpression.split('/')

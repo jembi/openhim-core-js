@@ -6,7 +6,7 @@ import * as utils from '../utils'
 
 // Endpoint that returns all visualizers
 export function * getVisualizers () {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getVisualizers denied.`, 'info')
   }
@@ -20,7 +20,7 @@ export function * getVisualizers () {
 
 // Endpoint that returns specific visualizer by visualizerId
 export function * getVisualizer (visualizerId) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getVisualizer denied.`, 'info')
   }
@@ -42,7 +42,7 @@ export function * getVisualizer (visualizerId) {
 
 // Endpoint to add new visualizer
 export function * addVisualizer () {
-    // Must be admin user
+  // Must be admin user
   if (!authorisation.inGroup('admin', this.authenticated)) {
     return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addVisualizer denied.`, 'info')
   }
@@ -66,7 +66,7 @@ export function * addVisualizer () {
 
 // Endpoint to update specific visualizer by visualizerId
 export function * updateVisualizer (visualizerId) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateVisualizer denied.`, 'info')
   }
@@ -78,7 +78,7 @@ export function * updateVisualizer (visualizerId) {
 
   visualizerId = unescape(visualizerId)
 
-    // Ignore _id if it exists, a user shouldn't be able to update the internal id
+  // Ignore _id if it exists, a user shouldn't be able to update the internal id
   if (visualizerData._id) { delete visualizerData._id }
 
   try {
@@ -96,7 +96,7 @@ export function * updateVisualizer (visualizerId) {
 
 // Endpoint to remove specific visualizer by visualizerId
 export function * removeVisualizer (visualizerId) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeVisualizer denied.`, 'info')
   }

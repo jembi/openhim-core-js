@@ -18,7 +18,7 @@ let activeTasks = 0
 export async function findAndProcessAQueuedTask () {
   let task
   try {
-    task = await TaskModel.findOneAndUpdate({ status: 'Queued' }, { status: 'Processing' }, { new: true })
+    task = await TaskModel.findOneAndUpdate({status: 'Queued'}, {status: 'Processing'}, {new: true})
 
     if (task != null) {
       activeTasks++
@@ -67,7 +67,7 @@ export function stop (callback) {
 export function isRunning () { return live }
 
 async function finalizeTaskRound (task) {
-  const result = await TaskModel.findOne({ _id: task._id }, { status: 1 })
+  const result = await TaskModel.findOne({_id: task._id}, {status: 1})
   if (result.status === 'Processing' && task.remainingTransactions !== 0) {
     task.status = 'Queued'
     logger.info(`Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remaining`)
@@ -83,18 +83,18 @@ async function finalizeTaskRound (task) {
   await task.save()
 }
 /**
-* Process a task.
-*
-* Tasks are processed in rounds:
-* Each round consists of processing n transactions where n is between 1 and the task's batchSize,
-* depending on how many transactions are left to process.
-*
-* When a round completes, the task will be marked as 'Queued' if it still has transactions remaining.
-* The next available core instance will then pick up the task again for the next round.
-*
-* This model allows the instance the get updated information regarding the task in between rounds:
-* i.e. if the server has been stopped, if the task has been paused, etc.
-*/
+ * Process a task.
+ *
+ * Tasks are processed in rounds:
+ * Each round consists of processing n transactions where n is between 1 and the task's batchSize,
+ * depending on how many transactions are left to process.
+ *
+ * When a round completes, the task will be marked as 'Queued' if it still has transactions remaining.
+ * The next available core instance will then pick up the task again for the next round.
+ *
+ * This model allows the instance the get updated information regarding the task in between rounds:
+ * i.e. if the server has been stopped, if the task has been paused, etc.
+ */
 async function processNextTaskRound (task) {
   logger.debug(`Processing next task round: total transactions = ${task.totalTransactions}, remainingTransactions = ${task.remainingTransactions}`)
   const promises = []
@@ -138,7 +138,7 @@ function rerunTransaction (transactionID, taskID, callback) {
   rerunGetTransaction(transactionID, (err, transaction) => {
     if (err) { return callback(err) }
 
-        // setup the option object for the HTTP Request
+    // setup the option object for the HTTP Request
     return ChannelModel.findById(transaction.channelID, (err, channel) => {
       if (err) { return callback(err) }
 
@@ -148,7 +148,7 @@ function rerunTransaction (transactionID, taskID, callback) {
         rerunSetHTTPRequestOptions(transaction, taskID, (err, options) => {
           if (err) { return callback(err) }
 
-                    // Run the HTTP Request with details supplied in options object
+          // Run the HTTP Request with details supplied in options object
           return rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => callback(err, HTTPResponse))
         })
       }
@@ -157,7 +157,7 @@ function rerunTransaction (transactionID, taskID, callback) {
         return rerunTcpRequestSend(channel, transaction, (err, TCPResponse) => {
           if (err) { return callback(err) }
 
-                    // Update original
+          // Update original
           const ctx = {
             parentID: transaction._id,
             transactionId: transactionID,
@@ -181,13 +181,13 @@ function rerunGetTransaction (transactionID, callback) {
       return callback((new Error(`Transaction ${transactionID} could not be found`)), null)
     }
 
-        // check if 'canRerun' property is false - reject the rerun
+    // check if 'canRerun' property is false - reject the rerun
     if (!transaction.canRerun) {
       err = new Error(`Transaction ${transactionID} cannot be rerun as there isn't enough information about the request`)
       return callback(err, null)
     }
 
-        // send the transactions data in callback
+    // send the transactions data in callback
     return callback(null, transaction)
   })
 }
@@ -236,12 +236,12 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
 function rerunHttpRequestSend (options, transaction, callback) {
   let err
   if (options === null) {
-    err = new Error("An empty 'Options' object was supplied. Aborting HTTP Send Request")
+    err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
     return callback(err, null)
   }
 
   if (transaction === null) {
-    err = new Error("An empty 'Transaction' object was supplied. Aborting HTTP Send Request")
+    err = new Error('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
     return callback(err, null)
   }
 
@@ -253,7 +253,7 @@ function rerunHttpRequestSend (options, transaction, callback) {
   logger.info(`Rerun Transaction #${transaction._id} - HTTP Request is being sent...`)
   const req = http.request(options, (res) => {
     res.on('data', chunk => {
-            // response data
+      // response data
       response.body += chunk
     })
 
@@ -275,7 +275,7 @@ function rerunHttpRequestSend (options, transaction, callback) {
   })
 
   req.on('error', (err) => {
-        // update the status of the transaction that was processed to indicate it failed to process
+    // update the status of the transaction that was processed to indicate it failed to process
     if (err) { response.transaction.status = 'Failed' }
 
     response.status = 500
@@ -285,7 +285,7 @@ function rerunHttpRequestSend (options, transaction, callback) {
     return callback(null, response)
   })
 
-    // write data to request body
+  // write data to request body
   if ((transaction.request.method === 'POST') || (transaction.request.method === 'PUT')) {
     req.write(transaction.request.body)
   }
@@ -319,7 +319,7 @@ function rerunTcpRequestSend (channel, transaction, callback) {
   })
 
   return client.on('error', (err) => {
-        // update the status of the transaction that was processed to indicate it failed to process
+    // update the status of the transaction that was processed to indicate it failed to process
     if (err) { response.transaction.status = 'Failed' }
 
     response.status = 500

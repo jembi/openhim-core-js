@@ -153,53 +153,53 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   }
 
   before(done =>
-        testUtils.setupTestKeystore(null, null, [], (keystore) => {
-          const cert = new CertificateModelAPI({
-            data: fs.readFileSync('test/resources/server-tls/cert.pem')
-          })
-            // Setup certs for secure channels
-          channel4.routes[0].cert = cert._id
-          channel5.routes[0].cert = cert._id
+    testUtils.setupTestKeystore(null, null, [], (keystore) => {
+      const cert = new CertificateModelAPI({
+        data: fs.readFileSync('test/resources/server-tls/cert.pem')
+      })
+      // Setup certs for secure channels
+      channel4.routes[0].cert = cert._id
+      channel5.routes[0].cert = cert._id
 
-          keystore.ca.push(cert)
-          return keystore.save(() =>
-                channel1.save(() => channel2.save(() => channel3.save(() => channel4.save(() => channel5.save(() => channel6.save(() => secureClient.save(() =>
-                    testUtils.createMockTCPServer(6000, testMessage, 'TCP OK', 'TCP Not OK', (server) => {
-                      mockTCPServer = server
-                      return testUtils.createMockHTTPRespondingPostServer(6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) => {
-                        mockHTTPServer = server
-                        return testUtils.createMockTLSServerWithMutualAuth(6002, testMessage, 'TLS OK', 'TLS Not OK', (server) => {
-                          mockTLSServer = server
-                          return testUtils.createMockTLSServerWithMutualAuth(6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) => {
-                            mockTLSServerWithoutClientCert = server
-                            return testUtils.createMockTCPServer(6004, testMessage, `MLLP OK${String.fromCharCode(0o034)}\n`, `MLLP Not OK${String.fromCharCode(0o034)}\n`, (server) => {
-                              mockMLLPServer = server
-                              return done()
-                            })
-                          })
-                        })
-                      })
+      keystore.ca.push(cert)
+      return keystore.save(() =>
+        channel1.save(() => channel2.save(() => channel3.save(() => channel4.save(() => channel5.save(() => channel6.save(() => secureClient.save(() =>
+            testUtils.createMockTCPServer(6000, testMessage, 'TCP OK', 'TCP Not OK', (server) => {
+              mockTCPServer = server
+              return testUtils.createMockHTTPRespondingPostServer(6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) => {
+                mockHTTPServer = server
+                return testUtils.createMockTLSServerWithMutualAuth(6002, testMessage, 'TLS OK', 'TLS Not OK', (server) => {
+                  mockTLSServer = server
+                  return testUtils.createMockTLSServerWithMutualAuth(6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) => {
+                    mockTLSServerWithoutClientCert = server
+                    return testUtils.createMockTCPServer(6004, testMessage, `MLLP OK${String.fromCharCode(0o034)}\n`, `MLLP Not OK${String.fromCharCode(0o034)}\n`, (server) => {
+                      mockMLLPServer = server
+                      return done()
                     })
-                )
-                )
-                )
-                )
-                )
-                )
-                )
-            )
-        })
-    )
+                  })
+                })
+              })
+            })
+          )
+          )
+          )
+          )
+          )
+          )
+        )
+      )
+    })
+  )
 
   beforeEach(done => TransactionModelAPI.remove({}, done))
 
   after(done =>
-        testUtils.cleanupTestKeystore(() =>
-            ChannelModelAPI.remove({}, () => TransactionModelAPI.remove({}, () => ClientModelAPI.remove({}, () => mockTCPServer.close(() => mockHTTPServer.close(() => mockTLSServer.close(() => mockTLSServerWithoutClientCert.close(() => mockMLLPServer.close(done))))))
-            )
-            )
+    testUtils.cleanupTestKeystore(() =>
+      ChannelModelAPI.remove({}, () => TransactionModelAPI.remove({}, () => ClientModelAPI.remove({}, () => mockTCPServer.close(() => mockHTTPServer.close(() => mockTLSServer.close(() => mockTLSServerWithoutClientCert.close(() => mockMLLPServer.close(done))))))
         )
+      )
     )
+  )
 
   afterEach(done => server.stop(done))
 
@@ -207,85 +207,85 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const incrementTransactionCountSpy = sinon.spy(stats, 'incrementTransactionCount') // check if the method was called
     const measureTransactionDurationSpy = sinon.spy(stats, 'measureTransactionDuration') // check if the method was called
 
-    return server.start({ tcpHttpReceiverPort: 7787 }, () =>
-            sendTCPTestMessage(4000, (data) => {
-              data.should.be.exactly('TCP OK')
-              if (config.statsd.enabled) {
-                incrementTransactionCountSpy.calledOnce.should.be.true
-                incrementTransactionCountSpy.getCall(0).args[0].authorisedChannel.should.have.property('name', 'TCPIntegrationChannel1')
-                measureTransactionDurationSpy.calledOnce.should.be.true
-              }
-              return done()
-            })
-        )
+    return server.start({tcpHttpReceiverPort: 7787}, () =>
+      sendTCPTestMessage(4000, (data) => {
+        data.should.be.exactly('TCP OK')
+        if (config.statsd.enabled) {
+          incrementTransactionCountSpy.calledOnce.should.be.true
+          incrementTransactionCountSpy.getCall(0).args[0].authorisedChannel.should.have.property('name', 'TCPIntegrationChannel1')
+          measureTransactionDurationSpy.calledOnce.should.be.true
+        }
+        return done()
+      })
+    )
   })
 
   it('should handle disconnected clients', done =>
-        server.start({ tcpHttpReceiverPort: 7787 }, () => {
-          let client
-          client = net.connect(4000, 'localhost', () => {
-            client.on('close', () => server.stop(done))
-            return client.end('test')
-          })
-        })
-    )
+    server.start({tcpHttpReceiverPort: 7787}, () => {
+      let client
+      client = net.connect(4000, 'localhost', () => {
+        client.on('close', () => server.stop(done))
+        return client.end('test')
+      })
+    })
+  )
 
   it('should route TLS messages', done =>
-        server.start({ tcpHttpReceiverPort: 7787 }, () =>
-            sendTLSTestMessage(4001, (data) => {
-              data.should.be.exactly('TCP OK')
-              return done()
-            })
-        )
+    server.start({tcpHttpReceiverPort: 7787}, () =>
+      sendTLSTestMessage(4001, (data) => {
+        data.should.be.exactly('TCP OK')
+        return done()
+      })
     )
+  )
 
   it('should route TCP messages to HTTP routes', done =>
-        server.start({ tcpHttpReceiverPort: 7787 }, () =>
-            sendTCPTestMessage(4002, (data) => {
-              data.should.be.exactly('HTTP OK')
-              return done()
-            })
-        )
+    server.start({tcpHttpReceiverPort: 7787}, () =>
+      sendTCPTestMessage(4002, (data) => {
+        data.should.be.exactly('HTTP OK')
+        return done()
+      })
     )
+  )
 
   it('should route TCP messages to TLS routes', done =>
-        server.start({ tcpHttpReceiverPort: 7787 }, () =>
-            sendTCPTestMessage(4003, (data) => {
-              data.should.be.exactly('TLS OK')
-              return done()
-            })
-        )
+    server.start({tcpHttpReceiverPort: 7787}, () =>
+      sendTCPTestMessage(4003, (data) => {
+        data.should.be.exactly('TLS OK')
+        return done()
+      })
     )
+  )
 
   it('should return an error when the client cert is not known by the server', done =>
-        server.start({ tcpHttpReceiverPort: 7787 }, () =>
-            sendTCPTestMessage(4004, (data) => {
-              data.should.be.exactly('An internal server error occurred')
-              return done()
-            })
-        )
+    server.start({tcpHttpReceiverPort: 7787}, () =>
+      sendTCPTestMessage(4004, (data) => {
+        data.should.be.exactly('An internal server error occurred')
+        return done()
+      })
     )
+  )
 
   it('should persist messages', done =>
-        server.start({ tcpHttpReceiverPort: 7787 }, () =>
-            sendTCPTestMessage(4000, data =>
-                TransactionModelAPI.find({}, (err, trx) => {
-                  trx.length.should.be.exactly(1)
-                  trx[0].channelID.toString().should.be.exactly(channel1._id.toString())
-                  trx[0].request.body.should.be.exactly(testMessage)
-                  trx[0].response.body.should.be.exactly('TCP OK')
-                  return done()
-                })
-            )
-        )
+    server.start({tcpHttpReceiverPort: 7787}, () =>
+      sendTCPTestMessage(4000, data =>
+        TransactionModelAPI.find({}, (err, trx) => {
+          trx.length.should.be.exactly(1)
+          trx[0].channelID.toString().should.be.exactly(channel1._id.toString())
+          trx[0].request.body.should.be.exactly(testMessage)
+          trx[0].response.body.should.be.exactly('TCP OK')
+          return done()
+        })
+      )
     )
+  )
 
   return it('should route MLLP messages', done =>
-        server.start({ tcpHttpReceiverPort: 7787 }, () =>
-            sendTCPTestMessage(4005, (data) => {
-              data.should.be.exactly(`MLLP OK${String.fromCharCode(0o034)}\n`)
-              return done()
-            })
-        )
+    server.start({tcpHttpReceiverPort: 7787}, () =>
+      sendTCPTestMessage(4005, (data) => {
+        data.should.be.exactly(`MLLP OK${String.fromCharCode(0o034)}\n`)
+        return done()
+      })
     )
+  )
 })

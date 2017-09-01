@@ -53,7 +53,7 @@ function restoreMaskedPasswords (defs, maskedConfig, config) {
 }
 
 export function * getAllMediators () {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAllMediators denied.`, 'info')
     return
@@ -69,7 +69,7 @@ export function * getAllMediators () {
 }
 
 export function * getMediator (mediatorURN) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getMediator denied.`, 'info')
     return
@@ -78,7 +78,7 @@ export function * getMediator (mediatorURN) {
   const urn = unescape(mediatorURN)
 
   try {
-    const result = yield MediatorModelAPI.findOne({ urn }).exec()
+    const result = yield MediatorModelAPI.findOne({urn}).exec()
     if (result === null) {
       this.status = 404
     } else {
@@ -127,7 +127,7 @@ function validateConfigDef (def) {
 const validateConfigDefs = configDefs => Array.from(configDefs).map((def) => validateConfigDef(def))
 
 export function * addMediator () {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addMediator denied.`, 'info')
     return
@@ -141,7 +141,7 @@ export function * addMediator () {
       mediatorHost = mediator.endpoints[0].host
     }
 
-        // audit mediator start
+    // audit mediator start
     let audit = atna.appActivityAudit(true, mediator.name, mediatorHost, 'system')
     audit = atna.wrapInSyslog(audit)
     auditing.sendAuditEvent(audit, () => logger.info(`Processed internal mediator start audit for: ${mediator.name} - ${mediator.urn}`))
@@ -160,12 +160,12 @@ export function * addMediator () {
       }
     }
 
-    const existing = yield MediatorModelAPI.findOne({ urn: mediator.urn }).exec()
+    const existing = yield MediatorModelAPI.findOne({urn: mediator.urn}).exec()
     if (existing != null) {
       if (semver.gt(mediator.version, existing.version)) {
-                // update the mediator
+        // update the mediator
         if ((mediator.config != null) && (existing.config != null)) {
-                    // if some config already exists, add only config that didn't exist previously
+          // if some config already exists, add only config that didn't exist previously
           for (const param in mediator.config) {
             const val = mediator.config[param]
             if (existing.config[param] != null) {
@@ -176,7 +176,7 @@ export function * addMediator () {
         yield MediatorModelAPI.findByIdAndUpdate(existing._id, mediator).exec()
       }
     } else {
-            // this is a new mediator validate and save it
+      // this is a new mediator validate and save it
       if (!mediator.endpoints || (mediator.endpoints.length < 1)) {
         throw constructError('At least 1 endpoint is required', 'ValidationError')
       }
@@ -194,7 +194,7 @@ export function * addMediator () {
 }
 
 export function * removeMediator (urn) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
     return
@@ -203,7 +203,7 @@ export function * removeMediator (urn) {
   urn = unescape(urn)
 
   try {
-    yield MediatorModelAPI.findOneAndRemove({ urn }).exec()
+    yield MediatorModelAPI.findOneAndRemove({urn}).exec()
     this.body = `Mediator with urn ${urn} has been successfully removed by ${this.authenticated.email}`
     return logger.info(`Mediator with urn ${urn} has been successfully removed by ${this.authenticated.email}`)
   } catch (err) {
@@ -212,7 +212,7 @@ export function * removeMediator (urn) {
 }
 
 export function * heartbeat (urn) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
     return
@@ -221,7 +221,7 @@ export function * heartbeat (urn) {
   urn = unescape(urn)
 
   try {
-    const mediator = yield MediatorModelAPI.findOne({ urn }).exec()
+    const mediator = yield MediatorModelAPI.findOne({urn}).exec()
 
     if ((mediator == null)) {
       this.status = 404
@@ -236,13 +236,13 @@ export function * heartbeat (urn) {
     }
 
     if ((mediator._configModifiedTS > mediator._lastHeartbeat) || ((heartbeat != null ? heartbeat.config : undefined) === true)) {
-            // Return config if it has changed since last heartbeat
+      // Return config if it has changed since last heartbeat
       this.body = mediator.config
     } else {
       this.body = ''
     }
 
-        // set internal properties
+    // set internal properties
     if (heartbeat != null) {
       const update = {
         _lastHeartbeat: new Date(),
@@ -328,17 +328,17 @@ function validateConfigField (param, def, field) {
 }
 
 function validateConfig (configDef, config) {
-    // reduce to a single true or false value, start assuming valid
+  // reduce to a single true or false value, start assuming valid
   Object.keys(config).every((param) => {
-        // find the matching def if there is one
+    // find the matching def if there is one
     const matchingDefs = configDef.filter(def => def.param === param)
 
-        // fail if there isn't a matching def
+    // fail if there isn't a matching def
     if (matchingDefs.length === 0) {
       throw constructError(`No config definition found for parameter ${param}`, 'ValidationError')
     }
 
-        // validate the param against the defs
+    // validate the param against the defs
     return matchingDefs.map((def) => {
       if (def.array) {
         if (!utils.typeIsArray(config[param])) {
@@ -346,7 +346,7 @@ function validateConfig (configDef, config) {
         }
 
         return Array.from(config[param]).map((field, i) =>
-                    validateConfigField(`${param}[${i}]`, def, field))
+          validateConfigField(`${param}[${i}]`, def, field))
       } else {
         return validateConfigField(param, def, config[param])
       }
@@ -359,7 +359,7 @@ if (process.env.NODE_ENV === 'test') {
 }
 
 export function * setConfig (urn) {
-    // Must be admin
+  // Must be admin
   let err
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
@@ -370,7 +370,7 @@ export function * setConfig (urn) {
   const config = this.request.body
 
   try {
-    const mediator = yield MediatorModelAPI.findOne({ urn }).exec()
+    const mediator = yield MediatorModelAPI.findOne({urn}).exec()
 
     if (mediator == null) {
       this.status = 404
@@ -387,7 +387,7 @@ export function * setConfig (urn) {
       return
     }
 
-    yield MediatorModelAPI.findOneAndUpdate({ urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec()
+    yield MediatorModelAPI.findOneAndUpdate({urn}, {config: this.request.body, _configModifiedTS: new Date()}).exec()
     this.status = 200
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not set mediator config (urn: ${urn}): ${err}`, 'error')
@@ -407,7 +407,7 @@ function saveDefaultChannelConfig (channels) {
 }
 
 export function * loadDefaultChannels (urn) {
-    // Must be admin
+  // Must be admin
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
     return
@@ -417,7 +417,7 @@ export function * loadDefaultChannels (urn) {
   const channels = this.request.body
 
   try {
-    const mediator = yield MediatorModelAPI.findOne({ urn }).lean().exec()
+    const mediator = yield MediatorModelAPI.findOne({urn}).lean().exec()
 
     if ((mediator == null)) {
       this.status = 404

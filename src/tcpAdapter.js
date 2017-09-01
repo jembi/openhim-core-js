@@ -8,7 +8,7 @@ import * as tlsAuthentication from './middleware/tlsAuthentication'
 import { config } from './config'
 
 config.tcpAdapter = config.get('tcpAdapter')
-const { ChannelModel } = Channels
+const {ChannelModel} = Channels
 
 let tcpServers = []
 let newKey = 0
@@ -32,7 +32,7 @@ export function popTransaction (key) {
 
 function startListening (channel, tcpServer, host, port, callback) {
   tcpServer.listen(port, host, () => {
-    tcpServers.push({ channelID: channel._id, server: tcpServer })
+    tcpServers.push({channelID: channel._id, server: tcpServer})
     return callback(null)
   })
   return tcpServer.on('error', err => logger.error(`${err} Host: ${host} Port: ${port}`))
@@ -48,16 +48,16 @@ export function notifyMasterToStartTCPServer (channelID, callback) {
 
 export function startupTCPServer (channelID, callback) {
   for (const existingServer of Array.from(tcpServers)) {
-        // server already running for channel
+    // server already running for channel
     if (existingServer.channelID.equals(channelID)) { return callback(null) }
   }
 
   const handler = sock =>
-        ChannelModel.findById(channelID, (err, channel) => {
-          if (err) { return logger.error(err) }
-          sock.on('data', data => adaptSocketRequest(channel, sock, `${data}`))
-          return sock.on('error', err => logger.error(err))
-        })
+    ChannelModel.findById(channelID, (err, channel) => {
+      if (err) { return logger.error(err) }
+      sock.on('data', data => adaptSocketRequest(channel, sock, `${data}`))
+      return sock.on('error', err => logger.error(err))
+    })
 
   return ChannelModel.findById(channelID, (err, channel) => {
     const host = channel.tcpHost || '0.0.0.0'
@@ -97,7 +97,7 @@ export function startupTCPServer (channelID, callback) {
 
 // Startup a TCP server for each TCP channel
 export function startupServers (callback) {
-  return ChannelModel.find({ $or: [{ type: 'tcp' }, { type: 'tls' }] }, (err, channels) => {
+  return ChannelModel.find({$or: [{type: 'tcp'}, {type: 'tls'}]}, (err, channels) => {
     if (err) { return callback(err) }
 
     const promises = []
@@ -140,15 +140,15 @@ function adaptSocketRequest (channel, sock, socketData) {
 
   req.on('error', err => logger.error(err))
 
-    // don't write the actual data to the http receiver
-    // instead send a reference through (see popTransaction)
+  // don't write the actual data to the http receiver
+  // instead send a reference through (see popTransaction)
   datastore[`${newKey}`] = {}
   datastore[`${newKey}`].data = socketData
   datastore[`${newKey}`].channel = channel
   req.write(`${newKey}`)
 
   newKey++
-    // in case we've been running for a couple thousand years
+  // in case we've been running for a couple thousand years
   if (newKey === Number.MAX_VALUE) { newKey = 0 }
 
   return req.end()
@@ -200,7 +200,7 @@ export function stopServerForChannel (channelID, callback) {
     if (serverDetails.channelID.equals(channelID)) {
       server = serverDetails
     } else {
-            // push all except the server we're stopping
+      // push all except the server we're stopping
       notStoppedTcpServers.push(serverDetails)
     }
   }

@@ -59,8 +59,7 @@ describe('Auto Retry Integration Tests', () => {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
           name: 'TEST Client',
-          roles:
-          [
+          roles: [
             'OpenMRS_PoC',
             'PoC'
           ],
@@ -73,174 +72,174 @@ describe('Auto Retry Integration Tests', () => {
         const client = new ClientModel(testAppDoc)
         return client.save(() => done())
       })
-            )
+      )
     })
 
     after(done =>
-            ChannelModel.remove({ name: 'TEST DATA - Will break channel' }, () =>
-                ClientModel.remove({ clientID: 'testApp' }, () =>
-                    TransactionModel.remove({}, () => AutoRetryModel.remove({}, () => done())
-                    )
-                )
-            )
+      ChannelModel.remove({name: 'TEST DATA - Will break channel'}, () =>
+        ClientModel.remove({clientID: 'testApp'}, () =>
+          TransactionModel.remove({}, () => AutoRetryModel.remove({}, () => done())
+          )
         )
+      )
+    )
 
     beforeEach(done => TransactionModel.remove({}, () => AutoRetryModel.remove({}, () => EventModel.remove({}, done))))
 
     afterEach(done => server.stop(() => done()))
 
     it('should mark transaction as available to auto retry if an internal server error occurs', done =>
-            server.start({ httpPort: 5001 }, () =>
-                request('http://localhost:5001')
-                    .get('/test/nowhere')
-                    .auth('testApp', 'password')
-                    .expect(500)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return setTimeout(() =>
-                                TransactionModel.findOne({}, (err, trx) => {
-                                  if (err) { return done(err) }
-                                  trx.should.have.property('autoRetry')
-                                  trx.autoRetry.should.be.true()
-                                  trx.should.have.property('error')
-                                  trx.error.should.have.property('message')
-                                  trx.error.should.have.property('stack');
-                                  (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
-                                  return done()
-                                })
-                            , 1000 * global.testTimeoutFactor)
-                      }
-                    })
-            )
-        )
+      server.start({httpPort: 5001}, () =>
+        request('http://localhost:5001')
+          .get('/test/nowhere')
+          .auth('testApp', 'password')
+          .expect(500)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return setTimeout(() =>
+                  TransactionModel.findOne({}, (err, trx) => {
+                    if (err) { return done(err) }
+                    trx.should.have.property('autoRetry')
+                    trx.autoRetry.should.be.true()
+                    trx.should.have.property('error')
+                    trx.error.should.have.property('message')
+                    trx.error.should.have.property('stack');
+                    (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
+                    return done()
+                  })
+                , 1000 * global.testTimeoutFactor)
+            }
+          })
+      )
+    )
 
     it('should push an auto retry transaction to the auto retry queue', done =>
-            server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
-                request('http://localhost:5001')
-                    .get('/test/nowhere')
-                    .auth('testApp', 'password')
-                    .expect(500)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return setTimeout(() =>
-                                TransactionModel.findOne({}, (err, trx) => {
-                                  if (err) { return done(err) }
-                                  return AutoRetryModel.findOne({}, (err, autoRetry) => {
-                                    if (err) { return done(err) }
-                                    autoRetry.transactionID.toString().should.be.equal(trx._id.toString())
-                                    autoRetry.channelID.toString().should.be.equal(channel1._id.toString())
-                                    return done()
-                                  })
-                                })
-                            , 150 * global.testTimeoutFactor)
-                      }
+      server.start({httpPort: 5001, rerunHttpPort: 7786}, () =>
+        request('http://localhost:5001')
+          .get('/test/nowhere')
+          .auth('testApp', 'password')
+          .expect(500)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return setTimeout(() =>
+                  TransactionModel.findOne({}, (err, trx) => {
+                    if (err) { return done(err) }
+                    return AutoRetryModel.findOne({}, (err, autoRetry) => {
+                      if (err) { return done(err) }
+                      autoRetry.transactionID.toString().should.be.equal(trx._id.toString())
+                      autoRetry.channelID.toString().should.be.equal(channel1._id.toString())
+                      return done()
                     })
-            )
-        )
+                  })
+                , 150 * global.testTimeoutFactor)
+            }
+          })
+      )
+    )
 
     it('should auto retry a failed transaction', done =>
-            server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
-                request('http://localhost:5001')
-                    .get('/test/nowhere')
-                    .auth('testApp', 'password')
-                    .expect(500)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return setTimeout(() =>
-                                // manually trigger rerun
-                                autoRetry.autoRetryTask(null, () => {
-                                  tasks.findAndProcessAQueuedTask()
+      server.start({httpPort: 5001, rerunHttpPort: 7786}, () =>
+        request('http://localhost:5001')
+          .get('/test/nowhere')
+          .auth('testApp', 'password')
+          .expect(500)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return setTimeout(() =>
+                  // manually trigger rerun
+                  autoRetry.autoRetryTask(null, () => {
+                    tasks.findAndProcessAQueuedTask()
 
-                                  return setTimeout(() =>
-                                        TransactionModel.find({}, (err, transactions) => {
-                                          if (err) { return done(err) }
-                                          transactions.length.should.be.exactly(2)
-                                          transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString())
-                                          transactions[1].autoRetryAttempt.should.be.exactly(1)
-                                            // failed so should be eligible to rerun again
-                                          transactions[1].autoRetry.should.be.true()
-                                          return done()
-                                        })
-                                    , 150 * global.testTimeoutFactor)
-                                })
-                            , 150 * global.testTimeoutFactor)
-                      }
-                    })
-            )
-        )
+                    return setTimeout(() =>
+                        TransactionModel.find({}, (err, transactions) => {
+                          if (err) { return done(err) }
+                          transactions.length.should.be.exactly(2)
+                          transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString())
+                          transactions[1].autoRetryAttempt.should.be.exactly(1)
+                          // failed so should be eligible to rerun again
+                          transactions[1].autoRetry.should.be.true()
+                          return done()
+                        })
+                      , 150 * global.testTimeoutFactor)
+                  })
+                , 150 * global.testTimeoutFactor)
+            }
+          })
+      )
+    )
 
     it('should not auto retry a transaction that has reached the max retry limit', done =>
-            server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
-                request('http://localhost:5001')
-                    .get('/test/nowhere/2')
-                    .auth('testApp', 'password')
-                    .expect(500)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return setTimeout(() =>
-                                // manually trigger rerun
-                                autoRetry.autoRetryTask(null, () => {
-                                  tasks.findAndProcessAQueuedTask()
+      server.start({httpPort: 5001, rerunHttpPort: 7786}, () =>
+        request('http://localhost:5001')
+          .get('/test/nowhere/2')
+          .auth('testApp', 'password')
+          .expect(500)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return setTimeout(() =>
+                  // manually trigger rerun
+                  autoRetry.autoRetryTask(null, () => {
+                    tasks.findAndProcessAQueuedTask()
 
-                                  return setTimeout(() =>
-                                        TransactionModel.find({}, (err, transactions) => {
-                                          if (err) { return done(err) }
-                                          transactions.length.should.be.exactly(2)
-                                          transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString())
-                                          transactions[1].autoRetryAttempt.should.be.exactly(1)
-                                            // should not be eligible to retry
-                                          transactions[1].autoRetry.should.be.false()
-                                          return done()
-                                        })
-                                    , 150 * global.testTimeoutFactor)
-                                })
-                            , 150 * global.testTimeoutFactor)
-                      }
-                    })
-            )
-        )
+                    return setTimeout(() =>
+                        TransactionModel.find({}, (err, transactions) => {
+                          if (err) { return done(err) }
+                          transactions.length.should.be.exactly(2)
+                          transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString())
+                          transactions[1].autoRetryAttempt.should.be.exactly(1)
+                          // should not be eligible to retry
+                          transactions[1].autoRetry.should.be.false()
+                          return done()
+                        })
+                      , 150 * global.testTimeoutFactor)
+                  })
+                , 150 * global.testTimeoutFactor)
+            }
+          })
+      )
+    )
 
     it('should contain the attempt number in transaction events', done =>
-            server.start({ httpPort: 5001, rerunHttpPort: 7786 }, () =>
-                request('http://localhost:5001')
-                    .get('/test/nowhere')
-                    .auth('testApp', 'password')
-                    .expect(500)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return setTimeout(() =>
-                                // manually trigger rerun
-                                autoRetry.autoRetryTask(null, () => {
-                                  tasks.findAndProcessAQueuedTask()
+      server.start({httpPort: 5001, rerunHttpPort: 7786}, () =>
+        request('http://localhost:5001')
+          .get('/test/nowhere')
+          .auth('testApp', 'password')
+          .expect(500)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return setTimeout(() =>
+                  // manually trigger rerun
+                  autoRetry.autoRetryTask(null, () => {
+                    tasks.findAndProcessAQueuedTask()
 
-                                  return setTimeout(() =>
-                                        EventModel.find({}, (err, events) => {
-                                          if (err) { return done(err) }
-                                          const prouteEvents = events.filter(ev => (ev.type === 'primary') && (ev.event === 'end'))
+                    return setTimeout(() =>
+                        EventModel.find({}, (err, events) => {
+                          if (err) { return done(err) }
+                          const prouteEvents = events.filter(ev => (ev.type === 'primary') && (ev.event === 'end'))
 
-                                            // original transaction
-                                          should(prouteEvents[0].autoRetryAttempt).be.null()
-                                            // retried transaction
-                                          prouteEvents[1].autoRetryAttempt.should.be.exactly(1)
-                                          return done()
-                                        })
-                                    , 250 * global.testTimeoutFactor)
-                                })
-                            , 250 * global.testTimeoutFactor)
-                      }
-                    })
-            )
-        )
+                          // original transaction
+                          should(prouteEvents[0].autoRetryAttempt).be.null()
+                          // retried transaction
+                          prouteEvents[1].autoRetryAttempt.should.be.exactly(1)
+                          return done()
+                        })
+                      , 250 * global.testTimeoutFactor)
+                  })
+                , 250 * global.testTimeoutFactor)
+            }
+          })
+      )
+    )
   })
 
   describe('Secondary route auto retry tests', () => {
@@ -273,8 +272,7 @@ describe('Auto Retry Integration Tests', () => {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
           name: 'TEST Client',
-          roles:
-          [
+          roles: [
             'OpenMRS_PoC',
             'PoC'
           ],
@@ -290,47 +288,47 @@ describe('Auto Retry Integration Tests', () => {
     })
 
     after(done =>
-            ChannelModel.remove({ name: 'TEST DATA - Secondary route will break channel' }, () =>
-                ClientModel.remove({ clientID: 'testApp' }, () =>
-                    TransactionModel.remove({}, () =>
-                        mockServer1.close(() => done())
-                    )
-                )
-            )
+      ChannelModel.remove({name: 'TEST DATA - Secondary route will break channel'}, () =>
+        ClientModel.remove({clientID: 'testApp'}, () =>
+          TransactionModel.remove({}, () =>
+            mockServer1.close(() => done())
+          )
         )
+      )
+    )
 
     beforeEach(done => TransactionModel.remove({}, done))
 
     afterEach(done =>
-            server.stop(() => done())
-        )
+      server.stop(() => done())
+    )
 
     it('should mark transaction as available to auto retry if an internal server error occurs on a secondary route', done =>
-            server.start({ httpPort: 5001 }, () =>
-                request('http://localhost:5001')
-                    .get('/test/nowhere')
-                    .auth('testApp', 'password')
-                    .expect(200)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return setTimeout(() =>
-                                TransactionModel.findOne({}, (err, trx) => {
-                                  if (err) { return done(err) }
-                                  trx.should.have.property('autoRetry')
-                                  trx.autoRetry.should.be.true()
-                                  trx.routes[0].should.have.property('error')
-                                  trx.routes[0].error.should.have.property('message')
-                                  trx.routes[0].error.should.have.property('stack');
-                                  (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
-                                  return done()
-                                })
-                            , 150 * global.testTimeoutFactor)
-                      }
-                    })
-            )
-        )
+      server.start({httpPort: 5001}, () =>
+        request('http://localhost:5001')
+          .get('/test/nowhere')
+          .auth('testApp', 'password')
+          .expect(200)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return setTimeout(() =>
+                  TransactionModel.findOne({}, (err, trx) => {
+                    if (err) { return done(err) }
+                    trx.should.have.property('autoRetry')
+                    trx.autoRetry.should.be.true()
+                    trx.routes[0].should.have.property('error')
+                    trx.routes[0].error.should.have.property('message')
+                    trx.routes[0].error.should.have.property('stack');
+                    (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
+                    return done()
+                  })
+                , 150 * global.testTimeoutFactor)
+            }
+          })
+      )
+    )
   })
 
   describe('Mediator auto retry tests', () => {
@@ -372,8 +370,7 @@ describe('Auto Retry Integration Tests', () => {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
           name: 'TEST Client',
-          roles:
-          [
+          roles: [
             'OpenMRS_PoC',
             'PoC'
           ],
@@ -389,48 +386,48 @@ describe('Auto Retry Integration Tests', () => {
     })
 
     after(done =>
-            ChannelModel.remove({ name: 'TEST DATA - Mediator has error channel' }, () =>
-                ClientModel.remove({ clientID: 'testApp' }, () =>
-                    TransactionModel.remove({}, () =>
-                        mockServer1.close(() => done())
-                    )
-                )
-            )
+      ChannelModel.remove({name: 'TEST DATA - Mediator has error channel'}, () =>
+        ClientModel.remove({clientID: 'testApp'}, () =>
+          TransactionModel.remove({}, () =>
+            mockServer1.close(() => done())
+          )
         )
+      )
+    )
 
     beforeEach(done => TransactionModel.remove({}, done))
 
     afterEach(done =>
-            server.stop(() => done())
-        )
+      server.stop(() => done())
+    )
 
     it('should mark transaction as available to auto retry if an internal server error occurs in a mediator', done =>
-            server.start({ httpPort: 5001 }, () =>
-                request('http://localhost:5001')
-                    .get('/test/nowhere')
-                    .auth('testApp', 'password')
-                    .expect(500)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return setTimeout(() =>
-                                TransactionModel.findOne({}, (err, trx) => {
-                                  if (err) { return done(err) }
-                                  trx.should.have.property('autoRetry')
-                                  trx.autoRetry.should.be.true()
-                                  trx.should.have.property('error')
-                                  trx.error.should.have.property('message')
-                                  trx.error.message.should.be.exactly(mediatorResponse.error.message)
-                                  trx.error.should.have.property('stack')
-                                  trx.error.stack.should.be.exactly(mediatorResponse.error.stack)
-                                  return done()
-                                })
-                            , 150 * global.testTimeoutFactor)
-                      }
-                    })
-            )
-        )
+      server.start({httpPort: 5001}, () =>
+        request('http://localhost:5001')
+          .get('/test/nowhere')
+          .auth('testApp', 'password')
+          .expect(500)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return setTimeout(() =>
+                  TransactionModel.findOne({}, (err, trx) => {
+                    if (err) { return done(err) }
+                    trx.should.have.property('autoRetry')
+                    trx.autoRetry.should.be.true()
+                    trx.should.have.property('error')
+                    trx.error.should.have.property('message')
+                    trx.error.message.should.be.exactly(mediatorResponse.error.message)
+                    trx.error.should.have.property('stack')
+                    trx.error.stack.should.be.exactly(mediatorResponse.error.stack)
+                    return done()
+                  })
+                , 150 * global.testTimeoutFactor)
+            }
+          })
+      )
+    )
   })
 
   return describe('All routes failed auto retry tests', () => {
@@ -461,8 +458,7 @@ describe('Auto Retry Integration Tests', () => {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
           name: 'TEST Client',
-          roles:
-          [
+          roles: [
             'OpenMRS_PoC',
             'PoC'
           ],
@@ -478,48 +474,48 @@ describe('Auto Retry Integration Tests', () => {
     })
 
     after(done =>
-            ChannelModel.remove({ name: 'TEST DATA - Both will break channel' }, () =>
-                ClientModel.remove({ clientID: 'testApp' }, () =>
-                    TransactionModel.remove({}, () => done())
-                )
-            )
+      ChannelModel.remove({name: 'TEST DATA - Both will break channel'}, () =>
+        ClientModel.remove({clientID: 'testApp'}, () =>
+          TransactionModel.remove({}, () => done())
         )
+      )
+    )
 
     beforeEach(done => TransactionModel.remove({}, done))
 
     afterEach(done =>
-            server.stop(() => done())
-        )
+      server.stop(() => done())
+    )
 
     it('should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes', done =>
-            server.start({ httpPort: 5001 }, () =>
-                request('http://localhost:5001')
-                    .get('/test/nowhere')
-                    .auth('testApp', 'password')
-                    .expect(500)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return setTimeout(() =>
-                                TransactionModel.findOne({}, (err, trx) => {
-                                  if (err) { return done(err) }
-                                  trx.should.have.property('autoRetry')
-                                  trx.autoRetry.should.be.true()
-                                  trx.should.have.property('error')
-                                  trx.error.should.have.property('message')
-                                  trx.error.should.have.property('stack');
-                                  (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
-                                  trx.routes[0].should.have.property('error')
-                                  trx.routes[0].error.should.have.property('message')
-                                  trx.routes[0].error.should.have.property('stack');
-                                  (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
-                                  return done()
-                                })
-                            , 150 * global.testTimeoutFactor)
-                      }
-                    })
-            )
-        )
+      server.start({httpPort: 5001}, () =>
+        request('http://localhost:5001')
+          .get('/test/nowhere')
+          .auth('testApp', 'password')
+          .expect(500)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return setTimeout(() =>
+                  TransactionModel.findOne({}, (err, trx) => {
+                    if (err) { return done(err) }
+                    trx.should.have.property('autoRetry')
+                    trx.autoRetry.should.be.true()
+                    trx.should.have.property('error')
+                    trx.error.should.have.property('message')
+                    trx.error.should.have.property('stack');
+                    (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
+                    trx.routes[0].should.have.property('error')
+                    trx.routes[0].error.should.have.property('message')
+                    trx.routes[0].error.should.have.property('stack');
+                    (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
+                    return done()
+                  })
+                , 150 * global.testTimeoutFactor)
+            }
+          })
+      )
+    )
   })
 })

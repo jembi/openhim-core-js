@@ -30,17 +30,17 @@ describe('TCP adapter tests', () => {
   after(done => tcpAdapter.stopServers(() => ChannelModel.remove({}, done)))
 
   return describe('.startupServers', () =>
-        it('should startup all enabled channels', (done) => {
-          const spy = sinon.spy(tcpAdapter, 'startupTCPServer')
-          return tcpAdapter.startupServers(() => {
-            try {
-              spy.calledOnce.should.be.true
-              spy.calledWith(testChannel._id)
-            } catch (err) {
-              return done(err)
-            }
-            return done()
-          })
-        })
-    )
+    it('should startup all enabled channels', (done) => {
+      const spy = sinon.spy(tcpAdapter, 'startupTCPServer')
+      return tcpAdapter.startupServers(() => {
+        try {
+          spy.calledOnce.should.be.true
+          spy.calledWith(testChannel._id)
+        } catch (err) {
+          return done(err)
+        }
+        return done()
+      })
+    })
+  )
 })

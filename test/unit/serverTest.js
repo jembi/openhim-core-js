@@ -43,48 +43,48 @@ describe('Server tests', () => {
         keystore.cert.data = fs.readFileSync('test/resources/protected/test.crt')
         keystore.passphrase = 'password'
         return keystore.save(() =>
-                    server.restartServer(() => {
-                      (moment().isBefore(future)).should.be.true
-                      return done()
-                    })
-                )
+          server.restartServer(() => {
+            (moment().isBefore(future)).should.be.true
+            return done()
+          })
+        )
       })
     })
   })
 
   return describe('.ensureKeystore()', () => {
     it('should create a default keystore when none exists using default certs', done =>
-            KeystoreModel.findOneAndRemove({}, () =>
-                server.ensureKeystore((err) => {
-                  should.not.exist(err)
-                  return KeystoreModel.findOne({}, (err, keystore) => {
-                    keystore.cert.commonName.should.be.exactly('localhost')
-                    keystore.cert.organization.should.be.exactly('OpenHIM Default Certificate')
-                    keystore.cert.data.should.be.exactly((fs.readFileSync('resources/certs/default/cert.pem')).toString())
-                    keystore.key.should.be.exactly((fs.readFileSync('resources/certs/default/key.pem')).toString())
-                    return done()
-                  })
-                })
-            )
-        )
+      KeystoreModel.findOneAndRemove({}, () =>
+        server.ensureKeystore((err) => {
+          should.not.exist(err)
+          return KeystoreModel.findOne({}, (err, keystore) => {
+            keystore.cert.commonName.should.be.exactly('localhost')
+            keystore.cert.organization.should.be.exactly('OpenHIM Default Certificate')
+            keystore.cert.data.should.be.exactly((fs.readFileSync('resources/certs/default/cert.pem')).toString())
+            keystore.key.should.be.exactly((fs.readFileSync('resources/certs/default/key.pem')).toString())
+            return done()
+          })
+        })
+      )
+    )
 
     it('should create a default keystore when none exists using cert from file system certs', (done) => {
       config.certificateManagement.watchFSForCert = true
       config.certificateManagement.certPath = `${appRoot}/test/resources/server-tls/cert.pem`
       config.certificateManagement.keyPath = `${appRoot}/test/resources/server-tls/key.pem`
       return KeystoreModel.findOneAndRemove({}, () =>
-                server.ensureKeystore((err) => {
-                  should.not.exist(err)
-                  return KeystoreModel.findOne({}, (err, keystore) => {
-                    keystore.cert.commonName.should.be.exactly('localhost')
-                    keystore.cert.organization.should.be.exactly('Jembi Health Systems NPC')
-                    keystore.cert.emailAddress.should.be.exactly('ryan@jembi.org')
-                    keystore.cert.data.should.be.exactly((fs.readFileSync('test/resources/server-tls/cert.pem')).toString())
-                    keystore.key.should.be.exactly((fs.readFileSync('test/resources/server-tls/key.pem')).toString())
-                    return done()
-                  })
-                })
-            )
+        server.ensureKeystore((err) => {
+          should.not.exist(err)
+          return KeystoreModel.findOne({}, (err, keystore) => {
+            keystore.cert.commonName.should.be.exactly('localhost')
+            keystore.cert.organization.should.be.exactly('Jembi Health Systems NPC')
+            keystore.cert.emailAddress.should.be.exactly('ryan@jembi.org')
+            keystore.cert.data.should.be.exactly((fs.readFileSync('test/resources/server-tls/cert.pem')).toString())
+            keystore.key.should.be.exactly((fs.readFileSync('test/resources/server-tls/key.pem')).toString())
+            return done()
+          })
+        })
+      )
     })
 
     it('should update an existing keystore with cert from filesystem', (done) => {

@@ -7,7 +7,7 @@ import { TransactionModel } from '../../src/model/transactions'
 import { ChannelModel } from '../../src/model/channels'
 import * as utils from '../../src/utils'
 
-const { ObjectId } = Types
+const {ObjectId} = Types
 const transactionId = null
 
 describe('MessageStore', () => {
@@ -92,56 +92,56 @@ describe('MessageStore', () => {
     ctx.authorisedChannel.responseBody = true
 
     return TransactionModel.remove({}, () =>
-            ChannelModel.remove({}, () =>
-                (new ChannelModel(channel1)).save((err, ch1) => {
-                  channel1._id = ch1._id
-                  ctx.authorisedChannel._id = ch1._id
-                  return (new ChannelModel(channel2)).save((err, ch2) => {
-                    channel2._id = ch2._id
-                    return done()
-                  })
-                })
-            )
-        )
+      ChannelModel.remove({}, () =>
+        (new ChannelModel(channel1)).save((err, ch1) => {
+          channel1._id = ch1._id
+          ctx.authorisedChannel._id = ch1._id
+          return (new ChannelModel(channel2)).save((err, ch2) => {
+            channel2._id = ch2._id
+            return done()
+          })
+        })
+      )
+    )
   })
 
   afterEach(done =>
-        TransactionModel.remove({}, () =>
-            ChannelModel.remove({}, () => done())
-        )
+    TransactionModel.remove({}, () =>
+      ChannelModel.remove({}, () => done())
     )
+  )
 
   describe('.storeTransaction', () => {
     it('should be able to save the transaction in the db', done =>
-            messageStore.storeTransaction(ctx, (error, result) => {
-              should.not.exist(error)
-              return TransactionModel.findOne({ _id: result._id }, (error, trans) => {
-                should.not.exist(error);
-                (trans !== null).should.be.true()
-                trans.clientID.toString().should.equal('313233343536373839319999')
-                trans.status.should.equal('Processing')
-                trans.status.should.not.equal('None')
-                trans.request.path.should.equal('/api/test/request')
-                trans.request.headers['Content-Type'].should.equal('application/json')
-                trans.request.querystring.should.equal('param1=value1&param2=value2')
-                trans.request.host.should.equal('localhost')
-                trans.request.port.should.equal('5000')
-                trans.channelID.toString().should.equal(channel1._id.toString())
-                return done()
-              })
-            })
-        )
+      messageStore.storeTransaction(ctx, (error, result) => {
+        should.not.exist(error)
+        return TransactionModel.findOne({_id: result._id}, (error, trans) => {
+          should.not.exist(error);
+          (trans !== null).should.be.true()
+          trans.clientID.toString().should.equal('313233343536373839319999')
+          trans.status.should.equal('Processing')
+          trans.status.should.not.equal('None')
+          trans.request.path.should.equal('/api/test/request')
+          trans.request.headers['Content-Type'].should.equal('application/json')
+          trans.request.querystring.should.equal('param1=value1&param2=value2')
+          trans.request.host.should.equal('localhost')
+          trans.request.port.should.equal('5000')
+          trans.channelID.toString().should.equal(channel1._id.toString())
+          return done()
+        })
+      })
+    )
 
     it('should be able to save the transaction if the headers contain Mongo reserved characters ($ or .)', (done) => {
       ctx.header['dot.header'] = '123'
       ctx.header.dollar$header = '124'
       return messageStore.storeTransaction(ctx, (error, result) => {
-                // cleanup ctx before moving on in case there's a failure
+        // cleanup ctx before moving on in case there's a failure
         delete ctx.header['dot.header']
         delete ctx.header.dollar$header
 
         should.not.exist(error)
-        return TransactionModel.findOne({ _id: result._id }, (error, trans) => {
+        return TransactionModel.findOne({_id: result._id}, (error, trans) => {
           should.not.exist(error);
           (trans !== null).should.be.true()
           trans.request.headers['dot．header'].should.equal('123')
@@ -154,12 +154,12 @@ describe('MessageStore', () => {
 
     return it('should truncate the request body if it exceeds storage limits', (done) => {
       ctx.body = ''
-            // generate a big body
+      // generate a big body
       for (let i = 0, end = 2000 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { ctx.body += '1234567890' }
 
       return messageStore.storeTransaction(ctx, (error, result) => {
         should.not.exist(error)
-        return TransactionModel.findOne({ _id: result._id }, (error, trans) => {
+        return TransactionModel.findOne({_id: result._id}, (error, trans) => {
           should.not.exist(error);
           (trans !== null).should.be.true()
           trans.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
@@ -172,52 +172,52 @@ describe('MessageStore', () => {
 
   return describe('.storeResponse', () => {
     beforeEach(done =>
-            ChannelModel.remove({}, () =>
-                (new ChannelModel(channel1)).save((err, ch1) => {
-                  channel1._id = ch1._id
-                  ctx.authorisedChannel._id = ch1._id
-                  return (new ChannelModel(channel2)).save((err, ch2) => {
-                    channel2._id = ch2._id
-                    return done()
-                  })
-                })
-            )
-        )
+      ChannelModel.remove({}, () =>
+        (new ChannelModel(channel1)).save((err, ch1) => {
+          channel1._id = ch1._id
+          ctx.authorisedChannel._id = ch1._id
+          return (new ChannelModel(channel2)).save((err, ch2) => {
+            channel2._id = ch2._id
+            return done()
+          })
+        })
+      )
+    )
 
     afterEach(done =>
-            TransactionModel.remove({}, () =>
-                ChannelModel.remove({}, () => done())
-            )
-        )
+      TransactionModel.remove({}, () =>
+        ChannelModel.remove({}, () => done())
+      )
+    )
 
     const createResponse = status =>
-            ({
-              status,
-              header: {
-                testHeader: 'value'
-              },
-              body: new Buffer('<HTTP response body>'),
-              timestamp: new Date()
-            })
+      ({
+        status,
+        header: {
+          testHeader: 'value'
+        },
+        body: new Buffer('<HTTP response body>'),
+        timestamp: new Date()
+      })
 
     const createRoute = (name, status) =>
-            ({
-              name,
-              request: {
-                host: 'localhost',
-                port: '4466',
-                path: '/test',
-                timestamp: new Date()
-              },
-              response: {
-                status,
-                headers: {
-                  test: 'test'
-                },
-                body: 'route body',
-                timestamp: new Date()
-              }
-            })
+      ({
+        name,
+        request: {
+          host: 'localhost',
+          port: '4466',
+          path: '/test',
+          timestamp: new Date()
+        },
+        response: {
+          status,
+          headers: {
+            test: 'test'
+          },
+          body: 'route body',
+          timestamp: new Date()
+        }
+      })
 
     it('should update the transaction with the response', (done) => {
       ctx.response = createResponse(201)
@@ -227,16 +227,16 @@ describe('MessageStore', () => {
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
           return messageStore.setFinalStatus(ctx, () =>
-                        TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                          should.not.exist(err3);
-                          (trans !== null).should.be.true()
-                          trans.response.status.should.equal(201)
-                          trans.response.headers.testHeader.should.equal('value')
-                          trans.response.body.should.equal('<HTTP response body>')
-                          trans.status.should.equal('Successful')
-                          return done()
-                        })
-                    )
+            TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+              should.not.exist(err3);
+              (trans !== null).should.be.true()
+              trans.response.status.should.equal(201)
+              trans.response.headers.testHeader.should.equal('value')
+              trans.response.body.should.equal('<HTTP response body>')
+              trans.status.should.equal('Successful')
+              return done()
+            })
+          )
         })
       })
     })
@@ -250,20 +250,20 @@ describe('MessageStore', () => {
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
           return messageStore.storeNonPrimaryResponse(ctx, route, () =>
-                        TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                          should.not.exist(err3);
-                          (trans !== null).should.be.true()
-                          trans.routes.length.should.be.exactly(1)
-                          trans.routes[0].name.should.equal('route1')
-                          trans.routes[0].response.status.should.equal(200)
-                          trans.routes[0].response.headers.test.should.equal('test')
-                          trans.routes[0].response.body.should.equal('route body')
-                          trans.routes[0].request.path.should.equal('/test')
-                          trans.routes[0].request.host.should.equal('localhost')
-                          trans.routes[0].request.port.should.equal('4466')
-                          return done()
-                        })
-                    )
+            TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+              should.not.exist(err3);
+              (trans !== null).should.be.true()
+              trans.routes.length.should.be.exactly(1)
+              trans.routes[0].name.should.equal('route1')
+              trans.routes[0].response.status.should.equal(200)
+              trans.routes[0].response.headers.test.should.equal('test')
+              trans.routes[0].response.body.should.equal('route body')
+              trans.routes[0].request.path.should.equal('/test')
+              trans.routes[0].request.host.should.equal('localhost')
+              trans.routes[0].request.port.should.equal('4466')
+              return done()
+            })
+          )
         })
       })
     })
@@ -298,20 +298,20 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
-                    messageStore.storeNonPrimaryResponse(ctx, route1, () =>
-                        messageStore.storeNonPrimaryResponse(ctx, route2, () =>
-                            messageStore.setFinalStatus(ctx, () => {
-                              should.not.exist(err2)
-                              return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                                should.not.exist(err3);
-                                (trans !== null).should.be.true()
-                                trans.status.should.be.exactly('Successful')
-                                return done()
-                              })
-                            })
-                        )
-                    )
-                )
+          messageStore.storeNonPrimaryResponse(ctx, route1, () =>
+            messageStore.storeNonPrimaryResponse(ctx, route2, () =>
+              messageStore.setFinalStatus(ctx, () => {
+                should.not.exist(err2)
+                return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                  should.not.exist(err3);
+                  (trans !== null).should.be.true()
+                  trans.status.should.be.exactly('Successful')
+                  return done()
+                })
+              })
+            )
+          )
+        )
       })
     })
 
@@ -327,20 +327,20 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
-                    messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-                        messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-                            messageStore.setFinalStatus(ctx, () => {
-                              should.not.exist(err2)
-                              return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                                should.not.exist(err3);
-                                (trans !== null).should.be.true()
-                                trans.status.should.be.exactly('Failed')
-                                return done()
-                              })
-                            })
-                        )
-                    )
-                )
+          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
+            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
+              messageStore.setFinalStatus(ctx, () => {
+                should.not.exist(err2)
+                return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                  should.not.exist(err3);
+                  (trans !== null).should.be.true()
+                  trans.status.should.be.exactly('Failed')
+                  return done()
+                })
+              })
+            )
+          )
+        )
       })
     })
 
@@ -356,20 +356,20 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
-                    messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-                        messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-                            messageStore.setFinalStatus(ctx, () => {
-                              should.not.exist(err2)
-                              return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                                should.not.exist(err3);
-                                (trans !== null).should.be.true()
-                                trans.status.should.be.exactly('Completed with error(s)')
-                                return done()
-                              })
-                            })
-                        )
-                    )
-                )
+          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
+            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
+              messageStore.setFinalStatus(ctx, () => {
+                should.not.exist(err2)
+                return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                  should.not.exist(err3);
+                  (trans !== null).should.be.true()
+                  trans.status.should.be.exactly('Completed with error(s)')
+                  return done()
+                })
+              })
+            )
+          )
+        )
       })
     })
 
@@ -385,20 +385,20 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
-                    messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-                        messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-                            messageStore.setFinalStatus(ctx, () => {
-                              should.not.exist(err2)
-                              return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                                should.not.exist(err3);
-                                (trans !== null).should.be.true()
-                                trans.status.should.be.exactly('Completed')
-                                return done()
-                              })
-                            })
-                        )
-                    )
-                )
+          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
+            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
+              messageStore.setFinalStatus(ctx, () => {
+                should.not.exist(err2)
+                return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                  should.not.exist(err3);
+                  (trans !== null).should.be.true()
+                  trans.status.should.be.exactly('Completed')
+                  return done()
+                })
+              })
+            )
+          )
+        )
       })
     })
 
@@ -414,20 +414,20 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
-                    messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-                        messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-                            messageStore.setFinalStatus(ctx, () => {
-                              should.not.exist(err2)
-                              return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                                should.not.exist(err3);
-                                (trans !== null).should.be.true()
-                                trans.status.should.be.exactly('Completed')
-                                return done()
-                              })
-                            })
-                        )
-                    )
-                )
+          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
+            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
+              messageStore.setFinalStatus(ctx, () => {
+                should.not.exist(err2)
+                return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                  should.not.exist(err3);
+                  (trans !== null).should.be.true()
+                  trans.status.should.be.exactly('Completed')
+                  return done()
+                })
+              })
+            )
+          )
+        )
       })
     })
 
@@ -443,20 +443,20 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
-                    messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-                        messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-                            messageStore.setFinalStatus(ctx, () => {
-                              should.not.exist(err2)
-                              return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                                should.not.exist(err3);
-                                (trans !== null).should.be.true()
-                                trans.status.should.be.exactly('Completed')
-                                return done()
-                              })
-                            })
-                        )
-                    )
-                )
+          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
+            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
+              messageStore.setFinalStatus(ctx, () => {
+                should.not.exist(err2)
+                return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                  should.not.exist(err3);
+                  (trans !== null).should.be.true()
+                  trans.status.should.be.exactly('Completed')
+                  return done()
+                })
+              })
+            )
+          )
+        )
       })
     })
 
@@ -472,33 +472,33 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
-                    messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-                        messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-                            messageStore.setFinalStatus(ctx, () => {
-                              should.not.exist(err2)
-                              return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                                should.not.exist(err3);
-                                (trans !== null).should.be.true()
-                                trans.status.should.be.exactly('Completed')
-                                return done()
-                              })
-                            })
-                        )
-                    )
-                )
+          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
+            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
+              messageStore.setFinalStatus(ctx, () => {
+                should.not.exist(err2)
+                return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                  should.not.exist(err3);
+                  (trans !== null).should.be.true()
+                  trans.status.should.be.exactly('Completed')
+                  return done()
+                })
+              })
+            )
+          )
+        )
       })
     })
 
     const createResponseWithReservedChars = status =>
-            ({
-              status,
-              header: {
-                'dot.header': '123',
-                dollar$header: '124'
-              },
-              body: new Buffer('<HTTP response body>'),
-              timestamp: new Date()
-            })
+      ({
+        status,
+        header: {
+          'dot.header': '123',
+          dollar$header: '124'
+        },
+        body: new Buffer('<HTTP response body>'),
+        timestamp: new Date()
+      })
 
     it('should be able to save the response if the headers contain Mongo reserved characters ($ or .)', (done) => {
       ctx.response = createResponseWithReservedChars(200)
@@ -507,7 +507,7 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
-          return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
+          return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
             should.not.exist(err3);
             (trans !== null).should.be.true()
             trans.response.headers['dot．header'].should.equal('123')
@@ -523,7 +523,7 @@ describe('MessageStore', () => {
 
       return messageStore.storeTransaction(ctx, (error, result) => {
         should.not.exist(error)
-        return TransactionModel.findOne({ _id: result._id }, (error, trans) => {
+        return TransactionModel.findOne({_id: result._id}, (error, trans) => {
           should.not.exist(error);
           (trans !== null).should.be.true()
           trans.clientID.toString().should.equal('313233343536373839319999')
@@ -545,7 +545,7 @@ describe('MessageStore', () => {
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
-          return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
+          return TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
             should.not.exist(err3);
             (trans !== null).should.be.true()
             trans.response.status.should.equal(201)
@@ -566,14 +566,14 @@ describe('MessageStore', () => {
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
           return messageStore.setFinalStatus(ctx, () =>
-                        TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                          should.not.exist(err3);
-                          (trans !== null).should.be.true()
-                          const expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length
-                          trans.response.body.length.should.be.exactly(expectedLen)
-                          return done()
-                        })
-                    )
+            TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+              should.not.exist(err3);
+              (trans !== null).should.be.true()
+              const expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length
+              trans.response.body.length.should.be.exactly(expectedLen)
+              return done()
+            })
+          )
         })
       })
     })
@@ -620,15 +620,15 @@ describe('MessageStore', () => {
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
           return messageStore.setFinalStatus(ctx, () =>
-                        TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                          should.not.exist(err3);
-                          (trans !== null).should.be.true()
-                          const expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
-                                ctx.mediatorResponse.orchestrations[0].request.body.length
-                          trans.orchestrations[1].response.body.length.should.be.exactly(expectedLen)
-                          return done()
-                        })
-                    )
+            TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+              should.not.exist(err3);
+              (trans !== null).should.be.true()
+              const expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
+                ctx.mediatorResponse.orchestrations[0].request.body.length
+              trans.orchestrations[1].response.body.length.should.be.exactly(expectedLen)
+              return done()
+            })
+          )
         })
       })
     })
@@ -643,21 +643,21 @@ describe('MessageStore', () => {
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
-                    messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-                        messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-                            messageStore.setFinalStatus(ctx, () =>
-                                TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                                  should.not.exist(err3);
-                                  (trans !== null).should.be.true()
-                                  const expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
-                                        ctx.routes[0].response.body.length
-                                  trans.routes[1].response.body.length.should.be.exactly(expectedLen)
-                                  return done()
-                                })
-                            )
-                        )
-                    )
-                )
+          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
+            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
+              messageStore.setFinalStatus(ctx, () =>
+                TransactionModel.findOne({_id: storedTrans._id}, (err3, trans) => {
+                  should.not.exist(err3);
+                  (trans !== null).should.be.true()
+                  const expectedLen = utils.MAX_BODIES_SIZE - ctx.body.length - ctx.response.body.length -
+                    ctx.routes[0].response.body.length
+                  trans.routes[1].response.body.length.should.be.exactly(expectedLen)
+                  return done()
+                })
+              )
+            )
+          )
+        )
       })
     })
   })

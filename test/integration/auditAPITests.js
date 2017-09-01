@@ -7,7 +7,7 @@ import * as server from '../../src/server'
 import { AuditModel, AuditMetaModel } from '../../src/model/audits'
 import * as testUtils from '../testUtils'
 
-const { auth } = testUtils
+const {auth} = testUtils
 
 describe('API Integration Tests', () => {
   beforeEach(done => AuditModel.remove({}, () => AuditMetaModel.remove({}, () => done())))
@@ -32,8 +32,7 @@ describe('API Integration Tests', () => {
           codeSystemName: 'IHE Transactions'
         }
       },
-      activeParticipant:
-      [
+      activeParticipant: [
         {
           userID: 'pix|pix',
           alternativeUserID: '2100',
@@ -61,8 +60,7 @@ describe('API Integration Tests', () => {
       auditSourceIdentification: {
         auditSourceID: 'openhim'
       },
-      participantObjectIdentification:
-      [
+      participantObjectIdentification: [
         {
           participantObjectID: '975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO',
           participantObjectTypeCode: '1',
@@ -93,98 +91,98 @@ describe('API Integration Tests', () => {
     let authDetails = {}
 
     before(done =>
-            auth.setupTestUsers(err =>
-                server.start({ apiPort: 8080 }, () => done())
-            )
-        )
+      auth.setupTestUsers(err =>
+        server.start({apiPort: 8080}, () => done())
+      )
+    )
 
     after(done =>
-            auth.cleanupTestUsers(err =>
-                server.stop(() => done())
-            )
-        )
+      auth.cleanupTestUsers(err =>
+        server.stop(() => done())
+      )
+    )
 
     beforeEach(() => authDetails = auth.getAuthDetails())
 
     describe('*addAudit()', () => {
       it('should add a audit and return status 201 - audit created', done =>
-                request('https://localhost:8080')
-                    .post('/audits')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(auditData)
-                    .expect(201)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return AuditModel.findOne({ 'eventIdentification.eventDateTime': '2015-02-20T15:38:25.282Z' }, (error, newAudit) => {
-                          should.not.exist((error));
-                          (newAudit !== null).should.be.true
-                          newAudit.eventIdentification.eventActionCode.should.equal('E')
-                          newAudit.eventIdentification.eventID.code.should.equal('110112')
-                          newAudit.eventIdentification.eventID.displayName.should.equal('Query')
-                          newAudit.eventIdentification.eventID.codeSystemName.should.equal('DCM')
-                          newAudit.activeParticipant.length.should.equal(2)
-                          newAudit.activeParticipant[0].userID.should.equal('pix|pix')
-                          newAudit.activeParticipant[0].networkAccessPointID.should.equal('localhost')
-                          newAudit.auditSourceIdentification.auditSourceID.should.equal('openhim')
-                          newAudit.participantObjectIdentification.length.should.equal(2)
-                          newAudit.participantObjectIdentification[0].participantObjectID.should.equal('975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO')
-                          newAudit.participantObjectIdentification[0].participantObjectIDTypeCode.codeSystemName.should.equal('RFC-3881')
-                          newAudit.participantObjectIdentification[1].participantObjectID.should.equal('dca6c09e-cc92-4bc5-8741-47bd938fa405')
-                          newAudit.participantObjectIdentification[1].participantObjectIDTypeCode.codeSystemName.should.equal('IHE Transactions')
-                          return done()
-                        })
-                      }
-                    })
-            )
+        request('https://localhost:8080')
+          .post('/audits')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(auditData)
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return AuditModel.findOne({'eventIdentification.eventDateTime': '2015-02-20T15:38:25.282Z'}, (error, newAudit) => {
+                should.not.exist((error));
+                (newAudit !== null).should.be.true
+                newAudit.eventIdentification.eventActionCode.should.equal('E')
+                newAudit.eventIdentification.eventID.code.should.equal('110112')
+                newAudit.eventIdentification.eventID.displayName.should.equal('Query')
+                newAudit.eventIdentification.eventID.codeSystemName.should.equal('DCM')
+                newAudit.activeParticipant.length.should.equal(2)
+                newAudit.activeParticipant[0].userID.should.equal('pix|pix')
+                newAudit.activeParticipant[0].networkAccessPointID.should.equal('localhost')
+                newAudit.auditSourceIdentification.auditSourceID.should.equal('openhim')
+                newAudit.participantObjectIdentification.length.should.equal(2)
+                newAudit.participantObjectIdentification[0].participantObjectID.should.equal('975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO')
+                newAudit.participantObjectIdentification[0].participantObjectIDTypeCode.codeSystemName.should.equal('RFC-3881')
+                newAudit.participantObjectIdentification[1].participantObjectID.should.equal('dca6c09e-cc92-4bc5-8741-47bd938fa405')
+                newAudit.participantObjectIdentification[1].participantObjectIDTypeCode.codeSystemName.should.equal('IHE Transactions')
+                return done()
+              })
+            }
+          })
+      )
 
       return it('should only allow admin users to add audits', done =>
-                request('https://localhost:8080')
-                    .post('/audits')
-                    .set('auth-username', testUtils.nonRootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(auditData)
-                    .expect(403)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return done()
-                      }
-                    })
-            )
+        request('https://localhost:8080')
+          .post('/audits')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(auditData)
+          .expect(403)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return done()
+            }
+          })
+      )
     })
 
     describe('*getAudits()', () => {
       it('should call getAudits ', done =>
-                AuditModel.count({}, (err, countBefore) => {
-                  const newAudit = new AuditModel(auditData)
-                  return newAudit.save((error, result) => {
-                    should.not.exist((error))
-                    return request('https://localhost:8080')
-                            .get('/audits?filterPage=0&filterLimit=10&filters={}')
-                            .set('auth-username', testUtils.rootUser.email)
-                            .set('auth-ts', authDetails.authTS)
-                            .set('auth-salt', authDetails.authSalt)
-                            .set('auth-token', authDetails.authToken)
-                            .expect(200)
-                            .end((err, res) => {
-                              if (err) {
-                                return done(err)
-                              } else {
-                                res.body.length.should.equal(countBefore + 1)
-                                return done()
-                              }
-                            })
-                  })
-                })
-            )
+        AuditModel.count({}, (err, countBefore) => {
+          const newAudit = new AuditModel(auditData)
+          return newAudit.save((error, result) => {
+            should.not.exist((error))
+            return request('https://localhost:8080')
+              .get('/audits?filterPage=0&filterLimit=10&filters={}')
+              .set('auth-username', testUtils.rootUser.email)
+              .set('auth-ts', authDetails.authTS)
+              .set('auth-salt', authDetails.authSalt)
+              .set('auth-token', authDetails.authToken)
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err)
+                } else {
+                  res.body.length.should.equal(countBefore + 1)
+                  return done()
+                }
+              })
+          })
+        })
+      )
 
       it('should call getAudits with filter paramaters ', (done) => {
         const startDate = '2015-02-20T00:00:00.000Z'
@@ -199,85 +197,85 @@ describe('API Integration Tests', () => {
           return audit.save((error, result) => {
             should.not.exist((error))
             return request('https://localhost:8080')
-                            .get(`/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(filters)}`)
-                            .set('auth-username', testUtils.rootUser.email)
-                            .set('auth-ts', authDetails.authTS)
-                            .set('auth-salt', authDetails.authSalt)
-                            .set('auth-token', authDetails.authToken)
-                            .expect(200)
-                            .end((err, res) => {
-                              if (err) {
-                                return done(err)
-                              } else {
-                                res.body.length.should.equal(countBefore + 1)
-                                return done()
-                              }
-                            })
+              .get(`/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(filters)}`)
+              .set('auth-username', testUtils.rootUser.email)
+              .set('auth-ts', authDetails.authTS)
+              .set('auth-salt', authDetails.authSalt)
+              .set('auth-token', authDetails.authToken)
+              .expect(200)
+              .end((err, res) => {
+                if (err) {
+                  return done(err)
+                } else {
+                  res.body.length.should.equal(countBefore + 1)
+                  return done()
+                }
+              })
           })
         })
       })
 
-      it("should generate an 'audit log used' audit when using non-basic representation", (done) => {
+      it('should generate an \'audit log used\' audit when using non-basic representation', (done) => {
         const audit = new AuditModel(auditData)
         return audit.save((err, result) => {
           if (err) { return done(err) }
 
           return request('https://localhost:8080')
-                        .get('/audits?filterRepresentation=full')
-                        .set('auth-username', testUtils.rootUser.email)
-                        .set('auth-ts', authDetails.authTS)
-                        .set('auth-salt', authDetails.authSalt)
-                        .set('auth-token', authDetails.authToken)
-                        .expect(200)
-                        .end((err, res) => {
-                          if (err) {
-                            return done(err)
-                          } else {
-                            return setTimeout(() =>
-                                    AuditModel.find({}, (err, newAudits) => {
-                                      if (err) { return done(err) }
-                                      newAudits.length.should.be.exactly(2)
+            .get('/audits?filterRepresentation=full')
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err)
+              } else {
+                return setTimeout(() =>
+                    AuditModel.find({}, (err, newAudits) => {
+                      if (err) { return done(err) }
+                      newAudits.length.should.be.exactly(2)
 
-                                      if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
-                                        newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
-                                        newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
-                                      } else {
-                                        newAudits[1].eventIdentification.eventID.displayName === 'Audit Log Used'
-                                        newAudits[1].participantObjectIdentification.length.should.be.exactly(1)
-                                        newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
-                                      }
-                                      return done()
-                                    })
+                      if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
+                        newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
+                        newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
+                      } else {
+                        newAudits[1].eventIdentification.eventID.displayName === 'Audit Log Used'
+                        newAudits[1].participantObjectIdentification.length.should.be.exactly(1)
+                        newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
+                      }
+                      return done()
+                    })
 
-                                    , 100 * global.testTimeoutFactor)
-                          }
-                        })
+                  , 100 * global.testTimeoutFactor)
+              }
+            })
         })
       })
 
-      return it("should NOT generate an 'audit log used' audit when using basic (default) representation", (done) => {
+      return it('should NOT generate an \'audit log used\' audit when using basic (default) representation', (done) => {
         const audit = new AuditModel(auditData)
         return audit.save((err, result) => {
           if (err) { return done(err) }
 
           return request('https://localhost:8080')
-                        .get('/audits')
-                        .set('auth-username', testUtils.rootUser.email)
-                        .set('auth-ts', authDetails.authTS)
-                        .set('auth-salt', authDetails.authSalt)
-                        .set('auth-token', authDetails.authToken)
-                        .expect(200)
-                        .end((err, res) => {
-                          if (err) {
-                            return done(err)
-                          } else {
-                            return AuditModel.find({}, (err, newAudits) => {
-                              if (err) { return done(err) }
-                              newAudits.length.should.be.exactly(1)
-                              return done()
-                            })
-                          }
-                        })
+            .get('/audits')
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err)
+              } else {
+                return AuditModel.find({}, (err, newAudits) => {
+                  if (err) { return done(err) }
+                  newAudits.length.should.be.exactly(1)
+                  return done()
+                })
+              }
+            })
         })
       })
     })
@@ -289,34 +287,34 @@ describe('API Integration Tests', () => {
           should.not.exist(err)
           const auditId = result._id
           return request('https://localhost:8080')
-                        .get(`/audits/${auditId}`)
-                        .set('auth-username', testUtils.rootUser.email)
-                        .set('auth-ts', authDetails.authTS)
-                        .set('auth-salt', authDetails.authSalt)
-                        .set('auth-token', authDetails.authToken)
-                        .expect(200)
-                        .end((err, res) => {
-                          if (err) {
-                            return done(err)
-                          } else {
-                            (res !== null).should.be.true
-                            res.body.eventIdentification.eventDateTime.should.equal('2015-02-20T15:38:25.282Z')
-                            res.body.eventIdentification.eventActionCode.should.equal('E')
-                            res.body.eventIdentification.eventID.code.should.equal('110112')
-                            res.body.eventIdentification.eventID.displayName.should.equal('Query')
-                            res.body.eventIdentification.eventID.codeSystemName.should.equal('DCM')
-                            res.body.activeParticipant.length.should.equal(2)
-                            res.body.activeParticipant[0].userID.should.equal('pix|pix')
-                            res.body.activeParticipant[0].networkAccessPointID.should.equal('localhost')
-                            res.body.auditSourceIdentification.auditSourceID.should.equal('openhim')
-                            res.body.participantObjectIdentification.length.should.equal(2)
-                            res.body.participantObjectIdentification[0].participantObjectID.should.equal('975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO')
-                            res.body.participantObjectIdentification[0].participantObjectIDTypeCode.codeSystemName.should.equal('RFC-3881')
-                            res.body.participantObjectIdentification[1].participantObjectID.should.equal('dca6c09e-cc92-4bc5-8741-47bd938fa405')
-                            res.body.participantObjectIdentification[1].participantObjectIDTypeCode.codeSystemName.should.equal('IHE Transactions')
-                            return done()
-                          }
-                        })
+            .get(`/audits/${auditId}`)
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err)
+              } else {
+                (res !== null).should.be.true
+                res.body.eventIdentification.eventDateTime.should.equal('2015-02-20T15:38:25.282Z')
+                res.body.eventIdentification.eventActionCode.should.equal('E')
+                res.body.eventIdentification.eventID.code.should.equal('110112')
+                res.body.eventIdentification.eventID.displayName.should.equal('Query')
+                res.body.eventIdentification.eventID.codeSystemName.should.equal('DCM')
+                res.body.activeParticipant.length.should.equal(2)
+                res.body.activeParticipant[0].userID.should.equal('pix|pix')
+                res.body.activeParticipant[0].networkAccessPointID.should.equal('localhost')
+                res.body.auditSourceIdentification.auditSourceID.should.equal('openhim')
+                res.body.participantObjectIdentification.length.should.equal(2)
+                res.body.participantObjectIdentification[0].participantObjectID.should.equal('975cac30-68e5-11e4-bf2a-04012ce65b02^^^ECID&amp;ECID&amp;ISO')
+                res.body.participantObjectIdentification[0].participantObjectIDTypeCode.codeSystemName.should.equal('RFC-3881')
+                res.body.participantObjectIdentification[1].participantObjectID.should.equal('dca6c09e-cc92-4bc5-8741-47bd938fa405')
+                res.body.participantObjectIdentification[1].participantObjectIDTypeCode.codeSystemName.should.equal('IHE Transactions')
+                return done()
+              }
+            })
         })
       })
 
@@ -326,97 +324,97 @@ describe('API Integration Tests', () => {
           should.not.exist(err)
           const auditId = result._id
           return request('https://localhost:8080')
-                        .get(`/audits/${auditId}`)
-                        .set('auth-username', testUtils.nonRootUser.email)
-                        .set('auth-ts', authDetails.authTS)
-                        .set('auth-salt', authDetails.authSalt)
-                        .set('auth-token', authDetails.authToken)
-                        .expect(403)
-                        .end((err, res) => {
-                          if (err) {
-                            return done(err)
-                          } else {
-                            return done()
-                          }
-                        })
+            .get(`/audits/${auditId}`)
+            .set('auth-username', testUtils.nonRootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .expect(403)
+            .end((err, res) => {
+              if (err) {
+                return done(err)
+              } else {
+                return done()
+              }
+            })
         })
       })
 
-      return it("should generate an 'audit log used' audit", (done) => {
+      return it('should generate an \'audit log used\' audit', (done) => {
         const audit = new AuditModel(auditData)
         return audit.save((err, result) => {
           if (err) { return done(err) }
 
           return request('https://localhost:8080')
-                        .get(`/audits/${result._id}`)
-                        .set('auth-username', testUtils.rootUser.email)
-                        .set('auth-ts', authDetails.authTS)
-                        .set('auth-salt', authDetails.authSalt)
-                        .set('auth-token', authDetails.authToken)
-                        .expect(200)
-                        .end((err, res) => {
-                          if (err) {
-                            return done(err)
-                          } else {
-                            return setTimeout(() =>
-                                    AuditModel.find({}, (err, newAudits) => {
-                                      if (err) { return done(err) }
-                                      newAudits.length.should.be.exactly(2)
+            .get(`/audits/${result._id}`)
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .expect(200)
+            .end((err, res) => {
+              if (err) {
+                return done(err)
+              } else {
+                return setTimeout(() =>
+                    AuditModel.find({}, (err, newAudits) => {
+                      if (err) { return done(err) }
+                      newAudits.length.should.be.exactly(2)
 
-                                      if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
-                                        newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
-                                        newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
-                                      } else {
-                                        newAudits[1].eventIdentification.eventID.displayName === 'Audit Log Used'
-                                        newAudits[1].participantObjectIdentification.length.should.be.exactly(1)
-                                        newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
-                                      }
-                                      return done()
-                                    })
+                      if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
+                        newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
+                        newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
+                      } else {
+                        newAudits[1].eventIdentification.eventID.displayName === 'Audit Log Used'
+                        newAudits[1].participantObjectIdentification.length.should.be.exactly(1)
+                        newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
+                      }
+                      return done()
+                    })
 
-                                    , 100 * global.testTimeoutFactor)
-                          }
-                        })
+                  , 100 * global.testTimeoutFactor)
+              }
+            })
         })
       })
     })
 
     return describe('*getAuditsFilterOptions', () => {
       it('should fetch dropdown filter options - admin user', done =>
-                request('https://localhost:8080')
-                    .post('/audits')
-                    .set('auth-username', testUtils.rootUser.email)
-                    .set('auth-ts', authDetails.authTS)
-                    .set('auth-salt', authDetails.authSalt)
-                    .set('auth-token', authDetails.authToken)
-                    .send(auditData)
-                    .expect(201)
-                    .end((err, res) => {
-                      if (err) {
-                        return done(err)
-                      } else {
-                        return request('https://localhost:8080')
-                                .get('/audits-filter-options')
-                                .set('auth-username', testUtils.rootUser.email)
-                                .set('auth-ts', authDetails.authTS)
-                                .set('auth-salt', authDetails.authSalt)
-                                .set('auth-token', authDetails.authToken)
-                                .expect(200)
-                                .end((err, res) => {
-                                  if (err) {
-                                    return done(err)
-                                  } else {
-                                    (res !== null).should.be.true
-                                    res.body.eventType.length.should.equal(1)
-                                    res.body.eventID.length.should.equal(1)
-                                    res.body.activeParticipantRoleID.length.should.equal(1)
-                                    res.body.participantObjectIDTypeCode.length.should.equal(2)
-                                    return done()
-                                  }
-                                })
-                      }
-                    })
-            )
+        request('https://localhost:8080')
+          .post('/audits')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(auditData)
+          .expect(201)
+          .end((err, res) => {
+            if (err) {
+              return done(err)
+            } else {
+              return request('https://localhost:8080')
+                .get('/audits-filter-options')
+                .set('auth-username', testUtils.rootUser.email)
+                .set('auth-ts', authDetails.authTS)
+                .set('auth-salt', authDetails.authSalt)
+                .set('auth-token', authDetails.authToken)
+                .expect(200)
+                .end((err, res) => {
+                  if (err) {
+                    return done(err)
+                  } else {
+                    (res !== null).should.be.true
+                    res.body.eventType.length.should.equal(1)
+                    res.body.eventID.length.should.equal(1)
+                    res.body.activeParticipantRoleID.length.should.equal(1)
+                    res.body.participantObjectIDTypeCode.length.should.equal(2)
+                    return done()
+                  }
+                })
+            }
+          })
+      )
 
       return it('should NOT return a filter dropdown object if user is not admin', (done) => {
         const audit = new AuditModel(auditData)
@@ -424,19 +422,19 @@ describe('API Integration Tests', () => {
           should.not.exist(err)
 
           return request('https://localhost:8080')
-                        .get('/audits-filter-options')
-                        .set('auth-username', testUtils.nonRootUser.email)
-                        .set('auth-ts', authDetails.authTS)
-                        .set('auth-salt', authDetails.authSalt)
-                        .set('auth-token', authDetails.authToken)
-                        .expect(403)
-                        .end((err, res) => {
-                          if (err) {
-                            return done(err)
-                          } else {
-                            return done()
-                          }
-                        })
+            .get('/audits-filter-options')
+            .set('auth-username', testUtils.nonRootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .expect(403)
+            .end((err, res) => {
+              if (err) {
+                return done(err)
+              } else {
+                return done()
+              }
+            })
         })
       })
     })

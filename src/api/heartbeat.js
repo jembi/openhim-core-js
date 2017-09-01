@@ -14,8 +14,8 @@ export function * getHeartbeat () {
       if (!result.mediators) { result.mediators = {} }
 
       if ((mediator._lastHeartbeat != null) && (mediator._uptime != null) &&
-                // have we received a heartbeat within the last minute?
-                (moment().diff(mediator._lastHeartbeat, 'seconds') <= 60)) {
+        // have we received a heartbeat within the last minute?
+        (moment().diff(mediator._lastHeartbeat, 'seconds') <= 60)) {
         result.mediators[mediator.urn] = mediator._uptime
       } else {
         result.mediators[mediator.urn] = null

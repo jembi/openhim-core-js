@@ -12,18 +12,18 @@ const levels = {
 }
 
 export function * getLogs () {
-    // Only admins can view server logs
+  // Only admins can view server logs
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getLogs denied.`, 'info')
     return
   }
 
-  let { query } = this.request
+  let {query} = this.request
   if (query == null) {
     query = {}
   }
 
-    // default to info level logs
+  // default to info level logs
   if ((query.level == null)) {
     query.level = 'info'
   }

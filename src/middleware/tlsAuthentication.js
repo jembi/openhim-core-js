@@ -52,7 +52,7 @@ export function getServerOptions (mutualTLS, done) {
         cert: keystore.cert.data
       }
 
-            // if key has password add it to the options
+      // if key has password add it to the options
       if (keystore.passphrase) {
         options.passphrase = keystore.passphrase
       }
@@ -88,54 +88,53 @@ function clientLookup (fingerprint, subjectCN, issuerCN) {
   logger.debug(`Looking up client linked to cert with fingerprint ${fingerprint} with subject ${subjectCN} and issuer ${issuerCN}`)
   const deferred = Q.defer()
 
-  ClientModel.findOne({ certFingerprint: fingerprint }, (err, result) => {
+  ClientModel.findOne({certFingerprint: fingerprint}, (err, result) => {
     if (err) { deferred.reject(err) }
 
     if (result != null) {
-            // found a match
+      // found a match
       return deferred.resolve(result)
     }
 
     if (subjectCN === issuerCN) {
-            // top certificate reached
+      // top certificate reached
       return deferred.resolve(null)
     }
 
     if (config.tlsClientLookup.type === 'in-chain') {
-            // walk further up and cert chain and check
+      // walk further up and cert chain and check
       return utils.getKeystore((err, keystore) => {
         if (err) { deferred.reject(err) }
         let missedMatches = 0
-                // find the isser cert
+        // find the isser cert
         if ((keystore.ca == null) || (keystore.ca.length < 1)) {
           logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
           return deferred.resolve(null)
         } else {
           return Array.from(keystore.ca).map((cert) =>
-                        (cert =>
-                            pem.readCertificateInfo(cert.data, (err, info) => {
-                              if (err) {
-                                return deferred.reject(err)
-                              }
+            (cert =>
+                pem.readCertificateInfo(cert.data, (err, info) => {
+                  if (err) {
+                    return deferred.reject(err)
+                  }
 
-                              if (info.commonName === issuerCN) {
-                                const promise = clientLookup(cert.fingerprint, info.commonName, info.issuer.commonName)
-                                promise.then(result => deferred.resolve(result))
-                              } else {
-                                missedMatches++
-                              }
+                  if (info.commonName === issuerCN) {
+                    const promise = clientLookup(cert.fingerprint, info.commonName, info.issuer.commonName)
+                    promise.then(result => deferred.resolve(result))
+                  } else {
+                    missedMatches++
+                  }
 
-                              if (missedMatches === keystore.ca.length) {
-                                logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
-                                return deferred.resolve(null)
-                              }
-                            })
-                        )(cert))
+                  if (missedMatches === keystore.ca.length) {
+                    logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
+                    return deferred.resolve(null)
+                  }
+                }))(cert))
         }
       })
     } else {
       if (config.tlsClientLookup.type !== 'strict') {
-        logger.warn("tlsClientLookup.type config option does not contain a known value, defaulting to 'strict'. Available options are 'strict' and 'in-chain'.")
+        logger.warn('tlsClientLookup.type config option does not contain a known value, defaulting to \'strict\'. Available options are \'strict\' and \'in-chain\'.')
       }
       return deferred.resolve(null)
     }
@@ -160,7 +159,7 @@ export function * koaMiddleware (next) {
     const cert = this.req.connection.getPeerCertificate(true)
     logger.info(`${cert.subject.CN} is authenticated via TLS.`)
 
-        // lookup client by cert fingerprint and set them as the authenticated user
+    // lookup client by cert fingerprint and set them as the authenticated user
     try {
       this.authenticated = yield clientLookup(cert.fingerprint, cert.subject.CN, cert.issuer.CN)
     } catch (err) {

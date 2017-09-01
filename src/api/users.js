@@ -24,11 +24,11 @@ export function * authenticate (email) {
   email = unescape(email)
 
   try {
-    const user = yield UserModelAPI.findOne({ email }).exec()
+    const user = yield UserModelAPI.findOne({email}).exec()
 
     if (!user) {
       utils.logAndSetResponse(this, 404, `Could not find user by email ${email}`, 'info')
-            // Audit unknown user requested
+      // Audit unknown user requested
       let audit = atna.userLoginAudit(atna.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email)
       audit = atna.wrapInSyslog(audit)
       return auditing.sendAuditEvent(audit, () => logger.debug('Processed internal audit'))
@@ -75,16 +75,16 @@ export function * userPasswordResetRequest (email) {
   email = unescape(email)
 
   if (email === 'root@openhim.org') {
-    this.body = "Cannot request password reset for 'root@openhim.org'"
+    this.body = 'Cannot request password reset for \'root@openhim.org\''
     this.status = 403
     return
   }
 
-    // Generate the new user token here
-    // set expiry date = true
+  // Generate the new user token here
+  // set expiry date = true
 
   const token = exports.generateRandomToken()
-  const { duration, durationType } = config.userPasswordResetExpiry
+  const {duration, durationType} = config.userPasswordResetExpiry
   const expiry = moment().add(duration, durationType).utc().format()
 
   const updateUserTokenExpiry = {
@@ -94,7 +94,7 @@ export function * userPasswordResetRequest (email) {
   }
 
   try {
-    const user = yield UserModelAPI.findOneAndUpdate({ email }, updateUserTokenExpiry).exec()
+    const user = yield UserModelAPI.findOneAndUpdate({email}, updateUserTokenExpiry).exec()
 
     if (!user) {
       this.body = `Tried to request password reset for invalid email address: ${email}`
@@ -103,10 +103,10 @@ export function * userPasswordResetRequest (email) {
       return
     }
 
-    const { consoleURL } = config.alerts
+    const {consoleURL} = config.alerts
     const setPasswordLink = `${consoleURL}/#/set-password/${token}`
 
-        // Send email to user to reset password
+    // Send email to user to reset password
     const plainMessage = passwordResetPlainMessageTemplate(user.firstname, setPasswordLink)
     const htmlMessage = passwordResetHtmlMessageTemplate(user.firstname, setPasswordLink)
 
@@ -126,7 +126,7 @@ export function * userPasswordResetRequest (email) {
 }
 
 /**
-*New User Set Password Functions
+ *New User Set Password Functions
  */
 
 // get the new user details
@@ -134,14 +134,24 @@ export function * getUserByToken (token) {
   token = unescape(token)
 
   try {
-    const projectionRestriction = { email: 1, firstname: 1, surname: 1, msisdn: 1, token: 1, tokenType: 1, locked: 1, expiry: 1, _id: 0 }
+    const projectionRestriction = {
+      email: 1,
+      firstname: 1,
+      surname: 1,
+      msisdn: 1,
+      token: 1,
+      tokenType: 1,
+      locked: 1,
+      expiry: 1,
+      _id: 0
+    }
 
-    const result = yield UserModelAPI.findOne({ token }, projectionRestriction).exec()
+    const result = yield UserModelAPI.findOne({token}, projectionRestriction).exec()
     if (!result) {
       this.body = `User with token ${token} could not be found.`
       this.status = 404
     } else if (moment(result.expiry).isBefore(moment())) {
-            // user- set password - expired
+      // user- set password - expired
       this.body = `Token ${token} has expired`
       this.status = 410
     } else {
@@ -161,15 +171,15 @@ export function * updateUserByToken (token) {
   const userData = this.request.body
 
   try {
-        // first try get new user details to check expiry date
-    userDataExpiry = yield UserModelAPI.findOne({ token }).exec()
+    // first try get new user details to check expiry date
+    userDataExpiry = yield UserModelAPI.findOne({token}).exec()
 
     if (!userDataExpiry) {
       this.body = `User with token ${token} could not be found.`
       this.status = 404
       return
     } else if (moment(userDataExpiry.expiry).isBefore(moment())) {
-            // new user- set password - expired
+      // new user- set password - expired
       this.body = `User with token ${token} has expired to set their password.`
       this.status = 410
       return
@@ -180,10 +190,10 @@ export function * updateUserByToken (token) {
     return
   }
 
-    // check to make sure 'msisdn' isnt 'undefined' when saving
-  if (userData.msisdn) { ({ msisdn } = userData) } else { msisdn = null }
+  // check to make sure 'msisdn' isnt 'undefined' when saving
+  if (userData.msisdn) { ({msisdn} = userData) } else { msisdn = null }
 
-    // construct user object to prevent other properties from being updated
+  // construct user object to prevent other properties from being updated
   const userUpdateObj = {
     token: null,
     tokenType: null,
@@ -201,7 +211,7 @@ export function * updateUserByToken (token) {
   }
 
   try {
-    yield UserModelAPI.findOneAndUpdate({ token }, userUpdateObj).exec()
+    yield UserModelAPI.findOneAndUpdate({token}, userUpdateObj).exec()
     this.body = 'Successfully set new user password.'
     return logger.info(`User updated by token ${token}`)
   } catch (error1) {
@@ -235,7 +245,7 @@ const htmlMessageTemplate = (firstname, setPasswordLink) => `\
  * Adds a user
  */
 export function * addUser () {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addUser denied.`, 'info')
     return
@@ -243,16 +253,16 @@ export function * addUser () {
 
   const userData = this.request.body
 
-    // Generate the new user token here
-    // set locked = true
-    // set expiry date = true
+  // Generate the new user token here
+  // set locked = true
+  // set expiry date = true
 
   const token = randtoken.generate(32)
   userData.token = token
   userData.tokenType = 'newUser'
   userData.locked = true
 
-  const { duration, durationType } = config.newUserExpiry
+  const {duration, durationType} = config.newUserExpiry
   userData.expiry = moment().add(duration, durationType).utc().format()
 
   const consoleURL = config.alerts.consoleURL
@@ -262,7 +272,7 @@ export function * addUser () {
     const user = new UserModelAPI(userData)
     const result = yield Q.ninvoke(user, 'save')
 
-        // Send email to new user to set password
+    // Send email to new user to set password
 
     const plainMessage = plainMessageTemplate(userData.firstname, setPasswordLink)
     const htmlMessage = htmlMessageTemplate(userData.firstname, setPasswordLink)
@@ -289,14 +299,14 @@ export function * addUser () {
 export function * getUser (email) {
   email = unescape(email)
 
-    // Test if the user is authorised, allow a user to fetch their own details
+  // Test if the user is authorised, allow a user to fetch their own details
   if (!authorisation.inGroup('admin', this.authenticated) && (this.authenticated.email !== email)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getUser denied.`, 'info')
     return
   }
 
   try {
-    const result = yield UserModelAPI.findOne({ email }).exec()
+    const result = yield UserModelAPI.findOne({email}).exec()
     if (!result) {
       this.body = `User with email ${email} could not be found.`
       this.status = 404
@@ -311,7 +321,7 @@ export function * getUser (email) {
 export function * updateUser (email) {
   email = unescape(email)
 
-    // Test if the user is authorised, allow a user to update their own details
+  // Test if the user is authorised, allow a user to update their own details
   if (!authorisation.inGroup('admin', this.authenticated) && (this.authenticated.email !== email)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateUser denied.`, 'info')
     return
@@ -319,7 +329,7 @@ export function * updateUser (email) {
 
   const userData = this.request.body
 
-    // reset token/locked/expiry when user is updated and password supplied
+  // reset token/locked/expiry when user is updated and password supplied
   if (userData.passwordAlgorithm && userData.passwordHash && userData.passwordSalt) {
     userData.token = null
     userData.tokenType = null
@@ -327,14 +337,14 @@ export function * updateUser (email) {
     userData.expiry = null
   }
 
-    // Don't allow a non-admin user to change their groups
+  // Don't allow a non-admin user to change their groups
   if ((this.authenticated.email === email) && !authorisation.inGroup('admin', this.authenticated)) { delete userData.groups }
 
-    // Ignore _id if it exists (update is by email)
+  // Ignore _id if it exists (update is by email)
   if (userData._id) { delete userData._id }
 
   try {
-    yield UserModelAPI.findOneAndUpdate({ email }, userData).exec()
+    yield UserModelAPI.findOneAndUpdate({email}, userData).exec()
     this.body = 'Successfully updated user.'
     return logger.info(`User ${this.authenticated.email} updated user ${userData.email}`)
   } catch (e) {
@@ -343,7 +353,7 @@ export function * updateUser (email) {
 }
 
 export function * removeUser (email) {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeUser denied.`, 'info')
     return
@@ -351,14 +361,14 @@ export function * removeUser (email) {
 
   email = unescape(email)
 
-    // Test if the user is root@openhim.org
+  // Test if the user is root@openhim.org
   if (email === 'root@openhim.org') {
     utils.logAndSetResponse(this, 403, 'User root@openhim.org is OpenHIM root, User cannot be deleted through the API', 'info')
     return
   }
 
   try {
-    yield UserModelAPI.findOneAndRemove({ email }).exec()
+    yield UserModelAPI.findOneAndRemove({email}).exec()
     this.body = `Successfully removed user with email ${email}`
     return logger.info(`User ${this.authenticated.email} removed user ${email}`)
   } catch (e) {
@@ -367,7 +377,7 @@ export function * removeUser (email) {
 }
 
 export function * getUsers () {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getUsers denied.`, 'info')
     return

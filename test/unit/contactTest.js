@@ -47,11 +47,11 @@ describe('Contact Users', () => {
     })
 
     it('should propagate errors from nodemailer', (done) => {
-            // Stub nodemailer and the transport
-      const transportStub = { sendMail: sandbox.stub().yields(new Error('Nodemailer error')) }
+      // Stub nodemailer and the transport
+      const transportStub = {sendMail: sandbox.stub().yields(new Error('Nodemailer error'))}
       const nodemailerStub = sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
-            // Execute the test method
+      // Execute the test method
       return contact.sendEmail('test@example.com', 'Test', 'Hello world', '<h1>Hello world</h1>', (err) => {
         should.exist(err)
         should.equal(err.message, 'Nodemailer error')
@@ -68,16 +68,16 @@ describe('Contact Users', () => {
         html: '<h1>Hello world</h1>'
       }
 
-            // Stub the sendMail function
+      // Stub the sendMail function
       const sendMailStub = sandbox.stub()
       sendMailStub.yields(new Error('Incorrect fields'))
       sendMailStub.withArgs(sinon.match(expectedFields), sinon.match.func).yields(null)
 
-            // Stub nodemailer and the transport
-      const transportStub = { sendMail: sendMailStub }
+      // Stub nodemailer and the transport
+      const transportStub = {sendMail: sendMailStub}
       const nodemailerStub = sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
-            // Execute the test method
+      // Execute the test method
       return contact.sendEmail(expectedFields.to, expectedFields.subject, expectedFields.text, expectedFields.html, (err) => {
         should.not.exist(err)
         return done()
@@ -85,7 +85,7 @@ describe('Contact Users', () => {
     })
 
     it('should send mail with the correct fields with old config', (done) => {
-            // Temporarily switch config
+      // Temporarily switch config
       const emailConfig = config.email
       config.email = null
       config.nodemailer = emailConfig.nodemailer
@@ -98,19 +98,19 @@ describe('Contact Users', () => {
         html: '<h1>Hello world</h1>'
       }
 
-            // Stub the sendMail function
+      // Stub the sendMail function
       const sendMailStub = sandbox.stub()
       sendMailStub.yields(new Error('Incorrect fields'))
       sendMailStub.withArgs(sinon.match(expectedFields), sinon.match.func).yields(null)
 
-            // Stub nodemailer and the transport
-      const transportStub = { sendMail: sendMailStub }
+      // Stub nodemailer and the transport
+      const transportStub = {sendMail: sendMailStub}
       const nodemailerStub = sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
-            // Execute the test method
+      // Execute the test method
       return contact.sendEmail(expectedFields.to, expectedFields.subject, expectedFields.text, expectedFields.html, (err) => {
         should.not.exist(err)
-                // Restore config
+        // Restore config
         config.nodemailer = null
         config.email = emailConfig
         return done()
@@ -118,15 +118,15 @@ describe('Contact Users', () => {
     })
 
     return it('should return an error when no config is found', (done) => {
-            // Temporarily remove email config
+      // Temporarily remove email config
       const emailConfig = config.email
       config.email = null
 
-            // Execute the test method
+      // Execute the test method
       return contact.sendEmail('test@example.com', 'Test', 'Hello world', '<h1>Hello world</h1>', (err) => {
         should.exist(err)
         should.equal(err.message, 'No email config found')
-                // Restore config
+        // Restore config
         config.email = emailConfig
         return done()
       })

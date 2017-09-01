@@ -10,12 +10,19 @@ import * as tlsAuthentication from './middleware/tlsAuthentication'
 import { config } from './config'
 
 config.auditing = config.get('auditing')
-const { firstCharLowerCase } = require('xml2js').processors
+const {firstCharLowerCase} = require('xml2js').processors
 
 function parseAuditRecordFromXML (xml, callback) {
-    // DICOM mappers
-  function csdCodeToCode (name) { if (name === 'csd-code') { return 'code' } return name }
-  function originalTextToDisplayName (name) { if (name === 'originalText') { return 'displayName' } return name }
+  // DICOM mappers
+  function csdCodeToCode (name) {
+    if (name === 'csd-code') { return 'code' }
+    return name
+  }
+
+  function originalTextToDisplayName (name) {
+    if (name === 'originalText') { return 'displayName' }
+    return name
+  }
 
   const options = {
     mergeAttrs: true,
@@ -39,7 +46,7 @@ function parseAuditRecordFromXML (xml, callback) {
 
     audit.activeParticipant = []
     if (result.auditMessage.activeParticipant) {
-            // xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
+      // xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
       if (result.auditMessage.activeParticipant instanceof Array) {
         for (const ap of Array.from(result.auditMessage.activeParticipant)) {
           audit.activeParticipant.push(ap)
@@ -55,7 +62,7 @@ function parseAuditRecordFromXML (xml, callback) {
 
     audit.participantObjectIdentification = []
     if (result.auditMessage.participantObjectIdentification) {
-            // xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
+      // xml2js will only use an array if multiple items exist (explicitArray: false), else it's an object
       if (result.auditMessage.participantObjectIdentification instanceof Array) {
         for (const poi of Array.from(result.auditMessage.participantObjectIdentification)) {
           audit.participantObjectIdentification.push(poi)
@@ -152,19 +159,19 @@ function sendUDPAudit (msg, callback) {
 }
 
 const sendTLSAudit = (msg, callback) =>
-    tlsAuthentication.getServerOptions(true, (err, options) => {
-      if (err) { return callback(err) }
+  tlsAuthentication.getServerOptions(true, (err, options) => {
+    if (err) { return callback(err) }
 
-      const client = tls.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, () => {
-        if (!client.authorized) { return callback(client.authorizationError) }
+    const client = tls.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, () => {
+      if (!client.authorized) { return callback(client.authorizationError) }
 
-        client.write(`${msg.length} ${msg}`)
-        return client.end()
-      })
-
-      client.on('error', err => logger.error(err))
-      return client.on('close', () => callback())
+      client.write(`${msg.length} ${msg}`)
+      return client.end()
     })
+
+    client.on('error', err => logger.error(err))
+    return client.on('close', () => callback())
+  })
 
 function sendTCPAudit (msg, callback) {
   const client = net.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, () => {
@@ -189,10 +196,15 @@ export function sendAuditEvent (msg, callback) {
   }
 
   switch (config.auditing.auditEvents.interface) {
-    case 'internal': return processAudit(msg, done)
-    case 'udp': return sendUDPAudit(msg, done)
-    case 'tls': return sendTLSAudit(msg, done)
-    case 'tcp': return sendTCPAudit(msg, done)
-    default: return done(new Error(`Invalid audit event interface '${config.auditing.auditEvents.interface}'`))
+    case 'internal':
+      return processAudit(msg, done)
+    case 'udp':
+      return sendUDPAudit(msg, done)
+    case 'tls':
+      return sendTLSAudit(msg, done)
+    case 'tcp':
+      return sendTCPAudit(msg, done)
+    default:
+      return done(new Error(`Invalid audit event interface '${config.auditing.auditEvents.interface}'`))
   }
 }

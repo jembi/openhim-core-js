@@ -13,7 +13,7 @@ const syslogDef = {
   severityID: Number,
   facility: String,
   severity: String,
-  type: { type: String },
+  type: {type: String},
   time: Date,
   host: String,
   appName: String,
@@ -37,7 +37,7 @@ const ParticipantObjectIdentificationDef = {
   participantObjectIDTypeCode: codeTypeDef,
   participantObjectQuery: String,
   participantObjectDetail: {
-    type: { type: String },
+    type: {type: String},
     value: String
   }
 }

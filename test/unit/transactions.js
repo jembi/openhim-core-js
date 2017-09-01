@@ -8,7 +8,7 @@ const transactions = require('../../src/api/transactions')
 
 describe('calculateTransactionBodiesByteLength()', () => {
   it('should calculate the bodies length of a transaction', async () => {
-    const lengthObj = { length: 0 }
+    const lengthObj = {length: 0}
     let transaction = {
       body: '123456789'
     }
@@ -17,7 +17,7 @@ describe('calculateTransactionBodiesByteLength()', () => {
   })
 
   it('should calculate the bodies length of a transaction with hidden bodies', async () => {
-    const lengthObj = { length: 0 }
+    const lengthObj = {length: 0}
     let transaction = {
       body: '123456789',
       arbitrary: {
@@ -31,7 +31,7 @@ describe('calculateTransactionBodiesByteLength()', () => {
   })
 
   it('should calculate the bodies length of a transaction', async () => {
-    const lengthObj = { length: 0 }
+    const lengthObj = {length: 0}
     let transaction = {}
     try {
       transactions.calculateTransactionBodiesByteLength(lengthObj, transaction, new WeakSet())

@@ -403,7 +403,7 @@ describe('Auditing', () => {
 
       server.on('error', done)
 
-      return server.bind({ port: 6050 })
+      return server.bind({port: 6050})
     })
 
     it('should send an audit event via TLS', (done) => {

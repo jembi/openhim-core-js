@@ -45,21 +45,35 @@ function getChannelIDsArray (channels) {
 function getProjectionObject (filterRepresentation) {
   switch (filterRepresentation) {
     case 'simpledetails':
-            // view minimum required data for transaction details view
-      return { 'request.body': 0, 'response.body': 0, 'routes.request.body': 0, 'routes.response.body': 0, 'orchestrations.request.body': 0, 'orchestrations.response.body': 0 }
+      // view minimum required data for transaction details view
+      return {
+        'request.body': 0,
+        'response.body': 0,
+        'routes.request.body': 0,
+        'routes.response.body': 0,
+        'orchestrations.request.body': 0,
+        'orchestrations.response.body': 0
+      }
     case 'full':
-            // view all transaction data
+      // view all transaction data
       return {}
     case 'fulltruncate':
-            // same as full
+      // same as full
       return {}
     case 'bulkrerun':
-            // view only 'bulkrerun' properties
-      return { _id: 1, childIDs: 1, canRerun: 1, channelID: 1 }
+      // view only 'bulkrerun' properties
+      return {_id: 1, childIDs: 1, canRerun: 1, channelID: 1}
     default:
-            // no filterRepresentation supplied - simple view
-            // view minimum required data for transactions
-      return { 'request.body': 0, 'request.headers': 0, 'response.body': 0, 'response.headers': 0, orchestrations: 0, routes: 0 }
+      // no filterRepresentation supplied - simple view
+      // view minimum required data for transactions
+      return {
+        'request.body': 0,
+        'request.headers': 0,
+        'response.body': 0,
+        'response.headers': 0,
+        orchestrations: 0,
+        routes: 0
+      }
   }
 }
 
@@ -75,6 +89,7 @@ function truncateTransactionDetails (trx) {
       t.response.body = t.response.body.slice(0, truncateSize) + truncateAppend
     }
   }
+
   trunc(trx)
 
   if (trx.routes != null) {
@@ -94,81 +109,84 @@ export function * getTransactions () {
   try {
     const filtersObject = this.request.query
 
-        // get limit and page values
-    const { filterLimit } = filtersObject
-    const { filterPage } = filtersObject
-    let { filterRepresentation } = filtersObject
+    // get limit and page values
+    const {filterLimit} = filtersObject
+    const {filterPage} = filtersObject
+    let {filterRepresentation} = filtersObject
 
-        // remove limit/page/filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
+    // remove limit/page/filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
     delete filtersObject.filterLimit
     delete filtersObject.filterPage
     delete filtersObject.filterRepresentation
 
-        // determine skip amount
+    // determine skip amount
     const filterSkip = filterPage * filterLimit
 
-        // get filters object
+    // get filters object
     const filters = (filtersObject.filters != null) ? JSON.parse(filtersObject.filters) : {}
 
-        // Test if the user is authorised
+    // Test if the user is authorised
     if (!authorisation.inGroup('admin', this.authenticated)) {
-            // if not an admin, restrict by transactions that this user can view
+      // if not an admin, restrict by transactions that this user can view
       const channels = yield authorisation.getUserViewableChannels(this.authenticated)
 
       if (!filtersObject.channelID) {
-        filters.channelID = { $in: getChannelIDsArray(channels) }
+        filters.channelID = {$in: getChannelIDsArray(channels)}
       } else if (!Array.from(getChannelIDsArray(channels)).includes(filtersObject.channelID)) {
         return utils.logAndSetResponse(this, 403, `Forbidden: Unauthorized channel ${filtersObject.channelID}`, 'info')
       }
 
-            // set 'filterRepresentation' to default if user isnt admin
+      // set 'filterRepresentation' to default if user isnt admin
       filterRepresentation = ''
     }
 
-        // get projection object
+    // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
     if (filtersObject.channelID) {
       filters.channelID = filtersObject.channelID
     }
 
-        // parse date to get it into the correct format for querying
+    // parse date to get it into the correct format for querying
     if (filters['request.timestamp']) {
       filters['request.timestamp'] = JSON.parse(filters['request.timestamp'])
     }
 
-        /* Transaction Filters */
-        // build RegExp for transaction request path filter
+    /* Transaction Filters */
+    // build RegExp for transaction request path filter
     if (filters['request.path']) {
       filters['request.path'] = new RegExp(filters['request.path'], 'i')
     }
 
-        // build RegExp for transaction request querystring filter
+    // build RegExp for transaction request querystring filter
     if (filters['request.querystring']) {
       filters['request.querystring'] = new RegExp(filters['request.querystring'], 'i')
     }
 
-        // response status pattern match checking
+    // response status pattern match checking
     if (filters['response.status'] && utils.statusCodePatternMatch(filters['response.status'])) {
-      filters['response.status'] = { $gte: filters['response.status'][0] * 100, $lt: (filters['response.status'][0] * 100) + 100 }
+      filters['response.status'] = {
+        $gte: filters['response.status'][0] * 100,
+        $lt: (filters['response.status'][0] * 100) + 100
+      }
     }
 
-        // check if properties exist
+    // check if properties exist
     if (filters.properties) {
-            // we need to source the property key and re-construct filter
+      // we need to source the property key and re-construct filter
       const key = Object.keys(filters.properties)[0]
       filters[`properties.${key}`] = filters.properties[key]
 
-            // if property has no value then check if property exists instead
+      // if property has no value then check if property exists instead
       if (filters.properties[key] === null) {
-        filters[`properties.${key}`] = { $exists: true }
+        filters[`properties.${key}`] = {$exists: true}
       }
 
-            // delete the old properties filter as its not needed
+      // delete the old properties filter as its not needed
       delete filters.properties
     }
 
-        // parse childIDs query to get it into the correct format for querying
+    // parse childIDs query to get it into the correct format for querying
     if (filters['childIDs']) {
       filters['childIDs'] = JSON.parse(filters['childIDs'])
     }
@@ -177,45 +195,51 @@ export function * getTransactions () {
       filters['$or'] = JSON.parse(filters['$or'])
     }
 
-        /* Route Filters */
-        // build RegExp for route request path filter
+    /* Route Filters */
+    // build RegExp for route request path filter
     if (filters['routes.request.path']) {
       filters['routes.request.path'] = new RegExp(filters['routes.request.path'], 'i')
     }
 
-        // build RegExp for transaction request querystring filter
+    // build RegExp for transaction request querystring filter
     if (filters['routes.request.querystring']) {
       filters['routes.request.querystring'] = new RegExp(filters['routes.request.querystring'], 'i')
     }
 
-        // route response status pattern match checking
+    // route response status pattern match checking
     if (filters['routes.response.status'] && utils.statusCodePatternMatch(filters['routes.response.status'])) {
-      filters['routes.response.status'] = { $gte: filters['routes.response.status'][0] * 100, $lt: (filters['routes.response.status'][0] * 100) + 100 }
+      filters['routes.response.status'] = {
+        $gte: filters['routes.response.status'][0] * 100,
+        $lt: (filters['routes.response.status'][0] * 100) + 100
+      }
     }
 
-        /* orchestration Filters */
-        // build RegExp for orchestration request path filter
+    /* orchestration Filters */
+    // build RegExp for orchestration request path filter
     if (filters['orchestrations.request.path']) {
       filters['orchestrations.request.path'] = new RegExp(filters['orchestrations.request.path'], 'i')
     }
 
-        // build RegExp for transaction request querystring filter
+    // build RegExp for transaction request querystring filter
     if (filters['orchestrations.request.querystring']) {
       filters['orchestrations.request.querystring'] = new RegExp(filters['orchestrations.request.querystring'], 'i')
     }
 
-        // orchestration response status pattern match checking
+    // orchestration response status pattern match checking
     if (filters['orchestrations.response.status'] && utils.statusCodePatternMatch(filters['orchestrations.response.status'])) {
-      filters['orchestrations.response.status'] = { $gte: filters['orchestrations.response.status'][0] * 100, $lt: (filters['orchestrations.response.status'][0] * 100) + 100 }
+      filters['orchestrations.response.status'] = {
+        $gte: filters['orchestrations.response.status'][0] * 100,
+        $lt: (filters['orchestrations.response.status'][0] * 100) + 100
+      }
     }
 
-        // execute the query
+    // execute the query
     this.body = yield TransactionModelAPI
-            .find(filters, projectionFiltersObject)
-            .skip(filterSkip)
-            .limit(parseInt(filterLimit, 10))
-            .sort({ 'request.timestamp': -1 })
-            .exec()
+      .find(filters, projectionFiltersObject)
+      .skip(filterSkip)
+      .limit(parseInt(filterLimit, 10))
+      .sort({'request.timestamp': -1})
+      .exec()
 
     if (filterRepresentation === 'fulltruncate') {
       return Array.from(this.body).map((trx) => truncateTransactionDetails(trx))
@@ -264,21 +288,21 @@ function calculateTransactionBodiesByteLength (lengthObj, obj, ws) {
  * Adds an transaction
  */
 export function * addTransaction () {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addTransaction denied.`, 'info')
     return
   }
 
   try {
-        // Get the values to use
+    // Get the values to use
     const transactionData = this.request.body
-    const ctx = { primaryRequest: true }
+    const ctx = {primaryRequest: true}
     enforceMaxBodiesSize(ctx, transactionData, new WeakSet())
 
     const tx = new TransactionModelAPI(transactionData)
 
-        // Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
+    // Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
     yield Q.ninvoke(tx, 'save')
     this.status = 201
     logger.info(`User ${this.authenticated.email} created transaction with id ${tx.id}`)
@@ -293,40 +317,40 @@ export function * addTransaction () {
  * Retrieves the details for a specific transaction
  */
 export function * getTransactionById (transactionId) {
-    // Get the values to use
+  // Get the values to use
   transactionId = unescape(transactionId)
 
   try {
     const filtersObject = this.request.query
-    let { filterRepresentation } = filtersObject
+    let {filterRepresentation} = filtersObject
 
-        // remove filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
+    // remove filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
     delete filtersObject.filterRepresentation
 
-        // set filterRepresentation to 'full' if not supplied
+    // set filterRepresentation to 'full' if not supplied
     if (!filterRepresentation) { filterRepresentation = 'full' }
 
-        // --------------Check if user has permission to view full content----------------- #
-        // if user NOT admin, determine their representation privileges.
+    // --------------Check if user has permission to view full content----------------- #
+    // if user NOT admin, determine their representation privileges.
     if (!authorisation.inGroup('admin', this.authenticated)) {
-            // retrieve transaction channelID
-      const txChannelID = yield TransactionModelAPI.findById(transactionId, { channelID: 1 }, { _id: 0 }).exec()
+      // retrieve transaction channelID
+      const txChannelID = yield TransactionModelAPI.findById(transactionId, {channelID: 1}, {_id: 0}).exec()
       if ((txChannelID != null ? txChannelID.length : undefined) === 0) {
         this.body = `Could not find transaction with ID: ${transactionId}`
         this.status = 404
         return
       } else {
-                // assume user is not allowed to view all content - show only 'simpledetails'
+        // assume user is not allowed to view all content - show only 'simpledetails'
         filterRepresentation = 'simpledetails'
 
-                // get channel.txViewFullAcl information by channelID
-        const channel = yield ChannelModelAPI.findById(txChannelID.channelID, { txViewFullAcl: 1 }, { _id: 0 }).exec()
+        // get channel.txViewFullAcl information by channelID
+        const channel = yield ChannelModelAPI.findById(txChannelID.channelID, {txViewFullAcl: 1}, {_id: 0}).exec()
 
-                // loop through user groups
+        // loop through user groups
         for (const group of Array.from(this.authenticated.groups)) {
-                    // if user role found in channel txViewFullAcl - user has access to view all content
+          // if user role found in channel txViewFullAcl - user has access to view all content
           if (channel.txViewFullAcl.indexOf(group) >= 0) {
-                        // update filterRepresentation object to be 'full' and allow all content
+            // update filterRepresentation object to be 'full' and allow all content
             filterRepresentation = 'full'
             break
           }
@@ -334,8 +358,8 @@ export function * getTransactionById (transactionId) {
       }
     }
 
-        // --------------Check if user has permission to view full content----------------- #
-        // get projection object
+    // --------------Check if user has permission to view full content----------------- #
+    // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
     const result = yield TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
@@ -343,11 +367,11 @@ export function * getTransactionById (transactionId) {
       truncateTransactionDetails(result)
     }
 
-        // Test if the result if valid
+    // Test if the result if valid
     if (!result) {
       this.body = `Could not find transaction with ID: ${transactionId}`
       this.status = 404
-            // Test if the user is authorised
+      // Test if the user is authorised
     } else if (!authorisation.inGroup('admin', this.authenticated)) {
       const channels = yield authorisation.getUserViewableChannels(this.authenticated)
       if (getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0) {
@@ -371,30 +395,30 @@ export function * findTransactionByClientId (clientId) {
 
   try {
     let filtersObject = this.request.query
-    let { filterRepresentation } = filtersObject
+    let {filterRepresentation} = filtersObject
 
-        // get projection object
+    // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
     filtersObject = {}
     filtersObject.clientID = clientId
 
-        // Test if the user is authorised
+    // Test if the user is authorised
     if (!authorisation.inGroup('admin', this.authenticated)) {
-            // if not an admin, restrict by transactions that this user can view
+      // if not an admin, restrict by transactions that this user can view
       const channels = yield authorisation.getUserViewableChannels(this.authenticated)
 
-      filtersObject.channelID = { $in: getChannelIDsArray(channels) }
+      filtersObject.channelID = {$in: getChannelIDsArray(channels)}
 
-            // set 'filterRepresentation' to default if user isnt admin
+      // set 'filterRepresentation' to default if user isnt admin
       filterRepresentation = ''
     }
 
-        // execute the query
+    // execute the query
     this.body = yield TransactionModelAPI
-            .find(filtersObject, projectionFiltersObject)
-            .sort({ 'request.timestamp': -1 })
-            .exec()
+      .find(filtersObject, projectionFiltersObject)
+      .sort({'request.timestamp': -1})
+      .exec()
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not get transaction by clientID via the API: ${e}`, 'error')
   }
@@ -450,16 +474,16 @@ function updateTransactionMetrics (updates, doc) {
           orchestrationName = `${orchestration.group}.${orchestration.name}` // Namespace it by group
         }
 
-              /*
-               * Update timers
-               */
+        /*
+         * Update timers
+         */
         logger.debug('updating async route timers')
         sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`, orchestrationDuration)
         sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`, orchestrationDuration)
 
-              /*
-               * Update counters
-               */
+        /*
+         * Update counters
+         */
         logger.debug('updating async route counters')
         sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`)
         sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`)
@@ -491,7 +515,7 @@ function updateTransactionMetrics (updates, doc) {
  * Updates a transaction record specified by transactionId
  */
 export function * updateTransaction (transactionId) {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateTransaction denied.`, 'info')
     return
@@ -511,8 +535,8 @@ export function * updateTransaction (transactionId) {
       }
     }
 
-    const transactionToUpdate = yield TransactionModelAPI.findOne({ _id: transactionId }).exec()
-    const transactionBodiesLength = { length: 0 }
+    const transactionToUpdate = yield TransactionModelAPI.findOne({_id: transactionId}).exec()
+    const transactionBodiesLength = {length: 0}
 
     calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet())
 
@@ -522,7 +546,7 @@ export function * updateTransaction (transactionId) {
     }
     enforceMaxBodiesSize(ctx, updates, new WeakSet())
 
-    tx = yield TransactionModelAPI.findByIdAndUpdate(transactionId, updates, { new: true }).exec()
+    tx = yield TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
 
     this.body = `Transaction with ID: ${transactionId} successfully updated`
     this.status = 200
@@ -539,13 +563,13 @@ export function * updateTransaction (transactionId) {
  * Removes a transaction
  */
 export function * removeTransaction (transactionId) {
-    // Test if the user is authorised
+  // Test if the user is authorised
   if (!authorisation.inGroup('admin', this.authenticated)) {
     utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeTransaction denied.`, 'info')
     return
   }
 
-    // Get the values to use
+  // Get the values to use
   transactionId = unescape(transactionId)
 
   try {

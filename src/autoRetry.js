@@ -5,12 +5,12 @@ import { AutoRetryModel } from './model/autoRetry'
 import { TaskModel } from './model/tasks'
 import * as Channels from './model/channels'
 
-const { ChannelModel } = Channels
+const {ChannelModel} = Channels
 
 export function reachedMaxAttempts (tx, channel) {
   return (channel.autoRetryMaxAttempts != null) &&
-        (channel.autoRetryMaxAttempts > 0) &&
-        (tx.autoRetryAttempt >= channel.autoRetryMaxAttempts)
+    (channel.autoRetryMaxAttempts > 0) &&
+    (tx.autoRetryAttempt >= channel.autoRetryMaxAttempts)
 }
 
 export function queueForRetry (tx) {
@@ -26,14 +26,14 @@ export function queueForRetry (tx) {
   })
 }
 
-const getChannels = callback => ChannelModel.find({ autoRetryEnabled: true, status: 'enabled' }, callback)
+const getChannels = callback => ChannelModel.find({autoRetryEnabled: true, status: 'enabled'}, callback)
 
 function popTransactions (channel, callback) {
   const to = moment().subtract(channel.autoRetryPeriodMinutes - 1, 'minutes')
 
   const query = {
     $and: [
-            { channelID: channel._id },
+      {channelID: channel._id},
       {
         requestTimestamp: {
           $lte: to.toDate()
@@ -46,7 +46,7 @@ function popTransactions (channel, callback) {
   return AutoRetryModel.find(query, (err, transactions) => {
     if (err) { return callback(err) }
     if (transactions.length === 0) { return callback(null, []) }
-    return AutoRetryModel.remove({ _id: { $in: (transactions.map(t => t._id)) } }, (err) => {
+    return AutoRetryModel.remove({_id: {$in: (transactions.map(t => t._id))}}, (err) => {
       if (err) { return callback(err) }
       return callback(null, transactions)
     })
@@ -56,7 +56,7 @@ function popTransactions (channel, callback) {
 function createRerunTask (transactionIDs, callback) {
   logger.info(`Rerunning failed transactions: ${transactionIDs}`)
   const task = new TaskModel({
-    transactions: (transactionIDs.map(t => ({ tid: t }))),
+    transactions: (transactionIDs.map(t => ({tid: t}))),
     totalTransactions: transactionIDs.length,
     remainingTransactions: transactionIDs.length,
     user: 'internal'
@@ -97,6 +97,7 @@ function autoRetryTask (job, done) {
         logger.debug(`Auto retry task total time: ${new Date() - _taskStart} ms`)
         return done()
       }
+
       if (transactionsToRerun.length > 0) {
         return createRerunTask(transactionsToRerun, end)
       }

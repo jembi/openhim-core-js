@@ -12,13 +12,13 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)
 
 export function authoriseUser (ctx, done) {
-    // Use the original transaction's channel to setup the authorised channel
-  return TransactionModel.findOne({ _id: ctx.parentID }, (err, originalTransaction) =>
-        ChannelModel.findOne({ _id: originalTransaction.channelID }, (err, authorisedChannel) => {
-          ctx.authorisedChannel = authorisedChannel
-          return done()
-        })
-    )
+  // Use the original transaction's channel to setup the authorised channel
+  return TransactionModel.findOne({_id: ctx.parentID}, (err, originalTransaction) =>
+    ChannelModel.findOne({_id: originalTransaction.channelID}, (err, authorisedChannel) => {
+      ctx.authorisedChannel = authorisedChannel
+      return done()
+    })
+  )
 }
 
 /*

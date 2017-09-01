@@ -39,7 +39,7 @@ export function authenticateUser (ctx, done) {
   const user = auth(ctx)
 
   if (user) {
-    return ClientModel.findOne({ clientID: user.name }, (err, client) => {
+    return ClientModel.findOne({clientID: user.name}, (err, client) => {
       if (err) { return done(err) }
 
       if (client) {

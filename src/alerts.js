@@ -13,14 +13,14 @@ import * as utils from './utils'
 import * as Channels from './model/channels'
 
 config.alerts = config.get('alerts')
-const { ChannelModel } = Channels
+const {ChannelModel} = Channels
 
 const trxURL = trx => `${config.alerts.consoleURL}/#/transactions/${trx.transactionID}`
 
 const statusTemplate = (transactions, channel, alert) =>
-    ({
-      plain () {
-        return `\
+  ({
+    plain () {
+      return `\
 OpenHIM Transactions Alert
 
 The following transaction(s) have completed with status ${alert.status} on the OpenHIM instance running on ${config.alerts.himInstance}:
@@ -28,9 +28,9 @@ Channel - ${channel.name}
 ${(transactions.map(trx => trxURL(trx))).join('\n')}
 \
 `
-      },
-      html () {
-        let text = `\
+    },
+    html () {
+      let text = `\
 <html>
     <head></head>
     <body>
@@ -40,35 +40,35 @@ ${(transactions.map(trx => trxURL(trx))).join('\n')}
         <table>
           <tr><td>Channel - <b>${channel.name}</b></td></td>\n\
 `
-        text += (transactions.map(trx => `        <tr><td><a href='${trxURL(trx)}'>${trxURL(trx)}</a></td></tr>`)).join('\n')
-        text += '\n'
-        text += `\
+      text += (transactions.map(trx => `        <tr><td><a href='${trxURL(trx)}'>${trxURL(trx)}</a></td></tr>`)).join('\n')
+      text += '\n'
+      text += `\
         </table>
       </div>
     </body>
 </html>\
 `
 
-        return text
-      },
-      sms () {
-        let text = 'Alert - '
-        if (transactions.length > 1) {
-          text += `${transactions.length} transactions have`
-        } else if (transactions.length === 1) {
-          text += '1 transaction has'
-        } else {
-          text += 'no transactions have'
-        }
-        text += ` completed with status ${alert.status} on the OpenHIM running on ${config.alerts.himInstance} (${channel.name})`
-        return text
+      return text
+    },
+    sms () {
+      let text = 'Alert - '
+      if (transactions.length > 1) {
+        text += `${transactions.length} transactions have`
+      } else if (transactions.length === 1) {
+        text += '1 transaction has'
+      } else {
+        text += 'no transactions have'
       }
-    })
+      text += ` completed with status ${alert.status} on the OpenHIM running on ${config.alerts.himInstance} (${channel.name})`
+      return text
+    }
+  })
 
 const maxRetriesTemplate = (transactions, channel) =>
-    ({
-      plain () {
-        return `\
+  ({
+    plain () {
+      return `\
 OpenHIM Transactions Alert - ${config.alerts.himInstance}
 
 The following transaction(s) have been retried ${channel.autoRetryMaxAttempts} times, but are still failing:
@@ -78,9 +78,9 @@ ${(transactions.map(trx => trxURL(trx))).join('\n')}
 
 Please note that they will not be retried any further by the OpenHIM automatically.\
 `
-      },
-      html () {
-        let text = `\
+    },
+    html () {
+      let text = `\
 <html>
     <head></head>
     <body>
@@ -90,9 +90,9 @@ Please note that they will not be retried any further by the OpenHIM automatical
         <table>
           <tr><td>Channel - <b>${channel.name}</b></td></td>\n\
 `
-        text += (transactions.map(trx => `        <tr><td><a href='${trxURL(trx)}'>${trxURL(trx)}</a></td></tr>`)).join('\n')
-        text += '\n'
-        text += `\
+      text += (transactions.map(trx => `        <tr><td><a href='${trxURL(trx)}'>${trxURL(trx)}</a></td></tr>`)).join('\n')
+      text += '\n'
+      text += `\
         </table>
         <p>Please note that they will not be retried any further by the OpenHIM automatically.</p>
       </div>
@@ -100,51 +100,51 @@ Please note that they will not be retried any further by the OpenHIM automatical
 </html>\
 `
 
-        return text
-      },
-      sms () {
-        let text = 'Alert - '
-        if (transactions.length > 1) {
-          text += `${transactions.length} transactions have`
-        } else if (transactions.length === 1) {
-          text += '1 transaction has'
-        }
-        text += ` been retried ${channel.autoRetryMaxAttempts} times but are still failing on the OpenHIM on ${config.alerts.himInstance} (${channel.name})`
-        return text
+      return text
+    },
+    sms () {
+      let text = 'Alert - '
+      if (transactions.length > 1) {
+        text += `${transactions.length} transactions have`
+      } else if (transactions.length === 1) {
+        text += '1 transaction has'
       }
-    })
+      text += ` been retried ${channel.autoRetryMaxAttempts} times but are still failing on the OpenHIM on ${config.alerts.himInstance} (${channel.name})`
+      return text
+    }
+  })
 
 const getAllChannels = callback => ChannelModel.find({}, callback)
 
-const findGroup = (groupID, callback) => ContactGroupModel.findOne({ _id: groupID }, callback)
+const findGroup = (groupID, callback) => ContactGroupModel.findOne({_id: groupID}, callback)
 
 const findTransactions = (channel, dateFrom, status, callback) =>
-    EventModel
-        .find({
-          created: {
-            $gte: dateFrom
-          },
-          channelID: channel._id,
-          event: 'end',
-          status,
-          type: 'channel'
-        }, { transactionID: 'transactionID' })
-        .hint({ created: 1 })
-        .exec(callback)
-
-const countTotalTransactionsForChannel = (channel, dateFrom, callback) =>
-    EventModel.count({
+  EventModel
+    .find({
       created: {
         $gte: dateFrom
       },
       channelID: channel._id,
-      type: 'channel',
-      event: 'end'
-    }, callback)
+      event: 'end',
+      status,
+      type: 'channel'
+    }, {transactionID: 'transactionID'})
+    .hint({created: 1})
+    .exec(callback)
+
+const countTotalTransactionsForChannel = (channel, dateFrom, callback) =>
+  EventModel.count({
+    created: {
+      $gte: dateFrom
+    },
+    channelID: channel._id,
+    type: 'channel',
+    event: 'end'
+  }, callback)
 
 function findOneAlert (channel, alert, dateFrom, user, alertStatus, callback) {
   const criteria = {
-    timestamp: { $gte: dateFrom },
+    timestamp: {$gte: dateFrom},
     channelID: channel._id,
     condition: alert.condition,
     status: alert.condition === 'auto-retry-max-attempted' ? '500' : alert.status,
@@ -152,26 +152,26 @@ function findOneAlert (channel, alert, dateFrom, user, alertStatus, callback) {
   }
   if (user) { criteria.user = user }
   return AlertModel
-        .findOne(criteria)
-        .exec(callback)
+    .findOne(criteria)
+    .exec(callback)
 }
 
 function findTransactionsMatchingStatus (channel, alert, dateFrom, callback) {
   let statusMatch
   const pat = /\dxx/.exec(alert.status)
   if (pat) {
-    statusMatch = { $gte: alert.status[0] * 100, $lt: (alert.status[0] * 100) + 100 }
+    statusMatch = {$gte: alert.status[0] * 100, $lt: (alert.status[0] * 100) + 100}
   } else {
     statusMatch = alert.status
   }
 
   let dateToCheck = dateFrom
-    // check last hour when using failureRate
+  // check last hour when using failureRate
   if (alert.failureRate != null) { dateToCheck = moment().subtract(1, 'hours').toDate() }
 
   return findTransactions(channel, dateToCheck, statusMatch, (err, results) => {
     if (!err && (results != null) && (alert.failureRate != null)) {
-            // Get count of total transactions and work out failure ratio
+      // Get count of total transactions and work out failure ratio
       const _countStart = new Date()
       return countTotalTransactionsForChannel(channel, dateToCheck, (err, count) => {
         logger.debug(`.countTotalTransactionsForChannel: ${new Date() - _countStart} ms`)
@@ -182,7 +182,7 @@ function findTransactionsMatchingStatus (channel, alert, dateFrom, callback) {
         if (failureRatio >= alert.failureRate) {
           return findOneAlert(channel, alert, dateToCheck, null, 'Completed', (err, userAlert) => {
             if (err) { return callback(err, null) }
-                        // Has an alert already been sent this last hour?
+            // Has an alert already been sent this last hour?
             if (userAlert != null) {
               return callback(err, [])
             }
@@ -199,22 +199,22 @@ function findTransactionsMatchingStatus (channel, alert, dateFrom, callback) {
 }
 
 const findTransactionsMaxRetried = (channel, alert, dateFrom, callback) =>
-    EventModel
-        .find({
-          created: {
-            $gte: dateFrom
-          },
-          channelID: channel._id,
-          event: 'end',
-          type: 'channel',
-          status: 500,
-          autoRetryAttempt: channel.autoRetryMaxAttempts
-        }, { transactionID: 'transactionID' })
-        .hint({ created: 1 })
-        .exec((err, transactions) => {
-          if (err) { return callback(err) }
-          return callback(null, _.uniqWith(transactions, (a, b) => a.transactionID.equals(b.transactionID)))
-        })
+  EventModel
+    .find({
+      created: {
+        $gte: dateFrom
+      },
+      channelID: channel._id,
+      event: 'end',
+      type: 'channel',
+      status: 500,
+      autoRetryAttempt: channel.autoRetryMaxAttempts
+    }, {transactionID: 'transactionID'})
+    .hint({created: 1})
+    .exec((err, transactions) => {
+      if (err) { return callback(err) }
+      return callback(null, _.uniqWith(transactions, (a, b) => a.transactionID.equals(b.transactionID)))
+    })
 
 function findTransactionsMatchingCondition (channel, alert, dateFrom, callback) {
   if (!alert.condition || (alert.condition === 'status')) {
@@ -236,7 +236,7 @@ function calcDateFromForUser (user) {
 
 function userAlreadyReceivedAlert (channel, alert, user, callback) {
   if (!user.maxAlerts || (user.maxAlerts === 'no max')) {
-        // user gets all alerts
+    // user gets all alerts
     return callback(null, false)
   }
   const dateFrom = calcDateFromForUser(user)
@@ -260,36 +260,36 @@ function getTransactionsForAlert (channel, alert, user, transactions, callback) 
 }
 
 const sendAlert = (channel, alert, user, transactions, contactHandler, done) =>
-    UserModel.findOne({ email: user.user }, (err, dbUser) => {
-      if (err) { return done(err) }
-      if (!dbUser) { return done(`Cannot send alert: Unknown user '${user.user}'`) }
+  UserModel.findOne({email: user.user}, (err, dbUser) => {
+    if (err) { return done(err) }
+    if (!dbUser) { return done(`Cannot send alert: Unknown user '${user.user}'`) }
 
-      return userAlreadyReceivedAlert(channel, alert, user, (err, received) => {
-        if (err) { return done(err, true) }
-        if (received) { return done(null, true) }
+    return userAlreadyReceivedAlert(channel, alert, user, (err, received) => {
+      if (err) { return done(err, true) }
+      if (received) { return done(null, true) }
 
-        logger.info(`Sending alert for user '${user.user}' using method '${user.method}'`)
+      logger.info(`Sending alert for user '${user.user}' using method '${user.method}'`)
 
-        return getTransactionsForAlert(channel, alert, user, transactions, (err, transactionsForAlert) => {
-          let template = statusTemplate(transactionsForAlert, channel, alert)
-          if (alert.condition === 'auto-retry-max-attempted') {
-            template = maxRetriesTemplate(transactionsForAlert, channel, alert)
-          }
+      return getTransactionsForAlert(channel, alert, user, transactions, (err, transactionsForAlert) => {
+        let template = statusTemplate(transactionsForAlert, channel, alert)
+        if (alert.condition === 'auto-retry-max-attempted') {
+          template = maxRetriesTemplate(transactionsForAlert, channel, alert)
+        }
 
-          if (user.method === 'email') {
-            const plainMsg = template.plain()
-            const htmlMsg = template.html()
-            return contactHandler('email', user.user, 'OpenHIM Alert', plainMsg, htmlMsg, done)
-          } else if (user.method === 'sms') {
-            if (!dbUser.msisdn) { return done(`Cannot send alert: MSISDN not specified for user '${user.user}'`) }
+        if (user.method === 'email') {
+          const plainMsg = template.plain()
+          const htmlMsg = template.html()
+          return contactHandler('email', user.user, 'OpenHIM Alert', plainMsg, htmlMsg, done)
+        } else if (user.method === 'sms') {
+          if (!dbUser.msisdn) { return done(`Cannot send alert: MSISDN not specified for user '${user.user}'`) }
 
-            const smsMsg = template.sms()
-            return contactHandler('sms', dbUser.msisdn, 'OpenHIM Alert', smsMsg, null, done)
-          }
-          return done(`Unknown method '${user.method}' specified for user '${user.user}'`)
-        })
+          const smsMsg = template.sms()
+          return contactHandler('sms', dbUser.msisdn, 'OpenHIM Alert', smsMsg, null, done)
+        }
+        return done(`Unknown method '${user.method}' specified for user '${user.user}'`)
       })
     })
+  })
 
 // Actions to take after sending an alert
 function afterSendAlert (err, channel, alert, user, transactions, skipSave, done) {
@@ -314,12 +314,12 @@ function afterSendAlert (err, channel, alert, user, transactions, skipSave, done
 }
 
 function sendAlerts (channel, alert, transactions, contactHandler, done) {
-    // Each group check creates one promise that needs to be resolved.
-    // For each group, the promise is only resolved when an alert is sent and stored
-    // for each user in that group. This resolution is managed by a promise set for that group.
-    //
-    // For individual users in the alert object (not part of a group),
-    // a promise is resolved per user when the alert is both sent and stored.
+  // Each group check creates one promise that needs to be resolved.
+  // For each group, the promise is only resolved when an alert is sent and stored
+  // for each user in that group. This resolution is managed by a promise set for that group.
+  //
+  // For individual users in the alert object (not part of a group),
+  // a promise is resolved per user when the alert is both sent and stored.
   const promises = []
 
   const _alertStart = new Date()

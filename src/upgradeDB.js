@@ -36,7 +36,7 @@ upgradeFuncs.push({
     KeystoreModel.findOne((err, keystore) => {
       if (!keystore) { return defer.resolve() }
 
-            // convert server cert
+      // convert server cert
       return pem.getFingerprint(keystore.cert.data, (err, obj) => {
         keystore.cert.fingerprint = obj.fingerprint
 
@@ -52,11 +52,11 @@ upgradeFuncs.push({
         }
 
         return Q.all(promises).then(() =>
-                    keystore.save((err) => {
-                      if (err != null) { logger.error(`Failed to save keystore: ${err}`) }
-                      return defer.resolve()
-                    })
-                )
+          keystore.save((err) => {
+            if (err != null) { logger.error(`Failed to save keystore: ${err}`) }
+            return defer.resolve()
+          })
+        )
       })
     })
 
@@ -96,15 +96,14 @@ upgradeFuncs.push({
           }
 
           (clientDefer =>
-                        client.save((err) => {
-                          if (err != null) {
-                            logger.error(`Couldn't save client ${client.clientID} while upgrading db: ${err}`)
-                            return clientDefer.reject()
-                          }
+              client.save((err) => {
+                if (err != null) {
+                  logger.error(`Couldn't save client ${client.clientID} while upgrading db: ${err}`)
+                  return clientDefer.reject()
+                }
 
-                          return clientDefer.resolve()
-                        })
-                    )(clientDefer)
+                return clientDefer.resolve()
+              }))(clientDefer)
         }
 
         return Q.all(promises).then(() => defer.resolve())
@@ -157,7 +156,7 @@ function adaptOldVisualizerStructure (visualizer) {
 }
 
 upgradeFuncs.push({
-  description: "Migrate visualizer setting from a user's profile to a shared collection",
+  description: 'Migrate visualizer setting from a user\'s profile to a shared collection',
   func () {
     const defer = Q.defer()
     UserModel.find((err, users) => {
@@ -191,7 +190,7 @@ upgradeFuncs.push({
                 return userDefer.reject(err)
               }
 
-                            // delete the visualizer settings from this user profile
+              // delete the visualizer settings from this user profile
               user.set('settings.visualizer', null)
               return user.save((err, user) => {
                 if (err) { return userDefer.reject(err) }
@@ -216,7 +215,7 @@ if (process.env.NODE_ENV === 'test') {
 
 async function upgradeDbInternal () {
   try {
-    const dbVer = (await DbVersionModel.findOne()) || new DbVersionModel({ version: 0, lastUpdated: new Date() })
+    const dbVer = (await DbVersionModel.findOne()) || new DbVersionModel({version: 0, lastUpdated: new Date()})
     const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version)
 
     for (const upgradeFunc of upgradeFuncsToRun) {
@@ -238,16 +237,16 @@ async function upgradeDbInternal () {
 
 export function upgradeDb (callback) {
   return upgradeDbInternal()
-        .then((...values) => {
-          if (callback) {
-            callback(...(values || []))
-          }
-        })
-        .catch(err => {
-          if (callback) {
-            callback(err)
-          }
-        })
+    .then((...values) => {
+      if (callback) {
+        callback(...(values || []))
+      }
+    })
+    .catch(err => {
+      if (callback) {
+        callback(err)
+      }
+    })
 }
 
 if (!module.parent) {

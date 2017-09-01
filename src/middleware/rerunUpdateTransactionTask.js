@@ -13,7 +13,7 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)
 
 export function setAttemptNumber (ctx, done) {
-  return TransactionModel.findOne({ _id: ctx.parentID }, (err, transaction) => {
+  return TransactionModel.findOne({_id: ctx.parentID}, (err, transaction) => {
     if (transaction.autoRetry) {
       if (transaction.autoRetryAttempt != null) {
         ctx.currentAttempt = transaction.autoRetryAttempt + 1
@@ -34,7 +34,7 @@ export function setAttemptNumber (ctx, done) {
 }
 
 export function updateOriginalTransaction (ctx, done) {
-  return TransactionModel.findOne({ _id: ctx.parentID }, (err, transaction) => {
+  return TransactionModel.findOne({_id: ctx.parentID}, (err, transaction) => {
     transaction.childIDs.push(ctx.transactionId)
     transaction.wasRerun = true
 
@@ -51,7 +51,7 @@ export function updateOriginalTransaction (ctx, done) {
 }
 
 export function updateTask (ctx, done) {
-  return TaskModel.findOne({ _id: ctx.taskID }, (err, task) => {
+  return TaskModel.findOne({_id: ctx.taskID}, (err, task) => {
     task.transactions.forEach((tx) => {
       if (tx.tid === ctx.parentID) {
         tx.rerunID = ctx.transactionId
@@ -81,7 +81,7 @@ export function * koaMiddleware (next) {
   yield setAttempt(this)
   if (statsdServer.enabled) { sdc.timing(`${domain}.rerunUpdateTransactionMiddleware.setAttemptNumber`, startTime) }
 
-    // do intial yield for koa to come back to this function with updated ctx object
+  // do intial yield for koa to come back to this function with updated ctx object
   yield next
   if (statsdServer.enabled) { startTime = new Date() }
   const _updateOriginalTransaction = Q.denodeify(updateOriginalTransaction)

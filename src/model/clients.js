@@ -11,7 +11,7 @@ const ClientSchema = new Schema({
   name: {
     type: String, required: true
   },
-  roles: [{ type: String, required: true }],
+  roles: [{type: String, required: true}],
   passwordAlgorithm: String,
   passwordHash: String,
   passwordSalt: String,

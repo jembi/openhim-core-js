@@ -11,7 +11,7 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)
 
 export function authoriseUser (ctx, done) {
-  return ChannelModel.findOne({ _id: ctx.request.header['channel-id'] }, (err, channel) => {
+  return ChannelModel.findOne({_id: ctx.request.header['channel-id']}, (err, channel) => {
     ctx.authorisedChannel = channel
     return done(null, channel)
   })
