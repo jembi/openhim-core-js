@@ -96,30 +96,30 @@ if (process.env.NODE_ENV === 'test') {
 function setCookiesOnContext (ctx, value) {
   logger.info('Setting cookies on context')
   const result = []
-  for (let c_value = 0; c_value < value.length; c_value++) {
-    let p_val
-    const c_key = value[c_value]
-    const c_opts = { path: false, httpOnly: false } // clear out default values in cookie module
-    const c_vals = {}
-    const object = cookie.parse(c_key)
-    for (const p_key in object) {
-      p_val = object[p_key]
-      const p_key_l = p_key.toLowerCase()
-      switch (p_key_l) {
-        case 'max-age': c_opts.maxage = parseInt(p_val, 10); break
-        case 'expires': c_opts.expires = new Date(p_val); break
-        case 'path': case 'domain': case 'secure': case 'signed': case 'overwrite': c_opts[p_key_l] = p_val; break
-        case 'httponly': c_opts.httpOnly = p_val; break
-        default: c_vals[p_key] = p_val
+  for (let cValue = 0; cValue < value.length; cValue++) {
+    let pVal
+    const cKey = value[cValue]
+    const cOpts = { path: false, httpOnly: false } // clear out default values in cookie module
+    const cVals = {}
+    const object = cookie.parse(cKey)
+    for (const pKey in object) {
+      pVal = object[pKey]
+      const pKeyL = pKey.toLowerCase()
+      switch (pKeyL) {
+        case 'max-age': cOpts.maxage = parseInt(pVal, 10); break
+        case 'expires': cOpts.expires = new Date(pVal); break
+        case 'path': case 'domain': case 'secure': case 'signed': case 'overwrite': cOpts[pKeyL] = pVal; break
+        case 'httponly': cOpts.httpOnly = pVal; break
+        default: cVals[pKey] = pVal
       }
     }
 
         // TODO : Refactor this code when possible
     result.push((() => {
       const result1 = []
-      for (const p_key in c_vals) {
-        p_val = c_vals[p_key]
-        result1.push(ctx.cookies.set(p_key, p_val, c_opts))
+      for (const pKey in cVals) {
+        pVal = cVals[pKey]
+        result1.push(ctx.cookies.set(pKey, pVal, cOpts))
       }
       return result1
     })())

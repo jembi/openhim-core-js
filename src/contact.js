@@ -36,13 +36,13 @@ export function sendEmail (contactAddress, title, messagePlain, messageHTML, cal
 
 function sendSMS (contactAddress, message, callback) {
   if (config.smsGateway.provider === 'clickatell') {
-    return sendSMS_Clickatell(contactAddress, message, callback)
+    return sendSMSClickatell(contactAddress, message, callback)
   }
 
   return callback(`Unknown SMS gateway provider '${config.smsGateway.provider}'`)
 }
 
-function sendSMS_Clickatell (contactAddress, message, callback) {
+function sendSMSClickatell (contactAddress, message, callback) {
   logger.info(`Sending SMS to '${contactAddress}' using Clickatell`)
   return request(`http://api.clickatell.com/http/sendmsg?api_id=${config.smsGateway.config.apiID}&` +
         `user=${config.smsGateway.config.user}&password=${config.smsGateway.config.pass}&` +

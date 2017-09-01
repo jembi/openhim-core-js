@@ -40,7 +40,7 @@ export const testAuditMessage = (testAudit = `\
 `)
 
 // an example from IHE http://ihewiki.wustl.edu/wiki/index.php/Syslog_Collector
-const testAuditIHE_RFC3881 = `\
+const testAuditIHERFC3881 = `\
 <85>1 2010-12-17T15:12:04.287-06:00 cabig-h1 OHT 521 IHE+RFC-3881 - 
 <?xml version="1.0" encoding="UTF-8"?>
 <AuditMessage>
@@ -330,12 +330,12 @@ describe('Auditing', () => {
     }
 
     it('should parse IHE sample RFC3881 audit message and persist it to the database', done =>
-      auditing.processAudit(testAuditIHE_RFC3881, () =>
+      auditing.processAudit(testAuditIHERFC3881, () =>
         AuditModel.find({}, (err, audits) => {
           if (err) { return done(err) }
 
           audits.length.should.be.exactly(1)
-          audits[0].rawMessage.should.be.exactly(testAuditIHE_RFC3881)
+          audits[0].rawMessage.should.be.exactly(testAuditIHERFC3881)
           validateIHEAudit('IHE+RFC-3881', audits[0])
 
           return done()
