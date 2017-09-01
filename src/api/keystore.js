@@ -1,5 +1,4 @@
 import Q from 'q'
-import logger from 'winston'
 import pem from 'pem'
 import { KeystoreModelAPI } from '../model/keystore'
 import * as authorisation from './authorisation'

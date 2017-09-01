@@ -1,5 +1,4 @@
 import koa from 'koa'
-import Q from 'q'
 import getRawBody from 'raw-body'
 import compress from 'koa-compress'
 import SDC from 'statsd-client'
@@ -17,14 +16,12 @@ import * as tcpBypassAuthentication from './middleware/tcpBypassAuthentication'
 import * as retrieveTCPTransaction from './middleware/retrieveTCPTransaction'
 import * as requestMatching from './middleware/requestMatching'
 import * as authorisation from './middleware/authorisation'
-import * as stats from './stats'
 import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisation'
 import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
 import * as events from './middleware/events'
 import * as proxy from './middleware/proxy'
 import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
-import * as tcpAdapter from './tcpAdapter'
 
 config.authentication = config.get('authentication')
 config.statsd = config.get('statsd')

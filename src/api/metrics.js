@@ -1,16 +1,12 @@
 import moment from 'moment'
 import logger from 'winston'
 import mongoose from 'mongoose'
-import Q from 'q'
 import _ from 'lodash'
-import { TransactionModelAPI } from '../model/transactions'
-import { ChannelModelAPI } from '../model/channels'
 import * as authorisation from './authorisation'
 import * as metrics from '../metrics'
 
 // all in one getMetrics generator function for metrics API
 export function * getMetrics (groupChannels, timeSeries, channelID) {
-  let needle
   logger.debug(`Called getMetrics(${groupChannels}, ${timeSeries}, ${channelID})`)
   const channels = yield authorisation.getUserViewableChannels(this.authenticated)
   let channelIDs = channels.map(c => c._id)

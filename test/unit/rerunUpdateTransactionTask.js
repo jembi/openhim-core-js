@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 
 import should from 'should'
-import request from 'supertest'
 import * as rerunUpdateTransactionTask from '../../src/middleware/rerunUpdateTransactionTask'
 import { TransactionModel } from '../../src/model/transactions'
 import { TaskModel } from '../../src/model/tasks'

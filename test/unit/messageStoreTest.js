@@ -1,8 +1,6 @@
 /* eslint-env mocha */
 
 import should from 'should'
-import sinon from 'sinon'
-import http from 'http'
 import { Types } from 'mongoose'
 import * as messageStore from '../../src/middleware/messageStore'
 import { TransactionModel } from '../../src/model/transactions'

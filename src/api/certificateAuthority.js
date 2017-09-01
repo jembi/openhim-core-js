@@ -1,7 +1,7 @@
 import Q from 'q'
 import logger from 'winston'
 import pem from 'pem'
-import { KeystoreModelAPI, CertificateModelAPI } from '../model/keystore'
+import { KeystoreModelAPI } from '../model/keystore'
 import * as utils from '../utils'
 import * as authorisation from './authorisation'
 

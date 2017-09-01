@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import request from 'supertest'
 import { MongoClient } from 'mongodb'
 import { Types } from 'mongoose'

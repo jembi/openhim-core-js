@@ -1,7 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
-import sinon from 'sinon'
 import * as authorisation from '../../src/api/authorisation'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { UserModelAPI } from '../../src/model/users'

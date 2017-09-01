@@ -1,4 +1,3 @@
-import fs from 'fs'
 import Q from 'q'
 import logger from 'winston'
 import pem from 'pem'

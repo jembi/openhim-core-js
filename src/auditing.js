@@ -196,7 +196,3 @@ export function sendAuditEvent (msg, callback) {
     default: return done(new Error(`Invalid audit event interface '${config.auditing.auditEvents.interface}'`))
   }
 }
-
-function __guard__ (value, transform) {
-  return (typeof value !== 'undefined' && value !== null) ? transform(value) : undefined
-}

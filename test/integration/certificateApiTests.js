@@ -1,14 +1,11 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import request from 'supertest'
-import sinon from 'sinon'
 import fs from 'fs'
-import path from 'path'
 import * as testUtils from '../testUtils'
 import * as server from '../../src/server'
-import { KeystoreModelAPI, CertificateModelAPI } from '../../src/model/keystore'
+import { KeystoreModelAPI } from '../../src/model/keystore'
 
 const { auth } = testUtils
 

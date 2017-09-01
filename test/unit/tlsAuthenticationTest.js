@@ -2,8 +2,6 @@
 /* eslint no-unused-expressions:0 */
 
 import fs from 'fs'
-import should from 'should'
-import sinon from 'sinon'
 import * as tlsAuthentication from '../../src/middleware/tlsAuthentication'
 import { ClientModel } from '../../src/model/clients'
 import * as testUtils from '../testUtils'

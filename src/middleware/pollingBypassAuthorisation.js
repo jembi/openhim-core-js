@@ -1,5 +1,4 @@
 import Q from 'q'
-import logger from 'winston'
 import SDC from 'statsd-client'
 import os from 'os'
 import { ChannelModel } from '../model/channels'

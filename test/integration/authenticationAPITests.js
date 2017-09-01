@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import request from 'supertest'
 import logger from 'winston'
 import * as server from '../../src/server'

@@ -1,8 +1,6 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
-import sinon from 'sinon'
 import moment from 'moment'
 import mongoose from 'mongoose'
 

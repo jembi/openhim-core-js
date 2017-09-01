@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 
 import should from 'should'
-import request from 'supertest'
 import * as basicAuthentication from '../../src/middleware/basicAuthentication'
 import { ClientModel } from '../../src/model/clients'
 

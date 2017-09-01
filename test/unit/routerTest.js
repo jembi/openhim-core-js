@@ -2,9 +2,7 @@
 /* eslint no-unused-expressions:0 */
 
 import fs from 'fs'
-import should from 'should'
 import sinon from 'sinon'
-import http from 'http'
 import * as router from '../../src/middleware/router'
 import * as testUtils from '../testUtils'
 import { KeystoreModel, CertificateModel } from '../../src/model/keystore'

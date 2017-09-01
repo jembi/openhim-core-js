@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 
 import should from 'should'
-import http from 'http'
 import https from 'https'
 import fs from 'fs'
 import request from 'supertest'

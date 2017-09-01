@@ -1,12 +1,9 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import sinon from 'sinon'
 import request from 'supertest'
-import { TransactionModelAPI } from '../../src/model/transactions'
 import { ChannelModelAPI } from '../../src/model/channels'
-import { UserModelAPI } from '../../src/model/users'
 import * as server from '../../src/server'
 import * as testUtils from '../testUtils'
 

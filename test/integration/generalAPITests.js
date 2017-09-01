@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import request from 'supertest'
 import crypto from 'crypto'
 import * as server from '../../src/server'

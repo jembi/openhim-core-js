@@ -1,7 +1,6 @@
 import url from 'url'
 import winston from 'winston'
 import Q from 'q'
-import { ChannelModel } from '../model/channels'
 import * as utils from '../utils'
 import * as router from '../middleware/router'
 import { config } from '../config'

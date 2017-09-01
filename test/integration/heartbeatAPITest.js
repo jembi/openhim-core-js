@@ -3,7 +3,6 @@
 import should from 'should'
 import request from 'supertest'
 import * as server from '../../src/server'
-import { ChannelModelAPI } from '../../src/model/channels'
 import { MediatorModelAPI } from '../../src/model/mediators'
 import * as testUtils from '../testUtils'
 

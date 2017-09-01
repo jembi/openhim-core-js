@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import sinon from 'sinon'
 import * as tcpAdapter from '../../src/tcpAdapter'
 import { ChannelModel } from '../../src/model/channels'

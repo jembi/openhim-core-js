@@ -95,7 +95,6 @@ export function * getMetadata () {
 
 function * handleMetadataPost (action, that) {
     // Test if the user is authorised
-  let e
   if (!authorisation.inGroup('admin', that.authenticated)) {
     return utils.logAndSetResponse(that, 403, `User ${that.authenticated.email} is not an admin, API access to importMetadata denied.`, 'info')
   }

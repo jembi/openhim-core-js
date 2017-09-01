@@ -1,4 +1,3 @@
-import logger from 'winston'
 import { TransactionModel } from './model/transactions'
 
 /**

@@ -1,13 +1,9 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
-import sinon from 'sinon'
-import http from 'http'
 import moment from 'moment'
 import { Types } from 'mongoose'
 import * as autoRetry from '../../src/autoRetry'
-import * as testUtils from '../testUtils'
 import { ChannelModel } from '../../src/model/channels'
 import { AutoRetryModel } from '../../src/model/autoRetry'
 import { TaskModel } from '../../src/model/tasks'

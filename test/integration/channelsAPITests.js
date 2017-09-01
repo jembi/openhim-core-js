@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import request from 'supertest'
 import sinon from 'sinon'
 import mongoose from 'mongoose'

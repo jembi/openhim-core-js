@@ -1,7 +1,4 @@
-import auth from 'basic-auth'
 import Q from 'q'
-import logger from 'winston'
-import crypto from 'crypto'
 import SDC from 'statsd-client'
 import os from 'os'
 import { ClientModel } from '../model/clients'

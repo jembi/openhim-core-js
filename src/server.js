@@ -1,5 +1,4 @@
 import 'babel-polyfill'
-import path from 'path'
 import cluster from 'cluster'
 import nconf from 'nconf'
 import atna from 'atna-audit'

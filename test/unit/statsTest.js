@@ -1,13 +1,9 @@
 /* eslint-env mocha */
 
 import fs from 'fs'
-import should from 'should'
-import sinon from 'sinon'
-import http from 'http'
 import os from 'os'
 import * as q from 'q'
 import * as stats from '../../src/stats'
-import * as testUtils from '../testUtils'
 import FakeServer from '../fakeTcpServer'
 import { config } from '../../src/config'
 

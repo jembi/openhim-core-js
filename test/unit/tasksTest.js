@@ -1,9 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
-import request from 'supertest'
-import * as q from 'q'
-import * as server from '../../src/server'
 import { TransactionModel } from '../../src/model/transactions'
 import { TaskModel } from '../../src/model/tasks'
 import { ChannelModel } from '../../src/model/channels'

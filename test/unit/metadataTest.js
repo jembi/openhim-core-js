@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import * as metadata from '../../src/api/metadata'
 
 describe('Metadata Functions', () => {

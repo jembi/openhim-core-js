@@ -1,5 +1,3 @@
-import logger from 'winston'
-import Q from 'q'
 import { ChannelModelAPI } from '../model/channels'
 
 export function inGroup (group, user) {

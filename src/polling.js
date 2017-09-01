@@ -4,7 +4,6 @@ import Q from 'q'
 
 import * as Channels from './model/channels'
 import { config } from './config'
-import * as authorisation from './middleware/authorisation'
 import * as utils from './utils'
 
 const { ChannelModel } = Channels

@@ -6,7 +6,6 @@ import SDC from 'statsd-client'
 import os from 'os'
 import { config } from '../config'
 import * as utils from '../utils'
-import * as auditing from '../auditing'
 import * as Channels from '../model/channels'
 
 const { ChannelModel } = Channels

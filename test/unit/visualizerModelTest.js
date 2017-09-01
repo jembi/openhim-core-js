@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import { VisualizerModel } from '../../src/model/visualizer'
 
 describe('Visualizer Model Tests', () => {

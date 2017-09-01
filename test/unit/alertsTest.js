@@ -1,11 +1,8 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
-import should from 'should'
 import sinon from 'sinon'
-import http from 'http'
 import moment from 'moment'
 import * as alerts from '../../src/alerts'
-import * as testUtils from '../testUtils'
 import { ChannelModel } from '../../src/model/channels'
 import { UserModel } from '../../src/model/users'
 import { ContactGroupModel } from '../../src/model/contactGroups'

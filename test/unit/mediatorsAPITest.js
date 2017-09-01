@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import rewire from 'rewire'
 
 const mediators = rewire('../../src/api/mediators')

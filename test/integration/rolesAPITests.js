@@ -1,6 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import request from 'supertest'
 import * as server from '../../src/server'
 import { ChannelModelAPI } from '../../src/model/channels'

@@ -1,5 +1,3 @@
-import logger from 'winston'
-import Q from 'q'
 import SDC from 'statsd-client'
 import os from 'os'
 import { config } from '../config'

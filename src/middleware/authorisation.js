@@ -3,7 +3,6 @@ import logger from 'winston'
 import atna from 'atna-audit'
 import SDC from 'statsd-client'
 import os from 'os'
-import * as utils from '../utils'
 import * as auditing from '../auditing'
 import { config } from '../config'
 

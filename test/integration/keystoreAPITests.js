@@ -1,10 +1,7 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import request from 'supertest'
-import sinon from 'sinon'
 import fs from 'fs'
-import path from 'path'
 import * as testUtils from '../testUtils'
 import * as server from '../../src/server'
 import { KeystoreModelAPI } from '../../src/model/keystore'

@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import net from 'net'
 import tls from 'tls'
 import fs from 'fs'

@@ -1,8 +1,5 @@
 /* eslint-env mocha */
 
-import should from 'should'
-import sinon from 'sinon'
-import http from 'http'
 import * as proxy from '../../src/middleware/proxy'
 
 describe('Proxy', () => {

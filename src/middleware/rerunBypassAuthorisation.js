@@ -1,5 +1,3 @@
-import auth from 'basic-auth'
-import logger from 'winston'
 import Q from 'q'
 import SDC from 'statsd-client'
 import os from 'os'

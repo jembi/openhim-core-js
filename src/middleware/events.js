@@ -1,7 +1,6 @@
 import moment from 'moment'
 import logger from 'winston'
 import * as events from '../model/events'
-import * as messageStore from '../middleware/messageStore'
 import { config } from '../config'
 
 config.events = config.get('events')

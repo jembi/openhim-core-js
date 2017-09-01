@@ -8,7 +8,6 @@ import * as q from 'q'
 import * as utils from '../../src/utils'
 import { TransactionModelAPI } from '../../src/model/transactions'
 import { ChannelModelAPI } from '../../src/model/channels'
-import { UserModelAPI } from '../../src/model/users'
 import * as server from '../../src/server'
 import * as testUtils from '../testUtils'
 import FakeServer from '../fakeTcpServer'
@@ -32,8 +31,6 @@ const clearTransactionBodies = function (t) {
 }
 
 describe('API Integration Tests', () => {
-  let end
-  let asc
   let largeBody = ''
   for (let i = 0, end = 2 * 1024 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { largeBody += '1234567890' }
 
@@ -229,8 +226,6 @@ describe('API Integration Tests', () => {
       })
 
       it('should add a transaction and add the correct truncate message', async () => {
-        let asc1
-        let end1
         const td = JSON.parse(JSON.stringify(transactionData))
         td.channelID = channel._id
         const mbs = config.api.maxBodiesSizeMB
