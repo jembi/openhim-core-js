@@ -167,7 +167,6 @@ export function * addMediator () {
         if ((mediator.config != null) && (existing.config != null)) {
           // if some config already exists, add only config that didn't exist previously
           for (const param in mediator.config) {
-            const val = mediator.config[param]
             if (existing.config[param] != null) {
               mediator.config[param] = existing.config[param]
             }

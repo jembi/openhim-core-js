@@ -34,7 +34,6 @@ function * rawBodyReader (next) {
   let startTime
   if (config.statsd.enabled) { startTime = new Date() }
   const body = yield getRawBody(this.req)
-  const {length, charset: encoding} = this
 
   if (body) { this.body = body }
   if (config.statsd.enabled) { sdc.timing(`${domain}.rawBodyReaderMiddleware`, startTime) }

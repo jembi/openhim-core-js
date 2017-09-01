@@ -16,7 +16,6 @@ const {auth} = testUtils
 describe('Events API Integration Tests', () => {
   let mockServer = null
   let mockServer2 = null
-  let slowMockServer = null
   let authDetails = {}
 
   const channelName = 'TEST DATA - Mock endpoint'
@@ -72,7 +71,7 @@ describe('Events API Integration Tests', () => {
         }
       ]
     })
-    return channel1.save(err =>
+    channel1.save(err =>
       channel2.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
@@ -89,11 +88,11 @@ describe('Events API Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) =>
+        client.save((error, newAppDoc) =>
           auth.setupTestUsers(err =>
             // Create mock endpoint to forward requests to
             mockServer = testUtils.createMockMediatorServer(200, mockResponse, 1232, () =>
-              mockServer2 = testUtils.createMockMediatorServer(200, mockResponse, 1233, () => slowMockServer = testUtils.createSlowMockMediatorServer(400 * global.testTimeoutFactor, 200, mockResponse, 1234, () => done()))
+              mockServer2 = testUtils.createMockMediatorServer(200, mockResponse, 1233, () => testUtils.createSlowMockMediatorServer(400 * global.testTimeoutFactor, 200, mockResponse, 1234, () => done()))
             )
           )
         )

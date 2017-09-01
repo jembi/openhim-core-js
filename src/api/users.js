@@ -270,7 +270,7 @@ export function * addUser () {
 
   try {
     const user = new UserModelAPI(userData)
-    const result = yield Q.ninvoke(user, 'save')
+    yield Q.ninvoke(user, 'save')
 
     // Send email to new user to set password
 

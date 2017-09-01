@@ -17,7 +17,7 @@ export function * addContactGroup () {
 
   try {
     const contactGroup = new ContactGroupModelAPI(contactGroupData)
-    const result = yield Q.ninvoke(contactGroup, 'save')
+    yield Q.ninvoke(contactGroup, 'save')
 
     return utils.logAndSetResponse(this, 201, 'Contact Group successfully created', 'info')
   } catch (err) {

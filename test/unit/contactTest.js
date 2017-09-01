@@ -49,7 +49,7 @@ describe('Contact Users', () => {
     it('should propagate errors from nodemailer', (done) => {
       // Stub nodemailer and the transport
       const transportStub = {sendMail: sandbox.stub().yields(new Error('Nodemailer error'))}
-      const nodemailerStub = sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
+      sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method
       return contact.sendEmail('test@example.com', 'Test', 'Hello world', '<h1>Hello world</h1>', (err) => {
@@ -75,7 +75,7 @@ describe('Contact Users', () => {
 
       // Stub nodemailer and the transport
       const transportStub = {sendMail: sendMailStub}
-      const nodemailerStub = sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
+      sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method
       return contact.sendEmail(expectedFields.to, expectedFields.subject, expectedFields.text, expectedFields.html, (err) => {
@@ -105,7 +105,7 @@ describe('Contact Users', () => {
 
       // Stub nodemailer and the transport
       const transportStub = {sendMail: sendMailStub}
-      const nodemailerStub = sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
+      sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method
       return contact.sendEmail(expectedFields.to, expectedFields.subject, expectedFields.text, expectedFields.html, (err) => {

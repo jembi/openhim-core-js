@@ -8,7 +8,6 @@ import FakeServer from '../fakeTcpServer'
 import { config } from '../../src/config'
 
 const application = config.get('application')
-const timer = new Date()
 const domain = `${os.hostname()}.${application.name}`
 
 describe('Stats Middleware ', () => {

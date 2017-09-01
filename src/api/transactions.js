@@ -14,7 +14,6 @@ const statsdServer = config.get('statsd')
 const sdc = new StatsdClient(statsdServer)
 const application = config.get('application')
 const apiConf = config.get('api')
-const timer = new Date()
 const domain = `${os.hostname()}.${application.name}`
 
 function hasError (updates) {

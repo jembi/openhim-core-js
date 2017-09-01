@@ -88,7 +88,6 @@ export function * getMetadata () {
 
   try {
     const exportObject = {}
-    const params = this.request.query
 
     // Return all documents from all collections for export
     for (const col in collections) {

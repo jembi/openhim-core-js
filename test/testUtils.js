@@ -303,7 +303,6 @@ export function createMockServerForPostWithReturn (successStatusCode, errStatusC
     return req.on('data', (chunk) => {
       if (chunk.toString() === bodyToMatch) {
         if (acceptEncoding.match(/gzip/g)) { // the him always  sets the accept-encoding headers to accept gzip it then decompresses the response and sends it to the client
-          const buf = new Buffer(bodyToMatch, 'utf-8')
           return zlib.gzip(bodyToMatch, (_, result) => {
             const headers = {
               date: (new Date()).toString(),

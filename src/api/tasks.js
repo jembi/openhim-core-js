@@ -142,7 +142,7 @@ export function * addTask () {
       taskObject.totalTransactions = transactionsArr.length
 
       const task = new TaskModelAPI(taskObject)
-      const result = yield Q.ninvoke(task, 'save')
+      yield Q.ninvoke(task, 'save')
 
       // All ok! So set the result
       utils.logAndSetResponse(this, 201, `User ${this.authenticated.email} created task with id ${task.id}`, 'info')

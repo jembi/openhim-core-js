@@ -128,8 +128,7 @@ describe('HTTP Router', () => {
 
     it('should route an incomming https request to the endpoints specific by the channel config', done =>
       testUtils.createMockHTTPSServerWithMutualAuth(201, 'Mock response body\n', 9877, (server) => {
-        let keystore
-        keystore = KeystoreModel.findOne({}, (err, keystore) => {
+        KeystoreModel.findOne({}, (err, keystore) => {
           const cert = new CertificateModel({
             data: fs.readFileSync('test/resources/server-tls/cert.pem')
           })

@@ -164,7 +164,7 @@ describe('API Integration Tests', () => {
         td.request.body = ''
         const respBody = largeBody
         td.response.body = respBody
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -181,7 +181,7 @@ describe('API Integration Tests', () => {
 
       it('should add a transaction and return status 201 - transaction created', async () => {
         const newTransactionData = Object.assign({}, transactionData, {channelID: channel._id})
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -208,7 +208,7 @@ describe('API Integration Tests', () => {
         td.channelID = channel._id
         const reqBody = largeBody
         td.request.body = reqBody
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -233,7 +233,7 @@ describe('API Integration Tests', () => {
         bod = bod.slice(0, len - 4)
         td.request.body = bod
         td.response.body = largeBody
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -257,7 +257,7 @@ describe('API Integration Tests', () => {
         td.routes[0].request.body = largeBody
 
         // When
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -280,7 +280,7 @@ describe('API Integration Tests', () => {
         td.routes[0].response.body = largeBody
 
         // When
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -326,7 +326,7 @@ describe('API Integration Tests', () => {
         td.orchestrations[0].response.body = largeBody
 
         // When
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -355,7 +355,7 @@ describe('API Integration Tests', () => {
 
       it('should generate events after adding a transaction', async () => {
         const newTransactionData = Object.assign({}, transactionData, {channelID: channel._id})
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -432,7 +432,7 @@ describe('API Integration Tests', () => {
           }
         }
 
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .put(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -474,7 +474,7 @@ describe('API Integration Tests', () => {
           clientID: '777777777777777777777777'
         }
 
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .put(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -507,7 +507,7 @@ describe('API Integration Tests', () => {
           clientID: '777777777777777777777777'
         }
 
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .put(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -553,7 +553,7 @@ describe('API Integration Tests', () => {
           }
         }
 
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .put(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -568,7 +568,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should queue a transaction for auto retry', async () => {
-        const channels = await ChannelModelAPI.find({})
+        await ChannelModelAPI.find({})
         const newTransaction = Object.assign({}, transactionData, {channelID: channel2._id})
         let tx = new TransactionModelAPI(newTransaction)
         const result = await tx.save()
@@ -581,7 +581,7 @@ describe('API Integration Tests', () => {
           }
         }
 
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .put(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -610,7 +610,7 @@ describe('API Integration Tests', () => {
           }
         }
 
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .put(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -647,7 +647,7 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .put(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -675,7 +675,7 @@ describe('API Integration Tests', () => {
 
         transactionId = result._id
         const updates = {}
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .put(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -690,7 +690,7 @@ describe('API Integration Tests', () => {
       it('should call getTransactions ', async () => {
         const countBefore = await TransactionModelAPI.count({})
         countBefore.should.equal(0)
-        const tx = await new TransactionModelAPI(transactionData).save()
+        await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
           .get('/transactions?filterPage=0&filterLimit=10&filters={}')
           .set('auth-username', testUtils.rootUser.email)
@@ -726,7 +726,7 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const tx = await new TransactionModelAPI(transactionData).save()
+        await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
           .get(`/transactions?${params}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -765,7 +765,7 @@ describe('API Integration Tests', () => {
         }
 
         params = encodeURI(params)
-        const tx = await new TransactionModelAPI(transactionData).save()
+        await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
           .get(`/transactions?${params}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -804,7 +804,6 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        const tx = new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
           .get(`/transactions?${params}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -817,8 +816,8 @@ describe('API Integration Tests', () => {
       })
 
       it('should only return the transactions that a user can view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel._id})).save()
-        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, {
+        await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel._id})).save()
+        await new TransactionModelAPI(Object.assign({}, transactionData, {
           channelID: channel2._id,
           _id: '111111111111111111111112'
         })).save()
@@ -835,8 +834,8 @@ describe('API Integration Tests', () => {
       })
 
       it('should return the transactions for a channel that a user has permission to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel._id})).save()
-        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, {
+        await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel._id})).save()
+        await new TransactionModelAPI(Object.assign({}, transactionData, {
           channelID: channel2._id,
           _id: '111111111111111111111112'
         })).save()
@@ -868,7 +867,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should truncate transaction details if filterRepresentation is fulltruncate ', async () => {
-        const tx = await new TransactionModelAPI(transactionData).save()
+        await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
           .get('/transactions?filterRepresentation=fulltruncate')
           .set('auth-username', testUtils.rootUser.email)
@@ -911,7 +910,7 @@ describe('API Integration Tests', () => {
 
       it('should NOT return a transaction that a user is not allowed to view', async () => {
         const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {channelID: channel2._id})).save()
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .get(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -1009,7 +1008,7 @@ describe('API Integration Tests', () => {
     describe('*removeTransaction (transactionId)', () => {
       it('should call removeTransaction', async () => {
         const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {clientID: '222222222222222222222222'})).save()
-        const res = await request('https://localhost:8080')
+        await request('https://localhost:8080')
           .del(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -1022,8 +1021,8 @@ describe('API Integration Tests', () => {
       })
 
       it('should only allow admin users to remove transactions', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {clientID: '222222222222222222222222'})).save()
-        const res = await request('https://localhost:8080')
+        await new TransactionModelAPI(Object.assign({}, transactionData, {clientID: '222222222222222222222222'})).save()
+        await request('https://localhost:8080')
           .del(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)

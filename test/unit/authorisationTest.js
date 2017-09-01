@@ -6,9 +6,6 @@ import { ChannelModel } from '../../src/model/channels'
 
 const authorisation = rewire('../../src/middleware/authorisation')
 
-const truthy = () => true
-const falsey = () => false
-
 describe('Authorisation middleware', () => {
   describe('.authorise(ctx, done)', () => {
     it('should allow a request if the client is authorised to use the channel by role', (done) => {

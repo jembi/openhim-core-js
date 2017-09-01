@@ -54,7 +54,7 @@ export function * addVisualizer () {
 
   try {
     const visualizer = new VisualizerModelAPI(visualizerData)
-    const result = yield Q.ninvoke(visualizer, 'save')
+    yield Q.ninvoke(visualizer, 'save')
 
     this.body = 'Visualizer successfully created'
     this.status = 201

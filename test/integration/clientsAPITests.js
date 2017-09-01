@@ -513,7 +513,6 @@ describe('API Integration Tests', () =>
       })
 
       return it('should not allow a non admin user to remove a client', (done) => {
-        const docTestRemove = {}
         return request('https://localhost:8080')
           .del('/clients/000000000000000000000000')
           .set('auth-username', testUtils.nonRootUser.email)

@@ -8,8 +8,6 @@ import * as testUtils from '../testUtils'
 
 const {ObjectId} = require('mongoose').Types
 
-const {auth} = testUtils
-
 describe('Rerun Task Tests', () => {
   const transaction1 = {
     _id: '53bfbccc6a2b417f6cd14871',
@@ -53,8 +51,6 @@ describe('Rerun Task Tests', () => {
     txViewAcl: 'aGroup'
   }
 
-  let authDetails = {}
-
   beforeEach(done =>
     TransactionModel.remove({}, () =>
       (new TransactionModel(transaction1)).save(err =>
@@ -76,8 +72,6 @@ describe('Rerun Task Tests', () => {
       TaskModel.remove({}, () => done())
     )
   )
-
-  beforeEach(() => authDetails = auth.getAuthDetails())
 
   describe('*rerunGetTransaction()', () => {
     it('should run rerunGetTransaction() and return Transaction object successfully', (done) => {

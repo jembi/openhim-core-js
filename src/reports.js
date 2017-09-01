@@ -135,7 +135,6 @@ function sendReports (job, flag, done) {
 
               const totals = calculateTotalsFromGrouping(data)
               for (const key in totals) {
-                const value = totals[key]
                 report.data[i][key] = totals[key]
               }
 
@@ -177,7 +176,6 @@ function calculateTotalsFromGrouping (data) {
     (() => {
       const result = []
       for (const key in totals) {
-        const value = totals[key]
         if (key === 'avgResp') {
           result.push(totals[key] += (((data.data[index] != null ? data.data[index][key] : undefined) != null) ? Math.round(data.data[index][key]) / 1000 : 0))
         } else {

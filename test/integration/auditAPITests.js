@@ -185,9 +185,6 @@ describe('API Integration Tests', () => {
       )
 
       it('should call getAudits with filter paramaters ', (done) => {
-        const startDate = '2015-02-20T00:00:00.000Z'
-        const endDate = '2015-02-21T00:00:00.000Z'
-
         let filters = {}
         filters['eventIdentification.eventDateTime'] = '{ "$gte": "2015-02-20T00:00:00.000Z","$lte": "2015-02-21T00:00:00.000Z" }'
         filters = JSON.stringify(filters)

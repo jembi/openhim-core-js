@@ -8,11 +8,8 @@ import { config } from '../config'
 import * as utils from '../utils'
 import * as Channels from '../model/channels'
 
-const {ChannelModel} = Channels
-
 const statsdServer = config.get('statsd')
 const application = config.get('application')
-const himSourceID = config.get('auditing').auditEvents.auditSourceID
 
 const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)

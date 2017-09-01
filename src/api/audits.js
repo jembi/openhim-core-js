@@ -51,13 +51,12 @@ export function * addAudit () {
 
   try {
     const audit = new AuditModel(auditData)
-    const result = yield Q.ninvoke(audit, 'save')
+    yield Q.ninvoke(audit, 'save')
     yield Q.ninvoke(auditing, 'processAuditMeta', audit)
 
     logger.info(`User ${this.authenticated.email} created audit with id ${audit.id}`)
     this.body = 'Audit successfully created'
     this.status = 201
-    return
   } catch (e) {
     logger.error(`Could not add a audit via the API: ${e.message}`)
     this.body = e.message

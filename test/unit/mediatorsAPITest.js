@@ -41,7 +41,6 @@ describe('Mediator API unit tests', () => {
     )
 
     it('should reject config value if they are the incorrect type', () => {
-      let err
       let errors = 0
       try {
         mediators.validateConfig(
@@ -53,7 +52,6 @@ describe('Mediator API unit tests', () => {
           {param1: 'val1'}
         )
       } catch (error) {
-        err = error
         errors++
       }
 
@@ -67,7 +65,6 @@ describe('Mediator API unit tests', () => {
           {param1: 5}
         )
       } catch (error1) {
-        err = error1
         errors++
       }
 
@@ -81,7 +78,6 @@ describe('Mediator API unit tests', () => {
           {param1: 5}
         )
       } catch (error2) {
-        err = error2
         errors++
       }
 
@@ -96,7 +92,6 @@ describe('Mediator API unit tests', () => {
           {param1: true}
         )
       } catch (error3) {
-        err = error3
         errors++
       }
 
@@ -110,7 +105,6 @@ describe('Mediator API unit tests', () => {
           {pass: true}
         )
       } catch (error4) {
-        err = error4
         errors++
       }
 

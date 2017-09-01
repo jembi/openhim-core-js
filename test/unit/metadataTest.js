@@ -28,16 +28,6 @@ describe('Metadata Functions', () => {
   describe('.getUniqueIdentifierForCollection', () =>
 
     it('should return objects with the collection\'s unique attribute and the respective value', (done) => {
-      const object = {
-        _id: '11111',
-        __v: 'test',
-        someProp: 'hello',
-        innerObj: {
-          _id: '11111',
-          __v: 'test',
-          someOtherProp: 'hello'
-        }
-      }
       let result = metadata.getUniqueIdentifierForCollection('Channels', {name: 'channelUID'})
       result.should.have.property('name', 'channelUID')
 

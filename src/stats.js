@@ -6,7 +6,6 @@ import { config } from './config'
 const statsdServer = config.get('statsd')
 const application = config.get('application')
 
-const timer = new Date()
 const domain = `${os.hostname()}.${application.name}`
 const sdc = new SDC(statsdServer)
 

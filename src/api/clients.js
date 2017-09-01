@@ -27,7 +27,7 @@ export function * addClient () {
 
   try {
     const client = new ClientModelAPI(clientData)
-    const result = yield Q.ninvoke(client, 'save')
+    yield Q.ninvoke(client, 'save')
 
     logger.info(`User ${this.authenticated.email} created client with id ${client.id}`)
     this.body = 'Client successfully created'

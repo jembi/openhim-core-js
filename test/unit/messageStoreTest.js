@@ -8,7 +8,6 @@ import { ChannelModel } from '../../src/model/channels'
 import * as utils from '../../src/utils'
 
 const {ObjectId} = Types
-const transactionId = null
 
 describe('MessageStore', () => {
   const channel1 = {

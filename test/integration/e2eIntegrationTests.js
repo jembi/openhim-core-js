@@ -1117,8 +1117,6 @@ describe('e2e Integration Tests', () => {
   })
 
   describe('Multipart form data tests', () => {
-    let mockServer = null
-
     before((done) => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
@@ -1166,7 +1164,7 @@ describe('e2e Integration Tests', () => {
         ]
       })
 
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testAppMultipart',
           clientDomain: 'test-client.jembi.org',
@@ -1182,8 +1180,8 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) =>
-          mockServer = testUtils.createMockMediatorServer(200, mediatorResponse, 1276, () => done())
+        client.save((error, newAppDoc) =>
+          testUtils.createMockMediatorServer(200, mediatorResponse, 1276, () => done())
         )
       })
     })

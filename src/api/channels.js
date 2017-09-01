@@ -91,7 +91,7 @@ export function * addChannel () {
       return
     }
 
-    const result = yield Q.ninvoke(channel, 'save')
+    yield Q.ninvoke(channel, 'save')
 
     // All ok! So set the result
     this.body = 'Channel successfully created'
@@ -215,7 +215,7 @@ export function * updateChannel (channelId) {
   }
 
   try {
-    const channel = yield ChannelModel.findByIdAndUpdate(id, channelData).exec()
+    yield ChannelModel.findByIdAndUpdate(id, channelData).exec()
 
     // All ok! So set the result
     this.body = 'The channel was successfully updated'
