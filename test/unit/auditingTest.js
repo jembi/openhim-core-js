@@ -73,7 +73,7 @@ const testAuditIHERFC3881 = `\
 `
 
 // an example from IHE http://ihewiki.wustl.edu/wiki/index.php/Syslog_Collector
-const testAuditIHE_DICOM = `\
+const testAuditIHEDICOM = `\
 <85>1 2013-10-17T15:12:04.287-06:00 cabig-h1 OHT 521 IHE+DICOM - 
 <?xml version="1.0" encoding="UTF-8"?>
 <AuditMessage>
@@ -344,12 +344,12 @@ describe('Auditing', () => {
     )
 
     return it('should parse IHE sample DICOM audit message and persist it to the database', done =>
-      auditing.processAudit(testAuditIHE_DICOM, () =>
+      auditing.processAudit(testAuditIHEDICOM, () =>
         AuditModel.find({}, (err, audits) => {
           if (err) { return done(err) }
 
           audits.length.should.be.exactly(1)
-          audits[0].rawMessage.should.be.exactly(testAuditIHE_DICOM)
+          audits[0].rawMessage.should.be.exactly(testAuditIHEDICOM)
           validateIHEAudit('IHE+DICOM', audits[0])
 
           return done()
