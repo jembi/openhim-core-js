@@ -40,5 +40,5 @@ export function * getMetrics (groupChannels, timeSeries, channelID) {
     })
   }
 
-  return this.body = m
+  this.body = m
 }

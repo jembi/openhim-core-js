@@ -33,12 +33,12 @@ export function * restart (next) {
 
             // All ok! So set the result
       this.body = 'Server being restarted'
-      return this.status = 200
+      this.status = 200
     } else {
             // Not valid
       logger.info(`User ${emailAddr} has requested a Server Restart with invalid certificate details. Cancelling restart...`)
       this.body = 'Certificates and Key did not match. Cancelling restart...'
-      return this.status = 400
+      this.status = 400
     }
   } catch (e) {
     return utils.logAndSetResponse(this, 400, `Could not restart the servers via the API: ${e}`, 'error')

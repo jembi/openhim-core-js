@@ -95,7 +95,7 @@ describe('e2e Integration Tests', () => {
                           return keystore.save((err) => {
                             if (err) { done(err) }
 
-                            return mockServer = testUtils.createMockServer(201, 'Mock response body\n', 1232, () => done())
+                            mockServer = testUtils.createMockServer(201, 'Mock response body\n', 1232, () => done())
                           })
                         })
                     )

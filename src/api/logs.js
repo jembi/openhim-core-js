@@ -48,5 +48,5 @@ export function * getLogs () {
   }
 
   this.body = results
-  return this.status = 200
+  this.status = 200
 }

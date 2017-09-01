@@ -39,9 +39,9 @@ export function * getContactGroup (contactGroupId) {
 
     if (result === null) {
       this.body = `Contact Group with id '${contactGroupId}' could not be found.`
-      return this.status = 404
+      this.status = 404
     } else {
-      return this.body = result
+      this.body = result
     }
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not find Contact Group by id '${contactGroupId}' via the API: ${err}`, 'error')
@@ -111,7 +111,7 @@ export function * getContactGroups () {
   }
 
   try {
-    return this.body = yield ContactGroupModelAPI.find().exec()
+    this.body = yield ContactGroupModelAPI.find().exec()
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch all Contact Group via the API: ${err}`, 'error')
   }

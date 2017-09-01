@@ -23,7 +23,7 @@ function hasError (updates) {
   if (updates.routes != null) {
     error = false
     updates.routes.forEach((route) => {
-      if (route.error) { return error = true }
+      if (route.error) { return true }
     })
   }
   if (error) { return true }
@@ -72,7 +72,7 @@ function truncateTransactionDetails (trx) {
       t.request.body = t.request.body.slice(0, truncateSize) + truncateAppend
     }
     if (((t.response != null ? t.response.body : undefined) != null) && (t.response.body.length > truncateSize)) {
-      return t.response.body = t.response.body.slice(0, truncateSize) + truncateAppend
+      t.response.body = t.response.body.slice(0, truncateSize) + truncateAppend
     }
   }
   trunc(trx)
@@ -346,17 +346,17 @@ export function * getTransactionById (transactionId) {
         // Test if the result if valid
     if (!result) {
       this.body = `Could not find transaction with ID: ${transactionId}`
-      return this.status = 404
+      this.status = 404
             // Test if the user is authorised
     } else if (!authorisation.inGroup('admin', this.authenticated)) {
       const channels = yield authorisation.getUserViewableChannels(this.authenticated)
       if (getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0) {
-        return this.body = result
+        this.body = result
       } else {
         return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`, 'info')
       }
     } else {
-      return this.body = result
+      this.body = result
     }
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not get transaction by ID via the API: ${e}`, 'error')
@@ -391,7 +391,7 @@ export function * findTransactionByClientId (clientId) {
     }
 
         // execute the query
-    return this.body = yield TransactionModelAPI
+    this.body = yield TransactionModelAPI
             .find(filtersObject, projectionFiltersObject)
             .sort({ 'request.timestamp': -1 })
             .exec()

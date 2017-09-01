@@ -12,7 +12,7 @@ export function * getVisualizers () {
   }
 
   try {
-    return this.body = yield VisualizerModelAPI.find().exec()
+    this.body = yield VisualizerModelAPI.find().exec()
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch visualizers via the API: ${err}`, 'error')
   }
@@ -31,9 +31,9 @@ export function * getVisualizer (visualizerId) {
     const result = yield VisualizerModelAPI.findById(visualizerId).exec()
     if (!result) {
       this.body = `Visualizer with _id ${visualizerId} could not be found.`
-      return this.status = 404
+      this.status = 404
     } else {
-      return this.body = result
+      this.body = result
     }
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch visualizer via the API: ${err}`, 'error')

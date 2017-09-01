@@ -75,7 +75,7 @@ export function * getTasks () {
     this.body = yield TaskModelAPI.find({}).exec()
 
         // execute the query
-    return this.body = yield TaskModelAPI
+    this.body = yield TaskModelAPI
             .find(filters, projectionFiltersObject)
             .skip(filterSkip)
             .limit(parseInt(filterLimit, 10))
@@ -252,7 +252,7 @@ export function * getTask (taskId) {
             // task not found! So inform the user
       return utils.logAndSetResponse(this, 404, `We could not find a Task with this ID: ${taskId}.`, 'info')
     } else {
-      return this.body = result
+      this.body = result
     }
         // All ok! So set the result
   } catch (err) {

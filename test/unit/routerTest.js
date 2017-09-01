@@ -129,7 +129,7 @@ describe('HTTP Router', () => {
     it('should route an incomming https request to the endpoints specific by the channel config', done =>
             testUtils.createMockHTTPSServerWithMutualAuth(201, 'Mock response body\n', 9877, (server) => {
               let keystore
-              return keystore = KeystoreModel.findOne({}, (err, keystore) => {
+              keystore = KeystoreModel.findOne({}, (err, keystore) => {
                 const cert = new CertificateModel({
                   data: fs.readFileSync('test/resources/server-tls/cert.pem')
                 })
@@ -351,7 +351,7 @@ describe('HTTP Router', () => {
 
     it('should send request params if these where received from the incoming request', (done) => {
       let mockServer
-      return mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9873, () => {
+      mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9873, () => {
                 // Setup a channel for the mock endpoint
         const channel = {
           name: 'Mock endpoint',
@@ -666,7 +666,7 @@ describe('HTTP Router', () => {
   describe('Basic Auth', () => {
     it('should have valid authorization header if username and password is set in options', (done) => {
       let mockServer
-      return mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9875, () => {
+      mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9875, () => {
                 // Setup a channel for the mock endpoint
         const channel = {
           name: 'Mock endpoint',
@@ -704,7 +704,7 @@ describe('HTTP Router', () => {
 
     it('should not have authorization header if username and password is absent from options', (done) => {
       let mockServer
-      return mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9874, () => {
+      mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9874, () => {
                 // Setup a channel for the mock endpoint
         const channel = {
           name: 'Mock endpoint',
@@ -738,7 +738,7 @@ describe('HTTP Router', () => {
 
     it('should not propagate the authorization header present in the request headers', (done) => {
       let mockServer
-      return mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9872, () => {
+      mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9872, () => {
                 // Setup a channel for the mock endpoint
         const channel = {
           name: 'Mock endpoint',
@@ -773,7 +773,7 @@ describe('HTTP Router', () => {
 
     it('should propagate the authorization header present in the request headers if forwardAuthHeader is set to true', (done) => {
       let mockServer
-      return mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9872, () => {
+      mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9872, () => {
                 // Setup a channel for the mock endpoint
         const channel = {
           name: 'Mock endpoint',
@@ -933,8 +933,7 @@ describe('HTTP Router', () => {
     }
 
     const createResponse = function () {
-      let response
-      return response = {
+      return {
         status: 201,
         headers: {
           'content-type': 'text/xml',

@@ -86,7 +86,7 @@ export function * getMetadata () {
     }
 
     this.body = [exportObject]
-    return this.status = 200
+    this.status = 200
   } catch (e) {
     this.body = e.message
     return utils.logAndSetResponse(this, 500, `Could not fetch specified metadata via the API ${e}`, 'error')
@@ -160,7 +160,7 @@ function * handleMetadataPost (action, that) {
     }
 
     that.body = returnObject
-    return that.status = 201
+    that.status = 201
   } catch (error2) {
     that.body = error2.message
     return utils.logAndSetResponse(that, 500, `Could not import metadata via the API ${error2}`, 'error')

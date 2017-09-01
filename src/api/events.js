@@ -11,7 +11,7 @@ export function * getLatestEvents (receivedTime) {
   try {
     const rtDate = new Date(Number(receivedTime))
     const results = yield EventModelAPI.find({ created: { $gte: rtDate } }).sort({ normalizedTimestamp: 1 }).exec()
-    return this.body = { events: results }
+    this.body = { events: results }
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch the latest events via the API: ${err}`, 'error')
   }

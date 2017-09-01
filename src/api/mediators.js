@@ -39,7 +39,7 @@ function restoreMaskedPasswords (defs, maskedConfig, config) {
       if (d.array) {
         maskedConfig[d.param].forEach((p, i) => {
           if (p === mask) {
-            return maskedConfig[d.param][i] = config[d.param][i]
+            maskedConfig[d.param][i] = config[d.param][i]
           }
         })
       } else if (maskedConfig[d.param] === mask) {
@@ -62,7 +62,7 @@ export function * getAllMediators () {
   try {
     const m = yield MediatorModelAPI.find().exec()
     maskPasswords(m.configDefs, m.config)
-    return this.body = m
+    this.body = m
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch mediators via the API: ${err}`, 'error')
   }
@@ -80,10 +80,10 @@ export function * getMediator (mediatorURN) {
   try {
     const result = yield MediatorModelAPI.findOne({ urn }).exec()
     if (result === null) {
-      return this.status = 404
+      this.status = 404
     } else {
       maskPasswords(result.configDefs, result.config)
-      return this.body = result
+      this.body = result
     }
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch mediator using UUID ${urn} via the API: ${err}`, 'error')
@@ -252,7 +252,7 @@ export function * heartbeat (urn) {
       yield MediatorModelAPI.findByIdAndUpdate(mediator._id, update).exec()
     }
 
-    return this.status = 200
+    this.status = 200
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not process mediator heartbeat (urn: ${urn}): ${err}`, 'error')
   }
@@ -388,7 +388,7 @@ export function * setConfig (urn) {
     }
 
     yield MediatorModelAPI.findOneAndUpdate({ urn }, { config: this.request.body, _configModifiedTS: new Date() }).exec()
-    return this.status = 200
+    this.status = 200
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not set mediator config (urn: ${urn}): ${err}`, 'error')
   }
@@ -437,7 +437,7 @@ export function * loadDefaultChannels (urn) {
       }
     }
 
-    return this.status = 201
+    this.status = 201
   } catch (err) {
     logger.debug(err.stack)
     return utils.logAndSetResponse(this, 500, `Could not load mediator default channel config (urn: ${urn}): ${err}`, 'error')

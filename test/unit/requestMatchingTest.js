@@ -190,7 +190,7 @@ describe('Request Matching middleware', () => {
         ChannelModel.remove({ name: channelName }, (err) => { })
       }
 
-      return addedChannelNames = []
+      addedChannelNames = []
     })
 
     it('should match if message content matches the channel rules', (done) => {

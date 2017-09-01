@@ -411,7 +411,7 @@ describe('Auditing', () => {
 
       const validate = function (data) {
         `${data}`.should.be.exactly(`${testString.length} ${testString}`)
-        return called['called-tls'] = true
+        called['called-tls'] = true
       }
 
       const afterSetup = server =>
@@ -431,7 +431,7 @@ describe('Auditing', () => {
 
       const validate = function (data) {
         `${data}`.should.be.exactly(`${testString.length} ${testString}`)
-        return called['called-tcp'] = true
+        called['called-tcp'] = true
       }
 
       const afterSetup = server =>

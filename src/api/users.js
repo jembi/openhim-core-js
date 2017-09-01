@@ -33,7 +33,7 @@ export function * authenticate (email) {
       audit = atna.wrapInSyslog(audit)
       return auditing.sendAuditEvent(audit, () => logger.debug('Processed internal audit'))
     } else {
-      return this.body = {
+      this.body = {
         salt: user.passwordSalt,
         ts: new Date()
       }
@@ -139,13 +139,13 @@ export function * getUserByToken (token) {
     const result = yield UserModelAPI.findOne({ token }, projectionRestriction).exec()
     if (!result) {
       this.body = `User with token ${token} could not be found.`
-      return this.status = 404
+      this.status = 404
     } else if (moment(result.expiry).isBefore(moment())) {
             // user- set password - expired
       this.body = `Token ${token} has expired`
-      return this.status = 410
+      this.status = 410
     } else {
-      return this.body = result
+      this.body = result
     }
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not find user with token ${token} via the API ${e}`, 'error')
@@ -299,9 +299,9 @@ export function * getUser (email) {
     const result = yield UserModelAPI.findOne({ email }).exec()
     if (!result) {
       this.body = `User with email ${email} could not be found.`
-      return this.status = 404
+      this.status = 404
     } else {
-      return this.body = result
+      this.body = result
     }
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not get user via the API ${e}`, 'error')
@@ -374,7 +374,7 @@ export function * getUsers () {
   }
 
   try {
-    return this.body = yield UserModelAPI.find().exec()
+    this.body = yield UserModelAPI.find().exec()
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Could not fetch all users via the API ${e}`, 'error')
   }

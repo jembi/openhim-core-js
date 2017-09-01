@@ -55,7 +55,7 @@ export function updateTask (ctx, done) {
     task.transactions.forEach((tx) => {
       if (tx.tid === ctx.parentID) {
         tx.rerunID = ctx.transactionId
-        return tx.rerunStatus = ctx.transactionStatus
+        tx.rerunStatus = ctx.transactionStatus
       }
     })
 

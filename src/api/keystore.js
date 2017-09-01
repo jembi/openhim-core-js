@@ -17,7 +17,7 @@ export function * getServerCert () {
   try {
     const keystoreDoc = yield KeystoreModelAPI.findOne().lean('cert').exec()
     keystoreDoc.cert.watchFSForCert = config.certificateManagement.watchFSForCert
-    return this.body = keystoreDoc.cert
+    this.body = keystoreDoc.cert
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch the server cert via the API: ${err}`, 'error')
   }
@@ -32,7 +32,7 @@ export function * getCACerts () {
 
   try {
     const keystoreDoc = yield KeystoreModelAPI.findOne().select('ca').exec()
-    return this.body = keystoreDoc.ca
+    this.body = keystoreDoc.ca
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch the ca certs trusted by this server via the API: ${err}`, 'error')
   }
@@ -49,7 +49,7 @@ export function * getCACert (certId) {
     const keystoreDoc = yield KeystoreModelAPI.findOne().select('ca').exec()
     const cert = keystoreDoc.ca.id(certId)
 
-    return this.body = cert
+    this.body = cert
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not fetch ca cert by id via the API: ${err}`, 'error')
   }
@@ -67,7 +67,7 @@ export function * setServerPassphrase () {
     const keystoreDoc = yield KeystoreModelAPI.findOne().exec()
     keystoreDoc.passphrase = passphrase
     yield Q.ninvoke(keystoreDoc, 'save')
-    return this.status = 201
+    this.status = 201
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not set the passphrase  via the API: ${err}`, 'error')
   }
@@ -107,7 +107,7 @@ export function * setServerCert () {
     keystoreDoc.passphrase = passphrase
 
     yield Q.ninvoke(keystoreDoc, 'save')
-    return this.status = 201
+    this.status = 201
   } catch (error1) {
     err = error1
     return utils.logAndSetResponse(this, 500, `Could not add server cert via the API: ${err}`, 'error')
@@ -127,7 +127,7 @@ export function * setServerKey () {
     keystoreDoc.key = key
     keystoreDoc.passphrase = passphrase
     yield Q.ninvoke(keystoreDoc, 'save')
-    return this.status = 201
+    this.status = 201
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not add server key via the API: ${err}`, 'error')
   }
@@ -189,7 +189,7 @@ export function * addTrustedCert () {
     if (invalidCert) {
       return utils.logAndSetResponse(this, 400, `Failed to add one more cert, are they valid? ${err}`, 'error')
     } else {
-      return this.status = 201
+      this.status = 201
     }
   } catch (error1) {
     err = error1
@@ -208,7 +208,7 @@ export function * removeCACert (certId) {
     const keystoreDoc = yield KeystoreModelAPI.findOne().exec()
     keystoreDoc.ca.id(certId).remove()
     yield Q.ninvoke(keystoreDoc, 'save')
-    return this.status = 200
+    this.status = 200
   } catch (err) {
     return utils.logAndSetResponse(this, 500, `Could not remove ca cert by id via the API: ${err}`, 'error')
   }
@@ -233,7 +233,7 @@ export function * verifyServerKeys () {
 
     this.body =
             { valid: result }
-    return this.status = 200
+    this.status = 200
   } catch (error1) {
     err = error1
     return utils.logAndSetResponse(this, 500, `Could not determine validity via the API: ${err}`, 'error')

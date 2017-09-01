@@ -72,11 +72,11 @@ export function * getRoles () {
     const channels = yield ChannelModelAPI.find({}, { name: 1, allow: 1 }).exec()
     const clients = yield ClientModelAPI.find({}, { clientID: 1, roles: 1 }).exec()
 
-    return this.body = filterRolesFromChannels(channels, clients)
+    this.body = filterRolesFromChannels(channels, clients)
   } catch (e) {
     logger.error(`Could not fetch roles via the API: ${e.message}`)
     this.message = e.message
-    return this.status = 500
+    this.status = 500
   }
 }
 
@@ -92,7 +92,7 @@ export function * getRole (name) {
     if ((channels === null || channels.length === 0) && (clients === null || clients.length === 0)) {
       return utils.logAndSetResponse(this, 404, `Role with name '${name}' could not be found.`, 'info')
     } else {
-      return this.body = {
+      this.body = {
         name,
         channels: channels.map(r => ({ _id: r._id, name: r.name })),
         clients: clients.map(c => ({ _id: c._id, clientID: c.clientID }))
@@ -101,7 +101,7 @@ export function * getRole (name) {
   } catch (e) {
     logger.error(`Could not find role with name '${name}' via the API: ${e.message}`)
     this.body = e.message
-    return this.status = 500
+    this.status = 500
   }
 }
 
@@ -223,11 +223,11 @@ export function * addRole () {
 
     logger.info(`User ${this.authenticated.email} setup role '${role.name}'`)
     this.body = 'Role successfully created'
-    return this.status = 201
+    this.status = 201
   } catch (e) {
     logger.error(`Could not add a role via the API: ${e.message}`)
     this.body = e.message
-    return this.status = 400
+    this.status = 400
   }
 }
 
@@ -306,11 +306,11 @@ export function * updateRole (name) {
 
     logger.info(`User ${this.authenticated.email} updated role with name '${name}'`)
     this.body = 'Successfully updated role'
-    return this.status = 200
+    this.status = 200
   } catch (e) {
     logger.error(`Could not update role with name '${name}' via the API: ${e.message}`)
     this.body = e.message
-    return this.status = 500
+    this.status = 500
   }
 }
 
@@ -331,10 +331,10 @@ export function * deleteRole (name) {
     yield ClientModelAPI.update({}, { $pull: { roles: name } }, { multi: true }).exec()
 
     logger.info(`User ${this.authenticated.email} deleted role with name '${name}'`)
-    return this.body = 'Successfully deleted role'
+    this.body = 'Successfully deleted role'
   } catch (e) {
     logger.error(`Could not update role with name '${name}' via the API: ${e.message}`)
     this.body = e.message
-    return this.status = 500
+    this.status = 500
   }
 }

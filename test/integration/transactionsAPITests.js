@@ -27,7 +27,7 @@ const clearTransactionBodies = function (t) {
   t.routes[0].request.body = ''
   t.routes[0].response.body = ''
   t.orchestrations[0].request.body = ''
-  return t.orchestrations[0].response.body = ''
+  t.orchestrations[0].response.body = ''
 }
 
 describe('API Integration Tests', () => {

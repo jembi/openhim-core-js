@@ -25,7 +25,7 @@ export function * generateCert () {
     result = yield generateClientCert(options, ctx)
   }
   ctx.status = 201
-  return ctx.body = result
+  ctx.body = result
 }
 
 function * generateClientCert (options, ctx) {

@@ -223,7 +223,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   it('should handle disconnected clients', done =>
         server.start({ tcpHttpReceiverPort: 7787 }, () => {
           let client
-          return client = net.connect(4000, 'localhost', () => {
+          client = net.connect(4000, 'localhost', () => {
             client.on('close', () => server.stop(done))
             return client.end('test')
           })

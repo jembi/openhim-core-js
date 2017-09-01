@@ -23,7 +23,7 @@ export function * getHeartbeat () {
     }
 
     result.now = Date.now()
-    return this.body = result
+    this.body = result
   } catch (e) {
     return utils.logAndSetResponse(this, 500, `Error: ${e}`, 'error')
   }

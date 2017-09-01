@@ -13,9 +13,9 @@ export function setupProxyHeaders (ctx) {
   function setOrAppendHeader (ctx, header, value) {
     if (!value) { return }
     if (ctx.header[header]) {
-      return ctx.header[header] = `${ctx.header[header]}, ${value}`
+      ctx.header[header] = `${ctx.header[header]}, ${value}`
     } else {
-      return ctx.header[header] = `${value}`
+      ctx.header[header] = `${value}`
     }
   }
   setOrAppendHeader(ctx, 'X-Forwarded-For', ctx.request.ip)
