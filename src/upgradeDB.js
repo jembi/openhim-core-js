@@ -1,7 +1,7 @@
 import logger from 'winston'
 import pem from 'pem'
 import Q from 'q'
-import { dbVersionModel } from './model/dbVersion'
+import { DbVersionModel } from './model/dbVersion'
 import { KeystoreModel } from './model/keystore'
 import { ClientModel } from './model/clients'
 import { UserModel } from './model/users'
@@ -216,7 +216,7 @@ if (process.env.NODE_ENV === 'test') {
 
 async function upgradeDbInternal () {
   try {
-    const dbVer = (await dbVersionModel.findOne()) || new dbVersionModel({ version: 0, lastUpdated: new Date() })
+    const dbVer = (await DbVersionModel.findOne()) || new DbVersionModel({ version: 0, lastUpdated: new Date() })
     const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version)
 
     for (const upgradeFunc of upgradeFuncsToRun) {

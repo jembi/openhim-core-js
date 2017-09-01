@@ -1,6 +1,6 @@
 import Q from 'q'
 import logger from 'winston'
-import statsdClient from 'statsd-client'
+import StatsdClient from 'statsd-client'
 import os from 'os'
 import { TransactionModelAPI } from '../model/transactions'
 import * as events from '../middleware/events'
@@ -11,7 +11,7 @@ import * as utils from '../utils'
 import { config } from '../config'
 
 const statsdServer = config.get('statsd')
-const sdc = new statsdClient(statsdServer)
+const sdc = new StatsdClient(statsdServer)
 const application = config.get('application')
 const apiConf = config.get('api')
 const timer = new Date()

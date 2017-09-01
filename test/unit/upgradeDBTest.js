@@ -7,7 +7,7 @@ import * as upgradeDB from '../../src/upgradeDB'
 import * as testUtils from '../testUtils'
 import { KeystoreModel } from '../../src/model/keystore'
 import { ClientModel } from '../../src/model/clients'
-import { dbVersionModel } from '../../src/model/dbVersion'
+import { DbVersionModel } from '../../src/model/dbVersion'
 import { UserModel } from '../../src/model/users'
 import { VisualizerModel } from '../../src/model/visualizer'
 
@@ -18,7 +18,7 @@ describe('Upgrade DB Tests', () => {
 
     async function cleanUpgrade (done) {
       try {
-        await dbVersionModel.remove()
+        await DbVersionModel.remove()
         done()
       } catch (err) {
         done(err)

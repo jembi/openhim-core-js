@@ -3,7 +3,7 @@
 import should from 'should'
 import sinon from 'sinon'
 import xpath from 'xpath'
-import { DOMParser as dom } from 'xmldom'
+import { DOMParser as Dom } from 'xmldom'
 import * as rewriteUrls from '../../src/middleware/rewriteUrls'
 import * as utils from '../../src/utils'
 
@@ -218,7 +218,7 @@ describe('Rewrite URLs middleware', () => {
       })
 
       return rewriteUrls.rewriteUrls(xmlResponse, rewiredChannel, 'tls', (err, newResponse) => {
-        const doc = new dom().parseFromString(newResponse)
+        const doc = new Dom().parseFromString(newResponse)
         const href1 = xpath.select('string(//someTags/tag1/@href)', doc)
         const href2 = xpath.select('string(//someTags/tag2/child/@href)', doc)
         const src = xpath.select('string(//someTags/img/@src)', doc)

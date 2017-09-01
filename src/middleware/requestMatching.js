@@ -1,6 +1,6 @@
 import Q from 'q'
 import xpath from 'xpath'
-import { DOMParser as dom } from 'xmldom'
+import { DOMParser as Dom } from 'xmldom'
 import logger from 'winston'
 import SDC from 'statsd-client'
 import os from 'os'
@@ -40,7 +40,7 @@ function matchRegex (regexPat, body) {
 }
 
 function matchXpath (xpathStr, val, xml) {
-  const doc = new dom().parseFromString(xml.toString())
+  const doc = new Dom().parseFromString(xml.toString())
   const xpathVal = xpath.select(xpathStr, doc).toString()
   return val === xpathVal
 }
