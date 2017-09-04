@@ -39,6 +39,7 @@ function sendReports (job, flag, done) {
   }
 
   return fetchUsers((err, users) => {
+    if (err) { return done(err) }
     const promises = []
     let userKey = ''
     let userIndex = 0
@@ -73,6 +74,7 @@ function sendReports (job, flag, done) {
         const innerDeferred = Q.defer();
         ((innerDeferred, key, obj) =>
           fetchChannelReport(obj.channel, obj.user, flag, from, to, (err, item) => {
+            if (err) { return done(err) }
             channelReportMap[key] = item
             return innerDeferred.resolve()
           }))(innerDeferred, key, obj)

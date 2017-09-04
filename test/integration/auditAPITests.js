@@ -91,14 +91,18 @@ describe('API Integration Tests', () => {
     let authDetails = {}
 
     before(done =>
-      auth.setupTestUsers(err =>
+      auth.setupTestUsers(err => {
+        if (err) { return done(err) }
         server.start({apiPort: 8080}, () => done())
+      }
       )
     )
 
     after(done =>
-      auth.cleanupTestUsers(err =>
+      auth.cleanupTestUsers(err => {
+        if (err) { return done(err) }
         server.stop(() => done())
+      }
       )
     )
 
@@ -162,6 +166,7 @@ describe('API Integration Tests', () => {
     describe('*getAudits()', () => {
       it('should call getAudits ', done =>
         AuditModel.count({}, (err, countBefore) => {
+          if (err) { return done(err) }
           const newAudit = new AuditModel(auditData)
           newAudit.save((error, result) => {
             should.not.exist((error))
@@ -190,6 +195,7 @@ describe('API Integration Tests', () => {
         filters = JSON.stringify(filters)
 
         AuditModel.count({}, (err, countBefore) => {
+          if (err) { return done(err) }
           const audit = new AuditModel(auditData)
           audit.save((error, result) => {
             should.not.exist((error))
@@ -247,7 +253,7 @@ describe('API Integration Tests', () => {
         })
       })
 
-      return it('should NOT generate an \'audit log used\' audit when using basic (default) representation', (done) => {
+      it('should NOT generate an \'audit log used\' audit when using basic (default) representation', (done) => {
         const audit = new AuditModel(auditData)
         audit.save((err, result) => {
           if (err) { return done(err) }
@@ -334,7 +340,7 @@ describe('API Integration Tests', () => {
         })
       })
 
-      return it('should generate an \'audit log used\' audit', (done) => {
+      it('should generate an \'audit log used\' audit', (done) => {
         const audit = new AuditModel(auditData)
         audit.save((err, result) => {
           if (err) { return done(err) }

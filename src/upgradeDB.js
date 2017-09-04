@@ -34,10 +34,12 @@ upgradeFuncs.push({
     const defer = Q.defer()
 
     KeystoreModel.findOne((err, keystore) => {
+      if (err) { return (err) }
       if (!keystore) { return defer.resolve() }
 
       // convert server cert
       return pem.getFingerprint(keystore.cert.data, (err, obj) => {
+        if (err) { return (err) }
         keystore.cert.fingerprint = obj.fingerprint
 
         const promises = []
@@ -46,12 +48,13 @@ upgradeFuncs.push({
           const caDefer = Q.defer()
           promises.push(caDefer.promise)
           pem.getFingerprint(cert.data, (err, obj) => {
+            if (err) { return (err) }
             keystore.ca[i].fingerprint = obj.fingerprint
             return caDefer.resolve()
           })
         }
 
-        return Q.all(promises).then(() =>
+        Q.all(promises).then(() =>
           keystore.save((err) => {
             if (err != null) { logger.error(`Failed to save keystore: ${err}`) }
             return defer.resolve()
@@ -75,7 +78,7 @@ upgradeFuncs.push({
         return defer.reject()
       }
 
-      return KeystoreModel.findOne((err, keystore) => {
+      KeystoreModel.findOne((err, keystore) => {
         if (err != null) {
           logger.error(`Couldn't fetch keystore to upgrade db: ${err}`)
           return defer.reject()
@@ -106,7 +109,7 @@ upgradeFuncs.push({
               }))(clientDefer)
         }
 
-        return Q.all(promises).then(() => defer.resolve())
+        Q.all(promises).then(() => defer.resolve())
       })
     })
 
@@ -184,7 +187,7 @@ upgradeFuncs.push({
 
             vis = new VisualizerModel(vis)
             logger.debug(`Migrating visualizer from user profile ${user.email}, using visualizer name '${name}'`)
-            return vis.save((err, vis) => {
+            vis.save((err, vis) => {
               if (err) {
                 logger.error(`Error migrating visualizer from user profile ${user.email}: ${err.stack}`)
                 return userDefer.reject(err)
@@ -192,7 +195,7 @@ upgradeFuncs.push({
 
               // delete the visualizer settings from this user profile
               user.set('settings.visualizer', null)
-              return user.save((err, user) => {
+              user.save((err, user) => {
                 if (err) { return userDefer.reject(err) }
                 return userDefer.resolve()
               })
@@ -201,7 +204,7 @@ upgradeFuncs.push({
         }
       })
 
-      return Q.all(promises).then(() => defer.resolve()).catch(err => defer.reject(err))
+      Q.all(promises).then(() => defer.resolve()).catch(err => defer.reject(err))
     })
 
     return defer.promise
@@ -236,7 +239,7 @@ async function upgradeDbInternal () {
 }
 
 export function upgradeDb (callback) {
-  return upgradeDbInternal()
+  upgradeDbInternal()
     .then((...values) => {
       if (callback) {
         callback(new Error(...(values || [])))

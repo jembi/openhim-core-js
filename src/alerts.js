@@ -370,6 +370,7 @@ function alertingTask (job, contactHandler, done) {
 
   const _taskStart = new Date()
   return getAllChannels((err, results) => {
+    if (err) { return done(err) }
     const promises = []
 
     for (const channel of Array.from(results)) {

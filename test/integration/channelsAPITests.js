@@ -49,7 +49,7 @@ describe('API Integration Tests', () =>
     before(done =>
       auth.setupTestUsers((err) => {
         if (err) { return done(err) }
-        return server.start({apiPort: 8080, tcpHttpReceiverPort: 7787}, () => {
+        server.start({apiPort: 8080, tcpHttpReceiverPort: 7787}, () => {
           authDetails = auth.getAuthDetails()
           return done()
         })
@@ -70,8 +70,10 @@ describe('API Integration Tests', () =>
       TransactionModelAPI.remove({}, () =>
         ChannelModelAPI.remove({}, () =>
           (new ChannelModelAPI(channel1)).save((err, ch1) => {
+            if (err) { return done(err) }
             channel1._id = ch1._id
             return (new ChannelModelAPI(channel2)).save((err, ch2) => {
+              if (err) { return done(err) }
               channel2._id = ch2._id
               return done()
             })
@@ -100,7 +102,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should only allow non root user to fetch channel that they are allowed to view', done =>
+      it('should only allow non root user to fetch channel that they are allowed to view', done =>
         request('https://localhost:8080')
           .get('/channels')
           .set('auth-username', testUtils.nonRootUser.email)
@@ -135,7 +137,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -147,7 +149,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return ChannelModelAPI.findOne({name: 'NewChannel'}, (err, channel) => {
+              ChannelModelAPI.findOne({name: 'NewChannel'}, (err, channel) => {
+                if (err) { return done(err) }
                 channel.should.have.property('urlPattern', 'test/sample')
                 channel.allow.should.have.length(3)
                 return done()
@@ -169,7 +172,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -201,7 +204,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -234,7 +237,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -254,7 +257,7 @@ describe('API Integration Tests', () =>
       it('should not allow a non admin user to add a channel', (done) => {
         const newChannel = {}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -291,7 +294,7 @@ describe('API Integration Tests', () =>
 
         const stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -331,7 +334,7 @@ describe('API Integration Tests', () =>
 
         const stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -368,7 +371,7 @@ describe('API Integration Tests', () =>
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -409,7 +412,7 @@ describe('API Integration Tests', () =>
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -441,7 +444,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -478,7 +481,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -516,7 +519,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -533,7 +536,7 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should reject a channel with a priority below 1', (done) => {
+      it('should reject a channel with a priority below 1', (done) => {
         const newChannel = {
           name: 'Channel-Priority--1',
           urlPattern: 'test/sample',
@@ -548,7 +551,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -627,7 +630,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should return a 404 if that channel doesnt exist', done =>
+      it('should return a 404 if that channel doesnt exist', done =>
 
         request('https://localhost:8080')
           .get('/channels/999999999999999999999999')
@@ -666,7 +669,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put(`/channels/${channel1._id}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -678,7 +681,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
+              ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
+                if (err) { return done(err) }
                 channel.should.have.property('name', 'TestChannel1')
                 channel.should.have.property('urlPattern', 'test/changed')
                 channel.allow.should.have.length(4)
@@ -692,7 +696,7 @@ describe('API Integration Tests', () =>
       it('should not allow a non admin user to update a channel', (done) => {
         const updates = {}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put(`/channels/${channel1._id}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -732,7 +736,7 @@ describe('API Integration Tests', () =>
 
         const stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
 
-        return httpChannel.save(() =>
+        httpChannel.save(() =>
           request('https://localhost:8080')
             .put(`/channels/${httpChannel._id}`)
             .set('auth-username', testUtils.rootUser.email)
@@ -778,7 +782,7 @@ describe('API Integration Tests', () =>
         const startStub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
         const stopStub = sinon.stub(tcpAdapter, 'notifyMasterToStopTCPServer')
 
-        return httpChannel.save(() =>
+        httpChannel.save(() =>
           request('https://localhost:8080')
             .put(`/channels/${httpChannel._id}`)
             .set('auth-username', testUtils.rootUser.email)
@@ -819,7 +823,7 @@ describe('API Integration Tests', () =>
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
 
-        return pollChannel.save(() =>
+        pollChannel.save(() =>
           request('https://localhost:8080')
             .put(`/channels/${pollChannel._id}`)
             .set('auth-username', testUtils.rootUser.email)
@@ -863,7 +867,7 @@ describe('API Integration Tests', () =>
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
 
-        return pollChannel.save(() =>
+        pollChannel.save(() =>
           request('https://localhost:8080')
             .put(`/channels/${pollChannel._id}`)
             .set('auth-username', testUtils.rootUser.email)
@@ -901,7 +905,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put(`/channels/${channel1._id}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -937,7 +941,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put(`/channels/${channel1._id}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -974,7 +978,7 @@ describe('API Integration Tests', () =>
           ]
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put(`/channels/${channel1._id}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -991,13 +995,13 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should NOT update a channel with a priority below 1', (done) => {
+      it('should NOT update a channel with a priority below 1', (done) => {
         const updates = {
           urlPattern: 'test/changed',
           priority: -1
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put(`/channels/${channel1._id}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -1009,7 +1013,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
+              ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
+                if (err) { return done(err) }
                 channel.should.have.property('urlPattern', 'test/sample')
                 return done()
               })
@@ -1021,10 +1026,11 @@ describe('API Integration Tests', () =>
     describe('*removeChannel(channelId)', () => {
       it('should remove a specific channel by name', done =>
         TransactionModelAPI.find({channelID: channel1._id}, (err, trx) => {
+          if (err) { return done(err) }
           // there can't be any linked transactions
           trx.length.should.be.exactly(0)
 
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .del(`/channels/${channel1._id}`)
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -1035,7 +1041,8 @@ describe('API Integration Tests', () =>
               if (err) {
                 return done(err)
               } else {
-                return ChannelModelAPI.find({name: 'TestChannel1'}, (err, channels) => {
+                ChannelModelAPI.find({name: 'TestChannel1'}, (err, channels) => {
+                  if (err) { return done(err) }
                   channels.should.have.length(0)
                   return done()
                 })
@@ -1080,11 +1087,12 @@ describe('API Integration Tests', () =>
 
         const spy = sinon.spy(polling, 'removePollingChannel')
 
-        return TransactionModelAPI.find({channelID: channel1._id}, (err, trx) => {
+        TransactionModelAPI.find({channelID: channel1._id}, (err, trx) => {
+          if (err) { return done(err) }
           // there can't be any linked transactions
           trx.length.should.be.exactly(0)
 
-          return pollChannel.save(() =>
+          pollChannel.save(() =>
             request('https://localhost:8080')
               .del(`/channels/${pollChannel._id}`)
               .set('auth-username', testUtils.rootUser.email)
@@ -1107,7 +1115,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      return it('should NOT remove a specific channel if any transactions are linked to it but mark the status as deleted', (done) => {
+      it('should NOT remove a specific channel if any transactions are linked to it but mark the status as deleted', (done) => {
         const trx = new TransactionModelAPI({
           clientID: channel1._id, // not really but anyway
           channelID: channel1._id,
@@ -1119,10 +1127,10 @@ describe('API Integration Tests', () =>
           status: 'Successful'
         })
 
-        return trx.save((err) => {
+        trx.save((err) => {
           if (err) { return done(err) }
 
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .del(`/channels/${channel1._id}`)
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -1133,7 +1141,8 @@ describe('API Integration Tests', () =>
               if (err) {
                 return done(err)
               } else {
-                return ChannelModelAPI.find({name: 'TestChannel1'}, (err, channels) => {
+                ChannelModelAPI.find({name: 'TestChannel1'}, (err, channels) => {
+                  if (err) { return done(err) }
                   channels.should.have.length(1)
                   channels[0].status.should.exist
                   channels[0].status.should.be.equal('deleted')
@@ -1145,7 +1154,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    return describe('*manuallyPollChannel', () => {
+    describe('*manuallyPollChannel', () => {
       it('should manually poll a channel', done =>
 
         request('https://localhost:8080')
@@ -1166,7 +1175,7 @@ describe('API Integration Tests', () =>
 
       it('should reject a manually polled channel - channel not found', (done) => {
         const invalidId = mongoose.Types.ObjectId('4eeeeeeeeeeeeeeeebbbbbb2')
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post(`/channels/${invalidId}/trigger`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -1182,7 +1191,7 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should not allow a non admin user from manually polling a channel they do not have access to', done =>
+      it('should not allow a non admin user from manually polling a channel they do not have access to', done =>
 
         request('https://localhost:8080')
           .post(`/channels/${channel1._id}/trigger`)

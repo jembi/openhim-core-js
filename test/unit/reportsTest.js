@@ -59,11 +59,13 @@ describe('Transaction Reports', () => {
   before(done =>
     testUser1.save(() =>
       testUser2.save(() =>
-        channel1.save(err =>
-          channel2.save(err =>
+        channel1.save(err => {
+          if (err) { return done(err) }
+          channel2.save(err => {
+            if (err) { return done(err) }
             testUtils.setupMetricsTransactions(() => done())
-          )
-        )
+          })
+        })
       )
     )
   )
@@ -85,6 +87,7 @@ describe('Transaction Reports', () => {
   describe('Subscribers', () => {
     it('should fetch weekly subscribers', done =>
       reports.fetchWeeklySubscribers((err, results) => {
+        if (err) { return done(err) }
         results.length.should.be.exactly(1)
         results[0].email.should.eql(testUser1.email)
         return done()
@@ -93,6 +96,7 @@ describe('Transaction Reports', () => {
 
     return it('should fetch daily subscribers', done =>
       reports.fetchDailySubscribers((err, results) => {
+        if (err) { return done(err) }
         results.length.should.be.exactly(1)
         results[0].email.should.eql(testUser2.email)
         return done()
@@ -105,6 +109,7 @@ describe('Transaction Reports', () => {
       const from = moment('2014-07-15').startOf('day').toDate()
       const to = moment('2014-07-15').endOf('day').toDate()
       return reports.fetchChannelReport(channel2, testUser1, 'dailyReport', from, to, (err, item) => {
+        if (err) { return done(err) }
         item.data[0].should.have.property('total', 1)
         item.data[0].should.have.property('avgResp', 100)
         item.data[0].should.have.property('completed', 1)
@@ -117,6 +122,7 @@ describe('Transaction Reports', () => {
       const from = moment(date).startOf('isoWeek').subtract(1, 'weeks').toDate()
       const to = moment(date).endOf('isoWeek').subtract(1, 'weeks').toDate()
       return reports.fetchChannelReport(channel2, testUser1, 'weeklyReport', from, to, (err, item) => {
+        if (err) { return done(err) }
         item.data[0].should.have.property('total', 1)
         item.data[0].should.have.property('failed', 1)
         item.data[1].should.have.property('total', 5)

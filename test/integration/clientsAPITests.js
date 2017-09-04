@@ -27,15 +27,17 @@ describe('API Integration Tests', () =>
     let authDetails = {}
 
     before(done =>
-      auth.setupTestUsers(err =>
+      auth.setupTestUsers(err => {
+        if (err) { return done(err) }
         server.start({apiPort: 8080}, () => done())
-      )
+      })
     )
 
     after(done =>
-      auth.cleanupTestUsers(err =>
+      auth.cleanupTestUsers(err => {
+        if (err) { return done(err) }
         server.stop(() => done())
-      )
+      })
     )
 
     beforeEach(() => { authDetails = auth.getAuthDetails() })
@@ -59,6 +61,7 @@ describe('API Integration Tests', () =>
               return done(err)
             } else {
               ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
+                if (err) { return done(err) }
                 client.clientID.should.equal('YUIAIIIICIIAIA')
                 client.clientDomain.should.equal('him.jembi.org')
                 client.name.should.equal('OpenMRS Ishmael instance')
@@ -289,6 +292,7 @@ describe('API Integration Tests', () =>
 
       it('should return all clients ', done =>
         ClientModelAPI.count((err, countBefore) => {
+          if (err) { return done(err) }
           let client = new ClientModelAPI(testDocument)
           client.clientID += '1'
           client.save((error, testDoc) => {
@@ -382,7 +386,8 @@ describe('API Integration Tests', () =>
               if (err) {
                 return done(err)
               } else {
-                ClientModelAPI.findById(client._id, (error, clientDoc) => {
+                ClientModelAPI.findById(client._id, (err, clientDoc) => {
+                  if (err) { return done(err) }
                   clientDoc.roles[0].should.equal('clientTest_update')
                   clientDoc.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
                   clientDoc.name.should.equal('Devil_may_Cry')
@@ -418,7 +423,8 @@ describe('API Integration Tests', () =>
               if (err) {
                 return done(err)
               } else {
-                ClientModelAPI.findById(client._id, (error, clientDoc) => {
+                ClientModelAPI.findById(client._id, (err, clientDoc) => {
+                  if (err) { return done(err) }
                   clientDoc.roles[0].should.equal('clientTest_update')
                   clientDoc.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
                   clientDoc.name.should.equal('Devil_may_Cry')
@@ -487,27 +493,32 @@ describe('API Integration Tests', () =>
         const client = new ClientModelAPI(docTestRemove)
         client.save((error, testDoc) => {
           should.not.exist(error)
-          ClientModelAPI.count((err, countBefore) =>
+          ClientModelAPI.count((err, countBefore) => {
+            if (err) { return done(err) }
             request('https://localhost:8080')
-              .del(`/clients/${client._id}`)
-              .set('auth-username', testUtils.rootUser.email)
-              .set('auth-ts', authDetails.authTS)
-              .set('auth-salt', authDetails.authSalt)
-              .set('auth-token', authDetails.authToken)
-              .expect(200)
-              .end((err, res) => {
-                if (err) {
-                  return done(err)
-                } else {
-                  ClientModelAPI.count((err, countAfter) =>
-                    ClientModelAPI.findOne({clientID: 'Jembi_OpenHIE_Instance'}, (error, notFoundDoc) => {
-                      (notFoundDoc === null).should.be.true;
-                      (countBefore - 1).should.equal(countAfter)
-                      return done()
-                    })
-                  )
-                }
-              })
+                .del(`/clients/${client._id}`)
+                .set('auth-username', testUtils.rootUser.email)
+                .set('auth-ts', authDetails.authTS)
+                .set('auth-salt', authDetails.authSalt)
+                .set('auth-token', authDetails.authToken)
+                .expect(200)
+                .end((err, res) => {
+                  if (err) {
+                    return done(err)
+                  } else {
+                    ClientModelAPI.count((err, countAfter) => {
+                      if (err) { return done(err) }
+                      ClientModelAPI.findOne({clientID: 'Jembi_OpenHIE_Instance'}, (err, notFoundDoc) => {
+                        if (err) { return done(err) }
+                        (notFoundDoc === null).should.be.true;
+                        (countBefore - 1).should.equal(countAfter)
+                        return done()
+                      })
+                    }
+                    )
+                  }
+                })
+          }
           )
         })
       })

@@ -93,9 +93,11 @@ describe('MessageStore', () => {
     return TransactionModel.remove({}, () =>
       ChannelModel.remove({}, () =>
         (new ChannelModel(channel1)).save((err, ch1) => {
+          if (err) { return done(err) }
           channel1._id = ch1._id
           ctx.authorisedChannel._id = ch1._id
           return (new ChannelModel(channel2)).save((err, ch2) => {
+            if (err) { return done(err) }
             channel2._id = ch2._id
             return done()
           })
@@ -175,9 +177,11 @@ describe('MessageStore', () => {
     beforeEach(done =>
       ChannelModel.remove({}, () =>
         (new ChannelModel(channel1)).save((err, ch1) => {
+          if (err) { return done(err) }
           channel1._id = ch1._id
           ctx.authorisedChannel._id = ch1._id
           return (new ChannelModel(channel2)).save((err, ch2) => {
+            if (err) { return done(err) }
             channel2._id = ch2._id
             return done()
           })
@@ -224,6 +228,7 @@ describe('MessageStore', () => {
       ctx.response = createResponse(201)
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
@@ -247,6 +252,7 @@ describe('MessageStore', () => {
       const route = createRoute('route1', 200)
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
@@ -274,6 +280,7 @@ describe('MessageStore', () => {
       ctx.transactionStatus = null
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.request = storedTrans.request
         ctx.request.header = {}
         ctx.transactionId = storedTrans._id
@@ -294,6 +301,7 @@ describe('MessageStore', () => {
       const route2 = createRoute('route2', 201)
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.request = storedTrans.request
         ctx.request.header = {}
         ctx.transactionId = storedTrans._id
@@ -323,6 +331,7 @@ describe('MessageStore', () => {
       ctx.routes.push(createRoute('route2', 201))
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.request = storedTrans.request
         ctx.request.header = {}
         ctx.transactionId = storedTrans._id
@@ -353,6 +362,7 @@ describe('MessageStore', () => {
         ctx.routes.push(createRoute('route2', 501))
 
         return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+          if (err) { return done(err) }
           ctx.request = storedTrans.request
           ctx.request.header = {}
           ctx.transactionId = storedTrans._id
@@ -382,6 +392,7 @@ describe('MessageStore', () => {
       ctx.routes.push(createRoute('route2', 404))
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.request = storedTrans.request
         ctx.request.header = {}
         ctx.transactionId = storedTrans._id
@@ -411,6 +422,7 @@ describe('MessageStore', () => {
       ctx.routes.push(createRoute('route2', 404))
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.request = storedTrans.request
         ctx.request.header = {}
         ctx.transactionId = storedTrans._id
@@ -440,6 +452,7 @@ describe('MessageStore', () => {
       ctx.routes.push(createRoute('route2', 200))
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.request = storedTrans.request
         ctx.request.header = {}
         ctx.transactionId = storedTrans._id
@@ -469,6 +482,7 @@ describe('MessageStore', () => {
       ctx.routes.push(createRoute('route2', 200))
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.request = storedTrans.request
         ctx.request.header = {}
         ctx.transactionId = storedTrans._id
@@ -506,6 +520,7 @@ describe('MessageStore', () => {
       ctx.response = createResponseWithReservedChars(200)
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
@@ -544,6 +559,7 @@ describe('MessageStore', () => {
       ctx.authorisedChannel.responseBody = false
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
@@ -566,6 +582,7 @@ describe('MessageStore', () => {
       }
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
@@ -622,6 +639,7 @@ describe('MessageStore', () => {
       }
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, (err2) => {
           should.not.exist(err2)
@@ -649,6 +667,7 @@ describe('MessageStore', () => {
       }
 
       return messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        if (err) { return done(err) }
         ctx.transactionId = storedTrans._id
         return messageStore.storeResponse(ctx, err2 =>
           messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>

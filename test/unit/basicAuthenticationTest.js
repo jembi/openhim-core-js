@@ -51,7 +51,7 @@ describe('Basic Auth', () => {
   describe('with no credentials', () =>
     it('ctx.authenticated should not exist', (done) => {
       const ctx = buildEmptyCtx()
-      return basicAuthentication.authenticateUser(ctx, () => {
+      basicAuthentication.authenticateUser(ctx, () => {
         ({}.should.not.equal(ctx.authenticated))
         return done()
       })
@@ -61,7 +61,7 @@ describe('Basic Auth', () => {
   describe('with unknown user', () =>
     it('ctx.authenticated should not exist', (done) => {
       const ctx = buildCtx('incorrect_user', 'incorrect_password')
-      return basicAuthentication.authenticateUser(ctx, () => {
+      basicAuthentication.authenticateUser(ctx, () => {
         ({}.should.not.equal(ctx.authenticated))
         return done()
       })
@@ -71,9 +71,10 @@ describe('Basic Auth', () => {
   describe('default algorithm (bcrypt) with correct credentials', () =>
     it('ctx.authenticated should exist and contain the client object from the database ', (done) => {
       const client = new ClientModel(bcryptClient)
-      return client.save((error, newAppDoc) => {
+      client.save((err, newAppDoc) => {
+        if (err) { return done(err) }
         const ctx = buildCtx('user', 'password')
-        return basicAuthentication.authenticateUser(ctx, () => {
+        basicAuthentication.authenticateUser(ctx, () => {
           should.exist(ctx.authenticated)
           should.exist(ctx.authenticated.clientID)
           ctx.authenticated.clientID.should.equal(bcryptClient.clientID)
@@ -86,9 +87,10 @@ describe('Basic Auth', () => {
   describe('default algorithm (bcrypt) with incorrect credentials', () =>
     it('ctx.authenticated should not exist', (done) => {
       const client = new ClientModel(bcryptClient)
-      return client.save((error, newAppDoc) => {
+      client.save((err, newAppDoc) => {
+        if (err) { return done(err) }
         const ctx = buildCtx('user', 'incorrectPassword')
-        return basicAuthentication.authenticateUser(ctx, () => {
+        basicAuthentication.authenticateUser(ctx, () => {
           should.not.exist(ctx.authenticated)
           return done()
         })
@@ -99,9 +101,10 @@ describe('Basic Auth', () => {
   describe('crypto algorithm (sha) with correct credentials', () =>
     it('ctx.authenticated should exist and contain the client object from the database ', (done) => {
       const client = new ClientModel(shaClient)
-      return client.save((error, newAppDoc) => {
+      client.save((err, newAppDoc) => {
+        if (err) { return done(err) }
         const ctx = buildCtx('user', 'password')
-        return basicAuthentication.authenticateUser(ctx, () => {
+        basicAuthentication.authenticateUser(ctx, () => {
           should.exist(ctx.authenticated)
           should.exist(ctx.authenticated.clientID)
           ctx.authenticated.clientID.should.equal(shaClient.clientID)
@@ -114,9 +117,10 @@ describe('Basic Auth', () => {
   return describe('crypto algorithm (sha) with incorrect credentials', () =>
     it('ctx.authenticated should not exist', (done) => {
       const client = new ClientModel(shaClient)
-      return client.save((error, newAppDoc) => {
+      client.save((err, newAppDoc) => {
+        if (err) { return done(err) }
         const ctx = buildCtx('user', 'incorrectPassword')
-        return basicAuthentication.authenticateUser(ctx, () => {
+        basicAuthentication.authenticateUser(ctx, () => {
           should.not.exist(ctx.authenticated)
           return done()
         })

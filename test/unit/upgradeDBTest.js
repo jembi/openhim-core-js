@@ -74,6 +74,7 @@ describe('Upgrade DB Tests', () => {
     beforeEach(done =>
       testUtils.setupTestKeystore(() =>
         KeystoreModel.findOne((err, keystore) => {
+          if (err) { return done(err) }
           keystore.cert.fingerprint = undefined
           for (const cert of Array.from(keystore.ca)) {
             cert.fingerprint = undefined
@@ -134,7 +135,11 @@ describe('Upgrade DB Tests', () => {
 
     return it('should convert client.domain match to client.certFingerprint match', () =>
       upgradeFunc().then(() =>
-        ClientModel.findOne({clientID: 'test'}, (err, client) => client.certFingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54'))
+        ClientModel.findOne({clientID: 'test'}, (err, client) => {
+          if (err) { return err }
+          client.certFingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54')
+        }
+        )
       )
     )
   })
@@ -373,6 +378,7 @@ describe('Upgrade DB Tests', () => {
     beforeEach((done) => {
       let user = new UserModel(userObj1)
       return user.save((err) => {
+        if (err) { return done(err) }
         user = new UserModel(userObj2)
         return user.save((err) => {
           if (err != null) { return done(err) }
@@ -405,6 +411,7 @@ describe('Upgrade DB Tests', () => {
 
     it('should migrate visualizer settings even when user have the same name', done =>
       UserModel.findOne({surname: 'User2'}, (err, user) => {
+        if (err) { return done(err) }
         user.surname = 'User1'
         return user.save((err) => {
           if (err) { return done(err) }
@@ -428,6 +435,7 @@ describe('Upgrade DB Tests', () => {
     it('should remove the users visualizer setting from their profile', done =>
       upgradeFunc().then(() =>
         UserModel.findOne({email: 'test1@user.org'}, (err, user) => {
+          if (err) { return done(err) }
           should.not.exist(user.settings.visualizer)
           return done()
         })
@@ -436,16 +444,23 @@ describe('Upgrade DB Tests', () => {
 
     it('should ignore users that don\'t have a settings.visualizer or settings set', done =>
       UserModel.find((err, users) => {
+        if (err) { return done(err) }
         users[0].set('settings.visualizer', null)
         users[1].set('settings', null)
-        return users[0].save(err =>
-          users[1].save(err =>
+        return users[0].save(err => {
+          if (err) { return done(err) }
+          users[1].save(err => {
+            if (err) { return done(err) }
             upgradeFunc().then(() =>
-              VisualizerModel.find((err, visualizers) => {
-                visualizers.length.should.be.exactly(0)
-                return done()
-              })).catch(err => done(err))
-          )
+                  VisualizerModel.find((err, visualizers) => {
+                    if (err) { return done(err) }
+                    visualizers.length.should.be.exactly(0)
+                    return done()
+                  })
+                ).catch(err => done(err))
+          }
+            )
+        }
         )
       })
     )
@@ -456,6 +471,7 @@ describe('Upgrade DB Tests', () => {
         if (err) { done(err) }
         return upgradeFunc().then(() =>
           VisualizerModel.find((err, visualizers) => {
+            if (err) { return done(err) }
             visualizers.length.should.be.exactly(2) // third user is skipped
             return done()
           })).catch(err => done(err))
@@ -468,6 +484,7 @@ describe('Upgrade DB Tests', () => {
         if (err) { done(err) }
         return upgradeFunc().then(() =>
           VisualizerModel.find((err, visualizers) => {
+            if (err) { return done(err) }
             visualizers.length.should.be.exactly(3)
 
             const names = visualizers.map(v => v.name)
@@ -499,6 +516,7 @@ describe('Upgrade DB Tests', () => {
         if (err) { done(err) }
         return upgradeFunc().then(() =>
           VisualizerModel.find((err, visualizers) => {
+            if (err) { return done(err) }
             visualizers.length.should.be.exactly(2)
             return done()
           })).catch(err => done(err))

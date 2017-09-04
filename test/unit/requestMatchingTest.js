@@ -205,7 +205,9 @@ describe('Request Matching middleware', () => {
     afterEach(() => {
       // remove test channels
       for (const channelName of Array.from(addedChannelNames)) {
-        ChannelModel.remove({name: channelName}, (err) => { })
+        ChannelModel.remove({name: channelName}, (err) => {
+          if (err) { return err }
+        })
       }
 
       addedChannelNames = []

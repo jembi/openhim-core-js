@@ -63,8 +63,10 @@ describe('API Integration Tests', () =>
         user2.save(() =>
           newUser.save(() =>
             newUserExpired.save(() =>
-              auth.setupTestUsers(err =>
+              auth.setupTestUsers(err => {
+                if (err) { return done(err) }
                 server.start({apiPort: 8080}, () => done())
+              }
               )
             )
           )
@@ -74,8 +76,10 @@ describe('API Integration Tests', () =>
 
     after(done =>
       UserModelAPI.remove({}, () =>
-        auth.cleanupTestUsers(err =>
+        auth.cleanupTestUsers(err => {
+          if (err) { return done(err) }
           server.stop(() => done())
+        }
         )
       )
     )
@@ -122,14 +126,15 @@ describe('API Integration Tests', () =>
         const stubContact = sinon.stub(contact, 'sendEmail')
         stubContact.yields(null)
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .get('/password-reset-request/r..@jembi.org')
           .expect(201)
           .end((err, res) => {
             if (err) {
               return done(err)
             } else {
-              return UserModelAPI.findOne({email: 'r..@jembi.org'}, (err, user) => {
+              UserModelAPI.findOne({email: 'r..@jembi.org'}, (err, user) => {
+                if (err) { return done(err) }
                 user.should.have.property('firstname', 'Ryan')
                 user.should.have.property('surname', 'Chrichton')
                 user.should.have.property('token')
@@ -146,7 +151,7 @@ describe('API Integration Tests', () =>
         const stubContact = sinon.stub(contact, 'sendEmail')
         stubContact.yields('An error occurred trying to send the email.')
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .get('/password-reset-request/r..@jembi.org')
           .expect(500)
           .end((err, res) => {
@@ -159,7 +164,7 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should return a not found error', done =>
+      it('should return a not found error', done =>
         request('https://localhost:8080')
           .get('/password-reset-request/test@jembi.org')
           .expect(404)
@@ -211,7 +216,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should return a expired token error', done =>
+      it('should return a expired token error', done =>
         request('https://localhost:8080')
           .get('/token/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg')
           .expect(410)
@@ -236,7 +241,7 @@ describe('API Integration Tests', () =>
           passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put('/token/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM')
           .send(updates)
           .expect(200)
@@ -244,7 +249,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return UserModelAPI.findOne({email: 'jane@doe.net'}, (err, user) => {
+              UserModelAPI.findOne({email: 'jane@doe.net'}, (err, user) => {
+                if (err) { return done(err) }
                 user.should.have.property('firstname', 'Jane Sally')
                 user.should.have.property('surname', 'Doe')
                 user.should.have.property('passwordHash', 'af200ab5-4227-4840-97d1-92ba91206499')
@@ -259,7 +265,7 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should prevent an update with an expired token (expired token)', (done) => {
+      it('should prevent an update with an expired token (expired token)', (done) => {
         const updates = {
           firstname: 'Peter',
           surname: 'smith',
@@ -269,7 +275,7 @@ describe('API Integration Tests', () =>
           passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put('/token/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg')
           .send(updates)
           .expect(410)
@@ -303,7 +309,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should not allow non admin user to fetch all users', done =>
+      it('should not allow non admin user to fetch all users', done =>
         request('https://localhost:8080')
           .get('/users')
           .set('auth-username', testUtils.nonRootUser.email)
@@ -333,7 +339,7 @@ describe('API Integration Tests', () =>
           groups: ['HISP']
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/users')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -345,7 +351,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return UserModelAPI.findOne({email: 'bill@newman.com'}, (err, user) => {
+              UserModelAPI.findOne({email: 'bill@newman.com'}, (err, user) => {
+                if (err) { return done(err) }
                 user.should.have.property('firstname', 'Bill')
                 user.should.have.property('surname', 'Newman')
                 user.groups.should.have.length(1)
@@ -359,10 +366,10 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should not allow a non admin user to add a user', (done) => {
+      it('should not allow a non admin user to add a user', (done) => {
         newUser = {}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/users')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -418,7 +425,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should always allow a user to fetch their own details', done =>
+      it('should always allow a user to fetch their own details', done =>
         request('https://localhost:8080')
           .get(`/users/${testUtils.nonRootUser.email}`)
           .set('auth-username', testUtils.nonRootUser.email)
@@ -449,7 +456,7 @@ describe('API Integration Tests', () =>
           groups: ['admin', 'RHIE', 'HISP']
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put('/users/r..@jembi.org')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -461,7 +468,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return UserModelAPI.findOne({email: 'rg..@jembi.org'}, (err, user) => {
+              UserModelAPI.findOne({email: 'rg..@jembi.org'}, (err, user) => {
+                if (err) { return done(err) }
                 user.should.have.property('surname', 'Crichton')
                 user.should.have.property('email', 'rg..@jembi.org')
                 user.groups.should.have.length(3)
@@ -474,7 +482,7 @@ describe('API Integration Tests', () =>
       it('should not allow non admin users to update a user', (done) => {
         const updates = {}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put('/users/r..@jembi.org')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -497,7 +505,7 @@ describe('API Integration Tests', () =>
           surname: 'Root-updated'
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put(`/users/${testUtils.nonRootUser.email}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -509,7 +517,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return UserModelAPI.findOne({email: testUtils.nonRootUser.email}, (err, user) => {
+              UserModelAPI.findOne({email: testUtils.nonRootUser.email}, (err, user) => {
+                if (err) { return done(err) }
                 user.should.have.property('surname', 'Root-updated')
                 return done()
               })
@@ -517,13 +526,12 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should NOT allow a non-admin user to update their groups', (done) => {
+      it('should NOT allow a non-admin user to update their groups', (done) => {
         const updates = {
           _id: 'thisShouldBeIgnored',
           groups: ['admin']
         }
-
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put(`/users/${testUtils.nonRootUser.email}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -535,7 +543,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return UserModelAPI.findOne({email: testUtils.nonRootUser.email}, (err, user) => {
+              UserModelAPI.findOne({email: testUtils.nonRootUser.email}, (err, user) => {
+                if (err) { return done(err) }
                 user.groups.should.be.length(2)
                 user.groups.should.not.containEql('admin')
                 return done()
@@ -545,7 +554,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    return describe('*removeUser(email)', () => {
+    describe('*removeUser(email)', () => {
       it('should remove a specific user by email', done =>
         request('https://localhost:8080')
           .del('/users/bfm@crazy.net')
@@ -558,7 +567,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return UserModelAPI.find({name: 'bfm@crazy.net'}, (err, users) => {
+              UserModelAPI.find({name: 'bfm@crazy.net'}, (err, users) => {
+                if (err) { return done(err) }
                 users.should.have.length(0)
                 return done()
               })
@@ -566,7 +576,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should not allow a non admin user to remove a user', done =>
+      it('should not allow a non admin user to remove a user', done =>
         request('https://localhost:8080')
           .del('/users/bfm@crazy.net')
           .set('auth-username', testUtils.nonRootUser.email)

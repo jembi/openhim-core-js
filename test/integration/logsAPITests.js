@@ -22,53 +22,46 @@ describe('API Integration Tests', () =>
       // logs messages, this can affect their order and makes the tests fail.
       setTimeout(() => {
         beforeTS = new Date()
-        return setTimeout(() => {
+        setTimeout(() => {
           logger.warn('TEST1')
-          return setTimeout(() => {
+          setTimeout(() => {
             logger.error('TEST2')
-            return setTimeout(() => {
+            setTimeout(() => {
               logger.warn('TEST3')
-              return setTimeout(() => {
+              setTimeout(() => {
                 middleTS = new Date()
-                return setTimeout(() => {
+                setTimeout(() => {
                   logger.warn('TEST4')
-                  return setTimeout(() => {
+                  setTimeout(() => {
                     logger.error('TEST5')
-                    return setTimeout(() => {
+                    setTimeout(() => {
                       endTS = new Date()
-                      return setTimeout(() =>
-                                          auth.setupTestUsers(err =>
-                                            server.start({apiPort: 8080}, () => done())
-                                          )
-
-                                        // We need to go deeper!
-                                        , 15 * global.testTimeoutFactor)
-                    }
-                                    , 15 * global.testTimeoutFactor)
-                  }
-                                , 15 * global.testTimeoutFactor)
-                }
-                            , 15 * global.testTimeoutFactor)
-              }
-                        , 15 * global.testTimeoutFactor)
-            }
-                    , 15 * global.testTimeoutFactor)
-          }
-                , 15 * global.testTimeoutFactor)
-        }
-            , 15 * global.testTimeoutFactor)
-      }
-        , 15 * global.testTimeoutFactor)
+                      setTimeout(() =>
+                        auth.setupTestUsers(err => {
+                          if (err) { return done(err) }
+                          server.start({apiPort: 8080}, () => done())
+                        }
+                        ), 15 * global.testTimeoutFactor)
+                    }, 15 * global.testTimeoutFactor)
+                  }, 15 * global.testTimeoutFactor)
+                }, 15 * global.testTimeoutFactor)
+              }, 15 * global.testTimeoutFactor)
+            }, 15 * global.testTimeoutFactor)
+          }, 15 * global.testTimeoutFactor)
+        }, 15 * global.testTimeoutFactor)
+      }, 15 * global.testTimeoutFactor)
     )
 
     after((done) => {
       logger.transports.MongoDB.level = 'debug'
-      return auth.cleanupTestUsers(err =>
+      return auth.cleanupTestUsers(err => {
+        if (err) { return done(err) }
         server.stop(() => done())
+      }
       )
     })
 
-    return describe('*getLogs', () => {
+    describe('*getLogs', () => {
       it('should return latest logs in order', done =>
         request('https://localhost:8080')
           .get(`/logs?from=${beforeTS.toISOString()}&until=${endTS.toISOString()}`)
@@ -173,7 +166,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should deny access for a non-admin', done =>
+      it('should deny access for a non-admin', done =>
         request('https://localhost:8080')
           .get('/logs')
           .set('auth-username', testUtils.nonRootUser.email)

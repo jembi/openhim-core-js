@@ -176,6 +176,7 @@ export function setFinalStatus (ctx, callback) {
   }
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
+    if (err) { return callback(err) }
     const update = {}
 
     if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
@@ -229,7 +230,8 @@ export function setFinalStatus (ctx, callback) {
 
     if (_.isEmpty(update)) { return callback(tx) } // nothing to do
 
-    return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {}, (err, tx) => {
+    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {}, (err, tx) => {
+      if (err) { return callback(err) }
       callback(tx)
 
       // queue for autoRetry

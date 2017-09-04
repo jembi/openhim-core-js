@@ -60,6 +60,7 @@ export function startupTCPServer (channelID, callback) {
     })
 
   return ChannelModel.findById(channelID, (err, channel) => {
+    if (err) { return (err) }
     const host = channel.tcpHost || '0.0.0.0'
     const port = channel.tcpPort
 

@@ -34,18 +34,22 @@ describe('API Metrics Tests', () =>
 
     before((done) => {
       config.statsd.enabled = false
-      return ChannelModelAPI.remove({}, () =>
+      ChannelModelAPI.remove({}, () =>
         TransactionModelAPI.remove({}, () =>
-          channel1.save(err =>
-            channel2.save(err =>
+          channel1.save(err => {
+            if (err) { return done(err) }
+            channel2.save(err => {
+              if (err) { return done(err) }
               testUtils.setupMetricsTransactions(() =>
-                auth.setupTestUsers((err) => {
-                  if (err) { return done(err) }
-                  config.statsd.enabled = false
-                  return server.start({apiPort: 8080, tcpHttpReceiverPort: 7787}, () => done())
-                })
+                    auth.setupTestUsers((err) => {
+                      if (err) { return done(err) }
+                      config.statsd.enabled = false
+                      return server.start({apiPort: 8080, tcpHttpReceiverPort: 7787}, () => done())
+                    })
+                  )
+            }
               )
-            )
+          }
           )
         )
       )
@@ -207,7 +211,7 @@ describe('API Metrics Tests', () =>
           })
       )
 
-      return it('should return a 401 when a channel isn\'t found', done =>
+      it('should return a 401 when a channel isn\'t found', done =>
         request('https://localhost:8080')
           .get('/metrics/channels/333333333333333333333333?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
           .set('auth-username', testUtils.rootUser.email)

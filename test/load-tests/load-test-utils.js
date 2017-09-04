@@ -41,6 +41,7 @@ module.exports = {
     }
 
     getAuthHeaders('root@openhim.org', 'password', (err, headers) => {
+      if (err) { return next(err) }
       Object.assign(requestParams.headers, headers)
       next()
     })

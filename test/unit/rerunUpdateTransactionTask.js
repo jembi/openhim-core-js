@@ -114,13 +114,16 @@ const task1 = new TaskModel({
 describe('rerunUpdateTransactionTask middleware', () => {
   before(done =>
     transaction1.save(() =>
-      transaction2.save(err =>
-        transaction3.save(err =>
-          transaction4.save(err =>
+      transaction2.save(err => {
+        if (err) { return done(err) }
+        transaction3.save(err => {
+          if (err) { return done(err) }
+          transaction4.save(err => {
+            if (err) { return done(err) }
             task1.save(() => done())
-          )
-        )
-      )
+          })
+        })
+      })
     )
   )
 
@@ -135,6 +138,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
       // check data before function execution
       const transactionID = '53e096fea0af3105689acd6a'
       return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
+        if (err) { return done(err) }
         transaction.should.have.property('_id', ObjectId('53e096fea0af3105689acd6a'))
         transaction.should.have.property('channelID', ObjectId('53bbe25485e66d8e5daad4a2'))
         transaction.should.have.property('clientID', ObjectId('42bbe25485e77d8e5daad4b4'))
@@ -142,6 +146,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
         transaction.childIDs.length.should.be.eql(0)
 
         return rerunUpdateTransactionTask.updateOriginalTransaction(ctx, (err, transaction) => {
+          if (err) { return done(err) }
           transaction.should.have.property('_id', ObjectId('53e096fea0af3105689acd6a'))
           transaction.should.have.property('channelID', ObjectId('53bbe25485e66d8e5daad4a2'))
           transaction.should.have.property('clientID', ObjectId('42bbe25485e77d8e5daad4b4'))
@@ -157,6 +162,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
       // check data before function execution
       const transactionID = '53e096fea0af3105689acd6b'
       return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
+        if (err) { return done(err) }
         transaction.should.have.property('_id', ObjectId('53e096fea0af3105689acd6b'))
         transaction.should.have.property('channelID', ObjectId('53bbe25485e66d8e5daad4a2'))
         transaction.should.have.property('clientID', ObjectId('42bbe25485e77d8e5daad4b4'))
@@ -182,6 +188,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
       // check data before function execution
       const taskID = '53e34b915d0180cf6eef2d01'
       TaskModel.findOne({_id: taskID}, (err, task) => {
+        if (err) { return done(err) }
         task.should.have.property('_id', ObjectId('53e34b915d0180cf6eef2d01'))
         task.should.have.property('remainingTransactions', 2)
         task.transactions[0].tid.should.be.eql('53e096fea0af3105689acd6a')
@@ -193,6 +200,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
       })
 
       return rerunUpdateTransactionTask.updateTask(ctx, (err, task) => {
+        if (err) { return done(err) }
         task.should.have.property('_id', ObjectId('53e34b915d0180cf6eef2d01'))
         task.should.have.property('remainingTransactions', 2)
         task.transactions[0].tid.should.be.eql('53e096fea0af3105689acd6a')
@@ -207,6 +215,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
     it('should not set the attempt number if the parent transaction was not an autoretry', (done) => {
       delete ctx.currentAttempt
       return rerunUpdateTransactionTask.setAttemptNumber(ctx, (err) => {
+        if (err) { return done(err) }
         ctx.should.not.have.property('currentAttempt')
         return done()
       })
@@ -215,6 +224,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
     it('should add an initial attempt number to the ctx', (done) => {
       delete ctx3.currentAttempt
       return rerunUpdateTransactionTask.setAttemptNumber(ctx3, (err) => {
+        if (err) { return done(err) }
         ctx3.should.have.property('currentAttempt')
         ctx3.currentAttempt.should.be.exactly(1)
         return done()
@@ -224,6 +234,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
     return it('should increment the attempt number if it exists on the parent transaction', (done) => {
       delete ctx4.currentAttempt
       return rerunUpdateTransactionTask.setAttemptNumber(ctx4, (err) => {
+        if (err) { return done(err) }
         ctx4.should.have.property('currentAttempt')
         ctx4.currentAttempt.should.be.exactly(6)
         return done()

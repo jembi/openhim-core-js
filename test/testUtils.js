@@ -36,7 +36,7 @@ export function createMockServerPromised (resStatusCode, resBody, port, requestC
   // Create mock endpoint to forward requests to
   const mockServer = http.createServer((req, res) => {
     res.writeHead(resStatusCode, {'Content-Type': 'text/plain'})
-    return res.end(resBody)
+    res.end(resBody)
   })
   MOCK_SERVERS.push(mockServer)
   mockServer.on('request', requestCallback)
@@ -46,7 +46,7 @@ export function createMockServerPromised (resStatusCode, resBody, port, requestC
         return reject(err)
       }
 
-      return resolve(mockServer)
+      resolve(mockServer)
     })
   })
 }
@@ -56,7 +56,7 @@ export function createMockServer (resStatusCode, resBody, port, callback, reques
   // Create mock endpoint to forward requests to
   const mockServer = http.createServer((req, res) => {
     res.writeHead(resStatusCode, {'Content-Type': 'text/plain'})
-    return res.end(resBody)
+    res.end(resBody)
   })
   MOCK_SERVERS.push(mockServer)
   mockServer.listen(port, () => callback(mockServer))
@@ -69,10 +69,10 @@ export function createMockServerForPost (successStatusCode, errStatusCode, bodyT
     req.on('data', (chunk) => {
       if (chunk.toString() === bodyToMatch) {
         res.writeHead(successStatusCode, {'Content-Type': 'text/plain'})
-        return res.end()
+        res.end()
       } else {
         res.writeHead(errStatusCode, {'Content-Type': 'text/plain'})
-        return res.end()
+        res.end()
       }
     })
   )
@@ -96,7 +96,7 @@ export function createStaticServer (path, port, callback) {
   })
   MOCK_SERVERS.push(server)
   // Listen
-  return server.listen(port, 'localhost', () => callback(server))
+  server.listen(port, 'localhost', () => callback(server))
 }
 
 export function createMockHTTPSServerWithMutualAuth (resStatusCode, resBody, port, useClientCert, callback, requestCallback) {
@@ -122,12 +122,12 @@ export function createMockHTTPSServerWithMutualAuth (resStatusCode, resBody, por
   // Create mock endpoint to forward requests to
   const mockServer = https.createServer(options, (req, res) => {
     res.writeHead(resStatusCode, {'Content-Type': 'text/plain'})
-    return res.end(`Secured ${resBody}`)
+    res.end(`Secured ${resBody}`)
   })
   MOCK_SERVERS.push(mockServer)
 
   mockServer.listen(port, () => callback(mockServer))
-  return mockServer.on('request', requestCallback)
+  mockServer.on('request', requestCallback)
 }
 
 export function createMockTCPServer (port, expected, matchResponse, nonMatchResponse, callback, onRequest) {
@@ -173,7 +173,7 @@ export function createMockTLSServerWithMutualAuth (port, expected, matchResponse
   )
   MOCK_SERVERS.push(server)
 
-  return server.listen(port, 'localhost', () => callback(server))
+  server.listen(port, 'localhost', () => callback(server))
 }
 
 export function createMockHTTPRespondingPostServer (port, expected, matchResponse, nonMatchResponse, callback) {
@@ -186,7 +186,7 @@ export function createMockHTTPRespondingPostServer (port, expected, matchRespons
         res.writeHead(500, {'Content-Type': 'text/plain'})
         res.write(nonMatchResponse)
       }
-      return res.end()
+      res.end()
     })
   )
   MOCK_SERVERS.push(server)
@@ -198,7 +198,7 @@ export function createMockMediatorServer (resStatusCode, mediatorResponse, port,
   // Create mock endpoint to forward requests to
   const mockServer = http.createServer((req, res) => {
     res.writeHead(resStatusCode, {'Content-Type': 'application/json+openhim; charset=utf-8'})
-    return res.end(JSON.stringify(mediatorResponse))
+    res.end(JSON.stringify(mediatorResponse))
   })
   MOCK_SERVERS.push(mockServer)
 
@@ -214,7 +214,7 @@ export function createSlowMockMediatorServer (delay, resStatusCode, resBody, por
       res.writeHead(resStatusCode, {'Content-Type': 'application/json+openhim; charset=utf-8'})
       return res.end(JSON.stringify(resBody))
     }
-    return setTimeout(respond, delay)
+    setTimeout(respond, delay)
   })
   MOCK_SERVERS.push(mockServer)
 
@@ -251,7 +251,7 @@ exports.auth.setupTestUsers = done =>
   (new UserModel(exports.rootUser)).save((err) => {
     if (err) { return done(err) }
 
-    return (new UserModel(exports.nonRootUser)).save((err) => {
+    (new UserModel(exports.nonRootUser)).save((err) => {
       if (err) {
         return done(err)
       } else {
@@ -283,7 +283,7 @@ exports.auth.cleanupTestUsers = done =>
   UserModel.remove({email: 'root@jembi.org'}, (err) => {
     if (err) { return done(err) }
 
-    return UserModel.remove({email: 'nonroot@jembi.org'}, (err) => {
+    UserModel.remove({email: 'nonroot@jembi.org'}, (err) => {
       if (err) {
         return done(err)
       } else {
@@ -300,10 +300,10 @@ export function createMockServerForPostWithReturn (successStatusCode, errStatusC
       acceptEncoding = ''
     }
 
-    return req.on('data', (chunk) => {
+    req.on('data', (chunk) => {
       if (chunk.toString() === bodyToMatch) {
         if (acceptEncoding.match(/gzip/g)) { // the him always  sets the accept-encoding headers to accept gzip it then decompresses the response and sends it to the client
-          return zlib.gzip(bodyToMatch, (_, result) => {
+          zlib.gzip(bodyToMatch, (_, result) => {
             const headers = {
               date: (new Date()).toString(),
               vary: 'Accept-Encoding',
@@ -359,7 +359,7 @@ export function setupTestKeystore (serverCert, serverKey, ca, callback) {
   }
 
   // remove any existing keystore
-  return KeystoreModel.remove({}, () =>
+  KeystoreModel.remove({}, () =>
 
     pem.readCertificateInfo(serverCert, (err, serverCertInfo) => {
       if (err != null) {
@@ -368,7 +368,7 @@ export function setupTestKeystore (serverCert, serverKey, ca, callback) {
       }
       serverCertInfo.data = serverCert
 
-      return pem.getFingerprint(serverCert, (err, serverCertFingerprint) => {
+      pem.getFingerprint(serverCert, (err, serverCertFingerprint) => {
         if (err != null) {
           logger.error(`Failed to get certificate fingerprint in test utils: ${err}`)
           return callback(null)
@@ -392,7 +392,7 @@ export function setupTestKeystore (serverCert, serverKey, ca, callback) {
             fingerprintPromises.push(getFingerprint(cert))
           }
 
-          return Q.all(infoPromises).then(caCertsInfo =>
+          Q.all(infoPromises).then(caCertsInfo =>
             Q.all(fingerprintPromises).then((caFingerprints) => {
               keystore.ca = caCertsInfo
               // Add in the cert data
@@ -401,11 +401,11 @@ export function setupTestKeystore (serverCert, serverKey, ca, callback) {
                 keystore.ca[i].data = cert
                 keystore.ca[i].fingerprint = caFingerprints[i].fingerprint
               }
-              return keystore.save(() => callback(keystore))
+              keystore.save(() => callback(keystore))
             })
           )
         } else {
-          return keystore.save(() => callback(keystore))
+          keystore.save(() => callback(keystore))
         }
       })
     })
@@ -413,7 +413,7 @@ export function setupTestKeystore (serverCert, serverKey, ca, callback) {
 }
 
 export function cleanupTestKeystore (callback) {
-  return KeystoreModel.remove({}, () => callback())
+  KeystoreModel.remove({}, () => callback())
 }
 
 export function setupMetricsTransactions (callback) {
@@ -534,29 +534,44 @@ export function setupMetricsTransactions (callback) {
     status: 'Failed'
   })
 
-  return transaction0.save(err =>
-    transaction1.save(err =>
-      transaction2.save(err =>
-        transaction3.save(err =>
-          transaction4.save(err =>
-            transaction5.save(err =>
-              transaction6.save(err =>
-                transaction7.save(err =>
-                  transaction8.save(err =>
-                    transaction9.save(err =>
-                      transaction10.save(err =>
-                        transaction11.save(err =>
-                          transaction12.save(err => callback())
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
-          )
-        )
-      )
-    )
-  )
+  transaction0.save(err => {
+    if (err) { return callback(err) }
+    transaction1.save(err => {
+      if (err) { return callback(err) }
+      transaction2.save(err => {
+        if (err) { return callback(err) }
+        transaction3.save(err => {
+          if (err) { return callback(err) }
+          transaction4.save(err => {
+            if (err) { return callback(err) }
+            transaction5.save(err => {
+              if (err) { return callback(err) }
+              transaction6.save(err => {
+                if (err) { return callback(err) }
+                transaction7.save(err => {
+                  if (err) { return callback(err) }
+                  transaction8.save(err => {
+                    if (err) { return callback(err) }
+                    transaction9.save(err => {
+                      if (err) { return callback(err) }
+                      transaction10.save(err => {
+                        if (err) { return callback(err) }
+                        transaction11.save(err => {
+                          if (err) { return callback(err) }
+                          transaction12.save(err => {
+                            if (err) { return callback(err) }
+                            callback()
+                          })
+                        })
+                      })
+                    })
+                  })
+                })
+              })
+            })
+          })
+        })
+      })
+    })
+  })
 }

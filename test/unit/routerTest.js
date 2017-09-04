@@ -126,9 +126,10 @@ describe('HTTP Router', () => {
       return ctx
     }
 
-    it('should route an incomming https request to the endpoints specific by the channel config', done =>
+    it('should route an incoming https request to the endpoints specific by the channel config', done =>
       testUtils.createMockHTTPSServerWithMutualAuth(201, 'Mock response body\n', 9877, (server) => {
         KeystoreModel.findOne({}, (err, keystore) => {
+          if (err) { return done(err) }
           const cert = new CertificateModel({
             data: fs.readFileSync('test/resources/server-tls/cert.pem')
           })
@@ -192,6 +193,7 @@ describe('HTTP Router', () => {
         }
 
         return (new ChannelModel(channel)).save((err, ch1) => {
+          if (err) { return done(err) }
           const ctx = {}
           ctx.authorisedChannel = ch1
           ctx.request = {}

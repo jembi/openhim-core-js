@@ -15,6 +15,7 @@ describe('API Integration Tests', () =>
 
     before(done =>
       auth.setupTestUsers((err) => {
+        if (err) { return done(err) }
         authDetails = auth.getAuthDetails()
         return server.start({apiPort: 8080}, () => done())
       })
@@ -23,10 +24,12 @@ describe('API Integration Tests', () =>
     beforeEach(done => AuditModel.remove({}, done))
 
     after(done =>
-      auth.cleanupTestUsers(err =>
+      auth.cleanupTestUsers(err => {
+        if (err) { return done(err) }
         AuditModel.remove({}, () =>
-          server.stop(() => done())
-        )
+            server.stop(() => done())
+          )
+      }
       )
     )
 

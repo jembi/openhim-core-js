@@ -265,10 +265,11 @@ describe('Transaction Alerts', () => {
     it('should return transactions that match an exact status', done =>
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return alerts.findTransactionsMatchingStatus(testChannel, {
+        alerts.findTransactionsMatchingStatus(testChannel, {
           condition: 'status',
           status: '404'
         }, dateFrom, (err, results) => {
+          if (err) { return done(err) }
           results.length.should.be.exactly(1)
           results[0]._id.equals(testTransactions[0]._id).should.be.true()
           return done()
@@ -279,10 +280,11 @@ describe('Transaction Alerts', () => {
     it('should return transactions that have a matching status in a route response', done =>
       testTransactions[1].save((err) => {
         if (err) { return done(err) }
-        return alerts.findTransactionsMatchingStatus(testChannel, {
+        alerts.findTransactionsMatchingStatus(testChannel, {
           condition: 'status',
           status: '404'
         }, dateFrom, (err, results) => {
+          if (err) { return done(err) }
           results.length.should.be.exactly(1)
           results[0]._id.equals(testTransactions[1]._id).should.be.true()
           return done()
@@ -294,12 +296,13 @@ describe('Transaction Alerts', () => {
       // should return transaction 0 but not 6
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return testTransactions[6].save((err) => {
+        testTransactions[6].save((err) => {
           if (err) { return done(err) }
-          return alerts.findTransactionsMatchingStatus(testChannel, {
+          alerts.findTransactionsMatchingStatus(testChannel, {
             condition: 'status',
             status: '404'
           }, dateFrom, (err, results) => {
+            if (err) { return done(err) }
             results.length.should.be.exactly(1)
             results[0]._id.equals(testTransactions[0]._id).should.be.true()
             return done()
@@ -312,10 +315,11 @@ describe('Transaction Alerts', () => {
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
         const newFrom = moment().add(1, 'days').toDate()
-        return alerts.findTransactionsMatchingStatus(testChannel, {
+        alerts.findTransactionsMatchingStatus(testChannel, {
           condition: 'status',
           status: '404'
         }, newFrom, (err, results) => {
+          if (err) { return done(err) }
           results.length.should.be.exactly(0)
           return done()
         })
@@ -326,18 +330,19 @@ describe('Transaction Alerts', () => {
       // should return transactions 0, 1 and 2 but not 3 or 6
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return testTransactions[1].save((err) => {
+        testTransactions[1].save((err) => {
           if (err) { return done(err) }
-          return testTransactions[2].save((err) => {
+          testTransactions[2].save((err) => {
             if (err) { return done(err) }
-            return testTransactions[3].save((err) => {
+            testTransactions[3].save((err) => {
               if (err) { return done(err) }
-              return testTransactions[6].save((err) => {
+              testTransactions[6].save((err) => {
                 if (err) { return done(err) }
-                return alerts.findTransactionsMatchingStatus(testChannel, {
+                alerts.findTransactionsMatchingStatus(testChannel, {
                   condition: 'status',
                   status: '4xx'
                 }, dateFrom, (err, results) => {
+                  if (err) { return done(err) }
                   results.length.should.be.exactly(3)
                   const resultIDs = results.map(result => result._id)
                   resultIDs.should.containEql(testTransactions[0]._id)
@@ -356,15 +361,16 @@ describe('Transaction Alerts', () => {
     it('should not return any transactions when their count is below the failure rate', done =>
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return testTransactions[1].save((err) => {
+        testTransactions[1].save((err) => {
           if (err) { return done(err) }
-          return testTransactions[3].save((err) => {
+          testTransactions[3].save((err) => {
             if (err) { return done(err) }
-            return alerts.findTransactionsMatchingStatus(testChannel, {
+            alerts.findTransactionsMatchingStatus(testChannel, {
               condition: 'status',
               status: '500',
               failureRate: testFailureRate
             }, dateFrom, (err, results) => {
+              if (err) { return done(err) }
               // only one 500 transaction, but failureRate is 50%
               results.length.should.be.exactly(0)
               return done()
@@ -377,17 +383,18 @@ describe('Transaction Alerts', () => {
     it('should return transactions when their count is equal to the failure rate', done =>
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return testTransactions[1].save((err) => {
+        testTransactions[1].save((err) => {
           if (err) { return done(err) }
-          return testTransactions[3].save((err) => {
+          testTransactions[3].save((err) => {
             if (err) { return done(err) }
-            return testTransactions[4].save((err) => {
+            testTransactions[4].save((err) => {
               if (err) { return done(err) }
-              return alerts.findTransactionsMatchingStatus(testChannel, {
+              alerts.findTransactionsMatchingStatus(testChannel, {
                 condition: 'status',
                 status: '500',
                 failureRate: testFailureRate
               }, dateFrom, (err, results) => {
+                if (err) { return done(err) }
                 results.length.should.be.exactly(2)
                 const resultIDs = results.map(result => result._id)
                 resultIDs.should.containEql(testTransactions[3]._id)
@@ -403,19 +410,20 @@ describe('Transaction Alerts', () => {
     it('should return transactions when their count is above the failure rate', done =>
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return testTransactions[1].save((err) => {
+        testTransactions[1].save((err) => {
           if (err) { return done(err) }
-          return testTransactions[3].save((err) => {
+          testTransactions[3].save((err) => {
             if (err) { return done(err) }
-            return testTransactions[4].save((err) => {
+            testTransactions[4].save((err) => {
               if (err) { return done(err) }
-              return testTransactions[5].save((err) => {
+              testTransactions[5].save((err) => {
                 if (err) { return done(err) }
-                return alerts.findTransactionsMatchingStatus(testChannel, {
+                alerts.findTransactionsMatchingStatus(testChannel, {
                   condition: 'status',
                   status: '500',
                   failureRate: testFailureRate
                 }, dateFrom, (err, results) => {
+                  if (err) { return done(err) }
                   results.length.should.be.exactly(3)
                   const resultIDs = results.map(result => result._id)
                   resultIDs.should.containEql(testTransactions[3]._id)
@@ -430,7 +438,7 @@ describe('Transaction Alerts', () => {
       })
     )
 
-    return it('should not return any transactions when the count is equal/above the failure rate, but an alert has already been sent', (done) => {
+    it('should not return any transactions when the count is equal/above the failure rate, but an alert has already been sent', (done) => {
       const alert = new AlertModel({
         user: 'one@openhim.org',
         method: 'email',
@@ -439,20 +447,22 @@ describe('Transaction Alerts', () => {
         status: '500',
         alertStatus: 'Completed'
       })
-      return alert.save(err =>
+      alert.save(err => {
+        if (err) { return done(err) }
         testTransactions[0].save((err) => {
           if (err) { return done(err) }
-          return testTransactions[1].save((err) => {
+          testTransactions[1].save((err) => {
             if (err) { return done(err) }
-            return testTransactions[3].save((err) => {
+            testTransactions[3].save((err) => {
               if (err) { return done(err) }
-              return testTransactions[4].save((err) => {
+              testTransactions[4].save((err) => {
                 if (err) { return done(err) }
-                return alerts.findTransactionsMatchingStatus(testChannel, {
+                alerts.findTransactionsMatchingStatus(testChannel, {
                   condition: 'status',
                   status: '500',
                   failureRate: testFailureRate
                 }, dateFrom, (err, results) => {
+                  if (err) { return done(err) }
                   results.length.should.be.exactly(0)
                   return done()
                 })
@@ -460,7 +470,7 @@ describe('Transaction Alerts', () => {
             })
           })
         })
-      )
+      })
     })
   })
 
@@ -468,50 +478,58 @@ describe('Transaction Alerts', () => {
     it('should not return transactions have not reached max retries', done =>
       testTransactions[8].save((err) => {
         if (err) { return done(err) }
-        return alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) => {
-          results.length.should.be.exactly(0)
-          return done()
-        })
+        alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom,
+          (err, results) => {
+            if (err) { return done(err) }
+            results.length.should.be.exactly(0)
+            return done()
+          })
       })
     )
 
     it('should return transactions have reached max retries', done =>
       testTransactions[9].save((err) => {
         if (err) { return done(err) }
-        return alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) => {
-          results.length.should.be.exactly(1)
-          results[0]._id.equals(testTransactions[9]._id).should.be.true()
-          return done()
-        })
+        alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom,
+          (err, results) => {
+            if (err) { return done(err) }
+            results.length.should.be.exactly(1)
+            results[0]._id.equals(testTransactions[9]._id).should.be.true()
+            return done()
+          })
       })
     )
 
     it('should not return successful transactions that have reached max retries', done =>
       testTransactions[11].save((err) => {
         if (err) { return done(err) }
-        return alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) => {
-          results.length.should.be.exactly(0)
-          return done()
-        })
+        alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom,
+          (err, results) => {
+            if (err) { return done(err) }
+            results.length.should.be.exactly(0)
+            return done()
+          })
       })
     )
 
-    return it('should not return duplicate transaction IDs where multiple events exist for the same transaction', done =>
+    it('should not return duplicate transaction IDs where multiple events exist for the same transaction', done =>
       testTransactions[9].save((err) => {
         if (err) { return done(err) }
-        return testTransactions[10].save((err) => {
+        testTransactions[10].save((err) => {
           if (err) { return done(err) }
-          return alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom, (err, results) => {
-            results.length.should.be.exactly(1)
-            results[0].transactionID.equals(testTransactions[9].transactionID).should.be.true()
-            return done()
-          })
+          alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom,
+            (err, results) => {
+              if (err) { return done(err) }
+              results.length.should.be.exactly(1)
+              results[0].transactionID.equals(testTransactions[9].transactionID).should.be.true()
+              return done()
+            })
         })
       })
     )
   })
 
-  return describe('.alertingTask', () => {
+  describe('.alertingTask', () => {
     const buildJobStub = function (date) {
       const jobStub = {}
       jobStub.attrs = {}
@@ -532,7 +550,7 @@ describe('Transaction Alerts', () => {
 
     it('should not contact users if there no matching transactions', (done) => {
       const contactSpy = sinon.spy()
-      return alerts.alertingTask(buildJobStub(null), mockContactHandler(contactSpy), () => {
+      alerts.alertingTask(buildJobStub(null), mockContactHandler(contactSpy), () => {
         contactSpy.called.should.be.false
         return done()
       })
@@ -541,7 +559,7 @@ describe('Transaction Alerts', () => {
     it('should set the last run date as a job attribute', (done) => {
       const jobStub = buildJobStub(null)
       const contactSpy = sinon.spy()
-      return alerts.alertingTask(jobStub, mockContactHandler(contactSpy), () => {
+      alerts.alertingTask(jobStub, mockContactHandler(contactSpy), () => {
         jobStub.attrs.data.should.exist
         jobStub.attrs.data.lastAlertDate.should.exist
         jobStub.attrs.data.lastAlertDate.should.be.instanceof(Date)
@@ -551,9 +569,9 @@ describe('Transaction Alerts', () => {
 
     it('should contact users when there are matching transactions', (done) => {
       const contactSpy = sinon.spy()
-      return testTransactions[0].save((err) => {
+      testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
+        alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
           contactSpy.calledTwice.should.be.true()
           contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
           contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
@@ -564,11 +582,11 @@ describe('Transaction Alerts', () => {
 
     it('should store an alert log item in mongo for each alert generated', (done) => {
       const contactSpy = sinon.spy()
-      return testTransactions[0].save((err) => {
+      testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
+        alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
           contactSpy.called.should.be.true()
-          return AlertModel.find({}, (err, results) => {
+          AlertModel.find({}, (err, results) => {
             if (err) { return done(err) }
             results.length.should.be.exactly(2)
             const resultUsers = results.map(result => result.user)
@@ -582,11 +600,11 @@ describe('Transaction Alerts', () => {
 
     it('should contact users using their specified method', (done) => {
       const contactSpy = sinon.spy()
-      return testTransactions[3].save((err) => {
+      testTransactions[3].save((err) => {
         if (err) { return done(err) }
-        return testTransactions[4].save((err) => {
+        testTransactions[4].save((err) => {
           if (err) { return done(err) }
-          return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
+          alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
             contactSpy.calledTwice.should.be.true()
             contactSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
             contactSpy.withArgs('sms', testUser2.msisdn, 'OpenHIM Alert', sinon.match.string, null).calledOnce.should.be.true()
@@ -598,12 +616,12 @@ describe('Transaction Alerts', () => {
 
     it('should not send alerts to users with a maxAlerts restriction if they\'ve already received an alert for the same day', (done) => {
       const contactSpy = sinon.spy()
-      return testTransactions[0].save((err) => {
+      testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
+        alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
           contactSpy.calledTwice.should.be.true()
           const secondSpy = sinon.spy()
-          return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(secondSpy), () => {
+          alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(secondSpy), () => {
             secondSpy.calledOnce.should.be.true()
             secondSpy.withArgs('email', testUser1.email, 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
             return done()
@@ -614,12 +632,12 @@ describe('Transaction Alerts', () => {
 
     it('should send alerts to users if an alert for the same day was already attempted but it failed', (done) => {
       const contactSpy = sinon.spy()
-      return testTransactions[0].save((err) => {
+      testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy, 'Test Failure'), () => {
+        alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy, 'Test Failure'), () => {
           contactSpy.calledTwice.should.be.true()
           const secondSpy = sinon.spy()
-          return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(secondSpy), () => {
+          alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(secondSpy), () => {
             secondSpy.calledTwice.should.be.true()
             secondSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
             secondSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
@@ -631,14 +649,14 @@ describe('Transaction Alerts', () => {
 
     it('should not generate alerts for disabled channels', (done) => {
       const contactSpy = sinon.spy()
-      return testTransactions[0].save((err) => {
+      testTransactions[0].save((err) => {
         if (err) { return done(err) }
-        return testTransactions[7].save((err) => {
+        testTransactions[7].save((err) => {
           if (err) { return done(err) }
 
-          return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
+          alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
             contactSpy.called.should.be.true()
-            return AlertModel.find({}, (err, results) => {
+            AlertModel.find({}, (err, results) => {
               if (err) { return done(err) }
               results.length.should.be.exactly(2)
 
@@ -656,11 +674,11 @@ describe('Transaction Alerts', () => {
       })
     })
 
-    return it('should contact users when there are matching max auto retried transactions', (done) => {
+    it('should contact users when there are matching max auto retried transactions', (done) => {
       const contactSpy = sinon.spy()
-      return testTransactions[9].save((err) => {
+      testTransactions[9].save((err) => {
         if (err) { return done(err) }
-        return alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
+        alerts.alertingTask(buildJobStub(dateFrom), mockContactHandler(contactSpy), () => {
           contactSpy.calledTwice.should.be.true()
           contactSpy.withArgs('email', 'one@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()
           contactSpy.withArgs('email', 'two@openhim.org', 'OpenHIM Alert', sinon.match.string, sinon.match.string).calledOnce.should.be.true()

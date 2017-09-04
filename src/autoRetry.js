@@ -19,9 +19,9 @@ export function queueForRetry (tx) {
     channelID: tx.channelID,
     requestTimestamp: tx.request.timestamp
   })
-  return retry.save((err) => {
+  retry.save((err) => {
     if (err) {
-      return logger.error(`Failed to queue transaction ${tx._id} for auto retry: ${err}`)
+      logger.error(`Failed to queue transaction ${tx._id} for auto retry: ${err}`)
     }
   })
 }
@@ -43,10 +43,10 @@ function popTransactions (channel, callback) {
   }
 
   logger.debug(`Executing query autoRetry.findAndRemove(${JSON.stringify(query)})`)
-  return AutoRetryModel.find(query, (err, transactions) => {
+  AutoRetryModel.find(query, (err, transactions) => {
     if (err) { return callback(err) }
     if (transactions.length === 0) { return callback(null, []) }
-    return AutoRetryModel.remove({_id: {$in: (transactions.map(t => t._id))}}, (err) => {
+    AutoRetryModel.remove({_id: {$in: (transactions.map(t => t._id))}}, (err) => {
       if (err) { return callback(err) }
       return callback(null, transactions)
     })
@@ -62,7 +62,7 @@ function createRerunTask (transactionIDs, callback) {
     user: 'internal'
   })
 
-  return task.save((err) => {
+  task.save((err) => {
     if (err) { logger.error(err) }
     return callback()
   })
@@ -72,7 +72,8 @@ function autoRetryTask (job, done) {
   const _taskStart = new Date()
   const transactionsToRerun = []
 
-  return getChannels((err, results) => {
+  getChannels((err, results) => {
+    if (err) { return done(err) }
     const promises = []
 
     for (const channel of Array.from(results)) {
@@ -88,11 +89,11 @@ function autoRetryTask (job, done) {
           return deferred.resolve()
         })
 
-        return promises.push(deferred.promise)
+        promises.push(deferred.promise)
       }(channel))
     }
 
-    return (Q.all(promises)).then(() => {
+    (Q.all(promises)).then(() => {
       function end () {
         logger.debug(`Auto retry task total time: ${new Date() - _taskStart} ms`)
         return done()

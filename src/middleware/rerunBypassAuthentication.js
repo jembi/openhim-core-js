@@ -12,6 +12,7 @@ const sdc = new SDC(statsdServer)
 
 export function authenticateUser (ctx, done) {
   return ClientModel.findOne({_id: ctx.request.header.clientid}, (err, client) => {
+    if (err) { return done(err) }
     ctx.authenticated = client
     ctx.parentID = ctx.request.header.parentid
     ctx.taskID = ctx.request.header.taskid

@@ -19,23 +19,26 @@ function isRerunPermissionsValid (user, transactions, callback) {
     // admin user allowed to rerun any transactions
     return callback(null, true)
   } else {
-    return TransactionModelAPI.distinct('channelID', {_id: {$in: transactions.tids}}, (err, transChannels) =>
+    return TransactionModelAPI.distinct('channelID', {_id: {$in: transactions.tids}}, (err, transChannels) => {
+      if (err) { return callback(err) }
       ChannelModelAPI.distinct('_id', {txRerunAcl: {$in: user.groups}}, (err, allowedChannels) => {
-        // for each transaction channel found to be rerun
+        if (err) { return callback(err) }
+          // for each transaction channel found to be rerun
         for (const trx of Array.from(transChannels)) {
-          // assume transaction channnel is not allowed at first
+            // assume transaction channnel is not allowed at first
           let matchFound = false
 
-          // for each user allowed channel to be rerun
+            // for each user allowed channel to be rerun
           for (const chan of Array.from(allowedChannels)) {
             if (trx.equals(chan)) { matchFound = true }
           }
 
-          // if one channel not allowed then rerun NOT allowed
+            // if one channel not allowed then rerun NOT allowed
           if (!matchFound) { return callback(null, false) }
         }
         return callback(null, true)
       })
+    }
     )
   }
 }

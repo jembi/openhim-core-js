@@ -83,6 +83,7 @@ describe('Auto Retry Task', () => {
     it('should return auto-retry enabled channels', done =>
       retryChannel.save(() =>
         autoRetry.getChannels((err, results) => {
+          if (err) { return done(err) }
           results.length.should.be.exactly(1)
           results[0]._id.equals(retryChannel._id).should.be.true
           return done()
@@ -93,6 +94,7 @@ describe('Auto Retry Task', () => {
     it('should not return non auto-retry channels', done =>
       retryChannel.save(() => noRetryChannel.save(() =>
           autoRetry.getChannels((err, results) => {
+            if (err) { return done(err) }
             // should not return noRetryChannel
             results.length.should.be.exactly(1)
             results[0]._id.equals(retryChannel._id).should.be.true
@@ -102,9 +104,10 @@ describe('Auto Retry Task', () => {
       )
     )
 
-    return it('should not return disabled channels', done =>
+    it('should not return disabled channels', done =>
       retryChannel.save(() => disabledChannel.save(() =>
           autoRetry.getChannels((err, results) => {
+            if (err) { return done(err) }
             // should not return disabledChannel
             results.length.should.be.exactly(1)
             results[0]._id.equals(retryChannel._id).should.be.true
@@ -119,8 +122,9 @@ describe('Auto Retry Task', () => {
     it('should return transactions that can be retried', done =>
       retryChannel.save(() => {
         retryTransaction1.channelID = retryChannel._id
-        return retryTransaction1.save(() =>
+        retryTransaction1.save(() =>
           autoRetry.popTransactions(retryChannel, (err, results) => {
+            if (err) { return done(err) }
             results.length.should.be.exactly(1)
             results[0]._id.equals(retryTransaction1._id).should.be.true
             return done()
@@ -129,12 +133,13 @@ describe('Auto Retry Task', () => {
       })
     )
 
-    return it('should not return transactions that are too new', done =>
+    it('should not return transactions that are too new', done =>
       retryChannel.save(() => {
         retryTransaction1.channelID = retryChannel._id
         retryTransaction2.channelID = retryChannel._id
-        return retryTransaction1.save(() => retryTransaction2.save(() =>
+        retryTransaction1.save(() => retryTransaction2.save(() =>
             autoRetry.popTransactions(retryChannel, (err, results) => {
+              if (err) { return done(err) }
               // should not return retryTransaction2 (too new)
               results.length.should.be.exactly(1)
               results[0]._id.equals(retryTransaction1._id).should.be.true
@@ -150,10 +155,11 @@ describe('Auto Retry Task', () => {
     it('should save a valid task', done =>
       retryChannel.save(() => {
         retryTransaction1.channelID = retryChannel._id
-        return retryTransaction1.save(() =>
+        retryTransaction1.save(() =>
           autoRetry.createRerunTask([retryTransaction1.transactionID], (err) => {
             if (err) { return done(err) }
-            return TaskModel.find({}, (err, results) => {
+            TaskModel.find({}, (err, results) => {
+              if (err) { return done(err) }
               results.length.should.be.exactly(1)
               results[0].transactions.length.should.be.exactly(1)
               results[0].transactions[0].tid.should.be.exactly(retryTransaction1.transactionID.toString())
@@ -168,13 +174,14 @@ describe('Auto Retry Task', () => {
     )
   )
 
-  return describe('.autoRetryTask', () => {
+  describe('.autoRetryTask', () => {
     it('should lookup transactions and save a valid task', done =>
       retryChannel.save(() => {
         retryTransaction1.channelID = retryChannel._id
-        return retryTransaction1.save(() =>
+        retryTransaction1.save(() =>
           autoRetry.autoRetryTask(null, () =>
             TaskModel.find({}, (err, results) => {
+              if (err) { return done(err) }
               results.length.should.be.exactly(1)
               results[0].transactions.length.should.be.exactly(1)
               results[0].transactions[0].tid.should.be.exactly(retryTransaction1.transactionID.toString())
@@ -189,9 +196,10 @@ describe('Auto Retry Task', () => {
       retryChannel.save(() => retryChannel2.save(() => {
         retryTransaction1.channelID = retryChannel._id
         retryTransaction3.channelID = retryChannel2._id
-        return retryTransaction1.save(() => retryTransaction3.save(() =>
+        retryTransaction1.save(() => retryTransaction3.save(() =>
               autoRetry.autoRetryTask(null, () =>
                 TaskModel.find({}, (err, results) => {
+                  if (err) { return done(err) }
                   results.length.should.be.exactly(1)
                   results[0].transactions.length.should.be.exactly(2)
                   const tids = results[0].transactions.map(t => t.tid)
@@ -206,10 +214,11 @@ describe('Auto Retry Task', () => {
       )
     )
 
-    return it('should only create a task if there are transactions to rerun', done =>
+    it('should only create a task if there are transactions to rerun', done =>
       retryChannel.save(() => retryChannel2.save(() =>
           autoRetry.autoRetryTask(null, () =>
             TaskModel.find({}, (err, results) => {
+              if (err) { return done(err) }
               results.length.should.be.exactly(0)
               return done()
             })

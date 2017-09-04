@@ -96,12 +96,12 @@ describe('API Integration Tests', () =>
         vis2.name = 'Visualizer2'
         vis2 = new VisualizerModelAPI(vis2)
 
-        return vis1.save((err) => {
+        vis1.save((err) => {
           if (err) { return done(err) }
-          return vis2.save((err) => {
+          vis2.save((err) => {
             if (err) { return done(err) }
 
-            return request('https://localhost:8080')
+            request('https://localhost:8080')
               .get('/visualizers')
               .set('auth-username', testUtils.rootUser.email)
               .set('auth-ts', authDetails.authTS)
@@ -136,7 +136,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should return an empty array if there are no visualizers', done =>
+      it('should return an empty array if there are no visualizers', done =>
         request('https://localhost:8080')
           .get('/visualizers')
           .set('auth-username', testUtils.rootUser.email)
@@ -163,12 +163,12 @@ describe('API Integration Tests', () =>
         vis2.name = 'Visualizer2'
         vis2 = new VisualizerModelAPI(vis2)
 
-        return vis1.save((err) => {
+        vis1.save((err) => {
           if (err) { return done(err) }
-          return vis2.save((err) => {
+          vis2.save((err) => {
             if (err) { return done(err) }
 
-            return request('https://localhost:8080')
+            request('https://localhost:8080')
               .get(`/visualizers/${vis1._id}`)
               .set('auth-username', testUtils.rootUser.email)
               .set('auth-ts', authDetails.authTS)
@@ -200,7 +200,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should return 404 with message if no visualizers match the _id', done =>
+      it('should return 404 with message if no visualizers match the _id', done =>
         request('https://localhost:8080')
           .get('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.rootUser.email)
@@ -230,7 +230,7 @@ describe('API Integration Tests', () =>
           .end((err, res) => {
             if (err) { return done(err) }
 
-            return VisualizerModelAPI.findOne({name: 'Visualizer1'}, (err, vis) => {
+            VisualizerModelAPI.findOne({name: 'Visualizer1'}, (err, vis) => {
               if (err) { return done(err) }
               return done()
             })
@@ -252,7 +252,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should return 404 if no request object is sent', done =>
+      it('should return 404 if no request object is sent', done =>
         request('https://localhost:8080')
           .post('/visualizers')
           .set('auth-username', testUtils.rootUser.email)
@@ -280,10 +280,10 @@ describe('API Integration Tests', () =>
         visUpdate.name = 'VisualizerUpdate1'
         visUpdate.color.inactive = '#11111'
 
-        return vis1.save((err) => {
+        vis1.save((err) => {
           if (err) { return done(err) }
 
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .put(`/visualizers/${vis1._id}`)
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -294,7 +294,7 @@ describe('API Integration Tests', () =>
             .end((err, res) => {
               if (err) { return done(err) }
 
-              return VisualizerModelAPI.findOne({name: 'VisualizerUpdate1'}, (err, vis) => {
+              VisualizerModelAPI.findOne({name: 'VisualizerUpdate1'}, (err, vis) => {
                 if (err) { return done(err) }
                 vis.color.should.have.property('inactive', '#11111')
                 return done()
@@ -329,13 +329,12 @@ describe('API Integration Tests', () =>
           .expect(404)
           .end((err, res) => {
             if (err) { return done(err) }
-
             res.text.should.equal('Cannot Update Visualizer with _id 111111111111111111111111, no request object')
             return done()
           })
       )
 
-      return it('should return 404 if no visualizers match the _id', done =>
+      it('should return 404 if no visualizers match the _id', done =>
         request('https://localhost:8080')
           .put('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.rootUser.email)
@@ -346,14 +345,13 @@ describe('API Integration Tests', () =>
           .expect(404)
           .end((err, res) => {
             if (err) { return done(err) }
-
             res.text.should.equal('Cannot Update Visualizer with _id 111111111111111111111111, does not exist')
             return done()
           })
       )
     })
 
-    return describe('*removeVisualizer(visualizerId)', () => {
+    describe('*removeVisualizer(visualizerId)', () => {
       it('should sucessfully remove a visualizer', (done) => {
         let vis1 = _.assign({}, visObj)
         vis1.name = 'Root\'s Visualizer 1'
@@ -362,12 +360,12 @@ describe('API Integration Tests', () =>
         vis2.name = 'Root\'s Visualizer 2'
         vis2 = new VisualizerModelAPI(vis2)
 
-        return vis1.save((err) => {
+        vis1.save((err) => {
           if (err) { return done(err) }
-          return vis2.save((err) => {
+          vis2.save((err) => {
             if (err) { return done(err) }
 
-            return request('https://localhost:8080')
+            request('https://localhost:8080')
               .del(`/visualizers/${vis1._id}`)
               .set('auth-username', testUtils.rootUser.email)
               .set('auth-ts', authDetails.authTS)
@@ -376,8 +374,8 @@ describe('API Integration Tests', () =>
               .expect(200)
               .end((err, res) => {
                 if (err) { return done(err) }
-
-                return VisualizerModelAPI.find((err, visualizers) => {
+                VisualizerModelAPI.find((err, visualizers) => {
+                  if (err) { return done(err) }
                   visualizers.length.should.be.exactly(1)
                   return done()
                 })

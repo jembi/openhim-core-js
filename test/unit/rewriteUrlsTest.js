@@ -76,6 +76,7 @@ describe('Rewrite URLs middleware', () => {
       stub.callsArgWith(0, null, [currentChannel, channel1, channel2])
 
       return rewriteUrls.fetchRewriteConfig(currentChannel, 'tls', (err, rewriteConfig) => {
+        if (err) { return done(err) }
         rewriteConfig.should.have.length(4)
         rewriteConfig[0].fromHost.should.be.exactly('from.org')
         rewriteConfig[0].toHost.should.be.exactly('to.org')
@@ -98,6 +99,7 @@ describe('Rewrite URLs middleware', () => {
       const stub = sandbox.stub(utils, 'getAllChannelsInPriorityOrder')
       stub.callsArgWith(0, null, [currentChannel, channel1, channel2])
       return rewriteUrls.fetchRewriteConfig(currentChannel, 'tls', (err, rewriteConfig) => {
+        if (err) { return done(err) }
         rewriteConfig.should.have.length(1)
         rewriteConfig[0].fromHost.should.be.exactly('from.org')
         rewriteConfig[0].toHost.should.be.exactly('to.org')
@@ -161,6 +163,7 @@ describe('Rewrite URLs middleware', () => {
       })
 
       return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), rewiredChannel, 'tls', (err, newResponse) => {
+        if (err) { return done(err) }
         newResponse = JSON.parse(newResponse)
         newResponse.obj.href.should.be.exactly('https://toWithTransform.org:5000/that')
         newResponse.href.should.be.exactly('http://to.org:5001/test1')
@@ -183,6 +186,7 @@ describe('Rewrite URLs middleware', () => {
       })
 
       return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), rewiredChannel, 'tls', (err, newResponse) => {
+        if (err) { return done(err) }
         newResponse = JSON.parse(newResponse)
         newResponse.obj2.href.should.be.exactly('/test1/to/xyz')
         return done()
@@ -218,6 +222,7 @@ describe('Rewrite URLs middleware', () => {
       })
 
       return rewriteUrls.rewriteUrls(xmlResponse, rewiredChannel, 'tls', (err, newResponse) => {
+        if (err) { return done(err) }
         const doc = new Dom().parseFromString(newResponse)
         const href1 = xpath.select('string(//someTags/tag1/@href)', doc)
         const href2 = xpath.select('string(//someTags/tag2/child/@href)', doc)

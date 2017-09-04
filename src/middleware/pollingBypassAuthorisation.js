@@ -12,6 +12,7 @@ const sdc = new SDC(statsdServer)
 
 export function authoriseUser (ctx, done) {
   return ChannelModel.findOne({_id: ctx.request.header['channel-id']}, (err, channel) => {
+    if (err) { return done(err) }
     ctx.authorisedChannel = channel
     return done(null, channel)
   })

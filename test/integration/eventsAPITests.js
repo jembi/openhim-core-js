@@ -71,8 +71,10 @@ describe('Events API Integration Tests', () => {
         }
       ]
     })
-    channel1.save(err =>
+    channel1.save(err => {
+      if (err) { return done(err) }
       channel2.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -88,26 +90,33 @@ describe('Events API Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => auth.setupTestUsers(err => {
-            // Create mock endpoint to forward requests to
-          mockServer = testUtils.createMockMediatorServer(200, mockResponse, 1232, () => {
-            mockServer2 = testUtils.createMockMediatorServer(200, mockResponse, 1233,
-                () => testUtils.createSlowMockMediatorServer(400 * global.testTimeoutFactor, 200, mockResponse, 1234,
-                  () => done()
-                )
-              )
+        client.save((err, newAppDoc) => {
+          if (err) { return done(err) }
+          auth.setupTestUsers(err => {
+            if (err) { return done(err) }
+                // Create mock endpoint to forward requests to
+            mockServer = testUtils.createMockMediatorServer(200, mockResponse, 1232, () => {
+              mockServer2 = testUtils.createMockMediatorServer(200, mockResponse, 1233,
+                    () => testUtils.createSlowMockMediatorServer(400 * global.testTimeoutFactor, 200, mockResponse, 1234,
+                      () => done()
+                    )
+                  )
+            })
           })
-        })
-        )
+        }
+          )
       })
+    }
     )
   })
 
   after(done =>
     ChannelModelAPI.remove({name: 'TEST DATA - Mock endpoint'}, () =>
       ClientModelAPI.remove({clientID: 'testApp'}, () =>
-        auth.cleanupTestUsers(err =>
+        auth.cleanupTestUsers(err => {
+          if (err) { return done(err) }
           mockServer.close(() => mockServer2.close(done))
+        }
         )
       )
     )
@@ -125,7 +134,7 @@ describe('Events API Integration Tests', () => {
   it('should create events', (done) => {
     const startTime = new Date()
 
-    return request('http://localhost:5001')
+    request('http://localhost:5001')
       .get('/test/mock')
       .auth('testApp', 'password')
       .expect(200)
@@ -161,14 +170,14 @@ describe('Events API Integration Tests', () => {
               return done()
             })
 
-        return setTimeout(validate, 100 * global.testTimeoutFactor)
+        setTimeout(validate, 100 * global.testTimeoutFactor)
       })
   })
 
   it('should sort events according to \'normalizedTimestamp\' field ascending', (done) => {
     const startTime = new Date()
 
-    return request('http://localhost:5001')
+    request('http://localhost:5001')
       .get('/test/mock')
       .auth('testApp', 'password')
       .expect(200)
@@ -196,14 +205,14 @@ describe('Events API Integration Tests', () => {
               return done()
             })
 
-        return setTimeout(validate, 100 * global.testTimeoutFactor)
+        setTimeout(validate, 100 * global.testTimeoutFactor)
       })
   })
 
   it('should set the event status as a string', (done) => {
     const startTime = new Date()
 
-    return request('http://localhost:5001')
+    request('http://localhost:5001')
       .get('/test/mock')
       .auth('testApp', 'password')
       .expect(200)
@@ -229,14 +238,14 @@ describe('Events API Integration Tests', () => {
               return done()
             })
 
-        return setTimeout(validate, 100 * global.testTimeoutFactor)
+        setTimeout(validate, 100 * global.testTimeoutFactor)
       })
   })
 
   it('should add mediator info', (done) => {
     const startTime = new Date()
 
-    return request('http://localhost:5001')
+    request('http://localhost:5001')
       .get('/test/mock')
       .auth('testApp', 'password')
       .expect(200)
@@ -268,14 +277,14 @@ describe('Events API Integration Tests', () => {
               return done()
             })
 
-        return setTimeout(validate, 100 * global.testTimeoutFactor)
+        setTimeout(validate, 100 * global.testTimeoutFactor)
       })
   })
 
   it('should create events for slow secondary routes', (done) => {
     const startTime = new Date()
 
-    return request('http://localhost:5001')
+    request('http://localhost:5001')
       .get('/test/slow')
       .auth('testApp', 'password')
       .expect(200)
@@ -311,14 +320,14 @@ describe('Events API Integration Tests', () => {
               return done()
             })
 
-        return setTimeout(validate, 800 * global.testTimeoutFactor)
+        setTimeout(validate, 800 * global.testTimeoutFactor)
       })
   })
 
-  return it('should add mediator info for slow secondary routes', (done) => {
+  it('should add mediator info for slow secondary routes', (done) => {
     const startTime = new Date()
 
-    return request('http://localhost:5001')
+    request('http://localhost:5001')
       .get('/test/slow')
       .auth('testApp', 'password')
       .expect(200)
@@ -351,7 +360,7 @@ describe('Events API Integration Tests', () => {
               return done()
             })
 
-        return setTimeout(validate, 800 * global.testTimeoutFactor)
+        setTimeout(validate, 800 * global.testTimeoutFactor)
       })
   })
 })

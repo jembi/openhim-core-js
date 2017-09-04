@@ -74,6 +74,7 @@ describe('API Integration Tests', () =>
     before(done =>
       server.start({apiPort: 8080}, () =>
         auth.setupTestUsers((err) => {
+          if (err) { return done(err) }
           authDetails = auth.getAuthDetails()
           return done()
         })
@@ -82,7 +83,10 @@ describe('API Integration Tests', () =>
 
     after(done =>
       server.stop(() =>
-        auth.cleanupTestUsers(err => done())
+        auth.cleanupTestUsers(err => {
+          if (err) { return done(err) }
+          done()
+        })
       )
     )
 
@@ -100,7 +104,7 @@ describe('API Integration Tests', () =>
           ChannelModelAPI.remove(() => done())
         )
 
-        return it('should fetch channels and return status 200', done =>
+        it('should fetch channels and return status 200', done =>
           request('https://localhost:8080')
             .get('/metadata')
             .set('auth-username', testUtils.rootUser.email)
@@ -132,7 +136,7 @@ describe('API Integration Tests', () =>
           ClientModelAPI.remove(() => done())
         )
 
-        return it('should fetch clients and return status 200', done =>
+        it('should fetch clients and return status 200', done =>
           request('https://localhost:8080')
             .get('/metadata')
             .set('auth-username', testUtils.rootUser.email)
@@ -164,7 +168,7 @@ describe('API Integration Tests', () =>
           MediatorModelAPI.remove(() => done())
         )
 
-        return it('should fetch mediators and return status 200', done =>
+        it('should fetch mediators and return status 200', done =>
           request('https://localhost:8080')
             .get('/metadata')
             .set('auth-username', testUtils.rootUser.email)
@@ -195,13 +199,14 @@ describe('API Integration Tests', () =>
         afterEach(done =>
           UserModelAPI.remove(() =>
             auth.setupTestUsers((err) => {
+              if (err) { return done(err) }
               authDetails = auth.getAuthDetails()
               return done()
             })
           )
         )
 
-        return it('should fetch users and return status 200', done =>
+        it('should fetch users and return status 200', done =>
           request('https://localhost:8080')
             .get('/metadata')
             .set('auth-username', testUtils.rootUser.email)
@@ -232,7 +237,7 @@ describe('API Integration Tests', () =>
           ContactGroupModelAPI.remove(() => done())
         )
 
-        return it('should fetch contact groups and return status 200', done =>
+        it('should fetch contact groups and return status 200', done =>
           request('https://localhost:8080')
             .get('/metadata')
             .set('auth-username', testUtils.rootUser.email)
@@ -252,7 +257,7 @@ describe('API Integration Tests', () =>
         )
       })
 
-      return describe('Other Get Metadata', () => {
+      describe('Other Get Metadata', () => {
         it('should not allow a non admin user to get metadata', done =>
           request('https://localhost:8080')
             .get('/metadata')
@@ -270,7 +275,7 @@ describe('API Integration Tests', () =>
             })
         )
 
-        return it('should return 404 if not found', done =>
+        it('should return 404 if not found', done =>
           request('https://localhost:8080')
             .get('/metadata/bleh')
             .set('auth-username', testUtils.rootUser.email)
@@ -318,7 +323,7 @@ describe('API Integration Tests', () =>
               if (err) { return done(err) }
 
               res.body[0].should.have.property('status', 'Inserted')
-              return ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
+              ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
                 if (err) { return done(err) }
                 channel.should.have.property('urlPattern', 'test/sample')
                 channel.allow.should.have.length(3)
@@ -339,7 +344,7 @@ describe('API Integration Tests', () =>
             .end((err, resp) => {
               if (err) { return done(err) }
               testMetadata.Channels[0].urlPattern = 'sample/test'
-              return request('https://localhost:8080')
+              request('https://localhost:8080')
                 .post('/metadata')
                 .set('auth-username', testUtils.rootUser.email)
                 .set('auth-ts', authDetails.authTS)
@@ -351,7 +356,7 @@ describe('API Integration Tests', () =>
                   if (err) { return done(err) }
 
                   res.body[0].should.have.property('status', 'Updated')
-                  return ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
+                  ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
                     if (err) { return done(err) }
                     channel.should.have.property('urlPattern', 'sample/test')
                     channel.allow.should.have.length(3)
@@ -361,9 +366,9 @@ describe('API Integration Tests', () =>
             })
         )
 
-        return it('should fail to insert a Channel and return 201', (done) => {
+        it('should fail to insert a Channel and return 201', (done) => {
           testMetadata.Channels = [{fakeChannel: 'fakeChannel'}]
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .post('/metadata')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -405,7 +410,7 @@ describe('API Integration Tests', () =>
               if (err) { return done(err) }
 
               res.body[0].should.have.property('status', 'Inserted')
-              return ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
+              ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
                 if (err) { return done(err) }
                 client.should.have.property('name', 'OpenMRS Ishmael instance')
                 return done()
@@ -425,7 +430,7 @@ describe('API Integration Tests', () =>
             .end((err, resp) => {
               if (err) { return done(err) }
               testMetadata.Clients[0].name = 'Test Update'
-              return request('https://localhost:8080')
+              request('https://localhost:8080')
                 .post('/metadata')
                 .set('auth-username', testUtils.rootUser.email)
                 .set('auth-ts', authDetails.authTS)
@@ -437,7 +442,7 @@ describe('API Integration Tests', () =>
                   if (err) { return done(err) }
 
                   res.body[0].should.have.property('status', 'Updated')
-                  return ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
+                  ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
                     if (err) { return done(err) }
                     client.should.have.property('name', 'Test Update')
                     return done()
@@ -446,9 +451,9 @@ describe('API Integration Tests', () =>
             })
         )
 
-        return it('should fail to insert a Client and return 201', (done) => {
+        it('should fail to insert a Client and return 201', (done) => {
           testMetadata.Clients = [{fakeClient: 'fakeClient'}]
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .post('/metadata')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -490,7 +495,7 @@ describe('API Integration Tests', () =>
               if (err) { return done(err) }
 
               res.body[0].should.have.property('status', 'Inserted')
-              return MediatorModelAPI.findOne({urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED'}, (err, mediator) => {
+              MediatorModelAPI.findOne({urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED'}, (err, mediator) => {
                 if (err) { return done(err) }
                 mediator.should.have.property('name', 'Save Encounter Mediator')
                 return done()
@@ -510,7 +515,7 @@ describe('API Integration Tests', () =>
             .end((err, resp) => {
               if (err) { return done(err) }
               testMetadata.Mediators[0].name = 'Updated Encounter Mediator'
-              return request('https://localhost:8080')
+              request('https://localhost:8080')
                 .post('/metadata')
                 .set('auth-username', testUtils.rootUser.email)
                 .set('auth-ts', authDetails.authTS)
@@ -531,9 +536,9 @@ describe('API Integration Tests', () =>
             })
         )
 
-        return it('should fail to insert a mediator and return 201', (done) => {
+        it('should fail to insert a mediator and return 201', (done) => {
           testMetadata.Mediators = [{fakeMediator: 'fakeMediator'}]
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .post('/metadata')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -561,6 +566,7 @@ describe('API Integration Tests', () =>
         afterEach(done =>
           UserModelAPI.remove(() =>
             auth.setupTestUsers((err) => {
+              if (err) { return done(err) }
               authDetails = auth.getAuthDetails()
               return done()
             })
@@ -580,7 +586,7 @@ describe('API Integration Tests', () =>
               if (err) { return done(err) }
 
               res.body[0].should.have.property('status', 'Inserted')
-              return UserModelAPI.findOne({email: 'r..@jembi.org'}, (err, user) => {
+              UserModelAPI.findOne({email: 'r..@jembi.org'}, (err, user) => {
                 if (err) { return done(err) }
                 user.should.have.property('firstname', 'Namey')
                 return done()
@@ -600,7 +606,7 @@ describe('API Integration Tests', () =>
             .end((err, resp) => {
               if (err) { return done(err) }
               testMetadata.Users[0].firstname = 'updatedNamey'
-              return request('https://localhost:8080')
+              request('https://localhost:8080')
                 .post('/metadata')
                 .set('auth-username', testUtils.rootUser.email)
                 .set('auth-ts', authDetails.authTS)
@@ -612,7 +618,7 @@ describe('API Integration Tests', () =>
                   if (err) { return done(err) }
 
                   res.body[0].should.have.property('status', 'Updated')
-                  return UserModelAPI.findOne({email: 'r..@jembi.org'}, (err, user) => {
+                  UserModelAPI.findOne({email: 'r..@jembi.org'}, (err, user) => {
                     if (err) { return done(err) }
                     user.should.have.property('firstname', 'updatedNamey')
                     return done()
@@ -621,9 +627,9 @@ describe('API Integration Tests', () =>
             })
         )
 
-        return it('should fail to insert a user and return 201', (done) => {
+        it('should fail to insert a user and return 201', (done) => {
           testMetadata.Users = [{fakeUser: 'fakeUser'}]
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .post('/metadata')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -665,7 +671,7 @@ describe('API Integration Tests', () =>
               if (err) { return done(err) }
 
               res.body[0].should.have.property('status', 'Inserted')
-              return ContactGroupModelAPI.findOne({group: 'Group 1'}, (err, cg) => {
+              ContactGroupModelAPI.findOne({group: 'Group 1'}, (err, cg) => {
                 if (err) { return done(err) }
                 cg.users.should.have.length(6)
                 return done()
@@ -685,7 +691,7 @@ describe('API Integration Tests', () =>
             .end((err, resp) => {
               if (err) { return done(err) }
               testMetadata.ContactGroups[0].users.push({user: 'User 6', method: 'email', maxAlerts: '1 per day'})
-              return request('https://localhost:8080')
+              request('https://localhost:8080')
                 .post('/metadata')
                 .set('auth-username', testUtils.rootUser.email)
                 .set('auth-ts', authDetails.authTS)
@@ -695,9 +701,8 @@ describe('API Integration Tests', () =>
                 .expect(201)
                 .end((err, res) => {
                   if (err) { return done(err) }
-
                   res.body[0].should.have.property('status', 'Updated')
-                  return ContactGroupModelAPI.findOne({group: 'Group 1'}, (err, cg) => {
+                  ContactGroupModelAPI.findOne({group: 'Group 1'}, (err, cg) => {
                     if (err) { return done(err) }
                     cg.users.should.have.length(7)
                     return done()
@@ -706,9 +711,9 @@ describe('API Integration Tests', () =>
             })
         )
 
-        return it('should fail to insert a ContactGroup and return 201', (done) => {
+        it('should fail to insert a ContactGroup and return 201', (done) => {
           testMetadata.ContactGroups = [{fakeContactGroup: 'fakeContactGroup'}]
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .post('/metadata')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -732,6 +737,7 @@ describe('API Integration Tests', () =>
                 ContactGroupModelAPI.remove(() =>
                   UserModelAPI.remove(() =>
                     auth.setupTestUsers((err) => {
+                      if (err) { return done(err) }
                       authDetails = auth.getAuthDetails()
                       return done()
                     })
@@ -742,11 +748,10 @@ describe('API Integration Tests', () =>
           )
         )
 
-        return it('should ignore invalid metadata, insert valid metadata and return 201', (done) => {
-          let testMetadata = {}
-          testMetadata = JSON.parse(JSON.stringify(sampleMetadata))
+        it('should ignore invalid metadata, insert valid metadata and return 201', (done) => {
+          let testMetadata = JSON.parse(JSON.stringify(sampleMetadata))
           testMetadata.Channels = [{InvalidChannel: 'InvalidChannel'}]
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .post('/metadata')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -756,24 +761,24 @@ describe('API Integration Tests', () =>
             .expect(201)
             .end((err, res) => {
               if (err) { return done(err) }
-
-              return ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
+              ChannelModelAPI.findOne({name: 'TestChannel1'}, (err, channel) => {
+                if (err) { return done(err) }
                 const noChannel = channel ? 'false' : 'true'
                 noChannel.should.equal('true')
 
-                return ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
+                ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
                   if (err) { return done(err) }
                   client.should.have.property('name', 'OpenMRS Ishmael instance')
 
-                  return MediatorModelAPI.findOne({urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED'}, (err, mediator) => {
+                  MediatorModelAPI.findOne({urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED'}, (err, mediator) => {
                     if (err) { return done(err) }
                     mediator.should.have.property('name', 'Save Encounter Mediator')
 
-                    return UserModelAPI.findOne({email: 'r..@jembi.org'}, (err, user) => {
+                    UserModelAPI.findOne({email: 'r..@jembi.org'}, (err, user) => {
                       if (err) { return done(err) }
                       user.should.have.property('firstname', 'Namey')
 
-                      return ContactGroupModelAPI.findOne({group: 'Group 1'}, (err, cg) => {
+                      ContactGroupModelAPI.findOne({group: 'Group 1'}, (err, cg) => {
                         if (err) { return done(err) }
                         cg.users.should.have.length(6)
                         return done()
@@ -786,7 +791,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      return describe('Bad metadata import requests', () => {
+      describe('Bad metadata import requests', () => {
         it('should not allow a non admin user to insert metadata', done =>
           request('https://localhost:8080')
             .post('/metadata')
@@ -802,7 +807,7 @@ describe('API Integration Tests', () =>
             })
         )
 
-        return it('should return 404 if not found', done =>
+        it('should return 404 if not found', done =>
           request('https://localhost:8080')
             .post('/metadata/bleh')
             .set('auth-username', testUtils.rootUser.email)
@@ -820,7 +825,7 @@ describe('API Integration Tests', () =>
     })
 
     // POST TO VALIDATE METADATA TESTS
-    return describe('*validateMetadata', () => {
+    describe('*validateMetadata', () => {
       it('should validate metadata and return status 201', done =>
         request('https://localhost:8080')
           .post('/metadata/validate')
@@ -846,11 +851,10 @@ describe('API Integration Tests', () =>
       )
 
       it('should validate partially valid metadata and return status 201', (done) => {
-        let testMetadata = {}
-        testMetadata = JSON.parse(JSON.stringify(sampleMetadata))
+        let testMetadata = JSON.parse(JSON.stringify(sampleMetadata))
         testMetadata.Channels = [{'Invalid Channel': 'Invalid Channel'}]
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/metadata/validate')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -879,7 +883,7 @@ describe('API Integration Tests', () =>
 
         return (new ChannelModelAPI(sampleMetadata.Channels[0])).save((err, channel) => {
           if (err) { return done(err) }
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .post('/metadata/validate')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -898,7 +902,7 @@ describe('API Integration Tests', () =>
               statusCheckObj.Valid.should.equal(4)
               statusCheckObj.Conflict.should.equal(1)
               statusCheckObj.Error.should.equal(0)
-              return ChannelModelAPI.remove(() => done())
+              ChannelModelAPI.remove(() => done())
             })
         })
       })
@@ -918,7 +922,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should return 404 if not found', done =>
+      it('should return 404 if not found', done =>
         request('https://localhost:8080')
           .post('/metadata/validate/bleh')
           .set('auth-username', testUtils.rootUser.email)

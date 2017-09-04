@@ -144,8 +144,7 @@ describe('API Integration Tests', () =>
         host: 'localhost',
         port: 9876,
         primary: true
-      }
-      ],
+      }],
       txViewAcl: ['group1'],
       txRerunAcl: ['group2']
     })
@@ -160,8 +159,7 @@ describe('API Integration Tests', () =>
         host: 'localhost',
         port: 9876,
         primary: true
-      }
-      ],
+      }],
       txViewAcl: ['group1'],
       txRerunAcl: ['group222222222']
     })
@@ -176,8 +174,7 @@ describe('API Integration Tests', () =>
         host: 'localhost',
         port: 9876,
         primary: true
-      }
-      ],
+      }],
       txViewAcl: ['group1'],
       txRerunAcl: ['group222222222'],
       status: 'disabled'
@@ -193,8 +190,7 @@ describe('API Integration Tests', () =>
         host: 'localhost',
         port: 9876,
         primary: true
-      }
-      ],
+      }],
       txViewAcl: ['group1'],
       txRerunAcl: ['group222222222'],
       status: 'deleted'
@@ -204,25 +200,21 @@ describe('API Integration Tests', () =>
 
     before(done =>
       TaskModelAPI.remove({}, () =>
-        task1.save(() => task2.save(() => task3.save(err =>
-            transaction1.save(() => transaction2.save(() => transaction3.save(() =>
+        task1.save(() => task2.save(() => task3.save(err => {
+          if (err) { return done(err) }
+          transaction1.save(() => transaction2.save(() => transaction3.save(() =>
                 transaction4.save(() => transaction5.save(() => transaction6.save(() =>
                     channel.save(() => channel2.save(() => channel3.save(() => channel4.save(() =>
                         auth.setupTestUsers(() =>
                           server.start({apiPort: 8080}, () => done())
                         )
-                      )
-                      )
-                      )
+                      )))
                     )
-                  )
-                  )
+                  ))
                 )
-              )
-              )
+              ))
             )
-          )
-          )
+        }))
         )
       )
     )
@@ -234,6 +226,7 @@ describe('API Integration Tests', () =>
             TransactionModelAPI.remove({}, () =>
               ChannelModelAPI.remove({}, () =>
                 MongoClient.connect(config.mongo.url, (err, db) => {
+                  if (err) { return done(err) }
                   const mongoCollection = db != null ? db.collection('jobs') : undefined
                   mongoCollection.drop()
                   return done()
@@ -267,7 +260,7 @@ describe('API Integration Tests', () =>
 
         params = encodeURI(params)
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .get(`/tasks?${params}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -284,7 +277,7 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should fetch all tasks that are currently Paused', (done) => {
+      it('should fetch all tasks that are currently Paused', (done) => {
         const obj = {
           filterPage: 0,
           filterLimit: 10,
@@ -305,7 +298,7 @@ describe('API Integration Tests', () =>
 
         params = encodeURI(params)
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .get(`/tasks?${params}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -328,7 +321,7 @@ describe('API Integration Tests', () =>
         const newTask =
           {tids: ['888888888888888888888888', '999999999999999999999999', '101010101010101010101010']}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/tasks')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -340,7 +333,15 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return TaskModelAPI.findOne({$and: [{transactions: {$elemMatch: {tid: '888888888888888888888888'}}}, {transactions: {$elemMatch: {tid: '999999999999999999999999'}}}, {transactions: {$elemMatch: {tid: '101010101010101010101010'}}}]}, (err, task) => {
+              TaskModelAPI.findOne({
+                $and: [{transactions: {$elemMatch: {tid: '888888888888888888888888'}}},
+                  {transactions: {$elemMatch: {tid: '999999999999999999999999'}}}, {
+                    transactions: {
+                      $elemMatch: {tid: '101010101010101010101010'}
+                    }
+                  }]
+              }, (err, task) => {
+                if (err) { return done(err) }
                 task.should.have.property('status', 'Queued')
                 task.transactions.should.have.length(3)
                 task.should.have.property('remainingTransactions', 3)
@@ -366,7 +367,15 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return TaskModelAPI.findOne({$and: [{transactions: {$elemMatch: {tid: '888888888888888888888888'}}}, {transactions: {$elemMatch: {tid: '999999999999999999999999'}}}, {transactions: {$elemMatch: {tid: '101010101010101010101010'}}}]}, (err, task) => {
+              TaskModelAPI.findOne({
+                $and: [{transactions: {$elemMatch: {tid: '888888888888888888888888'}}},
+                  {transactions: {$elemMatch: {tid: '999999999999999999999999'}}}, {
+                    transactions: {
+                      $elemMatch: {tid: '101010101010101010101010'}
+                    }
+                  }]
+              }, (err, task) => {
+                if (err) { return done(err) }
                 task.should.have.property('status', 'Queued')
                 task.transactions.should.have.length(3)
                 task.should.have.property('remainingTransactions', 3)
@@ -380,7 +389,7 @@ describe('API Integration Tests', () =>
         const newTask =
           {tids: ['112233445566778899101122', '888888888888888888888888', '999999999999999999999999', '101010101010101010101010']}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/tasks')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -401,7 +410,7 @@ describe('API Integration Tests', () =>
         const newTask =
           {tids: ['888888888888888888888888', '999999999999999999999999', '101010101010101010101010', '101010101010101010105555']}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/tasks')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -422,7 +431,7 @@ describe('API Integration Tests', () =>
         const newTask =
           {tids: ['888888888888888888888888', '999999999999999999999999', '101010101010101010101010', '101010101010101010106666']}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/tasks')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -445,7 +454,7 @@ describe('API Integration Tests', () =>
           paused: true
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/tasks')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -457,7 +466,15 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return TaskModelAPI.findOne({$and: [{transactions: {$elemMatch: {tid: '222288888888888888888888'}}}, {transactions: {$elemMatch: {tid: '333399999999999999999999'}}}, {transactions: {$elemMatch: {tid: '444410101010101010101010'}}}]}, (err, task) => {
+              TaskModelAPI.findOne({
+                $and: [{transactions: {$elemMatch: {tid: '222288888888888888888888'}}},
+                  {transactions: {$elemMatch: {tid: '333399999999999999999999'}}}, {
+                    transactions: {
+                      $elemMatch: {tid: '444410101010101010101010'}
+                    }
+                  }]
+              }, (err, task) => {
+                if (err) { return done(err) }
                 task.should.have.property('status', 'Paused')
                 task.transactions.should.have.length(3)
                 task.should.have.property('remainingTransactions', 3)
@@ -467,11 +484,11 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should clear the transactions in a new task out of the auto retry queue', (done) => {
+      it('should clear the transactions in a new task out of the auto retry queue', (done) => {
         const newTask =
           {tids: ['888888888888888888888888', '999999999999999999999999']}
 
-        return AutoRetryModelAPI.remove({}, (err) => {
+        AutoRetryModelAPI.remove({}, (err) => {
           if (err) { return done(err) }
 
           const retry1 = new AutoRetryModelAPI({
@@ -489,7 +506,7 @@ describe('API Integration Tests', () =>
             channelID: ObjectId('222222222222222222222222'),
             requestTimestamp: new Date()
           })
-          return retry1.save(() => retry2.save(() => retry3.save(() =>
+          retry1.save(() => retry2.save(() => retry3.save(() =>
               request('https://localhost:8080')
                 .post('/tasks')
                 .set('auth-username', testUtils.rootUser.email)
@@ -502,8 +519,9 @@ describe('API Integration Tests', () =>
                   if (err) {
                     return done(err)
                   } else {
-                    return setTimeout(() =>
+                    setTimeout(() =>
                         AutoRetryModelAPI.find({}, (err, results) => {
+                          if (err) { return done(err) }
                           results.length.should.be.exactly(1)
                           // retry3 not in task
                           results[0].transactionID.toString().should.be.equal(retry3.transactionID.toString())
@@ -539,7 +557,7 @@ describe('API Integration Tests', () =>
 
         params = encodeURI(params)
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .get(`/tasks/aaa908908bbb98cc1d0809ee?${params}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -577,7 +595,7 @@ describe('API Integration Tests', () =>
 
         params = encodeURI(params)
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .get(`/tasks/bbb777777bbb66cc5d4444ee?${params}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -624,7 +642,7 @@ describe('API Integration Tests', () =>
 
         params = encodeURI(params)
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .get(`/tasks/bbb777777bbb66cc5d4444ee?${params}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -653,7 +671,7 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should fetch a specific task by ID with filters ( tstatus: "Completed", rerunStatus: "Successful" )', (done) => {
+      it('should fetch a specific task by ID with filters ( tstatus: "Completed", rerunStatus: "Successful" )', (done) => {
         const obj = {
           filterPage: 0,
           filterLimit: 10,
@@ -675,7 +693,7 @@ describe('API Integration Tests', () =>
 
         params = encodeURI(params)
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .get(`/tasks/bbb777777bbb66cc5d4444ee?${params}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -701,8 +719,7 @@ describe('API Integration Tests', () =>
           status: 'Completed',
           completed: '2014-06-18T13:30:00.929Z'
         }
-
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put('/tasks/aaa777777bbb66cc5d4444ee')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -714,7 +731,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return TaskModelAPI.findOne({_id: 'aaa777777bbb66cc5d4444ee'}, (err, task) => {
+              TaskModelAPI.findOne({_id: 'aaa777777bbb66cc5d4444ee'}, (err, task) => {
+                if (err) { return done(err) }
                 task.should.have.property('status', 'Completed')
                 task.transactions.should.have.length(3)
                 return done()
@@ -723,10 +741,10 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should not allow a non admin user to update a task', (done) => {
+      it('should not allow a non admin user to update a task', (done) => {
         const updates = {}
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put('/tasks/890aaS0b93ccccc30dddddd0')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -744,7 +762,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    return describe('*removeTask(taskId)', () => {
+    describe('*removeTask(taskId)', () => {
       it('should remove a specific task by ID', done =>
 
         request('https://localhost:8080')
@@ -758,7 +776,8 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return TaskModelAPI.find({_id: 'aaa777777bbb66cc5d4444ee'}, (err, task) => {
+              TaskModelAPI.find({_id: 'aaa777777bbb66cc5d4444ee'}, (err, task) => {
+                if (err) { return done(err) }
                 task.should.have.length(0)
                 return done()
               })
@@ -766,7 +785,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should not only allow a non admin user to remove a task', done =>
+      it('should not only allow a non admin user to remove a task', done =>
 
         request('https://localhost:8080')
           .del('/tasks/890aaS0b93ccccc30dddddd0')

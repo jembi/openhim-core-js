@@ -63,6 +63,7 @@ describe('Visualizer Model Tests', () => {
     return vis.save((err) => {
       if (err) { return done(err) }
       return VisualizerModel.findOne({name: 'TestVisualizer'}, (err, foundVis) => {
+        if (err) { return done(err) }
         foundVis.should.have.property('name').which.is.exactly('TestVisualizer')
         foundVis.should.have.property('components').which.has.property('length').which.is.exactly(2)
         foundVis.should.have.property('mediators').which.has.property('length').which.is.exactly(2)

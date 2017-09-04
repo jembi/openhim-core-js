@@ -13,14 +13,18 @@ describe('API Integration Tests', () =>
   describe('Certificate API Tests', () => {
     let authDetails = {}
     before(done =>
-      auth.setupTestUsers(err =>
+      auth.setupTestUsers(err => {
+        if (err) { return done(err) }
         server.start({apiPort: 8080}, () => done())
+      }
       )
     )
 
     after(done =>
-      auth.cleanupTestUsers(err =>
+      auth.cleanupTestUsers(err => {
+        if (err) { return done(err) }
         server.stop(() => done())
+      }
       )
     )
 
@@ -47,7 +51,7 @@ describe('API Integration Tests', () =>
           organizationUnit: 'testOrg unit'
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/certificates')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -59,7 +63,7 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return KeystoreModelAPI.findOne({}, (err, keystore) => {
+              KeystoreModelAPI.findOne({}, (err, keystore) => {
                 const result = JSON.parse(res.text)
                 result.certificate.should.not.be.empty
                 result.key.should.not.be.empty
@@ -76,7 +80,7 @@ describe('API Integration Tests', () =>
       })
     )
 
-    return it('Should create a new server certificate', done =>
+    it('Should create a new server certificate', done =>
       testUtils.setupTestKeystore((keystore) => {
         const serverCert = fs.readFileSync('test/resources/server-tls/cert.pem')
         const serverKey = fs.readFileSync('test/resources/server-tls/key.pem')
@@ -93,7 +97,7 @@ describe('API Integration Tests', () =>
           organizationUnit: 'testOrg unit'
         }
 
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/certificates')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -105,7 +109,7 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return KeystoreModelAPI.findOne({}, (err, keystore) => {
+              KeystoreModelAPI.findOne({}, (err, keystore) => {
                 const result = JSON.parse(res.text)
                 result.certificate.should.not.be.empty
                 result.key.should.not.be.empty

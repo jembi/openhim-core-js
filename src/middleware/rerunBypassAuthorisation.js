@@ -13,11 +13,14 @@ const sdc = new SDC(statsdServer)
 
 export function authoriseUser (ctx, done) {
   // Use the original transaction's channel to setup the authorised channel
-  return TransactionModel.findOne({_id: ctx.parentID}, (err, originalTransaction) =>
+  TransactionModel.findOne({_id: ctx.parentID}, (err, originalTransaction) => {
+    if (err) { return done(err) }
     ChannelModel.findOne({_id: originalTransaction.channelID}, (err, authorisedChannel) => {
+      if (err) { return done(err) }
       ctx.authorisedChannel = authorisedChannel
       return done()
     })
+  }
   )
 }
 

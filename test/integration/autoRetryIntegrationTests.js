@@ -268,6 +268,7 @@ describe('Auto Retry Integration Tests', () => {
       config.authentication.enableBasicAuthentication = true
 
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -366,6 +367,7 @@ describe('Auto Retry Integration Tests', () => {
       config.authentication.enableBasicAuthentication = true
 
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -454,6 +456,7 @@ describe('Auto Retry Integration Tests', () => {
       config.authentication.enableBasicAuthentication = true
 
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -511,8 +514,7 @@ describe('Auto Retry Integration Tests', () => {
                     trx.routes[0].error.should.have.property('stack');
                     (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
                     return done()
-                  })
-                , 150 * global.testTimeoutFactor)
+                  }), 150 * global.testTimeoutFactor)
             }
           })
       )

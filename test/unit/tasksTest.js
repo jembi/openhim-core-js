@@ -53,14 +53,16 @@ describe('Rerun Task Tests', () => {
 
   beforeEach(done =>
     TransactionModel.remove({}, () =>
-      (new TransactionModel(transaction1)).save(err =>
+      (new TransactionModel(transaction1)).save(err => {
+        if (err) { return done(err) }
         TaskModel.remove({}, () =>
-          (new TaskModel(task1)).save(() =>
-            ChannelModel.remove({}, () =>
-              (new ChannelModel(channel1)).save(() => done())
+            (new TaskModel(task1)).save(() =>
+              ChannelModel.remove({}, () =>
+                (new ChannelModel(channel1)).save(() => done())
+              )
             )
           )
-        )
+      }
       )
     )
   )
@@ -79,6 +81,7 @@ describe('Rerun Task Tests', () => {
 
       // run the tasks function and check results
       return tasks.rerunGetTransaction(transactionID, (err, transaction) => {
+        if (err) { return done(err) }
         transaction.clientID.toString().should.equal('42bbe25485e77d8e5daad4b4')
         transaction.status.should.equal('Completed')
         transaction.request.path.should.equal('/sample/api')
@@ -104,9 +107,11 @@ describe('Rerun Task Tests', () => {
     it('should run rerunSetHTTPRequestOptions() and return HTTP options object successfully', (done) => {
       const taskID = '53c4dd063b8cb04d2acf0adc'
       const transactionID = '53bfbccc6a2b417f6cd14871'
-      return TransactionModel.findOne({_id: transactionID}, (err, transaction) =>
-        // run the tasks function and check results
+      return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
+        if (err) { return done(err) }
+          // run the tasks function and check results
         tasks.rerunSetHTTPRequestOptions(transaction, taskID, (err, options) => {
+          if (err) { return done(err) }
           options.should.have.property('hostname', 'localhost')
           options.should.have.property('port', 7786)
           options.should.have.property('path', '/sample/api?param=hello')
@@ -115,6 +120,7 @@ describe('Rerun Task Tests', () => {
           options.headers.should.have.property('parentID', ObjectId('53bfbccc6a2b417f6cd14871'))
           return done()
         })
+      }
       )
     })
 
@@ -133,22 +139,26 @@ describe('Rerun Task Tests', () => {
       testUtils.createMockServer(200, 'Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871', 7786, () => {
         const taskID = '53c4dd063b8cb04d2acf0adc'
         const transactionID = '53bfbccc6a2b417f6cd14871'
-        return TransactionModel.findOne({_id: transactionID}, (err, transaction) =>
+        return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
+          if (err) { return done(err) }
+            // run the tasks function and check results
+          tasks.rerunSetHTTPRequestOptions(transaction, taskID, (err, options) => {
+            if (err) { return done(err) }
 
-          // run the tasks function and check results
-          tasks.rerunSetHTTPRequestOptions(transaction, taskID, (err, options) =>
-
-            // transaction object retrieved from fineOne
-            // options generated from 'rerunSetHTTPRequestOptions' function
+                // transaction object retrieved from fineOne
+                // options generated from 'rerunSetHTTPRequestOptions' function
 
             tasks.rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => {
+              if (err) { return done(err) }
               HTTPResponse.transaction.should.have.property('status', 'Completed')
               HTTPResponse.should.have.property('body', 'Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871')
               HTTPResponse.should.have.property('status', 200)
               HTTPResponse.should.have.property('message', 'OK')
               done()
             })
-          )
+          }
+            )
+        }
         )
       })
     })
@@ -156,6 +166,7 @@ describe('Rerun Task Tests', () => {
     it('should run rerunHttpRequestSend() and fail when "options" is null', (done) => {
       const transactionID = '53bfbccc6a2b417f6cd14871'
       return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
+        if (err) { return done(err) }
         const options = null
 
         return tasks.rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => {
@@ -184,6 +195,7 @@ describe('Rerun Task Tests', () => {
       testUtils.createMockServer(200, 'Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871', 5252, () => {
         const transactionID = '53bfbccc6a2b417f6cd14871'
         return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
+          if (err) { return done(err) }
           const options = {
             hostname: 'localhost',
             port: 1000,
@@ -192,6 +204,7 @@ describe('Rerun Task Tests', () => {
           }
 
           return tasks.rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => {
+            if (err) { return done(err) }
             HTTPResponse.transaction.should.have.property('status', 'Failed')
             HTTPResponse.should.have.property('status', 500)
             HTTPResponse.should.have.property('message', 'Internal Server Error')
@@ -217,6 +230,7 @@ describe('Rerun Task Tests', () => {
         }
 
         return tasks.rerunTcpRequestSend(channel, transaction, (err, data) => {
+          if (err) { return done(err) }
           data.body.should.be.exactly('TCP OK')
           done()
         })
@@ -271,6 +285,7 @@ describe('Rerun Task Tests', () => {
           tasks.findAndProcessAQueuedTask()
           const validateTask = () =>
             TaskModel.findOne({_id: task1._id}, (err, task) => {
+              if (err) { return done(err) }
               // Task should be untouched
               task.status.should.be.equal('Paused')
               task.remainingTransactions.should.be.equal(3)
@@ -293,6 +308,7 @@ describe('Rerun Task Tests', () => {
           tasks.findAndProcessAQueuedTask()
           const validateTask = () =>
             TaskModel.findOne({_id: task1._id}, (err, task) => {
+              if (err) { return done(err) }
               // Task should be untouched
               task.status.should.be.equal('Cancelled')
               task.remainingTransactions.should.be.equal(3)

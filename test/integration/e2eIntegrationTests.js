@@ -39,6 +39,7 @@ describe('e2e Integration Tests', () => {
           ]
         })
         channel1.save((err) => {
+          if (err) { return done(err) }
           const testClientDoc1 = {
             clientID: 'testApp',
             clientDomain: 'test-client.jembi.org',
@@ -236,6 +237,7 @@ describe('e2e Integration Tests', () => {
           ]
         })
         channel1.save((err) => {
+          if (err) { return done(err) }
           const testAppDoc = {
             clientID: 'testApp',
             clientDomain: 'openhim.jembi.org',
@@ -250,7 +252,8 @@ describe('e2e Integration Tests', () => {
           }
 
           const client = new ClientModelAPI(testAppDoc)
-          client.save((error, newAppDoc) => {
+          client.save((err, newAppDoc) => {
+            if (err) { return done(err) }
             mockServer = testUtils.createMockServer(200, 'Mock response body 1\n', 1232, () => done())
           }
           )
@@ -420,12 +423,18 @@ describe('e2e Integration Tests', () => {
         ]
       })
 
-      channel1.save(err =>
-        channel2.save(err =>
-          channel3.save(err =>
-            channel4.save(err =>
-              channel5.save(err =>
+      channel1.save(err => {
+        if (err) { return done(err) }
+        channel2.save(err => {
+          if (err) { return done(err) }
+          channel3.save(err => {
+            if (err) { return done(err) }
+            channel4.save(err => {
+              if (err) { return done(err) }
+              channel5.save(err => {
+                if (err) { return done(err) }
                 channel6.save((err) => {
+                  if (err) { return done(err) }
                   const testAppDoc = {
                     clientID: 'testApp',
                     clientDomain: 'test-client.jembi.org',
@@ -441,18 +450,23 @@ describe('e2e Integration Tests', () => {
                   }
 
                   const client = new ClientModelAPI(testAppDoc)
-                  client.save((error, newAppDoc) => {
-                    // Create mock endpoint to forward requests to
+                  client.save((err, newAppDoc) => {
+                    if (err) { return done(err) }
+                              // Create mock endpoint to forward requests to
                     mockServer = testUtils.createMockServerForPost(201, 400, testDoc)
                     mockServerWithReturn = testUtils.createMockServerForPostWithReturn(201, 400, testDoc)
-
                     mockServer.listen(1232, () => mockServerWithReturn.listen(1499, done))
                   })
                 })
+              }
+                      )
+            }
+                  )
+          }
               )
-            )
+        }
           )
-        )
+      }
       )
     })
 
@@ -625,6 +639,7 @@ describe('e2e Integration Tests', () => {
         ]
       })
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -640,7 +655,8 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => {
+        client.save((err, newAppDoc) => {
+          if (err) { return done(err) }
             // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServer(201, testDoc, 6262, () => done())
         }
@@ -714,6 +730,7 @@ describe('e2e Integration Tests', () => {
         matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66'
       })
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -729,7 +746,8 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => {
+        client.save((err, newAppDoc) => {
+          if (err) { return done(err) }
           // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testXMLDoc)
 
@@ -818,6 +836,7 @@ describe('e2e Integration Tests', () => {
         matchContentValue: '1234'
       })
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -833,7 +852,8 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => {
+        client.save((err, newAppDoc) => {
+          if (err) { return done(err) }
           // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testJSONDoc)
 
@@ -914,6 +934,7 @@ describe('e2e Integration Tests', () => {
         matchContentRegex: '\\s[A-Z]{4}\\d{3}'
       })
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -929,7 +950,8 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => {
+        client.save((err, newAppDoc) => {
+          if (err) { return done(err) }
           // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testRegExDoc)
 
@@ -1038,6 +1060,7 @@ describe('e2e Integration Tests', () => {
         ]
       })
       mediatorChannel.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'mediatorTestApp',
           clientDomain: 'test-client.jembi.org',
@@ -1053,7 +1076,8 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => {
+        client.save((err, newAppDoc) => {
+          if (err) { return done(err) }
           mockServer = testUtils.createMockMediatorServer(200, mediatorResponse, 1244, () => done())
         })
       })
@@ -1105,6 +1129,7 @@ describe('e2e Integration Tests', () => {
               } else {
                 setTimeout(() =>
                   TransactionModelAPI.findOne({}, (err, res) => {
+                    if (err) { return done(err) }
                     res.status.should.be.equal(mediatorResponse.status)
                     res.orchestrations.length.should.be.exactly(1)
                     res.orchestrations[0].name.should.be.equal(mediatorResponse.orchestrations[0].name)
@@ -1169,6 +1194,7 @@ describe('e2e Integration Tests', () => {
       })
 
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testAppMultipart',
           clientDomain: 'test-client.jembi.org',
@@ -1184,9 +1210,10 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) =>
+        client.save((err, newAppDoc) => {
+          if (err) { return done(err) }
           testUtils.createMockMediatorServer(200, mediatorResponse, 1276, () => done())
-        )
+        })
       })
     })
 
@@ -1252,6 +1279,7 @@ describe('e2e Integration Tests', () => {
         rewriteUrls: true
       })
       channel1.save((err) => {
+        if (err) { return done(err) }
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -1267,7 +1295,8 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => {
+        client.save((err, newAppDoc) => {
+          if (err) { return done(err) }
             // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServer(201, JSON.stringify(jsonResponse), 1232, () => done())
         }
@@ -1371,31 +1400,40 @@ describe('e2e Integration Tests', () => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      channel1.save(err => channel2.save(err => channel3.save((err) => {
-        const testAppDoc = {
-          clientID: 'testApp',
-          clientDomain: 'test-client.jembi.org',
-          name: 'TEST Client',
-          roles: [
-            'OpenMRS_PoC',
-            'PoC'
-          ],
-          passwordAlgorithm: 'sha512',
-          passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-          passwordSalt: '1234567890',
-          cert: ''
-        }
+      channel1.save(err => {
+        if (err) { return done(err) }
+        channel2.save(err => {
+          if (err) { return done(err) }
+          channel3.save((err) => {
+            if (err) { return done(err) }
 
-        const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => {
-              // Create mock endpoint to forward requests to
-          mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => {
-            mockServer2 = testUtils.createMockServer(200, 'target2', 1234, () => done())
+            const testAppDoc = {
+              clientID: 'testApp',
+              clientDomain: 'test-client.jembi.org',
+              name: 'TEST Client',
+              roles: [
+                'OpenMRS_PoC',
+                'PoC'
+              ],
+              passwordAlgorithm: 'sha512',
+              passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+              passwordSalt: '1234567890',
+              cert: ''
+            }
+
+            const client = new ClientModelAPI(testAppDoc)
+            client.save((err, newAppDoc) => {
+              if (err) { return done(err) }
+                    // Create mock endpoint to forward requests to
+              mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => {
+                mockServer2 = testUtils.createMockServer(200, 'target2', 1234, () => done())
+              })
+            }
+                )
           })
         }
           )
-      })
-        )
+      }
       )
     })
 
@@ -1539,30 +1577,38 @@ describe('e2e Integration Tests', () => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      channel1.save(err => channel2.save(err => channel3.save((err) => {
-        const testAppDoc = {
-          clientID: 'testApp',
-          clientDomain: 'test-client.jembi.org',
-          name: 'TEST Client',
-          roles: [
-            'OpenMRS_PoC',
-            'PoC'
-          ],
-          passwordAlgorithm: 'sha512',
-          passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-          passwordSalt: '1234567890',
-          cert: ''
-        }
+      channel1.save(err => {
+        if (err) { return done(err) }
+        channel2.save(err => {
+          if (err) { return done(err) }
+          channel3.save((err) => {
+            if (err) { return done(err) }
+            const testAppDoc = {
+              clientID: 'testApp',
+              clientDomain: 'test-client.jembi.org',
+              name: 'TEST Client',
+              roles: [
+                'OpenMRS_PoC',
+                'PoC'
+              ],
+              passwordAlgorithm: 'sha512',
+              passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+              passwordSalt: '1234567890',
+              cert: ''
+            }
 
-        const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) => {
-              // Create mock endpoint to forward requests to
-          mockServer1 = testUtils.createMockServer(200, 'target1', 1233,
-                () => { mockServer2 = testUtils.createMockServer(200, 'target2', 1234, () => done()) })
+            const client = new ClientModelAPI(testAppDoc)
+            client.save((err, newAppDoc) => {
+              if (err) { return done(err) }
+                    // Create mock endpoint to forward requests to
+              mockServer1 = testUtils.createMockServer(200, 'target1', 1233,
+                      () => { mockServer2 = testUtils.createMockServer(200, 'target2', 1234, () => done()) })
+            }
+                )
+          })
         }
           )
-      })
-        )
+      }
       )
     })
 

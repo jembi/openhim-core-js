@@ -18,6 +18,7 @@ describe('tlsAuthentication.coffee', () => {
   describe('.getServerOptions', () => {
     it('should add all trusted certificates and enable mutual auth from all clients to server options if mutual auth is enabled', done =>
       tlsAuthentication.getServerOptions(true, (err, options) => {
+        if (err) { return done(err) }
         options.ca.should.be.ok
         options.ca.should.be.an.Array
         options.ca.should.containEql((fs.readFileSync('test/resources/trust-tls/cert1.pem')).toString())
@@ -30,6 +31,7 @@ describe('tlsAuthentication.coffee', () => {
 
     it('should NOT have mutual auth options set if mutual auth is disabled', done =>
       tlsAuthentication.getServerOptions(false, (err, options) => {
+        if (err) { return done(err) }
         options.should.not.have.property('ca')
         options.should.not.have.property('requestCert')
         options.should.not.have.property('rejectUnauthorized')
@@ -39,6 +41,7 @@ describe('tlsAuthentication.coffee', () => {
 
     return it('should add the servers key and certificate to the server options', done =>
       tlsAuthentication.getServerOptions(false, (err, options) => {
+        if (err) { return done(err) }
         options.cert.should.be.ok
         options.key.should.be.ok
         return done()

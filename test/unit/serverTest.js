@@ -58,6 +58,7 @@ describe('Server tests', () => {
         server.ensureKeystore((err) => {
           should.not.exist(err)
           return KeystoreModel.findOne({}, (err, keystore) => {
+            if (err) { return done(err) }
             keystore.cert.commonName.should.be.exactly('localhost')
             keystore.cert.organization.should.be.exactly('OpenHIM Default Certificate')
             keystore.cert.data.should.be.exactly((fs.readFileSync('resources/certs/default/cert.pem')).toString())
@@ -76,6 +77,7 @@ describe('Server tests', () => {
         server.ensureKeystore((err) => {
           should.not.exist(err)
           return KeystoreModel.findOne({}, (err, keystore) => {
+            if (err) { return done(err) }
             keystore.cert.commonName.should.be.exactly('localhost')
             keystore.cert.organization.should.be.exactly('Jembi Health Systems NPC')
             keystore.cert.emailAddress.should.be.exactly('ryan@jembi.org')
@@ -96,6 +98,7 @@ describe('Server tests', () => {
         return server.ensureKeystore((err) => {
           should.not.exist(err)
           return KeystoreModel.findOne({}, (err, keystore) => {
+            if (err) { return done(err) }
             keystore.cert.organization.should.be.exactly('OpenHIM Default Certificate')
             keystore.cert.data.should.be.exactly((fs.readFileSync(`${appRoot}/resources/certs/default/cert.pem`)).toString())
             return done()
@@ -111,6 +114,7 @@ describe('Server tests', () => {
         return server.ensureKeystore((err) => {
           should.not.exist(err)
           return KeystoreModel.findOne({}, (err, keystore) => {
+            if (err) { return done(err) }
             const after = keystore.cert.data
             before.should.be.exactly(after)
             return done()

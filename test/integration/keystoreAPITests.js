@@ -16,15 +16,17 @@ describe('API Integration Tests', () =>
     let authDetails = {}
 
     before(done =>
-      auth.setupTestUsers(err =>
+      auth.setupTestUsers(err => {
+        if (err) { return done(err) }
         server.start({apiPort: 8080}, () => done())
-      )
+      })
     )
 
     after(done =>
-      auth.cleanupTestUsers(err =>
+      auth.cleanupTestUsers(err => {
+        if (err) { return done(err) }
         server.stop(() => done())
-      )
+      })
     )
 
     beforeEach((done) => {

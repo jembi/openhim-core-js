@@ -20,8 +20,7 @@ describe('API Integration Tests', () =>
         host: 'localhost',
         port: 9876,
         primary: true
-      }
-      ]
+      }]
     }
 
     const channel2 = {
@@ -33,8 +32,7 @@ describe('API Integration Tests', () =>
         host: 'localhost',
         port: 9876,
         primary: true
-      }
-      ]
+      }]
     }
 
     const client1 = {
@@ -95,21 +93,27 @@ describe('API Integration Tests', () =>
     beforeEach(done =>
       ClientModelAPI.remove({}, () =>
         (new ClientModelAPI(client1)).save((err, cl1) => {
+          if (err) { return done(err) }
           client1._id = cl1._id
           return (new ClientModelAPI(client2)).save((err, cl2) => {
+            if (err) { return done(err) }
             client2._id = cl2._id
             return (new ClientModelAPI(client3)).save((err, cl3) => {
+              if (err) { return done(err) }
               client3._id = cl3._id
               return (new ClientModelAPI(client4)).save((err, cl4) => {
+                if (err) { return done(err) }
                 client4._id = cl4._id
                 return ChannelModelAPI.remove({}, () =>
-                  (new ChannelModelAPI(channel1)).save((err, ch1) => {
-                    channel1._id = ch1._id
-                    return (new ChannelModelAPI(channel2)).save((err, ch2) => {
-                      channel2._id = ch2._id
-                      return done()
-                    })
+                (new ChannelModelAPI(channel1)).save((err, ch1) => {
+                  if (err) { return done(err) }
+                  channel1._id = ch1._id
+                  return (new ChannelModelAPI(channel2)).save((err, ch2) => {
+                    if (err) { return done(err) }
+                    channel2._id = ch2._id
+                    return done()
                   })
+                })
                 )
               })
             })

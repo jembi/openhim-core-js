@@ -132,7 +132,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   const sendTCPTestMessage = function (port, callback) {
     const client = net.connect(port, 'localhost', () => client.write(testMessage))
-    return client.on('data', (data) => {
+    client.on('data', (data) => {
       client.end()
       return callback(null, `${data}`)
     })
@@ -146,7 +146,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     }
 
     const client = tls.connect(port, 'localhost', options, () => client.write(testMessage))
-    return client.on('data', (data) => {
+    client.on('data', (data) => {
       client.end()
       return callback(null, `${data}`)
     })
@@ -162,17 +162,17 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
       channel5.routes[0].cert = cert._id
 
       keystore.ca.push(cert)
-      return keystore.save(() =>
+      keystore.save(() =>
         channel1.save(() => channel2.save(() => channel3.save(() => channel4.save(() => channel5.save(() => channel6.save(() => secureClient.save(() =>
             testUtils.createMockTCPServer(6000, testMessage, 'TCP OK', 'TCP Not OK', (server) => {
               mockTCPServer = server
-              return testUtils.createMockHTTPRespondingPostServer(6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) => {
+              testUtils.createMockHTTPRespondingPostServer(6001, testMessage, 'HTTP OK', 'HTTP Not OK', (server) => {
                 mockHTTPServer = server
-                return testUtils.createMockTLSServerWithMutualAuth(6002, testMessage, 'TLS OK', 'TLS Not OK', (server) => {
+                testUtils.createMockTLSServerWithMutualAuth(6002, testMessage, 'TLS OK', 'TLS Not OK', (server) => {
                   mockTLSServer = server
-                  return testUtils.createMockTLSServerWithMutualAuth(6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) => {
+                  testUtils.createMockTLSServerWithMutualAuth(6003, testMessage, 'TLS OK', 'TLS Not OK', false, (server) => {
                     mockTLSServerWithoutClientCert = server
-                    return testUtils.createMockTCPServer(6004, testMessage, `MLLP OK${String.fromCharCode(0o034)}\n`, `MLLP Not OK${String.fromCharCode(0o034)}\n`, (server) => {
+                    testUtils.createMockTCPServer(6004, testMessage, `MLLP OK${String.fromCharCode(0o034)}\n`, `MLLP Not OK${String.fromCharCode(0o034)}\n`, (server) => {
                       mockMLLPServer = server
                       return done()
                     })
@@ -207,8 +207,9 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const incrementTransactionCountSpy = sinon.spy(stats, 'incrementTransactionCount') // check if the method was called
     const measureTransactionDurationSpy = sinon.spy(stats, 'measureTransactionDuration') // check if the method was called
 
-    return server.start({tcpHttpReceiverPort: 7787}, () =>
+    server.start({tcpHttpReceiverPort: 7787}, () =>
       sendTCPTestMessage(4000, (err, data) => {
+        if (err) { return done(err) }
         data.should.be.exactly('TCP OK')
         if (config.statsd.enabled) {
           incrementTransactionCountSpy.calledOnce.should.be.true
@@ -233,6 +234,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   it('should route TLS messages', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
       sendTLSTestMessage(4001, (err, data) => {
+        if (err) { return done(err) }
         data.should.be.exactly('TCP OK')
         return done()
       })
@@ -242,6 +244,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   it('should route TCP messages to HTTP routes', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
       sendTCPTestMessage(4002, (err, data) => {
+        if (err) { return done(err) }
         data.should.be.exactly('HTTP OK')
         return done()
       })
@@ -251,6 +254,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   it('should route TCP messages to TLS routes', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
       sendTCPTestMessage(4003, (err, data) => {
+        if (err) { return done(err) }
         data.should.be.exactly('TLS OK')
         return done()
       })
@@ -260,6 +264,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   it('should return an error when the client cert is not known by the server', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
       sendTCPTestMessage(4004, (err, data) => {
+        if (err) { return done(err) }
         data.should.be.exactly('An internal server error occurred')
         return done()
       })
@@ -268,21 +273,24 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   it('should persist messages', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
-      sendTCPTestMessage(4000, (err, data) =>
+      sendTCPTestMessage(4000, (err, data) => {
+        if (err) { return done(err) }
         TransactionModelAPI.find({}, (err, trx) => {
+          if (err) { return done(err) }
           trx.length.should.be.exactly(1)
           trx[0].channelID.toString().should.be.exactly(channel1._id.toString())
           trx[0].request.body.should.be.exactly(testMessage)
           trx[0].response.body.should.be.exactly('TCP OK')
           return done()
         })
-      )
+      })
     )
   )
 
-  return it('should route MLLP messages', done =>
+  it('should route MLLP messages', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
       sendTCPTestMessage(4005, (err, data) => {
+        if (err) { return done(err) }
         data.should.be.exactly(`MLLP OK${String.fromCharCode(0o034)}\n`)
         return done()
       })

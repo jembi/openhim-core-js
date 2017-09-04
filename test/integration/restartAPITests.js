@@ -23,34 +23,37 @@ describe('API Integration Tests', () =>
         host: 'localhost',
         port: 9876,
         primary: true
-      }
-      ],
+      }],
       txViewAcl: ['group1'],
       txViewFullAcl: []
     })
 
     before(done =>
-      auth.setupTestUsers(err =>
-        channel.save(err =>
+      auth.setupTestUsers(err => {
+        if (err) { return done(err) }
+        channel.save(err => {
+          if (err) { return done(err) }
           server.start({apiPort: 8080}, () => done())
-        )
-      )
+        })
+      })
     )
 
     after(done =>
-      auth.cleanupTestUsers(err =>
-        ChannelModelAPI.remove(err =>
+      auth.cleanupTestUsers(err => {
+        if (err) { return done(err) }
+        ChannelModelAPI.remove(err => {
+          if (err) { return done(err) }
           server.stop(() => done())
-        )
-      )
+        })
+      })
     )
 
     beforeEach(() => { authDetails = auth.getAuthDetails() })
 
-    return describe('*restart()', () => {
+    describe('*restart()', () => {
       it('should successfully send API request to restart the server', (done) => {
         const stub = sinon.stub(server, 'startRestartServerTimeout')
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .post('/restart')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -68,7 +71,7 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should not allow non admin user to restart the server', done =>
+      it('should not allow non admin user to restart the server', done =>
         request('https://localhost:8080')
           .post('/restart')
           .set('auth-username', testUtils.nonRootUser.email)

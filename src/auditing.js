@@ -81,7 +81,7 @@ function codeInArray (code, arr) {
 }
 
 export function processAuditMeta (audit, callback) {
-  return AuditMetaModel.findOne({}, (err, auditMeta) => {
+  AuditMetaModel.findOne({}, (err, auditMeta) => {
     if (err) {
       logger.error(err)
       return callback()
@@ -117,7 +117,7 @@ export function processAuditMeta (audit, callback) {
       auditMeta.auditSourceID.push(audit.auditSourceIdentification.auditSourceID)
     }
 
-    return auditMeta.save((err) => {
+    auditMeta.save((err) => {
       if (err) { logger.error(err) }
       return callback()
     })
@@ -133,7 +133,7 @@ export function processAudit (msg, callback) {
     return callback()
   }
 
-  return parseAuditRecordFromXML(parsedMsg.message, (xmlErr, result) => {
+  parseAuditRecordFromXML(parsedMsg.message, (xmlErr, result) => {
     const audit = new AuditModel(result)
 
     audit.rawMessage = msg
@@ -145,14 +145,14 @@ export function processAudit (msg, callback) {
       if (saveErr) { logger.error(`An error occurred while processing the audit entry: ${saveErr}`) }
       if (xmlErr) { logger.info(`Failed to parse message as an AuditMessage XML document: ${xmlErr}`) }
 
-      return processAuditMeta(audit, callback)
+      processAuditMeta(audit, callback)
     })
   })
 }
 
 function sendUDPAudit (msg, callback) {
   const client = dgram.createSocket('udp4')
-  return client.send(msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, (err) => {
+  client.send(msg, 0, msg.length, config.auditing.auditEvents.port, config.auditing.auditEvents.host, (err) => {
     client.close()
     return callback(err)
   })
@@ -179,7 +179,9 @@ function sendTCPAudit (msg, callback) {
     return client.end()
   })
 
-  client.on('error', err => logger.error)
+  client.on('error', err => {
+    if (err) { return callback(err) }
+  })
   return client.on('close', () => callback())
 }
 
