@@ -36,7 +36,7 @@ describe('API Integration Tests', () =>
 
     after(done => server.stop(() => auth.cleanupTestUsers(done)))
 
-    beforeEach(() => authDetails = auth.getAuthDetails())
+    beforeEach(() => { authDetails = auth.getAuthDetails() })
 
     afterEach(done => MediatorModelAPI.remove({}, done))
 

@@ -88,13 +88,16 @@ describe('Events API Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        client.save((error, newAppDoc) =>
-          auth.setupTestUsers(err =>
+        client.save((error, newAppDoc) => auth.setupTestUsers(err => {
             // Create mock endpoint to forward requests to
-            mockServer = testUtils.createMockMediatorServer(200, mockResponse, 1232, () =>
-              mockServer2 = testUtils.createMockMediatorServer(200, mockResponse, 1233, () => testUtils.createSlowMockMediatorServer(400 * global.testTimeoutFactor, 200, mockResponse, 1234, () => done()))
-            )
-          )
+          mockServer = testUtils.createMockMediatorServer(200, mockResponse, 1232, () => {
+            mockServer2 = testUtils.createMockMediatorServer(200, mockResponse, 1233,
+                () => testUtils.createSlowMockMediatorServer(400 * global.testTimeoutFactor, 200, mockResponse, 1234,
+                  () => done()
+                )
+              )
+          })
+        })
         )
       })
     )

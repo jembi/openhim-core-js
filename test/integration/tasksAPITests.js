@@ -245,7 +245,7 @@ describe('API Integration Tests', () =>
       )
     )
 
-    beforeEach(() => authDetails = auth.getAuthDetails())
+    beforeEach(() => { authDetails = auth.getAuthDetails() })
 
     describe('*getTasks()', () => {
       it('should fetch all tasks', (done) => {

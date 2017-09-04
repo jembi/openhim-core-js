@@ -38,7 +38,7 @@ describe('API Integration Tests', () =>
       )
     )
 
-    beforeEach(() => authDetails = auth.getAuthDetails())
+    beforeEach(() => { authDetails = auth.getAuthDetails() })
 
     afterEach(done =>
       ClientModelAPI.remove(() => done())
@@ -58,7 +58,7 @@ describe('API Integration Tests', () =>
             if (err) {
               return done(err)
             } else {
-              return ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
+              ClientModelAPI.findOne({clientID: 'YUIAIIIICIIAIA'}, (err, client) => {
                 client.clientID.should.equal('YUIAIIIICIIAIA')
                 client.clientDomain.should.equal('him.jembi.org')
                 client.name.should.equal('OpenMRS Ishmael instance')
@@ -90,12 +90,12 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should reject a client that conflicts with a role', (done) => {
+      it('should reject a client that conflicts with a role', (done) => {
         const client = new ClientModelAPI(testAppDoc)
-        return client.save(() => {
+        client.save(() => {
           const conflict = Object.assign({}, testAppDoc)
           conflict.clientID = 'PoC'
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .post('/clients')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -130,7 +130,7 @@ describe('API Integration Tests', () =>
 
       beforeEach((done) => {
         const client = new ClientModelAPI(clientTest)
-        return client.save((err, client) => {
+        client.save((err, client) => {
           clientId = client._id
           if (err) { done(err) }
           return done()
@@ -194,7 +194,7 @@ describe('API Integration Tests', () =>
           })
       )
 
-      return it('should allow a non admin user to fetch a limited view of a client', done =>
+      it('should allow a non admin user to fetch a limited view of a client', done =>
         request('https://localhost:8080')
           .get(`/clients/${clientId}/clientName`)
           .set('auth-username', testUtils.nonRootUser.email)
@@ -232,9 +232,9 @@ describe('API Integration Tests', () =>
 
       it('should return client with specified clientDomain', (done) => {
         const client = new ClientModelAPI(clientTest)
-        return client.save((error, newApp) => {
+        client.save((error, newApp) => {
           should.not.exist((error))
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .get('/clients/domain/www.zedmusic-unique.co.zw')
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -257,7 +257,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      return it('should not allow a non admin user to fetch a client by domain', done =>
+      it('should not allow a non admin user to fetch a client by domain', done =>
         request('https://localhost:8080')
           .get('/clients/domain/www.zedmusic-unique.co.zw')
           .set('auth-username', testUtils.nonRootUser.email)
@@ -291,21 +291,21 @@ describe('API Integration Tests', () =>
         ClientModelAPI.count((err, countBefore) => {
           let client = new ClientModelAPI(testDocument)
           client.clientID += '1'
-          return client.save((error, testDoc) => {
+          client.save((error, testDoc) => {
             should.not.exist((error))
             client = new ClientModelAPI(testDocument)
             client.clientID += '2'
-            return client.save((error, testDoc) => {
+            client.save((error, testDoc) => {
               should.not.exist(error)
               client = new ClientModelAPI(testDocument)
               client.clientID += '3'
-              return client.save((error, testDoc) => {
+              client.save((error, testDoc) => {
                 should.not.exist(error)
                 client = new ClientModelAPI(testDocument)
                 client.clientID += '4'
-                return client.save((error, testDoc) => {
+                client.save((error, testDoc) => {
                   should.not.exist((error))
-                  return request('https://localhost:8080')
+                  request('https://localhost:8080')
                     .get('/clients')
                     .set('auth-username', testUtils.rootUser.email)
                     .set('auth-ts', authDetails.authTS)
@@ -327,7 +327,7 @@ describe('API Integration Tests', () =>
         })
       )
 
-      return it('should not allow a non admin user to fetch all clients', done =>
+      it('should not allow a non admin user to fetch all clients', done =>
         request('https://localhost:8080')
           .get('/clients')
           .set('auth-username', testUtils.nonRootUser.email)
@@ -359,7 +359,7 @@ describe('API Integration Tests', () =>
 
       it('should update the specified client ', (done) => {
         const client = new ClientModelAPI(testDocument)
-        return client.save((error, testDoc) => {
+        client.save((error, testDoc) => {
           should.not.exist((error))
 
           const updates = {
@@ -370,7 +370,7 @@ describe('API Integration Tests', () =>
             passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
             name: 'Devil_may_Cry'
           }
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .put(`/clients/${client._id}`)
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -382,7 +382,7 @@ describe('API Integration Tests', () =>
               if (err) {
                 return done(err)
               } else {
-                return ClientModelAPI.findById(client._id, (error, clientDoc) => {
+                ClientModelAPI.findById(client._id, (error, clientDoc) => {
                   clientDoc.roles[0].should.equal('clientTest_update')
                   clientDoc.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
                   clientDoc.name.should.equal('Devil_may_Cry')
@@ -395,7 +395,7 @@ describe('API Integration Tests', () =>
 
       it('should update successfully if the _id field is present in update, ignoring it', (done) => {
         const client = new ClientModelAPI(testDocument)
-        return client.save((error, testDoc) => {
+        client.save((error, testDoc) => {
           should.not.exist((error))
 
           const updates = {
@@ -406,7 +406,7 @@ describe('API Integration Tests', () =>
             passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
             name: 'Devil_may_Cry'
           }
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .put(`/clients/${client._id}`)
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -418,7 +418,7 @@ describe('API Integration Tests', () =>
               if (err) {
                 return done(err)
               } else {
-                return ClientModelAPI.findById(client._id, (error, clientDoc) => {
+                ClientModelAPI.findById(client._id, (error, clientDoc) => {
                   clientDoc.roles[0].should.equal('clientTest_update')
                   clientDoc.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
                   clientDoc.name.should.equal('Devil_may_Cry')
@@ -431,7 +431,7 @@ describe('API Integration Tests', () =>
 
       it('should not allow a non admin user to update a client', (done) => {
         const updates = {}
-        return request('https://localhost:8080')
+        request('https://localhost:8080')
           .put('/clients/000000000000000000000000')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -448,11 +448,11 @@ describe('API Integration Tests', () =>
           })
       })
 
-      return it('should reject a client that conflicts with a role', (done) => {
+      it('should reject a client that conflicts with a role', (done) => {
         const client = new ClientModelAPI(testAppDoc)
-        return client.save(() => {
+        client.save(() => {
           const conflict = {clientID: 'PoC'}
-          return request('https://localhost:8080')
+          request('https://localhost:8080')
             .put(`/clients/${client._id}`)
             .set('auth-username', testUtils.rootUser.email)
             .set('auth-ts', authDetails.authTS)
@@ -471,7 +471,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    return describe('*removeClient', () => {
+    describe('*removeClient', () => {
       it('should remove an client with specified clientID', (done) => {
         const docTestRemove = {
           clientID: 'Jembi_OpenHIE_Instance',
@@ -485,9 +485,9 @@ describe('API Integration Tests', () =>
         }
 
         const client = new ClientModelAPI(docTestRemove)
-        return client.save((error, testDoc) => {
+        client.save((error, testDoc) => {
           should.not.exist(error)
-          return ClientModelAPI.count((err, countBefore) =>
+          ClientModelAPI.count((err, countBefore) =>
             request('https://localhost:8080')
               .del(`/clients/${client._id}`)
               .set('auth-username', testUtils.rootUser.email)
@@ -499,7 +499,7 @@ describe('API Integration Tests', () =>
                 if (err) {
                   return done(err)
                 } else {
-                  return ClientModelAPI.count((err, countAfter) =>
+                  ClientModelAPI.count((err, countAfter) =>
                     ClientModelAPI.findOne({clientID: 'Jembi_OpenHIE_Instance'}, (error, notFoundDoc) => {
                       (notFoundDoc === null).should.be.true;
                       (countBefore - 1).should.equal(countAfter)
@@ -512,8 +512,8 @@ describe('API Integration Tests', () =>
         })
       })
 
-      return it('should not allow a non admin user to remove a client', (done) => {
-        return request('https://localhost:8080')
+      it('should not allow a non admin user to remove a client', (done) => {
+        request('https://localhost:8080')
           .del('/clients/000000000000000000000000')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)

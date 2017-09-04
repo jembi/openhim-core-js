@@ -38,7 +38,7 @@ describe('e2e Integration Tests', () => {
           }
           ]
         })
-        return channel1.save((err) => {
+        channel1.save((err) => {
           const testClientDoc1 = {
             clientID: 'testApp',
             clientDomain: 'test-client.jembi.org',
@@ -66,7 +66,7 @@ describe('e2e Integration Tests', () => {
           const client1 = new ClientModelAPI(testClientDoc1)
           const client2 = new ClientModelAPI(testClientDoc2)
 
-          return ClientModelAPI.remove({}, () => client1.save(() => client2.save(() =>
+          ClientModelAPI.remove({}, () => client1.save(() => client2.save(() =>
               // remove default keystore
               KeystoreModelAPI.remove({}, () => {
                 const keystore = new KeystoreModelAPI({
@@ -90,7 +90,7 @@ describe('e2e Integration Tests', () => {
                   ]
                 })
 
-                return keystore.save((err) => {
+                keystore.save((err) => {
                   if (err) { done(err) }
 
                   mockServer = testUtils.createMockServer(201, 'Mock response body\n', 1232, () => done())
@@ -131,7 +131,7 @@ describe('e2e Integration Tests', () => {
             res.statusCode.should.be.exactly(201)
             return done()
           })
-          return req.end()
+          req.end()
         })
       )
 
@@ -150,13 +150,13 @@ describe('e2e Integration Tests', () => {
             res.statusCode.should.be.exactly(401)
             return done()
           })
-          return req.end()
+          req.end()
         })
       )
 
       it('should authenticate a client further up the chain if \'in-chain\' config is set', (done) => {
         config.tlsClientLookup.type = 'in-chain'
-        return server.start({httpPort: 5001, httpsPort: 5000}, () => {
+        server.start({httpPort: 5001, httpsPort: 5000}, () => {
           const options = {
             host: 'localhost',
             path: '/test/mock',
@@ -170,13 +170,13 @@ describe('e2e Integration Tests', () => {
             res.statusCode.should.be.exactly(201)
             return done()
           })
-          return req.end()
+          req.end()
         })
       })
 
       it('should reject a request with an invalid cert if \'in-chain\' config is set', (done) => {
         config.tlsClientLookup.type = 'in-chain'
-        return server.start({httpPort: 5001, httpsPort: 5000}, () => {
+        server.start({httpPort: 5001, httpsPort: 5000}, () => {
           const options = {
             host: 'localhost',
             path: '/test/mock',
@@ -190,13 +190,13 @@ describe('e2e Integration Tests', () => {
             res.statusCode.should.be.exactly(401)
             return done()
           })
-          return req.end()
+          req.end()
         })
       })
 
-      return it('should NOT authenticate a client further up the chain if \'strict\' config is set', (done) => {
+      it('should NOT authenticate a client further up the chain if \'strict\' config is set', (done) => {
         config.tlsClientLookup.type = 'strict'
-        return server.start({httpPort: 5001, httpsPort: 5000}, () => {
+        server.start({httpPort: 5001, httpsPort: 5000}, () => {
           const options = {
             host: 'localhost',
             path: '/test/mock',
@@ -210,12 +210,12 @@ describe('e2e Integration Tests', () => {
             res.statusCode.should.be.exactly(401)
             return done()
           })
-          return req.end()
+          req.end()
         })
       })
     })
 
-    return describe('Basic Authentication', () => {
+    describe('Basic Authentication', () => {
       let mockServer = null
 
       before((done) => {
@@ -235,7 +235,7 @@ describe('e2e Integration Tests', () => {
           }
           ]
         })
-        return channel1.save((err) => {
+        channel1.save((err) => {
           const testAppDoc = {
             clientID: 'testApp',
             clientDomain: 'openhim.jembi.org',
@@ -250,8 +250,9 @@ describe('e2e Integration Tests', () => {
           }
 
           const client = new ClientModelAPI(testAppDoc)
-          return client.save((error, newAppDoc) =>
+          client.save((error, newAppDoc) => {
             mockServer = testUtils.createMockServer(200, 'Mock response body 1\n', 1232, () => done())
+          }
           )
         })
       })
@@ -304,7 +305,7 @@ describe('e2e Integration Tests', () => {
         )
       )
 
-      return describe('with correct credentials', () =>
+      describe('with correct credentials', () =>
         it('should return 200 OK', done =>
           server.start({httpPort: 5001}, () =>
             request('http://localhost:5001')
@@ -419,7 +420,7 @@ describe('e2e Integration Tests', () => {
         ]
       })
 
-      return channel1.save(err =>
+      channel1.save(err =>
         channel2.save(err =>
           channel3.save(err =>
             channel4.save(err =>
@@ -440,12 +441,12 @@ describe('e2e Integration Tests', () => {
                   }
 
                   const client = new ClientModelAPI(testAppDoc)
-                  return client.save((error, newAppDoc) => {
+                  client.save((error, newAppDoc) => {
                     // Create mock endpoint to forward requests to
                     mockServer = testUtils.createMockServerForPost(201, 400, testDoc)
                     mockServerWithReturn = testUtils.createMockServerForPostWithReturn(201, 400, testDoc)
 
-                    return mockServer.listen(1232, () => mockServerWithReturn.listen(1499, done))
+                    mockServer.listen(1232, () => mockServerWithReturn.listen(1499, done))
                   })
                 })
               )
@@ -581,7 +582,7 @@ describe('e2e Integration Tests', () => {
       )
     )
 
-    return it('should returned gzipped response', done =>
+    it('should returned gzipped response', done =>
       server.start({httpPort: 5001}, () =>
         request('http://localhost:5001')
           .put('/gmo')
@@ -623,7 +624,7 @@ describe('e2e Integration Tests', () => {
         }
         ]
       })
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -639,9 +640,10 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) =>
-          // Create mock endpoint to forward requests to
+        client.save((error, newAppDoc) => {
+            // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServer(201, testDoc, 6262, () => done())
+        }
         )
       })
     })
@@ -658,7 +660,7 @@ describe('e2e Integration Tests', () => {
       server.stop(() => done())
     )
 
-    return it('should keep HTTP headers of the response intact', done =>
+    it('should keep HTTP headers of the response intact', done =>
       server.start({httpPort: 5001}, () =>
         request('http://localhost:5001')
           .get('/test/mock')
@@ -711,7 +713,7 @@ describe('e2e Integration Tests', () => {
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
         matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66'
       })
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -727,11 +729,11 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) => {
+        client.save((error, newAppDoc) => {
           // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testXMLDoc)
 
-          return mockServer.listen(1232, done)
+          mockServer.listen(1232, done)
         })
       })
     })
@@ -766,7 +768,7 @@ describe('e2e Integration Tests', () => {
       )
     )
 
-    return it('should return 201 CREATED on PUT', done =>
+    it('should return 201 CREATED on PUT', done =>
       server.start({httpPort: 5001}, () =>
         request('http://localhost:5001')
           .put('/test/mock')
@@ -815,7 +817,7 @@ describe('e2e Integration Tests', () => {
         matchContentJson: 'functionId',
         matchContentValue: '1234'
       })
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -831,11 +833,11 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) => {
+        client.save((error, newAppDoc) => {
           // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testJSONDoc)
 
-          return mockServer.listen(1232, done)
+          mockServer.listen(1232, done)
         })
       })
     })
@@ -870,7 +872,7 @@ describe('e2e Integration Tests', () => {
       )
     )
 
-    return it('should return 201 CREATED on PUT', done =>
+    it('should return 201 CREATED on PUT', done =>
       server.start({httpPort: 5001}, () =>
         request('http://localhost:5001')
           .put('/test/mock')
@@ -911,7 +913,7 @@ describe('e2e Integration Tests', () => {
         ],
         matchContentRegex: '\\s[A-Z]{4}\\d{3}'
       })
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -927,11 +929,11 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) => {
+        client.save((error, newAppDoc) => {
           // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServerForPost(201, 400, testRegExDoc)
 
-          return mockServer.listen(1232, done)
+          mockServer.listen(1232, done)
         })
       })
     })
@@ -965,7 +967,7 @@ describe('e2e Integration Tests', () => {
       )
     )
 
-    return it('should return 201 CREATED on PUT', done =>
+    it('should return 201 CREATED on PUT', done =>
       server.start({httpPort: 5001}, () =>
         request('http://localhost:5001')
           .put('/test/mock')
@@ -1035,7 +1037,7 @@ describe('e2e Integration Tests', () => {
         }
         ]
       })
-      return mediatorChannel.save((err) => {
+      mediatorChannel.save((err) => {
         const testAppDoc = {
           clientID: 'mediatorTestApp',
           clientDomain: 'test-client.jembi.org',
@@ -1051,7 +1053,9 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) => mockServer = testUtils.createMockMediatorServer(200, mediatorResponse, 1244, () => done()))
+        client.save((error, newAppDoc) => {
+          mockServer = testUtils.createMockMediatorServer(200, mediatorResponse, 1244, () => done())
+        })
       })
     })
 
@@ -1099,16 +1103,16 @@ describe('e2e Integration Tests', () => {
               if (err) {
                 return done(err)
               } else {
-                return setTimeout(() =>
-                    TransactionModelAPI.findOne({}, (err, res) => {
-                      res.status.should.be.equal(mediatorResponse.status)
-                      res.orchestrations.length.should.be.exactly(1)
-                      res.orchestrations[0].name.should.be.equal(mediatorResponse.orchestrations[0].name)
-                      should.exist(res.properties)
-                      res.properties.orderId.should.be.equal(mediatorResponse.properties.orderId)
-                      return done()
-                    })
-                  , 150 * global.testTimeoutFactor)
+                setTimeout(() =>
+                  TransactionModelAPI.findOne({}, (err, res) => {
+                    res.status.should.be.equal(mediatorResponse.status)
+                    res.orchestrations.length.should.be.exactly(1)
+                    res.orchestrations[0].name.should.be.equal(mediatorResponse.orchestrations[0].name)
+                    should.exist(res.properties)
+                    res.properties.orderId.should.be.equal(mediatorResponse.properties.orderId)
+                    return done()
+                  }), 150 * global.testTimeoutFactor
+                )
               }
             })
         )
@@ -1196,24 +1200,23 @@ describe('e2e Integration Tests', () => {
       server.stop(() => done())
     )
 
-    return it('should return 201 CREATED on POST', done =>
+    it('should return 201 CREATED on POST', done =>
       server.start({httpPort: 5001}, () => {
         const form = new FormData()
         form.append('my_field', 'my value')
         form.append('unix', fs.readFileSync('test/resources/files/unix.txt'))
         form.append('mac', fs.readFileSync('test/resources/files/mac.txt'))
         form.append('msdos', fs.readFileSync('test/resources/files/msdos.txt'))
-        return form.submit({
+        form.submit({
           host: 'localhost',
           port: 5001,
           path: '/test/multipart',
           auth: 'testAppMultipart:password',
           method: 'post'
-        }
-          , (err, res) => {
+        }, (err, res) => {
           res.statusCode.should.equal(200)
           res.on('data', (chunk) => { })
-            //   chunk.should.be.ok
+          //   chunk.should.be.ok
           if (err) {
             return done(err)
           } else {
@@ -1248,7 +1251,7 @@ describe('e2e Integration Tests', () => {
         ],
         rewriteUrls: true
       })
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -1264,9 +1267,10 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) =>
-          // Create mock endpoint to forward requests to
+        client.save((error, newAppDoc) => {
+            // Create mock endpoint to forward requests to
           mockServer = testUtils.createMockServer(201, JSON.stringify(jsonResponse), 1232, () => done())
+        }
         )
       })
     })
@@ -1283,7 +1287,7 @@ describe('e2e Integration Tests', () => {
       server.stop(() => done())
     )
 
-    return it('should rewrite response urls', done =>
+    it('should rewrite response urls', done =>
       server.start({httpPort: 5001}, () =>
         request('http://localhost:5001')
           .get('/test/mock')
@@ -1367,7 +1371,7 @@ describe('e2e Integration Tests', () => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      return channel1.save(err => channel2.save(err => channel3.save((err) => {
+      channel1.save(err => channel2.save(err => channel3.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -1383,9 +1387,12 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) =>
-            // Create mock endpoint to forward requests to
-            mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => mockServer2 = testUtils.createMockServer(200, 'target2', 1234, () => done()))
+        client.save((error, newAppDoc) => {
+              // Create mock endpoint to forward requests to
+          mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => {
+            mockServer2 = testUtils.createMockServer(200, 'target2', 1234, () => done())
+          })
+        }
           )
       })
         )
@@ -1422,7 +1429,7 @@ describe('e2e Integration Tests', () => {
             } else {
               res.text.should.be.exactly('target1')
               // routes are async
-              return setTimeout(() =>
+              setTimeout(() =>
                   TransactionModelAPI.findOne({}, (err, trx) => {
                     if (err) { return done(err) }
                     trx.routes.length.should.be.exactly(1)
@@ -1448,7 +1455,7 @@ describe('e2e Integration Tests', () => {
             } else {
               res.text.should.be.exactly('target2')
               // routes are async
-              return setTimeout(() =>
+              setTimeout(() =>
                   TransactionModelAPI.findOne({}, (err, trx) => {
                     if (err) { return done(err) }
                     trx.routes.length.should.be.exactly(0)
@@ -1460,7 +1467,7 @@ describe('e2e Integration Tests', () => {
       )
     )
 
-    return it('should ignore disabled primary routes (multiple primary routes)', done =>
+    it('should ignore disabled primary routes (multiple primary routes)', done =>
       server.start({httpPort: 5001}, () =>
         request('http://localhost:5001')
           .get('/test/channel3')
@@ -1472,7 +1479,7 @@ describe('e2e Integration Tests', () => {
             } else {
               res.text.should.be.exactly('target1')
               // routes are async
-              return setTimeout(() =>
+              setTimeout(() =>
                   TransactionModelAPI.findOne({}, (err, trx) => {
                     if (err) { return done(err) }
                     trx.routes.length.should.be.exactly(0)
@@ -1485,7 +1492,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  return describe('Channel priority tests', () => {
+  describe('Channel priority tests', () => {
     let mockServer1 = null
     let mockServer2 = null
 
@@ -1532,7 +1539,7 @@ describe('e2e Integration Tests', () => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      return channel1.save(err => channel2.save(err => channel3.save((err) => {
+      channel1.save(err => channel2.save(err => channel3.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -1548,9 +1555,11 @@ describe('e2e Integration Tests', () => {
         }
 
         const client = new ClientModelAPI(testAppDoc)
-        return client.save((error, newAppDoc) =>
-            // Create mock endpoint to forward requests to
-            mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => mockServer2 = testUtils.createMockServer(200, 'target2', 1234, () => done()))
+        client.save((error, newAppDoc) => {
+              // Create mock endpoint to forward requests to
+          mockServer1 = testUtils.createMockServer(200, 'target1', 1233,
+                () => { mockServer2 = testUtils.createMockServer(200, 'target2', 1234, () => done()) })
+        }
           )
       })
         )
@@ -1611,7 +1620,7 @@ describe('e2e Integration Tests', () => {
       )
     )
 
-    return it('should deny access if multiple channels match but the top priority channel denies access', (done) => {
+    it('should deny access if multiple channels match but the top priority channel denies access', (done) => {
       const channel4 = new ChannelModelAPI({
         name: 'TEST DATA - Mock endpoint 4',
         urlPattern: '^/test/mock$',
@@ -1626,7 +1635,7 @@ describe('e2e Integration Tests', () => {
         ]
       })
 
-      return channel4.save(() =>
+      channel4.save(() =>
 
         server.start({httpPort: 5001}, () =>
           request('http://localhost:5001')

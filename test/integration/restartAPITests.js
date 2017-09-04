@@ -45,7 +45,7 @@ describe('API Integration Tests', () =>
       )
     )
 
-    beforeEach(() => authDetails = auth.getAuthDetails())
+    beforeEach(() => { authDetails = auth.getAuthDetails() })
 
     return describe('*restart()', () => {
       it('should successfully send API request to restart the server', (done) => {

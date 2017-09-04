@@ -15,7 +15,7 @@ describe('API Integration Tests', () =>
     let middleTS = {}
     let endTS = {}
 
-    beforeEach(() => authDetails = auth.getAuthDetails())
+    beforeEach(() => { authDetails = auth.getAuthDetails() })
 
     before(done =>
       // setTimeouts are to make sure we don't get overlapping timestamps on the

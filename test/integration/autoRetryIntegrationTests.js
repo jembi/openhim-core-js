@@ -54,7 +54,7 @@ describe('Auto Retry Integration Tests', () => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      return channel1.save(() => channel2.save(() => {
+      channel1.save(() => channel2.save(() => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -70,7 +70,7 @@ describe('Auto Retry Integration Tests', () => {
         }
 
         const client = new ClientModel(testAppDoc)
-        return client.save(() => done())
+        client.save(() => done())
       })
       )
     })
@@ -98,7 +98,7 @@ describe('Auto Retry Integration Tests', () => {
             if (err) {
               return done(err)
             } else {
-              return setTimeout(() =>
+              setTimeout(() =>
                   TransactionModel.findOne({}, (err, trx) => {
                     if (err) { return done(err) }
                     trx.should.have.property('autoRetry')
@@ -125,10 +125,10 @@ describe('Auto Retry Integration Tests', () => {
             if (err) {
               return done(err)
             } else {
-              return setTimeout(() =>
+              setTimeout(() =>
                   TransactionModel.findOne({}, (err, trx) => {
                     if (err) { return done(err) }
-                    return AutoRetryModel.findOne({}, (err, autoRetry) => {
+                    AutoRetryModel.findOne({}, (err, autoRetry) => {
                       if (err) { return done(err) }
                       autoRetry.transactionID.toString().should.be.equal(trx._id.toString())
                       autoRetry.channelID.toString().should.be.equal(channel1._id.toString())
@@ -151,12 +151,12 @@ describe('Auto Retry Integration Tests', () => {
             if (err) {
               return done(err)
             } else {
-              return setTimeout(() =>
+              setTimeout(() =>
                   // manually trigger rerun
                   autoRetry.autoRetryTask(null, () => {
                     tasks.findAndProcessAQueuedTask()
 
-                    return setTimeout(() =>
+                    setTimeout(() =>
                         TransactionModel.find({}, (err, transactions) => {
                           if (err) { return done(err) }
                           transactions.length.should.be.exactly(2)
@@ -184,12 +184,12 @@ describe('Auto Retry Integration Tests', () => {
             if (err) {
               return done(err)
             } else {
-              return setTimeout(() =>
+              setTimeout(() =>
                   // manually trigger rerun
                   autoRetry.autoRetryTask(null, () => {
                     tasks.findAndProcessAQueuedTask()
 
-                    return setTimeout(() =>
+                    setTimeout(() =>
                         TransactionModel.find({}, (err, transactions) => {
                           if (err) { return done(err) }
                           transactions.length.should.be.exactly(2)
@@ -217,12 +217,12 @@ describe('Auto Retry Integration Tests', () => {
             if (err) {
               return done(err)
             } else {
-              return setTimeout(() =>
+              setTimeout(() =>
                   // manually trigger rerun
                   autoRetry.autoRetryTask(null, () => {
                     tasks.findAndProcessAQueuedTask()
 
-                    return setTimeout(() =>
+                    setTimeout(() =>
                         EventModel.find({}, (err, events) => {
                           if (err) { return done(err) }
                           const prouteEvents = events.filter(ev => (ev.type === 'primary') && (ev.event === 'end'))
@@ -267,7 +267,7 @@ describe('Auto Retry Integration Tests', () => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -283,7 +283,7 @@ describe('Auto Retry Integration Tests', () => {
         }
 
         const client = new ClientModel(testAppDoc)
-        return client.save(() => mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => done()))
+        client.save(() => { mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => done()) })
       })
     })
 
@@ -313,7 +313,7 @@ describe('Auto Retry Integration Tests', () => {
             if (err) {
               return done(err)
             } else {
-              return setTimeout(() =>
+              setTimeout(() =>
                   TransactionModel.findOne({}, (err, trx) => {
                     if (err) { return done(err) }
                     trx.should.have.property('autoRetry')
@@ -365,7 +365,7 @@ describe('Auto Retry Integration Tests', () => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -381,7 +381,7 @@ describe('Auto Retry Integration Tests', () => {
         }
 
         const client = new ClientModel(testAppDoc)
-        return client.save(() => mockServer1 = testUtils.createMockMediatorServer(200, mediatorResponse, 1233, () => done()))
+        client.save(() => { mockServer1 = testUtils.createMockMediatorServer(200, mediatorResponse, 1233, () => done()) })
       })
     })
 
@@ -411,7 +411,7 @@ describe('Auto Retry Integration Tests', () => {
             if (err) {
               return done(err)
             } else {
-              return setTimeout(() =>
+              setTimeout(() =>
                   TransactionModel.findOne({}, (err, trx) => {
                     if (err) { return done(err) }
                     trx.should.have.property('autoRetry')
@@ -430,7 +430,7 @@ describe('Auto Retry Integration Tests', () => {
     )
   })
 
-  return describe('All routes failed auto retry tests', () => {
+  describe('All routes failed auto retry tests', () => {
     const channel1 = new ChannelModel({
       name: 'TEST DATA - Both will break channel',
       urlPattern: '^/test/nowhere$',
@@ -453,7 +453,7 @@ describe('Auto Retry Integration Tests', () => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
 
-      return channel1.save((err) => {
+      channel1.save((err) => {
         const testAppDoc = {
           clientID: 'testApp',
           clientDomain: 'test-client.jembi.org',
@@ -469,7 +469,7 @@ describe('Auto Retry Integration Tests', () => {
         }
 
         const client = new ClientModel(testAppDoc)
-        return client.save(() => done())
+        client.save(() => done())
       })
     })
 
@@ -497,7 +497,7 @@ describe('Auto Retry Integration Tests', () => {
             if (err) {
               return done(err)
             } else {
-              return setTimeout(() =>
+              setTimeout(() =>
                   TransactionModel.findOne({}, (err, trx) => {
                     if (err) { return done(err) }
                     trx.should.have.property('autoRetry')

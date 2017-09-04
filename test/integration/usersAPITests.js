@@ -80,7 +80,7 @@ describe('API Integration Tests', () =>
       )
     )
 
-    beforeEach(() => authDetails = auth.getAuthDetails())
+    beforeEach(() => { authDetails = auth.getAuthDetails() })
 
     describe('*authenticate(email)', () =>
 

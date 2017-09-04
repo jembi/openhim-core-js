@@ -37,7 +37,7 @@ describe('API Integration Tests', () =>
       )
     )
 
-    beforeEach(() => authDetails = auth.getAuthDetails())
+    beforeEach(() => { authDetails = auth.getAuthDetails() })
 
     afterEach(done =>
       ContactGroupModelAPI.remove(() => done())

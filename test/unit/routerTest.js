@@ -643,7 +643,7 @@ describe('HTTP Router', () => {
         ctx.request.method = 'GET'
         ctx.requestTimestamp = requestTimestamp
         const headerSpy = {}
-        ctx.response.set = (k, v) => headerSpy[k] = v
+        ctx.response.set = (k, v) => { headerSpy[k] = v }
 
         return router.route(ctx, (err) => {
           if (err) {

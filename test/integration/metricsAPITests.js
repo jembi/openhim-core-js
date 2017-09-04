@@ -61,7 +61,7 @@ describe('API Metrics Tests', () =>
       )
     )
 
-    beforeEach(() => authDetails = auth.getAuthDetails())
+    beforeEach(() => { authDetails = auth.getAuthDetails() })
 
     describe('*getMetrics()', () => {
       it('should fetch metrics and return a 200', done =>
