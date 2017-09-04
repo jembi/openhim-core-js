@@ -134,7 +134,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const client = net.connect(port, 'localhost', () => client.write(testMessage))
     return client.on('data', (data) => {
       client.end()
-      return callback(`${data}`)
+      return callback(null, `${data}`)
     })
   }
 
@@ -148,7 +148,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const client = tls.connect(port, 'localhost', options, () => client.write(testMessage))
     return client.on('data', (data) => {
       client.end()
-      return callback(`${data}`)
+      return callback(null, `${data}`)
     })
   }
 
@@ -208,7 +208,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const measureTransactionDurationSpy = sinon.spy(stats, 'measureTransactionDuration') // check if the method was called
 
     return server.start({tcpHttpReceiverPort: 7787}, () =>
-      sendTCPTestMessage(4000, (data) => {
+      sendTCPTestMessage(4000, (err, data) => {
         data.should.be.exactly('TCP OK')
         if (config.statsd.enabled) {
           incrementTransactionCountSpy.calledOnce.should.be.true
@@ -232,7 +232,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   it('should route TLS messages', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
-      sendTLSTestMessage(4001, (data) => {
+      sendTLSTestMessage(4001, (err, data) => {
         data.should.be.exactly('TCP OK')
         return done()
       })
@@ -241,7 +241,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   it('should route TCP messages to HTTP routes', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
-      sendTCPTestMessage(4002, (data) => {
+      sendTCPTestMessage(4002, (err, data) => {
         data.should.be.exactly('HTTP OK')
         return done()
       })
@@ -250,7 +250,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   it('should route TCP messages to TLS routes', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
-      sendTCPTestMessage(4003, (data) => {
+      sendTCPTestMessage(4003, (err, data) => {
         data.should.be.exactly('TLS OK')
         return done()
       })
@@ -259,7 +259,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   it('should return an error when the client cert is not known by the server', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
-      sendTCPTestMessage(4004, (data) => {
+      sendTCPTestMessage(4004, (err, data) => {
         data.should.be.exactly('An internal server error occurred')
         return done()
       })
@@ -268,7 +268,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   it('should persist messages', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
-      sendTCPTestMessage(4000, data =>
+      sendTCPTestMessage(4000, (err, data) =>
         TransactionModelAPI.find({}, (err, trx) => {
           trx.length.should.be.exactly(1)
           trx[0].channelID.toString().should.be.exactly(channel1._id.toString())
@@ -282,7 +282,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   return it('should route MLLP messages', done =>
     server.start({tcpHttpReceiverPort: 7787}, () =>
-      sendTCPTestMessage(4005, (data) => {
+      sendTCPTestMessage(4005, (err, data) => {
         data.should.be.exactly(`MLLP OK${String.fromCharCode(0o034)}\n`)
         return done()
       })

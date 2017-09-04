@@ -63,7 +63,7 @@ export function startupTCPServer (channelID, callback) {
     const host = channel.tcpHost || '0.0.0.0'
     const port = channel.tcpPort
 
-    if (!port) { return callback(`Channel ${channel.name} (${channel._id}): TCP port not defined`) }
+    if (!port) { return callback(new Error(`Channel ${channel.name} (${channel._id}): TCP port not defined`)) }
 
     if (channel.type === 'tls') {
       return tlsAuthentication.getServerOptions(true, (err, options) => {
@@ -90,7 +90,7 @@ export function startupTCPServer (channelID, callback) {
         }
       })
     } else {
-      return callback(`Cannot handle ${channel.type} channels`)
+      return callback(new Error(`Cannot handle ${channel.type} channels`))
     }
   })
 }
@@ -205,7 +205,7 @@ export function stopServerForChannel (channelID, callback) {
     }
   }
 
-  if (!server) { return callback(`Server for channel ${channelID} not running`) }
+  if (!server) { return callback(new Error(`Server for channel ${channelID} not running`)) }
 
   tcpServers = notStoppedTcpServers
   return stopTCPServers([server], callback)

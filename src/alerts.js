@@ -240,7 +240,7 @@ function userAlreadyReceivedAlert (channel, alert, user, callback) {
     return callback(null, false)
   }
   const dateFrom = calcDateFromForUser(user)
-  if (!dateFrom) { return callback(`Unsupported option 'maxAlerts=${user.maxAlerts}'`) }
+  if (!dateFrom) { return callback(new Error(`Unsupported option 'maxAlerts=${user.maxAlerts}'`)) }
 
   return findOneAlert(channel, alert, dateFrom, user.user, 'Completed', (err, userAlert) => callback(err != null ? err : null, !!userAlert))
 }
@@ -254,7 +254,7 @@ function getTransactionsForAlert (channel, alert, user, transactions, callback) 
     return callback(null, transactions)
   }
   const dateFrom = calcDateFromForUser(user)
-  if (!dateFrom) { return callback(`Unsupported option 'maxAlerts=${user.maxAlerts}'`) }
+  if (!dateFrom) { return callback(new Error(`Unsupported option 'maxAlerts=${user.maxAlerts}'`)) }
 
   return findTransactionsMatchingCondition(channel, alert, dateFrom, callback)
 }

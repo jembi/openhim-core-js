@@ -39,7 +39,7 @@ function sendSMS (contactAddress, message, callback) {
     return sendSMSClickatell(contactAddress, message, callback)
   }
 
-  return callback(`Unknown SMS gateway provider '${config.smsGateway.provider}'`)
+  return callback(new Error(`Unknown SMS gateway provider '${config.smsGateway.provider}'`))
 }
 
 function sendSMSClickatell (contactAddress, message, callback) {
@@ -67,5 +67,5 @@ export function contactUser (method, contactAddress, title, messagePlain, messag
   } else if (method === 'sms') {
     return sendSMS(contactAddress, messagePlain, callback)
   }
-  return callback(`Unknown contact method '${method}'`)
+  return callback(new Error(`Unknown contact method '${method}'`))
 }

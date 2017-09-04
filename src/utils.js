@@ -56,7 +56,7 @@ function getCachedValues (store, callback) {
     } else if (store === 'keystore') {
       return KeystoreModel.findOne({}, handler)
     } else {
-      return callback(`Internal error: Invalid store ${store}`)
+      return callback(new Error(`Internal error: Invalid store ${store}`))
     }
   } else {
     return callback(null, cacheValueStore[`${store}`].value)
