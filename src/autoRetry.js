@@ -104,7 +104,7 @@ function autoRetryTask (job, done) {
       }
 
       return end()
-    })
+    }).catch(done)
   })
 }
 
