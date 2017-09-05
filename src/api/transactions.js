@@ -179,10 +179,6 @@ export function* getTransactions() {
       filters["childIDs"] = JSON.parse(filters["childIDs"]);
     }
 
-    if (filters["$or"]) {
-      filters["$or"] = JSON.parse(filters["$or"]);
-    }
-
         /* Route Filters */
         // build RegExp for route request path filter
     if (filters["routes.request.path"]) {
@@ -216,9 +212,7 @@ export function* getTransactions() {
       filters["orchestrations.response.status"] = { $gte: filters["orchestrations.response.status"][0] * 100, $lt: (filters["orchestrations.response.status"][0] * 100) + 100 };
     }
 
-
         // execute the query
-    console.log(filters)
     this.body = yield TransactionModelAPI
             .find(filters, projectionFiltersObject)
             .skip(filterSkip)
