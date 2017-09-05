@@ -34,12 +34,12 @@ upgradeFuncs.push({
     const defer = Q.defer()
 
     KeystoreModel.findOne((err, keystore) => {
-      if (err) { return (err) }
+      if (err) { return callback(err) }
       if (!keystore) { return defer.resolve() }
 
       // convert server cert
       return pem.getFingerprint(keystore.cert.data, (err, obj) => {
-        if (err) { return (err) }
+        if (err) { return callback(err) }
         keystore.cert.fingerprint = obj.fingerprint
 
         const promises = []
@@ -48,7 +48,7 @@ upgradeFuncs.push({
           const caDefer = Q.defer()
           promises.push(caDefer.promise)
           pem.getFingerprint(cert.data, (err, obj) => {
-            if (err) { return (err) }
+            if (err) { return callback(err) }
             keystore.ca[i].fingerprint = obj.fingerprint
             return caDefer.resolve()
           })

@@ -377,7 +377,7 @@ if (cluster.isMaster && !module.parent) {
   // Ensure that a root user always exists
   const ensureRootUser = callback =>
     UserModel.findOne({email: 'root@openhim.org'}, (err, user) => {
-      if (err) { return (err) }
+      if (err) { return callback(err) }
       if (!user) {
         user = new UserModel(rootUser)
         return user.save((err) => {
