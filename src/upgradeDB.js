@@ -239,7 +239,7 @@ async function upgradeDbInternal () {
 }
 
 export function upgradeDb (callback) {
-  upgradeDbInternal()
+  return upgradeDbInternal()
     .then((...values) => {
       if (callback) {
         callback(null, ...(values || []))
