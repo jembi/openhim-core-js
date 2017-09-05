@@ -242,7 +242,7 @@ export function upgradeDb (callback) {
   upgradeDbInternal()
     .then((...values) => {
       if (callback) {
-        callback(new Error(...(values || [])))
+        callback(null, ...(values || []))
       }
     })
     .catch(err => {
