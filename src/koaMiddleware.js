@@ -1,4 +1,4 @@
-import koa from 'koa'
+import Koa from 'koa'
 import getRawBody from 'raw-body'
 import compress from 'koa-compress'
 import SDC from 'statsd-client'
@@ -43,7 +43,7 @@ async function rawBodyReader (ctx, next) {
 // Primary app
 
 export function setupApp (done) {
-  const app = new koa()
+  const app = new Koa()
 
   // Basic authentication middleware
   if (config.authentication.enableBasicAuthentication) {
@@ -90,7 +90,7 @@ export function setupApp (done) {
 
 // Rerun app that bypasses auth
 export function rerunApp (done) {
-  const app = new koa()
+  const app = new Koa()
 
   app.use(rawBodyReader)
 
@@ -120,7 +120,7 @@ export function rerunApp (done) {
 
 // App for TCP/TLS sockets
 export function tcpApp (done) {
-  const app = new koa()
+  const app = new Koa()
 
   app.use(rawBodyReader)
   app.use(retrieveTCPTransaction.koaMiddleware)
@@ -145,7 +145,7 @@ export function tcpApp (done) {
 
 // App used by scheduled polling
 export function pollingApp (done) {
-  const app = new koa()
+  const app = new Koa()
 
   app.use(rawBodyReader)
 
