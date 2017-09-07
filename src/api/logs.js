@@ -11,20 +11,20 @@ const levels = {
   error: 4
 }
 
-export function * getLogs () {
+export async function getLogs (ctx) {
   // Only admins can view server logs
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getLogs denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getLogs denied.`, 'info')
     return
   }
 
-  let {query} = this.request
+  let {query} = ctx.request
   if (query == null) {
     query = {}
   }
 
   // default to info level logs
-  if ((query.level == null)) {
+  if (query.level == null) {
     query.level = 'info'
   }
 
@@ -36,7 +36,7 @@ export function * getLogs () {
     limit: 100000 // limit: 0 doesn't work :/
   }
 
-  let results = yield Q.ninvoke(logger, 'query', options)
+  let results = await Q.ninvoke(logger, 'query', options)
   results = results.mongodb
 
   if (query.level != null) {
@@ -47,6 +47,6 @@ export function * getLogs () {
     results.splice(query.limit, results.length - query.limit)
   }
 
-  this.body = results
-  this.status = 200
+  ctx.body = results
+  ctx.status = 200
 }
