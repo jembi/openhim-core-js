@@ -1,7 +1,7 @@
 import Koa from 'koa'
 import route from 'koa-route'
-import cors from 'koa-cors'
-import bodyParser from 'koa-body-parser'
+import cors from 'kcors'
+import bodyParser from 'koa-bodyparser'
 import * as authentication from './api/authentication'
 import * as users from './api/users'
 import * as clients from './api/clients'
@@ -29,7 +29,7 @@ export function setupApp (done) {
   const app = new Koa()
   app.use(cors())
   const limitMB = config.api.maxPayloadSizeMB || 16
-  app.use(bodyParser({limit: limitMB * 1024 * 1024}))
+  app.use(bodyParser({jsonLimit: limitMB * 1024 * 1024}))
 
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
