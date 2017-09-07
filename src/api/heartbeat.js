@@ -4,12 +4,12 @@ import * as utils from '../utils'
 import * as server from '../server'
 import { MediatorModelAPI } from '../model/mediators'
 
-export function * getHeartbeat () {
+export async function getHeartbeat (ctx) {
   try {
     const uptime = Q.denodeify(server.getUptime)
-    const result = yield uptime
+    const result = await uptime()
 
-    const mediators = yield MediatorModelAPI.find().exec()
+    const mediators = await MediatorModelAPI.find().exec()
     for (const mediator of Array.from(mediators)) {
       if (!result.mediators) { result.mediators = {} }
 
@@ -23,8 +23,8 @@ export function * getHeartbeat () {
     }
 
     result.now = Date.now()
-    this.body = result
+    ctx.body = result
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Error: ${e}`, 'error')
+    return utils.logAndSetResponse(ctx, 500, `Error: ${e}`, 'error')
   }
 }
