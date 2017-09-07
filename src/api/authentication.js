@@ -25,8 +25,8 @@ const auditingExemptPaths = [
 
 const isUndefOrEmpty = string => (string == null) || (string === '')
 
-export function * authenticate (next) {
-  const {header} = this.request
+export async function authenticate (ctx, next) {
+  const {header} = ctx.request
   const email = header['auth-username']
   const authTS = header['auth-ts']
   const authSalt = header['auth-salt']
@@ -40,8 +40,8 @@ export function * authenticate (next) {
 
   // if any of the required headers aren't present
   if (isUndefOrEmpty(email) || isUndefOrEmpty(authTS) || isUndefOrEmpty(authSalt) || isUndefOrEmpty(authToken)) {
-    logger.info(`API request made by ${email} from ${this.request.host} is missing required API authentication headers, denying access`)
-    this.status = 401
+    logger.info(`API request made by ${email} from ${ctx.request.host} is missing required API authentication headers, denying access`)
+    ctx.status = 401
     auditAuthFailure()
     return
   }
@@ -57,19 +57,19 @@ export function * authenticate (next) {
 
   if ((requestDate < from) || (requestDate > to)) {
     // request expired
-    logger.info(`API request made by ${email} from ${this.request.host} has expired, denying access`)
-    this.status = 401
+    logger.info(`API request made by ${email} from ${ctx.request.host} has expired, denying access`)
+    ctx.status = 401
     auditAuthFailure()
     return
   }
 
-  const user = yield UserModelAPI.findOne({email}).exec()
-  this.authenticated = user
+  const user = await UserModelAPI.findOne({email}).exec()
+  ctx.authenticated = user
 
   if (!user) {
     // not authenticated - user not found
-    logger.info(`No user exists for ${email}, denying access to API, request originated from ${this.request.host}`)
-    this.status = 401
+    logger.info(`No user exists for ${email}, denying access to API, request originated from ${ctx.request.host}`)
+    ctx.status = 401
     auditAuthFailure()
     return
   }
@@ -82,17 +82,17 @@ export function * authenticate (next) {
   if (authToken === hash.digest('hex')) {
     // authenticated
 
-    if (this.path === '/transactions') {
-      if (!this.query.filterRepresentation || (this.query.filterRepresentation !== 'full')) {
+    if (ctx.path === '/transactions') {
+      if (!ctx.query.filterRepresentation || (ctx.query.filterRepresentation !== 'full')) {
         // exempt from auditing success
-        yield next
+        await next()
         return
       }
     } else {
       for (const pathTest of Array.from(auditingExemptPaths)) {
-        if (pathTest.test(this.path)) {
+        if (pathTest.test(ctx.path)) {
           // exempt from auditing success
-          yield next
+          await next()
           return
         }
       }
@@ -102,11 +102,11 @@ export function * authenticate (next) {
     let audit = atna.userLoginAudit(atna.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(','), user.groups.join(','))
     audit = atna.wrapInSyslog(audit)
     auditing.sendAuditEvent(audit, () => logger.debug('Processed internal audit'))
-    return yield next
+    await next()
   } else {
     // not authenticated - token mismatch
-    logger.info(`API token did not match expected value, denying access to API, the request was made by ${email} from ${this.request.host}`)
-    this.status = 401
+    logger.info(`API token did not match expected value, denying access to API, the request was made by ${email} from ${ctx.request.host}`)
+    ctx.status = 401
     return auditAuthFailure()
   }
 }
