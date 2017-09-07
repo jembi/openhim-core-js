@@ -247,14 +247,14 @@ export function setFinalStatus (ctx, callback) {
   })
 }
 
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const saveTransaction = Q.denodeify(storeTransaction)
-  yield saveTransaction(this)
+  await saveTransaction(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.messageStoreMiddleware.storeTransaction`, startTime) }
-  yield next
+  await next()
   if (statsdServer.enabled) { startTime = new Date() }
-  storeResponse(this, () => { })
+  storeResponse(ctx, () => { })
   if (statsdServer.enabled) { return sdc.timing(`${domain}.messageStoreMiddleware.storeResponse`, startTime) }
 }

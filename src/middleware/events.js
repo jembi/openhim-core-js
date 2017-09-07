@@ -205,9 +205,7 @@ export function createTransactionEvents (dst, transaction, channel) {
   }
 }
 
-export function * koaMiddleware (next) {
-  const ctx = this
-
+export async function koaMiddleware (ctx, next) {
   const runAsync = method => {
     const f = () => method(ctx, (err) => { if (err) { return logger.error(err) } })
     return setTimeout(f, 0)
@@ -220,7 +218,7 @@ export function * koaMiddleware (next) {
     return saveEvents(trxEvents, done)
   })
 
-  yield next
+  await next()
 
   runAsync((ctx, done) => {
     logger.debug(`Storing channel end and primary routes events for transaction: ${ctx.transactionId}`)

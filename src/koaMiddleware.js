@@ -30,14 +30,14 @@ const application = config.get('application')
 const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(config.statsd)
 
-function * rawBodyReader (next) {
+async function rawBodyReader (ctx, next) {
   let startTime
   if (config.statsd.enabled) { startTime = new Date() }
-  const body = yield getRawBody(this.req)
+  const body = await getRawBody(ctx.req)
 
-  if (body) { this.body = body }
+  if (body) { ctx.body = body }
   if (config.statsd.enabled) { sdc.timing(`${domain}.rawBodyReaderMiddleware`, startTime) }
-  yield next
+  await next()
 }
 
 // Primary app

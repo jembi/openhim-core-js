@@ -124,21 +124,21 @@ const matchRequest = (ctx, done) =>
     return done(null, match)
   })
 
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const matchReq = Q.denodeify(matchRequest)
-  const match = yield matchReq(this)
+  const match = await matchReq(ctx)
 
   if (match != null) {
-    logger.info(`The channel that matches the request ${this.request.path} is: ${match.name}`)
-    this.matchingChannel = match
+    logger.info(`The channel that matches the request ${ctx.request.path} is: ${match.name}`)
+    ctx.matchingChannel = match
   } else {
-    logger.info(`No channel matched the request ${this.request.path}`)
+    logger.info(`No channel matched the request ${ctx.request.path}`)
   }
 
   if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime) }
-  return yield next
+  await next()
 }
 
 // export private functions for unit testing

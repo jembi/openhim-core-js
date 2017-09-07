@@ -77,21 +77,21 @@ export function updateTask (ctx, done) {
 /*
  * Koa middleware for updating original transaction with childID
  */
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const setAttempt = Q.denodeify(setAttemptNumber)
-  yield setAttempt(this)
+  await setAttempt(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.rerunUpdateTransactionMiddleware.setAttemptNumber`, startTime) }
 
-  // do intial yield for koa to come back to this function with updated ctx object
-  yield next
+  // do intial yield for koa to come back to ctx function with updated ctx object
+  await next()
   if (statsdServer.enabled) { startTime = new Date() }
   const _updateOriginalTransaction = Q.denodeify(updateOriginalTransaction)
-  yield _updateOriginalTransaction(this)
+  await _updateOriginalTransaction(ctx)
 
   const _updateTask = Q.denodeify(updateTask)
-  yield _updateTask(this)
+  await _updateTask(ctx)
   if (statsdServer.enabled) {
     sdc.timing(`${domain}.rerunUpdateTransactionMiddleware`, startTime)
   }

@@ -150,39 +150,39 @@ if (process.env.NODE_ENV === 'test') {
 /*
  * Koa middleware for mutual TLS authentication
  */
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  if (this.authenticated != null) {
-    return yield next
-  } else if (this.req.client.authorized === true) {
-    const cert = this.req.connection.getPeerCertificate(true)
+  if (ctx.authenticated != null) {
+    await next()
+  } else if (ctx.req.client.authorized === true) {
+    const cert = ctx.req.connection.getPeerCertificate(true)
     logger.info(`${cert.subject.CN} is authenticated via TLS.`)
 
     // lookup client by cert fingerprint and set them as the authenticated user
     try {
-      this.authenticated = yield clientLookup(cert.fingerprint, cert.subject.CN, cert.issuer.CN)
+      ctx.authenticated = await clientLookup(cert.fingerprint, cert.subject.CN, cert.issuer.CN)
     } catch (err) {
       logger.error(`Failed to lookup client: ${err}`)
     }
 
-    if (this.authenticated != null) {
-      if (this.authenticated.clientID != null) {
-        this.header['X-OpenHIM-ClientID'] = this.authenticated.clientID
+    if (ctx.authenticated != null) {
+      if (ctx.authenticated.clientID != null) {
+        ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID
       }
       if (statsdServer.enabled) { sdc.timing(`${domain}.tlsAuthenticationMiddleware`, startTime) }
-      this.authenticationType = 'tls'
-      return yield next
+      ctx.authenticationType = 'tls'
+      await next()
     } else {
-      this.authenticated = null
+      ctx.authenticated = null
       logger.info(`Certificate Authentication Failed: the certificate's fingerprint ${cert.fingerprint} did not match any client's certFingerprint attribute, trying next auth mechanism if any...`)
       if (statsdServer.enabled) { sdc.timing(`${domain}.tlsAuthenticationMiddleware`, startTime) }
-      return yield next
+      await next()
     }
   } else {
-    this.authenticated = null
-    logger.info(`Could NOT authenticate via TLS: ${this.req.client.authorizationError}, trying next auth mechanism if any...`)
+    ctx.authenticated = null
+    logger.info(`Could NOT authenticate via TLS: ${ctx.req.client.authorizationError}, trying next auth mechanism if any...`)
     if (statsdServer.enabled) { sdc.timing(`${domain}.tlsAuthenticationMiddleware`, startTime) }
-    return yield next
+    await next()
   }
 }

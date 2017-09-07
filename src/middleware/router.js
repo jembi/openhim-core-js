@@ -587,11 +587,11 @@ export function route (ctx, next) {
  *
  * Use with: app.use(router.koaMiddleware)
  */
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const _route = Q.denodeify(route)
-  yield _route(this)
+  await _route(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.routerMiddleware`, startTime) }
-  return yield next
+  await next()
 }

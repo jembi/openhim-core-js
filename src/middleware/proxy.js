@@ -23,10 +23,10 @@ export function setupProxyHeaders (ctx) {
   return setOrAppendHeader(ctx, 'X-Forwarded-Host', ctx.request.host)
 }
 
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  exports.setupProxyHeaders(this)
+  exports.setupProxyHeaders(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.proxyHeadersMiddleware`, startTime) }
-  return yield next
+  await next()
 }
