@@ -52,41 +52,41 @@ function restoreMaskedPasswords (defs, maskedConfig, config) {
   })
 }
 
-export function * getAllMediators () {
+export async function getAllMediators (ctx) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAllMediators denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getAllMediators denied.`, 'info')
     return
   }
 
   try {
-    const m = yield MediatorModelAPI.find().exec()
-    maskPasswords(m.configDefs, m.config)
-    this.body = m
+    const mediator = await MediatorModelAPI.find().exec()
+    maskPasswords(mediator.configDefs, mediator.config)
+    ctx.body = mediator
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not fetch mediators via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not fetch mediators via the API: ${err}`, 'error')
   }
 }
 
-export function * getMediator (mediatorURN) {
+export async function getMediator (ctx, mediatorURN) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getMediator denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getMediator denied.`, 'info')
     return
   }
 
   const urn = unescape(mediatorURN)
 
   try {
-    const result = yield MediatorModelAPI.findOne({urn}).exec()
+    const result = await MediatorModelAPI.findOne({urn}).exec()
     if (result === null) {
-      this.status = 404
+      ctx.status = 404
     } else {
       maskPasswords(result.configDefs, result.config)
-      this.body = result
+      ctx.body = result
     }
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not fetch mediator using UUID ${urn} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not fetch mediator using UUID ${urn} via the API: ${err}`, 'error')
   }
 }
 
@@ -126,16 +126,16 @@ function validateConfigDef (def) {
 // validations additional to the mongoose schema validation
 const validateConfigDefs = configDefs => Array.from(configDefs).map((def) => validateConfigDef(def))
 
-export function * addMediator () {
+export async function addMediator (ctx) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addMediator denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addMediator denied.`, 'info')
     return
   }
 
   try {
     let mediatorHost = 'unknown'
-    const mediator = this.request.body
+    const mediator = ctx.request.body
 
     if (mediator != null && mediator.endpoints != null && mediator.endpoints.length > 0 && mediator.endpoints[0].host != null) {
       mediatorHost = mediator.endpoints[0].host
@@ -160,7 +160,7 @@ export function * addMediator () {
       }
     }
 
-    const existing = yield MediatorModelAPI.findOne({urn: mediator.urn}).exec()
+    const existing = await MediatorModelAPI.findOne({urn: mediator.urn}).exec()
     if (existing != null) {
       if (semver.gt(mediator.version, existing.version)) {
         // update the mediator
@@ -172,73 +172,73 @@ export function * addMediator () {
             }
           }
         }
-        yield MediatorModelAPI.findByIdAndUpdate(existing._id, mediator).exec()
+        await MediatorModelAPI.findByIdAndUpdate(existing._id, mediator).exec()
       }
     } else {
       // this is a new mediator validate and save it
       if (!mediator.endpoints || (mediator.endpoints.length < 1)) {
         throw constructError('At least 1 endpoint is required', 'ValidationError')
       }
-      yield Q.ninvoke(new MediatorModelAPI(mediator), 'save')
+      await Q.ninvoke(new MediatorModelAPI(mediator), 'save')
     }
-    this.status = 201
-    return logger.info(`User ${this.authenticated.email} created mediator with urn ${mediator.urn}`)
+    ctx.status = 201
+    logger.info(`User ${ctx.authenticated.email} created mediator with urn ${mediator.urn}`)
   } catch (err) {
     if (err.name === 'ValidationError') {
-      return utils.logAndSetResponse(this, 400, `Could not add Mediator via the API: ${err}`, 'error')
+      utils.logAndSetResponse(ctx, 400, `Could not add Mediator via the API: ${err}`, 'error')
     } else {
-      return utils.logAndSetResponse(this, 500, `Could not add Mediator via the API: ${err}`, 'error')
+      utils.logAndSetResponse(ctx, 500, `Could not add Mediator via the API: ${err}`, 'error')
     }
   }
 }
 
-export function * removeMediator (urn) {
+export async function removeMediator (ctx, urn) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
     return
   }
 
   urn = unescape(urn)
 
   try {
-    yield MediatorModelAPI.findOneAndRemove({urn}).exec()
-    this.body = `Mediator with urn ${urn} has been successfully removed by ${this.authenticated.email}`
-    return logger.info(`Mediator with urn ${urn} has been successfully removed by ${this.authenticated.email}`)
+    await MediatorModelAPI.findOneAndRemove({urn}).exec()
+    ctx.body = `Mediator with urn ${urn} has been successfully removed by ${ctx.authenticated.email}`
+    return logger.info(`Mediator with urn ${urn} has been successfully removed by ${ctx.authenticated.email}`)
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not remove Mediator by urn ${urn} via the API: ${err}`, 'error')
+    return utils.logAndSetResponse(ctx, 500, `Could not remove Mediator by urn ${urn} via the API: ${err}`, 'error')
   }
 }
 
-export function * heartbeat (urn) {
+export async function heartbeat (ctx, urn) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
     return
   }
 
   urn = unescape(urn)
 
   try {
-    const mediator = yield MediatorModelAPI.findOne({urn}).exec()
+    const mediator = await MediatorModelAPI.findOne({urn}).exec()
 
-    if ((mediator == null)) {
-      this.status = 404
+    if (mediator == null) {
+      ctx.status = 404
       return
     }
 
-    const heartbeat = this.request.body
+    const heartbeat = ctx.request.body
 
-    if (((heartbeat != null ? heartbeat.uptime : undefined) == null)) {
-      this.status = 400
+    if ((heartbeat != null ? heartbeat.uptime : undefined) == null) {
+      ctx.status = 400
       return
     }
 
     if ((mediator._configModifiedTS > mediator._lastHeartbeat) || ((heartbeat != null ? heartbeat.config : undefined) === true)) {
       // Return config if it has changed since last heartbeat
-      this.body = mediator.config
+      ctx.body = mediator.config
     } else {
-      this.body = ''
+      ctx.body = ''
     }
 
     // set internal properties
@@ -248,12 +248,12 @@ export function * heartbeat (urn) {
         _uptime: heartbeat.uptime
       }
 
-      yield MediatorModelAPI.findByIdAndUpdate(mediator._id, update).exec()
+      await MediatorModelAPI.findByIdAndUpdate(mediator._id, update).exec()
     }
 
-    this.status = 200
+    ctx.status = 200
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not process mediator heartbeat (urn: ${urn}): ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not process mediator heartbeat (urn: ${urn}): ${err}`, 'error')
   }
 }
 
@@ -357,39 +357,37 @@ if (process.env.NODE_ENV === 'test') {
   exports.validateConfig = validateConfig
 }
 
-export function * setConfig (urn) {
+export async function setConfig (ctx, urn) {
   // Must be admin
-  let err
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
     return
   }
 
   urn = unescape(urn)
-  const config = this.request.body
+  const config = ctx.request.body
 
   try {
-    const mediator = yield MediatorModelAPI.findOne({urn}).exec()
+    const mediator = await MediatorModelAPI.findOne({urn}).exec()
 
     if (mediator == null) {
-      this.status = 404
-      this.body = 'No mediator found for this urn.'
+      ctx.status = 404
+      ctx.body = 'No mediator found for this urn.'
       return
     }
     try {
       restoreMaskedPasswords(mediator.configDefs, config, mediator.config)
       validateConfig(mediator.configDefs, config)
     } catch (error) {
-      err = error
-      this.status = 400
-      this.body = err.message
+      ctx.status = 400
+      ctx.body = error.message
       return
     }
 
-    yield MediatorModelAPI.findOneAndUpdate({urn}, {config: this.request.body, _configModifiedTS: new Date()}).exec()
-    this.status = 200
-  } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not set mediator config (urn: ${urn}): ${err}`, 'error')
+    await MediatorModelAPI.findOneAndUpdate({urn}, {config: ctx.request.body, _configModifiedTS: new Date()}).exec()
+    ctx.status = 200
+  } catch (error) {
+    utils.logAndSetResponse(ctx, 500, `Could not set mediator config (urn: ${urn}): ${error}`, 'error')
   }
 }
 
@@ -405,40 +403,40 @@ function saveDefaultChannelConfig (channels) {
   return promises
 }
 
-export function * loadDefaultChannels (urn) {
+export async function loadDefaultChannels (ctx, urn) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeMediator denied.`, 'info')
     return
   }
 
   urn = unescape(urn)
-  const channels = this.request.body
+  const channels = ctx.request.body
 
   try {
-    const mediator = yield MediatorModelAPI.findOne({urn}).lean().exec()
+    const mediator = await MediatorModelAPI.findOne({urn}).lean().exec()
 
     if ((mediator == null)) {
-      this.status = 404
-      this.body = 'No mediator found for this urn.'
+      ctx.status = 404
+      ctx.body = 'No mediator found for this urn.'
       return
     }
 
     if ((channels == null) || (channels.length === 0)) {
-      yield Q.all(saveDefaultChannelConfig(mediator.defaultChannelConfig))
+      await Q.all(saveDefaultChannelConfig(mediator.defaultChannelConfig))
     } else {
       const filteredChannelConfig = mediator.defaultChannelConfig.filter(channel => Array.from(channels).includes(channel.name))
       if (filteredChannelConfig.length < channels.length) {
-        utils.logAndSetResponse(this, 400, `Could not load mediator default channel config, one or more channels in the request body not found in the mediator config (urn: ${urn})`, 'error')
+        utils.logAndSetResponse(ctx, 400, `Could not load mediator default channel config, one or more channels in the request body not found in the mediator config (urn: ${urn})`, 'error')
         return
       } else {
-        yield Q.all(saveDefaultChannelConfig(filteredChannelConfig))
+        await Q.all(saveDefaultChannelConfig(filteredChannelConfig))
       }
     }
 
-    this.status = 201
+    ctx.status = 201
   } catch (err) {
     logger.debug(err.stack)
-    return utils.logAndSetResponse(this, 500, `Could not load mediator default channel config (urn: ${urn}): ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not load mediator default channel config (urn: ${urn}): ${err}`, 'error')
   }
 }
