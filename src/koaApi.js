@@ -26,7 +26,7 @@ import * as about from './api/about'
 
 export function setupApp (done) {
   // Create an instance of the koa-server and add a body-parser
-  const app = koa()
+  const app = new koa()
   app.use(cors())
   const limitMB = config.api.maxPayloadSizeMB || 16
   app.use(bodyParser({limit: limitMB * 1024 * 1024}))

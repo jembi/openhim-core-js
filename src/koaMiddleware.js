@@ -43,7 +43,7 @@ function * rawBodyReader (next) {
 // Primary app
 
 export function setupApp (done) {
-  const app = koa()
+  const app = new koa()
 
   // Basic authentication middleware
   if (config.authentication.enableBasicAuthentication) {
@@ -90,7 +90,7 @@ export function setupApp (done) {
 
 // Rerun app that bypasses auth
 export function rerunApp (done) {
-  const app = koa()
+  const app = new koa()
 
   app.use(rawBodyReader)
 
@@ -120,7 +120,7 @@ export function rerunApp (done) {
 
 // App for TCP/TLS sockets
 export function tcpApp (done) {
-  const app = koa()
+  const app = new koa()
 
   app.use(rawBodyReader)
   app.use(retrieveTCPTransaction.koaMiddleware)
@@ -145,7 +145,7 @@ export function tcpApp (done) {
 
 // App used by scheduled polling
 export function pollingApp (done) {
-  const app = koa()
+  const app = new koa()
 
   app.use(rawBodyReader)
 
