@@ -190,10 +190,6 @@ export function * getTransactions () {
       filters['childIDs'] = JSON.parse(filters['childIDs'])
     }
 
-    if (filters['$or']) {
-      filters['$or'] = JSON.parse(filters['$or'])
-    }
-
     /* Route Filters */
     // build RegExp for route request path filter
     if (filters['routes.request.path']) {
