@@ -1,12 +1,12 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
 
 const TaskSchema = new Schema({
   status: {
     type: String,
     required: true,
-    enum: ["Queued", "Processing", "Paused", "Cancelled", "Completed"],
-    default: "Queued",
+    enum: ['Queued', 'Processing', 'Paused', 'Cancelled', 'Completed'],
+    default: 'Queued',
     index: true
   },
   transactions: [{
@@ -16,8 +16,8 @@ const TaskSchema = new Schema({
     tstatus: {
       type: String,
       required: true,
-      enum: ["Queued", "Processing", "Completed", "Failed"],
-      default: "Queued"
+      enum: ['Queued', 'Processing', 'Completed', 'Failed'],
+      default: 'Queued'
     },
     error: String,
     rerunID: String,
@@ -40,12 +40,11 @@ const TaskSchema = new Schema({
   batchSize: {
     type: Number, default: 1
   }
-});
+})
 
 /*
  * The task object that describes a specific task within the OpenHIM.
  * It provides some metadata describing a task and contains a number of transaction IDs.
  */
-export const TaskModelAPI = connectionAPI.model("Task", TaskSchema);
-export const TaskModel = connectionDefault.model("Task", TaskSchema);
-
+export const TaskModelAPI = connectionAPI.model('Task', TaskSchema)
+export const TaskModel = connectionDefault.model('Task', TaskSchema)

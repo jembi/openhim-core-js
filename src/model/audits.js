@@ -1,11 +1,11 @@
-import { Schema } from "mongoose";
-import { connectionATNA } from "../config";
+import { Schema } from 'mongoose'
+import { connectionATNA } from '../config'
 
 const codeTypeDef = {
   code: String,
   displayName: String,
   codeSystemName: String
-};
+}
 
 const syslogDef = {
   prival: Number,
@@ -13,13 +13,13 @@ const syslogDef = {
   severityID: Number,
   facility: String,
   severity: String,
-  type: { type: String },
+  type: {type: String},
   time: Date,
   host: String,
   appName: String,
   pid: String,
   msgID: String
-};
+}
 
 const ActiveParticipantDef = {
   userID: String,
@@ -28,8 +28,7 @@ const ActiveParticipantDef = {
   networkAccessPointID: String,
   networkAccessPointTypeCode: String,
   roleIDCode: codeTypeDef
-};
-
+}
 
 const ParticipantObjectIdentificationDef = {
   participantObjectID: String,
@@ -38,11 +37,10 @@ const ParticipantObjectIdentificationDef = {
   participantObjectIDTypeCode: codeTypeDef,
   participantObjectQuery: String,
   participantObjectDetail: {
-    type: { type: String },
+    type: {type: String},
     value: String
   }
-};
-
+}
 
 const AuditRecordSchema = new Schema({
   rawMessage: String,
@@ -63,7 +61,7 @@ const AuditRecordSchema = new Schema({
     auditSourceTypeCode: codeTypeDef
   },
   participantObjectIdentification: [ParticipantObjectIdentificationDef]
-});
+})
 
 // keeps track of unique codes for various fields found in the audits collection
 const AuditMetaRecordSchema = new Schema({
@@ -73,8 +71,8 @@ const AuditMetaRecordSchema = new Schema({
   participantObjectIDTypeCode: [codeTypeDef],
   auditSourceID: [String]
 }, {
-  collection: "auditMeta"
-});
+  collection: 'auditMeta'
+})
 
-export const AuditModel = connectionATNA.model("Audit", AuditRecordSchema);
-export const AuditMetaModel = connectionATNA.model("AuditMeta", AuditMetaRecordSchema);
+export const AuditModel = connectionATNA.model('Audit', AuditRecordSchema)
+export const AuditMetaModel = connectionATNA.model('AuditMeta', AuditMetaRecordSchema)

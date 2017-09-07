@@ -1,5 +1,5 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
 
 const AutoRetrySchema = new Schema({
   transactionID: {
@@ -11,7 +11,7 @@ const AutoRetrySchema = new Schema({
   requestTimestamp: {
     type: Date, required: true
   }
-});
+})
 
-export const AutoRetryModelAPI = connectionAPI.model("AutoRetry", AutoRetrySchema);
-export const AutoRetryModel = connectionDefault.model("AutoRetry", AutoRetrySchema);
+export const AutoRetryModelAPI = connectionAPI.model('AutoRetry', AutoRetrySchema)
+export const AutoRetryModel = connectionDefault.model('AutoRetry', AutoRetrySchema)

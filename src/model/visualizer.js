@@ -1,6 +1,6 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
-import * as events from "./events";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
+import * as events from './events'
 
 const EventLinkDef = {
   eventType: {
@@ -8,13 +8,13 @@ const EventLinkDef = {
   },
   eventName: String,
   display: String
-};
+}
 
 const MediatorLinkDef = {
   mediator: String, // mediator URN
   name: String,
   display: String
-};
+}
 
 const VisualizerSchema = new Schema({
   name: {
@@ -25,16 +25,16 @@ const VisualizerSchema = new Schema({
   mediators: [MediatorLinkDef],
   color: {
     inactive: {
-      type: String, default: "#cccccc"
+      type: String, default: '#cccccc'
     },
     active: {
-      type: String, default: "#4cae4c"
+      type: String, default: '#4cae4c'
     },
     error: {
-      type: String, default: "#d43f3a"
+      type: String, default: '#d43f3a'
     },
     text: {
-      type: String, default: "#000000"
+      type: String, default: '#000000'
     }
   },
   size: {
@@ -65,8 +65,8 @@ const VisualizerSchema = new Schema({
       type: Number, default: 5000
     }
   }
-});
+})
 
 // Compile schema into Model
-export const VisualizerModelAPI = connectionAPI.model("Visualizer", VisualizerSchema);
-export const VisualizerModel = connectionDefault.model("Visualizer", VisualizerSchema);
+export const VisualizerModelAPI = connectionAPI.model('Visualizer', VisualizerSchema)
+export const VisualizerModel = connectionDefault.model('Visualizer', VisualizerSchema)

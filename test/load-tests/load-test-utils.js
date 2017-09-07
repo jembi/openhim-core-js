@@ -8,7 +8,7 @@ module.exports = {
     if (!requestParams.headers) {
       requestParams.headers = {}
     }
-    
+
     const getAuthHeaders = (username, password, callback) => {
       const options = {
         url: `https://localhost:8080/authenticate/${username}`,
@@ -39,10 +39,11 @@ module.exports = {
         callback(null, auth)
       })
     }
-    
+
     getAuthHeaders('root@openhim.org', 'password', (err, headers) => {
+      if (err) { return next(err) }
       Object.assign(requestParams.headers, headers)
-      next()  
-    })    
-  },
+      next()
+    })
+  }
 }

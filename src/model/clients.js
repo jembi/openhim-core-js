@@ -1,5 +1,5 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
 
 const ClientSchema = new Schema({
   clientID: {
@@ -11,7 +11,7 @@ const ClientSchema = new Schema({
   name: {
     type: String, required: true
   },
-  roles: [{ type: String, required: true }],
+  roles: [{type: String, required: true}],
   passwordAlgorithm: String,
   passwordHash: String,
   passwordSalt: String,
@@ -22,8 +22,8 @@ const ClientSchema = new Schema({
   description: String,
   contactPerson: String,
   contactPersonEmail: String
-});
+})
 
 // compile the Client Schema into a Model
-export const ClientModelAPI = connectionAPI.model("Client", ClientSchema);
-export const ClientModel = connectionDefault.model("Client", ClientSchema);
+export const ClientModelAPI = connectionAPI.model('Client', ClientSchema)
+export const ClientModel = connectionDefault.model('Client', ClientSchema)

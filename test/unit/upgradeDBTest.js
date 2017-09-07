@@ -1,169 +1,174 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import Q from "q";
-import should from "should";
-import * as upgradeDB from "../../src/upgradeDB";
-import * as testUtils from "../testUtils";
-import { KeystoreModel } from "../../src/model/keystore";
-import { ClientModel } from "../../src/model/clients";
-import { dbVersionModel } from "../../src/model/dbVersion";
-import { UserModel } from "../../src/model/users";
-import { VisualizerModel } from "../../src/model/visualizer";
+import Q from 'q'
+import should from 'should'
+import * as upgradeDB from '../../src/upgradeDB'
+import * as testUtils from '../testUtils'
+import { KeystoreModel } from '../../src/model/keystore'
+import { ClientModel } from '../../src/model/clients'
+import { DbVersionModel } from '../../src/model/dbVersion'
+import { UserModel } from '../../src/model/users'
+import { VisualizerModel } from '../../src/model/visualizer'
 
-describe("Upgrade DB Tests", () => {
-  describe(".upgradeDB", () => {
-    let func1Complete = false;
-    let func2Complete = false;
+describe('Upgrade DB Tests', () => {
+  describe('.upgradeDB', () => {
+    let func1Complete = false
+    let func2Complete = false
 
-    async function cleanUpgrade(done) {
+    async function cleanUpgrade (done) {
       try {
-        await dbVersionModel.remove();
-        done();
+        await DbVersionModel.remove()
+        done()
       } catch (err) {
-        done(err);
+        done(err)
       }
     }
 
-    beforeEach(cleanUpgrade);
-    afterEach(cleanUpgrade);
+    beforeEach(cleanUpgrade)
+    afterEach(cleanUpgrade)
 
     const mockUpgradeFunc1 = function () {
-      const defer = Q.defer();
+      const defer = Q.defer()
       setTimeout(() => {
         if (func2Complete) {
-          throw new Error("Funtions ran non sequentially");
+          throw new Error('Funtions ran non sequentially')
         } else {
-          func1Complete = true;
-          return defer.resolve();
+          func1Complete = true
+          return defer.resolve()
         }
       }
-                , 10 * global.testTimeoutFactor);
-      return defer.promise;
-    };
+        , 10 * global.testTimeoutFactor)
+      return defer.promise
+    }
 
     const mockUpgradeFunc2 = function () {
-      const defer = Q.defer();
-      func2Complete = true;
-      defer.resolve();
-      return defer.promise;
-    };
+      const defer = Q.defer()
+      func2Complete = true
+      defer.resolve()
+      return defer.promise
+    }
 
-    it("should run each upgrade function sequentially", (done) => {
-      upgradeDB.upgradeFuncs.length = 0;
+    it('should run each upgrade function sequentially', (done) => {
+      upgradeDB.upgradeFuncs.length = 0
       upgradeDB.upgradeFuncs.push({
-        description: "mock func 1",
+        description: 'mock func 1',
         func: mockUpgradeFunc1
-      });
+      })
       upgradeDB.upgradeFuncs.push({
-        description: "mock func 2",
+        description: 'mock func 2',
         func: mockUpgradeFunc2
-      });
+      })
 
       return upgradeDB.upgradeDb(() => {
-        func1Complete.should.be.exactly(true);
-        func2Complete.should.be.exactly(true);
-        return done();
-      });
-    });
-  });
+        func1Complete.should.be.exactly(true)
+        func2Complete.should.be.exactly(true)
+        return done()
+      })
+    })
+  })
 
-  describe("updateFunction0 - Ensure cert fingerprint", () => {
-    const upgradeFunc = upgradeDB.upgradeFuncs[0].func;
+  describe('updateFunction0 - Ensure cert fingerprint', () => {
+    const upgradeFunc = upgradeDB.upgradeFuncs[0].func
 
     beforeEach(done =>
-            testUtils.setupTestKeystore(() =>
-                KeystoreModel.findOne((err, keystore) => {
-                  keystore.cert.fingerprint = undefined;
-                  for (const cert of Array.from(keystore.ca)) {
-                    cert.fingerprint = undefined;
-                  }
-                  return keystore.save((err) => {
-                    if (err) { console.error(err); }
-                    return done();
-                  });
-                })
-            )
-        );
+      testUtils.setupTestKeystore(() =>
+        KeystoreModel.findOne((err, keystore) => {
+          if (err) { return done(err) }
+          keystore.cert.fingerprint = undefined
+          for (const cert of Array.from(keystore.ca)) {
+            cert.fingerprint = undefined
+          }
+          return keystore.save((err) => {
+            if (err) { console.error(err) }
+            return done()
+          })
+        })
+      )
+    )
 
-    it("should add the fingerprint property to ca certificates", done =>
-            upgradeFunc().then(() =>
-                KeystoreModel.findOne((err, keystore) => {
-                  if (err) { console.error(err); }
-                  for (const cert of Array.from(keystore.ca)) {
-                    cert.fingerprint.should.exist;
-                  }
-                  return done();
-                })
-            )
-        );
+    it('should add the fingerprint property to ca certificates', done =>
+      upgradeFunc().then(() =>
+        KeystoreModel.findOne((err, keystore) => {
+          if (err) { console.error(err) }
+          for (const cert of Array.from(keystore.ca)) {
+            cert.fingerprint.should.exist
+          }
+          return done()
+        })
+      )
+    )
 
-    return it("should add the fingerprint property to server certificate", done =>
-            upgradeFunc().then(() =>
-                KeystoreModel.findOne((err, keystore) => {
-                  if (err) { console.error(err); }
-                  keystore.cert.fingerprint.should.exist;
-                  return done();
-                })
-            )
-        );
-  });
+    return it('should add the fingerprint property to server certificate', done =>
+      upgradeFunc().then(() =>
+        KeystoreModel.findOne((err, keystore) => {
+          if (err) { console.error(err) }
+          keystore.cert.fingerprint.should.exist
+          return done()
+        })
+      )
+    )
+  })
 
-  describe("updateFunction1 - Convert client.domain to client.fingerprint", () => {
-    const upgradeFunc = upgradeDB.upgradeFuncs[1].func;
+  describe('updateFunction1 - Convert client.domain to client.fingerprint', () => {
+    const upgradeFunc = upgradeDB.upgradeFuncs[1].func
 
     const clientData = {
-      clientID: "test",
-      clientDomain: "trust1.org", // in default test keystore
-      name: "Test client",
+      clientID: 'test',
+      clientDomain: 'trust1.org', // in default test keystore
+      name: 'Test client',
       roles: [
-        "OpenMRS_PoC",
-        "PoC"
+        'OpenMRS_PoC',
+        'PoC'
       ]
-    };
+    }
 
     before(done =>
-            testUtils.setupTestKeystore(() => {
-              const client = new ClientModel(clientData);
-              return client.save((err) => {
-                if (err != null) { console.error(err); }
-                return done();
-              });
-            })
-        );
+      testUtils.setupTestKeystore(() => {
+        const client = new ClientModel(clientData)
+        return client.save((err) => {
+          if (err != null) { console.error(err) }
+          return done()
+        })
+      })
+    )
 
-    return it("should convert client.domain match to client.certFingerprint match", () =>
-            upgradeFunc().then(() =>
-                ClientModel.findOne({ clientID: "test" }, (err, client) => client.certFingerprint.should.be.exactly("23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54"))
-            )
-        );
-  });
+    return it('should convert client.domain match to client.certFingerprint match', () =>
+      upgradeFunc().then(() =>
+        ClientModel.findOne({clientID: 'test'}, (err, client) => {
+          if (err) { return err }
+          client.certFingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54')
+        }
+        )
+      )
+    )
+  })
 
-  describe("updateFunction2 - Migrate visualizer settings from user profile to shared collection", () => {
-    const upgradeFunc = upgradeDB.upgradeFuncs[2].func;
+  describe('updateFunction2 - Migrate visualizer settings from user profile to shared collection', () => {
+    const upgradeFunc = upgradeDB.upgradeFuncs[2].func
 
     const userObj1 = {
-      firstname: "Test",
-      surname: "User1",
-      email: "test1@user.org",
+      firstname: 'Test',
+      surname: 'User1',
+      email: 'test1@user.org',
       settings: {
         visualizer: {
           components: [{
-            eventType: "primary",
-            eventName: "OpenHIM Mediator FHIR Proxy Route",
-            display: "FHIR Server"
+            eventType: 'primary',
+            eventName: 'OpenHIM Mediator FHIR Proxy Route',
+            display: 'FHIR Server'
           },
           {
-            eventType: "primary",
-            eventName: "echo",
-            display: "Echo"
+            eventType: 'primary',
+            eventName: 'echo',
+            display: 'Echo'
           }
           ],
           color: {
-            inactive: "#c8cacf",
-            active: "#10e057",
-            error: "#a84b5c",
-            text: "#4a4254"
+            inactive: '#c8cacf',
+            active: '#10e057',
+            error: '#a84b5c',
+            text: '#4a4254'
           },
           size: {
             responsive: true,
@@ -178,47 +183,47 @@ describe("Upgrade DB Tests", () => {
             minDisplayPeriod: 500
           },
           channels: [{
-            eventType: "channel",
-            eventName: "FHIR Proxy",
-            display: "FHIR Proxy"
+            eventType: 'channel',
+            eventName: 'FHIR Proxy',
+            display: 'FHIR Proxy'
           },
           {
-            eventType: "channel",
-            eventName: "Echo",
-            display: "Echo"
+            eventType: 'channel',
+            eventName: 'Echo',
+            display: 'Echo'
           }
           ],
           mediators: [{
-            mediator: "urn:mediator:fhir-proxy",
-            name: "OpenHIM Mediator FHIR Proxy",
-            display: "OpenHIM Mediator FHIR Proxy"
+            mediator: 'urn:mediator:fhir-proxy',
+            name: 'OpenHIM Mediator FHIR Proxy',
+            display: 'OpenHIM Mediator FHIR Proxy'
           },
           {
-            mediator: "urn:mediator:shell-script",
-            name: "OpenHIM Shell Script Mediator",
-            display: "OpenHIM Shell Script Mediator"
+            mediator: 'urn:mediator:shell-script',
+            name: 'OpenHIM Shell Script Mediator',
+            display: 'OpenHIM Shell Script Mediator'
           }
           ]
         }
       }
-    };
+    }
     const userObj2 = {
-      firstname: "Test",
-      surname: "User2",
-      email: "test2@user.org",
+      firstname: 'Test',
+      surname: 'User2',
+      email: 'test2@user.org',
       settings: {
         visualizer: {
           components: [{
-            eventType: "primary",
-            eventName: "OpenHIM Mediator FHIR Proxy Route",
-            display: "FHIR Server"
+            eventType: 'primary',
+            eventName: 'OpenHIM Mediator FHIR Proxy Route',
+            display: 'FHIR Server'
           }
           ],
           color: {
-            inactive: "#c8cacf",
-            active: "#10e057",
-            error: "#a84b5c",
-            text: "#4a4254"
+            inactive: '#c8cacf',
+            active: '#10e057',
+            error: '#a84b5c',
+            text: '#4a4254'
           },
           size: {
             responsive: true,
@@ -233,31 +238,31 @@ describe("Upgrade DB Tests", () => {
             minDisplayPeriod: 500
           },
           channels: [{
-            eventType: "channel",
-            eventName: "FHIR Proxy",
-            display: "FHIR Proxy"
+            eventType: 'channel',
+            eventName: 'FHIR Proxy',
+            display: 'FHIR Proxy'
           }
           ],
           mediators: [{
-            mediator: "urn:mediator:fhir-proxy",
-            name: "OpenHIM Mediator FHIR Proxy",
-            display: "OpenHIM Mediator FHIR Proxy"
+            mediator: 'urn:mediator:fhir-proxy',
+            name: 'OpenHIM Mediator FHIR Proxy',
+            display: 'OpenHIM Mediator FHIR Proxy'
           }
           ]
         }
       }
-    };
+    }
     const userObj3 = {
-      firstname: "Test",
-      surname: "User3",
-      email: "test3@user.org",
+      firstname: 'Test',
+      surname: 'User3',
+      email: 'test3@user.org',
       settings: {
         visualizer: {
           color: {
-            inactive: "#c8cacf",
-            active: "#10e057",
-            error: "#a84b5c",
-            text: "#4a4254"
+            inactive: '#c8cacf',
+            active: '#10e057',
+            error: '#a84b5c',
+            text: '#4a4254'
           },
           size: {
             responsive: true,
@@ -276,9 +281,9 @@ describe("Upgrade DB Tests", () => {
           mediators: []
         }
       }
-    };
+    }
 
-        // from structure for Console v1.6.0
+    // from structure for Console v1.6.0
     const userObj4 = {
       settings: {
         list: {},
@@ -295,23 +300,23 @@ describe("Upgrade DB Tests", () => {
             responsive: true
           },
           color: {
-            text: "000000",
-            error: "d43f3a",
-            active: "4cae4c",
-            inactive: "CCCCCC"
+            text: '000000',
+            error: 'd43f3a',
+            active: '4cae4c',
+            inactive: 'CCCCCC'
           },
           endpoints: [{
-            desc: "Test Channel",
-            event: "channel-test"
+            desc: 'Test Channel',
+            event: 'channel-test'
           }
           ],
           components: [{
-            desc: "Test",
-            event: "test"
+            desc: 'Test',
+            event: 'test'
           },
           {
-            desc: "Test Route",
-            event: "route-testroute"
+            desc: 'Test Route',
+            event: 'route-testroute'
           }
           ]
         },
@@ -319,15 +324,15 @@ describe("Upgrade DB Tests", () => {
           limit: 100
         }
       },
-      email: "test4@user.org",
-      firstname: "Test",
-      surname: "User4",
+      email: 'test4@user.org',
+      firstname: 'Test',
+      surname: 'User4',
       groups: [
-        "admin"
+        'admin'
       ]
-    };
+    }
 
-        // from structure for Console v1.6.0
+    // from structure for Console v1.6.0
     const userObj5 = {
       settings: {
         list: {},
@@ -344,10 +349,10 @@ describe("Upgrade DB Tests", () => {
             responsive: true
           },
           color: {
-            text: "000000",
-            error: "d43f3a",
-            active: "4cae4c",
-            inactive: "CCCCCC"
+            text: '000000',
+            error: 'd43f3a',
+            active: '4cae4c',
+            inactive: 'CCCCCC'
           },
           endpoints: [],
           components: []
@@ -356,174 +361,186 @@ describe("Upgrade DB Tests", () => {
           limit: 100
         }
       },
-      email: "test5@user.org",
-      firstname: "Test",
-      surname: "User5",
+      email: 'test5@user.org',
+      firstname: 'Test',
+      surname: 'User5',
       groups: [
-        "admin"
+        'admin'
       ]
-    };
-
+    }
 
     before(done =>
-            UserModel.remove(() =>
-                VisualizerModel.remove(() => done())
-            )
-        );
+      UserModel.remove(() =>
+        VisualizerModel.remove(() => done())
+      )
+    )
 
     beforeEach((done) => {
-      let user = new UserModel(userObj1);
+      let user = new UserModel(userObj1)
       return user.save((err) => {
-        user = new UserModel(userObj2);
+        if (err) { return done(err) }
+        user = new UserModel(userObj2)
         return user.save((err) => {
-          if (err != null) { return done(err); }
-          return done();
-        });
-      });
-    });
+          if (err != null) { return done(err) }
+          return done()
+        })
+      })
+    })
 
     afterEach(done =>
-            UserModel.remove(() =>
-                VisualizerModel.remove(() => done())
-            )
-        );
+      UserModel.remove(() =>
+        VisualizerModel.remove(() => done())
+      )
+    )
 
-    it("should migrate visualizer settings from user setting to shared collection", done =>
+    it('should migrate visualizer settings from user setting to shared collection', done =>
+      upgradeFunc().then(() =>
+        VisualizerModel.find((err, visualizers) => {
+          if (err) { return done(err) }
+          visualizers.length.should.be.exactly(2)
+          const names = visualizers.map(v => v.name)
+          const idx1 = names.indexOf('Test User1\'s visualizer')
+          const idx2 = names.indexOf('Test User2\'s visualizer')
+          idx1.should.be.above(-1)
+          visualizers[idx1].components.length.should.be.exactly(2)
+          idx2.should.be.above(-1)
+          visualizers[idx2].components.length.should.be.exactly(1)
+          return done()
+        })).catch(err => done(err))
+    )
+
+    it('should migrate visualizer settings even when user have the same name', done =>
+      UserModel.findOne({surname: 'User2'}, (err, user) => {
+        if (err) { return done(err) }
+        user.surname = 'User1'
+        return user.save((err) => {
+          if (err) { return done(err) }
+          return upgradeFunc().then(() =>
+            VisualizerModel.find((err, visualizers) => {
+              if (err) { return done(err) }
+              visualizers.length.should.be.exactly(2)
+              const names = visualizers.map(v => v.name)
+              const idx1 = names.indexOf('Test User1\'s visualizer')
+              const idx2 = names.indexOf('Test User1\'s visualizer 2')
+              idx1.should.be.above(-1)
+              visualizers[idx1].components.length.should.be.exactly(2)
+              idx2.should.be.above(-1)
+              visualizers[idx2].components.length.should.be.exactly(1)
+              return done()
+            })).catch(err => done(err))
+        })
+      })
+    )
+
+    it('should remove the users visualizer setting from their profile', done =>
+      upgradeFunc().then(() =>
+        UserModel.findOne({email: 'test1@user.org'}, (err, user) => {
+          if (err) { return done(err) }
+          should.not.exist(user.settings.visualizer)
+          return done()
+        })
+      )
+    )
+
+    it('should ignore users that don\'t have a settings.visualizer or settings set', done =>
+      UserModel.find((err, users) => {
+        if (err) { return done(err) }
+        users[0].set('settings.visualizer', null)
+        users[1].set('settings', null)
+        return users[0].save(err => {
+          if (err) { return done(err) }
+          users[1].save(err => {
+            if (err) { return done(err) }
             upgradeFunc().then(() =>
-                VisualizerModel.find((err, visualizers) => {
-                  if (err) { return done(err); }
-                  visualizers.length.should.be.exactly(2);
-                  const names = visualizers.map(v => v.name);
-                  const idx1 = names.indexOf("Test User1's visualizer");
-                  const idx2 = names.indexOf("Test User2's visualizer");
-                  idx1.should.be.above(-1);
-                  visualizers[idx1].components.length.should.be.exactly(2);
-                  idx2.should.be.above(-1);
-                  visualizers[idx2].components.length.should.be.exactly(1);
-                  return done();
-                })).catch(err => done(err))
-        );
-
-    it("should migrate visualizer settings even when user have the same name", done =>
-            UserModel.findOne({ surname: "User2" }, (err, user) => {
-              user.surname = "User1";
-              return user.save((err) => {
-                if (err) { return done(err); }
-                return upgradeFunc().then(() =>
-                        VisualizerModel.find((err, visualizers) => {
-                          if (err) { return done(err); }
-                          visualizers.length.should.be.exactly(2);
-                          const names = visualizers.map(v => v.name);
-                          const idx1 = names.indexOf("Test User1's visualizer");
-                          const idx2 = names.indexOf("Test User1's visualizer 2");
-                          idx1.should.be.above(-1);
-                          visualizers[idx1].components.length.should.be.exactly(2);
-                          idx2.should.be.above(-1);
-                          visualizers[idx2].components.length.should.be.exactly(1);
-                          return done();
-                        })).catch(err => done(err));
-              });
-            })
-        );
-
-    it("should remove the users visualizer setting from their profile", done =>
-            upgradeFunc().then(() =>
-                UserModel.findOne({ email: "test1@user.org" }, (err, user) => {
-                  should.not.exist(user.settings.visualizer);
-                  return done();
-                })
+                  VisualizerModel.find((err, visualizers) => {
+                    if (err) { return done(err) }
+                    visualizers.length.should.be.exactly(0)
+                    return done()
+                  })
+                ).catch(err => done(err))
+          }
             )
-        );
+        }
+        )
+      })
+    )
 
-    it("should ignore users that don't have a settings.visualizer or settings set", done =>
-            UserModel.find((err, users) => {
-              users[0].set("settings.visualizer", null);
-              users[1].set("settings", null);
-              return users[0].save(err =>
-                    users[1].save(err =>
-                        upgradeFunc().then(() =>
-                            VisualizerModel.find((err, visualizers) => {
-                              visualizers.length.should.be.exactly(0);
-                              return done();
-                            })).catch(err => done(err))
-                    )
-                );
-            })
-        );
-
-    it("should ignore users that have visualizer settings with no mediators, components or channels", (done) => {
-      const user = new UserModel(userObj3);
+    it('should ignore users that have visualizer settings with no mediators, components or channels', (done) => {
+      const user = new UserModel(userObj3)
       return user.save((err) => {
-        if (err) { done(err); }
+        if (err) { done(err) }
         return upgradeFunc().then(() =>
-                    VisualizerModel.find((err, visualizers) => {
-                      visualizers.length.should.be.exactly(2); // third user is skipped
-                      return done();
-                    })).catch(err => done(err));
-      });
-    });
+          VisualizerModel.find((err, visualizers) => {
+            if (err) { return done(err) }
+            visualizers.length.should.be.exactly(2) // third user is skipped
+            return done()
+          })).catch(err => done(err))
+      })
+    })
 
-    it("should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)", (done) => {
-      const user = new UserModel(userObj4);
+    it('should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)', (done) => {
+      const user = new UserModel(userObj4)
       return user.save((err) => {
-        if (err) { done(err); }
+        if (err) { done(err) }
         return upgradeFunc().then(() =>
-                    VisualizerModel.find((err, visualizers) => {
-                      visualizers.length.should.be.exactly(3);
+          VisualizerModel.find((err, visualizers) => {
+            if (err) { return done(err) }
+            visualizers.length.should.be.exactly(3)
 
-                      const names = visualizers.map(v => v.name);
-                      const idx = names.indexOf("Test User4's visualizer");
+            const names = visualizers.map(v => v.name)
+            const idx = names.indexOf('Test User4\'s visualizer')
 
-                      visualizers[idx].time.minDisplayPeriod.should.be.exactly(100);
-                      visualizers[idx].mediators.length.should.be.exactly(0);
+            visualizers[idx].time.minDisplayPeriod.should.be.exactly(100)
+            visualizers[idx].mediators.length.should.be.exactly(0)
 
-                      visualizers[idx].channels.length.should.be.exactly(1);
-                      visualizers[idx].channels[0].eventType.should.be.equal("channel");
-                      visualizers[idx].channels[0].eventName.should.be.equal("test");
-                      visualizers[idx].channels[0].display.should.be.equal("Test Channel");
+            visualizers[idx].channels.length.should.be.exactly(1)
+            visualizers[idx].channels[0].eventType.should.be.equal('channel')
+            visualizers[idx].channels[0].eventName.should.be.equal('test')
+            visualizers[idx].channels[0].display.should.be.equal('Test Channel')
 
-                      visualizers[idx].components.length.should.be.exactly(2);
-                      visualizers[idx].components[0].eventType.should.be.equal("channel");
-                      visualizers[idx].components[0].eventName.should.be.equal("test");
-                      visualizers[idx].components[0].display.should.be.equal("Test");
-                      visualizers[idx].components[1].eventType.should.be.equal("route");
-                      visualizers[idx].components[1].eventName.should.be.equal("testroute");
-                      visualizers[idx].components[1].display.should.be.equal("Test Route");
-                      return done();
-                    })).catch(err => done(err));
-      });
-    });
+            visualizers[idx].components.length.should.be.exactly(2)
+            visualizers[idx].components[0].eventType.should.be.equal('channel')
+            visualizers[idx].components[0].eventName.should.be.equal('test')
+            visualizers[idx].components[0].display.should.be.equal('Test')
+            visualizers[idx].components[1].eventType.should.be.equal('route')
+            visualizers[idx].components[1].eventName.should.be.equal('testroute')
+            visualizers[idx].components[1].display.should.be.equal('Test Route')
+            return done()
+          })).catch(err => done(err))
+      })
+    })
 
-    return it("should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)", (done) => {
-      const user = new UserModel(userObj5);
+    return it('should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)', (done) => {
+      const user = new UserModel(userObj5)
       return user.save((err) => {
-        if (err) { done(err); }
+        if (err) { done(err) }
         return upgradeFunc().then(() =>
-                    VisualizerModel.find((err, visualizers) => {
-                      visualizers.length.should.be.exactly(2);
-                      return done();
-                    })).catch(err => done(err));
-      });
-    });
-  });
+          VisualizerModel.find((err, visualizers) => {
+            if (err) { return done(err) }
+            visualizers.length.should.be.exactly(2)
+            return done()
+          })).catch(err => done(err))
+      })
+    })
+  })
 
-  return describe("dedupName()", () => {
-    it("should correctly dedup a name", () => {
-      const names = ["Max", "Sam", "John"];
-      const name = upgradeDB.dedupName("Max", names);
-      return name.should.be.exactly("Max 2");
-    });
+  return describe('dedupName()', () => {
+    it('should correctly dedup a name', () => {
+      const names = ['Max', 'Sam', 'John']
+      const name = upgradeDB.dedupName('Max', names)
+      return name.should.be.exactly('Max 2')
+    })
 
-    it("should bump the increment if there are multiple dupes", () => {
-      const names = ["Max", "Max 2", "Max 3"];
-      const name = upgradeDB.dedupName("Max", names);
-      return name.should.be.exactly("Max 4");
-    });
+    it('should bump the increment if there are multiple dupes', () => {
+      const names = ['Max', 'Max 2', 'Max 3']
+      const name = upgradeDB.dedupName('Max', names)
+      return name.should.be.exactly('Max 4')
+    })
 
-    return it("should return the original name of no dupes", () => {
-      const names = ["Sam", "John", "Simon"];
-      const name = upgradeDB.dedupName("Max", names);
-      return name.should.be.exactly("Max");
-    });
-  });
-});
+    return it('should return the original name of no dupes', () => {
+      const names = ['Sam', 'John', 'Simon']
+      const name = upgradeDB.dedupName('Max', names)
+      return name.should.be.exactly('Max')
+    })
+  })
+})

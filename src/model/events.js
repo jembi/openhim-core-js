@@ -1,7 +1,7 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
 
-export const eventTypes = ["channel", "primary", "route", "orchestration"];
+export const eventTypes = ['channel', 'primary', 'route', 'orchestration']
 
 // Active transaction events
 //
@@ -12,7 +12,7 @@ export const eventTypes = ["channel", "primary", "route", "orchestration"];
 //
 const EventsSchema = new Schema({
   created: {
-    type: Date, default: Date.now, expires: "1h"
+    type: Date, default: Date.now, expires: '1h'
   },
   channelID: {
     type: Schema.Types.ObjectId, required: true
@@ -24,17 +24,17 @@ const EventsSchema = new Schema({
     type: String, enum: exports.EventTypes
   },
   event: {
-    type: String, enum: ["start", "end"]
+    type: String, enum: ['start', 'end']
   },
   name: String,
   status: Number,
   statusType: {
-    type: String, enum: ["success", "error"]
+    type: String, enum: ['success', 'error']
   },  // status string supported by visualizer (e.g. 'error' is red)
   normalizedTimestamp: String,
   mediator: String,
   autoRetryAttempt: Number
-});
+})
 
-export const EventModelAPI = connectionAPI.model("Event", EventsSchema);
-export const EventModel = connectionDefault.model("Event", EventsSchema);
+export const EventModelAPI = connectionAPI.model('Event', EventsSchema)
+export const EventModel = connectionDefault.model('Event', EventsSchema)

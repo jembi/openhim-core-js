@@ -4,7 +4,7 @@
     "atnaUrl": "mongodb://localhost/openhim-test"
   },
   "logger": {
-    "level": "error"
+    "level": "fatal"
   },
   "api": {
     "enabled" : true,

@@ -1,5 +1,5 @@
-import { Schema } from "mongoose";
-import { connectionAPI, connectionDefault } from "../config";
+import { Schema } from 'mongoose'
+import { connectionAPI, connectionDefault } from '../config'
 
 const UserSchema = new Schema({
   firstname: {
@@ -22,12 +22,12 @@ const UserSchema = new Schema({
   token: String,
   tokenType: {
     type: String,
-    enum: ["newUser", "existingUser", null]
+    enum: ['newUser', 'existingUser', null]
   }, // null is needed as we used nulls to clear to token and tokenType
   expiry: Date,
   locked: Boolean
-});
+})
 
 // compile the User Schema into a Model
-export const UserModelAPI = connectionAPI.model("User", UserSchema);
-export const UserModel = connectionDefault.model("User", UserSchema);
+export const UserModelAPI = connectionAPI.model('User', UserSchema)
+export const UserModel = connectionDefault.model('User', UserSchema)
