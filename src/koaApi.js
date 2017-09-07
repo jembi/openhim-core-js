@@ -91,12 +91,12 @@ export function setupApp (done) {
   app.use(route.put('/tasks/:taskId', tasks.updateTask))
   app.use(route.delete('/tasks/:taskId', tasks.removeTask))
 
-  app.use(route.get('/metrics', function () { return metrics.getMetrics.call(this, false) }))
-  app.use(route.get('/metrics/channels', function () { return metrics.getMetrics.call(this, true) }))
-  app.use(route.get('/metrics/channels/:channelID', function (channelID) { return metrics.getMetrics.call(this, true, null, channelID) }))
-  app.use(route.get('/metrics/timeseries/:timeSeries', function (timeSeries) { return metrics.getMetrics.call(this, false, timeSeries) }))
-  app.use(route.get('/metrics/timeseries/:timeSeries/channels', function (timeSeries) { return metrics.getMetrics.call(this, true, timeSeries) }))
-  app.use(route.get('/metrics/timeseries/:timeSeries/channels/:channelID', function (timeSeries, channelID) { return metrics.getMetrics.call(this, true, timeSeries, channelID) }))
+  app.use(route.get('/metrics', (ctx) => metrics.getMetrics(ctx, false)))
+  app.use(route.get('/metrics/channels', (ctx) => metrics.getMetrics(ctx, true)))
+  app.use(route.get('/metrics/channels/:channelID', (ctx, channelID) => metrics.getMetrics(ctx, true, null, channelID)))
+  app.use(route.get('/metrics/timeseries/:timeSeries', (ctx, timeseries) => metrics.getMetrics(ctx, false, timeseries)))
+  app.use(route.get('/metrics/timeseries/:timeSeries/channels', (ctx, timeseries) => metrics.getMetrics(ctx, true, timeseries)))
+  app.use(route.get('/metrics/timeseries/:timeSeries/channels/:channelID', (ctx, timeseries, channelID) => metrics.getMetrics(ctx, true, timeseries, channelID)))
 
   app.use(route.get('/mediators', mediators.getAllMediators))
   app.use(route.get('/mediators/:uuid', mediators.getMediator))
