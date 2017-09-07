@@ -74,7 +74,7 @@ The server will by default start in development mode using the mongodb database 
 
 This starts the server with production defaults, including the use of the production mongodb database called 'openhim'.
 
-This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using `npm test`.
+This project uses [mocha](http://mochajs.org/) as a unit testing framework with [should.js](https://github.com/visionmedia/should.js/) for assertions and [sinon.js](http://sinonjs.org/) for spies and mocks. The tests can be run using `npm test`.
 
 **Pro tips:**
 
