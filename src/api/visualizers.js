@@ -47,13 +47,12 @@ export async function addVisualizer (ctx) {
     return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addVisualizer denied.`, 'info')
   }
 
-  const visualizerData = ctx.request.body
-  if (!visualizerData) {
+  if (!ctx.request.rawBody) {
     return utils.logAndSetResponse(ctx, 404, 'Cannot Add Visualizer, no request object', 'info')
   }
 
   try {
-    const visualizer = new VisualizerModelAPI(visualizerData)
+    const visualizer = new VisualizerModelAPI(ctx.request.body)
     await Q.ninvoke(visualizer, 'save')
 
     ctx.body = 'Visualizer successfully created'
@@ -71,13 +70,13 @@ export async function updateVisualizer (ctx, visualizerId) {
     return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to updateVisualizer denied.`, 'info')
   }
 
-  const visualizerData = ctx.request.body
-  if (!visualizerData) {
+  if (!ctx.request.rawBody) {
     return utils.logAndSetResponse(ctx, 404, `Cannot Update Visualizer with _id ${visualizerId}, no request object`, 'info')
   }
 
-  visualizerId = unescape(visualizerId)
+  const visualizerData = ctx.request.body
 
+  visualizerId = unescape(visualizerId)
   // Ignore _id if it exists, a user shouldn't be able to update the internal id
   if (visualizerData._id) { delete visualizerData._id }
 
