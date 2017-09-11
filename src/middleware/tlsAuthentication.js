@@ -89,7 +89,7 @@ function clientLookup (fingerprint, subjectCN, issuerCN) {
   const deferred = Q.defer()
 
   ClientModel.findOne({certFingerprint: fingerprint}, (err, result) => {
-    if (err) { deferred.reject(err) }
+    if (err) { return deferred.reject(err) }
 
     if (result != null) {
       // found a match
