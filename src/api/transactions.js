@@ -524,11 +524,11 @@ export async function updateTransaction (ctx, transactionId) {
 
     calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet())
 
-    const ctx = {
+    const context = {
       totalBodyLength: transactionBodiesLength.length,
       primaryRequest: true
     }
-    enforceMaxBodiesSize(ctx, updates, new WeakSet())
+    enforceMaxBodiesSize(context, updates, new WeakSet())
 
     const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
 
