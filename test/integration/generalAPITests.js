@@ -31,11 +31,14 @@ describe('API Integration Tests', () =>
       )
     )
 
-    it('should set the cross-origin resource sharing headers', done =>
+    it('should set the cross-origin resource sharing headers', done => {
+      const origin = 'https://example.com'
       request('https://localhost:8080')
-        .get('/authenticate/bfm@crazy.net')
-        .expect(200)
-        .expect('Access-Control-Allow-Origin', '*')
+        .options('/authenticate/bfm@crazy.net')
+        .set('Origin', origin)
+        .set('Access-Control-Request-Method', 'GET')
+        .expect(204)
+        .expect('Access-Control-Allow-Origin', origin)
         .expect('Access-Control-Allow-Methods', 'GET,HEAD,PUT,POST,DELETE')
         .end((err, res) => {
           if (err) {
@@ -44,7 +47,7 @@ describe('API Integration Tests', () =>
             return done()
           }
         })
-    )
+    })
 
     it('should disallow access if no API authentication details are provided', done =>
       request('https://localhost:8080')
