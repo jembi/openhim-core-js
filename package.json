@@ -28,7 +28,7 @@
     "stop": "pkill -SIGINT Core"
   },
   "dependencies": {
-    "agenda": "^0.8.1",
+    "agenda": "^1.0.0",
     "app-root-path": "^2.0.1",
     "atna-audit": "^0.5.0",
     "babel-polyfill": "^6.23.0",
