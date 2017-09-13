@@ -245,7 +245,7 @@ export function getCertKeyStatus (callback) {
       return callback(null, false)
     }
 
-    return pem.getModulusFromProtected(keystoreDoc.key, keystoreDoc.passphrase, (err, keyModulus) => {
+    return pem.getModulus(keystoreDoc.key, keystoreDoc.passphrase, (err, keyModulus) => {
       if (err) { return callback(err, null) }
       return pem.getModulus(keystoreDoc.cert.data, (err, certModulus) => {
         if (err) { return callback(err, null) }
