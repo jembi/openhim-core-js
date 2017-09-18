@@ -36,7 +36,7 @@ function comparePasswordWithClientHash (pass, client, callback) {
 }
 
 export function authenticateUser (ctx, done) {
-  const user = auth(ctx)
+  const user = auth(ctx.req)
 
   if (user) {
     return ClientModel.findOne({clientID: user.name}, (err, client) => {
