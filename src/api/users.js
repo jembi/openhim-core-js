@@ -29,8 +29,8 @@ export async function authenticate (ctx, email) {
     if (!user) {
       utils.logAndSetResponse(ctx, 404, `Could not find user by email ${email}`, 'info')
       // Audit unknown user requested
-      let audit = atna.userLoginAudit(atna.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email)
-      audit = atna.wrapInSyslog(audit)
+      let audit = atna.construct.userLoginAudit(atna.constants.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email)
+      audit = atna.construct.wrapInSyslog(audit)
       return auditing.sendAuditEvent(audit, () => logger.debug('Processed internal audit'))
     } else {
       ctx.body = {

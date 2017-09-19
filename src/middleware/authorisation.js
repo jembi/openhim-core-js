@@ -15,8 +15,8 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)
 
 function genAuthAudit (remoteAddress) {
-  let audit = atna.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE)
-  audit = atna.wrapInSyslog(audit)
+  let audit = atna.construct.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.constants.OUTCOME_MINOR_FAILURE)
+  audit = atna.construct.wrapInSyslog(audit)
   return audit
 }
 

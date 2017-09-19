@@ -33,8 +33,8 @@ export async function authenticate (ctx, next) {
   const authToken = header['auth-token']
 
   function auditAuthFailure () {
-    let audit = atna.userLoginAudit(atna.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email)
-    audit = atna.wrapInSyslog(audit)
+    let audit = atna.construct.userLoginAudit(atna.constants.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email)
+    audit = atna.construct.wrapInSyslog(audit)
     return auditing.sendAuditEvent(audit, () => logger.debug('Processed internal audit'))
   }
 
@@ -99,8 +99,8 @@ export async function authenticate (ctx, next) {
     }
 
     // send audit
-    let audit = atna.userLoginAudit(atna.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(','), user.groups.join(','))
-    audit = atna.wrapInSyslog(audit)
+    let audit = atna.construct.userLoginAudit(atna.constants.OUTCOME_SUCCESS, himSourceID, os.hostname(), email, user.groups.join(','), user.groups.join(','))
+    audit = atna.construct.wrapInSyslog(audit)
     auditing.sendAuditEvent(audit, () => logger.debug('Processed internal audit'))
     await next()
   } else {

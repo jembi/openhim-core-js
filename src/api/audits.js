@@ -32,8 +32,8 @@ function getProjectionObject (filterRepresentation) {
 function auditLogUsed (auditId, outcome, user) {
   const groups = user.groups.join(',')
   const uri = `https://${config.router.externalHostname}:${config.api.httpsPort}/audits/${auditId}`
-  let audit = atna.auditLogUsedAudit(outcome, himSourceID, os.hostname(), user.email, groups, groups, uri)
-  audit = atna.wrapInSyslog(audit)
+  let audit = atna.construct.auditLogUsedAudit(outcome, himSourceID, os.hostname(), user.email, groups, groups, uri)
+  audit = atna.construct.wrapInSyslog(audit)
   return auditing.sendAuditEvent(audit, () => logger.debug(`Processed audit log used message for user '${user.email}' and audit '${auditId}'`))
 }
 
@@ -129,7 +129,7 @@ export async function getAudits (ctx) {
 
     // audit each retrieved record, but only for non-basic representation requests
     if ((filterRepresentation === 'full') || (filterRepresentation === 'simpledetails')) {
-      Array.from(ctx.body).map((record) => auditLogUsed(record._id, atna.OUTCOME_SUCCESS, ctx.authenticated))
+      Array.from(ctx.body).map((record) => auditLogUsed(record._id, atna.constants.OUTCOME_SUCCESS, ctx.authenticated))
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not retrieve audits via the API: ${e}`, 'error')
@@ -159,14 +159,14 @@ export async function getAuditById (ctx, auditId) {
     if (!result) {
       ctx.body = `Could not find audits record with ID: ${auditId}`
       ctx.status = 404
-      return auditLogUsed(auditId, atna.OUTCOME_MINOR_FAILURE, ctx.authenticated)
+      return auditLogUsed(auditId, atna.constants.OUTCOME_MINOR_FAILURE, ctx.authenticated)
     } else {
       ctx.body = result
-      return auditLogUsed(auditId, atna.OUTCOME_SUCCESS, ctx.authenticated)
+      return auditLogUsed(auditId, atna.constants.OUTCOME_SUCCESS, ctx.authenticated)
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not get audit by ID via the API: ${e}`, 'error')
-    auditLogUsed(auditId, atna.OUTCOME_MAJOR_FAILURE, ctx.authenticated)
+    auditLogUsed(auditId, atna.constants.OUTCOME_MAJOR_FAILURE, ctx.authenticated)
   }
 }
 

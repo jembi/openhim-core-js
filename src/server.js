@@ -690,14 +690,15 @@ if (cluster.isMaster && !module.parent) {
       promises.push(startAgenda())
 
       return (Q.all(promises)).then(() => {
-        let audit = atna.appActivityAudit(true, himSourceID, os.hostname(), 'system')
-        audit = atna.wrapInSyslog(audit)
-        return auditing.sendAuditEvent(audit, () => {
+        let audit = atna.construct.appActivityAudit(true, himSourceID, os.hostname(), 'system')
+        audit = atna.construct.wrapInSyslog(audit)
+        return auditing.sendAuditEvent(audit, (err) => {
+          if (err) return done(err)
           logger.info('Processed start audit event')
           logger.info(`OpenHIM server started: ${new Date()}`)
           return done()
         })
-      })
+      }).catch(done)
     })
   }
 
@@ -791,8 +792,8 @@ if (cluster.isMaster && !module.parent) {
 
       agenda = null
 
-      let audit = atna.appActivityAudit(false, himSourceID, os.hostname(), 'system')
-      audit = atna.wrapInSyslog(audit)
+      let audit = atna.construct.appActivityAudit(false, himSourceID, os.hostname(), 'system')
+      audit = atna.construct.wrapInSyslog(audit)
       return auditing.sendAuditEvent(audit, () => {
         logger.info('Processed stop audit event')
         logger.info('Server shutdown complete.')

@@ -142,8 +142,8 @@ export async function addMediator (ctx) {
     }
 
     // audit mediator start
-    let audit = atna.appActivityAudit(true, mediator.name, mediatorHost, 'system')
-    audit = atna.wrapInSyslog(audit)
+    let audit = atna.construct.appActivityAudit(true, mediator.name, mediatorHost, 'system')
+    audit = atna.construct.wrapInSyslog(audit)
     auditing.sendAuditEvent(audit, () => logger.info(`Processed internal mediator start audit for: ${mediator.name} - ${mediator.urn}`))
 
     if (!mediator.urn) {

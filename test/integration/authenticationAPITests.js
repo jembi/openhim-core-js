@@ -25,11 +25,11 @@ describe('API Integration Tests', () =>
 
     after(done =>
       auth.cleanupTestUsers(err => {
-        if (err) { return done(err) }
-        AuditModel.remove({}, () =>
+          if (err) { return done(err) }
+          AuditModel.remove({}, () =>
             server.stop(() => done())
           )
-      }
+        }
       )
     )
 
