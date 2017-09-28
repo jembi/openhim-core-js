@@ -43,6 +43,7 @@ config.api = config.get('api')
 config.rerun = config.get('rerun')
 config.tcpAdapter = config.get('tcpAdapter')
 config.logger = config.get('logger')
+config.mongoLogger = config.get('mongoLogger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
@@ -99,6 +100,7 @@ if (cluster.isMaster && !module.parent) {
     logger.add(logger.transports.MongoDB, {
       db: config.mongo.url,
       label: 'master',
+      options: config.mongoLogger.options,
       level: 'debug',
       capped: config.logger.capDBLogs,
       cappedSize: config.logger.capSize
@@ -217,6 +219,7 @@ if (cluster.isMaster && !module.parent) {
   if (config.logger.logToDB === true) {
     logger.add(logger.transports.MongoDB, {
       db: config.mongo.url,
+      options: config.mongoLogger.options,
       label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined,
       level: 'debug',
       capped: config.logger.capDBLogs,
