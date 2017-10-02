@@ -1,0 +1,19 @@
+config:
+  target: "https://localhost:8080"
+  phases:
+    - duration: 10
+      name: 'Low load'
+      arrivalRate: 3
+    - duration: 10
+      name: 'Medium load'
+      arrivalRate: 20
+    - duration: 10
+      name: 'High load'
+      arrivalRate: 50
+  processor: './load-test-utils.js'
+      
+scenarios:
+  - flow:
+    - get:
+        url: "/users"
+        beforeRequest: 'setAuthHeaders'
