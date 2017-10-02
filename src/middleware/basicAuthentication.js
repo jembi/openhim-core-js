@@ -36,7 +36,7 @@ function comparePasswordWithClientHash (pass, client, callback) {
 }
 
 export function authenticateUser (ctx, done) {
-  const user = auth(ctx)
+  const user = auth(ctx.req)
 
   if (user) {
     return ClientModel.findOne({clientID: user.name}, (err, client) => {
@@ -76,18 +76,18 @@ export function authenticateUser (ctx, done) {
 /*
  * Koa middleware for authentication by basic auth
  */
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  if (this.authenticated != null) {
-    return yield next
+  if (ctx.authenticated != null) {
+    await next()
   } else {
     const _authenticateUser = Q.denodeify(authenticateUser)
-    yield _authenticateUser(this)
-    if ((this.authenticated != null ? this.authenticated.clientID : undefined) != null) {
-      this.header['X-OpenHIM-ClientID'] = this.authenticated.clientID
+    await _authenticateUser(ctx)
+    if ((ctx.authenticated != null ? ctx.authenticated.clientID : undefined) != null) {
+      ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID
     }
     if (statsdServer.enabled) { sdc.timing(`${domain}.basicAuthMiddleware`, startTime) }
-    return yield next
+    await next()
   }
 }

@@ -9,15 +9,15 @@ const application = config.get('application')
 const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)
 
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   // the body contains the key
-  const transaction = tcpAdapter.popTransaction(this.body)
+  const transaction = tcpAdapter.popTransaction(ctx.body)
 
-  this.body = transaction.data
-  this.authorisedChannel = transaction.channel
+  ctx.body = transaction.data
+  ctx.authorisedChannel = transaction.channel
 
   if (statsdServer.enabled) { sdc.timing(`${domain}.retrieveTCPTransactionMiddleware`, startTime) }
-  return yield next
+  await next()
 }

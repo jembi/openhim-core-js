@@ -70,7 +70,7 @@ describe('tlsAuthentication.coffee', () => {
         return promise.then((result) => {
           result.should.have.property('clientID', client.clientID)
           return ClientModel.remove({}, () => done())
-        })
+        }).catch(done)
       })
     })
 

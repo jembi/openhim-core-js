@@ -80,10 +80,10 @@ function buildResponseObject (model, doc, status, message, uid) {
 }
 
 // API endpoint that returns metadata for export
-export function * getMetadata () {
+export async function getMetadata (ctx) {
   // Test if the user is authorised
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getMetadata denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getMetadata denied.`, 'info')
   }
 
   try {
@@ -91,7 +91,7 @@ export function * getMetadata () {
 
     // Return all documents from all collections for export
     for (const col in collections) {
-      exportObject[col] = yield collections[col].find().lean().exec()
+      exportObject[col] = await collections[col].find().lean().exec()
       for (let doc of Array.from(exportObject[col])) {
         if (doc._id) {
           doc = removeProperties(doc)
@@ -99,24 +99,24 @@ export function * getMetadata () {
       }
     }
 
-    this.body = [exportObject]
-    this.status = 200
+    ctx.body = [exportObject]
+    ctx.status = 200
   } catch (e) {
-    this.body = e.message
-    return utils.logAndSetResponse(this, 500, `Could not fetch specified metadata via the API ${e}`, 'error')
+    ctx.body = e.message
+    utils.logAndSetResponse(ctx, 500, `Could not fetch specified metadata via the API ${e}`, 'error')
   }
 }
 
-function * handleMetadataPost (action, that) {
+async function handleMetadataPost (ctx, action) {
   // Test if the user is authorised
-  if (!authorisation.inGroup('admin', that.authenticated)) {
-    return utils.logAndSetResponse(that, 403, `User ${that.authenticated.email} is not an admin, API access to importMetadata denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to importMetadata denied.`, 'info')
   }
 
   try {
     let status
     const returnObject = []
-    const insertObject = that.request.body
+    const insertObject = ctx.request.body
 
     for (const key in insertObject) {
       const insertDocuments = insertObject[key]
@@ -131,22 +131,22 @@ function * handleMetadataPost (action, that) {
 
           // Keystore model does not have a uid other than _id and may not contain more than one entry
           if (key === 'Keystore') {
-            result = yield collections[key].find().exec()
+            result = await collections[key].find().exec()
             uid = ''
           } else {
             const uidObj = getUniqueIdentifierForCollection(key, doc)
             uid = uidObj[Object.keys(uidObj)[0]]
-            result = yield collections[key].find(uidObj).exec()
+            result = await collections[key].find(uidObj).exec()
           }
 
           if (action === 'import') {
             if (result && (result.length > 0) && result[0]._id) {
               if (doc._id) { delete doc._id }
-              result = yield collections[key].findByIdAndUpdate(result[0]._id, doc).exec()
+              result = await collections[key].findByIdAndUpdate(result[0]._id, doc).exec()
               status = 'Updated'
             } else {
               doc = new (collections[key])(doc)
-              result = yield Q.ninvoke(doc, 'save')
+              result = await Q.ninvoke(doc, 'save')
               status = 'Inserted'
             }
           }
@@ -164,7 +164,7 @@ function * handleMetadataPost (action, that) {
             }
           }
 
-          logger.info(`User ${that.authenticated.email} performed ${action} action on ${key}, got ${status}`)
+          logger.info(`User ${ctx.authenticated.email} performed ${action} action on ${key}, got ${status}`)
           returnObject.push(buildResponseObject(key, doc, status, '', uid))
         } catch (err) {
           logger.error(`Failed to ${action} ${key} with unique identifier ${uid}. ${err.message}`)
@@ -173,22 +173,22 @@ function * handleMetadataPost (action, that) {
       }
     }
 
-    that.body = returnObject
-    that.status = 201
+    ctx.body = returnObject
+    ctx.status = 201
   } catch (error2) {
-    that.body = error2.message
-    return utils.logAndSetResponse(that, 500, `Could not import metadata via the API ${error2}`, 'error')
+    ctx.body = error2.message
+    utils.logAndSetResponse(ctx, 500, `Could not import metadata via the API ${error2}`, 'error')
   }
 }
 
 // API endpoint that upserts metadata
-export function importMetadata () {
-  return handleMetadataPost('import', this)
+export async function importMetadata (ctx) {
+  return handleMetadataPost(ctx, 'import')
 }
 
 // API endpoint that checks for conflicts between import object and database
-export function validateMetadata () {
-  return handleMetadataPost('validate', this)
+export async function validateMetadata (ctx) {
+  return handleMetadataPost(ctx, 'validate')
 }
 
 if (process.env.NODE_ENV === 'test') {

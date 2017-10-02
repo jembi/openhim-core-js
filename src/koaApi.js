@@ -1,7 +1,7 @@
-import koa from 'koa'
+import Koa from 'koa'
 import route from 'koa-route'
-import cors from 'koa-cors'
-import bodyParser from 'koa-body-parser'
+import cors from 'kcors'
+import bodyParser from 'koa-bodyparser'
 import * as authentication from './api/authentication'
 import * as users from './api/users'
 import * as clients from './api/clients'
@@ -26,10 +26,10 @@ import * as about from './api/about'
 
 export function setupApp (done) {
   // Create an instance of the koa-server and add a body-parser
-  const app = koa()
-  app.use(cors())
+  const app = new Koa()
+  app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE'}))
   const limitMB = config.api.maxPayloadSizeMB || 16
-  app.use(bodyParser({limit: limitMB * 1024 * 1024}))
+  app.use(bodyParser({jsonLimit: limitMB * 1024 * 1024}))
 
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
@@ -91,12 +91,12 @@ export function setupApp (done) {
   app.use(route.put('/tasks/:taskId', tasks.updateTask))
   app.use(route.delete('/tasks/:taskId', tasks.removeTask))
 
-  app.use(route.get('/metrics', function () { return metrics.getMetrics.call(this, false) }))
-  app.use(route.get('/metrics/channels', function () { return metrics.getMetrics.call(this, true) }))
-  app.use(route.get('/metrics/channels/:channelID', function (channelID) { return metrics.getMetrics.call(this, true, null, channelID) }))
-  app.use(route.get('/metrics/timeseries/:timeSeries', function (timeSeries) { return metrics.getMetrics.call(this, false, timeSeries) }))
-  app.use(route.get('/metrics/timeseries/:timeSeries/channels', function (timeSeries) { return metrics.getMetrics.call(this, true, timeSeries) }))
-  app.use(route.get('/metrics/timeseries/:timeSeries/channels/:channelID', function (timeSeries, channelID) { return metrics.getMetrics.call(this, true, timeSeries, channelID) }))
+  app.use(route.get('/metrics', (ctx) => metrics.getMetrics(ctx, false)))
+  app.use(route.get('/metrics/channels', (ctx) => metrics.getMetrics(ctx, true)))
+  app.use(route.get('/metrics/channels/:channelID', (ctx, channelID) => metrics.getMetrics(ctx, true, null, channelID)))
+  app.use(route.get('/metrics/timeseries/:timeSeries', (ctx, timeseries) => metrics.getMetrics(ctx, false, timeseries)))
+  app.use(route.get('/metrics/timeseries/:timeSeries/channels', (ctx, timeseries) => metrics.getMetrics(ctx, true, timeseries)))
+  app.use(route.get('/metrics/timeseries/:timeSeries/channels/:channelID', (ctx, timeseries, channelID) => metrics.getMetrics(ctx, true, timeseries, channelID)))
 
   app.use(route.get('/mediators', mediators.getAllMediators))
   app.use(route.get('/mediators/:uuid', mediators.getMediator))

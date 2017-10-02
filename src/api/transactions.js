@@ -17,15 +17,12 @@ const apiConf = config.get('api')
 const domain = `${os.hostname()}.${application.name}`
 
 function hasError (updates) {
-  let error
   if (updates.error != null) { return true }
   if (updates.routes != null) {
-    error = false
-    updates.routes.forEach((route) => {
+    for (const route of updates.routes) {
       if (route.error) { return true }
-    })
+    }
   }
-  if (error) { return true }
   if (updates.$push != null && updates.$push.routes != null && updates.$push.routes.error != null) {
     return true
   }
@@ -104,9 +101,9 @@ function truncateTransactionDetails (trx) {
  * Retrieves the list of transactions
  */
 
-export function * getTransactions () {
+export async function getTransactions (ctx) {
   try {
-    const filtersObject = this.request.query
+    const filtersObject = ctx.request.query
 
     // get limit and page values
     const {filterLimit} = filtersObject
@@ -125,14 +122,14 @@ export function * getTransactions () {
     const filters = (filtersObject.filters != null) ? JSON.parse(filtersObject.filters) : {}
 
     // Test if the user is authorised
-    if (!authorisation.inGroup('admin', this.authenticated)) {
+    if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // if not an admin, restrict by transactions that this user can view
-      const channels = yield authorisation.getUserViewableChannels(this.authenticated)
+      const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
 
       if (!filtersObject.channelID) {
         filters.channelID = {$in: getChannelIDsArray(channels)}
       } else if (!Array.from(getChannelIDsArray(channels)).includes(filtersObject.channelID)) {
-        return utils.logAndSetResponse(this, 403, `Forbidden: Unauthorized channel ${filtersObject.channelID}`, 'info')
+        return utils.logAndSetResponse(ctx, 403, `Forbidden: Unauthorized channel ${filtersObject.channelID}`, 'info')
       }
 
       // set 'filterRepresentation' to default if user isnt admin
@@ -229,7 +226,7 @@ export function * getTransactions () {
     }
 
     // execute the query
-    this.body = yield TransactionModelAPI
+    ctx.body = await TransactionModelAPI
       .find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
@@ -237,10 +234,10 @@ export function * getTransactions () {
       .exec()
 
     if (filterRepresentation === 'fulltruncate') {
-      return Array.from(this.body).map((trx) => truncateTransactionDetails(trx))
+      Array.from(ctx.body).map((trx) => truncateTransactionDetails(trx))
     }
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
   }
 }
 
@@ -267,9 +264,9 @@ function recursivelySearchObject (ctx, obj, ws, repeat) {
 
 function enforceMaxBodiesSize (ctx, obj, ws) {
   if (obj.request && (typeof obj.request.body === 'string')) {
-    if (utils.enforceMaxBodiesSize(ctx, obj.request) && ctx.PrimaryRequest) { obj.canRerun = false }
+    if (utils.enforceMaxBodiesSize(ctx, obj.request) && ctx.primaryRequest) { obj.canRerun = false }
   }
-  ctx.PrimaryRequest = false
+  ctx.primaryRequest = false
   if (obj.response && (typeof obj.response.body === 'string')) { utils.enforceMaxBodiesSize(ctx, obj.response) }
   return recursivelySearchObject(ctx, obj, ws, enforceMaxBodiesSize)
 }
@@ -282,41 +279,41 @@ function calculateTransactionBodiesByteLength (lengthObj, obj, ws) {
 /*
  * Adds an transaction
  */
-export function * addTransaction () {
+export async function addTransaction (ctx) {
   // Test if the user is authorised
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addTransaction denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addTransaction denied.`, 'info')
     return
   }
 
   try {
     // Get the values to use
-    const transactionData = this.request.body
-    const ctx = {primaryRequest: true}
-    enforceMaxBodiesSize(ctx, transactionData, new WeakSet())
+    const transactionData = ctx.request.body
+    const context = {primaryRequest: true}
+    enforceMaxBodiesSize(context, transactionData, new WeakSet())
 
     const tx = new TransactionModelAPI(transactionData)
 
     // Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
-    yield Q.ninvoke(tx, 'save')
-    this.status = 201
-    logger.info(`User ${this.authenticated.email} created transaction with id ${tx.id}`)
+    await Q.ninvoke(tx, 'save')
+    ctx.status = 201
+    logger.info(`User ${ctx.authenticated.email} created transaction with id ${tx.id}`)
 
-    yield generateEvents(tx, tx.channelID)
+    await generateEvents(tx, tx.channelID)
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Could not add a transaction via the API: ${e}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not add a transaction via the API: ${e}`, 'error')
   }
 }
 
 /*
  * Retrieves the details for a specific transaction
  */
-export function * getTransactionById (transactionId) {
+export async function getTransactionById (ctx, transactionId) {
   // Get the values to use
   transactionId = unescape(transactionId)
 
   try {
-    const filtersObject = this.request.query
+    const filtersObject = ctx.request.query
     let {filterRepresentation} = filtersObject
 
     // remove filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
@@ -327,22 +324,22 @@ export function * getTransactionById (transactionId) {
 
     // --------------Check if user has permission to view full content----------------- #
     // if user NOT admin, determine their representation privileges.
-    if (!authorisation.inGroup('admin', this.authenticated)) {
+    if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // retrieve transaction channelID
-      const txChannelID = yield TransactionModelAPI.findById(transactionId, {channelID: 1}, {_id: 0}).exec()
+      const txChannelID = await TransactionModelAPI.findById(transactionId, {channelID: 1}, {_id: 0}).exec()
       if ((txChannelID != null ? txChannelID.length : undefined) === 0) {
-        this.body = `Could not find transaction with ID: ${transactionId}`
-        this.status = 404
+        ctx.body = `Could not find transaction with ID: ${transactionId}`
+        ctx.status = 404
         return
       } else {
         // assume user is not allowed to view all content - show only 'simpledetails'
         filterRepresentation = 'simpledetails'
 
         // get channel.txViewFullAcl information by channelID
-        const channel = yield ChannelModelAPI.findById(txChannelID.channelID, {txViewFullAcl: 1}, {_id: 0}).exec()
+        const channel = await ChannelModelAPI.findById(txChannelID.channelID, {txViewFullAcl: 1}, {_id: 0}).exec()
 
         // loop through user groups
-        for (const group of Array.from(this.authenticated.groups)) {
+        for (const group of Array.from(ctx.authenticated.groups)) {
           // if user role found in channel txViewFullAcl - user has access to view all content
           if (channel.txViewFullAcl.indexOf(group) >= 0) {
             // update filterRepresentation object to be 'full' and allow all content
@@ -357,65 +354,58 @@ export function * getTransactionById (transactionId) {
     // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
-    const result = yield TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
+    const result = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
     if (result && (filterRepresentation === 'fulltruncate')) {
       truncateTransactionDetails(result)
     }
 
     // Test if the result if valid
     if (!result) {
-      this.body = `Could not find transaction with ID: ${transactionId}`
-      this.status = 404
+      ctx.body = `Could not find transaction with ID: ${transactionId}`
+      ctx.status = 404
       // Test if the user is authorised
-    } else if (!authorisation.inGroup('admin', this.authenticated)) {
-      const channels = yield authorisation.getUserViewableChannels(this.authenticated)
+    } else if (!authorisation.inGroup('admin', ctx.authenticated)) {
+      const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
       if (getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0) {
-        this.body = result
+        ctx.body = result
       } else {
-        return utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`, 'info')
+        return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`, 'info')
       }
     } else {
-      this.body = result
+      ctx.body = result
     }
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Could not get transaction by ID via the API: ${e}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not get transaction by ID via the API: ${e}`, 'error')
   }
 }
 
 /*
  * Retrieves all transactions specified by clientId
  */
-export function * findTransactionByClientId (clientId) {
+export async function findTransactionByClientId (ctx, clientId) {
   clientId = unescape(clientId)
 
   try {
-    let filtersObject = this.request.query
-    let {filterRepresentation} = filtersObject
-
     // get projection object
-    const projectionFiltersObject = getProjectionObject(filterRepresentation)
+    const projectionFiltersObject = getProjectionObject(ctx.request.query.filterRepresentation)
 
-    filtersObject = {}
-    filtersObject.clientID = clientId
+    const filtersObject = {clientID: clientId}
 
     // Test if the user is authorised
-    if (!authorisation.inGroup('admin', this.authenticated)) {
+    if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // if not an admin, restrict by transactions that this user can view
-      const channels = yield authorisation.getUserViewableChannels(this.authenticated)
+      const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
 
       filtersObject.channelID = {$in: getChannelIDsArray(channels)}
-
-      // set 'filterRepresentation' to default if user isnt admin
-      filterRepresentation = ''
     }
 
     // execute the query
-    this.body = yield TransactionModelAPI
+    ctx.body = await TransactionModelAPI
       .find(filtersObject, projectionFiltersObject)
       .sort({'request.timestamp': -1})
       .exec()
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Could not get transaction by clientID via the API: ${e}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not get transaction by clientID via the API: ${e}`, 'error')
   }
 }
 
@@ -509,58 +499,57 @@ function updateTransactionMetrics (updates, doc) {
 /*
  * Updates a transaction record specified by transactionId
  */
-export function * updateTransaction (transactionId) {
+export async function updateTransaction (ctx, transactionId) {
   // Test if the user is authorised
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateTransaction denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to updateTransaction denied.`, 'info')
     return
   }
 
   transactionId = unescape(transactionId)
-  const updates = this.request.body
+  const updates = ctx.request.body
 
   try {
-    let tx
     if (hasError(updates)) {
-      tx = yield TransactionModelAPI.findById(transactionId).exec()
-      const channel = yield ChannelModelAPI.findById(tx.channelID).exec()
-      if (!autoRetryUtils.reachedMaxAttempts(tx, channel)) {
+      const transaction = await TransactionModelAPI.findById(transactionId).exec()
+      const channel = await ChannelModelAPI.findById(transaction.channelID).exec()
+      if (!autoRetryUtils.reachedMaxAttempts(transaction, channel)) {
         updates.autoRetry = true
-        autoRetryUtils.queueForRetry(tx)
+        autoRetryUtils.queueForRetry(transaction)
       }
     }
 
-    const transactionToUpdate = yield TransactionModelAPI.findOne({_id: transactionId}).exec()
+    const transactionToUpdate = await TransactionModelAPI.findOne({_id: transactionId}).exec()
     const transactionBodiesLength = {length: 0}
 
     calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet())
 
-    const ctx = {
+    const context = {
       totalBodyLength: transactionBodiesLength.length,
       primaryRequest: true
     }
-    enforceMaxBodiesSize(ctx, updates, new WeakSet())
+    enforceMaxBodiesSize(context, updates, new WeakSet())
 
-    tx = yield TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
+    const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
 
-    this.body = `Transaction with ID: ${transactionId} successfully updated`
-    this.status = 200
-    logger.info(`User ${this.authenticated.email} updated transaction with id ${transactionId}`)
+    ctx.body = `Transaction with ID: ${transactionId} successfully updated`
+    ctx.status = 200
+    logger.info(`User ${ctx.authenticated.email} updated transaction with id ${transactionId}`)
 
-    yield generateEvents(updates, tx.channelID)
-    return updateTransactionMetrics(updates, tx)
+    await generateEvents(updates, updatedTransaction.channelID)
+    updateTransactionMetrics(updates, updatedTransaction)
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Could not update transaction via the API: ${e}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not update transaction via the API: ${e}`, 'error')
   }
 }
 
 /*
  * Removes a transaction
  */
-export function * removeTransaction (transactionId) {
+export async function removeTransaction (ctx, transactionId) {
   // Test if the user is authorised
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeTransaction denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeTransaction denied.`, 'info')
     return
   }
 
@@ -568,12 +557,12 @@ export function * removeTransaction (transactionId) {
   transactionId = unescape(transactionId)
 
   try {
-    yield TransactionModelAPI.findByIdAndRemove(transactionId).exec()
-    this.body = 'Transaction successfully deleted'
-    this.status = 200
-    return logger.info(`User ${this.authenticated.email} removed transaction with id ${transactionId}`)
+    await TransactionModelAPI.findByIdAndRemove(transactionId).exec()
+    ctx.body = 'Transaction successfully deleted'
+    ctx.status = 200
+    logger.info(`User ${ctx.authenticated.email} removed transaction with id ${transactionId}`)
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Could not remove transaction via the API: ${e}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not remove transaction via the API: ${e}`, 'error')
   }
 }
 

@@ -8,9 +8,8 @@ import * as authorisation from './authorisation'
 const readCertificateInfo = Q.denodeify(pem.readCertificateInfo)
 const getFingerprint = Q.denodeify(pem.getFingerprint)
 
-export function * generateCert () {
+export async function generateCert (ctx) {
   // Must be admin
-  const ctx = this
   let result
   if (authorisation.inGroup('admin', ctx.authenticated) === false) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getServerKey by id denied.`, 'info')
@@ -19,27 +18,27 @@ export function * generateCert () {
   const {request: {body: options}} = ctx
   if (options.type === 'server') {
     logger.info('Generating server cert')
-    result = yield generateServerCert(options, ctx)
+    result = await generateServerCert(options, ctx)
   } else {
     logger.info('Generating client cert')
-    result = yield generateClientCert(options, ctx)
+    result = await generateClientCert(options, ctx)
   }
   ctx.status = 201
   ctx.body = result
 }
 
-function * generateClientCert (options, ctx) {
-  const keystoreDoc = yield KeystoreModelAPI.findOne().exec()
+async function generateClientCert (options, ctx) {
+  const keystoreDoc = await KeystoreModelAPI.findOne().exec()
 
   // Set additional options
   options.selfSigned = true
 
   // Attempt to create the certificate
   try {
-    ctx.body = yield createCertificate(options)
-    const certInfo = yield extractCertMetadata(ctx.body.certificate, ctx)
+    ctx.body = await createCertificate(options)
+    const certInfo = await extractCertMetadata(ctx.body.certificate, ctx)
     keystoreDoc.ca.push(certInfo)
-    yield Q.ninvoke(keystoreDoc, 'save')
+    await Q.ninvoke(keystoreDoc, 'save')
     // Add the new certificate to the keystore
     ctx.status = 201
     logger.info('Client certificate created')
@@ -49,14 +48,14 @@ function * generateClientCert (options, ctx) {
   return ctx.body
 }
 
-function * generateServerCert (options, ctx) {
-  const keystoreDoc = yield KeystoreModelAPI.findOne().exec()
+async function generateServerCert (options, ctx) {
+  const keystoreDoc = await KeystoreModelAPI.findOne().exec()
   options.selfSigned = true
   try {
-    ctx.body = yield createCertificate(options)
-    keystoreDoc.cert = yield extractCertMetadata(ctx.body.certificate, ctx)
+    ctx.body = await createCertificate(options)
+    keystoreDoc.cert = await extractCertMetadata(ctx.body.certificate, ctx)
     keystoreDoc.key = ctx.body.key
-    yield Q.ninvoke(keystoreDoc, 'save')
+    await Q.ninvoke(keystoreDoc, 'save')
     // Add the new certificate to the keystore
     ctx.status = 201
     logger.info('Server certificate created')
@@ -86,9 +85,9 @@ function createCertificate (options) {
   return deferred.promise
 }
 
-function * extractCertMetadata (cert, ctx) {
-  const certInfo = yield readCertificateInfo(cert)
-  const fingerprint = yield getFingerprint(cert)
+async function extractCertMetadata (cert, ctx) {
+  const certInfo = await readCertificateInfo(cert)
+  const fingerprint = await getFingerprint(cert)
   certInfo.data = ctx.body.certificate
   certInfo.fingerprint = fingerprint.fingerprint
   return certInfo

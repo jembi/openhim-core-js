@@ -149,13 +149,13 @@ if (process.env.NODE_ENV === 'test') {
   exports.rewriteUrls = rewriteUrls
 }
 
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   // do nothing to the request
-  yield next
+  await next()
   // on response rewrite urls
-  if (this.authorisedChannel.rewriteUrls) {
+  if (ctx.authorisedChannel.rewriteUrls) {
     const rewrite = Q.denodeify(rewriteUrls)
-    this.response.body = yield rewrite(this.response.body.toString(), this.authorisedChannel, this.authenticationType)
-    return winston.info(`Rewrote url in the response of transaction: ${this.transactionId}`)
+    ctx.response.body = await rewrite(ctx.response.body.toString(), ctx.authorisedChannel, ctx.authenticationType)
+    return winston.info(`Rewrote url in the response of transaction: ${ctx.transactionId}`)
   }
 }

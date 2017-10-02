@@ -1,4 +1,4 @@
-import koa from 'koa'
+import Koa from 'koa'
 import getRawBody from 'raw-body'
 import compress from 'koa-compress'
 import SDC from 'statsd-client'
@@ -30,20 +30,20 @@ const application = config.get('application')
 const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(config.statsd)
 
-function * rawBodyReader (next) {
+async function rawBodyReader (ctx, next) {
   let startTime
   if (config.statsd.enabled) { startTime = new Date() }
-  const body = yield getRawBody(this.req)
+  const body = await getRawBody(ctx.req)
 
-  if (body) { this.body = body }
+  if (body) { ctx.body = body }
   if (config.statsd.enabled) { sdc.timing(`${domain}.rawBodyReaderMiddleware`, startTime) }
-  yield next
+  await next()
 }
 
 // Primary app
 
 export function setupApp (done) {
-  const app = koa()
+  const app = new Koa()
 
   // Basic authentication middleware
   if (config.authentication.enableBasicAuthentication) {
@@ -90,7 +90,7 @@ export function setupApp (done) {
 
 // Rerun app that bypasses auth
 export function rerunApp (done) {
-  const app = koa()
+  const app = new Koa()
 
   app.use(rawBodyReader)
 
@@ -120,7 +120,7 @@ export function rerunApp (done) {
 
 // App for TCP/TLS sockets
 export function tcpApp (done) {
-  const app = koa()
+  const app = new Koa()
 
   app.use(rawBodyReader)
   app.use(retrieveTCPTransaction.koaMiddleware)
@@ -145,7 +145,7 @@ export function tcpApp (done) {
 
 // App used by scheduled polling
 export function pollingApp (done) {
-  const app = koa()
+  const app = new Koa()
 
   app.use(rawBodyReader)
 

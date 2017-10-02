@@ -15,8 +15,8 @@ const domain = `${os.hostname()}.${application.name}.appMetrics`
 const sdc = new SDC(statsdServer)
 
 function genAuthAudit (remoteAddress) {
-  let audit = atna.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.OUTCOME_MINOR_FAILURE)
-  audit = atna.wrapInSyslog(audit)
+  let audit = atna.construct.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.constants.OUTCOME_MINOR_FAILURE)
+  audit = atna.construct.wrapInSyslog(audit)
   return audit
 }
 
@@ -45,7 +45,7 @@ function authoriseIP (channel, ctx) {
   }
 }
 
-export function authorise (ctx, done) {
+export async function authorise (ctx, done) {
   const channel = ctx.matchingChannel
 
   if ((channel != null) && authoriseIP(channel, ctx) && ((channel.authType === 'public') || authoriseClient(channel, ctx))) {
@@ -65,14 +65,14 @@ export function authorise (ctx, done) {
   return done()
 }
 
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const _authorise = Q.denodeify(authorise)
-  yield _authorise(this)
-  if (this.authorisedChannel != null) {
+  await _authorise(ctx)
+  if (ctx.authorisedChannel != null) {
     if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime) }
-    return yield next
+    await next()
   }
 }
 

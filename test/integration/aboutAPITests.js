@@ -11,13 +11,14 @@ describe('API Integration Tests', () =>
     let authDetails = {}
 
     before(done =>
-      server.start({apiPort: 8080}, () =>
+      server.start({apiPort: 8080}, (err) => {
+        if (err) return done(err)
         auth.setupTestUsers((err) => {
           if (err) { return done(err) }
           authDetails = auth.getAuthDetails()
           return done()
         })
-      )
+      })
     )
 
     after(done =>

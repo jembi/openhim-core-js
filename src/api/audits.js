@@ -32,51 +32,51 @@ function getProjectionObject (filterRepresentation) {
 function auditLogUsed (auditId, outcome, user) {
   const groups = user.groups.join(',')
   const uri = `https://${config.router.externalHostname}:${config.api.httpsPort}/audits/${auditId}`
-  let audit = atna.auditLogUsedAudit(outcome, himSourceID, os.hostname(), user.email, groups, groups, uri)
-  audit = atna.wrapInSyslog(audit)
+  let audit = atna.construct.auditLogUsedAudit(outcome, himSourceID, os.hostname(), user.email, groups, groups, uri)
+  audit = atna.construct.wrapInSyslog(audit)
   return auditing.sendAuditEvent(audit, () => logger.debug(`Processed audit log used message for user '${user.email}' and audit '${auditId}'`))
 }
 
 /*
  * Adds a Audit
  */
-export function * addAudit () {
+export async function addAudit (ctx) {
   // Test if the user is authorised
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addAudit denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addAudit denied.`, 'info')
     return
   }
 
-  const auditData = this.request.body
+  const auditData = ctx.request.body
 
   try {
     const audit = new AuditModel(auditData)
-    yield Q.ninvoke(audit, 'save')
-    yield Q.ninvoke(auditing, 'processAuditMeta', audit)
+    await Q.ninvoke(audit, 'save')
+    await Q.ninvoke(auditing, 'processAuditMeta', audit)
 
-    logger.info(`User ${this.authenticated.email} created audit with id ${audit.id}`)
-    this.body = 'Audit successfully created'
-    this.status = 201
+    logger.info(`User ${ctx.authenticated.email} created audit with id ${audit.id}`)
+    ctx.body = 'Audit successfully created'
+    ctx.status = 201
   } catch (e) {
     logger.error(`Could not add a audit via the API: ${e.message}`)
-    this.body = e.message
-    this.status = 400
+    ctx.body = e.message
+    ctx.status = 400
   }
 }
 
 /*
  * Retrieves the list of Audits
  */
-export function * getAudits () {
+export async function getAudits (ctx) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAudits denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getAudits denied.`, 'info')
     return
   }
 
   try {
     let filters
-    const filtersObject = this.request.query
+    const filtersObject = ctx.request.query
 
     // get limit and page values
     const filterLimit = filtersObject.filterLimit != null ? filtersObject.filterLimit : 0
@@ -120,7 +120,7 @@ export function * getAudits () {
     }
 
     // execute the query
-    this.body = yield AuditModel
+    ctx.body = await AuditModel
       .find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
@@ -129,21 +129,20 @@ export function * getAudits () {
 
     // audit each retrieved record, but only for non-basic representation requests
     if ((filterRepresentation === 'full') || (filterRepresentation === 'simpledetails')) {
-      return Array.from(this.body).map((record) =>
-        auditLogUsed(record._id, atna.OUTCOME_SUCCESS, this.authenticated))
+      Array.from(ctx.body).map((record) => auditLogUsed(record._id, atna.constants.OUTCOME_SUCCESS, ctx.authenticated))
     }
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Could not retrieve audits via the API: ${e}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not retrieve audits via the API: ${e}`, 'error')
   }
 }
 
 /*
  * Retrieves the details for a specific Audit Record
  */
-export function * getAuditById (auditId) {
+export async function getAuditById (ctx, auditId) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAuditById denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getAuditById denied.`, 'info')
     return
   }
 
@@ -154,37 +153,36 @@ export function * getAuditById (auditId) {
     // get projection object
     const projectionFiltersObject = getProjectionObject('full')
 
-    const result = yield AuditModel.findById(auditId, projectionFiltersObject).exec()
+    const result = await AuditModel.findById(auditId, projectionFiltersObject).exec()
 
     // Test if the result if valid
     if (!result) {
-      this.body = `Could not find audits record with ID: ${auditId}`
-      this.status = 404
-      return auditLogUsed(auditId, atna.OUTCOME_MINOR_FAILURE, this.authenticated)
+      ctx.body = `Could not find audits record with ID: ${auditId}`
+      ctx.status = 404
+      return auditLogUsed(auditId, atna.constants.OUTCOME_MINOR_FAILURE, ctx.authenticated)
     } else {
-      this.body = result
-      return auditLogUsed(auditId, atna.OUTCOME_SUCCESS, this.authenticated)
+      ctx.body = result
+      return auditLogUsed(auditId, atna.constants.OUTCOME_SUCCESS, ctx.authenticated)
     }
   } catch (e) {
-    utils.logAndSetResponse(this, 500, `Could not get audit by ID via the API: ${e}`, 'error')
-    return auditLogUsed(auditId, atna.OUTCOME_MAJOR_FAILURE, this.authenticated)
+    utils.logAndSetResponse(ctx, 500, `Could not get audit by ID via the API: ${e}`, 'error')
+    auditLogUsed(auditId, atna.constants.OUTCOME_MAJOR_FAILURE, ctx.authenticated)
   }
 }
 
 /*
  * construct audit filtering dropdown options
  */
-export function * getAuditsFilterOptions () {
+export async function getAuditsFilterOptions (ctx) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getAudits denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getAudits denied.`, 'info')
     return
   }
 
   try {
-    this.body = yield AuditMetaModel.findOne({}).exec()
-    return this.body
+    ctx.body = await AuditMetaModel.findOne({}).exec()
   } catch (e) {
-    return utils.logAndSetResponse(this, 500, `Could not retrieve audits filter options via the API: ${e}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not retrieve audits filter options via the API: ${e}`, 'error')
   }
 }

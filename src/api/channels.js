@@ -32,12 +32,11 @@ function isPathValid (channel) {
 /*
  * Retrieves the list of active channels
  */
-export function * getChannels () {
+export async function getChannels (ctx) {
   try {
-    this.body = yield authorisation.getUserViewableChannels(this.authenticated)
-    return
+    ctx.body = await authorisation.getUserViewableChannels(ctx.authenticated)
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not fetch all channels via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not fetch all channels via the API: ${err}`, 'error')
   }
 }
 
@@ -54,62 +53,62 @@ function processPostAddTriggers (channel) {
 /*
  * Creates a new channel
  */
-export function * addChannel () {
+export async function addChannel (ctx) {
   // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to addChannel denied.`, 'info')
+  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`, 'info')
     return
   }
 
   // Get the values to use
-  const channelData = this.request.body
+  const channelData = ctx.request.body
 
   try {
     const channel = new ChannelModel(channelData)
 
     if (!isPathValid(channel)) {
-      this.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]'
-      this.status = 400
+      ctx.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]'
+      ctx.status = 400
       return
     }
 
     if ((channel.priority != null) && (channel.priority < 1)) {
-      this.body = 'Channel priority cannot be below 1 (= Highest priority)'
-      this.status = 400
+      ctx.body = 'Channel priority cannot be below 1 (= Highest priority)'
+      ctx.status = 400
       return
     }
 
     const numPrimaries = routerMiddleware.numberOfPrimaryRoutes(channel.routes)
     if (numPrimaries === 0) {
-      this.body = 'Channel must have a primary route'
-      this.status = 400
+      ctx.body = 'Channel must have a primary route'
+      ctx.status = 400
       return
     }
     if (numPrimaries > 1) {
-      this.body = 'Channel cannot have a multiple primary routes'
-      this.status = 400
+      ctx.body = 'Channel cannot have a multiple primary routes'
+      ctx.status = 400
       return
     }
 
-    yield Q.ninvoke(channel, 'save')
+    await Q.ninvoke(channel, 'save')
 
     // All ok! So set the result
-    this.body = 'Channel successfully created'
-    this.status = 201
-    logger.info('User %s created channel with id %s', this.authenticated.email, channel.id)
+    ctx.body = 'Channel successfully created'
+    ctx.status = 201
+    logger.info('User %s created channel with id %s', ctx.authenticated.email, channel.id)
 
     channelData._id = channel._id
-    return processPostAddTriggers(channelData)
+    processPostAddTriggers(channelData)
   } catch (err) {
     // Error! So inform the user
-    return utils.logAndSetResponse(this, 400, `Could not add channel via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 400, `Could not add channel via the API: ${err}`, 'error')
   }
 }
 
 /*
  * Retrieves the details for a specific channel
  */
-export function * getChannel (channelId) {
+export async function getChannel (ctx, channelId) {
   // Get the values to use
   const id = unescape(channelId)
 
@@ -118,37 +117,34 @@ export function * getChannel (channelId) {
     let result = null
     let accessDenied = false
     // if admin allow acces to all channels otherwise restrict result set
-    if (authorisation.inGroup('admin', this.authenticated) === false) {
-      result = yield ChannelModel.findOne({_id: id, txViewAcl: {$in: this.authenticated.groups}}).exec()
-      const adminResult = yield ChannelModel.findById(id).exec()
+    if (authorisation.inGroup('admin', ctx.authenticated) === false) {
+      result = await ChannelModel.findOne({_id: id, txViewAcl: {$in: ctx.authenticated.groups}}).exec()
+      const adminResult = await ChannelModel.findById(id).exec()
       if (adminResult != null) {
         accessDenied = true
       }
     } else {
-      result = yield ChannelModel.findById(id).exec()
+      result = await ChannelModel.findById(id).exec()
     }
 
     // Test if the result if valid
     if (result === null) {
       if (accessDenied) {
         // Channel exists but this user doesn't have access
-        this.body = `Access denied to channel with Id: '${id}'.`
-        this.status = 403
-        return
+        ctx.body = `Access denied to channel with Id: '${id}'.`
+        ctx.status = 403
       } else {
         // Channel not found! So inform the user
-        this.body = `We could not find a channel with Id:'${id}'.`
-        this.status = 404
-        return
+        ctx.body = `We could not find a channel with Id:'${id}'.`
+        ctx.status = 404
       }
     } else {
       // All ok! So set the result
-      this.body = result
-      return
+      ctx.body = result
     }
   } catch (err) {
     // Error! So inform the user
-    return utils.logAndSetResponse(this, 500, `Could not fetch channel by Id '${id}' via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not fetch channel by Id '${id}' via the API: ${err}`, 'error')
   }
 }
 
@@ -173,16 +169,16 @@ function processPostUpdateTriggers (channel) {
 /*
  * Updates the details for a specific channel
  */
-export function * updateChannel (channelId) {
+export async function updateChannel (ctx, channelId) {
   // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateChannel denied.`, 'info')
+  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to updateChannel denied.`, 'info')
     return
   }
 
   // Get the values to use
   const id = unescape(channelId)
-  const channelData = this.request.body
+  const channelData = ctx.request.body
 
   // Ignore _id if it exists, user cannot change the internal id
   if (typeof channelData._id !== 'undefined') {
@@ -190,42 +186,42 @@ export function * updateChannel (channelId) {
   }
 
   if (!isPathValid(channelData)) {
-    utils.logAndSetResponse(this, 400, 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]', 'info')
+    utils.logAndSetResponse(ctx, 400, 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]', 'info')
     return
   }
 
   if ((channelData.priority != null) && (channelData.priority < 1)) {
-    this.body = 'Channel priority cannot be below 1 (= Highest priority)'
-    this.status = 400
+    ctx.body = 'Channel priority cannot be below 1 (= Highest priority)'
+    ctx.status = 400
     return
   }
 
   if (channelData.routes != null) {
     const numPrimaries = routerMiddleware.numberOfPrimaryRoutes(channelData.routes)
     if (numPrimaries === 0) {
-      this.body = 'Channel must have a primary route'
-      this.status = 400
+      ctx.body = 'Channel must have a primary route'
+      ctx.status = 400
       return
     }
     if (numPrimaries > 1) {
-      this.body = 'Channel cannot have a multiple primary routes'
-      this.status = 400
+      ctx.body = 'Channel cannot have a multiple primary routes'
+      ctx.status = 400
       return
     }
   }
 
   try {
-    yield ChannelModel.findByIdAndUpdate(id, channelData).exec()
+    await ChannelModel.findByIdAndUpdate(id, channelData).exec()
 
     // All ok! So set the result
-    this.body = 'The channel was successfully updated'
-    logger.info('User %s updated channel with id %s', this.authenticated.email, id)
+    ctx.body = 'The channel was successfully updated'
+    logger.info('User %s updated channel with id %s', ctx.authenticated.email, id)
 
     channelData._id = ObjectId(id)
     return processPostUpdateTriggers(channelData)
   } catch (err) {
     // Error! So inform the user
-    return utils.logAndSetResponse(this, 500, `Could not update channel by id: ${id} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not update channel by id: ${id} via the API: ${err}`, 'error')
   }
 }
 
@@ -242,10 +238,10 @@ function processPostDeleteTriggers (channel) {
 /*
  * Deletes a specific channels details
  */
-export function * removeChannel (channelId) {
+export async function removeChannel (ctx, channelId) {
   // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeChannel denied.`, 'info')
+  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeChannel denied.`, 'info')
     return
   }
 
@@ -254,35 +250,35 @@ export function * removeChannel (channelId) {
 
   try {
     let channel
-    const numExistingTransactions = yield TransactionModelAPI.count({channelID: id}).exec()
+    const numExistingTransactions = await TransactionModelAPI.count({channelID: id}).exec()
 
     // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
     if (numExistingTransactions === 0) {
       // safe to remove
-      channel = yield ChannelModel.findByIdAndRemove(id).exec()
+      channel = await ChannelModel.findByIdAndRemove(id).exec()
     } else {
       // not safe to remove. just flag as deleted
-      channel = yield ChannelModel.findByIdAndUpdate(id, {status: 'deleted'}).exec()
+      channel = await ChannelModel.findByIdAndUpdate(id, {status: 'deleted'}).exec()
     }
 
     // All ok! So set the result
-    this.body = 'The channel was successfully deleted'
-    logger.info(`User ${this.authenticated.email} removed channel with id ${id}`)
+    ctx.body = 'The channel was successfully deleted'
+    logger.info(`User ${ctx.authenticated.email} removed channel with id ${id}`)
 
     return processPostDeleteTriggers(channel)
   } catch (err) {
     // Error! So inform the user
-    return utils.logAndSetResponse(this, 500, `Could not remove channel by id: ${id} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not remove channel by id: ${id} via the API: ${err}`, 'error')
   }
 }
 
 /*
  * Manually Triggers Polling Channel
  */
-export function * triggerChannel (channelId) {
+export async function triggerChannel (ctx, channelId) {
   // Test if the user is authorised
-  if (authorisation.inGroup('admin', this.authenticated) === false) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeChannel denied.`, 'info')
+  if (authorisation.inGroup('admin', ctx.authenticated) === false) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeChannel denied.`, 'info')
     return
   }
 
@@ -290,16 +286,16 @@ export function * triggerChannel (channelId) {
   const id = unescape(channelId)
 
   // need to initialize return status otherwise will always return 404
-  this.status = 200
+  ctx.status = 200
 
   try {
-    const channel = yield ChannelModel.findById(id).exec()
+    const channel = await ChannelModel.findById(id).exec()
 
     // Test if the result if valid
     if (channel === null) {
       // Channel not found! So inform the user
-      this.body = `We could not find a channel with Id:'${id}'.`
-      this.status = 404
+      ctx.body = `We could not find a channel with Id:'${id}'.`
+      ctx.status = 404
       return
     } else {
       logger.info(`Manually Polling channel ${channel._id}`)
@@ -311,14 +307,18 @@ export function * triggerChannel (channelId) {
         }
       }
 
-      return request(options, function () {
+      request(options, function (err) {
+        if (err) {
+          logger.error(err)
+          return
+        }
         logger.info(`Channel Successfully polled ${channel._id}`)
         // Return success status
-        this.status = 200
+        ctx.status = 200
       })
     }
   } catch (err) {
     // Error! So inform the user
-    return utils.logAndSetResponse(this, 500, `Could not fetch channel by Id '${id}' via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not fetch channel by Id '${id}' via the API: ${err}`, 'error')
   }
 }

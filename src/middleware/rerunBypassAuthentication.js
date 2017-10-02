@@ -23,20 +23,19 @@ export function authenticateUser (ctx, done) {
 /*
  * Koa middleware for authentication by basic auth
  */
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const _authenticateUser = Q.denodeify(authenticateUser)
-  yield _authenticateUser(this)
+  await _authenticateUser(ctx)
 
-  if (this.authenticated != null) {
+  if (ctx.authenticated != null) {
     if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthenticationMiddleware`, startTime) }
-    return yield next
+    await next()
   } else {
-    this.authenticated =
-      {ip: '127.0.0.1'}
+    ctx.authenticated = {ip: '127.0.0.1'}
     // This is a public channel, allow rerun
     if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthenticationMiddleware`, startTime) }
-    return yield next
+    await next()
   }
 }

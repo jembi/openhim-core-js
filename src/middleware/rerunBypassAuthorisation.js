@@ -27,11 +27,11 @@ export function authoriseUser (ctx, done) {
 /*
  * Koa middleware for authentication by basic auth
  */
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const authoriseUser = Q.denodeify(exports.authoriseUser)
-  yield authoriseUser(this)
+  await authoriseUser(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthorisationMiddleware`, startTime) }
-  return yield next
+  await next()
 }

@@ -6,19 +6,19 @@ import * as authorisation from './authorisation'
 import * as metrics from '../metrics'
 
 // all in one getMetrics generator function for metrics API
-export function * getMetrics (groupChannels, timeSeries, channelID) {
+export async function getMetrics (ctx, groupChannels, timeSeries, channelID) {
   logger.debug(`Called getMetrics(${groupChannels}, ${timeSeries}, ${channelID})`)
-  const channels = yield authorisation.getUserViewableChannels(this.authenticated)
+  const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
   let channelIDs = channels.map(c => c._id)
   if (typeof channelID === 'string') {
     if (channelIDs.map(id => id.toString()).includes(channelID)) {
       channelIDs = [mongoose.Types.ObjectId(channelID)]
     } else {
-      this.status = 401
+      ctx.status = 401
     }
   }
 
-  let {query} = this.request
+  let {query} = ctx.request
   logger.debug(`Metrics query object: ${JSON.stringify(query)}`)
   const {startDate} = query
   delete query.startDate
@@ -29,7 +29,7 @@ export function * getMetrics (groupChannels, timeSeries, channelID) {
     query = null
   }
 
-  let m = yield metrics.calculateMetrics(new Date(startDate), new Date(endDate), query, channelIDs, timeSeries, groupChannels)
+  let m = await metrics.calculateMetrics(new Date(startDate), new Date(endDate), query, channelIDs, timeSeries, groupChannels)
   if (m != null && m[0] != null && m[0]._id != null && m[0]._id.year != null) {
     m = m.map((item) => {
       const date = _.assign({}, item._id)
@@ -40,5 +40,5 @@ export function * getMetrics (groupChannels, timeSeries, channelID) {
     })
   }
 
-  this.body = m
+  ctx.body = m
 }

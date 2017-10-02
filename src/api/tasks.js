@@ -46,15 +46,15 @@ function isRerunPermissionsValid (user, transactions, callback) {
 /**
  * Retrieves the list of active tasks
  */
-export function * getTasks () {
+export async function getTasks (ctx) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to getTasks denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getTasks denied.`, 'info')
     return
   }
 
   try {
-    const filtersObject = this.request.query
+    const filtersObject = ctx.request.query
 
     // get limit and page values
     const {filterLimit} = filtersObject
@@ -74,17 +74,17 @@ export function * getTasks () {
     // exclude transactions object from tasks list
     const projectionFiltersObject = {transactions: 0}
 
-    this.body = yield TaskModelAPI.find({}).exec()
+    ctx.body = await TaskModelAPI.find({}).exec()
 
     // execute the query
-    this.body = yield TaskModelAPI
+    ctx.body = await TaskModelAPI
       .find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({created: -1})
       .exec()
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not fetch all tasks via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not fetch all tasks via the API: ${err}`, 'error')
   }
 }
 
@@ -106,18 +106,18 @@ const areTransactionChannelsValid = (transactions, callback) =>
 /**
  * Creates a new Task
  */
-export function * addTask () {
+export async function addTask (ctx) {
   // Get the values to use
-  const transactions = this.request.body
+  const transactions = ctx.request.body
   try {
     const taskObject = {}
     const transactionsArr = []
     taskObject.remainingTransactions = transactions.tids.length
-    taskObject.user = this.authenticated.email
+    taskObject.user = ctx.authenticated.email
 
     if (transactions.batchSize != null) {
       if (transactions.batchSize <= 0) {
-        return utils.logAndSetResponse(this, 400, 'Invalid batch size specified', 'info')
+        return utils.logAndSetResponse(ctx, 400, 'Invalid batch size specified', 'info')
       }
       taskObject.batchSize = transactions.batchSize
     }
@@ -128,15 +128,15 @@ export function * addTask () {
 
     // check rerun permission and whether to create the rerun task
     const isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
-    const allowRerunTaskCreation = yield isRerunPermsValid(this.authenticated, transactions)
+    const allowRerunTaskCreation = await isRerunPermsValid(ctx.authenticated, transactions)
 
     // the rerun task may be created
     if (allowRerunTaskCreation === true) {
       const areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid)
-      const trxChannelsValid = yield areTrxChannelsValid(transactions)
+      const trxChannelsValid = await areTrxChannelsValid(transactions)
 
       if (!trxChannelsValid) {
-        utils.logAndSetResponse(this, 400, 'Cannot queue task as there are transactions with disabled or deleted channels', 'info')
+        utils.logAndSetResponse(ctx, 400, 'Cannot queue task as there are transactions with disabled or deleted channels', 'info')
         return
       }
 
@@ -145,21 +145,21 @@ export function * addTask () {
       taskObject.totalTransactions = transactionsArr.length
 
       const task = new TaskModelAPI(taskObject)
-      yield Q.ninvoke(task, 'save')
+      await Q.ninvoke(task, 'save')
 
       // All ok! So set the result
-      utils.logAndSetResponse(this, 201, `User ${this.authenticated.email} created task with id ${task.id}`, 'info')
+      utils.logAndSetResponse(ctx, 201, `User ${ctx.authenticated.email} created task with id ${task.id}`, 'info')
 
       // Clear the transactions out of the auto retry queue, in case they're in there
       return AutoRetryModelAPI.remove({transactionID: {$in: transactions.tids}}, (err) => { if (err) { return logger.error(err) } })
     } else {
       // rerun task creation not allowed
-      return utils.logAndSetResponse(this, 403, 'Insufficient permissions prevents this rerun task from being created', 'error')
+      utils.logAndSetResponse(ctx, 403, 'Insufficient permissions prevents this rerun task from being created', 'error')
     }
   } catch (error) {
     // Error! So inform the user
     const err = error
-    return utils.logAndSetResponse(this, 500, `Could not add Task via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not add Task via the API: ${err}`, 'error')
   }
 }
 
@@ -211,12 +211,12 @@ function buildFilteredTransactionsArray (filters, transactions) {
   return tempTransactions
 }
 
-export function * getTask (taskId) {
+export async function getTask (ctx, taskId) {
   // Get the values to use
   taskId = unescape(taskId)
 
   try {
-    const filtersObject = this.request.query
+    const filtersObject = ctx.request.query
 
     // get limit and page values
     const {filterLimit} = filtersObject
@@ -228,7 +228,7 @@ export function * getTask (taskId) {
     // get filters object
     const filters = JSON.parse(filtersObject.filters)
 
-    const result = yield TaskModelAPI.findById(taskId).lean().exec()
+    const result = await TaskModelAPI.findById(taskId).lean().exec()
     let tempTransactions = result.transactions
 
     // are filters present
@@ -252,51 +252,51 @@ export function * getTask (taskId) {
     // Test if the result if valid
     if (result === null) {
       // task not found! So inform the user
-      return utils.logAndSetResponse(this, 404, `We could not find a Task with this ID: ${taskId}.`, 'info')
+      return utils.logAndSetResponse(ctx, 404, `We could not find a Task with this ID: ${taskId}.`, 'info')
     } else {
-      this.body = result
+      ctx.body = result
     }
     // All ok! So set the result
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not fetch Task by ID {taskId} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not fetch Task by ID {taskId} via the API: ${err}`, 'error')
   }
 }
 
 /**
  * Updates the details for a specific Task
  */
-export function * updateTask (taskId) {
+export async function updateTask (ctx, taskId) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to updateTask denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to updateTask denied.`, 'info')
     return
   }
 
   // Get the values to use
   taskId = unescape(taskId)
-  const taskData = this.request.body
+  const taskData = ctx.request.body
 
   // Ignore _id if it exists, user cannot change the internal id
   if (taskData._id != null) { delete taskData._id }
 
   try {
-    yield TaskModelAPI.findOneAndUpdate({_id: taskId}, taskData).exec()
+    await TaskModelAPI.findOneAndUpdate({_id: taskId}, taskData).exec()
 
     // All ok! So set the result
-    this.body = 'The Task was successfully updated'
-    return logger.info(`User ${this.authenticated.email} updated task with id ${taskId}`)
+    ctx.body = 'The Task was successfully updated'
+    logger.info(`User ${ctx.authenticated.email} updated task with id ${taskId}`)
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not update Task by ID {taskId} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not update Task by ID {taskId} via the API: ${err}`, 'error')
   }
 }
 
 /**
  * Deletes a specific Tasks details
  */
-export function * removeTask (taskId) {
+export async function removeTask (ctx, taskId) {
   // Must be admin
-  if (!authorisation.inGroup('admin', this.authenticated)) {
-    utils.logAndSetResponse(this, 403, `User ${this.authenticated.email} is not an admin, API access to removeTask denied.`, 'info')
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeTask denied.`, 'info')
     return
   }
 
@@ -305,12 +305,12 @@ export function * removeTask (taskId) {
 
   try {
     // Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    yield TaskModelAPI.remove({_id: taskId}).exec()
+    await TaskModelAPI.remove({_id: taskId}).exec()
 
     // All ok! So set the result
-    this.body = 'The Task was successfully deleted'
-    return logger.info(`User ${this.authenticated.email} removed task with id ${taskId}`)
+    ctx.body = 'The Task was successfully deleted'
+    logger.info(`User ${ctx.authenticated.email} removed task with id ${taskId}`)
   } catch (err) {
-    return utils.logAndSetResponse(this, 500, `Could not remove Task by ID {taskId} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(ctx, 500, `Could not remove Task by ID {taskId} via the API: ${err}`, 'error')
   }
 }

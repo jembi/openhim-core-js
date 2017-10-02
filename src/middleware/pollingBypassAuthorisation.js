@@ -21,11 +21,11 @@ export function authoriseUser (ctx, done) {
 /*
  * Koa middleware for bypassing authorisation for polling
  */
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const _authoriseUser = Q.denodeify(authoriseUser)
-  yield _authoriseUser(this)
+  await _authoriseUser(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.pollingBypassAuthorisationMiddleware`, startTime) }
-  return yield next
+  await next()
 }

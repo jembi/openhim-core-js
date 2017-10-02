@@ -43,6 +43,7 @@ config.api = config.get('api')
 config.rerun = config.get('rerun')
 config.tcpAdapter = config.get('tcpAdapter')
 config.logger = config.get('logger')
+config.mongoLogger = config.get('mongoLogger')
 config.alerts = config.get('alerts')
 config.polling = config.get('polling')
 config.reports = config.get('reports')
@@ -99,6 +100,7 @@ if (cluster.isMaster && !module.parent) {
     logger.add(logger.transports.MongoDB, {
       db: config.mongo.url,
       label: 'master',
+      options: config.mongoLogger.options,
       level: 'debug',
       capped: config.logger.capDBLogs,
       cappedSize: config.logger.capSize
@@ -217,6 +219,7 @@ if (cluster.isMaster && !module.parent) {
   if (config.logger.logToDB === true) {
     logger.add(logger.transports.MongoDB, {
       db: config.mongo.url,
+      options: config.mongoLogger.options,
       label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined,
       level: 'debug',
       capped: config.logger.capDBLogs,
@@ -690,14 +693,15 @@ if (cluster.isMaster && !module.parent) {
       promises.push(startAgenda())
 
       return (Q.all(promises)).then(() => {
-        let audit = atna.appActivityAudit(true, himSourceID, os.hostname(), 'system')
-        audit = atna.wrapInSyslog(audit)
-        return auditing.sendAuditEvent(audit, () => {
+        let audit = atna.construct.appActivityAudit(true, himSourceID, os.hostname(), 'system')
+        audit = atna.construct.wrapInSyslog(audit)
+        return auditing.sendAuditEvent(audit, (err) => {
+          if (err) return done(err)
           logger.info('Processed start audit event')
           logger.info(`OpenHIM server started: ${new Date()}`)
           return done()
         })
-      })
+      }).catch(done)
     })
   }
 
@@ -791,8 +795,8 @@ if (cluster.isMaster && !module.parent) {
 
       agenda = null
 
-      let audit = atna.appActivityAudit(false, himSourceID, os.hostname(), 'system')
-      audit = atna.wrapInSyslog(audit)
+      let audit = atna.construct.appActivityAudit(false, himSourceID, os.hostname(), 'system')
+      audit = atna.construct.wrapInSyslog(audit)
       return auditing.sendAuditEvent(audit, () => {
         logger.info('Processed stop audit event')
         logger.info('Server shutdown complete.')

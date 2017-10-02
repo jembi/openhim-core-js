@@ -25,17 +25,17 @@ export function authenticateUser (ctx, done) {
 /*
  * Koa middleware for bypassing authentication for tcp requests
  */
-export function * koaMiddleware (next) {
+export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
   const _authenticateUser = Q.denodeify(authenticateUser)
-  yield _authenticateUser(this)
+  await _authenticateUser(ctx)
 
-  if (this.authenticated != null) {
+  if (ctx.authenticated != null) {
     if (statsdServer.enabled) { sdc.timing(`${domain}.tcpBypassAuthenticationMiddleware`, startTime) }
-    return yield next
+    await next()
   } else {
-    this.response.status = 401
+    ctx.response.status = 401
     if (statsdServer.enabled) { return sdc.timing(`${domain}.tcpBypassAuthenticationMiddleware`, startTime) }
   }
 }
