@@ -36,5 +36,7 @@ const EventsSchema = new Schema({
   autoRetryAttempt: Number
 })
 
+EventsSchema.index({created: 1}, {expireAfterSeconds: 3600})
+
 export const EventModelAPI = connectionAPI.model('Event', EventsSchema)
 export const EventModel = connectionDefault.model('Event', EventsSchema)
