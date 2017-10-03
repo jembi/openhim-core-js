@@ -9,12 +9,12 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () => {
+xdescribe('API Integration Tests', () => {
   beforeEach(done => AuditModel.remove({}, () => AuditMetaModel.remove({}, () => done())))
 
   afterEach(done => AuditModel.remove({}, () => AuditMetaModel.remove({}, () => done())))
 
-  describe('Audits REST Api testing', () => {
+  xdescribe('Audits REST Api testing', () => {
     const auditData = {
       rawMessage: 'This will be the raw ATNA message that gets received to be used as a backup reference',
       eventIdentification: {
@@ -108,7 +108,7 @@ describe('API Integration Tests', () => {
 
     beforeEach(() => { authDetails = auth.getAuthDetails() })
 
-    describe('*addAudit()', () => {
+    xdescribe('*addAudit()', () => {
       it('should add a audit and return status 201 - audit created', done =>
         request('https://localhost:8080')
           .post('/audits')
@@ -163,7 +163,7 @@ describe('API Integration Tests', () => {
       )
     })
 
-    describe('*getAudits()', () => {
+    xdescribe('*getAudits()', () => {
       it('should call getAudits ', done =>
         AuditModel.count({}, (err, countBefore) => {
           if (err) { return done(err) }
@@ -280,7 +280,7 @@ describe('API Integration Tests', () => {
       })
     })
 
-    describe('*getAuditById (auditId)', () => {
+    xdescribe('*getAuditById (auditId)', () => {
       it('should fetch a audit by ID - admin user', (done) => {
         const audit = new AuditModel(auditData)
         audit.save((err, result) => {
@@ -379,7 +379,7 @@ describe('API Integration Tests', () => {
       })
     })
 
-    describe('*getAuditsFilterOptions', () => {
+    xdescribe('*getAuditsFilterOptions', () => {
       it('should fetch dropdown filter options - admin user', done =>
         request('https://localhost:8080')
           .post('/audits')

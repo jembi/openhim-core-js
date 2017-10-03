@@ -98,10 +98,10 @@ const testAuditIHEDICOM = `\
 </AuditMessage>\
 `
 
-describe('Auditing', () => {
+xdescribe('Auditing', () => {
   beforeEach(done => AuditModel.remove({}, () => AuditMetaModel.remove({}, () => done())))
 
-  describe('.processAudit', () => {
+  xdescribe('.processAudit', () => {
     const validateSyslog = function (syslog) {
       syslog.should.exist
       syslog.msgID.should.be.equal('IHE+RFC-3881')
@@ -285,7 +285,7 @@ describe('Auditing', () => {
     )
   })
 
-  describe('IHE Samples', () => {
+  xdescribe('IHE Samples', () => {
     const validateIHEAudit = function (type, audit) {
       audit.syslog.should.exist
       audit.syslog.msgID.should.be.equal(type)
@@ -356,7 +356,7 @@ describe('Auditing', () => {
     )
   })
 
-  return describe('.sendAuditEvent', () => {
+  return xdescribe('.sendAuditEvent', () => {
     const testString = 'hello - this is a test'
     let _restore = null
 

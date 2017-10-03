@@ -9,9 +9,9 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Clients REST Api Testing', () => {
+  xdescribe('Clients REST Api Testing', () => {
     const testAppDoc = {
       clientID: 'YUIAIIIICIIAIA',
       clientDomain: 'him.jembi.org',
@@ -46,7 +46,7 @@ describe('API Integration Tests', () =>
       ClientModelAPI.remove(() => done())
     )
 
-    describe('*addClient', () => {
+    xdescribe('*addClient', () => {
       it('should add client to db and return status 201 - client created', done =>
         request('https://localhost:8080')
           .post('/clients')
@@ -117,7 +117,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*getClient(_id)', () => {
+    xdescribe('*getClient(_id)', () => {
       const clientTest = {
         clientID: 'testClient',
         clientDomain: 'www.zedmusic-unique.co.zw',
@@ -221,7 +221,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*findClientByDomain(clientDomain)', () => {
+    xdescribe('*findClientByDomain(clientDomain)', () => {
       const clientTest = {
         clientID: 'Zambia_OpenHIE_Instance',
         clientDomain: 'www.zedmusic-unique.co.zw',
@@ -278,7 +278,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*getClients()', () => {
+    xdescribe('*getClients()', () => {
       const testDocument = {
         clientID: 'Botswana_OpenHIE_Instance',
         clientDomain: 'www.zedmusic.co.zw',
@@ -349,7 +349,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*updateClient', () => {
+    xdescribe('*updateClient', () => {
       const testDocument = {
         clientID: 'Botswana_OpenHIE_Instance',
         clientDomain: 'www.zedmusic.co.zw',
@@ -477,7 +477,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*removeClient', () => {
+    xdescribe('*removeClient', () => {
       it('should remove an client with specified clientID', (done) => {
         const docTestRemove = {
           clientID: 'Jembi_OpenHIE_Instance',

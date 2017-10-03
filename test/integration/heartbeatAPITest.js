@@ -8,8 +8,8 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
-  describe('Heartbeat REST API testing', () => {
+xdescribe('API Integration Tests', () =>
+  xdescribe('Heartbeat REST API testing', () => {
     const mediator1 = {
       urn: 'urn:mediator:awesome-test-mediator',
       version: '1.0.0',
@@ -51,7 +51,7 @@ describe('API Integration Tests', () =>
         .expect(201)
         .end(done)
 
-    return describe('*getHeartbeat()', () => {
+    return xdescribe('*getHeartbeat()', () => {
       it('should fetch the heartbeat without requiring authentication', done =>
         request('https://localhost:8080')
           .get('/heartbeat')

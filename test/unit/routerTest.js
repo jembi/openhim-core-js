@@ -10,7 +10,7 @@ import { ChannelModel } from '../../src/model/channels'
 
 Error.stackTraceLimit = Infinity
 
-describe('HTTP Router', () => {
+xdescribe('HTTP Router', () => {
   const requestTimestamp = (new Date()).toString()
 
   before(done =>
@@ -21,7 +21,7 @@ describe('HTTP Router', () => {
     testUtils.cleanupTestKeystore(() => done())
   )
 
-  describe('.route', () => {
+  xdescribe('.route', () => {
     it('should route an incomming request to the endpoints specific by the channel config', done =>
       testUtils.createMockServer(201, 'Mock response body\n', 9876, () => {
         // Setup a channel for the mock endpoint
@@ -664,7 +664,7 @@ describe('HTTP Router', () => {
     })
   })
 
-  describe('Basic Auth', () => {
+  xdescribe('Basic Auth', () => {
     it('should have valid authorization header if username and password is set in options', (done) => {
       let mockServer
       mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9875, () => {
@@ -847,8 +847,8 @@ describe('HTTP Router', () => {
     )
   })
 
-  describe('Path Redirection', () => {
-    describe('.transformPath', () =>
+  xdescribe('Path Redirection', () => {
+    xdescribe('.transformPath', () =>
       it('must transform the path string correctly', (done) => {
         const test = (path, expr, res) => router.transformPath(path, expr).should.be.exactly(res)
         test('foo', 's/foo/bar', 'bar')
@@ -925,7 +925,7 @@ describe('HTTP Router', () => {
     })
   })
 
-  return describe('setKoaResponse', () => {
+  return xdescribe('setKoaResponse', () => {
     const createCtx = function () {
       const ctx = {}
       ctx.response = {}

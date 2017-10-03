@@ -9,7 +9,7 @@ import * as server from '../../src/server'
 import * as testUtils from '../testUtils'
 import { testAuditMessage } from '../unit/auditingTest'
 
-describe('Auditing Integration Tests', () => {
+xdescribe('Auditing Integration Tests', () => {
   beforeEach(done => AuditModel.remove({}, () => server.start({
     auditUDPPort: 5050,
     auditTlsPort: 5051,
@@ -22,7 +22,7 @@ describe('Auditing Integration Tests', () => {
 
   after(done => testUtils.cleanupTestKeystore(() => done()))
 
-  describe('UDP Audit Server', () =>
+  xdescribe('UDP Audit Server', () =>
     it('should receive and persist audit messages', (done) => {
       const client = dgram.createSocket('udp4')
       return client.send(testAuditMessage, 0, testAuditMessage.length, 5050, 'localhost', (err) => {
@@ -45,7 +45,7 @@ describe('Auditing Integration Tests', () => {
     })
   )
 
-  describe('TLS Audit Server', () => {
+  xdescribe('TLS Audit Server', () => {
     it('should send TLS audit messages and save (valid)', (done) => {
       const options = {
         cert: fs.readFileSync('test/resources/trust-tls/cert1.pem'),
@@ -101,7 +101,7 @@ describe('Auditing Integration Tests', () => {
     })
   })
 
-  return describe('TCP Audit Server', () => {
+  return xdescribe('TCP Audit Server', () => {
     it('should send TCP audit messages and save (valid)', (done) => {
       const client = net.connect(5052, 'localhost', () => {
         const messagePrependlength = `${testAuditMessage.length} ${testAuditMessage}`

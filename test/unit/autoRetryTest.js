@@ -56,7 +56,7 @@ const retryTransaction3 = new AutoRetryModel({
   requestTimestamp: moment().subtract(1, 'hour').subtract(30, 'minutes').toDate()
 })
 
-describe('Auto Retry Task', () => {
+xdescribe('Auto Retry Task', () => {
   afterEach(done =>
     ChannelModel.remove({}, () => AutoRetryModel.remove({}, () => TaskModel.remove({}, () => {
       retryChannel.isNew = true
@@ -79,7 +79,7 @@ describe('Auto Retry Task', () => {
     )
   )
 
-  describe('.getChannels', () => {
+  xdescribe('.getChannels', () => {
     it('should return auto-retry enabled channels', done =>
       retryChannel.save(() =>
         autoRetry.getChannels((err, results) => {
@@ -118,7 +118,7 @@ describe('Auto Retry Task', () => {
     )
   })
 
-  describe('.popTransactions', () => {
+  xdescribe('.popTransactions', () => {
     it('should return transactions that can be retried', done =>
       retryChannel.save(() => {
         retryTransaction1.channelID = retryChannel._id
@@ -151,7 +151,7 @@ describe('Auto Retry Task', () => {
     )
   })
 
-  describe('.createRerunTask', () =>
+  xdescribe('.createRerunTask', () =>
     it('should save a valid task', done =>
       retryChannel.save(() => {
         retryTransaction1.channelID = retryChannel._id
@@ -174,7 +174,7 @@ describe('Auto Retry Task', () => {
     )
   )
 
-  describe('.autoRetryTask', () => {
+  xdescribe('.autoRetryTask', () => {
     it('should lookup transactions and save a valid task', done =>
       retryChannel.save(() => {
         retryTransaction1.channelID = retryChannel._id

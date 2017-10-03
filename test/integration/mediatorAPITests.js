@@ -10,8 +10,8 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
-  describe('Mediators REST API testing', () => {
+xdescribe('API Integration Tests', () =>
+  xdescribe('Mediators REST API testing', () => {
     const mediator1 = {
       urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED',
       version: '1.0.0',
@@ -103,7 +103,7 @@ describe('API Integration Tests', () =>
 
     afterEach(done => MediatorModelAPI.remove({}, () => ChannelModelAPI.remove({}, done)))
 
-    describe('*getAllMediators()', () => {
+    xdescribe('*getAllMediators()', () => {
       it('should fetch all mediators', done =>
         new MediatorModelAPI(mediator1).save(() =>
           new MediatorModelAPI(mediator2).save(() =>
@@ -144,7 +144,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*getMediator()', () => {
+    xdescribe('*getMediator()', () => {
       it('should fetch mediator', done =>
         new MediatorModelAPI(mediator1).save(() =>
           request('https://localhost:8080')
@@ -200,7 +200,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*addMediator()', () => {
+    xdescribe('*addMediator()', () => {
       it('should return 201', done =>
         request('https://localhost:8080')
           .post('/mediators')
@@ -980,7 +980,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*removeMediator', () => {
+    xdescribe('*removeMediator', () => {
       it('should remove an mediator with specified urn', (done) => {
         const mediatorDelete = {
           urn: 'urn:uuid:EEA84E13-2M74-467C-UD7F-7C480462D1DF',
@@ -1064,7 +1064,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*heartbeat()', () => {
+    xdescribe('*heartbeat()', () => {
       it('should store uptime and lastHeartbeat then return a 200 status', done =>
         new MediatorModelAPI(mediator1).save(() =>
           request('https://localhost:8080')
@@ -1236,7 +1236,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*setConfig()', () => {
+    xdescribe('*setConfig()', () => {
       it('should deny access to a non admin user', done =>
         request('https://localhost:8080')
           .put('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config')
@@ -1355,7 +1355,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*loadDefaultChannels()', () => {
+    xdescribe('*loadDefaultChannels()', () => {
       it('should deny access to non-admin users', done =>
         request('https://localhost:8080')
           .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels')

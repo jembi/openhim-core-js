@@ -111,7 +111,7 @@ const task1 = new TaskModel({
   user: 'root@openhim.org'
 })
 
-describe('rerunUpdateTransactionTask middleware', () => {
+xdescribe('rerunUpdateTransactionTask middleware', () => {
   before(done =>
     transaction1.save(() =>
       transaction2.save(err => {
@@ -133,7 +133,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
     )
   )
 
-  describe('updateOriginalTransaction', () => {
+  xdescribe('updateOriginalTransaction', () => {
     it('should update the original transaction with the child ID', (done) => {
       // check data before function execution
       const transactionID = '53e096fea0af3105689acd6a'
@@ -183,7 +183,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
     })
   })
 
-  describe('updateTask()', () =>
+  xdescribe('updateTask()', () =>
     it('should update the task with the rerun ID and status', (done) => {
       // check data before function execution
       const taskID = '53e34b915d0180cf6eef2d01'
@@ -211,7 +211,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
     })
   )
 
-  return describe('setAttemptNumber', () => {
+  return xdescribe('setAttemptNumber', () => {
     it('should not set the attempt number if the parent transaction was not an autoretry', (done) => {
       delete ctx.currentAttempt
       return rerunUpdateTransactionTask.setAttemptNumber(ctx, (err) => {

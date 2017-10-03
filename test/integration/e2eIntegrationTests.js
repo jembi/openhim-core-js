@@ -16,9 +16,9 @@ import { config } from '../../src/config'
 config.authentication = config.get('authentication')
 config.tlsClientLookup = config.get('tlsClientLookup')
 
-describe('e2e Integration Tests', () => {
-  describe('Authentication and authorisation tests', () => {
-    describe('Mutual TLS', () => {
+xdescribe('e2e Integration Tests', () => {
+  xdescribe('Authentication and authorisation tests', () => {
+    xdescribe('Mutual TLS', () => {
       let mockServer = null
 
       before((done) => {
@@ -216,7 +216,7 @@ describe('e2e Integration Tests', () => {
       })
     })
 
-    describe('Basic Authentication', () => {
+    xdescribe('Basic Authentication', () => {
       let mockServer = null
 
       before((done) => {
@@ -272,7 +272,7 @@ describe('e2e Integration Tests', () => {
         server.stop(() => done())
       )
 
-      describe('with no credentials', () =>
+      xdescribe('with no credentials', () =>
         it('should `throw` 401', done =>
           server.start({httpPort: 5001}, () =>
             request('http://localhost:5001')
@@ -289,7 +289,7 @@ describe('e2e Integration Tests', () => {
         )
       )
 
-      describe('with incorrect credentials', () =>
+      xdescribe('with incorrect credentials', () =>
         it('should `throw` 401', done =>
           server.start({httpPort: 5001}, () =>
             request('http://localhost:5001')
@@ -308,7 +308,7 @@ describe('e2e Integration Tests', () => {
         )
       )
 
-      describe('with correct credentials', () =>
+      xdescribe('with correct credentials', () =>
         it('should return 200 OK', done =>
           server.start({httpPort: 5001}, () =>
             request('http://localhost:5001')
@@ -328,7 +328,7 @@ describe('e2e Integration Tests', () => {
     })
   })
 
-  describe('POST and PUT tests', () => {
+  xdescribe('POST and PUT tests', () => {
     let mockServer = null
     let mockServerWithReturn = null
     const testDoc = '<test>test message</test>'
@@ -617,7 +617,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  describe('HTTP header tests', () => {
+  xdescribe('HTTP header tests', () => {
     let mockServer = null
     const testDoc = '<test>test message</test>'
 
@@ -695,7 +695,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  describe('HTTP body content matching - XML', () => {
+  xdescribe('HTTP body content matching - XML', () => {
     let mockServer = null
     const testXMLDoc = `\
 <careServicesRequest>
@@ -805,7 +805,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  describe('HTTP body content matching - JSON', () => {
+  xdescribe('HTTP body content matching - JSON', () => {
     let mockServer = null
     const testJSONDoc = `\
 {
@@ -911,7 +911,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  describe('HTTP body content matching - RegEx', () => {
+  xdescribe('HTTP body content matching - RegEx', () => {
     let mockServer = null
     const testRegExDoc = 'facility: OMRS123'
 
@@ -1007,7 +1007,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  describe('mediator tests', () => {
+  xdescribe('mediator tests', () => {
     let mockServer = null
 
     const mediatorResponse = {
@@ -1099,7 +1099,7 @@ describe('e2e Integration Tests', () => {
       )
     )
 
-    describe('mediator response processing', () => {
+    xdescribe('mediator response processing', () => {
       it('should return the specified mediator response element as the actual response', done =>
         server.start({httpPort: 5001}, () =>
           request('http://localhost:5001')
@@ -1145,7 +1145,7 @@ describe('e2e Integration Tests', () => {
     })
   })
 
-  describe('Multipart form data tests', () => {
+  xdescribe('Multipart form data tests', () => {
     before((done) => {
       config.authentication.enableMutualTLSAuthentication = false
       config.authentication.enableBasicAuthentication = true
@@ -1254,7 +1254,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  describe('URL rewriting e2e test', () => {
+  xdescribe('URL rewriting e2e test', () => {
     let mockServer = null
 
     const jsonResponse =
@@ -1335,7 +1335,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  describe('Routes enabled/disabled tests', () => {
+  xdescribe('Routes enabled/disabled tests', () => {
     let mockServer1 = null
     let mockServer2 = null
 
@@ -1530,7 +1530,7 @@ describe('e2e Integration Tests', () => {
     )
   })
 
-  describe('Channel priority tests', () => {
+  xdescribe('Channel priority tests', () => {
     let mockServer1 = null
     let mockServer2 = null
 

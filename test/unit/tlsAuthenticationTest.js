@@ -10,12 +10,12 @@ import { config } from '../../src/config'
 
 config.tlsClientLookup = config.get('tlsClientLookup')
 
-describe('tlsAuthentication.coffee', () => {
+xdescribe('tlsAuthentication.coffee', () => {
   beforeEach(done => testUtils.setupTestKeystore(() => done()))
 
   afterEach(done => testUtils.cleanupTestKeystore(() => done()))
 
-  describe('.getServerOptions', () => {
+  xdescribe('.getServerOptions', () => {
     it('should add all trusted certificates and enable mutual auth from all clients to server options if mutual auth is enabled', done =>
       tlsAuthentication.getServerOptions(true, (err, options) => {
         if (err) { return done(err) }
@@ -49,7 +49,7 @@ describe('tlsAuthentication.coffee', () => {
     )
   })
 
-  return describe('.clientLookup', () => {
+  return xdescribe('.clientLookup', () => {
     it('should find a client in the keystore up the chain', (done) => {
       const testClientDoc = {
         clientID: 'testApp',

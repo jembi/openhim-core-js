@@ -55,7 +55,7 @@ const channel2 = new ChannelModel({
 const dateFrom = new Date()
 dateFrom.setHours(0, 0, 0, 0)
 
-describe('Transaction Reports', () => {
+xdescribe('Transaction Reports', () => {
   before(done =>
     testUser1.save(() =>
       testUser2.save(() =>
@@ -76,7 +76,7 @@ describe('Transaction Reports', () => {
     )
   )
 
-  describe('config', () =>
+  xdescribe('config', () =>
     it('default config should contain reporting config fields', (done) => {
       config.reports.should.exist
       config.reports.enableReports.should.exist
@@ -84,7 +84,7 @@ describe('Transaction Reports', () => {
     })
   )
 
-  describe('Subscribers', () => {
+  xdescribe('Subscribers', () => {
     it('should fetch weekly subscribers', done =>
       reports.fetchWeeklySubscribers((err, results) => {
         if (err) { return done(err) }
@@ -104,7 +104,7 @@ describe('Transaction Reports', () => {
     )
   })
 
-  return describe('Reports', () => {
+  return xdescribe('Reports', () => {
     it('should return a daily channel Report', (done) => {
       const from = moment('2014-07-15').startOf('day').toDate()
       const to = moment('2014-07-15').endOf('day').toDate()

@@ -30,7 +30,7 @@ const clearTransactionBodies = function (t) {
   t.orchestrations[0].response.body = ''
 }
 
-describe('API Integration Tests', () => {
+xdescribe('API Integration Tests', () => {
   let largeBody = ''
   for (let i = 0, end = 2 * 1024 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { largeBody += '1234567890' }
 
@@ -156,8 +156,8 @@ describe('API Integration Tests', () => {
     done()
   })
 
-  describe('Transactions REST Api testing', () => {
-    describe('*addTransaction()', () => {
+  xdescribe('Transactions REST Api testing', () => {
+    xdescribe('*addTransaction()', () => {
       it('should add a transaction and truncate the large response body', async () => {
         const td = JSON.parse(JSON.stringify(transactionData))
         td.channelID = channel._id
@@ -380,7 +380,7 @@ describe('API Integration Tests', () => {
       })
     })
 
-    describe('*updateTransaction()', () => {
+    xdescribe('*updateTransaction()', () => {
       const requestUpdate = {
         path: '/api/test/updated',
         headers: {
@@ -686,7 +686,7 @@ describe('API Integration Tests', () => {
       })
     })
 
-    describe('*getTransactions()', () => {
+    xdescribe('*getTransactions()', () => {
       it('should call getTransactions ', async () => {
         const countBefore = await TransactionModelAPI.count({})
         countBefore.should.equal(0)
@@ -886,7 +886,7 @@ describe('API Integration Tests', () => {
       })
     })
 
-    describe('*getTransactionById (transactionId)', () => {
+    xdescribe('*getTransactionById (transactionId)', () => {
       it('should fetch a transaction by ID - admin user', async () => {
         const tx = await new TransactionModelAPI(transactionData).save()
         const res = await request('https://localhost:8080')
@@ -960,7 +960,7 @@ describe('API Integration Tests', () => {
       })
     })
 
-    describe('*findTransactionByClientId (clientId)', () => {
+    xdescribe('*findTransactionByClientId (clientId)', () => {
       it('should call findTransactionByClientId', async () => {
         const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {clientID: '555555555555555555555555'})).save()
         const res = await request('https://localhost:8080')
@@ -1005,7 +1005,7 @@ describe('API Integration Tests', () => {
       })
     })
 
-    describe('*removeTransaction (transactionId)', () => {
+    xdescribe('*removeTransaction (transactionId)', () => {
       it('should call removeTransaction', async () => {
         const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {clientID: '222222222222222222222222'})).save()
         await request('https://localhost:8080')

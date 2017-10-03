@@ -2,7 +2,7 @@ module.exports = function (wallaby) {
   return {
     files: [
       'src/**/*.js',
-      'test/**/*.js',
+      'test/*.js',
       '!test/**/*Tests.js',
       '!test/**/*Test.js',
       {
@@ -28,7 +28,8 @@ module.exports = function (wallaby) {
     ],
 
     tests: [
-      'test/unit/*Test.js'
+      'test/setupTest.js',
+      'test/unit/alertsTest.js'
     ],
     compilers: {
       '**/*.js': wallaby.compilers.babel()

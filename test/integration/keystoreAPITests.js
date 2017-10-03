@@ -10,9 +10,9 @@ import { config } from '../../src/config'
 const {auth} = testUtils
 config.certificateManagement = config.get('certificateManagement')
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Keystore API Tests', () => {
+  xdescribe('Keystore API Tests', () => {
     let authDetails = {}
 
     before(done =>

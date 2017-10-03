@@ -7,7 +7,7 @@ const should = require('should')
 
 const transactions = require('../../src/api/transactions')
 
-describe('calculateTransactionBodiesByteLength()', () => {
+xdescribe('calculateTransactionBodiesByteLength()', () => {
   it('should calculate the bodies length of a transaction', async () => {
     const lengthObj = {length: 0}
     let transaction = {
@@ -43,7 +43,7 @@ describe('calculateTransactionBodiesByteLength()', () => {
   })
 })
 
-describe('updateTransactionMetrics()', () => {
+xdescribe('updateTransactionMetrics()', () => {
   it('should update transaction metrics', async () => {
     try {
       const updates = {

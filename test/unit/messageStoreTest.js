@@ -9,7 +9,7 @@ import * as utils from '../../src/utils'
 
 const {ObjectId} = Types
 
-describe('MessageStore', () => {
+xdescribe('MessageStore', () => {
   const channel1 = {
     name: 'TestChannel1',
     urlPattern: 'test/sample',
@@ -112,7 +112,7 @@ describe('MessageStore', () => {
     )
   )
 
-  describe('.storeTransaction', () => {
+  xdescribe('.storeTransaction', () => {
     it('should be able to save the transaction in the db', done =>
       messageStore.storeTransaction(ctx, (error, result) => {
         should.not.exist(error)
@@ -173,7 +173,7 @@ describe('MessageStore', () => {
     })
   })
 
-  return describe('.storeResponse', () => {
+  return xdescribe('.storeResponse', () => {
     beforeEach(done =>
       ChannelModel.remove({}, () =>
         (new ChannelModel(channel1)).save((err, ch1) => {

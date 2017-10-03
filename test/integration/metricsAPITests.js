@@ -10,9 +10,9 @@ import * as server from '../../src/server'
 
 const {auth} = testUtils
 
-describe('API Metrics Tests', () =>
+xdescribe('API Metrics Tests', () =>
 
-  describe('OpenHIM Metrics Api testing', () => {
+  xdescribe('OpenHIM Metrics Api testing', () => {
     const channel1 = new ChannelModelAPI({
       _id: '111111111111111111111111',
       name: 'Test Channel 11111',
@@ -67,7 +67,7 @@ describe('API Metrics Tests', () =>
 
     beforeEach(() => { authDetails = auth.getAuthDetails() })
 
-    describe('*getMetrics()', () => {
+    xdescribe('*getMetrics()', () => {
       it('should fetch metrics and return a 200', done =>
         request('https://localhost:8080')
           .get('/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')

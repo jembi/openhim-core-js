@@ -10,9 +10,9 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Contact Groups REST Api Testing', () => {
+  xdescribe('Contact Groups REST Api Testing', () => {
     let contactGroupData = {
       group: 'Group 1',
       users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'},
@@ -47,7 +47,7 @@ describe('API Integration Tests', () =>
       ContactGroupModelAPI.remove(() => done())
     )
 
-    describe('*addContactGroup', () => {
+    xdescribe('*addContactGroup', () => {
       it('should add contact group to db and return status 201 - group created', done =>
         request('https://localhost:8080')
           .post('/groups')
@@ -91,7 +91,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*getContactGroup(_id)', () => {
+    xdescribe('*getContactGroup(_id)', () => {
       contactGroupData = {
         group: 'Group 1',
         users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'},
@@ -171,7 +171,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*getContactGroups()', () => {
+    xdescribe('*getContactGroups()', () => {
       const contactGroupData1 = {
         group: 'Group 1',
         users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'},
@@ -252,7 +252,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*updateContactGroup', () => {
+    xdescribe('*updateContactGroup', () => {
       contactGroupData = {
         group: 'Group 1',
         users: [{user: 'User 1', method: 'sms', maxAlerts: 'no max'},
@@ -321,7 +321,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*removeContactGroup', () => {
+    xdescribe('*removeContactGroup', () => {
       it('should remove an contactGroup with specified contactGroupID', (done) => {
         contactGroupData = {
           group: 'Group 1',

@@ -4,8 +4,8 @@ import rewire from 'rewire'
 
 const mediators = rewire('../../src/api/mediators')
 
-describe('Mediator API unit tests', () => {
-  describe('.validateConfig()', () => {
+xdescribe('Mediator API unit tests', () => {
+  xdescribe('.validateConfig()', () => {
     it('should reject config that includes extra, unknown params', () => {
       try {
         mediators.validateConfig(
@@ -502,7 +502,7 @@ describe('Mediator API unit tests', () => {
     })
   })
 
-  describe('.maskPasswords()', () => {
+  xdescribe('.maskPasswords()', () => {
     const mask = '**********'
 
     it('should filter out a password from a mediator object', () => {
@@ -661,7 +661,7 @@ describe('Mediator API unit tests', () => {
     })
   })
 
-  return describe('.restoreMaskedPasswords()', () => {
+  return xdescribe('.restoreMaskedPasswords()', () => {
     const mask = '**********'
 
     it('should a restore a password in a mediator object', () => {

@@ -5,9 +5,9 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
+xxdescribe('API Integration Tests', () =>
 
-  describe('About Information REST Api Testing', () => {
+  xxdescribe('About Information REST Api Testing', () => {
     let authDetails = {}
 
     before(done =>
@@ -30,7 +30,7 @@ describe('API Integration Tests', () =>
       )
     )
 
-    describe('*getAboutInformation', () => {
+    xxdescribe('*getAboutInformation', () => {
       it('should fetch core version and return status 200', done =>
         request('https://localhost:8080')
           .get('/about')

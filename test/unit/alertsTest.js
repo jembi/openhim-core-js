@@ -9,6 +9,8 @@ import { ContactGroupModel } from '../../src/model/contactGroups'
 import { EventModel } from '../../src/model/events'
 import { AlertModel } from '../../src/model/alerts'
 import { config } from '../../src/config'
+import { promisify } from 'util'
+import { dropTestDb } from '../utils'
 
 config.alerts = config.get('alerts')
 
@@ -50,7 +52,7 @@ const testGroup1 = new ContactGroupModel({
 const testGroup2 = new ContactGroupModel({
   _id: 'bbb908908ccc98cc1d0888aa',
   group: 'group2',
-  users: [{user: 'one@openhim.org', method: 'email'}]
+  users: [{ user: 'one@openhim.org', method: 'email' }]
 })
 
 const testFailureRate = 50
@@ -69,7 +71,7 @@ const testChannel = new ChannelModel({
       condition: 'status',
       status: '5xx',
       groups: ['bbb908908ccc98cc1d0888aa'],
-      users: [{user: 'two@openhim.org', method: 'sms'}],
+      users: [{ user: 'two@openhim.org', method: 'sms' }],
       failureRate: testFailureRate
     }
   ]
@@ -210,74 +212,74 @@ const dateFrom = new Date()
 dateFrom.setHours(0, 0, 0, 0)
 
 describe('Transaction Alerts', () => {
-  before(done =>
-    EventModel.ensureIndexes(() =>
-      AlertModel.ensureIndexes(() =>
-        testUser1.save(() => testUser2.save(() => testGroup1.save(() => testGroup2.save(() =>
-            testChannel.save(() => disabledChannel.save(() => autoRetryChannel.save(() => {
-              for (const testTransaction of Array.from(testTransactions)) {
-                testTransaction.channelID = testChannel._id
-              }
-              testTransactions[6].channelID = '000000000000000000000000' // a channel id that doesn't exist
-              testTransactions[7].channelID = disabledChannel._id
-              testTransactions[8].channelID = autoRetryChannel._id
-              testTransactions[9].channelID = autoRetryChannel._id
-              testTransactions[10].channelID = autoRetryChannel._id
-              testTransactions[11].channelID = autoRetryChannel._id
-              return done()
-            })
-              )
-            )
-          )
-          )
-          )
-        )
-      )
-    )
-  )
+  before(async () => {
+    await Promise.all([
+      testUser1.save(),
+      testUser2.save()
+    ])
 
-  after(done => UserModel.remove({}, () => ContactGroupModel.remove({}, () => ChannelModel.remove({}, () => done()))))
+    await Promise.all([
+      testGroup1.save(),
+      testGroup2.save()
+    ])
 
-  afterEach(done =>
-    AlertModel.remove({}, () =>
-      EventModel.remove({}, () => {
-        for (const testTransaction of Array.from(testTransactions)) {
-          testTransaction.isNew = true
-          delete testTransaction._id
-        }
-        return done()
-      })
-    )
-  )
+    await Promise.all([
+      testChannel.save(),
+      disabledChannel.save(),
+      autoRetryChannel.save()
+    ])
+
+    testTransactions.forEach(tt => {
+      tt.channelID = testChannel._id
+    })
+
+    testTransactions[6].channelID = '000000000000000000000000' // a channel id that doesn't exist
+    testTransactions[7].channelID = disabledChannel._id
+    testTransactions[8].channelID = autoRetryChannel._id
+    testTransactions[9].channelID = autoRetryChannel._id
+    testTransactions[10].channelID = autoRetryChannel._id
+    testTransactions[11].channelID = autoRetryChannel._id
+  })
+
+  after(async () => {
+    await dropTestDb()
+  })
+
+  afterEach(async () => {
+    await Promise.all([
+      AlertModel.remove({}),
+      EventModel.remove({})
+    ])
+
+    for (const testTransaction of testTransactions) {
+      testTransaction.isNew = true
+      delete testTransaction._id
+    }
+  })
 
   describe('config', () =>
-    it('default config should contain alerting config fields', (done) => {
+    it('default config should contain alerting config fields', () => {
       config.alerts.should.exist
       config.alerts.enableAlerts.should.exist
       config.alerts.pollPeriodMinutes.should.exist
       config.alerts.himInstance.should.exist
       config.alerts.consoleURL.should.exist
-      return done()
     })
   )
 
   describe('.findTransactionsMatchingStatus', () => {
-    it('should return transactions that match an exact status', done =>
-      testTransactions[0].save((err) => {
-        if (err) { return done(err) }
-        alerts.findTransactionsMatchingStatus(testChannel, {
-          condition: 'status',
-          status: '404'
-        }, dateFrom, (err, results) => {
-          if (err) { return done(err) }
-          results.length.should.be.exactly(1)
-          results[0]._id.equals(testTransactions[0]._id).should.be.true()
-          return done()
-        })
-      })
-    )
+    it('should return transactions that match an exact status', async () => {
+      await testTransactions[0].save()
+      const results = await promisify(alerts.findTransactionsMatchingStatus)(testChannel, {
+        condition: 'status',
+        status: '404'
+      }, dateFrom)
 
-    it('should return transactions that have a matching status in a route response', done =>
+      results.length.should.be.exactly(1)
+      results[0]._id.equals(testTransactions[0]._id).should.be.true()
+    })
+
+    it('should return transactions that have a matching status in a route response', done => {
       testTransactions[1].save((err) => {
         if (err) { return done(err) }
         alerts.findTransactionsMatchingStatus(testChannel, {
@@ -290,9 +292,9 @@ describe('Transaction Alerts', () => {
           return done()
         })
       })
-    )
+    })
 
-    it('should only return transactions for the requested channel', done =>
+    it('should only return transactions for the requested channel', done => {
       // should return transaction 0 but not 6
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
@@ -309,9 +311,9 @@ describe('Transaction Alerts', () => {
           })
         })
       })
-    )
+    })
 
-    it('should not return transactions that occur before dateFrom', done =>
+    it('should not return transactions that occur before dateFrom', done => {
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
         const newFrom = moment().add(1, 'days').toDate()
@@ -324,9 +326,9 @@ describe('Transaction Alerts', () => {
           return done()
         })
       })
-    )
+    })
 
-    it('should return all matching transactions for a fuzzy status search for the specified channel', done =>
+    it('should return all matching transactions for a fuzzy status search for the specified channel', done => {
       // should return transactions 0, 1 and 2 but not 3 or 6
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
@@ -356,9 +358,9 @@ describe('Transaction Alerts', () => {
           })
         })
       })
-    )
+    })
 
-    it('should not return any transactions when their count is below the failure rate', done =>
+    it('should not return any transactions when their count is below the failure rate', done => {
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
         testTransactions[1].save((err) => {
@@ -378,9 +380,9 @@ describe('Transaction Alerts', () => {
           })
         })
       })
-    )
+    })
 
-    it('should return transactions when their count is equal to the failure rate', done =>
+    it('should return transactions when their count is equal to the failure rate', done => {
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
         testTransactions[1].save((err) => {
@@ -405,9 +407,9 @@ describe('Transaction Alerts', () => {
           })
         })
       })
-    )
+    })
 
-    it('should return transactions when their count is above the failure rate', done =>
+    it('should return transactions when their count is above the failure rate', done => {
       testTransactions[0].save((err) => {
         if (err) { return done(err) }
         testTransactions[1].save((err) => {
@@ -436,7 +438,7 @@ describe('Transaction Alerts', () => {
           })
         })
       })
-    )
+    })
 
     it('should not return any transactions when the count is equal/above the failure rate, but an alert has already been sent', (done) => {
       const alert = new AlertModel({
@@ -475,7 +477,7 @@ describe('Transaction Alerts', () => {
   })
 
   describe('.findTransactionsMaxRetried', () => {
-    it('should not return transactions have not reached max retries', done =>
+    it('should not return transactions have not reached max retries', done => {
       testTransactions[8].save((err) => {
         if (err) { return done(err) }
         alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom,
@@ -485,9 +487,9 @@ describe('Transaction Alerts', () => {
             return done()
           })
       })
-    )
+    })
 
-    it('should return transactions have reached max retries', done =>
+    it('should return transactions have reached max retries', done => {
       testTransactions[9].save((err) => {
         if (err) { return done(err) }
         alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom,
@@ -498,9 +500,9 @@ describe('Transaction Alerts', () => {
             return done()
           })
       })
-    )
+    })
 
-    it('should not return successful transactions that have reached max retries', done =>
+    it('should not return successful transactions that have reached max retries', done => {
       testTransactions[11].save((err) => {
         if (err) { return done(err) }
         alerts.findTransactionsMaxRetried(autoRetryChannel, autoRetryChannel.alerts[0], dateFrom,
@@ -510,9 +512,9 @@ describe('Transaction Alerts', () => {
             return done()
           })
       })
-    )
+    })
 
-    it('should not return duplicate transaction IDs where multiple events exist for the same transaction', done =>
+    it('should not return duplicate transaction IDs where multiple events exist for the same transaction', done => {
       testTransactions[9].save((err) => {
         if (err) { return done(err) }
         testTransactions[10].save((err) => {
@@ -526,7 +528,7 @@ describe('Transaction Alerts', () => {
             })
         })
       })
-    )
+    })
   })
 
   describe('.alertingTask', () => {

@@ -7,12 +7,12 @@ import { DOMParser as Dom } from 'xmldom'
 import * as rewriteUrls from '../../src/middleware/rewriteUrls'
 import * as utils from '../../src/utils'
 
-describe('Rewrite URLs middleware', () => {
+xdescribe('Rewrite URLs middleware', () => {
   const sandbox = sinon.sandbox.create()
   afterEach(() => {
     sandbox.restore()
   })
-  describe('.invertPathTransform', () =>
+  xdescribe('.invertPathTransform', () =>
 
     it('should invert various path transforms', () => {
       rewriteUrls.invertPathTransform('s/one/two/').should.be.exactly('s/two/one/')
@@ -22,7 +22,7 @@ describe('Rewrite URLs middleware', () => {
     })
   )
 
-  describe('.fetchRewriteConfig', () => {
+  xdescribe('.fetchRewriteConfig', () => {
     const currentChannel = {
       rewriteUrls: true,
       rewriteUrlsConfig: [{
@@ -109,7 +109,7 @@ describe('Rewrite URLs middleware', () => {
     })
   })
 
-  describe('.rewriteUrls', () => {
+  xdescribe('.rewriteUrls', () => {
     const channel = {
       rewriteUrls: true,
       rewriteUrlsConfig: [{

@@ -2,8 +2,8 @@
 
 import * as metadata from '../../src/api/metadata'
 
-describe('Metadata Functions', () => {
-  describe('.removeProperties', () =>
+xdescribe('Metadata Functions', () => {
+  xdescribe('.removeProperties', () =>
 
     it('should return an object with _id and __v removed from all objects in the object', (done) => {
       const object = {
@@ -25,7 +25,7 @@ describe('Metadata Functions', () => {
     })
   )
 
-  describe('.getUniqueIdentifierForCollection', () =>
+  xdescribe('.getUniqueIdentifierForCollection', () =>
 
     it('should return objects with the collection\'s unique attribute and the respective value', (done) => {
       let result = metadata.getUniqueIdentifierForCollection('Channels', {name: 'channelUID'})
@@ -46,7 +46,7 @@ describe('Metadata Functions', () => {
     })
   )
 
-  return describe('.buildResponseObject', () =>
+  return xdescribe('.buildResponseObject', () =>
 
     it('build a response object', (done) => {
       const model = 'Channels'

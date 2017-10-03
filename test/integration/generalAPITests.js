@@ -5,9 +5,9 @@ import crypto from 'crypto'
 import * as server from '../../src/server'
 import { UserModelAPI } from '../../src/model/users'
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('General API tests', () => {
+  xdescribe('General API tests', () => {
     const user = new UserModelAPI({
       firstname: 'Bill',
       surname: 'Murray',

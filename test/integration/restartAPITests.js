@@ -9,9 +9,9 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Restart REST Api testing', () => {
+  xdescribe('Restart REST Api testing', () => {
     let authDetails = {}
 
     const channel = new ChannelModelAPI({
@@ -50,7 +50,7 @@ describe('API Integration Tests', () =>
 
     beforeEach(() => { authDetails = auth.getAuthDetails() })
 
-    describe('*restart()', () => {
+    xdescribe('*restart()', () => {
       it('should successfully send API request to restart the server', (done) => {
         const stub = sinon.stub(server, 'startRestartServerTimeout')
         request('https://localhost:8080')

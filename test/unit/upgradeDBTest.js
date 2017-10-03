@@ -11,8 +11,8 @@ import { DbVersionModel } from '../../src/model/dbVersion'
 import { UserModel } from '../../src/model/users'
 import { VisualizerModel } from '../../src/model/visualizer'
 
-describe('Upgrade DB Tests', () => {
-  describe('.upgradeDB', () => {
+xdescribe('Upgrade DB Tests', () => {
+  xdescribe('.upgradeDB', () => {
     let func1Complete = false
     let func2Complete = false
 
@@ -68,7 +68,7 @@ describe('Upgrade DB Tests', () => {
     })
   })
 
-  describe('updateFunction0 - Ensure cert fingerprint', () => {
+  xdescribe('updateFunction0 - Ensure cert fingerprint', () => {
     const upgradeFunc = upgradeDB.upgradeFuncs[0].func
 
     beforeEach(done =>
@@ -110,7 +110,7 @@ describe('Upgrade DB Tests', () => {
     )
   })
 
-  describe('updateFunction1 - Convert client.domain to client.fingerprint', () => {
+  xdescribe('updateFunction1 - Convert client.domain to client.fingerprint', () => {
     const upgradeFunc = upgradeDB.upgradeFuncs[1].func
 
     const clientData = {
@@ -144,7 +144,7 @@ describe('Upgrade DB Tests', () => {
     )
   })
 
-  describe('updateFunction2 - Migrate visualizer settings from user profile to shared collection', () => {
+  xdescribe('updateFunction2 - Migrate visualizer settings from user profile to shared collection', () => {
     const upgradeFunc = upgradeDB.upgradeFuncs[2].func
 
     const userObj1 = {
@@ -524,7 +524,7 @@ describe('Upgrade DB Tests', () => {
     })
   })
 
-  return describe('dedupName()', () => {
+  return xdescribe('dedupName()', () => {
     it('should correctly dedup a name', () => {
       const names = ['Max', 'Sam', 'John']
       const name = upgradeDB.dedupName('Max', names)

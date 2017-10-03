@@ -8,9 +8,9 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Roles REST Api testing', () => {
+  xdescribe('Roles REST Api testing', () => {
     const channel1 = {
       name: 'TestChannel1',
       urlPattern: 'test/sample',
@@ -122,7 +122,7 @@ describe('API Integration Tests', () =>
       )
     )
 
-    describe('*getRoles()', () => {
+    xdescribe('*getRoles()', () => {
       it('should fetch all roles and list linked channels', done =>
         request('https://localhost:8080')
           .get('/roles')
@@ -283,7 +283,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*getRole()', () => {
+    xdescribe('*getRole()', () => {
       it('should get a role', done =>
         request('https://localhost:8080')
           .get('/roles/role2')
@@ -354,7 +354,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*addRole()', () => {
+    xdescribe('*addRole()', () => {
       it('should respond with 400 Bad Request if role already exists', done =>
         request('https://localhost:8080')
           .post('/roles')
@@ -603,7 +603,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*updateRole()', () => {
+    xdescribe('*updateRole()', () => {
       it('should respond with 400 Not Found if role doesn\'t exist', done =>
         request('https://localhost:8080')
           .put('/roles/role4')
@@ -861,7 +861,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    return describe('*deleteRole()', () => {
+    return xdescribe('*deleteRole()', () => {
       it('should respond with 404 Not Found if role doesn\'t exist', done =>
         request('https://localhost:8080')
           .put('/roles/role4')

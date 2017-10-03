@@ -14,7 +14,7 @@ import * as server from '../../src/server'
 import { config } from '../../src/config'
 import * as stats from '../../src/stats'
 
-describe('TCP/TLS/MLLP Integration Tests', () => {
+xdescribe('TCP/TLS/MLLP Integration Tests', () => {
   const testMessage = 'This is an awesome test message!'
   let mockTCPServer = null
   let mockHTTPServer = null

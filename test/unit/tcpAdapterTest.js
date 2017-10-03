@@ -5,7 +5,7 @@ import sinon from 'sinon'
 import * as tcpAdapter from '../../src/tcpAdapter'
 import { ChannelModel } from '../../src/model/channels'
 
-describe('TCP adapter tests', () => {
+xdescribe('TCP adapter tests', () => {
   const testChannel = new ChannelModel({
     name: 'test',
     urlPattern: '/test',
@@ -29,7 +29,7 @@ describe('TCP adapter tests', () => {
 
   after(done => tcpAdapter.stopServers(() => ChannelModel.remove({}, done)))
 
-  return describe('.startupServers', () =>
+  return xdescribe('.startupServers', () =>
     it('should startup all enabled channels', (done) => {
       const spy = sinon.spy(tcpAdapter, 'startupTCPServer')
       return tcpAdapter.startupServers(() => {

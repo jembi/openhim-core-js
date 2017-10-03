@@ -7,9 +7,9 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Logs REST API', () => {
+  xdescribe('Logs REST API', () => {
     let authDetails = {}
     let beforeTS = {}
     let middleTS = {}
@@ -61,7 +61,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*getLogs', () => {
+    xdescribe('*getLogs', () => {
       it('should return latest logs in order', done =>
         request('https://localhost:8080')
           .get(`/logs?from=${beforeTS.toISOString()}&until=${endTS.toISOString()}`)

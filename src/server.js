@@ -34,7 +34,7 @@ import * as upgradeDB from './upgradeDB'
 import * as autoRetry from './autoRetry'
 import { config } from './config'
 
-mongoose.Promise = Q.Promise
+mongoose.Promise = Promise
 
 config.mongo = config.get('mongo')
 config.authentication = config.get('authentication')

@@ -9,8 +9,8 @@ import { KeystoreModelAPI } from '../../src/model/keystore'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
-  describe('Certificate API Tests', () => {
+xdescribe('API Integration Tests', () =>
+  xdescribe('Certificate API Tests', () => {
     let authDetails = {}
     before(done =>
       auth.setupTestUsers(err => {

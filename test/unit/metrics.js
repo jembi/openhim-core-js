@@ -5,9 +5,9 @@ import mongoose from 'mongoose'
 import * as metrics from '../../src/metrics'
 import * as testUtils from '../../test/testUtils'
 
-describe('Metrics unit tests', () =>
+xdescribe('Metrics unit tests', () =>
 
-  describe('.calculateMetrics()', () => {
+  xdescribe('.calculateMetrics()', () => {
     before(done =>
       testUtils.setupMetricsTransactions(() => done())
     )

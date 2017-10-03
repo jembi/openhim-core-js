@@ -4,7 +4,7 @@ import sinon from 'sinon'
 import * as polling from '../../src/polling'
 import { ChannelModel } from '../../src/model/channels'
 
-describe('Polling tests', () => {
+xdescribe('Polling tests', () => {
   const testChannel = new ChannelModel({
     name: 'test',
     urlPattern: '/test',
@@ -47,7 +47,7 @@ describe('Polling tests', () => {
     return agenda
   }
 
-  describe('registerPollingChannel', () => {
+  xdescribe('registerPollingChannel', () => {
     it('should define a job for the given channel', (done) => {
       const agendaSpy = createSpy()
       polling.setupAgenda(agendaSpy)
@@ -89,7 +89,7 @@ describe('Polling tests', () => {
     })
   })
 
-  describe('removePollingChannel', () =>
+  xdescribe('removePollingChannel', () =>
 
     it('should cancel polling jobs with the given channel id', (done) => {
       const agendaSpy = createSpy()
@@ -103,7 +103,7 @@ describe('Polling tests', () => {
     })
   )
 
-  return describe('setupAgenda', () => {
+  return xdescribe('setupAgenda', () => {
     it('should set the global agenda', (done) => {
       polling.agendaGlobal = null
       const mockAgenda = createSpy()

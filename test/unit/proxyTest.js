@@ -2,7 +2,7 @@
 
 import * as proxy from '../../src/middleware/proxy'
 
-describe('Proxy', () => {
+xdescribe('Proxy', () => {
   const ctx = {}
   ctx.header = {}
   ctx.request = {}
@@ -10,7 +10,7 @@ describe('Proxy', () => {
   ctx.request.host = 'localhost:5000'
   ctx.request.protocol = 'https'
 
-  return describe('.setupProxyHeaders', () => {
+  return xdescribe('.setupProxyHeaders', () => {
     it('should set the X-Forwarded-* headers if not present', (done) => {
       delete ctx.header['X-Forwarded-For']
       delete ctx.header['X-Forwarded-Host']

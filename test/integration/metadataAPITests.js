@@ -68,9 +68,9 @@ const sampleMetadata = {
 
 let authDetails = {}
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Metadata REST Api Testing', () => {
+  xdescribe('Metadata REST Api Testing', () => {
     before(done =>
       server.start({apiPort: 8080}, () =>
         auth.setupTestUsers((err) => {
@@ -91,8 +91,8 @@ describe('API Integration Tests', () =>
     )
 
     // GET TESTS
-    describe('*getMetadata', () => {
-      describe('Channels', () => {
+    xdescribe('*getMetadata', () => {
+      xdescribe('Channels', () => {
         beforeEach(done =>
           (new ChannelModelAPI(sampleMetadata.Channels[0])).save((err, channel) => {
             if (err) { return done(err) }
@@ -124,7 +124,7 @@ describe('API Integration Tests', () =>
         )
       })
 
-      describe('Clients', () => {
+      xdescribe('Clients', () => {
         beforeEach(done =>
           (new ClientModelAPI(sampleMetadata.Clients[0])).save((err, client) => {
             if (err) { return done(err) }
@@ -156,7 +156,7 @@ describe('API Integration Tests', () =>
         )
       })
 
-      describe('Mediators', () => {
+      xdescribe('Mediators', () => {
         beforeEach(done =>
           (new MediatorModelAPI(sampleMetadata.Mediators[0])).save((err, mediator) => {
             if (err) { return done(err) }
@@ -188,7 +188,7 @@ describe('API Integration Tests', () =>
         )
       })
 
-      describe('Users', () => {
+      xdescribe('Users', () => {
         beforeEach(done =>
           (new UserModelAPI(sampleMetadata.Users[0])).save((err, user) => {
             if (err) { return done(err) }
@@ -225,7 +225,7 @@ describe('API Integration Tests', () =>
         )
       })
 
-      describe('ContactGroups', () => {
+      xdescribe('ContactGroups', () => {
         beforeEach(done =>
           (new ContactGroupModelAPI(sampleMetadata.ContactGroups[0])).save((err, cg) => {
             if (err) { return done(err) }
@@ -257,7 +257,7 @@ describe('API Integration Tests', () =>
         )
       })
 
-      describe('Other Get Metadata', () => {
+      xdescribe('Other Get Metadata', () => {
         it('should not allow a non admin user to get metadata', done =>
           request('https://localhost:8080')
             .get('/metadata')
@@ -296,8 +296,8 @@ describe('API Integration Tests', () =>
     })
 
     // IMPORT TESTS
-    describe('*importMetadata', () => {
-      describe('Channels', () => {
+    xdescribe('*importMetadata', () => {
+      xdescribe('Channels', () => {
         let testMetadata = {}
 
         beforeEach((done) => {
@@ -384,7 +384,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      describe('Clients', () => {
+      xdescribe('Clients', () => {
         let testMetadata = {}
 
         beforeEach((done) => {
@@ -469,7 +469,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      describe('Mediators', () => {
+      xdescribe('Mediators', () => {
         let testMetadata = {}
 
         beforeEach((done) => {
@@ -554,7 +554,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      describe('Users', () => {
+      xdescribe('Users', () => {
         let testMetadata = {}
 
         beforeEach((done) => {
@@ -645,7 +645,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      describe('ContactGroups', () => {
+      xdescribe('ContactGroups', () => {
         let testMetadata = {}
 
         beforeEach((done) => {
@@ -729,7 +729,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      describe('Full Metadata Import', () => {
+      xdescribe('Full Metadata Import', () => {
         after(done =>
           ChannelModelAPI.remove(() =>
             ClientModelAPI.remove(() =>
@@ -791,7 +791,7 @@ describe('API Integration Tests', () =>
         })
       })
 
-      describe('Bad metadata import requests', () => {
+      xdescribe('Bad metadata import requests', () => {
         it('should not allow a non admin user to insert metadata', done =>
           request('https://localhost:8080')
             .post('/metadata')
@@ -825,7 +825,7 @@ describe('API Integration Tests', () =>
     })
 
     // POST TO VALIDATE METADATA TESTS
-    describe('*validateMetadata', () => {
+    xdescribe('*validateMetadata', () => {
       it('should validate metadata and return status 201', done =>
         request('https://localhost:8080')
           .post('/metadata/validate')

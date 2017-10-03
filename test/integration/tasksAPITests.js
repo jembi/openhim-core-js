@@ -14,9 +14,9 @@ import { config } from '../../src/config'
 const {auth} = testUtils
 const {ObjectId} = Types
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Tasks REST Api testing', () => {
+  xdescribe('Tasks REST Api testing', () => {
     const task1 = new TaskModelAPI({
       _id: 'aaa908908bbb98cc1d0809ee',
       status: 'Completed',
@@ -240,7 +240,7 @@ describe('API Integration Tests', () =>
 
     beforeEach(() => { authDetails = auth.getAuthDetails() })
 
-    describe('*getTasks()', () => {
+    xdescribe('*getTasks()', () => {
       it('should fetch all tasks', (done) => {
         const obj = {
           filterPage: 0,
@@ -316,7 +316,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*addTask()', () => {
+    xdescribe('*addTask()', () => {
       it('should add a new task', (done) => {
         const newTask =
           {tids: ['888888888888888888888888', '999999999999999999999999', '101010101010101010101010']}
@@ -537,7 +537,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*getTask(taskId)', () => {
+    xdescribe('*getTask(taskId)', () => {
       it('should fetch a specific task by ID', (done) => {
         const obj = {
           filterPage: 0,
@@ -713,7 +713,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*updateTask(taskId)', () => {
+    xdescribe('*updateTask(taskId)', () => {
       it('should update a specific task by ID', (done) => {
         const updates = {
           status: 'Completed',
@@ -762,7 +762,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*removeTask(taskId)', () => {
+    xdescribe('*removeTask(taskId)', () => {
       it('should remove a specific task by ID', done =>
 
         request('https://localhost:8080')

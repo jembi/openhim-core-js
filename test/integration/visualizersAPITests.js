@@ -8,8 +8,8 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
-  describe('Visualizers REST API testing', () => {
+xdescribe('API Integration Tests', () =>
+  xdescribe('Visualizers REST API testing', () => {
     const visObj = {
       name: 'TestVisualizer',
       components: [{
@@ -87,7 +87,7 @@ describe('API Integration Tests', () =>
       VisualizerModelAPI.remove({}, () => done())
     )
 
-    describe('*getVisualizers()', () => {
+    xdescribe('*getVisualizers()', () => {
       it('should return a 200 response with a list of saved visualizers', (done) => {
         let vis1 = _.assign({}, visObj)
         vis1.name = 'Visualizer1'
@@ -154,7 +154,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*getVisualizer(visualizerId)', () => {
+    xdescribe('*getVisualizer(visualizerId)', () => {
       it('should return a 200 response with a specific visualizer', (done) => {
         let vis1 = _.assign({}, visObj)
         vis1.name = 'Visualizer1'
@@ -217,7 +217,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*addVisualizer()', () => {
+    xdescribe('*addVisualizer()', () => {
       it('should add a visualizer and return a 201 response', done =>
         request('https://localhost:8080')
           .post('/visualizers')
@@ -270,7 +270,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*updateVisualizer(visualizerId)', () => {
+    xdescribe('*updateVisualizer(visualizerId)', () => {
       it('should update a specific visualizer and return a 200 response', (done) => {
         let vis1 = _.assign({}, visObj)
         vis1.name = 'Visualizer1'
@@ -351,7 +351,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*removeVisualizer(visualizerId)', () => {
+    xdescribe('*removeVisualizer(visualizerId)', () => {
       it('should sucessfully remove a visualizer', (done) => {
         let vis1 = _.assign({}, visObj)
         vis1.name = 'Root\'s Visualizer 1'

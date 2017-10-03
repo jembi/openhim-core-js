@@ -13,7 +13,7 @@ config.tlsClientLookup = config.get('tlsClientLookup')
 
 const {auth} = testUtils
 
-describe('Events API Integration Tests', () => {
+xdescribe('Events API Integration Tests', () => {
   let mockServer = null
   let mockServer2 = null
   let authDetails = {}

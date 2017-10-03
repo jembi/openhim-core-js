@@ -43,12 +43,12 @@ const shaClient = {
   cert: ''
 }
 
-describe('Basic Auth', () => {
+xdescribe('Basic Auth', () => {
   before(done => ClientModel.remove({}, done))
 
   afterEach(done => ClientModel.remove({}, done))
 
-  describe('with no credentials', () =>
+  xdescribe('with no credentials', () =>
     it('ctx.authenticated should not exist', (done) => {
       const ctx = buildEmptyCtx()
       basicAuthentication.authenticateUser(ctx, () => {
@@ -58,7 +58,7 @@ describe('Basic Auth', () => {
     })
   )
 
-  describe('with unknown user', () =>
+  xdescribe('with unknown user', () =>
     it('ctx.authenticated should not exist', (done) => {
       const ctx = buildCtx('incorrect_user', 'incorrect_password')
       basicAuthentication.authenticateUser(ctx, () => {
@@ -68,7 +68,7 @@ describe('Basic Auth', () => {
     })
   )
 
-  describe('default algorithm (bcrypt) with correct credentials', () =>
+  xdescribe('default algorithm (bcrypt) with correct credentials', () =>
     it('ctx.authenticated should exist and contain the client object from the database ', (done) => {
       const client = new ClientModel(bcryptClient)
       client.save((err, newAppDoc) => {
@@ -84,7 +84,7 @@ describe('Basic Auth', () => {
     })
   )
 
-  describe('default algorithm (bcrypt) with incorrect credentials', () =>
+  xdescribe('default algorithm (bcrypt) with incorrect credentials', () =>
     it('ctx.authenticated should not exist', (done) => {
       const client = new ClientModel(bcryptClient)
       client.save((err, newAppDoc) => {
@@ -98,7 +98,7 @@ describe('Basic Auth', () => {
     })
   )
 
-  describe('crypto algorithm (sha) with correct credentials', () =>
+  xdescribe('crypto algorithm (sha) with correct credentials', () =>
     it('ctx.authenticated should exist and contain the client object from the database ', (done) => {
       const client = new ClientModel(shaClient)
       client.save((err, newAppDoc) => {
@@ -114,7 +114,7 @@ describe('Basic Auth', () => {
     })
   )
 
-  return describe('crypto algorithm (sha) with incorrect credentials', () =>
+  return xdescribe('crypto algorithm (sha) with incorrect credentials', () =>
     it('ctx.authenticated should not exist', (done) => {
       const client = new ClientModel(shaClient)
       client.save((err, newAppDoc) => {

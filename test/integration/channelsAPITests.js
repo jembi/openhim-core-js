@@ -13,9 +13,9 @@ import * as testUtils from '../testUtils'
 
 const {auth} = testUtils
 
-describe('API Integration Tests', () =>
+xdescribe('API Integration Tests', () =>
 
-  describe('Channels REST Api testing', () => {
+  xdescribe('Channels REST Api testing', () => {
     const channel1 = {
       name: 'TestChannel1',
       urlPattern: 'test/sample',
@@ -82,7 +82,7 @@ describe('API Integration Tests', () =>
       )
     )
 
-    describe('*getChannels()', () => {
+    xdescribe('*getChannels()', () => {
       it('should fetch all channels', done =>
 
         request('https://localhost:8080')
@@ -122,7 +122,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*addChannel()', () => {
+    xdescribe('*addChannel()', () => {
       it('should add a new channel', (done) => {
         const newChannel = {
           name: 'NewChannel',
@@ -569,7 +569,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*getChannel(channelId)', () => {
+    xdescribe('*getChannel(channelId)', () => {
       it('should fetch a specific channel by id', done =>
 
         request('https://localhost:8080')
@@ -649,7 +649,7 @@ describe('API Integration Tests', () =>
       )
     })
 
-    describe('*updateChannel(channelId)', () => {
+    xdescribe('*updateChannel(channelId)', () => {
       it('should update a specific channel by id', (done) => {
         const updates = {
           _id: 'thisShouldBeIgnored',
@@ -1023,7 +1023,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*removeChannel(channelId)', () => {
+    xdescribe('*removeChannel(channelId)', () => {
       it('should remove a specific channel by name', done =>
         TransactionModelAPI.find({channelID: channel1._id}, (err, trx) => {
           if (err) { return done(err) }
@@ -1154,7 +1154,7 @@ describe('API Integration Tests', () =>
       })
     })
 
-    describe('*manuallyPollChannel', () => {
+    xdescribe('*manuallyPollChannel', () => {
       it('should manually poll a channel', done =>
 
         request('https://localhost:8080')

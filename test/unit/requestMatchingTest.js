@@ -9,8 +9,8 @@ const {ChannelModel} = require('../../src/model/channels')
 const truthy = () => true
 const falsey = () => false
 
-describe('Request Matching middleware', () => {
-  describe('.matchReg(regexPat, body)', () => {
+xdescribe('Request Matching middleware', () => {
+  xdescribe('.matchReg(regexPat, body)', () => {
     it('should return true if the regex pattern finds a match in the body', () => {
       (requestMatching.matchRegex('123', Buffer.from('aaa123aaa'))).should.be.true
       return (requestMatching.matchRegex('functionId:\\s[a-z]{3}\\d{3}\\s', Buffer
@@ -24,7 +24,7 @@ describe('Request Matching middleware', () => {
     })
   })
 
-  describe('.matchXpath(xpath, val, xml)', () => {
+  xdescribe('.matchXpath(xpath, val, xml)', () => {
     it('should return true if the xpath value matches', () => (requestMatching.matchXpath('string(/root/function/@uuid)',
       'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', Buffer
         .from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.true)
@@ -34,7 +34,7 @@ describe('Request Matching middleware', () => {
         Buffer.from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.false)
   })
 
-  describe('.matchJsonPath(xpath, val, xml)', () => {
+  xdescribe('.matchJsonPath(xpath, val, xml)', () => {
     it('should return true if the json path value matches', () => (requestMatching.matchJsonPath('metadata.function.id',
       'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1',
       Buffer.from('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}'))).should.be.true)
@@ -44,7 +44,7 @@ describe('Request Matching middleware', () => {
         Buffer.from('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}'))).should.be.false)
   })
 
-  describe('.matchContent(channel, ctx)', () => {
+  xdescribe('.matchContent(channel, ctx)', () => {
     const channelRegex =
       {matchContentRegex: /\d{6}/}
 
@@ -84,7 +84,7 @@ describe('Request Matching middleware', () => {
       {body: Buffer.from('someBody')}).should.be.false)
   })
 
-  describe('.extractContentType', () =>
+  xdescribe('.extractContentType', () =>
 
     it('should extract a correct content-type', () => {
       requestMatching.extractContentType('text/xml; charset=utf-8').should.be.exactly('text/xml')
@@ -94,7 +94,7 @@ describe('Request Matching middleware', () => {
     })
   )
 
-  describe('.matchUrlPattern', () => {
+  xdescribe('.matchUrlPattern', () => {
     it('should match a url pattern', () => {
       const matchUrlPattern = requestMatching.__get__('matchUrlPattern')
       const actual = matchUrlPattern({urlPattern: '^test\\d+$'}, {request: {path: 'test123'}})
@@ -108,7 +108,7 @@ describe('Request Matching middleware', () => {
     })
   })
 
-  describe('.matchContentTypes', () => {
+  xdescribe('.matchContentTypes', () => {
     it('should match correct content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
       const actual = matchContentTypes({matchContentTypes: ['text/plain', 'something/else']}, {request: {header:
@@ -148,7 +148,7 @@ describe('Request Matching middleware', () => {
     })
   })
 
-  describe('.matchChannel', () => {
+  xdescribe('.matchChannel', () => {
     it('should return true when every match function returns true', () => {
       const revert = requestMatching.__set__('matchFunctions', [truthy, truthy])
       const matchChannel = requestMatching.__get__('matchChannel')
@@ -175,7 +175,7 @@ describe('Request Matching middleware', () => {
     })
   })
 
-  return describe('.matchRequest(ctx, done)', () => {
+  return xdescribe('.matchRequest(ctx, done)', () => {
     const validTestBody = `\
 <careServicesRequest>
   <function uuid='4e8bbeb9-f5f5-11e2-b778-0800200c9a66'>

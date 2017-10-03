@@ -8,7 +8,7 @@ import * as testUtils from '../testUtils'
 
 const {ObjectId} = require('mongoose').Types
 
-describe('Rerun Task Tests', () => {
+xdescribe('Rerun Task Tests', () => {
   const transaction1 = {
     _id: '53bfbccc6a2b417f6cd14871',
     channelID: '53bbe25485e66d8e5daad4a2',
@@ -75,7 +75,7 @@ describe('Rerun Task Tests', () => {
     )
   )
 
-  describe('*rerunGetTransaction()', () => {
+  xdescribe('*rerunGetTransaction()', () => {
     it('should run rerunGetTransaction() and return Transaction object successfully', (done) => {
       const transactionID = '53bfbccc6a2b417f6cd14871'
 
@@ -103,7 +103,7 @@ describe('Rerun Task Tests', () => {
     })
   })
 
-  describe('*rerunSetHTTPRequestOptions()', () => {
+  xdescribe('*rerunSetHTTPRequestOptions()', () => {
     it('should run rerunSetHTTPRequestOptions() and return HTTP options object successfully', (done) => {
       const taskID = '53c4dd063b8cb04d2acf0adc'
       const transactionID = '53bfbccc6a2b417f6cd14871'
@@ -134,7 +134,7 @@ describe('Rerun Task Tests', () => {
     })
   })
 
-  describe('*rerunHttpRequestSend()', () => {
+  xdescribe('*rerunHttpRequestSend()', () => {
     it('should run rerunHttpRequestSend() and return a successfull response', done => {
       testUtils.createMockServer(200, 'Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871', 7786, () => {
         const taskID = '53c4dd063b8cb04d2acf0adc'
@@ -215,7 +215,7 @@ describe('Rerun Task Tests', () => {
     )
   })
 
-  describe('*rerunTcpRequestSend()', () =>
+  xdescribe('*rerunTcpRequestSend()', () =>
     it('should rerun the tcp request', done =>
 
       testUtils.createMockTCPServer(6000, 'this is a test server', 'TCP OK', 'TCP Not OK', () => {
@@ -238,7 +238,7 @@ describe('Rerun Task Tests', () => {
     )
   )
 
-  describe('*findAndProcessAQueuedTask()', () => {
+  xdescribe('*findAndProcessAQueuedTask()', () => {
     it('should find the next available queued task and process its next round', async () => {
       await testUtils.createMockServerPromised(200, 'Mock response', 7786)
       await tasks.findAndProcessAQueuedTask()

@@ -3,9 +3,9 @@
 import should from 'should'
 import * as utils from '../../src/utils'
 
-describe('Utils', () =>
+xdescribe('Utils', () =>
 
-  describe('.statusCodePatternMatch()', () => {
+  xdescribe('.statusCodePatternMatch()', () => {
     it('should return true when pattern value match status code (2xx)', (done) => {
       const result = utils.statusCodePatternMatch('2xx')
       result.should.be.true

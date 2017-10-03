@@ -15,8 +15,8 @@ import { config } from '../../src/config'
 
 config.authentication = config.get('authentication')
 
-describe('Auto Retry Integration Tests', () => {
-  describe('Primary route auto retry tests', () => {
+xdescribe('Auto Retry Integration Tests', () => {
+  xdescribe('Primary route auto retry tests', () => {
     const channel1 = new ChannelModel({
       name: 'TEST DATA - Will break channel',
       urlPattern: '^/test/nowhere$',
@@ -242,7 +242,7 @@ describe('Auto Retry Integration Tests', () => {
     )
   })
 
-  describe('Secondary route auto retry tests', () => {
+  xdescribe('Secondary route auto retry tests', () => {
     let mockServer1 = null
 
     const channel1 = new ChannelModel({
@@ -332,7 +332,7 @@ describe('Auto Retry Integration Tests', () => {
     )
   })
 
-  describe('Mediator auto retry tests', () => {
+  xdescribe('Mediator auto retry tests', () => {
     let mockServer1 = null
 
     const channel1 = new ChannelModel({
@@ -432,7 +432,7 @@ describe('Auto Retry Integration Tests', () => {
     )
   })
 
-  describe('All routes failed auto retry tests', () => {
+  xdescribe('All routes failed auto retry tests', () => {
     const channel1 = new ChannelModel({
       name: 'TEST DATA - Both will break channel',
       urlPattern: '^/test/nowhere$',
