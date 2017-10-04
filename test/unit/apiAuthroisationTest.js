@@ -4,7 +4,7 @@ import * as authorisation from '../../src/api/authorisation'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { UserModelAPI } from '../../src/model/users'
 
-xdescribe('API authorisation test', () => {
+describe('API authorisation test', () => {
   const user = new UserModelAPI({
     firstname: 'Bill',
     surname: 'Murray',
@@ -35,7 +35,7 @@ xdescribe('API authorisation test', () => {
     groups: ['admin']
   })
 
-  before((done) => {
+  before(async () => {
     const channel1 = new ChannelModelAPI({
       name: 'TestChannel1 - api authorisation',
       urlPattern: 'test/sample',
@@ -81,108 +81,60 @@ xdescribe('API authorisation test', () => {
       txRerunAcl: ['group4']
     })
 
-    return channel1.save(() =>
-      channel2.save(() =>
-        channel3.save(() => done())
-      )
-    )
+    await Promise.all([
+      channel1.save(),
+      channel2.save(),
+      channel3.save()
+    ])
   })
 
-  after(done =>
-    ChannelModelAPI.remove({}, () => done())
-  )
+  after(async () => {
+    await ChannelModelAPI.remove({})
+  })
 
-  xdescribe('.inGroup', () => {
+  describe('.inGroup', () => {
     it('should return true when a user is in a particular group', () => {
       const result = authorisation.inGroup('group2', user)
       return result.should.be.true
     })
 
-    return it('should return falsse when a user is in NOT a particular group', () => {
+    it('should return falsse when a user is in NOT a particular group', () => {
       const result = authorisation.inGroup('somethingelse', user)
       return result.should.be.false
     })
   })
 
-  xdescribe('.getUserViewableChannels', () => {
-    it('should return channels that a user can view', (done) => {
-      const promise = authorisation.getUserViewableChannels(user)
-      return promise.then((channels) => {
-        try {
-          channels.should.have.length(2)
-        } catch (err) {
-          return done(err)
-        }
-        return done()
-      }
-        , err => done(err))
+  describe('.getUserViewableChannels', () => {
+    it('should return channels that a user can view', async () => {
+      const channels = await authorisation.getUserViewableChannels(user)
+      channels.should.have.length(2)
     })
 
-    it('should return an empty array when there are no channel that a user can view', (done) => {
-      const promise = authorisation.getUserViewableChannels(user2)
-      return promise.then((channels) => {
-        try {
-          channels.should.have.length(0)
-        } catch (err) {
-          return done(err)
-        }
-        return done()
-      }
-        , err => done(err))
+    it('should return an empty array when there are no channel that a user can view', async () => {
+      const channels = await authorisation.getUserViewableChannels(user2)
+      channels.should.have.length(0)
     })
 
-    return it('should return all channels for viewing if a user is in the admin group', (done) => {
-      const promise = authorisation.getUserViewableChannels(user3)
-      return promise.then((channels) => {
-        try {
-          channels.should.have.length(3)
-        } catch (err) {
-          return done(err)
-        }
-        return done()
-      }
-        , err => done(err))
+    it('should return all channels for viewing if a user is in the admin group', async () => {
+      const channels = await authorisation.getUserViewableChannels(user3)
+      channels.should.have.length(3)
     })
   })
 
-  return xdescribe('.getUserRerunableChannels', () => {
-    it('should return channels that a user can rerun', (done) => {
-      const promise = authorisation.getUserRerunableChannels(user)
-      return promise.then((channels) => {
-        try {
-          channels.should.have.length(1)
-        } catch (err) {
-          return done(err)
-        }
-        return done()
-      }
-        , err => done(err))
+  describe('.getUserRerunableChannels', () => {
+    it('should return channels that a user can rerun', async () => {
+      const channels = await authorisation.getUserRerunableChannels(user)
+      channels.should.have.length(1)
     })
 
-    it('should return an empty array when there are no channel that a user can rerun', (done) => {
-      const promise = authorisation.getUserRerunableChannels(user2)
-      return promise.then((channels) => {
-        try {
-          channels.should.have.length(0)
-        } catch (err) {
-          return done(err)
-        }
-        return done()
-      }
-        , err => done(err))
+    it('should return an empty array when there are no channel that a user can rerun', async () => {
+      const channels = await authorisation.getUserRerunableChannels(user2)
+      channels.should.have.length(0)
     })
 
-    return it('should return all channels for rerunning if a user is in the admin group', (done) => {
-      const promise = authorisation.getUserRerunableChannels(user3)
-      return promise.then((channels) => {
-        try {
-          channels.should.have.length(3)
-        } catch (err) {
-          return done(err)
-        }
-        return done()
-      }
-        , err => done(err))
+    it('should return all channels for rerunning if a user is in the admin group', async () => {
+      const channels = await authorisation.getUserRerunableChannels(user3)
+      channels.should.have.length(3)
     })
   })
 })

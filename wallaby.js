@@ -26,10 +26,12 @@ module.exports = function (wallaby) {
         instrument: false
       }
     ],
-
+    testFramework: 'mocha',
     tests: [
       'test/setupTest.js',
-      'test/unit/alertsTest.js'
+      'test/unit/alertsTest.js',
+      'test/unit/apiAuthroisationTest.js',
+      'test/unit/auditingTest.js'
     ],
     compilers: {
       '**/*.js': wallaby.compilers.babel()
@@ -42,7 +44,7 @@ module.exports = function (wallaby) {
       type: 'node',
       runner: 'node',
       params: {
-        env: 'NODE_ENV=test'
+        env: 'NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 '
       }
     }
   }

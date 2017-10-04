@@ -4,8 +4,11 @@ import dgram from 'dgram'
 import fs from 'fs'
 import * as auditing from '../../src/auditing'
 import { AuditModel, AuditMetaModel } from '../../src/model/audits'
-import * as testUtils from '../testUtils'
 import { config } from '../../src/config'
+import { setupTestKeystore, cleanupTestKeystore, createMockTLSServerWithMutualAuth, wait } from '../utils'
+import { UDP_PORT } from '../constants'
+import { promisify } from 'util'
+import * as sinon from 'sinon'
 
 config.auditing = config.get('auditing')
 let testAudit
@@ -98,10 +101,15 @@ const testAuditIHEDICOM = `\
 </AuditMessage>\
 `
 
-xdescribe('Auditing', () => {
-  beforeEach(done => AuditModel.remove({}, () => AuditMetaModel.remove({}, () => done())))
+describe('Auditing', () => {
+  beforeEach(async () => {
+    await Promise.all([
+      AuditModel.remove({}),
+      AuditMetaModel.remove({})
+    ])
+  })
 
-  xdescribe('.processAudit', () => {
+  describe('.processAudit', () => {
     const validateSyslog = function (syslog) {
       syslog.should.exist
       syslog.msgID.should.be.equal('IHE+RFC-3881')
@@ -215,7 +223,7 @@ xdescribe('Auditing', () => {
     it('should reject bad messages', (done) => {
       const badAudit = 'this message is a garbage message'
 
-      return auditing.processAudit(badAudit, () =>
+      auditing.processAudit(badAudit, () =>
         AuditModel.find({}, (err, audits) => {
           if (err) { return done(err) }
 
@@ -266,7 +274,7 @@ xdescribe('Auditing', () => {
       )
     )
 
-    return it('should not duplicate filter fields in audit meta collection', done =>
+    it('should not duplicate filter fields in audit meta collection', done =>
       auditing.processAudit(testAudit, () =>
         auditing.processAudit(testAudit, () =>
           AuditMetaModel.findOne({}, (err, auditMeta) => {
@@ -285,7 +293,7 @@ xdescribe('Auditing', () => {
     )
   })
 
-  xdescribe('IHE Samples', () => {
+  describe('IHE Samples', () => {
     const validateIHEAudit = function (type, audit) {
       audit.syslog.should.exist
       audit.syslog.msgID.should.be.equal(type)
@@ -341,7 +349,7 @@ xdescribe('Auditing', () => {
       )
     )
 
-    return it('should parse IHE sample DICOM audit message and persist it to the database', done =>
+    it('should parse IHE sample DICOM audit message and persist it to the database', done =>
       auditing.processAudit(testAuditIHEDICOM, () =>
         AuditModel.find({}, (err, audits) => {
           if (err) { return done(err) }
@@ -356,25 +364,25 @@ xdescribe('Auditing', () => {
     )
   })
 
-  return xdescribe('.sendAuditEvent', () => {
+  describe('.sendAuditEvent', () => {
     const testString = 'hello - this is a test'
     let _restore = null
+    const ca = [fs.readFileSync('test/resources/server-tls/cert.pem')]
 
-    before((done) => {
+    before(async () => {
       _restore = JSON.stringify(config.auditing.auditEvents)
-      const ca = [fs.readFileSync('test/resources/server-tls/cert.pem')]
-      return testUtils.setupTestKeystore(null, null, ca, () => done())
+      await setupTestKeystore(undefined, undefined, ca)
     })
 
-    after((done) => {
+    after(async () => {
       config.auditing.auditEvents = JSON.parse(_restore)
-      return testUtils.cleanupTestKeystore(() => done())
+      await cleanupTestKeystore()
     })
 
     it('should process audit internally', (done) => {
       config.auditing.auditEvents.interface = 'internal'
 
-      return auditing.sendAuditEvent(testAudit, () =>
+      auditing.sendAuditEvent(testAudit, () =>
         AuditModel.find({}, (err, audits) => {
           if (err) { return done(err) }
           audits.length.should.be.exactly(1)
@@ -390,7 +398,7 @@ xdescribe('Auditing', () => {
       server.on('listening', () => {
         config.auditing.auditEvents.interface = 'udp'
         config.auditing.auditEvents.port = 6050
-        return auditing.sendAuditEvent(testString, () => {})
+        return auditing.sendAuditEvent(testString, () => { })
       })
 
       server.on('message', (msg, rinfo) => {
@@ -401,47 +409,40 @@ xdescribe('Auditing', () => {
 
       server.on('error', done)
 
-      return server.bind({port: 6050})
+      return server.bind({ port: UDP_PORT })
     })
 
-    it('should send an audit event via TLS', (done) => {
-      const called = {}
-
-      const validate = function (data) {
-        `${data}`.should.be.exactly(`${testString.length} ${testString}`)
-        called['called-tls'] = true
-      }
-
-      const afterSetup = server =>
-        auditing.sendAuditEvent(testString, () => {
-          called.should.have.property('called-tls')
-          server.close()
-          return done()
-        })
-
+    it('should send an audit event via TLS', async () => {
+      const spy = sinon.spy(data => data)
+      const port = Math.floor(Math.random() * 100) + 32000
       config.auditing.auditEvents.interface = 'tls'
-      config.auditing.auditEvents.port = 6051
-      return testUtils.createMockTLSServerWithMutualAuth(6051, testString, 'ok', 'not-ok', afterSetup, validate)
+      config.auditing.auditEvents.port = port
+      const server = await createMockTLSServerWithMutualAuth(port, spy)
+      await promisify(auditing.sendAuditEvent)(testString)
+      await wait(200)
+      spy.callCount.should.equal(1)
+
+      await server.close()
     })
 
-    return it('should send an audit event via TCP', (done) => {
-      const called = {}
+    // it('should send an audit event via TCP', (done) => {
+    //   const called = {}
 
-      const validate = function (data) {
-        `${data}`.should.be.exactly(`${testString.length} ${testString}`)
-        called['called-tcp'] = true
-      }
+    //   const validate = function (data) {
+    //     `${data}`.should.be.exactly(`${testString.length} ${testString}`)
+    //     called['called-tcp'] = true
+    //   }
 
-      const afterSetup = server =>
-        auditing.sendAuditEvent(testString, () => {
-          called.should.have.property('called-tcp')
-          server.close()
-          return done()
-        })
+    //   const afterSetup = server =>
+    //     auditing.sendAuditEvent(testString, () => {
+    //       called.should.have.property('called-tcp')
+    //       server.close()
+    //       return done()
+    //     })
 
-      config.auditing.auditEvents.interface = 'tcp'
-      config.auditing.auditEvents.port = 6052
-      return testUtils.createMockTCPServer(6052, testString, 'ok', 'not-ok', afterSetup, validate)
-    })
+    //   config.auditing.auditEvents.interface = 'tcp'
+    //   config.auditing.auditEvents.port = 6052
+    //   testUtils.createMockTCPServer(6052, testString, 'ok', 'not-ok', afterSetup, validate)
+    // })
   })
 })
