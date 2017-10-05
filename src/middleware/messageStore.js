@@ -9,6 +9,7 @@ import * as utils from '../utils'
 import { config } from '../config'
 import * as stats from '../stats'
 
+config.statsd = config.get('statsd')
 const statsdServer = config.get('statsd')
 const application = config.get('application')
 

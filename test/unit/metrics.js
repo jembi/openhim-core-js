@@ -3,18 +3,16 @@
 import should from 'should'
 import mongoose from 'mongoose'
 import * as metrics from '../../src/metrics'
-import * as testUtils from '../../test/testUtils'
+import * as testUtils from '../utils'
 
-xdescribe('Metrics unit tests', () =>
+describe('Metrics unit tests', () =>
 
-  xdescribe('.calculateMetrics()', () => {
-    before(done =>
-      testUtils.setupMetricsTransactions(() => done())
-    )
+  describe('.calculateMetrics()', () => {
+    before(testUtils.setupMetricsTransactions)
 
     it('should return metrics for a particular channel', (done) => {
       const p = metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, [mongoose.Types.ObjectId('111111111111111111111111')])
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics[0].total.should.be.exactly(5)
         metrics[0].failed.should.be.exactly(1)
         metrics[0].successful.should.be.exactly(1)
@@ -30,7 +28,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics for all channels', (done) => {
       const p = metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'))
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics[0].total.should.be.exactly(10)
         metrics[0].failed.should.be.exactly(1)
         metrics[0].successful.should.be.exactly(1)
@@ -46,7 +44,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics in time series by minute', (done) => {
       const p = metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'minute')
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics.length.should.be.exactly(10)
         metrics[0]._id.minute.should.be.exactly(25)
         metrics[0]._id.hour.should.be.exactly(11)
@@ -61,7 +59,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics in time series by hour', (done) => {
       const p = metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'hour')
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics.length.should.be.exactly(9)
         metrics[1]._id.hour.should.be.exactly(11)
         metrics[1]._id.day.should.be.exactly(18)
@@ -75,7 +73,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics in time series by day', (done) => {
       const p = metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'day')
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics.length.should.be.exactly(4)
         metrics[0]._id.day.should.be.exactly(18)
         metrics[0]._id.week.should.be.exactly(28)
@@ -88,7 +86,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics in time series by week', (done) => {
       const p = metrics.calculateMetrics(new Date('2013-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'week')
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics.length.should.be.exactly(2)
         metrics[0]._id.week.should.be.exactly(28)
         metrics[0]._id.month.should.be.exactly(7)
@@ -100,7 +98,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics in time series by month', (done) => {
       const p = metrics.calculateMetrics(new Date('2013-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'month')
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics.length.should.be.exactly(2)
         metrics[0]._id.month.should.be.exactly(7)
         metrics[0]._id.year.should.be.exactly(2014)
@@ -111,7 +109,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics in time series by year', (done) => {
       const p = metrics.calculateMetrics(new Date('2013-07-15T00:00:00.000Z'), new Date('2015-07-19T00:00:00.000Z'), null, null, 'year')
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics.length.should.be.exactly(2)
         metrics[0]._id.year.should.be.exactly(2015)
         metrics[0].total.should.be.exactly(1)
@@ -121,7 +119,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics grouped by channels', (done) => {
       const p = metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, null, true)
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics.length.should.be.exactly(2)
         metrics[0]._id.channelID.toString().should.be.exactly('222222222222222222222222')
         metrics[0].total.should.be.exactly(5)
@@ -133,7 +131,7 @@ xdescribe('Metrics unit tests', () =>
 
     it('should return metrics grouped by channels and time series', (done) => {
       const p = metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'day', true)
-      return p.then((metrics) => {
+      p.then((metrics) => {
         metrics.length.should.be.exactly(8)
         const m1 = metrics.find(m =>
           (m._id.channelID.toString() === '111111111111111111111111') &&
@@ -160,9 +158,9 @@ xdescribe('Metrics unit tests', () =>
       }).catch(err => done(err))
     })
 
-    return it('should return an error if date not supplied', (done) => {
+    it('should return an error if date not supplied', (done) => {
       const p = metrics.calculateMetrics()
-      return p.then(metrics => done(new Error('An error should be thrown'))).catch((err) => {
+      p.then(metrics => done(new Error('An error should be thrown'))).catch((err) => {
         err.should.be.ok()
         return done()
       })

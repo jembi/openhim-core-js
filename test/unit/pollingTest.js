@@ -4,7 +4,7 @@ import sinon from 'sinon'
 import * as polling from '../../src/polling'
 import { ChannelModel } from '../../src/model/channels'
 
-xdescribe('Polling tests', () => {
+describe('Polling tests', () => {
   const testChannel = new ChannelModel({
     name: 'test',
     urlPattern: '/test',
@@ -36,7 +36,14 @@ xdescribe('Polling tests', () => {
     status: 'disabled'
   })
 
-  before(done => testChannel.save(() => testChannel2.save(() => testChannel3.save(() => disabledChannel.save(() => done())))))
+  before(async () => {
+    await Promise.all([
+      testChannel.save(),
+      testChannel2.save(),
+      testChannel3.save(),
+      disabledChannel.save()
+    ])
+  })
 
   const createSpy = function () {
     const agenda = {
@@ -47,11 +54,11 @@ xdescribe('Polling tests', () => {
     return agenda
   }
 
-  xdescribe('registerPollingChannel', () => {
+  describe('registerPollingChannel', () => {
     it('should define a job for the given channel', (done) => {
       const agendaSpy = createSpy()
       polling.setupAgenda(agendaSpy)
-      return polling.registerPollingChannel(testChannel, () => {
+      polling.registerPollingChannel(testChannel, () => {
         agendaSpy.define.calledOnce.should.be.true
         agendaSpy.define.getCall(0).args[0].should.eql(`polling-job-${testChannel._id}`)
         return done()
@@ -61,9 +68,9 @@ xdescribe('Polling tests', () => {
     it('should cancel a job if it already exists', (done) => {
       const agendaSpy = createSpy()
       polling.setupAgenda(agendaSpy)
-      return polling.registerPollingChannel(testChannel, () => {
+      polling.registerPollingChannel(testChannel, () => {
         agendaSpy.cancel.calledOnce.should.be.true
-        agendaSpy.cancel.getCall(0).args[0].should.eql({name: `polling-job-${testChannel._id}`})
+        agendaSpy.cancel.getCall(0).args[0].should.eql({ name: `polling-job-${testChannel._id}` })
         return done()
       })
     })
@@ -71,7 +78,7 @@ xdescribe('Polling tests', () => {
     it('should set the polling job', (done) => {
       const agendaSpy = createSpy()
       polling.setupAgenda(agendaSpy)
-      return polling.registerPollingChannel(testChannel, () => {
+      polling.registerPollingChannel(testChannel, () => {
         agendaSpy.every.calledOnce.should.be.true
         agendaSpy.every.getCall(0).args[0].should.eql(testChannel.pollingSchedule)
         agendaSpy.every.getCall(0).args[1].should.eql(`polling-job-${testChannel._id}`)
@@ -79,31 +86,31 @@ xdescribe('Polling tests', () => {
       })
     })
 
-    return it('should return an error if a the polling schedule is not set', (done) => {
+    it('should return an error if a the polling schedule is not set', (done) => {
       const agendaSpy = createSpy()
       polling.setupAgenda(agendaSpy)
-      return polling.registerPollingChannel(testChannel2, (err) => {
+      polling.registerPollingChannel(testChannel2, (err) => {
         err.should.exist
         return done()
       })
     })
   })
 
-  xdescribe('removePollingChannel', () =>
+  describe('removePollingChannel', () =>
 
     it('should cancel polling jobs with the given channel id', (done) => {
       const agendaSpy = createSpy()
       polling.setupAgenda(agendaSpy)
-      return polling.removePollingChannel(testChannel, (err) => {
+      polling.removePollingChannel(testChannel, (err) => {
         if (err) { return done(err) }
         agendaSpy.cancel.calledOnce.should.be.true
-        agendaSpy.cancel.getCall(0).args[0].should.eql({name: `polling-job-${testChannel._id}`})
+        agendaSpy.cancel.getCall(0).args[0].should.eql({ name: `polling-job-${testChannel._id}` })
         return done()
       })
     })
   )
 
-  return xdescribe('setupAgenda', () => {
+  describe('setupAgenda', () => {
     it('should set the global agenda', (done) => {
       polling.agendaGlobal = null
       const mockAgenda = createSpy()
@@ -112,9 +119,9 @@ xdescribe('Polling tests', () => {
       return done()
     })
 
-    return it('should register a channel for each enabled polling channel', (done) => {
+    it('should register a channel for each enabled polling channel', (done) => {
       const spy = sinon.spy(polling, 'registerPollingChannel')
-      return polling.setupAgenda(createSpy(), () => {
+      polling.setupAgenda(createSpy(), () => {
         spy.calledTwice.should.be.true
         spy.calledWith(testChannel)
         spy.calledWith(testChannel3)

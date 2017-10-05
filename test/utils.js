@@ -8,7 +8,7 @@ import net from 'net'
 
 import * as constants from './constants'
 import { config } from '../src/config'
-import { KeystoreModel } from '../src/model'
+import { KeystoreModel, TransactionModel } from '../src/model'
 
 config.mongo = config.get('mongo')
 
@@ -106,7 +106,7 @@ export async function createMockTCPServer (onRequest = async data => data, port 
   return server
 }
 
-export async function createMockUdpServer (onRequest = data => {}, port = constants.UDP_PORT) {
+export async function createMockUdpServer (onRequest = data => { }, port = constants.UDP_PORT) {
   const server = dgram.createSocket(constants.UPD_SOCKET_TYPE)
   server.on('message', async (msg) => {
     onRequest(msg)
@@ -171,4 +171,144 @@ export function wait (time = 100) {
 
 export function random (start = 32000, end = start + 100) {
   return Math.ceil(Math.random() * end - start) + start
+}
+
+export async function setupMetricsTransactions (callback = () => {}) {
+  const transaction0 = new TransactionModel({ // 1 month before the rest
+    _id: '000000000000000000000000',
+    channelID: '111111111111111111111111',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-06-15T08:10:45.100Z' },
+    response: { status: '200', timestamp: '2014-06-15T08:10:45.200Z' },
+    status: 'Completed'
+  })
+
+  const transaction1 = new TransactionModel({
+    _id: '111111111111111111111111',
+    channelID: '111111111111111111111111',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-15T08:10:45.100Z' },
+    response: { status: '200', timestamp: '2014-07-15T08:10:45.200Z' },
+    status: 'Completed'
+  })
+
+  const transaction2 = new TransactionModel({
+    _id: '222222222222222222222222',
+    channelID: '111111111111111111111111',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-15T14:30:45.100Z' },
+    response: { status: '200', timestamp: '2014-07-15T14:30:45.300Z' },
+    status: 'Successful'
+  })
+
+  const transaction3 = new TransactionModel({
+    _id: '333333333333333333333333',
+    channelID: '222222222222222222222222',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-15T19:46:45.100Z' },
+    response: { status: '200', timestamp: '2014-07-15T19:46:45.200Z' },
+    status: 'Completed'
+  })
+
+  const transaction4 = new TransactionModel({
+    _id: '444444444444444444444444',
+    channelID: '111111111111111111111111',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-16T09:15:45.100Z' },
+    response: { status: '404', timestamp: '2014-07-16T09:15:45.300Z' },
+    status: 'Failed'
+  })
+
+  const transaction5 = new TransactionModel({
+    _id: '555555555555555555555555',
+    channelID: '222222222222222222222222',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-16T13:30:45.100Z' },
+    response: { status: '200', timestamp: '2014-07-16T13:30:45.200Z' },
+    status: 'Completed'
+  })
+
+  const transaction6 = new TransactionModel({
+    _id: '666666666666666666666666',
+    channelID: '222222222222222222222222',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-16T16:10:39.100Z' },
+    response: { status: '200', timestamp: '2014-07-16T16:10:39.300Z' },
+    status: 'Completed'
+  })
+
+  const transaction7 = new TransactionModel({
+    _id: '777777777777777777777777',
+    channelID: '111111111111111111111111',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-17T14:45:20.100Z' },
+    response: { status: '200', timestamp: '2014-07-17T14:45:20.200Z' },
+    status: 'Completed with error(s)'
+  })
+
+  const transaction8 = new TransactionModel({
+    _id: '888888888888888888888888',
+    channelID: '222222222222222222222222',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-17T19:21:45.100Z' },
+    response: { status: '200', timestamp: '2014-07-17T19:21:45.300Z' },
+    status: 'Completed'
+  })
+
+  const transaction9 = new TransactionModel({
+    _id: '999999999999999999999999',
+    channelID: '111111111111111111111111',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-18T11:17:45.100Z' },
+    response: { status: '404', timestamp: '2014-07-18T11:17:45.200Z' },
+    status: 'Processing'
+  })
+
+  const transaction10 = new TransactionModel({
+    _id: '101010101010101010101010',
+    channelID: '222222222222222222222222',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-18T11:25:45.100Z' },
+    response: { status: '200', timestamp: '2014-07-18T11:25:45.300Z' },
+    status: 'Completed'
+  })
+
+  const transaction11 = new TransactionModel({ // 1 year after the rest
+    _id: '111110101010101010101111',
+    channelID: '222222222222222222222222',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2015-07-18T13:25:45.100Z' },
+    response: { status: '200', timestamp: '2015-07-18T13:25:45.300Z' },
+    status: 'Completed'
+  })
+
+  const transaction12 = new TransactionModel({ // A Sunday
+    _id: '111110101010101010102222',
+    channelID: '222222222222222222222222',
+    clientID: '42bbe25485e77d8e5daad4b4',
+    request: { path: '/sample/api', method: 'GET', timestamp: '2014-07-20T13:25:45.100Z' },
+    response: { status: '200', timestamp: '2014-07-20T13:25:45.300Z' },
+    status: 'Failed'
+  })
+
+  try {
+    await Promise.all([
+      transaction0.save(),
+      transaction1.save(),
+      transaction2.save(),
+      transaction3.save(),
+      transaction4.save(),
+      transaction5.save(),
+      transaction6.save(),
+      transaction7.save(),
+      transaction8.save(),
+      transaction9.save(),
+      transaction10.save(),
+      transaction11.save(),
+      transaction12.save()
+    ])
+  } catch (err) {
+    callback(err)
+  }
+  callback()
 }
