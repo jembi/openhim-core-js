@@ -1,3 +1,6 @@
+import Mongoose from 'mongoose'
+Mongoose.Promise = Promise
+
 export * from './alerts'
 export * from './audits'
 export * from './autoRetry'

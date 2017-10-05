@@ -3,7 +3,10 @@ import * as fs from 'fs'
 import * as pem from 'pem'
 import { promisify } from 'util'
 import tls from 'tls'
+import dgram from 'dgram'
+import net from 'net'
 
+import * as constants from './constants'
 import { config } from '../src/config'
 import { KeystoreModel } from '../src/model'
 
@@ -76,10 +79,10 @@ export async function setupTestKeystore (serverCert, serverKey, ca, callback = (
       throw new Error('Keystore error')
     }
 
-    keystore.ca = caCerts
-    keystore.ca.forEach((cert, i) => {
-      cert.data = cert
+    keystore.ca = caCerts.map((cert, i) => {
+      cert.data = ca[i]
       cert.fingerprint = caFingerprints[i].fingerprint
+      return cert
     })
     const result = await keystore.save()
     callback(result)
@@ -90,7 +93,34 @@ export async function setupTestKeystore (serverCert, serverKey, ca, callback = (
   }
 }
 
-export function createMockTLSServerWithMutualAuth (port, onRequest = async data => data, useClientCert = true) {
+export async function createMockTCPServer (onRequest = async data => data, port = constants.TCP_PORT) {
+  const server = await net.createServer()
+  server.on('connection', socket => {
+    socket.on('data', async (data) => {
+      const response = await onRequest(data)
+      socket.write(response)
+    })
+  })
+
+  await promisify(server.listen.bind(server))(port, 'localhost')
+  return server
+}
+
+export async function createMockUdpServer (onRequest = data => {}, port = constants.UDP_PORT) {
+  const server = dgram.createSocket(constants.UPD_SOCKET_TYPE)
+  server.on('message', async (msg) => {
+    onRequest(msg)
+  })
+
+  server.bind({ port })
+  await new Promise((resolve) => {
+    server.once('listening', resolve())
+  })
+  server.close = promisify(server.close.bind(server))
+  return server
+}
+
+export function createMockTLSServerWithMutualAuth (onRequest = async data => data, port = constants.TLS_PORT, useClientCert = true) {
   const options = {
     key: fs.readFileSync('test/resources/server-tls/key.pem'),
     cert: fs.readFileSync('test/resources/server-tls/cert.pem'),
@@ -109,6 +139,8 @@ export function createMockTLSServerWithMutualAuth (port, onRequest = async data 
       return sock.write(response)
     })
   )
+
+  server.close = promisify(server.close.bind(server))
 
   return new Promise((resolve, reject) => {
     server.listen(port, 'localhost', (error) => {

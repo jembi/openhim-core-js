@@ -210,7 +210,7 @@ const findTransactionsMaxRetried = (channel, alert, dateFrom, callback) =>
       status: 500,
       autoRetryAttempt: channel.autoRetryMaxAttempts
     }, {transactionID: 'transactionID'})
-    .hint({created: 1})
+    // .hint({created: 1})
     .exec((err, transactions) => {
       if (err) { return callback(err) }
       return callback(null, _.uniqWith(transactions, (a, b) => a.transactionID.equals(b.transactionID)))

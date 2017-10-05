@@ -1,14 +1,13 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
-import dgram from 'dgram'
 import fs from 'fs'
 import * as auditing from '../../src/auditing'
 import { AuditModel, AuditMetaModel } from '../../src/model/audits'
 import { config } from '../../src/config'
-import { setupTestKeystore, cleanupTestKeystore, createMockTLSServerWithMutualAuth, wait } from '../utils'
-import { UDP_PORT } from '../constants'
+import * as utils from '../utils'
 import { promisify } from 'util'
 import * as sinon from 'sinon'
+import * as constants from '../constants'
 
 config.auditing = config.get('auditing')
 let testAudit
@@ -368,81 +367,72 @@ describe('Auditing', () => {
     const testString = 'hello - this is a test'
     let _restore = null
     const ca = [fs.readFileSync('test/resources/server-tls/cert.pem')]
+    let servers
+    let spy
 
     before(async () => {
       _restore = JSON.stringify(config.auditing.auditEvents)
-      await setupTestKeystore(undefined, undefined, ca)
+      spy = sinon.spy(data => data)
+      servers = await Promise.all([
+        utils.createMockUdpServer(spy),
+        utils.createMockTCPServer(spy),
+        utils.createMockTLSServerWithMutualAuth(spy)
+      ])
+
+      await utils.setupTestKeystore(undefined, undefined, ca)
+    })
+
+    afterEach(() => {
+      spy.reset()
+      config.auditing.auditEvents.interface = undefined
+      config.auditing.auditEvents.port = undefined
     })
 
     after(async () => {
       config.auditing.auditEvents = JSON.parse(_restore)
-      await cleanupTestKeystore()
+      await Promise.all(servers.map(s => s.close()))
+      await utils.cleanupTestKeystore()
     })
 
-    it('should process audit internally', (done) => {
+    it('should process audit internally', async () => {
       config.auditing.auditEvents.interface = 'internal'
+      await promisify(auditing.sendAuditEvent)(testAudit)
+      const audits = await AuditModel.find({})
 
-      auditing.sendAuditEvent(testAudit, () =>
-        AuditModel.find({}, (err, audits) => {
-          if (err) { return done(err) }
-          audits.length.should.be.exactly(1)
-          audits[0].rawMessage.should.be.exactly(testAudit)
-          return done()
-        })
-      )
+      audits.length.should.be.exactly(1)
+      audits[0].rawMessage.should.be.exactly(testAudit)
     })
 
-    it('should send an audit event via UDP', (done) => {
-      const server = dgram.createSocket('udp4')
+    it('should send an audit event via UDP', async () => {
+      config.auditing.auditEvents.interface = 'udp'
+      config.auditing.auditEvents.port = constants.UDP_PORT
 
-      server.on('listening', () => {
-        config.auditing.auditEvents.interface = 'udp'
-        config.auditing.auditEvents.port = 6050
-        return auditing.sendAuditEvent(testString, () => { })
-      })
+      await promisify(auditing.sendAuditEvent)(testString)
+      // Needs to wait for event loop to catch up
+      await promisify(setImmediate)()
 
-      server.on('message', (msg, rinfo) => {
-        `${msg}`.should.be.exactly(testString)
-        server.close()
-        return done()
-      })
-
-      server.on('error', done)
-
-      return server.bind({ port: UDP_PORT })
+      spy.callCount.should.equal(1)
+      spy.calledWith(`${testString.length} ${testString}`)
     })
 
     it('should send an audit event via TLS', async () => {
-      const spy = sinon.spy(data => data)
-      const port = Math.floor(Math.random() * 100) + 32000
       config.auditing.auditEvents.interface = 'tls'
-      config.auditing.auditEvents.port = port
-      const server = await createMockTLSServerWithMutualAuth(port, spy)
+      config.auditing.auditEvents.port = constants.TLS_PORT
+      
       await promisify(auditing.sendAuditEvent)(testString)
-      await wait(200)
-      spy.callCount.should.equal(1)
 
-      await server.close()
+      spy.callCount.should.equal(1)
+      spy.calledWith(`${testString.length} ${testString}`)
     })
 
-    // it('should send an audit event via TCP', (done) => {
-    //   const called = {}
+    it('should send an audit event via TCP', async () => {
+      config.auditing.auditEvents.interface = 'tcp'
+      config.auditing.auditEvents.port = constants.TCP_PORT
 
-    //   const validate = function (data) {
-    //     `${data}`.should.be.exactly(`${testString.length} ${testString}`)
-    //     called['called-tcp'] = true
-    //   }
+      await promisify(auditing.sendAuditEvent)(testString)
 
-    //   const afterSetup = server =>
-    //     auditing.sendAuditEvent(testString, () => {
-    //       called.should.have.property('called-tcp')
-    //       server.close()
-    //       return done()
-    //     })
-
-    //   config.auditing.auditEvents.interface = 'tcp'
-    //   config.auditing.auditEvents.port = 6052
-    //   testUtils.createMockTCPServer(6052, testString, 'ok', 'not-ok', afterSetup, validate)
-    // })
+      spy.callCount.should.equal(1)
+      spy.calledWith(`${testString.length} ${testString}`)
+    })
   })
 })
