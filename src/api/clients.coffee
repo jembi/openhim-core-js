@@ -103,12 +103,6 @@ exports.updateClient = (clientId) ->
   # Ignore _id if it exists, a user shouldn't be able to update the internal id
   delete clientData._id if clientData._id
 
-  if clientData.clientID
-    chResult = yield Channel.find({allow: {$in: [clientData.clientID]}}, {name: 1 }).exec()
-    clResult = yield Client.find({roles: {$in: [clientData.clientID]}}, {clientID: 1 }).exec()
-    if chResult?.length > 0 or clResult?.length > 0
-      return utils.logAndSetResponse this, 409, "A role name conflicts with clientID '#{clientData.clientID}'. A role name cannot be the same as a clientID.", 'info'
-
   try
     yield Client.findByIdAndUpdate(clientId, clientData).exec()
     logger.info "User #{this.authenticated.email} updated client with id #{clientId}"
