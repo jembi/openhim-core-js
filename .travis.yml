@@ -5,4 +5,10 @@ node_js:
 services:
   - mongodb
 sudo: false
-after_success: npm run coverage
+after_success: 
+  - npm run coverage
+deploy:
+  provider: script
+  script: .travis/build_docker.sh
+  on:
+    branch: master
