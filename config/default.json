@@ -2,13 +2,22 @@
   "bindAddress": "0.0.0.0",
   "mongo": {
     "url": "mongodb://localhost/openhim",
-    "atnaUrl": "mongodb://localhost/openhim"
+    "atnaUrl": "mongodb://localhost/openhim",
+    "connectionOptions": {},
+    "openHIMApiReadPreference": "primaryPreffered",
+    "openHIMApiWriteConcern": 1,
+    "openHIMApiReadConcern": "local"
   },
   "logger": {
     "level": "info",
     "logToDB": true,
     "capDBLogs": true,
     "capSize": 10000000
+  },
+  "mongoLogger": {
+    "options": {
+      "w": 0
+    }
   },
   "router": {
     "externalHostname": "localhost",

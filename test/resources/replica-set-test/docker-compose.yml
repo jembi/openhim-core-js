@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  replica1:
+    container_name: replica1
+    image: khezen/mongo:slim
+    environment:
+      RS_NAME: repset1
+    volumes:
+      - ./mongo-volumes/replica1:/data/db
+
+  replica2:
+    container_name: replica2
+    image: khezen/mongo:slim
+    environment:
+      RS_NAME: repset1
+    volumes:
+      - ./mongo-volumes/replica2:/data/db
+
+  replica3:
+    container_name: replica3
+    image: khezen/mongo:slim
+    depends_on:
+      - replica1
+      - replica2
+    environment:
+      RS_NAME: repset1
+      MASTER: replica3
+      SLAVES: replica1 replica2
+    volumes:
+      - ./mongo-volumes/replica3:/data/db
+      
+  replica-core:
+    build: ../../../
+    container_name: replica-core
+    depends_on: 
+      - replica3
+    command: /bin/bash -c "npm run build && npm test"
+    environment:
+      - mongo_url=mongodb://replica3:27017/openhim-test?replicaSet=repset1
+      - mongo_atnaUrl=mongodb://replica3:27017/openhim-test?replicaSet=repset1

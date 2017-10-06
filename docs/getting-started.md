@@ -3,7 +3,7 @@ Getting started
 
 To get started we will show you how to install the OpenHIM along with the admin console for easy configuration.
 
-If you are on Ubuntu installing the OpenHIM is very easy as we provide a debian package in the openhie PPA. Just execute the following commands:
+If you are on Ubuntu installing the OpenHIM is very easy as we provide a debian package in the openhie PPA. Currently the packages are only built for Ubuntu 14.04 but we hope to support the latest LTS soon. Just execute the following commands:
 
 ```sh
 $ sudo add-apt-repository ppa:openhie/release
@@ -54,8 +54,9 @@ Installing the OpenHIM-core
 
 1. Install the latest stable [Node.js](http://nodejs.org/) v4 or greater. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
 2. Install and start [MongoDB](http://www.mongodb.org/) 2.6 or greater.
-3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an OpenHIM-core binary to your PATH.
-4. Start the server by executing `openhim-core` from anywhere.
+3. Install Git apt-get install git
+4. Install the OpenHIM-core package globally: `sudo npm install openhim-core -g`, this will also install an OpenHIM-core binary to your PATH.
+5. Start the server by executing `openhim-core` from anywhere.
 
 To make use of your own custom configurations you have two options. One, you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default settings:
 
@@ -79,14 +80,20 @@ First ensure that you have the OpenHIM-core server up and running. The console c
 Next, you need to pull down the latest release of the web app and deploy it to a web server (replace the X's in the below command to the [latest release](https://github.com/jembi/openhim-console/releases/latest)):
 
 ```sh
-wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz
-tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/
+1. Get the latest release : wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz
+2. Navigate to the path /var
+3. Create the /var/www/ path (If it does not already exist) : sudo mkdir www
+4. Navigate to the path /var/www/
+5. Create the /var/www/html path (If it does not already exist) : sudo mkdir html
+6. Export the contents of the download : tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/html
 ```
 
 Next, and this step is _vital_, you need to configure the console to point to your OpenHIM-core server. Locate `config/default.js` in the folder you extracted the OpenHIM console to and edit it as follows:
 
 ```js
 {
+  "version": "x.x.x", //Replace the x's with the latest release
+  "minimumCoreVersion": "3.4.0",
   "protocol": "https",
   "host": "localhost",  // change this to the hostname for your OpenHIM-core server (This hostname _MUST_ be publically accessible)
   "port": 8080,         // change this to the API port of the OpenHIM-core server, default is 8080 (This port _MUST_ be publically accessible)
@@ -94,7 +101,19 @@ Next, and this step is _vital_, you need to configure the console to point to yo
   "footerTitle": "OpenHIM Administration Console", // You may change this to customise the footer of the OpenHIM-console instance
   "footerPoweredBy": "<a href='http://openhim.org/' target='_blank'>Powered by OpenHIM</a>",
   "loginBanner": ""     // add text here that you want to appear on the login screen, if any.
+  "mediatorLastHeartbeatWarningSeconds": 60,
+  "mediatorLastHeartbeatDangerSeconds": 120
 }
+```
+
+Ensure that your OpenHIM Admin Console is able to communicate with the OpenHIM-Core.
+------------------------------------------------------------------------------------
+```sh
+Make sure you have the latest Apache server installed:
+sudo apt-get install apache2
+
+Make sure the apache service is up and running:
+sudo service apache2 status
 ```
 
 Now, navigate to your web server and you should see the OpenHIM-console load (eg. `http://localhost/`) and login. The default username and password are:

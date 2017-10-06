@@ -18,6 +18,7 @@ packaging/builds
 Vagrantfile
 .DS_Store
 .vscode
+artillery
 
 coverage
 .nyc_output

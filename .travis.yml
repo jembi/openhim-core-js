@@ -1,12 +1,10 @@
 language: node_js
 node_js:
-  - "4"
-  - "6"
-addons:
-  srcclr: true
-  apt:
-    sources:
-      - mongodb-3.2-precise
-    packages:
-      - mongodb-org-server
+  - "7.6"
+  - "8"
+services:
+  - mongodb
 sudo: false
+after_success: 
+  - npm run coverage
+  - .travis/build_docker.sh
