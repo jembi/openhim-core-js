@@ -5,4 +5,6 @@ node_js:
 services:
   - mongodb
 sudo: false
-after_success: npm run coverage
+after_success: 
+  - npm run coverage
+  - .travis/build_docker.sh
