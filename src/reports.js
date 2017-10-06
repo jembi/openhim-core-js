@@ -216,7 +216,7 @@ function fetchChannelReport (channel, user, flag, from, to, callback) {
     }).catch((err) => {
       logger.error('Error calculating metrics: ', err)
       return callback(err)
-    })// 
+    })
 }
 
 const fetchDailySubscribers = callback => UserModel.find({dailyReport: true}, callback)

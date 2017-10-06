@@ -4,24 +4,20 @@
 import fs from 'fs'
 import sinon from 'sinon'
 import * as router from '../../src/middleware/router'
-import * as testUtils from '../testUtils'
+import * as testUtils from '../utils'
 import { KeystoreModel, CertificateModel } from '../../src/model/keystore'
 import { ChannelModel } from '../../src/model/channels'
 
 Error.stackTraceLimit = Infinity
 
-xdescribe('HTTP Router', () => {
+describe('HTTP Router', () => {
   const requestTimestamp = (new Date()).toString()
 
-  before(done =>
-    testUtils.setupTestKeystore(null, null, [], () => done())
-  )
+  before(() => testUtils.setupTestKeystore())
 
-  after(done =>
-    testUtils.cleanupTestKeystore(() => done())
-  )
+  after(() => testUtils.cleanupTestKeystore())
 
-  xdescribe('.route', () => {
+  describe('.route', () => {
     it('should route an incomming request to the endpoints specific by the channel config', done =>
       testUtils.createMockServer(201, 'Mock response body\n', 9876, () => {
         // Setup a channel for the mock endpoint
@@ -58,7 +54,7 @@ xdescribe('HTTP Router', () => {
       })
     )
 
-    it('should route binary data', done =>
+  it('should route binary data', done =>
       testUtils.createStaticServer('test/resources', 9337, (server) => {
         // Setup a channel for the mock endpoint
         const channel = {
@@ -92,7 +88,7 @@ xdescribe('HTTP Router', () => {
       })
     )
 
-    const setupContextForMulticast = function () {
+  const setupContextForMulticast = function () {
       // Setup channels for the mock endpoints
       const channel = {
         name: 'Multicast 1',
@@ -126,7 +122,7 @@ xdescribe('HTTP Router', () => {
       return ctx
     }
 
-    it('should route an incoming https request to the endpoints specific by the channel config', done =>
+  it('should route an incoming https request to the endpoints specific by the channel config', done =>
       testUtils.createMockHTTPSServerWithMutualAuth(201, 'Mock response body\n', 9877, (server) => {
         KeystoreModel.findOne({}, (err, keystore) => {
           if (err) { return done(err) }
@@ -172,7 +168,7 @@ xdescribe('HTTP Router', () => {
       })
     )
 
-    it('should be denied access if the server doesn\'t know the client cert when using mutual TLS authentication', done =>
+  it('should be denied access if the server doesn\'t know the client cert when using mutual TLS authentication', done =>
       testUtils.createMockHTTPSServerWithMutualAuth(201, 'Mock response body\n', 9877, false, (server) => {
         // Setup a channel for the mock endpoint
         const channel = {
@@ -220,7 +216,7 @@ xdescribe('HTTP Router', () => {
       })
     )
 
-    it('should be able to multicast to multiple endpoints but return only the response from the primary route', done =>
+  it('should be able to multicast to multiple endpoints but return only the response from the primary route', done =>
       testUtils.createMockServer(200, 'Mock response body 1\n', 7777, () =>
         testUtils.createMockServer(201, 'Mock response body 2\n', 8888, () =>
           testUtils.createMockServer(400, 'Mock response body 3\n', 9999, () => {
@@ -239,7 +235,7 @@ xdescribe('HTTP Router', () => {
       )
     )
 
-    it('should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes', done =>
+  it('should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes', done =>
       testUtils.createMockServer(200, 'Mock response body 1\n', 7750, () =>
         testUtils.createMockServer(201, 'Mock response body 2\n', 7751, () =>
           testUtils.createMockServer(400, 'Mock response body 3\n', 7752, () => {
@@ -268,7 +264,7 @@ xdescribe('HTTP Router', () => {
       )
     )
 
-    it('should pass an error to next if there are multiple primary routes', done =>
+  it('should pass an error to next if there are multiple primary routes', done =>
       testUtils.createMockServer(200, 'Mock response body 1\n', 4444, mock1 =>
         testUtils.createMockServer(201, 'Mock response body 2\n', 5555, mock2 =>
           testUtils.createMockServer(400, 'Mock response body 3\n', 6666, (mock3) => {
@@ -311,7 +307,7 @@ xdescribe('HTTP Router', () => {
       )
     )
 
-    it('should forward PUT and POST requests correctly', (done) => {
+  it('should forward PUT and POST requests correctly', (done) => {
       // Create mock endpoint to forward requests to
       const mockServer = testUtils.createMockServerForPost(200, 400, 'TestBody')
 
@@ -350,7 +346,7 @@ xdescribe('HTTP Router', () => {
       })
     })
 
-    it('should send request params if these where received from the incoming request', (done) => {
+  it('should send request params if these where received from the incoming request', (done) => {
       let mockServer
       mockServer = testUtils.createMockServer(201, 'Mock response body\n', 9873, () => {
         // Setup a channel for the mock endpoint
@@ -387,7 +383,7 @@ xdescribe('HTTP Router', () => {
       })
     })
 
-    it('should set mediator response object on ctx', (done) => {
+  it('should set mediator response object on ctx', (done) => {
       const mediatorResponse = {
         status: 'Successful',
         response: {
@@ -453,7 +449,7 @@ xdescribe('HTTP Router', () => {
       })
     })
 
-    it('should set mediator response data as response to client', (done) => {
+  it('should set mediator response data as response to client', (done) => {
       const mediatorResponse = {
         status: 'Failed',
         response: {
@@ -520,7 +516,7 @@ xdescribe('HTTP Router', () => {
       })
     })
 
-    it('should set mediator response data for non-primary routes', (done) => {
+  it('should set mediator response data for non-primary routes', (done) => {
       router.nonPrimaryRoutes = []
       const mediatorResponse = {
         status: 'Failed',
@@ -595,7 +591,7 @@ xdescribe('HTTP Router', () => {
       )
     })
 
-    return it('should set mediator response location header if present and status is not 3xx', (done) => {
+  return it('should set mediator response location header if present and status is not 3xx', (done) => {
       const mediatorResponse = {
         status: 'Successful',
         response: {
@@ -662,7 +658,7 @@ xdescribe('HTTP Router', () => {
         })
       })
     })
-  })
+})
 
   xdescribe('Basic Auth', () => {
     it('should have valid authorization header if username and password is set in options', (done) => {
