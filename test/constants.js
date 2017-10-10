@@ -8,6 +8,17 @@ export const STATIC_PORT = PORT_START + 6
 export const HTTPS_PORT = PORT_START + 7
 export const MEDIATOR_PORT = PORT_START + 8
 
+const SERVER_PORT_START = PORT_START + 20
+export const SERVER_PORTS = Object.freeze({
+  httpPort: SERVER_PORT_START,
+  httpsPort: SERVER_PORT_START + 1,
+  apiPort: SERVER_PORT_START + 2,
+  rerunPort: SERVER_PORT_START + 3,
+  tcpHttpReceiverPort: SERVER_PORT_START + 4,
+  pollingPort: SERVER_PORT_START + 5,
+  auditUDPPort: SERVER_PORT_START + 6
+})
+
 export const UPD_SOCKET_TYPE = 'udp4'
 export const DEFAULT_HTTP_RESP = 'Mock response body\n'
 export const DEFAULT_HTTPS_RESP = 'Secured Mock response body\n'

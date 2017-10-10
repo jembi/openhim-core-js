@@ -23,6 +23,13 @@ const getFingerprintPromised = promisify(pem.getFingerprint).bind(pem)
 
 export const setImmediatePromise = promisify(setImmediate)
 
+/**
+ * Deep clones an object using JSON serialize function.
+ *
+ * @export
+ * @param {any} value object to clone
+ * @returns deep clone of the object
+ */
 export function clone (value) {
   if (value == null || Number.isNaN(value)) {
     return value
@@ -31,12 +38,25 @@ export function clone (value) {
   return JSON.parse(JSON.stringify(value))
 }
 
+/**
+ * Drops the current test db
+ *
+ * @export
+ * @return {Promise}
+ */
 export async function dropTestDb () {
   const url = config.get('mongo:url')
   const connection = await MongoClient.connect(url)
   await connection.dropDatabase()
 }
 
+/**
+ * Checks to see if the object passed in looks like a promise
+ *
+ * @export
+ * @param {any} maybePromise
+ * @returns {boolean}
+ */
 export function isPromise (maybePromise) {
   if (maybePromise == null) {
     return false
@@ -85,6 +105,14 @@ export function createSpyWithResolve (spyFnOrContent) {
   return spy
 }
 
+/**
+ * Creates a static server
+ *
+ * @export
+ * @param {string} [path=constants.DEFAULT_STATIC_PATH]
+ * @param {number} [port=constants.STATIC_PORT]
+ * @returns {Promise} promise that will resolve to a server
+ */
 export async function createStaticServer (path = constants.DEFAULT_STATIC_PATH, port = constants.STATIC_PORT) {
   // Serve up public/ftp folder
   const serve = serveStatic(path, {
@@ -229,6 +257,7 @@ export async function createMockTCPServer (onRequest = async data => data, port 
     })
   })
 
+  server.close = promisify(server.close.bind(server))
   await promisify(server.listen.bind(server))(port, 'localhost')
   return server
 }
