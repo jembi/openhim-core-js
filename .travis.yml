@@ -4,6 +4,7 @@ node_js:
   - '8'
 services:
   - docker
+  - mongodb
 sudo: required
 before_install:
   - ".travis/setup.sh"
