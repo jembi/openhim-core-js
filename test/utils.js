@@ -5,6 +5,11 @@ import { promisify } from 'util'
 import tls from 'tls'
 import dgram from 'dgram'
 import net from 'net'
+import http from 'http'
+import https from 'https'
+import serveStatic from 'serve-static'
+import finalhandler from 'finalhandler'
+import sinon from 'sinon'
 
 import * as constants from './constants'
 import { config } from '../src/config'
@@ -16,11 +21,133 @@ const readFilePromised = promisify(fs.readFile).bind(fs)
 const readCertificateInfoPromised = promisify(pem.readCertificateInfo).bind(pem)
 const getFingerprintPromised = promisify(pem.getFingerprint).bind(pem)
 
+export const setImmediatePromise = promisify(setImmediate)
+
+export function clone (value) {
+  if (value == null || Number.isNaN(value)) {
+    return value
+  }
+
+  return JSON.parse(JSON.stringify(value))
+}
+
 export async function dropTestDb () {
   const url = config.get('mongo:url')
-  console.log('url', url)
   const connection = await MongoClient.connect(url)
   await connection.dropDatabase()
+}
+
+export function isPromise (maybePromise) {
+  if (maybePromise == null) {
+    return false
+  }
+
+  if (typeof maybePromise !== 'function' || typeof maybePromise !== 'object') {
+    return false
+  }
+
+  return typeof maybePromise.then === 'function'
+}
+
+/**
+ * Creates a spy with a promise that will resolve or reject when called
+ * The spy can handle promises and will only resolve when the wrapped promise function resolves
+ * @export
+ * @param {any} spyFnOrContent function to be called or content
+ * @returns {object} spy with .callPromise
+ */
+export function createSpyWithResolve (spyFnOrContent) {
+  let outerResolve, outerReject
+  if (typeof spyFnOrContent !== 'function') {
+    spyFnOrContent = () => spyFnOrContent
+  }
+
+  const spy = sinon.spy(() => {
+    try {
+      const result = spyFnOrContent()
+      if (isPromise(result)) {
+        return result.then(outerResolve, outerReject)
+      } else {
+        outerResolve(result)
+        return result
+      }
+    } catch (err) {
+      outerReject(err)
+      throw err
+    }
+  })
+
+  spy.calledPromise = new Promise((resolve, reject) => {
+    outerResolve = resolve
+    outerReject = reject
+  })
+
+  return spy
+}
+
+export async function createStaticServer (path = constants.DEFAULT_STATIC_PATH, port = constants.STATIC_PORT) {
+  // Serve up public/ftp folder
+  const serve = serveStatic(path, {
+    index: [
+      'index.html',
+      'index.htm'
+    ]
+  })
+
+  // Create server
+  const server = http.createServer((req, res) => {
+    const done = finalhandler(req, res)
+    serve(req, res, done)
+  })
+
+  server.close = promisify(server.close.bind(server))
+  await promisify(server.listen.bind(server))(port)
+
+  return server
+}
+
+export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HTTPS_RESP, useClientCert = true, port = constants.HTTPS_PORT, resStatusCode = 201, resHeadersOrFn = constants.DEFAULT_HEADERS) {
+  const options = {
+    key: fs.readFileSync('test/resources/server-tls/key.pem'),
+    cert: fs.readFileSync('test/resources/server-tls/cert.pem'),
+    requestCert: true,
+    rejectUnauthorized: true,
+    secureProtocol: 'TLSv1_method'
+  }
+
+  if (useClientCert) {
+    options.ca = fs.readFileSync('test/resources/server-tls/cert.pem')
+  }
+
+  const server = https.createServer(options, async (req, res) => {
+    const respBody = typeof respBodyOrFn === 'function' ? await respBodyOrFn() : respBodyOrFn
+    res.writeHead(resStatusCode, typeof resHeadersOrFn === 'function' ? await resHeadersOrFn() : resHeadersOrFn)
+    res.end(respBody)
+  })
+
+  server.close = promisify(server.close.bind(server))
+  await promisify(server.listen.bind(server))(port)
+  return server
+}
+
+export async function createMockHttpServer (respBodyOrFn = constants.DEFAULT_HTTP_RESP, port = constants.HTTP_PORT, resStatusCode = 201, resHeadersOrFn = constants.DEFAULT_HEADERS) {
+  const server = http.createServer(async (req, res) => {
+    const respBody = typeof respBodyOrFn === 'function' ? await respBodyOrFn(req) : respBodyOrFn
+    res.writeHead(resStatusCode, typeof resHeadersOrFn === 'function' ? await resHeadersOrFn() : resHeadersOrFn)
+    if (respBody == null) {
+      res.end()
+    } else {
+      res.end(Buffer.isBuffer(respBody) || typeof respBody === 'string' ? respBody : JSON.stringify(respBody))
+    }
+  })
+
+  server.close = promisify(server.close.bind(server))
+  await promisify(server.listen.bind(server))(port)
+  return server
+}
+
+export async function createMockHttpMediator (respBodyOrFn = constants.MEDIATOR_REPONSE, port = constants.MEDIATOR_PORT, resStatusCode = 201, resHeadersOrFn = constants.MEDIATOR_HEADERS) {
+  return createMockHttpServer(respBodyOrFn, port, resStatusCode, resHeadersOrFn)
 }
 
 /*
@@ -173,7 +300,7 @@ export function random (start = 32000, end = start + 100) {
   return Math.ceil(Math.random() * end - start) + start
 }
 
-export async function setupMetricsTransactions (callback = () => {}) {
+export async function setupMetricsTransactions (callback = () => { }) {
   const transaction0 = new TransactionModel({ // 1 month before the rest
     _id: '000000000000000000000000',
     channelID: '111111111111111111111111',

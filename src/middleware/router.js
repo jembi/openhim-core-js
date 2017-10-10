@@ -103,7 +103,7 @@ function setCookiesOnContext (ctx, value) {
   for (let cValue = 0; cValue < value.length; cValue++) {
     let pVal
     const cKey = value[cValue]
-    const cOpts = {path: false, httpOnly: false} // clear out default values in cookie module
+    const cOpts = { path: false, httpOnly: false } // clear out default values in cookie module
     const cVals = {}
     const object = cookie.parse(cKey)
     for (const pKey in object) {
@@ -179,7 +179,6 @@ function sendRequestToRoutes (ctx, routes, next) {
     if (err) { return (err) }
     for (const route of Array.from(routes)) {
       if (!isRouteEnabled(route)) { continue }
-
       const path = getDestinationPath(route, ctx.path)
       const options = {
         hostname: route.host,
@@ -251,7 +250,7 @@ function sendRequestToRoutes (ctx, routes, next) {
             try {
               if (((routeObj != null ? routeObj.name : undefined) == null)) {
                 routeObj =
-                  {name: route.name}
+                  { name: route.name }
               }
 
               if (((routeObj != null ? routeObj.response : undefined) == null)) {
@@ -337,7 +336,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
       ctx.routes.push(routeObj)
       return routeObj
     }).fail((reason) => {
-    // on failure
+      // on failure
       const routeObj = {}
       routeObj.name = route.name
       handleServerError(ctx, reason, routeObj)
@@ -445,7 +444,10 @@ function sendHttpRequest (ctx, route, options) {
   routeReq.setTimeout(+config.router.timeout, () => defered.reject('Request Timed Out'))
 
   if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
-    routeReq.write(ctx.body)
+    if (ctx.body != null) {
+      // TODO : Should probally add checks to see if the body is a buffer or string
+      routeReq.write(ctx.body)
+    }
   }
 
   routeReq.end()
