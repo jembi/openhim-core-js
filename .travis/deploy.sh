@@ -9,7 +9,7 @@ fi
 REMOTE_URL=188.166.147.164
 
 # Copy new Dockerfile to remote server
-if ! scp -y "travis_deploy@$REMOTE_URL:~/Dockerfile" resources/docker/Dockerfile; then
+if ! scp -oStrictHostKeyChecking=no "travis_deploy@$REMOTE_URL:~/Dockerfile" resources/docker/Dockerfile; then
     echo 'Remote file did not exist.'
     scp -oStrictHostKeyChecking=no resources/docker/Dockerfile travis_deploy@$REMOTE_URL:~
 fi
