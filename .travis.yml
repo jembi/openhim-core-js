@@ -6,7 +6,7 @@ services:
   - docker
 sudo: required
 before_install:
-  - ".travis/install.sh"
+  - ".travis/setup.sh"
 after_success:
   - npm run coverage
   - ".travis/build_docker.sh"

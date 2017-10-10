@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x # Show the output of the following commands (useful for debugging)
 
 # Copy new Dockerfile to remote server
 if ! scp "travis_deploy@188.166.147.164:~/Dockerfile" resources/docker/Dockerfile; then
