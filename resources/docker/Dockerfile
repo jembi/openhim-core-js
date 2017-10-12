@@ -13,11 +13,11 @@ RUN git clone https://github.com/jembi/openhim-core-js.git
 
 WORKDIR /etc/openhim-core-js
 
-RUN git checkout $branch
+RUN git checkout -b $branch origin/$branch
 
 # Install dependencies and build
 RUN npm i
 RUN npm run build
 
 # Run server
-CMD npm start
+CMD ["npm", "start"]

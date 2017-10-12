@@ -7,6 +7,7 @@ if [[ $1 ]]; then
     REMOTE_TARGET=$1 # target environment config: [test/staging]
 fi
 REMOTE_URL=188.166.147.164
+NOW=`date +%Y%m%d%H%M%S`
 API_PORT=9090
 HTTP_PORT=6001
 HTTPS_PORT=6000
@@ -19,9 +20,7 @@ else
     HTTP_PORT=5001
     HTTPS_PORT=5000
 fi
-echo "$API_PORT"
-echo "$HTTP_PORT"
-echo "$HTTPS_PORT"
+echo "Ports: $API_PORT, $HTTP_PORT, $HTTPS_PORT"
 
 # Copy new Dockerfile to remote server
 ssh -i ~/.ssh/deploy_key travis_deploy@188.166.147.164 "test -e ~/Dockerfile"
@@ -41,8 +40,8 @@ ssh -i ~/.ssh/deploy_key -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL <<
     # backup & shutown current containers
     docker ps
     docker stop openhim-core-$REMOTE_TARGET
-    docker rm openhim-core-$REMOTE_TARGET-backup
-    docker rename openhim-core-$REMOTE_TARGET openhim-core-$REMOTE_TARGET-backup
+    # docker rm openhim-core-$REMOTE_TARGET-backup
+    docker rename openhim-core-$REMOTE_TARGET openhim-core-$REMOTE_TARGET-backup-$NOW
     docker rm openhim-core-$REMOTE_TARGET
 
     # Build docker image with latest changes
@@ -50,7 +49,15 @@ ssh -i ~/.ssh/deploy_key -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL <<
     rm Dockerfile # no-longer needed
 
     # install new container
-    # docker run -d -p $API_PORT:$API_PORT -p $HTTPS_PORT:$HTTPS_PORT -p $HTTP_PORT:$HTTP_PORT --network=$REMOTE_TARGET --name=openhim-core-$REMOTE_TARGET $REMOTE_TARGET/openhim-core
+    docker run -itd \
+        -p $API_PORT:$API_PORT \
+        -p $HTTPS_PORT:$HTTPS_PORT \
+        -p $HTTP_PORT:$HTTP_PORT \
+        -e mongo_url="mongodb://openhim-mongo/openhim" \
+        -e mongo_atnaUrl="mongodb://openhim-mongo/openhim" \
+        --network=openhim-$REMOTE_TARGET \
+        --name=openhim-core-$REMOTE_TARGET \
+        $REMOTE_TARGET/openhim-core
 
     echo "Docker image built and deployed..."
     exit
