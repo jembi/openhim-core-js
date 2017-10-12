@@ -6,3 +6,4 @@ openssl aes-256-cbc -K $encrypted_78888cd548b2_key -iv $encrypted_78888cd548b2_i
 chmod 600 deploy_key
 mv deploy_key ~/.ssh/id_rsa
 
+

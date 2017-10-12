@@ -1,4 +1,5 @@
 FROM node:8
+ARG branch
 
 WORKDIR /etc
 
@@ -11,6 +12,8 @@ RUN apt-get install -y bzip2
 RUN git clone https://github.com/jembi/openhim-core-js.git
 
 WORKDIR /etc/openhim-core-js
+
+RUN git checkout $branch
 
 # Install dependencies and build
 RUN npm i

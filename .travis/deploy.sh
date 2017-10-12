@@ -7,26 +7,53 @@ if [[ $1 ]]; then
     REMOTE_TARGET=$1 # target environment config: [test/staging]
 fi
 REMOTE_URL=188.166.147.164
+API_PORT=9090
+HTTP_PORT=6001
+HTTPS_PORT=6000
+if [ "$REMOTE_TARGET" = "test" ]; then
+    API_PORT=9090
+    HTTP_PORT=6001
+    HTTPS_PORT=6000
+else
+    API_PORT=8080
+    HTTP_PORT=5001
+    HTTPS_PORT=5000
+fi
+echo "$API_PORT"
+echo "$HTTP_PORT"
+echo "$HTTPS_PORT"
 
 # Copy new Dockerfile to remote server
-if ! scp -oStrictHostKeyChecking=no "travis_deploy@$REMOTE_URL:~/Dockerfile" resources/docker/Dockerfile; then
-    echo 'Remote file did not exist.'
-    scp -oStrictHostKeyChecking=no resources/docker/Dockerfile travis_deploy@$REMOTE_URL:~
+ssh -i ~/.ssh/deploy_key travis_deploy@188.166.147.164 "test -e ~/Dockerfile"
+if [ $? -eq 0 ]; then
+    # your file exists
+    echo "File exists"
+    ssh -i ~/.ssh/deploy_key travis_deploy@188.166.147.164 "rm ~/Dockerfile"
+else
+    echo "File is missing"
 fi
+scp -i ~/.ssh/deploy_key -oStrictHostKeyChecking=no ../resources/docker/Dockerfile travis_deploy@$REMOTE_URL:~
 
 # Log into remote server
-ssh -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL
+ssh -i ~/.ssh/deploy_key -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL <<EOF
+    sudo su
 
-# backup & shutown current containers
-docker ps
-docker stop openhim-core-$REMOTE_TARGET
-# docker rm openhim-core-$REMOTE_TARGET-backup
-docker rename openhim-core-$REMOTE_TARGET openhim-core-$REMOTE_TARGET-backup
+    # backup & shutown current containers
+    docker ps
+    docker stop openhim-core-$REMOTE_TARGET
+    docker rm openhim-core-$REMOTE_TARGET-backup
+    docker rename openhim-core-$REMOTE_TARGET openhim-core-$REMOTE_TARGET-backup
+    docker rm openhim-core-$REMOTE_TARGET
 
-# Build docker image with latest changes
-docker build -t jembi/openhim-core resources/docker
-rm Dockerfile # no-longer needed
+    # Build docker image with latest changes
+    docker build --build-arg branch=$REMOTE_TARGET -t $REMOTE_TARGET/openhim-core .
+    rm Dockerfile # no-longer needed
 
-# install new container
-# docker run -d -p 8080:8080 -p 5000:5000 -p 5001:5001 --network=$REMOTE_TARGET --name=openhim-core-$REMOTE_TARGET jembi/openhim-core
+    # install new container
+    # docker run -d -p $API_PORT:$API_PORT -p $HTTPS_PORT:$HTTPS_PORT -p $HTTP_PORT:$HTTP_PORT --network=$REMOTE_TARGET --name=openhim-core-$REMOTE_TARGET $REMOTE_TARGET/openhim-core
+
+    echo "Docker image built and deployed..."
+    exit
+    exit
+EOF
 
