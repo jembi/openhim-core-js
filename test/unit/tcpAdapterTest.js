@@ -4,14 +4,16 @@
 import sinon from 'sinon'
 import * as tcpAdapter from '../../src/tcpAdapter'
 import { ChannelModel } from '../../src/model/channels'
+import * as constants from '../constants'
+import { promisify } from 'util'
 
-xdescribe('TCP adapter tests', () => {
+describe('TCP adapter tests', () => {
   const testChannel = new ChannelModel({
     name: 'test',
     urlPattern: '/test',
     allow: '*',
     type: 'tcp',
-    tcpPort: 4000,
+    tcpPort: constants.PORT_START - 1,
     tcpHost: 'localhost'
   })
 
@@ -20,27 +22,31 @@ xdescribe('TCP adapter tests', () => {
     urlPattern: '/disabled',
     allow: '*',
     type: 'tcp',
-    tcpPort: 4001,
+    tcpPort: constants.PORT_START - 2,
     tcpHost: 'localhost',
     status: 'disabled'
   })
 
-  before(done => testChannel.save(() => disabledChannel.save(() => done())))
+  before(async () => {
+    await Promise.all([
+      testChannel.save(),
+      disabledChannel.save()
+    ])
+  })
 
-  after(done => tcpAdapter.stopServers(() => ChannelModel.remove({}, done)))
+  after(async () => {
+    await Promise.all([
+      promisify(tcpAdapter.stopServers)(),
+      ChannelModel.remove({})
+    ])
+  })
 
-  return xdescribe('.startupServers', () =>
-    it('should startup all enabled channels', (done) => {
+  describe('.startupServers', () =>
+    it('should startup all enabled channels', async () => {
       const spy = sinon.spy(tcpAdapter, 'startupTCPServer')
-      return tcpAdapter.startupServers(() => {
-        try {
-          spy.calledOnce.should.be.true
-          spy.calledWith(testChannel._id)
-        } catch (err) {
-          return done(err)
-        }
-        return done()
-      })
+      await promisify(tcpAdapter.startupServers)()
+      spy.calledOnce.should.be.true
+      spy.calledWith(testChannel._id)
     })
   )
 })
