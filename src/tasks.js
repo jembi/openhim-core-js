@@ -18,7 +18,7 @@ let activeTasks = 0
 export async function findAndProcessAQueuedTask () {
   let task
   try {
-    task = await TaskModel.findOneAndUpdate({status: 'Queued'}, {status: 'Processing'}, {new: true})
+    task = await TaskModel.findOneAndUpdate({ status: 'Queued' }, { status: 'Processing' }, { new: true })
 
     if (task != null) {
       activeTasks++
@@ -67,7 +67,7 @@ export function stop (callback) {
 export function isRunning () { return live }
 
 async function finalizeTaskRound (task) {
-  const result = await TaskModel.findOne({_id: task._id}, {status: 1})
+  const result = await TaskModel.findOne({ _id: task._id }, { status: 1 })
   if (result.status === 'Processing' && task.remainingTransactions !== 0) {
     task.status = 'Queued'
     logger.info(`Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remaining`)
@@ -197,7 +197,7 @@ function rerunGetTransaction (transactionID, callback) {
  */
 
 function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
-  if (transaction === null) {
+  if (transaction == null) {
     const err = new Error('An empty Transaction object was supplied. Aborting HTTP options configuration')
     return callback(err, null)
   }
@@ -208,7 +208,7 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
     port: config.rerun.httpPort,
     path: transaction.request.path,
     method: transaction.request.method,
-    headers: transaction.request.headers
+    headers: transaction.request.headers || {}
   }
 
   if (transaction.clientID) {
@@ -235,12 +235,12 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
 
 function rerunHttpRequestSend (options, transaction, callback) {
   let err
-  if (options === null) {
+  if (options == null) {
     err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
     return callback(err, null)
   }
 
-  if (transaction === null) {
+  if (transaction == null) {
     err = new Error('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
     return callback(err, null)
   }
@@ -287,7 +287,9 @@ function rerunHttpRequestSend (options, transaction, callback) {
 
   // write data to request body
   if ((transaction.request.method === 'POST') || (transaction.request.method === 'PUT')) {
-    req.write(transaction.request.body)
+    if (transaction.request.body != null) {
+      req.write(transaction.request.body)
+    }
   }
   return req.end()
 }
@@ -326,7 +328,7 @@ function rerunTcpRequestSend (channel, transaction, callback) {
     response.message = 'Internal Server Error'
     response.timestamp = new Date()
 
-    return callback(err, response)
+    return callback(null, response)
   })
 }
 

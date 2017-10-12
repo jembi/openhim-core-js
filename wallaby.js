@@ -29,7 +29,7 @@ module.exports = function (wallaby) {
     testFramework: 'mocha',
     tests: [
       'test/setupTest.js',
-      'test/unit/routerTest.js'
+      'test/unit/tasksTest.js'
     ],
     compilers: {
       '**/*.js': wallaby.compilers.babel()

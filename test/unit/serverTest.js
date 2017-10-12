@@ -22,7 +22,7 @@ describe('Server tests', () => {
     })
 
     it('should be able to restart the server in under 5 seconds', async () => {
-      // TODO : this test seems kinda useless as the test suite itself should have
+      // TODO : this test seems kinda useless as mocha itself should have
       // a timeout for if tests take too long
       const future = moment().add('5', 's')
       await promisify(server.restartServer)()

@@ -24,6 +24,56 @@ const getFingerprintPromised = promisify(pem.getFingerprint).bind(pem)
 export const setImmediatePromise = promisify(setImmediate)
 
 /**
+ * Will return the body of a request
+ *
+ * @export
+ * @param {any} req
+ * @returns {Buffer|string}
+ */
+export async function readBody (req) {
+  const chunks = []
+  const dataFn = (data) => chunks.push(data)
+  let endFn
+  let errorFn
+  try {
+    await new Promise((resolve, reject) => {
+      endFn = resolve
+      errorFn = reject
+      req.on('data', dataFn)
+      req.once('end', resolve)
+      req.once('error', reject)
+    })
+    if (chunks.every(Buffer.isBuffer)) {
+      return Buffer.concat(chunks)
+    }
+
+    return chunks.map(p => (p || '').toString()).join('')
+  } finally {
+    req.removeListener('data', dataFn)
+    req.removeListener('end', endFn)
+    req.removeListener('error', errorFn)
+  }
+}
+
+/**
+ * Does a shallow copy of an object whilst lower casing the members
+ *
+ * @export
+ * @param {any} object
+ */
+export function lowerCaseMembers (object) {
+  if (object == null || typeof object !== 'object') {
+    throw new Error(`Please pass in an object`)
+  }
+
+  const keys = Object.keys(object)
+  return keys.reduce((result, key) => {
+    result[key.toLowerCase()] = object[key]
+    return result
+  }, {})
+}
+
+/**
  * Deep clones an object using JSON serialize function.
  *
  * @export
@@ -134,7 +184,7 @@ export async function createStaticServer (path = constants.DEFAULT_STATIC_PATH, 
   return server
 }
 
-export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HTTPS_RESP, useClientCert = true, port = constants.HTTPS_PORT, resStatusCode = 201, resHeadersOrFn = constants.DEFAULT_HEADERS) {
+export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HTTPS_RESP, useClientCert = true, port = constants.HTTPS_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.DEFAULT_HEADERS) {
   const options = {
     key: fs.readFileSync('test/resources/server-tls/key.pem'),
     cert: fs.readFileSync('test/resources/server-tls/cert.pem'),
@@ -158,7 +208,7 @@ export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HT
   return server
 }
 
-export async function createMockHttpServer (respBodyOrFn = constants.DEFAULT_HTTP_RESP, port = constants.HTTP_PORT, resStatusCode = 201, resHeadersOrFn = constants.DEFAULT_HEADERS) {
+export async function createMockHttpServer (respBodyOrFn = constants.DEFAULT_HTTP_RESP, port = constants.HTTP_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.DEFAULT_HEADERS) {
   const server = http.createServer(async (req, res) => {
     const respBody = typeof respBodyOrFn === 'function' ? await respBodyOrFn(req) : respBodyOrFn
     res.writeHead(resStatusCode, typeof resHeadersOrFn === 'function' ? await resHeadersOrFn() : resHeadersOrFn)
@@ -174,7 +224,7 @@ export async function createMockHttpServer (respBodyOrFn = constants.DEFAULT_HTT
   return server
 }
 
-export async function createMockHttpMediator (respBodyOrFn = constants.MEDIATOR_REPONSE, port = constants.MEDIATOR_PORT, resStatusCode = 201, resHeadersOrFn = constants.MEDIATOR_HEADERS) {
+export async function createMockHttpMediator (respBodyOrFn = constants.MEDIATOR_REPONSE, port = constants.MEDIATOR_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.MEDIATOR_HEADERS) {
   return createMockHttpServer(respBodyOrFn, port, resStatusCode, resHeadersOrFn)
 }
 
@@ -268,11 +318,11 @@ export async function createMockUdpServer (onRequest = data => { }, port = const
     onRequest(msg)
   })
 
-  server.bind({ port })
+  server.close = promisify(server.close.bind(server))
   await new Promise((resolve) => {
+    server.bind({ port })
     server.once('listening', resolve())
   })
-  server.close = promisify(server.close.bind(server))
   return server
 }
 

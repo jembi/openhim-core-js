@@ -8,6 +8,8 @@ export const STATIC_PORT = PORT_START + 6
 export const HTTPS_PORT = PORT_START + 7
 export const MEDIATOR_PORT = PORT_START + 8
 
+export const DEFAULT_STATUS = 201
+
 const SERVER_PORT_START = PORT_START + 20
 export const SERVER_PORTS = Object.freeze({
   httpPort: SERVER_PORT_START,
