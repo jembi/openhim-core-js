@@ -1,7 +1,7 @@
 language: node_js
 node_js:
   - '7.6'
-  - '8'
+  - '8.6'
 services:
   - docker
   - mongodb
@@ -15,9 +15,10 @@ deploy:
   - provider: script
     script: ".travis/deploy.sh test"
     on:
-      branch: ohm-505-setup-continuous-deployment
-# depoy:
-#   provider: script
-#   script: ".travis/deploy.sh" staging
-#   on:
-#     branch: staging
+      branch: test
+depoy:
+  - provider: script
+    script: ".travis/deploy.sh staging"
+    on:
+      branch: staging
+
