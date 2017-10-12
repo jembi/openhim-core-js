@@ -59,6 +59,7 @@ ssh -i ~/.ssh/deploy_key -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL <<
         --name=openhim-core-$REMOTE_TARGET \
         $REMOTE_TARGET/openhim-core
 
+    # exit ssh & sudo sessions
     echo "Docker image built and deployed..."
     exit
     exit
