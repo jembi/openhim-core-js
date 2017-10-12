@@ -92,29 +92,6 @@ describe('API Integration Tests', () =>
             }
           })
       )
-
-      it('should reject a client that conflicts with a role', (done) => {
-        const client = new ClientModelAPI(testAppDoc)
-        client.save(() => {
-          const conflict = Object.assign({}, testAppDoc)
-          conflict.clientID = 'PoC'
-          request('https://localhost:8080')
-            .post('/clients')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
-            .send(conflict)
-            .expect(409)
-            .end((err, res) => {
-              if (err) {
-                return done(err)
-              } else {
-                return done()
-              }
-            })
-        })
-      })
     })
 
     describe('*getClient(_id)', () => {
@@ -452,28 +429,6 @@ describe('API Integration Tests', () =>
               return done()
             }
           })
-      })
-
-      it('should reject a client that conflicts with a role', (done) => {
-        const client = new ClientModelAPI(testAppDoc)
-        client.save(() => {
-          const conflict = {clientID: 'PoC'}
-          request('https://localhost:8080')
-            .put(`/clients/${client._id}`)
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
-            .send(conflict)
-            .expect(409)
-            .end((err, res) => {
-              if (err) {
-                return done(err)
-              } else {
-                return done()
-              }
-            })
-        })
       })
     })
 
