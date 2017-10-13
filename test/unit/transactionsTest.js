@@ -1,15 +1,10 @@
-'use strict'
 /* eslint-env mocha */
 
-process.env.NODE_ENV = 'test'
+import * as transactions from '../../src/api/transactions'
 
-const should = require('should')
-
-const transactions = require('../../src/api/transactions')
-
-xdescribe('calculateTransactionBodiesByteLength()', () => {
+describe('calculateTransactionBodiesByteLength()', () => {
   it('should calculate the bodies length of a transaction', async () => {
-    const lengthObj = {length: 0}
+    const lengthObj = { length: 0 }
     let transaction = {
       body: '123456789'
     }
@@ -18,7 +13,7 @@ xdescribe('calculateTransactionBodiesByteLength()', () => {
   })
 
   it('should calculate the bodies length of a transaction with hidden bodies', async () => {
-    const lengthObj = {length: 0}
+    const lengthObj = { length: 0 }
     let transaction = {
       body: '123456789',
       arbitrary: {
@@ -32,28 +27,20 @@ xdescribe('calculateTransactionBodiesByteLength()', () => {
   })
 
   it('should calculate the bodies length of a transaction', async () => {
-    const lengthObj = {length: 0}
+    const lengthObj = { length: 0 }
     let transaction = {}
-    try {
-      transactions.calculateTransactionBodiesByteLength(lengthObj, transaction, new WeakSet())
-      lengthObj.length.should.be.exactly(0)
-    } catch (err) {
-      should.not.exist(err)
-    }
+    transactions.calculateTransactionBodiesByteLength(lengthObj, transaction, new WeakSet())
+    lengthObj.length.should.be.exactly(0)
   })
 })
 
-xdescribe('updateTransactionMetrics()', () => {
+describe('updateTransactionMetrics()', () => {
   it('should update transaction metrics', async () => {
-    try {
-      const updates = {
-        $push: {
-          routes: {}
-        }
+    const updates = {
+      $push: {
+        routes: {}
       }
-      transactions.updateTransactionMetrics(updates, {})
-    } catch (err) {
-      should.not.exist(err)
     }
+    transactions.updateTransactionMetrics(updates, {})
   })
 })
