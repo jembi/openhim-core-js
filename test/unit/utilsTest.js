@@ -3,31 +3,27 @@
 import should from 'should'
 import * as utils from '../../src/utils'
 
-xdescribe('Utils', () =>
+describe('Utils', () =>
 
-  xdescribe('.statusCodePatternMatch()', () => {
-    it('should return true when pattern value match status code (2xx)', (done) => {
+  describe('.statusCodePatternMatch()', () => {
+    it('should return true when pattern value match status code (2xx)', () => {
       const result = utils.statusCodePatternMatch('2xx')
-      result.should.be.true
-      return done()
+      result.should.true()
     })
 
-    it('should return true when pattern value match status code (2)', (done) => {
+    it('should return true when pattern value match status code (2)', () => {
       const result = utils.statusCodePatternMatch('2xx')
-      result.should.be.true
-      return done()
+      result.should.true()
     })
 
-    it('should return false when pattern value does NOT match status code (200)', (done) => {
+    it('should return false when pattern value does NOT match status code (200)', () => {
       const result = utils.statusCodePatternMatch('200')
-      result.should.be.false
-      return done()
+      result.should.false()
     })
 
-    return it('should return server timezone', (done) => {
+    it('should return server timezone', () => {
       const result = utils.serverTimezone()
       should.exist(result)
-      return done()
     })
   })
 )
