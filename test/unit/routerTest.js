@@ -341,6 +341,7 @@ describe('HTTP Router', () => {
         const ctx = createContext(channel, '/test/multicasting')
         await promisify(router.route)(ctx)
         await testUtils.setImmediatePromise()
+
         ctx.routes.length.should.be.exactly(2)
         ctx.routes[0].response.status.should.be.exactly(200)
         ctx.routes[0].response.body.toString().should.be.eql('Non Primary 1')

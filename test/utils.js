@@ -379,7 +379,7 @@ export function random (start = 32000, end = start + 100) {
   return Math.ceil(Math.random() * end - start) + start
 }
 
-export async function setupMetricsTransactions (callback = () => { }) {
+export async function setupMetricsTransactions () {
   const transaction0 = new TransactionModel({ // 1 month before the rest
     _id: '000000000000000000000000',
     channelID: '111111111111111111111111',
@@ -497,24 +497,19 @@ export async function setupMetricsTransactions (callback = () => { }) {
     status: 'Failed'
   })
 
-  try {
-    await Promise.all([
-      transaction0.save(),
-      transaction1.save(),
-      transaction2.save(),
-      transaction3.save(),
-      transaction4.save(),
-      transaction5.save(),
-      transaction6.save(),
-      transaction7.save(),
-      transaction8.save(),
-      transaction9.save(),
-      transaction10.save(),
-      transaction11.save(),
-      transaction12.save()
-    ])
-  } catch (err) {
-    callback(err)
-  }
-  callback()
+  await Promise.all([
+    transaction0.save(),
+    transaction1.save(),
+    transaction2.save(),
+    transaction3.save(),
+    transaction4.save(),
+    transaction5.save(),
+    transaction6.save(),
+    transaction7.save(),
+    transaction8.save(),
+    transaction9.save(),
+    transaction10.save(),
+    transaction11.save(),
+    transaction12.save()
+  ])
 }

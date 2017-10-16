@@ -4,10 +4,11 @@
     "atnaUrl": "mongodb://localhost/openhim-test"
   },
   "logger": {
-    "level": "fatal"
+    "level": "fatal",
+    "logToDB": false
   },
   "api": {
-    "enabled" : true,
+    "enabled": true,
     "httpsPort": 8080,
     "authWindowSeconds": 50,
     "maxBodiesSizeMB": 15,
