@@ -19,7 +19,7 @@
     "lint:fix": "standard --fix src/ test/ bin/",
     "test": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --exit --require babel-register test/setupTest.js",
     "test:watch": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --watch --require babel-register test/setupTest.js test/unit/routerTest.js",
-    "test:unit": "cross-env NODE_ENV=test mocha --compilers js:babel-register test/unit/**/*.js",
+    "test:unit": "cross-env NODE_ENV=test mocha --require babel-register test/setupTest.js test/unit/**/*.js --exit",
     "test:int": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 mocha -t 4000 --compilers js:babel-register test/integration/**/*.js",
     "test:load:client": "./test/load-tests/env/clients.sh",
     "test:load:api": "./test/load-tests/env/api.sh",

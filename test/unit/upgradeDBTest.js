@@ -352,7 +352,8 @@ describe('Upgrade DB Tests', () => {
       user.surname = 'User1'
       await user.save()
       await upgradeFunc()
-      const visualizers = await VisualizerModel.find()
+      await testUtils.setImmediatePromise()
+      const visualizers = await VisualizerModel.find({})
       visualizers.length.should.be.exactly(2)
       const names = visualizers.map(v => v.name)
       const idx1 = names.indexOf('Test User1\'s visualizer')

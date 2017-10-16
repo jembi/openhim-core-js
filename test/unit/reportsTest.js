@@ -3,12 +3,13 @@
 
 import moment from 'moment'
 import mongoose from 'mongoose'
+import should from 'should'
 
 import * as reports from '../../src/reports'
 import * as testUtils from '../utils'
 import { config } from '../../src/config'
-import { ChannelModel } from '../../src/model/channels'
-import { UserModel } from '../../src/model/users'
+import { ChannelModel, UserModel, TransactionModel } from '../../src/model'
+import { promisify } from 'util'
 
 const testUser1 = new UserModel({
   firstname: 'User',
@@ -38,7 +39,7 @@ const channel1 = new ChannelModel({
   urlPattern: 'test/sample',
   allow: ['PoC', 'Test1', 'Test2'],
   routes: [
-    {name: 'test route', host: 'localhost', port: 9876}
+    { name: 'test route', host: 'localhost', port: 9876 }
   ]
 })
 
@@ -48,7 +49,7 @@ const channel2 = new ChannelModel({
   urlPattern: 'test/sample',
   allow: ['PoC', 'Test1', 'Test2'],
   routes: [
-    {name: 'test route', host: 'localhost', port: 9876}
+    { name: 'test route', host: 'localhost', port: 9876 }
   ]
 })
 
@@ -56,6 +57,8 @@ const dateFrom = new Date()
 dateFrom.setHours(0, 0, 0, 0)
 
 describe('Transaction Reports', () => {
+  const originalReports = config.reports
+  config.reports = config.get('reports')
   before(async () => {
     await Promise.all([
       testUser1.save(),
@@ -67,70 +70,58 @@ describe('Transaction Reports', () => {
   })
 
   after(async () => {
+    config.reports = originalReports
     await Promise.all([
       UserModel.remove(),
-      ChannelModel.remove()
+      ChannelModel.remove(),
+      TransactionModel.remove()
     ])
   })
 
   describe('config', () =>
-    it('default config should contain reporting config fields', (done) => {
-      config.reports.should.exist
-      config.reports.enableReports.should.exist
-      return done()
+    it('default config should contain reporting config fields', () => {
+      should.exist(config.reports)
+      should.exist(config.reports.enableReports)
     })
   )
 
   describe('Subscribers', () => {
-    it('should fetch weekly subscribers', done => {
-      reports.fetchWeeklySubscribers((err, results) => {
-        if (err) { return done(err) }
-        results.length.should.be.exactly(1)
-        results[0].email.should.eql(testUser1.email)
-        return done()
-      })
+    it('should fetch weekly subscribers', async () => {
+      const results = await promisify(reports.fetchWeeklySubscribers)()
+      results.length.should.eql(1)
+      results[0].email.should.eql(testUser1.email)
     })
 
-    it('should fetch daily subscribers', done => {
-      reports.fetchDailySubscribers((err, results) => {
-        if (err) { return done(err) }
-        results.length.should.be.exactly(1)
-        results[0].email.should.eql(testUser2.email)
-        return done()
-      })
+    it(`should fetch daily subscribers`, async () => {
+      const results = await promisify(reports.fetchDailySubscribers)()
+      results.length.should.be.exactly(1)
+      results[0].email.should.eql(testUser2.email)
     })
   })
 
   describe('Reports', () => {
-    it('should return a daily channel Report', (done) => {
+    it('should return a daily channel Report', async () => {
       const from = moment('2014-07-15').startOf('day').toDate()
       const to = moment('2014-07-15').endOf('day').toDate()
-      reports.fetchChannelReport(channel2, testUser1, 'dailyReport', from, to, (err, item) => {
-        if (err) { return done(err) }
-        item.data[0].should.have.property('total', 1)
-        item.data[0].should.have.property('avgResp', 100)
-        item.data[0].should.have.property('completed', 1)
-        return done()
-      })
+      const item = await promisify(reports.fetchChannelReport)(channel2, testUser1, 'dailyReport', from, to)
+      item.data.length.should.eql(1)
+      item.data[0].should.have.property('total', 1)
+      item.data[0].should.have.property('avgResp', 100)
+      item.data[0].should.have.property('completed', 1)
     })
 
-    it('should return a weekly channel Report', (done) => {
+    it('should return a weekly channel Report', async () => {
       const date = '2014-07-22'
       const from = moment(date).startOf('isoWeek').subtract(1, 'weeks').toDate()
       const to = moment(date).endOf('isoWeek').subtract(1, 'weeks').toDate()
-      reports.fetchChannelReport(channel2, testUser1, 'weeklyReport', from, to, (err, item) => {
-        if (err) { return done(err) }
-        item.data[1].should.have.property('total', 1)
-        item.data[1].should.have.property('failed', 1)
-        item.data[0].should.have.property('total', 5)
-        item.data[0].should.have.property('completed', 5)
+      const item = await promisify(reports.fetchChannelReport)(channel2, testUser1, 'dailyReport', from, to)
 
-        const totals = reports.calculateTotalsFromGrouping(item)
-        totals.should.have.property('total', 6)
-        totals.should.have.property('failed', 1)
-        totals.should.have.property('completed', 5)
-        return done()
-      })
+      item.data.length.should.eql(5)
+
+      const totals = reports.calculateTotalsFromGrouping(item)
+      totals.should.have.property('total', 6)
+      totals.should.have.property('failed', 1)
+      totals.should.have.property('completed', 5)
     })
   })
 })

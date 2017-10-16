@@ -219,9 +219,9 @@ function fetchChannelReport (channel, user, flag, from, to, callback) {
     })
 }
 
-const fetchDailySubscribers = callback => UserModel.find({dailyReport: true}, callback)
+const fetchDailySubscribers = callback => { UserModel.find({ dailyReport: true }, callback) }
 
-const fetchWeeklySubscribers = callback => UserModel.find({weeklyReport: true}, callback)
+const fetchWeeklySubscribers = callback => { UserModel.find({ weeklyReport: true }, callback) }
 
 function plainTemplate (report) {
   let text = `Generated on: ${new Date().toString()}`
@@ -261,8 +261,8 @@ export function setupAgenda (agenda) {
 
   agenda.define('send daily channel metrics', (job, done) => sendReports(job, 'dailyReport', done))
 
-  agenda.every(config.reports.weeklyReportAt, 'send weekly channel metrics', null, {timezone: utils.serverTimezone()})
-  return agenda.every(config.reports.dailyReportAt, 'send daily channel metrics', null, {timezone: utils.serverTimezone()})
+  agenda.every(config.reports.weeklyReportAt, 'send weekly channel metrics', null, { timezone: utils.serverTimezone() })
+  return agenda.every(config.reports.dailyReportAt, 'send daily channel metrics', null, { timezone: utils.serverTimezone() })
 }
 
 if (process.env.NODE_ENV === 'test') {
