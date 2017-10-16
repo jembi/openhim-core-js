@@ -1,10 +1,22 @@
 language: node_js
 node_js:
-  - "7.6"
-  - "8"
+  - '7.6'
+  - '8.6'
 services:
+  - docker
   - mongodb
-sudo: false
-after_success: 
+sudo: required
+before_install:
+  - ".travis/setup.sh"
+after_success:
   - npm run coverage
-  - .travis/build_docker.sh
+  - ".travis/build_docker.sh"
+deploy:
+  - provider: script
+    script: ".travis/deploy.sh test"
+    on:
+      branch: test
+  - provider: script
+    script: ".travis/deploy.sh staging"
+    on:
+      branch: staging
