@@ -16,9 +16,7 @@ deploy:
     script: ".travis/deploy.sh test"
     on:
       branch: test
-depoy:
   - provider: script
     script: ".travis/deploy.sh staging"
     on:
       branch: staging
-
