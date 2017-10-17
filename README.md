@@ -85,6 +85,15 @@ This project uses [mocha](http://visionmedia.github.io/mocha/) as a unit testing
 * `npm test -- --debugTests` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
 * `npm test -- --bail` - exit on first test failure.
 
+Deployments
+------------
+
+All commits to the `master` branch will automatically trigger a build of the latest changes into a docker image on dockerhub. 
+
+All commits directly to `staging` or `test` will automatically build and deploy a docker image to the test and staging servers respectively.
+
+Deployments are handled by travis, which uses the bash script `deploy.sh` to upload the dockerfile to the target server, build it and backup existing containers and deploy the latest changes.
+
 Contributing
 ------------
 
