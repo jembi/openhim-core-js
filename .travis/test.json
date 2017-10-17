@@ -1,0 +1,144 @@
+{
+  "bindAddress": "0.0.0.0",
+  "mongo": {
+    "url": "mongodb://openhim-mongo/openhim-test",
+    "atnaUrl": "mongodb://openhim-mongo/openhim-test",
+    "connectionOptions": {},
+    "openHIMApiReadPreference": "primaryPreffered",
+    "openHIMApiWriteConcern": 1,
+    "openHIMApiReadConcern": "local"
+  },
+  "logger": {
+    "level": "info",
+    "logToDB": true,
+    "capDBLogs": true,
+    "capSize": 10000000
+  },
+  "mongoLogger": {
+    "options": {
+      "w": 0
+    }
+  },
+  "router": {
+    "externalHostname": "localhost",
+    "httpPort": 6001,
+    "httpsPort": 6000,
+    "timeout": 60000
+  },
+  "api": {
+    "enabled" : true,
+    "httpsPort": 9090,
+    "authWindowSeconds": 10,
+    "maxBodiesSizeMB": 15,
+    "maxPayloadSizeMB": 50,
+    "truncateSize": 15000,
+    "truncateAppend": "\n[truncated ...]"
+  },
+  "rerun": {
+    "httpPort": 7786,
+    "host": "localhost",
+    "processor": {
+      "enabled": true,
+      "pollPeriodMillis": 2000
+    }
+  },
+  "tcpAdapter": {
+    "httpReceiver": {
+      "httpPort": 7787,
+      "host": "localhost"
+    }
+  },
+  "polling": {
+    "enabled": true,
+    "pollingPort": 7788,
+    "host": "localhost"
+  },
+  "authentication": {
+    "enableMutualTLSAuthentication": true,
+    "enableBasicAuthentication": true
+  },
+  "email": {
+    "fromAddress": "address@example.com",
+    "nodemailer": {
+      "service": "Gmail",
+      "auth": {
+        "user": "user@gmail.com",
+        "pass": "password"
+      }
+    }
+  },
+  "smsGateway": {
+    "provider": "clickatell",
+    "config": {
+      "user": "user",
+      "pass": "pass",
+      "apiID": "apiID"
+    }
+  },
+  "alerts": {
+    "enableAlerts": true,
+    "pollPeriodMinutes": 1,
+    "himInstance": "openhim.jembi.org",
+    "consoleURL": "http://openhim.jembi.org"
+  },
+  "reports": {
+    "enableReports": true,
+    "dailyReportAt": "0 7 * * *",
+    "weeklyReportAt": "0 7 * * 1"
+  },
+  "events": {
+    "enableTSNormalization": true
+  },
+  "statsd": {
+    "enabled": false,
+    "host": "127.0.0.1"
+  },
+  "application": {
+    "name": "Test"
+  },
+  "newUserExpiry": {
+    "duration": 7,
+    "durationType": "days"
+  },
+  "userPasswordResetExpiry": {
+    "duration": 1,
+    "durationType": "hours"
+  },
+  "auditing": {
+    "servers": {
+      "udp": {
+        "enabled": false,
+        "port": 5050
+      },
+      "tls": {
+        "enabled": false,
+        "port": 5051
+      },
+      "tcp": {
+        "enabled": false,
+        "port": 5052
+      }
+    },
+    "auditEvents": {
+      "interface": "internal",
+      "host": "localhost",
+      "port": 5051,
+      "auditSourceID": "OpenHIM"
+    }
+  },
+  "caching": {
+    "enabled": true,
+    "refreshMillis": 1000
+  },
+  "tlsClientLookup": {
+    "type": "strict"
+  },
+  "agenda": {
+    "startupDelay": 500
+  },
+  "certificateManagement": {
+    "watchFSForCert": false,
+    "certPath": "/etc/letsencrypt/live/openhim.jembi.org/cert.pem",
+    "keyPath": "/etc/letsencrypt/live/openhim.jembi.org/privkey.pem"
+  }
+}
