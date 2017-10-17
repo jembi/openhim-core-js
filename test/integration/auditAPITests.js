@@ -284,65 +284,42 @@ describe('API Integration Tests', () => {
         }
       })
     })
-  })
 
-  /* xdescribe('*getAuditsFilterOptions', () => {
-    it('should fetch dropdown filter options - admin user', done =>
-        request('https://localhost:8080')
-          .post('/audits')
-          .set('auth-username', testUtils.rootUser.email)
+    describe('*getAuditsFilterOptions', () => {
+      it('should fetch dropdown filter options - admin user', async () => {
+        await request(constants.BASE_URL)
+        .post('/audits')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .send(auditData)
+        .expect(201)
+
+        const res = await request(constants.BASE_URL)
+        .get('/audits-filter-options')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(200)
+
+        res.body.eventType.length.should.equal(1)
+        res.body.eventID.length.should.equal(1)
+        res.body.activeParticipantRoleID.length.should.equal(1)
+        res.body.participantObjectIDTypeCode.length.should.equal(2)
+      })
+
+      it('should NOT return a filter dropdown object if user is not admin', async () => {
+        await new AuditModel(auditData).save()
+        await request(constants.BASE_URL)
+          .get('/audits-filter-options')
+          .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(auditData)
-          .expect(201)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              request('https://localhost:8080')
-                .get('/audits-filter-options')
-                .set('auth-username', testUtils.rootUser.email)
-                .set('auth-ts', authDetails.authTS)
-                .set('auth-salt', authDetails.authSalt)
-                .set('auth-token', authDetails.authToken)
-                .expect(200)
-                .end((err, res) => {
-                  if (err) {
-                    return done(err)
-                  } else {
-                    (res !== null).should.be.true
-                    res.body.eventType.length.should.equal(1)
-                    res.body.eventID.length.should.equal(1)
-                    res.body.activeParticipantRoleID.length.should.equal(1)
-                    res.body.participantObjectIDTypeCode.length.should.equal(2)
-                    return done()
-                  }
-                })
-            }
-          })
-      )
-
-    it('should NOT return a filter dropdown object if user is not admin', (done) => {
-      const audit = new AuditModel(auditData)
-      audit.save((err, result) => {
-        should.not.exist(err)
-
-        request('https://localhost:8080')
-            .get('/audits-filter-options')
-            .set('auth-username', testUtils.nonRootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
-            .expect(403)
-            .end((err, res) => {
-              if (err) {
-                return done(err)
-              } else {
-                return done()
-              }
-            })
+          .expect(403)
       })
     })
-  }) */
+  })
 })

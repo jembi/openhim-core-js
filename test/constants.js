@@ -18,7 +18,9 @@ export const SERVER_PORTS = Object.freeze({
   rerunPort: SERVER_PORT_START + 3,
   tcpHttpReceiverPort: SERVER_PORT_START + 4,
   pollingPort: SERVER_PORT_START + 5,
-  auditUDPPort: SERVER_PORT_START + 6
+  auditUDPPort: SERVER_PORT_START + 6,
+  auditTlsPort: SERVER_PORT_START + 7,
+  auditTcpPort: SERVER_PORT_START + 8
 })
 
 export const BASE_URL = `https://localhost:${SERVER_PORTS.apiPort}`
