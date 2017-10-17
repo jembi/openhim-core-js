@@ -20,22 +20,22 @@ NODE_ENV="production"
 echo "Ports: $API_PORT, $HTTP_PORT, $HTTPS_PORT"
 
 # Copy new Dockerfile to remote server
-ssh -oStrictHostKeyChecking=no travis_deploy@188.166.147.164 "test -e ~/Dockerfile"
+ssh -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL "test -e ~/Dockerfile"
 if [ $? -eq 0 ]; then
     # remove dockerfile if it exists to ensure using the latest version
     echo "File exists"
-    ssh -oStrictHostKeyChecking=no travis_deploy@188.166.147.164 "rm ~/Dockerfile"
+    ssh -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL "rm ~/Dockerfile"
 else
     echo "File is missing"
 fi
 scp -oStrictHostKeyChecking=no .travis/Dockerfile travis_deploy@$REMOTE_URL:~
 
 # Copy config for target container with updated ports and mongo urls
-ssh -oStrictHostKeyChecking=no travis_deploy@188.166.147.164 "test -e ~/$REMOTE_TARGET.json"
+ssh -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL "test -e ~/$REMOTE_TARGET.json"
 if [ $? -eq 0 ]; then
     # remove dockerfile if it exists to ensure using the latest version
     echo "File exists"
-    ssh -oStrictHostKeyChecking=no travis_deploy@188.166.147.164 "rm ~/$REMOTE_TARGET.json"
+    ssh -oStrictHostKeyChecking=no travis_deploy@$REMOTE_URL "rm ~/$REMOTE_TARGET.json"
 else
     echo "File is missing"
 fi
