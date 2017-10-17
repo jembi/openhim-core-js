@@ -10,10 +10,11 @@ import https from 'https'
 import serveStatic from 'serve-static'
 import finalhandler from 'finalhandler'
 import sinon from 'sinon'
+import * as crypto from 'crypto'
 
 import * as constants from './constants'
 import { config } from '../src/config'
-import { KeystoreModel, TransactionModel } from '../src/model'
+import { KeystoreModel, TransactionModel, UserModel } from '../src/model'
 
 config.mongo = config.get('mongo')
 
@@ -22,6 +23,56 @@ const readCertificateInfoPromised = promisify(pem.readCertificateInfo).bind(pem)
 const getFingerprintPromised = promisify(pem.getFingerprint).bind(pem)
 
 export const setImmediatePromise = promisify(setImmediate)
+
+export const rootUser = {
+  firstname: 'Admin',
+  surname: 'User',
+  email: 'root@jembi.org',
+  passwordAlgorithm: 'sha512',
+  passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
+  groups: ['HISP', 'admin']
+}
+// password is 'password'
+
+export const nonRootUser = {
+  firstname: 'Non',
+  surname: 'Root',
+  email: 'nonroot@jembi.org',
+  passwordAlgorithm: 'sha512',
+  passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
+  groups: ['group1', 'group2']
+}
+// password is 'password'
+
+export function setupTestUsers () {
+  return Promise.all([
+    new UserModel(rootUser).save(),
+    new UserModel(nonRootUser).save()
+  ])
+}
+
+export function getAuthDetails () {
+  const authTS = new Date().toISOString()
+  const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
+  const tokenhash = crypto.createHash('sha512')
+  tokenhash.update(rootUser.passwordHash)
+  tokenhash.update(requestsalt)
+  tokenhash.update(authTS)
+
+  const auth = {
+    authTS,
+    authSalt: requestsalt,
+    authToken: tokenhash.digest('hex')
+  }
+
+  return auth
+}
+
+export function cleanupTestUsers () {
+  return UserModel.remove({email: {$in: [rootUser.email, nonRootUser.email]}})
+}
 
 /**
  * Will return the body of a request

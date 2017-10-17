@@ -21,6 +21,8 @@ export const SERVER_PORTS = Object.freeze({
   auditUDPPort: SERVER_PORT_START + 6
 })
 
+export const BASE_URL = `https://localhost:${SERVER_PORTS.apiPort}`
+
 export const UPD_SOCKET_TYPE = 'udp4'
 export const DEFAULT_HTTP_RESP = 'Mock response body\n'
 export const DEFAULT_HTTPS_RESP = 'Secured Mock response body\n'
