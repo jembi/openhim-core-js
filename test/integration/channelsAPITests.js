@@ -557,7 +557,7 @@ describe('API Integration Tests', () =>
 
         const stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
 
-        httpChannel.save()
+        await httpChannel.save()
         await request(constants.BASE_URL)
           .put(`/channels/${httpChannel._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -567,7 +567,7 @@ describe('API Integration Tests', () =>
           .send(changeToTCP)
           .expect(200)
 
-        stub.should.be.calledOnce
+        stub.should.be.calledOnce()
         stub.restore()
       })
 
@@ -604,8 +604,8 @@ describe('API Integration Tests', () =>
           .set('auth-token', authDetails.authToken)
           .send(changeToTCPDisabled)
           .expect(200)
-        startStub.should.not.be.called
-        stopStub.should.be.calledOnce
+        startStub.should.not.be.called()
+        stopStub.should.be.calledOnce()
         startStub.restore()
         stopStub.restore()
       })
