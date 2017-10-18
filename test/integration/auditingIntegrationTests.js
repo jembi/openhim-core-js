@@ -11,9 +11,9 @@ import tls from 'tls'
 import net from 'net'
 
 describe('Auditing Integration Tests', () => {
-  let authDetails
   let client
   const messagePrependlength = `${testAuditMessage.length} ${testAuditMessage}`
+
   before(async () => {
     const serverPorts = {
       auditUDPPort: constants.SERVER_PORTS.auditUDPPort,
@@ -28,7 +28,6 @@ describe('Auditing Integration Tests', () => {
     await promisify(server.start)(serverPorts)
     await testUtils.setImmediatePromise()
     await AuditModel.remove()
-    authDetails = testUtils.getAuthDetails()
   })
 
   after(async () => {
@@ -44,7 +43,14 @@ describe('Auditing Integration Tests', () => {
       AuditModel.remove()
     ])
     if (client != null) {
-      await client.close()
+      if (client.end) {
+        client.end()
+      }
+
+      if (client.close) {
+        client.close()
+      }
+      client = null
     }
   })
 
@@ -85,8 +91,7 @@ describe('Auditing Integration Tests', () => {
       audits[0].rawMessage.should.be.exactly(testAuditMessage)
     })
 
-    // TODO : This test needs to be investigated
-    xit('should send TLS audit and NOT save (Invalid)', async () => {
+    it('should send TLS audit and NOT save (Invalid)', async () => {
       const options = {
         cert: fs.readFileSync('test/resources/trust-tls/cert1.pem'),
         key: fs.readFileSync('test/resources/trust-tls/key1.pem'),
@@ -94,7 +99,6 @@ describe('Auditing Integration Tests', () => {
       }
 
       client = tls.connect(constants.SERVER_PORTS.auditTlsPort, 'localhost', options)
-      client.close = promisify(client.end.bind(client))
       client.write = promisify(client.write.bind(client))
 
       await new Promise((resolve) => {
@@ -107,96 +111,46 @@ describe('Auditing Integration Tests', () => {
       const audits = await AuditModel.find()
       audits.length.should.be.exactly(0)
     })
-
-    // it('should send TLS audit messages and NOT save (Invalid)', (done) => {
-    //   const options = {
-    //     cert: fs.readFileSync('test/resources/trust-tls/cert1.pem'),
-    //     key: fs.readFileSync('test/resources/trust-tls/key1.pem'),
-    //     ca: [fs.readFileSync('test/resources/server-tls/cert.pem')]
-    //   }
-
-    //   const client = tls.connect(5051, 'localhost', options, () =>
-    //     client.write(testAuditMessage, (err) => {
-    //       if (err) { return done(err) }
-    //       return client.end()
-    //     })
-    //   )
-
-    //   client.on('end', () => {
-    //     const checkAudits = () => AuditModel.find({}, (err, audits) => {
-    //       if (err) { return done(err) }
-
-    //       // message fields already validate heavily in unit test, just perform basic check
-    //       audits.length.should.be.exactly(1) // 1 extra due to automatic actor start audit
-    //       return done()
-    //     })
-    //     return setTimeout(checkAudits, 100 * global.testTimeoutFactor)
-    //   })
-    // })
   })
 
   describe('TCP Audit Server', () => {
-    it('should send TCP audit messages and save (valid)', async () => { 
-      client = tls.connect(constants.SERVER_PORTS.auditTcpPort, 'localhost')
+    it('should send TCP audit messages and save (valid)', async () => {
+      client = net.connect(constants.SERVER_PORTS.auditTcpPort, 'localhost')
       client.close = promisify(client.end.bind(client))
-      client.write = promisify(client.write.bind(client))
 
-      await new Promise((resolve) => {
-        client.once('connection', () => resolve())
+      await new Promise((resolve, reject) => {
+        client.once('error', reject)
+        client.once('connect', () => {
+          client.removeListener('error', reject)
+          resolve()
+        })
       })
-      client.authorized.should.true()
-      await client.write(messagePrependlength)
+      await client.end(messagePrependlength)
+      await promisify(client.once.bind(client))('end')
       await testUtils.setImmediatePromise()
 
       const audits = await AuditModel.find()
       audits.length.should.be.exactly(1)
       audits[0].rawMessage.should.be.exactly(testAuditMessage)
     })
+
+    it('should send TCP audit message and NOT save (Invalid)', async () => {
+      client = net.connect(constants.SERVER_PORTS.auditTcpPort, 'localhost')
+      client.close = promisify(client.end.bind(client))
+
+      await new Promise((resolve, reject) => {
+        client.once('error', reject)
+        client.once('connect', () => {
+          client.removeListener('error', reject)
+          resolve()
+        })
+      })
+      await client.end(testAuditMessage)
+      await promisify(client.once.bind(client))('end')
+      await testUtils.setImmediatePromise()
+
+      const audits = await AuditModel.find()
+      audits.length.should.be.exactly(0)
+    })
   })
-
-  /*
-  describe('TCP Audit Server', () => {
-    it('should send TCP audit messages and save (valid)', (done) => {
-      const client = net.connect(5052, 'localhost', () => {
-        const messagePrependlength = `${testAuditMessage.length} ${testAuditMessage}`
-        client.write(messagePrependlength, (err) => {
-          if (err) { return done(err) }
-          return client.end()
-        })
-      })
-
-      client.on('end', () => {
-        const checkAudits = () => AuditModel.find({}, (err, audits) => {
-          if (err) { return done(err) }
-
-          // message fields already validate heavily in unit test, just perform basic check
-          audits.length.should.be.exactly(2)  // 1 extra due to automatic actor start audit
-          audits[1].rawMessage.should.be.exactly(testAuditMessage)
-          return done()
-        })
-        return setTimeout(checkAudits, 100 * global.testTimeoutFactor)
-      })
-    })
-
-    it('should send TCP audit message and NOT save (Invalid)', (done) => {
-      const client = net.connect(5052, 'localhost', () =>
-        // testAuditMessage does not have message length with space prepended
-        client.write(testAuditMessage, (err) => {
-          if (err) { return done(err) }
-          return client.end()
-        })
-      )
-
-      return client.on('end', () => {
-        const checkAudits = () => AuditModel.find({}, (err, audits) => {
-          if (err) { return done(err) }
-
-          // message fields already validate heavily in unit test, just perform basic check
-          audits.length.should.be.exactly(1) // 1 extra due to automatic actor start audit
-          return done()
-        })
-        return setTimeout(checkAudits, 100 * global.testTimeoutFactor)
-      })
-    })
-  }) */
 })
