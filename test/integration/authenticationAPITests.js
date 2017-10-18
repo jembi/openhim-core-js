@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import logger from 'winston'
 import * as server from '../../src/server'
 import { AuditModel } from '../../src/model/audits'
 import * as testUtils from '../utils'
