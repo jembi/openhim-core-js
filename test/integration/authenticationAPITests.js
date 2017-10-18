@@ -115,7 +115,7 @@ describe('API Integration Tests', () =>
       audits.length.should.be.exactly(0)
     })
 
-    it.only('should audit a successful login on /transactions if the view is full', async () => {
+    it('should audit a successful login on /transactions if the view is full', async () => {
       await request(constants.BASE_URL)
         .get('/transactions?filterRepresentation=full')
         .set('auth-username', testUtils.rootUser.email)
