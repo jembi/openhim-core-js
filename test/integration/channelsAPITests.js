@@ -12,8 +12,10 @@ import { TransactionModelAPI } from '../../src/model/transactions'
 import * as testUtils from '../utils'
 import { promisify } from 'util'
 import * as constants from '../constants'
+import should from 'should'
 
 const { SERVER_PORTS } = constants
+let sandbox = sinon.createSandbox()
 
 describe('API Integration Tests', () =>
 
@@ -63,6 +65,10 @@ describe('API Integration Tests', () =>
       ])
     })
 
+    afterEach(async () => {
+      await sandbox.restore()
+    })
+
     beforeEach(async () => {
       await Promise.all([
         TransactionModelAPI.remove(),
@@ -72,6 +78,8 @@ describe('API Integration Tests', () =>
       channel1._id = ch1._id
       const ch2 = await (new ChannelModelAPI(channel2)).save()
       channel2._id = ch2._id
+      sandbox.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
+      sandbox.stub(tcpAdapter, 'notifyMasterToStopTCPServer')
     })
 
     describe('*getChannels()', () => {
@@ -226,8 +234,6 @@ describe('API Integration Tests', () =>
           }]
         }
 
-        const stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
-
         await request(constants.BASE_URL)
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
@@ -236,8 +242,8 @@ describe('API Integration Tests', () =>
           .set('auth-token', authDetails.authToken)
           .send(tcpChannel)
           .expect(201)
-        stub.should.be.calledOnce
-        stub.restore()
+
+        sinon.assert.calledOnce(tcpAdapter.notifyMasterToStartTCPServer)
       })
 
       it('should NOT notify master to startup TCP server if the new channel is of type "tcp" but is disabled', async () => {
@@ -258,8 +264,6 @@ describe('API Integration Tests', () =>
           status: 'disabled'
         }
 
-        const stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
-
         await request(constants.BASE_URL)
           .post('/channels')
           .set('auth-username', testUtils.rootUser.email)
@@ -268,8 +272,7 @@ describe('API Integration Tests', () =>
           .set('auth-token', authDetails.authToken)
           .send(tcpChannelDisabled)
           .expect(201)
-        stub.should.not.be.called
-        stub.restore()
+        sinon.assert.notCalled(tcpAdapter.notifyMasterToStartTCPServer)
       })
 
       it('should register the channel with the polling service if of type "polling"', async () => {
@@ -299,7 +302,7 @@ describe('API Integration Tests', () =>
           .expect(201)
 
         spy.restore()
-        spy.calledOnce.should.be.true
+        spy.calledOnce.should.be.true()
         spy.getCall(0).args[0].should.have.property('name', 'POLLINGTestChannel-Add')
         spy.getCall(0).args[0].should.have.property('urlPattern', '/trigger')
         spy.getCall(0).args[0].should.have.property('type', 'polling')
@@ -555,8 +558,6 @@ describe('API Integration Tests', () =>
           tcpPort: 3601
         }
 
-        const stub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
-
         await httpChannel.save()
         await request(constants.BASE_URL)
           .put(`/channels/${httpChannel._id}`)
@@ -567,8 +568,7 @@ describe('API Integration Tests', () =>
           .send(changeToTCP)
           .expect(200)
 
-        stub.should.be.calledOnce()
-        stub.restore()
+        sinon.assert.calledOnce(tcpAdapter.notifyMasterToStartTCPServer)
       })
 
       it('should NOT notify master to startup a TCP server if the type is set to "tcp" but it is disabled', async () => {
@@ -592,10 +592,7 @@ describe('API Integration Tests', () =>
           status: 'disabled'
         }
 
-        const startStub = sinon.stub(tcpAdapter, 'notifyMasterToStartTCPServer')
-        const stopStub = sinon.stub(tcpAdapter, 'notifyMasterToStopTCPServer')
-
-        httpChannel.save()
+        await httpChannel.save()
         await request(constants.BASE_URL)
           .put(`/channels/${httpChannel._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -604,10 +601,8 @@ describe('API Integration Tests', () =>
           .set('auth-token', authDetails.authToken)
           .send(changeToTCPDisabled)
           .expect(200)
-        startStub.should.not.be.called()
-        stopStub.should.be.calledOnce()
-        startStub.restore()
-        stopStub.restore()
+        sinon.assert.notCalled(tcpAdapter.notifyMasterToStartTCPServer)
+        sinon.assert.calledOnce(tcpAdapter.notifyMasterToStopTCPServer)
       })
 
       it('should register the updated channel with the polling service if of type "polling"', async () => {
@@ -627,7 +622,7 @@ describe('API Integration Tests', () =>
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
 
-        pollChannel.save()
+        await pollChannel.save()
         await request(constants.BASE_URL)
           .put(`/channels/${pollChannel._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -637,7 +632,7 @@ describe('API Integration Tests', () =>
           .send(pollChannel)
           .expect(200)
         spy.restore()
-        spy.calledOnce.should.be.true
+        spy.calledOnce.should.be.true()
         spy.getCall(0).args[0].should.have.property('name', 'POLLINGTestChannel-Update')
         spy.getCall(0).args[0].should.have.property('urlPattern', '/trigger')
         spy.getCall(0).args[0].should.have.property('type', 'polling')
@@ -662,7 +657,7 @@ describe('API Integration Tests', () =>
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
 
-        pollChannel.save()
+        await pollChannel.save()
         await request(constants.BASE_URL)
           .put(`/channels/${pollChannel._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -825,7 +820,7 @@ describe('API Integration Tests', () =>
         // there can't be any linked transactions
         trx.length.should.be.exactly(0)
 
-        pollChannel.save()
+        await pollChannel.save()
         await request(constants.BASE_URL)
           .del(`/channels/${pollChannel._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -834,7 +829,7 @@ describe('API Integration Tests', () =>
           .set('auth-token', authDetails.authToken)
           .expect(200)
         spy.restore()
-        spy.calledOnce.should.be.true
+        spy.calledOnce.should.be.true()
         spy.getCall(0).args[0].should.have.property('name', 'POLLINGTestChannel-Remove')
         spy.getCall(0).args[0].should.have.property('_id', pollChannel._id)
       })
@@ -851,7 +846,7 @@ describe('API Integration Tests', () =>
           status: 'Successful'
         })
 
-        trx.save()
+        await trx.save()
         await request(constants.BASE_URL)
           .del(`/channels/${channel1._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -861,7 +856,7 @@ describe('API Integration Tests', () =>
           .expect(200)
         const channels = await ChannelModelAPI.find({ name: 'TestChannel1' })
         channels.should.have.length(1)
-        channels[0].status.should.exist
+        should.exist(channels[0].status)
         channels[0].status.should.be.equal('deleted')
       })
     })
