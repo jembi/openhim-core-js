@@ -4,10 +4,13 @@ import request from 'supertest'
 import crypto from 'crypto'
 import * as server from '../../src/server'
 import { UserModelAPI } from '../../src/model/users'
+import { promisify } from 'util'
+import * as constants from '../constants'
 
-xdescribe('API Integration Tests', () =>
+const { SERVER_PORTS } = constants
 
-  xdescribe('General API tests', () => {
+describe('API Integration Tests', () => {
+  describe('General API tests', () => {
     const user = new UserModelAPI({
       firstname: 'Bill',
       surname: 'Murray',
@@ -19,176 +22,118 @@ xdescribe('API Integration Tests', () =>
     })
     // password is 'password'
 
-    before(done =>
-      server.start({apiPort: 8080}, () =>
-        user.save(() => done())
-      )
-    )
+    before(async () => {
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, httpsPort: SERVER_PORTS.httpsPort })
+      await user.save()
+    })
 
-    after(done =>
-      UserModelAPI.remove({}, () =>
-        server.stop(() => done())
-      )
-    )
+    after(async () => {
+      await UserModelAPI.remove({})
+      await promisify(server.stop)()
+    })
 
-    it('should set the cross-origin resource sharing headers', done => {
+    it('should set the cross-origin resource sharing headers', async () => {
       const origin = 'https://example.com'
-      request('https://localhost:8080')
+      await request(constants.BASE_URL)
         .options('/authenticate/bfm@crazy.net')
         .set('Origin', origin)
         .set('Access-Control-Request-Method', 'GET')
         .expect(204)
         .expect('Access-Control-Allow-Origin', origin)
         .expect('Access-Control-Allow-Methods', 'GET,HEAD,PUT,POST,DELETE')
-        .end((err, res) => {
-          if (err) {
-            return done(err)
-          } else {
-            return done()
-          }
-        })
     })
 
-    it('should disallow access if no API authentication details are provided', done =>
-      request('https://localhost:8080')
+    it('should disallow access if no API authentication details are provided', async () => {
+      await request(constants.BASE_URL)
         .get('/channels')
         .expect(401)
-        .end((err, res) => {
-          if (err) {
-            return done(err)
-          } else {
-            return done()
-          }
-        })
-    )
+    })
 
-    it('should disallow access if token does not match', done =>
-
-      request('https://localhost:8080')
+    it('should disallow access if token does not match', async () => {
+      const res = await request(constants.BASE_URL)
         .get('/authenticate/bfm@crazy.net')
         .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err)
-          } else {
-            const passwordsalt = res.body.salt
+      const passwordsalt = res.body.salt
 
-            // create passwordhash
-            const passwordhash = crypto.createHash('sha512')
-            passwordhash.update(passwordsalt)
-            passwordhash.update('password')
+      // create passwordhash
+      const passwordhash = await crypto.createHash('sha512')
+      await passwordhash.update(passwordsalt)
+      await passwordhash.update('password')
 
-            // create tokenhash
-            const authTS = new Date().toISOString()
-            const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
-            const tokenhash = crypto.createHash('sha512')
-            tokenhash.update(passwordhash.digest('hex'))
-            tokenhash.update(requestsalt)
-            tokenhash.update(authTS)
+      // create tokenhash
+      const authTS = await new Date().toISOString()
+      const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
+      const tokenhash = await crypto.createHash('sha512')
+      await tokenhash.update(passwordhash.digest('hex'))
+      await tokenhash.update(requestsalt)
+      await tokenhash.update(authTS)
 
-            return request('https://localhost:8080')
-              .get('/channels')
-              .set('auth-username', 'bfm@crazy.net')
-              .set('auth-ts', authTS)
-              .set('auth-salt', `${requestsalt}incorrect`)
-              .set('auth-token', tokenhash.digest('hex'))
-              .expect(401)
-              .end((err, res) => {
-                if (err) {
-                  return done(err)
-                } else {
-                  return done()
-                }
-              })
-          }
-        })
-    )
+      await request(constants.BASE_URL)
+        .get('/channels')
+        .set('auth-username', 'bfm@crazy.net')
+        .set('auth-ts', authTS)
+        .set('auth-salt', `${requestsalt}incorrect`)
+        .set('auth-token', tokenhash.digest('hex'))
+        .expect(401)
+    })
 
-    it('should allow access if correct API authentication details are provided', done =>
-
-      request('https://localhost:8080')
+    it('should allow access if correct API authentication details are provided', async () => {
+      const res = await request(constants.BASE_URL)
         .get('/authenticate/bfm@crazy.net')
         .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err)
-          } else {
-            const passwordsalt = res.body.salt
+      const passwordsalt = res.body.salt
 
-            // create passwordhash
-            const passwordhash = crypto.createHash('sha512')
-            passwordhash.update(passwordsalt)
-            passwordhash.update('password')
+      // create passwordhash
+      const passwordhash = await crypto.createHash('sha512')
+      await passwordhash.update(passwordsalt)
+      await passwordhash.update('password')
 
-            // create tokenhash
-            const authTS = new Date().toISOString()
-            const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
-            const tokenhash = crypto.createHash('sha512')
-            const hashStr = passwordhash.digest('hex')
-            tokenhash.update(hashStr)
-            tokenhash.update(requestsalt)
-            tokenhash.update(authTS)
+      // create tokenhash
+      const authTS = await new Date().toISOString()
+      const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
+      const tokenhash = await crypto.createHash('sha512')
+      const hashStr = await passwordhash.digest('hex')
+      await tokenhash.update(hashStr)
+      await tokenhash.update(requestsalt)
+      await tokenhash.update(authTS)
 
-            return request('https://localhost:8080')
-              .get('/channels')
-              .set('auth-username', 'bfm@crazy.net')
-              .set('auth-ts', authTS)
-              .set('auth-salt', requestsalt)
-              .set('auth-token', tokenhash.digest('hex'))
-              .expect(200)
-              .end((err, res) => {
-                if (err) {
-                  return done(err)
-                } else {
-                  return done()
-                }
-              })
-          }
-        })
-    )
+      await request(constants.BASE_URL)
+        .get('/channels')
+        .set('auth-username', 'bfm@crazy.net')
+        .set('auth-ts', authTS)
+        .set('auth-salt', requestsalt)
+        .set('auth-token', tokenhash.digest('hex'))
+        .expect(200)
+    })
 
-    return it('should disallow access if the request is too old', done =>
-
-      request('https://localhost:8080')
+    it('should disallow access if the request is too old', async () => {
+      const res = await request(constants.BASE_URL)
         .get('/authenticate/bfm@crazy.net')
         .expect(200)
-        .end((err, res) => {
-          if (err) {
-            return done(err)
-          } else {
-            const passwordsalt = res.body.salt
+      const passwordsalt = res.body.salt
 
-            // create passwordhash
-            const passwordhash = crypto.createHash('sha512')
-            passwordhash.update(passwordsalt)
-            passwordhash.update('password')
+      // create passwordhash
+      const passwordhash = await crypto.createHash('sha512')
+      await passwordhash.update(passwordsalt)
+      await passwordhash.update('password')
 
-            // create tokenhash
-            let authTS = new Date()
-            authTS.setSeconds(authTS.getSeconds() - 53)
-            authTS = authTS.toISOString()
-            const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
-            const tokenhash = crypto.createHash('sha512')
-            tokenhash.update(passwordhash.digest('hex'))
-            tokenhash.update(requestsalt)
-            tokenhash.update(authTS)
+      // create tokenhash
+      let authTS = await new Date()
+      await authTS.setSeconds(authTS.getSeconds() - 53)
+      authTS = await authTS.toISOString()
+      const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
+      const tokenhash = await crypto.createHash('sha512')
+      await tokenhash.update(passwordhash.digest('hex'))
+      await tokenhash.update(requestsalt)
+      await tokenhash.update(authTS)
 
-            return request('https://localhost:8080')
-              .get('/channels')
-              .set('auth-username', 'bfm@crazy.net')
-              .set('auth-ts', authTS)
-              .set('auth-salt', requestsalt)
-              .set('auth-token', tokenhash.digest('hex'))
-              .expect(401)
-              .end((err, res) => {
-                if (err) {
-                  return done(err)
-                } else {
-                  return done()
-                }
-              })
-          }
-        })
-    )
+      await request(constants.BASE_URL)
+        .get('/channels')
+        .set('auth-username', 'bfm@crazy.net')
+        .set('auth-ts', authTS)
+        .set('auth-salt', requestsalt)
+        .set('auth-token', tokenhash.digest('hex'))
+        .expect(401)
+    })
   })
-)
+})
