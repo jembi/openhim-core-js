@@ -122,7 +122,7 @@ describe('API Integration Tests', () =>
         .set('auth-salt', authDetails.authSalt)
         .set('auth-token', authDetails.authToken)
         .expect(200)
-      const audits = await AuditModel.find({})
+      const audits = await AuditModel.find()
       audits.length.should.be.exactly(1)
       audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('0') // success
       audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')

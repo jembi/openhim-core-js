@@ -46,6 +46,19 @@ export const nonRootUser = {
 }
 // password is 'password'
 
+/**
+ * Function that will only resolve once the predicate is true
+ * It's used as a way to pause a test while waiting for the system state to catch up
+ * @export
+ * @param {Function} pollPredicate Function that will return a boolean or a promise that will resolve as a boolean
+ * @param {number} [pollBreak=30] Time to wait between checks
+ */
+export async function pollCondition (pollPredicate, pollBreak = 20) {
+  while (!(await pollPredicate())) {
+    await wait(pollBreak)
+  }
+}
+
 export function setupTestUsers () {
   return Promise.all([
     new UserModel(rootUser).save(),

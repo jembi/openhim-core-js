@@ -515,7 +515,7 @@ export async function updateTransaction (ctx, transactionId) {
       const channel = await ChannelModelAPI.findById(transaction.channelID).exec()
       if (!autoRetryUtils.reachedMaxAttempts(transaction, channel)) {
         updates.autoRetry = true
-        autoRetryUtils.queueForRetry(transaction)
+        await autoRetryUtils.queueForRetry(transaction)
       }
     }
 

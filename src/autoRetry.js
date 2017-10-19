@@ -5,7 +5,7 @@ import { AutoRetryModel } from './model/autoRetry'
 import { TaskModel } from './model/tasks'
 import * as Channels from './model/channels'
 
-const {ChannelModel} = Channels
+const { ChannelModel } = Channels
 
 export function reachedMaxAttempts (tx, channel) {
   return (channel.autoRetryMaxAttempts != null) &&
@@ -13,27 +13,28 @@ export function reachedMaxAttempts (tx, channel) {
     (tx.autoRetryAttempt >= channel.autoRetryMaxAttempts)
 }
 
-export function queueForRetry (tx) {
+export async function queueForRetry (tx) {
   const retry = new AutoRetryModel({
     transactionID: tx._id,
     channelID: tx.channelID,
     requestTimestamp: tx.request.timestamp
   })
-  retry.save((err) => {
-    if (err) {
-      logger.error(`Failed to queue transaction ${tx._id} for auto retry: ${err}`)
-    }
-  })
+
+  try {
+    await retry.save()
+  } catch (err) {
+    logger.error(`Failed to queue transaction ${tx._id} for auto retry: ${err}`)
+  }
 }
 
-const getChannels = callback => ChannelModel.find({autoRetryEnabled: true, status: 'enabled'}, callback)
+const getChannels = callback => ChannelModel.find({ autoRetryEnabled: true, status: 'enabled' }, callback)
 
 function popTransactions (channel, callback) {
   const to = moment().subtract(channel.autoRetryPeriodMinutes - 1, 'minutes')
 
   const query = {
     $and: [
-      {channelID: channel._id},
+      { channelID: channel._id },
       {
         requestTimestamp: {
           $lte: to.toDate()
@@ -46,7 +47,7 @@ function popTransactions (channel, callback) {
   AutoRetryModel.find(query, (err, transactions) => {
     if (err) { return callback(err) }
     if (transactions.length === 0) { return callback(null, []) }
-    AutoRetryModel.remove({_id: {$in: (transactions.map(t => t._id))}}, (err) => {
+    AutoRetryModel.remove({ _id: { $in: (transactions.map(t => t._id)) } }, (err) => {
       if (err) { return callback(err) }
       return callback(null, transactions)
     })
@@ -56,7 +57,7 @@ function popTransactions (channel, callback) {
 function createRerunTask (transactionIDs, callback) {
   logger.info(`Rerunning failed transactions: ${transactionIDs}`)
   const task = new TaskModel({
-    transactions: (transactionIDs.map(t => ({tid: t}))),
+    transactions: (transactionIDs.map(t => ({ tid: t }))),
     totalTransactions: transactionIDs.length,
     remainingTransactions: transactionIDs.length,
     user: 'internal'
@@ -72,25 +73,24 @@ function autoRetryTask (job, done) {
   const _taskStart = new Date()
   const transactionsToRerun = []
 
-  getChannels((err, results) => {
+  getChannels((err, channels) => {
     if (err) { return done(err) }
     const promises = []
 
-    for (const channel of Array.from(results)) {
-      (function (channel) {
-        const deferred = Q.defer()
+    for (const channel of channels) {
+      const deferred = Q.defer()
 
-        popTransactions(channel, (err, results) => {
-          if (err) {
-            logger.error(err)
-          } else if ((results != null) && (results.length > 0)) {
-            for (const tid of Array.from((results.map(r => r.transactionID)))) { transactionsToRerun.push(tid) }
-          }
-          return deferred.resolve()
-        })
+      popTransactions(channel, (err, transactions) => {
+        if (err) {
+          logger.error(err)
+        } else if (transactions != null) {
+          const tranIDs = transactions.map(r => r.transactionID)
+          transactionsToRerun.push(...tranIDs)
+        }
+        return deferred.resolve()
+      })
 
-        promises.push(deferred.promise)
-      }(channel))
+      promises.push(deferred.promise)
     }
 
     (Q.all(promises)).then(() => {
@@ -101,9 +101,9 @@ function autoRetryTask (job, done) {
 
       if (transactionsToRerun.length > 0) {
         return createRerunTask(transactionsToRerun, end)
+      } else {
+        end()
       }
-
-      return end()
     }).catch(done)
   })
 }
