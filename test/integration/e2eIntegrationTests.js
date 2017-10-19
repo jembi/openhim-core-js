@@ -1,6 +1,7 @@
 /* eslint-env mocha */
 
-import should from 'should'
+// TODO : This gigantic test needs to be moved to several smaller tests and some of it is already covered
+/* import should from 'should'
 import https from 'https'
 import fs from 'fs'
 import request from 'supertest'
@@ -1700,3 +1701,4 @@ xdescribe('e2e Integration Tests', () => {
     })
   })
 })
+ */
