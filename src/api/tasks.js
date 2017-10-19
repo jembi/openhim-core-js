@@ -7,7 +7,7 @@ import * as Channels from '../model/channels'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
 
-const {ChannelModelAPI} = Channels
+const { ChannelModelAPI } = Channels
 
 /**
  * Function to check if rerun task creation is valid
@@ -19,21 +19,21 @@ function isRerunPermissionsValid (user, transactions, callback) {
     // admin user allowed to rerun any transactions
     return callback(null, true)
   } else {
-    return TransactionModelAPI.distinct('channelID', {_id: {$in: transactions.tids}}, (err, transChannels) => {
+    return TransactionModelAPI.distinct('channelID', { _id: { $in: transactions.tids } }, (err, transChannels) => {
       if (err) { return callback(err) }
-      ChannelModelAPI.distinct('_id', {txRerunAcl: {$in: user.groups}}, (err, allowedChannels) => {
+      ChannelModelAPI.distinct('_id', { txRerunAcl: { $in: user.groups } }, (err, allowedChannels) => {
         if (err) { return callback(err) }
-          // for each transaction channel found to be rerun
+        // for each transaction channel found to be rerun
         for (const trx of Array.from(transChannels)) {
-            // assume transaction channnel is not allowed at first
+          // assume transaction channnel is not allowed at first
           let matchFound = false
 
-            // for each user allowed channel to be rerun
+          // for each user allowed channel to be rerun
           for (const chan of Array.from(allowedChannels)) {
             if (trx.equals(chan)) { matchFound = true }
           }
 
-            // if one channel not allowed then rerun NOT allowed
+          // if one channel not allowed then rerun NOT allowed
           if (!matchFound) { return callback(null, false) }
         }
         return callback(null, true)
@@ -57,8 +57,8 @@ export async function getTasks (ctx) {
     const filtersObject = ctx.request.query
 
     // get limit and page values
-    const {filterLimit} = filtersObject
-    const {filterPage} = filtersObject
+    const { filterLimit } = filtersObject
+    const { filterPage } = filtersObject
 
     // determine skip amount
     const filterSkip = filterPage * filterLimit
@@ -72,26 +72,23 @@ export async function getTasks (ctx) {
     }
 
     // exclude transactions object from tasks list
-    const projectionFiltersObject = {transactions: 0}
-
-    ctx.body = await TaskModelAPI.find({}).exec()
+    const projectionFiltersObject = { transactions: 0 }
 
     // execute the query
     ctx.body = await TaskModelAPI
       .find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
-      .sort({created: -1})
-      .exec()
+      .sort({ created: -1 })
   } catch (err) {
     utils.logAndSetResponse(ctx, 500, `Could not fetch all tasks via the API: ${err}`, 'error')
   }
 }
 
 const areTransactionChannelsValid = (transactions, callback) =>
-  TransactionModelAPI.distinct('channelID', {_id: {$in: transactions.tids}}, (err, trxChannelIDs) => {
+  TransactionModelAPI.distinct('channelID', { _id: { $in: transactions.tids } }, (err, trxChannelIDs) => {
     if (err) { return callback(err) }
-    return ChannelModelAPI.find({_id: {$in: trxChannelIDs}}, {status: 1}, (err, trxChannels) => {
+    return ChannelModelAPI.find({ _id: { $in: trxChannelIDs } }, { status: 1 }, (err, trxChannels) => {
       if (err) { return callback(err) }
 
       for (const chan of Array.from(trxChannels)) {
@@ -140,18 +137,17 @@ export async function addTask (ctx) {
         return
       }
 
-      for (const tid of Array.from(transactions.tids)) { transactionsArr.push({tid}) }
+      for (const tid of Array.from(transactions.tids)) { transactionsArr.push({ tid }) }
       taskObject.transactions = transactionsArr
       taskObject.totalTransactions = transactionsArr.length
 
-      const task = new TaskModelAPI(taskObject)
-      await Q.ninvoke(task, 'save')
+      const task = await new TaskModelAPI(taskObject).save()
 
       // All ok! So set the result
       utils.logAndSetResponse(ctx, 201, `User ${ctx.authenticated.email} created task with id ${task.id}`, 'info')
 
       // Clear the transactions out of the auto retry queue, in case they're in there
-      return AutoRetryModelAPI.remove({transactionID: {$in: transactions.tids}}, (err) => { if (err) { return logger.error(err) } })
+      return AutoRetryModelAPI.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err) } })
     } else {
       // rerun task creation not allowed
       utils.logAndSetResponse(ctx, 403, 'Insufficient permissions prevents this rerun task from being created', 'error')
@@ -219,8 +215,8 @@ export async function getTask (ctx, taskId) {
     const filtersObject = ctx.request.query
 
     // get limit and page values
-    const {filterLimit} = filtersObject
-    const {filterPage} = filtersObject
+    const { filterLimit } = filtersObject
+    const { filterPage } = filtersObject
 
     // determine skip amount
     const filterSkip = filterPage * filterLimit
@@ -280,7 +276,7 @@ export async function updateTask (ctx, taskId) {
   if (taskData._id != null) { delete taskData._id }
 
   try {
-    await TaskModelAPI.findOneAndUpdate({_id: taskId}, taskData).exec()
+    await TaskModelAPI.findOneAndUpdate({ _id: taskId }, taskData).exec()
 
     // All ok! So set the result
     ctx.body = 'The Task was successfully updated'
@@ -305,7 +301,7 @@ export async function removeTask (ctx, taskId) {
 
   try {
     // Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    await TaskModelAPI.remove({_id: taskId}).exec()
+    await TaskModelAPI.remove({ _id: taskId }).exec()
 
     // All ok! So set the result
     ctx.body = 'The Task was successfully deleted'

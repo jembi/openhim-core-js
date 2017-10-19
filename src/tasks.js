@@ -19,7 +19,6 @@ export async function findAndProcessAQueuedTask () {
   let task
   try {
     task = await TaskModel.findOneAndUpdate({ status: 'Queued' }, { status: 'Processing' }, { new: true })
-
     if (task != null) {
       activeTasks++
       await processNextTaskRound(task)
@@ -102,7 +101,6 @@ async function processNextTaskRound (task) {
 
   for (const transaction of Array.from(task.transactions.slice(nextI, nextI + task.batchSize))) {
     const defer = Q.defer()
-
     rerunTransaction(transaction.tid, task._id, (err, response) => {
       if (err) {
         transaction.tstatus = 'Failed'

@@ -24,6 +24,7 @@ export const SERVER_PORTS = Object.freeze({
 })
 
 export const BASE_URL = `https://localhost:${SERVER_PORTS.apiPort}`
+export const HTTP_BASE_URL = `http://localhost:${SERVER_PORTS.httpPort}`
 
 export const UPD_SOCKET_TYPE = 'udp4'
 export const DEFAULT_HTTP_RESP = 'Mock response body\n'
