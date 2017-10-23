@@ -3,7 +3,7 @@
 import request from 'supertest'
 import crypto from 'crypto'
 import * as server from '../../src/server'
-import { UserModelAPI } from '../../src/model/users'
+import { UserModel } from '../../src/model'
 import { promisify } from 'util'
 import * as constants from '../constants'
 
@@ -11,7 +11,7 @@ const { SERVER_PORTS } = constants
 
 describe('API Integration Tests', () => {
   describe('General API tests', () => {
-    const user = new UserModelAPI({
+    const userDoc = {
       firstname: 'Bill',
       surname: 'Murray',
       email: 'bfm@crazy.net',
@@ -19,17 +19,20 @@ describe('API Integration Tests', () => {
       passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
       passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
       groups: ['HISP', 'admin']
-    })
+    }
     // password is 'password'
-
     before(async () => {
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, httpsPort: SERVER_PORTS.httpsPort })
-      await user.save()
+      await Promise.all([
+        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, httpsPort: SERVER_PORTS.httpsPort }),
+        new UserModel(userDoc).save()
+      ])
     })
 
     after(async () => {
-      await UserModelAPI.remove({})
-      await promisify(server.stop)()
+      await Promise.all([
+        UserModel.remove(),
+        promisify(server.stop)()
+      ])
     })
 
     it('should set the cross-origin resource sharing headers', async () => {
