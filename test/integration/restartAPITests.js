@@ -4,15 +4,17 @@
 import sinon from 'sinon'
 import request from 'supertest'
 import { ChannelModelAPI } from '../../src/model/channels'
+import { MediatorModelAPI } from '../../src/model/mediators'
+import * as constants from '../constants'
 import * as server from '../../src/server'
-import * as testUtils from '../testUtils'
+import * as testUtils from '../utils'
+import { promisify } from 'util'
 
-const {auth} = testUtils
+describe('API Integration Tests', () =>
 
-xdescribe('API Integration Tests', () =>
-
-  xdescribe('Restart REST Api testing', () => {
+  describe('Restart REST Api testing', () => {
     let authDetails = {}
+    const { SERVER_PORTS } = constants
 
     const channel = new ChannelModelAPI({
       name: 'TestChannel1',
@@ -28,32 +30,24 @@ xdescribe('API Integration Tests', () =>
       txViewFullAcl: []
     })
 
-    before(done =>
-      auth.setupTestUsers(err => {
-        if (err) { return done(err) }
-        channel.save(err => {
-          if (err) { return done(err) }
-          server.start({apiPort: 8080}, () => done())
-        })
-      })
-    )
+    before(async () => {
+      await testUtils.setupTestUsers()
+      await channel.save()
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+    })
 
-    after(done =>
-      auth.cleanupTestUsers(err => {
-        if (err) { return done(err) }
-        ChannelModelAPI.remove(err => {
-          if (err) { return done(err) }
-          server.stop(() => done())
-        })
-      })
-    )
+    after(async () => {
+      await testUtils.cleanupTestUsers()
+      await ChannelModelAPI.remove()
+      await promisify(server.stop)()
+    })
 
-    beforeEach(() => { authDetails = auth.getAuthDetails() })
+    beforeEach(() => { authDetails = testUtils.getAuthDetails() })
 
-    xdescribe('*restart()', () => {
-      it('should successfully send API request to restart the server', (done) => {
+    describe('*restart()', () => {
+      it('should successfully send API request to restart the server', async () => {
         const stub = sinon.stub(server, 'startRestartServerTimeout')
-        request('https://localhost:8080')
+        await request(constants.BASE_URL)
           .post('/restart')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -61,18 +55,11 @@ xdescribe('API Integration Tests', () =>
           .set('auth-token', authDetails.authToken)
           .send()
           .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              stub.calledOnce.should.be.true
-              return done()
-            }
-          })
+        stub.calledOnce.should.be.true()
       })
 
-      it('should not allow non admin user to restart the server', done =>
-        request('https://localhost:8080')
+      it('should not allow non admin user to restart the server', async () => {
+        await request(constants.BASE_URL)
           .post('/restart')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -80,14 +67,7 @@ xdescribe('API Integration Tests', () =>
           .set('auth-token', authDetails.authToken)
           .send()
           .expect(403)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              return done()
-            }
-          })
-      )
+      })
     })
   })
 )
