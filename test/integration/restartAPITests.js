@@ -10,11 +10,11 @@ import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import { promisify } from 'util'
 
-describe('API Integration Tests', () =>
+describe('API Integration Tests', () => {
+  const { SERVER_PORTS } = constants
 
   describe('Restart REST Api testing', () => {
     let authDetails = {}
-    const { SERVER_PORTS } = constants
 
     const channel = new ChannelModelAPI({
       name: 'TestChannel1',
@@ -70,4 +70,4 @@ describe('API Integration Tests', () =>
       })
     })
   })
-)
+})
