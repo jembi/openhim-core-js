@@ -29,8 +29,8 @@ export async function getLogs (ctx) {
   }
 
   const options = {
-    from: query.from || moment().subtract(5, 'minutes').toDate(),
-    until: query.until || new Date(),
+    from: query.from != null ? moment(query.from).toDate() : moment().subtract(5, 'minutes').toDate(),
+    until: moment(query.until || undefined).toDate(),
     order: 'asc',
     start: parseInt(query.start, 10) || 0,
     limit: 100000 // limit: 0 doesn't work :/
