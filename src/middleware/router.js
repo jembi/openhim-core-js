@@ -61,36 +61,33 @@ function setKoaResponse (ctx, response) {
     }
   }
 
-  const result = []
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
       case 'set-cookie':
-        result.push(setCookiesOnContext(ctx, value))
+        setCookiesOnContext(ctx, value)
         break
       case 'location':
-        if ((response.status >= 300) && (response.status < 400)) {
-          result.push(ctx.response.redirect(value))
+        if (response.status >= 300 && response.status < 400) {
+          ctx.response.redirect(value)
         } else {
-          result.push(ctx.response.set(key, value))
+          ctx.response.set(key, value)
         }
         break
       case 'content-type':
-        result.push(ctx.response.type = value)
+        ctx.response.type = value
+        break
+      case 'content-encoding':
+      case 'transfer-encoding':
+        // Skip headers which will be set internally
+        // These would otherwise interfere with the response
         break
       default:
-        try {
-          // Strip the content and transfer encoding headers
-          if ((key !== 'content-encoding') && (key !== 'transfer-encoding')) {
-            result.push(ctx.response.set(key, value))
-          }
-        } catch (error1) {
-          err = error1
-          result.push(logger.error(err))
-        }
+        // Copy any other headers onto the response
+        ctx.response.set(key, value)
+        break
     }
   }
-  return result
 }
 
 if (process.env.NODE_ENV === 'test') {
