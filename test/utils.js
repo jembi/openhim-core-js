@@ -163,9 +163,13 @@ export function clone (value) {
  * @return {Promise}
  */
 export async function dropTestDb () {
-  const url = config.get('mongo:url')
-  const connection = await MongoClient.connect(url)
+  const connection = await getMongoClient()
   await connection.dropDatabase()
+}
+
+export function getMongoClient () {
+  const url = config.get('mongo:url')
+  return MongoClient.connect(url)
 }
 
 /**

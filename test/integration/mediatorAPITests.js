@@ -204,8 +204,7 @@ describe('API Integration Tests', () => {
           .send(mediator1)
           .expect(201)
 
-        const res = await MediatorModelA
-        PI.findOne({ urn: mediator1.urn })
+        const res = await MediatorModelAPI.findOne({ urn: mediator1.urn })
         should.exist(res)
       })
 
