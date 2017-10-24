@@ -87,6 +87,10 @@ export function cleanupTestUsers () {
   return UserModel.remove({email: {$in: [rootUser.email, nonRootUser.email]}})
 }
 
+export function cleanupAllTestUsers () {
+  return UserModel.remove()
+}
+
 /**
  * Will return the body of a request
  *
