@@ -77,6 +77,7 @@ function setKoaResponse (ctx, response) {
       case 'content-type':
         ctx.response.type = value
         break
+      case 'content-length':
       case 'content-encoding':
       case 'transfer-encoding':
         // Skip headers which will be set internally
