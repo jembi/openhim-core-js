@@ -350,7 +350,7 @@ describe('Upgrade DB Tests', () => {
       visualizers[idx2].components.length.should.be.exactly(1)
     })
 
-    xit('should migrate visualizer settings even when user have the same name', async () => {
+    it('should migrate visualizer settings even when user have the same name', async () => {
       const user = await UserModel.findOne({ surname: 'User2' })
       user.surname = 'User1'
       await user.save()

@@ -45,7 +45,7 @@ describe('Metrics unit tests', () =>
       result[0].maxResp.should.be.exactly(200)
     })
 
-    xit('should return metrics in time series by minute', async () => {
+    it('should return metrics in time series by minute', async () => {
       const result = await metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'minute')
       result.length.should.be.exactly(10)
       result[0]._id.minute.should.Number()
@@ -56,8 +56,8 @@ describe('Metrics unit tests', () =>
       result[0]._id.year.should.be.exactly(2014)
       result[0].total.should.be.exactly(1)
     })
-
-    xit('should return metrics in time series by hour', async () => {
+// TODO Ross ?
+    it('should return metrics in time series by hour', async () => {
       const result = await metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'hour')
       result.length.should.be.exactly(9)
       result[1]._id.hour.should.Number()
@@ -68,7 +68,7 @@ describe('Metrics unit tests', () =>
       result[1].total.should.be.exactly(2)
     })
 
-    xit('should return metrics in time series by day', async () => {
+    it('should return metrics in time series by day', async () => {
       const result = await metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'day')
       result.length.should.be.exactly(4)
       result[0]._id.day.should.Number()
@@ -78,7 +78,7 @@ describe('Metrics unit tests', () =>
       result[0].total.should.be.exactly(2)
     })
 
-    xit('should return metrics in time series by week', async () => {
+    it('should return metrics in time series by week', async () => {
       const result = await metrics.calculateMetrics(new Date('2013-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'week')
       result.length.should.be.exactly(2)
       result[0]._id.week.should.be.exactly(28)
@@ -87,7 +87,7 @@ describe('Metrics unit tests', () =>
       result[0].total.should.be.exactly(10)
     })
 
-    xit('should return metrics in time series by month', async () => {
+    it('should return metrics in time series by month', async () => {
       const result = await metrics.calculateMetrics(new Date('2013-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'month')
       result.length.should.be.exactly(2)
       result[0]._id.month.should.be.exactly(7)
