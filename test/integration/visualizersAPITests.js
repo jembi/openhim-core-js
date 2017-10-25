@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import _ from 'lodash'
 import * as server from '../../src/server'
 import { VisualizerModelAPI } from '../../src/model/visualizer'
 import * as testUtils from '../utils'
