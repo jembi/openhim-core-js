@@ -4,39 +4,44 @@
 import should from 'should'
 import request from 'supertest'
 import os from 'os'
-import * as q from 'q'
-import * as utils from '../../src/utils'
-import { TransactionModelAPI } from '../../src/model/transactions'
-import { ChannelModelAPI } from '../../src/model/channels'
-import * as server from '../../src/server'
-import FakeServer from '../fakeTcpServer'
-import { config } from '../../src/config'
-import { EventModelAPI } from '../../src/model/events'
-import { AutoRetryModelAPI } from '../../src/model/autoRetry'
 import * as testUtils from '../utils'
+import { TransactionModel } from '../../src/model/transactions'
+import { ChannelModel } from '../../src/model/channels'
+import * as server from '../../src/server'
+import { config } from '../../src/config'
+import { EventModel, autoRetryModel } from '../../src/model'
 import * as constants from '../constants'
 import { promisify } from 'util'
 
-const apiConf = config.get('api')
+const ORIGINAL_API_CONFIG = config.api
+const ORIGINAL_APPLICATION_CONFIG = config.application
+
 const application = config.get('application')
 const domain = `${os.hostname()}.${application.name}`
 
-const clearTransactionBodies = function (t) {
-  t.request.body = ''
-  t.response.body = ''
-  t.routes[0].request.body = ''
-  t.routes[0].response.body = ''
-  t.orchestrations[0].request.body = ''
-  t.orchestrations[0].response.body = ''
+const clearTransactionBodies = function (transaction) {
+  transaction.request.body = ''
+  transaction.response.body = ''
+  transaction.routes.forEach(r => {
+    r.request.body = ''
+    r.response.body = ''
+  })
+
+  transaction.orchestrations.forEach(o => {
+    o.request.body = ''
+    o.response.body = ''
+  })
 }
+
+const MAX_BODY_MB = 1
+const MAX_BODY_SIZE = MAX_BODY_MB * 1024 * 1024
 
 describe('API Integration Tests', () => {
   const { SERVER_PORTS } = constants
-  let largeBody = ''
-  for (let i = 0, end = 2 * 1024 * 1024, asc = end >= 0; asc ? i < end : i > end; asc ? i++ : i--) { largeBody += '1234567890' }
 
-  let transactionId = null
-  const requ = {
+  const LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
+
+  const requestDoc = {
     path: '/api/test',
     headers: {
       'header-title': 'header1-value',
@@ -48,9 +53,9 @@ describe('API Integration Tests', () => {
     timestamp: '2014-06-09T11:17:25.929Z'
   }
 
-  Object.freeze(requ)
+  Object.freeze(requestDoc)
 
-  const respo = {
+  const responseDoc = {
     status: '200',
     headers: {
       header: 'value',
@@ -60,27 +65,27 @@ describe('API Integration Tests', () => {
     timestamp: '2014-06-09T11:17:25.929Z'
   }
 
-  Object.freeze(respo)
+  Object.freeze(responseDoc)
 
   const transactionData = {
     _id: '111111111111111111111111',
     status: 'Processing',
     clientID: '999999999999999999999999',
     channelID: '888888888888888888888888',
-    request: requ,
-    response: respo,
+    request: requestDoc,
+    response: responseDoc,
 
     routes: [{
       name: 'dummy-route',
-      request: requ,
-      response: respo
+      request: requestDoc,
+      response: responseDoc
     }
     ],
 
     orchestrations: [{
       name: 'dummy-orchestration',
-      request: requ,
-      response: respo
+      request: requestDoc,
+      response: responseDoc
     }
     ],
     properties: {
@@ -92,8 +97,10 @@ describe('API Integration Tests', () => {
   Object.freeze(transactionData)
 
   let authDetails = {}
+  let channel
+  let channel2
 
-  const channel = new ChannelModelAPI({
+  const channelDoc = {
     name: 'TestChannel1',
     urlPattern: 'test/sample',
     allow: ['PoC', 'Test1', 'Test2'],
@@ -106,9 +113,9 @@ describe('API Integration Tests', () => {
     ],
     txViewAcl: ['group1'],
     txViewFullAcl: []
-  })
+  }
 
-  const channel2 = new ChannelModelAPI({
+  const channel2Doc = {
     name: 'TestChannel2',
     urlPattern: 'test2/sample',
     allow: ['PoC', 'Test1', 'Test2'],
@@ -124,40 +131,51 @@ describe('API Integration Tests', () => {
     autoRetryEnabled: true,
     autoRetryPeriodMinutes: 60,
     autoRetryMaxAttempts: 5
-  })
+  }
 
   before(async () => {
-    await testUtils.dropTestDb()
-    await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
-    await channel.save()
-    await channel2.save()
+    config.api = config.get('api')
+    config.api.maxBodiesSizeMB = MAX_BODY_MB
+
+    config.application = config.get('application')
+    const results = await Promise.all([
+      new ChannelModel(channelDoc).save(),
+      new ChannelModel(channel2Doc).save(),
+      promisify(server.start)({ apiPort: SERVER_PORTS.apiPort }),
+      testUtils.setupTestUsers()
+    ])
+    channel = results[0]
+    channel2 = results[1]
   })
 
   after(async () => {
-    await promisify(server.stop)()
-    await testUtils.dropTestDb()
+    config.api = ORIGINAL_API_CONFIG
+    config.application = ORIGINAL_APPLICATION_CONFIG
+    await Promise.all([
+      testUtils.cleanupTestUsers(),
+      ChannelModel.remove(),
+      promisify(server.stop)()
+    ])
   })
 
   beforeEach(async () => {
-    transactionId = null
-    await testUtils.setupTestUsers()
     authDetails = testUtils.getAuthDetails()
   })
 
   afterEach(async () => {
-    await EventModelAPI.remove()
-    await TransactionModelAPI.remove()
-    await testUtils.cleanupTestUsers()
+    await Promise.all([
+      EventModel.remove(),
+      TransactionModel.remove()
+    ])
   })
 
   describe('Transactions REST Api testing', () => {
-    describe('*addTransaction()', () => {
+    describe.only('*addTransaction()', () => {
       it('should add a transaction and truncate the large response body', async () => {
-        const td = JSON.parse(JSON.stringify(transactionData))
+        const td = testUtils.clone(transactionData)
         td.channelID = channel._id
         td.request.body = ''
-        const respBody = largeBody
-        td.response.body = respBody
+        td.response.body = LARGE_BODY
         await request(constants.BASE_URL)
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
@@ -167,9 +185,9 @@ describe('API Integration Tests', () => {
           .send(td)
           .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModel.findOne({ clientID: transactionData.clientID });
         (newTransaction !== null).should.be.true()
-        newTransaction.response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
+        newTransaction.response.body.length.should.be.exactly(MAX_BODY_SIZE)
         newTransaction.canRerun.should.be.true()
       })
 
@@ -184,7 +202,7 @@ describe('API Integration Tests', () => {
           .send(newTransactionData)
           .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true
         newTransaction.status.should.equal('Processing')
         newTransaction.clientID.toString().should.equal('999999999999999999999999')
@@ -198,10 +216,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should add a transaction and truncate the large request body', async () => {
-        const td = JSON.parse(JSON.stringify(transactionData))
+        const td = testUtils.clone(transactionData)
         td.channelID = channel._id
-        const reqBody = largeBody
-        td.request.body = reqBody
+        td.request.body = LARGE_BODY
         await request(constants.BASE_URL)
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
@@ -211,14 +228,14 @@ describe('API Integration Tests', () => {
           .send(td)
           .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true()
-        newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
+        newTransaction.request.body.length.should.be.exactly(MAX_BODY_SIZE)
         newTransaction.canRerun.should.be.false()
       })
 
       it('should add a transaction and add the correct truncate message', async () => {
-        const td = JSON.parse(JSON.stringify(transactionData))
+        const td = testUtils.clone(transactionData)
         td.channelID = channel._id
         const mbs = config.api.maxBodiesSizeMB
         const len = mbs >= 1 && mbs <= 15 ? mbs * 1024 * 1024 : 15 * 1024 * 1024
@@ -226,7 +243,7 @@ describe('API Integration Tests', () => {
         for (let i = 0, end1 = len, asc1 = end1 >= 0; asc1 ? i < end1 : i > end1; asc1 ? i++ : i--) { bod += '1' }
         bod = bod.slice(0, len - 4)
         td.request.body = bod
-        td.response.body = largeBody
+        td.response.body = LARGE_BODY
         await request(constants.BASE_URL)
           .post('/transactions')
           .set('auth-username', testUtils.rootUser.email)
@@ -236,19 +253,19 @@ describe('API Integration Tests', () => {
           .send(td)
           .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true
-        newTransaction.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE - 4)
+        newTransaction.request.body.length.should.be.exactly(MAX_BODY_SIZE - 4)
         newTransaction.response.body.length.should.be.exactly(Buffer.byteLength(config.api.truncateAppend))
         newTransaction.canRerun.should.be.false
       })
 
       it('should add a transaction and truncate the routes request body', async () => {
         // Given
-        const td = JSON.parse(JSON.stringify(transactionData))
+        const td = testUtils.clone(transactionData)
         td.channelID = channel._id
         clearTransactionBodies(td)
-        td.routes[0].request.body = largeBody
+        td.routes[0].request.body = LARGE_BODY
 
         // When
         await request(constants.BASE_URL)
@@ -260,18 +277,18 @@ describe('API Integration Tests', () => {
           .send(td)
           .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true
-        newTransaction.routes[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
+        newTransaction.routes[0].request.body.length.should.be.exactly(MAX_BODY_SIZE)
         newTransaction.canRerun.should.be.true
       })
 
       it('should add a transaction and truncate the routes response body', async () => {
         // Given
-        const td = JSON.parse(JSON.stringify(transactionData))
+        const td = testUtils.clone(transactionData)
         td.channelID = channel._id
         clearTransactionBodies(td)
-        td.routes[0].response.body = largeBody
+        td.routes[0].response.body = LARGE_BODY
 
         // When
         await request(constants.BASE_URL)
@@ -283,18 +300,18 @@ describe('API Integration Tests', () => {
           .send(td)
           .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true
-        newTransaction.routes[0].response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
+        newTransaction.routes[0].response.body.length.should.be.exactly(MAX_BODY_SIZE)
         newTransaction.canRerun.should.be.true
       })
 
       it('should add a transaction and truncate the orchestrations request body', async () => {
         // Given
-        const td = JSON.parse(JSON.stringify(transactionData))
+        const td = testUtils.clone(transactionData)
         td.channelID = channel._id
         clearTransactionBodies(td)
-        td.orchestrations[0].request.body = largeBody
+        td.orchestrations[0].request.body = LARGE_BODY
 
         // When
         await request(constants.BASE_URL)
@@ -306,18 +323,18 @@ describe('API Integration Tests', () => {
           .send(td)
           .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true
-        newTransaction.orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
+        newTransaction.orchestrations[0].request.body.length.should.be.exactly(MAX_BODY_SIZE)
         newTransaction.canRerun.should.be.true
       })
 
       it('should add a transaction and truncate the orchestrations response body', async () => {
         // Given
-        const td = JSON.parse(JSON.stringify(transactionData))
+        const td = testUtils.clone(transactionData)
         td.channelID = channel._id
         clearTransactionBodies(td)
-        td.orchestrations[0].response.body = largeBody
+        td.orchestrations[0].response.body = LARGE_BODY
 
         // When
         await request(constants.BASE_URL)
@@ -329,10 +346,10 @@ describe('API Integration Tests', () => {
           .send(td)
           .expect(201)
 
-        const newTransaction = await TransactionModelAPI.findOne({ clientID: '999999999999999999999999' });
+        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
 
         (newTransaction !== null).should.be.true
-        newTransaction.orchestrations[0].response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
+        newTransaction.orchestrations[0].response.body.length.should.be.exactly(MAX_BODY_SIZE)
         newTransaction.canRerun.should.be.true
       })
 
@@ -358,7 +375,7 @@ describe('API Integration Tests', () => {
           .send(newTransactionData)
           .expect(201)
 
-        const events = await EventModelAPI.find({})
+        const events = await EventModel.find({})
         events.length.should.be.exactly(6)
         for (const ev of Array.from(events)) {
           ev.channelID.toString().should.be.exactly(channel._id.toString())
@@ -386,22 +403,11 @@ describe('API Integration Tests', () => {
         method: 'PUT'
       }
 
-      let s = {}
       let expectMessage
-      beforeEach(async () => {
-        s = await new FakeServer()
-          await Promise.all([
-            expectMessage = q.nbind(s.expectMessage, s),
-            promisify(s.start)()
-          ])
-      })
+      let transactionId
 
-      afterEach(async () => {
-        await promisify(s.stop)()
-      })
-
-      it.only('should call /updateTransaction ', async () => {
-        const tx = new TransactionModelAPI(transactionData)
+      it('should call /updateTransaction ', async () => {
+        const tx = new TransactionModel(transactionData)
         const result = await tx.save()
         transactionId = result._id
         const updates = {
@@ -439,7 +445,7 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const updatedTrans = await TransactionModelAPI.findOne({ _id: transactionId });
+        const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true
         updatedTrans.status.should.equal('Completed')
         updatedTrans.clientID.toString().should.equal('777777777777777777777777')
@@ -455,16 +461,16 @@ describe('API Integration Tests', () => {
         await expectMessage(`${domain}.channels.888888888888888888888888.async.orchestrations.test.statusCodes.201:1|c`)
       })
 
-      it('should update transaction with large update request body', async () => {
-        const td = JSON.parse(JSON.stringify(transactionData))
+      /* it('should update transaction with large update request body', async () => {
+        td = testUtils.clone(transactionData)
         td.channelID = channel._id
         clearTransactionBodies(td)
-        const tx = new TransactionModelAPI(td)
+        const tx = new TransactionModel(td)
         const result = await tx.save()
         transactionId = result._id
 
-        const reqUp = JSON.parse(JSON.stringify(requestUpdate))
-        reqUp.body = largeBody
+        const reqUp = testUtils.clone(requestUpdate)
+        reqUp.body = LARGE_BODY
 
         const updates = {
           request: reqUp,
@@ -481,50 +487,13 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const updatedTrans = await TransactionModelAPI.findOne({ _id: transactionId });
+        const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true
-        updatedTrans.request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
-        updatedTrans.canRerun.should.be.false
-      })
-
-      it('should update transaction with large update response body', async () => {
-        const td = JSON.parse(JSON.stringify(transactionData))
+        updatedTrans.request.body.length.should.be.exactly(MAX_BODY_SIZE)
+        td = testUtils.clone(transactionData)
         td.channelID = channel._id
         clearTransactionBodies(td)
-        const tx = new TransactionModelAPI(td)
-        const result = await tx.save()
-        transactionId = result._id
-        const updates = {
-          response: {
-            headers: '',
-            timestamp: new Date(),
-            body: largeBody,
-            status: 200
-          },
-          status: 'Completed',
-          clientID: '777777777777777777777777'
-        }
-
-        await request(constants.BASE_URL)
-          .put(`/transactions/${transactionId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(updates)
-          .expect(200)
-
-        const updatedTrans = await TransactionModelAPI.findOne({ _id: transactionId });
-        (updatedTrans !== null).should.be.true
-        updatedTrans.response.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
-        updatedTrans.canRerun.should.be.true
-      })
-
-      it('should update transaction with large routes orchestrations request body', async () => {
-        const td = JSON.parse(JSON.stringify(transactionData))
-        td.channelID = channel._id
-        clearTransactionBodies(td)
-        const tx = new TransactionModelAPI(td)
+        const tx = new TransactionModel(td)
         const result = await tx.save()
         transactionId = result._id
         const updates = {
@@ -537,7 +506,7 @@ describe('API Integration Tests', () => {
                 name: 'test',
                 request: {
                   method: 'POST',
-                  body: largeBody,
+                  body: LARGE_BODY,
                   timestamp: 1425897647329
                 },
                 response: {
@@ -559,16 +528,16 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send(updates)
           .expect(200)
-        const updatedTrans = await TransactionModelAPI.findOne({ _id: transactionId });
+        const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true
         updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
         updatedTrans.canRerun.should.be.true
-      })
+      }) */
 
       it('should queue a transaction for auto retry', async () => {
-        await ChannelModelAPI.find()
+        await ChannelModel.find()
         const newTransaction = Object.assign({}, transactionData, { channelID: channel2._id })
-        let tx = new TransactionModelAPI(newTransaction)
+        let tx = new TransactionModel(newTransaction)
         const result = await tx.save()
         transactionId = result._id
         const updates = {
@@ -588,16 +557,16 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        tx = await TransactionModelAPI.findById(transactionId)
+        tx = await TransactionModel.findById(transactionId)
         tx.autoRetry.should.be.true()
-        const queueItem = await AutoRetryModelAPI.findOne({ transactionID: transactionId })
+        const queueItem = await autoRetryModel.findOne({ transactionID: transactionId })
         queueItem.should.be.ok()
         queueItem.channelID.toString().should.be.exactly(channel2._id.toString())
       })
 
       it('should not queue a transaction for auto retry when max retries have been reached', async () => {
         const newTransactionData = Object.assign({}, transactionData, { autoRetryAttempt: 5, channelID: channel2._id })
-        let tx = new TransactionModelAPI(newTransactionData)
+        let tx = new TransactionModel(newTransactionData)
         const result = await tx.save()
         transactionId = result._id
         const updates = {
@@ -617,13 +586,13 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        tx = await TransactionModelAPI.findById(transactionId)
+        tx = await TransactionModel.findById(transactionId)
         tx.autoRetry.should.be.false()
       })
 
       it('should generate events on update', async () => {
         const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
-        const tx = new TransactionModelAPI(newTransactionData)
+        const tx = new TransactionModel(newTransactionData)
         const result = await tx.save()
         transactionId = result._id
         const updates = {
@@ -654,7 +623,7 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const events = await EventModelAPI.find({})
+        const events = await EventModel.find({})
         // events should only be generated for the updated fields
         events.length.should.be.exactly(2)
         for (const ev of Array.from(events)) {
@@ -668,7 +637,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should only allow admin user to update a transaction', async () => {
-        const tx = new TransactionModelAPI(transactionData)
+        const tx = new TransactionModel(transactionData)
         const result = await tx.save()
 
         transactionId = result._id
@@ -686,9 +655,9 @@ describe('API Integration Tests', () => {
 
     xdescribe('*getTransactions()', () => {
       it('should call getTransactions ', async () => {
-        const countBefore = await TransactionModelAPI.count({})
+        const countBefore = await TransactionModel.count({})
         countBefore.should.equal(0)
-        await new TransactionModelAPI(transactionData).save()
+        await new TransactionModel(transactionData).save()
         const res = await request(constants.BASE_URL)
           .get('/transactions?filterPage=0&filterLimit=10&filters={}')
           .set('auth-username', testUtils.rootUser.email)
@@ -724,7 +693,7 @@ describe('API Integration Tests', () => {
 
         params = encodeURI(params)
 
-        await new TransactionModelAPI(transactionData).save()
+        await new TransactionModel(transactionData).save()
         const res = await request(constants.BASE_URL)
           .get(`/transactions?${params}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -763,7 +732,7 @@ describe('API Integration Tests', () => {
         }
 
         params = encodeURI(params)
-        await new TransactionModelAPI(transactionData).save()
+        await new TransactionModel(transactionData).save()
         const res = await request(constants.BASE_URL)
           .get(`/transactions?${params}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -814,8 +783,8 @@ describe('API Integration Tests', () => {
       })
 
       it('should only return the transactions that a user can view', async () => {
-        await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel._id })).save()
-        await new TransactionModelAPI(Object.assign({}, transactionData, {
+        await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
+        await new TransactionModel(Object.assign({}, transactionData, {
           channelID: channel2._id,
           _id: '111111111111111111111112'
         })).save()
@@ -832,8 +801,8 @@ describe('API Integration Tests', () => {
       })
 
       it('should return the transactions for a channel that a user has permission to view', async () => {
-        await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel._id })).save()
-        await new TransactionModelAPI(Object.assign({}, transactionData, {
+        await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
+        await new TransactionModel(Object.assign({}, transactionData, {
           channelID: channel2._id,
           _id: '111111111111111111111112'
         })).save()
@@ -851,7 +820,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should return 403 for a channel that a user does NOT have permission to view', async () => {
-        const tx2 = await new TransactionModelAPI(Object.assign({}, transactionData, {
+        const tx2 = await new TransactionModel(Object.assign({}, transactionData, {
           channelID: channel2._id,
           _id: '111111111111111111111112'
         })).save()
@@ -865,7 +834,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should truncate transaction details if filterRepresentation is fulltruncate ', async () => {
-        await new TransactionModelAPI(transactionData).save()
+        await new TransactionModel(transactionData).save()
         const res = await request(constants.BASE_URL)
           .get('/transactions?filterRepresentation=fulltruncate')
           .set('auth-username', testUtils.rootUser.email)
@@ -875,18 +844,18 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         res.body.length.should.equal(1)
-        res.body[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`)
-        res.body[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`)
-        res.body[0].routes[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`)
-        res.body[0].routes[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`)
-        res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`)
-        res.body[0].orchestrations[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`)
+        res.body[0].request.body.should.equal(`<HTTP body${config.api.truncateAppend}`)
+        res.body[0].response.body.should.equal(`<HTTP resp${config.api.truncateAppend}`)
+        res.body[0].routes[0].request.body.should.equal(`<HTTP body${config.api.truncateAppend}`)
+        res.body[0].routes[0].response.body.should.equal(`<HTTP resp${config.api.truncateAppend}`)
+        res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${config.api.truncateAppend}`)
+        res.body[0].orchestrations[0].response.body.should.equal(`<HTTP resp${config.api.truncateAppend}`)
       })
     })
 
     xdescribe('*getTransactionById (transactionId)', () => {
       it('should fetch a transaction by ID - admin user', async () => {
-        const tx = await new TransactionModelAPI(transactionData).save()
+        const tx = await new TransactionModel(transactionData).save()
         const res = await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -907,7 +876,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should NOT return a transaction that a user is not allowed to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel2._id })).save()
+        const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel2._id })).save()
         await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.nonRootUser.email)
@@ -918,7 +887,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a transaction that a user is allowed to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel._id })).save()
+        const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
         const res = await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.nonRootUser.email)
@@ -940,7 +909,7 @@ describe('API Integration Tests', () => {
 
       it('should truncate a large body if filterRepresentation is \'fulltruncate\'', async () => {
         // transactionData body lengths > config.truncateSize
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { channelID: channel._id })).save()
+        const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
         const res = await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}?filterRepresentation=fulltruncate`)
           .set('auth-username', testUtils.rootUser.email)
@@ -949,18 +918,13 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        res.body.request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`)
-        res.body.response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`)
-        res.body.routes[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`)
-        res.body.routes[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`)
-        res.body.orchestrations[0].request.body.should.equal(`<HTTP body${apiConf.truncateAppend}`)
-        res.body.orchestrations[0].response.body.should.equal(`<HTTP resp${apiConf.truncateAppend}`)
+        res.body.request.body.should.equal(`<HTTP body${config.api.truncateAppend}`)
       })
     })
 
     xdescribe('*findTransactionByClientId (clientId)', () => {
       it('should call findTransactionByClientId', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { clientID: '555555555555555555555555' })).save()
+        const tx = await new TransactionModel(Object.assign({}, transactionData, { clientID: '555555555555555555555555' })).save()
         const res = await request(constants.BASE_URL)
           .get(`/transactions/clients/${tx.clientID}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -972,7 +936,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should NOT return transactions that a user is not allowed to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {
+        const tx = await new TransactionModel(Object.assign({}, transactionData, {
           clientID: '444444444444444444444444',
           channelID: channel2._id
         })).save()
@@ -987,7 +951,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should return transactions that a user is allowed to view', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, {
+        const tx = await new TransactionModel(Object.assign({}, transactionData, {
           clientID: '444444444444444444444444',
           channelID: channel._id
         })).save()
@@ -1005,7 +969,7 @@ describe('API Integration Tests', () => {
 
     xdescribe('*removeTransaction (transactionId)', () => {
       it('should call removeTransaction', async () => {
-        const tx = await new TransactionModelAPI(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
+        const tx = await new TransactionModel(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
         await request(constants.BASE_URL)
           .del(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -1014,12 +978,12 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const txFound = await TransactionModelAPI.findById(tx._id);
+        const txFound = await TransactionModel.findById(tx._id);
         (txFound == null).should.be.true
       })
 
       it('should only allow admin users to remove transactions', async () => {
-        await new TransactionModelAPI(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
+        const { _id: transactionId } = await new TransactionModel(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
         await request(constants.BASE_URL)
           .del(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.nonRootUser.email)
