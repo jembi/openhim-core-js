@@ -27,7 +27,10 @@ describe(`API Integration Tests`, () => {
       ])
 
       const connection = await testUtils.getMongoClient()
-      await connection.dropCollection('log')
+      const collections = await connection.collections()
+      if (collections.map(c => c.collectionName).indexOf('log') !== -1) {
+        await connection.dropCollection('log')
+      }
     })
 
     beforeEach(async () => {
@@ -53,6 +56,7 @@ describe(`API Integration Tests`, () => {
     afterEach(async () => {
       const connection = await testUtils.getMongoClient()
       await connection.dropCollection('log')
+      // TODO Ross fix
     })
 
     describe('*getLogs', () => {
