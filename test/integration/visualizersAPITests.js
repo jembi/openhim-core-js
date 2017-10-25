@@ -86,20 +86,22 @@ describe('API Integration Tests', () => {
 
     beforeEach(() => { authDetails = testUtils.getAuthDetails() })
 
-    afterEach(() => VisualizerModelAPI.remove({}))
+    afterEach(() => VisualizerModelAPI.remove())
 
     describe('*getVisualizers()', () => {
       it('should return a 200 response with a list of saved visualizers', async () => {
-        let vis1 = _.assign({}, visObj)
+        let vis1 = Object.assign({}, visObj)
         vis1.name = 'Visualizer1'
         vis1 = new VisualizerModelAPI(vis1)
 
-        let vis2 = _.assign({}, visObj)
+        let vis2 = Object.assign({}, visObj)
         vis2.name = 'Visualizer2'
         vis2 = new VisualizerModelAPI(vis2)
 
-        vis1.save()
-        vis2.save()
+        await Promise.all([
+          vis1.save(),
+          vis2.save()
+        ])
 
         const res = await request(constants.BASE_URL)
           .get('/visualizers')
@@ -142,16 +144,18 @@ describe('API Integration Tests', () => {
 
     describe('*getVisualizer(visualizerId)', () => {
       it('should return a 200 response with a specific visualizer', async () => {
-        let vis1 = _.assign({}, visObj)
+        let vis1 = Object.assign({}, visObj)
         vis1.name = 'Visualizer1'
         vis1 = new VisualizerModelAPI(vis1)
 
-        let vis2 = _.assign({}, visObj)
+        let vis2 = Object.assign({}, visObj)
         vis2.name = 'Visualizer2'
         vis2 = new VisualizerModelAPI(vis2)
 
-        vis1.save()
-        vis2.save()
+        await Promise.all([
+          vis1.save(),
+          vis2.save()
+        ])
 
         const res = await request(constants.BASE_URL)
           .get(`/visualizers/${vis1._id}`)
@@ -196,7 +200,7 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(_.assign({}, visObj))
+          .send(Object.assign({}, visObj))
           .expect(201)
 
         await VisualizerModelAPI.findOne({ name: 'Visualizer1' })
@@ -209,7 +213,7 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(_.assign({}, visObj))
+          .send(Object.assign({}, visObj))
           .expect(403)
       })
 
@@ -229,11 +233,11 @@ describe('API Integration Tests', () => {
 
     describe('*updateVisualizer(visualizerId)', () => {
       it('should update a specific visualizer and return a 200 response', async () => {
-        let vis1 = _.assign({}, visObj)
+        let vis1 = Object.assign({}, visObj)
         vis1.name = 'Visualizer1'
         vis1 = new VisualizerModelAPI(vis1)
 
-        const visUpdate = _.assign({}, visObj)
+        const visUpdate = Object.assign({}, visObj)
         visUpdate.name = 'VisualizerUpdate1'
         visUpdate.color.inactive = '#11111'
 
@@ -259,7 +263,7 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(_.assign({}, visObj))
+          .send(Object.assign({}, visObj))
           .expect(403)
       })
 
@@ -282,7 +286,7 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send(_.assign({}, visObj))
+          .send(Object.assign({}, visObj))
           .expect(404)
         res.text.should.equal('Cannot Update Visualizer with _id 111111111111111111111111, does not exist')
       })
@@ -290,16 +294,18 @@ describe('API Integration Tests', () => {
 
     describe('*removeVisualizer(visualizerId)', () => {
       it('should sucessfully remove a visualizer', async () => {
-        let vis1 = _.assign({}, visObj)
+        let vis1 = Object.assign({}, visObj)
         vis1.name = 'Root\'s Visualizer 1'
         vis1 = new VisualizerModelAPI(vis1)
 
-        let vis2 = _.assign({}, visObj)
+        let vis2 = Object.assign({}, visObj)
         vis2.name = 'Root\'s Visualizer 2'
         vis2 = new VisualizerModelAPI(vis2)
 
-        vis1.save()
-        vis2.save()
+        await Promise.all([
+          vis1.save(),
+          vis2.save()
+        ])
 
         await request(constants.BASE_URL)
           .del(`/visualizers/${vis1._id}`)
