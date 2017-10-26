@@ -714,6 +714,9 @@ if (cluster.isMaster && !module.parent) {
   }
 
   exports.stop = (stop = done => stopTasksProcessor(() => {
+    if (typeof done !== 'function') {
+      done = () => {}
+    }
     let socket
     const promises = []
 

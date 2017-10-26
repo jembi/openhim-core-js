@@ -31,22 +31,28 @@ describe('API Integration Tests', () => {
     })
 
     before(async () => {
-      await testUtils.setupTestUsers()
-      await channel.save()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await testUtils.cleanupTestUsers()
+      await Promise.all([
+        testUtils.setupTestUsers(),
+        channel.save(),
+        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      ])
     })
 
     after(async () => {
-      await testUtils.cleanupTestUsers()
-      await ChannelModelAPI.remove()
-      await promisify(server.stop)()
+      await Promise.all([
+        testUtils.cleanupTestUsers(),
+        ChannelModelAPI.remove(),
+        promisify(server.stop)()
+      ])
     })
 
     beforeEach(() => { authDetails = testUtils.getAuthDetails() })
 
     describe('*restart()', () => {
       it('should successfully send API request to restart the server', async () => {
-        const stub = sinon.stub(server, 'startRestartServerTimeout')
+        const stub = await sinon.stub(server, 'startRestartServerTimeout')
+
         await request(constants.BASE_URL)
           .post('/restart')
           .set('auth-username', testUtils.rootUser.email)
@@ -55,6 +61,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send()
           .expect(200)
+
         stub.calledOnce.should.be.true()
       })
 
