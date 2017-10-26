@@ -1,7 +1,7 @@
 {
   "name": "openhim-core",
   "description": "The OpenHIM core application that provides logging and routing of http requests",
-  "version": "3.4.1",
+  "version": "3.4.2",
   "main": "./lib/server.js",
   "bin": {
     "openhim-core": "./bin/openhim-core.js"
