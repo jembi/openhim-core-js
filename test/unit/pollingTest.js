@@ -3,6 +3,7 @@
 import sinon from 'sinon'
 import * as polling from '../../src/polling'
 import { ChannelModel } from '../../src/model/channels'
+import {ObjectId} from 'mongodb'
 
 describe('Polling tests', () => {
   const testChannel = new ChannelModel({
@@ -10,13 +11,15 @@ describe('Polling tests', () => {
     urlPattern: '/test',
     allow: '*',
     type: 'polling',
-    pollingSchedule: '* * * * *'
+    pollingSchedule: '* * * * *',
+    updatedById: new ObjectId()
   })
 
   const testChannel2 = new ChannelModel({
     name: 'test2',
     urlPattern: '/test2',
-    allow: '*'
+    allow: '*',
+    updatedById: new ObjectId()
   })
 
   const testChannel3 = new ChannelModel({
@@ -24,7 +27,8 @@ describe('Polling tests', () => {
     urlPattern: '/test4',
     allow: '*',
     type: 'polling',
-    pollingSchedule: '2 * * * *'
+    pollingSchedule: '2 * * * *',
+    updatedById: new ObjectId()
   })
 
   const disabledChannel = new ChannelModel({
@@ -33,7 +37,8 @@ describe('Polling tests', () => {
     allow: '*',
     type: 'polling',
     pollingSchedule: '* * * * *',
-    status: 'disabled'
+    status: 'disabled',
+    updatedById: new ObjectId()
   })
 
   before(async () => {

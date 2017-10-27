@@ -3,6 +3,7 @@
 
 import rewire from 'rewire'
 import { ChannelModel } from '../../src/model/channels'
+import {ObjectId} from 'mongodb'
 
 const authorisation = rewire('../../src/middleware/authorisation')
 
@@ -20,7 +21,8 @@ describe('Authorisation middleware', () => {
           port: 9876,
           primary: true
         }
-        ]
+        ],
+        updatedById: new ObjectId()
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated
@@ -56,7 +58,8 @@ describe('Authorisation middleware', () => {
           port: 9876,
           primary: true
         }
-        ]
+        ],
+        updatedById: new ObjectId()
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated
@@ -94,7 +97,8 @@ describe('Authorisation middleware', () => {
           port: 9876,
           primary: true
         }
-        ]
+        ],
+        updatedById: new ObjectId()
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated

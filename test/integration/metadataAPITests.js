@@ -12,6 +12,7 @@ import * as constants from '../constants'
 import { promisify } from 'util'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
+import {ObjectId} from 'mongodb'
 
 const sampleMetadata = {
   Channels: [{
@@ -19,7 +20,8 @@ const sampleMetadata = {
     urlPattern: 'test/sample',
     allow: ['PoC', 'Test1', 'Test2'],
     routes: [{ name: 'test route', host: 'localhost', port: 9876, primary: true }],
-    txViewAcl: 'group1'
+    txViewAcl: 'group1',
+    updatedById: new ObjectId()
   }],
   Clients: [{
     clientID: 'YUIAIIIICIIAIA',

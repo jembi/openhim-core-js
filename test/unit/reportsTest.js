@@ -10,6 +10,7 @@ import * as testUtils from '../utils'
 import { config } from '../../src/config'
 import { ChannelModel, UserModel, TransactionModel } from '../../src/model'
 import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
 
 const testUser1 = new UserModel({
   firstname: 'User',
@@ -40,7 +41,8 @@ const channel1 = new ChannelModel({
   allow: ['PoC', 'Test1', 'Test2'],
   routes: [
     { name: 'test route', host: 'localhost', port: 9876 }
-  ]
+  ],
+  updatedById: new ObjectId()
 })
 
 const channel2 = new ChannelModel({
@@ -50,7 +52,8 @@ const channel2 = new ChannelModel({
   allow: ['PoC', 'Test1', 'Test2'],
   routes: [
     { name: 'test route', host: 'localhost', port: 9876 }
-  ]
+  ],
+  updatedById: new ObjectId()
 })
 
 const dateFrom = new Date()

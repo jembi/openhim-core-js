@@ -28,7 +28,8 @@ describe('MessageStore', () => {
         primary: true
       }
     ],
-    txViewAcl: 'aGroup'
+    txViewAcl: 'aGroup',
+    updatedById: new ObjectId()
   }
 
   const channel2 = {
@@ -42,7 +43,8 @@ describe('MessageStore', () => {
       primary: true
     }
     ],
-    txViewAcl: 'group1'
+    txViewAcl: 'group1',
+    updatedById: new ObjectId()
   }
 
   const req = {}

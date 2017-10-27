@@ -4,11 +4,11 @@
 import sinon from 'sinon'
 import request from 'supertest'
 import { ChannelModelAPI } from '../../src/model/channels'
-import { MediatorModelAPI } from '../../src/model/mediators'
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
 
 describe('API Integration Tests', () => {
   const { SERVER_PORTS } = constants
@@ -27,7 +27,8 @@ describe('API Integration Tests', () => {
         primary: true
       }],
       txViewAcl: ['group1'],
-      txViewFullAcl: []
+      txViewFullAcl: [],
+      updatedById: new ObjectId()
     })
 
     before(async () => {

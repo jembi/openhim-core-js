@@ -13,6 +13,7 @@ import * as testUtils from '../utils'
 import { promisify } from 'util'
 import * as constants from '../constants'
 import should from 'should'
+import {ObjectId} from 'mongodb'
 
 const { SERVER_PORTS } = constants
 let sandbox = sinon.createSandbox()
@@ -31,7 +32,8 @@ describe('API Integration Tests', () =>
         primary: true
       }
       ],
-      txViewAcl: 'aGroup'
+      txViewAcl: 'aGroup',
+      updatedById: new ObjectId()
     }
 
     const channel2 = {
@@ -45,7 +47,8 @@ describe('API Integration Tests', () =>
         primary: true
       }
       ],
-      txViewAcl: 'group1'
+      txViewAcl: 'group1',
+      updatedById: new ObjectId()
     }
 
     let authDetails = {}
@@ -549,7 +552,8 @@ describe('API Integration Tests', () =>
             port: 9876,
             primary: true
           }],
-          txViewAcl: 'group1'
+          txViewAcl: 'group1',
+          updatedById: new ObjectId()
         })
 
         const changeToTCP = {
@@ -582,7 +586,8 @@ describe('API Integration Tests', () =>
             port: 9876,
             primary: true
           }],
-          txViewAcl: 'group1'
+          txViewAcl: 'group1',
+          updatedById: new ObjectId()
         })
 
         const changeToTCPDisabled = {
@@ -617,7 +622,8 @@ describe('API Integration Tests', () =>
             host: 'localhost',
             port: 9876,
             primary: true
-          }]
+          }],
+          updatedById: new ObjectId()
         })
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
@@ -652,7 +658,8 @@ describe('API Integration Tests', () =>
             port: 9876,
             primary: true
           }],
-          status: 'disabled'
+          status: 'disabled',
+          updatedById: new ObjectId()
         })
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
@@ -811,7 +818,8 @@ describe('API Integration Tests', () =>
             host: 'localhost',
             port: 9876,
             primary: true
-          }]
+          }],
+          updatedById: new ObjectId()
         })
 
         const spy = sinon.spy(polling, 'removePollingChannel')
