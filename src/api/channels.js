@@ -148,6 +148,20 @@ export async function getChannel (ctx, channelId) {
   }
 }
 
+export async function getChannelAudits (ctx, channelId) {
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`, 'info')
+    return
+  }
+
+  try {
+    const channel = await ChannelModel.findById(channelId).exec()
+    ctx.body = await channel.patches.find({ref: channel.id}).exec()
+  } catch (err) {
+    utils.logAndSetResponse(ctx, 500, `Could not fetch all channels via the API: ${err}`, 'error')
+  }
+}
+
 function processPostUpdateTriggers (channel) {
   if (channel.type) {
     if (((channel.type === 'tcp') || (channel.type === 'tls')) && server.isTcpHttpReceiverRunning()) {

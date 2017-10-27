@@ -495,6 +495,68 @@ describe('API Integration Tests', () =>
       })
     })
 
+    describe('getChannelAudits(channelId)', () => {
+      let expectedPatches
+
+      beforeEach(async () => {
+        await ChannelModelAPI.Patches.remove().exec()
+        const patches = await ChannelModelAPI.Patches.create([
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: 'before',
+                path: '/name',
+                op: 'add'
+              }
+            ],
+            updatedById: new ObjectId()
+          },
+          {
+            ref: channel2._id,
+            ops: [
+              {
+                value: 'nope',
+                path: '/name',
+                op: 'add'
+              }
+            ],
+            updatedById: new ObjectId()
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: 'after',
+                path: '/name',
+                op: 'replace'
+              }
+            ],
+            updatedById: new ObjectId()
+          }
+        ])
+        expectedPatches = patches.filter(patch => patch.ref.equals(channel1._id)).map(patch => {
+          const convertedPatch = patch.toObject()
+          convertedPatch._id = convertedPatch._id.toString()
+          convertedPatch.ref = convertedPatch.ref.toString()
+          convertedPatch.date = convertedPatch.date.toISOString()
+          convertedPatch.updatedById = convertedPatch.updatedById.toString()
+          return convertedPatch
+        })
+      })
+
+      it('should return the patches for the correct channel', async () => {
+        const res = await request(constants.BASE_URL)
+          .get(`/channels/${channel1._id}/audits`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+        res.body.should.eql(expectedPatches)
+      })
+    })
+
     describe('*updateChannel(channelId)', () => {
       it('should update a specific channel by id', async () => {
         const updates = {
