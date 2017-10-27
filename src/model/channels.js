@@ -1,6 +1,8 @@
 import { Schema } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
 import { ContactUserDef } from './contactGroups'
+import patchHistory from 'mongoose-patch-history'
+import {camelize, pascalize} from 'humps'
 
 const RouteDef = {
   name: {
@@ -135,6 +137,34 @@ export { RouteDef }
  * of users or group that are authroised to send messages to this channel.
  */
 const ChannelSchema = new Schema(ChannelDef)
+
+// Virtual field to store the id of user changing the channel
+ChannelSchema.virtual('updatedById')
+  .set(function (updatedById) {
+    this._updatedById = updatedById
+  })
+  .get(function () {
+    return this._updatedById
+  })
+
+// Use the patch history plugin to audit changes to channels
+ChannelSchema.plugin(patchHistory, {
+  mongoose: connectionDefault,
+  name: 'ChannelAudits',
+  transforms: [
+    pascalize,
+    camelize
+  ],
+  includes: {
+    updatedById: {
+      type: Schema.Types.ObjectId,
+      required: true,
+      from: '_updatedById'
+    }
+  }
+})
+
+// Create a unique index on the name field
 ChannelSchema.index('name', {unique: true})
 
 export const ChannelModelAPI = connectionAPI.model('Channel', ChannelSchema)
