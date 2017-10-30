@@ -42,7 +42,10 @@ const channel1 = new ChannelModel({
   routes: [
     { name: 'test route', host: 'localhost', port: 9876 }
   ],
-  updatedById: new ObjectId()
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const channel2 = new ChannelModel({
@@ -53,7 +56,10 @@ const channel2 = new ChannelModel({
   routes: [
     { name: 'test route', host: 'localhost', port: 9876 }
   ],
-  updatedById: new ObjectId()
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const dateFrom = new Date()

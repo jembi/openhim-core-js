@@ -72,7 +72,10 @@ const testChannel = new ChannelModel({
       failureRate: testFailureRate
     }
   ],
-  updatedById: new ObjectId()
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const disabledChannel = new ChannelModel({
@@ -87,7 +90,10 @@ const disabledChannel = new ChannelModel({
     }
   ],
   status: 'disabled',
-  updatedById: new ObjectId()
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const autoRetryChannel = new ChannelModel({
@@ -103,7 +109,10 @@ const autoRetryChannel = new ChannelModel({
       groups: ['aaa908908bbb98cc1d0809ee']
     }
   ],
-  updatedById: new ObjectId()
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const testTransactions = [

@@ -291,7 +291,10 @@ describe('API Integration Tests', () => {
               ]
             }
           ],
-          updatedById: new ObjectId()
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         }
         await (new ChannelModelAPI(channel1)).save()
         const countBefore = await ContactGroupModelAPI.count()

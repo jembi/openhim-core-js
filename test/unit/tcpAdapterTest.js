@@ -16,7 +16,10 @@ describe('TCP adapter tests', () => {
     type: 'tcp',
     tcpPort: constants.PORT_START - 1,
     tcpHost: 'localhost',
-    updatedById: new ObjectId()
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   })
 
   const disabledChannel = new ChannelModel({
@@ -27,7 +30,10 @@ describe('TCP adapter tests', () => {
     tcpPort: constants.PORT_START - 2,
     tcpHost: 'localhost',
     status: 'disabled',
-    updatedById: new ObjectId()
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   })
 
   before(async () => {

@@ -28,7 +28,10 @@ describe('API Integration Tests', () => {
       }],
       txViewAcl: ['group1'],
       txViewFullAcl: [],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     before(async () => {

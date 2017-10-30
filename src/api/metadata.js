@@ -143,7 +143,7 @@ async function handleMetadataPost (ctx, action) {
               if (doc._id) { delete doc._id }
               result = await collections[key].findById(result[0]._id).exec()
               result.set(doc)
-              result.set('updatedById', ctx.authenticated._id)
+              result.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
               await result.save()
               status = 'Updated'
             } else {

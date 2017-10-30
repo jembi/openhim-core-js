@@ -65,7 +65,10 @@ describe('Events API Integration Tests', () => {
         }
       ],
       rewriteUrls: true,
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }).save()
 
     await new ChannelModelAPI({
@@ -84,7 +87,10 @@ describe('Events API Integration Tests', () => {
           port: mediatorPortPlus42
         }
       ],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }).save()
 
     const testAppDoc = {

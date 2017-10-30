@@ -78,7 +78,10 @@ describe(`Auto Retry Integration Tests`, () => {
       autoRetryEnabled: true,
       autoRetryPeriodMinutes: 1,
       autoRetryMaxAttempts: 2,
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const channel2Doc = {
@@ -95,7 +98,10 @@ describe(`Auto Retry Integration Tests`, () => {
       autoRetryEnabled: true,
       autoRetryPeriodMinutes: 1,
       autoRetryMaxAttempts: 1,
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     before(async () => {
@@ -215,7 +221,10 @@ describe(`Auto Retry Integration Tests`, () => {
         host: 'localhost',
         port: 9999
       }],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     before(async () => {
@@ -265,7 +274,10 @@ describe(`Auto Retry Integration Tests`, () => {
         primary: true
       }
       ],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const mediatorResponse = {
@@ -333,7 +345,10 @@ describe(`Auto Retry Integration Tests`, () => {
         port: 9988
       }
       ],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     before(async () => {

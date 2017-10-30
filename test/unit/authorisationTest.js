@@ -22,7 +22,10 @@ describe('Authorisation middleware', () => {
           primary: true
         }
         ],
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated
@@ -59,7 +62,10 @@ describe('Authorisation middleware', () => {
           primary: true
         }
         ],
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated
@@ -98,7 +104,10 @@ describe('Authorisation middleware', () => {
           primary: true
         }
         ],
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated

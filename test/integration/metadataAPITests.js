@@ -21,7 +21,10 @@ const sampleMetadata = {
     allow: ['PoC', 'Test1', 'Test2'],
     routes: [{ name: 'test route', host: 'localhost', port: 9876, primary: true }],
     txViewAcl: 'group1',
-    updatedById: new ObjectId()
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   }],
   Clients: [{
     clientID: 'YUIAIIIICIIAIA',

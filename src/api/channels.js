@@ -60,8 +60,8 @@ export async function addChannel (ctx) {
   // Get the values to use
   const channelData = ctx.request.body
 
-  // Set the id of the user creating the channel for auditing purposes
-  channelData.updatedById = ctx.authenticated._id
+  // Set the user creating the channel for auditing purposes
+  channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
 
   try {
     const channel = new ChannelModel(channelData)
@@ -204,8 +204,8 @@ export async function updateChannel (ctx, channelId) {
   const id = unescape(channelId)
   const channelData = ctx.request.body
 
-  // Set the id of the user creating the channel for auditing purposes
-  channelData.updatedById = ctx.authenticated._id
+  // Set the user updating the channel for auditing purposes
+  channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
 
   // Ignore _id if it exists, user cannot change the internal id
   if (typeof channelData._id !== 'undefined') {
@@ -284,7 +284,7 @@ export async function removeChannel (ctx, channelId) {
       channel = await ChannelModel.findByIdAndRemove(id).exec()
     } else {
       // not safe to remove. just flag as deleted
-      channel = await findChannelByIdAndUpdate(id, {status: 'deleted', updatedById: ctx.authenticated._id})
+      channel = await findChannelByIdAndUpdate(id, {status: 'deleted', updatedBy: utils.selectAuditFields(ctx.authenticated)})
     }
 
     // All ok! So set the result

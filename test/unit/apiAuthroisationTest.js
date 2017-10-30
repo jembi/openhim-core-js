@@ -50,7 +50,10 @@ describe('API authorisation test', () => {
       ],
       txViewAcl: ['group1', 'group2'],
       txRerunAcl: ['group2'],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const channel2 = new ChannelModelAPI({
@@ -66,7 +69,10 @@ describe('API authorisation test', () => {
       ],
       txViewAcl: ['group2', 'group3'],
       txRerunAcl: ['group1', 'group3'],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const channel3 = new ChannelModelAPI({
@@ -82,7 +88,10 @@ describe('API authorisation test', () => {
       ],
       txViewAcl: ['group4'],
       txRerunAcl: ['group4'],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     await Promise.all([

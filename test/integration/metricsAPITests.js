@@ -22,7 +22,10 @@ describe('API Metrics Tests', () =>
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
       routes: [{ name: 'test route', host: 'localhost', port: constants.HTTP_PORT }],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const channel2Doc = {
@@ -32,7 +35,10 @@ describe('API Metrics Tests', () =>
       allow: ['PoC', 'Test1', 'Test2'],
       routes: [{ name: 'test route', host: 'localhost', port: constants.HTTP_PORT }],
       txViewAcl: ['group1'],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const ORIGINAL_STATS = config.statsd

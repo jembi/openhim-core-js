@@ -12,14 +12,20 @@ describe('Polling tests', () => {
     allow: '*',
     type: 'polling',
     pollingSchedule: '* * * * *',
-    updatedById: new ObjectId()
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   })
 
   const testChannel2 = new ChannelModel({
     name: 'test2',
     urlPattern: '/test2',
     allow: '*',
-    updatedById: new ObjectId()
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   })
 
   const testChannel3 = new ChannelModel({
@@ -28,7 +34,10 @@ describe('Polling tests', () => {
     allow: '*',
     type: 'polling',
     pollingSchedule: '2 * * * *',
-    updatedById: new ObjectId()
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   })
 
   const disabledChannel = new ChannelModel({
@@ -38,7 +47,10 @@ describe('Polling tests', () => {
     type: 'polling',
     pollingSchedule: '* * * * *',
     status: 'disabled',
-    updatedById: new ObjectId()
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   })
 
   before(async () => {

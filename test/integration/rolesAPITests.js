@@ -22,7 +22,10 @@ describe('API Integration Tests', () => {
         port: 9876,
         primary: true
       }],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const channel2Doc = {
@@ -35,7 +38,10 @@ describe('API Integration Tests', () => {
         port: 9876,
         primary: true
       }],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const client1Doc = {

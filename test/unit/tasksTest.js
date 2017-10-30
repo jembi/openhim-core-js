@@ -41,7 +41,10 @@ describe('Rerun Task Tests', () => {
       request: {
         timestamp: new Date().toISOString()
       },
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     afterEach(async () => {
@@ -253,7 +256,10 @@ describe('Rerun Task Tests', () => {
         path: '/test1',
         port: '12345'
       }],
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const DEFAULT_TASK = Object.freeze({

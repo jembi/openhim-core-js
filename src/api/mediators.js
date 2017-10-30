@@ -398,7 +398,7 @@ function saveDefaultChannelConfig (channels, authenticated) {
     for (const route of Array.from(channel.routes)) {
       delete route._id
     }
-    channel.updatedById = authenticated._id
+    channel.updatedBy = utils.selectAuditFields(authenticated)
     promises.push(new ChannelModelAPI(channel).save())
   }
   return promises

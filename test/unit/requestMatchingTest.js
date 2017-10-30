@@ -228,7 +228,10 @@ describe('Request Matching middleware', () => {
         ],
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
         matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
@@ -275,7 +278,10 @@ describe('Request Matching middleware', () => {
         ],
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
         matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
@@ -324,7 +330,10 @@ describe('Request Matching middleware', () => {
         matchContentTypes: ['text/xml'],
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
         matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
@@ -374,7 +383,10 @@ describe('Request Matching middleware', () => {
         matchContentTypes: ['text/xml'],
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
         matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
@@ -423,7 +435,10 @@ describe('Request Matching middleware', () => {
         }
         ],
         status: 'enabled',
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
@@ -468,7 +483,10 @@ describe('Request Matching middleware', () => {
         }
         ],
         status: 'disabled',
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
@@ -514,7 +532,10 @@ describe('Request Matching middleware', () => {
         }
         ],
         status: 'deleted',
-        updatedById: new ObjectId()
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)

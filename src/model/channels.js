@@ -139,12 +139,12 @@ export { RouteDef }
 const ChannelSchema = new Schema(ChannelDef)
 
 // Virtual field to store the id of user changing the channel
-ChannelSchema.virtual('updatedById')
-  .set(function (updatedById) {
-    this._updatedById = updatedById
+ChannelSchema.virtual('updatedBy')
+  .set(function (updatedBy) {
+    this._updatedBy = updatedBy
   })
   .get(function () {
-    return this._updatedById
+    return this._updatedBy
   })
 
 // Use the patch history plugin to audit changes to channels
@@ -156,10 +156,13 @@ ChannelSchema.plugin(patchHistory, {
     camelize
   ],
   includes: {
-    updatedById: {
-      type: Schema.Types.ObjectId,
+    updatedBy: {
+      type: {
+        id: Schema.Types.ObjectId,
+        name: String
+      },
       required: true,
-      from: '_updatedById'
+      from: '_updatedBy'
     }
   }
 })

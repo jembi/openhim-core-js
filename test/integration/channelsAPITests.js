@@ -33,7 +33,10 @@ describe('API Integration Tests', () =>
       }
       ],
       txViewAcl: 'aGroup',
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const channel2 = {
@@ -48,7 +51,10 @@ describe('API Integration Tests', () =>
       }
       ],
       txViewAcl: 'group1',
-      updatedById: new ObjectId()
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     let authDetails = {}
@@ -510,7 +516,10 @@ describe('API Integration Tests', () =>
                 op: 'add'
               }
             ],
-            updatedById: new ObjectId()
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
           },
           {
             ref: channel2._id,
@@ -521,7 +530,10 @@ describe('API Integration Tests', () =>
                 op: 'add'
               }
             ],
-            updatedById: new ObjectId()
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
           },
           {
             ref: channel1._id,
@@ -532,7 +544,10 @@ describe('API Integration Tests', () =>
                 op: 'replace'
               }
             ],
-            updatedById: new ObjectId()
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
           }
         ])
         expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).map(patch => {
@@ -540,7 +555,7 @@ describe('API Integration Tests', () =>
           convertedPatch._id = convertedPatch._id.toString()
           convertedPatch.ref = convertedPatch.ref.toString()
           convertedPatch.date = convertedPatch.date.toISOString()
-          convertedPatch.updatedById = convertedPatch.updatedById.toString()
+          convertedPatch.updatedBy.id = convertedPatch.updatedBy.id.toString()
           return convertedPatch
         })
       })
@@ -626,7 +641,10 @@ describe('API Integration Tests', () =>
             primary: true
           }],
           txViewAcl: 'group1',
-          updatedById: new ObjectId()
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const changeToTCP = {
@@ -660,7 +678,10 @@ describe('API Integration Tests', () =>
             primary: true
           }],
           txViewAcl: 'group1',
-          updatedById: new ObjectId()
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const changeToTCPDisabled = {
@@ -696,7 +717,10 @@ describe('API Integration Tests', () =>
             port: 9876,
             primary: true
           }],
-          updatedById: new ObjectId()
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
@@ -732,7 +756,10 @@ describe('API Integration Tests', () =>
             primary: true
           }],
           status: 'disabled',
-          updatedById: new ObjectId()
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
@@ -892,7 +919,10 @@ describe('API Integration Tests', () =>
             port: 9876,
             primary: true
           }],
-          updatedById: new ObjectId()
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const spy = sinon.spy(polling, 'removePollingChannel')
