@@ -555,6 +555,17 @@ describe('API Integration Tests', () =>
           .expect(200)
         res.body.should.eql(expectedPatches)
       })
+
+      it('should return an empty array when the channel does not exist', async () => {
+        const res = await request(constants.BASE_URL)
+          .get('/channels/59f6d57b07552f280271efac/audits')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+        res.body.should.eql([])
+      })
     })
 
     describe('*updateChannel(channelId)', () => {
