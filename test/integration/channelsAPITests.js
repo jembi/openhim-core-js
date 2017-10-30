@@ -535,7 +535,7 @@ describe('API Integration Tests', () =>
             updatedById: new ObjectId()
           }
         ])
-        expectedPatches = patches.filter(patch => patch.ref.equals(channel1._id)).map(patch => {
+        expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).map(patch => {
           const convertedPatch = patch.toObject()
           convertedPatch._id = convertedPatch._id.toString()
           convertedPatch.ref = convertedPatch.ref.toString()

@@ -156,7 +156,7 @@ export async function getChannelAudits (ctx, channelId) {
 
   try {
     const channel = await ChannelModel.findById(channelId).exec()
-    ctx.body = await channel.patches.find({ref: channel.id}).exec()
+    ctx.body = await channel.patches.find({ref: channel.id}).sort({_id: -1}).exec()
   } catch (err) {
     utils.logAndSetResponse(ctx, 500, `Could not fetch all channels via the API: ${err}`, 'error')
   }
