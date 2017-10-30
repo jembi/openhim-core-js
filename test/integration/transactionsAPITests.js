@@ -17,7 +17,7 @@ import { promisify } from 'util'
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
 
-const TRUNCATE_APPEND = 'Truncated Append'
+const TRUNCATE_APPEND = '\n[truncated ...]'
 const application = config.get('application')
 const domain = `${os.hostname()}.${application.name}`
 
@@ -840,14 +840,14 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-
+        
         res.body.length.should.equal(1)
-        res.body[0].request.body.should.equal(`<HTTP body${config.api.truncateAppend}`)
-        res.body[0].response.body.should.equal(`<HTTP resp${config.api.truncateAppend}`)
-        res.body[0].routes[0].request.body.should.equal(`<HTTP body${config.api.truncateAppend}`)
-        res.body[0].routes[0].response.body.should.equal(`<HTTP resp${config.api.truncateAppend}`)
-        res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${config.api.truncateAppend}`)
-        res.body[0].orchestrations[0].response.body.should.equal(`<HTTP resp${config.api.truncateAppend}`)
+        res.body[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+        res.body[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+        res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+        res.body[0].routes[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+        res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+        res.body[0].orchestrations[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
       })
     })
 
@@ -916,7 +916,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        res.body.request.body.should.equal(`<HTTP body${config.api.truncateAppend}`)
+        res.body.request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
       })
     })
 
