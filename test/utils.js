@@ -330,6 +330,25 @@ export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HT
   return server
 }
 
+export function createMockServerForPost (successStatusCode, errStatusCode, bodyToMatch, returnBody) {
+  const mockServer = http.createServer((req, res) =>
+    req.on('data', (chunk) => {
+      if (chunk.toString() === bodyToMatch) {
+        res.writeHead(successStatusCode, {'Content-Type': 'text/plain'})
+        if (returnBody) {
+          res.end(bodyToMatch)
+        } else {
+          res.end()
+        }
+      } else {
+        res.writeHead(errStatusCode, {'Content-Type': 'text/plain'})
+        res.end()
+      }
+    })
+  )
+  return mockServer
+}
+
 export async function createMockHttpServer (respBodyOrFn = constants.DEFAULT_HTTP_RESP, port = constants.HTTP_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.DEFAULT_HEADERS) {
   const server = http.createServer(async (req, res) => {
     const respBody = typeof respBodyOrFn === 'function' ? await respBodyOrFn(req) : respBodyOrFn

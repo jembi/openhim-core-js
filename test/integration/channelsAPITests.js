@@ -13,13 +13,14 @@ import * as testUtils from '../utils'
 import { promisify } from 'util'
 import * as constants from '../constants'
 import should from 'should'
-import {ObjectId} from 'mongodb'
+import { ObjectId } from 'mongodb'
+import { config } from '../../src/config'
+import { ClientModelAPI } from '../../src/model/clients'
 
 const { SERVER_PORTS } = constants
 let sandbox = sinon.createSandbox()
 
-describe('API Integration Tests', () =>
-
+describe('API Integration Tests', () => {
   describe('Channels REST Api testing', () => {
     const channel1 = {
       name: 'TestChannel1',
@@ -1005,4 +1006,149 @@ describe('API Integration Tests', () =>
       })
     })
   })
-)
+
+  describe('Channel priority tests', () => {
+    let mockServer1 = null
+    let mockServer2 = null
+
+    const channel1 = new ChannelModelAPI({
+      name: 'TEST DATA - Mock endpoint 1',
+      urlPattern: '^/test/undefined/priority$',
+      allow: ['PoC'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 1234,
+        primary: true
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    })
+
+    const channel2 = new ChannelModelAPI({
+      name: 'TEST DATA - Mock endpoint 2',
+      urlPattern: '^/.*$',
+      priority: 3,
+      allow: ['PoC'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 1233,
+        primary: true
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    })
+
+    const channel3 = new ChannelModelAPI({
+      name: 'TEST DATA - Mock endpoint 3',
+      urlPattern: '^/test/mock$',
+      priority: 2,
+      allow: ['PoC'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 1234,
+        primary: true
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    })
+
+    before(async () => {
+      config.authentication.enableMutualTLSAuthentication = false
+      config.authentication.enableBasicAuthentication = true
+
+      await Promise.all([
+        channel1.save(),
+        channel2.save(),
+        channel3.save()
+      ])
+
+      const testAppDoc = {
+        clientID: 'testApp',
+        clientDomain: 'test-client.jembi.org',
+        name: 'TEST Client',
+        roles: [
+          'OpenMRS_PoC',
+          'PoC'
+        ],
+        passwordAlgorithm: 'sha512',
+        passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+        passwordSalt: '1234567890',
+        cert: ''
+      }
+
+      await new ClientModelAPI(testAppDoc).save()
+
+      // Create mock endpoint to forward requests to
+      mockServer1 = await testUtils.createMockHttpServer('target1', 1233, 200)
+      mockServer2 = await testUtils.createMockHttpServer('target2', 1234, 200)
+    })
+
+    after(async () => {
+      await Promise.all([
+        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 1' }),
+        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 2' }),
+        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 3' }),
+        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 4' }),
+        ClientModelAPI.remove({ clientID: 'testApp' }),
+        mockServer1.close(),
+        mockServer2.close()
+      ])
+    })
+
+    afterEach(async () => {
+      await promisify(server.stop)()
+    })
+
+    it('should route to the channel with higher priority if multiple channels match a request', async () => {
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      const res = await request(constants.HTTP_BASE_URL)
+        .get('/test/mock')
+        .auth('testApp', 'password')
+        .expect(200)
+      res.text.should.be.exactly('target2') // should route to target2 via channel3
+    })
+
+    it('should treat a channel with an undefined priority with lowest priority', async () => {
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      const res = await request(constants.HTTP_BASE_URL)
+        .get('/test/undefined/priority')
+        .auth('testApp', 'password')
+        .expect(200)
+      res.text.should.be.exactly('target1') // should route to target1 via channel2
+    })
+
+    it('should deny access if multiple channels match but the top priority channel denies access', async () => {
+      await new ChannelModelAPI({
+        name: 'TEST DATA - Mock endpoint 4',
+        urlPattern: '^/test/mock$',
+        priority: 1,
+        allow: ['something else'],
+        routes: [{
+          name: 'test route',
+          host: 'localhost',
+          port: 1234,
+          primary: true
+        }],
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
+      }).save()
+
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      await request(constants.HTTP_BASE_URL)
+        .get('/test/mock')
+        .auth('testApp', 'password')
+        .expect(401)
+    })
+  })
+})

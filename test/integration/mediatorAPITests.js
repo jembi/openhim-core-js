@@ -3,15 +3,23 @@
 
 import should from 'should'
 import request from 'supertest'
-import * as server from '../../src/server'
+import { TransactionModelAPI } from '../../src/model/transactions'
+import nconf from 'nconf'
+import { ClientModelAPI } from '../../src/model/clients'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { MediatorModelAPI } from '../../src/model/mediators'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
 import { promisify } from 'util'
+import { ObjectId } from 'mongodb'
+import { config } from '../../src/config'
 
 describe('API Integration Tests', () => {
   const { SERVER_PORTS } = constants
+
+  nconf.set('router', { httpPort: SERVER_PORTS.httpPort })
+
+  const server = require('../../src/server')
 
   describe('Mediators REST API testing', () => {
     const mediator1 = {
@@ -1166,6 +1174,124 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send([])
           .expect(404)
+      })
+    })
+  })
+
+  describe('mediator tests', () => {
+    let mockServer = null
+
+    const mediatorResponse = {
+      status: 'Successful',
+      response: {
+        status: 200,
+        headers: {},
+        body: '<transaction response>',
+        timestamp: new Date()
+      },
+      orchestrations: [{
+        name: 'Lab API',
+        request: {
+          path: 'api/patient/lab',
+          headers: {
+            'Content-Type': 'text/plain'
+          },
+          body: '<route request>',
+          method: 'POST',
+          timestamp: new Date()
+        },
+        response: {
+          status: 200,
+          headers: {},
+          body: '<route response>',
+          timestamp: new Date()
+        }
+      }],
+      properties: {
+        orderId: 'TEST00001',
+        documentId: '1f49c3e0-3cec-4292-b495-5bd41433a048'
+      }
+    }
+
+    before(async () => {
+      config.authentication.enableMutualTLSAuthentication = false
+      config.authentication.enableBasicAuthentication = true
+
+      await new ChannelModelAPI({
+        name: 'TEST DATA - Mock mediator endpoint',
+        urlPattern: 'test/mediator',
+        allow: ['PoC'],
+        routes: [{
+          name: 'mediator route',
+          host: 'localhost',
+          port: 1244,
+          primary: true
+        }],
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
+      }).save()
+
+      const testAppDoc = {
+        clientID: 'mediatorTestApp',
+        clientDomain: 'test-client.jembi.org',
+        name: 'TEST Client',
+        roles: [
+          'OpenMRS_PoC',
+          'PoC'
+        ],
+        passwordAlgorithm: 'sha512',
+        passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+        passwordSalt: '1234567890',
+        cert: ''
+      }
+
+      await new ClientModelAPI(testAppDoc).save()
+      mockServer = await testUtils.createMockHttpMediator(mediatorResponse, 1244, 200)
+    })
+
+    beforeEach(async () => { await TransactionModelAPI.remove() })
+
+    after(async () => {
+      await Promise.all([
+        ChannelModelAPI.remove({ name: 'TEST DATA - Mock mediator endpoint' }),
+        ClientModelAPI.remove({ clientID: 'mediatorTestApp' }),
+        mockServer.close()
+      ])
+    })
+
+    afterEach(async () => {
+      await Promise.all([
+        promisify(server.stop)(),
+        TransactionModelAPI.remove()
+      ])
+    })
+
+    describe('mediator response processing', () => {
+      it('should return the specified mediator response element as the actual response', async () => {
+        await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+        const res = await request(constants.HTTP_BASE_URL)
+          .get('/test/mediator')
+          .auth('mediatorTestApp', 'password')
+          .expect(200)
+
+        res.body.toString().should.equal(mediatorResponse.response.body)
+      })
+
+      it('should setup the correct metadata on the transaction as specified by the mediator response', async () => {
+        await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+
+        await request(constants.HTTP_BASE_URL)
+          .get('/test/mediator')
+          .auth('mediatorTestApp', 'password')
+          .expect(200)
+        const res = await TransactionModelAPI.findOne()
+        res.status.should.be.equal(mediatorResponse.status)
+        res.orchestrations.length.should.be.exactly(1)
+        res.orchestrations[0].name.should.be.equal(mediatorResponse.orchestrations[0].name)
+        should.exist(res.properties)
+        res.properties.orderId.should.be.equal(mediatorResponse.properties.orderId)
       })
     })
   })
