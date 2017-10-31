@@ -13,6 +13,7 @@ import * as testUtils from '../utils'
 import { promisify } from 'util'
 import * as constants from '../constants'
 import should from 'should'
+import {ObjectId} from 'mongodb'
 
 const { SERVER_PORTS } = constants
 let sandbox = sinon.createSandbox()
@@ -31,7 +32,11 @@ describe('API Integration Tests', () =>
         primary: true
       }
       ],
-      txViewAcl: 'aGroup'
+      txViewAcl: 'aGroup',
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const channel2 = {
@@ -45,7 +50,11 @@ describe('API Integration Tests', () =>
         primary: true
       }
       ],
-      txViewAcl: 'group1'
+      txViewAcl: 'group1',
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     let authDetails = {}
@@ -492,6 +501,88 @@ describe('API Integration Tests', () =>
       })
     })
 
+    describe('getChannelAudits(channelId)', () => {
+      let expectedPatches
+
+      beforeEach(async () => {
+        await ChannelModelAPI.Patches.remove().exec()
+        const patches = await ChannelModelAPI.Patches.create([
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: 'before',
+                path: '/name',
+                op: 'add'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          },
+          {
+            ref: channel2._id,
+            ops: [
+              {
+                value: 'nope',
+                path: '/name',
+                op: 'add'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: 'after',
+                path: '/name',
+                op: 'replace'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          }
+        ])
+        expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).map(patch => {
+          const convertedPatch = patch.toObject()
+          convertedPatch._id = convertedPatch._id.toString()
+          convertedPatch.ref = convertedPatch.ref.toString()
+          convertedPatch.date = convertedPatch.date.toISOString()
+          convertedPatch.updatedBy.id = convertedPatch.updatedBy.id.toString()
+          return convertedPatch
+        })
+      })
+
+      it('should return the patches for the correct channel', async () => {
+        const res = await request(constants.BASE_URL)
+          .get(`/channels/${channel1._id}/audits`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+        res.body.should.eql(expectedPatches)
+      })
+
+      it('should return an empty array when the channel does not exist', async () => {
+        const res = await request(constants.BASE_URL)
+          .get('/channels/59f6d57b07552f280271efac/audits')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+        res.body.should.eql([])
+      })
+    })
+
     describe('*updateChannel(channelId)', () => {
       it('should update a specific channel by id', async () => {
         const updates = {
@@ -549,7 +640,11 @@ describe('API Integration Tests', () =>
             port: 9876,
             primary: true
           }],
-          txViewAcl: 'group1'
+          txViewAcl: 'group1',
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const changeToTCP = {
@@ -582,7 +677,11 @@ describe('API Integration Tests', () =>
             port: 9876,
             primary: true
           }],
-          txViewAcl: 'group1'
+          txViewAcl: 'group1',
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const changeToTCPDisabled = {
@@ -617,7 +716,11 @@ describe('API Integration Tests', () =>
             host: 'localhost',
             port: 9876,
             primary: true
-          }]
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
@@ -652,7 +755,11 @@ describe('API Integration Tests', () =>
             port: 9876,
             primary: true
           }],
-          status: 'disabled'
+          status: 'disabled',
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const spy = sinon.spy(polling, 'registerPollingChannel')
@@ -811,7 +918,11 @@ describe('API Integration Tests', () =>
             host: 'localhost',
             port: 9876,
             primary: true
-          }]
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         })
 
         const spy = sinon.spy(polling, 'removePollingChannel')

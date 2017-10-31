@@ -9,6 +9,7 @@ import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import { promisify } from 'util'
 import * as constants from '../constants'
+import {ObjectId} from 'mongodb'
 
 const { SERVER_PORTS } = constants
 
@@ -289,7 +290,11 @@ describe('API Integration Tests', () => {
                 contactGroup._id
               ]
             }
-          ]
+          ],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
         }
         await (new ChannelModelAPI(channel1)).save()
         const countBefore = await ContactGroupModelAPI.count()

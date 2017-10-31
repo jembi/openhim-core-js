@@ -10,6 +10,7 @@ import * as tasks from '../../src/tasks'
 import * as constants from '../constants'
 import { config } from '../../src/config'
 import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
 
 function waitForAutoRetry () {
   return testUtils.pollCondition(() => AutoRetryModel.count().then(count => count === 1))
@@ -76,7 +77,11 @@ describe(`Auto Retry Integration Tests`, () => {
       ],
       autoRetryEnabled: true,
       autoRetryPeriodMinutes: 1,
-      autoRetryMaxAttempts: 2
+      autoRetryMaxAttempts: 2,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const channel2Doc = {
@@ -92,7 +97,11 @@ describe(`Auto Retry Integration Tests`, () => {
       ],
       autoRetryEnabled: true,
       autoRetryPeriodMinutes: 1,
-      autoRetryMaxAttempts: 1
+      autoRetryMaxAttempts: 1,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     before(async () => {
@@ -211,7 +220,11 @@ describe(`Auto Retry Integration Tests`, () => {
         name: 'unavailable route',
         host: 'localhost',
         port: 9999
-      }]
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     before(async () => {
@@ -250,7 +263,7 @@ describe(`Auto Retry Integration Tests`, () => {
   describe(`Mediator auto retry tests`, () => {
     let server
 
-    const channelDoc = new ChannelModel({
+    const channelDoc = {
       name: 'TEST DATA - Mediator has error channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
@@ -260,8 +273,12 @@ describe(`Auto Retry Integration Tests`, () => {
         port: constants.MEDIATOR_PORT,
         primary: true
       }
-      ]
-    })
+      ],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
 
     const mediatorResponse = {
       'x-mediator-urn': 'urn:mediator:test',
@@ -327,7 +344,11 @@ describe(`Auto Retry Integration Tests`, () => {
         host: 'localhost',
         port: 9988
       }
-      ]
+      ],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     before(async () => {

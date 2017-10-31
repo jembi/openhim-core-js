@@ -15,7 +15,11 @@ const retryChannel = new ChannelModel({
   urlPattern: '/test',
   allow: '*',
   autoRetryEnabled: true,
-  autoRetryPeriodMinutes: 60
+  autoRetryPeriodMinutes: 60,
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const retryChannel2 = new ChannelModel({
@@ -23,14 +27,22 @@ const retryChannel2 = new ChannelModel({
   urlPattern: '/test/2',
   allow: '*',
   autoRetryEnabled: true,
-  autoRetryPeriodMinutes: 60
+  autoRetryPeriodMinutes: 60,
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const noRetryChannel = new ChannelModel({
   name: 'no-retry-test',
   urlPattern: '/test',
   allow: '*',
-  autoRetryEnabled: false
+  autoRetryEnabled: false,
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const disabledChannel = new ChannelModel({
@@ -38,7 +50,11 @@ const disabledChannel = new ChannelModel({
   urlPattern: '/disabled',
   allow: '*',
   autoRetryEnabled: true,
-  status: 'disabled'
+  status: 'disabled',
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const retryTransaction1 = new AutoRetryModel({

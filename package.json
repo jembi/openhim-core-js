@@ -57,6 +57,7 @@
     "moment-timezone": "^0.5.5",
     "mongodb": "^2.2.11",
     "mongoose": "^4.12.0",
+    "mongoose-patch-history": "^1.1.7",
     "nconf": "^0.8.5",
     "node-uuid": "^1.4.1",
     "nodemailer": "^4.1.2",

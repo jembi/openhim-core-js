@@ -122,3 +122,16 @@ export function enforceMaxBodiesSize (ctx, tx) {
   ctx.totalBodyLength += len
   return enforced
 }
+
+/**
+ * Return an object containing the relevant fields for audit logging from the authenticated user.
+ *
+ * @param {Object} authenticated The authenticated user.
+ * @return {Object} The object containing selected audit fields.
+ */
+export function selectAuditFields (authenticated) {
+  return {
+    id: authenticated._id,
+    name: `${authenticated.firstname} ${authenticated.surname}`
+  }
+}

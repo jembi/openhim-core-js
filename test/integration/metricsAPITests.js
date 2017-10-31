@@ -8,6 +8,7 @@ import { config } from '../../src/config'
 import * as server from '../../src/server'
 import * as constants from '../constants'
 import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
 
 const { SERVER_PORTS } = constants
 
@@ -20,7 +21,11 @@ describe('API Metrics Tests', () =>
       name: 'Test Channel 11111',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
-      routes: [{ name: 'test route', host: 'localhost', port: constants.HTTP_PORT }]
+      routes: [{ name: 'test route', host: 'localhost', port: constants.HTTP_PORT }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const channel2Doc = {
@@ -29,7 +34,11 @@ describe('API Metrics Tests', () =>
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
       routes: [{ name: 'test route', host: 'localhost', port: constants.HTTP_PORT }],
-      txViewAcl: ['group1']
+      txViewAcl: ['group1'],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const ORIGINAL_STATS = config.statsd

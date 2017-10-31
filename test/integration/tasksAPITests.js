@@ -148,7 +148,11 @@ describe('API Integration Tests', () => {
         primary: true
       }],
       txViewAcl: ['group1'],
-      txRerunAcl: ['group2']
+      txRerunAcl: ['group2'],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const channel2 = new ChannelModelAPI({
@@ -163,7 +167,11 @@ describe('API Integration Tests', () => {
         primary: true
       }],
       txViewAcl: ['group1'],
-      txRerunAcl: ['group222222222']
+      txRerunAcl: ['group222222222'],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const channel3 = new ChannelModelAPI({
@@ -179,7 +187,11 @@ describe('API Integration Tests', () => {
       }],
       txViewAcl: ['group1'],
       txRerunAcl: ['group222222222'],
-      status: 'disabled'
+      status: 'disabled',
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const channel4 = new ChannelModelAPI({
@@ -195,7 +207,11 @@ describe('API Integration Tests', () => {
       }],
       txViewAcl: ['group1'],
       txRerunAcl: ['group222222222'],
-      status: 'deleted'
+      status: 'deleted',
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     let authDetails = {}

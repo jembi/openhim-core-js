@@ -7,6 +7,7 @@ import { ChannelModel, UserModel, ContactGroupModel, EventModel, AlertModel } fr
 import { config } from '../../src/config'
 import { promisify } from 'util'
 import { dropTestDb } from '../utils'
+import {ObjectId} from 'mongodb'
 
 config.alerts = config.get('alerts')
 
@@ -70,7 +71,11 @@ const testChannel = new ChannelModel({
       users: [{ user: 'two@openhim.org', method: 'sms' }],
       failureRate: testFailureRate
     }
-  ]
+  ],
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const disabledChannel = new ChannelModel({
@@ -84,7 +89,11 @@ const disabledChannel = new ChannelModel({
       groups: ['aaa908908bbb98cc1d0809ee']
     }
   ],
-  status: 'disabled'
+  status: 'disabled',
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const autoRetryChannel = new ChannelModel({
@@ -99,7 +108,11 @@ const autoRetryChannel = new ChannelModel({
       condition: 'auto-retry-max-attempted',
       groups: ['aaa908908bbb98cc1d0809ee']
     }
-  ]
+  ],
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
 })
 
 const testTransactions = [

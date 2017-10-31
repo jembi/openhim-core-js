@@ -6,6 +6,7 @@ import { ClientModel, ChannelModel } from '../../src/model'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
 import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
 
 const { SERVER_PORTS } = constants
 
@@ -20,7 +21,11 @@ describe('API Integration Tests', () => {
         host: 'localhost',
         port: 9876,
         primary: true
-      }]
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const channel2Doc = {
@@ -32,7 +37,11 @@ describe('API Integration Tests', () => {
         host: 'localhost',
         port: 9876,
         primary: true
-      }]
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
 
     const client1Doc = {

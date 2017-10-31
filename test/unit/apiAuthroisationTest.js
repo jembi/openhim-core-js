@@ -3,6 +3,7 @@
 import * as authorisation from '../../src/api/authorisation'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { UserModelAPI } from '../../src/model/users'
+import {ObjectId} from 'mongodb'
 
 describe('API authorisation test', () => {
   const user = new UserModelAPI({
@@ -48,7 +49,11 @@ describe('API authorisation test', () => {
       }
       ],
       txViewAcl: ['group1', 'group2'],
-      txRerunAcl: ['group2']
+      txRerunAcl: ['group2'],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const channel2 = new ChannelModelAPI({
@@ -63,7 +68,11 @@ describe('API authorisation test', () => {
       }
       ],
       txViewAcl: ['group2', 'group3'],
-      txRerunAcl: ['group1', 'group3']
+      txRerunAcl: ['group1', 'group3'],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const channel3 = new ChannelModelAPI({
@@ -78,7 +87,11 @@ describe('API authorisation test', () => {
       }
       ],
       txViewAcl: ['group4'],
-      txRerunAcl: ['group4']
+      txRerunAcl: ['group4'],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     await Promise.all([

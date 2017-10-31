@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
@@ -142,11 +141,14 @@ async function handleMetadataPost (ctx, action) {
           if (action === 'import') {
             if (result && (result.length > 0) && result[0]._id) {
               if (doc._id) { delete doc._id }
-              result = await collections[key].findByIdAndUpdate(result[0]._id, doc).exec()
+              result = await collections[key].findById(result[0]._id).exec()
+              result.set(doc)
+              result.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
+              await result.save()
               status = 'Updated'
             } else {
               doc = new (collections[key])(doc)
-              result = await Q.ninvoke(doc, 'save')
+              result = await doc.save()
               status = 'Inserted'
             }
           }

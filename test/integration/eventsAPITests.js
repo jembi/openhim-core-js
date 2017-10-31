@@ -10,6 +10,7 @@ import { config } from '../../src/config'
 import { promisify } from 'util'
 import * as constants from '../constants'
 import sinon from 'sinon'
+import {ObjectId} from 'mongodb'
 
 config.authentication = config.get('authentication')
 config.tlsClientLookup = config.get('tlsClientLookup')
@@ -63,7 +64,11 @@ describe('Events API Integration Tests', () => {
           port: mediatorPortPlus41
         }
       ],
-      rewriteUrls: true
+      rewriteUrls: true,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }).save()
 
     await new ChannelModelAPI({
@@ -81,7 +86,11 @@ describe('Events API Integration Tests', () => {
           host: 'localhost',
           port: mediatorPortPlus42
         }
-      ]
+      ],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }).save()
 
     const testAppDoc = {

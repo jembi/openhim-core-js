@@ -6,6 +6,7 @@ import * as tcpAdapter from '../../src/tcpAdapter'
 import { ChannelModel } from '../../src/model/channels'
 import * as constants from '../constants'
 import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
 
 describe('TCP adapter tests', () => {
   const testChannel = new ChannelModel({
@@ -14,7 +15,11 @@ describe('TCP adapter tests', () => {
     allow: '*',
     type: 'tcp',
     tcpPort: constants.PORT_START - 1,
-    tcpHost: 'localhost'
+    tcpHost: 'localhost',
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   })
 
   const disabledChannel = new ChannelModel({
@@ -24,7 +29,11 @@ describe('TCP adapter tests', () => {
     type: 'tcp',
     tcpPort: constants.PORT_START - 2,
     tcpHost: 'localhost',
-    status: 'disabled'
+    status: 'disabled',
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   })
 
   before(async () => {

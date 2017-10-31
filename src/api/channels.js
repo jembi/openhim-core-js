@@ -1,5 +1,3 @@
-import { Types } from 'mongoose'
-import Q from 'q'
 import logger from 'winston'
 import request from 'request'
 import * as Channels from '../model/channels'
@@ -13,7 +11,6 @@ import * as utils from '../utils'
 import { config } from '../config'
 
 const {ChannelModel} = Channels
-const {ObjectId} = Types
 
 config.polling = config.get('polling')
 
@@ -63,6 +60,9 @@ export async function addChannel (ctx) {
   // Get the values to use
   const channelData = ctx.request.body
 
+  // Set the user creating the channel for auditing purposes
+  channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
+
   try {
     const channel = new ChannelModel(channelData)
 
@@ -90,7 +90,7 @@ export async function addChannel (ctx) {
       return
     }
 
-    await Q.ninvoke(channel, 'save')
+    await channel.save()
 
     // All ok! So set the result
     ctx.body = 'Channel successfully created'
@@ -148,6 +148,24 @@ export async function getChannel (ctx, channelId) {
   }
 }
 
+export async function getChannelAudits (ctx, channelId) {
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`, 'info')
+    return
+  }
+
+  try {
+    const channel = await ChannelModel.findById(channelId).exec()
+    if (channel) {
+      ctx.body = await channel.patches.find({ref: channel.id}).sort({_id: -1}).exec()
+    } else {
+      ctx.body = []
+    }
+  } catch (err) {
+    utils.logAndSetResponse(ctx, 500, `Could not fetch all channels via the API: ${err}`, 'error')
+  }
+}
+
 function processPostUpdateTriggers (channel) {
   if (channel.type) {
     if (((channel.type === 'tcp') || (channel.type === 'tls')) && server.isTcpHttpReceiverRunning()) {
@@ -166,6 +184,12 @@ function processPostUpdateTriggers (channel) {
   }
 }
 
+async function findChannelByIdAndUpdate (id, channelData) {
+  const channel = await ChannelModel.findById(id).exec()
+  channel.set(channelData)
+  return channel.save()
+}
+
 /*
  * Updates the details for a specific channel
  */
@@ -179,6 +203,9 @@ export async function updateChannel (ctx, channelId) {
   // Get the values to use
   const id = unescape(channelId)
   const channelData = ctx.request.body
+
+  // Set the user updating the channel for auditing purposes
+  channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
 
   // Ignore _id if it exists, user cannot change the internal id
   if (typeof channelData._id !== 'undefined') {
@@ -211,14 +238,13 @@ export async function updateChannel (ctx, channelId) {
   }
 
   try {
-    await ChannelModel.findByIdAndUpdate(id, channelData).exec()
+    const channel = await findChannelByIdAndUpdate(id, channelData)
 
     // All ok! So set the result
     ctx.body = 'The channel was successfully updated'
     logger.info('User %s updated channel with id %s', ctx.authenticated.email, id)
 
-    channelData._id = ObjectId(id)
-    return processPostUpdateTriggers(channelData)
+    return processPostUpdateTriggers(channel)
   } catch (err) {
     // Error! So inform the user
     utils.logAndSetResponse(ctx, 500, `Could not update channel by id: ${id} via the API: ${err}`, 'error')
@@ -258,7 +284,7 @@ export async function removeChannel (ctx, channelId) {
       channel = await ChannelModel.findByIdAndRemove(id).exec()
     } else {
       // not safe to remove. just flag as deleted
-      channel = await ChannelModel.findByIdAndUpdate(id, {status: 'deleted'}).exec()
+      channel = await findChannelByIdAndUpdate(id, {status: 'deleted', updatedBy: utils.selectAuditFields(ctx.authenticated)})
     }
 
     // All ok! So set the result

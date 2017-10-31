@@ -6,6 +6,7 @@ import { promisify } from 'util'
 import * as constants from '../constants'
 import { config } from '../../src/config'
 import sinon from 'sinon'
+import {ObjectId} from 'mongodb'
 
 // const {ObjectId} = require('mongoose').Types
 
@@ -39,6 +40,10 @@ describe('Rerun Task Tests', () => {
       status: 'Failed',
       request: {
         timestamp: new Date().toISOString()
+      },
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
       }
     })
 
@@ -250,7 +255,11 @@ describe('Rerun Task Tests', () => {
         host: 'localhost',
         path: '/test1',
         port: '12345'
-      }]
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     })
 
     const DEFAULT_TASK = Object.freeze({
