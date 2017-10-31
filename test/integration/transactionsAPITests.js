@@ -12,7 +12,7 @@ import { EventModelAPI } from '../../src/model/events'
 import { AutoRetryModelAPI } from '../../src/model/autoRetry'
 import * as constants from '../constants'
 import { promisify } from 'util'
-import {ObjectId} from 'mongodb'
+import { ObjectId } from 'mongodb'
 
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
@@ -460,78 +460,116 @@ describe('API Integration Tests', () => {
         updatedTrans.routes[1].orchestrations[0].name.should.equal('test')
       })
 
-      /* it('should update transaction with large update request body', async () => {
-         td = testUtils.clone(transactionData)
-         td.channelID = channel._id
-         clearTransactionBodies(td)
-         const tx = new TransactionModel(td)
-         const result = await tx.save()
-         transactionId = result._id
+      it('should update transaction with large update request body', async () => {
+        const td = testUtils.clone(transactionData)
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        const tx = new TransactionModel(td)
+        const result = await tx.save()
+        transactionId = result._id
 
-         const reqUp = testUtils.clone(requestUpdate)
-         reqUp.body = LARGE_BODY
+        const reqUp = testUtils.clone(requestUpdate)
+        reqUp.body = LARGE_BODY
 
-         const updates = {
-           request: reqUp,
-           status: 'Completed',
-           clientID: '777777777777777777777777'
-         }
+        const updates = {
+          request: reqUp,
+          status: 'Completed',
+          clientID: '777777777777777777777777'
+        }
 
-         await request(constants.BASE_URL)
-           .put(`/transactions/${transactionId}`)
-           .set('auth-username', testUtils.rootUser.email)
-           .set('auth-ts', authDetails.authTS)
-           .set('auth-salt', authDetails.authSalt)
-           .set('auth-token', authDetails.authToken)
-           .send(updates)
-           .expect(200)
+        await request(constants.BASE_URL)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
 
-         const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
-         (updatedTrans !== null).should.be.true
-         updatedTrans.request.body.length.should.be.exactly(MAX_BODY_SIZE)
-         td = testUtils.clone(transactionData)
-         td.channelID = channel._id
-         clearTransactionBodies(td)
-         const tx = new TransactionModel(td)
-         const result = await tx.save()
-         transactionId = result._id
-         const updates = {
-           status: 'Completed',
-           clientID: '777777777777777777777777',
-           $push: {
-             routes: {
-               name: 'async',
-               orchestrations: [{
-                 name: 'test',
-                 request: {
-                   method: 'POST',
-                   body: LARGE_BODY,
-                   timestamp: 1425897647329
-                 },
-                 response: {
-                   status: 201,
-                   body: '',
-                   timestamp: 1425897688016
-                 }
-               }
-               ]
-             }
-           }
-         }
+        const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
+        (updatedTrans !== null).should.be.true()
+        updatedTrans.request.body.length.should.be.exactly(MAX_BODY_SIZE)
+        updatedTrans.canRerun.should.be.true()
+      })
 
-         await request(constants.BASE_URL)
-           .put(`/transactions/${transactionId}`)
-           .set('auth-username', testUtils.rootUser.email)
-           .set('auth-ts', authDetails.authTS)
-           .set('auth-salt', authDetails.authSalt)
-           .set('auth-token', authDetails.authToken)
-           .send(updates)
-           .expect(200)
-         const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
-         (updatedTrans !== null).should.be.true
-         updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(utils.MAX_BODIES_SIZE)
-         updatedTrans.canRerun.should.be.true
-       }) */
+      it('should update transaction with large update response body', async () => {
+        const td = testUtils.clone(transactionData)
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        const tx = new TransactionModel(td)
+        const result = await tx.save()
+        transactionId = result._id
+        const updates = {
+          response: {
+            headers: '',
+            timestamp: new Date(),
+            body: LARGE_BODY,
+            status: 200
+          },
+          status: 'Completed',
+          clientID: '777777777777777777777777'
+        }
+
+        await request(constants.BASE_URL)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+
+        const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
+        (updatedTrans !== null).should.be.true()
+        updatedTrans.response.body.length.should.be.exactly(MAX_BODY_SIZE)
+        updatedTrans.canRerun.should.be.true()
+      })
+
+      it('should update transaction with large routes orchestrations request body', async () => {
+        const td = testUtils.clone(transactionData)
+        td.channelID = channel._id
+        clearTransactionBodies(td)
+        const tx = new TransactionModel(td)
+        const result = await tx.save()
+        transactionId = result._id
+        const updates = {
+          status: 'Completed',
+          clientID: '777777777777777777777777',
+          $push: {
+            routes: {
+              name: 'async',
+              orchestrations: [{
+                name: 'test',
+                request: {
+                  method: 'POST',
+                  body: LARGE_BODY,
+                  timestamp: 1425897647329
+                },
+                response: {
+                  status: 201,
+                  body: '',
+                  timestamp: 1425897688016
+                }
+              }
+              ]
+            }
+          }
+        }
+
+        await request(constants.BASE_URL)
+          .put(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+
+        const updatedTrans = await TransactionModel.findOne({_id: transactionId});
+        (updatedTrans !== null).should.be.true()
+        updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(MAX_BODY_SIZE)
+        updatedTrans.canRerun.should.be.true()
+      })
 
       it('should queue a transaction for auto retry', async () => {
         await ChannelModel.find()
