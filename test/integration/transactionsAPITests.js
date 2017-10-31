@@ -13,6 +13,7 @@ import { EventModelAPI } from '../../src/model/events'
 import { AutoRetryModelAPI } from '../../src/model/autoRetry'
 import * as constants from '../constants'
 import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
 
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
@@ -113,7 +114,11 @@ describe('API Integration Tests', () => {
     }
     ],
     txViewAcl: ['group1'],
-    txViewFullAcl: []
+    txViewFullAcl: [],
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   }
 
   const channel2Doc = {
@@ -131,7 +136,11 @@ describe('API Integration Tests', () => {
     txViewFullAcl: [],
     autoRetryEnabled: true,
     autoRetryPeriodMinutes: 60,
-    autoRetryMaxAttempts: 5
+    autoRetryMaxAttempts: 5,
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
   }
 
   before(async () => {
