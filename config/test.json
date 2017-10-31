@@ -5,7 +5,8 @@
   },
   "logger": {
     "level": "fatal",
-    "logToDB": false
+    "logToDB": true,
+    "capDBLogs": false
   },
   "api": {
     "enabled": true,

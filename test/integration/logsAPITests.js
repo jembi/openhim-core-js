@@ -1,14 +1,13 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import logger from 'winston'
-import 'winston-mongodb'
 import moment from 'moment'
+import { promisify } from 'util'
+
 import { LogModel } from '../../src/model'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
-import { promisify } from 'util'
 
 describe(`API Integration Tests`, () => {
   describe(`Log REST API`, () => {
@@ -26,37 +25,28 @@ describe(`API Integration Tests`, () => {
         promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort })
       ])
 
-      const connection = await testUtils.getMongoClient()
-      const collections = await connection.collections()
-      if (collections.map(c => c.collectionName).indexOf('log') !== -1) {
-        await connection.dropCollection('log')
-      }
+      await LogModel.remove()
+
+      const timestamp = moment(beforeTS)
+      await Promise.all([
+        new LogModel({ message: 'TEST1', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
+        new LogModel({ message: 'TEST2', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'error', meta: {} }).save(),
+        new LogModel({ message: 'TEST3', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
+        new LogModel({ message: 'TEST4', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
+        new LogModel({ message: 'TEST5', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'error', meta: {} }).save()
+      ])
     })
 
     beforeEach(async () => {
       authDetails = testUtils.getAuthDetails()
-      const timestamp = moment(beforeTS)
-      await Promise.all([
-        new LogModel({ message: 'TEST1', timestamp: timestamp.add(30, 'seconds'), level: 'warn', meta: {} }).save(),
-        new LogModel({ message: 'TEST2', timestamp: timestamp.add(30, 'seconds'), level: 'error', meta: {} }).save(),
-        new LogModel({ message: 'TEST3', timestamp: timestamp.add(30, 'seconds'), level: 'warn', meta: {} }).save(),
-        new LogModel({ message: 'TEST4', timestamp: timestamp.add(30, 'seconds'), level: 'warn', meta: {} }).save(),
-        new LogModel({ message: 'TEST5', timestamp: timestamp.add(30, 'seconds'), level: 'error', meta: {} }).save()
-      ])
     })
 
     after(async () => {
-      logger.transports.MongoDB.level = 'debug'
       await Promise.all([
         testUtils.cleanupTestUsers(),
-        promisify(server.stop)()
+        promisify(server.stop)(),
+        LogModel.remove()
       ])
-    })
-
-    afterEach(async () => {
-      const connection = await testUtils.getMongoClient()
-      await connection.dropCollection('log')
-      // TODO Ross fix
     })
 
     describe('*getLogs', () => {
