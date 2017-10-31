@@ -46,6 +46,56 @@ export const nonRootUser = {
 }
 // password is 'password'
 
+export function secureSocketTest (portOrOptions, data, waitForResponse = true) {
+  const options = {}
+  if (typeof portOrOptions === 'number') {
+    Object.assign(options, {
+      port: portOrOptions,
+      cert: fs.readFileSync('test/resources/client-tls/cert.pem'),
+      key: fs.readFileSync('test/resources/client-tls/key.pem'),
+      ca: fs.readFileSync('test/resources/server-tls/cert.pem')
+    })
+  } else {
+    Object.assign(options, portOrOptions)
+  }
+  return socketCallInternal(tls.connect, options, data, waitForResponse)
+}
+
+export async function socketTest (portOrOptions, data, waitForResponse = true) {
+  return socketCallInternal(net.connect, portOrOptions, data, waitForResponse)
+}
+
+async function socketCallInternal (connectFn, portOrOptions, data, waitForResponse) {
+  if (portOrOptions == null) {
+    throw new Error('Please enter in a port number or connection object')
+  }
+
+  if (typeof portOrOptions === 'number') {
+    portOrOptions = {
+      port: portOrOptions
+    }
+  }
+
+  const socket = connectFn(portOrOptions)
+  const boundOnce = promisify(socket.once.bind(socket))
+  await boundOnce('connect')
+  await promisify(socket.write.bind(socket))(data || '')
+  let result
+  if (waitForResponse) {
+    result = await new Promise((resolve, reject) => {
+      socket.once('data', (d) => {
+        resolve(d)
+      })
+      socket.once('error', (err) => {
+        reject(err)
+      })
+    })
+  }
+  socket.end()
+  await boundOnce('close')
+  return result
+}
+
 /**
  * Function that will only resolve once the predicate is true
  * It's used as a way to pause a test while waiting for the system state to catch up
@@ -84,7 +134,7 @@ export function getAuthDetails () {
 }
 
 export function cleanupTestUsers () {
-  return UserModel.remove({email: {$in: [rootUser.email, nonRootUser.email]}})
+  return UserModel.remove({ email: { $in: [rootUser.email, nonRootUser.email] } })
 }
 
 export function cleanupAllTestUsers () {
@@ -375,7 +425,7 @@ export async function createMockTCPServer (onRequest = async data => data, port 
   server.on('connection', socket => {
     socket.on('data', async (data) => {
       const response = await onRequest(data)
-      socket.write(response)
+      socket.write(response || '')
     })
   })
 
@@ -414,7 +464,7 @@ export function createMockTLSServerWithMutualAuth (onRequest = async data => dat
   const server = tls.createServer(options, sock =>
     sock.on('data', async (data) => {
       const response = await onRequest(data)
-      return sock.write(response)
+      return sock.write(response || '')
     })
   )
 
