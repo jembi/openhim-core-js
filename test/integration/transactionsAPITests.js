@@ -3,7 +3,6 @@
 
 import should from 'should'
 import request from 'supertest'
-import os from 'os'
 import * as testUtils from '../utils'
 import { TransactionModel } from '../../src/model/transactions'
 import { ChannelModel } from '../../src/model/channels'
@@ -19,8 +18,6 @@ const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
 
 const TRUNCATE_APPEND = '\n[truncated ...]'
-const application = config.get('application')
-const domain = `${os.hostname()}.${application.name}`
 
 const clearTransactionBodies = function (transaction) {
   transaction.request.body = ''
@@ -409,9 +406,7 @@ describe('API Integration Tests', () => {
         method: 'PUT'
       }
 
-      // let expectMessage
       let transactionId
-
       it('should call /updateTransaction ', async () => {
         const tx = new TransactionModel(transactionData)
         const result = await tx.save()
@@ -463,8 +458,6 @@ describe('API Integration Tests', () => {
         updatedTrans.request.method.should.equal('PUT')
         updatedTrans.routes[1].name.should.equal('async')
         updatedTrans.routes[1].orchestrations[0].name.should.equal('test')
-        // await expectMessage(`${domain}.channels.888888888888888888888888.async.orchestrations.test:1|c`)
-        // await expectMessage(`${domain}.channels.888888888888888888888888.async.orchestrations.test.statusCodes.201:1|c`)
       })
 
       /* it('should update transaction with large update request body', async () => {
@@ -849,7 +842,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-        
+
         res.body.length.should.equal(1)
         res.body[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
         res.body[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)

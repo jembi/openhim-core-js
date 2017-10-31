@@ -2,10 +2,9 @@
 /* eslint no-unused-expressions:0 */
 import should from 'should'
 import rewire from 'rewire'
-
+import {ObjectId} from 'mongodb'
 const requestMatching = rewire('../../src/middleware/requestMatching')
 const { ChannelModel } = require('../../src/model/channels')
-import {ObjectId} from 'mongodb'
 
 const truthy = () => true
 const falsey = () => false
