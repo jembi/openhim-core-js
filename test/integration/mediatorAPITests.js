@@ -1026,14 +1026,14 @@ describe('API Integration Tests', () => {
 
       it('should set the current config for a mediator and return a 200 status', async () => {
         mediator1.configDefs =
-        [{
-          param: 'param1',
-          type: 'string'
-        },
-        {
-          param: 'param2',
-          type: 'string'
-        }]
+          [{
+            param: 'param1',
+            type: 'string'
+          },
+          {
+            param: 'param2',
+            type: 'string'
+          }]
 
         await new MediatorModelAPI(mediator1).save()
 
@@ -1058,15 +1058,15 @@ describe('API Integration Tests', () => {
 
       it('should return a 400 if the config object contains unknown keys', async () => {
         mediator1.configDefs =
-        [{
-          param: 'param1',
-          type: 'string'
-        },
-        {
-          param: 'param2',
-          type: 'string'
-        }
-        ]
+          [{
+            param: 'param1',
+            type: 'string'
+          },
+          {
+            param: 'param2',
+            type: 'string'
+          }
+          ]
         await new MediatorModelAPI(mediator1).save()
 
         await request(constants.BASE_URL)
@@ -1286,6 +1286,7 @@ describe('API Integration Tests', () => {
           .get('/test/mediator')
           .auth('mediatorTestApp', 'password')
           .expect(200)
+
         const res = await TransactionModelAPI.findOne()
         res.status.should.be.equal(mediatorResponse.status)
         res.orchestrations.length.should.be.exactly(1)
