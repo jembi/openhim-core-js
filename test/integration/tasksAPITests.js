@@ -243,8 +243,10 @@ describe('API Integration Tests', () => {
       await ChannelModelAPI.remove()
 
       const db = await MongoClient.connect(config.mongo.url)
-      const mongoCollection = db != null ? db.collection('jobs') : undefined
-      await mongoCollection.drop()
+      const mongoCollection = db != null ? db.collection.jobs : undefined
+      if (mongoCollection) {
+        mongoCollection.drop()
+      }
     })
 
     beforeEach(() => { authDetails = testUtils.getAuthDetails() })
@@ -675,7 +677,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-          
+
         const task = await TaskModelAPI.find({ _id: 'aaa777777bbb66cc5d4444ee' })
         task.should.have.length(0)
       })
@@ -692,4 +694,3 @@ describe('API Integration Tests', () => {
     })
   })
 })
-
