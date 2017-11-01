@@ -44,9 +44,7 @@ const shaClient = {
 }
 
 describe('Basic Auth', () => {
-  before(done => ClientModel.remove({}, done))
-
-  afterEach(done => ClientModel.remove({}, done))
+  afterEach(async () => ClientModel.remove({}))
 
   describe('with no credentials', () =>
     it('ctx.authenticated should not exist', (done) => {
@@ -114,7 +112,7 @@ describe('Basic Auth', () => {
     })
   )
 
-  return describe('crypto algorithm (sha) with incorrect credentials', () =>
+  describe('crypto algorithm (sha) with incorrect credentials', () =>
     it('ctx.authenticated should not exist', (done) => {
       const client = new ClientModel(shaClient)
       client.save((err, newAppDoc) => {

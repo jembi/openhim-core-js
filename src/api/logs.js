@@ -1,8 +1,8 @@
 import logger from 'winston'
 import moment from 'moment'
-import Q from 'q'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { promisify } from 'util'
 
 const levels = {
   debug: 1,
@@ -18,7 +18,7 @@ export async function getLogs (ctx) {
     return
   }
 
-  let {query} = ctx.request
+  let { query } = ctx.request || {}
   if (query == null) {
     query = {}
   }
@@ -29,14 +29,14 @@ export async function getLogs (ctx) {
   }
 
   const options = {
-    from: query.from || moment().subtract(5, 'minutes').toDate(),
-    until: query.until || new Date(),
+    from: query.from != null ? moment(query.from).toDate() : moment().subtract(5, 'minutes').toDate(),
+    until: moment(query.until || undefined).toDate(),
     order: 'asc',
     start: parseInt(query.start, 10) || 0,
     limit: 100000 // limit: 0 doesn't work :/
   }
 
-  let results = await Q.ninvoke(logger, 'query', options)
+  let results = await promisify(logger.query.bind(logger))(options)
   results = results.mongodb
 
   if (query.level != null) {

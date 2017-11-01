@@ -18,7 +18,7 @@ describe('Rewrite URLs middleware', () => {
       rewriteUrls.invertPathTransform('s/one/two/').should.be.exactly('s/two/one/')
       rewriteUrls.invertPathTransform('s/one/two').should.be.exactly('s/two/one/')
       rewriteUrls.invertPathTransform('s/one/two/g').should.be.exactly('s/two/one/g')
-      return rewriteUrls.invertPathTransform('s/one/two/gi').should.be.exactly('s/two/one/gi')
+      rewriteUrls.invertPathTransform('s/one/two/gi').should.be.exactly('s/two/one/gi')
     })
   )
 
@@ -75,7 +75,7 @@ describe('Rewrite URLs middleware', () => {
       const stub = sandbox.stub(utils, 'getAllChannelsInPriorityOrder')
       stub.callsArgWith(0, null, [currentChannel, channel1, channel2])
 
-      return rewriteUrls.fetchRewriteConfig(currentChannel, 'tls', (err, rewriteConfig) => {
+      rewriteUrls.fetchRewriteConfig(currentChannel, 'tls', (err, rewriteConfig) => {
         if (err) { return done(err) }
         rewriteConfig.should.have.length(4)
         rewriteConfig[0].fromHost.should.be.exactly('from.org')
@@ -98,7 +98,7 @@ describe('Rewrite URLs middleware', () => {
       currentChannel.addAutoRewriteRules = false
       const stub = sandbox.stub(utils, 'getAllChannelsInPriorityOrder')
       stub.callsArgWith(0, null, [currentChannel, channel1, channel2])
-      return rewriteUrls.fetchRewriteConfig(currentChannel, 'tls', (err, rewriteConfig) => {
+      rewriteUrls.fetchRewriteConfig(currentChannel, 'tls', (err, rewriteConfig) => {
         if (err) { return done(err) }
         rewriteConfig.should.have.length(1)
         rewriteConfig[0].fromHost.should.be.exactly('from.org')
@@ -162,7 +162,7 @@ describe('Rewrite URLs middleware', () => {
         ]
       })
 
-      return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), rewiredChannel, 'tls', (err, newResponse) => {
+      rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), rewiredChannel, 'tls', (err, newResponse) => {
         if (err) { return done(err) }
         newResponse = JSON.parse(newResponse)
         newResponse.obj.href.should.be.exactly('https://toWithTransform.org:5000/that')
@@ -185,7 +185,7 @@ describe('Rewrite URLs middleware', () => {
         ]
       })
 
-      return rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), rewiredChannel, 'tls', (err, newResponse) => {
+      rewriteUrls.rewriteUrls((JSON.stringify(jsonResponse)), rewiredChannel, 'tls', (err, newResponse) => {
         if (err) { return done(err) }
         newResponse = JSON.parse(newResponse)
         newResponse.obj2.href.should.be.exactly('/test1/to/xyz')
@@ -221,7 +221,7 @@ describe('Rewrite URLs middleware', () => {
         }]
       })
 
-      return rewriteUrls.rewriteUrls(xmlResponse, rewiredChannel, 'tls', (err, newResponse) => {
+      rewriteUrls.rewriteUrls(xmlResponse, rewiredChannel, 'tls', (err, newResponse) => {
         if (err) { return done(err) }
         const doc = new Dom().parseFromString(newResponse)
         const href1 = xpath.select('string(//someTags/tag1/@href)', doc)

@@ -1,117 +1,79 @@
 /* eslint-env mocha */
-/* eslint no-unused-expressions:0 */
 
-import Q from 'q'
+import sinon from 'sinon'
 import should from 'should'
 import * as upgradeDB from '../../src/upgradeDB'
-import * as testUtils from '../testUtils'
-import { KeystoreModel } from '../../src/model/keystore'
-import { ClientModel } from '../../src/model/clients'
-import { DbVersionModel } from '../../src/model/dbVersion'
-import { UserModel } from '../../src/model/users'
-import { VisualizerModel } from '../../src/model/visualizer'
+import * as testUtils from '../utils'
+import {
+  KeystoreModel,
+  ClientModel,
+  DbVersionModel,
+  UserModel,
+  VisualizerModel
+} from '../../src/model'
 
 describe('Upgrade DB Tests', () => {
+  const originalUpgradeFuncs = [...upgradeDB.upgradeFuncs]
+  upgradeDB.upgradeFuncs.length = 0
+  after(() => {
+    upgradeDB.upgradeFuncs.push(...originalUpgradeFuncs)
+  })
+
+  afterEach(async () => {
+    await DbVersionModel.remove({})
+  })
+
   describe('.upgradeDB', () => {
-    let func1Complete = false
-    let func2Complete = false
-
-    async function cleanUpgrade (done) {
-      try {
-        await DbVersionModel.remove()
-        done()
-      } catch (err) {
-        done(err)
-      }
-    }
-
-    beforeEach(cleanUpgrade)
-    afterEach(cleanUpgrade)
-
-    const mockUpgradeFunc1 = function () {
-      const defer = Q.defer()
-      setTimeout(() => {
-        if (func2Complete) {
-          throw new Error('Funtions ran non sequentially')
-        } else {
-          func1Complete = true
-          return defer.resolve()
+    it('should run each upgrade function sequentially', async () => {
+      const calls = []
+      upgradeDB.upgradeFuncs.push({
+        description: 'testFunc 1',
+        func: sinon.spy(() => calls.push(1))
+      },
+        {
+          description: 'testFunc 2',
+          func: sinon.spy(() => calls.push(2))
         }
-      }
-        , 10 * global.testTimeoutFactor)
-      return defer.promise
-    }
+      )
 
-    const mockUpgradeFunc2 = function () {
-      const defer = Q.defer()
-      func2Complete = true
-      defer.resolve()
-      return defer.promise
-    }
-
-    it('should run each upgrade function sequentially', (done) => {
-      upgradeDB.upgradeFuncs.length = 0
-      upgradeDB.upgradeFuncs.push({
-        description: 'mock func 1',
-        func: mockUpgradeFunc1
-      })
-      upgradeDB.upgradeFuncs.push({
-        description: 'mock func 2',
-        func: mockUpgradeFunc2
-      })
-
-      return upgradeDB.upgradeDb(() => {
-        func1Complete.should.be.exactly(true)
-        func2Complete.should.be.exactly(true)
-        return done()
-      })
+      await upgradeDB.upgradeDb()
+      calls.should.eql([1, 2])
+      const dbVersions = await DbVersionModel.find({}).sort('version')
+      dbVersions.length.should.eql(1)
+      dbVersions[0].version.should.eql(2)
     })
   })
 
   describe('updateFunction0 - Ensure cert fingerprint', () => {
-    const upgradeFunc = upgradeDB.upgradeFuncs[0].func
+    const upgradeFunc = originalUpgradeFuncs[0].func
 
-    beforeEach(done =>
-      testUtils.setupTestKeystore(() =>
-        KeystoreModel.findOne((err, keystore) => {
-          if (err) { return done(err) }
-          keystore.cert.fingerprint = undefined
-          for (const cert of Array.from(keystore.ca)) {
-            cert.fingerprint = undefined
-          }
-          return keystore.save((err) => {
-            if (err) { console.error(err) }
-            return done()
-          })
-        })
-      )
-    )
+    beforeEach(async () => {
+      await testUtils.setupTestKeystore()
+      const keystore = await KeystoreModel.findOne()
+      keystore.cert.fingerprint = undefined
+      for (const cert of keystore.ca) {
+        cert.fingerprint = undefined
+      }
+      await keystore.save()
+    })
 
-    it('should add the fingerprint property to ca certificates', done =>
-      upgradeFunc().then(() =>
-        KeystoreModel.findOne((err, keystore) => {
-          if (err) { console.error(err) }
-          for (const cert of Array.from(keystore.ca)) {
-            cert.fingerprint.should.exist
-          }
-          return done()
-        })
-      )
-    )
+    it(`should add the fingerprint property to ca certificates`, async () => {
+      await upgradeFunc()
+      const keystore = await KeystoreModel.findOne()
+      for (const cert of keystore.ca) {
+        should.exist(cert.fingerprint)
+      }
+    })
 
-    return it('should add the fingerprint property to server certificate', done =>
-      upgradeFunc().then(() =>
-        KeystoreModel.findOne((err, keystore) => {
-          if (err) { console.error(err) }
-          keystore.cert.fingerprint.should.exist
-          return done()
-        })
-      )
-    )
+    it(`should add the fingerprint property to server certificate`, async () => {
+      await upgradeFunc()
+      const keystore = await KeystoreModel.findOne()
+      should.exist(keystore.cert.fingerprint)
+    })
   })
 
-  describe('updateFunction1 - Convert client.domain to client.fingerprint', () => {
-    const upgradeFunc = upgradeDB.upgradeFuncs[1].func
+  describe(`updateFunction1 - Convert client.domain to client.fingerprint`, () => {
+    const upgradeFunc = originalUpgradeFuncs[1].func
 
     const clientData = {
       clientID: 'test',
@@ -123,29 +85,20 @@ describe('Upgrade DB Tests', () => {
       ]
     }
 
-    before(done =>
-      testUtils.setupTestKeystore(() => {
-        const client = new ClientModel(clientData)
-        return client.save((err) => {
-          if (err != null) { console.error(err) }
-          return done()
-        })
-      })
-    )
+    beforeEach(async () => {
+      await testUtils.setupTestKeystore()
+      await ClientModel(clientData).save()
+    })
 
-    return it('should convert client.domain match to client.certFingerprint match', () =>
-      upgradeFunc().then(() =>
-        ClientModel.findOne({clientID: 'test'}, (err, client) => {
-          if (err) { return err }
-          client.certFingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54')
-        }
-        )
-      )
-    )
+    it(`should convert client.domain match to client.certFingerprint match`, async () => {
+      await upgradeFunc()
+      const client = await ClientModel.findOne({ clientID: 'test' })
+      client.certFingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54')
+    })
   })
 
-  describe('updateFunction2 - Migrate visualizer settings from user profile to shared collection', () => {
-    const upgradeFunc = upgradeDB.upgradeFuncs[2].func
+  describe(`updateFunction2 - Migrate visualizer settings from user profile to shared collection`, () => {
+    const upgradeFunc = originalUpgradeFuncs[2].func
 
     const userObj1 = {
       firstname: 'Test',
@@ -282,7 +235,6 @@ describe('Upgrade DB Tests', () => {
         }
       }
     }
-
     // from structure for Console v1.6.0
     const userObj4 = {
       settings: {
@@ -331,7 +283,6 @@ describe('Upgrade DB Tests', () => {
         'admin'
       ]
     }
-
     // from structure for Console v1.6.0
     const userObj5 = {
       settings: {
@@ -369,178 +320,115 @@ describe('Upgrade DB Tests', () => {
       ]
     }
 
-    before(done =>
-      UserModel.remove(() =>
-        VisualizerModel.remove(() => done())
-      )
-    )
-
-    beforeEach((done) => {
-      let user = new UserModel(userObj1)
-      return user.save((err) => {
-        if (err) { return done(err) }
-        user = new UserModel(userObj2)
-        return user.save((err) => {
-          if (err != null) { return done(err) }
-          return done()
-        })
-      })
+    afterEach(async () => {
+      await Promise.all([
+        UserModel.remove(),
+        VisualizerModel.remove()
+      ])
+      await testUtils.setImmediatePromise()
     })
 
-    afterEach(done =>
-      UserModel.remove(() =>
-        VisualizerModel.remove(() => done())
-      )
-    )
-
-    it('should migrate visualizer settings from user setting to shared collection', done =>
-      upgradeFunc().then(() =>
-        VisualizerModel.find((err, visualizers) => {
-          if (err) { return done(err) }
-          visualizers.length.should.be.exactly(2)
-          const names = visualizers.map(v => v.name)
-          const idx1 = names.indexOf('Test User1\'s visualizer')
-          const idx2 = names.indexOf('Test User2\'s visualizer')
-          idx1.should.be.above(-1)
-          visualizers[idx1].components.length.should.be.exactly(2)
-          idx2.should.be.above(-1)
-          visualizers[idx2].components.length.should.be.exactly(1)
-          return done()
-        })).catch(err => done(err))
-    )
-
-    it('should migrate visualizer settings even when user have the same name', done =>
-      UserModel.findOne({surname: 'User2'}, (err, user) => {
-        if (err) { return done(err) }
-        user.surname = 'User1'
-        return user.save((err) => {
-          if (err) { return done(err) }
-          return upgradeFunc().then(() =>
-            VisualizerModel.find((err, visualizers) => {
-              if (err) { return done(err) }
-              visualizers.length.should.be.exactly(2)
-              const names = visualizers.map(v => v.name)
-              const idx1 = names.indexOf('Test User1\'s visualizer')
-              const idx2 = names.indexOf('Test User1\'s visualizer 2')
-              idx1.should.be.above(-1)
-              visualizers[idx1].components.length.should.be.exactly(2)
-              idx2.should.be.above(-1)
-              visualizers[idx2].components.length.should.be.exactly(1)
-              return done()
-            })).catch(err => done(err))
-        })
-      })
-    )
-
-    it('should remove the users visualizer setting from their profile', done =>
-      upgradeFunc().then(() =>
-        UserModel.findOne({email: 'test1@user.org'}, (err, user) => {
-          if (err) { return done(err) }
-          should.not.exist(user.settings.visualizer)
-          return done()
-        })
-      )
-    )
-
-    it('should ignore users that don\'t have a settings.visualizer or settings set', done =>
-      UserModel.find((err, users) => {
-        if (err) { return done(err) }
-        users[0].set('settings.visualizer', null)
-        users[1].set('settings', null)
-        return users[0].save(err => {
-          if (err) { return done(err) }
-          users[1].save(err => {
-            if (err) { return done(err) }
-            upgradeFunc().then(() =>
-                  VisualizerModel.find((err, visualizers) => {
-                    if (err) { return done(err) }
-                    visualizers.length.should.be.exactly(0)
-                    return done()
-                  })
-                ).catch(err => done(err))
-          }
-            )
-        }
-        )
-      })
-    )
-
-    it('should ignore users that have visualizer settings with no mediators, components or channels', (done) => {
-      const user = new UserModel(userObj3)
-      return user.save((err) => {
-        if (err) { done(err) }
-        return upgradeFunc().then(() =>
-          VisualizerModel.find((err, visualizers) => {
-            if (err) { return done(err) }
-            visualizers.length.should.be.exactly(2) // third user is skipped
-            return done()
-          })).catch(err => done(err))
-      })
+    beforeEach(async () => {
+      await Promise.all([
+        new UserModel(userObj1).save(),
+        new UserModel(userObj2).save()
+      ])
     })
 
-    it('should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)', (done) => {
-      const user = new UserModel(userObj4)
-      return user.save((err) => {
-        if (err) { done(err) }
-        return upgradeFunc().then(() =>
-          VisualizerModel.find((err, visualizers) => {
-            if (err) { return done(err) }
-            visualizers.length.should.be.exactly(3)
+    it('should migrate visualizer settings from user setting to shared collection', async () => {
+      await upgradeFunc()
+      const visualizers = await VisualizerModel.find()
 
-            const names = visualizers.map(v => v.name)
-            const idx = names.indexOf('Test User4\'s visualizer')
+      visualizers.length.should.be.exactly(2)
+      const names = visualizers.map(v => v.name)
+      const idx1 = names.indexOf('Test User1\'s visualizer')
+      const idx2 = names.indexOf('Test User2\'s visualizer')
 
-            visualizers[idx].time.minDisplayPeriod.should.be.exactly(100)
-            visualizers[idx].mediators.length.should.be.exactly(0)
-
-            visualizers[idx].channels.length.should.be.exactly(1)
-            visualizers[idx].channels[0].eventType.should.be.equal('channel')
-            visualizers[idx].channels[0].eventName.should.be.equal('test')
-            visualizers[idx].channels[0].display.should.be.equal('Test Channel')
-
-            visualizers[idx].components.length.should.be.exactly(2)
-            visualizers[idx].components[0].eventType.should.be.equal('channel')
-            visualizers[idx].components[0].eventName.should.be.equal('test')
-            visualizers[idx].components[0].display.should.be.equal('Test')
-            visualizers[idx].components[1].eventType.should.be.equal('route')
-            visualizers[idx].components[1].eventName.should.be.equal('testroute')
-            visualizers[idx].components[1].display.should.be.equal('Test Route')
-            return done()
-          })).catch(err => done(err))
-      })
+      idx1.should.be.above(-1)
+      visualizers[idx1].components.length.should.be.exactly(2)
+      idx2.should.be.above(-1)
+      visualizers[idx2].components.length.should.be.exactly(1)
     })
 
-    return it('should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)', (done) => {
-      const user = new UserModel(userObj5)
-      return user.save((err) => {
-        if (err) { done(err) }
-        return upgradeFunc().then(() =>
-          VisualizerModel.find((err, visualizers) => {
-            if (err) { return done(err) }
-            visualizers.length.should.be.exactly(2)
-            return done()
-          })).catch(err => done(err))
-      })
-    })
-  })
+    it('should migrate visualizer settings even when user have the same name', async function () {
+      this.retries(2)
+      const user = await UserModel.findOne({ surname: 'User2' })
+      user.surname = 'User1'
+      await user.save()
+      await upgradeFunc()
 
-  return describe('dedupName()', () => {
-    it('should correctly dedup a name', () => {
-      const names = ['Max', 'Sam', 'John']
-      const name = upgradeDB.dedupName('Max', names)
-      return name.should.be.exactly('Max 2')
+      const visualizers = await VisualizerModel.find()
+      visualizers.length.should.be.exactly(2)
+      const names = visualizers.map(v => v.name)
+      const idx1 = names.indexOf('Test User1\'s visualizer')
+      const idx2 = names.indexOf('Test User1\'s visualizer 2')
+
+      idx1.should.be.above(-1)
+      visualizers[idx1].components.length.should.be.exactly(2)
+      idx2.should.be.above(-1)
+      visualizers[idx2].components.length.should.be.exactly(1)
     })
 
-    it('should bump the increment if there are multiple dupes', () => {
-      const names = ['Max', 'Max 2', 'Max 3']
-      const name = upgradeDB.dedupName('Max', names)
-      return name.should.be.exactly('Max 4')
+    it('should remove the users visualizer setting from their profile', async () => {
+      await upgradeFunc()
+      const user = await UserModel.findOne({ email: 'test1@user.org' })
+      should.not.exist(user.settings.visualizer)
     })
 
-    return it('should return the original name of no dupes', () => {
-      const names = ['Sam', 'John', 'Simon']
-      const name = upgradeDB.dedupName('Max', names)
-      return name.should.be.exactly('Max')
+    it('should ignore users that don\'t have a settings.visualizer or settings set', async () => {
+      const users = await UserModel.find()
+
+      users[0].set('settings.visualizer', null)
+      users[1].set('settings', null)
+
+      await Promise.all(users.map(u => u.save()))
+      await upgradeFunc()
+
+      const visualizers = await VisualizerModel.find()
+      visualizers.length.should.eql(0)
+    })
+
+    it(`should ignore users that have visualizer settings with no mediators, components or channels`, async () => {
+      await new UserModel(userObj3).save()
+      await upgradeFunc()
+
+      const visualizers = await VisualizerModel.find()
+      visualizers.length.should.eql(2)
+    })
+
+    it(`should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)`, async () => {
+      await new UserModel(userObj4).save()
+      await upgradeFunc()
+
+      const visualizers = await await VisualizerModel.find()
+      visualizers.length.should.be.exactly(3)
+
+      const names = visualizers.map(v => v.name)
+      const idx = names.indexOf('Test User4\'s visualizer')
+
+      visualizers[idx].time.minDisplayPeriod.should.be.exactly(100)
+      visualizers[idx].mediators.length.should.be.exactly(0)
+
+      visualizers[idx].channels.length.should.be.exactly(1)
+      visualizers[idx].channels[0].eventType.should.be.equal('channel')
+      visualizers[idx].channels[0].eventName.should.be.equal('test')
+      visualizers[idx].channels[0].display.should.be.equal('Test Channel')
+
+      visualizers[idx].components.length.should.be.exactly(2)
+      visualizers[idx].components[0].eventType.should.be.equal('channel')
+      visualizers[idx].components[0].eventName.should.be.equal('test')
+      visualizers[idx].components[0].display.should.be.equal('Test')
+      visualizers[idx].components[1].eventType.should.be.equal('route')
+      visualizers[idx].components[1].eventName.should.be.equal('testroute')
+      visualizers[idx].components[1].display.should.be.equal('Test Route')
+    })
+
+    it(`should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)`, async () => {
+      await new UserModel(userObj5).save()
+      await upgradeFunc()
+
+      const visualizers = await VisualizerModel.find()
+      visualizers.length.should.eql(2)
     })
   })
 })

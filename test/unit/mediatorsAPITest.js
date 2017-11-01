@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 
 import rewire from 'rewire'
-
 const mediators = rewire('../../src/api/mediators')
 
 describe('Mediator API unit tests', () => {
@@ -480,7 +479,7 @@ describe('Mediator API unit tests', () => {
       throw new Error('Failed')
     })
 
-    return it('should reject config that is NOT defined as an array but has an array value (\'array\' undefined - default behaviour)', () => {
+    it('should reject config that is NOT defined as an array but has an array value (\'array\' undefined - default behaviour)', () => {
       try {
         mediators.validateConfig(
           [{
@@ -537,7 +536,7 @@ describe('Mediator API unit tests', () => {
       m.config.one.should.be.exactly(mask)
       m.config.two.should.be.exactly('a string')
       m.config.three.should.be.exactly(true)
-      return m.config.four.should.be.exactly(mask)
+      m.config.four.should.be.exactly(mask)
     })
 
     it('should ignore a password param if it isn\'t set', () => {
@@ -571,7 +570,7 @@ describe('Mediator API unit tests', () => {
       (m.config.one === undefined).should.be.true()
       m.config.two.should.be.exactly('a string')
       m.config.three.should.be.exactly(true)
-      return m.config.four.should.be.exactly(mask)
+      m.config.four.should.be.exactly(mask)
     })
 
     it('should filter out passwords nested in structs', () => {
@@ -657,11 +656,11 @@ describe('Mediator API unit tests', () => {
       maskPasswords(m.configDefs, m.config)
       m.config.one[0].should.be.exactly(mask)
       m.config.one[1].should.be.exactly(mask)
-      return m.config.one[2].should.be.exactly(mask)
+      m.config.one[2].should.be.exactly(mask)
     })
   })
 
-  return describe('.restoreMaskedPasswords()', () => {
+  describe('.restoreMaskedPasswords()', () => {
     const mask = '**********'
 
     it('should a restore a password in a mediator object', () => {
@@ -700,7 +699,7 @@ describe('Mediator API unit tests', () => {
 
       restoreMaskedPasswords(defs, maskedConfig, config)
       maskedConfig.one.should.be.exactly('secret')
-      return maskedConfig.four.should.be.exactly('changed secret')
+      maskedConfig.four.should.be.exactly('changed secret')
     })
 
     it('should restore passwords nested in structs', () => {
@@ -761,10 +760,10 @@ describe('Mediator API unit tests', () => {
 
       restoreMaskedPasswords(defs, maskedConfig, config)
       maskedConfig.two.nestedPass.should.be.exactly('one')
-      return maskedConfig.two.twoone.nestedNestedPass.should.be.exactly('two')
+      maskedConfig.two.twoone.nestedNestedPass.should.be.exactly('two')
     })
 
-    return it('should a restore an ARRAY of passwords in a mediator object', () => {
+    it('should a restore an ARRAY of passwords in a mediator object', () => {
       const restoreMaskedPasswords = mediators.__get__('restoreMaskedPasswords')
       const defs =
         [{

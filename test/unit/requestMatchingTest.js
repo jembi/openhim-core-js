@@ -2,9 +2,9 @@
 /* eslint no-unused-expressions:0 */
 import should from 'should'
 import rewire from 'rewire'
-
+import {ObjectId} from 'mongodb'
 const requestMatching = rewire('../../src/middleware/requestMatching')
-const {ChannelModel} = require('../../src/model/channels')
+const { ChannelModel } = require('../../src/model/channels')
 
 const truthy = () => true
 const falsey = () => false
@@ -17,7 +17,7 @@ describe('Request Matching middleware', () => {
         .from('data: xyz\\nfunctionId: abc123\n'))).should.be.true
     })
 
-    return it('should return false if the regex pattern DOES NOT find a match in the body', () => {
+    it('should return false if the regex pattern DOES NOT find a match in the body', () => {
       (requestMatching.matchRegex('123', Buffer.from('aaa124aaa'))).should.be.false
       return (requestMatching.matchRegex('functionId:\\s[a-z]{3}\\d{3}\\s', Buffer
         .from('data: xyz\\nfunctionId: somethingelse\n'))).should.be.false
@@ -29,9 +29,9 @@ describe('Request Matching middleware', () => {
       'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1', Buffer
         .from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.true)
 
-    return it('should return false if the xpath value DOES NOT match', () => (requestMatching
+    it('should return false if the xpath value DOES NOT match', () => (requestMatching
       .matchXpath('string(/root/function/@uuid)', 'not-correct',
-        Buffer.from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.false)
+      Buffer.from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.false)
   })
 
   describe('.matchJsonPath(xpath, val, xml)', () => {
@@ -39,14 +39,14 @@ describe('Request Matching middleware', () => {
       'da98db33-dd94-4e2a-ba6c-ac3f016dbdf1',
       Buffer.from('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}'))).should.be.true)
 
-    return it('should return false if the json path value DOES NOT match', () => (
+    it('should return false if the json path value DOES NOT match', () => (
       requestMatching.matchJsonPath('metadata.function.id', 'not-correct',
         Buffer.from('{"metadata": {"function": {"id": "da98db33-dd94-4e2a-ba6c-ac3f016dbdf1"}}}'))).should.be.false)
   })
 
   describe('.matchContent(channel, ctx)', () => {
     const channelRegex =
-      {matchContentRegex: /\d{6}/}
+      { matchContentRegex: /\d{6}/ }
 
     const channelXpath = {
       matchContentXpath: 'string(/function/uuid)',
@@ -61,27 +61,27 @@ describe('Request Matching middleware', () => {
     const noMatchChannel = {}
 
     const channelInvalid =
-      {matchContentJson: 'function.uuid'}
+      { matchContentJson: 'function.uuid' }
 
     it('should call the correct matcher', () => {
-      requestMatching.matchContent(channelRegex, {body: Buffer.from('--------123456------')}).should.be.true
-      requestMatching.matchContent(channelXpath, {body: Buffer.from('<function><uuid>123456789</uuid></function>')})
+      requestMatching.matchContent(channelRegex, { body: Buffer.from('--------123456------') }).should.be.true
+      requestMatching.matchContent(channelXpath, { body: Buffer.from('<function><uuid>123456789</uuid></function>') })
         .should.be.true
-      requestMatching.matchContent(channelJson, {body: Buffer.from('{"function": {"uuid": "123456789"}}')})
+      requestMatching.matchContent(channelJson, { body: Buffer.from('{"function": {"uuid": "123456789"}}') })
         .should.be.true
 
-      requestMatching.matchContent(channelRegex, {body: Buffer.from('--------1234aaa56------')}).should.be.false
-      requestMatching.matchContent(channelXpath, {body: Buffer.from('<function><uuid>1234aaa56789</uuid></function>')})
+      requestMatching.matchContent(channelRegex, { body: Buffer.from('--------1234aaa56------') }).should.be.false
+      requestMatching.matchContent(channelXpath, { body: Buffer.from('<function><uuid>1234aaa56789</uuid></function>') })
         .should.be.false
-      return requestMatching.matchContent(channelJson, {body: Buffer.from('{"function": {"uuid": "1234aaa56789"}}')})
+      return requestMatching.matchContent(channelJson, { body: Buffer.from('{"function": {"uuid": "1234aaa56789"}}') })
         .should.be.false
     })
 
     it('should return true if no matching properties are present', () => requestMatching.matchContent(noMatchChannel,
-      {body: Buffer.from('someBody')}).should.be.true)
+      { body: Buffer.from('someBody') }).should.be.true)
 
-    return it('should return false for invalid channel configs', () => requestMatching.matchContent(channelInvalid,
-      {body: Buffer.from('someBody')}).should.be.false)
+    it('should return false for invalid channel configs', () => requestMatching.matchContent(channelInvalid,
+      { body: Buffer.from('someBody') }).should.be.false)
   })
 
   describe('.extractContentType', () =>
@@ -97,13 +97,13 @@ describe('Request Matching middleware', () => {
   describe('.matchUrlPattern', () => {
     it('should match a url pattern', () => {
       const matchUrlPattern = requestMatching.__get__('matchUrlPattern')
-      const actual = matchUrlPattern({urlPattern: '^test\\d+$'}, {request: {path: 'test123'}})
+      const actual = matchUrlPattern({ urlPattern: '^test\\d+$' }, { request: { path: 'test123' } })
       return actual.should.be.true()
     })
 
-    return it('should reject an invalid match', () => {
+    it('should reject an invalid match', () => {
       const matchUrlPattern = requestMatching.__get__('matchUrlPattern')
-      const actual = matchUrlPattern({urlPattern: '^test\\d+$'}, {request: {path: 'test12aaa3'}})
+      const actual = matchUrlPattern({ urlPattern: '^test\\d+$' }, { request: { path: 'test12aaa3' } })
       return actual.should.be.false()
     })
   })
@@ -111,39 +111,47 @@ describe('Request Matching middleware', () => {
   describe('.matchContentTypes', () => {
     it('should match correct content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({matchContentTypes: ['text/plain', 'something/else']}, {request: {header:
-        {'content-type': 'text/plain'}}})
+      const actual = matchContentTypes({ matchContentTypes: ['text/plain', 'something/else'] }, {
+        request: {
+          header:
+          { 'content-type': 'text/plain' }
+        }
+      })
       return actual.should.be.true()
     })
 
     it('should not match incorrect content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({matchContentTypes: ['text/plain']}, {request: {header:
-        {'content-type': 'application/json'}}})
+      const actual = matchContentTypes({ matchContentTypes: ['text/plain'] }, {
+        request: {
+          header:
+          { 'content-type': 'application/json' }
+        }
+      })
       return actual.should.be.false()
     })
 
     it('should return true if there is no matching criteria set (property doesnt exist)', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({}, {request: {header: {'content-type': 'application/json'}}})
+      const actual = matchContentTypes({}, { request: { header: { 'content-type': 'application/json' } } })
       return actual.should.be.true()
     })
 
     it('should return true if there is no matching criteria set (null)', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({matchContentTypes: null}, {request: {header: {'content-type': 'application/json'}}})
+      const actual = matchContentTypes({ matchContentTypes: null }, { request: { header: { 'content-type': 'application/json' } } })
       return actual.should.be.true()
     })
 
     it('should return true if there is no matching criteria set (undefined)', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({matchContentTypes: undefined}, {request: {header: {'content-type': 'application/json'}}})
+      const actual = matchContentTypes({ matchContentTypes: undefined }, { request: { header: { 'content-type': 'application/json' } } })
       return actual.should.be.true()
     })
 
-    return it('should return true if there is no matching criteria set (empty)', () => {
+    it('should return true if there is no matching criteria set (empty)', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
-      const actual = matchContentTypes({matchContentTypes: []}, {request: {header: {'content-type': 'application/json'}}})
+      const actual = matchContentTypes({ matchContentTypes: [] }, { request: { header: { 'content-type': 'application/json' } } })
       return actual.should.be.true()
     })
   })
@@ -175,7 +183,7 @@ describe('Request Matching middleware', () => {
     })
   })
 
-  return describe('.matchRequest(ctx, done)', () => {
+  describe('.matchRequest(ctx, done)', () => {
     const validTestBody = `\
 <careServicesRequest>
   <function uuid='4e8bbeb9-f5f5-11e2-b778-0800200c9a66'>
@@ -202,16 +210,7 @@ describe('Request Matching middleware', () => {
 
     let addedChannelNames = []
 
-    afterEach(() => {
-      // remove test channels
-      for (const channelName of Array.from(addedChannelNames)) {
-        ChannelModel.remove({name: channelName}, (err) => {
-          if (err) { return err }
-        })
-      }
-
-      addedChannelNames = []
-    })
+    afterEach(() => ChannelModel.remove({name: { $in: addedChannelNames }}))
 
     it('should match if message content matches the channel rules', (done) => {
       // Setup a channel for the mock endpoint
@@ -227,11 +226,15 @@ describe('Request Matching middleware', () => {
         }
         ],
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
-        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66'
+        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
-      return channel.save((err) => {
+      channel.save((err) => {
         if (err) {
           return done(err)
         }
@@ -251,7 +254,7 @@ describe('Request Matching middleware', () => {
         ctx.request.url = 'test/authorisation'
         ctx.request.path = 'test/authorisation'
         ctx.response = {}
-        return requestMatching.matchRequest(ctx, (err, match) => {
+        requestMatching.matchRequest(ctx, (err, match) => {
           should.not.exist(err)
           should.exist(match)
           return done()
@@ -273,11 +276,15 @@ describe('Request Matching middleware', () => {
         }
         ],
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
-        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66'
+        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
-      return channel.save((err) => {
+      channel.save((err) => {
         if (err) {
           return done(err)
         }
@@ -298,7 +305,7 @@ describe('Request Matching middleware', () => {
         ctx.request.path = 'test/authorisation'
         ctx.response = {}
         ctx.set = function () { }
-        return requestMatching.matchRequest(ctx, (err, match) => {
+        requestMatching.matchRequest(ctx, (err, match) => {
           should.not.exist(err)
           should.not.exist(match)
           return done()
@@ -321,11 +328,15 @@ describe('Request Matching middleware', () => {
         ],
         matchContentTypes: ['text/xml'],
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
-        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66'
+        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
-      return channel.save((err) => {
+      channel.save((err) => {
         if (err) {
           return done(err)
         }
@@ -347,7 +358,7 @@ describe('Request Matching middleware', () => {
         ctx.request.header = {}
         ctx.request.header['content-type'] = 'text/xml; charset=utf-8'
         ctx.response = {}
-        return requestMatching.matchRequest(ctx, (err, match) => {
+        requestMatching.matchRequest(ctx, (err, match) => {
           should.not.exist(err)
           should.exist(match)
           return done()
@@ -370,11 +381,15 @@ describe('Request Matching middleware', () => {
         ],
         matchContentTypes: ['text/xml'],
         matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
-        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66'
+        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
-      return channel.save((err) => {
+      channel.save((err) => {
         if (err) {
           return done(err)
         }
@@ -418,11 +433,15 @@ describe('Request Matching middleware', () => {
           primary: true
         }
         ],
-        status: 'enabled'
+        status: 'enabled',
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
-      return channel.save((err) => {
+      channel.save((err) => {
         if (err) {
           return done(err)
         }
@@ -462,11 +481,15 @@ describe('Request Matching middleware', () => {
           primary: true
         }
         ],
-        status: 'disabled'
+        status: 'disabled',
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
-      return channel.save((err) => {
+      channel.save((err) => {
         if (err) {
           return done(err)
         }
@@ -507,11 +530,15 @@ describe('Request Matching middleware', () => {
           primary: true
         }
         ],
-        status: 'deleted'
+        status: 'deleted',
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       addedChannelNames.push(channel.name)
-      return channel.save((err) => {
+      channel.save((err) => {
         if (err) {
           return done(err)
         }

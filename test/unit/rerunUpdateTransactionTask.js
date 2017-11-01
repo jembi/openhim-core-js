@@ -5,7 +5,7 @@ import * as rerunUpdateTransactionTask from '../../src/middleware/rerunUpdateTra
 import { TransactionModel } from '../../src/model/transactions'
 import { TaskModel } from '../../src/model/tasks'
 
-const {ObjectId} = require('mongoose').Types
+const { ObjectId } = require('mongoose').Types
 
 const ctx = {
   parentID: '53e096fea0af3105689acd6a',
@@ -22,10 +22,10 @@ const ctx2 = {
 }
 
 const ctx3 =
-  {parentID: '53e096fea0af310568333333'}
+  { parentID: '53e096fea0af310568333333' }
 
 const ctx4 =
-  {parentID: '53e096fea0af310568444444'}
+  { parentID: '53e096fea0af310568444444' }
 
 const transaction1 = new TransactionModel({
   _id: '53e096fea0af3105689acd6a',
@@ -33,7 +33,7 @@ const transaction1 = new TransactionModel({
   clientID: '42bbe25485e77d8e5daad4b4',
   request: {
     path: '/sample/api',
-    headers: {authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001'},
+    headers: { authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001' },
     querystring: 'param=hello',
     body: '',
     method: 'GET',
@@ -48,7 +48,7 @@ const transaction2 = new TransactionModel({
   clientID: '42bbe25485e77d8e5daad4b4',
   request: {
     path: '/sample/api',
-    headers: {authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001'},
+    headers: { authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001' },
     querystring: 'param=hello',
     body: '',
     method: 'GET',
@@ -72,7 +72,7 @@ const transaction3 = new TransactionModel({
   clientID: '42bbe25485e77d8e5daad4b4',
   request: {
     path: '/sample/api',
-    headers: {authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001'},
+    headers: { authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001' },
     querystring: 'param=hello',
     body: '',
     method: 'GET',
@@ -88,7 +88,7 @@ const transaction4 = new TransactionModel({
   clientID: '42bbe25485e77d8e5daad4b4',
   request: {
     path: '/sample/api',
-    headers: {authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001'},
+    headers: { authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001' },
     querystring: 'param=hello',
     body: '',
     method: 'GET',
@@ -105,39 +105,34 @@ const task1 = new TaskModel({
   remainingTransactions: 2,
   totalTransactions: 3,
   status: 'Processing',
-  transactions: [{tid: '53e096fea0af3105689acd6a', tstatus: 'Completed'},
-    {tid: '53bfbcd06a2b417f6cd14872', tstatus: 'Queued'},
-    {tid: 'aaaaaaaaaabbbbbbbbbbcccc', tstatus: 'Queued'}],
+  transactions: [{ tid: '53e096fea0af3105689acd6a', tstatus: 'Completed' },
+  { tid: '53bfbcd06a2b417f6cd14872', tstatus: 'Queued' },
+  { tid: 'aaaaaaaaaabbbbbbbbbbcccc', tstatus: 'Queued' }],
   user: 'root@openhim.org'
 })
 
 describe('rerunUpdateTransactionTask middleware', () => {
-  before(done =>
-    transaction1.save(() =>
-      transaction2.save(err => {
-        if (err) { return done(err) }
-        transaction3.save(err => {
-          if (err) { return done(err) }
-          transaction4.save(err => {
-            if (err) { return done(err) }
-            task1.save(() => done())
-          })
-        })
-      })
-    )
-  )
+  before(async () => {
+    await Promise.all([
+      transaction1.save(),
+      transaction2.save(),
+      transaction3.save(),
+      transaction4.save()
+    ])
 
-  after(done =>
-    TransactionModel.remove({}, () =>
-      TaskModel.remove({}, () => done())
-    )
-  )
+    await task1.save()
+  })
+
+  after(async () => {
+    await TransactionModel.remove({})
+    await TaskModel.remove({})
+  })
 
   describe('updateOriginalTransaction', () => {
     it('should update the original transaction with the child ID', (done) => {
       // check data before function execution
       const transactionID = '53e096fea0af3105689acd6a'
-      return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
+      TransactionModel.findOne({ _id: transactionID }, (err, transaction) => {
         if (err) { return done(err) }
         transaction.should.have.property('_id', ObjectId('53e096fea0af3105689acd6a'))
         transaction.should.have.property('channelID', ObjectId('53bbe25485e66d8e5daad4a2'))
@@ -145,7 +140,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
         transaction.should.have.property('status', 'Completed')
         transaction.childIDs.length.should.be.eql(0)
 
-        return rerunUpdateTransactionTask.updateOriginalTransaction(ctx, (err, transaction) => {
+        rerunUpdateTransactionTask.updateOriginalTransaction(ctx, (err, transaction) => {
           if (err) { return done(err) }
           transaction.should.have.property('_id', ObjectId('53e096fea0af3105689acd6a'))
           transaction.should.have.property('channelID', ObjectId('53bbe25485e66d8e5daad4a2'))
@@ -158,10 +153,10 @@ describe('rerunUpdateTransactionTask middleware', () => {
       })
     })
 
-    return it('should update the original transaction with the child ID even when there are orchestrations without a request property', (done) => {
+    it('should update the original transaction with the child ID even when there are orchestrations without a request property', (done) => {
       // check data before function execution
       const transactionID = '53e096fea0af3105689acd6b'
-      return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
+      TransactionModel.findOne({ _id: transactionID }, (err, transaction) => {
         if (err) { return done(err) }
         transaction.should.have.property('_id', ObjectId('53e096fea0af3105689acd6b'))
         transaction.should.have.property('channelID', ObjectId('53bbe25485e66d8e5daad4a2'))
@@ -169,7 +164,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
         transaction.should.have.property('status', 'Completed')
         transaction.childIDs.length.should.be.eql(0)
 
-        return rerunUpdateTransactionTask.updateOriginalTransaction(ctx2, (err, transaction) => {
+        rerunUpdateTransactionTask.updateOriginalTransaction(ctx2, (err, transaction) => {
           if (err) { done(err) }
           transaction.should.have.property('_id', ObjectId('53e096fea0af3105689acd6b'))
           transaction.should.have.property('channelID', ObjectId('53bbe25485e66d8e5daad4a2'))
@@ -187,7 +182,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
     it('should update the task with the rerun ID and status', (done) => {
       // check data before function execution
       const taskID = '53e34b915d0180cf6eef2d01'
-      TaskModel.findOne({_id: taskID}, (err, task) => {
+      TaskModel.findOne({ _id: taskID }, (err, task) => {
         if (err) { return done(err) }
         task.should.have.property('_id', ObjectId('53e34b915d0180cf6eef2d01'))
         task.should.have.property('remainingTransactions', 2)
@@ -199,7 +194,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
         return should.not.exist((task.transactions[2].rerunID))
       })
 
-      return rerunUpdateTransactionTask.updateTask(ctx, (err, task) => {
+      rerunUpdateTransactionTask.updateTask(ctx, (err, task) => {
         if (err) { return done(err) }
         task.should.have.property('_id', ObjectId('53e34b915d0180cf6eef2d01'))
         task.should.have.property('remainingTransactions', 2)
@@ -211,10 +206,10 @@ describe('rerunUpdateTransactionTask middleware', () => {
     })
   )
 
-  return describe('setAttemptNumber', () => {
+  describe('setAttemptNumber', () => {
     it('should not set the attempt number if the parent transaction was not an autoretry', (done) => {
       delete ctx.currentAttempt
-      return rerunUpdateTransactionTask.setAttemptNumber(ctx, (err) => {
+      rerunUpdateTransactionTask.setAttemptNumber(ctx, (err) => {
         if (err) { return done(err) }
         ctx.should.not.have.property('currentAttempt')
         return done()
@@ -223,7 +218,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
 
     it('should add an initial attempt number to the ctx', (done) => {
       delete ctx3.currentAttempt
-      return rerunUpdateTransactionTask.setAttemptNumber(ctx3, (err) => {
+      rerunUpdateTransactionTask.setAttemptNumber(ctx3, (err) => {
         if (err) { return done(err) }
         ctx3.should.have.property('currentAttempt')
         ctx3.currentAttempt.should.be.exactly(1)
@@ -231,9 +226,9 @@ describe('rerunUpdateTransactionTask middleware', () => {
       })
     })
 
-    return it('should increment the attempt number if it exists on the parent transaction', (done) => {
+    it('should increment the attempt number if it exists on the parent transaction', (done) => {
       delete ctx4.currentAttempt
-      return rerunUpdateTransactionTask.setAttemptNumber(ctx4, (err) => {
+      rerunUpdateTransactionTask.setAttemptNumber(ctx4, (err) => {
         if (err) { return done(err) }
         ctx4.should.have.property('currentAttempt')
         ctx4.currentAttempt.should.be.exactly(6)

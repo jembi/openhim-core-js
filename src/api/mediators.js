@@ -391,13 +391,14 @@ export async function setConfig (ctx, urn) {
   }
 }
 
-function saveDefaultChannelConfig (channels) {
+function saveDefaultChannelConfig (channels, authenticated) {
   const promises = []
   for (const channel of Array.from(channels)) {
     delete channel._id
     for (const route of Array.from(channel.routes)) {
       delete route._id
     }
+    channel.updatedBy = utils.selectAuditFields(authenticated)
     promises.push(new ChannelModelAPI(channel).save())
   }
   return promises
@@ -423,14 +424,14 @@ export async function loadDefaultChannels (ctx, urn) {
     }
 
     if ((channels == null) || (channels.length === 0)) {
-      await Q.all(saveDefaultChannelConfig(mediator.defaultChannelConfig))
+      await Promise.all(saveDefaultChannelConfig(mediator.defaultChannelConfig, ctx.authenticated))
     } else {
       const filteredChannelConfig = mediator.defaultChannelConfig.filter(channel => Array.from(channels).includes(channel.name))
       if (filteredChannelConfig.length < channels.length) {
         utils.logAndSetResponse(ctx, 400, `Could not load mediator default channel config, one or more channels in the request body not found in the mediator config (urn: ${urn})`, 'error')
         return
       } else {
-        await Q.all(saveDefaultChannelConfig(filteredChannelConfig))
+        await Promise.all(saveDefaultChannelConfig(filteredChannelConfig, ctx.authenticated))
       }
     }
 

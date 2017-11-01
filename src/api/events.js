@@ -10,7 +10,7 @@ export async function getLatestEvents (ctx, receivedTime) {
 
   try {
     const rtDate = new Date(Number(receivedTime))
-    const results = await EventModelAPI.find({created: {$gte: rtDate}}).sort({normalizedTimestamp: 1}).exec()
+    const results = await EventModelAPI.find({created: {$gte: rtDate}}).sort({normalizedTimestamp: 1})    
     ctx.body = {events: results}
   } catch (err) {
     utils.logAndSetResponse(ctx, 500, `Could not fetch the latest events via the API: ${err}`, 'error')

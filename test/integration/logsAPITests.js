@@ -1,187 +1,138 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import logger from 'winston'
+import moment from 'moment'
+import { promisify } from 'util'
+
+import { LogModel } from '../../src/model'
 import * as server from '../../src/server'
-import * as testUtils from '../testUtils'
+import * as testUtils from '../utils'
+import * as constants from '../constants'
 
-const {auth} = testUtils
+describe(`API Integration Tests`, () => {
+  describe(`Log REST API`, () => {
+    let authDetails
+    let beforeTS
+    let middleTS
+    let endTS
 
-describe('API Integration Tests', () =>
+    before(async () => {
+      beforeTS = moment('2012-01-01 11:00')
+      middleTS = moment(beforeTS).add(1, 'minutes').add(30, 'seconds')
+      endTS = moment(beforeTS).add(3, 'minutes')
+      await Promise.all([
+        testUtils.setupTestUsers(),
+        promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort })
+      ])
 
-  describe('Logs REST API', () => {
-    let authDetails = {}
-    let beforeTS = {}
-    let middleTS = {}
-    let endTS = {}
+      await LogModel.remove()
 
-    beforeEach(() => { authDetails = auth.getAuthDetails() })
+      const timestamp = moment(beforeTS)
+      await Promise.all([
+        new LogModel({ message: 'TEST1', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
+        new LogModel({ message: 'TEST2', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'error', meta: {} }).save(),
+        new LogModel({ message: 'TEST3', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
+        new LogModel({ message: 'TEST4', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
+        new LogModel({ message: 'TEST5', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'error', meta: {} }).save()
+      ])
+    })
 
-    before(done =>
-      // setTimeouts are to make sure we don't get overlapping timestamps on the
-      // logs messages, this can affect their order and makes the tests fail.
-      setTimeout(() => {
-        beforeTS = new Date()
-        setTimeout(() => {
-          logger.warn('TEST1')
-          setTimeout(() => {
-            logger.error('TEST2')
-            setTimeout(() => {
-              logger.warn('TEST3')
-              setTimeout(() => {
-                middleTS = new Date()
-                setTimeout(() => {
-                  logger.warn('TEST4')
-                  setTimeout(() => {
-                    logger.error('TEST5')
-                    setTimeout(() => {
-                      endTS = new Date()
-                      setTimeout(() =>
-                        auth.setupTestUsers(err => {
-                          if (err) { return done(err) }
-                          server.start({apiPort: 8080}, () => done())
-                        }
-                        ), 15 * global.testTimeoutFactor)
-                    }, 15 * global.testTimeoutFactor)
-                  }, 15 * global.testTimeoutFactor)
-                }, 15 * global.testTimeoutFactor)
-              }, 15 * global.testTimeoutFactor)
-            }, 15 * global.testTimeoutFactor)
-          }, 15 * global.testTimeoutFactor)
-        }, 15 * global.testTimeoutFactor)
-      }, 15 * global.testTimeoutFactor)
-    )
+    beforeEach(async () => {
+      authDetails = testUtils.getAuthDetails()
+    })
 
-    after((done) => {
-      logger.transports.MongoDB.level = 'debug'
-      return auth.cleanupTestUsers(err => {
-        if (err) { return done(err) }
-        server.stop(() => done())
-      }
-      )
+    after(async () => {
+      await Promise.all([
+        testUtils.cleanupTestUsers(),
+        promisify(server.stop)(),
+        LogModel.remove()
+      ])
     })
 
     describe('*getLogs', () => {
-      it('should return latest logs in order', done =>
-        request('https://localhost:8080')
+      it('should return latest logs in order', async () => {
+        const res = await request(constants.BASE_URL)
           .get(`/logs?from=${beforeTS.toISOString()}&until=${endTS.toISOString()}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              res.body.length.should.be.equal(5)
-              res.body[0].message.should.be.equal('TEST1')
-              res.body[1].message.should.be.equal('TEST2')
-              res.body[2].message.should.be.equal('TEST3')
-              res.body[3].message.should.be.equal('TEST4')
-              res.body[4].message.should.be.equal('TEST5')
-              return done()
-            }
-          })
-      )
 
-      it('should limit number of logs returned', done =>
-        request('https://localhost:8080')
+        res.body.length.should.be.equal(5)
+        res.body[0].message.should.be.equal('TEST1')
+        res.body[1].message.should.be.equal('TEST2')
+        res.body[2].message.should.be.equal('TEST3')
+        res.body[3].message.should.be.equal('TEST4')
+        res.body[4].message.should.be.equal('TEST5')
+      })
+
+      it('should limit number of logs returned', async () => {
+        const res = await request(constants.BASE_URL)
           .get(`/logs?limit=2&from=${beforeTS.toISOString()}&until=${endTS.toISOString()}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              res.body.length.should.be.equal(2)
-              res.body[0].message.should.be.equal('TEST1')
-              res.body[1].message.should.be.equal('TEST2')
-              return done()
-            }
-          })
-      )
 
-      it('should use start after the specified entry', done =>
-        request('https://localhost:8080')
+        res.body.length.should.be.equal(2)
+        res.body[0].message.should.be.equal('TEST1')
+        res.body[1].message.should.be.equal('TEST2')
+      })
+
+      it('should use start after the specified entry', async () => {
+        const res = await request(constants.BASE_URL)
           .get(`/logs?start=3&from=${beforeTS.toISOString()}&until=${endTS.toISOString()}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              res.body.length.should.be.equal(2)
-              res.body[0].message.should.be.equal('TEST4')
-              res.body[1].message.should.be.equal('TEST5')
-              return done()
-            }
-          })
-      )
 
-      it('should filter by date', done =>
-        request('https://localhost:8080')
+        res.body.length.should.be.equal(2)
+        res.body[0].message.should.be.equal('TEST4')
+        res.body[1].message.should.be.equal('TEST5')
+      })
+
+      it('should filter by date', async () => {
+        const res = await request(constants.BASE_URL)
           .get(`/logs?from=${beforeTS.toISOString()}&until=${middleTS.toISOString()}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              res.body.length.should.be.equal(3)
-              res.body[0].message.should.be.equal('TEST1')
-              res.body[1].message.should.be.equal('TEST2')
-              res.body[2].message.should.be.equal('TEST3')
-              return done()
-            }
-          })
-      )
 
-      it('should filter by level', done =>
-        request('https://localhost:8080')
+        res.body.length.should.be.equal(3)
+        res.body[0].message.should.be.equal('TEST1')
+        res.body[1].message.should.be.equal('TEST2')
+        res.body[2].message.should.be.equal('TEST3')
+      })
+
+      it('should filter by level', async () => {
+        const res = await request(constants.BASE_URL)
           .get(`/logs?level=error&from=${beforeTS.toISOString()}&until=${endTS.toISOString()}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              res.body.length.should.be.equal(2)
-              res.body[0].message.should.be.equal('TEST2')
-              res.body[1].message.should.be.equal('TEST5')
-              return done()
-            }
-          })
-      )
 
-      it('should deny access for a non-admin', done =>
-        request('https://localhost:8080')
+        res.body.length.should.be.equal(2)
+        res.body[0].message.should.be.equal('TEST2')
+        res.body[1].message.should.be.equal('TEST5')
+      })
+
+      it('should deny access for a non-admin', async () => {
+        await request(constants.BASE_URL)
           .get('/logs')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(403)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              return done()
-            }
-          })
-      )
+      })
     })
   })
-)
+})

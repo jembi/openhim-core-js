@@ -10,7 +10,7 @@ import * as tlsAuthentication from './middleware/tlsAuthentication'
 import { config } from './config'
 
 config.auditing = config.get('auditing')
-const {firstCharLowerCase} = require('xml2js').processors
+const { firstCharLowerCase } = require('xml2js').processors
 
 function parseAuditRecordFromXML (xml, callback) {
   // DICOM mappers
@@ -163,7 +163,10 @@ const sendTLSAudit = (msg, callback) =>
     if (err) { return callback(err) }
 
     const client = tls.connect(config.auditing.auditEvents.port, config.auditing.auditEvents.host, options, () => {
-      if (!client.authorized) { return callback(client.authorizationError) }
+      const { rejectUnauthorized = true } = options
+      if (rejectUnauthorized && !client.authorized) {
+        return callback(client.authorizationError)
+      }
 
       client.write(`${msg.length} ${msg}`)
       return client.end()

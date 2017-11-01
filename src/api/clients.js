@@ -113,6 +113,14 @@ export async function updateClient (ctx, clientId) {
   // Ignore _id if it exists, a user shouldn't be able to update the internal id
   if (clientData._id) { delete clientData._id }
 
+  if (clientData.clientID) {
+    const chResult = await ChannelModelAPI.find({allow: {$in: [clientData.clientID]}}, {name: 1}).exec()
+    const clResult = await ClientModelAPI.find({roles: {$in: [clientData.clientID]}}, {clientID: 1}).exec()
+    if (((chResult != null ? chResult.length : undefined) > 0) || ((clResult != null ? clResult.length : undefined) > 0)) {
+      return utils.logAndSetResponse(ctx, 409, `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`, 'info')
+    }
+  }
+
   try {
     await ClientModelAPI.findByIdAndUpdate(clientId, clientData).exec()
     logger.info(`User ${ctx.authenticated.email} updated client with id ${clientId}`)

@@ -3,129 +3,106 @@
 
 import request from 'supertest'
 import fs from 'fs'
-import * as testUtils from '../testUtils'
+import * as testUtils from '../utils'
 import * as server from '../../src/server'
 import { KeystoreModelAPI } from '../../src/model/keystore'
+import * as constants from '../constants'
+import { promisify } from 'util'
+import should from 'should'
 
-const {auth} = testUtils
+const { SERVER_PORTS } = constants
 
-describe('API Integration Tests', () =>
+describe('API Integration Tests', () => {
   describe('Certificate API Tests', () => {
-    let authDetails = {}
-    before(done =>
-      auth.setupTestUsers(err => {
-        if (err) { return done(err) }
-        server.start({apiPort: 8080}, () => done())
-      }
-      )
-    )
+    let authDetails = null
 
-    after(done =>
-      auth.cleanupTestUsers(err => {
-        if (err) { return done(err) }
-        server.stop(() => done())
-      }
-      )
-    )
-
-    beforeEach((done) => {
-      authDetails = auth.getAuthDetails()
-      return done()
+    before(async () => {
+      await testUtils.setupTestUsers()
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      authDetails = await testUtils.getAuthDetails()
     })
 
-    afterEach(done =>
-      testUtils.cleanupTestKeystore(() => done())
-    )
+    after(async () => {
+      await Promise.all([
+        testUtils.cleanupTestUsers(),
+        promisify(server.stop)()
+      ])
+    })
 
-    it('Should create a new client certificate', done =>
-      testUtils.setupTestKeystore((keystore) => {
-        const postData = {
-          type: 'client',
-          commonName: 'testcert.com',
-          country: 'za',
-          days: 365,
-          emailAddress: 'test@testcert.com',
-          state: 'test state',
-          locality: 'test locality',
-          organization: 'test Org',
-          organizationUnit: 'testOrg unit'
-        }
+    beforeEach(async () => {
+      await testUtils.setupTestKeystore()
+    })
 
-        request('https://localhost:8080')
-          .post('/certificates')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(postData)
-          .expect(201)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              KeystoreModelAPI.findOne({}, (err, keystore) => {
-                const result = JSON.parse(res.text)
-                result.certificate.should.not.be.empty
-                result.key.should.not.be.empty
-                if (err) { done(err) }
-                keystore.ca.should.be.instanceOf(Array).and.have.lengthOf(3)
-                keystore.ca[2].commonName.should.be.exactly('testcert.com')
-                keystore.ca[2].organization.should.be.exactly('test Org')
-                keystore.ca[2].country.should.be.exactly('za')
-                keystore.ca[2].fingerprint.should.exist
-                return done()
-              })
-            }
-          })
-      })
-    )
+    afterEach(async () => {
+      await testUtils.cleanupTestKeystore()
+    })
 
-    it('Should create a new server certificate', done =>
-      testUtils.setupTestKeystore((keystore) => {
-        const serverCert = fs.readFileSync('test/resources/server-tls/cert.pem')
-        const serverKey = fs.readFileSync('test/resources/server-tls/key.pem')
+    it('Should create a new client certificate', async () => {
+      const postData = {
+        type: 'client',
+        commonName: 'testcert.com',
+        country: 'za',
+        days: 365,
+        emailAddress: 'test@testcert.com',
+        state: 'test state',
+        locality: 'test locality',
+        organization: 'test Org',
+        organizationUnit: 'testOrg unit'
+      }
 
-        const postData = {
-          type: 'server',
-          commonName: 'testcert.com',
-          country: 'za',
-          days: 365,
-          emailAddress: 'test@testcert.com',
-          state: 'test state',
-          locality: 'test locality',
-          organization: 'test Org',
-          organizationUnit: 'testOrg unit'
-        }
+      await request(constants.BASE_URL)
+        .post('/certificates')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .send(postData)
+        .expect(201)
 
-        request('https://localhost:8080')
-          .post('/certificates')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(postData)
-          .expect(201)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              KeystoreModelAPI.findOne({}, (err, keystore) => {
-                const result = JSON.parse(res.text)
-                result.certificate.should.not.be.empty
-                result.key.should.not.be.empty
-                if (err) { done(err) }
+      const result = await KeystoreModelAPI.findOne({})
+      result.cert.should.not.be.empty()
+      result.key.should.not.be.empty()
+      result.ca.should.be.instanceOf(Array).and.have.lengthOf(3)
+      result.ca[2].commonName.should.be.exactly('testcert.com')
+      result.ca[2].organization.should.be.exactly('test Org')
+      result.ca[2].country.should.be.exactly('za')
+      should.exist(result.ca[2].fingerprint)
+    })
 
-                keystore.cert.commonName.should.be.exactly('testcert.com')
-                keystore.cert.organization.should.be.exactly('test Org')
-                keystore.cert.country.should.be.exactly('za')
-                keystore.cert.fingerprint.should.exist
-                keystore.cert.data.should.not.equal(serverCert.toString())
-                keystore.key.should.not.equal(serverKey.toString())
-                return done()
-              })
-            }
-          })
-      })
-    )
+    it('Should create a new server certificate', async () => {
+      const serverCert = await fs.readFileSync('test/resources/server-tls/cert.pem')
+      const serverKey = await fs.readFileSync('test/resources/server-tls/key.pem')
+
+      const postData = {
+        type: 'server',
+        commonName: 'testcert.com',
+        country: 'za',
+        days: 365,
+        emailAddress: 'test@testcert.com',
+        state: 'test state',
+        locality: 'test locality',
+        organization: 'test Org',
+        organizationUnit: 'testOrg unit'
+      }
+
+      await request(constants.BASE_URL)
+        .post('/certificates')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .send(postData)
+        .expect(201)
+
+      const result = await KeystoreModelAPI.findOne({})
+      result.cert.should.not.be.empty()
+      result.key.should.not.be.empty()
+      result.cert.commonName.should.be.exactly('testcert.com')
+      result.cert.organization.should.be.exactly('test Org')
+      result.cert.country.should.be.exactly('za')
+      should.exist(result.cert.fingerprint)
+      result.cert.data.should.not.equal(serverCert.toString())
+      result.key.should.not.equal(serverKey.toString())
+    })
   })
-)
+})

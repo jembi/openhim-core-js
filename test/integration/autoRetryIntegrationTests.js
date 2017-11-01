@@ -2,22 +2,78 @@
 
 import should from 'should'
 import request from 'supertest'
-import { ChannelModel } from '../../src/model/channels'
-import { ClientModel } from '../../src/model/clients'
-import { TransactionModel } from '../../src/model/transactions'
-import { AutoRetryModel } from '../../src/model/autoRetry'
-import { EventModel } from '../../src/model/events'
-import * as testUtils from '../testUtils'
+import { ChannelModel, ClientModel, TransactionModel, AutoRetryModel, EventModel, TaskModel } from '../../src/model'
+import * as testUtils from '../utils'
 import * as server from '../../src/server'
 import * as autoRetry from '../../src/autoRetry'
 import * as tasks from '../../src/tasks'
+import * as constants from '../constants'
 import { config } from '../../src/config'
+import { promisify } from 'util'
+import { ObjectId } from 'mongodb'
 
-config.authentication = config.get('authentication')
+// TODO : Check the tasks have beeen removed before trying the next test
 
-describe('Auto Retry Integration Tests', () => {
-  describe('Primary route auto retry tests', () => {
-    const channel1 = new ChannelModel({
+function waitForAutoRetry () {
+  return testUtils.pollCondition(() => AutoRetryModel.count().then(count => count === 1))
+}
+
+// TODO : This test suite could be written a bit neater
+describe(`Auto Retry Integration Tests`, () => {
+  const { HTTP_BASE_URL: baseUrl } = constants
+  const ORIGINAL_AUTH = config.authentication
+  const ORIGNAL_RERUN = config.rerun
+
+  const clientDoc = {
+    clientID: 'testApp',
+    clientDomain: 'test-client.jembi.org',
+    name: 'TEST Client',
+    roles: [
+      'OpenMRS_PoC',
+      'PoC'
+    ],
+    passwordAlgorithm: 'sha512',
+    passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+    passwordSalt: '1234567890',
+    cert: ''
+  }
+
+  config.rerun = config.get('rerun')
+  config.authentication = config.get('authentication')
+
+  before(async () => {
+    config.authentication.enableMutualTLSAuthentication = false
+    config.authentication.enableBasicAuthentication = true
+    config.rerun.httpPort = constants.SERVER_PORTS.rerunPort
+    await promisify(server.start)({ httpPort: constants.SERVER_PORTS.httpPort, rerunHttpPort: constants.SERVER_PORTS.rerunPort })
+  })
+
+  after(async () => {
+    config.authentication = ORIGINAL_AUTH
+    config.rerun = ORIGNAL_RERUN
+
+    await promisify(server.stop)()
+  })
+
+  beforeEach(async () => {
+    await testUtils.setImmediatePromise()
+    await Promise.all([
+      TaskModel.remove(),
+      TransactionModel.remove()
+    ])
+  })
+
+  afterEach(async () => {
+    await Promise.all([
+      TransactionModel.remove(),
+      AutoRetryModel.remove(),
+      EventModel.remove(),
+      TaskModel.remove()
+    ])
+  })
+
+  describe(`Primary route auto retry tests`, () => {
+    const channel1Doc = {
       name: 'TEST DATA - Will break channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
@@ -30,10 +86,14 @@ describe('Auto Retry Integration Tests', () => {
       ],
       autoRetryEnabled: true,
       autoRetryPeriodMinutes: 1,
-      autoRetryMaxAttempts: 2
-    })
+      autoRetryMaxAttempts: 2,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
 
-    const channel2 = new ChannelModel({
+    const channel2Doc = {
       name: 'TEST DATA - Will break channel - attempt once',
       urlPattern: '^/test/nowhere/2$',
       allow: ['PoC'],
@@ -46,307 +106,188 @@ describe('Auto Retry Integration Tests', () => {
       ],
       autoRetryEnabled: true,
       autoRetryPeriodMinutes: 1,
-      autoRetryMaxAttempts: 1
+      autoRetryMaxAttempts: 1,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
+    before(async () => {
+      await Promise.all([
+        new ChannelModel(channel1Doc).save(),
+        new ChannelModel(channel2Doc).save(),
+        new ClientModel(clientDoc).save()
+      ])
     })
 
-    before(async (done) => {
-      await testUtils.dropTestDb()
-      config.authentication.enableMutualTLSAuthentication = false
-      config.authentication.enableBasicAuthentication = true
-
-      channel1.save(() => channel2.save(() => {
-        const testAppDoc = {
-          clientID: 'testApp',
-          clientDomain: 'test-client.jembi.org',
-          name: 'TEST Client',
-          roles: [
-            'OpenMRS_PoC',
-            'PoC'
-          ],
-          passwordAlgorithm: 'sha512',
-          passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-          passwordSalt: '1234567890',
-          cert: ''
-        }
-
-        const client = new ClientModel(testAppDoc)
-        client.save(() => done())
-      })
-      )
+    after(async () => {
+      await Promise.all([
+        ChannelModel.remove(),
+        ClientModel.remove()
+      ])
     })
 
-    after(done =>
-      ChannelModel.remove({name: 'TEST DATA - Will break channel'}, () =>
-        ClientModel.remove({clientID: 'testApp'}, () =>
-          TransactionModel.remove({}, () => AutoRetryModel.remove({}, () => done())
-          )
-        )
-      )
-    )
+    it('should mark transaction as available to auto retry if an internal server error occurs', async () => {
+      await request(baseUrl)
+        .get('/test/nowhere')
+        .auth('testApp', 'password')
+        .expect(500)
 
-    beforeEach(done => TransactionModel.remove({}, () => AutoRetryModel.remove({}, () => EventModel.remove({}, done))))
+      await waitForAutoRetry()
+      const trx = await TransactionModel.findOne()
+      trx.should.have.property('autoRetry')
+      trx.autoRetry.should.be.true()
+      trx.should.have.property('error')
+      trx.error.should.have.property('message')
+      trx.error.should.have.property('stack')
+      trx.error.message.should.match(/ECONNREFUSED/)
+    })
 
-    afterEach(done => server.stop(() => done()))
+    it(`should push an auto retry transaction to the auto retry queue`, async () => {
+      await request(baseUrl)
+        .get('/test/nowhere')
+        .auth('testApp', 'password')
+        .expect(500)
 
-    it('should mark transaction as available to auto retry if an internal server error occurs', done =>
-      server.start({httpPort: 5001}, () =>
-        request('http://localhost:5001')
-          .get('/test/nowhere')
-          .auth('testApp', 'password')
-          .expect(500)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              setTimeout(() =>
-                  TransactionModel.findOne({}, (err, trx) => {
-                    if (err) { return done(err) }
-                    trx.should.have.property('autoRetry')
-                    trx.autoRetry.should.be.true()
-                    trx.should.have.property('error')
-                    trx.error.should.have.property('message')
-                    trx.error.should.have.property('stack');
-                    (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
-                    return done()
-                  })
-                , 1000 * global.testTimeoutFactor)
-            }
-          })
-      )
-    )
+      await waitForAutoRetry()
+      const channel1 = await ChannelModel.findOne({ name: channel1Doc.name })
+      const trx = await TransactionModel.findOne()
+      const autoRetry = await AutoRetryModel.findOne()
+      autoRetry.transactionID.toString().should.be.equal(trx._id.toString())
+      autoRetry.channelID.toString().should.be.equal(channel1._id.toString())
+    })
 
-    it('should push an auto retry transaction to the auto retry queue', done =>
-      server.start({httpPort: 5001, rerunHttpPort: 7786}, () =>
-        request('http://localhost:5001')
-          .get('/test/nowhere')
-          .auth('testApp', 'password')
-          .expect(500)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              setTimeout(() =>
-                  TransactionModel.findOne({}, (err, trx) => {
-                    if (err) { return done(err) }
-                    AutoRetryModel.findOne({}, (err, autoRetry) => {
-                      if (err) { return done(err) }
-                      autoRetry.transactionID.toString().should.be.equal(trx._id.toString())
-                      autoRetry.channelID.toString().should.be.equal(channel1._id.toString())
-                      return done()
-                    })
-                  })
-                , 150 * global.testTimeoutFactor)
-            }
-          })
-      )
-    )
+    it(`should auto retry a failed transaction`, async () => {
+      await request(baseUrl)
+        .get('/test/nowhere')
+        .auth('testApp', 'password')
+        .expect(500)
 
-    it('should auto retry a failed transaction', done =>
-      server.start({httpPort: 5001, rerunHttpPort: 7786}, () =>
-        request('http://localhost:5001')
-          .get('/test/nowhere')
-          .auth('testApp', 'password')
-          .expect(500)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              setTimeout(() =>
-                  // manually trigger rerun
-                  autoRetry.autoRetryTask(null, () => {
-                    tasks.findAndProcessAQueuedTask()
+      await waitForAutoRetry()
+      await promisify(autoRetry.autoRetryTask)(null)
+      await tasks.findAndProcessAQueuedTask()
 
-                    setTimeout(() =>
-                        TransactionModel.find({}, (err, transactions) => {
-                          if (err) { return done(err) }
-                          transactions.length.should.be.exactly(2)
-                          transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString())
-                          transactions[1].autoRetryAttempt.should.be.exactly(1)
-                          // failed so should be eligible to rerun again
-                          transactions[1].autoRetry.should.be.true()
-                          return done()
-                        })
-                      , 150 * global.testTimeoutFactor)
-                  })
-                , 150 * global.testTimeoutFactor)
-            }
-          })
-      )
-    )
+      const transactions = await TransactionModel.find()
+      transactions.length.should.be.exactly(2)
+      transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString())
+      transactions[1].autoRetryAttempt.should.be.exactly(1)
+      // failed so should be eligible to rerun again
+      transactions[1].autoRetry.should.be.true()
+    })
 
-    it('should not auto retry a transaction that has reached the max retry limit', done =>
-      server.start({httpPort: 5001, rerunHttpPort: 7786}, () =>
-        request('http://localhost:5001')
-          .get('/test/nowhere/2')
-          .auth('testApp', 'password')
-          .expect(500)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              setTimeout(() =>
-                  // manually trigger rerun
-                  autoRetry.autoRetryTask(null, () => {
-                    tasks.findAndProcessAQueuedTask()
+    it(`should not auto retry a transaction that has reached the max retry limit`, async () => {
+      await request(baseUrl)
+        .get('/test/nowhere/2')
+        .auth('testApp', 'password')
+        .expect(500)
 
-                    setTimeout(() =>
-                        TransactionModel.find({}, (err, transactions) => {
-                          if (err) { return done(err) }
-                          transactions.length.should.be.exactly(2)
-                          transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString())
-                          transactions[1].autoRetryAttempt.should.be.exactly(1)
-                          // should not be eligible to retry
-                          transactions[1].autoRetry.should.be.false()
-                          return done()
-                        })
-                      , 150 * global.testTimeoutFactor)
-                  })
-                , 150 * global.testTimeoutFactor)
-            }
-          })
-      )
-    )
+      await waitForAutoRetry()
+      await promisify(autoRetry.autoRetryTask)(null)
+      await tasks.findAndProcessAQueuedTask()
 
-    it('should contain the attempt number in transaction events', done =>
-      server.start({httpPort: 5001, rerunHttpPort: 7786}, () =>
-        request('http://localhost:5001')
-          .get('/test/nowhere')
-          .auth('testApp', 'password')
-          .expect(500)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              setTimeout(() =>
-                  // manually trigger rerun
-                  autoRetry.autoRetryTask(null, () => {
-                    tasks.findAndProcessAQueuedTask()
+      const transactions = await TransactionModel.find()
+      transactions.length.should.be.exactly(2)
+      transactions[0].childIDs[0].toString().should.be.equal(transactions[1]._id.toString())
+      transactions[1].autoRetryAttempt.should.be.exactly(1)
+      // failed so should be eligible to rerun again
+      transactions[1].autoRetry.should.be.false()
+    })
 
-                    setTimeout(() =>
-                        EventModel.find({}, (err, events) => {
-                          if (err) { return done(err) }
-                          const prouteEvents = events.filter(ev => (ev.type === 'primary') && (ev.event === 'end'))
+    it(`should contain the attempt number in transaction events`, async () => {
+      await request(baseUrl)
+        .get('/test/nowhere')
+        .auth('testApp', 'password')
+        .expect(500)
 
-                          // original transaction
-                          should(prouteEvents[0].autoRetryAttempt).be.null()
-                          // retried transaction
-                          prouteEvents[1].autoRetryAttempt.should.be.exactly(1)
-                          return done()
-                        })
-                      , 250 * global.testTimeoutFactor)
-                  })
-                , 250 * global.testTimeoutFactor)
-            }
-          })
-      )
-    )
+      await waitForAutoRetry()
+      await promisify(autoRetry.autoRetryTask)(null)
+      await tasks.findAndProcessAQueuedTask()
+
+      const events = await EventModel.find()
+      const prouteEvents = events.filter(ev => (ev.type === 'primary') && (ev.event === 'end'))
+
+      // original transaction
+      should(prouteEvents[0].autoRetryAttempt).be.null()
+      prouteEvents[1].autoRetryAttempt.should.be.exactly(1)
+    })
   })
 
   describe('Secondary route auto retry tests', () => {
-    let mockServer1 = null
-
-    const channel1 = new ChannelModel({
+    let server
+    const channelDoc = {
       name: 'TEST DATA - Secondary route will break channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
       routes: [{
         name: 'available route',
         host: 'localhost',
-        port: 1233,
+        port: constants.HTTP_PORT,
         primary: true
       },
       {
         name: 'unavailable route',
         host: 'localhost',
         port: 9999
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
       }
-      ]
+    }
+
+    before(async () => {
+      [server] = await Promise.all([
+        testUtils.createMockHttpServer(),
+        new ClientModel(clientDoc).save(),
+        new ChannelModel(channelDoc).save()
+      ])
     })
 
-    before((done) => {
-      config.authentication.enableMutualTLSAuthentication = false
-      config.authentication.enableBasicAuthentication = true
-
-      channel1.save((err) => {
-        if (err) { return done(err) }
-        const testAppDoc = {
-          clientID: 'testApp',
-          clientDomain: 'test-client.jembi.org',
-          name: 'TEST Client',
-          roles: [
-            'OpenMRS_PoC',
-            'PoC'
-          ],
-          passwordAlgorithm: 'sha512',
-          passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-          passwordSalt: '1234567890',
-          cert: ''
-        }
-
-        const client = new ClientModel(testAppDoc)
-        client.save(() => { mockServer1 = testUtils.createMockServer(200, 'target1', 1233, () => done()) })
-      })
+    after(async () => {
+      await Promise.all([
+        ChannelModel.remove(),
+        ClientModel.remove(),
+        server.close()
+      ])
     })
 
-    after(done =>
-      ChannelModel.remove({name: 'TEST DATA - Secondary route will break channel'}, () =>
-        ClientModel.remove({clientID: 'testApp'}, () =>
-          TransactionModel.remove({}, () =>
-            mockServer1.close(() => done())
-          )
-        )
-      )
-    )
+    it('should mark transaction as available to auto retry if an internal server error occurs on a secondary route', async () => {
+      await request(baseUrl)
+        .get('/test/nowhere')
+        .auth('testApp', 'password')
+        .expect(201)
 
-    beforeEach(done => TransactionModel.remove({}, done))
-
-    afterEach(done =>
-      server.stop(() => done())
-    )
-
-    it('should mark transaction as available to auto retry if an internal server error occurs on a secondary route', done =>
-      server.start({httpPort: 5001}, () =>
-        request('http://localhost:5001')
-          .get('/test/nowhere')
-          .auth('testApp', 'password')
-          .expect(200)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              setTimeout(() =>
-                  TransactionModel.findOne({}, (err, trx) => {
-                    if (err) { return done(err) }
-                    trx.should.have.property('autoRetry')
-                    trx.autoRetry.should.be.true()
-                    trx.routes[0].should.have.property('error')
-                    trx.routes[0].error.should.have.property('message')
-                    trx.routes[0].error.should.have.property('stack');
-                    (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
-                    return done()
-                  })
-                , 150 * global.testTimeoutFactor)
-            }
-          })
-      )
-    )
+      await waitForAutoRetry()
+      const trx = await TransactionModel.findOne()
+      trx.should.have.property('autoRetry')
+      trx.autoRetry.should.be.true()
+      trx.routes[0].should.have.property('error')
+      trx.routes[0].error.should.have.property('message')
+      trx.routes[0].error.should.have.property('stack')
+      trx.routes[0].error.message.should.match(/ECONNREFUSED/)
+    })
   })
 
-  describe('Mediator auto retry tests', () => {
-    let mockServer1 = null
+  describe(`Mediator auto retry tests`, () => {
+    let server
 
-    const channel1 = new ChannelModel({
+    const channelDoc = {
       name: 'TEST DATA - Mediator has error channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
       routes: [{
         name: 'mediator route',
         host: 'localhost',
-        port: 1233,
+        port: constants.MEDIATOR_PORT,
         primary: true
       }
-      ]
-    })
+      ],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
 
     const mediatorResponse = {
       'x-mediator-urn': 'urn:mediator:test',
@@ -362,78 +303,42 @@ describe('Auto Retry Integration Tests', () => {
       }
     }
 
-    before((done) => {
-      config.authentication.enableMutualTLSAuthentication = false
-      config.authentication.enableBasicAuthentication = true
-
-      channel1.save((err) => {
-        if (err) { return done(err) }
-        const testAppDoc = {
-          clientID: 'testApp',
-          clientDomain: 'test-client.jembi.org',
-          name: 'TEST Client',
-          roles: [
-            'OpenMRS_PoC',
-            'PoC'
-          ],
-          passwordAlgorithm: 'sha512',
-          passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-          passwordSalt: '1234567890',
-          cert: ''
-        }
-
-        const client = new ClientModel(testAppDoc)
-        client.save(() => { mockServer1 = testUtils.createMockMediatorServer(200, mediatorResponse, 1233, () => done()) })
-      })
+    before(async () => {
+      [server] = await Promise.all([
+        testUtils.createMockHttpMediator(mediatorResponse),
+        new ClientModel(clientDoc).save(),
+        new ChannelModel(channelDoc).save()
+      ])
     })
 
-    after(done =>
-      ChannelModel.remove({name: 'TEST DATA - Mediator has error channel'}, () =>
-        ClientModel.remove({clientID: 'testApp'}, () =>
-          TransactionModel.remove({}, () =>
-            mockServer1.close(() => done())
-          )
-        )
-      )
-    )
+    after(async () => {
+      await Promise.all([
+        ChannelModel.remove(),
+        ClientModel.remove(),
+        server.close()
+      ])
+    })
 
-    beforeEach(done => TransactionModel.remove({}, done))
+    it('should mark transaction as available to auto retry if an internal server error occurs in a mediator', async () => {
+      await request(baseUrl)
+        .get('/test/nowhere')
+        .auth('testApp', 'password')
+        .expect(500)
 
-    afterEach(done =>
-      server.stop(() => done())
-    )
-
-    it('should mark transaction as available to auto retry if an internal server error occurs in a mediator', done =>
-      server.start({httpPort: 5001}, () =>
-        request('http://localhost:5001')
-          .get('/test/nowhere')
-          .auth('testApp', 'password')
-          .expect(500)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              setTimeout(() =>
-                  TransactionModel.findOne({}, (err, trx) => {
-                    if (err) { return done(err) }
-                    trx.should.have.property('autoRetry')
-                    trx.autoRetry.should.be.true()
-                    trx.should.have.property('error')
-                    trx.error.should.have.property('message')
-                    trx.error.message.should.be.exactly(mediatorResponse.error.message)
-                    trx.error.should.have.property('stack')
-                    trx.error.stack.should.be.exactly(mediatorResponse.error.stack)
-                    return done()
-                  })
-                , 150 * global.testTimeoutFactor)
-            }
-          })
-      )
-    )
+      await waitForAutoRetry()
+      const trx = await TransactionModel.findOne()
+      trx.should.have.property('autoRetry')
+      trx.autoRetry.should.be.true()
+      trx.should.have.property('error')
+      trx.error.should.have.property('message')
+      trx.error.message.should.be.exactly(mediatorResponse.error.message)
+      trx.error.should.have.property('stack')
+      trx.error.stack.should.be.exactly(mediatorResponse.error.stack)
+    })
   })
 
   describe('All routes failed auto retry tests', () => {
-    const channel1 = new ChannelModel({
+    const channelDoc = {
       name: 'TEST DATA - Both will break channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
@@ -448,76 +353,45 @@ describe('Auto Retry Integration Tests', () => {
         host: 'localhost',
         port: 9988
       }
-      ]
+      ],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
+    before(async () => {
+      await Promise.all([
+        new ClientModel(clientDoc).save(),
+        new ChannelModel(channelDoc).save()
+      ])
     })
 
-    before((done) => {
-      config.authentication.enableMutualTLSAuthentication = false
-      config.authentication.enableBasicAuthentication = true
-
-      channel1.save((err) => {
-        if (err) { return done(err) }
-        const testAppDoc = {
-          clientID: 'testApp',
-          clientDomain: 'test-client.jembi.org',
-          name: 'TEST Client',
-          roles: [
-            'OpenMRS_PoC',
-            'PoC'
-          ],
-          passwordAlgorithm: 'sha512',
-          passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-          passwordSalt: '1234567890',
-          cert: ''
-        }
-
-        const client = new ClientModel(testAppDoc)
-        client.save(() => done())
-      })
+    after(async () => {
+      await Promise.all([
+        ChannelModel.remove(),
+        ClientModel.remove()
+      ])
     })
 
-    after(done =>
-      ChannelModel.remove({name: 'TEST DATA - Both will break channel'}, () =>
-        ClientModel.remove({clientID: 'testApp'}, () =>
-          TransactionModel.remove({}, () => done())
-        )
-      )
-    )
+    it('should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes', async () => {
+      await request(baseUrl)
+        .get('/test/nowhere')
+        .auth('testApp', 'password')
+        .expect(500)
 
-    beforeEach(done => TransactionModel.remove({}, done))
-
-    afterEach(done =>
-      server.stop(() => done())
-    )
-
-    it('should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes', done =>
-      server.start({httpPort: 5001}, () =>
-        request('http://localhost:5001')
-          .get('/test/nowhere')
-          .auth('testApp', 'password')
-          .expect(500)
-          .end((err, res) => {
-            if (err) {
-              return done(err)
-            } else {
-              setTimeout(() =>
-                  TransactionModel.findOne({}, (err, trx) => {
-                    if (err) { return done(err) }
-                    trx.should.have.property('autoRetry')
-                    trx.autoRetry.should.be.true()
-                    trx.should.have.property('error')
-                    trx.error.should.have.property('message')
-                    trx.error.should.have.property('stack');
-                    (trx.error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
-                    trx.routes[0].should.have.property('error')
-                    trx.routes[0].error.should.have.property('message')
-                    trx.routes[0].error.should.have.property('stack');
-                    (trx.routes[0].error.message.indexOf('ECONNREFUSED') > -1).should.be.true()
-                    return done()
-                  }), 150 * global.testTimeoutFactor)
-            }
-          })
-      )
-    )
+      await waitForAutoRetry()
+      const trx = await TransactionModel.findOne()
+      trx.should.have.property('autoRetry')
+      trx.autoRetry.should.be.true()
+      trx.should.have.property('error')
+      trx.error.should.have.property('message')
+      trx.error.should.have.property('stack')
+      trx.error.message.should.match(/ECONNREFUSED/)
+      trx.routes[0].should.have.property('error')
+      trx.routes[0].error.should.have.property('message')
+      trx.routes[0].error.should.have.property('stack')
+      trx.routes[0].error.message.should.match(/ECONNREFUSED/)
+    })
   })
 })

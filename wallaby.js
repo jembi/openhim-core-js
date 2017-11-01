@@ -2,7 +2,7 @@ module.exports = function (wallaby) {
   return {
     files: [
       'src/**/*.js',
-      'test/**/*.js',
+      'test/*.js',
       '!test/**/*Tests.js',
       '!test/**/*Test.js',
       {
@@ -26,9 +26,10 @@ module.exports = function (wallaby) {
         instrument: false
       }
     ],
-
+    testFramework: 'mocha',
     tests: [
-      'test/unit/*Test.js'
+      'test/setupTest.js',
+      'test/unit/tasksTest.js'
     ],
     compilers: {
       '**/*.js': wallaby.compilers.babel()
@@ -41,7 +42,7 @@ module.exports = function (wallaby) {
       type: 'node',
       runner: 'node',
       params: {
-        env: 'NODE_ENV=test'
+        env: 'NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 '
       }
     }
   }

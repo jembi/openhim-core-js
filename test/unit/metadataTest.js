@@ -46,7 +46,7 @@ describe('Metadata Functions', () => {
     })
   )
 
-  return describe('.buildResponseObject', () =>
+  describe('.buildResponseObject', () =>
 
     it('build a response object', (done) => {
       const model = 'Channels'

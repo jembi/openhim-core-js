@@ -1,326 +1,406 @@
 /* eslint-env mocha */
-
-import { TransactionModel } from '../../src/model/transactions'
-import { TaskModel } from '../../src/model/tasks'
-import { ChannelModel } from '../../src/model/channels'
+import { TransactionModel, TaskModel, ChannelModel } from '../../src/model'
 import * as tasks from '../../src/tasks'
-import * as testUtils from '../testUtils'
+import * as testUtils from '../utils'
+import { promisify } from 'util'
+import * as constants from '../constants'
+import { config } from '../../src/config'
+import sinon from 'sinon'
+import {ObjectId} from 'mongodb'
 
-const {ObjectId} = require('mongoose').Types
+// const {ObjectId} = require('mongoose').Types
+
+if (config.rerun == null) {
+  config.rerun = config.get('rerun')
+}
 
 describe('Rerun Task Tests', () => {
-  const transaction1 = {
-    _id: '53bfbccc6a2b417f6cd14871',
-    channelID: '53bbe25485e66d8e5daad4a2',
-    clientID: '42bbe25485e77d8e5daad4b4',
-    request: {
-      path: '/sample/api',
-      headers: {authorization: 'Basic dGVzdDp0ZXN0', 'user-agent': 'curl/7.35.0', host: 'localhost:5001'},
-      querystring: 'param=hello',
-      body: '',
-      method: 'GET',
-      timestamp: '2014-07-15T08:10:45.109Z'
-    },
-    status: 'Completed'
-  }
+  let server
 
-  const task1 = {
-    _id: '53c4dd063b8cb04d2acf0adc',
-    created: '2014-07-15T07:49:26.238Z',
-    remainingTransactions: 3,
-    totalTransactions: 3,
-    status: 'Queued',
-    transactions: [{tid: '53bfbccc6a2b417f6cd14871', tstatus: 'Queued'},
-      {tid: '53bfbcd06a2b417f6cd14872', tstatus: 'Queued'},
-      {tid: 'aaaaaaaaaabbbbbbbbbbcccc', tstatus: 'Queued'}],
-    user: 'root@openhim.org'
-  }
+  const originalRerun = testUtils.clone(config.rerun || config.get('rerun'))
+  before(async () => {
+    Object.assign(config.rerun, {
+      httpPort: constants.SERVER_PORTS.rerunPort
+    })
+  })
 
-  const channel1 = {
-    _id: '53bbe25485e66d8e5daad4a2',
-    name: 'TestChannel1',
-    urlPattern: 'test/sample',
-    allow: ['PoC', 'Test1', 'Test2'],
-    routes: [{
-      name: 'test route',
-      host: 'localhost',
-      port: 9876,
-      primary: true
+  after(async () => {
+    Object.assign(config.rerun, originalRerun)
+  })
+
+  afterEach(async () => {
+    if (server != null) {
+      await server.close()
     }
-    ],
-    txViewAcl: 'aGroup'
-  }
+    server = null
+  })
 
-  beforeEach(done =>
-    TransactionModel.remove({}, () =>
-      (new TransactionModel(transaction1)).save(err => {
-        if (err) { return done(err) }
-        TaskModel.remove({}, () =>
-            (new TaskModel(task1)).save(() =>
-              ChannelModel.remove({}, () =>
-                (new ChannelModel(channel1)).save(() => done())
-              )
-            )
-          )
+  describe('rerunGetTransaction', () => {
+    const DEFAULT_TRANSACTION = Object.freeze({
+      status: 'Failed',
+      request: {
+        timestamp: new Date().toISOString()
+      },
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
       }
-      )
-    )
-  )
-
-  beforeEach((done) => testUtils.cleanupMockServers().then(done).catch(done))
-
-  afterEach(done =>
-    TransactionModel.remove({}, () =>
-      TaskModel.remove({}, () => done())
-    )
-  )
-
-  describe('*rerunGetTransaction()', () => {
-    it('should run rerunGetTransaction() and return Transaction object successfully', (done) => {
-      const transactionID = '53bfbccc6a2b417f6cd14871'
-
-      // run the tasks function and check results
-      return tasks.rerunGetTransaction(transactionID, (err, transaction) => {
-        if (err) { return done(err) }
-        transaction.clientID.toString().should.equal('42bbe25485e77d8e5daad4b4')
-        transaction.status.should.equal('Completed')
-        transaction.request.path.should.equal('/sample/api')
-        transaction.request.querystring.should.equal('param=hello')
-        transaction.request.method.should.equal('GET')
-
-        return done()
-      })
     })
 
-    it('should run rerunGetTaskTransactionsData() and return transaction not found error', (done) => {
-      const transactionID = 'aaaaaaaaaabbbbbbbbbbcccc'
+    afterEach(async () => {
+      await TransactionModel.remove({})
+    })
 
-      // run the tasks function and check results
-      return tasks.rerunGetTransaction(transactionID, (err, transaction) => {
-        err.message.should.equal('Transaction aaaaaaaaaabbbbbbbbbbcccc could not be found')
-        return done()
-      })
+    it(`will fail if the transaction can't be found`, async () => {
+      const transactionID = `transactioniddoesntexist`
+      await promisify(tasks.rerunGetTransaction)(transactionID).should.rejectedWith(`Transaction ${transactionID} could not be found`)
+    })
+
+    it(`will fail if the transaction can't be rerun`, async () => {
+      const transaction = new TransactionModel(Object.assign({}, DEFAULT_TRANSACTION, { canRerun: false }))
+      await transaction.save()
+
+      const transactionID = transaction._id
+      await promisify(tasks.rerunGetTransaction)(transactionID).should.rejectedWith(`Transaction ${transactionID} cannot be rerun as there isn't enough information about the request`)
+    })
+
+    it('will find a transaction', async () => {
+      const transaction = new TransactionModel(Object.assign({}, DEFAULT_TRANSACTION, { canRerun: true }))
+      await transaction.save()
+
+      const transactionID = transaction._id
+      const foundTransaction = await promisify(tasks.rerunGetTransaction)(transactionID)
+      foundTransaction._id.toString().should.equal(transaction._id.toString())
     })
   })
 
-  describe('*rerunSetHTTPRequestOptions()', () => {
-    it('should run rerunSetHTTPRequestOptions() and return HTTP options object successfully', (done) => {
-      const taskID = '53c4dd063b8cb04d2acf0adc'
-      const transactionID = '53bfbccc6a2b417f6cd14871'
-      return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
-        if (err) { return done(err) }
-          // run the tasks function and check results
-        tasks.rerunSetHTTPRequestOptions(transaction, taskID, (err, options) => {
-          if (err) { return done(err) }
-          options.should.have.property('hostname', 'localhost')
-          options.should.have.property('port', 7786)
-          options.should.have.property('path', '/sample/api?param=hello')
-          options.should.have.property('method', 'GET')
-          options.headers.should.have.property('clientID', ObjectId('42bbe25485e77d8e5daad4b4'))
-          options.headers.should.have.property('parentID', ObjectId('53bfbccc6a2b417f6cd14871'))
-          return done()
-        })
+  describe('rerunSetHTTPRequestOptions', async () => {
+    const DEFAULT_TRANSACTION = Object.freeze({
+      _id: 'somefakeid',
+      request: {
+        path: '/test',
+        method: 'GET',
+        headers: {
+          Accept: 'text/plain'
+        }
       }
+    })
+
+    it('will throw if the transaction is not set', async () => {
+      const rejectedMessage = `An empty Transaction object was supplied. Aborting HTTP options configuration`
+      await promisify(tasks.rerunSetHTTPRequestOptions)(null, null).should.rejectedWith(rejectedMessage)
+      await promisify(tasks.rerunSetHTTPRequestOptions)(undefined, undefined).should.rejectedWith(rejectedMessage)
+    })
+
+    it('will set the options', async () => {
+      const transaction = testUtils.clone(DEFAULT_TRANSACTION)
+      const taskId = 'testTaskId'
+      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(transaction, taskId)
+
+      options.hostname.should.equal(config.rerun.host)
+      options.port.should.equal(config.rerun.httpPort)
+      options.path.should.equal(transaction.request.path)
+      options.method.should.equal(transaction.request.method)
+
+      options.headers.Accept.should.equal('text/plain')
+      options.headers.parentID.should.equal(transaction._id)
+      options.headers.taskID.should.equal(taskId)
+    })
+
+    it('will set client id in the header if defined', async () => {
+      const transaction = testUtils.clone(DEFAULT_TRANSACTION)
+      transaction.clientID = 'testClientID'
+      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(transaction, null)
+
+      options.headers.clientID.should.equal(transaction.clientID)
+    })
+
+    it('will add the request.querystring to the path if defined', async () => {
+      const transaction = testUtils.clone(DEFAULT_TRANSACTION)
+      const testQueryString = transaction.request.querystring = 'testQueryStringValue'
+      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(transaction, null)
+
+      options.path.should.equal(`${transaction.request.path}?${testQueryString}`)
+    })
+  })
+
+  describe('rerunHttpRequestSend', async () => {
+    const DEFAULT_HTTP_OPTIONS = Object.freeze({
+      host: 'localhost',
+      port: constants.HTTP_PORT,
+      path: '/test',
+      headers: {
+        some: 'value'
+      }
+    })
+
+    it('will throw an error if no options are sent in', async () => {
+      const expectedError = 'An empty \'Options\' object was supplied. Aborting HTTP Send Request'
+      await promisify(tasks.rerunHttpRequestSend)(null, null).should.rejectedWith(expectedError)
+    })
+
+    it('will throw an error if no transaction is sent in', async () => {
+      const expectedError = 'An empty \'Transaction\' object was supplied. Aborting HTTP Send Request'
+      await promisify(tasks.rerunHttpRequestSend)({}, null).should.rejectedWith(expectedError)
+    })
+
+    it('will rerun a transaction', async () => {
+      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS)
+      const responsestr = 'Response string'
+      const spy = sinon.spy(req => responsestr)
+      const transaction = { request: {} }
+      server = await testUtils.createMockHttpServer(spy, undefined, 200)
+
+      const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
+
+      response.body.should.equal(responsestr)
+      response.transaction.status.should.eql('Completed')
+      response.timestamp.should.Date()
+      response.headers.should.properties(testUtils.lowerCaseMembers(constants.DEFAULT_HEADERS))
+      response.status.should.eql(200)
+      response.message.should.eql('OK')
+
+      spy.callCount.should.eql(1)
+      const req = spy.args[0][0]
+      req.headers.should.properties(DEFAULT_HTTP_OPTIONS.headers)
+    })
+
+    it('will report if it failed', async () => {
+      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { port: constants.PORT_START - 1 })
+      const transaction = { request: {} }
+      const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
+
+      response.transaction.status.should.eql('Failed')
+      response.status.should.eql(500)
+      response.message.should.eql('Internal Server Error')
+      response.timestamp.should.Date()
+    })
+
+    it('will send the request body on post', async () => {
+      const spy = sinon.spy(req => testUtils.readBody(req))
+      server = await testUtils.createMockHttpServer(spy)
+
+      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { method: 'POST' })
+      const transaction = { request: { method: 'POST', body: 'Hello  Post' } }
+      const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
+
+      response.body.should.eql(transaction.request.body) // The spy just sends back the data
+      spy.callCount.should.eql(1)
+      const req = spy.args[0][0]
+      req.method.should.eql('POST')
+    })
+
+    it('can handle a post with no body', async () => {
+      const spy = sinon.spy(req => testUtils.readBody(req))
+      server = await testUtils.createMockHttpServer(spy)
+
+      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { method: 'POST' })
+      const transaction = { request: { method: 'POST', body: null } }
+      await promisify(tasks.rerunHttpRequestSend)(options, transaction)
+
+      spy.callCount.should.eql(1)
+      const req = spy.args[0][0]
+      req.method.should.eql('POST')
+    })
+  })
+
+  describe('rerunTcpRequestSend', async () => {
+    const DEFAULT_CHANNEL = Object.freeze({
+      tcpHost: 'localhost',
+      tcpPort: constants.TCP_PORT
+    })
+
+    const DEFAULT_TRANSACTION = Object.freeze({
+      request: {
+        body: 'Hello Tcp'
+      }
+    })
+
+    it('will do a tcp request', async () => {
+      const spy = sinon.spy((data) => data.toString().toLowerCase())
+      server = await testUtils.createMockTCPServer(spy)
+
+      const channel = Object.assign({}, DEFAULT_CHANNEL)
+      const transaction = Object.assign({}, DEFAULT_TRANSACTION)
+      const response = await promisify(tasks.rerunTcpRequestSend)(channel, transaction)
+
+      spy.callCount.should.eql(1)
+      response.status.should.eql(200)
+      response.transaction.status.should.eql('Completed')
+      response.message.should.eql('')
+      response.headers.should.eql({})
+      response.timestamp.should.Date()
+      response.body.should.eql(transaction.request.body.toLowerCase())
+    })
+
+    it('will correctly record an error', async () => {
+      const channel = Object.assign({}, DEFAULT_CHANNEL, { tcpPort: constants.PORT_START - 1 })
+      const transaction = Object.assign({}, DEFAULT_TRANSACTION)
+      const response = await promisify(tasks.rerunTcpRequestSend)(channel, transaction)
+
+      response.transaction.status.should.eql('Failed')
+      response.status.should.eql(500)
+      response.message.should.eql('Internal Server Error')
+      response.timestamp.should.Date()
+    })
+  })
+
+  describe('findAndProcessAQueuedTask', async () => {
+    const DEFAULT_CHANNEL = Object.freeze({
+      name: 'testChannel',
+      urlPattern: '.+',
+      type: 'http',
+      routes: [{
+        name: 'asdf',
+        host: 'localhost',
+        path: '/test1',
+        port: '12345'
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    })
+
+    const DEFAULT_TASK = Object.freeze({
+      status: 'Queued',
+      user: 'user'
+    })
+
+    const DEFAULT_TRANSACTION = Object.freeze({
+      status: 'Processing',
+      request: {
+        timestamp: new Date()
+      }
+    })
+
+    function createTask (transactions = [], taskOverrides = {}) {
+      const taskDoc = Object.assign({}, DEFAULT_TASK, {
+        remainingTransactions: transactions.length,
+        totalTransactions: transactions.length,
+        transactions: transactions.map(t => ({
+          tid: t._id,
+          tstatus: 'Queued'
+        }))
+      }, taskOverrides)
+
+      return new TaskModel(taskDoc).save()
+    }
+
+    const clearTasksFn = () => Promise.all([
+      TaskModel.remove({}),
+      TransactionModel.remove({}),
+      ChannelModel.remove({})
+    ])
+
+    before(async () => {
+      await clearTasksFn()
+    })
+
+    afterEach(async () => {
+      await clearTasksFn()
+    })
+
+    it(`will not throw if it doesn't find any tasks`, async () => {
+      await tasks.findAndProcessAQueuedTask().should.not.rejected()
+    })
+
+    it('will process empty tasks', async () => {
+      const originalTask = await createTask()
+      await tasks.findAndProcessAQueuedTask()
+      const updatedTask = await TaskModel.findById(originalTask._id)
+      updatedTask.status.should.eql('Completed')
+    })
+
+    it(`will process a single transactions`, async () => {
+      const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
+      const originalTrans = await new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save()
+      const originalTask = await createTask([originalTrans])
+
+      const spy = sinon.spy()
+      server = await testUtils.createMockHttpServer(spy, constants.SERVER_PORTS.rerunPort)
+      await tasks.findAndProcessAQueuedTask()
+
+      spy.callCount.should.eql(1)
+      const req = spy.args[0][0]
+      req.headers.should.properties({
+        parentid: originalTrans._id.toString(),
+        taskid: originalTask._id.toString()
+      })
+
+      await testUtils.setImmediatePromise()
+      const updatedTask = await TaskModel.findById(originalTask._id)
+      updatedTask.status.should.eql('Completed')
+      updatedTask.transactions[0].tstatus.should.eql('Completed')
+    })
+
+    it(`will process the batch size`, async () => {
+      const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
+      const transactions = await Promise.all(
+        Array(3).fill(new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save())
       )
-    })
+      const originalTask = await createTask(transactions, { batchSize: 2 })
 
-    it('should run rerunSetHTTPRequestOptions() and return error if no Transaction object supplied', (done) => {
-      const taskID = '53c4dd063b8cb04d2acf0adc'
-      const transaction = null
-      return tasks.rerunSetHTTPRequestOptions(transaction, taskID, (err, options) => {
-        err.message.should.equal('An empty Transaction object was supplied. Aborting HTTP options configuration')
-        return done()
-      })
-    })
-  })
-
-  describe('*rerunHttpRequestSend()', () => {
-    it('should run rerunHttpRequestSend() and return a successfull response', done => {
-      testUtils.createMockServer(200, 'Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871', 7786, () => {
-        const taskID = '53c4dd063b8cb04d2acf0adc'
-        const transactionID = '53bfbccc6a2b417f6cd14871'
-        return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
-          if (err) { return done(err) }
-            // run the tasks function and check results
-          tasks.rerunSetHTTPRequestOptions(transaction, taskID, (err, options) => {
-            if (err) { return done(err) }
-
-                // transaction object retrieved from fineOne
-                // options generated from 'rerunSetHTTPRequestOptions' function
-
-            tasks.rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => {
-              if (err) { return done(err) }
-              HTTPResponse.transaction.should.have.property('status', 'Completed')
-              HTTPResponse.should.have.property('body', 'Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871')
-              HTTPResponse.should.have.property('status', 200)
-              HTTPResponse.should.have.property('message', 'OK')
-              done()
-            })
-          }
-            )
-        }
-        )
-      })
-    })
-
-    it('should run rerunHttpRequestSend() and fail when "options" is null', (done) => {
-      const transactionID = '53bfbccc6a2b417f6cd14871'
-      return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
-        if (err) { return done(err) }
-        const options = null
-
-        return tasks.rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => {
-          err.message.should.equal('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
-          return done()
-        })
-      })
-    })
-
-    it('should run rerunHttpRequestSend() and fail when "transaction" is null', (done) => {
-      const options = {}
-      options.hostname = 'localhost'
-      options.port = 7786
-      options.path = '/sample/api?param=hello'
-      options.method = 'GET'
-
-      const transaction = null
-      return tasks.rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => {
-        err.message.should.equal('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
-        return done()
-      })
-    })
-
-    it('should run rerunHttpRequestSend() and return 500 Internal Server Error', done =>
-
-      testUtils.createMockServer(200, 'Mock response for rerun Transaction #53bfbccc6a2b417f6cd14871', 5252, () => {
-        const transactionID = '53bfbccc6a2b417f6cd14871'
-        return TransactionModel.findOne({_id: transactionID}, (err, transaction) => {
-          if (err) { return done(err) }
-          const options = {
-            hostname: 'localhost',
-            port: 1000,
-            path: '/fakepath',
-            method: 'GET'
-          }
-
-          return tasks.rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => {
-            if (err) { return done(err) }
-            HTTPResponse.transaction.should.have.property('status', 'Failed')
-            HTTPResponse.should.have.property('status', 500)
-            HTTPResponse.should.have.property('message', 'Internal Server Error')
-            done()
-          })
-        })
-      })
-    )
-  })
-
-  describe('*rerunTcpRequestSend()', () =>
-    it('should rerun the tcp request', done =>
-
-      testUtils.createMockTCPServer(6000, 'this is a test server', 'TCP OK', 'TCP Not OK', () => {
-        const channel = {}
-        channel.tcpHost = '127.0.0.1'
-        channel.tcpPort = 6000
-        channel.type = 'tcp'
-        const transaction = {
-          request: {
-            body: 'this is a test server'
-          }
-        }
-
-        return tasks.rerunTcpRequestSend(channel, transaction, (err, data) => {
-          if (err) { return done(err) }
-          data.body.should.be.exactly('TCP OK')
-          done()
-        })
-      })
-    )
-  )
-
-  describe('*findAndProcessAQueuedTask()', () => {
-    it('should find the next available queued task and process its next round', async () => {
-      await testUtils.createMockServerPromised(200, 'Mock response', 7786)
+      const spy = sinon.spy()
+      server = await testUtils.createMockHttpServer(spy, constants.SERVER_PORTS.rerunPort)
       await tasks.findAndProcessAQueuedTask()
 
-      const task = await TaskModel.findOne({_id: task1._id})
-      task.status.should.be.equal('Queued')
-      task.remainingTransactions.should.be.equal(2)
-      task.transactions[0].tstatus.should.be.equal('Completed')
-      task.transactions[1].tstatus.should.be.equal('Queued')
-      task.transactions[2].tstatus.should.be.equal('Queued')
+      spy.callCount.should.eql(2)
+
+      const updatedTask = await TaskModel.findById(originalTask._id)
+      updatedTask.status.should.eql('Queued')
+      updatedTask.remainingTransactions.should.be.equal(1)
+      updatedTask.transactions[0].tstatus.should.be.equal('Completed')
+      updatedTask.transactions[1].tstatus.should.be.equal('Completed')
+      updatedTask.transactions[2].tstatus.should.be.equal('Queued')
     })
 
-    it('should process X transactions where X is the batch size', async () => {
-      await testUtils.createMockServerPromised(200, 'Mock response', 7786)
-      await TaskModel.update({_id: task1._id}, {batchSize: 2})
+    it(`will process the transactions till they are completed`, async () => {
+      const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
+      const transactions = await Promise.all(
+        Array(3).fill(new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save())
+      )
+      const originalTask = await createTask(transactions, { batchSize: 2 })
+
+      const spy = sinon.spy()
+      server = await testUtils.createMockHttpServer(spy, constants.SERVER_PORTS.rerunPort)
+
+      await tasks.findAndProcessAQueuedTask()
+      spy.callCount.should.eql(2)
+
+      let updatedTask = await TaskModel.findById(originalTask._id)
+      updatedTask.status.should.eql('Queued')
+      updatedTask.remainingTransactions.should.be.equal(1)
+      updatedTask.transactions[0].tstatus.should.be.equal('Completed')
+      updatedTask.transactions[1].tstatus.should.be.equal('Completed')
+      updatedTask.transactions[2].tstatus.should.be.equal('Queued')
+
+      await tasks.findAndProcessAQueuedTask()
+      spy.callCount.should.eql(3)
+
+      updatedTask = await TaskModel.findById(originalTask._id)
+      updatedTask.status.should.eql('Completed')
+      updatedTask.remainingTransactions.should.be.equal(0)
+      updatedTask.transactions[2].tstatus.should.be.equal('Completed')
+    })
+
+    it(`not process a paused transaction`, async () => {
+      const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
+      const originalTrans = await new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save()
+      const originalTask = await createTask([originalTrans], { status: 'Paused' })
+
+      const spy = sinon.spy()
+      server = await testUtils.createMockHttpServer(spy, constants.SERVER_PORTS.rerunPort)
       await tasks.findAndProcessAQueuedTask()
 
-      const task = await TaskModel.findOne({_id: task1._id})
-      task.status.should.be.equal('Queued')
-      task.remainingTransactions.should.be.equal(1)
-      task.transactions[0].tstatus.should.be.equal('Completed')
-      task.transactions[1].tstatus.should.be.equal('Failed') // non-existent
-      task.transactions[2].tstatus.should.be.equal('Queued')
+      spy.callCount.should.eql(0)
+
+      await testUtils.setImmediatePromise()
+      const updatedTask = await TaskModel.findById(originalTask._id)
+      updatedTask.status.should.eql('Paused')
+      updatedTask.transactions[0].tstatus.should.eql('Queued')
     })
 
-    it('should complete a queued task after all its transactions are finished', async () => {
-      await testUtils.createMockServerPromised(200, 'Mock response', 7786)
-      await TaskModel.update({_id: task1._id}, {batchSize: 3})
-      await tasks.findAndProcessAQueuedTask()
-
-      const task = await TaskModel.findOne({_id: task1._id})
-      task.status.should.be.equal('Completed')
-      task.remainingTransactions.should.be.equal(0)
-      task.transactions[0].tstatus.should.be.equal('Completed')
-      task.transactions[1].tstatus.should.be.equal('Failed') // non-existent
-      task.transactions[2].tstatus.should.be.equal('Failed') // non-existent
-    })
-
-    it('should not process a paused task', done =>
-      TaskModel.update({_id: task1._id}, {status: 'Paused'}, (err) => {
-        if (err) { return done(err) }
-
-        testUtils.createMockServer(200, 'Mock response', 7786, () => {
-          tasks.findAndProcessAQueuedTask()
-          const validateTask = () =>
-            TaskModel.findOne({_id: task1._id}, (err, task) => {
-              if (err) { return done(err) }
-              // Task should be untouched
-              task.status.should.be.equal('Paused')
-              task.remainingTransactions.should.be.equal(3)
-              task.transactions[0].tstatus.should.be.equal('Queued')
-              task.transactions[1].tstatus.should.be.equal('Queued')
-              task.transactions[2].tstatus.should.be.equal('Queued')
-              done()
-            })
-
-          return setTimeout(validateTask, 100 * global.testTimeoutFactor)
-        })
-      })
-    )
-
-    it('should not process a cancelled task', done =>
-      TaskModel.update({_id: task1._id}, {status: 'Cancelled'}, (err) => {
-        if (err) { return done(err) }
-
-        testUtils.createMockServer(200, 'Mock response', 7786, () => {
-          tasks.findAndProcessAQueuedTask()
-          const validateTask = () =>
-            TaskModel.findOne({_id: task1._id}, (err, task) => {
-              if (err) { return done(err) }
-              // Task should be untouched
-              task.status.should.be.equal('Cancelled')
-              task.remainingTransactions.should.be.equal(3)
-              task.transactions[0].tstatus.should.be.equal('Queued')
-              task.transactions[1].tstatus.should.be.equal('Queued')
-              task.transactions[2].tstatus.should.be.equal('Queued')
-              done()
-            })
-
-          return setTimeout(validateTask, 100 * global.testTimeoutFactor)
-        })
-      })
-    )
+    // TODO : Have to add the failed transaction test
   })
 })

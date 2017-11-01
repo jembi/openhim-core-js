@@ -34,7 +34,7 @@ import * as upgradeDB from './upgradeDB'
 import * as autoRetry from './autoRetry'
 import { config } from './config'
 
-mongoose.Promise = Q.Promise
+mongoose.Promise = Promise
 
 config.mongo = config.get('mongo')
 config.authentication = config.get('authentication')
@@ -216,7 +216,7 @@ if (cluster.isMaster && !module.parent) {
     level: config.logger.level
   }
   )
-  if (config.logger.logToDB === true) {
+  if (config.logger.logToDB === true && logger.default.transports.mongodb == null) {
     logger.add(logger.transports.MongoDB, {
       db: config.mongo.url,
       options: config.mongoLogger.options,
@@ -714,6 +714,9 @@ if (cluster.isMaster && !module.parent) {
   }
 
   exports.stop = (stop = done => stopTasksProcessor(() => {
+    if (typeof done !== 'function') {
+      done = () => {}
+    }
     let socket
     const promises = []
 

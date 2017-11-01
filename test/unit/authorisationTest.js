@@ -3,6 +3,7 @@
 
 import rewire from 'rewire'
 import { ChannelModel } from '../../src/model/channels'
+import {ObjectId} from 'mongodb'
 
 const authorisation = rewire('../../src/middleware/authorisation')
 
@@ -20,7 +21,11 @@ describe('Authorisation middleware', () => {
           port: 9876,
           primary: true
         }
-        ]
+        ],
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated
@@ -56,7 +61,11 @@ describe('Authorisation middleware', () => {
           port: 9876,
           primary: true
         }
-        ]
+        ],
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated
@@ -94,7 +103,11 @@ describe('Authorisation middleware', () => {
           port: 9876,
           primary: true
         }
-        ]
+        ],
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
       })
 
       // Setup test data, will need authentication mechanisms to set ctx.authenticated
@@ -136,7 +149,7 @@ describe('Authorisation middleware', () => {
         }
       }
       const channel =
-        {allow: ['something', 'admin']}
+        { allow: ['something', 'admin'] }
       const authoriseClient = authorisation.__get__('authoriseClient')
       const actual = authoriseClient(channel, ctx)
       return actual.should.be.true()
@@ -149,7 +162,7 @@ describe('Authorisation middleware', () => {
         }
       }
       const channel =
-        {allow: ['another', 'notme']}
+        { allow: ['another', 'notme'] }
       const authoriseClient = authorisation.__get__('authoriseClient')
       const actual = authoriseClient(channel, ctx)
       return actual.should.be.false()
@@ -163,7 +176,7 @@ describe('Authorisation middleware', () => {
         }
       }
       const channel =
-        {allow: ['something', 'admin', 'client1']}
+        { allow: ['something', 'admin', 'client1'] }
       const authoriseClient = authorisation.__get__('authoriseClient')
       const actual = authoriseClient(channel, ctx)
       return actual.should.be.true()
@@ -177,7 +190,7 @@ describe('Authorisation middleware', () => {
         }
       }
       const channel =
-        {allow: ['something', 'admin', 'client1']}
+        { allow: ['something', 'admin', 'client1'] }
       const authoriseClient = authorisation.__get__('authoriseClient')
       const actual = authoriseClient(channel, ctx)
       return actual.should.be.false()
@@ -186,7 +199,7 @@ describe('Authorisation middleware', () => {
     it('should return false for if there is no authenticated client', () => {
       const ctx = {}
       const channel =
-        {allow: ['something', 'admin', 'client1']}
+        { allow: ['something', 'admin', 'client1'] }
       const authoriseClient = authorisation.__get__('authoriseClient')
       const actual = authoriseClient(channel, ctx)
       return actual.should.be.false()
@@ -200,19 +213,19 @@ describe('Authorisation middleware', () => {
         }
       }
       const channel =
-        {allow: null}
+        { allow: null }
       const authoriseClient = authorisation.__get__('authoriseClient')
       const actual = authoriseClient(channel, ctx)
       return actual.should.be.false()
     })
   })
 
-  return describe('authoriseIP', () => {
+  describe('authoriseIP', () => {
     it('should return true if the client IP is in the whitelist', () => {
       const ctx =
-        {ip: '192.168.0.11'}
+        { ip: '192.168.0.11' }
       const channel =
-        {whitelist: ['192.168.0.11']}
+        { whitelist: ['192.168.0.11'] }
       const authoriseIP = authorisation.__get__('authoriseIP')
       const actual = authoriseIP(channel, ctx)
       return actual.should.be.true()
@@ -220,19 +233,19 @@ describe('Authorisation middleware', () => {
 
     it('should return false if the client IP isnt in the whitelist', () => {
       const ctx =
-        {ip: '192.168.0.11'}
+        { ip: '192.168.0.11' }
       const channel =
-        {whitelist: ['192.168.0.15']}
+        { whitelist: ['192.168.0.15'] }
       const authoriseIP = authorisation.__get__('authoriseIP')
       const actual = authoriseIP(channel, ctx)
       return actual.should.be.false()
     })
 
-    return it('should return true if there are no whitelist entires', () => {
+    it('should return true if there are no whitelist entires', () => {
       const ctx =
-        {ip: '192.168.0.11'}
+        { ip: '192.168.0.11' }
       const channel =
-        {whitelist: null}
+        { whitelist: null }
       const authoriseIP = authorisation.__get__('authoriseIP')
       const actual = authoriseIP(channel, ctx)
       return actual.should.be.true()
