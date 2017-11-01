@@ -16,7 +16,7 @@ Some of the important information is repeated here, however, the the above docum
 Getting started with the OpenHIM-core
 -------------------------------------
 
-1. Install the latest stable [Node.js](http://nodejs.org/) v4 or greater. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
+1. Install the latest stable [Node.js](http://nodejs.org/) v8.9 or greater. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
 2. Install and start [MongoDB](http://www.mongodb.org/) 2.6 or greater.
 3. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your PATH.
 4. Start the server by executing `openhim-core` from anywhere.
@@ -41,7 +41,7 @@ You can use vagrant if you would want to get up and running quickly with a dev e
 Clone the `https://github.com/jembi/openhim-core-js.git` repository.
 
 Ensure you have the following installed:
-* [Node.js](http://nodejs.org/) v4 or greater
+* [Node.js](http://nodejs.org/) v8.9 or greater
 * [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt-get install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
 
 The OpenHIM core makes use of the [Koa framework](http://koajs.com/), which requires node version v4 or greater.
@@ -50,9 +50,9 @@ The easiest way to use the latest version of node is to install [`nvm`](https://
 
 Once `nvm `is installed, run the following:
 
-`nvm install 6`
+`nvm install 8.9`
 
-`nvm alias default 6`
+`nvm alias default 8.9`
 
 The latest version of node 4 should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
 
