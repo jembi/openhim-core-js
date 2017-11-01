@@ -1,103 +1,104 @@
 /* eslint-env mocha */
 
 import fs from 'fs'
-import nconf from 'nconf'
 import FormData from 'form-data'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { ClientModelAPI } from '../../src/model/clients'
-import * as testUtils from '../utils'
-import { config } from '../../src/config'
 import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
+import * as testUtils from '../utils'
+import { config } from '../../src/config'
 import * as constants from '../constants'
+import * as server from '../../src/server'
+import { ChannelModel, ClientModel } from '../../src/model'
 
 const { SERVER_PORTS } = constants
-nconf.set('router', { httpPort: SERVER_PORTS.httpPort })
-
-const server = require('../../src/server')
 
 describe('Multipart form data tests', () => {
+  let mockServer
+  const mediatorResponse = {
+    status: 'Successful',
+    response: {
+      status: 200,
+      headers: {},
+      body: '<transaction response>',
+      timestamp: new Date()
+    },
+    orchestrations: [{
+      name: 'Lab API',
+      request: {
+        path: 'api/patient/lab',
+        headers: {
+          'Content-Type': 'text/plain'
+        },
+        body: '<route request>',
+        method: 'POST',
+        timestamp: new Date()
+      },
+      response: {
+        status: 200,
+        headers: {},
+        body: '<route response>',
+        timestamp: new Date()
+      }
+    }]
+  }
+
+  const channelDoc = {
+    name: 'TEST DATA - Mock endpoint - multipart',
+    urlPattern: '/test/multipart',
+    allow: ['PoC'],
+    routes: [{
+      name: 'test route',
+      host: 'localhost',
+      port: constants.MEDIATOR_PORT,
+      primary: true
+    }],
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
+  }
+
+  const testClientDoc = {
+    clientID: 'testAppMultipart',
+    clientDomain: 'test-client.jembi.org',
+    name: 'TEST Client',
+    roles: [
+      'OpenMRS_PoC',
+      'PoC'
+    ],
+    passwordAlgorithm: 'sha512',
+    passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+    passwordSalt: '1234567890',
+    cert: ''
+  }
+
   before(async () => {
     config.authentication.enableMutualTLSAuthentication = false
     config.authentication.enableBasicAuthentication = true
 
-    const mediatorResponse = {
-      status: 'Successful',
-      response: {
-        status: 200,
-        headers: {},
-        body: '<transaction response>',
-        timestamp: new Date()
-      },
-      orchestrations: [{
-        name: 'Lab API',
-        request: {
-          path: 'api/patient/lab',
-          headers: {
-            'Content-Type': 'text/plain'
-          },
-          body: '<route request>',
-          method: 'POST',
-          timestamp: new Date()
-        },
-        response: {
-          status: 200,
-          headers: {},
-          body: '<route response>',
-          timestamp: new Date()
-        }
-      }]
-    }
+    await Promise.all([
+      new ChannelModel(channelDoc).save(),
+      new ClientModel(testClientDoc).save(),
+      promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+    ])
 
-    // Setup some test data
-    await new ChannelModelAPI({
-      name: 'TEST DATA - Mock endpoint - multipart',
-      urlPattern: '/test/multipart',
-      allow: ['PoC'],
-      routes: [{
-        name: 'test route',
-        host: 'localhost',
-        port: 1276,
-        primary: true
-      }],
-      updatedBy: {
-        id: new ObjectId(),
-        name: 'Test'
-      }
-    }).save()
-
-    const testAppDoc = {
-      clientID: 'testAppMultipart',
-      clientDomain: 'test-client.jembi.org',
-      name: 'TEST Client',
-      roles: [
-        'OpenMRS_PoC',
-        'PoC'
-      ],
-      passwordAlgorithm: 'sha512',
-      passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-      passwordSalt: '1234567890',
-      cert: ''
-    }
-
-    await new ClientModelAPI(testAppDoc).save()
-
-    await testUtils.createMockHttpMediator(mediatorResponse, 1276, 200)
+    mockServer = await testUtils.createMockHttpMediator(mediatorResponse)
   })
 
   after(async () => {
+    if (mockServer != null) {
+      await mockServer.close()
+      mockServer = null
+    }
+
     await Promise.all([
-      ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint - multipart' }),
-      ClientModelAPI.remove({ clientID: 'testAppMultipart' })
+      promisify(server.stop)(),
+      ChannelModel.remove(),
+      ClientModel.remove()
     ])
   })
 
-  afterEach(async () => {
-    await promisify(server.stop)()
-  })
-
   it('should return 201 CREATED on POST', async () => {
-    await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
     const form = await new FormData()
 
     form.append('my_field', 'my value')
