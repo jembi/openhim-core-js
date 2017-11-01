@@ -216,7 +216,7 @@ if (cluster.isMaster && !module.parent) {
     level: config.logger.level
   }
   )
-  if (config.logger.logToDB === true) {
+  if (config.logger.logToDB === true && logger.default.transports.mongodb == null) {
     logger.add(logger.transports.MongoDB, {
       db: config.mongo.url,
       options: config.mongoLogger.options,
