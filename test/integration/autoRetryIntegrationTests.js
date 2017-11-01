@@ -10,7 +10,7 @@ import * as tasks from '../../src/tasks'
 import * as constants from '../constants'
 import { config } from '../../src/config'
 import { promisify } from 'util'
-import {ObjectId} from 'mongodb'
+import { ObjectId } from 'mongodb'
 
 // TODO : Check the tasks have beeen removed before trying the next test
 
@@ -53,6 +53,14 @@ describe(`Auto Retry Integration Tests`, () => {
     config.rerun = ORIGNAL_RERUN
 
     await promisify(server.stop)()
+  })
+
+  beforeEach(async () => {
+    await testUtils.setImmediatePromise()
+    await Promise.all([
+      TaskModel.remove(),
+      TransactionModel.remove()
+    ])
   })
 
   afterEach(async () => {
