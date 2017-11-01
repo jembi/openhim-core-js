@@ -189,7 +189,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
     promisify(server.start)({ tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort })
     // TODO : Replace with ping till ready
-    await testUtils.wait(200)
+    await testUtils.wait(10)
   })
 
   after(async () => {

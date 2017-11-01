@@ -155,5 +155,5 @@ export function calculateMetrics (startDate, endDate, transactionFilter, channel
   }
 
   const pipeline = [{$match: match}, {$group: group}]
-  return TransactionModel.aggregate(pipeline).exec()
+  return TransactionModel.aggregate(pipeline)
 }

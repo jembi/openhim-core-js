@@ -12,6 +12,8 @@ import { config } from '../../src/config'
 import { promisify } from 'util'
 import {ObjectId} from 'mongodb'
 
+// TODO : Check the tasks have beeen removed before trying the next test
+
 function waitForAutoRetry () {
   return testUtils.pollCondition(() => AutoRetryModel.count().then(count => count === 1))
 }
@@ -43,7 +45,6 @@ describe(`Auto Retry Integration Tests`, () => {
     config.authentication.enableMutualTLSAuthentication = false
     config.authentication.enableBasicAuthentication = true
     config.rerun.httpPort = constants.SERVER_PORTS.rerunPort
-
     await promisify(server.start)({ httpPort: constants.SERVER_PORTS.httpPort, rerunHttpPort: constants.SERVER_PORTS.rerunPort })
   })
 
