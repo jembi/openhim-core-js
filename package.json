@@ -1,7 +1,7 @@
 {
   "name": "openhim-core",
   "description": "The OpenHIM core application that provides logging and routing of http requests",
-  "version": "4.0.0-rc.2",
+  "version": "4.0.0-rc.3",
   "main": "./lib/server.js",
   "bin": {
     "openhim-core": "./bin/openhim-core.js"
@@ -14,10 +14,11 @@
     "build": "npm run clean; babel src --out-dir lib -s",
     "build:watch": "npm run build -- -w",
     "clean": "rimraf lib/",
+    "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "prepare": "npm run build",
     "lint": "standard src/ test/ bin/",
     "lint:fix": "standard --fix src/ test/ bin/",
-    "test": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --exit --require babel-register test/setupTest.js test/**/*.js",
+    "test": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 nyc mocha --exit --require babel-register test/setupTest.js test/**/*.js",
     "test:watch": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --watch --require babel-register test/setupTest.js test/unit/routerTest.js",
     "test:unit": "cross-env NODE_ENV=test mocha --require babel-register test/setupTest.js test/unit/**/*.js --watch",
     "test:int": "cross-env NODE_TLS_REJECT_UNAUTHORIZED=0 mocha -t 4000 --compilers js:babel-register test/integration/**/*.js",
@@ -80,9 +81,11 @@
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.5.1",
     "babel-register": "^6.26.0",
+    "codecov": "^2.3.0",
     "cross-env": "^5.0.1",
     "finalhandler": "^1.1.0",
     "mocha": "^4.0.0",
+    "nyc": "^11.2.1",
     "rewire": "^2.5.1",
     "rimraf": "^2.6.1",
     "serve-static": "^1.13.1",
