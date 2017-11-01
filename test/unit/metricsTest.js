@@ -5,6 +5,7 @@ import mongoose from 'mongoose'
 import { TransactionModel } from '../../src/model'
 import * as metrics from '../../src/metrics'
 import * as testUtils from '../utils'
+import { ObjectID } from 'mongodb'
 
 // TODO : These test are very flacky and need to be fixed
 describe('Metrics unit tests', () =>
@@ -56,7 +57,7 @@ describe('Metrics unit tests', () =>
       result[0]._id.year.should.be.exactly(2014)
       result[0].total.should.be.exactly(1)
     })
-// TODO Ross ?
+    // TODO Ross ?
     it('should return metrics in time series by hour', async () => {
       const result = await metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, 'hour')
       result.length.should.be.exactly(9)
@@ -103,8 +104,9 @@ describe('Metrics unit tests', () =>
     })
 
     it('should return metrics grouped by channels', async () => {
-      const result = await metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, null, true)
+      let result = await metrics.calculateMetrics(new Date('2014-07-15T00:00:00.000Z'), new Date('2014-07-19T00:00:00.000Z'), null, null, null, true)
       result.length.should.be.exactly(2)
+      result = result.sort((a, b) => a._id.channelID.toString() < b._id.channelID.toString())
       result[0]._id.channelID.toString().should.be.exactly('222222222222222222222222')
       result[0].total.should.be.exactly(5)
       result[1]._id.channelID.toString().should.be.exactly('111111111111111111111111')
