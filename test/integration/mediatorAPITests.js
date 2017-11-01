@@ -16,6 +16,7 @@ import { config } from '../../src/config'
 
 describe('API Integration Tests', () => {
   const { SERVER_PORTS } = constants
+  const httpPortPlus40 = constants.PORT_START + 40
 
   nconf.set('router', { httpPort: SERVER_PORTS.httpPort })
 
@@ -1224,7 +1225,7 @@ describe('API Integration Tests', () => {
         routes: [{
           name: 'mediator route',
           host: 'localhost',
-          port: 1244,
+          port: httpPortPlus40,
           primary: true
         }],
         updatedBy: {
@@ -1248,7 +1249,7 @@ describe('API Integration Tests', () => {
       }
 
       await new ClientModelAPI(testAppDoc).save()
-      mockServer = await testUtils.createMockHttpMediator(mediatorResponse, 1244, 200)
+      mockServer = await testUtils.createMockHttpMediator(mediatorResponse, httpPortPlus40, 200)
     })
 
     beforeEach(async () => { await TransactionModelAPI.remove() })

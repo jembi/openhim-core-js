@@ -822,6 +822,7 @@ describe('API Integration Tests', () => {
 
       it('should only return the transactions that a user can view', async () => {
         await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
+        
         await new TransactionModel(Object.assign({}, transactionData, {
           channelID: channel2._id,
           _id: '111111111111111111111112'
@@ -840,6 +841,7 @@ describe('API Integration Tests', () => {
 
       it('should return the transactions for a channel that a user has permission to view', async () => {
         await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
+
         await new TransactionModel(Object.assign({}, transactionData, {
           channelID: channel2._id,
           _id: '111111111111111111111112'
@@ -873,6 +875,7 @@ describe('API Integration Tests', () => {
 
       it('should truncate transaction details if filterRepresentation is fulltruncate ', async () => {
         await new TransactionModel(transactionData).save()
+
         const res = await request(constants.BASE_URL)
           .get('/transactions?filterRepresentation=fulltruncate')
           .set('auth-username', testUtils.rootUser.email)
@@ -894,6 +897,7 @@ describe('API Integration Tests', () => {
     describe('*getTransactionById (transactionId)', () => {
       it('should fetch a transaction by ID - admin user', async () => {
         const tx = await new TransactionModel(transactionData).save()
+
         const res = await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -915,6 +919,7 @@ describe('API Integration Tests', () => {
 
       it('should NOT return a transaction that a user is not allowed to view', async () => {
         const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel2._id })).save()
+
         await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.nonRootUser.email)
@@ -926,6 +931,7 @@ describe('API Integration Tests', () => {
 
       it('should return a transaction that a user is allowed to view', async () => {
         const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
+
         const res = await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.nonRootUser.email)
@@ -947,7 +953,9 @@ describe('API Integration Tests', () => {
 
       it('should truncate a large body if filterRepresentation is \'fulltruncate\'', async () => {
         // transactionData body lengths > config.truncateSize
+      
         const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
+
         const res = await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}?filterRepresentation=fulltruncate`)
           .set('auth-username', testUtils.rootUser.email)
@@ -978,6 +986,7 @@ describe('API Integration Tests', () => {
           clientID: '444444444444444444444444',
           channelID: channel2._id
         })).save()
+
         const res = await request(constants.BASE_URL)
           .get(`/transactions/clients/${tx.clientID}`)
           .set('auth-username', testUtils.nonRootUser.email)
@@ -993,6 +1002,7 @@ describe('API Integration Tests', () => {
           clientID: '444444444444444444444444',
           channelID: channel._id
         })).save()
+
         const res = await request(constants.BASE_URL)
           .get(`/transactions/clients/${tx.clientID}`)
           .set('auth-username', testUtils.nonRootUser.email)
@@ -1008,6 +1018,7 @@ describe('API Integration Tests', () => {
     describe('*removeTransaction (transactionId)', () => {
       it('should call removeTransaction', async () => {
         const tx = await new TransactionModel(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
+
         await request(constants.BASE_URL)
           .del(`/transactions/${tx._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -1022,6 +1033,7 @@ describe('API Integration Tests', () => {
 
       it('should only allow admin users to remove transactions', async () => {
         const { _id: transactionId } = await new TransactionModel(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
+
         await request(constants.BASE_URL)
           .del(`/transactions/${transactionId}`)
           .set('auth-username', testUtils.nonRootUser.email)

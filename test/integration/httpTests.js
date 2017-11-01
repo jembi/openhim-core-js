@@ -14,6 +14,9 @@ import * as server from '../../src/server'
 const { SERVER_PORTS } = constants
 nconf.set('router', { httpPort: SERVER_PORTS.httpPort })
 describe('HTTP tests', () => {
+  const httpPortPlus40 = constants.PORT_START + 40
+  const httpPortPlus41 = constants.PORT_START + 41  
+
   describe('HTTP header tests', () => {
     let mockServer = null
     const testDoc = '<test>test message</test>'
@@ -30,7 +33,7 @@ describe('HTTP tests', () => {
         routes: [{
           name: 'test route',
           host: 'localhost',
-          port: 6262,
+          port: httpPortPlus40,
           primary: true
         }],
         updatedBy: {
@@ -55,7 +58,7 @@ describe('HTTP tests', () => {
 
       await new ClientModelAPI(testAppDoc).save()
       // Create mock endpoint to forward requests to
-      mockServer = await testUtils.createMockHttpServer(testDoc, 6262, 201)
+      mockServer = await testUtils.createMockHttpServer(testDoc, httpPortPlus40, 201)
     })
 
     after(async () => {
@@ -114,7 +117,7 @@ describe('HTTP tests', () => {
         routes: [{
           name: 'test route return',
           host: 'localhost',
-          port: 1499,
+          port: httpPortPlus41,
           primary: true
         }],
         updatedBy: {
@@ -222,7 +225,7 @@ describe('HTTP tests', () => {
       mockServer = testUtils.createMockServerForPost(201, 400, testDoc)
       mockServerWithReturn = testUtils.createMockServerForPost(201, 400, testDoc, true)
       mockServer.listen(constants.MEDIATOR_PORT)
-      mockServerWithReturn.listen(1499)
+      mockServerWithReturn.listen(httpPortPlus41)
     })
 
     after(async () => {

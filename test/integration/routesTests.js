@@ -19,6 +19,8 @@ const server = require('../../src/server')
 describe('Routes enabled/disabled tests', () => {
   let mockServer1 = null
   let mockServer2 = null
+  const httpPortPlus40 = constants.PORT_START + 40
+  const httpPortPlus41 = constants.PORT_START + 41
 
   const channel1 = new ChannelModelAPI({
     name: 'TEST DATA - Mock endpoint 1',
@@ -28,12 +30,12 @@ describe('Routes enabled/disabled tests', () => {
       {
         name: 'test route',
         host: 'localhost',
-        port: 1233,
+        port: httpPortPlus40,
         primary: true
       }, {
         name: 'test route 2',
         host: 'localhost',
-        port: 1234
+        port: httpPortPlus41
       }
     ],
     updatedBy: {
@@ -50,12 +52,12 @@ describe('Routes enabled/disabled tests', () => {
       {
         name: 'test route',
         host: 'localhost',
-        port: 1233,
+        port: httpPortPlus40,
         status: 'disabled'
       }, {
         name: 'test route 2',
         host: 'localhost',
-        port: 1234,
+        port: httpPortPlus41,
         primary: true,
         status: 'enabled'
       }
@@ -74,13 +76,13 @@ describe('Routes enabled/disabled tests', () => {
       {
         name: 'test route',
         host: 'localhost',
-        port: 1233,
+        port: httpPortPlus40,
         primary: true,
         status: 'enabled'
       }, {
         name: 'test route 2',
         host: 'localhost',
-        port: 1234,
+        port: httpPortPlus41,
         primary: true,
         status: 'disabled'
       }
@@ -116,8 +118,8 @@ describe('Routes enabled/disabled tests', () => {
     await new ClientModelAPI(testAppDoc).save()
 
     // Create mock endpoint to forward requests to
-    mockServer1 = await testUtils.createMockHttpServer('target1', 1233, 200)
-    mockServer2 = await testUtils.createMockHttpServer('target2', 1234, 200)
+    mockServer1 = await testUtils.createMockHttpServer('target1', httpPortPlus40, 200)
+    mockServer2 = await testUtils.createMockHttpServer('target2', httpPortPlus41, 200)
   })
 
   after(async () => {

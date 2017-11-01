@@ -241,9 +241,10 @@ describe('API Integration Tests', () => {
       await TaskModelAPI.remove()
       await TransactionModelAPI.remove()
       await ChannelModelAPI.remove()
+
       const db = await MongoClient.connect(config.mongo.url)
       const mongoCollection = db != null ? db.collection('jobs') : undefined
-      mongoCollection.drop()
+      await mongoCollection.drop()
     })
 
     beforeEach(() => { authDetails = testUtils.getAuthDetails() })
@@ -275,6 +276,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+
         res.body.length.should.be.eql(3)
       })
 
@@ -306,6 +308,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+
         res.body.length.should.be.eql(1)
       })
     })
@@ -323,6 +326,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send(newTask)
           .expect(201)
+
         const task = await TaskModelAPI.findOne({
           $and: [{ transactions: { $elemMatch: { tid: '888888888888888888888888' } } },
           { transactions: { $elemMatch: { tid: '999999999999999999999999' } } }, {
@@ -418,6 +422,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send(newTask)
           .expect(201)
+
         const task = await TaskModelAPI.findOne({
           $and: [{ transactions: { $elemMatch: { tid: '222288888888888888888888' } } },
           { transactions: { $elemMatch: { tid: '333399999999999999999999' } } }, {
@@ -426,6 +431,7 @@ describe('API Integration Tests', () => {
             }
           }]
         })
+
         task.should.have.property('status', 'Paused')
         task.transactions.should.have.length(3)
         task.should.have.property('remainingTransactions', 3)
@@ -436,24 +442,29 @@ describe('API Integration Tests', () => {
           { tids: ['888888888888888888888888', '999999999999999999999999'] }
 
         await AutoRetryModelAPI.remove()
+
         const retry1 = new AutoRetryModelAPI({
           transactionID: ObjectId('888888888888888888888888'),
           channelID: ObjectId('222222222222222222222222'),
           requestTimestamp: new Date()
         })
+
         const retry2 = new AutoRetryModelAPI({
           transactionID: ObjectId('999999999999999999999999'),
           channelID: ObjectId('222222222222222222222222'),
           requestTimestamp: new Date()
         })
+
         const retry3 = new AutoRetryModelAPI({
           transactionID: ObjectId('111119999999999999999999'),
           channelID: ObjectId('222222222222222222222222'),
           requestTimestamp: new Date()
         })
+
         await retry1.save()
         await retry2.save()
         await retry3.save()
+
         await request(constants.BASE_URL)
           .post('/tasks')
           .set('auth-username', testUtils.rootUser.email)
@@ -496,6 +507,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+
         res.body.should.have.property('_id', 'aaa908908bbb98cc1d0809ee')
         res.body.should.have.property('status', 'Completed')
         res.body.transactions.should.have.length(4)
@@ -527,6 +539,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+
         res.body.should.have.property('_id', 'bbb777777bbb66cc5d4444ee')
         res.body.should.have.property('status', 'Paused')
         res.body.transactions.should.have.length(10)
@@ -567,6 +580,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+
         res.body.should.have.property('_id', 'bbb777777bbb66cc5d4444ee')
         res.body.should.have.property('status', 'Paused')
         res.body.transactions.should.have.length(9)
@@ -611,6 +625,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+
         res.body.should.have.property('_id', 'bbb777777bbb66cc5d4444ee')
         res.body.should.have.property('status', 'Paused')
         res.body.transactions.should.have.length(4)
@@ -623,6 +638,7 @@ describe('API Integration Tests', () => {
           status: 'Completed',
           completed: '2014-06-18T13:30:00.929Z'
         }
+
         await request(constants.BASE_URL)
           .put('/tasks/aaa777777bbb66cc5d4444ee')
           .set('auth-username', testUtils.rootUser.email)
@@ -652,7 +668,6 @@ describe('API Integration Tests', () => {
 
     describe('*removeTask(taskId)', () => {
       it('should remove a specific task by ID', async () => {
-
         await request(constants.BASE_URL)
           .del('/tasks/aaa777777bbb66cc5d4444ee')
           .set('auth-username', testUtils.rootUser.email)
@@ -660,12 +675,12 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+          
         const task = await TaskModelAPI.find({ _id: 'aaa777777bbb66cc5d4444ee' })
         task.should.have.length(0)
       })
 
       it('should not only allow a non admin user to remove a task', async () => {
-
         await request(constants.BASE_URL)
           .del('/tasks/890aaS0b93ccccc30dddddd0')
           .set('auth-username', testUtils.nonRootUser.email)

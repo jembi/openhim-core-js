@@ -21,6 +21,8 @@ const { SERVER_PORTS } = constants
 let sandbox = sinon.createSandbox()
 
 describe('API Integration Tests', () => {
+  const httpPortPlus40 = constants.PORT_START + 40
+  const httpPortPlus41 = constants.PORT_START + 41
   describe('Channels REST Api testing', () => {
     const channel1 = {
       name: 'TestChannel1',
@@ -1018,7 +1020,7 @@ describe('API Integration Tests', () => {
       routes: [{
         name: 'test route',
         host: 'localhost',
-        port: 1234,
+        port: httpPortPlus40,
         primary: true
       }],
       updatedBy: {
@@ -1035,7 +1037,7 @@ describe('API Integration Tests', () => {
       routes: [{
         name: 'test route',
         host: 'localhost',
-        port: 1233,
+        port: httpPortPlus41,
         primary: true
       }],
       updatedBy: {
@@ -1052,7 +1054,7 @@ describe('API Integration Tests', () => {
       routes: [{
         name: 'test route',
         host: 'localhost',
-        port: 1234,
+        port: httpPortPlus40,
         primary: true
       }],
       updatedBy: {
@@ -1088,8 +1090,8 @@ describe('API Integration Tests', () => {
       await new ClientModelAPI(testAppDoc).save()
 
       // Create mock endpoint to forward requests to
-      mockServer1 = await testUtils.createMockHttpServer('target1', 1233, 200)
-      mockServer2 = await testUtils.createMockHttpServer('target2', 1234, 200)
+      mockServer1 = await testUtils.createMockHttpServer('target1', httpPortPlus41, 200)
+      mockServer2 = await testUtils.createMockHttpServer('target2', httpPortPlus40, 200)
     })
 
     after(async () => {
@@ -1135,7 +1137,7 @@ describe('API Integration Tests', () => {
         routes: [{
           name: 'test route',
           host: 'localhost',
-          port: 1234,
+          port: httpPortPlus40,
           primary: true
         }],
         updatedBy: {
