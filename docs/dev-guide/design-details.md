@@ -1,4 +1,4 @@
-Detailed design using Node.js
+Detailed design using Node.js - test
 =============================
 
 **Note:** this design document was written before the development OpenHIM an as such some of the detail have changed or evolved with the OpenHIM's continuted development. It is a good starting point but not a complete picture.
