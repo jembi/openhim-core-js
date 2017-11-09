@@ -562,7 +562,7 @@ describe('API Integration Tests', () => {
             name: 'Test'
           }
         }
-        
+
         const { insertedId: id } = await db.collection('channels').insertOne(noMethodChannelDoc)
         const resp = await request(constants.BASE_URL)
           .get(`/channels/${id.toString()}`)
