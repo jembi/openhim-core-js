@@ -434,11 +434,30 @@ describe('HTTP Router', () => {
         }
       })
 
-      it('will allow only get methods', async () => {
-        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), { methods: ['GET'] })
-        const ctx = createContext(channel)
+      it('will reject methods that are not allowed', async () => {
+        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), { methods: ['GET', 'PUT'] })
+        const ctx = createContext(channel, undefined, 'POST')
+        await promisify(router.route)(ctx)
+        ctx.response.status.should.eql(405)
+        ctx.response.timestamp.should.Date()
+        ctx.response.body.should.eql(`Request with method POST is not allowed. Only GET, PUT methods are allowed`)
+        spy.callCount.should.eql(0)
+      })
+
+      it('will allow methods that are allowed', async () => {
+        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), { methods: ['GET', 'PUT'] })
+        const ctx = createContext(channel, undefined, 'GET')
         await promisify(router.route)(ctx)
         ctx.response.status.should.eql(201)
+        spy.callCount.should.eql(1)
+      })
+
+      it('will allow all methods if methods is empty', async () => {
+        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), { methods: [] })
+        const ctx = createContext(channel, undefined, 'GET')
+        await promisify(router.route)(ctx)
+        ctx.response.status.should.eql(201)
+        spy.callCount.should.eql(1)
       })
     })
   })

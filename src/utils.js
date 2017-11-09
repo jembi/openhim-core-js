@@ -7,6 +7,10 @@ import { config } from './config'
 config.caching = config.get('caching')
 config.api = config.get('api')
 
+export function isNullOrWhitespace (value) {
+  return /^\s*$/.test(value || '')
+}
+
 // function to log errors and return response
 export function logAndSetResponse (ctx, status, msg, logLevel) {
   logger[logLevel](msg)
@@ -18,7 +22,7 @@ export function logAndSetResponse (ctx, status, msg, logLevel) {
 
 const cacheValueStore = {}
 
-const {refreshMillis} = config.caching
+const { refreshMillis } = config.caching
 
 function getCachedValues (store, callback) {
   const lastCheck = cacheValueStore[`${store}`] != null ? cacheValueStore[`${store}`].lastCheck : undefined
@@ -38,7 +42,7 @@ function getCachedValues (store, callback) {
 
     // TODO make this more generic (had issues passing Channel.find as a param [higher order function])
     if (store === 'channels') {
-      return ChannelModel.find({}).sort({priority: 1}).exec((err, channels) => {
+      return ChannelModel.find({}).sort({ priority: 1 }).exec((err, channels) => {
         if (err) {
           return handler(err)
         }
