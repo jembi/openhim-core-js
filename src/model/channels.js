@@ -2,7 +2,7 @@ import { Schema } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
 import { ContactUserDef } from './contactGroups'
 import patchHistory from 'mongoose-patch-history'
-import {camelize, pascalize} from 'humps'
+import { camelize, pascalize } from 'humps'
 
 const RouteDef = {
   name: {
@@ -74,6 +74,9 @@ const ChannelDef = {
   urlPattern: {
     type: String, required: true
   },
+  methods: [{
+    type: String, enum: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
+  }],
   type: {
     type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
   },
@@ -87,7 +90,7 @@ const ChannelDef = {
   pollingSchedule: String,
   requestBody: Boolean,
   responseBody: Boolean,
-  allow: [{type: String, required: true}],
+  allow: [{ type: String, required: true }],
   whitelist: [String],
   authType: {
     type: String, default: 'private', enum: ['private', 'public']
@@ -168,7 +171,7 @@ ChannelSchema.plugin(patchHistory, {
 })
 
 // Create a unique index on the name field
-ChannelSchema.index('name', {unique: true})
+ChannelSchema.index('name', { unique: true })
 
 export const ChannelModelAPI = connectionAPI.model('Channel', ChannelSchema)
 export const ChannelModel = connectionDefault.model('Channel', ChannelSchema)

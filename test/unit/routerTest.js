@@ -413,6 +413,34 @@ describe('HTTP Router', () => {
         ctx.routes[0].name.should.be.eql('non prim')
       })
     })
+
+    describe('methods', () => {
+      let mockServer
+      const sandbox = sinon.createSandbox()
+      const spy = sandbox.spy()
+
+      before(async () => {
+        mockServer = await testUtils.createMockHttpServer(spy)
+      })
+
+      afterEach(async () => {
+        sandbox.reset()
+      })
+
+      after(async () => {
+        if (mockServer != null) {
+          await mockServer.close()
+          mockServer = null
+        }
+      })
+
+      it('will allow only get methods', async () => {
+        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), { methods: ['GET'] })
+        const ctx = createContext(channel)
+        await promisify(router.route)(ctx)
+        ctx.response.status.should.eql(201)
+      })
+    })
   })
 
   describe('Basic Auth', () => {
