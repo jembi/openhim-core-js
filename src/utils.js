@@ -7,6 +7,14 @@ import { config } from './config'
 config.caching = config.get('caching')
 config.api = config.get('api')
 
+export function isNullOrEmpty (arr) {
+  if (arr == null) {
+    return true
+  }
+
+  return arr.length === 0
+}
+
 export function isNullOrWhitespace (value) {
   return /^\s*$/.test(value || '')
 }

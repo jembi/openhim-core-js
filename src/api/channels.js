@@ -10,9 +10,11 @@ import * as routerMiddleware from '../middleware/router'
 import * as utils from '../utils'
 import { config } from '../config'
 
-const {ChannelModel} = Channels
+const { ChannelModel } = Channels
 
 config.polling = config.get('polling')
+
+const CHANNEL_METHOD_INVALID_MSG = `Channel method can't be defined if channel type is not http`
 
 function isPathValid (channel) {
   if (channel.routes != null) {
@@ -47,6 +49,15 @@ function processPostAddTriggers (channel) {
   }
 }
 
+export function isMethodValid (channel) {
+  const { methods = [] } = channel || {}
+  if (methods.length === 0) {
+    return true
+  }
+
+  return /http/i.test(channel.type || 'http')
+}
+
 /*
  * Creates a new channel
  */
@@ -74,6 +85,12 @@ export async function addChannel (ctx) {
 
     if ((channel.priority != null) && (channel.priority < 1)) {
       ctx.body = 'Channel priority cannot be below 1 (= Highest priority)'
+      ctx.status = 400
+      return
+    }
+
+    if (!isMethodValid(channel)) {
+      ctx.body = CHANNEL_METHOD_INVALID_MSG
       ctx.status = 400
       return
     }
@@ -118,7 +135,7 @@ export async function getChannel (ctx, channelId) {
     let accessDenied = false
     // if admin allow acces to all channels otherwise restrict result set
     if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-      result = await ChannelModel.findOne({_id: id, txViewAcl: {$in: ctx.authenticated.groups}}).exec()
+      result = await ChannelModel.findOne({ _id: id, txViewAcl: { $in: ctx.authenticated.groups } }).exec()
       const adminResult = await ChannelModel.findById(id).exec()
       if (adminResult != null) {
         accessDenied = true
@@ -157,7 +174,7 @@ export async function getChannelAudits (ctx, channelId) {
   try {
     const channel = await ChannelModel.findById(channelId).exec()
     if (channel) {
-      ctx.body = await channel.patches.find({ref: channel.id}).sort({_id: -1}).exec()
+      ctx.body = await channel.patches.find({ ref: channel.id }).sort({ _id: -1 }).exec()
     } else {
       ctx.body = []
     }
@@ -206,6 +223,22 @@ export async function updateChannel (ctx, channelId) {
 
   // Set the user updating the channel for auditing purposes
   channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
+
+  if (!utils.isNullOrWhitespace(channelData.type) && utils.isNullOrEmpty(channelData.methods)) {
+    // Empty the methods if the type has changed from http
+    if (channelData.type !== 'http') {
+      channelData.methods = []
+    }
+  } else {
+    const currentChannel = await ChannelModel.findById(id)
+    const { type = currentChannel.type } = channelData
+    let { methods = currentChannel.methods } = channelData
+    if (!isMethodValid({ type, methods })) {
+      ctx.body = CHANNEL_METHOD_INVALID_MSG
+      ctx.status = 400
+      return
+    }
+  }
 
   // Ignore _id if it exists, user cannot change the internal id
   if (typeof channelData._id !== 'undefined') {
@@ -276,7 +309,7 @@ export async function removeChannel (ctx, channelId) {
 
   try {
     let channel
-    const numExistingTransactions = await TransactionModelAPI.count({channelID: id}).exec()
+    const numExistingTransactions = await TransactionModelAPI.count({ channelID: id }).exec()
 
     // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
     if (numExistingTransactions === 0) {
@@ -284,7 +317,7 @@ export async function removeChannel (ctx, channelId) {
       channel = await ChannelModel.findByIdAndRemove(id).exec()
     } else {
       // not safe to remove. just flag as deleted
-      channel = await findChannelByIdAndUpdate(id, {status: 'deleted', updatedBy: utils.selectAuditFields(ctx.authenticated)})
+      channel = await findChannelByIdAndUpdate(id, { status: 'deleted', updatedBy: utils.selectAuditFields(ctx.authenticated) })
     }
 
     // All ok! So set the result
