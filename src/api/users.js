@@ -253,7 +253,7 @@ export async function addUser (ctx) {
   }
 
   const userData = ctx.request.body
-
+  console.log(ctx.request.body)
   // Generate the new user token here
   // set locked = true
   // set expiry date = true
@@ -262,6 +262,7 @@ export async function addUser (ctx) {
   userData.token = token
   userData.tokenType = 'newUser'
   userData.locked = true
+  userData.email = userData.email.toLocaleLowerCase()
 
   const { duration, durationType } = config.newUserExpiry
   userData.expiry = moment().add(duration, durationType).utc().format()

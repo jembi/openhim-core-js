@@ -286,6 +286,30 @@ describe('API Integration Tests', () => {
         user.should.have.property('expiry')
       })
 
+      it('should save new users username in lowercase only', async () => {
+        newUser = {
+          firstname: 'Matome',
+          surname: 'Phoshoko',
+          email: 'MATOME.Phoshoko@jembi.org',
+          passwordAlgorithm: 'sha256',
+          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499',
+          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f',
+          groups: ['HISP']
+        }
+
+        await request(constants.BASE_URL)
+          .post('/users')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(newUser)
+          .expect(201)
+
+        const user = await UserModelAPI.findOne({ email: 'matome.phoshoko@jembi.org' })
+        user.email.should.eql('matome.phoshoko@jembi.org')
+      })
+
       it('should not allow a non admin user to add a user', async () => {
         newUser = {}
 
