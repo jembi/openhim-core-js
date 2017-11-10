@@ -95,6 +95,19 @@ describe('API Integration Tests', () => {
       })
     })
 
+    it('should return the requested case insensitive users salt', async () => {
+      const res = await request(constants.BASE_URL)
+        .get('/authenticate/R..@jembi.org')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(200)
+
+      res.body.salt.should.eql('bf93caba-6eec-4c0c-a1a3-d968a7533fd7')
+      should.exist(res.body.ts)
+    })
+
     describe('*userPasswordResetRequest(email)', () => {
       it('should return 403 when requesting root@openhim.org password reset', async () => {
         await request(constants.BASE_URL)
