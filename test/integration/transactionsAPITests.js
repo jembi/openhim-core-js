@@ -822,7 +822,7 @@ describe('API Integration Tests', () => {
 
       it('should only return the transactions that a user can view', async () => {
         await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
-        
+
         await new TransactionModel(Object.assign({}, transactionData, {
           channelID: channel2._id,
           _id: '111111111111111111111112'
@@ -953,7 +953,7 @@ describe('API Integration Tests', () => {
 
       it('should truncate a large body if filterRepresentation is \'fulltruncate\'', async () => {
         // transactionData body lengths > config.truncateSize
-      
+
         const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
 
         const res = await request(constants.BASE_URL)

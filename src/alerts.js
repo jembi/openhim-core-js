@@ -271,7 +271,7 @@ const sendAlert = (channel, alert, user, transactions, contactHandler, done) =>
       logger.info(`Sending alert for user '${user.user}' using method '${user.method}'`)
 
       return getTransactionsForAlert(channel, alert, user, transactions, (err, transactionsForAlert) => {
-        if (err) {done(err)}
+        if (err) { done(err) }
         let template = statusTemplate(transactionsForAlert, channel, alert)
         if (alert.condition === 'auto-retry-max-attempted') {
           template = maxRetriesTemplate(transactionsForAlert, channel, alert)
