@@ -24,6 +24,8 @@ export async function authenticate (ctx, email) {
   email = unescape(email)
 
   try {
+    let emailReg = new RegExp(email, 'i')
+    const user = await UserModelAPI.findOne({ email: {$regex: emailReg}}).exec()
     const user = await UserModelAPI.findOne({email}).exec()
 
     if (!user) {
