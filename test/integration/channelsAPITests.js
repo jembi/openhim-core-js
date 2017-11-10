@@ -546,7 +546,7 @@ describe('API Integration Tests', () => {
         res.body.allow.should.have.length(3)
       })
 
-      it.only(`will default the channel methods as an empty array on existing channels`, async () => {
+      it(`will default the channel methods as an empty array on existing channels`, async () => {
         const db = await testUtils.getMongoClient()
         const noMethodChannelDoc = {
           name: 'method channel',
