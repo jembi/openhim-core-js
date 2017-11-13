@@ -10,6 +10,7 @@ import * as contact from '../contact'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as auditing from '../auditing'
+import _ from 'lodash'
 
 config.newUserExpiry = config.get('newUserExpiry')
 config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')
@@ -24,8 +25,8 @@ export async function authenticate (ctx, email) {
   email = unescape(email)
 
   try {
-    const emailReg = new RegExp(email, 'i')
-    const user = await UserModelAPI.findOne({ email: { $regex: emailReg } }).exec()
+    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    const user = await UserModelAPI.findOne({ email: emailReg }).exec()
 
     if (!user) {
       utils.logAndSetResponse(ctx, 404, `Could not find user by email ${email}`, 'info')
@@ -95,7 +96,8 @@ export async function userPasswordResetRequest (ctx, email) {
   }
 
   try {
-    const user = await UserModelAPI.findOneAndUpdate({ email }, updateUserTokenExpiry).exec()
+    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    const user = await UserModelAPI.findOneAndUpdate({ email: emailReg }, updateUserTokenExpiry).exec()
 
     if (!user) {
       ctx.body = `Tried to request password reset for invalid email address: ${email}`
@@ -253,7 +255,6 @@ export async function addUser (ctx) {
   }
 
   const userData = ctx.request.body
-  console.log(ctx.request.body)
   // Generate the new user token here
   // set locked = true
   // set expiry date = true
@@ -308,7 +309,8 @@ export async function getUser (ctx, email) {
   }
 
   try {
-    const result = await UserModelAPI.findOne({ email }).exec()
+    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    const result = await UserModelAPI.findOne({ email: emailReg }).exec()
     if (!result) {
       ctx.body = `User with email ${email} could not be found.`
       ctx.status = 404
@@ -346,7 +348,8 @@ export async function updateUser (ctx, email) {
   if (userData._id) { delete userData._id }
 
   try {
-    await UserModelAPI.findOneAndUpdate({ email }, userData).exec()
+    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    await UserModelAPI.findOneAndUpdate({ email: { $regex: emailReg } }, userData).exec()
     ctx.body = 'Successfully updated user.'
     logger.info(`User ${ctx.authenticated.email} updated user ${userData.email}`)
   } catch (e) {
@@ -370,7 +373,8 @@ export async function removeUser (ctx, email) {
   }
 
   try {
-    await UserModelAPI.findOneAndRemove({ email }).exec()
+    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    await UserModelAPI.findOneAndRemove({ email: emailReg }).exec()
     ctx.body = `Successfully removed user with email ${email}`
     logger.info(`User ${ctx.authenticated.email} removed user ${email}`)
   } catch (e) {
