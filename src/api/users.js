@@ -263,7 +263,7 @@ export async function addUser (ctx) {
   userData.token = token
   userData.tokenType = 'newUser'
   userData.locked = true
-  userData.email = userData.email.toLocaleLowerCase()
+  userData.email = userData.email.toLowerCase()
 
   const { duration, durationType } = config.newUserExpiry
   userData.expiry = moment().add(duration, durationType).utc().format()
