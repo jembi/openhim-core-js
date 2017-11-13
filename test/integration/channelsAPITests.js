@@ -507,6 +507,34 @@ describe('API Integration Tests', () => {
         const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
         channelCount.should.eql(0)
       })
+
+      it(`will reject the request if the channel repeats methods`, async () => {
+        const methodChannelDocRejected = {
+          name: 'method channel rejected',
+          urlPattern: 'test/method',
+          type: 'http',
+          methods: ['POST', 'POST', 'GET', 'OPTIONS', 'GET'],
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }]
+        }
+
+        const res = await request(constants.BASE_URL)
+          .post('/channels')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(methodChannelDocRejected)
+          .expect(400)
+
+        res.text.should.eql("Channel methods can't be repeated. Repeated methods are GET, POST")
+        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        channelCount.should.eql(0)
+      })
     })
 
     describe('*getChannel(channelId)', () => {
@@ -1060,6 +1088,45 @@ describe('API Integration Tests', () => {
         channel.should.have.property('type', 'http')
         channel.methods.length.should.eql(1)
         channel.methods[0].should.eql('GET')
+      })
+
+      it(`should reject the update if the channel repeats methods`, async () => {
+        const methodChannelDocRejected = {
+          name: 'method channel rejected',
+          urlPattern: 'test/method',
+          type: 'http',
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
+        }
+
+        const methodUpdate = {
+          methods: ['POST', 'POST', 'GET', 'OPTIONS', 'GET']
+        }
+
+        const { _id: channelId } = await new ChannelModelAPI(methodChannelDocRejected).save()
+
+        const res = await request(constants.BASE_URL)
+          .put(`/channels/${channelId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(methodUpdate)
+          .expect(400)
+
+        res.text.should.eql("Channel methods can't be repeated. Repeated methods are GET, POST")
+        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        channelCount.should.eql(1)
+        const channel = await ChannelModelAPI.findById(channelId)
+        channel.methods.length.should.eql(0)
       })
     })
 

@@ -14,8 +14,6 @@ const { ChannelModel } = Channels
 
 config.polling = config.get('polling')
 
-const CHANNEL_METHOD_INVALID_MSG = `Channel method can't be defined if channel type is not http`
-
 function isPathValid (channel) {
   if (channel.routes != null) {
     for (const route of Array.from(channel.routes)) {
@@ -49,13 +47,31 @@ function processPostAddTriggers (channel) {
   }
 }
 
-export function isMethodValid (channel) {
+export function validateMethod (channel) {
   const { methods = [] } = channel || {}
   if (methods.length === 0) {
-    return true
+    return
   }
 
-  return /http/i.test(channel.type || 'http')
+  if (!/http/i.test(channel.type || 'http')) {
+    return `Channel method can't be defined if channel type is not http`
+  }
+
+  const mapCount = methods.reduce((dictionary, method) => {
+    if (dictionary[method] == null) {
+      dictionary[method] = 0
+    }
+    dictionary[method] += 1
+    return dictionary
+  }, {})
+
+  const repeats = Object.keys(mapCount)
+      .filter(k => mapCount[k] > 1)
+      .sort()
+  if (repeats.length > 0) {
+    return `Channel methods can't be repeated. Repeated methods are ${repeats.join(', ')}`
+  }
+
 }
 
 /*
@@ -89,8 +105,10 @@ export async function addChannel (ctx) {
       return
     }
 
-    if (!isMethodValid(channel)) {
-      ctx.body = CHANNEL_METHOD_INVALID_MSG
+    let methodValidation = validateMethod(channel)
+
+    if (methodValidation != null) {
+      ctx.body = methodValidation
       ctx.status = 400
       return
     }
@@ -233,8 +251,10 @@ export async function updateChannel (ctx, channelId) {
     const currentChannel = await ChannelModel.findById(id)
     const { type = currentChannel.type } = channelData
     let { methods = currentChannel.methods } = channelData
-    if (!isMethodValid({ type, methods })) {
-      ctx.body = CHANNEL_METHOD_INVALID_MSG
+    let methodValidation = validateMethod({ type, methods })
+
+    if (methodValidation != null) {
+      ctx.body = methodValidation
       ctx.status = 400
       return
     }
