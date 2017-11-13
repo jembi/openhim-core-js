@@ -63,8 +63,8 @@ export async function authenticate (ctx, next) {
     auditAuthFailure()
     return
   }
-  const emailReg = new RegExp(_.escapeRegExp(email), 'i')
-  const user = await UserModelAPI.findOne({ email: emailReg }).exec()
+  const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
+  const user = await UserModelAPI.findOne({ email : emailReg })
   ctx.authenticated = user
 
   if (!user) {
