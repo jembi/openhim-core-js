@@ -415,6 +415,27 @@ describe('API Integration Tests', () => {
         user.groups.should.have.length(3)
       })
 
+      it('should update a specific user regardless of email case', async () => {
+        const updates = {
+          _id: 'thisShouldBeIgnored',
+          surname: 'Crichton',
+          email: 'rg..@jembi.org',
+          groups: ['admin', 'RHIE', 'HISP']
+        }
+
+        await request(constants.BASE_URL)
+          .put('/users/R..@jembi.org')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+
+        const user = await UserModelAPI.findOne({ email: 'rg..@jembi.org' })
+        user.should.have.property('email', updates.email)
+      })
+
       it('should not allow non admin users to update a user', async () => {
         const updates = {}
 

@@ -10,7 +10,7 @@ config.api = config.get('api')
 
 /**
  * Will take in a string and return a safe regex that will match case insensitive
- * 
+ *
  * @export
  * @param {string} value that needs to be matched
  * @returns {RegExp} regex that will match case insensitive
