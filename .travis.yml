@@ -1,21 +1,11 @@
 language: node_js
 node_js:
-  - "8.9.0"
+  - "node"
+  - "lts/carbon"
 services:
   - docker
   - mongodb
 sudo: required
-before_install:
-  - ".travis/setup.sh"
 after_success:
   - npm run coverage
   - ".travis/build_docker.sh"
-deploy:
-  - provider: script
-    script: ".travis/deploy.sh test"
-    on:
-      branch: test
-  - provider: script
-    script: ".travis/deploy.sh staging"
-    on:
-      branch: staging
