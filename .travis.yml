@@ -6,8 +6,6 @@ services:
   - docker
   - mongodb
 sudo: required
-before_install:
-  - ".travis/setup.sh"
 after_success:
   - npm run coverage
   - ".travis/build_docker.sh"
