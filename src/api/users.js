@@ -1,7 +1,6 @@
 import Q from 'q'
 import logger from 'winston'
 import moment from 'moment'
-import randtoken from 'rand-token'
 import atna from 'atna-audit'
 import os from 'os'
 import { UserModelAPI } from '../model/users'
@@ -10,6 +9,7 @@ import * as contact from '../contact'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as auditing from '../auditing'
+import crypto from 'crypto'
 
 config.newUserExpiry = config.get('newUserExpiry')
 config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')
@@ -64,8 +64,8 @@ const passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) => `\
 <p>${setPasswordLink}</p>\
 `
 
-export function generateRandomToken () {
-  return randtoken.generate(32)
+function generateRandomToken () {
+  return crypto.randomBytes(16).toString('hex')
 }
 
 /*
@@ -83,7 +83,7 @@ export async function userPasswordResetRequest (ctx, email) {
   // Generate the new user token here
   // set expiry date = true
 
-  const token = exports.generateRandomToken()
+  const token = generateRandomToken()
   const {duration, durationType} = config.userPasswordResetExpiry
   const expiry = moment().add(duration, durationType).utc().format()
 
@@ -257,7 +257,7 @@ export async function addUser (ctx) {
   // set locked = true
   // set expiry date = true
 
-  const token = randtoken.generate(32)
+  const token = generateRandomToken()
   userData.token = token
   userData.tokenType = 'newUser'
   userData.locked = true
