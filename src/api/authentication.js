@@ -5,7 +5,7 @@ import os from 'os'
 import { UserModelAPI } from '../model/users'
 import { config } from '../config'
 import * as auditing from '../auditing'
-import _ from 'lodash'
+import { caseInsensitiveRegex } from '../utils'
 
 config.api = config.get('api')
 config.auditing = config.get('auditing')
@@ -63,8 +63,7 @@ export async function authenticate (ctx, next) {
     auditAuthFailure()
     return
   }
-  const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
-  const user = await UserModelAPI.findOne({ email : emailReg })
+  const user = await UserModelAPI.findOne({ email: caseInsensitiveRegex(email) })
   ctx.authenticated = user
 
   if (!user) {

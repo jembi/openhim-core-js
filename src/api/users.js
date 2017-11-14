@@ -10,7 +10,6 @@ import * as contact from '../contact'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as auditing from '../auditing'
-import _ from 'lodash'
 
 config.newUserExpiry = config.get('newUserExpiry')
 config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')
@@ -22,15 +21,11 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
  * Get authentication details
  */
 
-function emailReg(email) {
-  return new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
-}
-
-export async function authenticate(ctx, email) {
+export async function authenticate (ctx, email) {
   email = unescape(email)
 
   try {
-    const user = await UserModelAPI.findOne({ email: emailReg(email) }).exec()
+    const user = await UserModelAPI.findOne({ email: utils.caseInsensitiveRegex(email) })
 
     if (!user) {
       utils.logAndSetResponse(ctx, 404, `Could not find user by email ${email}`, 'info')
@@ -70,14 +65,14 @@ const passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) => `\
 <p>${setPasswordLink}</p>\
 `
 
-export function generateRandomToken() {
+export function generateRandomToken () {
   return randtoken.generate(32)
 }
 
 /*
  * update user token/expiry and send new password email
  */
-export async function userPasswordResetRequest(ctx, email) {
+export async function userPasswordResetRequest (ctx, email) {
   email = unescape(email)
 
   if (email === 'root@openhim.org') {
@@ -100,7 +95,7 @@ export async function userPasswordResetRequest(ctx, email) {
   }
 
   try {
-    const user = await UserModelAPI.findOneAndUpdate({ email: emailReg(email) }, updateUserTokenExpiry).exec()
+    const user = await UserModelAPI.findOneAndUpdate({ email: utils.caseInsensitiveRegex(email) }, updateUserTokenExpiry)
     if (!user) {
       ctx.body = `Tried to request password reset for invalid email address: ${email}`
       ctx.status = 404
@@ -136,7 +131,7 @@ export async function userPasswordResetRequest(ctx, email) {
  */
 
 // get the new user details
-export async function getUserByToken(ctx, token) {
+export async function getUserByToken (ctx, token) {
   token = unescape(token)
 
   try {
@@ -152,7 +147,7 @@ export async function getUserByToken(ctx, token) {
       _id: 0
     }
 
-    const result = await UserModelAPI.findOne({ token }, projectionRestriction).exec()
+    const result = await UserModelAPI.findOne({ token }, projectionRestriction)
     if (!result) {
       ctx.body = `User with token ${token} could not be found.`
       ctx.status = 404
@@ -169,14 +164,14 @@ export async function getUserByToken(ctx, token) {
 }
 
 // update the password/details for the new user
-export async function updateUserByToken(ctx, token) {
+export async function updateUserByToken (ctx, token) {
   let userDataExpiry
   token = unescape(token)
   const userData = ctx.request.body
 
   try {
     // first try get new user details to check expiry date
-    userDataExpiry = await UserModelAPI.findOne({ token }).exec()
+    userDataExpiry = await UserModelAPI.findOne({ token })
 
     if (!userDataExpiry) {
       ctx.body = `User with token ${token} could not be found.`
@@ -217,7 +212,7 @@ export async function updateUserByToken(ctx, token) {
   }
 
   try {
-    await UserModelAPI.findOneAndUpdate({ token }, userUpdateObj).exec()
+    await UserModelAPI.findOneAndUpdate({ token }, userUpdateObj)
     ctx.body = 'Successfully set new user password.'
     return logger.info(`User updated by token ${token}`)
   } catch (error) {
@@ -249,7 +244,7 @@ const htmlMessageTemplate = (firstname, setPasswordLink) => `\
 /*
  * Adds a user
  */
-export async function addUser(ctx) {
+export async function addUser (ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addUser denied.`, 'info')
@@ -301,7 +296,7 @@ export async function addUser(ctx) {
 /*
  * Retrieves the details of a specific user
  */
-export async function getUser(ctx, email) {
+export async function getUser (ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to fetch their own details
@@ -311,7 +306,7 @@ export async function getUser(ctx, email) {
   }
 
   try {
-    const result = await UserModelAPI.findOne({ email: emailReg(email) }).exec()
+    const result = await UserModelAPI.findOne({ email: utils.caseInsensitiveRegex(email) })
     if (!result) {
       ctx.body = `User with email ${email} could not be found.`
       ctx.status = 404
@@ -323,7 +318,7 @@ export async function getUser(ctx, email) {
   }
 }
 
-export async function updateUser(ctx, email) {
+export async function updateUser (ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to update their own details
@@ -349,7 +344,7 @@ export async function updateUser(ctx, email) {
   if (userData._id) { delete userData._id }
 
   try {
-    await UserModelAPI.findOneAndUpdate({ email: emailReg(email) }, userData).exec()
+    await UserModelAPI.findOneAndUpdate({ email: utils.caseInsensitiveRegex(email) }, userData)
     ctx.body = 'Successfully updated user.'
     logger.info(`User ${ctx.authenticated.email} updated user ${userData.email}`)
   } catch (e) {
@@ -357,7 +352,7 @@ export async function updateUser(ctx, email) {
   }
 }
 
-export async function removeUser(ctx, email) {
+export async function removeUser (ctx, email) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeUser denied.`, 'info')
@@ -373,7 +368,7 @@ export async function removeUser(ctx, email) {
   }
 
   try {
-    await UserModelAPI.findOneAndRemove({ email: emailReg(email) }).exec()
+    await UserModelAPI.findOneAndRemove({ email: utils.caseInsensitiveRegex(email) })
     ctx.body = `Successfully removed user with email ${email}`
     logger.info(`User ${ctx.authenticated.email} removed user ${email}`)
   } catch (e) {
@@ -381,7 +376,7 @@ export async function removeUser(ctx, email) {
   }
 }
 
-export async function getUsers(ctx) {
+export async function getUsers (ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getUsers denied.`, 'info')
@@ -389,7 +384,7 @@ export async function getUsers(ctx) {
   }
 
   try {
-    ctx.body = await UserModelAPI.find().exec()
+    ctx.body = await UserModelAPI.find()
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not fetch all users via the API ${e}`, 'error')
   }

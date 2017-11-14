@@ -1,11 +1,23 @@
 import momentTZ from 'moment-timezone'
 import logger from 'winston'
+import _ from 'lodash'
 import { ChannelModel } from './model/channels'
 import { KeystoreModel } from './model/keystore'
 import { config } from './config'
 
 config.caching = config.get('caching')
 config.api = config.get('api')
+
+/**
+ * Will take in a string and return a safe regex that will match case insensitive
+ * 
+ * @export
+ * @param {string} value that needs to be matched
+ * @returns {RegExp} regex that will match case insensitive
+ */
+export function caseInsensitiveRegex (value) {
+  return new RegExp(`^${_.escapeRegExp(value)}$`, 'i')
+}
 
 // function to log errors and return response
 export function logAndSetResponse (ctx, status, msg, logLevel) {
@@ -18,7 +30,7 @@ export function logAndSetResponse (ctx, status, msg, logLevel) {
 
 const cacheValueStore = {}
 
-const {refreshMillis} = config.caching
+const { refreshMillis } = config.caching
 
 function getCachedValues (store, callback) {
   const lastCheck = cacheValueStore[`${store}`] != null ? cacheValueStore[`${store}`].lastCheck : undefined
@@ -38,7 +50,7 @@ function getCachedValues (store, callback) {
 
     // TODO make this more generic (had issues passing Channel.find as a param [higher order function])
     if (store === 'channels') {
-      return ChannelModel.find({}).sort({priority: 1}).exec((err, channels) => {
+      return ChannelModel.find({}).sort({ priority: 1 }).exec((err, channels) => {
         if (err) {
           return handler(err)
         }
