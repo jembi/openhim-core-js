@@ -493,7 +493,7 @@ describe('API Integration Tests', () => {
         users.should.have.length(0)
       })
 
-      ity('should find and remove specific user by case insensitive email', async () => {
+      it('should find and remove specific user by case insensitive email', async () => {
         const emailReg = new RegExp(`^${_.escapeRegExp('BMF@crazy.Net')}$`, 'i')
         await request(constants.BASE_URL)
           .del('/users/BMF@crazy.net')
