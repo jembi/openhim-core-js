@@ -25,7 +25,7 @@ export async function authenticate (ctx, email) {
   email = unescape(email)
 
   try {
-    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
     const user = await UserModelAPI.findOne({ email: emailReg }).exec()
 
     if (!user) {
@@ -96,7 +96,7 @@ export async function userPasswordResetRequest (ctx, email) {
   }
 
   try {
-    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
     const user = await UserModelAPI.findOneAndUpdate({ email: emailReg }, updateUserTokenExpiry).exec()
 
     if (!user) {
@@ -348,7 +348,7 @@ export async function updateUser (ctx, email) {
   if (userData._id) { delete userData._id }
 
   try {
-    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
     await UserModelAPI.findOneAndUpdate({ email: { $regex: emailReg } }, userData).exec()
     ctx.body = 'Successfully updated user.'
     logger.info(`User ${ctx.authenticated.email} updated user ${userData.email}`)
@@ -373,7 +373,7 @@ export async function removeUser (ctx, email) {
   }
 
   try {
-    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
     await UserModelAPI.findOneAndRemove({ email: emailReg }).exec()
     ctx.body = `Successfully removed user with email ${email}`
     logger.info(`User ${ctx.authenticated.email} removed user ${email}`)
