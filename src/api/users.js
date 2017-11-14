@@ -309,7 +309,7 @@ export async function getUser (ctx, email) {
   }
 
   try {
-    const emailReg = new RegExp(_.escapeRegExp(email), 'i')
+    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
     const result = await UserModelAPI.findOne({ email: emailReg }).exec()
     if (!result) {
       ctx.body = `User with email ${email} could not be found.`
