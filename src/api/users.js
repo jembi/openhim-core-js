@@ -21,12 +21,16 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
 /*
  * Get authentication details
  */
-export async function authenticate (ctx, email) {
+
+function emailReg(email) {
+  return new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
+}
+
+export async function authenticate(ctx, email) {
   email = unescape(email)
 
   try {
-    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
-    const user = await UserModelAPI.findOne({ email: emailReg }).exec()
+    const user = await UserModelAPI.findOne({ email: emailReg(email) }).exec()
 
     if (!user) {
       utils.logAndSetResponse(ctx, 404, `Could not find user by email ${email}`, 'info')
@@ -66,14 +70,14 @@ const passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) => `\
 <p>${setPasswordLink}</p>\
 `
 
-export function generateRandomToken () {
+export function generateRandomToken() {
   return randtoken.generate(32)
 }
 
 /*
  * update user token/expiry and send new password email
  */
-export async function userPasswordResetRequest (ctx, email) {
+export async function userPasswordResetRequest(ctx, email) {
   email = unescape(email)
 
   if (email === 'root@openhim.org') {
@@ -96,9 +100,7 @@ export async function userPasswordResetRequest (ctx, email) {
   }
 
   try {
-    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
-    const user = await UserModelAPI.findOneAndUpdate({ email: emailReg }, updateUserTokenExpiry).exec()
-
+    const user = await UserModelAPI.findOneAndUpdate({ email: emailReg(email) }, updateUserTokenExpiry).exec()
     if (!user) {
       ctx.body = `Tried to request password reset for invalid email address: ${email}`
       ctx.status = 404
@@ -134,7 +136,7 @@ export async function userPasswordResetRequest (ctx, email) {
  */
 
 // get the new user details
-export async function getUserByToken (ctx, token) {
+export async function getUserByToken(ctx, token) {
   token = unescape(token)
 
   try {
@@ -167,7 +169,7 @@ export async function getUserByToken (ctx, token) {
 }
 
 // update the password/details for the new user
-export async function updateUserByToken (ctx, token) {
+export async function updateUserByToken(ctx, token) {
   let userDataExpiry
   token = unescape(token)
   const userData = ctx.request.body
@@ -247,7 +249,7 @@ const htmlMessageTemplate = (firstname, setPasswordLink) => `\
 /*
  * Adds a user
  */
-export async function addUser (ctx) {
+export async function addUser(ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addUser denied.`, 'info')
@@ -299,7 +301,7 @@ export async function addUser (ctx) {
 /*
  * Retrieves the details of a specific user
  */
-export async function getUser (ctx, email) {
+export async function getUser(ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to fetch their own details
@@ -309,8 +311,7 @@ export async function getUser (ctx, email) {
   }
 
   try {
-    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
-    const result = await UserModelAPI.findOne({ email: emailReg }).exec()
+    const result = await UserModelAPI.findOne({ email: emailReg(email) }).exec()
     if (!result) {
       ctx.body = `User with email ${email} could not be found.`
       ctx.status = 404
@@ -322,7 +323,7 @@ export async function getUser (ctx, email) {
   }
 }
 
-export async function updateUser (ctx, email) {
+export async function updateUser(ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to update their own details
@@ -348,8 +349,7 @@ export async function updateUser (ctx, email) {
   if (userData._id) { delete userData._id }
 
   try {
-    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
-    await UserModelAPI.findOneAndUpdate({ email: { $regex: emailReg } }, userData).exec()
+    await UserModelAPI.findOneAndUpdate({ email: emailReg(email) }, userData).exec()
     ctx.body = 'Successfully updated user.'
     logger.info(`User ${ctx.authenticated.email} updated user ${userData.email}`)
   } catch (e) {
@@ -357,7 +357,7 @@ export async function updateUser (ctx, email) {
   }
 }
 
-export async function removeUser (ctx, email) {
+export async function removeUser(ctx, email) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeUser denied.`, 'info')
@@ -373,8 +373,7 @@ export async function removeUser (ctx, email) {
   }
 
   try {
-    const emailReg = new RegExp(`^${_.escapeRegExp(email)}$`, 'i')
-    await UserModelAPI.findOneAndRemove({ email: emailReg }).exec()
+    await UserModelAPI.findOneAndRemove({ email: emailReg(email) }).exec()
     ctx.body = `Successfully removed user with email ${email}`
     logger.info(`User ${ctx.authenticated.email} removed user ${email}`)
   } catch (e) {
@@ -382,7 +381,7 @@ export async function removeUser (ctx, email) {
   }
 }
 
-export async function getUsers (ctx) {
+export async function getUsers(ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getUsers denied.`, 'info')

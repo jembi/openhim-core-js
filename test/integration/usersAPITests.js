@@ -10,6 +10,7 @@ import { UserModelAPI } from '../../src/model/users'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
 import { promisify } from 'util'
+import _ from 'lodash'
 
 describe('API Integration Tests', () => {
   const { SERVER_PORTS } = constants
@@ -132,6 +133,21 @@ describe('API Integration Tests', () => {
         await stubContact.restore()
       })
 
+      it('should find user regardless of case and send reset email', async () => {
+        const stubContact = await sinon.stub(contact, 'sendEmail')
+        const emailReg = new RegExp(`^${_.escapeRegExp('R..@Jembi.org')}$`, 'i')
+        await stubContact.yields(null)
+
+        await request(constants.BASE_URL)
+          .get('/password-reset-request/R..@jembi.org')
+          .expect(201)
+
+        const user = await UserModelAPI.findOne({ email: emailReg })
+        user.should.have.property('firstname', 'Ryan')
+        user.email.should.eql('r..@jembi.org')
+        await stubContact.restore()
+      })
+
       it('should update the user with a token get a 500 error when nodemailer fails', async () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
 
@@ -210,6 +226,28 @@ describe('API Integration Tests', () => {
         user.should.have.property('tokenType', null)
         user.should.have.property('locked', false)
         user.should.have.property('expiry', null)
+      })
+
+      it('should find user by case insensitive email and update a user based on supplied token', async () => {
+        const updates = {
+          firstname: 'Jane Sally',
+          surname: 'Doe',
+          msisdn: '27123456789',
+          passwordAlgorithm: 'sha256',
+          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499',
+          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
+        }
+
+        const emailReg = new RegExp(`^${_.escapeRegExp('JANE@doe.net')}$`, 'i')
+
+        await request(constants.BASE_URL)
+          .put('/token/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM')
+          .send(updates)
+          .expect(200)
+
+        const user = await UserModelAPI.findOne({ email: emailReg })
+
+        user.should.have.property('firstname', 'Jane Sally')
       })
 
       it('should prevent an update with an expired token (expired token)', async () => {
@@ -452,6 +490,21 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         const users = await UserModelAPI.find({ name: 'bfm@crazy.net' })
+        users.should.have.length(0)
+      })
+
+      ity('should find and remove specific user by case insensitive email', async () => {
+        const emailReg = new RegExp(`^${_.escapeRegExp('BMF@crazy.Net')}$`, 'i')
+        await request(constants.BASE_URL)
+          .del('/users/BMF@crazy.net')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+
+        const users = await UserModelAPI.find({ name: emailReg })
         users.should.have.length(0)
       })
 
