@@ -21,7 +21,7 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
  * Get authentication details
  */
 
-export async function authenticate(ctx, email) {
+export async function authenticate (ctx, email) {
   email = unescape(email)
 
   try {
@@ -65,14 +65,14 @@ const passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) => `\
 <p>${setPasswordLink}</p>\
 `
 
-function generateRandomToken() {
+function generateRandomToken () {
   return crypto.randomBytes(16).toString('hex')
 }
 
 /*
  * update user token/expiry and send new password email
  */
-export async function userPasswordResetRequest(ctx, email) {
+export async function userPasswordResetRequest (ctx, email) {
   email = unescape(email)
   if (email === 'root@openhim.org') {
     ctx.body = 'Cannot request password reset for \'root@openhim.org\''
@@ -129,7 +129,7 @@ export async function userPasswordResetRequest(ctx, email) {
  */
 
 // get the new user details
-export async function getUserByToken(ctx, token) {
+export async function getUserByToken (ctx, token) {
   token = unescape(token)
 
   try {
@@ -162,7 +162,7 @@ export async function getUserByToken(ctx, token) {
 }
 
 // update the password/details for the new user
-export async function updateUserByToken(ctx, token) {
+export async function updateUserByToken (ctx, token) {
   let userDataExpiry
   token = unescape(token)
   const userData = ctx.request.body
@@ -242,7 +242,7 @@ const htmlMessageTemplate = (firstname, setPasswordLink) => `\
 /*
  * Adds a user
  */
-export async function addUser(ctx) {
+export async function addUser (ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addUser denied.`, 'info')
@@ -294,7 +294,7 @@ export async function addUser(ctx) {
 /*
  * Retrieves the details of a specific user
  */
-export async function getUser(ctx, email) {
+export async function getUser (ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to fetch their own details
@@ -316,7 +316,7 @@ export async function getUser(ctx, email) {
   }
 }
 
-export async function updateUser(ctx, email) {
+export async function updateUser (ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to update their own details
@@ -350,7 +350,7 @@ export async function updateUser(ctx, email) {
   }
 }
 
-export async function removeUser(ctx, email) {
+export async function removeUser (ctx, email) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeUser denied.`, 'info')
@@ -374,7 +374,7 @@ export async function removeUser(ctx, email) {
   }
 }
 
-export async function getUsers(ctx) {
+export async function getUsers (ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getUsers denied.`, 'info')
