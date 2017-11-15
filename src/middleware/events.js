@@ -227,7 +227,9 @@ export async function koaMiddleware (ctx, next) {
     const mediatorURN = ctx.mediatorResponse != null ? ctx.mediatorResponse['x-mediator-urn'] : undefined
     const orchestrations = ctx.mediatorResponse != null ? ctx.mediatorResponse.orchestrations : undefined
 
-    createPrimaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute.name, mediatorURN, ctx.response, ctx.currentAttempt)
+    if (ctx.primaryRoute != null) {
+      createPrimaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.primaryRoute.name, mediatorURN, ctx.response, ctx.currentAttempt)
+    }
     if (orchestrations) {
       createOrchestrationEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, orchestrations, ctx.currentAttempt)
     }

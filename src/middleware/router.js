@@ -601,12 +601,12 @@ function isMethodAllowed (ctx, channel) {
 
   const isAllowed = methods.indexOf(method.toUpperCase()) !== -1
   if (!isAllowed) {
-    logger.info(`Attempted to use method ${method} with channel ${channel.name}`)
-    ctx.response = {
+    logger.info(`Attempted to use method ${method} with channel ${channel.name} valid methods are ${methods.join(', ')}`)
+    Object.assign(ctx.response, {
       status: 405,
       timestamp: new Date(),
       body: `Request with method ${method} is not allowed. Only ${methods.join(', ')} methods are allowed`
-    }
+    })
   }
 
   return isAllowed
