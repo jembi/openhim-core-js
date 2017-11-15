@@ -297,7 +297,7 @@ The JSON object returned to the OpenHIM should take the following form:
 
 See the response format above; error details can be included using the `error` field. Although optional, its use is encouraged whenever any internal server errors occur, especially if the connection to an upstream server fails. When included, the OpenHIM will automatically retry the transaction, if the auto-retry option enabled on the channel.
 
-Error details can also be included for orchestrations; see https://github.com/jembi/openhim-core-js/blob/67d9c4c3dc2293bc6aca1d13d7d9a26771136678/src/model/transactions.coffee#L34
+Error details can also be included for orchestrations; see [here](https://github.com/jembi/openhim-core-js/blob/67d9c4c3dc2293bc6aca1d13d7d9a26771136678/src/model/transactions.coffee#L34). Note that a transaction will NOT be auto retried if the error is present on an orchestration. In the case that an orchestration should be able to trigger an auto retry, then add the error details normally to the main response, as with the above response format.
 
 ### (Optional) Send heartbeats and recieve user configuration directly from OpenHIM-core
 
