@@ -95,6 +95,19 @@ describe('API Integration Tests', () => {
       })
     })
 
+    it('should return the requested case insensitive users salt', async () => {
+      const res = await request(constants.BASE_URL)
+        .get('/authenticate/R..@jembi.org')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(200)
+
+      res.body.salt.should.eql('bf93caba-6eec-4c0c-a1a3-d968a7533fd7')
+      should.exist(res.body.ts)
+    })
+
     describe('*userPasswordResetRequest(email)', () => {
       it('should return 403 when requesting root@openhim.org password reset', async () => {
         await request(constants.BASE_URL)
@@ -116,6 +129,20 @@ describe('API Integration Tests', () => {
         user.should.have.property('token')
         user.should.have.property('tokenType', 'existingUser')
         user.should.have.property('expiry')
+        await stubContact.restore()
+      })
+
+      it('should find user regardless of case and send reset email', async () => {
+        const stubContact = await sinon.stub(contact, 'sendEmail')
+        await stubContact.yields(null)
+
+        await request(constants.BASE_URL)
+          .get('/password-reset-request/R..@jembi.org')
+          .expect(201)
+
+        const user = await UserModelAPI.findOne({ email: user1.email })
+        user.should.have.property('firstname', 'Ryan')
+        user.email.should.eql('r..@jembi.org')
         await stubContact.restore()
       })
 
@@ -273,6 +300,30 @@ describe('API Integration Tests', () => {
         user.should.have.property('expiry')
       })
 
+      it('should save new users username in lowercase only', async () => {
+        newUser = {
+          firstname: 'Matome',
+          surname: 'Phoshoko',
+          email: 'MATOME.Phoshoko@jembi.org',
+          passwordAlgorithm: 'sha256',
+          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499',
+          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f',
+          groups: ['HISP']
+        }
+
+        await request(constants.BASE_URL)
+          .post('/users')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(newUser)
+          .expect(201)
+
+        const user = await UserModelAPI.findOne({ email: 'matome.phoshoko@jembi.org' })
+        user.email.should.eql('matome.phoshoko@jembi.org')
+      })
+
       it('should not allow a non admin user to add a user', async () => {
         newUser = {}
 
@@ -326,6 +377,18 @@ describe('API Integration Tests', () => {
         res.body.should.have.property('email', 'nonroot@jembi.org')
         res.body.groups.should.have.length(2)
       })
+
+      it(`should find a user regardless of email case`, async () => {
+        const res = await request(constants.BASE_URL)
+          .get(`/users/${user1.email.toUpperCase()}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        res.body.should.have.property('email', user1.email)
+      })
     })
 
     describe('*updateUser(email)', () => {
@@ -350,6 +413,27 @@ describe('API Integration Tests', () => {
         user.should.have.property('surname', 'Crichton')
         user.should.have.property('email', 'rg..@jembi.org')
         user.groups.should.have.length(3)
+      })
+
+      it('should update a specific user regardless of email case', async () => {
+        const updates = {
+          _id: 'thisShouldBeIgnored',
+          surname: 'Crichton',
+          email: 'rg..@jembi.org',
+          groups: ['admin', 'RHIE', 'HISP']
+        }
+
+        await request(constants.BASE_URL)
+          .put('/users/R..@jembi.org')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+
+        const user = await UserModelAPI.findOne({ email: 'rg..@jembi.org' })
+        user.should.have.property('email', updates.email)
       })
 
       it('should not allow non admin users to update a user', async () => {
@@ -415,6 +499,19 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         const users = await UserModelAPI.find({ name: 'bfm@crazy.net' })
+        users.should.have.length(0)
+      })
+
+      it('should find and remove specific user by case insensitive email', async () => {
+        await request(constants.BASE_URL)
+          .del('/users/BMF@crazy.Net')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        const users = await UserModelAPI.find({ name: user2.email })
         users.should.have.length(0)
       })
 

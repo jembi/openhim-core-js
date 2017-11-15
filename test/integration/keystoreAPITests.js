@@ -298,7 +298,7 @@ describe('API Integration Tests', () => {
 
     it('Should return 400 with there is an invlaid cert in the chain', async () => {
       const postData = { cert: fs.readFileSync('test/resources/invalid-chain.pem').toString() }
-      
+
       await request(constants.BASE_URL)
         .post('/keystore/ca/cert')
         .set('auth-username', testUtils.rootUser.email)

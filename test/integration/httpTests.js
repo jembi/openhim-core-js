@@ -15,7 +15,7 @@ const { SERVER_PORTS } = constants
 nconf.set('router', { httpPort: SERVER_PORTS.httpPort })
 describe('HTTP tests', () => {
   const httpPortPlus40 = constants.PORT_START + 40
-  const httpPortPlus41 = constants.PORT_START + 41  
+  const httpPortPlus41 = constants.PORT_START + 41
 
   describe('HTTP header tests', () => {
     let mockServer = null

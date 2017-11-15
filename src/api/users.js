@@ -20,11 +20,12 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
 /*
  * Get authentication details
  */
+
 export async function authenticate (ctx, email) {
   email = unescape(email)
 
   try {
-    const user = await UserModelAPI.findOne({email}).exec()
+    const user = await UserModelAPI.findOne({ email: utils.caseInsensitiveRegex(email) })
 
     if (!user) {
       utils.logAndSetResponse(ctx, 404, `Could not find user by email ${email}`, 'info')
@@ -73,7 +74,6 @@ function generateRandomToken () {
  */
 export async function userPasswordResetRequest (ctx, email) {
   email = unescape(email)
-
   if (email === 'root@openhim.org') {
     ctx.body = 'Cannot request password reset for \'root@openhim.org\''
     ctx.status = 403
@@ -82,9 +82,8 @@ export async function userPasswordResetRequest (ctx, email) {
 
   // Generate the new user token here
   // set expiry date = true
-
   const token = generateRandomToken()
-  const {duration, durationType} = config.userPasswordResetExpiry
+  const { duration, durationType } = config.userPasswordResetExpiry
   const expiry = moment().add(duration, durationType).utc().format()
 
   const updateUserTokenExpiry = {
@@ -94,8 +93,7 @@ export async function userPasswordResetRequest (ctx, email) {
   }
 
   try {
-    const user = await UserModelAPI.findOneAndUpdate({email}, updateUserTokenExpiry).exec()
-
+    const user = await UserModelAPI.findOneAndUpdate({ email: utils.caseInsensitiveRegex(email) }, updateUserTokenExpiry)
     if (!user) {
       ctx.body = `Tried to request password reset for invalid email address: ${email}`
       ctx.status = 404
@@ -103,7 +101,7 @@ export async function userPasswordResetRequest (ctx, email) {
       return
     }
 
-    const {consoleURL} = config.alerts
+    const { consoleURL } = config.alerts
     const setPasswordLink = `${consoleURL}/#/set-password/${token}`
 
     // Send email to user to reset password
@@ -147,7 +145,7 @@ export async function getUserByToken (ctx, token) {
       _id: 0
     }
 
-    const result = await UserModelAPI.findOne({token}, projectionRestriction).exec()
+    const result = await UserModelAPI.findOne({ token }, projectionRestriction)
     if (!result) {
       ctx.body = `User with token ${token} could not be found.`
       ctx.status = 404
@@ -171,7 +169,7 @@ export async function updateUserByToken (ctx, token) {
 
   try {
     // first try get new user details to check expiry date
-    userDataExpiry = await UserModelAPI.findOne({token}).exec()
+    userDataExpiry = await UserModelAPI.findOne({ token })
 
     if (!userDataExpiry) {
       ctx.body = `User with token ${token} could not be found.`
@@ -212,7 +210,7 @@ export async function updateUserByToken (ctx, token) {
   }
 
   try {
-    await UserModelAPI.findOneAndUpdate({token}, userUpdateObj).exec()
+    await UserModelAPI.findOneAndUpdate({ token }, userUpdateObj)
     ctx.body = 'Successfully set new user password.'
     return logger.info(`User updated by token ${token}`)
   } catch (error) {
@@ -252,7 +250,6 @@ export async function addUser (ctx) {
   }
 
   const userData = ctx.request.body
-
   // Generate the new user token here
   // set locked = true
   // set expiry date = true
@@ -261,8 +258,9 @@ export async function addUser (ctx) {
   userData.token = token
   userData.tokenType = 'newUser'
   userData.locked = true
+  userData.email = userData.email.toLowerCase()
 
-  const {duration, durationType} = config.newUserExpiry
+  const { duration, durationType } = config.newUserExpiry
   userData.expiry = moment().add(duration, durationType).utc().format()
 
   const consoleURL = config.alerts.consoleURL
@@ -306,7 +304,7 @@ export async function getUser (ctx, email) {
   }
 
   try {
-    const result = await UserModelAPI.findOne({email}).exec()
+    const result = await UserModelAPI.findOne({ email: utils.caseInsensitiveRegex(email) })
     if (!result) {
       ctx.body = `User with email ${email} could not be found.`
       ctx.status = 404
@@ -344,7 +342,7 @@ export async function updateUser (ctx, email) {
   if (userData._id) { delete userData._id }
 
   try {
-    await UserModelAPI.findOneAndUpdate({email}, userData).exec()
+    await UserModelAPI.findOneAndUpdate({ email: utils.caseInsensitiveRegex(email) }, userData)
     ctx.body = 'Successfully updated user.'
     logger.info(`User ${ctx.authenticated.email} updated user ${userData.email}`)
   } catch (e) {
@@ -368,7 +366,7 @@ export async function removeUser (ctx, email) {
   }
 
   try {
-    await UserModelAPI.findOneAndRemove({email}).exec()
+    await UserModelAPI.findOneAndRemove({ email: utils.caseInsensitiveRegex(email) })
     ctx.body = `Successfully removed user with email ${email}`
     logger.info(`User ${ctx.authenticated.email} removed user ${email}`)
   } catch (e) {
@@ -384,7 +382,7 @@ export async function getUsers (ctx) {
   }
 
   try {
-    ctx.body = await UserModelAPI.find().exec()
+    ctx.body = await UserModelAPI.find()
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not fetch all users via the API ${e}`, 'error')
   }

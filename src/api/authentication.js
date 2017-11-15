@@ -5,6 +5,7 @@ import os from 'os'
 import { UserModelAPI } from '../model/users'
 import { config } from '../config'
 import * as auditing from '../auditing'
+import { caseInsensitiveRegex } from '../utils'
 
 config.api = config.get('api')
 config.auditing = config.get('auditing')
@@ -26,7 +27,7 @@ const auditingExemptPaths = [
 const isUndefOrEmpty = string => (string == null) || (string === '')
 
 export async function authenticate (ctx, next) {
-  const {header} = ctx.request
+  const { header } = ctx.request
   const email = header['auth-username']
   const authTS = header['auth-ts']
   const authSalt = header['auth-salt']
@@ -62,8 +63,7 @@ export async function authenticate (ctx, next) {
     auditAuthFailure()
     return
   }
-
-  const user = await UserModelAPI.findOne({email}).exec()
+  const user = await UserModelAPI.findOne({ email: caseInsensitiveRegex(email) })
   ctx.authenticated = user
 
   if (!user) {
