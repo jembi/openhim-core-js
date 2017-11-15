@@ -54,6 +54,7 @@ There are many fields that you may supply and these are spread over a number of 
     * **Channel Name** - This is a descriptive name of the **Channel**.
     * **Channel Type** - Select a **Channel** type
         * **HTTP** - Default **Channel** type.
+          * **Methods** - The allowed `http` methods for a channel
         * **TCP** - Supply a TCP Host and Port
         * **TLS** - Supply a TLS Host and Port
         * **Polling** - Supply a Polling schedule - Cron format: '*/10 * * * *' or Written format: '10 minutes' - The module 'Agenda' is used to accomplish the polling - You can find more documentation [here](https://github.com/rschmukler/agenda)

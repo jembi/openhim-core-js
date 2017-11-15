@@ -578,7 +578,38 @@ export function transformPath (path, expression) {
  */
 export function route (ctx, next) {
   const channel = ctx.authorisedChannel
-  return sendRequestToRoutes(ctx, channel.routes, next)
+  if (!isMethodAllowed(ctx, channel)) {
+    next()
+  } else {
+    sendRequestToRoutes(ctx, channel.routes, next)
+  }
+}
+
+/**
+ * Checks if the request in the current context is allowed
+ *
+ * @param {any} ctx Koa context, will mutate the response property if not allowed
+ * @param {any} channel Channel that is getting fired against
+ * @returns {Boolean}
+ */
+function isMethodAllowed (ctx, channel) {
+  const { request: { method } = {} } = ctx || {}
+  const { methods = [] } = channel || {}
+  if (utils.isNullOrWhitespace(method) || methods.length === 0) {
+    return true
+  }
+
+  const isAllowed = methods.indexOf(method.toUpperCase()) !== -1
+  if (!isAllowed) {
+    logger.info(`Attempted to use method ${method} with channel ${channel.name} valid methods are ${methods.join(', ')}`)
+    Object.assign(ctx.response, {
+      status: 405,
+      timestamp: new Date(),
+      body: `Request with method ${method} is not allowed. Only ${methods.join(', ')} methods are allowed`
+    })
+  }
+
+  return isAllowed
 }
 
 /*
