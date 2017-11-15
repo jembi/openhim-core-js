@@ -83,7 +83,7 @@ export async function userPasswordResetRequest (ctx, email) {
 
   // Generate the new user token here
   // set expiry date = true
-  const token = exports.generateRandomToken()
+  const token = generateRandomToken()
   const { duration, durationType } = config.userPasswordResetExpiry
   const expiry = moment().add(duration, durationType).utc().format()
 
