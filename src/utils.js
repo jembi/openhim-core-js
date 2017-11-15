@@ -19,6 +19,18 @@ export function caseInsensitiveRegex (value) {
   return new RegExp(`^${_.escapeRegExp(value)}$`, 'i')
 }
 
+export function isNullOrEmpty (arr) {
+  if (arr == null) {
+    return true
+  }
+
+  return arr.length === 0
+}
+
+export function isNullOrWhitespace (value) {
+  return /^\s*$/.test(value || '')
+}
+
 // function to log errors and return response
 export function logAndSetResponse (ctx, status, msg, logLevel) {
   logger[logLevel](msg)

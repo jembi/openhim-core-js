@@ -454,6 +454,87 @@ describe('API Integration Tests', () => {
           .send(newChannel)
           .expect(400)
       })
+
+      it('will create a channel with methods', async () => {
+        const methodChannelDoc = {
+          name: 'method channel',
+          urlPattern: 'test/method',
+          methods: ['GET', 'OPTIONS'],
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }]
+        }
+
+        await request(constants.BASE_URL)
+          .post('/channels')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(methodChannelDoc)
+          .expect(201)
+
+        const channel = await ChannelModelAPI.findOne({ name: methodChannelDoc.name })
+        channel.methods.should.containDeep(methodChannelDoc.methods)
+      })
+
+      it(`will reject the request if the channel has methods but is not http`, async () => {
+        const methodChannelDocRejected = {
+          name: 'method channel rejected',
+          urlPattern: 'test/method',
+          type: 'tcp',
+          methods: ['GET', 'OPTIONS'],
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }]
+        }
+
+        await request(constants.BASE_URL)
+          .post('/channels')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(methodChannelDocRejected)
+          .expect(400)
+
+        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        channelCount.should.eql(0)
+      })
+
+      it(`will reject the request if the channel repeats methods`, async () => {
+        const methodChannelDocRejected = {
+          name: 'method channel rejected',
+          urlPattern: 'test/method',
+          type: 'http',
+          methods: ['POST', 'POST', 'GET', 'OPTIONS', 'GET'],
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }]
+        }
+
+        const res = await request(constants.BASE_URL)
+          .post('/channels')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(methodChannelDocRejected)
+          .expect(400)
+
+        res.text.should.eql("Channel methods can't be repeated. Repeated methods are GET, POST")
+        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        channelCount.should.eql(0)
+      })
     })
 
     describe('*getChannel(channelId)', () => {
@@ -491,6 +572,35 @@ describe('API Integration Tests', () => {
         res.body.should.have.property('name', 'TestChannel2')
         res.body.should.have.property('urlPattern', 'test/sample')
         res.body.allow.should.have.length(3)
+      })
+
+      it(`will default the channel methods as an empty array on existing channels`, async () => {
+        const db = await testUtils.getMongoClient()
+        const noMethodChannelDoc = {
+          name: 'method channel',
+          urlPattern: 'test/method',
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
+        }
+
+        const { insertedId: id } = await db.collection('channels').insertOne(noMethodChannelDoc)
+        const resp = await request(constants.BASE_URL)
+          .get(`/channels/${id.toString()}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        resp.body.should.property('methods')
       })
 
       it('should return a 404 if that channel doesnt exist', async () => {
@@ -879,6 +989,144 @@ describe('API Integration Tests', () => {
           .expect(400)
         const channel = await ChannelModelAPI.findOne({ name: 'TestChannel1' })
         channel.should.have.property('urlPattern', 'test/sample')
+      })
+
+      it('should remove the methods if the type is chaned from http', async () => {
+        const methodChannelDoc = {
+          name: 'method channel',
+          urlPattern: 'test/method',
+          methods: ['GET', 'OPTIONS'],
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
+        }
+
+        const { _id: channelId } = await new ChannelModelAPI(methodChannelDoc).save()
+
+        await request(constants.BASE_URL)
+          .put(`/channels/${channelId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({ type: 'tcp' })
+          .expect(200)
+
+        const channel = await ChannelModelAPI.findById(channelId)
+        channel.should.have.property('type', 'tcp')
+        channel.methods.length.should.eql(0)
+      })
+
+      it('should reject the update if the methods is defined but type is not http', async () => {
+        const methodChannelDoc = {
+          name: 'method channel',
+          urlPattern: 'test/method',
+          type: 'tcp',
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
+        }
+
+        const { _id: channelId } = await new ChannelModelAPI(methodChannelDoc).save()
+
+        await request(constants.BASE_URL)
+          .put(`/channels/${channelId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({ methods: ['GET'] })
+          .expect(400)
+
+        const channel = await ChannelModelAPI.findById(channelId)
+        channel.should.have.property('type', 'tcp')
+        channel.methods.length.should.eql(0)
+      })
+
+      it('should update the methods', async () => {
+        const methodChannelDoc = {
+          name: 'method channel',
+          urlPattern: 'test/method',
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
+        }
+
+        const { _id: channelId } = await new ChannelModelAPI(methodChannelDoc).save()
+
+        await request(constants.BASE_URL)
+          .put(`/channels/${channelId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({ methods: ['GET'] })
+          .expect(200)
+
+        const channel = await ChannelModelAPI.findById(channelId)
+        channel.should.have.property('type', 'http')
+        channel.methods.length.should.eql(1)
+        channel.methods[0].should.eql('GET')
+      })
+
+      it(`should reject the update if the channel repeats methods`, async () => {
+        const methodChannelDocRejected = {
+          name: 'method channel rejected',
+          urlPattern: 'test/method',
+          type: 'http',
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
+        }
+
+        const methodUpdate = {
+          methods: ['POST', 'POST', 'GET', 'OPTIONS', 'GET']
+        }
+
+        const { _id: channelId } = await new ChannelModelAPI(methodChannelDocRejected).save()
+
+        const res = await request(constants.BASE_URL)
+          .put(`/channels/${channelId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(methodUpdate)
+          .expect(400)
+
+        res.text.should.eql("Channel methods can't be repeated. Repeated methods are GET, POST")
+        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        channelCount.should.eql(1)
+        const channel = await ChannelModelAPI.findById(channelId)
+        channel.methods.length.should.eql(0)
       })
     })
 

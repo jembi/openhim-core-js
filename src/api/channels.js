@@ -10,7 +10,7 @@ import * as routerMiddleware from '../middleware/router'
 import * as utils from '../utils'
 import { config } from '../config'
 
-const {ChannelModel} = Channels
+const { ChannelModel } = Channels
 
 config.polling = config.get('polling')
 
@@ -47,6 +47,33 @@ function processPostAddTriggers (channel) {
   }
 }
 
+export function validateMethod (channel) {
+  const { methods = [] } = channel || {}
+  if (methods.length === 0) {
+    return
+  }
+
+  if (!/http/i.test(channel.type || 'http')) {
+    return `Channel method can't be defined if channel type is not http`
+  }
+
+  const mapCount = methods.reduce((dictionary, method) => {
+    if (dictionary[method] == null) {
+      dictionary[method] = 0
+    }
+    dictionary[method] += 1
+    return dictionary
+  }, {})
+
+  const repeats = Object.keys(mapCount)
+      .filter(k => mapCount[k] > 1)
+      .sort()
+  if (repeats.length > 0) {
+    return `Channel methods can't be repeated. Repeated methods are ${repeats.join(', ')}`
+  }
+
+}
+
 /*
  * Creates a new channel
  */
@@ -74,6 +101,14 @@ export async function addChannel (ctx) {
 
     if ((channel.priority != null) && (channel.priority < 1)) {
       ctx.body = 'Channel priority cannot be below 1 (= Highest priority)'
+      ctx.status = 400
+      return
+    }
+
+    let methodValidation = validateMethod(channel)
+
+    if (methodValidation != null) {
+      ctx.body = methodValidation
       ctx.status = 400
       return
     }
@@ -118,7 +153,7 @@ export async function getChannel (ctx, channelId) {
     let accessDenied = false
     // if admin allow acces to all channels otherwise restrict result set
     if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-      result = await ChannelModel.findOne({_id: id, txViewAcl: {$in: ctx.authenticated.groups}}).exec()
+      result = await ChannelModel.findOne({ _id: id, txViewAcl: { $in: ctx.authenticated.groups } }).exec()
       const adminResult = await ChannelModel.findById(id).exec()
       if (adminResult != null) {
         accessDenied = true
@@ -157,7 +192,7 @@ export async function getChannelAudits (ctx, channelId) {
   try {
     const channel = await ChannelModel.findById(channelId).exec()
     if (channel) {
-      ctx.body = await channel.patches.find({ref: channel.id}).sort({_id: -1}).exec()
+      ctx.body = await channel.patches.find({ ref: channel.id }).sort({ _id: -1 }).exec()
     } else {
       ctx.body = []
     }
@@ -206,6 +241,24 @@ export async function updateChannel (ctx, channelId) {
 
   // Set the user updating the channel for auditing purposes
   channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
+
+  if (!utils.isNullOrWhitespace(channelData.type) && utils.isNullOrEmpty(channelData.methods)) {
+    // Empty the methods if the type has changed from http
+    if (channelData.type !== 'http') {
+      channelData.methods = []
+    }
+  } else {
+    const currentChannel = await ChannelModel.findById(id)
+    const { type = currentChannel.type } = channelData
+    let { methods = currentChannel.methods } = channelData
+    let methodValidation = validateMethod({ type, methods })
+
+    if (methodValidation != null) {
+      ctx.body = methodValidation
+      ctx.status = 400
+      return
+    }
+  }
 
   // Ignore _id if it exists, user cannot change the internal id
   if (typeof channelData._id !== 'undefined') {
@@ -276,7 +329,7 @@ export async function removeChannel (ctx, channelId) {
 
   try {
     let channel
-    const numExistingTransactions = await TransactionModelAPI.count({channelID: id}).exec()
+    const numExistingTransactions = await TransactionModelAPI.count({ channelID: id }).exec()
 
     // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
     if (numExistingTransactions === 0) {
@@ -284,7 +337,7 @@ export async function removeChannel (ctx, channelId) {
       channel = await ChannelModel.findByIdAndRemove(id).exec()
     } else {
       // not safe to remove. just flag as deleted
-      channel = await findChannelByIdAndUpdate(id, {status: 'deleted', updatedBy: utils.selectAuditFields(ctx.authenticated)})
+      channel = await findChannelByIdAndUpdate(id, { status: 'deleted', updatedBy: utils.selectAuditFields(ctx.authenticated) })
     }
 
     // All ok! So set the result
