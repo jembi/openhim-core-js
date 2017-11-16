@@ -5,14 +5,11 @@ const http = require('http')
 const https = require('https')
 const path = require('path')
 
+const httpHandler = require('./http-handler')
+
 const config = {
   httpPort: +(process.env.HTTP_PORT || 8080),
   httpsPort: +(process.env.HTTPS_PORT || 8443)
-}
-
-function handleHttpRequest (req, res) {
-  res.writeHead(200, {'Content-Type': 'text/plain'})
-  res.end('Hello world')
 }
 
 const tlsOptions = {
@@ -20,12 +17,12 @@ const tlsOptions = {
   cert: fs.readFileSync(path.join(__dirname, 'tls', 'cert.pem'))
 }
 
-const httpServer = http.createServer(handleHttpRequest)
+const httpServer = http.createServer(httpHandler.handleRequest)
 httpServer.listen(config.httpPort, () => {
   console.log(`HTTP server started on ${config.httpPort}`)
 })
 
-const httpsServer = https.createServer(tlsOptions, handleHttpRequest)
+const httpsServer = https.createServer(tlsOptions, httpHandler.handleRequest)
 httpsServer.listen(config.httpsPort, () => {
   console.log(`HTTPS server started on ${config.httpsPort}`)
 })
