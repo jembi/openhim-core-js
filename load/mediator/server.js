@@ -11,10 +11,13 @@ const httpHandler = require('./http-handler')
 const tcpHandler = require('./tcp-handler')
 
 const config = {
-  httpPort: +(process.env.HTTP_PORT || 8080),
+  httpPort: +(process.env.HTTP_PORT || 8082),
   httpsPort: +(process.env.HTTPS_PORT || 8443),
   tcpBodyPort: +(process.env.TCP_BODY_PORT || 9000),
-  tlsBodyPort: +(process.env.TCP_BODY_PORT || 9001)
+  tlsBodyPort: +(process.env.TLS_BODY_PORT || 9001),
+  tcpDelayPort: +(process.env.TCP_BODY_PORT || 9002),
+  tlsDelayPort: +(process.env.TLS_BODY_PORT || 9003)
+
 }
 
 const tlsOptions = {
@@ -40,4 +43,13 @@ tcpBodyServer.listen(config.tcpBodyPort, () => {
 const tlsBodyServer = tls.createServer(tlsOptions, tcpHandler.handleBodyRequest)
 tlsBodyServer.listen(config.tlsBodyPort, () => {
   console.log(`TCP body server started on ${config.tlsBodyPort}`)
+})
+const tcpDelayServer = tcp.createServer(tcpHandler.handleDelayRequest)
+tcpDelayServer.listen(config.tcpDelayPort, () => {
+  console.log(`Tcp delay server started on ${config.tcpDelayPort}`)
+})
+
+const tlsDelayServer = tls.createServer(tlsOptions, tcpHandler.handleDelayRequest)
+tlsDelayServer.listen(config.tlsDelayPort, () => {
+  console.log(`TLS delay server started on ${config.tlsDelayPort}`)
 })
