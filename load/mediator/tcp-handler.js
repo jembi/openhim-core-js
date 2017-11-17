@@ -15,7 +15,7 @@ exports.handleBodyRequest = (conn) => {
 exports.handleDelayRequest = (conn) => {
   setTimeout(() => {
     conn.end(`Waited for ${DELAY}ms`)
-  })
+  }, DELAY)
 
   conn.on('error', console.warn)
 }
