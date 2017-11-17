@@ -4,7 +4,12 @@ const DELAY = parseInt(process.env.DELAY, 10) || 2000
 const BodyStream = require('./body-stream')
 
 exports.handleBodyRequest = (conn) => {
-  new BodyStream(1024).pipe(conn)
+  const length = 1024 * 1024
+  conn.write('HTTP/1.1 200 OK\n')
+  conn.write('Content-Type: text/plain; charset=utf-8\n')
+  conn.write(`Content-Length: ${length}\n`)
+  conn.write('\n')
+  new BodyStream(length).pipe(conn)
 }
 
 exports.handleDelayRequest = (conn) => {

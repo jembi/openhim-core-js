@@ -4,9 +4,9 @@ const {Readable} = require('stream')
 const crypto = require('crypto')
 
 class BodyStream extends Readable {
-  constructor (length, encoding = 'hex') {
-    super({encoding})
-    this.remainingLength = length
+  constructor (length) {
+    super({encoding: 'hex'})
+    this.remainingLength = length / 2
   }
 
   _read (size) {

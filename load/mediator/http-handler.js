@@ -40,7 +40,7 @@ const MEDIATOR_RESPONSE = JSON.stringify({
 })
 
 function respondImmediately (req, res) {
-  res.writeHead(200, {'Content-Type': 'text/plain'})
+  res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'})
   res.end('Hello world\n')
 }
 
@@ -48,7 +48,7 @@ function respondWithBody (req, res, length) {
   if (!Number.isInteger(length)) {
     length = 1024
   }
-  res.writeHead(200, {'Content-Type': 'text/plain'})
+  res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'})
   new BodyStream(length).pipe(res)
 }
 
@@ -57,7 +57,7 @@ function respondAsMediator (req, res, delay) {
     delay = 500
   }
   setTimeout(() => {
-    res.writeHead(200, {'Content-Type': 'application/json+openhim'})
+    res.writeHead(200, {'Content-Type': 'application/json+openhim; charset=utf-8'})
     res.end(MEDIATOR_RESPONSE)
   }, delay)
 }
