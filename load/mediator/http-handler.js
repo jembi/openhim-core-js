@@ -10,9 +10,9 @@ const MEDIATOR_RESPONSE = JSON.stringify({
   response: {
     status: 200,
     headers: {
-      'Content-Type': 'text/plain'
+      'Content-Type': 'application/json'
     },
-    body: 'Hello world\n',
+    body: '{"message": "Hello world\\n"}',
     timestamp: Date.now()
   },
   orchestrations: [
