@@ -39,5 +39,5 @@ tcpBodyServer.listen(config.tcpBodyPort, () => {
 
 const tlsBodyServer = tls.createServer(tlsOptions, tcpHandler.handleBodyRequest)
 tlsBodyServer.listen(config.tlsBodyPort, () => {
-  console.log(`TCP body server started on ${config.tlsBodyPort}`)
+  console.log(`TLS body server started on ${config.tlsBodyPort}`)
 })
