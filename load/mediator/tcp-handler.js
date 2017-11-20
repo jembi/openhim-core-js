@@ -25,7 +25,7 @@ exports.handleDelayRequest = (conn) => {
   conn.on('error', console.warn)
 }
 
-exports.handleImmediateResponse = (conn) => {
+exports.handleImmediateRequest = (conn) => {
   sendHttpHeaders(conn)
   conn.end(`Immediate tcp response`)
 }
