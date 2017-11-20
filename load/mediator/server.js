@@ -63,5 +63,5 @@ tcpImmediateServer.listen(config.tcpImmediatePort, () => {
 
 const tlsImmediateServer = tls.createServer(tlsOptions, tcpHandler.handleDelayRequest)
 tlsImmediateServer.listen(config.tlsImmediatePort, () => {
-  console.log(`TLS delay server started on ${config.tlsImmediatePort}`)
+  console.log(`TLS immediate server started on ${config.tlsImmediatePort}`)
 })
