@@ -26,6 +26,10 @@ const tlsOptions = {
   cert: fs.readFileSync(path.join(__dirname, 'tls', 'cert.pem'))
 }
 
+const tcpOptions = {
+  allowHalfOpen: true
+}
+
 const httpServer = http.createServer(httpHandler.handleRequest)
 httpServer.listen(config.httpPort, () => {
   console.log(`HTTP server started on ${config.httpPort}`)
@@ -36,22 +40,22 @@ httpsServer.listen(config.httpsPort, () => {
   console.log(`HTTPS server started on ${config.httpsPort}`)
 })
 
-const tcpBodyServer = tcp.createServer(tcpHandler.handleBodyRequest)
+const tcpBodyServer = tcp.createServer(tcpOptions, tcpHandler.handleBodyRequest)
 tcpBodyServer.listen(config.tcpBodyPort, () => {
   console.log(`TCP body server started on ${config.tcpBodyPort}`)
 })
 
-const tlsBodyServer = tls.createServer(tlsOptions, tcpHandler.handleBodyRequest)
+const tlsBodyServer = tls.createServer(Object.assign({}, tcpOptions, tlsOptions), tcpHandler.handleBodyRequest)
 tlsBodyServer.listen(config.tlsBodyPort, () => {
   console.log(`TLS body server started on ${config.tlsBodyPort}`)
 })
 
-const tcpDelayServer = tcp.createServer(tcpHandler.handleDelayRequest)
+const tcpDelayServer = tcp.createServer(tcpOptions, tcpHandler.handleDelayRequest)
 tcpDelayServer.listen(config.tcpDelayPort, () => {
   console.log(`TCP delay server started on ${config.tcpDelayPort}`)
 })
 
-const tlsDelayServer = tls.createServer(tlsOptions, tcpHandler.handleDelayRequest)
+const tlsDelayServer = tls.createServer(Object.assign({}, tcpOptions, tlsOptions), tcpHandler.handleDelayRequest)
 tlsDelayServer.listen(config.tlsDelayPort, () => {
   console.log(`TLS delay server started on ${config.tlsDelayPort}`)
 })
