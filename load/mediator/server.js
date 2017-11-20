@@ -44,9 +44,10 @@ const tlsBodyServer = tls.createServer(tlsOptions, tcpHandler.handleBodyRequest)
 tlsBodyServer.listen(config.tlsBodyPort, () => {
   console.log(`TLS body server started on ${config.tlsBodyPort}`)
 })
+
 const tcpDelayServer = tcp.createServer(tcpHandler.handleDelayRequest)
 tcpDelayServer.listen(config.tcpDelayPort, () => {
-  console.log(`Tcp delay server started on ${config.tcpDelayPort}`)
+  console.log(`TCP delay server started on ${config.tcpDelayPort}`)
 })
 
 const tlsDelayServer = tls.createServer(tlsOptions, tcpHandler.handleDelayRequest)
