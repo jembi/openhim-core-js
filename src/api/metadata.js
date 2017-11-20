@@ -148,6 +148,7 @@ async function handleMetadataPost (ctx, action) {
               status = 'Updated'
             } else {
               doc = new (collections[key])(doc)
+              doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
               result = await doc.save()
               status = 'Inserted'
             }
@@ -158,6 +159,7 @@ async function handleMetadataPost (ctx, action) {
               status = 'Conflict'
             } else {
               doc = new (collections[key])(doc)
+              doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
               error = doc.validateSync()
               if (error) {
                 throw new Error(`Document Validation failed: ${error}`)
