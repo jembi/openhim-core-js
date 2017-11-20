@@ -15,9 +15,10 @@ const config = {
   httpsPort: +(process.env.HTTPS_PORT || 8443),
   tcpBodyPort: +(process.env.TCP_BODY_PORT || 9000),
   tlsBodyPort: +(process.env.TLS_BODY_PORT || 9001),
-  tcpDelayPort: +(process.env.TCP_BODY_PORT || 9002),
-  tlsDelayPort: +(process.env.TLS_BODY_PORT || 9003)
-
+  tcpDelayPort: +(process.env.TCP_DELAY_PORT || 9002),
+  tlsDelayPort: +(process.env.TLS_DELAY_PORT || 9003),
+  tcpImmediatePort: +(process.env.TCP_IMMEDIATE_PORT || 9004),
+  tlsImmediatePort: +(process.env.TLS_IMMEDIATE_PORT || 9005)
 }
 
 const tlsOptions = {
@@ -53,4 +54,14 @@ tcpDelayServer.listen(config.tcpDelayPort, () => {
 const tlsDelayServer = tls.createServer(tlsOptions, tcpHandler.handleDelayRequest)
 tlsDelayServer.listen(config.tlsDelayPort, () => {
   console.log(`TLS delay server started on ${config.tlsDelayPort}`)
+})
+
+const tcpImmediateServer = tcp.createServer(tcpHandler.handleImmediateResponse)
+tcpImmediateServer.listen(config.tcpImmediatePort, () => {
+  console.log(`TCP immediate server started on ${config.tcpImmediatePort}`)
+})
+
+const tlsImmediateServer = tls.createServer(tlsOptions, tcpHandler.handleDelayRequest)
+tlsImmediateServer.listen(config.tlsImmediatePort, () => {
+  console.log(`TLS delay server started on ${config.tlsImmediatePort}`)
 })
