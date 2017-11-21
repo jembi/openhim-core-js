@@ -11,9 +11,28 @@ export const options = {
   }
 }
 
-function makeRequest() {
+function makeGetRequest() {
   const response = http.get(
     `${BASE_URL}/mediator`,
+    {
+      headers: {
+        Accept: 'application/json',
+        Authorization: 'Basic cGVyZm9ybWFuY2U6cGVyZm9ybWFuY2U='
+      },
+      tags: {
+        name: 'Get request'
+      }
+    }
+  )
+  check(response, {
+    'status code is 200': r => r.status === 200
+  })
+}
+
+function makePostRequest() {
+  const response = http.post(
+    `${BASE_URL}/mediator`,
+    '{"hello": "world"}',
     {
       headers: {
         Accept: 'application/json',
@@ -21,7 +40,7 @@ function makeRequest() {
         'Content-Type': 'application/json'
       },
       tags: {
-        name: 'Get response'
+        name: 'Post request'
       }
     }
   )
@@ -31,5 +50,6 @@ function makeRequest() {
 }
 
 export default function() {
-  makeRequest()
+  makeGetRequest()
+  makePostRequest()
 }
