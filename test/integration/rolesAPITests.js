@@ -5,7 +5,7 @@ import * as server from '../../src/server'
 import { ClientModel, ChannelModel } from '../../src/model'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
-import { promisify, debug } from 'util'
+import { promisify } from 'util'
 import { ObjectId } from 'mongodb'
 
 const { SERVER_PORTS } = constants
