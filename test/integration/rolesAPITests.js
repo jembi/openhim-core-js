@@ -6,7 +6,7 @@ import { ClientModel, ChannelModel } from '../../src/model'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
 import { promisify } from 'util'
-import {ObjectId} from 'mongodb'
+import { ObjectId } from 'mongodb'
 
 const { SERVER_PORTS } = constants
 
@@ -32,6 +32,22 @@ describe('API Integration Tests', () => {
       name: 'TestChannel2',
       urlPattern: 'test/sample',
       allow: ['role2', 'role3'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 9876,
+        primary: true
+      }],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
+    const channel3Doc = {
+      name: 'TestChannel3',
+      urlPattern: 'test/sample',
+      allow: ['channelOnlyRole'],
       routes: [{
         name: 'test route',
         host: 'localhost',
@@ -77,6 +93,14 @@ describe('API Integration Tests', () => {
       ]
     }
 
+    const client5Doc = {
+      clientID: 'client5',
+      name: 'Client 5',
+      roles: [
+        'clientOnlyRole'
+      ]
+    }
+
     let authDetails
     let channel1
     let channel2
@@ -99,15 +123,19 @@ describe('API Integration Tests', () => {
         new ClientModel(client1Doc).save(),
         new ClientModel(client2Doc).save(),
         new ClientModel(client3Doc).save(),
-        new ClientModel(client4Doc).save()
+        new ClientModel(client4Doc).save(),
+        new ChannelModel(channel3Doc).save(),
+        new ClientModel(client5Doc).save()
       ])
 
-      channel1 = result[0]
-      channel2 = result[1]
-      client1 = result[2]
-      client2 = result[3]
-      client3 = result[4]
-      client4 = result[5]
+      channel1 = result.shift()
+      channel2 = result.shift()
+
+      client1 = result.shift()
+      client2 = result.shift()
+      client3 = result.shift()
+      client4 = result.shift()
+
       authDetails = testUtils.getAuthDetails()
     })
 
@@ -135,7 +163,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        res.body.length.should.be.exactly(4)
+        res.body.length.should.be.exactly(6)
         const names = res.body.map(r => r.name)
         names.should.containEql('role1')
         names.should.containEql('role2')
@@ -168,7 +196,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        res.body.length.should.be.exactly(4)
+        res.body.length.should.be.exactly(6)
         const names = res.body.map(r => r.name)
         names.should.containEql('role1')
         names.should.containEql('role2')
@@ -205,7 +233,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        res.body.length.should.be.exactly(4)
+        res.body.length.should.be.exactly(5)
         const names = res.body.map(r => r.name)
         names.should.containEql('role1')
         names.should.containEql('role2')
@@ -241,7 +269,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        res.body.length.should.be.exactly(4)
+        res.body.length.should.be.exactly(6)
         const names = res.body.map(r => r.name)
         names.should.not.containEql('client4')
       })
@@ -327,6 +355,21 @@ describe('API Integration Tests', () => {
             channels: [{ _id: `${channel2._id}` }]
           })
           .expect(400)
+      })
+
+      it('should respond with 400 Bad Request if role does not have a channel or client', async () => {
+        const res = await request(constants.BASE_URL)
+          .post('/roles')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            name: 'newRole'
+          })
+          .expect(400)
+
+        res.text.should.eql('Must specify at least one channel or client to link the role to')
       })
 
       it('should add a role', async () => {
@@ -535,7 +578,7 @@ describe('API Integration Tests', () => {
     })
 
     describe('*updateRole()', () => {
-      it('should respond with 400 Not Found if role doesn\'t exist', async () => {
+      it('should respond with 404 Not Found if role doesn\'t exist', async () => {
         await request(constants.BASE_URL)
           .put('/roles/role4')
           .set('auth-username', testUtils.rootUser.email)
@@ -546,6 +589,46 @@ describe('API Integration Tests', () => {
             channels: [{ _id: `${channel1._id}` }]
           })
           .expect(404)
+      })
+
+      it('should respond with 400 if channels and clients is empty', async () => {
+        await request(constants.BASE_URL)
+          .put('/roles/role1')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            channels: [],
+            clients: []
+          })
+          .expect(400)
+      })
+
+      it('should respond with 400 if clearing the channels will remove the role', async () => {
+        await request(constants.BASE_URL)
+          .put('/roles/channelOnlyRole')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            channels: []
+          })
+          .expect(400)
+      })
+
+      it('should respond with 400 if clearing the clients will remove the role', async () => {
+        await request(constants.BASE_URL)
+          .put('/roles/clientOnlyRole')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            clients: []
+          })
+          .expect(400)
       })
 
       it('should update a role (enable role1 on channel2 and remove from channel1)', async () => {
@@ -641,26 +724,6 @@ describe('API Integration Tests', () => {
 
         const clients = await ClientModel.find({ roles: { $in: ['role2'] } })
         clients.length.should.be.exactly(1)
-      })
-
-      it('should remove a role from all channels and clients if update contains empty channel and clients arrays', async () => {
-        await request(constants.BASE_URL)
-          .put('/roles/role2')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send({
-            channels: [],
-            clients: []
-          })
-          .expect(200)
-
-        const channels = await ChannelModel.find({ allow: { $in: ['role2'] } })
-        channels.length.should.be.exactly(0)
-
-        const clients = await ClientModel.find({ allow: { $in: ['role2'] } })
-        clients.length.should.be.exactly(0)
       })
 
       it('should update a role using channel name', async () => {
