@@ -18,6 +18,7 @@ function makeGetRequest() {
     {
       headers: {
         Accept: 'application/json',
+        'Accept-Encoding': 'identity',
         Authorization: 'Basic cGVyZm9ybWFuY2U6cGVyZm9ybWFuY2U='
       },
       tags: {
