@@ -1,8 +1,8 @@
 'use strict'
 
-const DELAY = parseInt(process.env.DELAY, 10) || 2000
+const BodyStream = require('./body-stream')
 
-const bigBuff = Buffer.alloc(2 * 1024 * 1024, 'HellWorld ')
+const DELAY = parseInt(process.env.DELAY, 10) || 2000
 
 function sendHttpHeaders (conn) {
   conn.write('HTTP/1.1 200 OK\r\n')
@@ -16,7 +16,7 @@ exports.handleBodyRequest = (conn) => {
   conn.on('error', console.error)
   conn.once('data', () => {
     sendHttpHeaders(conn)
-    conn.end(bigBuff)
+    new BodyStream(2 * 1024 * 1024).pipe(conn)
   })
 }
 

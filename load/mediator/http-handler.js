@@ -46,7 +46,7 @@ function respondImmediately (req, res) {
 
 function respondWithBody (req, res, length) {
   if (!Number.isInteger(length)) {
-    length = 1024
+    length = 2 * 1024 * 1024
   }
   res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'})
   new BodyStream(length).pipe(res)
