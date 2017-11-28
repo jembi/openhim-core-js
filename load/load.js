@@ -1,5 +1,5 @@
 import http from 'k6/http'
-import {check} from 'k6'
+import {check, sleep} from 'k6'
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:5001/http'
 
@@ -52,7 +52,12 @@ function makePostRequest() {
   })
 }
 
+function think() {
+  sleep(Math.random() * 0.5)
+}
+
 export default function() {
   makeGetRequest()
+  think()
   makePostRequest()
 }
