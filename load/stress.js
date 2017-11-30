@@ -7,7 +7,7 @@ export const options = {
   vus: 100,
   duration: '2m',
   thresholds: {
-    http_req_duration: ['p(95)<600']
+    http_req_duration: ['p(95)<60']
   }
 }
 
@@ -23,7 +23,7 @@ function makeGetRequest () {
         name: 'Get request'
       }
     }
-    )
+  )
   check(response, {
     'status code is 200': r => r.status === 200
   })
