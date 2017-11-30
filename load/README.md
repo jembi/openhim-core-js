@@ -55,5 +55,5 @@ docker run -e 'BASE_URL=<BASE_URL>' --net=host -i -v $PWD:/src loadimpact/k6 run
 | -------- | --------------------------- |
 | HTTP     | http://localhost:5001/http  |
 | HTTPS    | http://localhost:5001/https |
-| TCP      | http://localhost:7000       |
-| TLS      | http://localhost:7001       |
+| TCP      | http://localhost:7004       |
+| TLS      | http://localhost:7005       |
