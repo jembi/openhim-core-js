@@ -2,7 +2,7 @@
 
 const BodyStream = require('./body-stream')
 
-const DELAY = parseInt(process.env.DELAY, 10) || 2000
+const DELAY = +(process.env.DELAY || 500)
 
 function sendHttpHeaders (conn) {
   conn.write('HTTP/1.1 200 OK\r\n')
