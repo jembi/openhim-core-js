@@ -3,6 +3,8 @@
 const {Readable} = require('stream')
 const crypto = require('crypto')
 
+const RANDOM_BUFFER = crypto.randomBytes(2 * 1024 * 1024)
+
 class BodyStream extends Readable {
   constructor (length) {
     super({encoding: 'hex'})
@@ -13,17 +15,17 @@ class BodyStream extends Readable {
     const length = Math.min(size, this.remainingLength)
     const lastChunk = length === this.remainingLength
     this.remainingLength -= length
-    crypto.randomBytes(length, (err, buf) => {
-      if (err) {
-        return process.nextTick(() => {
-          this.emit('error', err)
-        })
-      }
-      this.push(buf)
-      if (lastChunk) {
-        this.push(null)
-      }
-    })
+
+    let remaining = length
+    while (remaining > 0) {
+      const chunkSize = Math.min(remaining, RANDOM_BUFFER.length)
+      remaining -= chunkSize
+      this.push(RANDOM_BUFFER.slice(0, chunkSize))
+    }
+
+    if (lastChunk) {
+      this.push(null)
+    }
   }
 }
 
