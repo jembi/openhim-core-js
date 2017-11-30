@@ -13,7 +13,7 @@ export const options = {
 
 function makeGetRequest () {
   const response = http.get(
-        `${BASE_URL}/immediate`,
+    `${BASE_URL}/immediate`,
     {
       headers: {
         Accept: 'application/json',
