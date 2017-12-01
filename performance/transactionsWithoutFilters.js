@@ -5,8 +5,8 @@ import {getTestAuthHeaders} from './auth.js'
 const BASE_URL = __ENV.BASE_URL || 'https://127.0.0.1:8080'
 
 export const options = {
-  vus: 10,
-  duration: '2m',
+  vus: 1,
+  iterations: 100,
   thresholds: {
     http_req_duration: ['p(95)<600']
   },
