@@ -9,7 +9,6 @@ const rootUser = {
 export function getTestAuthHeaders () {
   const timestamp = new Date().toISOString()
   return {
-    'Accept': 'application/json',
     'auth-username': rootUser.email,
     'auth-ts': timestamp,
     'auth-salt': rootUser.salt,
