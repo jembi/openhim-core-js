@@ -94,3 +94,11 @@ docker run --name=chronograf --net=host -d chronograf --influxdb-url=http://loca
 Once it is up and running you can access Chronograf at http://localhost:8888.
 
 In order to use the InfluxDB output for reporting test results you can pass the `-o influxdb=http://localhost:8086/k6` option to `k6 run`.
+
+To create some dashboards in Chronograf run:
+
+```bash
+curl -XPOST -H "Content-Type:application/json" -d @dashboards/overview-dashboard.json localhost:8888/chronograf/v1/dashboards
+curl -XPOST -H "Content-Type:application/json" -d @dashboards/metrics-dashboard.json localhost:8888/chronograf/v1/dashboards
+curl -XPOST -H "Content-Type:application/json" -d @dashboards/transactions-dashboard.json localhost:8888/chronograf/v1/dashboards
+```
