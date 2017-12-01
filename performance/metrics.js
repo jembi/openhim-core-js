@@ -1,0 +1,97 @@
+import http from 'k6/http'
+import {check, group} from 'k6'
+import {getTestAuthHeaders} from './auth.js'
+
+const BASE_URL = __ENV.BASE_URL || 'https://localhost:8080'
+
+export const options = {
+  vus: 10,
+  duration: '1m',
+  thresholds: {
+    http_req_duration: ['p(95)<50']
+  },
+  insecureSkipTLSVerify: true
+}
+
+function getMetricsByMinute() {
+  const res = http.get(
+    // TODO: Use valid date
+    `${BASE_URL}/metrics/timeseries/minute?startDate=2017-12-01T10:00:00.000Z&endDate=2017-12-01T11:00:00.000Z`,
+    {
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json'
+      }),
+      tags: {
+        name: 'All metrics by minute'
+      }
+    }
+  )
+  check(res, {
+    'status code is 200': r => r.status === 200
+  })
+}
+
+function getMetricsByHour() {
+  const res = http.get(
+    // TODO: Use valid date
+    `${BASE_URL}/metrics/timeseries/hour?startDate=2017-12-01T00:00:00.000Z&endDate=2017-12-02T00:00:00.000Z`,
+    {
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json'
+      }),
+      tags: {
+        name: 'All metrics by hour'
+      }
+    }
+  )
+  check(res, {
+    'status code is 200': r => r.status === 200
+  })
+}
+
+function getMetricsByDay() {
+  const res = http.get(
+    // TODO: Use valid date
+    `${BASE_URL}/metrics/timeseries/day?startDate=2017-12-01&endDate=2017-12-31`,
+    {
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json'
+      }),
+      tags: {
+        name: 'All metrics by day'
+      }
+    }
+  )
+  check(res, {
+    'status code is 200': r => r.status === 200
+  })
+}
+
+function getMetricsByMonth() {
+  const res = http.get(
+    // TODO: Use valid date
+    `${BASE_URL}/metrics/timeseries/month?startDate=2017-01-01&endDate=2017-12-31`,
+    {
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json'
+      }),
+      tags: {
+        name: 'All metrics by month'
+      }
+    }
+  )
+  check(res, {
+    'status code is 200': r => r.status === 200
+  })
+}
+
+export default function execute() {
+  group('Metrics', () => {
+    group('By time range', () => {
+      group('By minute', getMetricsByMinute)
+      group('By hour', getMetricsByHour)
+      group('By day', getMetricsByDay)
+      group('By month', getMetricsByMonth)
+    })
+  })
+}
