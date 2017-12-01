@@ -3,7 +3,7 @@ const utils = require('../utils')
 const config = require('../config')
 const faker = require('faker')
 
-const baseUrl = 'localhost:8080/'
+const baseUrl = 'http//localhost:8080/'
 
 const headers = {
     Authorization: utils.getAuthBasicValue('root@openhim.org', 'admin')
