@@ -1,6 +1,6 @@
 import http from 'k6/http'
-import { check } from 'k6'
-const auth = require('./auth.js')
+import { check, group } from 'k6'
+import {getTestAuthHeaders} from './auth.js'
 
 const BASE_URL = __ENV.BASE_URL || 'https://127.0.0.1:8080'
 const status = 'Failed'
@@ -22,7 +22,10 @@ function makeGetRequestWithStatusFilter () {
   const response = http.get(
     `${BASE_URL}/transactions?filterLimit=100&filters=${query}`,
     {
-      headers: auth.getTestAuthHeaders(),
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json',
+        'Content-Type': 'apllication/json'
+      }),
       tags: {
         name: 'Transactions with Status filter'
       }
@@ -38,7 +41,10 @@ function makeGetRequestWithDateRangeFilter () {
   const response = http.get(
     `${BASE_URL}/transactions?filterLimit=100&filters=${query}`,
     {
-      headers: auth.getTestAuthHeaders(),
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json',
+        'Content-Type': 'apllication/json'
+      }),
       tags: {
         name: 'Transactions with Date Range Filter'
       }
@@ -54,7 +60,10 @@ function makeGetRequestWithChannelFilter () {
   const response = http.get(
     `${BASE_URL}/transactions?filterLimit=100&filters=${query}`,
     {
-      headers: auth.getTestAuthHeaders(),
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json',
+        'Content-Type': 'apllication/json'
+      }),
       tags: {
         name: 'Transactions with Channel Filter'
       }
@@ -70,7 +79,10 @@ function makeGetRequestWithChannelAndDateRangeFilters () {
   const response = http.get(
     `${BASE_URL}/transactions?filterLimit=100&filters=${query}`,
     {
-      headers: auth.getTestAuthHeaders(),
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json',
+        'Content-Type': 'apllication/json'
+      }),
       tags: {
         name: 'Transactions with Channel and Date Range Filters'
       }
@@ -86,7 +98,10 @@ function makeGetRequestWithChannelAndStatusFilters () {
   const response = http.get(
     `${BASE_URL}/transactions?filterLimit=100&filters=${query}`,
     {
-      headers: auth.getTestAuthHeaders(),
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json',
+        'Content-Type': 'apllication/json'
+      }),
       tags: {
         name: 'Transactions with Channel and Status Filters'
       }
@@ -102,7 +117,10 @@ function makeGetRequestWithStatusAndDateRangeFilters () {
   const response = http.get(
     `${BASE_URL}/transactions?filterLimit=100&filters=${query}`,
     {
-      headers: auth.getTestAuthHeaders(),
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json',
+        'Content-Type': 'apllication/json'
+      }),
       tags: {
         name: 'Transactions with Status and Date Range Filters'
       }
@@ -118,7 +136,10 @@ function makeGetRequestWithAllFilters () {
   const response = http.get(
   `${BASE_URL}/transactions?filterLimit=100&filters=${query}`,
     {
-      headers: auth.getTestAuthHeaders(),
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json',
+        'Content-Type': 'apllication/json'
+      }),
       tags: {
         name: 'Transactions with Status, Channel and Date Range Filters'
       }
@@ -130,11 +151,19 @@ function makeGetRequestWithAllFilters () {
 }
 
 export default function () {
-  makeGetRequestWithDateRangeFilter()
-  makeGetRequestWithStatusFilter()
-  makeGetRequestWithChannelFilter()
-  makeGetRequestWithChannelAndDateRangeFilters()
-  makeGetRequestWithChannelAndStatusFilters()
-  makeGetRequestWithStatusAndDateRangeFilters()
-  makeGetRequestWithAllFilters()
+  group('Transactions', () => {
+    group('One Filter', () => {
+      makeGetRequestWithDateRangeFilter()
+      makeGetRequestWithStatusFilter()
+      makeGetRequestWithChannelFilter()
+    })
+    group('Two filters', () => {
+      makeGetRequestWithChannelAndDateRangeFilters()
+      makeGetRequestWithChannelAndStatusFilters()
+      makeGetRequestWithStatusAndDateRangeFilters()
+    })
+    group('Three filters', () => {
+      makeGetRequestWithAllFilters()
+    })
+  })
 }
