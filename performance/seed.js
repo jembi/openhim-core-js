@@ -1,28 +1,38 @@
 require('babel-register')
+const { ClientModel, ChannelModel, TransactionModel, UserModel } = require('../src/model')
+const { dropTestDb, rootUser } = require('../test/utils')
+const Progress = require('progress')
 const faker = require('faker')
-const { ClientModel, ChannelModel, TransactionModel } = require('../src/model')
-const { dropTestDb } = require('../test/utils')
 
 const DEFAULT_SEED = 9575
 
-const DEFAULT_START_DATE = new Date('2015/11/12')
-const DEFAULT_END_DATE = new Date('2018/11/12')
+const DEFAULT_START_DATE = new Date('2016/11/12')
+const DEFAULT_END_DATE = new Date('2017/12/30')
 
-async function seedValues (clients = 1, channelsPerClient = 1, transactionsPerChannel = 1000, startDate = DEFAULT_START_DATE, endDate = DEFAULT_END_DATE) {
+async function seedValues (clients = 1, channelsPerClient = 1, transactionsPerChannel = 500000, startDate = DEFAULT_START_DATE, endDate = DEFAULT_END_DATE) {
+  const totalTrans = clients * channelsPerClient * transactionsPerChannel
+  console.log(`Starting seed of ${totalTrans} transactions`)
   await dropTestDb()
+  const bar = new Progress('Seeding Transactions [:bar] :rate/trans per s :percent :etas', {
+    total: totalTrans
+  })
+  bar.render()
   faker.seed(DEFAULT_SEED)
+  const user = await new UserModel(rootUser).save()
   const timeStep = Math.floor((endDate.getTime() - startDate.getTime()) / transactionsPerChannel)
   // TODO : Make this a lot faster
   for (let clientNum = 0; clientNum < clients; clientNum++) {
     const client = await createClient(clientNum)
     for (let channelNum = 0; channelNum < channelsPerClient; channelNum++) {
-      const channel = await creatChannel(client, channelNum)
+      const channel = await creatChannel(client, channelNum, user)
       for (let transactionNum = 0; transactionNum < transactionsPerChannel; transactionNum++) {
         const requestTime = new Date(startDate.getTime() + timeStep * transactionNum)
         await createTransaction(channel, client, requestTime)
+        bar.tick(1)
       }
     }
   }
+  console.log(`completed seed`)
 }
 
 async function createClient (clientNum) {
@@ -49,10 +59,29 @@ async function createClient (clientNum) {
   return client.save()
 }
 
-function creatChannel (client, channelNum) {
-  // const channel = new ChannelModel({
-  //   name :
-  // })
+async function creatChannel (client, channelNum, user) {
+  const routeDef = {
+    name: faker.name.findName(),
+    host: 'http//localhost:8080',
+    port: 3441,
+    primary: true,
+    type: 'http'
+  }
+
+  const channel = new ChannelModel({
+    name: `testChannel${channelNum}`,
+    urlPattern: '/encounters/.*$',
+    routes: routeDef,
+    type: 'http',
+    allow: [`${client.name}`],
+    addAutoRewriteRules: true,
+    updatedBy: {
+      id: user._id,
+      name: user.email
+    }
+  })
+
+  return channel.save()
 }
 
 function createTransaction (channel, client, requestTime) {
@@ -64,7 +93,7 @@ function createTransaction (channel, client, requestTime) {
       'Content-type': 'text/html'
     },
     method: oneOf(['POST', 'GET', 'PUT', 'DELETE']),
-    timestamp: new Date()
+    timestamp: requestTime
   }
 
   const transactionDoc = {
@@ -81,7 +110,7 @@ function createTransaction (channel, client, requestTime) {
       headers: {
         'Content-type': 'text/html'
       },
-      timestamp: new Date()
+      timestamp: new Date(requestTime.getTime() + faker.random.number({ min: 30, max: 1200 }))
     }
 
     if (response.status >= 500) {
@@ -108,7 +137,7 @@ function getStatusCode (status) {
 }
 
 function getBody () {
-  switch (faker.random() % 6) {
+  switch (faker.random.number() % 6) {
     case 0: return Buffer.alloc(100000, 'Large Response ').toString()
     case 1:
     case 2:
@@ -124,4 +153,6 @@ function oneOf (arr) {
 if (module.parent == null) {
   // Do seed off of argv
   seedValues()
+    .then(() => process.exit(0))
+    .catch(() => process.exit(1))
 }
