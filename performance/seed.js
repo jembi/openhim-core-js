@@ -43,7 +43,7 @@ async function createClient (clientNum) {
 
 function creatChannel(client, channelNum){
   const channel = new ChannelModel({
-    name : 
+    name :
   })
 }
 
