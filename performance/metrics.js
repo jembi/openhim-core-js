@@ -85,6 +85,24 @@ function getMetricsByMonth() {
   })
 }
 
+function getMetricsByChannel() {
+  const res = http.get(
+    // TODO: Use valid date and channel id
+    `${BASE_URL}/metrics/channels/5a1ff399ab40973d07eec9f9?startDate=2017-01-01&endDate=2017-12-31`,
+    {
+      headers: Object.assign(getTestAuthHeaders(), {
+        Accept: 'application/json'
+      }),
+      tags: {
+        name: 'Metrics by channel'
+      }
+    }
+  )
+  check(res, {
+    'status code is 200': r => r.status === 200
+  })
+}
+
 export default function execute() {
   group('Metrics', () => {
     group('By time range', () => {
@@ -93,5 +111,6 @@ export default function execute() {
       group('By day', getMetricsByDay)
       group('By month', getMetricsByMonth)
     })
+    group('By channel', getMetricsByChannel)
   })
 }
