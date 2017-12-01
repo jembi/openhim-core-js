@@ -57,3 +57,16 @@ docker run -e 'BASE_URL=<BASE_URL>' --net=host -i -v $PWD:/src loadimpact/k6 run
 | HTTPS    | http://localhost:5001/https |
 | TCP      | http://localhost:7004       |
 | TLS      | http://localhost:7005       |
+
+# InfluxDB Output
+
+InfluxDB can be used as an output for test results. To set up InfluxDB and Chronograf for viewing the results run the following:
+
+```bash
+docker run --name=influx -d -p 8086:8086 influxdb
+docker run --name=chronograf --net=host -d chronograf --influxdb-url=http://localhost:8086
+```
+
+Once it is up and running you can access Chronograf at http://localhost:8888.
+
+In order to use the InfluxDB output for reporting test results you can pass the `-o influxdb=http://localhost:8086/k6` option to `k6 run`.
