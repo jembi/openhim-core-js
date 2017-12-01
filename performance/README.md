@@ -70,3 +70,19 @@ docker run --name=chronograf --net=host -d chronograf --influxdb-url=http://loca
 Once it is up and running you can access Chronograf at http://localhost:8888.
 
 In order to use the InfluxDB output for reporting test results you can pass the `-o influxdb=http://localhost:8086/k6` option to `k6 run`.
+
+## Transaction Without Filter Tests
+
+To perform a transaction test run the following command:
+
+```bash
+docker run --net=host -i -v $PWD:/src loadimpact/k6 run /src/transactionsWithoutFilters.js
+```
+
+## Transaction Filter Tests
+
+To perform a transaction test run the following command:
+
+```bash
+docker run --net=host -i -v $PWD:/src loadimpact/k6 run /src/transactionsWithFilters.js
+```
