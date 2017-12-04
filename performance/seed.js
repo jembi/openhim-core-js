@@ -3,6 +3,7 @@ const { ClientModel, ChannelModel, TransactionModel, UserModel } = require('../s
 const { dropTestDb, rootUser } = require('../test/utils')
 const Progress = require('progress')
 const faker = require('faker')
+const { ObjectId } = require('mongodb')
 
 const DEFAULT_SEED = 9575
 
@@ -80,6 +81,7 @@ async function creatChannel (client, channelNum, user) {
   }
 
   const channel = new ChannelModel({
+    _id: new ObjectId(10000 + channelNum),
     name: `channel${channelNum}`,
     urlPattern: `/channel${channelNum}/.*$`,
     routes: routeDef,
