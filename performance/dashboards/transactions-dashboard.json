@@ -1,0 +1,544 @@
+{
+  "cells": [
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "a5a4a051-cc5f-418c-9d50-0b1c12539721",
+      "links": {
+        "self": "/chronograf/v1/dashboards/3/cells/a5a4a051-cc5f-418c-9d50-0b1c12539721"
+      },
+      "name": "By Status, Channel and Date",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='Transactions with Status, Channel and Date Range Filters' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "Transactions with Status, Channel and Date Range Filters"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 9,
+      "y": 0
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "2f8b93a8-fad7-43f1-9ac3-1a8e3f13b9fa",
+      "links": {
+        "self": "/chronograf/v1/dashboards/3/cells/2f8b93a8-fad7-43f1-9ac3-1a8e3f13b9fa"
+      },
+      "name": "By Status",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='Transactions with Status filter' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "Transactions with Status filter"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 3,
+      "y": 0
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "a77dda45-8489-4ea7-81e3-1a3ed26a38be",
+      "links": {
+        "self": "/chronograf/v1/dashboards/3/cells/a77dda45-8489-4ea7-81e3-1a3ed26a38be"
+      },
+      "name": "By Status and Date",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='Transactions with Status and Date Range Filters' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "Transactions with Status and Date Range Filters"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 3,
+      "y": 4
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "3de13ebc-0506-4911-87e8-928c955d6b8b",
+      "links": {
+        "self": "/chronograf/v1/dashboards/3/cells/3de13ebc-0506-4911-87e8-928c955d6b8b"
+      },
+      "name": "By Date",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='Transactions with Date Range Filter' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "Transactions with Date Range Filter"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 6,
+      "y": 0
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "98d8cd31-f905-428f-9ff4-7165b815a4b0",
+      "links": {
+        "self": "/chronograf/v1/dashboards/3/cells/98d8cd31-f905-428f-9ff4-7165b815a4b0"
+      },
+      "name": "By Channel and Status",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='Transactions with Channel and Status Filters' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "Transactions with Channel and Status Filters"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 0,
+      "y": 4
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "9016b43e-9f16-4a3d-b753-0633b3de9f66",
+      "links": {
+        "self": "/chronograf/v1/dashboards/3/cells/9016b43e-9f16-4a3d-b753-0633b3de9f66"
+      },
+      "name": "By Channel and Date",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='Transactions with Channel and Date Range Filters' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "Transactions with Channel and Date Range Filters"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 6,
+      "y": 4
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "167edcba-978e-4189-8437-d6364dec689a",
+      "links": {
+        "self": "/chronograf/v1/dashboards/3/cells/167edcba-978e-4189-8437-d6364dec689a"
+      },
+      "name": "By Channel",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='Transactions with Channel Filter' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "Transactions with Channel Filter"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "id": 3,
+  "links": {
+    "cells": "/chronograf/v1/dashboards/3/cells",
+    "self": "/chronograf/v1/dashboards/3",
+    "templates": "/chronograf/v1/dashboards/3/templates"
+  },
+  "name": "Transactions Endpoint",
+  "templates": []
+}
