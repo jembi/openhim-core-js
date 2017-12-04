@@ -4,9 +4,9 @@ import {getTestAuthHeaders} from './auth.js'
 
 const BASE_URL = __ENV.BASE_URL || 'https://127.0.0.1:8080'
 const status = 'Failed'
-const startDate = '\\"2017-11-29T10:24:52+02:00\\"'
-const endDate = '\\"2017-12-01T10:24:52+02:00\\"'
-const channelID = '5a1d74be0cc902172d6c5f9b'
+const startDate = '\\"2017-10-01T10:24:52+02:00\\"'
+const endDate = '\\"2017-10-31T10:24:52+02:00\\"'
+const channelID = '303030303030303030303030'
 
 export const options = {
   vus: 1,

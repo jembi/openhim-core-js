@@ -15,7 +15,6 @@ export const options = {
 
 function getMetricsByMinute() {
   const res = http.get(
-    // TODO: Use valid date
     `${BASE_URL}/metrics/timeseries/minute?startDate=2017-12-01T10:00:00.000Z&endDate=2017-12-01T11:00:00.000Z`,
     {
       headers: Object.assign(getTestAuthHeaders(), {
@@ -33,8 +32,7 @@ function getMetricsByMinute() {
 
 function getMetricsByHour() {
   const res = http.get(
-    // TODO: Use valid date
-    `${BASE_URL}/metrics/timeseries/hour?startDate=2017-12-01T00:00:00.000Z&endDate=2017-12-02T00:00:00.000Z`,
+    `${BASE_URL}/metrics/timeseries/hour?startDate=2017-12-01T00:00:00.000Z&endDate=2017-12-01T23:59:59.999Z`,
     {
       headers: Object.assign(getTestAuthHeaders(), {
         Accept: 'application/json'
@@ -51,8 +49,7 @@ function getMetricsByHour() {
 
 function getMetricsByDay() {
   const res = http.get(
-    // TODO: Use valid date
-    `${BASE_URL}/metrics/timeseries/day?startDate=2017-12-01&endDate=2017-12-31`,
+    `${BASE_URL}/metrics/timeseries/day?startDate=2017-12-01&endDate=2017-12-08`,
     {
       headers: Object.assign(getTestAuthHeaders(), {
         Accept: 'application/json'
@@ -69,7 +66,6 @@ function getMetricsByDay() {
 
 function getMetricsByMonth() {
   const res = http.get(
-    // TODO: Use valid date
     `${BASE_URL}/metrics/timeseries/month?startDate=2017-01-01&endDate=2017-12-31`,
     {
       headers: Object.assign(getTestAuthHeaders(), {
@@ -87,8 +83,7 @@ function getMetricsByMonth() {
 
 function getMetricsByChannel() {
   const res = http.get(
-    // TODO: Use valid date and channel id
-    `${BASE_URL}/metrics/channels/5a1ff399ab40973d07eec9f9?startDate=2017-01-01&endDate=2017-12-31`,
+    `${BASE_URL}/metrics/channels/303030303030303030303030?startDate=2017-01-01T00:00:00.000Z&endDate=2017-01-01T23:59:59.999Z`,
     {
       headers: Object.assign(getTestAuthHeaders(), {
         Accept: 'application/json'
