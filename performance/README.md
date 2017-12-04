@@ -82,6 +82,8 @@ To test the metrics endpoints run the following command:
 docker run --net=host -i -v $PWD:/src loadimpact/k6 run /src/metrics.js
 ```
 
+If metrics tests don't work (connection refused error) try replacing __localhost__ with __127.0.0.1__ in the metrics.js script URL
+
 # InfluxDB Output
 
 InfluxDB can be used as an output for test results. To set up InfluxDB and Chronograf for viewing the results run the following:
