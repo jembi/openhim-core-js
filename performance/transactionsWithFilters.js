@@ -10,7 +10,7 @@ const channelID = '303030303030303030303030'
 
 export const options = {
   vus: 1,
-  iterations: 100,
+  iterations: 1000,
   thresholds: {
     http_req_duration: ['p(95)<60']
   },
