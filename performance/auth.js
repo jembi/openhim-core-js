@@ -1,9 +1,9 @@
 import crypto from 'k6/crypto'
 
 const rootUser = {
-  email: 'root@openhim.org',
-  hash: 'a8cfb8a146612e0388decb184d1b14642cf6a77c0adf40c7bc37eb958364239af01e91297e76b9758de4b4abfc3018fc71bddc5d65cf2e9c1ca3929898d20514',
-  salt: 'b8fe0e678fff2bc83aa109cd6b28751f'
+  email: 'root@jembi.org',
+  hash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+  salt: '22a61686-66f6-483c-a524-185aac251fb0'
 }
 
 export function getTestAuthHeaders () {
