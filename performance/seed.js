@@ -80,8 +80,10 @@ async function creatChannel (client, channelNum, user) {
     type: 'http'
   }
 
+  const id = `0`.repeat(12 - channelNum.toString().length) + channelNum
+
   const channel = new ChannelModel({
-    _id: new ObjectId(10000 + channelNum),
+    _id: new ObjectId(id),
     name: `channel${channelNum}`,
     urlPattern: `/channel${channelNum}/.*$`,
     routes: routeDef,
