@@ -9,26 +9,37 @@ const DEFAULT_SEED = 9575
 const DEFAULT_START_DATE = new Date('2016/11/12')
 const DEFAULT_END_DATE = new Date('2017/12/30')
 
-async function seedValues (clients = 1, channelsPerClient = 1, transactionsPerChannel = 500000, startDate = DEFAULT_START_DATE, endDate = DEFAULT_END_DATE) {
+async function seedValues (clients = 1, channelsPerClient = 2, transactionsPerChannel = 250000, startDate = DEFAULT_START_DATE, endDate = DEFAULT_END_DATE) {
   const totalTrans = clients * channelsPerClient * transactionsPerChannel
   console.log(`Starting seed of ${totalTrans} transactions`)
   await dropTestDb()
-  const bar = new Progress('Seeding Transactions [:bar] :rate/trans per s :percent :etas', {
+  const bar = new Progress('Seeding Transactions [:bar] :rate/trans per sec :percent :etas', {
     total: totalTrans
   })
   bar.render()
   faker.seed(DEFAULT_SEED)
   const user = await new UserModel(rootUser).save()
   const timeStep = Math.floor((endDate.getTime() - startDate.getTime()) / transactionsPerChannel)
-  // TODO : Make this a lot faster
+  // This could be done better with something like rxjs but it might make it needlessly complicated
   for (let clientNum = 0; clientNum < clients; clientNum++) {
     const client = await createClient(clientNum)
     for (let channelNum = 0; channelNum < channelsPerClient; channelNum++) {
       const channel = await creatChannel(client, channelNum, user)
+      const transactions = []
+      const flushTrans = async () => {
+        bar.tick(transactions.length)
+        await TransactionModel.bulkWrite(transactions.map(t => ({ insertOne: { document: t } })))
+        transactions.length = 0
+      }
       for (let transactionNum = 0; transactionNum < transactionsPerChannel; transactionNum++) {
         const requestTime = new Date(startDate.getTime() + timeStep * transactionNum)
-        await createTransaction(channel, client, requestTime)
-        bar.tick(1)
+        transactions.push(createTransactionDoc(channel, client, requestTime))
+        if (transactions.length > 1000) {
+          await flushTrans()
+        }
+      }
+      if (transactions.length > 0) {
+        await flushTrans()
       }
     }
   }
@@ -62,15 +73,15 @@ async function createClient (clientNum) {
 async function creatChannel (client, channelNum, user) {
   const routeDef = {
     name: faker.name.findName(),
-    host: 'http//localhost:8080',
+    host: 'localhost',
     port: 3441,
     primary: true,
     type: 'http'
   }
 
   const channel = new ChannelModel({
-    name: `testChannel${channelNum}`,
-    urlPattern: '/encounters/.*$',
+    name: `channel${channelNum}`,
+    urlPattern: `/channel${channelNum}/.*$`,
     routes: routeDef,
     type: 'http',
     allow: [`${client.name}`],
@@ -84,11 +95,11 @@ async function creatChannel (client, channelNum, user) {
   return channel.save()
 }
 
-function createTransaction (channel, client, requestTime) {
+function createTransactionDoc (channel, client, requestTime) {
   const request = {
     host: faker.internet.ip(),
     port: channel.port,
-    path: 'test/path',
+    path: `/${channel.name}`,
     headers: {
       'Content-type': 'text/html'
     },
@@ -124,7 +135,7 @@ function createTransaction (channel, client, requestTime) {
     Object.assign(transactionDoc, { response })
   }
 
-  return new TransactionModel(transactionDoc).save()
+  return transactionDoc
 }
 
 function getStatusCode (status) {
