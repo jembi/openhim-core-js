@@ -26,6 +26,7 @@
     "test:load:api": "./test/load-tests/env/api.sh",
     "test:replica:set": "./test/resources/replica-set-test/setup.sh",
     "test:replica:set:cleanup": "./test/resources/replica-set-test/tear-down.sh",
+    "test:seed": "node performance/seed.js",
     "start": "node --harmony lib/server.js",
     "stop": "pkill -SIGINT Core"
   },
@@ -76,15 +77,19 @@
     "xpath": "0.0.24"
   },
   "devDependencies": {
+    "@types/faker": "^4.1.2",
+    "@types/progress": "^2.0.0",
     "artillery": "^1.6.0-9",
     "babel-cli": "^6.24.1",
     "babel-preset-env": "^1.5.1",
     "babel-register": "^6.26.0",
     "codecov": "^2.3.0",
     "cross-env": "^5.0.1",
+    "faker": "^4.1.0",
     "finalhandler": "^1.1.0",
     "mocha": "^4.0.0",
     "nyc": "^11.2.1",
+    "progress": "^2.0.0",
     "rewire": "^2.5.1",
     "rimraf": "^2.6.1",
     "serve-static": "^1.13.1",
