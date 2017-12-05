@@ -102,7 +102,7 @@ Refer to this [blog](https://developers.redhat.com/blog/2014/05/05/running-syste
 
 1. Setup environment
 
-Navigate to the resources folder: `resources/centos`
+Navigate to the infrastructure folder: `infrastructure/centos`
 
 ```bash
 vagrant up
