@@ -96,11 +96,11 @@ Deployments are handled by travis, which uses the bash script `deploy.sh` to upl
 
 ## Creating CentOS RPM package
 
-The build process for the RPM package is based off [this](https://github.com/bbc/speculate/wiki/Packaging-a-Node.js-project-as-an-RPM-for-CentOS-7) blog. The reason for using vagrant instead of docker is because so that we are can test it by running it as a service using systemctl. Systemctl is a process which communicates with systemd over dbus
+The build process for the RPM package is based off [this](https://github.com/bbc/speculate/wiki/Packaging-a-Node.js-project-as-an-RPM-for-CentOS-7) blog. The reason for using vagrant instead of docker is so that we can test the RPM package by running it as a service using SystemCtl - similar to how it will likely be used in a production environment. SystemCtl is not available out the box in docker containers.
+
+Refer to this [blog](https://developers.redhat.com/blog/2014/05/05/running-systemd-within-docker-container/) for a more detailed description of a possible work-around. This is not recommended since it is a hack. This is where vagrant comes in since it sets up an isolated VM.
 
 1. Setup environment
-
-Using Vagrant:
 
 Navigate to the resources folder: `resources/centos`
 
@@ -108,37 +108,7 @@ Navigate to the resources folder: `resources/centos`
 vagrant up
 ```
 
-1. Download the project you want to build an RPM package for:
-
-```bash
-git clone https://github.com/jembi/openhim-core-js.git
-```
-
-1. Install dependencies
-
-```bash
-npm install
-```
-
-1. Run speculate
-
-```bash
-npm run spec
-```
-
-1. Link source folder with default rpmbuild
-
-```bash
-ln -s ~/openhim-core-js ~/rpmbuild
-```
-
-1. Build rpm package
-
-```bash
-rpmbuild -bb ~/rpmbuild/SPECS/openhim-core.spec
-```
-
-1. Test package
+2. Install & Test package
 
 ```bash
 sudo yum install -y ~/rpmbuild/RPMS/x86_64/openhim-core-{current_version}.x86_64.rpm
@@ -153,7 +123,7 @@ Note: In order for openhim-core to run successfully, you'll need to point it to 
 sudo yum install mongodb-org
 ```
 
-If everything checks out then extract the RPM package by leaving the VM.
+3. If everything checks out then extract the RPM package by leaving the VM.
 
 Install Vagrant scp [plugin](https://github.com/invernizzi/vagrant-scp):
 ```bash
