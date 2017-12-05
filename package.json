@@ -73,7 +73,6 @@
     "raw-body": "^2.1.2",
     "request": "^2.83.0",
     "semver": "^5.1.0",
-    "speculate": "^1.7.4",
     "ssl-root-cas": "^1.1.10",
     "statsd-client": "^0.4.0",
     "winston": "^2.4.0",
@@ -97,6 +96,7 @@
     "serve-static": "^1.13.1",
     "should": "^13.1.0",
     "sinon": "^4.1.2",
+    "speculate": "^1.7.4",
     "standard": "^10.0.3",
     "supertest": "^3.0.0"
   },

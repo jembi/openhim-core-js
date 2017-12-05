@@ -82,7 +82,7 @@ Vagrant.configure("2") do |config|
     # download master and install dependencies
     git clone https://github.com/jembi/openhim-core-js.git
     cd openhim-core-js/
-    npm install
+    npm install && npm install speculate
 
     # generate SPEC file for rpmbuild
     npm run spec
