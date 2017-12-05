@@ -15,9 +15,6 @@
     "buildRequires": [
       "nodejs"
     ],
-    "requires": [
-      "mongodb"
-    ],
     "environment": {
       "NODE_ENV": "production"
     }
