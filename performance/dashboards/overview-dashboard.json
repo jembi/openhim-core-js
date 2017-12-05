@@ -1,0 +1,156 @@
+{
+  "cells": [
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "686f5ec6-d93b-40cb-af1a-ebef38a6522e",
+      "links": {
+        "self": "/chronograf/v1/dashboards/1/cells/686f5ec6-d93b-40cb-af1a-ebef38a6522e"
+      },
+      "name": "Vitual Users",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"vus\" WHERE time > :dashboardTime: GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": false,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "vus",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {}
+          },
+          "source": ""
+        }
+      ],
+      "type": "line",
+      "w": 4,
+      "x": 4,
+      "y": 0
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "4f997221-a8e9-4dcd-b842-7a0f938f717e",
+      "links": {
+        "self": "/chronograf/v1/dashboards/1/cells/4f997221-a8e9-4dcd-b842-7a0f938f717e"
+      },
+      "name": "Request Duration",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": false,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {}
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 4,
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "id": 1,
+  "links": {
+    "cells": "/chronograf/v1/dashboards/1/cells",
+    "self": "/chronograf/v1/dashboards/1",
+    "templates": "/chronograf/v1/dashboards/1/templates"
+  },
+  "name": "Overview",
+  "templates": []
+}

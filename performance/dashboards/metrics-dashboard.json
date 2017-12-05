@@ -1,0 +1,392 @@
+{
+  "cells": [
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "a9763a0a-439f-4620-b78c-1172412c3fbf",
+      "links": {
+        "self": "/chronograf/v1/dashboards/2/cells/a9763a0a-439f-4620-b78c-1172412c3fbf"
+      },
+      "name": "By Channel",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='Metrics by channel' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "Metrics by channel"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 0,
+      "y": 4
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "6cda411a-6325-40cc-a692-ff3153d79c87",
+      "links": {
+        "self": "/chronograf/v1/dashboards/2/cells/6cda411a-6325-40cc-a692-ff3153d79c87"
+      },
+      "name": "By Month",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='All metrics by month' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "All metrics by month"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 9,
+      "y": 0
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "b14177a0-74ce-44f8-83bb-56cbfe513b98",
+      "links": {
+        "self": "/chronograf/v1/dashboards/2/cells/b14177a0-74ce-44f8-83bb-56cbfe513b98"
+      },
+      "name": "By Minute",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='All metrics by minute' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "All metrics by minute"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "32cacb07-d5d5-4ed7-9941-dec7f8a6a858",
+      "links": {
+        "self": "/chronograf/v1/dashboards/2/cells/32cacb07-d5d5-4ed7-9941-dec7f8a6a858"
+      },
+      "name": "By Hour",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='All metrics by hour' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "All metrics by hour"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line",
+      "w": 3,
+      "x": 3,
+      "y": 0
+    },
+    {
+      "axes": {
+        "x": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y": {
+          "base": "10",
+          "bounds": [],
+          "label": "Duration (ms)",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        },
+        "y2": {
+          "base": "10",
+          "bounds": [],
+          "label": "",
+          "prefix": "",
+          "scale": "linear",
+          "suffix": ""
+        }
+      },
+      "h": 4,
+      "i": "cf0fbf45-8322-4c84-9948-22c83c6f89d5",
+      "links": {
+        "self": "/chronograf/v1/dashboards/2/cells/cf0fbf45-8322-4c84-9948-22c83c6f89d5"
+      },
+      "name": "By Day",
+      "queries": [
+        {
+          "query": "SELECT mean(\"value\") AS \"mean_value\" FROM \"k6\".\"autogen\".\"http_req_duration\" WHERE time > :dashboardTime: AND \"name\"='All metrics by day' GROUP BY :interval: FILL(0)",
+          "queryConfig": {
+            "areTagsAccepted": true,
+            "database": "k6",
+            "fields": [
+              {
+                "alias": "mean_value",
+                "args": [
+                  {
+                    "alias": "",
+                    "type": "field",
+                    "value": "value"
+                  }
+                ],
+                "type": "func",
+                "value": "mean"
+              }
+            ],
+            "fill": "0",
+            "groupBy": {
+              "tags": [],
+              "time": "auto"
+            },
+            "measurement": "http_req_duration",
+            "range": null,
+            "rawText": null,
+            "retentionPolicy": "autogen",
+            "tags": {
+              "name": [
+                "All metrics by day"
+              ]
+            }
+          },
+          "source": "/chronograf/v1/sources/0"
+        }
+      ],
+      "type": "line-stacked",
+      "w": 3,
+      "x": 6,
+      "y": 0
+    }
+  ],
+  "id": 2,
+  "links": {
+    "cells": "/chronograf/v1/dashboards/2/cells",
+    "self": "/chronograf/v1/dashboards/2",
+    "templates": "/chronograf/v1/dashboards/2/templates"
+  },
+  "name": "Metrics Endpoint",
+  "templates": []
+}
