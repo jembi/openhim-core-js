@@ -74,6 +74,12 @@ const ChannelDef = {
   urlPattern: {
     type: String, required: true
   },
+  maxBodyAgeDays: {
+    type: Number, min: 1
+  },
+  lastBodyCleared: {
+    type: Date
+  },
   methods: [{
     type: String, enum: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
   }],

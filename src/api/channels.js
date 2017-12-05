@@ -12,6 +12,8 @@ import { config } from '../config'
 
 const { ChannelModel } = Channels
 
+const MAX_BODY_AGE_MESSAGE = `Channel property maxBodyAgeDays has to be a number that's valid`
+
 config.polling = config.get('polling')
 
 function isPathValid (channel) {
@@ -66,12 +68,19 @@ export function validateMethod (channel) {
   }, {})
 
   const repeats = Object.keys(mapCount)
-      .filter(k => mapCount[k] > 1)
-      .sort()
+    .filter(k => mapCount[k] > 1)
+    .sort()
   if (repeats.length > 0) {
     return `Channel methods can't be repeated. Repeated methods are ${repeats.join(', ')}`
   }
+}
 
+export function isMaxBodyDaysValid (channel) {
+  if (channel.maxBodyAgeDays == null) {
+    return true
+  }
+
+  return typeof channel.maxBodyAgeDays !== 'number' || channel.maxBodyAgeDays > 0
 }
 
 /*
@@ -121,6 +130,12 @@ export async function addChannel (ctx) {
     }
     if (numPrimaries > 1) {
       ctx.body = 'Channel cannot have a multiple primary routes'
+      ctx.status = 400
+      return
+    }
+
+    if (!isMaxBodyDaysValid(channelData)) {
+      ctx.body = MAX_BODY_AGE_MESSAGE
       ctx.status = 400
       return
     }
@@ -288,6 +303,12 @@ export async function updateChannel (ctx, channelId) {
       ctx.status = 400
       return
     }
+  }
+
+  if (!isMaxBodyDaysValid(channelData)) {
+    ctx.body = MAX_BODY_AGE_MESSAGE
+    ctx.status = 400
+    return
   }
 
   try {
