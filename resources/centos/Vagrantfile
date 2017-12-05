@@ -85,7 +85,6 @@ Vagrant.configure("2") do |config|
 
     git checkout OHM-549-create-rpm-package
     npm install
-    npm install speculate
 
     # generate SPEC file for rpmbuild
     npm run spec
