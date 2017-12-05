@@ -1,4 +1,4 @@
-FROM centos/systemd
+FROM centos
 
 LABEL Jembi Health Systems NPC
 
@@ -8,19 +8,7 @@ RUN yum install -y gcc gcc-c++ \
   rpm-build redhat-rpm-config && \
   yum clean all
 
-RUN curl -sL https://rpm.nodesource.com/setup_8.x | bash -
-RUN yum install -y nodejs
+RUN curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
+RUN source ~/.bashrc
+RUN nvm install --lts
 RUN npm --version && node -v
-
-WORKDIR /etc
-
-# pull latest code from git
-RUN git clone https://github.com/jembi/openhim-core-js.git
-WORKDIR /etc/openhim-core-js
-
-# link source code to rpmbuild folder
-RUN ln -s /etc/openhim-core-js ~/rpmbuild
-
-# Install existing dependencies and build
-RUN npm i
-RUN npm run build

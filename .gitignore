@@ -15,7 +15,6 @@ packaging/.vagrant
 packaging/builds
 .otto
 *.log
-Vagrantfile
 .DS_Store
 .vscode
 artillery

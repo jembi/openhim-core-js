@@ -11,10 +11,6 @@
     "node": ">= 7.6.0"
   },
   "spec": {
-    "nodeVersion": ">= 8.0.0",
-    "buildRequires": [
-      "nodejs"
-    ],
     "environment": {
       "NODE_ENV": "production"
     }
