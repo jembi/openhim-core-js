@@ -1,6 +1,5 @@
-import * as moment from 'moment'
-import { MongoClient } from 'mongodb'
-import { config, connectionDefault } from './config'
+import moment from 'moment'
+import { config } from './config'
 import { ChannelModel, TransactionModel } from './model'
 import * as logger from 'winston'
 
@@ -17,27 +16,27 @@ export function setupAgenda (agenda) {
 }
 
 export async function cullBodies () {
-  const mongoDb = await MongoClient.connect(connectionDefault)
   const channels = await ChannelModel.find({ maxBodyAgeDays: { $gt: 0 } })
-  await Promise.all(channels.map(channel => clearTransactions(channel, mongoDb)))
+  await Promise.all(channels.map(channel => clearTransactions(channel)))
 }
 
 async function clearTransactions (channel) {
   const { maxBodyAgeDays, lastBodyCleared } = channel
-  const startDate = moment().subtract(maxBodyAgeDays, 'd').toDate()
+  const maxAge = moment().subtract(maxBodyAgeDays, 'd').toDate()
   const query = {
     channelID: channel._id,
-    request: {
-      timestamp: {
-        $lte: startDate
-      }
+    'request.timestamp': {
+      $lte: maxAge
     }
   }
 
   if (lastBodyCleared != null) {
-    query.request.timestamp.$gte = lastBodyCleared
+    query['request.timestamp'].$gte = lastBodyCleared
   }
-  logger.info('Sup stuff')
-  await TransactionModel.update(query, { $unset: { request: { body: '' }, response: { body: '' } } })
-  // const updateResp = 
+
+  channel.lastBodyCleared = Date.now()
+  channel.updatedBy = 'Cron'
+  await channel.save()
+  const updateResp = await TransactionModel.updateMany(query, { $unset: {'request.body':'', 'response.body':''} })
+  logger.info(`Updated `)
 }
