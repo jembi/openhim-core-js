@@ -11,6 +11,9 @@
     "node": ">= 7.6.0"
   },
   "spec": {
+    "requires": [
+      "nodejs"
+    ],
     "environment": {
       "NODE_ENV": "production"
     }

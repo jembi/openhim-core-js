@@ -69,15 +69,15 @@ Vagrant.configure("2") do |config|
     file.destination = "/tmp/mongodb-org-3.4.repo"
   end
 
-  config.vm.provision "shell", privileged: false, inline: <<-SHELL
-    sudo mv /tmp/mongodb-org-3.4.repo /etc/yum.repos.d/
+  config.vm.provision "shell", inline: <<-SHELL
+    mv /tmp/mongodb-org-3.4.repo /etc/yum.repos.d/
 
-    sudo yum -y update
-    sudo yum install -y git rpm-build redhat-rpm-config gcc-c++ make
+    yum -y update
+    yum install -y git rpm-build redhat-rpm-config gcc-c++ make
 
-    curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
-    source ~/.bashrc
-    nvm install --lts
+    # reason for this instead of nvm is that nvm only installs node
+    curl --silent --location https://rpm.nodesource.com/setup_8.x | bash -
+    yum install -y nodejs
 
     # download master and install dependencies
     git clone https://github.com/jembi/openhim-core-js.git
