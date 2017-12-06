@@ -8,7 +8,8 @@ import { clone } from '../utils'
 import moment from 'moment'
 import should from 'should'
 
-const testTime = new Date(2016, 2, 1)
+const testTime = new Date(2016, 2, 12)
+const cullTime = new Date(2016, 2, 9)
 
 const clientDoc = Object.freeze({
   clientID: 'testClient',
@@ -40,7 +41,7 @@ const channelHasCulledDoc = Object.freeze({
   name: 'hasCulled',
   urlPattern: 'test/sample',
   maxBodyAgeDays: 2,
-  lastBodyCleared: testTime,
+  lastBodyCleared: cullTime,
   routes: [{
     name: 'test route',
     host: 'localhost',
@@ -145,12 +146,41 @@ describe(`cullBodies`, () => {
 
   it(`will set the lastBodyCleared to the current date if they are to be culled`, async () => {
     await cullBodies()
-    const neverCulled = await TransactionModel.find({name: 'neverCulled'})
-    const hasCulled = await TransactionModel.find({name: 'hasCulled'})
-    const dontCull = await TransactionModel.find({name: 'dontCull'})
+    const neverCulled = await ChannelModel.findOne({name: 'neverCulled'})
+    const hasCulled = await ChannelModel.findOne({name: 'hasCulled'})
+    const dontCull = await ChannelModel.findOne({name: 'dontCull'})
 
     neverCulled.lastBodyCleared.should.eql(testTime)
     hasCulled.lastBodyCleared.should.eql(testTime)
     should(dontCull.lastBodyCleared).undefined()
+  })
+
+  it('will only cull from the lastBodyCleared to the current date', async () => {
+    const momentTime = moment(channelHasCulled.lastBodyCleared).subtract(1, 'd')
+    const notCulled = await createTransaction(channelHasCulled, momentTime.toDate())
+    momentTime.add(2, 'd')
+    const culled = await createTransaction(channelHasCulled, momentTime.toDate())
+
+    await cullBodies()
+
+    {
+      const transaction = await TransactionModel.findById(notCulled._id)
+      should(transaction.request.body).eql('test')
+      should(transaction.response.body).eql('test')
+    }
+    {
+      const transaction = await TransactionModel.findById(culled._id)
+      should(transaction.request.body).undefined()
+      should(transaction.response.body).undefined()
+    }
+  })
+
+  it(`will never cull the body of transaction who does not have a maxBodyAgeDays`, async () => {
+    const momentTime = moment().subtract(7, 'd')
+    const tran = await createTransaction(channelNeverCull, momentTime.toDate())
+    await cullBodies()
+    const transaction = await TransactionModel.findById(tran._id)
+    should(transaction.request.body).eql('test')
+    should(transaction.response.body).eql('test')
   })
 })

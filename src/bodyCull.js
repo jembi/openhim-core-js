@@ -1,7 +1,7 @@
 import moment from 'moment'
 import { config } from './config'
 import { ChannelModel, TransactionModel } from './model'
-import * as logger from 'winston'
+import logger from 'winston'
 
 export function setupAgenda (agenda) {
   agenda.define('transaction body culling', async (job, done) => {
@@ -16,7 +16,7 @@ export function setupAgenda (agenda) {
 }
 
 export async function cullBodies () {
-  const channels = await ChannelModel.find({ maxBodyAgeDays: { $gt: 0 } })
+  const channels = await ChannelModel.find({ maxBodyAgeDays: { $exists: true } })
   await Promise.all(channels.map(channel => clearTransactions(channel)))
 }
 
@@ -37,6 +37,8 @@ async function clearTransactions (channel) {
   channel.lastBodyCleared = Date.now()
   channel.updatedBy = 'Cron'
   await channel.save()
-  const updateResp = await TransactionModel.updateMany(query, { $unset: {'request.body':'', 'response.body':''} })
-  logger.info(`Updated `)
+  const updateResp = await TransactionModel.updateMany(query, { $unset: {'request.body': '', 'response.body': ''} })
+  if (updateResp.nModified > 0) {
+    logger.info(`Culled ${updateResp.nModified} transactions for channel ${channel.name}`)
+  }
 }
