@@ -1,4 +1,5 @@
-import { TransactionModel } from './model/transactions'
+import { METRIC_TYPE_MINUTE, METRIC_TYPE_HOUR, METRIC_TYPE_DAY, MetricModel, TransactionModel } from './model'
+import moment from 'moment'
 
 /**
  * Calculates transaction metrics
@@ -156,4 +157,68 @@ export function calculateMetrics (startDate, endDate, transactionFilter, channel
 
   const pipeline = [{$match: match}, {$group: group}]
   return TransactionModel.aggregate(pipeline)
+}
+
+const TRANSACTION_STATUS_KEYS = {
+  Processing: 'processing',
+  Successful: 'successful',
+  Completed: 'completed',
+  'Completed with error(s)': 'completedWithErrors',
+  Failed: 'failed'
+}
+
+const METRIC_UPDATE_OPTIONS = {upsert: true, setDefaultsOnInsert: true}
+
+async function recordTransactionMetric (fields, update) {
+  return MetricModel.updateOne(
+    fields,
+    Object.assign({}, update, {$setOnInsert: fields}),
+    METRIC_UPDATE_OPTIONS
+  )
+}
+
+export async function recordTransactionMetrics (transaction) {
+  if (!transaction.response) {
+    // Don't record metrics if there is no response i.e. an error
+    return
+  }
+
+  const responseTime = transaction.response.timestamp - transaction.request.timestamp
+  const statusKey = TRANSACTION_STATUS_KEYS[transaction.status]
+  const update = {
+    $inc: {
+      requests: 1,
+      responseTime,
+      [statusKey]: 1
+    },
+    $min: {
+      minResponseTime: responseTime
+    },
+    $max: {
+      maxResponseTime: responseTime
+    }
+  }
+
+  // Update metrics for the minute bucket
+  const minuteUpdate = recordTransactionMetric({
+    type: METRIC_TYPE_MINUTE,
+    startTime: moment(transaction.request.timestamp).startOf('minute').toDate(),
+    channelID: transaction.channelID
+  }, update)
+
+  // Update metrics for the hour bucket
+  const hourUpdate = recordTransactionMetric({
+    type: METRIC_TYPE_HOUR,
+    startTime: moment(transaction.request.timestamp).startOf('hour').toDate(),
+    channelID: transaction.channelID
+  }, update)
+
+  // Update metrics for the day bucket
+  const dayUpdate = recordTransactionMetric({
+    type: METRIC_TYPE_DAY,
+    startTime: moment(transaction.request.timestamp).startOf('day').toDate(),
+    channelID: transaction.channelID
+  }, update)
+
+  await Promise.all([minuteUpdate, hourUpdate, dayUpdate])
 }
