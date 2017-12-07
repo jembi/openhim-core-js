@@ -17,6 +17,7 @@ packaging/builds
 *.log
 .DS_Store
 .vscode
+.vagrant
 artillery
 
 coverage
