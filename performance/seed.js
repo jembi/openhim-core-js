@@ -89,6 +89,7 @@ async function creatChannel (client, channelNum, user) {
     routes: routeDef,
     type: 'http',
     allow: [`${client.name}`],
+    methods: ['POST', 'GET', 'PUT', 'DELETE'],
     addAutoRewriteRules: true,
     updatedBy: {
       id: user._id,
