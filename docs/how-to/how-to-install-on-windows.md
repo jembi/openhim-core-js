@@ -5,7 +5,7 @@ The following is a quickstart tutorial to help guide you through the steps requi
 
 ## Install Node.js LTS
 
-Install the latest LTS version of Node.js from their [official site](http://nodejs.org/). Note that the OpenHIM only officially supports the LTS edition of node, which is version 4.x at time of writing.
+Install the latest LTS version of Node.js from their [official site](http://nodejs.org/). Note that the OpenHIM only officially supports the LTS edition of node, which is currently version 8.x
 
 The official process should be suitable for the OpenHIM; simply download and run the installer msi.
 
