@@ -235,7 +235,10 @@ function processPostUpdateTriggers (channel) {
 }
 
 async function findChannelByIdAndUpdate (id, channelData) {
-  const channel = await ChannelModel.findById(id).exec()
+  const channel = await ChannelModel.findById(id)
+  if (channelData.maxBodyAgeDays != null && channel.maxBodyAgeDays != null && channelData.maxBodyAgeDays !== channel.maxBodyAgeDays) {
+    channelData.lastBodyCleared = undefined
+  }
   channel.set(channelData)
   return channel.save()
 }

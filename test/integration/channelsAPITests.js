@@ -66,6 +66,10 @@ describe('API Integration Tests', () => {
       await testUtils.setupTestUsers()
       await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort })
       authDetails = await testUtils.getAuthDetails()
+      await Promise.all([
+        TransactionModelAPI.remove(),
+        ChannelModelAPI.remove()
+      ])
     })
 
     after(async () => {
@@ -1247,6 +1251,40 @@ describe('API Integration Tests', () => {
 
         const channel = await ChannelModelAPI.findById(channelId)
         channel.should.not.property('maxBodyAge')
+      })
+
+      it(`will clear the lastBodyCleared if the maxBodyAgeDays is cleared`, async () => {
+        // if the maxBodyAgeDays differ then clear the lastTime it was cleared
+        const methodChannelDoc = {
+          name: 'method channel',
+          urlPattern: 'test/method',
+          maxBodyAgeDays: 1,
+          lastBodyCleared: new Date(),
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
+        }
+
+        const { _id: channelId } = await new ChannelModelAPI(methodChannelDoc).save()
+
+        await request(constants.BASE_URL)
+          .put(`/channels/${channelId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({ maxBodyAgeDays: 2 })
+          .expect(200)
+
+        const channel = await ChannelModelAPI.findById(channelId)
+        channel.should.property('lastBodyCleared', undefined)
       })
     })
 
