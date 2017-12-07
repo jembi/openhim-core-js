@@ -1290,7 +1290,7 @@ describe('API Integration Tests', () => {
 
         const res = await TransactionModelAPI.findOne()
         res.status.should.be.equal(mediatorResponse.status)
-        res.orchestrations.length.should.be.exactly(1)
+        res.orchestrations.length.should.be.exactly(2)
         res.orchestrations[0].name.should.be.equal(mediatorResponse.orchestrations[0].name)
         should.exist(res.properties)
         res.properties.orderId.should.be.equal(mediatorResponse.properties.orderId)
