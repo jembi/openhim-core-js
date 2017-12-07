@@ -3,7 +3,12 @@ import { config } from './config'
 import { ChannelModel, TransactionModel } from './model'
 import logger from 'winston'
 
+config.bodyCull = config.get('bodyCull')
+
 export function setupAgenda (agenda) {
+  if (config.bodyCull == null) {
+    return
+  }
   agenda.define('transaction body culling', async (job, done) => {
     try {
       await cullBodies()
@@ -12,7 +17,7 @@ export function setupAgenda (agenda) {
       done(err)
     }
   })
-  agenda.every(`${config.cullBodies.pollPeriodMins} minutes`, `transaction body culling`)
+  agenda.every(`${config.bodyCull.pollPeriodMins} minutes`, `transaction body culling`)
 }
 
 export async function cullBodies () {
@@ -37,7 +42,7 @@ async function clearTransactions (channel) {
   channel.lastBodyCleared = Date.now()
   channel.updatedBy = 'Cron'
   await channel.save()
-  const updateResp = await TransactionModel.updateMany(query, { $unset: {'request.body': '', 'response.body': ''} })
+  const updateResp = await TransactionModel.updateMany(query, { $unset: { 'request.body': '', 'response.body': '' } })
   if (updateResp.nModified > 0) {
     logger.info(`Culled ${updateResp.nModified} transactions for channel ${channel.name}`)
   }
