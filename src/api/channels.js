@@ -12,7 +12,7 @@ import { config } from '../config'
 
 const { ChannelModel } = Channels
 
-const MAX_BODY_AGE_MESSAGE = `Channel property maxBodyAgeDays has to be a number that's valid`
+const MAX_BODY_AGE_MESSAGE = `Channel property maxBodyAgeDays has to be a number that's valid and requestBody or responseBody must be true.`
 
 config.polling = config.get('polling')
 
@@ -78,6 +78,10 @@ export function validateMethod (channel) {
 export function isMaxBodyDaysValid (channel) {
   if (channel.maxBodyAgeDays == null) {
     return true
+  }
+
+  if (!channel.requestBody && !channel.responseBody) {
+    return false
   }
 
   return typeof channel.maxBodyAgeDays !== 'number' || channel.maxBodyAgeDays > 0
@@ -259,6 +263,9 @@ export async function updateChannel (ctx, channelId) {
 
   // Set the user updating the channel for auditing purposes
   channelData.updatedBy = utils.selectAuditFields(ctx.authenticated)
+  const updatedChannel = await ChannelModel.findById(id)
+  // This is so you can see how the channel will look as a whole before saving
+  updatedChannel.set(channelData)
 
   if (!utils.isNullOrWhitespace(channelData.type) && utils.isNullOrEmpty(channelData.methods)) {
     // Empty the methods if the type has changed from http
@@ -266,9 +273,8 @@ export async function updateChannel (ctx, channelId) {
       channelData.methods = []
     }
   } else {
-    const currentChannel = await ChannelModel.findById(id)
-    const { type = currentChannel.type } = channelData
-    let { methods = currentChannel.methods } = channelData
+    const { type } = updatedChannel
+    let { methods } = updatedChannel
     let methodValidation = validateMethod({ type, methods })
 
     if (methodValidation != null) {
@@ -308,7 +314,7 @@ export async function updateChannel (ctx, channelId) {
     }
   }
 
-  if (!isMaxBodyDaysValid(channelData)) {
+  if (!isMaxBodyDaysValid(updatedChannel)) {
     ctx.body = MAX_BODY_AGE_MESSAGE
     ctx.status = 400
     return

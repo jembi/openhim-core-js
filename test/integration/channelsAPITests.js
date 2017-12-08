@@ -540,11 +540,39 @@ describe('API Integration Tests', () => {
         channelCount.should.eql(0)
       })
 
+      it('will reject a channel with a maxBodyAge set if the request or response is not', async () => {
+        const methodChannelDoc = {
+          name: 'maxBodyAgeRejected',
+          urlPattern: 'test/method',
+          maxBodyAgeDays: 5,
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }]
+        }
+
+        await request(constants.BASE_URL)
+          .post('/channels')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(methodChannelDoc)
+          .expect(400)
+
+        const channelCount = await ChannelModelAPI.count({ name: methodChannelDoc.name })
+        channelCount.should.eql(0)
+      })
+
       it('will create a channel with a maxBodyAge', async () => {
         const methodChannelDoc = {
           name: 'maxBodyAge',
           urlPattern: 'test/method',
           maxBodyAgeDays: 5,
+          requestBody: true,
+          responseBody: true,
           routes: [{
             name: 'test route',
             host: 'localhost',
@@ -1159,10 +1187,42 @@ describe('API Integration Tests', () => {
         channel.methods.length.should.eql(0)
       })
 
+      it(`should fail to update a channel with maxBodyAgeDays if requestBody nor responseBody is true`, async () => {
+        const methodChannelDoc = {
+          name: 'method channel',
+          urlPattern: 'test/method',
+          routes: [{
+            name: 'test route',
+            host: 'localhost',
+            port: 9876,
+            primary: true
+          }],
+          updatedBy: {
+            id: new ObjectId(),
+            name: 'Test'
+          }
+        }
+
+        const { _id: channelId } = await new ChannelModelAPI(methodChannelDoc).save()
+
+        await request(constants.BASE_URL)
+          .put(`/channels/${channelId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({ maxBodyAgeDays: 2 })
+          .expect(400)
+
+        const channel = await ChannelModelAPI.findById(channelId)
+        should(channel.maxBodyAgeDays == null).true()
+      })
+
       it(`should update the channel with maxBodyAgeDays`, async () => {
         const methodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
+          requestBody: true,
           routes: [{
             name: 'test route',
             host: 'localhost',
@@ -1258,6 +1318,7 @@ describe('API Integration Tests', () => {
         const methodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
+          requestBody: true,
           maxBodyAgeDays: 1,
           lastBodyCleared: new Date(),
           routes: [{
