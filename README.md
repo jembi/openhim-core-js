@@ -127,11 +127,11 @@ npm run spec
 ```
 * Ensure the directory with the source code is linked to the rpmbuild directory - the folder RPMBUILD will use.
 ```bash
-ln -s ~/openhim-console ~/rpmbuild
+ln -s ~/openhim-core ~/rpmbuild
 ```
 * Build RPM package.
 ```bash
-rpmbuild -bb ~/rpmbuild/SPECS/openhim-console.spec
+rpmbuild -bb ~/rpmbuild/SPECS/openhim-core.spec
 ```
 
 3. Install & Test package
@@ -151,7 +151,7 @@ sudo yum install mongodb-org
 4. How to check the logs?
 
 ```bash
-sudo systemctl status openhim-console
+sudo systemctl status openhim-core
 sudo tail -f -n 100 /var/log/messages
 ```
 
