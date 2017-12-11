@@ -277,6 +277,12 @@ describe('calculateMetrics', () => {
       channels: [channelID]
     })
 
+    returnedMetrics.forEach(metric => {
+      // Remove fields not relevant to the test
+      delete metric._id
+      delete metric.__v
+    })
+
     should.deepEqual(returnedMetrics, [
       {
         channelID,
@@ -385,7 +391,8 @@ describe('calculateMetrics', () => {
     })
 
     returnedMetrics.forEach(metric => {
-      // Remove mongoose version field since it's irrelevant
+      // Remove fields not relevant to the test
+      delete metric._id
       delete metric.__v
     })
 
@@ -467,6 +474,12 @@ describe('calculateMetrics', () => {
       channels: [firstChannelID, secondChannelID],
       timeSeries: 'hour'
     }, false)
+
+    returnedMetrics.forEach(metric => {
+      // Remove fields not relevant to the test
+      delete metric._id
+      delete metric.__v
+    })
 
     should.deepEqual(returnedMetrics, [
       {
@@ -572,6 +585,12 @@ describe('calculateMetrics', () => {
       endDate: new Date('2017-12-11T09:00:00Z'),
       channels: [firstChannelID, secondChannelID]
     }, false)
+
+    returnedMetrics.forEach(metric => {
+      // Remove fields not relevant to the test
+      delete metric._id
+      delete metric.__v
+    })
 
     should.deepEqual(returnedMetrics, [
       {

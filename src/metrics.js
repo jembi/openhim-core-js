@@ -130,8 +130,7 @@ export async function calculateMetrics (filters, groupByChannel = true) {
   }
 
   pipeline.push(
-    {$sort: {startTime: 1, channelID: 1}},
-    {$project: {_id: 0}}
+    {$sort: {startTime: 1, channelID: 1}}
   )
 
   return MetricModel.aggregate(pipeline)
