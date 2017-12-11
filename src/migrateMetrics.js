@@ -1,10 +1,11 @@
 import logger from 'winston'
 import Progress from 'progress'
 
-import { TransactionModel } from './model'
+import { TransactionModel, MetricModel } from './model'
 import { recordTransactionMetrics } from './metrics'
 
-async function aggregateTransactionToMetrics () {
+export async function aggregateTransactionToMetrics () {
+  await MetricModel.deleteMany()
   const query = { response: { $exists: true } }
   const totalTrans = await TransactionModel.count(query)
   if (totalTrans === 0) {
@@ -23,9 +24,13 @@ async function aggregateTransactionToMetrics () {
     transactionProgress.tick()
     transaction = await cursor.next()
   }
-  transactionProgress.complete()
 }
 
 if (!module.parent) {
   aggregateTransactionToMetrics()
+    .then(() => process.exit(0))
+    .catch((err) => {
+      console.err(err)
+      process.exit(1)
+    })
 }
