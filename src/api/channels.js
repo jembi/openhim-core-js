@@ -71,7 +71,6 @@ export function validateMethod (channel) {
   if (repeats.length > 0) {
     return `Channel methods can't be repeated. Repeated methods are ${repeats.join(', ')}`
   }
-
 }
 
 /*
