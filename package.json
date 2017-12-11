@@ -10,6 +10,14 @@
   "engines": {
     "node": ">= 7.6.0"
   },
+  "spec": {
+    "requires": [
+      "nodejs"
+    ],
+    "environment": {
+      "NODE_ENV": "production"
+    }
+  },
   "scripts": {
     "build": "npm run clean; babel src --out-dir lib -s",
     "build:watch": "npm run build -- -w",
@@ -28,7 +36,8 @@
     "test:replica:set:cleanup": "./test/resources/replica-set-test/tear-down.sh",
     "test:seed": "node performance/seed.js",
     "start": "node --harmony lib/server.js",
-    "stop": "pkill -SIGINT Core"
+    "stop": "pkill -SIGINT Core",
+    "spec": "speculate"
   },
   "dependencies": {
     "@types/kcors": "^2.2.1",
@@ -95,6 +104,7 @@
     "serve-static": "^1.13.1",
     "should": "^13.1.0",
     "sinon": "^4.1.2",
+    "speculate": "^1.7.4",
     "standard": "^10.0.3",
     "supertest": "^3.0.0"
   },
