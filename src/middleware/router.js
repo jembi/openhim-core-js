@@ -342,12 +342,61 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
     })
 
 function sendRequest (ctx, route, options) {
+  function buildOrchestration (response) {
+    const orchestration = {
+      name: route.name,
+      request: {
+        host: options.hostname,
+        port: options.port,
+        path: options.path,
+        headers: options.headers,
+        method: options.method,
+        body: ctx.body
+      }
+    }
+
+    if (response instanceof Error) {
+      orchestration.error = {
+        message: response.message,
+        stack: response.stack
+      }
+    } else {
+      orchestration.response = {
+        headers: response.headers,
+        status: response.status,
+        body: response.body,
+        timestamp: response.timestamp
+      }
+    }
+
+    return orchestration
+  }
+
+  function recordOrchestration (response) {
+    if (!route.primary) {
+      // Only record orchestrations for primary routes
+      return
+    }
+    if (!Array.isArray(ctx.orchestrations)) {
+      ctx.orchestrations = []
+    }
+    ctx.orchestrations.push(buildOrchestration(response))
+  }
+
   if ((route.type === 'tcp') || (route.type === 'mllp')) {
     logger.info('Routing socket request')
     return sendSocketRequest(ctx, route, options)
   } else {
     logger.info('Routing http(s) request')
-    return sendHttpRequest(ctx, route, options)
+    return sendHttpRequest(ctx, route, options).then(response => {
+      recordOrchestration(response)
+      // Return the response as before
+      return response
+    }).catch(err => {
+      recordOrchestration(err)
+      // Rethrow the error
+      throw err
+    })
   }
 }
 
@@ -407,11 +456,11 @@ function sendHttpRequest (ctx, route, options) {
     routeRes.on('data', chunk => bufs.push(chunk))
 
     // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
-    return routeRes.on('end', () => {
+    routeRes.on('end', () => {
       response.timestamp = new Date()
       const charset = obtainCharset(routeRes.headers)
       if (routeRes.headers['content-encoding'] === 'gzip') {
-        return gunzip.on('end', () => {
+        gunzip.on('end', () => {
           const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
           response.body = uncompressedBody.toString(charset)
           if (!defered.promise.isRejected()) {
@@ -419,7 +468,7 @@ function sendHttpRequest (ctx, route, options) {
           }
         })
       } else if (routeRes.headers['content-encoding'] === 'deflate') {
-        return inflate.on('end', () => {
+        inflate.on('end', () => {
           const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
           response.body = uncompressedBody.toString(charset)
           if (!defered.promise.isRejected()) {
@@ -429,15 +478,19 @@ function sendHttpRequest (ctx, route, options) {
       } else {
         response.body = Buffer.concat(bufs)
         if (!defered.promise.isRejected()) {
-          return defered.resolve(response)
+          defered.resolve(response)
         }
       }
     })
   })
 
-  routeReq.on('error', err => defered.reject(err))
+  routeReq.on('error', err => {
+    defered.reject(err)
+  })
 
-  routeReq.on('clientError', err => defered.reject(err))
+  routeReq.on('clientError', err => {
+    defered.reject(err)
+  })
 
   routeReq.setTimeout(+config.router.timeout, () => defered.reject('Request Timed Out'))
 
@@ -449,7 +502,6 @@ function sendHttpRequest (ctx, route, options) {
   }
 
   routeReq.end()
-
   return defered.promise
 }
 
