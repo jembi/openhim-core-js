@@ -66,4 +66,11 @@ MetricsSchema.index('startTime', {
   }
 })
 
+// Index for aggregation match stage
+MetricsSchema.index({
+  startTime: 1,
+  channelID: 1,
+  type: 1
+})
+
 export const MetricModel = connectionAPI.model('Metric', MetricsSchema)

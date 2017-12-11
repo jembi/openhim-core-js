@@ -114,8 +114,8 @@ describe('Transaction Reports', () => {
       const to = moment('2014-07-15').endOf('day').toDate()
       const item = await promisify(reports.fetchChannelReport)(channel2, testUser1, 'dailyReport', from, to)
       item.data.length.should.eql(1)
-      item.data[0].should.have.property('total', 1)
-      item.data[0].should.have.property('avgResp', 100)
+      item.data[0].should.have.property('requests', 1)
+      item.data[0].should.have.property('responseTime', 100)
       item.data[0].should.have.property('completed', 1)
     })
 

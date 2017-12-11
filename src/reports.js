@@ -164,31 +164,40 @@ function sendReports (job, flag, done) {
 }
 
 function calculateTotalsFromGrouping (data) {
-  const totals = {
-    total: 0,
-    avgResp: 0,
-    failed: 0,
+  const reduced = data.data.reduce((totals, metric, index) => ({
+    requests: totals.requests + metric.requests,
+    responseTime: totals.responseTime + metric.responseTime,
+    successful: totals.successful + metric.successful,
+    failed: totals.failed + metric.failed,
+    processing: totals.processing + metric.processing,
+    completed: totals.completed + metric.completed,
+    completedWithErrors: totals.completedWithErrors + metric.completedWithErrors
+  }), {
+    requests: 0,
+    responseTime: 0,
     successful: 0,
+    failed: 0,
     processing: 0,
     completed: 0,
-    completedWErrors: 0
+    completedWithErrors: 0
+  })
+
+  return {
+    total: reduced.requests,
+    avgResp: Math.round(calculateAverage(reduced.responseTime, reduced.requests) / 1000),
+    failed: reduced.failed,
+    successful: reduced.successful,
+    processing: reduced.processing,
+    completed: reduced.completed,
+    completedWErrors: reduced.completedWithErrors
   }
+}
 
-  data.data.forEach((val, index) =>
-    (() => {
-      const result = []
-      for (const key in totals) {
-        if (key === 'avgResp') {
-          result.push(totals[key] += (((data.data[index] != null ? data.data[index][key] : undefined) != null) ? Math.round(data.data[index][key]) / 1000 : 0))
-        } else {
-          result.push(totals[key] += (((data.data[index] != null ? data.data[index][key] : undefined) != null) ? data.data[index][key] : 0))
-        }
-      }
-      return result
-    })()
-  )
-
-  return totals
+function calculateAverage (total, count) {
+  if (count === 0) {
+    return 0
+  }
+  return total / count
 }
 
 function sendUserEmail (report) {
@@ -208,7 +217,14 @@ function fetchChannelReport (channel, user, flag, from, to, callback) {
 
   logger.info(`fetching ${flag} for #${channel.name} ${user.email} ${channel._id}`)
 
-  return metrics.calculateMetrics(from, to, null, [channel._id], period)
+  const filters = {
+    startDate: from,
+    endDate: to,
+    timeSeries: period,
+    channels: [channel._id]
+  }
+
+  return metrics.calculateMetrics(filters)
     .then((data) => {
       item.channel = channel
       item.data = data

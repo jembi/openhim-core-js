@@ -2,7 +2,7 @@
 
 import should from 'should'
 import request from 'supertest'
-import { ChannelModel, TransactionModel } from '../../src/model'
+import { ChannelModel, MetricModel } from '../../src/model'
 import * as testUtils from '../utils'
 import { config } from '../../src/config'
 import * as server from '../../src/server'
@@ -17,7 +17,7 @@ describe('API Metrics Tests', () =>
   describe('OpenHIM Metrics Api testing', () => {
     let authDetails
     const channel1Doc = {
-      _id: '111111111111111111111111',
+      _id: new ObjectId('111111111111111111111111'),
       name: 'Test Channel 11111',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
@@ -29,7 +29,7 @@ describe('API Metrics Tests', () =>
     }
 
     const channel2Doc = {
-      _id: '222222222222222222222222',
+      _id: new ObjectId('222222222222222222222222'),
       name: 'Test Channel 22222',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
@@ -62,7 +62,7 @@ describe('API Metrics Tests', () =>
       await Promise.all([
         promisify(server.stop)(),
         ChannelModel.remove(),
-        TransactionModel.remove()
+        MetricModel.remove()
       ])
     })
 
@@ -176,6 +176,26 @@ describe('API Metrics Tests', () =>
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(401)
+      })
+
+      it('should return a 400 when startDate is not provided', async () => {
+        await request(constants.BASE_URL)
+          .get('/metrics?endDate=2014-07-19T00:00:00.000Z')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(400)
+      })
+
+      it('should return a 400 when endDate is not provided', async () => {
+        await request(constants.BASE_URL)
+          .get('/metrics?startDate=2014-07-15T00:00:00.000Z')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(400)
       })
     })
   })
