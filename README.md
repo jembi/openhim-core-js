@@ -146,6 +146,7 @@ Note: In order for openhim-core to run successfully, you'll need to point it to 
 
 ```bash
 sudo yum install mongodb-org
+sudo service mongod start
 ```
 
 4. How to check the logs?
