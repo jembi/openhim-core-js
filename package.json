@@ -16,6 +16,7 @@
     "clean": "rimraf lib/",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "prepare": "npm run build",
+    "migrate:metrics":"node lib/migrateMetrics.js",
     "lint": "standard src/ test/ bin/",
     "lint:fix": "standard --fix src/ test/ bin/",
     "test": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 nyc mocha --exit --require babel-register test/setupTest.js test/**/*.js",
