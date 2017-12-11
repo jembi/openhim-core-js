@@ -75,7 +75,7 @@ const ChannelDef = {
     type: String, required: true
   },
   maxBodyAgeDays: {
-    type: Number, min: 1
+    type: Number, min: 1, max: 36500
   },
   lastBodyCleared: {
     type: Date

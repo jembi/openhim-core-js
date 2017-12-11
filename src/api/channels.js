@@ -84,7 +84,7 @@ export function isMaxBodyDaysValid (channel) {
     return false
   }
 
-  return typeof channel.maxBodyAgeDays !== 'number' || channel.maxBodyAgeDays > 0
+  return typeof channel.maxBodyAgeDays !== 'number' || (channel.maxBodyAgeDays > 0 && channel.maxBodyAgeDays < 36500)
 }
 
 /*
