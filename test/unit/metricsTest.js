@@ -384,6 +384,11 @@ describe('calculateMetrics', () => {
       timeSeries: 'hour'
     })
 
+    returnedMetrics.forEach(metric => {
+      // Remove mongoose version field since it's irrelevant
+      delete metric.__v
+    })
+
     should.deepEqual(returnedMetrics, expectedMetrics)
   })
 
