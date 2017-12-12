@@ -112,7 +112,8 @@ export function storeResponse (ctx, done) {
 
   const update = {
     response: res,
-    error: ctx.error
+    error: ctx.error,
+    orchestrations: []
   }
 
   utils.enforceMaxBodiesSize(ctx, update.response)
@@ -124,14 +125,14 @@ export function storeResponse (ctx, done) {
 
   if (ctx.mediatorResponse) {
     if (ctx.mediatorResponse.orchestrations) {
-      update.orchestrations = ctx.mediatorResponse.orchestrations
-      for (const orch of Array.from(update.orchestrations)) {
-        if ((orch.request != null ? orch.request.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, orch.request) }
-        if ((orch.response != null ? orch.response.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, orch.response) }
-      }
+      update.orchestrations.push(...truncateOrchestrationBodies(ctx, ctx.mediatorResponse.orchestrations))
     }
 
     if (ctx.mediatorResponse.properties) { update.properties = ctx.mediatorResponse.properties }
+  }
+
+  if (ctx.orchestrations) {
+    update.orchestrations.push(...truncateOrchestrationBodies(ctx, ctx.orchestrations))
   }
 
   return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
@@ -145,6 +146,15 @@ export function storeResponse (ctx, done) {
     }
     logger.info(`stored primary response for ${tx._id}`)
     return done()
+  })
+}
+
+function truncateOrchestrationBodies (ctx, orchestrations) {
+  return orchestrations.map(orch => {
+    const truncatedOrchestration = Object.assign({}, orch)
+    if (truncatedOrchestration.request && truncatedOrchestration.request.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.request) }
+    if (truncatedOrchestration.response && truncatedOrchestration.response.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.response) }
+    return truncatedOrchestration
   })
 }
 

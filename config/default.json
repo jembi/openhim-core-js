@@ -25,6 +25,10 @@
     "httpsPort": 5000,
     "timeout": 60000
   },
+  "bodyCull":{
+    "enabled":true,
+    "pollPeriodMins": 5
+  },
   "api": {
     "enabled" : true,
     "httpsPort": 8080,

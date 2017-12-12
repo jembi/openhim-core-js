@@ -32,6 +32,7 @@ import * as auditing from './auditing'
 import * as tasks from './tasks'
 import * as upgradeDB from './upgradeDB'
 import * as autoRetry from './autoRetry'
+import * as bodyCull from './bodyCull'
 import { config } from './config'
 
 mongoose.Promise = Promise
@@ -50,6 +51,7 @@ config.reports = config.get('reports')
 config.auditing = config.get('auditing')
 config.agenda = config.get('agenda')
 config.certificateManagement = config.get('certificateManagement')
+config.bodyCull = config.get('bodyCull')
 
 const himSourceID = config.get('auditing').auditEvents.auditSourceID
 const currentVersion = require('../package.json').version
@@ -294,6 +296,7 @@ if (cluster.isMaster && !module.parent) {
     agenda.on('ready', () => {
       if (config.alerts.enableAlerts) { alerts.setupAgenda(agenda) }
       if (config.reports.enableReports) { reports.setupAgenda(agenda) }
+      if (config.bodyCull.enabled) { bodyCull.setupAgenda(agenda) }
       autoRetry.setupAgenda(agenda)
       if (config.polling.enabled) {
         return polling.setupAgenda(agenda, () =>
@@ -379,7 +382,7 @@ if (cluster.isMaster && !module.parent) {
 
   // Ensure that a root user always exists
   const ensureRootUser = callback =>
-    UserModel.findOne({email: 'root@openhim.org'}, (err, user) => {
+    UserModel.findOne({ email: 'root@openhim.org' }, (err, user) => {
       if (err) { return callback(err) }
       if (!user) {
         user = new UserModel(rootUser)
@@ -425,8 +428,8 @@ if (cluster.isMaster && !module.parent) {
       }
       if ((keystore == null)) { // set default keystore
         if (config.certificateManagement.watchFSForCert) { // use cert from filesystem
-          ({certPath} = config.certificateManagement);
-          ({keyPath} = config.certificateManagement)
+          ({ certPath } = config.certificateManagement);
+          ({ keyPath } = config.certificateManagement)
         } else { // use default self-signed certs
           certPath = `${appRoot}/resources/certs/default/cert.pem`
           keyPath = `${appRoot}/resources/certs/default/key.pem`
@@ -715,7 +718,7 @@ if (cluster.isMaster && !module.parent) {
 
   exports.stop = (stop = done => stopTasksProcessor(() => {
     if (typeof done !== 'function') {
-      done = () => {}
+      done = () => { }
     }
     let socket
     const promises = []
@@ -880,7 +883,7 @@ if (cluster.isMaster && !module.parent) {
     if (cluster.isMaster) {
       // send reponse back to API request
       const uptime =
-        {master: process.uptime()}
+        { master: process.uptime() }
       return callback(null, uptime)
     }
     // send request to master
@@ -891,7 +894,7 @@ if (cluster.isMaster && !module.parent) {
     const processEvent = function (uptime) {
       if (uptime.type === 'get-uptime') {
         uptime =
-          {master: uptime.masterUptime}
+          { master: uptime.masterUptime }
 
         // remove eventListner
         process.removeListener('message', processEvent)
