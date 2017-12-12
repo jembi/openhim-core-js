@@ -8,6 +8,7 @@ import * as autoRetryUtils from '../autoRetry'
 import * as utils from '../utils'
 import { config } from '../config'
 import * as stats from '../stats'
+import * as metrics from '../metrics'
 
 config.statsd = config.get('statsd')
 const statsdServer = config.get('statsd')
@@ -241,7 +242,7 @@ export function setFinalStatus (ctx, callback) {
 
     if (_.isEmpty(update)) { return callback(tx) } // nothing to do
 
-    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {}, (err, tx) => {
+    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {new: true}, (err, tx) => {
       if (err) { return callback(err) }
       callback(tx)
 
@@ -253,6 +254,12 @@ export function setFinalStatus (ctx, callback) {
       if (config.statsd.enabled) {
         stats.incrementTransactionCount(ctx, () => { })
         return stats.measureTransactionDuration(ctx, () => { })
+      }
+
+      try {
+        metrics.recordTransactionMetrics(tx)
+      } catch (err) {
+        logger.error('Recording transaction metrics failed', err)
       }
     })
   })
