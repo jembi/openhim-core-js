@@ -5,6 +5,7 @@ If you're a developer, or would just like to get the OpenHIM up and running for 
 
 Steps
 -----
+
 * Setup [Vagrant](https://www.vagrantup.com/) on your system. Note that you'll also have to install [VirtualBox](https://www.virtualbox.org/).
 * Clone the repo
  * (if necessary) `sudo apt-get install git`
