@@ -351,7 +351,8 @@ function sendRequest (ctx, route, options) {
         path: options.path,
         headers: options.headers,
         method: options.method,
-        body: ctx.body
+        body: ctx.body,
+        timestamp: ctx.requestTimestamp
       }
     }
 
