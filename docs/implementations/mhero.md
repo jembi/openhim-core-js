@@ -3,7 +3,7 @@ mHero
 
 Mobile Health Worker Electronic Response and Outreach (mHero) is one way to harness the well-known power of mobile technology to reach frontline health workers. It combines data from multiple sources, such as a facility registry and a health worker registry, to enable targeted messaging directly to Health Workers. The messaging workflows that it enables provides an unprecedented link directly to those health workers that are in need of support.
 
-For more information please see the [mHero](http://www.mhero.org/mHero/) website.
+For more information please see the [mHero](http://www.mhero.org) website.
 
 ## How the OpenHIM is used
 

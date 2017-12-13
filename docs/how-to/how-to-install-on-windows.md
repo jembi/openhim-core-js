@@ -59,7 +59,7 @@ A web server will be required to host the OpenHIM Console and in this guide we w
 
 ### Install IIS
 
-Go to http://www.iis.net/learn/install for articles on how to install IIS for your particular flavour of Windows OS.
+Go to the [microsoft docs](http://www.iis.net/learn/install) for articles on how to install IIS for your particular flavour of Windows OS.
 
 If you want to check if IIS is installed, browse to http://localhost in your browser. If an image pops up, then IIS has been installed correctly.
 
@@ -76,7 +76,7 @@ Create a new site in Internet Information Services Manager. You can name it what
 1. Start IIS Manager.
 2. In the Connections panel, expand Sites
 3. Right-click Sites and then click Add Web Site.
-4. In the Add Web Site dialog box, fill in the required fields, for example: 
+4. In the Add Web Site dialog box, fill in the required fields, for example:
    *   Site name: `Console`
    *   Physical path: `C:\OpenHIM\Console`
    *   Port: Make sure the port is something other than 80, as this will conflict with "Default Web Site" in IIS
@@ -111,6 +111,6 @@ start nginx
 ```
 ## Fin
 
-The OpenHIM Core and Console should now be up and running! 
+The OpenHIM Core and Console should now be up and running!
 
 Access the console on http://yourserver:<port number> and login with **root@openhim.org** using the password: **openhim-password**

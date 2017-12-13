@@ -200,7 +200,7 @@ It should also allow for the following actions:
 *   single and batch re-processing of transactions
 *   querying for monitoring statistics
 
-The API reference as it currently exists can be [found here](/dev-guide/api-ref.html).
+The API reference as it currently exists can be [found here](./dev-guide/api-ref.html).
 
 ### API Authentication
 

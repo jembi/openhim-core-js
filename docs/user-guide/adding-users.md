@@ -20,7 +20,7 @@ Users accounts are created in order to give users of the system an certain capab
 
 ## How are users different from clients
 
-Clients are different from users, they represent systems that can route transactions through the OpenHIM. Users are people accessing and configuring the OpenHIM and clients are systems that are allowed to send requests to the OpenHIM. 
+Clients are different from users, they represent systems that can route transactions through the OpenHIM. Users are people accessing and configuring the OpenHIM and clients are systems that are allowed to send requests to the OpenHIM.
 
 ## User Groups:
 
@@ -29,7 +29,7 @@ Groups are created automatically by just adding a new group name in the user for
 There are 2 kinds of group
 
 1. The 'admin' group: this is a special group that grants users all permissions
-2. Then the rest are defined by the system administrator and in the channels, an admin can 
+2. Then the rest are defined by the system administrator and in the channels, an admin can
 set whether the group has any the permissions below.
 
 ## Permissions
@@ -51,7 +51,7 @@ Also on the users page, there is a matrix that shows these permissions. This can
 Required fields, are as follows:
 
 1. Email - This needs to be a valid and unique email address
-2. First Name 
+2. First Name
 3. Last Name
 4. Groups
 5. Password and Confirm Password
@@ -67,7 +67,7 @@ Optional Fields are as follows:
 
 The two kinds of reports mentioned above send transaction metrics aggregated over a period. In these reports, you can see, the number of transactions that went through as well as their statuses.
 
-The statuses are as follows:  
+The statuses are as follows:
 
 1. Failed
 2. Processing
@@ -82,5 +82,3 @@ The statuses are as follows:
 2. List settings: Upon clicking on a transaction in the transactions page, you can choose by default whether to view the transaction on the same page, or to open it in a new window altogether.
 
 If you find a field that is not described here, please let us know by [filing an issue on github](https://github.com/jembi/openhim-core-js/issues/new) with the 'documentation' label.
-
-
