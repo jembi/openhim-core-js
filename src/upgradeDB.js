@@ -1,6 +1,5 @@
 import logger from 'winston'
 import pem from 'pem'
-import Q from 'q'
 import { DbVersionModel } from './model/dbVersion'
 import { KeystoreModel } from './model/keystore'
 import { ClientModel } from './model/clients'
@@ -31,89 +30,72 @@ const upgradeFuncs = []
 upgradeFuncs.push({
   description: 'Ensure that all certs have a fingerprint property',
   func () {
-    const defer = Q.defer()
+    return new Promise((resolve, reject) => {
+      KeystoreModel.findOne((err, keystore) => {
+        if (err) { return reject(err) }
+        if (!keystore) { return resolve() }
 
-    KeystoreModel.findOne((err, keystore) => {
-      if (err) { return defer.reject(err) }
-      if (!keystore) { return defer.resolve() }
+        // convert server cert
+        pem.getFingerprint(keystore.cert.data, (err, obj) => {
+          if (err) { return reject(err) }
+          keystore.cert.fingerprint = obj.fingerprint
 
-      // convert server cert
-      return pem.getFingerprint(keystore.cert.data, (err, obj) => {
-        if (err) { return defer.reject(err) }
-        keystore.cert.fingerprint = obj.fingerprint
-
-        const promises = []
-        for (let i = 0; i < keystore.ca.length; i++) {
-          const cert = keystore.ca[i]
-          const caDefer = Q.defer()
-          promises.push(caDefer.promise)
-          pem.getFingerprint(cert.data, (err, obj) => {
-            if (err) { return defer.reject(err) }
-            keystore.ca[i].fingerprint = obj.fingerprint
-            return caDefer.resolve()
+          const promises = keystore.ca.map((cert) => {
+            return new Promise((resolve, reject) => {
+              pem.getFingerprint(cert.data, (err, obj) => {
+                if (err) { return reject(err) }
+                cert.fingerprint = obj.fingerprint
+                return resolve()
+              })
+            })
           })
-        }
 
-        Q.all(promises).then(() =>
-          keystore.save((err) => {
-            if (err != null) { logger.error(`Failed to save keystore: ${err}`) }
-            return defer.resolve()
-          })
-        )
+          Promise.all(promises).then(() =>
+            keystore.save((err) => {
+              if (err != null) { logger.error(`Failed to save keystore: ${err}`) }
+              return resolve()
+            })
+          ).catch(reject)
+        })
       })
     })
-
-    return defer.promise
   }
 })
 
 upgradeFuncs.push({
   description: 'Convert clients link to certs via their domain to use the cert fingerprint instead',
   func () {
-    const defer = Q.defer()
-
-    ClientModel.find((err, clients) => {
-      if (err != null) {
-        logger.error(`Couldn't fetch all clients to upgrade db: ${err}`)
-        return defer.reject()
-      }
-
-      KeystoreModel.findOne((err, keystore) => {
+    return new Promise((resolve, reject) => {
+      ClientModel.find((err, clients) => {
         if (err != null) {
-          logger.error(`Couldn't fetch keystore to upgrade db: ${err}`)
-          return defer.reject()
+          logger.error(`Couldn't fetch all clients to upgrade db: ${err}`)
+          return reject(err)
         }
 
-        const promises = []
-        for (const client of Array.from(clients)) {
-          const clientDefer = Q.defer()
-          promises.push(clientDefer.promise)
-
-          if ((keystore != null ? keystore.ca : undefined) != null) {
-            for (const cert of Array.from(keystore.ca)) {
-              if ((client.clientDomain === cert.commonName) && (client.certFingerprint == null)) {
-                client.certFingerprint = cert.fingerprint
-                break
-              }
-            }
+        KeystoreModel.findOne((err, keystore) => {
+          if (err != null) {
+            logger.error(`Couldn't fetch keystore to upgrade db: ${err}`)
+            return reject(err)
           }
 
-          (clientDefer =>
-              client.save((err) => {
-                if (err != null) {
-                  logger.error(`Couldn't save client ${client.clientID} while upgrading db: ${err}`)
-                  return clientDefer.reject()
+          const promises = []
+
+          Array.from(clients).forEach((client) => {
+            if (keystore != null && keystore.ca != null) {
+              for (const cert of Array.from(keystore.ca)) {
+                if (client.clientDomain === cert.commonName && client.certFingerprint == null) {
+                  client.certFingerprint = cert.fingerprint
+                  break
                 }
+              }
+              promises.push(client.save())
+            }
+          })
 
-                return clientDefer.resolve()
-              }))(clientDefer)
-        }
-
-        Q.all(promises).then(() => defer.resolve())
+          Promise.all(promises).then(resolve).catch(reject)
+        })
       })
     })
-
-    return defer.promise
   }
 })
 
@@ -161,53 +143,52 @@ function adaptOldVisualizerStructure (visualizer) {
 upgradeFuncs.push({
   description: 'Migrate visualizer setting from a user\'s profile to a shared collection',
   func () {
-    const defer = Q.defer()
-    UserModel.find((err, users) => {
-      if (err) {
-        return Q.defer().reject(err)
-      }
-
-      const visNames = []
-      const promises = []
-      users.forEach((user) => {
-        if ((user.settings != null ? user.settings.visualizer : undefined) != null) {
-          let vis = user.settings.visualizer
-          if (((vis.components != null ? vis.components.length : undefined) > 0) || ((vis.mediators != null ? vis.mediators.length : undefined) > 0) || ((vis.channels != null ? vis.channels.length : undefined) > 0) || ((vis.endpoints != null ? vis.endpoints.length : undefined) > 0)) {
-            const userDefer = Q.defer()
-            promises.push(userDefer.promise)
-
-            if (vis.endpoints) { // old version
-              adaptOldVisualizerStructure(vis)
-            }
-
-            let name = `${user.firstname} ${user.surname}'s visualizer`
-            name = dedupName(name, visNames)
-            vis.name = name
-            visNames.push(name)
-
-            vis = new VisualizerModel(vis)
-            logger.debug(`Migrating visualizer from user profile ${user.email}, using visualizer name '${name}'`)
-            vis.save((err, vis) => {
-              if (err) {
-                logger.error(`Error migrating visualizer from user profile ${user.email}: ${err.stack}`)
-                return userDefer.reject(err)
-              }
-
-              // delete the visualizer settings from this user profile
-              user.set('settings.visualizer', null)
-              user.save((err, user) => {
-                if (err) { return userDefer.reject(err) }
-                return userDefer.resolve()
-              })
-            })
-          }
+    return new Promise((resolve, reject) => {
+      UserModel.find((err, users) => {
+        if (err) {
+          return reject(err)
         }
+
+        const visNames = []
+        const promises = []
+        users.forEach((user) => {
+          if ((user.settings != null ? user.settings.visualizer : undefined) != null) {
+            let vis = user.settings.visualizer
+            if (((vis.components != null ? vis.components.length : undefined) > 0) || ((vis.mediators != null ? vis.mediators.length : undefined) > 0) || ((vis.channels != null ? vis.channels.length : undefined) > 0) || ((vis.endpoints != null ? vis.endpoints.length : undefined) > 0)) {
+              const promise = new Promise((resolve, reject) => {
+                if (vis.endpoints) { // old version
+                  adaptOldVisualizerStructure(vis)
+                }
+
+                let name = `${user.firstname} ${user.surname}'s visualizer`
+                name = dedupName(name, visNames)
+                vis.name = name
+                visNames.push(name)
+
+                vis = new VisualizerModel(vis)
+                logger.debug(`Migrating visualizer from user profile ${user.email}, using visualizer name '${name}'`)
+                vis.save((err, vis) => {
+                  if (err) {
+                    logger.error(`Error migrating visualizer from user profile ${user.email}: ${err.stack}`)
+                    return reject(err)
+                  }
+
+                  // delete the visualizer settings from this user profile
+                  user.set('settings.visualizer', null)
+                  user.save((err, user) => {
+                    if (err) { return reject(err) }
+                    return resolve()
+                  })
+                })
+              })
+              promises.push(promise)
+            }
+          }
+        })
+
+        Promise.all(promises).then(() => resolve()).catch(err => reject(err))
       })
-
-      Q.all(promises).then(() => defer.resolve()).catch(err => defer.reject(err))
     })
-
-    return defer.promise
   }
 })
 

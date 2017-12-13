@@ -1,9 +1,9 @@
-import Q from 'q'
 import pem from 'pem'
 import { KeystoreModelAPI } from '../model/keystore'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
+import { promisify } from 'util'
 
 config.certificateManagement = config.get('certificateManagement')
 
@@ -66,7 +66,7 @@ export async function setServerPassphrase (ctx) {
     const {passphrase} = ctx.request.body
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
     keystoreDoc.passphrase = passphrase
-    await Q.ninvoke(keystoreDoc, 'save')
+    await keystoreDoc.save()
     ctx.status = 201
   } catch (err) {
     utils.logAndSetResponse(ctx, 500, `Could not set the passphrase  via the API: ${err}`, 'error')
@@ -90,8 +90,8 @@ export async function setServerCert (ctx) {
     let certInfo
     let fingerprint
     const {cert, passphrase} = ctx.request.body
-    const readCertificateInfo = Q.denodeify(pem.readCertificateInfo)
-    const getFingerprint = Q.denodeify(pem.getFingerprint)
+    const readCertificateInfo = promisify(pem.readCertificateInfo)
+    const getFingerprint = promisify(pem.getFingerprint)
     try {
       certInfo = await readCertificateInfo(cert)
       fingerprint = await getFingerprint(cert)
@@ -106,7 +106,7 @@ export async function setServerCert (ctx) {
     keystoreDoc.cert = certInfo
     keystoreDoc.passphrase = passphrase
 
-    await Q.ninvoke(keystoreDoc, 'save')
+    await keystoreDoc.save()
     ctx.status = 201
   } catch (error1) {
     err = error1
@@ -126,7 +126,7 @@ export async function setServerKey (ctx) {
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
     keystoreDoc.key = key
     keystoreDoc.passphrase = passphrase
-    await Q.ninvoke(keystoreDoc, 'save')
+    await keystoreDoc.save()
     ctx.status = 201
   } catch (err) {
     return utils.logAndSetResponse(ctx, 500, `Could not add server key via the API: ${err}`, 'error')
@@ -161,8 +161,8 @@ export async function addTrustedCert (ctx) {
     }
 
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
-    const readCertificateInfo = Q.denodeify(pem.readCertificateInfo)
-    const getFingerprint = Q.denodeify(pem.getFingerprint)
+    const readCertificateInfo = promisify(pem.readCertificateInfo)
+    const getFingerprint = promisify(pem.getFingerprint)
 
     if (certs.length < 1) {
       invalidCert = true
@@ -184,7 +184,7 @@ export async function addTrustedCert (ctx) {
       keystoreDoc.ca.push(certInfo)
     }
 
-    await Q.ninvoke(keystoreDoc, 'save')
+    await keystoreDoc.save()
 
     if (invalidCert) {
       utils.logAndSetResponse(ctx, 400, `Failed to add one more cert, are they valid? ${err}`, 'error')
@@ -207,7 +207,7 @@ export async function removeCACert (ctx, certId) {
   try {
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
     keystoreDoc.ca.id(certId).remove()
-    await Q.ninvoke(keystoreDoc, 'save')
+    await keystoreDoc.save()
     ctx.status = 200
   } catch (err) {
     utils.logAndSetResponse(ctx, 500, `Could not remove ca cert by id via the API: ${err}`, 'error')
@@ -224,7 +224,7 @@ export async function verifyServerKeys (ctx) {
   try {
     let result
     try {
-      result = await Q.nfcall(getCertKeyStatus)
+      result = await promisify(getCertKeyStatus)()
     } catch (error) {
       return utils.logAndSetResponse(ctx, 400, `Could not verify certificate and key, are they valid? ${error}`, 'error')
     }

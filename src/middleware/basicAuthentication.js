@@ -1,5 +1,4 @@
 import auth from 'basic-auth'
-import Q from 'q'
 import logger from 'winston'
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
@@ -7,6 +6,7 @@ import SDC from 'statsd-client'
 import os from 'os'
 import { ClientModel } from '../model/clients'
 import { config } from '../config'
+import { promisify } from 'util'
 
 const statsdServer = config.get('statsd')
 const application = config.get('application')
@@ -82,7 +82,7 @@ export async function koaMiddleware (ctx, next) {
   if (ctx.authenticated != null) {
     await next()
   } else {
-    const _authenticateUser = Q.denodeify(authenticateUser)
+    const _authenticateUser = promisify(authenticateUser)
     await _authenticateUser(ctx)
     if ((ctx.authenticated != null ? ctx.authenticated.clientID : undefined) != null) {
       ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID

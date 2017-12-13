@@ -1,12 +1,12 @@
 import moment from 'moment'
-import Q from 'q'
 import * as utils from '../utils'
 import * as server from '../server'
 import { MediatorModelAPI } from '../model/mediators'
+import { promisify } from 'util'
 
 export async function getHeartbeat (ctx) {
   try {
-    const uptime = Q.denodeify(server.getUptime)
+    const uptime = promisify(server.getUptime)
     const result = await uptime()
 
     const mediators = await MediatorModelAPI.find().exec()

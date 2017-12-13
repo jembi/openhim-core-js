@@ -1,7 +1,6 @@
 import { EmailTemplate } from 'email-templates'
 import logger from 'winston'
 import moment from 'moment'
-import Q from 'q'
 import { path as appRoot } from 'app-root-path'
 import * as authorisation from './api/authorisation'
 import { config } from './config'
@@ -40,14 +39,9 @@ function sendReports (job, flag, done) {
 
   return fetchUsers((err, users) => {
     if (err) { return done(err) }
-    const promises = []
-    let userKey = ''
-    let userIndex = 0
     const usersArray = []
-    for (const user of Array.from(users)) {
-      const deferred = Q.defer()
-      userKey = user.email
-      authorisation.getUserViewableChannels(user)
+    const promises = Array.from(users).map((user, userIndex) => {
+      return authorisation.getUserViewableChannels(user)
         .then((channels) => {
           usersArray[userIndex] = user
           usersArray[userIndex].allowedChannels = channels
@@ -57,34 +51,25 @@ function sendReports (job, flag, done) {
               channel
             }
           }
-
-          userIndex++
-          return deferred.resolve()
         })
-
-      return promises.push(deferred.promise)
-    }
+    })
 
     // Loop through the enriched user array
-    const innerPromises = []
-    return (Q.all(promises)).then(() => {
+    return Promise.all(promises).then(() => {
       // Pre-Fetch report data into Channel Map
-      for (const key in channelMap) {
-        const obj = channelMap[key]
-        const innerDeferred = Q.defer();
-        ((innerDeferred, key, obj) =>
+      const innerPromises = Object.entries(channelMap).map(([key, obj]) => {
+        return new Promise((resolve, reject) => {
           fetchChannelReport(obj.channel, obj.user, flag, from, to, (err, item) => {
-            if (err) { return done(err) }
+            if (err) { return reject(err) }
             channelReportMap[key] = item
-            return innerDeferred.resolve()
-          }))(innerDeferred, key, obj)
+            return resolve()
+          })
+        })
+      })
 
-        innerPromises.push(innerDeferred.promise)
-      }
-
-      return (Q.all(innerPromises)).then(() => {
+      return Promise.all(innerPromises).then(() => {
         for (const user of Array.from(usersArray)) {
-          userKey = user.email
+          const userKey = user.email
           for (const channel of Array.from(user.allowedChannels)) {
             if (reportMap[userKey]) {
               // Do nothing since object already exists
@@ -158,7 +143,7 @@ function sendReports (job, flag, done) {
         }
 
         return done()
-      })
+      }).catch(done)
     })
   })
 }

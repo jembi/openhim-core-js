@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import http from 'http'
 import net from 'net'
@@ -96,34 +95,33 @@ async function finalizeTaskRound (task) {
  */
 async function processNextTaskRound (task) {
   logger.debug(`Processing next task round: total transactions = ${task.totalTransactions}, remainingTransactions = ${task.remainingTransactions}`)
-  const promises = []
   const nextI = task.transactions.length - task.remainingTransactions
+  const transactions = Array.from(task.transactions.slice(nextI, nextI + task.batchSize))
 
-  for (const transaction of Array.from(task.transactions.slice(nextI, nextI + task.batchSize))) {
-    const defer = Q.defer()
-    rerunTransaction(transaction.tid, task._id, (err, response) => {
-      if (err) {
-        transaction.tstatus = 'Failed'
-        transaction.error = err
-        logger.error(`An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`)
-      } else if ((response != null ? response.status : undefined) === 'Failed') {
-        transaction.tstatus = 'Failed'
-        transaction.error = response.message
-        logger.error(`An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`)
-      } else {
-        transaction.tstatus = 'Completed'
-      }
+  const promises = transactions.map((transaction) => {
+    return new Promise((resolve) => {
+      rerunTransaction(transaction.tid, task._id, (err, response) => {
+        if (err) {
+          transaction.tstatus = 'Failed'
+          transaction.error = err
+          logger.error(`An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`)
+        } else if ((response != null ? response.status : undefined) === 'Failed') {
+          transaction.tstatus = 'Failed'
+          transaction.error = response.message
+          logger.error(`An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`)
+        } else {
+          transaction.tstatus = 'Completed'
+        }
 
-      task.remainingTransactions--
-      return defer.resolve()
+        task.remainingTransactions--
+        return resolve()
+      })
+
+      transaction.tstatus = 'Processing'
     })
+  })
 
-    transaction.tstatus = 'Processing'
-
-    promises.push(defer.promise)
-  }
-
-  await Q.all(promises)
+  await Promise.all(promises)
   try {
     await task.save()
   } catch (err) {

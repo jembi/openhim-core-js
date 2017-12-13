@@ -1,9 +1,9 @@
-import Q from 'q'
 import SDC from 'statsd-client'
 import os from 'os'
 import { ChannelModel } from '../model/channels'
 import { TransactionModel } from '../model/transactions'
 import { config } from '../config'
+import { promisify } from 'util'
 
 const statsdServer = config.get('statsd')
 const application = config.get('application')
@@ -30,7 +30,7 @@ export function authoriseUser (ctx, done) {
 export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  const authoriseUser = Q.denodeify(exports.authoriseUser)
+  const authoriseUser = promisify(exports.authoriseUser)
   await authoriseUser(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.rerunBypassAuthorisationMiddleware`, startTime) }
   await next()
