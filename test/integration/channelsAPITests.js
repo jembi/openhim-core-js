@@ -622,11 +622,11 @@ describe('API Integration Tests', () => {
         channel.maxBodyAgeDays.should.eql(5)
       })
 
-      it(`will create a channel with a timeoutSeconds`, async () => {
+      it(`will create a channel with a timeout`, async () => {
         const timeoutChannelDoc = {
-          name: 'timeoutSeconds',
+          name: 'timeout',
           urlPattern: 'test/method',
-          timeoutSeconds: 10,
+          timeout: 10,
           routes: [{
             name: 'test route',
             host: 'localhost',
@@ -645,14 +645,14 @@ describe('API Integration Tests', () => {
           .expect(201)
 
         const channel = await ChannelModelAPI.findOne({ name: timeoutChannelDoc.name })
-        channel.timeoutSeconds.should.eql(10)
+        channel.timeout.should.eql(10)
       })
 
-      it(`will reject a channel with a timeoutSeconds with negative value`, async () => {
+      it(`will reject a channel with a timeout with negative value`, async () => {
         const timeoutChannelDoc = {
-          name: 'timeoutSeconds',
+          name: 'timeout',
           urlPattern: 'test/method',
-          timeoutSeconds: -1,
+          timeout: -1,
           routes: [{
             name: 'test route',
             host: 'localhost',
@@ -1463,9 +1463,9 @@ describe('API Integration Tests', () => {
 
       it('will update a timeout', async () => {
         const timeoutChannelDoc = {
-          name: 'timeoutSeconds',
+          name: 'timeout',
           urlPattern: 'test/method',
-          timeoutSeconds: 10,
+          timeout: 10,
           routes: [{
             name: 'test route',
             host: 'localhost',
@@ -1486,18 +1486,18 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send({ timeoutSeconds: 9 })
+          .send({ timeout: 9 })
           .expect(200)
 
         const channel = await ChannelModelAPI.findById(channelId)
-        channel.timeoutSeconds.should.eql(9)
+        channel.timeout.should.eql(9)
       })
 
       it('will clear a timeout', async () => {
         const timeoutChannelDoc = {
-          name: 'timeoutSecondsUpdate',
+          name: 'timeoutUpdate',
           urlPattern: 'test/method',
-          timeoutSeconds: 10,
+          timeout: 10,
           routes: [{
             name: 'test route',
             host: 'localhost',
@@ -1518,18 +1518,18 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send({ timeoutSeconds: null })
+          .send({ timeout: null })
           .expect(200)
 
         const channel = await ChannelModelAPI.findById(channelId)
-        should(channel.timeoutSeconds).null()
+        should(channel.timeout).null()
       })
 
       it('will reject a timeout that is invalid', async () => {
         const timeoutChannelDoc = {
-          name: 'timeoutSeconds',
+          name: 'timeout',
           urlPattern: 'test/method',
-          timeoutSeconds: 10,
+          timeout: 10,
           routes: [{
             name: 'test route',
             host: 'localhost',
@@ -1550,11 +1550,11 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .send({ timeoutSeconds: -1 })
+          .send({ timeout: -1 })
           .expect(400)
 
         const channel = await ChannelModelAPI.findById(channelId)
-        channel.timeoutSeconds.should.eql(10)
+        channel.timeout.should.eql(10)
       })
     })
 

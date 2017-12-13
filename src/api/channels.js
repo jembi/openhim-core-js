@@ -76,12 +76,12 @@ export function validateMethod (channel) {
   }
 }
 
-export function isTimeoutSecondsValid (channel) {
-  if (channel.timeoutSeconds == null) {
+export function isTimeoutValid (channel) {
+  if (channel.timeout == null) {
     return true
   }
 
-  return typeof channel.timeoutSeconds === 'number' && channel.timeoutSeconds > 0 && channel.timeoutSeconds <= 3600
+  return typeof channel.timeout === 'number' && channel.timeout > 0 && channel.timeout <= 3600
 }
 
 export function isMaxBodyDaysValid (channel) {
@@ -135,7 +135,7 @@ export async function addChannel (ctx) {
       return
     }
 
-    if (!isTimeoutSecondsValid(channel)) {
+    if (!isTimeoutValid(channel)) {
       ctx.body = TIMEOUT_SECONDS_MESSAGE
       ctx.status = 400
       return
@@ -299,7 +299,7 @@ export async function updateChannel (ctx, channelId) {
     }
   }
 
-  if (!isTimeoutSecondsValid(channelData)) {
+  if (!isTimeoutValid(channelData)) {
     ctx.body = TIMEOUT_SECONDS_MESSAGE
     ctx.status = 400
     return
@@ -335,7 +335,7 @@ export async function updateChannel (ctx, channelId) {
     }
   }
 
-  if (!isTimeoutSecondsValid(updatedChannel)) {
+  if (!isTimeoutValid(updatedChannel)) {
     ctx.body = TIMEOUT_SECONDS_MESSAGE
     ctx.status = 400
     return

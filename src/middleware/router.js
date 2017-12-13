@@ -493,7 +493,8 @@ function sendHttpRequest (ctx, route, options) {
     defered.reject(err)
   })
 
-  routeReq.setTimeout(+config.router.timeout, () => defered.reject('Request Timed Out'))
+  const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+  routeReq.setTimeout(timeout, () => defered.reject('Request Timed Out'))
 
   if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
     if (ctx.body != null) {
@@ -634,6 +635,11 @@ export function route (ctx, next) {
   if (!isMethodAllowed(ctx, channel)) {
     next()
   } else {
+    if (channel.timeout != null) {
+      channel.routes.forEach(route => {
+        route.timeout = channel.timeout
+      })
+    }
     sendRequestToRoutes(ctx, channel.routes, next)
   }
 }
