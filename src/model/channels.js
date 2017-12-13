@@ -80,6 +80,9 @@ const ChannelDef = {
   lastBodyCleared: {
     type: Date
   },
+  timeoutSeconds: {
+    type: Number, min: 1, max: 3600
+  },
   methods: [{
     type: String, enum: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
   }],

@@ -13,6 +13,7 @@ import { config } from '../config'
 const { ChannelModel } = Channels
 
 const MAX_BODY_AGE_MESSAGE = `Channel property maxBodyAgeDays has to be a number that's valid and requestBody or responseBody must be true.`
+const TIMEOUT_SECONDS_MESSAGE = `Channel property timeoutSeconds has to be a number greater than 1 and less than an 3600`
 
 config.polling = config.get('polling')
 
@@ -75,6 +76,14 @@ export function validateMethod (channel) {
   }
 }
 
+export function isTimeoutSecondsValid (channel) {
+  if (channel.timeoutSeconds == null) {
+    return true
+  }
+
+  return typeof channel.timeoutSeconds === 'number' && channel.timeoutSeconds > 0 && channel.timeoutSeconds <= 3600
+}
+
 export function isMaxBodyDaysValid (channel) {
   if (channel.maxBodyAgeDays == null) {
     return true
@@ -84,7 +93,7 @@ export function isMaxBodyDaysValid (channel) {
     return false
   }
 
-  return typeof channel.maxBodyAgeDays !== 'number' || (channel.maxBodyAgeDays > 0 && channel.maxBodyAgeDays < 36500)
+  return typeof channel.maxBodyAgeDays === 'number' && channel.maxBodyAgeDays > 0 && channel.maxBodyAgeDays < 36500
 }
 
 /*
@@ -122,6 +131,12 @@ export async function addChannel (ctx) {
 
     if (methodValidation != null) {
       ctx.body = methodValidation
+      ctx.status = 400
+      return
+    }
+
+    if (!isTimeoutSecondsValid(channel)) {
+      ctx.body = TIMEOUT_SECONDS_MESSAGE
       ctx.status = 400
       return
     }
@@ -284,6 +299,12 @@ export async function updateChannel (ctx, channelId) {
     }
   }
 
+  if (!isTimeoutSecondsValid(channelData)) {
+    ctx.body = TIMEOUT_SECONDS_MESSAGE
+    ctx.status = 400
+    return
+  }
+
   // Ignore _id if it exists, user cannot change the internal id
   if (typeof channelData._id !== 'undefined') {
     delete channelData._id
@@ -312,6 +333,12 @@ export async function updateChannel (ctx, channelId) {
       ctx.status = 400
       return
     }
+  }
+
+  if (!isTimeoutSecondsValid(updatedChannel)) {
+    ctx.body = TIMEOUT_SECONDS_MESSAGE
+    ctx.status = 400
+    return
   }
 
   if (!isMaxBodyDaysValid(updatedChannel)) {
