@@ -9,7 +9,7 @@ This tutorial assumes that you've set up the [required dependencies](../getting-
 *   Roles: **tut**
 *   Password: **tut**
 
-For this tutorial, we will be using **Basic auth** for authenticating the client. The OpenHIM supports both basic authentication and mutual TLS. With this in mind, ensure that your HIM Core instance is running with Basic auth enabled. To do so, and if not already done, create a copy of the [default config file](https://github.com/jembi/openhim-core-js/blob/3c4eb85ecc013704eb41deace942136ebb8b3b73/config/default.json#L31-L32 "default.json") and ensure that **enableBasicAuthentication** is **true** (the default). You can also override any other config if required and startup core using:
+For this tutorial, we will be using **Basic auth** for authenticating the client. The OpenHIM supports both basic authentication and mutual TLS. With this in mind, ensure that your HIM Core instance is running with Basic auth enabled. To do so, and if not already done, create a copy of the [default config file](https://github.com/jembi/openhim-core-js/blob/master/config/default.json#L60-L63 "default.json") and ensure that **enableBasicAuthentication** is **true** (the default). You can also override any other config if required and startup core using:
 
 `$ openhim-core --conf=myconfig.json`
 

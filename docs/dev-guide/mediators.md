@@ -60,14 +60,14 @@ with a JSON body that conforms to the following structure:
     "version": "", // the version of the mediator, if this is incremented the OpenHIM-core will update the channel configuration - expects a semver string
     "name": "", // a human readable name for the mediator
     "defaultChannelConfig": [ // (optional) an array of default channels to add for this mediator
-        { ... }, // a channel object as defined by the OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/8264a9b7c81a05853c20cd071e379d23d740dd33/src/model/channels.coffee#L23-L56
+        { ... }, // a channel object as defined by the OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.js#L69-L134
         { ... }
     ],
     "endpoints": [ // (A minimum of 1 endpoint must be defined) an array of endpoints that the mediator can be contacted on
-        { ... }, // a route object as defined by OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/8264a9b7c81a05853c20cd071e379d23d740dd33/src/model/channels.coffee#L5-L15
+        { ... }, // a route object as defined by OpenHIM-core - see https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.js#L7-L33
         { ... }
     ],
-    "configDefs": [ ... ], // (optional) An array of config definitions of config that can be set in the OpenHIM-console - see https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee
+    "configDefs": [ ... ], // (optional) An array of config definitions of config that can be set in the OpenHIM-console - see https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.js
     "config": { "<param1>": "<val1>", "<param2>": "<val2>" } // (optional) Default mediator configuration
 }
 ```
