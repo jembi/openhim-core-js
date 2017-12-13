@@ -67,13 +67,13 @@ Channels represent configuration setting of how to route requests through the Op
 
 `GET /channels`
 
-The response status code will be `200` if successful and the response body will contain an array of channel objects. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.coffee).
+The response status code will be `200` if successful and the response body will contain an array of channel objects. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.js).
 
 #### Add a channel
 
 `POST /channels`
 
-with a json body representing the channel to be added. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.coffee).
+with a json body representing the channel to be added. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.js).
 
 The response code will be `201` if successful.
 
@@ -83,13 +83,13 @@ The response code will be `201` if successful.
 
 where `:channelId` is the `_id` property of the channel to fetch.
 
-The response status code will be `200` if successful and the response body will contain a channel object. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.coffee).
+The response status code will be `200` if successful and the response body will contain a channel object. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.js).
 
 #### Update a channel
 
 `PUT /channels/:channelId`
 
-where `:channelId` is the `_id` property of the channel to update and with a json body representing the channel updates. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.coffee).
+where `:channelId` is the `_id` property of the channel to update and with a json body representing the channel updates. See the [channel schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/channels.js).
 
 The response code will be `200` if successful.
 
@@ -117,13 +117,13 @@ Other system that send request for the OpenHIM to forward.
 
 `GET /clients`
 
-The response status code will be `200` if successful and the response body will contain an array of client objects. See the [clients schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.coffee).
+The response status code will be `200` if successful and the response body will contain an array of client objects. See the [clients schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.js).
 
 #### Add a client
 
 `POST /clients`
 
-with a json body representing the client to be added. See the [clients schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.coffee).
+with a json body representing the client to be added. See the [clients schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.js).
 
 The response code will be `201` if successful.
 
@@ -133,7 +133,7 @@ The response code will be `201` if successful.
 
 where `:clientId` is the `_id` property of the client to fetch.
 
-The response status code will be `200` if successful and the response body will contain a client object. See the [client schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.coffee).
+The response status code will be `200` if successful and the response body will contain a client object. See the [client schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.js).
 
 #### Fetch a specific client by domain
 
@@ -141,7 +141,7 @@ The response status code will be `200` if successful and the response body will 
 
 where `:clientDomain` is the `domain` property of the client to fetch.
 
-The response status code will be `200` if successful and the response body will contain a client object. See the [client schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.coffee).
+The response status code will be `200` if successful and the response body will contain a client object. See the [client schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/clients.js).
 
 #### Update a client
 
@@ -323,13 +323,13 @@ Console and API Users of the system.
 
 `GET /users`
 
-The response status code will be `200` if successful and the response body will contain an array of users objects. See the [user schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.coffee).
+The response status code will be `200` if successful and the response body will contain an array of users objects. See the [user schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.js).
 
 #### Add a user
 
 `POST /users`
 
-with a json body representing the user to be added. See the [users schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.coffee).
+with a json body representing the user to be added. See the [users schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.js).
 
 The response code will be `201` if successful.
 
@@ -339,13 +339,13 @@ The response code will be `201` if successful.
 
 where `:email` is the `email` property of the user to fetch.
 
-The response status code will be `200` if successful and the response body will contain a user object. See the [user schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.coffee).
+The response status code will be `200` if successful and the response body will contain a user object. See the [user schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.js).
 
 #### Update a user
 
 `PUT /users/:email`
 
-where `:email` is the `email` property of the user to update and with a json body representing the user updates. See the [user schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.coffee).
+where `:email` is the `email` property of the user to update and with a json body representing the user updates. See the [user schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/users.js).
 
 The response code will be `200` if successful.
 
@@ -375,7 +375,7 @@ An important concept to grasp with a transaction is the meaning of a transaction
 
 `GET /transactions`
 
-The response status code will be `200` if successful and the response body will contain an array of transaction objects. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.coffee).
+The response status code will be `200` if successful and the response body will contain an array of transaction objects. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js).
 
 The following query parameters are supported:
 * `filterLimit`: The max number of transactions to return
@@ -387,13 +387,13 @@ The following query parameters are supported:
   * `full`: Full transaction information
   * `fulltruncate`: The same as full except that large transaction bodies will be truncated
 * `channelID`: Only return transactions that are linked to the specified channel
-* `filters`: Advanced filters specified as an object. Transaction fields can be specified based on the [transaction schema](https://github.com/jembi/openhim-core-js/blob/2920608ac3911b1374c9256cd48ad1cfff0626d8/src/model/transactions.coffee#L40-L56). For example, in order to filter by response status 200 and a property called `prop` with a value `val`, the following query could be used: `/transactions?filterLimit=100&filterPage=0&filters=%7B%22response.status%22:%22200%22,%22properties%22:%7B%22prop%22:%22val%22%7D%7D`
+* `filters`: Advanced filters specified as an object. Transaction fields can be specified based on the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js#L40-L56). For example, in order to filter by response status 200 and a property called `prop` with a value `val`, the following query could be used: `/transactions?filterLimit=100&filterPage=0&filters=%7B%22response.status%22:%22200%22,%22properties%22:%7B%22prop%22:%22val%22%7D%7D`
 
 #### Add a transaction
 
 `POST /transactions`
 
-with a json body representing the transaction to be added. See the [transactions schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.coffee).
+with a json body representing the transaction to be added. See the [transactions schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js).
 
 The response code will be `201` if successful.
 
@@ -403,7 +403,7 @@ The response code will be `201` if successful.
 
 where `:transactionId` is the `_id` property of the user to fetch.
 
-The response status code will be `200` if successful and the response body will contain a transaction object. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.coffee).
+The response status code will be `200` if successful and the response body will contain a transaction object. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js).
 
 #### Find transactions by client Id
 
@@ -411,13 +411,13 @@ The response status code will be `200` if successful and the response body will 
 
 where `:clientId` is the `clientID` property of the client we wish to find transaction for.
 
-The response status code will be `200` if successful and the response body will contain an array of transaction objects. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.coffee).
+The response status code will be `200` if successful and the response body will contain an array of transaction objects. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js).
 
 #### Update a transaction
 
 `PUT /transactions/:transactionId`
 
-where `:transactionId` is the `_id` property of the transaction to update and with a json body representing the transaction updates. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.coffee).
+where `:transactionId` is the `_id` property of the transaction to update and with a json body representing the transaction updates. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js).
 
 The response code will be `200` if successful.
 
@@ -439,13 +439,13 @@ A contact group (or contact list) defines logical groups of users used for conta
 
 `GET /groups`
 
-The response status code will be `200` if successful and the response body will contain an array of group objects. See the [contact groups schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/contactGroups.coffee).
+The response status code will be `200` if successful and the response body will contain an array of group objects. See the [contact groups schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/contactGroups.js).
 
 #### Add a group
 
 `POST /groups`
 
-with a json body representing the group to be added. See the [contact groups schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/contactGroups.coffee).
+with a json body representing the group to be added. See the [contact groups schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/contactGroups.js).
 
 The response code will be `201` if successful.
 
@@ -455,7 +455,7 @@ The response code will be `201` if successful.
 
 where `:groupId` is the `_id` property of the group to fetch.
 
-The response status code will be `200` if successful and the response body will contain a group object. See the [contact group schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/contactGroups.coffee).
+The response status code will be `200` if successful and the response body will contain a group object. See the [contact group schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/contactGroups.js).
 
 #### Update a group
 
@@ -483,7 +483,7 @@ Tasks are used to submit transactions to be re-run.
 
 `GET /tasks`
 
-The response status code will be `200` if successful and the response body will contain an array of task objects. See the [tasks schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/tasks.coffee).
+The response status code will be `200` if successful and the response body will contain an array of task objects. See the [tasks schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/tasks.js).
 
 #### Add a task
 
@@ -513,7 +513,7 @@ The response code will be `201` if successful.
 
 where `:taskId` is the `_id` property of the task to fetch.
 
-The response status code will be `200` if successful and the response body will contain a task object. See the [task schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/tasks.coffee).
+The response status code will be `200` if successful and the response body will contain a task object. See the [task schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/tasks.js).
 
 #### Update a task
 
@@ -541,7 +541,7 @@ The response code will be `200` if successful.
 
 `GET /mediators`
 
-The response status code will be `200` if successful and the response body will contain an array of mediator objects. See the [mediators schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
+The response status code will be `200` if successful and the response body will contain an array of mediator objects. See the [mediators schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.js).
 
 **Note:** All password types returned in a mediator's config will be masked. To view the password, the heartbeat endpoint must be used by a mediator to retrieve config.
 
@@ -549,7 +549,7 @@ The response status code will be `200` if successful and the response body will 
 
 `POST /mediators`
 
-with a json body representing the mediator to be added. See the [mediators schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
+with a json body representing the mediator to be added. See the [mediators schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.js).
 
 The response code will be `201` if successful.
 
@@ -559,7 +559,7 @@ The response code will be `201` if successful.
 
 where `:urn` is the `urn` property of the mediator to fetch.
 
-The response status code will be `200` if successful and the response body will contain a mediator object. See the [mediator schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.coffee).
+The response status code will be `200` if successful and the response body will contain a mediator object. See the [mediator schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/mediators.js).
 
 **Note:** All password types returned in a mediator's config will be masked. To view the password, the heartbeat endpoint must be used by a mediator to retrieve config.
 
@@ -788,9 +788,9 @@ Note that this is a public endpoint that does not require any authorization. It 
 
 ### Metadata resource
 
-The metadata resource allows the user to export and import Channels, Clients, Mediators, Users and ContactGroups.  
+The metadata resource allows the user to export and import Channels, Clients, Mediators, Users and ContactGroups.
 
-Use `GET` to retrieve all available metadata, and `POST` to import metadata.  
+Use `GET` to retrieve all available metadata, and `POST` to import metadata.
 
 The import checks for conflicts in the database and either updates or inserts based on the result.  For more control over the import, the validate endpoint accepts the same payload as the import endpoint and returns a validation status per metadata record.
 
@@ -878,7 +878,7 @@ The import checks for conflicts in the database and either updates or inserts ba
 
 The visualizer resource allows the user to manage the visualizers that are present in the system. Visualizers are only accessible by admin users and all saved visualizers can be viewed by all admin users.
 
-An example visualizer object conforming to the [visualizer schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/visualizer.coffee):
+An example visualizer object conforming to the [visualizer schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/visualizer.js):
 
 ```js
 [

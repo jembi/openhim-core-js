@@ -29,7 +29,7 @@ The OpenHIM-core provides a framework to add and manage your own implementation 
 
 The OpenHIM also comes with an admin console which provides a user friendly interface for configuring and managing an OpenHIM instance.
 
-If you want to install and implement the OpenHIM, see the [getting started](/getting-started.html) section and the [user guide](/user-guide/index.html) for information on how to get setup and how to configure the system using the OpenHIM console.
+If you want to install and implement the OpenHIM, see the [getting started](./getting-started.html) section and the [user guide](./user-guide/index.html) for information on how to get setup and how to configure the system using the OpenHIM console.
 
 ## Roadmap
 

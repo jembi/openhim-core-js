@@ -1,7 +1,7 @@
 Creating your first channel
 ===========================
 
-This tutorial assumes that you've set up the [required dependencies](http://127.0.0.1:8000/tutorial/1-getting-started.html "Getting Started"), including setting up the OpenHIM, and that you are ready to create your first channel. In this tutorial we will look at setting up a channel on the HIM that will allow you to route data from a demo service. You will first need to create a **Client** that gets authenticated when requests are made. First, access the HIM Console on your browser, and login using the appropriate credentials. Next, go through to the **Clients** section (**Sidebar -> Clients**), create a new **Client** with the following details and save:
+This tutorial assumes that you've set up the [required dependencies](../getting-started.html "Getting Started"), including setting up the OpenHIM, and that you are ready to create your first channel. In this tutorial we will look at setting up a channel on the HIM that will allow you to route data from a demo service. You will first need to create a **Client** that gets authenticated when requests are made. First, access the HIM Console on your browser, and login using the appropriate credentials. Next, go through to the **Clients** section (**Sidebar -> Clients**), create a new **Client** with the following details and save:
 
 *   ClientID: **tut**
 *   Client Name: **OpenHIM Tutorial Client**
