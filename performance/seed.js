@@ -6,18 +6,30 @@ const faker = require('faker')
 const { ObjectId } = require('mongodb')
 
 const DEFAULT_SEED = 9575
+const IS_QUIET = process.argv.indexOf('--quiet') !== -1 || process.argv.indexOf('-q') !== -1
 
 const DEFAULT_START_DATE = new Date('2016/11/12')
 const DEFAULT_END_DATE = new Date('2017/12/30')
 
-async function seedValues (clients = 1, channelsPerClient = 2, transactionsPerChannel = 250000, startDate = DEFAULT_START_DATE, endDate = DEFAULT_END_DATE) {
+let bar
+
+function tickProgress (tickAmount) {
+  if (bar == null) {
+    return
+  }
+
+  bar.tick(tickAmount)
+}
+
+async function seedValues (clients = 1, channelsPerClient = 2, transactionsPerChannel = 500000, startDate = DEFAULT_START_DATE, endDate = DEFAULT_END_DATE) {
   const totalTrans = clients * channelsPerClient * transactionsPerChannel
   console.log(`Starting seed of ${totalTrans} transactions`)
   await dropTestDb()
-  const bar = new Progress('Seeding Transactions [:bar] :rate/trans per sec :percent :etas', {
-    total: totalTrans
-  })
-  bar.render()
+  if (!IS_QUIET) {
+    bar = new Progress('Seeding Transactions [:bar] :rate/trans per sec :percent :etas', {
+      total: totalTrans
+    })
+  }
   faker.seed(DEFAULT_SEED)
   const user = await new UserModel(rootUser).save()
   const timeStep = Math.floor((endDate.getTime() - startDate.getTime()) / transactionsPerChannel)
@@ -28,7 +40,7 @@ async function seedValues (clients = 1, channelsPerClient = 2, transactionsPerCh
       const channel = await creatChannel(client, channelNum, user)
       const transactions = []
       const flushTrans = async () => {
-        bar.tick(transactions.length)
+        tickProgress(transactions.length)
         await TransactionModel.bulkWrite(transactions.map(t => ({ insertOne: { document: t } })))
         transactions.length = 0
       }
