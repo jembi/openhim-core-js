@@ -21,7 +21,20 @@ function tickProgress (tickAmount) {
   bar.tick(tickAmount)
 }
 
-async function seedValues (clients = 1, channelsPerClient = 2, transactionsPerChannel = 500000, startDate = DEFAULT_START_DATE, endDate = DEFAULT_END_DATE) {
+function getTransactionCount () {
+  let tranIndex = process.argv.indexOf('--tran')
+  if (tranIndex === -1) {
+    tranIndex = process.argv.indexOf('-t')
+  }
+  if (tranIndex === -1 && process.argv.length >= tranIndex + 1) {
+    return
+  }
+
+  const trans = parseInt(process.argv[tranIndex + 1], 10)
+  return isNaN(trans) ? undefined : trans
+}
+
+async function seedValues (clients = 1, channelsPerClient = 2, transactionsPerChannel = 250000, startDate = DEFAULT_START_DATE, endDate = DEFAULT_END_DATE) {
   const totalTrans = clients * channelsPerClient * transactionsPerChannel
   console.log(`Starting seed of ${totalTrans} transactions`)
   await dropTestDb()
@@ -180,7 +193,7 @@ function oneOf (arr) {
 
 if (module.parent == null) {
   // Do seed off of argv
-  seedValues()
+  seedValues(undefined, undefined, getTransactionCount())
     .then(() => process.exit(0))
     .catch(() => process.exit(1))
 }
