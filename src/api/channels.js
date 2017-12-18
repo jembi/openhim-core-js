@@ -81,7 +81,7 @@ export function isTimeoutValid (channel) {
     return true
   }
 
-  return typeof channel.timeout === 'number' && channel.timeout > 0 && channel.timeout <= 3600
+  return typeof channel.timeout === 'number' && channel.timeout > 0 && channel.timeout <= 3600000
 }
 
 export function isMaxBodyDaysValid (channel) {
