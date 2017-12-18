@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import StatsdClient from 'statsd-client'
 import os from 'os'
@@ -9,6 +8,7 @@ import * as autoRetryUtils from '../autoRetry'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
+import { promisify } from 'util'
 
 const statsdServer = config.get('statsd')
 const sdc = new StatsdClient(statsdServer)
@@ -295,7 +295,7 @@ export async function addTransaction (ctx) {
     const tx = new TransactionModelAPI(transactionData)
 
     // Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
-    await Q.ninvoke(tx, 'save')
+    await tx.save()
     ctx.status = 201
     logger.info(`User ${ctx.authenticated.email} created transaction with id ${tx.id}`)
 
@@ -418,7 +418,7 @@ async function generateEvents (transaction, channelID) {
     events.createTransactionEvents(trxEvents, transaction, channel)
 
     if (trxEvents.length > 0) {
-      await Q.nfcall(events.saveEvents, trxEvents)
+      await promisify(events.saveEvents)(trxEvents)
     }
   } catch (err) {
     logger.error(err)

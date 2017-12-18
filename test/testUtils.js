@@ -7,7 +7,6 @@
 // import zlib from 'zlib'
 // import pem from 'pem'
 // import logger from 'winston'
-// import Q from 'q'
 // import finalhandler from 'finalhandler'
 // import serveStatic from 'serve-static'
 // import { TransactionModel } from '../src/model/transactions'

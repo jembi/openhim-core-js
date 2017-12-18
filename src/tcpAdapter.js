@@ -2,7 +2,6 @@ import http from 'http'
 import net from 'net'
 import tls from 'tls'
 import logger from 'winston'
-import Q from 'q'
 import * as Channels from './model/channels'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
 import { config } from './config'
@@ -103,22 +102,20 @@ export function startupServers (callback) {
 
     const promises = []
 
-    for (const channel of Array.from(channels)) {
-      (function (channel) {
-        if (Channels.isChannelEnabled(channel)) {
-          const defer = Q.defer()
-
+    Array.from(channels).forEach((channel) => {
+      if (Channels.isChannelEnabled(channel)) {
+        const promise = new Promise((resolve, reject) => {
           exports.startupTCPServer(channel._id, (err) => {
-            if (err) { return callback(err) }
-            return defer.resolve()
+            if (err) { return reject(err) }
+            return resolve()
           })
+        })
 
-          return promises.push(defer.promise)
-        }
-      }(channel))
-    }
+        return promises.push(promise)
+      }
+    })
 
-    return (Q.all(promises)).then(() => callback(null))
+    return Promise.all(promises).then(() => callback(null)).catch(callback)
   })
 }
 
@@ -156,31 +153,28 @@ function adaptSocketRequest (channel, sock, socketData) {
 }
 
 function stopTCPServers (servers, callback) {
-  const promises = []
-
-  for (const server of Array.from(servers)) {
-    (function (server) {
-      const defer = Q.defer()
-
+  const promises = Array.from(servers).map((server) => {
+    return new Promise((resolve, reject) => {
       server.server.close((err) => {
         if (err) {
-          logger.error(`Could not close tcp server: ${err}`)
-          return defer.reject(err)
+          return reject(err)
         } else {
           logger.info(`Channel ${server.channelID}: Stopped TCP/TLS server`)
-          return defer.resolve()
+          return resolve()
         }
       })
+    })
+  })
 
-      return promises.push(defer.promise)
-    }(server))
-  }
-
-  return (Q.all(promises)).then(() => callback())
+  Promise.all(promises).then(() => callback()).catch(callback)
 }
 
 export function stopServers (callback) {
-  return stopTCPServers(tcpServers, () => {
+  stopTCPServers(tcpServers, (err) => {
+    if (err) {
+      logger.error('Could not close tcp server', err)
+      return callback(err)
+    }
     tcpServers = []
     return callback()
   })

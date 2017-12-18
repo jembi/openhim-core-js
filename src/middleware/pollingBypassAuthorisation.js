@@ -1,8 +1,8 @@
-import Q from 'q'
 import SDC from 'statsd-client'
 import os from 'os'
 import { ChannelModel } from '../model/channels'
 import { config } from '../config'
+import { promisify } from 'util'
 
 const statsdServer = config.get('statsd')
 const application = config.get('application')
@@ -24,7 +24,7 @@ export function authoriseUser (ctx, done) {
 export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  const _authoriseUser = Q.denodeify(authoriseUser)
+  const _authoriseUser = promisify(authoriseUser)
   await _authoriseUser(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.pollingBypassAuthorisationMiddleware`, startTime) }
   await next()

@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import { VisualizerModelAPI } from '../model/visualizer'
 import * as authorisation from './authorisation'
@@ -53,7 +52,7 @@ export async function addVisualizer (ctx) {
 
   try {
     const visualizer = new VisualizerModelAPI(ctx.request.body)
-    await Q.ninvoke(visualizer, 'save')
+    await visualizer.save()
 
     ctx.body = 'Visualizer successfully created'
     ctx.status = 201

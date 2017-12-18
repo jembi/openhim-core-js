@@ -1,10 +1,10 @@
 import logger from 'winston'
-import Q from 'q'
 import * as authorisation from '../api/authorisation'
 import * as server from '../server'
 import { config } from '../config'
 import * as KeystoreAPI from '../api/keystore'
 import * as utils from '../utils'
+import { promisify } from 'util'
 
 config.router = config.get('router')
 config.api = config.get('api')
@@ -25,7 +25,7 @@ export async function restart (ctx, next) {
   try {
     const emailAddr = ctx.authenticated.email
 
-    const result = await Q.nfcall(KeystoreAPI.getCertKeyStatus)
+    const result = await promisify(KeystoreAPI.getCertKeyStatus)()
 
     // valid certificate/key
     if (result) {
