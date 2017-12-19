@@ -366,7 +366,7 @@ describe('Routes enabled/disabled tests', () => {
     newTransaction[0].orchestrations[0].error.message.should.eql('connect ECONNREFUSED 127.0.0.1:32043')
   })
 
-  it('should respsect the channel timeout', async () => {
+  it('should respect the channel timeout', async () => {
     await request(constants.HTTP_BASE_URL)
       .get('/test/timeoutChannel')
       .auth('testApp', 'password')
