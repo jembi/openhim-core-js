@@ -4,85 +4,110 @@ To get you started, we will show you how to install the OpenHIM core along with 
 
 ## How to install the OpenHIM
 
-If you are installing the OpenHIM on ubuntu, then the installation process is very easy as we provide a debian package in the OpenHIE Personal Package Archive (PPA). Currently, the packages are only built for Ubuntu 14.04 but we hope to support the latest LTS soon. The OpenHIM in general supports all versions of Ubuntu. 
+If you are installing the OpenHIM on ubuntu, then the installation process is very easy as we provide a debian package in the OpenHIE Personal Package Archive (PPA). Currently, the packages are only built for Ubuntu 14.04 but we hope to support the latest LTS soon. The OpenHIM in general supports all versions of Ubuntu.
 
-**Note**: If you are installing the OpenHIM on a VM, please see [Installation using a Virtual Machine](#installation-using-a-virtual-machine) before proceeding with the installation of the OpenHIM.
+> **Note**: If you are installing the OpenHIM on a VM, please see [Installation using a Virtual Machine](#installation-using-a-virtual-machine) before proceeding with the installation of the OpenHIM.
+___
 
 ### Installation using the PPA (Ubuntu v14.04 only)
 
-When installing the console, it will ask you for the host and port number of the OpenHIM core server. Make sure that you provide the public hostname so that the OpenHIM core server may be accessible (localhost if testing from your local machine). **Note**: If you are running the OpenHIM on a local machine that is not public facing, you will need to specify the machines **IP address** as the hostname during the installation of the console. During the installation of the OpenHIM, you will be prompted with an option to choose an existing folder which contains certificates. Should you not have any existing certificate which you would like to add to the OpenHIM, please select **No**.
+When installing the console, it will ask you for the host and port number of the OpenHIM core server. Make sure that you provide the public hostname so that the OpenHIM core server may be accessible (localhost if testing from your local machine).
+> **Note**: If you are running the OpenHIM on a local machine that is not public facing, you will need to specify the machines **IP address** as the hostname during the installation of the console. During the installation of the OpenHIM, you will be prompted with an option to choose an existing folder which contains certificates. Should you not have any existing certificate which you would like to add to the OpenHIM, please select _No_.
 
-You can run sudo dpkg-reconfigure openhim-console at any time to specify a new OpenHIM core host and port number. These packages will install the OpenHIM core using Node Package Manager (NPM) for the OpenHIM user, add the OpenHIM-core as a service and install the OpenHIM console to Engine-X (nginx). The OpenHIM core log file can be found here /var/log/upstart/openhim-core.log. You may stop and start the OpenHIM core with sudo start openhim-core or sudo stop openhim-core.
-
+You can run `sudo dpkg-reconfigure openhim-console` at any time to specify a new OpenHIM core host and port number. These packages will install the OpenHIM core using Node Package Manager (NPM) for the OpenHIM user, add the OpenHIM-core as a service and install the OpenHIM console to Engine-X (nginx). The OpenHIM core log file can be found here /var/log/upstart/openhim-core.log. You may stop and start the OpenHIM core with `sudo start openhim-core` or `sudo stop openhim-core`
 
 To install the OpenHIM core and console, just execute the following commands:
+
 ```sh
-1. $ sudo add-apt-repository ppa:openhie/release
-2. $ sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
-3. $ sudo echo 'deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse' | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
-4. $ sudo apt-get update
-5. $ sudo apt-get install openhim-core-js openhim-console
+sudo add-apt-repository ppa:openhie/release
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv EA312927
+sudo echo 'deb http://repo.mongodb.org/apt/ubuntu trusty/mongodb-org/3.2 multiverse' | sudo tee /etc/apt/sources.list.d/mongodb-org-3.2.list
+sudo apt-get update
+sudo apt-get install openhim-core-js openhim-console
 ```
 
-It is **recommended** that the OpenHIM be used with a proper Transport Layer Security (TLS) certificate to secure your server. The easiest way to do this on a public server is to generate a free Let’s Encrypt (letsencrypt) certificate. Let’s Encrypt certificate provides free X.509 certificates for TLS encryption. See their website for further information. 
+It is **recommended** that the OpenHIM be used with a proper Transport Layer Security (TLS) certificate to secure your server. The easiest way to do this on a public server is to generate a free Let’s Encrypt (letsencrypt) certificate. Let’s Encrypt certificate provides free X.509 certificates for TLS encryption. See their website for further information.
 
-**Note**: If your OpenHIM machine is running on a domain name that is not public facing, you will not be able to generate a certificate using letsencrypt. Instead, you will need to use a self-signed certificate. The next few steps will discuss how this works.
+> **Note**: If your OpenHIM machine is running on a domain name that is not public facing, you will not be able to generate a certificate using letsencrypt. Instead, you will need to use a self-signed certificate. The next few steps will discuss how this works.
 
 #### How to Generate a free Let’s Encrypt (letsencrypt) certificate
 
-**Note**: This section only applies to OpenHIM installations that have a public facing domain name. If you are running the OpenHIM on your local machine or on a virtual machine, you may continue with the self-signed certificate.
+> **Note**: This section only applies to OpenHIM installations that have a public facing domain name. If you are running the OpenHIM on your local machine or on a virtual machine, you may continue with the self-signed certificate.
 
-You are able to generate a free certificate by following these commands:
+You are able to generate a free certificate by following these steps:
+
+1. Fetch letsencrypt certbot script and make it executable (These commands assume you are running as the root user)
+
 ```sh
-#These commands assume you are running as the root user
-#fetch letsencrypt certbot script and make it executable
-1. $ wget https://dl.eff.org/certbot-auto
-2. $ chmod a+x certbot-auto
-#Install certbot dependencies - if this fails and you have a small amount of ram then you may need to add a swapfile
-3. $ ./certbot-auto
-4. $ ./certbot-auto certonly --webroot -w /usr/share/openhim-console -d <your_hostname>
-#allow the openhim the ability to read the generated certificate and key
-5. $ chmod 750 /etc/letsencrypt/live/
-6. $ chmod 750 /etc/letsencrypt/archive/
-7. $ chown :openhim /etc/letsencrypt/live/ /etc/letsencrypt/archive/
-#Change your OpenHIM cert config in /etc/openhim/config.json to (or enter these details when asked during the OpenHIM installation)
-8. "certificateManagement": {
-9. "watchFSForCert": true,
-10. "certPath": "/etc/letsencrypt/live/<your_hostname>/fullchain.pem",
-11. "keyPath": "/etc/letsencrypt/live/<your_hostname>/privkey.pem"
-12. }
-#setup auto renewal of the certificate
-13. $ crontab -e
-#append the following line at the end of your crontab
-14. 0 0 * * * /root/certbot-auto renew --no-self-upgrade >> /var/log/letsencrypt-renewal.log
+wget https://dl.eff.org/certbot-auto
+chmod a+x certbot-auto
 ```
-### Installation Manually
+
+2. Install certbot dependencies (If this fails and you have a small amount of ram then you may need to add a swapfile)
+
+```sh
+./certbot-auto
+./certbot-auto certonly --webroot -w /usr/share/openhim-console -d <your_hostname>
+```
+
+3. Allow the openhim the ability to read the generated certificate and key
+
+```sh
+chmod 750 /etc/letsencrypt/live/
+chmod 750 /etc/letsencrypt/archive/
+chown :openhim /etc/letsencrypt/live/ /etc/letsencrypt/archive/
+```
+
+4. Change your OpenHIM cert config in /etc/openhim/config.json to the following:
+
+```text
+"certificateManagement": {
+  "watchFSForCert": true,
+  "certPath": "/etc/letsencrypt/live/<your_hostname>/fullchain.pem",
+  "keyPath": "/etc/letsencrypt/live/<your_hostname>/privkey.pem"
+ }
+
+(or enter these details when asked during the OpenHIM installation)
+```
+
+5. setup auto renewal of the certificate
+
+```sh
+crontab -e
+```
+
+6. append the following line at the end of your crontab
+
+```text
+0 0 * * * /root/certbot-auto renew --no-self-upgrade >> /var/log/letsencrypt-renewal.log
+```
+
+___
+
+### Manual Installation
 
 If you don’t have ubuntu or prefer to proceed with the installation manually, please follow the following steps.
 
 #### Installing the OpenHIM Core
 
 The latest active LTS is **recommended**.
-**Note**: libappstream3 may cause problems with the npm package manager if your ubuntu instance is not fully updated.
-```sh
-1. Install the latest stable Node.js v4 or greater. 
-- curl -sL https://deb.nodesource.com/setup_6.x| sudo -E bash 
-- sudo apt-get install -y nodejs
-2. Install and start MongoDB 2.6 or greater. Note: If you are running Ubuntu 16.04, you may want to  configure MongoDB as a systemd service that will automatically start on boot.
-3. Install Git apt-get install git
-4. Install npm: sudo apt install npm
-5. Install the OpenHIM-core package globally: sudo npm install openhim-core -g, this will also install an OpenHIM-core binary to your PATH.
-6. Start the server by executing openhim-core from anywhere.
-```
+
+> **Note**: libappstream3 may cause problems with the npm package manager if your ubuntu instance is not fully updated.
+
+1. Install the latest stable Node.js v4 or greater `curl -sL https://deb.nodesource.com/setup_6.x| sudo -E bash` then `sudo apt-get install -y nodejs`
+1. Install and start MongoDB 2.6 or greater. (If you are running Ubuntu 16.04, you may want to  configure MongoDB as a systemd service that will automatically start on boot)
+1. Install Git `apt-get install git`
+1. Install npm `sudo apt install npm`
+1. Install the OpenHIM-core package globally (this will also install an OpenHIM-core binary to your PATH) `sudo npm install openhim-core -g`
+1. Start the server by executing `openhim-core` from anywhere.
+
 To make use of your own custom configurations, you have two options:
-```sh
-1. You can copy the default.json config file and override the default settings:
-wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/default.json
-# edit default.json, then
-openhim-core --conf=path/to/default.json
-2. You can use environment variables to set specific parameters. Environment variables use a _ as a separator for nested keys. For example, to change the port that the Application Programming Interface (API) listens on and to change the ports that the router listens on you could do the following: api_httpsPort=8081 router_httpsPort=50456 router_httpPort=50457 npm start. 
-```
-**Note**: The environment variables are case sensitive.
+
+1. You can copy the default.json config file and override the default settings: `wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/default.json` edit default.json, then `openhim-core --conf=path/to/default.json`
+
+1. You can use environment variables to set specific parameters. Environment variables use a _ as a separator for nested keys. For example, to change the port that the Application Programming Interface (API) listens on and to change the ports that the router listens on you could do the following: `api_httpsPort=8081 router_httpsPort=50456 router_httpPort=50457 npm start`
+
+> **Note**: The environment variables are case sensitive.
 
 For more information about the config options, please visit [OpenHIM Config Options](https://github.com/jembi/openhim-core-js/blob/master/config/config.md).
 
@@ -90,20 +115,18 @@ For more information about the config options, please visit [OpenHIM Config Opti
 
 Before installing the OpenHIM console, it is required that you first have the OpenHIM core server up and running. The OpenHIM console communicates with the OpenHIM core via its API to pull and display data.
 
-Next, you need to download the latest release of the web app and deploy it to a web server (replace the X’s in the below command to the latest release):
+Next, you need to download the latest release of the web app and deploy it to a web server (Replace the X’s in the below command to the latest release):
 
-```sh
-1. Get the latest release : wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz
-2. Navigate to the path /var
-3. Create the /var/www/ path (If it does not already exist) : sudo mkdir www
-4. Navigate to the path /var/www/
-5. Create the /var/www/html path (If it does not already exist) : sudo mkdir html
-6. Export the contents of the download : tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/html
-```
+1. Get the latest release `sh wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz`
+1. Navigate to the path `cd /var`
+1. Create the /var/www/ path (If it does not already exist) `sudo mkdir www`
+1. Navigate to the path `cd www/`
+1. Create the /var/www/html path (If it does not already exist) `sudo mkdir html`
+1. Export the contents of the download `tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/html`
 
 The next step is vital for the successful setup of the OpenHIM console. Firstly, you need to configure the console to point to your OpenHIM core server and lastly, navigate to the config/default.js file in the folder that you extracted the OpenHIM console’s contents to and edit it as follows:
 
-```sh
+```text
 {
   "version": "x.x.x", //Replace the x's with the latest release
   "minimumCoreVersion": "3.4.0",
@@ -121,25 +144,26 @@ The next step is vital for the successful setup of the OpenHIM console. Firstly,
 
 #### Ensure communication between the OpenHIM Console and Core
 
-Make sure you have the latest Apache server installed: sudo apt-get install apache2
-Make sure the apache service is up and running: sudo service apache2 status
+Make sure you have the latest Apache server installed `sudo apt-get install apache2`
+
+Make sure the apache service is up and running `sudo service apache2 status`
+
+___
 
 ### Installation using docker
 
 The following steps will guide you through the process of installing the OpenHIM using docker images.
 
-**Note**: Install Docker at the link below, follow all the steps and most importantly, ensure that there is no previous docker installed while following these instructions. (https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#install-using-the-repository)
+1. Install **Docker** via terminal `curl https://get.docker.com/ | sh -` Or install Docker using the link below, follow all the steps and most importantly, ensure that there is no previous docker installed while following these instructions. (https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/#install-using-the-repository)
+1. Install **Docker Compose**, follow all the steps and use the recommend example version to install which is their latest stable release:  https://docs.docker.com/compose/install/#install-compose
+1. Install Git `sudo apt-get install git`
+1. Clone the repository for setting up a docker image `git clone https://github.com/jembi/openhim-common.git`
+1. Navigate into the repo `cd openhim-common`
+1. Build the docker images `docker-compose build && docker-compose up -d`
+1. Access the OpenHIM Console on http://localhost:9000
 
-```sh
-1. Install Docker Compose, follow all the steps and use the recommend example version to install which is their latest stable release:  https://docs.docker.com/compose/install/#install-compose 
-2. Install Git:  sudo apt-get install git
-3. Clone the repository for setting up a docker image: 
-git clone https://github.com/jembi/openhim-common.git 
-4. Navigate into the repo: cd openhim-common
-5. Build the docker images: docker-compose build && docker-compose up -d
-6. Access the OpenHIM Console on http://localhost:9000
-```
-**Note**: To configure the IP address the user must do the following: sudo nano default.json. Edit the hostname to be that of the IP address of the docker image.
+> **Note**: To configure the IP address the user must do the following `sudo nano default.json` edit the hostname to be that of the IP address of the docker image.
+___
 
 ### Installation using a Virtual Machine
 
@@ -153,62 +177,64 @@ If you are running a server edition of Linux such as Ubuntu 16.04 LTS as a VM, y
 
 For example, if your local machine IP address is 192.168.1.5 then the network block is 192.168.1.0 with a subnet mask of 255.255.255.0. This means that the hostname for the OpenHIM must contain the first three octets that is 192.168.1. The last octet must be unique such as 192.168.1.6.
 
-When asked to configure the OpenHIM console during the OpenHIM installation process, you will need to specify the IP address which is the same IP address that has been assigned to the VMs eth0 interface. 
-- To verify the eth0 IP address, run the command: ifconfig -a
-- To change your eth0 network configuration, run the command: sudo vi /etc/network/interfaces
+When asked to configure the OpenHIM console during the OpenHIM installation process, you will need to specify the IP address which is the same IP address that has been assigned to the VMs eth0 interface.
 
-You may also need to configure your local machine (the machine running the VM instance) network settings for the VM by changing the network adapter type to bridged so that internet services will be possible as well as to access the OpenHIM console via your local machine internet browser. **Note**: This happens within the VM software itself, not in the installed server edition of linux.
+- To verify the eth0 IP address, run the command `ifconfig -a`
+- To change your eth0 network configuration, run the command `sudo vi /etc/network/interfaces`
+
+You may also need to configure your local machine (the machine running the VM instance) network settings for the VM by changing the network adapter type to 'bridged' so that internet services will be possible as well as to access the OpenHIM console via your local machine internet browser.
+> **Note**: This happens within the VM software itself, not in the installed server edition of linux.
 
 #### Desktop Edition Linux
 
 If you are running a desktop edition of Linux such as Ubuntu 14.04 LTS as a VM, you will be able to logon to the OpenHIM console directly from the VM by using localhost as your configured hostname.
 
 Should you wish to access the OpenHIM console from your local machine, please follow the steps in [Server Edition Linux](#server-edition-linux).
+___
 
 ## Logging in to the OpenHIM Console
 
-The OpenHIM console is accessible by navigating to your web server. **Note**: The default port for the OpenHIM console is port *80*. It is possible to change this port in your NGINX configuration file. See [How to update your NGINX Config file](#how-to-update-your-nginx-config-file) for instructions on how to do this.
+The OpenHIM console is accessible by navigating to your web server.
+> **Note**: The default port for the OpenHIM console is port **80**. It is possible to change this port in your NGINX configuration file. See [How to update your NGINX Config file](#how-to-update-your-nginx-config-file) for instructions on how to do this.
 
-For example, assuming your web server host is your local machine, the Uniform resource Locator (URL) will be http://localhost:80/. The default OpenHIM administrator login credentials are as follows. Upon logging in, you will be prompted to customize your credentials so that it is more secure:
+For example, assuming your web server host is your local machine, the Uniform resource Locator (URL) will be <http://localhost:80/>. The default OpenHIM administrator login credentials are as follows. Upon logging in, you will be prompted to customize your credentials so that it is more secure:
 
 - Username: root@openhim.org
 - Password: openhim-password
 
-**Note**: You will have problems logging in if your OpenHIM server is still setup to use a self-signed certificate (the default). Please see section **How to Generate a free Let’s Encrypt (letsencrypt) certificate** which identifies the steps necessary to generate a free certificate. If you choose to do this later, you may get around this by following these steps:
+> **Note**: You will have problems logging in if your OpenHIM server is still setup to use a self-signed certificate (the default). Please see section **How to Generate a free Let’s Encrypt (letsencrypt) certificate** which identifies the steps necessary to generate a free certificate. If you choose to do this later, you may get around this by following these steps:
 
-```sh
-1. Visit the following link: https://localhost:8080/authenticate/root@openhim.org in Chrome. 
+```text
+1. Visit the following link: https://localhost:8080/authenticate/root@openhim.org in Chrome.
 Note: Make sure you are visiting this link from the system that is running the OpenHIM core. Otherwise, replace localhost and 8080 with the appropriate OpenHIM core server hostname (or IP Address) and API port.
-2. You should see a message saying “Your connection is not private”. Click “Advanced” and then click “Proceed”. 
-3. Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed. 
+2. You should see a message saying “Your connection is not private”. Click “Advanced” and then click “Proceed”.
+3. Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed.
 4. Now, you should be able to go back to the OpenHIM console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM core server.
 ```
 
 The credentials used from this point will be considered the OpenHIM administrative account and is therefore highly recommended that you apply a strong password. General best practices in password creation that have been identified in this [article](https://www.symantec.com/connect/articles/simplest-security-guide-better-password-practices) may help you.
+___
 
-## How to update your NGINX Config file
+### How to update your NGINX Config file
 
 The following steps guides you through the process of updating your NGINX config file for the purpose of changing the default listening port for the OpenHIM console:
 
-```sh
-1. Navigate to the NGINX config file: vim /etc/nginx/sites-enabled/openhim-console
-2. Add the following line directly after the {
-listen 12345; 	#Where 12345 is the port number that you have chosen to use
-3. Save your changes with the command :wq
-4. Check your configuration for syntax errors: sudo nginx -t
-5. Refresh the NGINX config: service nginx reload
-```
+1. Navigate to the NGINX config file `vim /etc/nginx/sites-enabled/openhim-console`
+1. Add the following line directly after the curly bracket: listen 12345; // Where 12345 is the port number that you have chosen to use
+1. Save and exit with the command :wq
+1. Check your configuration for syntax errors `sudo nginx -t`
+1. Refresh the NGINX config `service nginx reload`
 
-Your NGINX configuration will then appears as follows:
+Your NGINX configuration will then appear as follows:
 
-```sh
+```text
 server {
-	listen 12345;  #Where 12345 is the port number that you have chosen to use
-root /usr/share/openhim-console;
-index index.html;
+  listen 12345;
+  root /usr/share/openhim-console;
+  index index.html;
 
-location / {
-	try_files $uri $url/ =404;
+  location / {
+    try_files $uri $url/ =404;
   }
 }
 ```
