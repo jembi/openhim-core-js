@@ -36,52 +36,39 @@ sudo apt-get install openhim-core-js openhim-console
 
 You are able to generate a free certificate by following these steps:
 
-1. Fetch letsencrypt certbot script and make it executable (These commands assume you are running as the root user)
-
+Fetch letsencrypt certbot script and make it executable (These commands assume you are running as the root user)
 ```sh
 wget https://dl.eff.org/certbot-auto
 chmod a+x certbot-auto
 ```
-
-2. Install certbot dependencies (If this fails and you have a small amount of ram then you may need to add a swapfile)
-
+Install certbot dependencies (If this fails and you have a small amount of ram then you may need to add a swapfile)
 ```sh
 ./certbot-auto
 ./certbot-auto certonly --webroot -w /usr/share/openhim-console -d <your_hostname>
 ```
-
-3. Allow the openhim the ability to read the generated certificate and key
-
+Allow the openhim the ability to read the generated certificate and key
 ```sh
 chmod 750 /etc/letsencrypt/live/
 chmod 750 /etc/letsencrypt/archive/
 chown :openhim /etc/letsencrypt/live/ /etc/letsencrypt/archive/
 ```
-
-4. Change your OpenHIM cert config in /etc/openhim/config.json to the following:
-
+Change your OpenHIM cert config in /etc/openhim/config.json to the following:
 ```text
 "certificateManagement": {
   "watchFSForCert": true,
   "certPath": "/etc/letsencrypt/live/<your_hostname>/fullchain.pem",
   "keyPath": "/etc/letsencrypt/live/<your_hostname>/privkey.pem"
  }
-
 (or enter these details when asked during the OpenHIM installation)
 ```
-
-5. Setup auto renewal of the certificate
-
+Setup auto renewal of the certificate
 ```sh
 crontab -e
 ```
-
-6. Append the following line at the end of your crontab
-
+Append the following line at the end of your crontab
 ```text
 0 0 * * * /root/certbot-auto renew --no-self-upgrade >> /var/log/letsencrypt-renewal.log
 ```
-
 ___
 
 ### Manual Installation
@@ -204,16 +191,10 @@ For example, assuming your web server host is your local machine, the Uniform re
 
 > **Note**: You will have problems logging in if your OpenHIM server is still setup to use a self-signed certificate (the default). Please see section **How to Generate a free Let’s Encrypt (letsencrypt) certificate** which identifies the steps necessary to generate a free certificate. If you choose to do this later, you may get around this by following these steps:
 
-
-1. Visit the following link: https://localhost:8080/authenticate/root@openhim.org in Chrome.
-> **Note**: Make sure you are visiting this link from the system that is running the OpenHIM core. Otherwise, replace localhost and 8080 with the appropriate OpenHIM core server hostname (or IP Address) and API port.
-
-2. You should see a message saying “Your connection is not private”. Click “Advanced” and then click “Proceed”.
-
-3. Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed.
-
-4. Now, you should be able to go back to the OpenHIM console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM core server.
-
+1. Visit the following link: https://localhost:8080/authenticate/root@openhim.org in Chrome. **Note**: Make sure you are visiting this link from the system that is running the OpenHIM core. Otherwise, replace localhost and 8080 with the appropriate OpenHIM core server hostname (or IP Address) and API port.
+1. You should see a message saying “Your connection is not private”. Click “Advanced” and then click “Proceed”.
+1. Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed.
+1. Now, you should be able to go back to the OpenHIM console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM core server.
 
 > The credentials used from this point will be considered the OpenHIM administrative account and is therefore highly recommended that you apply a strong password. General best practices in password creation that have been identified in this [article](https://www.symantec.com/connect/articles/simplest-security-guide-better-password-practices) may help you.
 ___
