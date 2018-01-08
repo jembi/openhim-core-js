@@ -36,40 +36,40 @@ sudo apt-get install openhim-core-js openhim-console
 
 You are able to generate a free certificate by following these steps:
 
-Fetch letsencrypt certbot script and make it executable (These commands assume you are running as the root user)
-```sh
-wget https://dl.eff.org/certbot-auto
-chmod a+x certbot-auto
-```
-Install certbot dependencies (If this fails and you have a small amount of ram then you may need to add a swapfile)
-```sh
-./certbot-auto
-./certbot-auto certonly --webroot -w /usr/share/openhim-console -d <your_hostname>
-```
-Allow the openhim the ability to read the generated certificate and key
-```sh
-chmod 750 /etc/letsencrypt/live/
-chmod 750 /etc/letsencrypt/archive/
-chown :openhim /etc/letsencrypt/live/ /etc/letsencrypt/archive/
-```
-Change your OpenHIM cert config in /etc/openhim/config.json to the following:
-```text
-"certificateManagement": {
-  "watchFSForCert": true,
-  "certPath": "/etc/letsencrypt/live/<your_hostname>/fullchain.pem",
-  "keyPath": "/etc/letsencrypt/live/<your_hostname>/privkey.pem"
- }
-(or enter these details when asked during the OpenHIM installation)
-```
-Setup auto renewal of the certificate
-```sh
-crontab -e
-```
-Append the following line at the end of your crontab
-```text
-0 0 * * * /root/certbot-auto renew --no-self-upgrade >> /var/log/letsencrypt-renewal.log
-```
-___
+1. Fetch letsencrypt certbot script and make it executable (These commands assume you are running as the root user):
+    ```sh
+    wget https://dl.eff.org/certbot-auto
+    chmod a+x certbot-auto
+    ```
+1. Install certbot dependencies (If this fails and you have a small amount of ram then you may need to add a swapfile):
+    ```sh
+    ./certbot-auto
+    ./certbot-auto certonly --webroot -w /usr/share/openhim-console -d <your_hostname>
+    ```
+1. Allow the openhim the ability to read the generated certificate and key:
+    ```sh
+    chmod 750 /etc/letsencrypt/live/
+    chmod 750 /etc/letsencrypt/archive/
+    chown :openhim /etc/letsencrypt/live/ /etc/letsencrypt/archive/
+    ```
+1. Change your OpenHIM cert config in /etc/openhim/config.json to the following:
+    ```json
+    "certificateManagement": {
+      "watchFSForCert": true,
+      "certPath": "/etc/letsencrypt/live/<your_hostname>/fullchain.pem",
+      "keyPath": "/etc/letsencrypt/live/<your_hostname>/privkey.pem"
+    }
+
+    (or enter these details when asked during the OpenHIM installation)
+    ```
+1. setup auto renewal of the certificate:
+    ```sh
+    crontab -e
+    ```
+1. append the following line at the end of your crontab:
+    ```text
+    0 0 * * * /root/certbot-auto renew --no-self-upgrade >> /var/log/letsencrypt-renewal.log
+    ```
 
 ### Manual Installation
 
@@ -211,7 +211,7 @@ The following steps guides you through the process of updating your NGINX config
 
 Your NGINX configuration will then appear as follows:
 
-```text
+```nginx
 server {
   listen 12345;
   root /usr/share/openhim-console;
