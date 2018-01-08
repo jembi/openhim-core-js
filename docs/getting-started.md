@@ -26,7 +26,7 @@ sudo apt-get update
 sudo apt-get install openhim-core-js openhim-console
 ```
 
-It is **recommended** that the OpenHIM be used with a proper Transport Layer Security (TLS) certificate to secure your server. The easiest way to do this on a public server is to generate a free Let’s Encrypt (letsencrypt) certificate. Let’s Encrypt certificate provides free X.509 certificates for TLS encryption. See their website for further information.
+> It is **recommended** that the OpenHIM be used with a proper Transport Layer Security (TLS) certificate to secure your server. The easiest way to do this on a public server is to generate a free Let’s Encrypt (letsencrypt) certificate. Let’s Encrypt certificate provides free X.509 certificates for TLS encryption. See their website for further information.
 
 > **Note**: If your OpenHIM machine is running on a domain name that is not public facing, you will not be able to generate a certificate using letsencrypt. Instead, you will need to use a self-signed certificate. The next few steps will discuss how this works.
 
@@ -70,13 +70,13 @@ chown :openhim /etc/letsencrypt/live/ /etc/letsencrypt/archive/
 (or enter these details when asked during the OpenHIM installation)
 ```
 
-5. setup auto renewal of the certificate
+5. Setup auto renewal of the certificate
 
 ```sh
 crontab -e
 ```
 
-6. append the following line at the end of your crontab
+6. Append the following line at the end of your crontab
 
 ```text
 0 0 * * * /root/certbot-auto renew --no-self-upgrade >> /var/log/letsencrypt-renewal.log
@@ -90,7 +90,7 @@ If you don’t have ubuntu or prefer to proceed with the installation manually, 
 
 #### Installing the OpenHIM Core
 
-The latest active LTS is **recommended**.
+> The latest active LTS is **recommended**.
 
 > **Note**: libappstream3 may cause problems with the npm package manager if your ubuntu instance is not fully updated.
 
@@ -115,6 +115,8 @@ For more information about the config options, please visit [OpenHIM Config Opti
 
 Before installing the OpenHIM console, it is required that you first have the OpenHIM core server up and running. The OpenHIM console communicates with the OpenHIM core via its API to pull and display data.
 
+> It is **recommended** that as soon as the OpenHIM core is up and running that you setup a properly signed TLS certificate. However, it is possible to do this later through the OpenHIM console under ‘Certificates’ on the left navigation pane.
+
 Next, you need to download the latest release of the web app and deploy it to a web server (Replace the X’s in the below command to the latest release):
 
 1. Get the latest release `sh wget https://github.com/jembi/openhim-console/releases/download/vX.X.X/openhim-console-vX.X.X.tar.gz`
@@ -124,9 +126,9 @@ Next, you need to download the latest release of the web app and deploy it to a 
 1. Create the /var/www/html path (If it does not already exist) `sudo mkdir html`
 1. Export the contents of the download `tar -vxzf openhim-console-vX.X.X.tar.gz --directory /var/www/html`
 
-The next step is vital for the successful setup of the OpenHIM console. Firstly, you need to configure the console to point to your OpenHIM core server and lastly, navigate to the config/default.js file in the folder that you extracted the OpenHIM console’s contents to and edit it as follows:
+> The next step is vital for the successful setup of the OpenHIM console. Firstly, you need to configure the console to point to your OpenHIM core server and lastly, navigate to the config/default.js file in the folder that you extracted the OpenHIM console’s contents to and edit it as follows:
 
-```text
+```js
 {
   "version": "x.x.x", //Replace the x's with the latest release
   "minimumCoreVersion": "3.4.0",
@@ -145,9 +147,7 @@ The next step is vital for the successful setup of the OpenHIM console. Firstly,
 #### Ensure communication between the OpenHIM Console and Core
 
 Make sure you have the latest Apache server installed `sudo apt-get install apache2`
-
 Make sure the apache service is up and running `sudo service apache2 status`
-
 ___
 
 ### Installation using docker
@@ -169,7 +169,7 @@ ___
 
 When installing the OpenHIM on a VM that is running on your local machine, please take note of the following.
 
-Oracle's [VirtualBox](https://www.virtualbox.org/) is **recommended** for the setup of VMs.
+> Oracle's [VirtualBox](https://www.virtualbox.org/) is **recommended** for the setup of VMs.
 
 #### Server Edition Linux
 
@@ -204,15 +204,18 @@ For example, assuming your web server host is your local machine, the Uniform re
 
 > **Note**: You will have problems logging in if your OpenHIM server is still setup to use a self-signed certificate (the default). Please see section **How to Generate a free Let’s Encrypt (letsencrypt) certificate** which identifies the steps necessary to generate a free certificate. If you choose to do this later, you may get around this by following these steps:
 
-```text
-1. Visit the following link: https://localhost:8080/authenticate/root@openhim.org in Chrome.
-Note: Make sure you are visiting this link from the system that is running the OpenHIM core. Otherwise, replace localhost and 8080 with the appropriate OpenHIM core server hostname (or IP Address) and API port.
-2. You should see a message saying “Your connection is not private”. Click “Advanced” and then click “Proceed”.
-3. Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed.
-4. Now, you should be able to go back to the OpenHIM console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM core server.
-```
 
-The credentials used from this point will be considered the OpenHIM administrative account and is therefore highly recommended that you apply a strong password. General best practices in password creation that have been identified in this [article](https://www.symantec.com/connect/articles/simplest-security-guide-better-password-practices) may help you.
+1. Visit the following link: https://localhost:8080/authenticate/root@openhim.org in Chrome.
+> **Note**: Make sure you are visiting this link from the system that is running the OpenHIM core. Otherwise, replace localhost and 8080 with the appropriate OpenHIM core server hostname (or IP Address) and API port.
+
+2. You should see a message saying “Your connection is not private”. Click “Advanced” and then click “Proceed”.
+
+3. Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed.
+
+4. Now, you should be able to go back to the OpenHIM console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM core server.
+
+
+> The credentials used from this point will be considered the OpenHIM administrative account and is therefore highly recommended that you apply a strong password. General best practices in password creation that have been identified in this [article](https://www.symantec.com/connect/articles/simplest-security-guide-better-password-practices) may help you.
 ___
 
 ### How to update your NGINX Config file
