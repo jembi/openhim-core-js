@@ -191,7 +191,8 @@ For example, assuming your web server host is your local machine, the Uniform re
 
 > **Note**: You will have problems logging in if your OpenHIM server is still setup to use a self-signed certificate (the default). Please see section **How to Generate a free Let’s Encrypt (letsencrypt) certificate** which identifies the steps necessary to generate a free certificate. If you choose to do this later, you may get around this by following these steps:
 
-1. Visit the following link: https://localhost:8080/authenticate/root@openhim.org in Chrome. **Note**: Make sure you are visiting this link from the system that is running the OpenHIM core. Otherwise, replace localhost and 8080 with the appropriate OpenHIM core server hostname (or IP Address) and API port.
+1. Visit the following link: https://localhost:8080/authenticate/root@openhim.org in Chrome.
+    > **Note**: Make sure you are visiting this link from the system that is running the OpenHIM core. Otherwise, replace localhost and 8080 with the appropriate OpenHIM core server hostname (or IP Address) and API port.
 1. You should see a message saying “Your connection is not private”. Click “Advanced” and then click “Proceed”.
 1. Once you have done this, you should see some JSON text displayed on the screen, you can ignore this and close the page. This will ignore the fact that the certificate is self-signed.
 1. Now, you should be able to go back to the OpenHIM console login page and login. This problem will occur every now and then until you load a properly signed certificate into the OpenHIM core server.
