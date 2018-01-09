@@ -8,6 +8,7 @@ Contents:
 
    about
    getting-started
+   setup-and-configuration/index
    tutorial/index
    user-guide/index
    dev-guide/index
