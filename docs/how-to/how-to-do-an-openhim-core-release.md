@@ -21,11 +21,15 @@ Support Releases
 From time to time a support release may be required for critical security issues or bugs. When this happens, a support branch should be created in order to support that particular version.
 
 If the branch doesn't exist, create it from the latest tag for a particular release:
+
 * `git checkout -b support-vx.y vx.y.z`
+
 else if the branch exists, simply check it out and continue from there
+
 * `git checkout support-vx.y`
 
 Ideally fixes should first be developed separately and merged into master. They can then be cherrypicked for the support release:
+
 * `git cherry-pick bd68fe1c8cf81cbef2169414ce8440a7a2c69717`
 
 Although this may not always be possible, in which case the fixes can be added manually.

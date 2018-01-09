@@ -8,7 +8,7 @@ OpenHIM mediators are separate micro services that run independently to the Open
 
 Mediators can be built using any platform that is desired (some good options are pure Java using our mediator engine, Node.js, Apache Camel, Mule ESB, or any language or platform that is a good fit for your needs). The only restriction is that the mediator MUST communicate with the OpenHIM-core in a particular way. Mediators must register themselves with the OpenHIM-core, accept request from the OpenHIM-core and return a specialised response to the OpenHIM-core to explain what that mediator did. A diagram of how mediators fit into the overall OpenHIM architecture can be seen below. ![OpenHIM architecture](/_static/mediators/mediators-overview.png)
 
-If you are interested in developing you own mediators see the [documentation available here](/dev-guide/mediators.html) and see our [tutorials page](/tutorial/index.html "Tutorials") for specific examples to get you started.
+If you are interested in developing you own mediators see the [documentation available here](../dev-guide/mediators.html) and see our [tutorials page](../tutorial/index.html "Tutorials") for specific examples to get you started.
 
 Mediator Types
 --------------
@@ -41,4 +41,4 @@ Mediators may be developed in any language and only talk to the OpenHIM via its 
 Existing Mediators
 ------------------
 
-To find some existing mediators we suggest [searching github for "openhim-mediator"](https://github.com/search?utf8=%E2%9C%93&q=%22openhim-mediator%22&type=Repositories&ref=searchresults) which is the naming convension for OpenHIM mediators. For more information on writing you own mediator [click here](/dev-guide/mediators.html).
+To find some existing mediators we suggest [searching github for "openhim-mediator"](https://github.com/search?utf8=%E2%9C%93&q=%22openhim-mediator%22&type=Repositories&ref=searchresults) which is the naming convension for OpenHIM mediators. For more information on writing you own mediator [click here](../dev-guide/mediators.html).

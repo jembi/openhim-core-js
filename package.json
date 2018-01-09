@@ -8,7 +8,7 @@
   },
   "license": "MPL-2.0",
   "engines": {
-    "node": ">= 7.6.0"
+    "node": ">= 8.0.0"
   },
   "spec": {
     "requires": [
@@ -36,6 +36,7 @@
     "test:replica:set": "./test/resources/replica-set-test/setup.sh",
     "test:replica:set:cleanup": "./test/resources/replica-set-test/tear-down.sh",
     "test:seed": "node performance/seed.js",
+    "test:seed:ci": "npm run test:seed -- --quiet",
     "start": "node --harmony lib/server.js",
     "stop": "pkill -SIGINT Core",
     "spec": "speculate"
@@ -74,7 +75,6 @@
     "node-uuid": "^1.4.1",
     "nodemailer": "^4.1.2",
     "pem": "^1.12.0",
-    "q": "^1.1.2",
     "raw-body": "^2.1.2",
     "request": "^2.83.0",
     "semver": "^5.1.0",

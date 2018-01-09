@@ -3,7 +3,7 @@ Tutorial start
 
 Before getting started with the tutorials, please ensure that
 
-*   the OpenHIM has been installed (see [here](http://127.0.0.1:8000/tutorial/1-getting-started.html#getting-started "What is the easiest way to install the OpenHIM?") for tips on proceeding with this if not done so already)
+*   the OpenHIM has been installed (see [here](../getting-started.html#installing-the-openhim-core "What is the easiest way to install the OpenHIM?") for tips on proceeding with this if not done so already)
 *   the [tutorial services](../_static/mediators/openhim-tutorial-services.zip "Tutorial services") are set up and running.
 
 The tutorial services consist of three mock health registries that we'll be routing to and retrieving data from during the tutorials. They provide simple endpoints, hosting mock patients, their health records and healthcare providers. Once you've downloaded the services, you will need to open up three terminals so that each service can be started individually. To do so, follow the below steps:

@@ -12,7 +12,7 @@ Together these 2 sets of components make up an interoperability layer. These can
 
 ## Key Requirements
 
-The full requirements that the Interoperability Layer community have identified can be found here: [Interoperability Layer - Use Cases and Requirements](/display/SUB/Interoperability+Layer+-+Use+Cases+and+Requirements)
+The full requirements that the Interoperability Layer community have identified can be found here: [Interoperability Layer - Use Cases and Requirements](https://wiki.ohie.org/display/SUB/Interoperability+Layer+-+Use+Cases+and+Requirements)
 
 The following is a list of key requirements that are seen as necessary for an interoperability layer:
 

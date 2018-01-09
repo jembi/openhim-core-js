@@ -1,6 +1,5 @@
 import logger from 'winston'
 import moment from 'moment'
-import Q from 'q'
 import { AutoRetryModel } from './model/autoRetry'
 import { TaskModel } from './model/tasks'
 import * as Channels from './model/channels'
@@ -75,25 +74,22 @@ function autoRetryTask (job, done) {
 
   getChannels((err, channels) => {
     if (err) { return done(err) }
-    const promises = []
-
-    for (const channel of channels) {
-      const deferred = Q.defer()
-
-      popTransactions(channel, (err, transactions) => {
-        if (err) {
-          logger.error(err)
-        } else if (transactions != null) {
-          const tranIDs = transactions.map(r => r.transactionID)
-          transactionsToRerun.push(...tranIDs)
-        }
-        return deferred.resolve()
+    const promises = channels.map((channel) => {
+      return new Promise((resolve, reject) => {
+        popTransactions(channel, (err, transactions) => {
+          if (err) {
+            logger.error(err)
+            return reject(err)
+          } else if (transactions != null) {
+            const tranIDs = transactions.map(r => r.transactionID)
+            transactionsToRerun.push(...tranIDs)
+          }
+          return resolve()
+        })
       })
+    })
 
-      promises.push(deferred.promise)
-    }
-
-    (Q.all(promises)).then(() => {
+    Promise.all(promises).then(() => {
       function end () {
         logger.debug(`Auto retry task total time: ${new Date() - _taskStart} ms`)
         return done()

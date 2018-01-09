@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import { TaskModelAPI } from '../model/tasks'
 import { TransactionModelAPI } from '../model/transactions'
@@ -6,6 +5,7 @@ import { AutoRetryModelAPI } from '../model/autoRetry'
 import * as Channels from '../model/channels'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { promisify } from 'util'
 
 const { ChannelModelAPI } = Channels
 
@@ -124,12 +124,12 @@ export async function addTask (ctx) {
     }
 
     // check rerun permission and whether to create the rerun task
-    const isRerunPermsValid = Q.denodeify(isRerunPermissionsValid)
+    const isRerunPermsValid = promisify(isRerunPermissionsValid)
     const allowRerunTaskCreation = await isRerunPermsValid(ctx.authenticated, transactions)
 
     // the rerun task may be created
     if (allowRerunTaskCreation === true) {
-      const areTrxChannelsValid = Q.denodeify(areTransactionChannelsValid)
+      const areTrxChannelsValid = promisify(areTransactionChannelsValid)
       const trxChannelsValid = await areTrxChannelsValid(transactions)
 
       if (!trxChannelsValid) {

@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import atna from 'atna-audit'
 import os from 'os'
@@ -7,10 +6,12 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import * as auditing from '../auditing'
 import { config } from '../config'
+import { promisify } from 'util'
 
 config.router = config.get('router')
 config.api = config.get('api')
 const himSourceID = config.get('auditing').auditEvents.auditSourceID
+const processAuditMeta = promisify(auditing.processAuditMeta)
 
 // function to construct projection object
 function getProjectionObject (filterRepresentation) {
@@ -51,8 +52,8 @@ export async function addAudit (ctx) {
 
   try {
     const audit = new AuditModel(auditData)
-    await Q.ninvoke(audit, 'save')
-    await Q.ninvoke(auditing, 'processAuditMeta', audit)
+    await audit.save()
+    await processAuditMeta(audit)
 
     logger.info(`User ${ctx.authenticated.email} created audit with id ${audit.id}`)
     ctx.body = 'Audit successfully created'

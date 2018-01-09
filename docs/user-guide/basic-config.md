@@ -3,9 +3,9 @@ Basic configuration
 
 This getting started guide will take you through two very important parts of the OpenHIM console which will allow you to create **Clients** and **Channels** to get messages routed through the system.
 
-Before you get started with **Clients** and **Channels** you will need OpenHIM core and OpenHIM console setup. To do so, follow the installation guide [here](/getting-started.html).
+Before you get started with **Clients** and **Channels** you will need OpenHIM core and OpenHIM console setup. To do so, follow the installation guide [here](../getting-started.html).
 
-To get a better understanding of what the openHIM core does and how it works, read up on the [OpenHIM core concepts](/about.html)
+To get a better understanding of what the openHIM core does and how it works, read up on the [OpenHIM core concepts](../about.html)
 
 A **Client** is usually some system that you want to able to send request to the OpenHIM. Setting up a **client** allows the OpenHIM to authenticate requests. A **Channel** defines a path that a request will take through the OpenHIM. It describes one more **routes** for the request to be forwarded to, which **clients** are allowed to use this **channel**, which requests are to be direccted to this **channel** and many more options that allow you to controls what happens for a particular request.
 
@@ -107,7 +107,7 @@ There are many fields that you may supply and these are spread over a number of 
 * **Alerts tab**:
     * **Status** - Supply the status of a transaction when the alert should be sent. This can be supplied in a range format (e.g 2xx or 4xx)
     * **Failure Rate (%)** - Supply the failure rate of when to start sending the alerts (e.g 50 - once failure rate above 50% then alerts will be sent)
-    * **Add Users** - Add individual users to receive alerts 
+    * **Add Users** - Add individual users to receive alerts
         * **User** - Select a user from the drop down to receive a alert
         * **Method** - Select the method of how the alert should be delivered [Email | SMS]
         * **Max Alerts** - Select the frequency of how often to send a alert [no max | 1 per hour | 1 per day]

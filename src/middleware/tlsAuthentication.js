@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import pem from 'pem'
 import { rootCas as rootCAs } from 'ssl-root-cas/latest'
@@ -85,62 +84,61 @@ export function getServerOptions (mutualTLS, done) {
  * higher in the chain.
  */
 function clientLookup (fingerprint, subjectCN, issuerCN) {
-  logger.debug(`Looking up client linked to cert with fingerprint ${fingerprint} with subject ${subjectCN} and issuer ${issuerCN}`)
-  const deferred = Q.defer()
+  return new Promise((resolve, reject) => {
+    logger.debug(`Looking up client linked to cert with fingerprint ${fingerprint} with subject ${subjectCN} and issuer ${issuerCN}`)
 
-  ClientModel.findOne({certFingerprint: fingerprint}, (err, result) => {
-    if (err) { return deferred.reject(err) }
+    ClientModel.findOne({certFingerprint: fingerprint}, (err, result) => {
+      if (err) { return reject(err) }
 
-    if (result != null) {
-      // found a match
-      return deferred.resolve(result)
-    }
-
-    if (subjectCN === issuerCN) {
-      // top certificate reached
-      return deferred.resolve(null)
-    }
-
-    if (config.tlsClientLookup.type === 'in-chain') {
-      // walk further up and cert chain and check
-      return utils.getKeystore((err, keystore) => {
-        if (err) { deferred.reject(err) }
-        let missedMatches = 0
-        // find the isser cert
-        if ((keystore.ca == null) || (keystore.ca.length < 1)) {
-          logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
-          return deferred.resolve(null)
-        } else {
-          return Array.from(keystore.ca).map((cert) =>
-            (cert =>
-                pem.readCertificateInfo(cert.data, (err, info) => {
-                  if (err) {
-                    return deferred.reject(err)
-                  }
-
-                  if (info.commonName === issuerCN) {
-                    const promise = clientLookup(cert.fingerprint, info.commonName, info.issuer.commonName)
-                    promise.then(result => deferred.resolve(result))
-                  } else {
-                    missedMatches++
-                  }
-
-                  if (missedMatches === keystore.ca.length) {
-                    logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
-                    return deferred.resolve(null)
-                  }
-                }))(cert))
-        }
-      })
-    } else {
-      if (config.tlsClientLookup.type !== 'strict') {
-        logger.warn('tlsClientLookup.type config option does not contain a known value, defaulting to \'strict\'. Available options are \'strict\' and \'in-chain\'.')
+      if (result != null) {
+        // found a match
+        return resolve(result)
       }
-      return deferred.resolve(null)
-    }
-  })
 
-  return deferred.promise
+      if (subjectCN === issuerCN) {
+        // top certificate reached
+        return resolve(null)
+      }
+
+      if (config.tlsClientLookup.type === 'in-chain') {
+        // walk further up and cert chain and check
+        return utils.getKeystore((err, keystore) => {
+          if (err) { return reject(err) }
+          let missedMatches = 0
+          // find the isser cert
+          if ((keystore.ca == null) || (keystore.ca.length < 1)) {
+            logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
+            return resolve(null)
+          } else {
+            return Array.from(keystore.ca).map((cert) =>
+              (cert =>
+                  pem.readCertificateInfo(cert.data, (err, info) => {
+                    if (err) {
+                      return reject(err)
+                    }
+
+                    if (info.commonName === issuerCN) {
+                      const promise = clientLookup(cert.fingerprint, info.commonName, info.issuer.commonName)
+                      promise.then(resolve)
+                    } else {
+                      missedMatches++
+                    }
+
+                    if (missedMatches === keystore.ca.length) {
+                      logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
+                      return resolve(null)
+                    }
+                  }))(cert))
+          }
+        })
+      } else {
+        if (config.tlsClientLookup.type !== 'strict') {
+          logger.warn('tlsClientLookup.type config option does not contain a known value, defaulting to \'strict\'. Available options are \'strict\' and \'in-chain\'.')
+        }
+        return resolve(null)
+      }
+    })
+  })
 }
 
 if (process.env.NODE_ENV === 'test') {

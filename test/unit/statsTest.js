@@ -4,7 +4,6 @@
 
 // import fs from 'fs'
 // import os from 'os'
-// import * as q from 'q'
 // import * as stats from '../../src/stats'
 // import FakeServer from '../fakeTcpServer'
 // import { config } from '../../src/config'

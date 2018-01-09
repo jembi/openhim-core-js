@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import { ContactGroupModelAPI } from '../model/contactGroups'
 import * as authorisation from './authorisation'
@@ -17,7 +16,7 @@ export async function addContactGroup (ctx) {
 
   try {
     const contactGroup = new ContactGroupModelAPI(contactGroupData)
-    await Q.ninvoke(contactGroup, 'save')
+    await contactGroup.save()
 
     utils.logAndSetResponse(ctx, 201, 'Contact Group successfully created', 'info')
   } catch (err) {

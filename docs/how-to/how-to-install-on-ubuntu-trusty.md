@@ -3,7 +3,7 @@ How to manually install on Ubuntu 14.04 Trusty
 
 The following is a quickstart tutorial to help guide you through the steps required for a new OpenHIM installation on a clean Ubuntu 14.04 instance.
 
-This quickest an easiest way to install the OpenHIM on ubuntu is to use our deb package. This will install both he OpenHIM core and console on your server. See details on how to do this [here](/getting-started.html).
+This quickest an easiest way to install the OpenHIM on ubuntu is to use our deb package. This will install both he OpenHIM core and console on your server. See details on how to do this [here](../getting-started.html).
 
 If you would like to install the OpenHIM manually, read on.
 

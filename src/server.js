@@ -12,7 +12,6 @@ import net from 'net'
 import dgram from 'dgram'
 import uuid from 'node-uuid'
 import pem from 'pem'
-import Q from 'q'
 import logger from 'winston'
 import 'winston-mongodb'
 import Agenda from 'agenda'
@@ -62,6 +61,21 @@ let ensureKeystore
 logger.remove(logger.transports.Console)
 
 let clusterArg = nconf.get('cluster')
+
+function defer () {
+  const deferred = {
+    promise: null,
+    resolve: null,
+    reject: null
+  }
+
+  deferred.promise = new Promise((resolve, reject) => {
+    deferred.resolve = resolve
+    deferred.reject = reject
+  })
+
+  return deferred
+}
 
 export function setupCertificateWatcher () {
   const certFile = config.certificateManagement.certPath
@@ -280,7 +294,7 @@ if (cluster.isMaster && !module.parent) {
   let agenda = null
 
   function startAgenda () {
-    const defer = Q.defer()
+    const deferred = defer()
     agenda = new Agenda({
       db: {
         address: config.mongo.url
@@ -303,7 +317,7 @@ if (cluster.isMaster && !module.parent) {
           // give workers a change to setup agenda tasks
           setTimeout(() => {
             agenda.start()
-            defer.resolve()
+            deferred.resolve()
             return logger.info('Started agenda job scheduler')
           }
             , config.agenda.startupDelay)
@@ -311,23 +325,23 @@ if (cluster.isMaster && !module.parent) {
       }
       // Start agenda anyway for the other servers
       agenda.start()
-      return defer.resolve()
+      return deferred.resolve()
     })
 
-    return defer.promise
+    return deferred.promise
   }
 
   function stopAgenda () {
-    const defer = Q.defer()
+    const deferred = defer()
     agenda.stop(() => {
-      defer.resolve()
+      deferred.resolve()
       return logger.info('Stopped agenda job scheduler')
     })
-    return defer.promise
+    return deferred.promise
   }
 
   function startHttpServer (httpPort, bindAddress, app) {
-    const deferred = Q.defer()
+    const deferred = defer()
 
     httpServer = http.createServer(app.callback())
 
@@ -351,7 +365,7 @@ if (cluster.isMaster && !module.parent) {
   }
 
   function startHttpsServer (httpsPort, bindAddress, app) {
-    const deferred = Q.defer()
+    const deferred = defer()
 
     const mutualTLS = config.authentication.enableMutualTLSAuthentication
     tlsAuthentication.getServerOptions(mutualTLS, (err, options) => {
@@ -475,7 +489,7 @@ if (cluster.isMaster && !module.parent) {
   }
 
   function startApiServer (apiPort, bindAddress, app) {
-    const deferred = Q.defer()
+    const deferred = defer()
 
     // mutualTLS not applicable for the API - set false
     const mutualTLS = false
@@ -495,24 +509,24 @@ if (cluster.isMaster && !module.parent) {
   }
 
   function startTCPServersAndHttpReceiver (tcpHttpReceiverPort, app) {
-    const defer = Q.defer()
+    const deferred = defer()
 
     tcpHttpReceiver = http.createServer(app.callback())
     tcpHttpReceiver.listen(tcpHttpReceiverPort, config.tcpAdapter.httpReceiver.host, () => {
       logger.info(`HTTP receiver for Socket adapter listening on port ${tcpHttpReceiverPort}`)
       return tcpAdapter.startupServers((err) => {
         if (err) { logger.error(err) }
-        return defer.resolve()
+        return deferred.resolve()
       })
     })
 
     tcpHttpReceiver.on('connection', socket => trackConnection(activeTcpConnections, socket))
 
-    return defer.promise
+    return deferred.promise
   }
 
   function startRerunServer (httpPort, app) {
-    const deferredHttp = Q.defer()
+    const deferredHttp = defer()
 
     rerunServer = http.createServer(app.callback())
     rerunServer.listen(httpPort, config.rerun.host, () => {
@@ -526,28 +540,28 @@ if (cluster.isMaster && !module.parent) {
   }
 
   function startPollingServer (pollingPort, app) {
-    const defer = Q.defer()
+    const deferred = defer()
 
     pollingServer = http.createServer(app.callback())
     pollingServer.listen(pollingPort, config.polling.host, (err) => {
       if (err) { logger.error(err) }
       logger.info(`Polling port listening on port ${pollingPort}`)
-      return defer.resolve()
+      return deferred.resolve()
     })
 
     pollingServer.on('connection', socket => trackConnection(activePollingConnections, socket))
 
-    return defer.promise
+    return deferred.promise
   }
 
   function startAuditUDPServer (auditUDPPort, bindAddress) {
-    const defer = Q.defer()
+    const deferred = defer()
 
     auditUDPServer = dgram.createSocket('udp4')
 
     auditUDPServer.on('listening', () => {
       logger.info(`Auditing UDP server listening on port ${auditUDPPort}`)
-      return defer.resolve()
+      return deferred.resolve()
     })
 
     auditUDPServer.on('message', (msg, rinfo) => {
@@ -559,10 +573,10 @@ if (cluster.isMaster && !module.parent) {
     auditUDPServer.on('error', (err) => {
       if (err.code === 'EADDRINUSE') {
         // ignore to allow only 1 worker to bind (workaround for: https://github.com/joyent/node/issues/9261)
-        return defer.resolve()
+        return deferred.resolve()
       }
       logger.error(`UDP Audit server error: ${err}`, err)
-      return defer.reject(err)
+      return deferred.reject(err)
     })
 
     auditUDPServer.bind({
@@ -571,12 +585,12 @@ if (cluster.isMaster && !module.parent) {
       exclusive: true
     }) // workaround for: https://github.com/joyent/node/issues/9261
 
-    return defer.promise
+    return deferred.promise
   }
 
   // function to start the TCP/TLS Audit server
   function startAuditTcpTlsServer (type, auditPort, bindAddress) {
-    const defer = Q.defer()
+    const deferred = defer()
 
     // data handler
     function handler (sock) {
@@ -625,24 +639,24 @@ if (cluster.isMaster && !module.parent) {
     if (type === 'TLS') {
       tlsAuthentication.getServerOptions(true, (err, options) => {
         if (err) {
-          return defer.reject(err)
+          return deferred.reject(err)
         }
 
         auditTlsServer = tls.createServer(options, handler)
         return auditTlsServer.listen(auditPort, bindAddress, () => {
           logger.info(`Auditing TLS server listening on port ${auditPort}`)
-          return defer.resolve()
+          return deferred.resolve()
         })
       })
     } else if (type === 'TCP') {
       auditTcpServer = net.createServer(handler)
       auditTcpServer.listen(auditPort, bindAddress, () => {
         logger.info(`Auditing TCP server listening on port ${auditPort}`)
-        return defer.resolve()
+        return deferred.resolve()
       })
     }
 
-    return defer.promise
+    return deferred.promise
   }
 
   exports.start = function (ports, done) {
@@ -667,9 +681,9 @@ if (cluster.isMaster && !module.parent) {
         koaMiddleware.rerunApp(app => promises.push(startRerunServer(ports.rerunHttpPort, app)))
 
         if (config.rerun.processor.enabled) {
-          const defer = Q.defer()
-          tasks.start(() => defer.resolve())
-          promises.push(defer.promise)
+          const deferred = defer()
+          tasks.start(() => deferred.resolve())
+          promises.push(deferred.promise)
         }
       }
 
@@ -695,7 +709,7 @@ if (cluster.isMaster && !module.parent) {
 
       promises.push(startAgenda())
 
-      return (Q.all(promises)).then(() => {
+      return Promise.all(promises).then(() => {
         let audit = atna.construct.appActivityAudit(true, himSourceID, os.hostname(), 'system')
         audit = atna.construct.wrapInSyslog(audit)
         return auditing.sendAuditEvent(audit, (err) => {
@@ -724,7 +738,7 @@ if (cluster.isMaster && !module.parent) {
     const promises = []
 
     function stopServer (server, serverType) {
-      const deferred = Q.defer()
+      const deferred = defer()
 
       server.close(() => {
         logger.info(`Stopped ${serverType} server`)
@@ -757,9 +771,14 @@ if (cluster.isMaster && !module.parent) {
     if (tcpHttpReceiver) {
       promises.push(stopServer(tcpHttpReceiver, 'TCP HTTP Receiver'))
 
-      const defer = Q.defer()
-      tcpAdapter.stopServers(() => defer.resolve())
-      promises.push(defer.promise)
+      const deferred = defer()
+      tcpAdapter.stopServers((err) => {
+        if (err) {
+          return deferred.reject(err)
+        }
+        deferred.resolve()
+      })
+      promises.push(deferred.promise)
     }
 
     // close active connection so that servers can stop
@@ -788,7 +807,7 @@ if (cluster.isMaster && !module.parent) {
       socket.destroy()
     }
 
-    return (Q.all(promises)).then(() => {
+    return Promise.all(promises).then(() => {
       httpServer = null
       httpsServer = null
       apiHttpsServer = null

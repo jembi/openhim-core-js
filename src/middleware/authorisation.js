@@ -1,10 +1,10 @@
-import Q from 'q'
 import logger from 'winston'
 import atna from 'atna-audit'
 import SDC from 'statsd-client'
 import os from 'os'
 import * as auditing from '../auditing'
 import { config } from '../config'
+import { promisify } from 'util'
 
 config.authentication = config.get('authentication')
 const statsdServer = config.get('statsd')
@@ -68,7 +68,7 @@ export async function authorise (ctx, done) {
 export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  const _authorise = Q.denodeify(authorise)
+  const _authorise = promisify(authorise)
   await _authorise(ctx)
   if (ctx.authorisedChannel != null) {
     if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime) }

@@ -1,7 +1,7 @@
 Creating your first channel
 ===========================
 
-This tutorial assumes that you've set up the [required dependencies](http://127.0.0.1:8000/tutorial/1-getting-started.html "Getting Started"), including setting up the OpenHIM, and that you are ready to create your first channel. In this tutorial we will look at setting up a channel on the HIM that will allow you to route data from a demo service. You will first need to create a **Client** that gets authenticated when requests are made. First, access the HIM Console on your browser, and login using the appropriate credentials. Next, go through to the **Clients** section (**Sidebar -> Clients**), create a new **Client** with the following details and save:
+This tutorial assumes that you've set up the [required dependencies](../getting-started.html "Getting Started"), including setting up the OpenHIM, and that you are ready to create your first channel. In this tutorial we will look at setting up a channel on the HIM that will allow you to route data from a demo service. You will first need to create a **Client** that gets authenticated when requests are made. First, access the HIM Console on your browser, and login using the appropriate credentials. Next, go through to the **Clients** section (**Sidebar -> Clients**), create a new **Client** with the following details and save:
 
 *   ClientID: **tut**
 *   Client Name: **OpenHIM Tutorial Client**
@@ -9,7 +9,7 @@ This tutorial assumes that you've set up the [required dependencies](http://127.
 *   Roles: **tut**
 *   Password: **tut**
 
-For this tutorial, we will be using **Basic auth** for authenticating the client. The OpenHIM supports both basic authentication and mutual TLS. With this in mind, ensure that your HIM Core instance is running with Basic auth enabled. To do so, and if not already done, create a copy of the [default config file](https://github.com/jembi/openhim-core-js/blob/3c4eb85ecc013704eb41deace942136ebb8b3b73/config/default.json#L31-L32 "default.json") and ensure that **enableBasicAuthentication** is **true** (the default). You can also override any other config if required and startup core using:
+For this tutorial, we will be using **Basic auth** for authenticating the client. The OpenHIM supports both basic authentication and mutual TLS. With this in mind, ensure that your HIM Core instance is running with Basic auth enabled. To do so, and if not already done, create a copy of the [default config file](https://github.com/jembi/openhim-core-js/blob/master/config/default.json#L60-L63 "default.json") and ensure that **enableBasicAuthentication** is **true** (the default). You can also override any other config if required and startup core using:
 
 `$ openhim-core --conf=myconfig.json`
 

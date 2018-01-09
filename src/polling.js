@@ -1,10 +1,10 @@
 import request from 'request'
 import logger from 'winston'
-import Q from 'q'
 
 import * as Channels from './model/channels'
 import { config } from './config'
 import * as utils from './utils'
+import { promisify } from 'util'
 
 const {ChannelModel} = Channels
 config.polling = config.get('polling')
@@ -47,7 +47,7 @@ export function removePollingChannel (channel, callback) {
 
 export function setupAgenda (agenda, callback) {
   logger.info('Starting polling server...')
-  const registerPollingChannelPromise = Q.denodeify(registerPollingChannel)
+  const registerPollingChannelPromise = promisify(registerPollingChannel)
   agendaGlobal = agenda
   return ChannelModel.find({type: 'polling'}, (err, channels) => {
     if (err) { return err }
@@ -59,6 +59,6 @@ export function setupAgenda (agenda, callback) {
       }
     }
 
-    return (Q.all(promises)).done(callback)
+    return Promise.all(promises).then(callback)
   })
 }

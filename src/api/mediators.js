@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import semver from 'semver'
 import atna from 'atna-audit'
@@ -179,7 +178,7 @@ export async function addMediator (ctx) {
       if (!mediator.endpoints || (mediator.endpoints.length < 1)) {
         throw constructError('At least 1 endpoint is required', 'ValidationError')
       }
-      await Q.ninvoke(new MediatorModelAPI(mediator), 'save')
+      await new MediatorModelAPI(mediator).save()
     }
     ctx.status = 201
     logger.info(`User ${ctx.authenticated.email} created mediator with urn ${mediator.urn}`)

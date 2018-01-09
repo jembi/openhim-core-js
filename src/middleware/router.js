@@ -3,7 +3,6 @@ import http from 'http'
 import https from 'https'
 import net from 'net'
 import tls from 'tls'
-import Q from 'q'
 import logger from 'winston'
 import cookie from 'cookie'
 import SDC from 'statsd-client'
@@ -13,6 +12,7 @@ import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import * as events from '../middleware/events'
 import * as stats from '../stats'
+import { promisify } from 'util'
 
 config.mongo = config.get('mongo')
 config.router = config.get('router')
@@ -234,7 +234,7 @@ function sendRequestToRoutes (ctx, routes, next) {
           }).then(() => {
             logger.info('primary route completed')
             return next()
-          }).fail((reason) => {
+          }).catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
             return next()
@@ -282,7 +282,7 @@ function sendRequestToRoutes (ctx, routes, next) {
       promises.push(promise)
     }
 
-    return (Q.all(promises)).then(() =>
+    return Promise.all(promises).then(() =>
       messageStore.setFinalStatus(ctx, () => {
         logger.info(`All routes completed for transaction: ${ctx.transactionId.toString()}`)
         if (ctx.routes) {
@@ -333,7 +333,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
       if (!ctx.routes) { ctx.routes = [] }
       ctx.routes.push(routeObj)
       return routeObj
-    }).fail((reason) => {
+    }).catch((reason) => {
       // on failure
       const routeObj = {}
       routeObj.name = route.name
@@ -420,93 +420,87 @@ function obtainCharset (headers) {
  *    timestamp: <the time the response was recieved>
  */
 function sendHttpRequest (ctx, route, options) {
-  const defered = Q.defer()
-  const response = {}
+  return new Promise((resolve, reject) => {
+    const response = {}
 
-  const gunzip = zlib.createGunzip()
-  const inflate = zlib.createInflate()
+    const gunzip = zlib.createGunzip()
+    const inflate = zlib.createInflate()
 
-  let method = http
+    let method = http
 
-  if (route.secured) {
-    method = https
-  }
-
-  const routeReq = method.request(options, (routeRes) => {
-    response.status = routeRes.statusCode
-    response.headers = routeRes.headers
-
-    const uncompressedBodyBufs = []
-    if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
-      routeRes.pipe(gunzip)
-
-      gunzip.on('data', (data) => {
-        uncompressedBodyBufs.push(data)
-      })
+    if (route.secured) {
+      method = https
     }
 
-    if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
-      routeRes.pipe(inflate)
+    const routeReq = method.request(options, (routeRes) => {
+      response.status = routeRes.statusCode
+      response.headers = routeRes.headers
 
-      inflate.on('data', (data) => {
-        uncompressedBodyBufs.push(data)
-      })
-    }
+      const uncompressedBodyBufs = []
+      if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+        routeRes.pipe(gunzip)
 
-    const bufs = []
-    routeRes.on('data', chunk => bufs.push(chunk))
-
-    // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
-    routeRes.on('end', () => {
-      response.timestamp = new Date()
-      const charset = obtainCharset(routeRes.headers)
-      if (routeRes.headers['content-encoding'] === 'gzip') {
-        gunzip.on('end', () => {
-          const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-          response.body = uncompressedBody.toString(charset)
-          if (!defered.promise.isRejected()) {
-            defered.resolve(response)
-          }
+        gunzip.on('data', (data) => {
+          uncompressedBodyBufs.push(data)
         })
-      } else if (routeRes.headers['content-encoding'] === 'deflate') {
-        inflate.on('end', () => {
-          const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-          response.body = uncompressedBody.toString(charset)
-          if (!defered.promise.isRejected()) {
-            defered.resolve(response)
-          }
-        })
-      } else {
-        response.body = Buffer.concat(bufs)
-        if (!defered.promise.isRejected()) {
-          defered.resolve(response)
-        }
       }
+
+      if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+        routeRes.pipe(inflate)
+
+        inflate.on('data', (data) => {
+          uncompressedBodyBufs.push(data)
+        })
+      }
+
+      const bufs = []
+      routeRes.on('data', chunk => bufs.push(chunk))
+
+      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+      routeRes.on('end', () => {
+        response.timestamp = new Date()
+        const charset = obtainCharset(routeRes.headers)
+        if (routeRes.headers['content-encoding'] === 'gzip') {
+          gunzip.on('end', () => {
+            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+            response.body = uncompressedBody.toString(charset)
+            resolve(response)
+          })
+        } else if (routeRes.headers['content-encoding'] === 'deflate') {
+          inflate.on('end', () => {
+            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+            response.body = uncompressedBody.toString(charset)
+            resolve(response)
+          })
+        } else {
+          response.body = Buffer.concat(bufs)
+          resolve(response)
+        }
+      })
     })
-  })
 
-  routeReq.on('error', err => {
-    defered.reject(err)
-  })
+    routeReq.on('error', err => {
+      reject(err)
+    })
 
-  routeReq.on('clientError', err => {
-    defered.reject(err)
-  })
+    routeReq.on('clientError', err => {
+      reject(err)
+    })
 
   const timeout = route.timeout != null ? route.timeout : +config.router.timeout
   routeReq.setTimeout(timeout, () => {
     routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
   })
 
-  if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
-    if (ctx.body != null) {
-      // TODO : Should probally add checks to see if the body is a buffer or string
-      routeReq.write(ctx.body)
+    if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
+      if (ctx.body != null) {
+        // TODO : Should probally add checks to see if the body is a buffer or string
+        routeReq.write(ctx.body)
+      }
     }
-  }
 
-  routeReq.end()
-  return defered.promise
+    routeReq.end()
+  })
 }
 
 /*
@@ -520,50 +514,48 @@ function sendHttpRequest (ctx, route, options) {
  * Supports both normal and MLLP sockets
  */
 function sendSocketRequest (ctx, route, options) {
-  const mllpEndChar = String.fromCharCode(0o034)
+  return new Promise((resolve, reject) => {
+    const mllpEndChar = String.fromCharCode(0o034)
 
-  const defered = Q.defer()
-  const requestBody = ctx.body
-  const response = {}
+    const requestBody = ctx.body
+    const response = {}
 
-  let method = net
-  if (route.secured) {
-    method = tls
-  }
-
-  options = {
-    host: options.hostname,
-    port: options.port,
-    rejectUnauthorized: options.rejectUnauthorized,
-    key: options.key,
-    cert: options.cert,
-    secureProtocol: options.secureProtocol,
-    ca: options.ca
-  }
-
-  const client = method.connect(options, () => {
-    logger.info(`Opened ${route.type} connection to ${options.host}:${options.port}`)
-    if (route.type === 'tcp') {
-      return client.end(requestBody)
-    } else if (route.type === 'mllp') {
-      return client.write(requestBody)
-    } else {
-      return logger.error(`Unkown route type ${route.type}`)
+    let method = net
+    if (route.secured) {
+      method = tls
     }
-  })
 
-  const bufs = []
-  client.on('data', (chunk) => {
-    bufs.push(chunk)
-    if ((route.type === 'mllp') && (chunk.toString().indexOf(mllpEndChar) > -1)) {
-      logger.debug('Received MLLP response end character')
-      return client.end()
+    options = {
+      host: options.hostname,
+      port: options.port,
+      rejectUnauthorized: options.rejectUnauthorized,
+      key: options.key,
+      cert: options.cert,
+      secureProtocol: options.secureProtocol,
+      ca: options.ca
     }
-  })
 
-  client.on('error', err => defered.reject(err))
+    const client = method.connect(options, () => {
+      logger.info(`Opened ${route.type} connection to ${options.host}:${options.port}`)
+      if (route.type === 'tcp') {
+        return client.end(requestBody)
+      } else if (route.type === 'mllp') {
+        return client.write(requestBody)
+      } else {
+        return logger.error(`Unkown route type ${route.type}`)
+      }
+    })
 
-  client.on('clientError', err => defered.reject(err))
+    const bufs = []
+    client.on('data', (chunk) => {
+      bufs.push(chunk)
+      if ((route.type === 'mllp') && (chunk.toString().indexOf(mllpEndChar) > -1)) {
+        logger.debug('Received MLLP response end character')
+        return client.end()
+      }
+    })
+
+    client.on('error', err => reject(err))
 
   const timeout = route.timeout != null ? route.timeout : +config.router.timeout
   client.setTimeout(timeout, () => {
@@ -573,18 +565,18 @@ function sendSocketRequest (ctx, route, options) {
   client.on('end', () => {
     logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
 
-    if (route.secured && !client.authorized) {
-      return defered.reject(new Error('Client authorization failed'))
-    }
-    response.body = Buffer.concat(bufs)
-    response.status = 200
-    response.timestamp = new Date()
-    if (!defered.promise.isRejected()) {
-      return defered.resolve(response)
-    }
-  })
+    client.on('end', () => {
+      logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
 
-  return defered.promise
+      if (route.secured && !client.authorized) {
+        return reject(new Error('Client authorization failed'))
+      }
+      response.body = Buffer.concat(bufs)
+      response.status = 200
+      response.timestamp = new Date()
+      return resolve(response)
+    })
+  })
 }
 
 function getDestinationPath (route, requestPath) {
@@ -687,7 +679,7 @@ function isMethodAllowed (ctx, channel) {
 export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  const _route = Q.denodeify(route)
+  const _route = promisify(route)
   await _route(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.routerMiddleware`, startTime) }
   await next()
