@@ -334,14 +334,14 @@ export function createMockServerForPost (successStatusCode, errStatusCode, bodyT
   const mockServer = http.createServer((req, res) =>
     req.on('data', (chunk) => {
       if (chunk.toString() === bodyToMatch) {
-        res.writeHead(successStatusCode, {'Content-Type': 'text/plain'})
+        res.writeHead(successStatusCode, { 'Content-Type': 'text/plain' })
         if (returnBody) {
           res.end(bodyToMatch)
         } else {
           res.end()
         }
       } else {
-        res.writeHead(errStatusCode, {'Content-Type': 'text/plain'})
+        res.writeHead(errStatusCode, { 'Content-Type': 'text/plain' })
         res.end()
       }
     })
@@ -446,7 +446,12 @@ export async function createMockTCPServer (onRequest = async data => data, port 
       const response = await onRequest(data)
       socket.write(response || '')
     })
+    socket.on('error', (err) => {
+      console.log(`Mock tcp socket err`, err)
+    })
   })
+
+  server.on('error', console.error)
 
   server.close = promisify(server.close.bind(server))
   await promisify(server.listen.bind(server))(port, 'localhost')
@@ -455,6 +460,7 @@ export async function createMockTCPServer (onRequest = async data => data, port 
 
 export async function createMockUdpServer (onRequest = data => { }, port = constants.UDP_PORT) {
   const server = dgram.createSocket(constants.UPD_SOCKET_TYPE)
+  server.on('error', console.error)
   server.on('message', async (msg) => {
     onRequest(msg)
   })
