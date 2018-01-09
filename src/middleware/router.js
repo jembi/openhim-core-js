@@ -565,17 +565,13 @@ function sendSocketRequest (ctx, route, options) {
     client.on('end', () => {
       logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
 
-      client.on('end', () => {
-        logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
-
-        if (route.secured && !client.authorized) {
-          return reject(new Error('Client authorization failed'))
-        }
-        response.body = Buffer.concat(bufs)
-        response.status = 200
-        response.timestamp = new Date()
-        return resolve(response)
-      })
+      if (route.secured && !client.authorized) {
+        return reject(new Error('Client authorization failed'))
+      }
+      response.body = Buffer.concat(bufs)
+      response.status = 200
+      response.timestamp = new Date()
+      return resolve(response)
     })
   })
 }
