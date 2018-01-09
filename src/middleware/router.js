@@ -487,7 +487,10 @@ function sendHttpRequest (ctx, route, options) {
       reject(err)
     })
 
-    routeReq.setTimeout(+config.router.timeout, () => reject(new Error('Request Timed Out')))
+  const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+  routeReq.setTimeout(timeout, () => {
+    routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
+  })
 
     if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
       if (ctx.body != null) {
@@ -554,7 +557,13 @@ function sendSocketRequest (ctx, route, options) {
 
     client.on('error', err => reject(err))
 
-    client.on('clientError', err => reject(err))
+  const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+  client.setTimeout(timeout, () => {
+    client.destroy(new Error(`Request took longer than ${timeout}ms`))
+  })
+
+  client.on('end', () => {
+    logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
 
     client.on('end', () => {
       logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
@@ -625,6 +634,11 @@ export function route (ctx, next) {
   if (!isMethodAllowed(ctx, channel)) {
     next()
   } else {
+    if (channel.timeout != null) {
+      channel.routes.forEach(route => {
+        route.timeout = channel.timeout
+      })
+    }
     sendRequestToRoutes(ctx, channel.routes, next)
   }
 }
