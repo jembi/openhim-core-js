@@ -487,10 +487,10 @@ function sendHttpRequest (ctx, route, options) {
       reject(err)
     })
 
-  const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-  routeReq.setTimeout(timeout, () => {
-    routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
-  })
+    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+    routeReq.setTimeout(timeout, () => {
+      routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
+    })
 
     if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
       if (ctx.body != null) {
@@ -557,13 +557,10 @@ function sendSocketRequest (ctx, route, options) {
 
     client.on('error', err => reject(err))
 
-  const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-  client.setTimeout(timeout, () => {
-    client.destroy(new Error(`Request took longer than ${timeout}ms`))
-  })
-
-  client.on('end', () => {
-    logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
+    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+    client.setTimeout(timeout, () => {
+      client.destroy(new Error(`Request took longer than ${timeout}ms`))
+    })
 
     client.on('end', () => {
       logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
