@@ -102,7 +102,7 @@ export async function userPasswordResetRequest (ctx, email) {
     }
 
     const { consoleURL } = config.alerts
-    const setPasswordLink = `${consoleURL}/#/set-password/${token}`
+    const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
 
     // Send email to user to reset password
     const plainMessage = passwordResetPlainMessageTemplate(user.firstname, setPasswordLink)
@@ -264,7 +264,7 @@ export async function addUser (ctx) {
   userData.expiry = moment().add(duration, durationType).utc().format()
 
   const consoleURL = config.alerts.consoleURL
-  const setPasswordLink = `${consoleURL}/#/set-password/${token}`
+  const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
 
   try {
     const user = new UserModelAPI(userData)
