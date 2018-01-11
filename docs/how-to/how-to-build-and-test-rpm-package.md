@@ -1,9 +1,14 @@
-How to build and test a CentOS RPM package
+How to build a CentOS RPM package
 ==========================================
 
-The build process for the RPM package is based off [this](https://github.com/bbc/speculate/wiki/Packaging-a-Node.js-project-as-an-RPM-for-CentOS-7) blog. The reason for using vagrant instead of docker is so that we can test the RPM package by running it as a service using SystemCtl - similar to how it will likely be used in a production environment. SystemCtl is not available out the box in docker containers.
+The build process for the RPM package is based off [this](https://github.com/bbc/speculate/wiki/Packaging-a-Node.js-project-as-an-RPM-for-CentOS-7) blog. There is the option to use Vagrant or Docker to build the packages for both the core and console.
+
+The reason for including vagrant is to be able to test the RPM package by running it as a service using SystemCtl - similar to how it will likely be used in a production environment. SystemCtl is not available out the box in docker containers.
 
 Refer to this [blog](https://developers.redhat.com/blog/2014/05/05/running-systemd-within-docker-container/) for a more detailed description of a possible work-around. This is not recommended since it is a hack. This is where vagrant comes in since it sets up an isolated VM.
+
+Using Vagrant
+---------------------
 
 1. Setup environment
 
@@ -73,3 +78,30 @@ Then copy the file from the VM:
 ```bash
 vagrant scp default:/home/vagrant/rpmbuild/RPMS/x86_64/{filename}.rpm .
 ```
+
+Using Docker
+---------------
+
+1. Setup environment
+
+Navigate to the infrastructure folder: `infrastructure/centos`
+
+Build the docker image with centos, ready to build the rpm packages:
+```bash
+docker build -t rpmbuilder .
+```
+
+2. Build package
+
+Note, the RPMBUILD tool for CentOS does not allow special characters in the version name, such as 'v3.4.0-rc'.
+
+Run the container and build the rpm packages:
+```bash
+docker run -v /folder/for/new/packages/core:/openhim-core-js/RPMS -v /folder/for/new/packages/console:/openhim-console/RPMS --rm rpmbuilder
+```
+
+This step will build the packages and copy them to the folder specified and automatically remove the docker container.
+
+3. How to test newly created packages?
+
+Copy the packages to a CentOS system or VM and install them as a service. Alternatively use the vagrant approach as explained earlier.

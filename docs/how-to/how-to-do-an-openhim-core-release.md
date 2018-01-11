@@ -14,7 +14,7 @@ This page describes the steps to follow to do an OpenHIM release. Make sure you 
 9. `git push origin vx.x.x` - push the tag that 4 created.
 10. Create a [new github release](https://github.com/jembi/openhim-core-js/releases/new) using the tag created in 4 above, that includes the release notes.
 11. Build a debian package and upload it to launchpad. Follow the [instructions here](https://github.com/jembi/openhim-core-js/tree/master/packaging).
-12. Build a rpm package, follow the [instructions here](https://github.com/jembi/openhim-core-js/tree/master/docs/how-to/how-to-build-and-test-rpm-package.md).
+12. Build a rpm package, follow the [instructions here](http://openhim.readthedocs.io/en/latest/how-to/how-to-build-and-test-rpm-package.html).
 
 Support Releases
 ----------------
