@@ -1,4 +1,4 @@
-# Setup and Configuration
+# How to Setup and Configure the OpenHIM
 
 ## OpenHIM Basic Configuration
 
