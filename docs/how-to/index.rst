@@ -4,6 +4,7 @@ How to's
 .. toctree::
    :maxdepth: 2
 
+   how-to-setup-and-configure-openhim
    how-to-do-an-openhim-core-release
    how-to-do-an-openhim-console-release
    how-to-pre-package-an-offline-release
