@@ -47,11 +47,9 @@ The rpm package for openhim-console uses the http-server package from npm to hos
 
 However it is recommended that NGINX be installed for production and staging servers. All openhim-console web traffic should be routed through NGINX; allowing NGINX to manage SSL certificates, data compression and port routing.
 
-## Install certs
+## Install SSL certificates
 
-There a couple of ways to setup SSL certificates for openhim-console. The easiest and recommended way is by routing all web traffic through NGINX and configuring it to use SSL. Certificates can be purchased or are freely available by using [Letsencrypt](https://letsencrypt.org/).
-
-SSL certificates for openhim-core can be managed through the openhim-console's interface. By default it uses a self-signed certificate.
+Please refer to [this](http://openhim.readthedocs.io/en/latest/how-to/how-to-setup-ssl-certs.html) on how to setup SSL certificates for OpenHIM.
 
 ## Backups
 
@@ -59,7 +57,7 @@ Important files to backup in order to restore Openhim, are as follows:
 
 * Config file for openhim-core
 * Config file for openhim-console
-* Export and backup a copy of the settings and configurations details of the mediators, channels, user accounts and roles (Use the export interface in openhim-console).
+* Export and backup server metadata (Use the [import/export](http://openhim.readthedocs.io/en/latest/how-to/how-to-import-export.html) interface in openhim-console)
 * All relevant certificates
 
 These files will backup the configuration and settings for Openhim. The entire database will need to be backed-up in order to backup all historical data for transactions, audit events & certificates. It is recommended that a full database backup occurs on a regular basis. The configuration files only need to be backup when any of the configuration is updated or modified. Once the system has been setup, these configuration files are not expected to change too often.
@@ -70,7 +68,7 @@ In order to upgrade Openhim, perform the following steps:
 
 * It is important to perform a full backup before starting, to ensure the system can be restored if needed
 * Proceed to building and installing the rpm packages for the new version of Openhim core and console. (You are able to upgrade only the core or console, as long as the new version remains compatible)
-* Restore the settings and configurations (use the Import interface in openhim-console)
+* Restore server metadata (use the Import interface in openhim-console)
 * Update core & console config (not automated yet, needs to be done manually for each field)
 * Restore database
 * Test if upgrade worked
