@@ -1,0 +1,85 @@
+How to install on CentOS
+====================================
+
+## Install RPM package
+
+Openhim RPM packages can be built using these [instructions](http://openhim.readthedocs.io/en/latest/how-to/how-to-build-and-test-rpm-package.html).
+
+Once you have built the rpm packages, openhim-core can be installed:
+
+```bash
+sudo yum install -y ~/rpmbuild/RPMS/x86_64/openhim-core-{current_version}.x86_64.rpm
+sudo systemctl start openhim-core
+curl https://localhost:8080/heartbeat -k
+```
+
+Note: In order for openhim-core to run successfully, there needs to be a valid instance of MongoDB available for openhim-core to use. To install mongo-db locally execute the following on a CentOS system:
+
+```bash
+sudo yum install mongodb-org && service mongod start
+```
+
+Openhim-core's config can be modified by using environment variables:
+
+```bash
+export mongo_url="mongodb://<mongodb-IP-address>/<db-name>"
+export mongo_atnaUrl="mongodb://<mongodb-IP-address>/<db-name>"
+export NODE_ENV="production"
+```
+
+To install openhim-console:
+
+```bash
+sudo yum install -y ~/rpmbuild/RPMS/x86_64/openhim-console-{current_version}.x86_64.rpm
+sudo systemctl start openhim-console
+curl http://localhost:9000
+```
+
+Note: In order for openhim-console to run successfully, you'll need to point it to a valid instance of Openhim-core or install it locally. The openhim-console's configuration file can be found here:
+
+```bash
+/
+```
+
+## Let's talk NGINX
+
+The rpm package for openhim-console uses the http-server package from npm to host and serve openhim-console. This is acceptable for development or test installations.
+
+However it is recommended that NGINX be installed for production and staging servers. All openhim-console web traffic should be routed through NGINX; allowing NGINX to manage SSL certificates, data compression and port routing.
+
+## Install certs
+
+There a couple of ways to setup SSL certificates for openhim-console. The easiest and recommended way is by routing all web traffic through NGINX and configuring it to use SSL. Certificates can be purchased or are freely available by using [Letsencrypt](https://letsencrypt.org/).
+
+SSL certificates for openhim-core can be managed through the openhim-console's interface. By default it uses a self-signed certificate.
+
+## Backups
+
+Important files to backup in order to restore Openhim, are as follows:
+
+* Config file for openhim-core
+* Config file for openhim-console
+* Export and backup a copy of the settings and configurations details of the mediators, channels, user accounts and roles (Use the export interface in openhim-console).
+* All relevant certificates
+
+These files will backup the configuration and settings for Openhim. The entire database will need to be backed-up in order to backup all historical data for transactions, audit events & certificates. It is recommended that a full database backup occurs on a regular basis. The configuration files only need to be backup when any of the configuration is updated or modified. Once the system has been setup, these configuration files are not expected to change too often.
+
+## Upgrade paths
+
+In order to upgrade Openhim, perform the following steps:
+
+* It is important to perform a full backup before starting, to ensure the system can be restored if needed.
+* Proceed to building and installing the rpm packages for the new version of Openhim core and console. (You are able to upgrade only the core or only the console, as long as the new version remains compatible).
+* Restore the settings and configurations (use the Import interface in openhim-console).
+* Restore
+* Restore database
+* Test if upgrade worked.
+
+## Logging files
+
+When Openhim is installed, all logs will be piped to standard output, which can be viewed as follows:
+
+```bash
+sudo systemctl status openhim-core
+sudo tail -f -n 100 /var/log/messages
+```
