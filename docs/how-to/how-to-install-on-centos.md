@@ -38,7 +38,7 @@ curl http://localhost:9000
 Note: In order for openhim-console to run successfully, you'll need to point it to a valid instance of Openhim-core or install it locally. The openhim-console's configuration file can be found here:
 
 ```bash
-/
+/usr/lib/openhim-console/dist/config
 ```
 
 ## Let's talk NGINX
@@ -68,12 +68,12 @@ These files will backup the configuration and settings for Openhim. The entire d
 
 In order to upgrade Openhim, perform the following steps:
 
-* It is important to perform a full backup before starting, to ensure the system can be restored if needed.
-* Proceed to building and installing the rpm packages for the new version of Openhim core and console. (You are able to upgrade only the core or only the console, as long as the new version remains compatible).
-* Restore the settings and configurations (use the Import interface in openhim-console).
-* Restore
+* It is important to perform a full backup before starting, to ensure the system can be restored if needed
+* Proceed to building and installing the rpm packages for the new version of Openhim core and console. (You are able to upgrade only the core or console, as long as the new version remains compatible)
+* Restore the settings and configurations (use the Import interface in openhim-console)
+* Update core & console config (not automated yet, needs to be done manually for each field)
 * Restore database
-* Test if upgrade worked.
+* Test if upgrade worked
 
 ## Logging files
 
