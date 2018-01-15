@@ -61,7 +61,9 @@ describe('Auditing Integration Tests', () => {
       // Let go of the process so the other server can do it's processing
       await testUtils.setImmediatePromise()
 
+      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
       const audits = await AuditModel.find()
+
       audits.length.should.be.exactly(1)
       audits[0].rawMessage.should.be.exactly(testAuditMessage)
     })
@@ -86,7 +88,10 @@ describe('Auditing Integration Tests', () => {
       await client.write(messagePrependlength)
       await testUtils.setImmediatePromise()
 
+      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
+
       const audits = await AuditModel.find()
+      // Needs to wait
       audits.length.should.be.exactly(1)
       audits[0].rawMessage.should.be.exactly(testAuditMessage)
     })
@@ -129,7 +134,9 @@ describe('Auditing Integration Tests', () => {
       await promisify(client.once.bind(client))('end')
       await testUtils.setImmediatePromise()
 
+      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
       const audits = await AuditModel.find()
+
       audits.length.should.be.exactly(1)
       audits[0].rawMessage.should.be.exactly(testAuditMessage)
     })

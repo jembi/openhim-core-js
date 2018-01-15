@@ -277,7 +277,10 @@ describe('Routes enabled/disabled tests', () => {
       .expect(200)
     res.text.should.be.exactly('target1')
     // routes are async
+
+    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
     const trx = await TransactionModelAPI.findOne()
+
     trx.routes.length.should.be.exactly(1)
     trx.routes[0].should.have.property('name', 'test route 2')
     trx.routes[0].response.body.should.be.exactly('target2')
@@ -334,6 +337,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
+    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
@@ -359,7 +363,9 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(500)
 
+    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
+
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
     newTransaction[0].orchestrations[0].name.should.eql('test transaction fail orchestration')

@@ -36,7 +36,7 @@ describe('API Integration Tests', () => {
   })
 
   describe('Audits REST Api testing', () => {
-    const auditData = {
+    const auditData = Object.freeze({
       rawMessage: 'This will be the raw ATNA message that gets received to be used as a backup reference',
       eventIdentification: {
         eventDateTime: '2015-02-20T15:38:25.282Z',
@@ -107,7 +107,7 @@ describe('API Integration Tests', () => {
           }
         }
       ]
-    }
+    })
 
     describe('*addAudit()', () => {
       it('should add a audit and return status 201 - audit created', async () => {
@@ -192,7 +192,10 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
+        await testUtils.pollCondition(() => AuditModel.count().then(c => c === 2))
+
         const newAudits = await AuditModel.find()
+        // needs to wait?
         newAudits.length.should.be.exactly(2)
         if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
           newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
@@ -270,6 +273,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
+        await testUtils.pollCondition(() => AuditModel.count().then(c => c === 2))
         const newAudits = await AuditModel.find()
         newAudits.length.should.eql(2)
         const participantObjectID = `https://${router.externalHostname}:${api.httpsPort}/audits/${auditId}`
@@ -288,21 +292,21 @@ describe('API Integration Tests', () => {
     describe('*getAuditsFilterOptions', () => {
       it('should fetch dropdown filter options - admin user', async () => {
         await request(constants.BASE_URL)
-        .post('/audits')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
-        .send(auditData)
-        .expect(201)
+          .post('/audits')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(auditData)
+          .expect(201)
 
         const res = await request(constants.BASE_URL)
-        .get('/audits-filter-options')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
-        .expect(200)
+          .get('/audits-filter-options')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
 
         res.body.eventType.length.should.equal(1)
         res.body.eventID.length.should.equal(1)

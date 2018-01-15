@@ -49,7 +49,9 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(200)
 
+      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
       const audits = await AuditModel.find()
+
       audits.length.should.be.exactly(1)
       audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('0') // success
       audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
@@ -68,7 +70,9 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(401)
 
+      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
       const audits = await AuditModel.find({})
+
       audits.length.should.be.exactly(1)
       audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('8') // failure
       audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
@@ -98,7 +102,10 @@ describe('API Integration Tests', () => {
         .set('auth-salt', authDetails.authSalt)
         .set('auth-token', authDetails.authToken)
         .expect(401)
+
+      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
       const audits = await AuditModel.find({})
+
       audits.length.should.be.exactly(1)
       audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('8') // failure
       audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
