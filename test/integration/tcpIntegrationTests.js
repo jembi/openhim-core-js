@@ -318,7 +318,9 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     resp.toString().should.eql('An internal server error occurred')
     spy.callCount.should.eql(0)
 
+    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
     const tran = await TransactionModel.findOne()
+
     tran.status.should.eql('Failed')
   })
 

@@ -337,31 +337,14 @@ describe('Upgrade DB Tests', () => {
 
     it('should migrate visualizer settings from user setting to shared collection', async () => {
       await upgradeFunc()
+
+      await testUtils.pollCondition(() => VisualizerModel.count().then(c => c === 2))
       const visualizers = await VisualizerModel.find()
 
       visualizers.length.should.be.exactly(2)
       const names = visualizers.map(v => v.name)
       const idx1 = names.indexOf('Test User1\'s visualizer')
       const idx2 = names.indexOf('Test User2\'s visualizer')
-
-      idx1.should.be.above(-1)
-      visualizers[idx1].components.length.should.be.exactly(2)
-      idx2.should.be.above(-1)
-      visualizers[idx2].components.length.should.be.exactly(1)
-    })
-
-    it('should migrate visualizer settings even when user have the same name', async function () {
-      this.retries(2)
-      const user = await UserModel.findOne({ surname: 'User2' })
-      user.surname = 'User1'
-      await user.save()
-      await upgradeFunc()
-
-      const visualizers = await VisualizerModel.find()
-      visualizers.length.should.be.exactly(2)
-      const names = visualizers.map(v => v.name)
-      const idx1 = names.indexOf('Test User1\'s visualizer')
-      const idx2 = names.indexOf('Test User1\'s visualizer 2')
 
       idx1.should.be.above(-1)
       visualizers[idx1].components.length.should.be.exactly(2)
