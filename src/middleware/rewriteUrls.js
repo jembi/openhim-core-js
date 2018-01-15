@@ -1,9 +1,9 @@
 import url from 'url'
 import winston from 'winston'
-import Q from 'q'
 import * as utils from '../utils'
 import * as router from '../middleware/router'
 import { config } from '../config'
+import { promisify } from 'util'
 
 const routerConf = config.get('router')
 
@@ -154,7 +154,7 @@ export async function koaMiddleware (ctx, next) {
   await next()
   // on response rewrite urls
   if (ctx.authorisedChannel.rewriteUrls) {
-    const rewrite = Q.denodeify(rewriteUrls)
+    const rewrite = promisify(rewriteUrls)
     ctx.response.body = await rewrite(ctx.response.body.toString(), ctx.authorisedChannel, ctx.authenticationType)
     return winston.info(`Rewrote url in the response of transaction: ${ctx.transactionId}`)
   }

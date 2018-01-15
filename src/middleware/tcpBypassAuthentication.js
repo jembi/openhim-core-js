@@ -1,8 +1,8 @@
-import Q from 'q'
 import SDC from 'statsd-client'
 import os from 'os'
 import { ClientModel } from '../model/clients'
 import { config } from '../config'
+import { promisify } from 'util'
 
 const statsdServer = config.get('statsd')
 const application = config.get('application')
@@ -28,7 +28,7 @@ export function authenticateUser (ctx, done) {
 export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  const _authenticateUser = Q.denodeify(authenticateUser)
+  const _authenticateUser = promisify(authenticateUser)
   await _authenticateUser(ctx)
 
   if (ctx.authenticated != null) {

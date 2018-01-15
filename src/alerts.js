@@ -1,6 +1,5 @@
 import logger from 'winston'
 import moment from 'moment'
-import Q from 'q'
 import _ from 'lodash'
 
 import * as contact from './contact'
@@ -326,39 +325,40 @@ function sendAlerts (channel, alert, transactions, contactHandler, done) {
   const _alertStart = new Date()
   if (alert.groups) {
     for (const group of Array.from(alert.groups)) {
-      const groupDefer = Q.defer()
-      findGroup(group, (err, result) => {
-        if (err) {
-          logger.error(err)
-          return groupDefer.resolve()
-        }
-        const groupUserPromises = []
+      const groupDefer = new Promise((resolve, reject) => {
+        findGroup(group, (err, result) => {
+          if (err) {
+            logger.error(err)
+            return resolve()
+          }
 
-        for (const user of Array.from(result.users)) {
-          (function (user) {
-            const groupUserDefer = Q.defer()
-            sendAlert(channel, alert, user, transactions, contactHandler, (err, skipSave) => afterSendAlert(err, channel, alert, user, transactions, skipSave, () => groupUserDefer.resolve()))
-            return groupUserPromises.push(groupUserDefer.promise)
-          }(user))
-        }
+          const groupUserPromises = Array.from(result.users).map((user) => {
+            return new Promise((resolve) => {
+              sendAlert(channel, alert, user, transactions, contactHandler, (err, skipSave) => {
+                afterSendAlert(err, channel, alert, user, transactions, skipSave, () => resolve())
+              })
+            })
+          })
 
-        return (Q.all(groupUserPromises)).then(() => groupDefer.resolve())
+          return Promise.all(groupUserPromises).then(() => resolve())
+        })
       })
-      promises.push(groupDefer.promise)
+      promises.push(groupDefer)
     }
   }
 
   if (alert.users) {
-    for (const user of Array.from(alert.users)) {
-      (function (user) {
-        const userDefer = Q.defer()
-        sendAlert(channel, alert, user, transactions, contactHandler, (err, skipSave) => afterSendAlert(err, channel, alert, user, transactions, skipSave, () => userDefer.resolve()))
-        return promises.push(userDefer.promise)
-      }(user))
-    }
+    Array.from(alert.users).forEach((user) => {
+      const userDefer = new Promise((resolve) => {
+        sendAlert(channel, alert, user, transactions, contactHandler, (err, skipSave) => {
+          afterSendAlert(err, channel, alert, user, transactions, skipSave, () => resolve())
+        })
+      })
+      promises.push(userDefer)
+    })
   }
 
-  return (Q.all(promises)).then(() => {
+  return Promise.all(promises).then(() => {
     logger.debug(`.sendAlerts: ${new Date() - _alertStart} ms`)
     return done()
   })
@@ -378,28 +378,28 @@ function alertingTask (job, contactHandler, done) {
       if (Channels.isChannelEnabled(channel)) {
         for (const alert of Array.from(channel.alerts)) {
           (function (channel, alert) {
-            const deferred = Q.defer()
+            const deferred = new Promise((resolve) => {
+              const _findStart = new Date()
+              findTransactionsMatchingCondition(channel, alert, lastAlertDate, (err, results) => {
+                logger.debug(`.findTransactionsMatchingStatus: ${new Date() - _findStart} ms`)
 
-            const _findStart = new Date()
-            findTransactionsMatchingCondition(channel, alert, lastAlertDate, (err, results) => {
-              logger.debug(`.findTransactionsMatchingStatus: ${new Date() - _findStart} ms`)
-
-              if (err) {
-                logger.error(err)
-                return deferred.resolve()
-              } else if ((results != null) && (results.length > 0)) {
-                return sendAlerts(channel, alert, results, contactHandler, () => deferred.resolve())
-              }
-              return deferred.resolve()
+                if (err) {
+                  logger.error(err)
+                  return resolve()
+                } else if ((results != null) && (results.length > 0)) {
+                  return sendAlerts(channel, alert, results, contactHandler, () => resolve())
+                }
+                return resolve()
+              })
             })
 
-            return promises.push(deferred.promise)
+            return promises.push(deferred)
           }(channel, alert))
         }
       }
     }
 
-    return (Q.all(promises)).then(() => {
+    return Promise.all(promises).then(() => {
       job.attrs.data.lastAlertDate = new Date()
       logger.debug(`Alerting task total time: ${new Date() - _taskStart} ms`)
       return done()

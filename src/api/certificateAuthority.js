@@ -1,12 +1,12 @@
-import Q from 'q'
 import logger from 'winston'
 import pem from 'pem'
 import { KeystoreModelAPI } from '../model/keystore'
 import * as utils from '../utils'
 import * as authorisation from './authorisation'
+import { promisify } from 'util'
 
-const readCertificateInfo = Q.denodeify(pem.readCertificateInfo)
-const getFingerprint = Q.denodeify(pem.getFingerprint)
+const readCertificateInfo = promisify(pem.readCertificateInfo)
+const getFingerprint = promisify(pem.getFingerprint)
 
 export async function generateCert (ctx) {
   // Must be admin
@@ -28,7 +28,7 @@ export async function generateCert (ctx) {
 }
 
 async function generateClientCert (options, ctx) {
-  const keystoreDoc = await KeystoreModelAPI.findOne().exec()
+  const keystoreDoc = await KeystoreModelAPI.findOne()
 
   // Set additional options
   options.selfSigned = true
@@ -38,7 +38,7 @@ async function generateClientCert (options, ctx) {
     ctx.body = await createCertificate(options)
     const certInfo = await extractCertMetadata(ctx.body.certificate, ctx)
     keystoreDoc.ca.push(certInfo)
-    await Q.ninvoke(keystoreDoc, 'save')
+    await keystoreDoc.save()
     // Add the new certificate to the keystore
     ctx.status = 201
     logger.info('Client certificate created')
@@ -49,13 +49,13 @@ async function generateClientCert (options, ctx) {
 }
 
 async function generateServerCert (options, ctx) {
-  const keystoreDoc = await KeystoreModelAPI.findOne().exec()
+  const keystoreDoc = await KeystoreModelAPI.findOne()
   options.selfSigned = true
   try {
     ctx.body = await createCertificate(options)
     keystoreDoc.cert = await extractCertMetadata(ctx.body.certificate, ctx)
     keystoreDoc.key = ctx.body.key
-    await Q.ninvoke(keystoreDoc, 'save')
+    await keystoreDoc.save()
     // Add the new certificate to the keystore
     ctx.status = 201
     logger.info('Server certificate created')
@@ -66,23 +66,17 @@ async function generateServerCert (options, ctx) {
 }
 
 function createCertificate (options) {
-  const deferred = Q.defer()
-  pem.createCertificate(options, (err, cert) => {
-    let response
-    if (err) {
-      response =
-        {err}
-      return deferred.resolve(response)
-    } else {
-      response = {
+  return new Promise((resolve, reject) => {
+    pem.createCertificate(options, (err, cert) => {
+      if (err) {
+        return reject(err)
+      }
+      resolve({
         certificate: cert.certificate,
         key: cert.clientKey
-      }
-      return deferred.resolve(response)
-    }
+      })
+    })
   })
-
-  return deferred.promise
 }
 
 async function extractCertMetadata (cert, ctx) {

@@ -1,4 +1,3 @@
-import Q from 'q'
 import xpath from 'xpath'
 import { DOMParser as Dom } from 'xmldom'
 import logger from 'winston'
@@ -7,6 +6,7 @@ import os from 'os'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as Channels from '../model/channels'
+import { promisify } from 'util'
 
 const statsdServer = config.get('statsd')
 const application = config.get('application')
@@ -127,7 +127,7 @@ const matchRequest = (ctx, done) =>
 export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  const matchReq = Q.denodeify(matchRequest)
+  const matchReq = promisify(matchRequest)
   const match = await matchReq(ctx)
 
   if (match != null) {

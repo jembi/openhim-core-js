@@ -1,7 +1,6 @@
 import SDC from 'statsd-client'
 import os from 'os'
 import logger from 'winston'
-import Q from 'q'
 import _ from 'lodash'
 import * as transactions from '../model/transactions'
 import * as autoRetryUtils from '../autoRetry'
@@ -9,6 +8,7 @@ import * as utils from '../utils'
 import { config } from '../config'
 import * as stats from '../stats'
 import * as metrics from '../metrics'
+import { promisify } from 'util'
 
 config.statsd = config.get('statsd')
 const statsdServer = config.get('statsd')
@@ -268,7 +268,7 @@ export function setFinalStatus (ctx, callback) {
 export async function koaMiddleware (ctx, next) {
   let startTime
   if (statsdServer.enabled) { startTime = new Date() }
-  const saveTransaction = Q.denodeify(storeTransaction)
+  const saveTransaction = promisify(storeTransaction)
   await saveTransaction(ctx)
   if (statsdServer.enabled) { sdc.timing(`${domain}.messageStoreMiddleware.storeTransaction`, startTime) }
   await next()

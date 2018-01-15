@@ -20,15 +20,21 @@ const server = require('../../src/server')
 describe('Routes enabled/disabled tests', () => {
   let mockServer1 = null
   let mockServer2 = null
+  let timeoutServer = null
   let restrictedServer = null
 
   const httpPortPlus40 = constants.PORT_START + 40
   const httpPortPlus41 = constants.PORT_START + 41
   const httpPortPlus42 = constants.PORT_START + 42
   const httpPortPlus43 = constants.PORT_START + 43
+  const httpPortPlus44 = constants.PORT_START + 44
 
   const sandbox = sinon.createSandbox()
   const restrictedSpy = sandbox.spy(async (req) => 'Restricted response')
+  const timeoutSpy = sandbox.spy(async (req) => {
+    await testUtils.wait(30)
+    return 'timeout'
+  })
 
   const channel1 = new ChannelModelAPI({
     name: 'TEST DATA - Mock endpoint 1',
@@ -163,6 +169,26 @@ describe('Routes enabled/disabled tests', () => {
     }
   })
 
+  const timeoutChannel = new ChannelModelAPI({
+    name: 'TEST DATA - timeoutChannel',
+    urlPattern: '^/test/timeoutChannel$',
+    allow: ['PoC'],
+    timeout: 20,
+    routes: [
+      {
+        name: 'test route',
+        host: 'localhost',
+        port: httpPortPlus44,
+        primary: true,
+        status: 'enabled'
+      }
+    ],
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
+  })
+
   const channelRestricted = new ChannelModelAPI({
     name: 'Restricted channel',
     urlPattern: '^/test/restricted$',
@@ -194,6 +220,7 @@ describe('Routes enabled/disabled tests', () => {
       channel4.save(),
       channel5.save(),
       channel6.save(),
+      timeoutChannel.save(),
       channelRestricted.save()
     ])
 
@@ -217,6 +244,7 @@ describe('Routes enabled/disabled tests', () => {
     mockServer1 = await testUtils.createMockHttpServer('target1', httpPortPlus40, 200)
     mockServer2 = await testUtils.createMockHttpServer('target2', httpPortPlus41, 200)
     restrictedServer = await testUtils.createMockHttpServer(restrictedSpy, httpPortPlus42, 200)
+    timeoutServer = await testUtils.createMockHttpServer(timeoutSpy, httpPortPlus44, 200)
 
     await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
   })
@@ -228,6 +256,7 @@ describe('Routes enabled/disabled tests', () => {
       mockServer1.close(),
       mockServer2.close(),
       restrictedServer.close(),
+      timeoutServer.close(),
       promisify(server.stop)()
     ])
   })
@@ -335,5 +364,17 @@ describe('Routes enabled/disabled tests', () => {
     newTransaction[0].orchestrations.length.should.be.exactly(1)
     newTransaction[0].orchestrations[0].name.should.eql('test transaction fail orchestration')
     newTransaction[0].orchestrations[0].error.message.should.eql('connect ECONNREFUSED 127.0.0.1:32043')
+  })
+
+  it('should respect the channel timeout', async () => {
+    await request(constants.HTTP_BASE_URL)
+      .get('/test/timeoutChannel')
+      .auth('testApp', 'password')
+      .expect(500)
+
+    timeoutSpy.callCount.should.eql(1)
+    const newTransaction = await TransactionModel.find()
+    newTransaction.length.should.be.exactly(1)
+    newTransaction[0].orchestrations[0].error.message.should.eql('Request took longer than 20ms')
   })
 })

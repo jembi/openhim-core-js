@@ -152,13 +152,37 @@ const tcpToMllpChannelDoc = {
   }
 }
 
+// We don't create a timeout channel for every possible combination as they all use the same code
+const tcpTimeoutChannel = {
+  name: 'tcpTimeoutChannel',
+  urlPattern: '/',
+  allow: ['tcp'],
+  type: 'tcp',
+  tcpPort: CHANNEL_PORT_START + 6,
+  timeout: 20,
+  tcpHost: 'localhost',
+  routes: [{
+    name: 'tcp route',
+    host: 'localhost',
+    port: SERVER_PORT_START + 6,
+    type: 'mllp', // DONT CHANGE TO TCP, it's currently bugged on waiting responses
+    primary: true
+  }
+  ],
+  updatedBy: {
+    id: new ObjectId(),
+    name: 'Test'
+  }
+}
+
 const channels = [
   tcpToTcpChannelDoc,
   tlsToTcpChannelDoc,
   tcpToHttpChannelDoc,
   tcpToTlsChannelDoc,
   tcpToTlsNoCertChannelDoc,
-  tcpToMllpChannelDoc
+  tcpToMllpChannelDoc,
+  tcpTimeoutChannel
 ]
 
 describe('TCP/TLS/MLLP Integration Tests', () => {
@@ -189,7 +213,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
     promisify(server.start)({ tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort })
     // TODO : Replace with ping till ready
-    await testUtils.wait(10)
+    await testUtils.wait(20)
   })
 
   after(async () => {
@@ -225,6 +249,24 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
+  })
+
+  it('will timeout a socket', async () => {
+    const mllpEndChar = String.fromCharCode(0o034)
+    const request = 'Tcp Request'
+    const spy = sandbox.spy(async data => {
+      await testUtils.wait(30)
+      return `should never get this with tcp response` + mllpEndChar
+    })
+    mockServer = await testUtils.createMockTCPServer(spy, tcpTimeoutChannel.routes[0].port)
+    const res = await testUtils.socketTest(tcpTimeoutChannel.tcpPort, request)
+
+    res.toString().should.eql(`An internal server error occurred`)
+    spy.callCount.should.eql(1)
+
+    const transactions = await TransactionModel.find({})
+    transactions.length.should.eql(1)
+    transactions[0].error.message.should.eql('Request took longer than 20ms')
   })
 
   it('will route tls -> tcp', async () => {

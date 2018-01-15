@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import moment from 'moment'
 import atna from 'atna-audit'
@@ -10,6 +9,7 @@ import { config } from '../config'
 import * as utils from '../utils'
 import * as auditing from '../auditing'
 import crypto from 'crypto'
+import { promisify } from 'util'
 
 config.newUserExpiry = config.get('newUserExpiry')
 config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')
@@ -102,13 +102,13 @@ export async function userPasswordResetRequest (ctx, email) {
     }
 
     const { consoleURL } = config.alerts
-    const setPasswordLink = `${consoleURL}/#/set-password/${token}`
+    const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
 
     // Send email to user to reset password
     const plainMessage = passwordResetPlainMessageTemplate(user.firstname, setPasswordLink)
     const htmlMessage = passwordResetHtmlMessageTemplate(user.firstname, setPasswordLink)
 
-    const sendEmail = Q.denodeify(contact.contactUser)
+    const sendEmail = promisify(contact.contactUser)
     const sendEmailError = await sendEmail('email', email, 'OpenHIM Console Password Reset', plainMessage, htmlMessage)
     if (sendEmailError) {
       utils.logAndSetResponse(ctx, 500, `Could not send email to user via the API ${sendEmailError}`, 'error')
@@ -264,11 +264,11 @@ export async function addUser (ctx) {
   userData.expiry = moment().add(duration, durationType).utc().format()
 
   const consoleURL = config.alerts.consoleURL
-  const setPasswordLink = `${consoleURL}/#/set-password/${token}`
+  const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
 
   try {
     const user = new UserModelAPI(userData)
-    await Q.ninvoke(user, 'save')
+    await user.save()
 
     // Send email to new user to set password
 

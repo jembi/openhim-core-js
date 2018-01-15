@@ -1,4 +1,3 @@
-import Q from 'q'
 import logger from 'winston'
 import { ClientModelAPI } from '../model/clients'
 import { ChannelModelAPI } from '../model/channels'
@@ -27,7 +26,7 @@ export async function addClient (ctx) {
 
   try {
     const client = new ClientModelAPI(clientData)
-    await Q.ninvoke(client, 'save')
+    await client.save()
 
     logger.info(`User ${ctx.authenticated.email} created client with id ${client.id}`)
     ctx.body = 'Client successfully created'
