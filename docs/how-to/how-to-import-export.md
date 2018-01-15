@@ -5,7 +5,7 @@ How to export/import Server Configuration
 
 ### Exporting
 
-Follow the below steps to export and import the server metadata configuration. By default, the Users, Channels, Clients, ContactGroups and Mediators collections will be exported.
+Follow the steps belue to export and import the server metadata configuration manually. By default, the Users, Channels, Clients, ContactGroups and Mediators collections will be exported.
 Copy the file [openhim-configuration-export.sh](https://github.com/jembi/openhim-core-js/blob/master/resources/openhim-configuration-export.sh) to a folder where you wish your export to be saved. Run the shell scrip by executing the following command:
 `./openhim-configuration-export.sh`
 
