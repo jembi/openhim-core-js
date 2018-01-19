@@ -17,22 +17,21 @@ For maximum reusability and modifiability, we suggest that mediators be split in
 
 ![](/_static/mediators/mediator-structure.png)
 
-Each mediator should consist of a **normalisation** sub-components, a **orchestration** sub-component and a **de-normalisation** sub-component. The purpose of each of these are described below.
+Each mediator should consist of a **normalisation** sub-components, an **orchestration** sub-component and a **de-normalisation** sub-component. The purpose of each of these are described below.
 
 _Note: These descriptions are taken the [published thesis](http://www.cair.za.net/research/outputs/open-health-information-mediator-architecture-enabling-interoperability-low-middle) of Ryan Crichton: 'The Open Health Information Mediator: an Architecture for Enabling Interoperability in Low to Middle Income Countries'_
 
 ### Normalisation sub-component
 
-This sub-component transforms the request message contained within a transaction to a normalised state. This normalised state is called the canonical form for that transaction. After this process the transaction data must be in a consistent and predictable format to allow components following this step to process it in a predictable fashion, no matter what format it arrived in. This process consists of two operations. Firstly, an on-ramp transformation is applied. This ensures that the message is transformed into a form that the HIM can process, thus enabling syntactic interoperability for the transaction. For example, if the transaction arrives from a legacy application that only supported exporting data in a custom XML format, this process would ensure that the XML is transformed into the canonical form that the HIM can understand, such as an HL7 version 2 message. Secondly, a translation operation is invoked. This operation is responsible for ensuring the codes and code systems used within the transaction are translated to a standard set of vocabulary or clinical terms, called reference terms, that have a common interpretation by other components of the HIM. This could involve a call to a terminology service to translate and verify that the codes used within the transaction are represented in, or are translated to, known reference terms. In this way semantic interoperability between service requesters and providers is achieved.
+This sub-component transforms the request message contained within a transaction to a normalised state. This normalised state is called the canonical form for that transaction. After this process the transaction data must be in a consistent and predictable format to allow components following this step to process it in a predictable fashion, no matter what format it arrived in. This process consists of two operations. Firstly, an on-ramp transformation is applied. This ensures that the message is transformed into a form that the HIM can process, thus enabling syntactic interoperability for the transaction. For example, if the transaction arrives from a legacy application that only supported exporting data in a custom XML format, this process would ensure that the XML is transformed into the canonical form that the HIM can understand, such as an HL7 version 2 messages. Secondly, a translation operation is invoked. This operation is responsible for ensuring the codes and code systems used within the transaction are translated to a standard set of vocabulary or clinical terms, called reference terms, that have a common interpretation by other components of the HIM. This could involve a call to a terminology service to translate and verify that the codes used within the transaction are represented in, or are translated to, known reference terms. In this way semantic interoperability between service requesters and providers is achieved.
 
 ### Orchestration sub-component
-
 
 This sub-component is responsible for performing implementation-specific orchestration for the current transaction. The aim of the orchestration component is to execute the received transaction and perform any consequent action(s) required for this transaction. This could include zero or more calls to external services as well as the execution of business logic. This component compiles the response for the executed transaction and returns this to the persistence component which forwards the response to the service requester via the interface component. The calls to external systems should be done in parallel where possible to ensure that the orchestration is done quickly and efficiently as possible.
 
 ### De-normalisation sub-component
 
-This sub-component is responsible for transforming or constructing a service request in a format that is understandable to the service provider. This operates in a similar way to the normalisation component except the operations occur in the reverse order. This approach serves to decouple service providers from the orchestration component, which allows for service providers to be easily modified or replaced with minimal impact on the mediation component.
+This sub-component is responsible for transforming or constructing a service request in a format that is understandable to the service provider. This operates similarly to the normalisation component except the operations occur in the reverse order. This approach serves to decouple service providers from the orchestration component, which allows for service providers to be easily modified or replaced with minimal impact on the mediation component.
 
 Separating the mediator into these difference components allows the same orchestration logic to be reused with multiple inbound and outbound message formats. It also allows the normalisation and de-normalisation sub-components to be split out of the mediator and scaled and load balanced independently from it. This is especially useful in high load applications. We recommend that mediation platform such as Mule ESB or Apache Camel be used to ease the construction of such a mediator simpler.
 
@@ -92,6 +91,7 @@ The OpenHIM-core SHALL respond with an appropriate 5xx status if the mediator re
 
 ##### Basic Settings
 The following is a config definition for basic server settings:
+
 ```js
 {
   ...
@@ -116,7 +116,9 @@ The following is a config definition for basic server settings:
   ]
 }
 ```
+
 Valid config would be:
+
 ```js
 {
   "host": "localhost",
@@ -127,6 +129,7 @@ Valid config would be:
 
 ##### Map example
 A map is a collection of key/value pairs:
+
 ```js
 {
   ...
@@ -139,7 +142,9 @@ A map is a collection of key/value pairs:
   ]
 }
 ```
+
 Valid config would be:
+
 ```js
 {
   "uidMappings": {
@@ -149,10 +154,12 @@ Valid config would be:
   }
 }
 ```
+
 Note that the keys `value1`, `value2`, etc. were not predefined in the definition. The OpenHIM-console allows users to dynamically add key/value pairs for a map.
 
 ##### Struct example
 A struct is a grouping of other types:
+
 ```js
 {
   ...
@@ -185,7 +192,9 @@ A struct is a grouping of other types:
   ]
 }
 ```
+
 Valid config would be:
+
 ```js
 {
   "server": {
@@ -198,6 +207,7 @@ Valid config would be:
 
 ##### Array example
 The following is a config definition for a string array:
+
 ```js
 {
   ...
@@ -212,7 +222,9 @@ The following is a config definition for a string array:
   ]
 }
 ```
+
 Valid config would be:
+
 ```js
 {
   "balancerHosts": [
@@ -224,6 +236,7 @@ Valid config would be:
 ```
 
 Arrays are supported for all types, including structs:
+
 ```js
 {
   ...
@@ -247,7 +260,9 @@ Arrays are supported for all types, including structs:
   ]
 }
 ```
+
 Valid config would be:
+
 ```js
 {
   "balancerHosts": [
@@ -267,7 +282,7 @@ Valid config would be:
 
 ### Return transaction metadata
 
-A mediator **SHOULD** return a structured object that indicates the response that should be returned to the user as well as metadata about the actions that were performed. The mediator is not required to do this however useful information can be returned to the OpenHIM-core in this way. If a structured response is not returned to the OpenHIM-core then what ever is returned to the OpenHIM-core  is pass directly on to the client that make the request.
+A mediator **SHOULD** return a structured object that indicates the response that should be returned to the user as well as metadata about the actions that were performed. The mediator is not required to do this however useful information can be returned to the OpenHIM-core in this way. If a structured response is not returned to the OpenHIM-core then what ever is returned to the OpenHIM-core is passed directly on to the client that made the request.
 
 The structured object should be returned in the HTTP response for each request that the OpenHIM-core forwards to the mediator. If the mediator chooses to return a strucutred response then the mediator MUST return this object with a content-type header with the value: 'application/json+openhim'. If the mediator wants to set a specific content-type to return to the client, they can set this in the response object as a header (see below).
 
