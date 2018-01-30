@@ -15,13 +15,14 @@ if (args.indexOf('-v') >= 0 || args.indexOf('--version') >= 0) {
   process.exit(0)
 }
 
-const lib = path.join(path.dirname(fs.realpathSync(__filename)), '../lib')
+const root = path.join(path.dirname(fs.realpathSync(__filename)), '..')
 
-const child = new (forever.Monitor)('server.js', {
-  sourceDir: lib,
+const child = new (forever.Monitor)('lib/server.js', {
+  sourceDir: root,
   command: 'node --harmony',
   args,
-  watch: true
+  watch: true,
+  watchDirectory: 'lib'
 })
 
 child.on('watch:restart', (info) => {

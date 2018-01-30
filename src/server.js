@@ -16,7 +16,6 @@ import logger from 'winston'
 import 'winston-mongodb'
 import Agenda from 'agenda'
 import mongoose from 'mongoose'
-import { path as appRoot } from 'app-root-path'
 
 import * as koaMiddleware from './koaMiddleware'
 import * as koaApi from './koaApi'
@@ -32,7 +31,7 @@ import * as tasks from './tasks'
 import * as upgradeDB from './upgradeDB'
 import * as autoRetry from './autoRetry'
 import * as bodyCull from './bodyCull'
-import { config } from './config'
+import { config, appRoot } from './config'
 
 mongoose.Promise = Promise
 

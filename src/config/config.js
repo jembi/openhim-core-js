@@ -1,5 +1,7 @@
 import nconf from 'nconf'
-import { path as appRoot } from 'app-root-path'
+import path from 'path'
+
+export const appRoot = path.resolve(__dirname, '../..')
 
 /*
  * Define the default constructor
@@ -7,12 +9,13 @@ import { path as appRoot } from 'app-root-path'
 function Config () {
   // Get the argument-value to use
   nconf.argv().env('_')
-  const environment = nconf.get('NODE:ENV') || 'development'
+  const environment = nconf.get('NODE:ENV')
+  const conf = getConfigOverride(process.argv)
 
   // Load the configuration-values
   // user specified config override
-  if (nconf.get('conf')) {
-    nconf.file('customConfigOverride', nconf.get('conf'))
+  if (conf) {
+    nconf.file('customConfigOverride', conf)
   }
 
   // environment override
@@ -24,6 +27,23 @@ function Config () {
   nconf.file('default', `${appRoot}/config/default.json`)
 
   // Return the result
+}
+
+function getConfigOverride (argv) {
+  const [conf] = argv.filter(v => /^conf/.test(v))
+  if (conf == null) {
+    return
+  }
+
+  if (/=(.*)/.test(conf)) {
+    const [, value] = conf.match(/=(.*)/)
+    return value
+  }
+
+  const index = argv.indexOf(conf)
+  if (argv.length > index + 1) {
+    return argv[index + 1]
+  }
 }
 
 /*
