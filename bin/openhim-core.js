@@ -7,15 +7,14 @@ const args = process.argv
 args.splice(0, 2)
 
 /* Check for version flag */
+const root = path.join(__dirname, '..')
 
 if (args.indexOf('-v') >= 0 || args.indexOf('--version') >= 0) {
-  const pkgF = path.join(path.dirname(fs.realpathSync(__filename)), '../package.json')
+  const pkgF = path.join(root, 'package.json')
   const pkg = JSON.parse(fs.readFileSync(pkgF))
   console.log(`OpenHIM Core version ${pkg.version}`)
   process.exit(0)
 }
-
-const root = path.join(path.dirname(fs.realpathSync(__filename)), '..')
 
 const child = new (forever.Monitor)('lib/server.js', {
   sourceDir: root,

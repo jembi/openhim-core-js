@@ -1,12 +1,11 @@
 /* eslint-env mocha */
 import moment from 'moment'
 import fs from 'fs'
-import { path as appRoot } from 'app-root-path'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
 import { KeystoreModel } from '../../src/model/keystore'
-import { config } from '../../src/config'
+import { config, appRoot } from '../../src/config'
 import { promisify } from 'util'
 
 config.certificateManagement = config.get('certificateManagement')
