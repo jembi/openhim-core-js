@@ -1,5 +1,7 @@
 import nconf from 'nconf'
 import path from 'path'
+import fs from 'fs'
+import logger from 'winston'
 
 export const appRoot = path.resolve(__dirname, '../..')
 
@@ -10,16 +12,23 @@ function Config () {
   // Get the argument-value to use
   nconf.argv().env('_')
   const environment = nconf.get('NODE:ENV')
-  const conf = getConfigOverride(process.argv)
+  const conf = nconf.get('conf')
 
   // Load the configuration-values
   // user specified config override
   if (conf) {
+    if (!fs.existsSync(conf)) {
+      logger.warn(`Invalid config path ${conf}`)
+    }
     nconf.file('customConfigOverride', conf)
   }
 
   // environment override
   if (environment) {
+    const envPath = `${appRoot}/config/${environment}.json`
+    if (!fs.existsSync(envPath)) {
+      logger.warn(`No config found for env ${environment} at path ${envPath}`)
+    }
     nconf.file('environmentOverride', `${appRoot}/config/${environment}.json`)
   }
 
@@ -27,23 +36,6 @@ function Config () {
   nconf.file('default', `${appRoot}/config/default.json`)
 
   // Return the result
-}
-
-function getConfigOverride (argv) {
-  const [conf] = argv.filter(v => /^conf/.test(v))
-  if (conf == null) {
-    return
-  }
-
-  if (/=(.*)/.test(conf)) {
-    const [, value] = conf.match(/=(.*)/)
-    return value
-  }
-
-  const index = argv.indexOf(conf)
-  if (argv.length > index + 1) {
-    return argv[index + 1]
-  }
 }
 
 /*
