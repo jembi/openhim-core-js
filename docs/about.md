@@ -16,7 +16,7 @@ Some examples of common workflows that the OpenHIM can support to facilitate the
 
 The OpenHIM enables easier interoperability between systems by connecting all of the infrastructure services and client or point of service applications together. In the OpenHIE context, these systems are Health Information Systems (HISs) such as a client registry, provider registry, facility registry, shared health record, terminology service and a data warehouse.  
 
-[![OpenHIE Architecture](/_static/overview/OpenHIE Architecture.PNG)]
+[![OpenHIEArchitecture](/_static/overview/OpenHIEArchitecture.PNG)]
 
 The OpenHIM provides a single point of entry into the services of a health information exchange (HIE): it receives transactions from client systems, coordinates interaction between the different components of the HIE by routing requests to the correct orchestrator or registry, and provides the centralised common core functions to simplify data exchange. 
 
