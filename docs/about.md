@@ -1,17 +1,16 @@
 About the OpenHIM
 ====================
 
-The Open Health Information Mediator (OpenHIM) is an interoperability layer: a software component that enables easier interoperability between disparate electronic information systems by providing a central point where the exchange of data is managed. An interoperability layer receives transactions from different information systems and coordinates the interactions between them.  The OpenHIM provides a layer of abstraction between systems that allows for the transformation of incoming messages to a form that the other system components expect and can support the business logic by orchestrating the transaction flow. 
+The Open Health Information Mediator (OpenHIM) is an interoperability layer: a software component that enables easier interoperability between disparate electronic information systems by providing a central point where the exchange of data is managed. An interoperability layer receives transactions from different information systems and coordinates the interactions between them. The OpenHIM provides a layer of abstraction between systems that allows for the transformation of incoming messages to a form that the other system components expect and can support the business logic by orchestrating the transaction flow. 
 
-The OpenHIM is the current reference technology for the interoperability layer of the OpenHIE (Open Health Information Exchange). It is supported through a number of  implementation projects that drive its continuing development to meet real world needs.  
+The OpenHIM is the current reference technology for the interoperability layer of the OpenHIE (Open Health Information Exchange). It is supported through a number of implementation projects that drive its continuing development to meet real world needs.  
 
 Some examples of common workflows that the OpenHIM can support to facilitate the sharing of health information within a Health Information Exchange are:  
-* Save a patient's clinical encounter to a shared health record so that authorised healthcare providers are able to access key clinical   data that can inform better care 
+* Save a patient's clinical encounter to a shared health record so that authorised healthcare providers are able to access key clinical data that can inform better care 
 * Retrieve relevant information about patient encounters and care plans for authorised healthcare providers
 * Receive aggregate reporting information from a client system and send this to an aggregate datastore
 * Manage health facilities 
-* Manage patient demographics and identity to allows for the tracking of a patient’s activity within and between healthcare   organisations  and across the continuum of care
-
+* Manage patient demographics and identity to allow for the tracking of a patient’s activity within and between healthcare  organisations and across the continuum of care
 
 ## Ok. But, what does the OpenHIM actually do?
 
@@ -34,15 +33,15 @@ The OpenHIM is also able to perform orchestration tasks for complex transactions
 ## What are the benefits of using the OpenHIM?
 
 The OpenHIM acts as a central exchange that offers the following benefits:
-* It is an open source software application, with a zero cost licence  (Mozilla Public License (MPL) version 2.0) and a publicly available codebase.
+* It is an open source software application, with a zero cost licence (Mozilla Public License (MPL) version 2.0) and a publicly available codebase.
 * It provides a single point of control within a Service Oriented Architecture (SOA), enabling: 
 * Centralised security management:
-* Authentication to confirm a the identity of an individual  user or client system
+* Authentication to confirm a the identity of an individual user or client system
 * Authorisation to determine the user or client’s privileges and access levels 
 * Centralised certificate management which allows for easier setup and maintenance.
 * Easy routing of messages between systems or system components.
-* Centralised logging of all messages  for auditing and reporting. This utilises ATNA and is compliant with international standards.
-* Monitoring of transactions relating to performance, data synchronisation  and system usage.  
+* Centralised logging of all messages for auditing and reporting. This utilises ATNA and is compliant with international standards.
+* Monitoring of transactions relating to performance, data synchronisation and system usage.  
 * Error management: Provides the ability for an administrator to review and bulk re-run requests or re-run individual requests, alleviating the need for point-of-service systems to re-send data. 
 * Alerting: User alerts can be configured to be sent when requests fail or a particular failure rate is exceeded. Users can be notified via email or SMS. 
 * The use of mediators for message transformation and orchestration. The OpenHIM provides a framework to add and manage your own custom implementation-specific mediators.  
@@ -67,9 +66,8 @@ The OpenHIM allows you to secure and view requests to your web service Applicati
 * Secures access to web services - The OpenHIM provides a secure interface to upstream hosts with certificate management and self-signed certificate generation along with advanced access control mechanisms based on client and server certificates.
 * Supports Audit Trail and Node Authentication (ATNA): - The OpenHIM provides a full ATNA audit repository implementation and advanced audit viewer.  
 * Provides visibility into the Service Oriented Architecture (SOA) - The administration console allows viewing of requests as they travel through the system as well as the ability to view metrics such as transaction loads and error rates. It allows an administrator to review and bulk re-run requests or re-run individual requests. The OpenHIM can automatically re-run requests to one's services if client systems are not able to.
-* Extends request processing via mediators - The OpenHIM allows one to build one’s own micro-services, called mediators, that plug into the OpenHIM to extend its functionality. These mediators can be used to transform or orchestrate requests or support more complex business logic. The mediators also report details of what processing has been done back to the OpenHIM using the mediator framework.
-Scalable 
-* The OpenHIM is scalable, supporting same server and multi-server clusters, using MongoDB as the underlying database.MongoDB is inherently massively scalable due to its clustering and sharding capabilities and can be horizontally scaled to deal with billions of transactions per day. Sharding increases write performance, while adding secondary nodes to a cluster increases read performance. 
+* Extends request processing via mediators - The OpenHIM allows one to build one’s own micro-services, called mediators, that plug into the OpenHIM to extend its functionality. These mediators can be used to transform or orchestrate requests or support more complex business logic. The mediators also report details of what processing has been done back to the OpenHIM using the mediator framework. 
+* Scalable - The OpenHIM is scalable, supporting same server and multi-server clusters, using MongoDB as the underlying database. MongoDB is inherently massively scalable due to its clustering and sharding capabilities and can be horizontally scaled to deal with billions of transactions per day. Sharding increases write performance, while adding secondary nodes to a cluster increases read performance. 
 * Minimal transaction overhead - The OpenHIM used the latest technologies such as Node.js and MongoDB to ensure that it doesn’t introduce any significant overhead to requests.
 
 
