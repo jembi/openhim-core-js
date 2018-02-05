@@ -3,13 +3,19 @@ How to install on CentOS
 
 ## Install RPM package
 
-Openhim RPM packages can be built using these [instructions](http://openhim.readthedocs.io/en/latest/how-to/how-to-build-and-test-rpm-package.html).
+RPM packages are provided for OpenHIM releases since v4.0.1. They may be downloaded from the [Github releases page](https://github.com/jembi/openhim-core-js/releases).
 
-Once you have built the rpm packages, openhim-core can be installed:
+```bash
+# example of downloading the package via the command line
+wget https://github.com/jembi/openhim-core-js/releases/download/v4.0.1/openhim-core-v4.0.1.x86_64.rpm
+```
+
+The package can be installed with the following:
 
 ```bash
 sudo yum install -y ~/rpmbuild/RPMS/x86_64/openhim-core-{current_version}.x86_64.rpm
 sudo systemctl start openhim-core
+# test that the OpenHIM is running
 curl https://localhost:8080/heartbeat -k
 ```
 
