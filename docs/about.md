@@ -3,7 +3,7 @@ About the OpenHIM
 
 The Open Health Information Mediator (OpenHIM) is an interoperability layer: a software component that enables easier interoperability between disparate electronic information systems by providing a central point where the exchange of data is managed. An interoperability layer receives transactions from different information systems and coordinates the interactions between them. The OpenHIM provides a layer of abstraction between systems that allows for the transformation of incoming messages to a form that the other system components expect and can support the business logic by orchestrating the transaction flow. 
 
-The OpenHIM is the current reference technology for the interoperability layer of the OpenHIE (Open Health Information Exchange). It is supported through a number of implementation projects that drive its continuing development to meet real world needs.  
+The OpenHIM was initially developed by Jembi Health Systems  in collaboration with the Health Architecture Laboratory ( HeAL)  at the University of KwaZulu-Natal as part of the Rwanda Health Enterprise Architecture (RHEA) project, and formed the basis for Ryan Crichton’s Master's thesis  “The Open Health Information Mediator: an Architecture for Enabling Interoperability in Low to Middle Income Countries”.  The OpenHIM is the current reference technology for the interoperability layer of the OpenHIE (Open Health Information Exchange). It is supported through a number of implementation projects that drive its continuing development to meet real world needs.   
 
 Some examples of common workflows that the OpenHIM can support to facilitate the sharing of health information within a Health Information Exchange are:  
 * Save a patient's clinical encounter to a shared health record so that authorised healthcare providers are able to access key clinical data that can inform better care 
@@ -59,17 +59,44 @@ As the OpenHIM provides these centralised services it means that domain services
 ## Where is the OpenHIM used?
 The OpenHIM has been implemented in a number of different projects, ranging from innovative prototypes to national level health systems strengthening projects. Read about some of these in our Implementation Case Studies.  
 
-## How does the OpenHIM do this?
+## Components of the OpenHIM
 
-The OpenHIM allows you to secure and view requests to your web service Application Programming Interfaces (API). It acts as a reverse proxy to upstream services and while doing so, enables visibility into your service-oriented architecture (SOA) by logging each request and by providing metrics about requests hitting the services. It also provides a central entry point into your SOA and allows you to secure access through mutual Transport Layer Security (TLS) or basic-auth. In addition, the OpenHIM acts as a central exchange, or service bus, which provides for the following:
-* Acts as a reverse proxy for web service - One can easily configure the OpenHIM to proxy web services, to multiple upstream hosts based on a URL pattern. It also supports multicasting requests to multiple different routes.
-* Secures access to web services - The OpenHIM provides a secure interface to upstream hosts with certificate management and self-signed certificate generation along with advanced access control mechanisms based on client and server certificates.
-* Supports Audit Trail and Node Authentication (ATNA): - The OpenHIM provides a full ATNA audit repository implementation and advanced audit viewer.  
-* Provides visibility into the Service Oriented Architecture (SOA) - The administration console allows viewing of requests as they travel through the system as well as the ability to view metrics such as transaction loads and error rates. It allows an administrator to review and bulk re-run requests or re-run individual requests. The OpenHIM can automatically re-run requests to one's services if client systems are not able to.
-* Extends request processing via mediators - The OpenHIM allows one to build one’s own micro-services, called mediators, that plug into the OpenHIM to extend its functionality. These mediators can be used to transform or orchestrate requests or support more complex business logic. The mediators also report details of what processing has been done back to the OpenHIM using the mediator framework. 
-* Scalable - The OpenHIM is scalable, supporting same server and multi-server clusters, using MongoDB as the underlying database. MongoDB is inherently massively scalable due to its clustering and sharding capabilities and can be horizontally scaled to deal with billions of transactions per day. Sharding increases write performance, while adding secondary nodes to a cluster increases read performance. 
-* Minimal transaction overhead - The OpenHIM used the latest technologies such as Node.js and MongoDB to ensure that it doesn’t introduce any significant overhead to requests.
+The OpenHIM logically consists of three components: 
+* The OpenHIM Core provides the main functions and services
+* The Administration Console provides an easy to use interface for system administrators to configure and manage the OpenHIM, giving a window into the workings of the HIE.
+* Mediators are additional services used to extend the functionality of the OpenHIM by transforming and orchestrating transactions.
 
+![OpenHIM Components](/_static/overview/OpenHIM Components.PNG)
+
+### The OpenHIM Core
+The OpenHIM Core provides the key functions and services required for an interoperability layer that are useful in a Service Oriented Architecture (SOA) environment. A service-oriented architecture is essentially a collection of services that communicate with each other. The communication can involve either simple data passing or it could involve two or more services coordinating an activity. The OpenHIM is used to connect these services to each other: it provides an interface that point of service applications (clients) are able to contact in order to reach the services provided in the SOA. You can think of this interface as a reverse proxy for your applications but with some special features. 
+
+The functions of the OpenHIM Core are identified as follows:
+* Basic Routing - A routing mechanism that routes requests received to the correct upstream service.
+* Log Service and Audit Repository- This service stores each message in its entirety along with metadata about the message, such as the time and the date the message was received, who sent the message, what information was requested  and the response that the service returned, as well as error information when available.
+* Authorization and Authentication - The OpenHIM Core ensures that the client system requesting or submitting information is known and has the correct privileges to do so.
+* Error Monitoring - Displaying and monitoring errors that occur between the services, including email and SMS alerting. 
+* Transaction ReRunning - Replays transactions by resending them to its target service(s). Transactions can also be rerun automatically if a service is unavailable. 
+* Transaction Metrics -  Calculations of statistics such as the number of transactions in a specific period 
+The OpenHIM-core also provides a framework to add and manage your own implementation specific mediators in the system. 
+
+### OpenHIM Administration Console
+The admin console is a web-based user interface that provides visual tools to assist administrators interacting with the OpenHIM Core for maintenance and monitoring. Administrators use the console to set up users and roles for the client systems that will be sending and receiving the information, and to configure the channels and routes that the information will pass through. Administrators can also monitor the OpenHIM transactions via the console and re-run failed transactions if necessary.
+The main functions of the OpenHIM console are:
+* Creation and management of client users and groups
+* Configuration  of  clients, channels and routes 
+* Transaction monitoring
+* Auditing of system interactions
+* Error management
+
+### Mediators
+OpenHIM mediators are separate micro services that run independently from the OpenHIM Core and perform additional mediation tasks for a particular use case. Mediators can be built using any platform or language fit for the requirement. The Core defines interfaces that mediators use to communicate and exchange metadata with the Core, both at a transaction-level as well as general configuration for the mediator. Mediators can also use these interfaces to send their "availability" status to Core for monitoring purposes.
+There are three types of mediators:
+* Pass-through mediator - Accepts a request and passes it on unchanged.
+* Adaptor mediator - Accepts a request and transforms/adapts the request into another format before sending the request on to its final destination e.g. transform HL7 v2 to HL7 v3 or transform MHD to XDS.b.  Adapters are used to simplify communication with the domain services and also to adapt a standards-based interface to a custom domain service interface.
+* Orchestration mediator - Accepts a request and uses that request to execute a business function that may need to call out to other service endpoints on other systems e.g. enriching a message with a client’s unique identifier retrieved from a client registry.
+These services are invoked whenever there is a need to orchestrate or adapt a certain transaction. If they are not needed the OpenHIM core component will call the domain service directly.  Orchestrators may use other adapters to send messages to other services. 
+As the architecture is designed to evolve as the environment changes, designing these orchestrators and adapters as independent services allows for additional logic or business processes to be added as the need arises.  Mediators are often implementation specific so they will change to meet the specific needs and business processes of the system.  A mediator library is available so that existing mediators can be re-used or adapted as needed. Both the orchestrator and adapter services are also expected to log and audit messages that they send out to the domain services. These services are implemented as mediators within the OpenHIM. 
 
 ## Funders
 
