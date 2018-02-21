@@ -1,8 +1,6 @@
-# Getting started
+# Getting started - How to install the OpenHIM
 
-To get you started, we will show you how to install the OpenHIM core along with the OpenHIM admin console.
-
-## How to install the OpenHIM
+To get you started, we will show you the various options for installing the OpenHIM core along with the OpenHIM admin console.
 
 If you are installing the OpenHIM on ubuntu, then the installation process is very easy as we provide a debian package in the OpenHIE Personal Package Archive (PPA). Currently, the packages are only built for Ubuntu 14.04 but we hope to support the latest LTS soon. The OpenHIM in general supports all versions of Ubuntu.
 
