@@ -14,3 +14,4 @@ Contents:
    dev-guide/index
    implementations/index
    how-to/index
+   FAQs/index
