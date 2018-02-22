@@ -20,7 +20,6 @@ mHero is not a new technology. It’s a way to connect data from existing health
 * SMS messages are developed and tested in RapidPro
 * DHIS2 and iHRIS are connected through the health worker registry, which connects to RapidPro through the OpenHIM
 
-
 ![mhero architecture](/_static/mhero/mhero-diagram.png)
 
 Within the context of mHero, the OpenHIM performs a few vital functions.
