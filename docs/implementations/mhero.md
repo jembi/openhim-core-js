@@ -1,11 +1,24 @@
 mHero
 =====
 
-Mobile Health Worker Electronic Response and Outreach (mHero) is one way to harness the well-known power of mobile technology to reach frontline health workers. It combines data from multiple sources, such as a facility registry and a health worker registry, to enable targeted messaging directly to Health Workers. The messaging workflows that it enables provides an unprecedented link directly to those health workers that are in need of support.
+Mobile Health Worker Electronic Response and Outreach (mHero) harnesses the power of mobile technology to reach frontline health workers. It is a two-way, mobile phone-based communication system that uses basic text messaging, or SMS, to connect ministries of health and health workers. mHero was rapidly developed in August 2014 to support health-sector communication during the Ebola outbreak in Liberia and is being extended for use in Sierra Leone, Guinea and Mali.
+
+Health officials can use mHero to:
+* Communicate critical messages to health workers during a crisis or emergency response. 
+* Target messages to health workers based on cadre, location, or skill set. 
+* Collect critical information that powers resilient health systems, including stock levels, routine and one-time assessments, and validation of health worker and facility data.
+* Provide care reminders and manage client referrals to strengthen clinical support. 
 
 For more information please see the [mHero](http://www.mhero.org) website.
 
 ## How the OpenHIM is used
+
+mHero is not a new technology. It’s a way to connect data from existing health information systems to allow for targeted, real-time communication. mHero brings together existing components of a country’s health information system using open international interoperability standards for health information exchange. The OpenHIM is deployed as the interoperability layer that connects the following systems:
+
+* DHIS2 houses information on service delivery statistics and facilities
+* iHRIS houses information on health workers, including their mobile phone numbers
+* SMS messages are developed and tested in RapidPro
+* DHIS2 and iHRIS are connected through the health worker registry, which connects to RapidPro through the OpenHIM
 
 ![mhero architecture](/_static/mhero/mhero-diagram.png)
 
