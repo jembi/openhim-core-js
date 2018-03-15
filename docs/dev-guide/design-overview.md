@@ -1,10 +1,9 @@
 Design overview
 ===============
 
-This dsection describes the architectural design of an Interoperability Layer for use within the [OpenHIE project](https://ohie.org/) (The OpenHIM is a reference implementation of an OpenHIE Interoperability Layer). It describes the key components that should make up an interoperability layer and how this relates to the other services that are used in OpenHIE.
+This section describes the architectural design of an Interoperability Layer for use within the [OpenHIE project](https://ohie.org/) (The OpenHIM is a reference implementation of an OpenHIE Interoperability Layer). It describes the key components that should make up an interoperability layer and how this relates to the other services that are used in OpenHIE.
 
-Conceptually, the OpenHIM consists of the following three components, illustrated in figure 4 below:
-
+Conceptually, the OpenHIM consists of the following three components:
 1. Core (thin proxy)
 2. Administration Console 
 3. Mediators including orchestrators and adapter services
