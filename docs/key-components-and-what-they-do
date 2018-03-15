@@ -85,3 +85,4 @@ Some users may be required to authenticate their credentials using a digital cer
 A new OpenHIM server certificate may be added or generated and trusted client certificatescan also be added or edited. 
 
 8. Export and Import OpenHIM configuration. 
+It is possible to import and export the OpenHIM's configuration in the form of a JSON file.
