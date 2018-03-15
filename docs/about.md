@@ -66,7 +66,7 @@ The OpenHIM logically consists of three components:
 * The Administration Console provides an easy to use interface for system administrators to configure and manage the OpenHIM, giving a window into the workings of the HIE.
 * Mediators are additional services used to extend the functionality of the OpenHIM by transforming and orchestrating transactions.
 
-![OpenHIM Components](/_static/overview/OpenHIM Components.PNG)
+![OpenHIM Components](/_static/overview/OpenHIMComponents.PNG)
 
 ### The OpenHIM Core
 The OpenHIM Core provides the key functions and services required for an interoperability layer that are useful in a Service Oriented Architecture (SOA) environment. A service-oriented architecture is essentially a collection of services that communicate with each other. The communication can involve either simple data passing or it could involve two or more services coordinating an activity. The OpenHIM is used to connect these services to each other: it provides an interface that point of service applications (clients) are able to contact in order to reach the services provided in the SOA. You can think of this interface as a reverse proxy for your applications but with some special features. 
