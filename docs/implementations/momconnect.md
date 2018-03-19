@@ -18,7 +18,8 @@ The OpenHIM is used to provide security and visibility into the MomConnect Healt
 
 The implemented architectural design for MomConnect is illustrated in figure 3 below. Mothers can opt-in to messaging through a free Unstructured Supplementary Service Data (USSD) line. The USSD data moves into District Health Information System (DHIS2) Tracker and other registries in a standards-compliant format through the OpenHIM. All reporting is provided through DHIS2.
 
-NEED TO INSERT Figure 3: MomConnect - Software Architectural Design
+Figure 3: MomConnect - Software Architectural Design
+[![MomConnectSoftwareArchitecture](/_static/general/MomConnect-Fig4-SystemArchDesign.jpg)]
 
 Incoming messages are validated, added to a queue and sent asynchronously to a mediator, which wraps all the Tracker Application programming interface (API) calls. As,  well as storing the person-level data DHIS2 also acts as the Master Facility List to validate facility information associated with the clinics. Tracker data is aggregated each night by specially developed aggregation scripts. Reports on the number of opt-ins, opt-outs, compliments and complaints, service ratings and patient demographics are accessed via DHIS2 HTML reports, pivot tables and GIS maps.
 
@@ -28,7 +29,8 @@ MomConnect uses a carefully designed system architecture which makes use of a lo
 3.	Extra backup for each transaction written to a MySQL database.
 4.	Rerun failed transactions using the backup data in MongoDB or MySQL
 
-NEED TO INSERT Figure 4: MomConnect - System Architectural Design
+Figure 4: MomConnect - System Architectural Design
+[![MomConnectSystemArchitecture](/_static/general/MomConnect-Fig3-SoftwareArchDesign.PNG)]
 
 This system architecture also allows for maximum system uptime during OpenHIM scheduled maintenance by allowing the software vendor to push all transaction load to one OpenHIM server while the other requires maintenance work. This strategy ensures system usability during maintenance operations as these operations will not have a negative impact on the day-to-day activities.
 
@@ -38,5 +40,5 @@ Each OpenHIM server has four mediators namely: message validator mediator, file 
 * Orchestrator Mediator: This mediator plays an important role during the message handling process as it needs to keep the OpenHIM informed regarding any failed attempts to commit data to DHIS. The OpenHIM needs to know when the file queue mediator is required to rerun message requests which is possible due to the feedback supplied by the orchestrator.
 * Tracker/Populator Mediator - Used to monitor the completion status for the request as well as to commit the well-formed message to DHIS.
 
-NEED TO INSERT Figure 5: MomConnect - Mediators
-
+Figure 5: MomConnect - Mediators
+[![MomConnectMediators](/_static/general/MomConnect-Fig5-Mediators.jpg)]
