@@ -1,4 +1,5 @@
-import { EmailTemplate } from 'email-templates'
+import Handlebars from 'handlebars'
+import fs from 'fs'
 import logger from 'winston'
 import moment from 'moment'
 import * as authorisation from './api/authorisation'
@@ -85,7 +86,7 @@ function sendReports (job, flag, done) {
               const data = channelReportMap[channel._id]
               // add report - always add if the channel is enabled (treating undefined status as enabled), otherwise only if there is data
               if ((data.channel.status == null) || (data.channel.status === 'enabled') || (data.data.length !== 0)) {
-                return reportMap[userKey].data.push(data)
+                reportMap[userKey].data.push(data)
               }
             } else {
               return logger.error('should never be here since channels have been pre-fetched')
@@ -186,7 +187,7 @@ function calculateAverage (total, count) {
 
 function sendUserEmail (report) {
   report.date = new Date().toString()
-  return renderTemplate('report', report, reportHtml => contact.contactUser('email', report.email, `${report.type} report for: ${report.instance}`, plainTemplate(report), reportHtml, afterEmail))
+  return renderTemplate('report/html.handlebars', report, reportHtml => contact.contactUser('email', report.email, `${report.type} report for: ${report.instance}`, plainTemplate(report), reportHtml, afterEmail))
 }
 
 function fetchChannelReport (channel, user, flag, from, to, callback) {
@@ -245,13 +246,26 @@ Completed with errors: ${((data.data[0] != null ? data.data[0].completedWErrors 
 
 function renderTemplate (templateName, templateData, callback) {
   const templateDir = `${appRoot}/templates/${templateName}`
-  const template = new EmailTemplate(templateDir)
-  return template.render(templateData, (err, result) => {
-    if (err) {
-      logger.error(err)
+
+  fs.readFile(templateDir, (err, data) => {
+    if (!err) {
+      // make the buffer into a string
+      const source = data.toString()
+
+      // call the render function
+      renderToString(source, templateData, callback)
+    } else {
+      // handle file read error
+      logger.error('Error reading report template')
     }
-    return callback(result.html.toString())
   })
+}
+
+const renderToString = (source, data, callback) => {
+  const template = Handlebars.compile(source)
+  const htmlResult = template(data)
+
+  return callback(htmlResult.toString())
 }
 
 const afterEmail = callback => logger.info('email sent..')
