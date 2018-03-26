@@ -19,7 +19,7 @@
     }
   },
   "scripts": {
-    "build": "npm run clean; babel src --out-dir lib -s",
+    "build": "npm run clean && babel src --out-dir lib -s",
     "build:watch": "npm run build -- -w",
     "clean": "rimraf lib/",
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
