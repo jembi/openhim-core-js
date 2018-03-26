@@ -49,13 +49,14 @@ echo "Console version: $CONSOLE_VERSION"
 yum -y update
 yum install -y git rpm-build redhat-rpm-config gcc-c++ make
 
+# reason for this instead of nvm is that nvm only installs node
+curl --silent --location https://rpm.nodesource.com/setup_8.x | bash -
+yum install -y nodejs
+
 # Install nvm and nodejs
-curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
-source ~/.bashrc
-nvm install --lts
 npm --version && node -v
 
-## Generate openhim-core rpm package
+# Generate openhim-core rpm package
 git clone https://github.com/jembi/openhim-core-js.git
 cd openhim-core-js/ && git checkout $CORE_VERSION
 npm install && npm install speculate && npm run build
@@ -64,10 +65,12 @@ npm run spec
 # Link source folder with default rpmbuild
 ln -s /openhim-core-js ~/rpmbuild
 # Build rpm package
-rpmbuild -bb ~/rpmbuild/SPECS/openhim-core.spec
+node -v && rpmbuild -bb ~/rpmbuild/SPECS/openhim-core.spec
+# copy rpm package to user folder for extraction
+cp RPMS/x86_64/*.rpm /usr/packages
 
 
-## Generate openhim-console rpm package
+# Generate openhim-console rpm package
 cd / && rm -rf ~/rpmbuild && git clone https://github.com/jembi/openhim-console.git
 cd openhim-console/ && git checkout $CONSOLE_VERSION
 npm install && npm install speculate
@@ -77,3 +80,5 @@ npm run spec
 ln -s /openhim-console ~/rpmbuild
 # Build rpm package
 rpmbuild -bb ~/rpmbuild/SPECS/openhim-console.spec
+# copy rpm package to user folder for extraction
+cp RPMS/x86_64/*.rpm /usr/packages

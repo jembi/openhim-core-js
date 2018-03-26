@@ -104,13 +104,13 @@ Using Docker
     Run the container and build the rpm packages for latest versions of core & console. This step will build the packages and copy them to the folder specified and automatically remove the docker container.
 
     ```bash
-    docker run -v /folder/for/new/packages/core:/openhim-core-js/RPMS -v /folder/for/new/packages/console:/openhim-console/RPMS --rm rpmbuilder
+    docker run -v /folder/for/new/packages/core:/usr/packages --rm rpmbuilder
     ```
 
     In order to build a package for a specific version of core & console, pass the target versions as parameters as follows:
 
     ```bash
-    docker run -v /folder/for/new/packages/core:/openhim-core-js/RPMS -v /folder/for/new/packages/console:/openhim-console/RPMS --rm rpmbuilder --core-version=v3.4.0 --console-version=v.1.11.1
+    docker run -v /folder/for/new/packages/core:/usr/packages --rm rpmbuilder --core-version=v3.4.0 --console-version=v1.11.1
     ```
 
     Note, the parameters are optional and it is not required to specify a version for either core or console since both will default to the latest code.
