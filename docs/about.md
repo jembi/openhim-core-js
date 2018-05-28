@@ -45,8 +45,8 @@ The OpenHIM acts as a central exchange that offers the following benefits:
 * Error management: Provides the ability for an administrator to review and bulk re-run requests or re-run individual requests, alleviating the need for point-of-service systems to re-send data.
 * Alerting: User alerts can be configured to be sent when requests fail or a particular failure rate is exceeded. Users can be notified via email or SMS.
 * The use of mediators for message transformation and orchestration. The OpenHIM provides a framework to add and manage your own custom implementation-specific mediators.
-** Transformation: Transforms messages received in one format into another format e.g. MHD to XDS.b or custom format to HL7v3.
-* Orchestration: Ensures the correct workflow between the systems components.
+  * Transformation: Transforms messages received in one format into another format e.g. MHD to XDS.b or custom format to HL7v3.
+  * Orchestration: Ensures the correct workflow between the systems components.
 * The OpenHIM offers a publicly accessible mediator library for the re-use of existing mediators.
 * The OpenHIM is configurable, providing the flexibility to support differing use cases.
 * The OpenHIM supports interchangeability of components, allowing for easier swap-outs for new and improved technologies and helping to minimise vendor lock-in.
