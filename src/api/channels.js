@@ -447,6 +447,7 @@ export async function triggerChannel (ctx, channelId) {
         request(options, function (err) {
           if (err) {
             logger.error(err)
+            ctx.status = 500
             resolve()
             return
           }
