@@ -16,7 +16,6 @@ import should from 'should'
 import { ObjectId } from 'mongodb'
 import { config } from '../../src/config'
 import { ClientModelAPI } from '../../src/model/clients'
-import { ChannelModel } from '../../src/model/index';
 
 const { SERVER_PORTS } = constants
 let sandbox = sinon.createSandbox()
@@ -65,7 +64,7 @@ describe('API Integration Tests', () => {
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort })
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort, pollingPort: SERVER_PORTS.pollingPort })
       authDetails = await testUtils.getAuthDetails()
       await Promise.all([
         TransactionModelAPI.remove(),
@@ -1653,6 +1652,8 @@ describe('API Integration Tests', () => {
 
     describe('*manuallyPollChannel', () => {
       it('should manually poll a channel', async () => {
+        config.polling.pollingPort = SERVER_PORTS.pollingPort
+
         await request(constants.BASE_URL)
           .post(`/channels/${channel1._id}/trigger`)
           .set('auth-username', testUtils.rootUser.email)
@@ -1660,6 +1661,18 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+      })
+
+      it('should fail when polling channel cannot be triggered', async () => {
+        config.polling.pollingPort = 1234
+
+        await request(constants.BASE_URL)
+          .post(`/channels/${channel1._id}/trigger`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(500)
       })
 
       it('should reject a manually polled channel - channel not found', async () => {

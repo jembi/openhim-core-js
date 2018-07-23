@@ -443,14 +443,19 @@ export async function triggerChannel (ctx, channelId) {
         }
       }
 
-      request(options, function (err) {
-        if (err) {
-          logger.error(err)
-          return
-        }
-        logger.info(`Channel Successfully polled ${channel._id}`)
-        // Return success status
-        ctx.status = 200
+      await new Promise((resolve) => {
+        request(options, function (err) {
+          if (err) {
+            logger.error(err)
+            ctx.status = 500
+            resolve()
+            return
+          }
+          logger.info(`Channel Successfully polled ${channel._id}`)
+          // Return success status
+          ctx.status = 200
+          resolve()
+        })
       })
     }
   } catch (err) {
