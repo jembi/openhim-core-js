@@ -187,7 +187,7 @@ function calculateAverage (total, count) {
 
 function sendUserEmail (report) {
   report.date = new Date().toString()
-  return renderTemplate('report/html.handlebars', report, reportHtml => contact.contactUser('email', report.email, `${report.type} report for: ${report.instance}`, plainTemplate(report), reportHtml, afterEmail))
+  return renderTemplate('report/html.handlebars', report, reportHtml => contact.contactUser('email', report.email, `${report.type} report for: ${report.instance}`, plainTemplate(report), reportHtml, (err) => afterEmail(err, report.type, report.email)))
 }
 
 function fetchChannelReport (channel, user, flag, from, to, callback) {
@@ -268,7 +268,12 @@ const renderToString = (source, data, callback) => {
   return callback(htmlResult.toString())
 }
 
-const afterEmail = callback => logger.info('email sent..')
+const afterEmail = (err, type, email) => {
+  if (err) {
+    return logger.error(err)
+  }
+  logger.info(`${type} report email sent to ${email}`)
+}
 
 export function setupAgenda (agenda) {
   agenda.define('send weekly channel metrics', (job, done) => sendReports(job, 'weeklyReport', done))
