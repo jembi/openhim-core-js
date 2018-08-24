@@ -11,7 +11,10 @@ export const appRoot = path.resolve(__dirname, '../..')
 function Config () {
   // Get the argument-value to use
   nconf.argv().env('_')
-  const environment = nconf.get('NODE:ENV')
+
+  // don't read NODE:ENV from nconf as it could be overwritten by any env var starting with 'NODE_'
+  const environment = process.env.NODE_ENV
+
   const conf = nconf.get('conf')
 
   // Load the configuration-values
