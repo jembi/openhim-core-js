@@ -20,8 +20,9 @@ async function recordTransactionMetric (fields, update) {
 }
 
 export async function recordTransactionMetrics (transaction) {
-  if (!transaction.response) {
+  if (!transaction.response || typeof transaction.response.timestamp !== 'number') {
     // Don't record metrics if there is no response i.e. an error
+    // or if the response does not have a timestamp
     return
   }
 
