@@ -196,6 +196,22 @@ describe('recordTransactionMetrics', () => {
     const count = await MetricModel.count()
     should.equal(count, 0)
   })
+
+  it('should not create metrics if the transaction has no response timestamp', async () => {
+    const transaction = {
+      status: 'Failed',
+      channelID: new ObjectId(),
+      request: {
+        timestamp: new Date('2017-12-07T09:17:58.333Z').getTime()
+      },
+      response: {}
+    }
+
+    await metrics.recordTransactionMetrics(transaction)
+
+    const count = await MetricModel.count()
+    should.equal(count, 0)
+  })
 })
 
 describe('calculateMetrics', () => {

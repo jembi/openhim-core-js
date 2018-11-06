@@ -256,11 +256,10 @@ export function setFinalStatus (ctx, callback) {
         return stats.measureTransactionDuration(ctx, () => { })
       }
 
-      try {
-        metrics.recordTransactionMetrics(tx)
-      } catch (err) {
+      // Asynchronously record transaction metrics
+      metrics.recordTransactionMetrics(tx).catch(err => {
         logger.error('Recording transaction metrics failed', err)
-      }
+      })
     })
   })
 }
