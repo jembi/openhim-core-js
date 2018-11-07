@@ -848,7 +848,7 @@ describe('API Integration Tests', () => {
         })).save()
 
         const res = await request(constants.BASE_URL)
-          .get(`/transactions?channelID=${channel._id}`)
+          .get(`/transactions?filters={"channelID":"${channel._id}"}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -865,7 +865,7 @@ describe('API Integration Tests', () => {
           _id: '111111111111111111111112'
         })).save()
         await request(constants.BASE_URL)
-          .get(`/transactions?channelID=${tx2.channelID}`)
+          .get(`/transactions?filters={"channelID":"${tx2.channelID}"}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
