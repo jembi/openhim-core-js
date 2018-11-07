@@ -125,11 +125,12 @@ export async function getTransactions (ctx) {
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // if not an admin, restrict by transactions that this user can view
       const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
-
-      if (!filtersObject.channelID) {
+      if (filters.channelID) {
+        if (!getChannelIDsArray(channels).includes(filters.channelID)) {
+          return utils.logAndSetResponse(ctx, 403, `Forbidden: Unauthorized channel ${filters.channelID}`, 'info')
+        }
+      } else {
         filters.channelID = {$in: getChannelIDsArray(channels)}
-      } else if (!Array.from(getChannelIDsArray(channels)).includes(filtersObject.channelID)) {
-        return utils.logAndSetResponse(ctx, 403, `Forbidden: Unauthorized channel ${filtersObject.channelID}`, 'info')
       }
 
       // set 'filterRepresentation' to default if user isnt admin
@@ -138,10 +139,6 @@ export async function getTransactions (ctx) {
 
     // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
-
-    if (filtersObject.channelID) {
-      filters.channelID = filtersObject.channelID
-    }
 
     // parse date to get it into the correct format for querying
     if (filters['request.timestamp']) {
