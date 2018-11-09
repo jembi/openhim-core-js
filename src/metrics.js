@@ -22,14 +22,16 @@ async function recordTransactionMetric (fields, update) {
 export async function recordTransactionMetrics (transaction) {
   if (
       !transaction.response || 
-      typeof transaction.response.timestamp !== 'object' // Date object
+      !transaction.response.timestamp || 
+      !transaction.response.timestamp instanceof Date // Date object
   ) {
+    console.log('should return -----------------')
     // Don't record metrics if there is no response i.e. an error
     // or if the response does not have a timestamp
     return
   }
 
-  const responseTime = transaction.response.timestamp - transaction.request.timestamp
+  const responseTime = transaction.response.timestamp.getTime() - transaction.request.timestamp.getTime()
   const statusKey = TRANSACTION_STATUS_KEYS[transaction.status]
   const update = {
     $inc: {
