@@ -23,10 +23,11 @@ export async function recordTransactionMetrics (transaction) {
   if (
       !transaction.response || 
       !transaction.response.timestamp || 
-      !transaction.response.timestamp instanceof Date // Date object
+      !transaction.response.timestamp instanceof Date
   ) {
     // Don't record metrics if there is no response i.e. an error
     // or if the response does not have a timestamp
+    // or if the timestamp isnt an instance of Date
     return
   }
 
