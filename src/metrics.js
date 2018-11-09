@@ -25,7 +25,6 @@ export async function recordTransactionMetrics (transaction) {
       !transaction.response.timestamp || 
       !transaction.response.timestamp instanceof Date // Date object
   ) {
-    console.log('should return -----------------')
     // Don't record metrics if there is no response i.e. an error
     // or if the response does not have a timestamp
     return
