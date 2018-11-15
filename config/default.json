@@ -27,7 +27,7 @@
   },
   "bodyCull":{
     "enabled":true,
-    "pollPeriodMins": 5
+    "pollPeriodMins": 60
   },
   "api": {
     "enabled" : true,
