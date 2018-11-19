@@ -14,7 +14,7 @@ import * as Channels from './model/channels'
 config.alerts = config.get('alerts')
 const {ChannelModel} = Channels
 
-const trxURL = trx => `${config.alerts.consoleURL}/#/transactions/${trx.transactionID}`
+const trxURL = trx => `${config.alerts.consoleURL}/#!/transactions/${trx.transactionID}`
 
 const statusTemplate = (transactions, channel, alert) =>
   ({
