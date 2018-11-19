@@ -218,6 +218,7 @@ export async function getChannel (ctx, channelId) {
 }
 
 export async function getChannelAudits (ctx, channelId) {
+  console.log("Inside getChannelAudits")
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`, 'info')
     return
@@ -226,7 +227,7 @@ export async function getChannelAudits (ctx, channelId) {
   try {
     const channel = await ChannelModel.findById(channelId).exec()
     if (channel) {
-      ctx.body = await channel.patches.find({ ref: channel.id }).sort({ _id: -1 }).exec()
+      ctx.body = await channel.patches.find({ $and: [{ ref: channel.id }, { ops: { $elemMatch: { path: { $ne: '/lastBodyCleared' }}}}] }).sort({ _id: -1 }).exec()
     } else {
       ctx.body = []
     }
