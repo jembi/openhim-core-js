@@ -217,8 +217,7 @@ export async function getChannel (ctx, channelId) {
   }
 }
 
-export async function getChannelAudits (ctx, channelId) {
-  console.log("Inside getChannelAudits")
+export async function getChannelAudits (ctx, channelId)
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`, 'info')
     return
