@@ -20,7 +20,7 @@ const child = new (forever.Monitor)('lib/server.js', {
   sourceDir: root,
   command: 'node',
   args,
-  watch: true,
+  watch: process.env.NODE_ENV !== 'production',
   watchDirectory: 'lib'
 })
 
