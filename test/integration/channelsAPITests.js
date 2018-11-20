@@ -753,7 +753,6 @@ describe('API Integration Tests', () => {
 
     describe('getChannelAudits(channelId)', () => {
       let expectedPatches
-      let expectedAudits
 
       beforeEach(async () => {
         await ChannelModelAPI.Patches.remove().exec()
