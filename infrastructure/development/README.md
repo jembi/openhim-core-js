@@ -6,6 +6,6 @@ Vagrant/Puppet can be used to setup a development instance of OpenHIM core. Simp
 A shared folder will be setup in the vm that includes the directory with the source code. So you can run the OpenHIM as follows:
 ```
 cd /openhim-core-js/
-node --harmony lib/server.js
+node lib/server.js
 ```
 Run the tests using `npm test` from the directory of the source code.

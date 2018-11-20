@@ -18,9 +18,9 @@ if (args.indexOf('-v') >= 0 || args.indexOf('--version') >= 0) {
 
 const child = new (forever.Monitor)('lib/server.js', {
   sourceDir: root,
-  command: 'node --harmony',
+  command: 'node',
   args,
-  watch: true,
+  watch: process.env.NODE_ENV !== 'production',
   watchDirectory: 'lib'
 })
 

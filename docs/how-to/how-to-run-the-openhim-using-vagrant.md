@@ -19,7 +19,7 @@ And that's it! Your Vagrant instance should now be up and running. You can acces
 vagrant ssh
 > cd /openhim-core-js
 > grunt build
-> node --harmony lib/server.js
+> node lib/server.js
 ```
 
 If you would like to run the console as well, the easiest way is to fire up another vagrant instance [in another terminal]:
