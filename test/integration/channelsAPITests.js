@@ -798,9 +798,45 @@ describe('API Integration Tests', () => {
               id: new ObjectId(),
               name: 'Test'
             }
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: new Date(),
+                path: '/lastBodyCleared',
+                op: 'replace'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: new Date(),
+                path: '/lastBodyCleared',
+                op: 'add'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
           }
         ])
         expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).map(patch => {
+          const convertedPatch = patch.toObject()
+          convertedPatch._id = convertedPatch._id.toString()
+          convertedPatch.ref = convertedPatch.ref.toString()
+          convertedPatch.date = convertedPatch.date.toISOString()
+          convertedPatch.updatedBy.id = convertedPatch.updatedBy.id.toString()
+          return convertedPatch
+        })
+        expectedAudits = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).filter(patch => !patch.ops[0].path.equals('/lastBodyCleared')).map(patch => {
           const convertedPatch = patch.toObject()
           convertedPatch._id = convertedPatch._id.toString()
           convertedPatch.ref = convertedPatch.ref.toString()
@@ -819,6 +855,17 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
         res.body.should.eql(expectedPatches)
+      })
+
+      it('should exclude channelAudit patches from returned set of patches', async () => {
+        const res = await request(constants.BASE_URL)
+          .get('/channels/${channel1._id}/audits')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+        res.body.should.eql(expectedAudits)
       })
 
       it('should return an empty array when the channel does not exist', async () => {
