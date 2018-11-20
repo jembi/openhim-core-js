@@ -66,11 +66,11 @@ In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must
 
 To run the server, execute:
 
-`npm start` (this runs `grunt build` then `node --harmony lib/server.js` behind the scenes)
+`npm start` (this runs `grunt build` then `node lib/server.js` behind the scenes)
 
 The server will by default start in development mode using the mongodb database 'openhim-development'. To start the serve in production mode use the following:
 
-`NODE_ENV=production node --harmony lib/server.js`
+`NODE_ENV=production node lib/server.js`
 
 This starts the server with production defaults, including the use of the production mongodb database called 'openhim'.
 
