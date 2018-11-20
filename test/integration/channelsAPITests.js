@@ -828,7 +828,7 @@ describe('API Integration Tests', () => {
             }
           }
         ])
-        expectedAudits = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).filter(patch => patch.ops[0].path !== '/lastBodyCleared').map(patch => {
+        expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).filter(patch => patch.ops[0].path !== '/lastBodyCleared').map(patch => {
           const convertedPatch = patch.toObject()
           convertedPatch._id = convertedPatch._id.toString()
           convertedPatch.ref = convertedPatch.ref.toString()
