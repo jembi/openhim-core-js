@@ -798,9 +798,37 @@ describe('API Integration Tests', () => {
               id: new ObjectId(),
               name: 'Test'
             }
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: new Date(),
+                path: '/lastBodyCleared',
+                op: 'replace'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: new Date(),
+                path: '/lastBodyCleared',
+                op: 'add'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
           }
         ])
-        expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).map(patch => {
+        expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).filter(patch => patch.ops[0].path !== '/lastBodyCleared').map(patch => {
           const convertedPatch = patch.toObject()
           convertedPatch._id = convertedPatch._id.toString()
           convertedPatch.ref = convertedPatch.ref.toString()
