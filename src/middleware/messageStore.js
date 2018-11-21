@@ -192,6 +192,7 @@ export function setFinalStatus (ctx, callback) {
     const update = {}
 
     if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
+      update.status = ctx.mediatorResponse.status
       logger.info(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
     } else {
       let routeFailures = false
