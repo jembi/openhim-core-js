@@ -1,7 +1,6 @@
 import SDC from 'statsd-client'
 import os from 'os'
 import logger from 'winston'
-import _ from 'lodash'
 import * as transactions from '../model/transactions'
 import * as autoRetryUtils from '../autoRetry'
 import * as utils from '../utils'
@@ -118,11 +117,6 @@ export function storeResponse (ctx, done) {
 
   utils.enforceMaxBodiesSize(ctx, update.response)
 
-  // Set status from mediator
-  if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
-    update.status = ctx.mediatorResponse.status
-  }
-
   if (ctx.mediatorResponse) {
     if (ctx.mediatorResponse.orchestrations) {
       update.orchestrations.push(...truncateOrchestrationBodies(ctx, ctx.mediatorResponse.orchestrations))
@@ -179,6 +173,14 @@ export function storeNonPrimaryResponse (ctx, route, done) {
   }
 }
 
+/**
+ * Set the status of the transaction based on the outcome of all routes.
+ *
+ * If the primary route responded in the mediator format and included a status
+ * then that overrides all other status calculations.
+ *
+ * This should only be called once all routes have responded.
+ */
 export function setFinalStatus (ctx, callback) {
   let transactionId = ''
   if (ctx.request != null && ctx.request.header != null && ctx.request.header['X-OpenHIM-TransactionID'] != null) {
@@ -192,7 +194,8 @@ export function setFinalStatus (ctx, callback) {
     const update = {}
 
     if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
-      logger.info(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
+      logger.debug(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
+      update.status = ctx.mediatorResponse.status
     } else {
       let routeFailures = false
       let routeSuccess = true
@@ -240,11 +243,9 @@ export function setFinalStatus (ctx, callback) {
       }
     }
 
-    if (_.isEmpty(update)) { return callback(tx) } // nothing to do
-
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {new: true}, (err, tx) => {
       if (err) { return callback(err) }
-      callback(tx)
+      callback(null, tx)
 
       // queue for autoRetry
       if (update.autoRetry) {

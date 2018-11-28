@@ -668,6 +668,60 @@ describe('MessageStore', () => {
       })
     })
 
+    it('should update the transaction status with the mediatorResponse\'s status. case 1 -mediator status set to Successful', (done) => {
+      ctx.response = createResponse(201)
+
+      messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        should.not.exist(err)
+        if (err != null) done(err)
+        ctx.transactionId = storedTrans._id
+
+        messageStore.storeResponse(ctx, (err2) => {
+          should.not.exist(err2)
+          if (err2 != null) done(err2)
+          ctx.mediatorResponse = {}
+          //Set the mediatorResponse's status
+          ctx.mediatorResponse.status = 'Successful'
+          messageStore.setFinalStatus(ctx, () => {
+
+            TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
+              should.not.exist(err3);
+              (trans !== null).should.be.true()
+              trans.status.should.equal('Successful')
+              return done(err3)
+            })
+          })
+        })
+      })
+    })
+
+    it('should update the transaction status with the mediatorResponse\'s status. Case 2 -mediator status set to Failed', (done) => {
+      ctx.response = createResponse(201)
+
+      messageStore.storeTransaction(ctx, (err, storedTrans) => {
+        should.not.exist(err)
+        if (err != null) done(err)
+        ctx.transactionId = storedTrans._id
+
+        messageStore.storeResponse(ctx, (err2) => {
+          should.not.exist(err2)
+          if (err2 != null) done(err2)
+          ctx.mediatorResponse = {}
+          //Set the mediatorResponse's status
+          ctx.mediatorResponse.status = 'Failed'
+          messageStore.setFinalStatus(ctx, () => {
+
+            TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
+              should.not.exist(err3);
+              (trans !== null).should.be.true()
+              trans.status.should.equal('Failed')
+              return done(err3)
+            })
+          })
+        })
+      })
+    })
+
     return it('should truncate the response body for routes if they exceed storage limits', (done) => {
       ctx.response = createResponse(201)
       ctx.routes = []
