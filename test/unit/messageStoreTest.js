@@ -537,7 +537,6 @@ describe('MessageStore', () => {
           should.not.exist(err2)
           return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
             should.not.exist(err3);
-            //console.log('The firstOne: ', );
             (trans !== null).should.be.true()
             trans.response.headers['dot．header'].should.equal('123')
             trans.response.headers['dollar＄header'].should.equal('124')

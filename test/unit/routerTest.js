@@ -719,5 +719,25 @@ describe('HTTP Router', () => {
       // then
       ctx.response.redirect.calledWith('http://some.other.place.org').should.be.false()
     })
+
+    it('should set cookies on context', () => {
+      const ctx = createCtx()
+      ctx.cookies = {}
+      ctx.cookies.set = sinon.spy()
+
+      const response = {
+        status: 201,
+        headers: {
+          'content-type': 'text/xml',
+          'x-header': 'anotherValue',
+          'set-cookie': ['maximus=Thegreat; max-age=18']
+        },
+        timestamp: new Date(),
+        body: 'Mock response body'
+      }
+
+      router.setKoaResponse(ctx, response)
+      ctx.cookies.set.calledWith("maximus", "Thegreat", {path: false, httpOnly: false, maxage: 18}).should.be.true()
+    })
   })
 })
