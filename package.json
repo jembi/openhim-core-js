@@ -95,7 +95,7 @@
     "cross-env": "5.2.0",
     "faker": "4.1.0",
     "finalhandler": "1.1.1",
-    "mocha": "4.1.0",
+    "mocha": "5.2.0",
     "nyc": "13.1.0",
     "progress": "2.0.2",
     "rewire": "4.0.1",
