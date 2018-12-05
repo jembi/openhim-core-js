@@ -10,7 +10,7 @@ import https from 'https'
 import tls from 'tls'
 import net from 'net'
 import dgram from 'dgram'
-import uuid from 'node-uuid'
+import uuidv4 from 'uuid/v4'
 import pem from 'pem'
 import logger from 'winston'
 import 'winston-mongodb'
@@ -263,7 +263,7 @@ if (cluster.isMaster && !module.parent) {
 
   function trackConnection (map, socket) {
     // save active socket
-    const id = uuid.v4()
+    const id = uuidv4()
     map[id] = socket
 
     // remove socket once it closes
