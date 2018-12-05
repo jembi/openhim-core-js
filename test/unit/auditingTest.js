@@ -294,7 +294,7 @@ describe('Auditing', () => {
     })
 
     afterEach(() => {
-      spy.reset()
+      spy.resetHistory()
       config.auditing.auditEvents.interface = undefined
       config.auditing.auditEvents.port = undefined
     })

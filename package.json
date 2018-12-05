@@ -102,7 +102,7 @@
     "rimraf": "2.6.1",
     "serve-static": "1.13.2",
     "should": "13.2.3",
-    "sinon": "4.5.0",
+    "sinon": "7.1.1",
     "speculate": "1.7.4",
     "standard": "10.0.3",
     "supertest": "3.3.0"
