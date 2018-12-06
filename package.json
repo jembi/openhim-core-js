@@ -123,5 +123,11 @@
   "bugs": {
     "url": "https://github.com/jembi/openhim-core-js/issues"
   },
-  "homepage": "http://openhim.org"
+  "homepage": "http://openhim.org",
+  "nyc": {
+    "all": true,
+    "include": [
+      "src"
+    ]
+  }
 }
