@@ -172,6 +172,8 @@ const sendTLSAudit = (msg, callback) =>
       return client.end()
     })
 
+    client.resume()
+
     client.on('error', err => logger.error(err))
     return client.on('close', () => callback())
   })
@@ -181,6 +183,8 @@ function sendTCPAudit (msg, callback) {
     client.write(`${msg.length} ${msg}`)
     return client.end()
   })
+
+  client.resume()
 
   client.on('error', err => {
     if (err) { return callback(err) }

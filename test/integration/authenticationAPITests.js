@@ -1,5 +1,6 @@
 /* eslint-env mocha */
 
+import should from 'should' // eslint-disable-line no-unused-vars
 import request from 'supertest'
 import * as server from '../../src/server'
 import { AuditModel } from '../../src/model/audits'
@@ -192,7 +193,7 @@ describe('API Integration Tests', () => {
             'PoC'
           ],
           passwordHash: '',
-          certFingerprint: '18:B7:F9:52:FA:37:86:C5:F5:63:DA:8B:FA:E6:6B:4D:FB:A0:27:ED'
+          certFingerprint: '6B:0D:BD:02:BB:A4:40:29:89:51:6A:0A:A2:F4:BD:8B:F8:E8:47:84'
         }
         await ClientModelAPI.remove()
 
@@ -214,11 +215,11 @@ describe('API Integration Tests', () => {
           },
           {
             data: fs.readFileSync('test/resources/trust-tls/chain/intermediate.cert.pem'),
-            fingerprint: '3B:21:0A:F1:D2:ED:4F:9B:9C:02:71:DF:4E:14:1B:3E:32:F5:B9:BB'
+            fingerprint: 'A9:C5:37:DF:84:FA:C8:BD:B8:5F:A3:9B:FF:52:D0:DB:79:9F:B1:3C'
           },
           {
             data: fs.readFileSync('test/resources/trust-tls/chain/ca.cert.pem'),
-            fingerprint: '18:B7:F9:52:FA:37:86:C5:F5:63:DA:8B:FA:E6:6B:4D:FB:A0:27:ED'
+            fingerprint: '6B:0D:BD:02:BB:A4:40:29:89:51:6A:0A:A2:F4:BD:8B:F8:E8:47:84'
           }
           ]
         }).save()
