@@ -43,7 +43,7 @@
   },
   "dependencies": {
     "@types/kcors": "2.2.3",
-    "@types/koa-bodyparser": "3.0.26",
+    "@types/koa-bodyparser": "4.2.1",
     "agenda": "1.0.3",
     "atna-audit": "1.0.1",
     "babel-polyfill": "6.26.0",
