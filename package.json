@@ -50,7 +50,6 @@
     "basic-auth": "2.0.1",
     "bcryptjs": "2.0.0",
     "chokidar": "1.6.0",
-    "co": "4.1.0",
     "cookie": "0.3.1",
     "forever-monitor": "1.7.1",
     "form-data": "2.3.3",
