@@ -61,7 +61,7 @@
     "lodash": "4.17.11",
     "moment": "2.22.2",
     "moment-timezone": "0.5.23",
-    "mongodb": "2.2.36",
+    "mongodb": "3.1.10",
     "mongoose": "4.13.17",
     "mongoose-patch-history": "1.1.7",
     "nconf": "0.10.0",

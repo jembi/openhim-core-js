@@ -712,7 +712,7 @@ describe('API Integration Tests', () => {
       })
 
       it(`will default the channel methods as an empty array on existing channels`, async () => {
-        const db = await testUtils.getMongoClient()
+        const mongoClient = await testUtils.getMongoClient()
         const noMethodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
@@ -728,7 +728,7 @@ describe('API Integration Tests', () => {
           }
         }
 
-        const { insertedId: id } = await db.collection('channels').insertOne(noMethodChannelDoc)
+        const { insertedId: id } = await mongoClient.db().collection('channels').insertOne(noMethodChannelDoc)
         const resp = await request(constants.BASE_URL)
           .get(`/channels/${id.toString()}`)
           .set('auth-username', testUtils.rootUser.email)

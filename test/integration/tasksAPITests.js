@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import { MongoClient } from 'mongodb'
 import { Types } from 'mongoose'
 import * as server from '../../src/server'
 import { TaskModelAPI } from '../../src/model/tasks'
@@ -9,7 +8,6 @@ import { TransactionModelAPI } from '../../src/model/transactions'
 import { AutoRetryModelAPI } from '../../src/model/autoRetry'
 import { ChannelModelAPI } from '../../src/model/channels'
 import * as testUtils from '../utils'
-import { config } from '../../src/config'
 import * as constants from '../constants'
 import { promisify } from 'util'
 
@@ -242,8 +240,8 @@ describe('API Integration Tests', () => {
       await TransactionModelAPI.remove()
       await ChannelModelAPI.remove()
 
-      const db = await MongoClient.connect(config.mongo.url)
-      const mongoCollection = db != null ? db.collection.jobs : undefined
+      const mongoClient = await testUtils.getMongoClient()
+      const mongoCollection = mongoClient != null ? mongoClient.db().collection.jobs : undefined
       if (mongoCollection) {
         mongoCollection.drop()
       }

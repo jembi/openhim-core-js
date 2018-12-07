@@ -213,8 +213,10 @@ export function clone (value) {
  * @return {Promise}
  */
 export async function dropTestDb () {
-  const connection = await getMongoClient()
-  await connection.dropDatabase()
+  // const connection = await getMongoClient()
+  // await connection.dropDatabase()
+  const client = await getMongoClient()
+  await client.db().dropDatabase()
 }
 
 export function getMongoClient () {
