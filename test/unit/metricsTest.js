@@ -297,11 +297,13 @@ describe('calculateMetrics', () => {
       // Remove fields not relevant to the test
       delete metric._id
       delete metric.__v
+      // convert the channelID into a string for deepEqual assertion
+      metric.channelID = JSON.stringify(metric.channelID)
     })
 
     should.deepEqual(returnedMetrics, [
       {
-        channelID,
+        channelID: JSON.stringify(channelID),
         requests: 2,
         responseTime: 200,
         minResponseTime: 50,
@@ -410,6 +412,13 @@ describe('calculateMetrics', () => {
       // Remove fields not relevant to the test
       delete metric._id
       delete metric.__v
+      // convert the channelID into a string for deepEqual assertion
+      metric.channelID = JSON.stringify(metric.channelID)
+    })
+
+    expectedMetrics.forEach(metric => {
+      // convert the channelID into a string for deepEqual assertion
+      metric.channelID = JSON.stringify(metric.channelID)
     })
 
     should.deepEqual(returnedMetrics, expectedMetrics)
