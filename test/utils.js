@@ -65,7 +65,7 @@ export async function socketTest (portOrOptions, data, waitForResponse = true) {
   return socketCallInternal(net.connect, portOrOptions, data, waitForResponse)
 }
 
-async function socketCallInternal (connectFn, portOrOptions, data, waitForResponse) {
+async function socketCallInternal (connectFn, portOrOptions, data) {
   if (portOrOptions == null) {
     throw new Error('Please enter in a port number or connection object')
   }
@@ -76,24 +76,28 @@ async function socketCallInternal (connectFn, portOrOptions, data, waitForRespon
     }
   }
 
-  const socket = connectFn(portOrOptions)
-  const boundOnce = promisify(socket.once.bind(socket))
-  await boundOnce('connect')
-  await promisify(socket.write.bind(socket))(data || '')
-  let result
-  if (waitForResponse) {
-    result = await new Promise((resolve, reject) => {
-      socket.once('data', (d) => {
-        resolve(d)
-      })
-      socket.once('error', (err) => {
-        reject(err)
-      })
+  return new Promise((resolve, reject) => {
+    const socket = connectFn(portOrOptions)
+    socket.on('connect', () => {
+      socket.write(data || '')
     })
-  }
-  socket.end()
-  await boundOnce('close')
-  return result
+    const chunks = []
+    socket.once('data', d => {
+      chunks.push(d)
+      /*
+       * End this side of the socket once data has been received. The OpenHIM
+       * does not wait for the client to end its side of the socket before
+       * forwarding the request and does not allow half open sockets.
+       */
+      socket.end()
+    })
+    socket.on('close', () => {
+      resolve(Buffer.concat(chunks))
+    })
+    socket.on('error', (err) => {
+      reject(err)
+    })
+  })
 }
 
 /**
@@ -442,16 +446,17 @@ export async function setupTestKeystore (serverCert, serverKey, ca, callback = (
 export async function createMockTCPServer (onRequest = async data => data, port = constants.TCP_PORT) {
   const server = await net.createServer()
   server.on('connection', socket => {
-    socket.on('data', async (data) => {
-      const response = await onRequest(data)
-      socket.write(response || '')
-    })
-    socket.on('error', (err) => {
-      console.log(`Mock tcp socket err`, err)
+    socket.on('data', data => {
+      async function sendRequest (data) {
+        const response = await onRequest(data)
+        socket.write(response || '')
+      }
+      // Throw errors to make them obvious
+      sendRequest(data).catch(err => {
+        throw err
+      })
     })
   })
-
-  server.on('error', console.error)
 
   server.close = promisify(server.close.bind(server))
   await promisify(server.listen.bind(server))(port, 'localhost')
