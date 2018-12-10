@@ -220,20 +220,17 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
     await Promise.all([
       promisify(server.stop)(),
-      testUtils.cleanupTestUsers(),
       testUtils.cleanupTestUsers()
     ])
   })
 
   afterEach(async () => {
-    sandbox.reset()
-    if (mockServer != null && typeof mockServer.close === 'function') {
-      await mockServer.close()
-      mockServer = null
-    }
     await Promise.all([
+      mockServer.close(),
       TransactionModel.remove()
     ])
+    sandbox.reset()
+    mockServer = null
   })
 
   it('will route tcp -> tcp', async () => {
