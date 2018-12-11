@@ -315,8 +315,7 @@ export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HT
     key: fs.readFileSync('test/resources/server-tls/key.pem'),
     cert: fs.readFileSync('test/resources/server-tls/cert.pem'),
     requestCert: true,
-    rejectUnauthorized: true,
-    secureProtocol: 'TLSv1_method'
+    rejectUnauthorized: true
   }
 
   if (useClientCert) {
@@ -483,8 +482,7 @@ export function createMockTLSServerWithMutualAuth (onRequest = async data => dat
     key: fs.readFileSync('test/resources/server-tls/key.pem'),
     cert: fs.readFileSync('test/resources/server-tls/cert.pem'),
     requestCert: true,
-    rejectUnauthorized: true,
-    secureProtocol: 'TLSv1_method'
+    rejectUnauthorized: true
   }
 
   if (useClientCert) {
