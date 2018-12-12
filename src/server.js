@@ -1,3 +1,5 @@
+import './winston-transport-workaround'
+
 import 'babel-polyfill'
 import cluster from 'cluster'
 import nconf from 'nconf'

@@ -73,7 +73,7 @@
     "semver": "5.6.0",
     "ssl-root-cas": "1.2.5",
     "statsd-client": "0.4.2",
-    "winston": "3.1.0",
+    "winston": "git+https://github.com/winstonjs/winston.git#cc05b36e0dfd8b6159302b34ab05f323228dc69b",
     "winston-mongodb": "4.0.3",
     "xml2js": "0.4.19",
     "xmldom": "0.1.27",
