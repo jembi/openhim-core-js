@@ -59,6 +59,10 @@ let ensureKeystore
 
 logger.remove(logger.transports.Console)
 
+const winstonLogFormat = logger.format.printf(info => {
+  return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`;
+})
+
 let clusterArg = nconf.get('cluster')
 
 function defer () {
@@ -104,22 +108,25 @@ if (cluster.isMaster && !module.parent) {
 
   // configure master logger
   let clusterSize
-  logger.add(logger.transports.Console, {
-    colorize: true,
-    timestamp: true,
-    label: 'master',
+  logger.add(new logger.transports.Console({
+    format: logger.format.combine(
+      logger.format.label({label: 'master'}),
+      logger.format.timestamp(),
+      logger.format.colorize(),
+      winstonLogFormat
+    ),
     level: config.logger.level
-  })
+  }))
 
   if (config.logger.logToDB === true) {
-    logger.add(logger.transports.MongoDB, {
+    logger.add(new logger.transports.MongoDB({
       db: config.mongo.url,
       label: 'master',
       options: config.mongoLogger.options,
       level: 'debug',
       capped: config.logger.capDBLogs,
       cappedSize: config.logger.capSize
-    })
+    }))
   }
 
   if ((clusterArg == null)) {
@@ -224,23 +231,24 @@ if (cluster.isMaster && !module.parent) {
 
   // configure worker logger
   let stop
-  logger.add(logger.transports.Console, {
-    colorize: true,
-    timestamp: true,
-    label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined,
+  logger.add(new logger.transports.Console({
+    format: logger.format.combine(
+      logger.format.label({label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined}),
+      logger.format.timestamp(),
+      logger.format.colorize(),
+      winstonLogFormat
+    ),
     level: config.logger.level
-  }
-  )
+  }))
   if (config.logger.logToDB === true && logger.default.transports.mongodb == null) {
-    logger.add(logger.transports.MongoDB, {
+    logger.add(new logger.transports.MongoDB({
       db: config.mongo.url,
       options: config.mongoLogger.options,
       label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined,
       level: 'debug',
       capped: config.logger.capDBLogs,
       cappedSize: config.logger.capSize
-    }
-    )
+    }))
   }
 
   let httpServer = null
