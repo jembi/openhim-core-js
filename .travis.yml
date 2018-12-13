@@ -16,5 +16,5 @@ before_install:
 after_success:
   - npm run coverage
   - ".travis/build_docker.sh"
- notifications:
-    slack: jembihealthsystems:mlQYVFbijxcZkesCt7G5VBoM
+notifications:
+  slack: jembihealthsystems:mlQYVFbijxcZkesCt7G5VBoM
