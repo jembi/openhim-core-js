@@ -187,8 +187,7 @@ function sendRequestToRoutes (ctx, routes, next) {
         agent: false,
         rejectUnauthorized: true,
         key: keystore.key,
-        cert: keystore.cert.data,
-        secureProtocol: 'TLSv1_method'
+        cert: keystore.cert.data
       }
 
       if (route.cert != null) {
@@ -539,7 +538,6 @@ function sendSocketRequest (ctx, route, options) {
       rejectUnauthorized: options.rejectUnauthorized,
       key: options.key,
       cert: options.cert,
-      secureProtocol: options.secureProtocol,
       ca: options.ca
     }
 
