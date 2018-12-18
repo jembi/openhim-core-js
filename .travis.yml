@@ -17,4 +17,8 @@ after_success:
   - npm run coverage
   - ".travis/build_docker.sh"
 notifications:
-  slack: jembihealthsystems:mlQYVFbijxcZkesCt7G5VBoM
+  slack:
+    rooms:
+      - jembihealthsystems:mlQYVFbijxcZkesCt7G5VBoM
+    on_success: change
+    on_failure: always
