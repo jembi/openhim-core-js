@@ -7,6 +7,7 @@ Contents:
    :maxdepth: 2
 
    about
+   roadmap
    getting-started
    key-components-and-what-they-do
    setup-and-configuration/index
