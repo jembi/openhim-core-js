@@ -88,7 +88,8 @@
   "reports": {
     "enableReports": true,
     "dailyReportAt": "0 7 * * *",
-    "weeklyReportAt": "0 7 * * 1"
+    "weeklyReportAt": "0 7 * * 1",
+    "utcOffset": "+0200"
   },
   "events": {
     "enableTSNormalization": true
