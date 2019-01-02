@@ -23,7 +23,7 @@ Getting started with the OpenHIM-core
 
 To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default setting:
 
-* The default timezone is the south african standard time. If in a different timezone specify the utc offset time. Change the utcOffset value in the default.json.
+* Please specify the timezone's offset value otherwise the offset used will be that of the server's timezone.  You can do this by changing the value of the utcOffset in the default.json.
 
 ```
 wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/default.json
