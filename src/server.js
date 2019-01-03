@@ -340,15 +340,6 @@ if (cluster.isMaster && !module.parent) {
     return deferred.promise
   }
 
-  function stopAgenda () {
-    const deferred = defer()
-    agenda.stop(() => {
-      deferred.resolve()
-      return logger.info('Stopped agenda job scheduler')
-    })
-    return deferred.promise
-  }
-
   function startHttpServer (httpPort, bindAddress, app) {
     const deferred = defer()
 
@@ -762,7 +753,11 @@ if (cluster.isMaster && !module.parent) {
     if (apiHttpsServer) { promises.push(stopServer(apiHttpsServer, 'API HTTP')) }
     if (rerunServer) { promises.push(stopServer(rerunServer, 'Rerun HTTP')) }
     if (pollingServer) { promises.push(stopServer(pollingServer, 'Polling HTTP')) }
-    if (agenda) { promises.push(stopAgenda()) }
+    if (agenda) { 
+      agenda.stop().then(() => {
+        logger.info('Stopped agenda job scheduler')
+      })
+    }
 
     if (auditTlsServer) { promises.push(stopServer(auditTlsServer, 'Audit TLS').promise) }
     if (auditTcpServer) { promises.push(stopServer(auditTcpServer, 'Audit TCP').promise) }

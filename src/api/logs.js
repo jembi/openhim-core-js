@@ -36,17 +36,16 @@ export async function getLogs (ctx) {
     limit: 100000 // limit: 0 doesn't work :/
   }
 
-  let results
-  // let results = await promisify(logger.query.bind(logger))(options)
-  // results = results.mongodb
+  let results = await promisify(logger.query.bind(logger))(options)
+  results = results.mongodb
 
-  // if (query.level != null) {
-  //   results = results.filter(item => levels[item.level] >= levels[query.level])
-  // }
+  if (query.level != null) {
+    results = results.filter(item => levels[item.level] >= levels[query.level])
+  }
 
-  // if (query.limit != null) {
-  //   results.splice(query.limit, results.length - query.limit)
-  // }
+  if (query.limit != null) {
+    results.splice(query.limit, results.length - query.limit)
+  }
 
   ctx.body = results
   ctx.status = 200

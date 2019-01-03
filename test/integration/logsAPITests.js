@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import should from 'should'
+require('should')
 import moment from 'moment'
 import { promisify } from 'util'
 
@@ -60,12 +60,12 @@ describe(`API Integration Tests`, () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        // res.body.length.should.be.equal(5)
-        // res.body[0].message.should.be.equal('TEST1')
-        // res.body[1].message.should.be.equal('TEST2')
-        // res.body[2].message.should.be.equal('TEST3')
-        // res.body[3].message.should.be.equal('TEST4')
-        // res.body[4].message.should.be.equal('TEST5')
+        res.body.length.should.be.equal(5)
+        res.body[0].message.should.be.equal('TEST1')
+        res.body[1].message.should.be.equal('TEST2')
+        res.body[2].message.should.be.equal('TEST3')
+        res.body[3].message.should.be.equal('TEST4')
+        res.body[4].message.should.be.equal('TEST5')
       })
 
       it('should limit number of logs returned', async () => {
@@ -77,9 +77,9 @@ describe(`API Integration Tests`, () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        // res.body.length.should.be.equal(2)
-        // res.body[0].message.should.be.equal('TEST1')
-        // res.body[1].message.should.be.equal('TEST2')
+        res.body.length.should.be.equal(2)
+        res.body[0].message.should.be.equal('TEST1')
+        res.body[1].message.should.be.equal('TEST2')
       })
 
       it('should use start after the specified entry', async () => {
@@ -91,9 +91,9 @@ describe(`API Integration Tests`, () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        // res.body.length.should.be.equal(2)
-        // res.body[0].message.should.be.equal('TEST4')
-        // res.body[1].message.should.be.equal('TEST5')
+        res.body.length.should.be.equal(2)
+        res.body[0].message.should.be.equal('TEST4')
+        res.body[1].message.should.be.equal('TEST5')
       })
 
       it('should filter by date', async () => {
@@ -105,10 +105,10 @@ describe(`API Integration Tests`, () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        // res.body.length.should.be.equal(3)
-        // res.body[0].message.should.be.equal('TEST1')
-        // res.body[1].message.should.be.equal('TEST2')
-        // res.body[2].message.should.be.equal('TEST3')
+        res.body.length.should.be.equal(3)
+        res.body[0].message.should.be.equal('TEST1')
+        res.body[1].message.should.be.equal('TEST2')
+        res.body[2].message.should.be.equal('TEST3')
       })
 
       it('should filter by level', async () => {
@@ -120,9 +120,9 @@ describe(`API Integration Tests`, () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        // res.body.length.should.be.equal(2)
-        // res.body[0].message.should.be.equal('TEST2')
-        // res.body[1].message.should.be.equal('TEST5')
+        res.body.length.should.be.equal(2)
+        res.body[0].message.should.be.equal('TEST2')
+        res.body[1].message.should.be.equal('TEST5')
       })
 
       it('should deny access for a non-admin', async () => {
