@@ -1,8 +1,8 @@
 {
   "bindAddress": "0.0.0.0",
   "mongo": {
-    "url": "mongodb://localhost/openhim",
-    "atnaUrl": "mongodb://localhost/openhim",
+    "url": "mongodb://localhost:27017/openhim",
+    "atnaUrl": "mongodb://localhost:27017/openhim",
     "connectionOptions": {},
     "openHIMApiReadPreference": "primaryPreffered",
     "openHIMApiWriteConcern": 1,
@@ -16,7 +16,8 @@
   },
   "mongoLogger": {
     "options": {
-      "w": 0
+      "w": 0,
+      "useNewUrlParser": true
     }
   },
   "router": {

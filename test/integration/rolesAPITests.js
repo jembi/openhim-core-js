@@ -7,6 +7,7 @@ import * as testUtils from '../utils'
 import * as constants from '../constants'
 import { promisify } from 'util'
 import { ObjectId } from 'mongodb'
+require('should')
 
 const { SERVER_PORTS } = constants
 

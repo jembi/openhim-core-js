@@ -206,18 +206,19 @@ export async function addRole (ctx) {
     if (channels.length > 0) {
       const chCriteria = buildFindChannelByIdOrNameCriteria(ctx, role)
       if (!chCriteria) { return }
-      await ChannelModelAPI.update(chCriteria, { $push: { allow: role.name } }, { multi: true })
+      await ChannelModelAPI.updateMany(chCriteria, { $push: { allow: role.name } })
     }
     if (clients.length > 0) {
       const clCriteria = buildFindClientByIdOrClientIDCriteria(ctx, role)
       if (!clCriteria) { return }
-      await ClientModelAPI.update(clCriteria, { $push: { roles: role.name } }, { multi: true })
+      await ClientModelAPI.updateMany(clCriteria, { $push: { roles: role.name } })
     }
 
     logger.info(`User ${ctx.authenticated.email} setup role '${role.name}'`)
     ctx.body = 'Role successfully created'
     ctx.status = 201
   } catch (e) {
+    console.log(e.message)
     logger.error(`Could not add a role via the API: ${e.message}`)
     ctx.body = e.message
     ctx.status = 400
@@ -271,10 +272,10 @@ export async function updateRole (ctx, name) {
     if (channels != null) {
       const chCriteria = buildFindChannelByIdOrNameCriteria(ctx, role)
       if (!chCriteria) { return }
-      await ChannelModelAPI.update({}, { $pull: { allow: name } }, { multi: true })
+      await ChannelModelAPI.updateMany({}, { $pull: { allow: name } })
       // set role on channels
       if (role.channels.length > 0) {
-        await ChannelModelAPI.update(chCriteria, { $push: { allow: name } }, { multi: true })
+        await ChannelModelAPI.updateMany(chCriteria, { $push: { allow: name } })
       }
     }
 
@@ -282,19 +283,19 @@ export async function updateRole (ctx, name) {
       const clCriteria = buildFindClientByIdOrClientIDCriteria(ctx, role)
       if (!clCriteria) { return }
       // clear role from existing
-      await ClientModelAPI.update({}, { $pull: { roles: name } }, { multi: true })
+      await ClientModelAPI.updateMany({}, { $pull: { roles: name } })
       // set role on clients
       if ((role.clients != null ? role.clients.length : undefined) > 0) {
-        await ClientModelAPI.update(clCriteria, { $push: { roles: name } }, { multi: true })
+        await ClientModelAPI.updateMany(clCriteria, { $push: { roles: name } })
       }
     }
 
     // rename role
     if (role.name) {
-      await ChannelModelAPI.update({ allow: { $in: [name] } }, { $push: { allow: role.name } }, { multi: true })
-      await ChannelModelAPI.update({ allow: { $in: [name] } }, { $pull: { allow: name } }, { multi: true })
-      await ClientModelAPI.update({ roles: { $in: [name] } }, { $push: { roles: role.name } }, { multi: true })
-      await ClientModelAPI.update({ roles: { $in: [name] } }, { $pull: { roles: name } }, { multi: true })
+      await ChannelModelAPI.updateMany({ allow: { $in: [name] } }, { $push: { allow: role.name } })
+      await ChannelModelAPI.updateMany({ allow: { $in: [name] } }, { $pull: { allow: name } })
+      await ClientModelAPI.updateMany({ roles: { $in: [name] } }, { $push: { roles: role.name } })
+      await ClientModelAPI.updateMany({ roles: { $in: [name] } }, { $pull: { roles: name } })
     }
 
     logger.info(`User ${ctx.authenticated.email} updated role with name '${name}'`)
@@ -320,8 +321,8 @@ export async function deleteRole (ctx, name) {
       return utils.logAndSetResponse(ctx, 404, `Role with name '${name}' could not be found.`, 'info')
     }
 
-    await ChannelModelAPI.update({}, { $pull: { allow: name } }, { multi: true })
-    await ClientModelAPI.update({}, { $pull: { roles: name } }, { multi: true })
+    await ChannelModelAPI.updateMany({}, { $pull: { allow: name } })
+    await ClientModelAPI.updateMany({}, { $pull: { roles: name } })
 
     logger.info(`User ${ctx.authenticated.email} deleted role with name '${name}'`)
     ctx.body = 'Successfully deleted role'
