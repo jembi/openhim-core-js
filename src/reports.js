@@ -286,8 +286,8 @@ export function setupAgenda (agenda) {
 
   agenda.define('send daily channel metrics', (job, done) => sendReports(job, 'dailyReport', done))
 
-  agenda.every(config.reports.weeklyReportAt, 'send weekly channel metrics', null, { timezone: utils.serverTimezone() })
-  return agenda.every('1 minutes', 'send daily channel metrics', null, { timezone: utils.serverTimezone() })
+  agenda.every('1 minutes', 'send weekly channel metrics', null, { timezone: utils.serverTimezone() })
+  return agenda.every('5 minutes', 'send daily channel metrics', null, { timezone: utils.serverTimezone() })
 }
 
 if (process.env.NODE_ENV === 'test') {
