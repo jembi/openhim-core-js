@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/jembi/openhim-core-js.png?branch=master)](https://travis-ci.org/jembi/openhim-core-js) [![Dependency Status](https://david-dm.org/jembi/openhim-core-js.png)](https://david-dm.org/jembi/openhim-core-js) [![devDependency Status](https://david-dm.org/jembi/openhim-core-js/dev-status.png)](https://david-dm.org/jembi/openhim-core-js#info=devDependencies) [![codecov](https://codecov.io/gh/jembi/openhim-core-js/branch/master/graph/badge.svg)](https://codecov.io/gh/jembi/openhim-core-js)
 
-Example description update as a test
+One more change here
 
 OpenHIM Core Component
 ======================
