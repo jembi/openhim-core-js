@@ -23,13 +23,13 @@ Getting started with the OpenHIM-core
 
 To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default setting:
 
-* Please specify the timezone's offset value otherwise the offset used will be that of the server's timezone.  You can do this by changing the value of the utcOffset in the default.json.
-
 ```
 wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/default.json
 # edit default.json, then
 openhim-core --conf=path/to/default.json
 ```
+
+> To specify the timezone that the openhim services are used in, change the utcOffset value in the default.json file. If the timezone's offset value is not specified, the dafault offset of +200 will be used. This ensures that weekly and daily channel reports have the correct timestamps. 
 
 For more information about the config options, [click here](https://github.com/jembi/openhim-core-js/blob/master/config/config.md).
 
