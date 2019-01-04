@@ -11,6 +11,12 @@ import * as utils from './utils'
 
 config.reports = config.get('reports')
 
+let utcOffset = 0
+
+if (config.reports.utcOffset){
+    utcOffset = config.reports.utcOffset
+}
+
 // Function Sends the reports
 function sendReports (job, flag, done) {
   let fetchUsers
@@ -22,11 +28,11 @@ function sendReports (job, flag, done) {
   const channelMap = {}
 
   if (flag === 'dailyReport') {
-    from = moment().subtract(1, 'days').startOf('day').toDate()
-    to = moment().subtract(1, 'days').endOf('day').toDate()
+    from = moment().subtract(1, 'days').startOf('day').utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
+    to = moment().subtract(1, 'days').endOf('day').utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
   } else {
-    from = moment().startOf('isoWeek').subtract(1, 'weeks').toDate()
-    to = moment().endOf('isoWeek').subtract(1, 'weeks').toDate()
+    from = moment().startOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
+    to = moment().endOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
   }
 
   // Select the right subscribers for the report
@@ -108,8 +114,8 @@ function sendReports (job, flag, done) {
           report.instance = config.alerts.himInstance
           report.consoleURL = config.alerts.consoleURL
 
-          report.from = moment(from).toISOString()
-          report.to = moment(to).toISOString()
+          report.from = from
+          report.to = to
 
           try {
             for (let i = 0; i < report.data.length; i++) {
@@ -225,7 +231,7 @@ const fetchDailySubscribers = callback => { UserModel.find({ dailyReport: true }
 const fetchWeeklySubscribers = callback => { UserModel.find({ weeklyReport: true }, callback) }
 
 function plainTemplate (report) {
-  let text = `Generated on: ${new Date().toString()}`
+  let text = `Generated on: ${moment().utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")}`
   for (const data of Array.from(report.data)) {
     text += ` \r\n \r\n <---------- Start Channel  ${data.channel.name} ---------------------------> \r\n \r\n \
 Channel Name: ${data.channel.name} \r\n \
@@ -281,7 +287,7 @@ export function setupAgenda (agenda) {
   agenda.define('send daily channel metrics', (job, done) => sendReports(job, 'dailyReport', done))
 
   agenda.every(config.reports.weeklyReportAt, 'send weekly channel metrics', null, { timezone: utils.serverTimezone() })
-  return agenda.every(config.reports.dailyReportAt, 'send daily channel metrics', null, { timezone: utils.serverTimezone() })
+  return agenda.every('1 minutes', 'send daily channel metrics', null, { timezone: utils.serverTimezone() })
 }
 
 if (process.env.NODE_ENV === 'test') {
