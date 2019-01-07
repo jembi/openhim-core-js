@@ -847,7 +847,7 @@ describe('API Integration Tests', () => {
         }
 
         const mediator = await new MediatorModelAPI(mediatorDelete).save()
-        const countBefore = await MediatorModelAPI.count()
+        const countBefore = await MediatorModelAPI.countDocuments()
         await request(constants.BASE_URL)
           .del(`/mediators/${mediator.urn}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -855,7 +855,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-        const countAfter = await MediatorModelAPI.count()
+        const countAfter = await MediatorModelAPI.countDocuments()
         const notFoundDoc = await MediatorModelAPI.findOne({ urn: mediator.urn });
         (notFoundDoc === null).should.be.true();
         (countBefore - 1).should.equal(countAfter)
@@ -1288,7 +1288,7 @@ describe('API Integration Tests', () => {
           .auth('mediatorTestApp', 'password')
           .expect(200)
 
-        await testUtils.pollCondition(() => TransactionModelAPI.count().then(c => c === 1))
+        await testUtils.pollCondition(() => TransactionModelAPI.countDocuments().then(c => c === 1))
         const res = await TransactionModelAPI.findOne()
 
         res.status.should.be.equal(mediatorResponse.status)

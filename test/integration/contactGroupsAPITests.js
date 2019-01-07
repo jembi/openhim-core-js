@@ -244,7 +244,7 @@ describe('API Integration Tests', () => {
           { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
         }
         const contactGroup = await new ContactGroupModelAPI(contactGroupData).save()
-        const countBefore = await ContactGroupModelAPI.count()
+        const countBefore = await ContactGroupModelAPI.countDocuments()
         await request(constants.BASE_URL)
           .del(`/groups/${contactGroup._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -252,7 +252,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-        const countAfter = await ContactGroupModelAPI.count()
+        const countAfter = await ContactGroupModelAPI.countDocuments()
         const notFoundDoc = await ContactGroupModelAPI.findOne({ group: 'Group 1' })
         should.not.exist(notFoundDoc)
         countAfter.should.equal(countBefore - 1)
@@ -297,7 +297,7 @@ describe('API Integration Tests', () => {
           }
         }
         await (new ChannelModelAPI(channel1)).save()
-        const countBefore = await ContactGroupModelAPI.count()
+        const countBefore = await ContactGroupModelAPI.countDocuments()
         await request(constants.BASE_URL)
           .del(`/groups/${contactGroup._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -305,7 +305,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(409)
-        const countAfter = await ContactGroupModelAPI.count()
+        const countAfter = await ContactGroupModelAPI.countDocuments()
         await ContactGroupModelAPI.findOne({ group: 'Group 2' })
         countBefore.should.equal(countAfter)
       })

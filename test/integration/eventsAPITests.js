@@ -259,7 +259,7 @@ describe('Events API Integration Tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
-    await testUtils.pollCondition(() => EventModel.count().then(c => c === 6))
+    await testUtils.pollCondition(() => EventModel.countDocuments().then(c => c === 6))
 
     const res = await request(constants.BASE_URL)
       .get(`/events/${+startTime}`)
@@ -293,7 +293,7 @@ describe('Events API Integration Tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
-    await testUtils.pollCondition(() => EventModel.count().then(c => c === 6))
+    await testUtils.pollCondition(() => EventModel.countDocuments().then(c => c === 6))
 
     const res = await request(constants.BASE_URL)
       .get(`/events/${+startTime}`)

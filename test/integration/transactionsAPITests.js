@@ -693,7 +693,7 @@ describe('API Integration Tests', () => {
 
     describe('*getTransactions()', () => {
       it('should call getTransactions ', async () => {
-        const countBefore = await TransactionModel.count({})
+        const countBefore = await TransactionModel.countDocuments({})
         countBefore.should.equal(0)
         await new TransactionModel(transactionData).save()
         const res = await request(constants.BASE_URL)

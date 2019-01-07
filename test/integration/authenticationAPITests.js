@@ -50,7 +50,7 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(200)
 
-      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
       const audits = await AuditModel.find()
 
       audits.length.should.be.exactly(1)
@@ -71,7 +71,7 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(401)
 
-      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
       const audits = await AuditModel.find({})
 
       audits.length.should.be.exactly(1)
@@ -104,7 +104,7 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(401)
 
-      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
       const audits = await AuditModel.find({})
 
       audits.length.should.be.exactly(1)

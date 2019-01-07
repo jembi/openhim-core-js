@@ -152,7 +152,7 @@ describe('API Integration Tests', () => {
 
     describe('*getAudits()', () => {
       it('should call getAudits ', async () => {
-        const countBefore = await AuditModel.count()
+        const countBefore = await AuditModel.countDocuments()
         await new AuditModel(auditData).save()
         const res = await request(constants.BASE_URL)
           .get('/audits?filterPage=0&filterLimit=10&filters={}')
@@ -169,7 +169,7 @@ describe('API Integration Tests', () => {
         let filters = {}
         filters['eventIdentification.eventDateTime'] = '{ "$gte": "2015-02-20T00:00:00.000Z","$lte": "2015-02-21T00:00:00.000Z" }'
         filters = JSON.stringify(filters)
-        const countBefore = await AuditModel.count()
+        const countBefore = await AuditModel.countDocuments()
         await new AuditModel(auditData).save()
         const res = await request(constants.BASE_URL)
           .get(`/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(filters)}`)
@@ -192,7 +192,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        await testUtils.pollCondition(() => AuditModel.count().then(c => c === 2))
+        await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 2))
 
         const newAudits = await AuditModel.find()
         // needs to wait?
@@ -217,7 +217,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const auditCount = await AuditModel.count()
+        const auditCount = await AuditModel.countDocuments()
         auditCount.should.eql(1)
       })
     })
@@ -273,7 +273,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        await testUtils.pollCondition(() => AuditModel.count().then(c => c === 2))
+        await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 2))
         const newAudits = await AuditModel.find()
         newAudits.length.should.eql(2)
         const participantObjectID = `https://${router.externalHostname}:${api.httpsPort}/audits/${auditId}`

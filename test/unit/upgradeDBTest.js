@@ -338,7 +338,7 @@ describe('Upgrade DB Tests', () => {
     it('should migrate visualizer settings from user setting to shared collection', async () => {
       await upgradeFunc()
 
-      await testUtils.pollCondition(() => VisualizerModel.count().then(c => c === 2))
+      await testUtils.pollCondition(() => VisualizerModel.countDocuments().then(c => c === 2))
       const visualizers = await VisualizerModel.find()
 
       visualizers.length.should.be.exactly(2)

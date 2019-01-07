@@ -7,7 +7,7 @@ import { recordTransactionMetrics } from './metrics'
 export async function aggregateTransactionToMetrics () {
   await MetricModel.deleteMany()
   const query = { response: { $exists: true } }
-  const totalTrans = await TransactionModel.count(query)
+  const totalTrans = await TransactionModel.countDocuments(query)
   if (totalTrans === 0) {
     logger.info('No transactions to aggregate to metrics, skipping.')
     return

@@ -508,7 +508,7 @@ describe('API Integration Tests', () => {
           .send(methodChannelDocRejected)
           .expect(400)
 
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDocRejected.name })
         channelCount.should.eql(0)
       })
 
@@ -536,7 +536,7 @@ describe('API Integration Tests', () => {
           .expect(400)
 
         res.text.should.eql("Channel methods can't be repeated. Repeated methods are GET, POST")
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDocRejected.name })
         channelCount.should.eql(0)
       })
 
@@ -562,7 +562,7 @@ describe('API Integration Tests', () => {
           .send(methodChannelDoc)
           .expect(400)
 
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDoc.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDoc.name })
         channelCount.should.eql(0)
       })
 
@@ -589,7 +589,7 @@ describe('API Integration Tests', () => {
           .send(methodChannelDoc)
           .expect(400)
 
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDoc.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDoc.name })
         channelCount.should.eql(0)
       })
 
@@ -1288,7 +1288,7 @@ describe('API Integration Tests', () => {
           .expect(400)
 
         res.text.should.eql("Channel methods can't be repeated. Repeated methods are GET, POST")
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDocRejected.name })
         channelCount.should.eql(1)
         const channel = await ChannelModelAPI.findById(channelId)
         channel.methods.length.should.eql(0)

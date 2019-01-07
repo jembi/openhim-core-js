@@ -278,7 +278,7 @@ describe('Routes enabled/disabled tests', () => {
   //   res.text.should.be.exactly('target1')
   //   // routes are async
 
-  //   await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
+  //   await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
   //   const trx = await TransactionModelAPI.findOne()
 
   //   trx.routes.length.should.be.exactly(1)
@@ -337,7 +337,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
-    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
+    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
@@ -363,7 +363,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(500)
 
-    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
+    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
 
     newTransaction.length.should.be.exactly(1)

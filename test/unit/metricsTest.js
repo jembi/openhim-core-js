@@ -193,7 +193,7 @@ describe('recordTransactionMetrics', () => {
 
     await metrics.recordTransactionMetrics(transaction)
 
-    const count = await MetricModel.count()
+    const count = await MetricModel.countDocuments()
     should.equal(count, 0)
   })
 
@@ -209,7 +209,7 @@ describe('recordTransactionMetrics', () => {
 
     await metrics.recordTransactionMetrics(transaction)
 
-    const count = await MetricModel.count()
+    const count = await MetricModel.countDocuments()
     should.equal(count, 0)
   })
 })
