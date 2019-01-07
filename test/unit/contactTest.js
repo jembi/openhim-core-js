@@ -35,7 +35,7 @@ describe('Contact Users', () => {
     let sandbox = null
 
     beforeEach(() => {
-      sandbox = sinon.sandbox.create()
+      sandbox = sinon.createSandbox()
     })
 
     afterEach(() => {

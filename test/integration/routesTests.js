@@ -251,8 +251,8 @@ describe('Routes enabled/disabled tests', () => {
 
   after(async () => {
     await Promise.all([
-      ChannelModelAPI.remove(),
-      ClientModelAPI.remove(),
+      ChannelModelAPI.deleteMany({}),
+      ClientModelAPI.deleteMany({}),
       mockServer1.close(),
       mockServer2.close(),
       restrictedServer.close(),
@@ -264,11 +264,11 @@ describe('Routes enabled/disabled tests', () => {
   afterEach(async () => {
     sandbox.reset()
     await Promise.all([
-      TransactionModelAPI.remove()
+      TransactionModelAPI.deleteMany({})
     ])
   })
 
-  beforeEach(async () => { await TransactionModelAPI.remove() })
+  beforeEach(async () => { await TransactionModelAPI.deleteMany({}) })
 
   // it('should route transactions to routes that have no status specified (default: enabled)', async () => {
   //   const res = await request(constants.HTTP_BASE_URL)

@@ -46,7 +46,7 @@ describe('API Integration Tests', () => {
     after(async () => {
       await Promise.all([
         testUtils.cleanupTestUsers(),
-        ChannelModelAPI.remove(),
+        ChannelModelAPI.deleteMany({}),
         promisify(server.stop)()
       ])
     })

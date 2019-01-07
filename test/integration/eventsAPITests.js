@@ -125,8 +125,8 @@ describe('Events API Integration Tests', () => {
   after(async () => {
     sandbox.restore()
     await Promise.all([
-      ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint' }),
-      ClientModelAPI.remove({ clientID: 'testApp' }),
+      ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+      ClientModelAPI.deleteOne({ clientID: 'testApp' }),
       testUtils.cleanupTestUsers(),
       mockServer.close(),
       mockServer2.close(),
@@ -137,7 +137,7 @@ describe('Events API Integration Tests', () => {
   beforeEach(async () => {
     await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort, apiPort: SERVER_PORTS.apiPort })
     authDetails = await testUtils.getAuthDetails()
-    await EventModel.remove()
+    await EventModel.deleteMany({})
   })
 
   afterEach(async () => {

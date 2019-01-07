@@ -147,7 +147,7 @@ export async function addTask (ctx) {
       utils.logAndSetResponse(ctx, 201, `User ${ctx.authenticated.email} created task with id ${task.id}`, 'info')
 
       // Clear the transactions out of the auto retry queue, in case they're in there
-      return AutoRetryModelAPI.remove({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err) } })
+      return AutoRetryModelAPI.deleteMany({ transactionID: { $in: transactions.tids } }, (err) => { if (err) { return logger.error(err) } })
     } else {
       // rerun task creation not allowed
       utils.logAndSetResponse(ctx, 403, 'Insufficient permissions prevents this rerun task from being created', 'error')
@@ -301,7 +301,7 @@ export async function removeTask (ctx, taskId) {
 
   try {
     // Try to get the Task (Call the function that emits a promise and Koa will wait for the function to complete)
-    await TaskModelAPI.remove({ _id: taskId }).exec()
+    await TaskModelAPI.deleteOne({ _id: taskId }).exec()
 
     // All ok! So set the result
     ctx.body = 'The Task was successfully deleted'

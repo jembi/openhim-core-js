@@ -42,7 +42,7 @@ describe('API Integration Tests', () => {
     })
 
     afterEach(async () => {
-      await ContactGroupModelAPI.remove()
+      await ContactGroupModelAPI.deleteMany({})
     })
 
     describe('*addContactGroup', () => {

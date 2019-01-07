@@ -116,8 +116,8 @@ describe('API Integration Tests', () => {
     })
 
     afterEach(async () => {
-      await MediatorModelAPI.remove()
-      await ChannelModelAPI.remove()
+      await MediatorModelAPI.deleteMany({})
+      await ChannelModelAPI.deleteMany({})
     })
 
     describe('*getAllMediators()', () => {
@@ -1252,12 +1252,12 @@ describe('API Integration Tests', () => {
       mockServer = await testUtils.createMockHttpMediator(mediatorResponse, httpPortPlus40, 200)
     })
 
-    beforeEach(async () => { await TransactionModelAPI.remove() })
+    beforeEach(async () => { await TransactionModelAPI.deleteMany({}) })
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock mediator endpoint' }),
-        ClientModelAPI.remove({ clientID: 'mediatorTestApp' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock mediator endpoint' }),
+        ClientModelAPI.deleteOne({ clientID: 'mediatorTestApp' }),
         mockServer.close()
       ])
     })
@@ -1265,7 +1265,7 @@ describe('API Integration Tests', () => {
     afterEach(async () => {
       await Promise.all([
         promisify(server.stop)(),
-        TransactionModelAPI.remove()
+        TransactionModelAPI.deleteMany({})
       ])
     })
 

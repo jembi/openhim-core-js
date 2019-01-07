@@ -227,7 +227,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   afterEach(async () => {
     await Promise.all([
       mockServer.close(),
-      TransactionModel.remove()
+      TransactionModel.deleteMany({})
     ])
     sandbox.reset()
     mockServer = null

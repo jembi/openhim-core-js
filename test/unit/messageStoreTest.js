@@ -99,8 +99,8 @@ describe('MessageStore', () => {
     ctx.authorisedChannel.responseBody = true
 
     await Promise.all([
-      TransactionModel.remove({}),
-      ChannelModel.remove({})
+      TransactionModel.deleteMany({}),
+      ChannelModel.deleteMany({})
     ])
 
     const [ch1, ch2] = await Promise.all([
@@ -115,8 +115,8 @@ describe('MessageStore', () => {
 
   afterEach(async () => {
     await Promise.all([
-      TransactionModel.remove({}),
-      ChannelModel.remove({})
+      TransactionModel.deleteMany({}),
+      ChannelModel.deleteMany({})
     ])
   })
 
@@ -182,28 +182,6 @@ describe('MessageStore', () => {
   })
 
   describe('.storeResponse', () => {
-    // beforeEach(async () => {
-    //   await ChannelModel.remove({})
-    //   ChannelModel.remove({}, () =>
-    //   (new ChannelModel(channel1)).save((err, ch1) => {
-    //     if (err) { return done(err) }
-    //     channel1._id = ch1._id
-    //     ctx.authorisedChannel._id = ch1._id
-    //     return (new ChannelModel(channel2)).save((err, ch2) => {
-    //       if (err) { return done(err) }
-    //       channel2._id = ch2._id
-    //       return done()
-    //     })
-    //   })
-    // )
-    // })
-
-    // afterEach(done =>
-    //   TransactionModel.remove({}, () =>
-    //     ChannelModel.remove({}, () => done())
-    //   )
-    // )
-
     const createResponse = status =>
       ({
         status,

@@ -20,7 +20,7 @@ describe('Upgrade DB Tests', () => {
   })
 
   afterEach(async () => {
-    await DbVersionModel.remove({})
+    await DbVersionModel.deleteMany({})
   })
 
   describe('.upgradeDB', () => {
@@ -322,8 +322,8 @@ describe('Upgrade DB Tests', () => {
 
     afterEach(async () => {
       await Promise.all([
-        UserModel.remove(),
-        VisualizerModel.remove()
+        UserModel.deleteMany(),
+        VisualizerModel.deleteMany()
       ])
       await testUtils.setImmediatePromise()
     })

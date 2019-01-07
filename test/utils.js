@@ -139,11 +139,11 @@ export function getAuthDetails () {
 }
 
 export function cleanupTestUsers () {
-  return UserModel.remove({ email: { $in: [rootUser.email, nonRootUser.email] } })
+  return UserModel.deleteMany({ email: { $in: [rootUser.email, nonRootUser.email] } })
 }
 
 export function cleanupAllTestUsers () {
-  return UserModel.remove()
+  return UserModel.deleteMany({})
 }
 
 /**
@@ -416,7 +416,7 @@ export async function setupTestKeystore (serverCert, serverKey, ca, callback = (
       ])
     }
 
-    await KeystoreModel.remove({})
+    await KeystoreModel.deleteMany({})
     const serverCertInfo = await readCertificateInfoPromised(serverCert)
     serverCertInfo.data = serverCert
 
@@ -521,7 +521,7 @@ export function createMockTLSServerWithMutualAuth (onRequest = async data => dat
 
 export async function cleanupTestKeystore (cb = () => { }) {
   try {
-    await KeystoreModel.remove({})
+    await KeystoreModel.deleteMany({})
     cb()
   } catch (error) {
     cb(error)

@@ -42,7 +42,7 @@ describe('API Integration Tests', () => {
     })
 
     afterEach(async () => {
-      await ClientModelAPI.remove()
+      await ClientModelAPI.deleteMany({})
     })
 
     describe('*addClient', () => {

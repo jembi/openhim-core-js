@@ -93,8 +93,8 @@ describe('Multipart form data tests', () => {
 
     await Promise.all([
       promisify(server.stop)(),
-      ChannelModel.remove(),
-      ClientModel.remove()
+      ChannelModel.deleteMany({}),
+      ClientModel.deleteMany({})
     ])
   })
 

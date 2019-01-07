@@ -7,7 +7,7 @@ import { ObjectId } from 'mongodb'
 
 describe('recordTransactionMetrics', () => {
   beforeEach(async () => {
-    await MetricModel.remove()
+    await MetricModel.deleteMany()
   })
 
   it('should record the correct metrics for a transaction', async () => {
@@ -216,7 +216,7 @@ describe('recordTransactionMetrics', () => {
 
 describe('calculateMetrics', () => {
   beforeEach(async () => {
-    await MetricModel.remove()
+    await MetricModel.deleteMany()
   })
 
   it('should return total metrics by channel when there is no timeseries', async () => {

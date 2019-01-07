@@ -67,15 +67,15 @@ describe('API Integration Tests', () => {
       await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort, pollingPort: SERVER_PORTS.pollingPort })
       authDetails = await testUtils.getAuthDetails()
       await Promise.all([
-        TransactionModelAPI.remove(),
-        ChannelModelAPI.remove()
+        TransactionModelAPI.deleteMany({}),
+        ChannelModelAPI.deleteMany({})
       ])
     })
 
     after(async () => {
       await Promise.all([
-        TransactionModelAPI.remove(),
-        ChannelModelAPI.remove(),
+        TransactionModelAPI.deleteMany({}),
+        ChannelModelAPI.deleteMany({}),
         testUtils.cleanupTestUsers(),
         promisify(server.stop)()
       ])
@@ -87,8 +87,8 @@ describe('API Integration Tests', () => {
 
     beforeEach(async () => {
       await Promise.all([
-        TransactionModelAPI.remove(),
-        ChannelModelAPI.remove()
+        TransactionModelAPI.deleteMany({}),
+        ChannelModelAPI.deleteMany({})
       ])
       const ch1 = await (new ChannelModelAPI(channel1)).save()
       channel1._id = ch1._id
@@ -755,7 +755,7 @@ describe('API Integration Tests', () => {
     //   let expectedPatches
 
     //   beforeEach(async () => {
-    //     await ChannelModelAPI.Patches.remove().exec()
+    //     await ChannelModelAPI.Patches.deleteMany({}).exec()
     //     const patches = await ChannelModelAPI.Patches.create([
     //       {
     //         ref: channel1._id,
@@ -1813,11 +1813,11 @@ describe('API Integration Tests', () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 1' }),
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 2' }),
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 3' }),
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 4' }),
-        ClientModelAPI.remove({ clientID: 'testApp' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint 1' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint 2' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint 3' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint 4' }),
+        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
         mockServer1.close(),
         mockServer2.close()
       ])

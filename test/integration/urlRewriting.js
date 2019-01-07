@@ -67,8 +67,8 @@ describe('URL rewriting test', () => {
 
   after(async () => {
     await Promise.all([
-      ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint' }),
-      ClientModelAPI.remove({ clientID: 'testApp' }),
+      ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+      ClientModelAPI.deleteOne({ clientID: 'testApp' }),
       mockServer.close()
     ])
     config.router = ORIGINAL_CONFIG_ROUTER

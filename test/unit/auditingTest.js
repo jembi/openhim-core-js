@@ -14,8 +14,8 @@ config.auditing = config.get('auditing')
 describe('Auditing', () => {
   beforeEach(async () => {
     await Promise.all([
-      AuditModel.remove({}),
-      AuditMetaModel.remove({})
+      AuditModel.deleteMany({}),
+      AuditMetaModel.deleteMany({})
     ])
   })
 

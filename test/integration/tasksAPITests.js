@@ -215,7 +215,7 @@ describe('API Integration Tests', () => {
     let authDetails = {}
 
     before(async () => {
-      await TaskModelAPI.remove()
+      await TaskModelAPI.deleteMany({})
       await task1.save()
       await task2.save()
       await task3.save()
@@ -236,9 +236,9 @@ describe('API Integration Tests', () => {
     after(async () => {
       await promisify(server.stop)()
       await testUtils.cleanupTestUsers()
-      await TaskModelAPI.remove()
-      await TransactionModelAPI.remove()
-      await ChannelModelAPI.remove()
+      await TaskModelAPI.deleteMany({})
+      await TransactionModelAPI.deleteMany({})
+      await ChannelModelAPI.deleteMany({})
 
       const mongoClient = await testUtils.getMongoClient()
       const mongoCollection = mongoClient != null ? mongoClient.db().collection.jobs : undefined
@@ -441,7 +441,7 @@ describe('API Integration Tests', () => {
         const newTask =
           { tids: ['888888888888888888888888', '999999999999999999999999'] }
 
-        await AutoRetryModelAPI.remove()
+        await AutoRetryModelAPI.deleteMany({})
 
         const retry1 = new AutoRetryModelAPI({
           transactionID: ObjectId('888888888888888888888888'),

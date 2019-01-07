@@ -46,7 +46,7 @@ describe('TCP adapter tests', () => {
   after(async () => {
     await Promise.all([
       promisify(tcpAdapter.stopServers)(),
-      ChannelModel.remove({})
+      ChannelModel.deleteMany({})
     ])
   })
 

@@ -30,8 +30,8 @@ describe('API Integration Tests', () => {
 
   afterEach(async () => {
     await Promise.all([
-      AuditModel.remove(),
-      AuditMetaModel.remove()
+      AuditModel.deleteMany({}),
+      AuditMetaModel.deleteMany({})
     ])
   })
 

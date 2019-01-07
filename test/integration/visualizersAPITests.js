@@ -70,7 +70,7 @@ describe('API Integration Tests', () => {
 
     before(async () => {
       await Promise.all([
-        VisualizerModelAPI.remove(),
+        VisualizerModelAPI.deleteMany({}),
         testUtils.setupTestUsers(),
         promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
       ])
@@ -85,7 +85,7 @@ describe('API Integration Tests', () => {
 
     beforeEach(() => { authDetails = testUtils.getAuthDetails() })
 
-    afterEach(() => VisualizerModelAPI.remove())
+    afterEach(() => VisualizerModelAPI.deleteMany({}))
 
     describe('*getVisualizers()', () => {
       it('should return a 200 response with a list of saved visualizers', async () => {

@@ -27,7 +27,7 @@ describe('Auditing Integration Tests', () => {
 
     await promisify(server.start)(serverPorts)
     await testUtils.setImmediatePromise()
-    await AuditModel.remove()
+    await AuditModel.deleteMany({})
   })
 
   after(async () => {
@@ -40,7 +40,7 @@ describe('Auditing Integration Tests', () => {
 
   afterEach(async () => {
     await Promise.all([
-      AuditModel.remove()
+      AuditModel.deleteMany({})
     ])
     if (client != null) {
       if (client.end) {

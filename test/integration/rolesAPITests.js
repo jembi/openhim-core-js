@@ -148,8 +148,8 @@ describe('API Integration Tests', () => {
 
     afterEach(async () => {
       await Promise.all([
-        ClientModel.remove(),
-        ChannelModel.remove()
+        ClientModel.deleteMany({}),
+        ChannelModel.deleteMany({})
       ])
     })
 
@@ -224,7 +224,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should fetch all roles if there are only linked clients', async () => {
-        await ChannelModel.remove()
+        await ChannelModel.deleteMany({})
         const res = await request(constants.BASE_URL)
           .get('/roles')
           .set('auth-username', testUtils.rootUser.email)

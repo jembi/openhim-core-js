@@ -52,7 +52,7 @@ describe('tlsAuthentication', () => {
 
   describe('.clientLookup', () => {
     afterEach(async () => {
-      await ClientModel.remove({})
+      await ClientModel.deleteMany({})
     })
 
     it('should find a client in the keystore up the chain', async () => {

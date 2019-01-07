@@ -124,8 +124,8 @@ describe('rerunUpdateTransactionTask middleware', () => {
   })
 
   after(async () => {
-    await TransactionModel.remove({})
-    await TaskModel.remove({})
+    await TransactionModel.deleteMany({})
+    await TaskModel.deleteMany({})
   })
 
   describe('updateOriginalTransaction', () => {

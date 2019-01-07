@@ -279,10 +279,10 @@
 // }
 
 // exports.auth.cleanupTestUsers = done =>
-//   UserModel.remove({email: 'root@jembi.org'}, (err) => {
+//   UserModel.deleteOne({email: 'root@jembi.org'}, (err) => {
 //     if (err) { return done(err) }
 
-//     UserModel.remove({email: 'nonroot@jembi.org'}, (err) => {
+//     UserModel.deleteOne({email: 'nonroot@jembi.org'}, (err) => {
 //       if (err) {
 //         return done(err)
 //       } else {
@@ -358,7 +358,7 @@
 //   }
 
 //   // remove any existing keystore
-//   KeystoreModel.remove({}, () =>
+//   KeystoreModel.deleteMany({}, () =>
 
 //     pem.readCertificateInfo(serverCert, (err, serverCertInfo) => {
 //       if (err != null) {
@@ -412,7 +412,7 @@
 // }
 
 // export function cleanupTestKeystore (callback) {
-//   KeystoreModel.remove({}, () => callback())
+//   KeystoreModel.deleteMany({}, () => callback())
 // }
 
 // export function setupMetricsTransactions (callback) {

@@ -48,7 +48,7 @@ describe('Rerun Task Tests', () => {
     })
 
     afterEach(async () => {
-      await TransactionModel.remove({})
+      await TransactionModel.deleteMany({})
     })
 
     it(`will fail if the transaction can't be found`, async () => {
@@ -288,9 +288,9 @@ describe('Rerun Task Tests', () => {
     }
 
     const clearTasksFn = () => Promise.all([
-      TaskModel.remove({}),
-      TransactionModel.remove({}),
-      ChannelModel.remove({})
+      TaskModel.deleteMany({}),
+      TransactionModel.deleteMany({}),
+      ChannelModel.deleteMany({})
     ])
 
     before(async () => {
