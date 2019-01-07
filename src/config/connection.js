@@ -4,6 +4,8 @@ import { config } from './'
 
 config.mongo = config.get('mongo')
 
+mongoose.set('useNewUrlParser', true)
+
 export const connectionAgenda = mongoose.createConnection(encodeMongoURI(config.mongo.url))
 export const connectionAPI = mongoose.createConnection(encodeMongoURI(config.mongo.url), getMongoOptions())
 export const connectionATNA = mongoose.createConnection(encodeMongoURI(config.mongo.atnaUrl))
@@ -19,10 +21,8 @@ function encodeMongoURI (urlString) {
 
 function getMongoOptions () {
   return {
-    db: {
-      readPreference: config.mongo.openHIMApiReadPreference,
-      readConcern: {level: config.mongo.openHIMApiReadConcern},
-      w: config.mongo.openHIMApiWriteConcern
-    }
+    readPreference: config.mongo.openHIMApiReadPreference,
+    readConcern: {level: config.mongo.openHIMApiReadConcern},
+    w: config.mongo.openHIMApiWriteConcern
   }
 }
