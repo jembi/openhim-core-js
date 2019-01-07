@@ -10,6 +10,7 @@ import https from 'https'
 import serveStatic from 'serve-static'
 import finalhandler from 'finalhandler'
 import sinon from 'sinon'
+import uriFormat from 'mongodb-uri'
 import * as crypto from 'crypto'
 
 import * as constants from './constants'
@@ -225,9 +226,16 @@ export async function dropTestDb () {
 
 export function getMongoClient () {
   const url = config.get('mongo:url')
-  return MongoClient.connect(url)
+  return MongoClient.connect(encodeMongoURI(url), { useNewUrlParser: true })
 }
 
+function encodeMongoURI (urlString) {
+  if (urlString) {
+    let parsed = uriFormat.parse(urlString)
+    urlString = uriFormat.format(parsed);
+  }
+  return urlString;
+}
 /**
  * Checks to see if the object passed in looks like a promise
  *
