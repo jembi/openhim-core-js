@@ -66,7 +66,7 @@
     "mongoose-patch-history": "1.1.7",
     "nconf": "0.10.0",
     "uuid": "3.3.2",
-    "nodemailer": "4.7.0",
+    "nodemailer": "5.0.0",
     "pem": "1.13.2",
     "raw-body": "2.3.3",
     "request": "2.88.0",
