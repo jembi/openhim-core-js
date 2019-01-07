@@ -6,6 +6,7 @@ config.mongo = config.get('mongo')
 export const connectionAPI = mongoose.createConnection(config.mongo.url, getMongoOptions())
 export const connectionDefault = mongoose.createConnection(config.mongo.url)
 export const connectionATNA = mongoose.createConnection(config.mongo.atnaUrl)
+export const connectionAgenda = mongoose.createConnection(config.mongo.url)
 
 function getMongoOptions () {
   return {

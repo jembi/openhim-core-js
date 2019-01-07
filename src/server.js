@@ -33,7 +33,7 @@ import * as tasks from './tasks'
 import * as upgradeDB from './upgradeDB'
 import * as autoRetry from './autoRetry'
 import * as bodyCull from './bodyCull'
-import { config, appRoot } from './config'
+import { config, appRoot, connectionAgenda } from './config'
 
 mongoose.Promise = Promise
 
@@ -305,9 +305,7 @@ if (cluster.isMaster && !module.parent) {
   function startAgenda () {
     const deferred = defer()
     agenda = new Agenda({
-      db: {
-        address: config.mongo.url
-      }
+      mongo: connectionAgenda
     })
 
     agenda.on('start', job => logger.info(`starting job: ${job.attrs.name}, Last Ran at: ${job.attrs.lastRunAt}`))
