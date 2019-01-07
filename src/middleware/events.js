@@ -50,7 +50,7 @@ export function saveEvents (trxEvents, callback) {
   for (const event of Array.from(trxEvents)) { event.created = now }
 
   // bypass mongoose for quick batch inserts
-  return events.EventModel.collection.insert(trxEvents, err => callback(err))
+  return events.EventModel.collection.insertMany(trxEvents, err => callback(err))
 }
 
 function createRouteEvents (dst, transactionId, channel, route, type, tsAdjustment, autoRetryAttempt) {
