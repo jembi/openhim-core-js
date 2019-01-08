@@ -15,7 +15,7 @@ import { ObjectId } from 'mongodb'
 // TODO : Check the tasks have beeen removed before trying the next test
 
 function waitForAutoRetry () {
-  return testUtils.pollCondition(() => AutoRetryModel.count().then(count => count === 1))
+  return testUtils.pollCondition(() => AutoRetryModel.countDocuments().then(count => count === 1))
 }
 
 // TODO : This test suite could be written a bit neater
