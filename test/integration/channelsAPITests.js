@@ -751,115 +751,115 @@ describe('API Integration Tests', () => {
       })
     })
 
-    // describe('getChannelAudits(channelId)', () => {
-    //   let expectedPatches
+    describe('getChannelAudits(channelId)', () => {
+      let expectedPatches
 
-    //   beforeEach(async () => {
-    //     await ChannelModelAPI.Patches.deleteMany({}).exec()
-    //     const patches = await ChannelModelAPI.Patches.create([
-    //       {
-    //         ref: channel1._id,
-    //         ops: [
-    //           {
-    //             value: 'before',
-    //             path: '/name',
-    //             op: 'add'
-    //           }
-    //         ],
-    //         updatedBy: {
-    //           id: new ObjectId(),
-    //           name: 'Test'
-    //         }
-    //       },
-    //       {
-    //         ref: channel2._id,
-    //         ops: [
-    //           {
-    //             value: 'nope',
-    //             path: '/name',
-    //             op: 'add'
-    //           }
-    //         ],
-    //         updatedBy: {
-    //           id: new ObjectId(),
-    //           name: 'Test'
-    //         }
-    //       },
-    //       {
-    //         ref: channel1._id,
-    //         ops: [
-    //           {
-    //             value: 'after',
-    //             path: '/name',
-    //             op: 'replace'
-    //           }
-    //         ],
-    //         updatedBy: {
-    //           id: new ObjectId(),
-    //           name: 'Test'
-    //         }
-    //       },
-    //       {
-    //         ref: channel1._id,
-    //         ops: [
-    //           {
-    //             value: new Date(),
-    //             path: '/lastBodyCleared',
-    //             op: 'replace'
-    //           }
-    //         ],
-    //         updatedBy: {
-    //           id: new ObjectId(),
-    //           name: 'Test'
-    //         }
-    //       },
-    //       {
-    //         ref: channel1._id,
-    //         ops: [
-    //           {
-    //             value: new Date(),
-    //             path: '/lastBodyCleared',
-    //             op: 'add'
-    //           }
-    //         ],
-    //         updatedBy: {
-    //           id: new ObjectId(),
-    //           name: 'Test'
-    //         }
-    //       }
-    //     ])
-    //     expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).filter(patch => patch.ops[0].path !== '/lastBodyCleared').map(patch => {
-    //       const convertedPatch = patch.toObject()
-    //       convertedPatch._id = convertedPatch._id.toString()
-    //       convertedPatch.ref = convertedPatch.ref.toString()
-    //       convertedPatch.date = convertedPatch.date.toISOString()
-    //       convertedPatch.updatedBy.id = convertedPatch.updatedBy.id.toString()
-    //       return convertedPatch
-    //     })
-    //   })
+      beforeEach(async () => {
+        await ChannelModelAPI.Patches.deleteMany({}).exec()
+        const patches = await ChannelModelAPI.Patches.create([
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: 'before',
+                path: '/name',
+                op: 'add'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          },
+          {
+            ref: channel2._id,
+            ops: [
+              {
+                value: 'nope',
+                path: '/name',
+                op: 'add'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: 'after',
+                path: '/name',
+                op: 'replace'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: new Date(),
+                path: '/lastBodyCleared',
+                op: 'replace'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          },
+          {
+            ref: channel1._id,
+            ops: [
+              {
+                value: new Date(),
+                path: '/lastBodyCleared',
+                op: 'add'
+              }
+            ],
+            updatedBy: {
+              id: new ObjectId(),
+              name: 'Test'
+            }
+          }
+        ])
+        expectedPatches = patches.reverse().filter(patch => patch.ref.equals(channel1._id)).filter(patch => patch.ops[0].path !== '/lastBodyCleared').map(patch => {
+          const convertedPatch = patch.toObject()
+          convertedPatch._id = convertedPatch._id.toString()
+          convertedPatch.ref = convertedPatch.ref.toString()
+          convertedPatch.date = convertedPatch.date.toISOString()
+          convertedPatch.updatedBy.id = convertedPatch.updatedBy.id.toString()
+          return convertedPatch
+        })
+      })
 
-    //   it('should return the patches for the correct channel', async () => {
-    //     const res = await request(constants.BASE_URL)
-    //       .get(`/channels/${channel1._id}/audits`)
-    //       .set('auth-username', testUtils.rootUser.email)
-    //       .set('auth-ts', authDetails.authTS)
-    //       .set('auth-salt', authDetails.authSalt)
-    //       .set('auth-token', authDetails.authToken)
-    //       .expect(200)
-    //     res.body.should.eql(expectedPatches)
-    //   })
+      it('should return the patches for the correct channel', async () => {
+        const res = await request(constants.BASE_URL)
+          .get(`/channels/${channel1._id}/audits`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+        res.body.should.eql(expectedPatches)
+      })
 
-    //   it('should return an empty array when the channel does not exist', async () => {
-    //     const res = await request(constants.BASE_URL)
-    //       .get('/channels/59f6d57b07552f280271efac/audits')
-    //       .set('auth-username', testUtils.rootUser.email)
-    //       .set('auth-ts', authDetails.authTS)
-    //       .set('auth-salt', authDetails.authSalt)
-    //       .set('auth-token', authDetails.authToken)
-    //       .expect(200)
-    //     res.body.should.eql([])
-    //   })
-    // })
+      it('should return an empty array when the channel does not exist', async () => {
+        const res = await request(constants.BASE_URL)
+          .get('/channels/59f6d57b07552f280271efac/audits')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+        res.body.should.eql([])
+      })
+    })
 
     describe('*updateChannel(channelId)', () => {
       it('should update a specific channel by id', async () => {
