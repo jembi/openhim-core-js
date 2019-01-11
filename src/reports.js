@@ -108,8 +108,8 @@ function sendReports (job, flag, done) {
           report.instance = config.alerts.himInstance
           report.consoleURL = config.alerts.consoleURL
 
-          report.from = moment(from).format('YYYY-MM-DD')
-          report.to = moment(to).format('YYYY-MM-DD')
+          report.from = moment(from).toISOString()
+          report.to = moment(to).toISOString()
 
           try {
             for (let i = 0; i < report.data.length; i++) {
