@@ -40,7 +40,7 @@ async function clearTransactions (channel) {
   }
 
   channel.lastBodyCleared = Date.now()
-  channel.updatedBy = 'Cron'
+  channel.updatedBy = { name: 'Cron' }
   await channel.save()
   const updateResp = await TransactionModel.updateMany(query, { $unset: { 'request.body': '', 'response.body': '' } })
   if (updateResp.nModified > 0) {

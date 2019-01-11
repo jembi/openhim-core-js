@@ -25,7 +25,7 @@ describe(`API Integration Tests`, () => {
         promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort })
       ])
 
-      await LogModel.remove()
+      await LogModel.deleteMany({})
 
       const timestamp = moment(beforeTS)
       await Promise.all([
@@ -45,7 +45,7 @@ describe(`API Integration Tests`, () => {
       await Promise.all([
         testUtils.cleanupTestUsers(),
         promisify(server.stop)(),
-        LogModel.remove()
+        LogModel.deleteMany({})
       ])
     })
 

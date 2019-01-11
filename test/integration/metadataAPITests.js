@@ -98,7 +98,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await ChannelModelAPI.remove()
+          await ChannelModelAPI.deleteMany({})
         })
 
         it('should fetch channels and return status 200', async () => {
@@ -121,7 +121,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await ClientModelAPI.remove()
+          await ClientModelAPI.deleteMany({})
         })
 
         it('should fetch clients and return status 200', async () => {
@@ -144,7 +144,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await MediatorModelAPI.remove()
+          await MediatorModelAPI.deleteMany({})
         })
 
         it('should fetch mediators and return status 200', async () => {
@@ -181,7 +181,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await ContactGroupModelAPI.remove()
+          await ContactGroupModelAPI.deleteMany({})
         })
 
         it('should fetch contact groups and return status 200', async () => {
@@ -232,7 +232,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await ChannelModelAPI.remove()
+          await ChannelModelAPI.deleteMany({})
         })
 
         it('should insert a channel and return 201', async () => {
@@ -304,7 +304,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await ClientModelAPI.remove()
+          await ClientModelAPI.deleteMany({})
         })
 
         it('should insert a client and return 201', async () => {
@@ -375,7 +375,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await MediatorModelAPI.remove()
+          await MediatorModelAPI.deleteMany({})
         })
 
         it('should insert a mediator and return 201', async () => {
@@ -445,7 +445,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await UserModelAPI.remove({ email: { $in: testMetadata.Users.map(u => u.email) } })
+          await UserModelAPI.deleteMany({ email: { $in: testMetadata.Users.map(u => u.email) } })
         })
 
         it('should insert a user and return 201', async () => {
@@ -515,7 +515,7 @@ describe('API Integration Tests', () => {
         })
 
         afterEach(async () => {
-          await ContactGroupModelAPI.remove()
+          await ContactGroupModelAPI.deleteMany({})
         })
 
         it('should insert a contactGroup and return 201', async () => {
@@ -580,10 +580,10 @@ describe('API Integration Tests', () => {
       describe('Full Metadata Import', () => {
         after(async () => {
           await Promise.all([
-            ChannelModelAPI.remove(),
-            ClientModelAPI.remove(),
-            MediatorModelAPI.remove(),
-            ContactGroupModelAPI.remove()
+            ChannelModelAPI.deleteMany({}),
+            ClientModelAPI.deleteMany({}),
+            MediatorModelAPI.deleteMany({}),
+            ContactGroupModelAPI.deleteMany({})
             // User?
           ])
           authDetails = await testUtils.getAuthDetails()
@@ -723,7 +723,7 @@ describe('API Integration Tests', () => {
         statusCheckObj.Valid.should.equal(4)
         statusCheckObj.Conflict.should.equal(1)
         statusCheckObj.Error.should.equal(0)
-        ChannelModelAPI.remove()
+        ChannelModelAPI.deleteMany({})
       })
 
       it('should not allow a non admin user to validate metadata', async () => {

@@ -101,8 +101,8 @@ describe('API Integration Tests', () => {
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await ChannelModelAPI.ensureIndexes()
-      await MediatorModelAPI.ensureIndexes()
+      await ChannelModelAPI.createIndexes()
+      await MediatorModelAPI.createIndexes()
       await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
     })
 
@@ -116,8 +116,8 @@ describe('API Integration Tests', () => {
     })
 
     afterEach(async () => {
-      await MediatorModelAPI.remove()
-      await ChannelModelAPI.remove()
+      await MediatorModelAPI.deleteMany({})
+      await ChannelModelAPI.deleteMany({})
     })
 
     describe('*getAllMediators()', () => {
@@ -847,7 +847,7 @@ describe('API Integration Tests', () => {
         }
 
         const mediator = await new MediatorModelAPI(mediatorDelete).save()
-        const countBefore = await MediatorModelAPI.count()
+        const countBefore = await MediatorModelAPI.countDocuments()
         await request(constants.BASE_URL)
           .del(`/mediators/${mediator.urn}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -855,7 +855,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-        const countAfter = await MediatorModelAPI.count()
+        const countAfter = await MediatorModelAPI.countDocuments()
         const notFoundDoc = await MediatorModelAPI.findOne({ urn: mediator.urn });
         (notFoundDoc === null).should.be.true();
         (countBefore - 1).should.equal(countAfter)
@@ -1252,12 +1252,12 @@ describe('API Integration Tests', () => {
       mockServer = await testUtils.createMockHttpMediator(mediatorResponse, httpPortPlus40, 200)
     })
 
-    beforeEach(async () => { await TransactionModelAPI.remove() })
+    beforeEach(async () => { await TransactionModelAPI.deleteMany({}) })
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock mediator endpoint' }),
-        ClientModelAPI.remove({ clientID: 'mediatorTestApp' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock mediator endpoint' }),
+        ClientModelAPI.deleteOne({ clientID: 'mediatorTestApp' }),
         mockServer.close()
       ])
     })
@@ -1265,7 +1265,7 @@ describe('API Integration Tests', () => {
     afterEach(async () => {
       await Promise.all([
         promisify(server.stop)(),
-        TransactionModelAPI.remove()
+        TransactionModelAPI.deleteMany({})
       ])
     })
 
@@ -1288,7 +1288,7 @@ describe('API Integration Tests', () => {
           .auth('mediatorTestApp', 'password')
           .expect(200)
 
-        await testUtils.pollCondition(() => TransactionModelAPI.count().then(c => c === 1))
+        await testUtils.pollCondition(() => TransactionModelAPI.countDocuments().then(c => c === 1))
         const res = await TransactionModelAPI.findOne()
 
         res.status.should.be.equal(mediatorResponse.status)

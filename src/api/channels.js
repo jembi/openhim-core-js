@@ -386,7 +386,7 @@ export async function removeChannel (ctx, channelId) {
 
   try {
     let channel
-    const numExistingTransactions = await TransactionModelAPI.count({ channelID: id }).exec()
+    const numExistingTransactions = await TransactionModelAPI.countDocuments({ channelID: id }).exec()
 
     // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
     if (numExistingTransactions === 0) {

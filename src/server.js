@@ -1,3 +1,5 @@
+import './winston-transport-workaround'
+
 import 'babel-polyfill'
 import cluster from 'cluster'
 import nconf from 'nconf'
@@ -10,7 +12,7 @@ import https from 'https'
 import tls from 'tls'
 import net from 'net'
 import dgram from 'dgram'
-import uuid from 'node-uuid'
+import uuidv4 from 'uuid/v4'
 import pem from 'pem'
 import logger from 'winston'
 import 'winston-mongodb'
@@ -31,7 +33,7 @@ import * as tasks from './tasks'
 import * as upgradeDB from './upgradeDB'
 import * as autoRetry from './autoRetry'
 import * as bodyCull from './bodyCull'
-import { config, appRoot } from './config'
+import { config, appRoot, connectionAgenda } from './config'
 
 mongoose.Promise = Promise
 
@@ -58,6 +60,10 @@ const numCPUs = require('os').cpus().length
 let ensureKeystore
 
 logger.remove(logger.transports.Console)
+
+const winstonLogFormat = logger.format.printf(info => {
+  return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`;
+})
 
 let clusterArg = nconf.get('cluster')
 
@@ -104,22 +110,25 @@ if (cluster.isMaster && !module.parent) {
 
   // configure master logger
   let clusterSize
-  logger.add(logger.transports.Console, {
-    colorize: true,
-    timestamp: true,
-    label: 'master',
+  logger.add(new logger.transports.Console({
+    format: logger.format.combine(
+      logger.format.label({label: 'master'}),
+      logger.format.timestamp(),
+      logger.format.colorize(),
+      winstonLogFormat
+    ),
     level: config.logger.level
-  })
+  }))
 
   if (config.logger.logToDB === true) {
-    logger.add(logger.transports.MongoDB, {
+    logger.add(new logger.transports.MongoDB({
       db: config.mongo.url,
       label: 'master',
       options: config.mongoLogger.options,
       level: 'debug',
       capped: config.logger.capDBLogs,
       cappedSize: config.logger.capSize
-    })
+    }))
   }
 
   if ((clusterArg == null)) {
@@ -224,23 +233,24 @@ if (cluster.isMaster && !module.parent) {
 
   // configure worker logger
   let stop
-  logger.add(logger.transports.Console, {
-    colorize: true,
-    timestamp: true,
-    label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined,
+  logger.add(new logger.transports.Console({
+    format: logger.format.combine(
+      logger.format.label({label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined}),
+      logger.format.timestamp(),
+      logger.format.colorize(),
+      winstonLogFormat
+    ),
     level: config.logger.level
-  }
-  )
+  }))
   if (config.logger.logToDB === true && logger.default.transports.mongodb == null) {
-    logger.add(logger.transports.MongoDB, {
+    logger.add(new logger.transports.MongoDB({
       db: config.mongo.url,
       options: config.mongoLogger.options,
       label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined,
       level: 'debug',
       capped: config.logger.capDBLogs,
       cappedSize: config.logger.capSize
-    }
-    )
+    }))
   }
 
   let httpServer = null
@@ -263,7 +273,7 @@ if (cluster.isMaster && !module.parent) {
 
   function trackConnection (map, socket) {
     // save active socket
-    const id = uuid.v4()
+    const id = uuidv4()
     map[id] = socket
 
     // remove socket once it closes
@@ -295,9 +305,7 @@ if (cluster.isMaster && !module.parent) {
   function startAgenda () {
     const deferred = defer()
     agenda = new Agenda({
-      db: {
-        address: config.mongo.url
-      }
+      mongo: connectionAgenda
     })
 
     agenda.on('start', job => logger.info(`starting job: ${job.attrs.name}, Last Ran at: ${job.attrs.lastRunAt}`))
@@ -331,12 +339,9 @@ if (cluster.isMaster && !module.parent) {
   }
 
   function stopAgenda () {
-    const deferred = defer()
-    agenda.stop(() => {
-      deferred.resolve()
-      return logger.info('Stopped agenda job scheduler')
+    agenda.stop().then(() => {
+      logger.info('Stopped agenda job scheduler')
     })
-    return deferred.promise
   }
 
   function startHttpServer (httpPort, bindAddress, app) {
@@ -752,7 +757,7 @@ if (cluster.isMaster && !module.parent) {
     if (apiHttpsServer) { promises.push(stopServer(apiHttpsServer, 'API HTTP')) }
     if (rerunServer) { promises.push(stopServer(rerunServer, 'Rerun HTTP')) }
     if (pollingServer) { promises.push(stopServer(pollingServer, 'Polling HTTP')) }
-    if (agenda) { promises.push(stopAgenda()) }
+    if (agenda) { stopAgenda() }
 
     if (auditTlsServer) { promises.push(stopServer(auditTlsServer, 'Audit TLS').promise) }
     if (auditTcpServer) { promises.push(stopServer(auditTcpServer, 'Audit TCP').promise) }

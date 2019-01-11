@@ -1,7 +1,6 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import { MongoClient } from 'mongodb'
 import { Types } from 'mongoose'
 import * as server from '../../src/server'
 import { TaskModelAPI } from '../../src/model/tasks'
@@ -9,7 +8,6 @@ import { TransactionModelAPI } from '../../src/model/transactions'
 import { AutoRetryModelAPI } from '../../src/model/autoRetry'
 import { ChannelModelAPI } from '../../src/model/channels'
 import * as testUtils from '../utils'
-import { config } from '../../src/config'
 import * as constants from '../constants'
 import { promisify } from 'util'
 
@@ -217,7 +215,7 @@ describe('API Integration Tests', () => {
     let authDetails = {}
 
     before(async () => {
-      await TaskModelAPI.remove()
+      await TaskModelAPI.deleteMany({})
       await task1.save()
       await task2.save()
       await task3.save()
@@ -238,12 +236,12 @@ describe('API Integration Tests', () => {
     after(async () => {
       await promisify(server.stop)()
       await testUtils.cleanupTestUsers()
-      await TaskModelAPI.remove()
-      await TransactionModelAPI.remove()
-      await ChannelModelAPI.remove()
+      await TaskModelAPI.deleteMany({})
+      await TransactionModelAPI.deleteMany({})
+      await ChannelModelAPI.deleteMany({})
 
-      const db = await MongoClient.connect(config.mongo.url)
-      const mongoCollection = db != null ? db.collection.jobs : undefined
+      const mongoClient = await testUtils.getMongoClient()
+      const mongoCollection = mongoClient != null ? mongoClient.db().collection.jobs : undefined
       if (mongoCollection) {
         mongoCollection.drop()
       }
@@ -443,7 +441,7 @@ describe('API Integration Tests', () => {
         const newTask =
           { tids: ['888888888888888888888888', '999999999999999999999999'] }
 
-        await AutoRetryModelAPI.remove()
+        await AutoRetryModelAPI.deleteMany({})
 
         const retry1 = new AutoRetryModelAPI({
           transactionID: ObjectId('888888888888888888888888'),

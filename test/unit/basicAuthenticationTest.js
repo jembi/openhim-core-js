@@ -44,7 +44,7 @@ const shaClient = {
 }
 
 describe('Basic Auth', () => {
-  afterEach(async () => ClientModel.remove({}))
+  afterEach(async () => ClientModel.deleteMany({}))
 
   describe('with no credentials', () =>
     it('ctx.authenticated should not exist', (done) => {

@@ -81,9 +81,9 @@ describe('Transaction Reports', () => {
   after(async () => {
     config.reports = originalReports
     await Promise.all([
-      UserModel.remove(),
-      ChannelModel.remove(),
-      TransactionModel.remove()
+      UserModel.deleteMany(),
+      ChannelModel.deleteMany(),
+      TransactionModel.deleteMany()
     ])
   })
 

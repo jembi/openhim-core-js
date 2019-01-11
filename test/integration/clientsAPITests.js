@@ -42,7 +42,7 @@ describe('API Integration Tests', () => {
     })
 
     afterEach(async () => {
-      await ClientModelAPI.remove()
+      await ClientModelAPI.deleteMany({})
     })
 
     describe('*addClient', () => {
@@ -217,7 +217,7 @@ describe('API Integration Tests', () => {
       }
 
       it('should return all clients ', async () => {
-        const countBefore = await ClientModelAPI.count()
+        const countBefore = await ClientModelAPI.countDocuments()
 
         let client = await new ClientModelAPI(testDocument)
         client.clientID += '1'
@@ -362,7 +362,7 @@ describe('API Integration Tests', () => {
         }
 
         const client = await new ClientModelAPI(docTestRemove).save()
-        const countBefore = await ClientModelAPI.count()
+        const countBefore = await ClientModelAPI.countDocuments()
         await request(constants.BASE_URL)
           .del(`/clients/${client._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -371,7 +371,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const countAfter = await ClientModelAPI.count()
+        const countAfter = await ClientModelAPI.countDocuments()
         const notFoundDoc = await ClientModelAPI.findOne({ clientID: 'Jembi_OpenHIE_Instance' })
         countAfter.should.equal(countBefore - 1)
         should.not.exist(notFoundDoc)

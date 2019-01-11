@@ -61,8 +61,8 @@ describe('API Metrics Tests', () =>
       config.statsd = ORIGINAL_STATS
       await Promise.all([
         promisify(server.stop)(),
-        ChannelModel.remove(),
-        MetricModel.remove()
+        ChannelModel.deleteMany({}),
+        MetricModel.deleteMany({})
       ])
     })
 

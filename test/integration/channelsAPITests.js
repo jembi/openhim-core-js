@@ -67,15 +67,15 @@ describe('API Integration Tests', () => {
       await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort, pollingPort: SERVER_PORTS.pollingPort })
       authDetails = await testUtils.getAuthDetails()
       await Promise.all([
-        TransactionModelAPI.remove(),
-        ChannelModelAPI.remove()
+        TransactionModelAPI.deleteMany({}),
+        ChannelModelAPI.deleteMany({})
       ])
     })
 
     after(async () => {
       await Promise.all([
-        TransactionModelAPI.remove(),
-        ChannelModelAPI.remove(),
+        TransactionModelAPI.deleteMany({}),
+        ChannelModelAPI.deleteMany({}),
         testUtils.cleanupTestUsers(),
         promisify(server.stop)()
       ])
@@ -87,8 +87,8 @@ describe('API Integration Tests', () => {
 
     beforeEach(async () => {
       await Promise.all([
-        TransactionModelAPI.remove(),
-        ChannelModelAPI.remove()
+        TransactionModelAPI.deleteMany({}),
+        ChannelModelAPI.deleteMany({})
       ])
       const ch1 = await (new ChannelModelAPI(channel1)).save()
       channel1._id = ch1._id
@@ -508,7 +508,7 @@ describe('API Integration Tests', () => {
           .send(methodChannelDocRejected)
           .expect(400)
 
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDocRejected.name })
         channelCount.should.eql(0)
       })
 
@@ -536,7 +536,7 @@ describe('API Integration Tests', () => {
           .expect(400)
 
         res.text.should.eql("Channel methods can't be repeated. Repeated methods are GET, POST")
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDocRejected.name })
         channelCount.should.eql(0)
       })
 
@@ -562,7 +562,7 @@ describe('API Integration Tests', () => {
           .send(methodChannelDoc)
           .expect(400)
 
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDoc.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDoc.name })
         channelCount.should.eql(0)
       })
 
@@ -589,7 +589,7 @@ describe('API Integration Tests', () => {
           .send(methodChannelDoc)
           .expect(400)
 
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDoc.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDoc.name })
         channelCount.should.eql(0)
       })
 
@@ -712,7 +712,7 @@ describe('API Integration Tests', () => {
       })
 
       it(`will default the channel methods as an empty array on existing channels`, async () => {
-        const db = await testUtils.getMongoClient()
+        const mongoClient = await testUtils.getMongoClient()
         const noMethodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
@@ -728,7 +728,7 @@ describe('API Integration Tests', () => {
           }
         }
 
-        const { insertedId: id } = await db.collection('channels').insertOne(noMethodChannelDoc)
+        const { insertedId: id } = await mongoClient.db().collection('channels').insertOne(noMethodChannelDoc)
         const resp = await request(constants.BASE_URL)
           .get(`/channels/${id.toString()}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -755,7 +755,7 @@ describe('API Integration Tests', () => {
       let expectedPatches
 
       beforeEach(async () => {
-        await ChannelModelAPI.Patches.remove().exec()
+        await ChannelModelAPI.Patches.deleteMany({}).exec()
         const patches = await ChannelModelAPI.Patches.create([
           {
             ref: channel1._id,
@@ -1288,7 +1288,7 @@ describe('API Integration Tests', () => {
           .expect(400)
 
         res.text.should.eql("Channel methods can't be repeated. Repeated methods are GET, POST")
-        const channelCount = await ChannelModelAPI.count({ name: methodChannelDocRejected.name })
+        const channelCount = await ChannelModelAPI.countDocuments({ name: methodChannelDocRejected.name })
         channelCount.should.eql(1)
         const channel = await ChannelModelAPI.findById(channelId)
         channel.methods.length.should.eql(0)
@@ -1813,11 +1813,11 @@ describe('API Integration Tests', () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 1' }),
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 2' }),
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 3' }),
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint 4' }),
-        ClientModelAPI.remove({ clientID: 'testApp' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint 1' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint 2' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint 3' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint 4' }),
+        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
         mockServer1.close(),
         mockServer2.close()
       ])

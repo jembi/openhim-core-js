@@ -14,8 +14,8 @@ config.auditing = config.get('auditing')
 describe('Auditing', () => {
   beforeEach(async () => {
     await Promise.all([
-      AuditModel.remove({}),
-      AuditMetaModel.remove({})
+      AuditModel.deleteMany({}),
+      AuditMetaModel.deleteMany({})
     ])
   })
 
@@ -294,7 +294,7 @@ describe('Auditing', () => {
     })
 
     afterEach(() => {
-      spy.reset()
+      spy.resetHistory()
       config.auditing.auditEvents.interface = undefined
       config.auditing.auditEvents.port = undefined
     })

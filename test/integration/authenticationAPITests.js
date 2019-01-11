@@ -27,11 +27,11 @@ describe('API Integration Tests', () => {
       const startPromise = promisify(server.start)
       await startPromise({ apiPort: SERVER_PORTS.apiPort })
       await testUtils.setImmediatePromise()
-      await AuditModel.remove()
+      await AuditModel.deleteMany({})
     })
 
     afterEach(async () => {
-      await AuditModel.remove()
+      await AuditModel.deleteMany({})
     })
 
     after(async () => {
@@ -50,7 +50,7 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(200)
 
-      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
       const audits = await AuditModel.find()
 
       audits.length.should.be.exactly(1)
@@ -71,7 +71,7 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(401)
 
-      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
       const audits = await AuditModel.find({})
 
       audits.length.should.be.exactly(1)
@@ -104,7 +104,7 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(401)
 
-      await testUtils.pollCondition(() => AuditModel.count().then(c => c === 1))
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
       const audits = await AuditModel.find({})
 
       audits.length.should.be.exactly(1)
@@ -195,13 +195,13 @@ describe('API Integration Tests', () => {
           passwordHash: '',
           certFingerprint: '6B:0D:BD:02:BB:A4:40:29:89:51:6A:0A:A2:F4:BD:8B:F8:E8:47:84'
         }
-        await ClientModelAPI.remove()
+        await ClientModelAPI.deleteMany({})
 
         await new ClientModelAPI(testClientDoc1).save()
         await new ClientModelAPI(testClientDoc2).save()
 
         // remove default keystore
-        await KeystoreModelAPI.remove()
+        await KeystoreModelAPI.deleteMany({})
 
         await new KeystoreModelAPI({
           key: fs.readFileSync('test/resources/server-tls/key.pem'),
@@ -229,9 +229,9 @@ describe('API Integration Tests', () => {
 
       after(async () => {
         await Promise.all([
-          ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint' }),
-          ClientModelAPI.remove({ clientID: 'testApp' }),
-          ClientModelAPI.remove({ clientID: 'testApp2' }),
+          ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+          ClientModelAPI.deleteOne({ clientID: 'testApp' }),
+          ClientModelAPI.deleteOne({ clientID: 'testApp2' }),
           mockServer.close()
         ])
       })
@@ -401,8 +401,8 @@ describe('API Integration Tests', () => {
 
       after(async () => {
         await Promise.all([
-          ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint' }),
-          ClientModelAPI.remove({ clientID: 'testApp' }),
+          ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+          ClientModelAPI.deleteOne({ clientID: 'testApp' }),
           mockServer.close()
         ])
       })

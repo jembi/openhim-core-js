@@ -10,6 +10,7 @@ import https from 'https'
 import serveStatic from 'serve-static'
 import finalhandler from 'finalhandler'
 import sinon from 'sinon'
+import uriFormat from 'mongodb-uri'
 import * as crypto from 'crypto'
 
 import * as constants from './constants'
@@ -138,11 +139,11 @@ export function getAuthDetails () {
 }
 
 export function cleanupTestUsers () {
-  return UserModel.remove({ email: { $in: [rootUser.email, nonRootUser.email] } })
+  return UserModel.deleteMany({ email: { $in: [rootUser.email, nonRootUser.email] } })
 }
 
 export function cleanupAllTestUsers () {
-  return UserModel.remove()
+  return UserModel.deleteMany({})
 }
 
 /**
@@ -217,15 +218,22 @@ export function clone (value) {
  * @return {Promise}
  */
 export async function dropTestDb () {
-  const connection = await getMongoClient()
-  await connection.dropDatabase()
+  const client = await getMongoClient()
+  await client.db().dropDatabase()
 }
 
 export function getMongoClient () {
   const url = config.get('mongo:url')
-  return MongoClient.connect(url)
+  return MongoClient.connect(encodeMongoURI(url), { useNewUrlParser: true })
 }
 
+function encodeMongoURI (urlString) {
+  if (urlString) {
+    let parsed = uriFormat.parse(urlString)
+    urlString = uriFormat.format(parsed);
+  }
+  return urlString;
+}
 /**
  * Checks to see if the object passed in looks like a promise
  *
@@ -406,7 +414,7 @@ export async function setupTestKeystore (serverCert, serverKey, ca, callback = (
       ])
     }
 
-    await KeystoreModel.remove({})
+    await KeystoreModel.deleteMany({})
     const serverCertInfo = await readCertificateInfoPromised(serverCert)
     serverCertInfo.data = serverCert
 
@@ -511,7 +519,7 @@ export function createMockTLSServerWithMutualAuth (onRequest = async data => dat
 
 export async function cleanupTestKeystore (cb = () => { }) {
   try {
-    await KeystoreModel.remove({})
+    await KeystoreModel.deleteMany({})
     cb()
   } catch (error) {
     cb(error)

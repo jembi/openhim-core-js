@@ -66,6 +66,15 @@ const RewriteRuleDef = {
   pathTransform: String
 }
 
+const UpdatedByDef = {
+  id: {
+    type: Schema.Types.ObjectId
+  },
+  name: {
+    type: String
+  }
+}
+
 const ChannelDef = {
   name: {
     type: String, required: true
@@ -133,7 +142,8 @@ const ChannelDef = {
   },
   autoRetryMaxAttempts: {
     type: Number, min: 0
-  } // 0 means unlimited
+  }, // 0 means unlimited
+  updatedBy: UpdatedByDef
 }
 
 // Expose the route schema
@@ -150,15 +160,6 @@ export { RouteDef }
  */
 const ChannelSchema = new Schema(ChannelDef)
 
-// Virtual field to store the id of user changing the channel
-ChannelSchema.virtual('updatedBy')
-  .set(function (updatedBy) {
-    this._updatedBy = updatedBy
-  })
-  .get(function () {
-    return this._updatedBy
-  })
-
 // Use the patch history plugin to audit changes to channels
 ChannelSchema.plugin(patchHistory, {
   mongoose: connectionDefault,
@@ -173,8 +174,7 @@ ChannelSchema.plugin(patchHistory, {
         id: Schema.Types.ObjectId,
         name: String
       },
-      required: true,
-      from: '_updatedBy'
+      required: true
     }
   }
 })

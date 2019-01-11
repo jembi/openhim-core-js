@@ -30,7 +30,7 @@ describe('API Integration Tests', () => {
 
     after(async () => {
       await Promise.all([
-        UserModel.remove(),
+        UserModel.deleteMany({}),
         promisify(server.stop)()
       ])
     })

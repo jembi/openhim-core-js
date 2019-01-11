@@ -256,8 +256,8 @@ describe('Transaction Alerts', () => {
 
   afterEach(async () => {
     await Promise.all([
-      AlertModel.remove({}),
-      EventModel.remove({})
+      AlertModel.deleteMany({}),
+      EventModel.deleteMany({})
     ])
 
     for (const testTransaction of testTransactions) {

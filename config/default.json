@@ -16,7 +16,8 @@
   },
   "mongoLogger": {
     "options": {
-      "w": 0
+      "w": 0,
+      "useNewUrlParser": true
     }
   },
   "router": {
