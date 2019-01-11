@@ -11,32 +11,29 @@ import * as utils from './utils'
 
 config.reports = config.get('reports')
 
-let utcOffset = "+0000"
-
-if (config.reports.utcOffset){
-    utcOffset = config.reports.utcOffset
-}
+const utcOffset = config.reports.utcOffset
+const dateTimeFormat = 'Do MMM YYYY HH:mm:ss Z'
 
 // Function Sends the reports
 function sendReports (job, flag, done) {
   let fetchUsers
-  let fromTime
-  let toTime
+  let reportPeriodStart
+  let reportPeriodEnd
 
   const reportMap = {}
   const channelReportMap = {}
   const channelMap = {}
 
   if (flag === 'dailyReport') {
-    fromTime = (utcOffset === '+0000') ? moment().subtract(1, 'days').startOf('day').format("Do MMM YYYY HH:mm:ss Z") :
-                    moment().subtract(1, 'days').startOf('day').utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
-    toTime = (utcOffset === '+0000') ? moment().subtract(1, 'days').endOf('day').format("Do MMM YYYY HH:mm:ss Z") :
-                    moment().subtract(1, 'days').endOf('day').utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
+    reportPeriodStart = (!utcOffset) ? moment().subtract(1, 'days').startOf('day').format(dateTimeFormat) :
+                    moment().subtract(1, 'days').startOf('day').utcOffset(utcOffset).format(dateTimeFormat)
+    reportPeriodEnd = (!utcOffset) ? moment().subtract(1, 'days').endOf('day').format(dateTimeFormat) :
+                    moment().subtract(1, 'days').endOf('day').utcOffset(utcOffset).format(dateTimeFormat)
   } else {
-    fromTime = (utcOffset === '+0000') ? moment().startOf('isoWeek').subtract(1, 'weeks').format("Do MMM YYYY HH:mm:ss Z") :
-                    moment().startOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
-    toTime = (utcOffset === '+0000') ? moment().endOf('isoWeek').subtract(1, 'weeks').format("Do MMM YYYY HH:mm:ss Z") :
-                    moment().endOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
+    reportPeriodStart = (!utcOffset) ? moment().startOf('isoWeek').subtract(1, 'weeks').format(dateTimeFormat) :
+                    moment().startOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format(dateTimeFormat)
+    reportPeriodEnd = (!utcOffset) ? moment().endOf('isoWeek').subtract(1, 'weeks').format(dateTimeFormat) :
+                    moment().endOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format(dateTimeFormat)
   }
 
   // Select the right subscribers for the report
@@ -69,7 +66,7 @@ function sendReports (job, flag, done) {
       // Pre-Fetch report data into Channel Map
       const innerPromises = Object.entries(channelMap).map(([key, obj]) => {
         return new Promise((resolve, reject) => {
-          fetchChannelReport(obj.channel, obj.user, flag, fromTime, toTime, (err, item) => {
+          fetchChannelReport(obj.channel, obj.user, flag, reportPeriodStart, reportPeriodEnd, (err, item) => {
             if (err) { return reject(err) }
             channelReportMap[key] = item
             return resolve()
@@ -118,8 +115,8 @@ function sendReports (job, flag, done) {
           report.instance = config.alerts.himInstance
           report.consoleURL = config.alerts.consoleURL
 
-          report.from = fromTime
-          report.to = toTime
+          report.from = reportPeriodStart
+          report.to = reportPeriodEnd
 
           try {
             for (let i = 0; i < report.data.length; i++) {
@@ -196,7 +193,7 @@ function calculateAverage (total, count) {
 }
 
 function sendUserEmail (report) {
-  report.date = (utcOffset === '+0000') ? moment().toString() : moment().utcOffset(utcOffset).toString()
+  report.date = (!utcOffset) ? moment().toString() : moment().utcOffset(utcOffset).toString()
   return renderTemplate('report/html.handlebars', report, reportHtml => contact.contactUser('email', report.email, `${report.type} report for: ${report.instance}`, plainTemplate(report), reportHtml, (err) => afterEmail(err, report.type, report.email)))
 }
 
@@ -236,11 +233,11 @@ const fetchWeeklySubscribers = callback => { UserModel.find({ weeklyReport: true
 
 function plainTemplate (report) {
   let text = `Generated on: ${
-    (utcOffset === '+0000') ? moment().format("Do MMM YYYY HH:mm:ss Z") :
-       moment().utcOffset(utcOffset).format("Do MMM YYYY HH:mm:ss Z")
+    (!utcOffset) ? moment().format(dateTimeFormat) :
+       moment().utcOffset(utcOffset).format(dateTimeFormat)
   }`
 
-  text += `\n\nReport is for the period: ${report.from} to ${report.to}\n`
+  text += `\n\nReport period: ${report.from} to ${report.to}\n`
   for (const data of Array.from(report.data)) {
     text += ` \r\n \r\n <---------- Start Channel  ${data.channel.name} ---------------------------> \r\n \r\n \
 Channel Name: ${data.channel.name} \r\n \

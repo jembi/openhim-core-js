@@ -89,7 +89,7 @@
     "enableReports": true,
     "dailyReportAt": "0 7 * * *",
     "weeklyReportAt": "0 7 * * 1",
-    "utcOffset": "+0000"
+    "utcOffset": null
   },
   "events": {
     "enableTSNormalization": true

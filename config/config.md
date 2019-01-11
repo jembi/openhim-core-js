@@ -131,8 +131,8 @@ The following config option are provided by the OpenHIM. All of these options ha
   "reports": {
     // To enable daily and weekly reporting
     "enableReports": true,
-    //To set the timezone's offset value
-    "utcOffset": "+000"
+    //To configure the timezone to be used for the Openhim daily and weekly reports
+    "utcOffset": null
   },
   "events": {
     // Should event timestamps be normalized to the transaction time.
