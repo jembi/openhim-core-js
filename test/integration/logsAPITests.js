@@ -21,8 +21,6 @@ describe(`API Integration Tests`, () => {
       middleTS = moment(beforeTS).add(1, 'minutes').add(30, 'seconds')
       endTS = moment(beforeTS).add(3, 'minutes')
 
-      // await connectionDefault
-
       await Promise.all([
         testUtils.setupTestUsers(),
         promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort }),
