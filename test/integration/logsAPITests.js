@@ -3,8 +3,8 @@
 import request from 'supertest'
 import moment from 'moment'
 import { promisify } from 'util'
+import { connectionDefault  } from '../../src/config/connection'
 
-import { LogModel } from '../../src/model'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
@@ -20,20 +20,23 @@ describe(`API Integration Tests`, () => {
       beforeTS = moment('2012-01-01 11:00')
       middleTS = moment(beforeTS).add(1, 'minutes').add(30, 'seconds')
       endTS = moment(beforeTS).add(3, 'minutes')
+
+      // await connectionDefault
+
       await Promise.all([
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort })
+        promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort }),
+        connectionDefault.db.collection('log').deleteMany({}), 
       ])
 
-      await LogModel.deleteMany({})
-
       const timestamp = moment(beforeTS)
-      await Promise.all([
-        new LogModel({ message: 'TEST1', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
-        new LogModel({ message: 'TEST2', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'error', meta: {} }).save(),
-        new LogModel({ message: 'TEST3', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
-        new LogModel({ message: 'TEST4', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} }).save(),
-        new LogModel({ message: 'TEST5', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'error', meta: {} }).save()
+
+      await connectionDefault.db.collection('log').insertMany([
+        { message: 'TEST1', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} },
+        { message: 'TEST2', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'error', meta: {} },
+        { message: 'TEST3', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} },
+        { message: 'TEST4', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'warn', meta: {} },
+        { message: 'TEST5', timestamp: timestamp.add(30, 'seconds').toDate(), level: 'error', meta: {} }
       ])
     })
 
@@ -45,7 +48,7 @@ describe(`API Integration Tests`, () => {
       await Promise.all([
         testUtils.cleanupTestUsers(),
         promisify(server.stop)(),
-        LogModel.deleteMany({})
+        connectionDefault.db.collection('log').deleteMany({})
       ])
     })
 
