@@ -26,3 +26,7 @@ function getMongoOptions () {
     w: config.mongo.openHIMApiWriteConcern
   }
 }
+
+if (process.env.NODE_ENV === 'test') {
+  exports.encodeMongoURI = encodeMongoURI
+}
