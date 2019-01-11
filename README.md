@@ -18,9 +18,9 @@ Some of the important information is repeated here, however, the the above docum
 
 ## Getting started with the OpenHIM-core
 
-1. Install the latest stable [Node.js](http://nodejs.org/) v8.9 or greater. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
-1. Install and start [MongoDB](http://www.mongodb.org/) 2.6 or greater.
-1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your PATH.
+1. Install the latest stable [Node.js](http://nodejs.org/) **v8.9** or greater. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
+1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v2.6** up to **v3.2**.
+1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your `PATH`.
 1. Start the server by executing `openhim-core` from anywhere.
 
 To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default setting:
@@ -31,7 +31,7 @@ wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/defau
 openhim-core --conf=path/to/default.json
 ```
 
-> To specify the timezone that the openhim services are used in, change the utcOffset value in the default.json file. If the timezone's offset value is not specified, the dafault offset of +200 will be used. This ensures that weekly and daily channel reports have the correct timestamps.
+> To specify the timezone in which the openhim services are used, change the utcOffset value in the default.json file. If the time-zone's offset value is not specified, the default server time will be used. This ensures that weekly and daily channel reports have the expected timestamps.
 
 For more information about the config options, [click here](https://github.com/jembi/openhim-core-js/blob/master/config/config.md).
 
@@ -125,7 +125,7 @@ Refer to this [blog](https://developers.redhat.com/blog/2014/05/05/running-syste
     vagrant up --no-provision
     ```
 
-1. [Optional] The Vagrantfile provisions the VM with the latest source code from master and attempts to compile the RPM package for you. However in the event an error occurs, or if you prefer to have manual control over the process, then you'll need to do the following:
+1. [Optional] The Vagrant file provisions the VM with the latest source code from master and attempts to compile the RPM package for you. However in the event an error occurs, or if you prefer to have manual control over the process, then you'll need to do the following:
 
     * Remote into the VM: `vagrant ssh`
     * Download or sync all source code into VM.
@@ -195,4 +195,4 @@ Refer to this [blog](https://developers.redhat.com/blog/2014/05/05/running-syste
 
 You may view/add issues here: <https://github.com/jembi/openhim-core-js/issues>
 
-To contibute code, please fork the repository and submit a pull request. The maintainers will review the code and merge it in if all is well.
+To contribute code, please fork the repository and submit a pull request. The maintainers will review the code and merge it in if all is well.
