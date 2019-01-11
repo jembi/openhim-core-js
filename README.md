@@ -18,7 +18,7 @@ Some of the important information is repeated here, however, the the above docum
 
 ## Getting started with the OpenHIM-core
 
-1. Install the latest stable [Node.js](http://nodejs.org/) **v8.9** or greater. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
+1. Install the latest stable [Node.js](http://nodejs.org/) **>=8.9 <9 || >=10.13 <11**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
 1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v2.6** up to **v3.2**.
 1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your `PATH`.
 1. Start the server by executing `openhim-core` from anywhere.
