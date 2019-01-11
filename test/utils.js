@@ -14,7 +14,7 @@ import uriFormat from 'mongodb-uri'
 import * as crypto from 'crypto'
 
 import * as constants from './constants'
-import { config } from '../src/config'
+import { config, encodeMongoURI } from '../src/config'
 import { KeystoreModel, MetricModel, UserModel, METRIC_TYPE_HOUR, METRIC_TYPE_DAY } from '../src/model'
 
 config.mongo = config.get('mongo')
@@ -227,13 +227,6 @@ export function getMongoClient () {
   return MongoClient.connect(encodeMongoURI(url), { useNewUrlParser: true })
 }
 
-function encodeMongoURI (urlString) {
-  if (urlString) {
-    let parsed = uriFormat.parse(urlString)
-    urlString = uriFormat.format(parsed);
-  }
-  return urlString;
-}
 /**
  * Checks to see if the object passed in looks like a promise
  *
