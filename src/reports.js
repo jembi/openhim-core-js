@@ -26,14 +26,14 @@ function sendReports (job, flag, done) {
 
   if (flag === 'dailyReport') {
     reportPeriodStart = (!utcOffset) ? moment().subtract(1, 'days').startOf('day').format(dateTimeFormat) :
-                    moment().subtract(1, 'days').startOf('day').utcOffset(utcOffset).format(dateTimeFormat)
+      moment().subtract(1, 'days').startOf('day').utcOffset(utcOffset).format(dateTimeFormat)
     reportPeriodEnd = (!utcOffset) ? moment().subtract(1, 'days').endOf('day').format(dateTimeFormat) :
-                    moment().subtract(1, 'days').endOf('day').utcOffset(utcOffset).format(dateTimeFormat)
+      moment().subtract(1, 'days').endOf('day').utcOffset(utcOffset).format(dateTimeFormat)
   } else {
     reportPeriodStart = (!utcOffset) ? moment().startOf('isoWeek').subtract(1, 'weeks').format(dateTimeFormat) :
-                    moment().startOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format(dateTimeFormat)
+      moment().startOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format(dateTimeFormat)
     reportPeriodEnd = (!utcOffset) ? moment().endOf('isoWeek').subtract(1, 'weeks').format(dateTimeFormat) :
-                    moment().endOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format(dateTimeFormat)
+      moment().endOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format(dateTimeFormat)
   }
 
   // Select the right subscribers for the report
