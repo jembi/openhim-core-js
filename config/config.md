@@ -1,9 +1,8 @@
-OpenHIM Config options
-======================
+# OpenHIM Config options
 
 The following config option are provided by the OpenHIM. All of these options have default values. You only need to provide config options if they differ from the defaults.
 
-```js
+```json
 {
   "bindAddress": "0.0.0.0",
   "mongo": {
@@ -130,7 +129,9 @@ The following config option are provided by the OpenHIM. All of these options ha
   },
   "reports": {
     // To enable daily and weekly reporting
-    "enableReports": true
+    "enableReports": true,
+    // To configure the timezone to be used for the Openhim daily and weekly reports. Defaults to server's time. "+0200" for example is the South African timezone.
+    "utcOffset": null
   },
   "events": {
     // Should event timestamps be normalized to the transaction time.
