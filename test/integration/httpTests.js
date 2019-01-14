@@ -63,8 +63,8 @@ describe('HTTP tests', () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint' }),
-        ClientModelAPI.remove({ clientID: 'testApp' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
         mockServer.close()
       ])
     })
@@ -230,8 +230,8 @@ describe('HTTP tests', () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove(),
-        ClientModelAPI.remove({ clientID: 'testApp' }),
+        ChannelModelAPI.deleteMany(),
+        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
         mockServer.close(),
         mockServerWithReturn.close()
       ])
@@ -381,8 +381,8 @@ describe('HTTP tests', () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint' }),
-        ClientModelAPI.remove({ clientID: 'testApp' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
         mockServer.close()
       ])
     })
@@ -471,8 +471,8 @@ describe('HTTP tests', () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint' }),
-        ClientModelAPI.remove({ clientID: 'testApp' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
         mockServer.close()
       ])
     })
@@ -552,8 +552,8 @@ describe('HTTP tests', () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.remove({ name: 'TEST DATA - Mock endpoint' }),
-        ClientModelAPI.remove({ clientID: 'testApp' }),
+        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
         mockServer.close()
       ])
     })

@@ -8,7 +8,7 @@ import * as rewriteUrls from '../../src/middleware/rewriteUrls'
 import * as utils from '../../src/utils'
 
 describe('Rewrite URLs middleware', () => {
-  const sandbox = sinon.sandbox.create()
+  const sandbox = sinon.createSandbox()
   afterEach(() => {
     sandbox.restore()
   })

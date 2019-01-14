@@ -162,7 +162,7 @@ export function storeNonPrimaryResponse (ctx, route, done) {
     if ((route.request != null ? route.request.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.request) }
     if ((route.response != null ? route.response.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.response) }
 
-    return transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {
+    transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {
       if (err) {
         logger.error(err)
       }

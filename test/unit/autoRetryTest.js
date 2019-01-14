@@ -75,9 +75,9 @@ const retryTransaction3 = new AutoRetryModel({
 describe('Auto Retry Task', () => {
   afterEach(async () => {
     await Promise.all([
-      ChannelModel.remove({}),
-      AutoRetryModel.remove({}),
-      TaskModel.remove({})
+      ChannelModel.deleteMany({}),
+      AutoRetryModel.deleteMany({}),
+      TaskModel.deleteMany({})
     ])
     const channels = [
       retryChannel,

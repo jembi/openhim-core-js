@@ -46,7 +46,7 @@ describe('API Integration Tests', () =>
     })
 
     afterEach(async () => {
-      await MediatorModel.remove()
+      await MediatorModel.deleteMany({})
     })
 
     const registerMediator = () =>

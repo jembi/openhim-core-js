@@ -110,9 +110,9 @@ describe(`cullBodies`, () => {
   afterEach(async () => {
     clock.restore()
     await Promise.all([
-      ClientModel.remove(),
-      ChannelModel.remove(),
-      TransactionModel.remove()
+      ClientModel.deleteMany(),
+      ChannelModel.deleteMany(),
+      TransactionModel.deleteMany()
     ])
   })
 

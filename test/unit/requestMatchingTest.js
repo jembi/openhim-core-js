@@ -210,7 +210,7 @@ describe('Request Matching middleware', () => {
 
     let addedChannelNames = []
 
-    afterEach(() => ChannelModel.remove({name: { $in: addedChannelNames }}))
+    afterEach(() => ChannelModel.deleteMany({name: { $in: addedChannelNames }}))
 
     it('should match if message content matches the channel rules', (done) => {
       // Setup a channel for the mock endpoint

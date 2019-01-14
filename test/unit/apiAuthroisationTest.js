@@ -102,7 +102,7 @@ describe('API authorisation test', () => {
   })
 
   after(async () => {
-    await ChannelModelAPI.remove({})
+    await ChannelModelAPI.deleteMany({})
   })
 
   describe('.inGroup', () => {

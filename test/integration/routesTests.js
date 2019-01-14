@@ -251,8 +251,8 @@ describe('Routes enabled/disabled tests', () => {
 
   after(async () => {
     await Promise.all([
-      ChannelModelAPI.remove(),
-      ClientModelAPI.remove(),
+      ChannelModelAPI.deleteMany({}),
+      ClientModelAPI.deleteMany({}),
       mockServer1.close(),
       mockServer2.close(),
       restrictedServer.close(),
@@ -264,11 +264,11 @@ describe('Routes enabled/disabled tests', () => {
   afterEach(async () => {
     sandbox.reset()
     await Promise.all([
-      TransactionModelAPI.remove()
+      TransactionModelAPI.deleteMany({})
     ])
   })
 
-  beforeEach(async () => { await TransactionModelAPI.remove() })
+  beforeEach(async () => { await TransactionModelAPI.deleteMany({}) })
 
   it('should route transactions to routes that have no status specified (default: enabled)', async () => {
     const res = await request(constants.HTTP_BASE_URL)
@@ -278,7 +278,7 @@ describe('Routes enabled/disabled tests', () => {
     res.text.should.be.exactly('target1')
     // routes are async
 
-    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
+    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
     const trx = await TransactionModelAPI.findOne()
 
     trx.routes.length.should.be.exactly(1)
@@ -337,7 +337,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(200)
 
-    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
+    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
@@ -363,7 +363,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(500)
 
-    await testUtils.pollCondition(() => TransactionModel.count().then(c => c === 1))
+    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
 
     newTransaction.length.should.be.exactly(1)

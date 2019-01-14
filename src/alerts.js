@@ -132,7 +132,7 @@ const findTransactions = (channel, dateFrom, status, callback) =>
     .exec(callback)
 
 const countTotalTransactionsForChannel = (channel, dateFrom, callback) =>
-  EventModel.count({
+  EventModel.countDocuments({
     created: {
       $gte: dateFrom
     },

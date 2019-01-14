@@ -46,7 +46,7 @@ function popTransactions (channel, callback) {
   AutoRetryModel.find(query, (err, transactions) => {
     if (err) { return callback(err) }
     if (transactions.length === 0) { return callback(null, []) }
-    AutoRetryModel.remove({ _id: { $in: (transactions.map(t => t._id)) } }, (err) => {
+    AutoRetryModel.deleteOne({ _id: { $in: (transactions.map(t => t._id)) } }, (err) => {
       if (err) { return callback(err) }
       return callback(null, transactions)
     })

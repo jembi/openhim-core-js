@@ -7,7 +7,7 @@ import { ObjectId } from 'mongodb'
 
 describe('recordTransactionMetrics', () => {
   beforeEach(async () => {
-    await MetricModel.remove()
+    await MetricModel.deleteMany()
   })
 
   it('should record the correct metrics for a transaction', async () => {
@@ -193,7 +193,7 @@ describe('recordTransactionMetrics', () => {
 
     await metrics.recordTransactionMetrics(transaction)
 
-    const count = await MetricModel.count()
+    const count = await MetricModel.countDocuments()
     should.equal(count, 0)
   })
 
@@ -209,14 +209,14 @@ describe('recordTransactionMetrics', () => {
 
     await metrics.recordTransactionMetrics(transaction)
 
-    const count = await MetricModel.count()
+    const count = await MetricModel.countDocuments()
     should.equal(count, 0)
   })
 })
 
 describe('calculateMetrics', () => {
   beforeEach(async () => {
-    await MetricModel.remove()
+    await MetricModel.deleteMany()
   })
 
   it('should return total metrics by channel when there is no timeseries', async () => {
@@ -297,11 +297,13 @@ describe('calculateMetrics', () => {
       // Remove fields not relevant to the test
       delete metric._id
       delete metric.__v
+      // convert the channelID into a string for deepEqual assertion
+      metric.channelID = JSON.stringify(metric.channelID)
     })
 
     should.deepEqual(returnedMetrics, [
       {
-        channelID,
+        channelID: JSON.stringify(channelID),
         requests: 2,
         responseTime: 200,
         minResponseTime: 50,
@@ -410,6 +412,13 @@ describe('calculateMetrics', () => {
       // Remove fields not relevant to the test
       delete metric._id
       delete metric.__v
+      // convert the channelID into a string for deepEqual assertion
+      metric.channelID = JSON.stringify(metric.channelID)
+    })
+
+    expectedMetrics.forEach(metric => {
+      // convert the channelID into a string for deepEqual assertion
+      metric.channelID = JSON.stringify(metric.channelID)
     })
 
     should.deepEqual(returnedMetrics, expectedMetrics)

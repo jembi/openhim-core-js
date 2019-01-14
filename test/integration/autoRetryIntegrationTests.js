@@ -15,7 +15,7 @@ import { ObjectId } from 'mongodb'
 // TODO : Check the tasks have beeen removed before trying the next test
 
 function waitForAutoRetry () {
-  return testUtils.pollCondition(() => AutoRetryModel.count().then(count => count === 1))
+  return testUtils.pollCondition(() => AutoRetryModel.countDocuments().then(count => count === 1))
 }
 
 // TODO : This test suite could be written a bit neater
@@ -58,17 +58,17 @@ describe(`Auto Retry Integration Tests`, () => {
   beforeEach(async () => {
     await testUtils.setImmediatePromise()
     await Promise.all([
-      TaskModel.remove(),
-      TransactionModel.remove()
+      TaskModel.deleteMany({}),
+      TransactionModel.deleteMany({})
     ])
   })
 
   afterEach(async () => {
     await Promise.all([
-      TransactionModel.remove(),
-      AutoRetryModel.remove(),
-      EventModel.remove(),
-      TaskModel.remove()
+      TransactionModel.deleteMany({}),
+      AutoRetryModel.deleteMany({}),
+      EventModel.deleteMany({}),
+      TaskModel.deleteMany({})
     ])
   })
 
@@ -123,8 +123,8 @@ describe(`Auto Retry Integration Tests`, () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModel.remove(),
-        ClientModel.remove()
+        ChannelModel.deleteMany({}),
+        ClientModel.deleteMany({})
       ])
     })
 
@@ -246,8 +246,8 @@ describe(`Auto Retry Integration Tests`, () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModel.remove(),
-        ClientModel.remove(),
+        ChannelModel.deleteMany({}),
+        ClientModel.deleteMany({}),
         server.close()
       ])
     })
@@ -313,8 +313,8 @@ describe(`Auto Retry Integration Tests`, () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModel.remove(),
-        ClientModel.remove(),
+        ChannelModel.deleteMany({}),
+        ClientModel.deleteMany({}),
         server.close()
       ])
     })
@@ -369,8 +369,8 @@ describe(`Auto Retry Integration Tests`, () => {
 
     after(async () => {
       await Promise.all([
-        ChannelModel.remove(),
-        ClientModel.remove()
+        ChannelModel.deleteMany({}),
+        ClientModel.deleteMany({})
       ])
     })
 

@@ -46,6 +46,9 @@ describe('API Metrics Tests', () =>
     before(async () => {
       config.statsd = config.get('statsd')
       config.statsd.enabled = false
+
+      await MetricModel.deleteMany()
+
       await Promise.all([
         new ChannelModel(channel1Doc).save(),
         new ChannelModel(channel2Doc).save(),
@@ -61,8 +64,8 @@ describe('API Metrics Tests', () =>
       config.statsd = ORIGINAL_STATS
       await Promise.all([
         promisify(server.stop)(),
-        ChannelModel.remove(),
-        MetricModel.remove()
+        ChannelModel.deleteMany({}),
+        MetricModel.deleteMany({})
       ])
     })
 
