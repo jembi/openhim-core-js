@@ -1,5 +1,3 @@
-import SDC from 'statsd-client'
-import os from 'os'
 import logger from 'winston'
 import * as transactions from '../model/transactions'
 import * as autoRetryUtils from '../autoRetry'
@@ -8,13 +6,6 @@ import { config } from '../config'
 import * as stats from '../stats'
 import * as metrics from '../metrics'
 import { promisify } from 'util'
-
-config.statsd = config.get('statsd')
-const statsdServer = config.get('statsd')
-const application = config.get('application')
-
-const domain = `${os.hostname()}.${application.name}.appMetrics`
-const sdc = new SDC(statsdServer)
 
 export const transactionStatus = {
   PROCESSING: 'Processing',
@@ -252,11 +243,6 @@ export function setFinalStatus (ctx, callback) {
         autoRetryUtils.queueForRetry(tx)
       }
 
-      if (config.statsd.enabled) {
-        stats.incrementTransactionCount(ctx, () => { })
-        return stats.measureTransactionDuration(ctx, () => { })
-      }
-
       // Asynchronously record transaction metrics
       metrics.recordTransactionMetrics(tx).catch(err => {
         logger.error('Recording transaction metrics failed', err)
@@ -266,13 +252,8 @@ export function setFinalStatus (ctx, callback) {
 }
 
 export async function koaMiddleware (ctx, next) {
-  let startTime
-  if (statsdServer.enabled) { startTime = new Date() }
   const saveTransaction = promisify(storeTransaction)
   await saveTransaction(ctx)
-  if (statsdServer.enabled) { sdc.timing(`${domain}.messageStoreMiddleware.storeTransaction`, startTime) }
   await next()
-  if (statsdServer.enabled) { startTime = new Date() }
   storeResponse(ctx, () => { })
-  if (statsdServer.enabled) { return sdc.timing(`${domain}.messageStoreMiddleware.storeResponse`, startTime) }
 }
