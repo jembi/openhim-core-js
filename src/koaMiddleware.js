@@ -1,8 +1,6 @@
 import Koa from 'koa'
 import getRawBody from 'raw-body'
 import compress from 'koa-compress'
-import SDC from 'statsd-client'
-import os from 'os'
 import { Z_SYNC_FLUSH } from 'zlib'
 
 import * as router from './middleware/router'
@@ -24,19 +22,11 @@ import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
 
 config.authentication = config.get('authentication')
-config.statsd = config.get('statsd')
-
-const application = config.get('application')
-const domain = `${os.hostname()}.${application.name}.appMetrics`
-const sdc = new SDC(config.statsd)
 
 async function rawBodyReader (ctx, next) {
-  let startTime
-  if (config.statsd.enabled) { startTime = new Date() }
   const body = await getRawBody(ctx.req)
 
   if (body) { ctx.body = body }
-  if (config.statsd.enabled) { sdc.timing(`${domain}.rawBodyReaderMiddleware`, startTime) }
   await next()
 }
 

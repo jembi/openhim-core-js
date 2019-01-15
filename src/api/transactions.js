@@ -1,6 +1,4 @@
 import logger from 'winston'
-import StatsdClient from 'statsd-client'
-import os from 'os'
 import { TransactionModelAPI } from '../model/transactions'
 import * as events from '../middleware/events'
 import { ChannelModelAPI } from '../model/channels'
@@ -10,11 +8,7 @@ import * as utils from '../utils'
 import { config } from '../config'
 import { promisify } from 'util'
 
-const statsdServer = config.get('statsd')
-const sdc = new StatsdClient(statsdServer)
-const application = config.get('application')
 const apiConf = config.get('api')
-const domain = `${os.hostname()}.${application.name}`
 
 function hasError (updates) {
   if (updates.error != null) { return true }
@@ -422,77 +416,6 @@ async function generateEvents (transaction, channelID) {
   }
 }
 
-function updateTransactionMetrics (updates, doc) {
-  if (updates.$push == null || updates.$push.routes === null) {
-    return
-  }
-  for (const k in updates.$push) {
-    const route = updates.$push[k]
-    if (route.metrics != null) {
-      for (const metric of Array.from(route.metrics)) {
-        if (metric.type === 'counter') {
-          logger.debug(`incrementing mediator counter  ${metric.name}`)
-          sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`)
-        }
-
-        if (metric.type === 'timer') {
-          logger.debug(`incrementing mediator timer  ${metric.name}`)
-          sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`, metric.value)
-        }
-
-        if (metric.type === 'gauge') {
-          logger.debug(`incrementing mediator gauge  ${metric.name}`)
-          sdc.gauge(`${domain}.channels.${doc.channelID}.${route.name}.mediator_metrics.${metric.name}`, metric.value)
-        }
-      }
-    }
-
-    if (route.orchestrations) {
-      for (const orchestration of route.orchestrations) {
-        const orchestrationDuration = orchestration.response.timestamp - orchestration.request.timestamp
-        const orchestrationStatus = orchestration.response.status
-        let orchestrationName = orchestration.name
-        if (orchestration.group) {
-          orchestrationName = `${orchestration.group}.${orchestration.name}` // Namespace it by group
-        }
-
-        /*
-         * Update timers
-         */
-        logger.debug('updating async route timers')
-        sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`, orchestrationDuration)
-        sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`, orchestrationDuration)
-
-        /*
-         * Update counters
-         */
-        logger.debug('updating async route counters')
-        sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}`)
-        sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.statusCodes.${orchestrationStatus}`)
-
-        if (orchestration.metrics != null) {
-          for (const metric of Array.from(orchestration.metrics)) {
-            if (metric.type === 'counter') {
-              logger.debug(`incrementing ${route.name} orchestration counter ${metric.name}`)
-              sdc.increment(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value)
-            }
-
-            if (metric.type === 'timer') {
-              logger.debug(`incrementing ${route.name} orchestration timer ${metric.name}`)
-              sdc.timing(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value)
-            }
-
-            if (metric.type === 'gauge') {
-              logger.debug(`incrementing ${route.name} orchestration gauge ${metric.name}`)
-              sdc.gauge(`${domain}.channels.${doc.channelID}.${route.name}.orchestrations.${orchestrationName}.${metric.name}`, metric.value)
-            }
-          }
-        }
-      }
-    }
-  }
-}
-
 /*
  * Updates a transaction record specified by transactionId
  */
@@ -534,7 +457,7 @@ export async function updateTransaction (ctx, transactionId) {
     logger.info(`User ${ctx.authenticated.email} updated transaction with id ${transactionId}`)
 
     await generateEvents(updates, updatedTransaction.channelID)
-    updateTransactionMetrics(updates, updatedTransaction)
+
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not update transaction via the API: ${e}`, 'error')
   }
@@ -565,5 +488,4 @@ export async function removeTransaction (ctx, transactionId) {
 
 if (process.env.NODE_ENV === 'test') {
   exports.calculateTransactionBodiesByteLength = calculateTransactionBodiesByteLength
-  exports.updateTransactionMetrics = updateTransactionMetrics
 }

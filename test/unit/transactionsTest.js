@@ -33,14 +33,3 @@ describe('calculateTransactionBodiesByteLength()', () => {
     lengthObj.length.should.be.exactly(0)
   })
 })
-
-describe('updateTransactionMetrics()', () => {
-  it('should update transaction metrics', async () => {
-    const updates = {
-      $push: {
-        routes: {}
-      }
-    }
-    transactions.updateTransactionMetrics(updates, {})
-  })
-})
