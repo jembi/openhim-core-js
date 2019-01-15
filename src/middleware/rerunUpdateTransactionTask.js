@@ -1,16 +1,8 @@
 import logger from 'winston'
-import SDC from 'statsd-client'
-import os from 'os'
 import { TransactionModel } from '../model/transactions'
 import { TaskModel } from '../model/tasks'
 import { config } from '../config'
 import { promisify } from 'util'
-
-const statsdServer = config.get('statsd')
-const application = config.get('application')
-
-const domain = `${os.hostname()}.${application.name}.appMetrics`
-const sdc = new SDC(statsdServer)
 
 export function setAttemptNumber (ctx, done) {
   return TransactionModel.findOne({_id: ctx.parentID}, (err, transaction) => {
@@ -78,21 +70,14 @@ export function updateTask (ctx, done) {
  * Koa middleware for updating original transaction with childID
  */
 export async function koaMiddleware (ctx, next) {
-  let startTime
-  if (statsdServer.enabled) { startTime = new Date() }
   const setAttempt = promisify(setAttemptNumber)
   await setAttempt(ctx)
-  if (statsdServer.enabled) { sdc.timing(`${domain}.rerunUpdateTransactionMiddleware.setAttemptNumber`, startTime) }
 
   // do intial yield for koa to come back to ctx function with updated ctx object
   await next()
-  if (statsdServer.enabled) { startTime = new Date() }
   const _updateOriginalTransaction = promisify(updateOriginalTransaction)
   await _updateOriginalTransaction(ctx)
 
   const _updateTask = promisify(updateTask)
   await _updateTask(ctx)
-  if (statsdServer.enabled) {
-    sdc.timing(`${domain}.rerunUpdateTransactionMiddleware`, startTime)
-  }
 }
