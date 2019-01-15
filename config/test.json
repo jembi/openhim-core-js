@@ -17,13 +17,6 @@
     "truncateSize": 10,
     "truncateAppend": "\n[truncated ...]"
   },
-  "statsd": {
-    "enabled": true,
-    "host": "localhost"
-  },
-  "application": {
-    "name": "openhim.test"
-  },
   "caching": {
     "enabled": false
   },

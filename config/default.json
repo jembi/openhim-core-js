@@ -95,13 +95,6 @@
   "events": {
     "enableTSNormalization": true
   },
-  "statsd": {
-    "enabled": false,
-    "host": "127.0.0.1"
-  },
-  "application": {
-    "name": "Development"
-  },
   "newUserExpiry": {
     "duration": 7,
     "durationType": "days"

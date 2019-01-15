@@ -6,12 +6,6 @@
   "logger": {
     "level": "debug"
   },
-  "statsd": {
-    "host": "127.0.0.1"
-  },
-  "application": {
-    "name": "openhim.development"
-  },
   "auditing": {
     "servers": {
       "udp": {
