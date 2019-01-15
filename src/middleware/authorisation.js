@@ -1,18 +1,12 @@
 import logger from 'winston'
 import atna from 'atna-audit'
-import SDC from 'statsd-client'
 import os from 'os'
 import * as auditing from '../auditing'
 import { config } from '../config'
 import { promisify } from 'util'
 
 config.authentication = config.get('authentication')
-const statsdServer = config.get('statsd')
-const application = config.get('application')
 const himSourceID = config.get('auditing').auditEvents.auditSourceID
-
-const domain = `${os.hostname()}.${application.name}.appMetrics`
-const sdc = new SDC(statsdServer)
 
 function genAuthAudit (remoteAddress) {
   let audit = atna.construct.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.constants.OUTCOME_MINOR_FAILURE)
@@ -66,12 +60,9 @@ export async function authorise (ctx, done) {
 }
 
 export async function koaMiddleware (ctx, next) {
-  let startTime
-  if (statsdServer.enabled) { startTime = new Date() }
   const _authorise = promisify(authorise)
   await _authorise(ctx)
   if (ctx.authorisedChannel != null) {
-    if (statsdServer.enabled) { sdc.timing(`${domain}.authorisationMiddleware`, startTime) }
     await next()
   }
 }

@@ -2,17 +2,9 @@ import auth from 'basic-auth'
 import logger from 'winston'
 import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
-import SDC from 'statsd-client'
-import os from 'os'
 import { ClientModel } from '../model/clients'
 import { config } from '../config'
 import { promisify } from 'util'
-
-const statsdServer = config.get('statsd')
-const application = config.get('application')
-
-const domain = `${os.hostname()}.${application.name}.appMetrics`
-const sdc = new SDC(statsdServer)
 
 const bcryptCompare = (pass, client, callback) => bcrypt.compare(pass, client.passwordHash, callback)
 
@@ -77,8 +69,6 @@ export function authenticateUser (ctx, done) {
  * Koa middleware for authentication by basic auth
  */
 export async function koaMiddleware (ctx, next) {
-  let startTime
-  if (statsdServer.enabled) { startTime = new Date() }
   if (ctx.authenticated != null) {
     await next()
   } else {
@@ -87,7 +77,6 @@ export async function koaMiddleware (ctx, next) {
     if ((ctx.authenticated != null ? ctx.authenticated.clientID : undefined) != null) {
       ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID
     }
-    if (statsdServer.enabled) { sdc.timing(`${domain}.basicAuthMiddleware`, startTime) }
     await next()
   }
 }
