@@ -16,10 +16,31 @@ Some of the important information is repeated here, however, the the above docum
 
 ---
 
+
+## Requirements
+
+Last 2 versions of NodeJS LTS will be supported
+
+NodeJS (LTS) | MongoDB NodeJS Driver | MongoDB
+------------ | ------------- | -------------
+~~6.x~~ | ~~2.2.x~~ | ~~>= 2.6 `||` <= 3.4~~
+~~6.x~~ | ~~3.0.x~~ | ~~>= 2.6 `||` <= 3.6~~
+~~6.x~~ | ~~3.1.x~~ | ~~>= 2.6 `||` <= 3.6~~
+8.x | 2.2.x | >= 2.6 `||` <= 3.4
+8.x | 3.0.x | >= 2.6 `||` <= 3.6
+8.x | 3.1.x | >= 2.6 `||` <= 3.6
+10.x | 3.0.x | >= 2.6 `||` <= 3.6
+10.x | 3.1.x | >= 2.6 `||` <= 4.0
+
+* [NodeJS Release Versions](https://github.com/nodejs/Release)
+* [MongoDB NodeJS Driver Versions](https://mongodb.github.io/node-mongodb-native/)
+* [MongoDB Driver Compatability](https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#node-js-driver-compatibility)
+
+
 ## Getting started with the OpenHIM-core
 
 1. Install the latest stable [Node.js](http://nodejs.org/) **>=8.9 <9 || >=10.13 <11**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
-1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v2.6** up to **v3.2**.
+1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v2.6** up to **v4.0**. Please refer to requirements table for accurate versions to use
 1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your `PATH`.
 1. Start the server by executing `openhim-core` from anywhere.
 
