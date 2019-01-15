@@ -1,19 +1,12 @@
 import logger from 'winston'
 import pem from 'pem'
 import { rootCas as rootCAs } from 'ssl-root-cas/latest'
-import SDC from 'statsd-client'
-import os from 'os'
 import { ClientModel } from '../model/clients'
 import { KeystoreModel } from '../model/keystore'
 import * as utils from '../utils'
 import { config } from '../config'
 
 config.tlsClientLookup = config.get('tlsClientLookup')
-const statsdServer = config.get('statsd')
-const application = config.get('application')
-
-const domain = `${os.hostname()}.${application.name}.appMetrics`
-const sdc = new SDC(statsdServer)
 
 /*
  * Fetches the trusted certificates, callsback with an array of certs.
@@ -149,8 +142,6 @@ if (process.env.NODE_ENV === 'test') {
  * Koa middleware for mutual TLS authentication
  */
 export async function koaMiddleware (ctx, next) {
-  let startTime
-  if (statsdServer.enabled) { startTime = new Date() }
   if (ctx.authenticated != null) {
     await next()
   } else if (ctx.req.client.authorized === true) {
@@ -168,19 +159,16 @@ export async function koaMiddleware (ctx, next) {
       if (ctx.authenticated.clientID != null) {
         ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID
       }
-      if (statsdServer.enabled) { sdc.timing(`${domain}.tlsAuthenticationMiddleware`, startTime) }
       ctx.authenticationType = 'tls'
       await next()
     } else {
       ctx.authenticated = null
       logger.info(`Certificate Authentication Failed: the certificate's fingerprint ${cert.fingerprint} did not match any client's certFingerprint attribute, trying next auth mechanism if any...`)
-      if (statsdServer.enabled) { sdc.timing(`${domain}.tlsAuthenticationMiddleware`, startTime) }
       await next()
     }
   } else {
     ctx.authenticated = null
     logger.info(`Could NOT authenticate via TLS: ${ctx.req.client.authorizationError}, trying next auth mechanism if any...`)
-    if (statsdServer.enabled) { sdc.timing(`${domain}.tlsAuthenticationMiddleware`, startTime) }
     await next()
   }
 }

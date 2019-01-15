@@ -41,12 +41,7 @@ describe('API Metrics Tests', () =>
       }
     }
 
-    const ORIGINAL_STATS = config.statsd
-
     before(async () => {
-      config.statsd = config.get('statsd')
-      config.statsd.enabled = false
-
       await MetricModel.deleteMany()
 
       await Promise.all([
@@ -61,7 +56,6 @@ describe('API Metrics Tests', () =>
     beforeEach(() => { authDetails = testUtils.getAuthDetails() })
 
     after(async () => {
-      config.statsd = ORIGINAL_STATS
       await Promise.all([
         promisify(server.stop)(),
         ChannelModel.deleteMany({}),
