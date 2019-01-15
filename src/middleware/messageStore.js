@@ -3,7 +3,6 @@ import * as transactions from '../model/transactions'
 import * as autoRetryUtils from '../autoRetry'
 import * as utils from '../utils'
 import { config } from '../config'
-import * as stats from '../stats'
 import * as metrics from '../metrics'
 import { promisify } from 'util'
 
