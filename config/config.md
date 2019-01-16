@@ -138,16 +138,6 @@ The following config option are provided by the OpenHIM. All of these options ha
     // This will be useful if you have mediators running on other servers
     "enableTSNormalization": true
   },
-  "statsd": {
-    // Report application metrics and transaction metrics to a statsd server
-    "enabled": false,
-    // The location of the statsd server (the default port must be used)
-    "host": "127.0.0.1"
-  },
-  "application": {
-    // The name of the application for use when reporting metrics to statsd
-    "name": "Development"
-  },
   "newUserExpiry": {
     // How long to wait before invalidating a user account if they don't
     // login

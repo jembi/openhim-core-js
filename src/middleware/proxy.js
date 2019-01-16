@@ -1,12 +1,4 @@
-import SDC from 'statsd-client'
-import os from 'os'
 import { config } from '../config'
-
-const statsdServer = config.get('statsd')
-const application = config.get('application')
-
-const domain = `${os.hostname()}.${application.name}.appMetrics`
-const sdc = new SDC(statsdServer)
 
 export function setupProxyHeaders (ctx) {
   // Headers
@@ -24,9 +16,6 @@ export function setupProxyHeaders (ctx) {
 }
 
 export async function koaMiddleware (ctx, next) {
-  let startTime
-  if (statsdServer.enabled) { startTime = new Date() }
   exports.setupProxyHeaders(ctx)
-  if (statsdServer.enabled) { sdc.timing(`${domain}.proxyHeadersMiddleware`, startTime) }
   await next()
 }
