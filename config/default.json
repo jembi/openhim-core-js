@@ -89,17 +89,11 @@
   "reports": {
     "enableReports": true,
     "dailyReportAt": "0 7 * * *",
-    "weeklyReportAt": "0 7 * * 1"
+    "weeklyReportAt": "0 7 * * 1",
+    "utcOffset": null
   },
   "events": {
     "enableTSNormalization": true
-  },
-  "statsd": {
-    "enabled": false,
-    "host": "127.0.0.1"
-  },
-  "application": {
-    "name": "Development"
   },
   "newUserExpiry": {
     "duration": 7,

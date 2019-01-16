@@ -5,23 +5,14 @@ import net from 'net'
 import tls from 'tls'
 import logger from 'winston'
 import cookie from 'cookie'
-import SDC from 'statsd-client'
-import os from 'os'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import * as events from '../middleware/events'
-import * as stats from '../stats'
 import { promisify } from 'util'
 
 config.mongo = config.get('mongo')
 config.router = config.get('router')
-
-const statsdServer = config.get('statsd')
-const application = config.get('application')
-
-const domain = `${os.hostname()}.${application.name}.appMetrics`
-const sdc = new SDC(statsdServer)
 
 const isRouteEnabled = route => (route.status == null) || (route.status === 'enabled')
 
@@ -269,9 +260,7 @@ function sendRequestToRoutes (ctx, routes, next) {
                 }
               }
 
-              return messageStore.storeNonPrimaryResponse(ctx, routeObj, () =>
-                stats.nonPrimaryRouteRequestCount(ctx, routeObj, () => stats.nonPrimaryRouteDurations(ctx, routeObj, () => { }))
-              )
+              return messageStore.storeNonPrimaryResponse(ctx, routeObj, () => {})
             } catch (err) {
               return logger.error(err)
             }
@@ -680,10 +669,7 @@ function isMethodAllowed (ctx, channel) {
  * Use with: app.use(router.koaMiddleware)
  */
 export async function koaMiddleware (ctx, next) {
-  let startTime
-  if (statsdServer.enabled) { startTime = new Date() }
   const _route = promisify(route)
   await _route(ctx)
-  if (statsdServer.enabled) { sdc.timing(`${domain}.routerMiddleware`, startTime) }
   await next()
 }
