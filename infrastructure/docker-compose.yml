@@ -17,17 +17,17 @@ services:
     image: jembi/openhim-core:latest
     restart: unless-stopped
     environment:
-      mongo_url: "mongodb://mongo-db/openhim-dev"
-      mongo_atnaUrl: "mongodb://mongo-db/openhim-dev"
-      NODE_ENV: "production"
+      mongo_url: "mongodb://mongo-db/openhim-development"
+      mongo_atnaUrl: "mongodb://mongo-db/openhim-development"
+      NODE_ENV: "development"
     ports:
-      - "9095:8080"
-      - "6000:5000"
-      - "6001:5001"
+      - "8080:8080"
+      - "5000:5000"
+      - "5001:5001"
     networks:
       - openhim
     healthcheck:
-     test: "curl -sS http://openhim-core:8080/heartbeat || exit 1"
+     test: "curl -sSk https://openhim-core:8080/heartbeat || exit 1"
      interval: 30s
      timeout: 30s
      retries: 3
@@ -39,9 +39,7 @@ services:
     networks:
       - openhim
     ports:
-      - "9090:80"
-    volumes:
-      - "../app/config/default.json:/usr/share/nginx/html/config/default.json"
+      - "9000:80"
     healthcheck:
      test: "curl -sS http://openhim-console || exit 1"
      interval: 30s
