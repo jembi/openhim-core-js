@@ -98,6 +98,17 @@ function truncateTransactionDetails (trx) {
 }
 
 /*
+ * Returns intersection of user and channel roles/permission groups
+ */
+
+function getActiveRoles (acl, userGroups, channels) {
+  const userRoles = new Set(userGroups)
+  const channelRoles = new Set()
+  channels.forEach(item => item[acl].forEach(role => channelRoles.add(role)))  
+  return new Set([...userRoles].filter(i => channelRoles.has(i)))
+}
+
+/*
  * Retrieves the list of transactions
  */
 
@@ -124,17 +135,25 @@ export async function getTransactions (ctx) {
     // Test if the user is authorised
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // if not an admin, restrict by transactions that this user can view
-      const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
+      const fullViewChannels = await authorisation.getUserViewableChannels(ctx.authenticated, 'txViewFullAcl')
+      const partViewChannels = await authorisation.getUserViewableChannels(ctx.authenticated)
+      const allChannels = fullViewChannels.concat(partViewChannels)
+
       if (filters.channelID) {
-        if (!getChannelIDsArray(channels).includes(filters.channelID)) {
+        if (!getChannelIDsArray(allChannels).includes(filters.channelID)) {
           return utils.logAndSetResponse(ctx, 403, `Forbidden: Unauthorized channel ${filters.channelID}`, 'info')
         }
       } else {
-        filters.channelID = {$in: getChannelIDsArray(channels)}
+        filters.channelID = {$in: getChannelIDsArray(allChannels)}
       }
 
-      // set 'filterRepresentation' to default if user isnt admin
-      filterRepresentation = ''
+      if (getActiveRoles('txViewFullAcl', ctx.authenticated.groups, allChannels).size > 0) {
+        filterRepresentation='full'
+      } else if (getActiveRoles('txViewAcl', ctx.authenticated.groups, allChannels).size > 0) {
+        filterRepresentation='simpledetails'
+      } else {
+        filterRepresentation=''
+      }
     }
 
     // get projection object
