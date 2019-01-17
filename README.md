@@ -44,7 +44,7 @@ NodeJS (LTS) | MongoDB NodeJS Driver | MongoDB
 ### NPM Package
 
 1. Install the latest stable [Node.js](http://nodejs.org/) **>=8.9 <9 || >=10.13 <11**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
-1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v2.6** up to **v4.0**. Please refer to the requirements table for accurate versions to use
+1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v2.6** up to **v4.0**. Please refer to the requirements table for accurate versions to use.
 1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your `PATH`.
 1. Start the server by executing `openhim-core` from anywhere.
 
@@ -91,7 +91,7 @@ Then build the project:
 
 `npm run build`
 
-In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must be installed and running. Please refer to the requirements table for accurate versions to use
+In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must be installed and running. Please refer to the requirements table for accurate versions to use.
 
 To run the server, execute:
 
@@ -110,7 +110,7 @@ This project uses [mocha](https://mochajs.org/) as a unit testing framework with
 * `grunt watch` - will automatically build the project on any changes.
 * `npm run lint` - ensure the code is lint free, this is also run before an `npm test`
 * `npm link` - will symlink you local working directory to the globally installed openhim-core module. Use this so you can use the global openhim-core binary to run your current work in progress. Also, if you build any local changes the server will automatically restart.
-* `npm test -- --grep <regex>` - will only run tests with names matching the regex
+* `npm test -- --grep <regex>` - will only run tests with names matching the regex.
 * `npm test -- --inspect` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
 * `npm test -- --bail` - exit on first test failure.
 
