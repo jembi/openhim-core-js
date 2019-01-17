@@ -37,7 +37,7 @@ NodeJS (LTS) | MongoDB NodeJS Driver | MongoDB
 ### Docker Compose
 
 1. Ensure that you have [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
-1. Navigate to the [docker-compose.yml](https://github.com/jembi/openhim-core-js/blob/master/infrastructure/docker-compose.yml) file found in the `/infrastrucuture` directory.
+1. Navigate to the [docker-compose.yml](https://github.com/jembi/openhim-core-js/blob/master/infrastructure/docker-compose.yml) file found in the `/infrastructure` directory.
 1. Execute the Docker Compose file to pull the docker images and start the services in a detached mode: `docker-compose up -d`
 1. Once the services have all started, you will be able to view the [OpenHIM Console](http://localhost:9000) in your browser.
 
