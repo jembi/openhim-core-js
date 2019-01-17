@@ -98,6 +98,7 @@ describe('API Integration Tests', () => {
   let authDetails = {}
   let channel
   let channel2
+  let channel3
 
   const channelDoc = {
     name: 'TestChannel1',
@@ -140,6 +141,28 @@ describe('API Integration Tests', () => {
     }
   }
 
+  const channel3Doc = {
+    name: 'TestChannel3',
+    urlPattern: 'test3/sample',
+    allow: ['PoC', 'Test1', 'Test2'],
+    routes: [{
+      name: 'test route',
+      host: 'localhost',
+      port: 9876,
+      primary: true
+    }
+    ],
+    txViewAcl: [],
+    txViewFullAcl: ['group1'],
+    autoRetryEnabled: true,
+    autoRetryPeriodMinutes: 60,
+    autoRetryMaxAttempts: 5,
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
+    }
+  }
+
   before(async () => {
     config.api = config.get('api')
     config.api.maxBodiesSizeMB = MAX_BODY_MB
@@ -149,11 +172,13 @@ describe('API Integration Tests', () => {
     const results = await Promise.all([
       new ChannelModel(channelDoc).save(),
       new ChannelModel(channel2Doc).save(),
+      new ChannelModel(channel3Doc).save(),
       promisify(server.start)({ apiPort: SERVER_PORTS.apiPort }),
       testUtils.setupTestUsers()
     ])
     channel = results[0]
     channel2 = results[1]
+    channel3 = results[2]
   })
 
   after(async () => {
@@ -857,6 +882,36 @@ describe('API Integration Tests', () => {
 
         res.body.should.have.length(1)
         res.body[0]._id.should.be.equal('111111111111111111111111')
+      })
+
+      it('should return the transactions with req/res bodies for all channels that a user has permission to view', async () => {
+        await new TransactionModel(Object.assign({}, transactionData, { channelID: channel3._id })).save()
+
+        await new TransactionModel(Object.assign({}, transactionData, {
+          channelID: channel2._id,
+          _id: '111111111111111111111112'
+        })).save()
+
+        await new TransactionModel(Object.assign({}, transactionData, {
+          channelID: channel3._id,
+          _id: '111111111111111111111113'
+        })).save()
+
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions?filterRepresentation=full`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        res.body.should.have.length(2)
+        res.body[0]._id.should.be.equal('111111111111111111111111')
+        res.body[0].request.body.should.equal(`<HTTP body request>`)
+        res.body[0].response.body.should.equal(`<HTTP response>`)
+        res.body[1]._id.should.be.equal('111111111111111111111113')
+        res.body[1].request.body.should.equal(`<HTTP body request>`)
+        res.body[1].response.body.should.equal(`<HTTP response>`)
       })
 
       it('should return 403 for a channel that a user does NOT have permission to view', async () => {

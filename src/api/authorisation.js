@@ -8,13 +8,13 @@ export function inGroup (group, user) {
  * A promise returning function that returns the list
  * of viewable channels for a user.
  */
-export function getUserViewableChannels (user) {
-  // if admin allow all channel
+export function getUserViewableChannels (user, access = 'txViewAcl') {
+  // if admin find all channels
   if (inGroup('admin', user)) {
     return ChannelModelAPI.find({}).exec()
   } else {
-    // otherwise figure out what this user can view
-    return ChannelModelAPI.find({txViewAcl: {$in: user.groups}}).exec()
+    // otherwise only channels that this user has access to
+    return ChannelModelAPI.find({[access]: {$in: user.groups}}).exec()
   }
 }
 
