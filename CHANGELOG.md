@@ -2,7 +2,7 @@
 
 ## v5.0.0-rc.1 / 2019-01-18
 
-### Release candicate with various bug fixes / code refactoring and dependency upgrades
+### Release candidate with various bug fixes / code refactoring and dependency upgrades
 
 #### Bug Fixes
 
@@ -29,7 +29,7 @@
 
 #### Upgrades
 
-* Upgrading of dependencies to latest versions
+* Upgrading of dependencies to latest versions. This ensures that no vulnerabilities exist within the codebase
 * Generate new test certificates
 * Added workaround for broken dependency in winston logger
 * Replace the "mongoose-patch-history" dependency with a version Jembi forked
@@ -38,16 +38,16 @@
 
 * Reporting utcOffset config variable for setting the timezone of the reports being generated
 * update the report template to include full timestamps 
-  * will vertically align the from and to timestamps of the report
-  * add the to and from dates to the plain channel report template and also make the requested changes
+  * will vertically align the "from" and "to" timestamps of the report
+  * add the "from" and "to" dates to the plain channel report template and also make the requested changes
 * Add the roadmap page to OpenHIM docs
 * Update supported Node/MongoDB versions to README
 
 #### Internal Refactoring
 
 * Handle promise rejections asynchronously
-* Change the time between task running from 5 to 60 minutes
-* Don't watch for changes in production
+* Body Culling: Change the time between task running from 5 to 60 minutes
+* Don't watch for file changes in production. This is a development feature
 * Make MongoDB filter out channel audit change entries logged by the body-culling job
 * Clean up transaction status handling
 * Ensure mongo connection string is properly encoded when creating the connection
