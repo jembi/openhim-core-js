@@ -14,16 +14,16 @@
   * Add missing ! to links
 * update the 'update' object which is checked when creating metrics so that metrics are created with mediators
 * Include time in filter dates
-* Determine user access level using channel permission groups (non-admin user can retireve transaction body when requesting multiple transactions - reporting as no admin user)
+* Determine user access level using channel permission groups (non-admin user can retrieve transaction body when requesting multiple transactions - reporting as no admin user)
 
 #### Code Cleanup
 
 * Don't set secureProtocol - already supported in supported versions of Node.js
 * Remove the harmony flag for start up
-* Remove the load testing code run by Artillery.
+* Remove the load testing code run by Artillery
 * Remove un-used packages
 * Remove the declaration of the Log model schema as this is only used within the tests
-* Remove package script command that isnt being used.
+* Remove package script command that isnt being used
 * Remove the use of StatsD
 * Remove the out-dated Vagrant script for development
 
