@@ -32,7 +32,7 @@ docker exec -it $containerName sh -c "mkdir /openhim-core-js && curl -sL 'https:
 echo "npm install && npm install speculate && npm run build"
 docker exec -it $containerName sh -c "cd /openhim-core-js && npm install && npm install speculate && npm run build && npm run spec"
 
-echo "ln -s ~/openhim-core-js ~/rpmbuild"
+echo "Symlink the openhim-core folder with the rpmbuild folder"
 docker exec -it $containerName sh -c "ln -s /openhim-core-js ~/rpmbuild"
 
 # if the Release Version incluldes a dash, apply workaround for rpmbuild to not break on dashes
@@ -43,7 +43,7 @@ then
   docker exec -it $containerName sh -c "sed -i 's/$RELEASE_VERSION/$RELEASE_VERSION_TEMP/g' ~/rpmbuild/SPECS/openhim-core.spec"
 fi
 
-echo "rpmbuild -bb ~/rpmbuild/SPECS/openhim-core.spec"
+echo "Build RPM package from spec"
 docker exec -it $containerName sh -c "rpmbuild -bb ~/rpmbuild/SPECS/openhim-core.spec"
 
 # if the Release Version incluldes a dash, apply workaround for rpmbuild to not break on dashes
