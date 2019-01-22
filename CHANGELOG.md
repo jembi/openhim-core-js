@@ -4,7 +4,7 @@
 
 ### Release candidate version bump due to incorrectly released version
 
-An incorrect version has been released which required this release version bump. No codebase changes has been updated in this release
+An incorrect version has been released which required this release version bump. Re-built the package-lock file to generate latest package dependencies
 
 ## v5.0.0-rc.1 / 2019-01-18
 
