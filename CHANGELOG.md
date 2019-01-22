@@ -1,5 +1,11 @@
 # Changelog
 
+## v5.0.0-rc.2 / 2019-01-22
+
+### Release candidate version bump due to incorrectly released version
+
+An incorrect version has been released which required this release version bump. Re-built the package-lock file to generate latest package dependencies
+
 ## v5.0.0-rc.1 / 2019-01-18
 
 ### Release candidate with various bug fixes / code refactoring and dependency upgrades
