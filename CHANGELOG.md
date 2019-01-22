@@ -1,13 +1,12 @@
 # Changelog
 
-## v5.0.0-rc.1 / 2019-01-18
+## v5.0.0-rc.2 / 2019-01-22
 
 ### Release candidate version bump due to incorrectly released version
 
-## v5.0.0-rc.2 / 2019-01-22
+An incorrect version has been released which required this release version bump. No codebase changes has been updated in this release
 
-An incorrect version has been released which required this release version bump
-No codebase changes has been updated in this release
+## v5.0.0-rc.1 / 2019-01-18
 
 ### Release candidate with various bug fixes / code refactoring and dependency upgrades
 
