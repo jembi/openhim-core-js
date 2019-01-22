@@ -1,5 +1,7 @@
-Debian Packaging for the OpenHIM-core
+Packaging OpenHIM Core
 =====================================
+
+# Debian Packaging
 
 The package is dependant on the system architecture that you build it on (amd64, i386 etc). So, please use an amd64 Ubuntu environment to build this on.
 
@@ -11,3 +13,14 @@ You must also have an environment variable set with the id of the key to use. Vi
 
 Login: openhie
 PPA: release
+
+# CentOS RPM Packaging
+
+Building the CentOS package makes uses of a CentOS docker container which runs various commands to build the package.
+
+Execute the `build-docker-centos-rpm.sh` bash script with a specific release version as an argument to build the RPM package on a specific release version.
+
+`build-docker-centos-rpm.sh 4.0.5` will build and RPM package for the 4.0.5 release of the OpenHIM
+
+Once the bash script has completed and cleaned up after itself, you will see the built rpm package in the directory of this script. The package will look something like:
+`openhim-core-4.0.5-1.x86_64.rpm`
