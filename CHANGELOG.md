@@ -1,9 +1,5 @@
 # Changelog
 
-## v5.0.0 / 2019-02-04
-
-### Final stable release
-
 ## v5.0.0-rc.2 / 2019-01-22
 
 ### Release candidate version bump due to incorrectly released version
@@ -16,11 +12,11 @@ An incorrect version has been released which required this release version bump.
 
 #### Bug Fixes
 
-* Fix channel filtering for non-admins
+* Fix channel filtering for non-admins 
 * Handle responses without timestamps
 * Updated a metrics check that verifies the timestamp value to check that its a object (Date) instead of a number
   * Replace the verifification mechanism to be instanceof Date instead of typeof
-* Add a shebang character to the url of the transaction link
+* Add a shebang character to the url of the transaction link 
   * Add missing ! to links
 * update the 'update' object which is checked when creating metrics so that metrics are created with mediators
 * Include time in filter dates
@@ -47,7 +43,7 @@ An incorrect version has been released which required this release version bump.
 #### Additional Features / Enhancements
 
 * Reporting utcOffset config variable for setting the timezone of the reports being generated
-* update the report template to include full timestamps
+* update the report template to include full timestamps 
   * will vertically align the "from" and "to" timestamps of the report
   * add the "from" and "to" dates to the plain channel report template and also make the requested changes
 * Add the roadmap page to OpenHIM docs
@@ -65,3 +61,4 @@ An incorrect version has been released which required this release version bump.
 * Updated the mongo options object structure to be one level up.
 * Updated mongo options to make use of the new URL parser for mongo
 * Updated the deprecated mongo functions with the appropriate alternative (.remove / .count / .insert / .ensureIndex)
+
