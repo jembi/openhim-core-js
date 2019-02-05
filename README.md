@@ -20,10 +20,10 @@ Some of the important information is repeated here, however, the the above docum
 
 Last 2 versions of NodeJS LTS will be supported
 
-NodeJS (LTS) | MongoDB
------------- | -------------
+NodeJS (LTS)  | MongoDB
+------------  | -------------
 8.x | >= 2.6 &#124;&#124; <= 4.0
-10.x | >= 2.6 &#124;&#124; <= 4.0
+10.15.0 | >= 2.6 &#124;&#124; <= 4.0
 
 * [NodeJS Release Versions](https://github.com/nodejs/Release)
 * [MongoDB NodeJS Driver Versions](https://mongodb.github.io/node-mongodb-native/)
