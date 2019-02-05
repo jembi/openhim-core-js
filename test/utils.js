@@ -497,7 +497,7 @@ export function createMockTLSServerWithMutualAuth (onRequest = async data => dat
     })
   )
 
-  server.close = promisify(server.close.bind(server))
+  server.close = (server.close.bind(server))
 
   return new Promise((resolve, reject) => {
     server.listen(port, 'localhost', (error) => {
