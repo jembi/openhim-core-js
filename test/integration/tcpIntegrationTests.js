@@ -228,6 +228,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     await Promise.all([
       TransactionModel.deleteMany({})
     ])
+    mockServer.close()
     sandbox.reset()
     mockServer = null
   })
@@ -244,7 +245,6 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
-    mockServer.close()
   })
 
   it('will timeout a socket', async () => {
@@ -263,7 +263,6 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const transactions = await TransactionModel.find({})
     transactions.length.should.eql(1)
     transactions[0].error.message.should.eql('Request took longer than 20ms')
-    mockServer.close()
   })
 
   it('will route tls -> tcp', async () => {
@@ -277,7 +276,6 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const res = await testUtils.secureSocketTest(tlsToTcpChannelDoc.tcpPort, request)
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
-    mockServer.close()
   })
 
   it('will route tcp -> http', async () => {
@@ -293,7 +291,6 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
-    mockServer.close()
   })
 
   it('will route tcp -> tls', async () => {
@@ -307,7 +304,6 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const res = await testUtils.socketTest(tcpToTlsChannelDoc.tcpPort, request)
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
-    mockServer.close()
   })
 
   it('will route tcp -> tls no auth will fail', async () => {
@@ -322,7 +318,6 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const tran = await TransactionModel.findOne()
 
     tran.status.should.eql('Failed')
-    mockServer.close()
   })
 
   it(`will route tcp -> mllp`, async () => {
@@ -338,6 +333,5 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
-    mockServer.close()
   })
 })
