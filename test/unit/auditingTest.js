@@ -301,7 +301,7 @@ describe('Auditing', () => {
 
     after(async () => {
       config.auditing.auditEvents = JSON.parse(_restore)
-      await Promise.all(servers.map(s => s.close()))
+      await servers.map(s => s.close())
       await utils.cleanupTestKeystore()
     })
 
