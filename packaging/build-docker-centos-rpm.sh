@@ -8,6 +8,8 @@ then
   exit 1
 fi
 
+set -eu
+
 # Set docker container name to build RPM package
 containerName=openhim-core-centos-rpm
 
