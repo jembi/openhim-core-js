@@ -5,7 +5,7 @@ if [ -z ${RELEASE_VERSION} ]
 then
   echo "You need so specify the release version you wish to build: e.g './build-docker-centos-rpm.sh 4.0.0'"
   echo "https://github.com/jembi/openhim-core-js/releases"
-  exit
+  exit 1
 fi
 
 # Set docker container name to build RPM package
