@@ -40,7 +40,7 @@ NodeJS (LTS)  | MongoDB
 
 ### NPM Package
 
-1. Install the latest stable [Node.js](http://nodejs.org/) **>=8.9 <9 || >=10.13 <11**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
+1. Install the latest stable [Node.js](http://nodejs.org/) **>=8.9 <9 || >=10.13 <10.15.1**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
 1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v2.6** up to **v4.0**. Please refer to the requirements table for accurate versions to use.
 1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your `PATH`.
 1. Start the server by executing `openhim-core` from anywhere.
@@ -67,10 +67,10 @@ Clone the `https://github.com/jembi/openhim-core-js.git` repository.
 
 Ensure you have the following installed:
 
-* [Node.js](http://nodejs.org/) v8.9 or greater
+* [Node.js](http://nodejs.org/) v8.9 or greater but less than 10.15.1
 * [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
 
-The OpenHIM core makes use of the [Koa framework](http://koajs.com/) (async/awaits), which requires node version v7 or greater.
+The OpenHIM core makes use of the [Koa framework](http://koajs.com/) (async/awaits), which requires node version v7 or greater but less than 10.15.1.
 
 The easiest way to use the latest version of node is to install [`nvm`](https://github.com/creationix/nvm). On Ubuntu, you can install using the install script but you have to add `[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh # This loads NVM` to the end of your `~/.bashrc` file as well.
 

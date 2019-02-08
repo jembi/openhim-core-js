@@ -2,11 +2,13 @@ language: node_js
 node_js:
   - "lts/carbon"
   - "lts/dubnium"
+  - "10.15.0"
   - "node"
 matrix:
   fast_finish: true
   allow_failures:
     - node_js: 'node'
+    - node_js: 'lts/dubnium'
 services:
   - docker
   - mongodb
