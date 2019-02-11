@@ -9,7 +9,9 @@ export const options = {
   thresholds: {
     http_req_receiving: ['p(95)<100'],
     http_req_duration: ['p(95)<100']
-  }
+  },
+  noVUConnectionReuse: true,
+  discardResponseBodies: true
 }
 
 function makeGetRequest() {
