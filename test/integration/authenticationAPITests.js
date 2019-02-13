@@ -62,6 +62,24 @@ describe('API Integration Tests', () => {
       audits[0].activeParticipant[1].userID.should.be.equal('root@jembi.org')
     })
 
+    it('should audit a successful login on an API endpoint with basic auth', async () => {
+      await request(constants.BASE_URL)
+        .get('/channels')
+        .set('Authorization', `Basic ${Buffer.from(`${testUtils.rootUser.email}:password`).toString('base64')}`)
+        .expect(200)
+
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
+      const audits = await AuditModel.find()
+
+      audits.length.should.be.exactly(1)
+      audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('0') // success
+      audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
+      audits[0].eventIdentification.eventTypeCode.displayName.should.be.equal('Login')
+      audits[0].activeParticipant.length.should.be.exactly(2)
+      audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
+      audits[0].activeParticipant[1].userID.should.be.equal('root@jembi.org')
+    })
+
     it('should audit an unsuccessful login on an API endpoint', async () => {
       await request(constants.BASE_URL)
         .get('/channels')
@@ -81,6 +99,42 @@ describe('API Integration Tests', () => {
       audits[0].activeParticipant.length.should.be.exactly(2)
       audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
       audits[0].activeParticipant[1].userID.should.be.equal('wrong@email.org')
+    })
+
+    it('should audit an unsuccessful login on an API endpoint with basic auth and incorrect email', async () => {
+      await request(constants.BASE_URL)
+        .get('/channels')
+        .set('Authorization', `Basic ${Buffer.from(`wrong@email.org:password`).toString('base64')}`)
+        .expect(401)
+
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
+      const audits = await AuditModel.find({})
+
+      audits.length.should.be.exactly(1)
+      audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('8') // failure
+      audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
+      audits[0].eventIdentification.eventTypeCode.displayName.should.be.equal('Login')
+      audits[0].activeParticipant.length.should.be.exactly(2)
+      audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
+      audits[0].activeParticipant[1].userID.should.be.equal('wrong@email.org')
+    })
+
+    it('should audit an unsuccessful login on an API endpoint with basic auth and incorrect password', async () => {
+      await request(constants.BASE_URL)
+        .get('/channels')
+        .set('Authorization', `Basic ${Buffer.from(`${testUtils.rootUser.email}:drowssap`).toString('base64')}`)
+        .expect(401)
+
+      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
+      const audits = await AuditModel.find({})
+
+      audits.length.should.be.exactly(1)
+      audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('8') // failure
+      audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
+      audits[0].eventIdentification.eventTypeCode.displayName.should.be.equal('Login')
+      audits[0].activeParticipant.length.should.be.exactly(2)
+      audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
+      audits[0].activeParticipant[1].userID.should.be.equal('root@jembi.org')
     })
 
     it('should NOT audit a successful login on an auditing exempt API endpoint', async () => {
