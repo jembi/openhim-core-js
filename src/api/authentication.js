@@ -131,7 +131,7 @@ async function authenticateRequest (ctx) {
 
 function handleAuditResponse (err) {
   if (err) {
-    logger.error('Sending audit even failed', err)
+    logger.error('Sending audit event failed', err)
     return
   }
   logger.debug('Processed internal audit')
