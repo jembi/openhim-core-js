@@ -37,7 +37,8 @@
     "maxBodiesSizeMB": 15,
     "maxPayloadSizeMB": 50,
     "truncateSize": 15000,
-    "truncateAppend": "\n[truncated ...]"
+    "truncateAppend": "\n[truncated ...]",
+    "authenticationTypes": ["token"]
   },
   "rerun": {
     "httpPort": 7786,

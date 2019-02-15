@@ -120,10 +120,13 @@ async function authenticateToken (ctx) {
 }
 
 async function authenticateRequest (ctx) {
-  // First attempt basic authentication
-  let user = await authenticateBasic(ctx)
-  if (user == null) {
-    // Otherwise try token based authentication
+  let user
+  // First attempt basic authentication if enabled
+  if (user == null && config.api.authenticationTypes.includes('basic')) {
+    user = await authenticateBasic(ctx)
+  }
+  // Otherwise try token based authentication if enabled
+  if (user == null && config.api.authenticationTypes.includes('token')) {
     user = await authenticateToken(ctx)
   }
   return user

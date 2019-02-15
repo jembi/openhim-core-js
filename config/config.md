@@ -56,7 +56,10 @@ The following config option are provided by the OpenHIM. All of these options ha
     // This setting sets the size to truncate to (number of characters)
     "truncateSize": 15000,
     // A message to append to detail strings that have been truncated
-    "truncateAppend": "\n[truncated ...]"
+    "truncateAppend": "\n[truncated ...]",
+    // The types of authentication to use for the API
+    // Supported types are "token" and "basic"
+    "authenicationTypes": ["token"]
   },
   "rerun": {
     // The port that the transaction re-run processor runs on, this port is
