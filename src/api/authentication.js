@@ -119,15 +119,42 @@ async function authenticateToken (ctx) {
   return user
 }
 
+function getEnabledAuthenticationTypesFromConfig (config) {
+  if (Array.isArray(config.api.authenticationTypes)) {
+    return config.api.authenticationTypes
+  }
+  try {
+    // Attempt to parse the authentication types as JSON
+    // e.g. if configured through an environment variable
+    const enabledTypes = JSON.parse(config.api.authenticationTypes)
+    if (Array.isArray(enabledTypes)) {
+      return enabledTypes
+    }
+  } catch (err) {
+    // Squash parsing errors
+  }
+  logger.warn(`Invalid value for API authenticationTypes config: ${config.api.authenticationTypes}`)
+  return []
+}
+
+function isAuthenticationTypeEnabled (type) {
+  return getEnabledAuthenticationTypesFromConfig(config).includes(type)
+}
+
 async function authenticateRequest (ctx) {
   let user
   // First attempt basic authentication if enabled
-  if (user == null && config.api.authenticationTypes.includes('basic')) {
+  if (user == null && isAuthenticationTypeEnabled('basic')) {
     user = await authenticateBasic(ctx)
   }
   // Otherwise try token based authentication if enabled
-  if (user == null && config.api.authenticationTypes.includes('token')) {
+  if (user == null && isAuthenticationTypeEnabled('token')) {
     user = await authenticateToken(ctx)
+  }
+  // User could not be authenticated
+  if (user == null) {
+    const enabledTypes = getEnabledAuthenticationTypesFromConfig(config).join(', ')
+    ctx.throw(401, `API request could not be authenticated with configured authentication types: "${enabledTypes}"`)
   }
   return user
 }
@@ -186,3 +213,6 @@ export async function authenticate (ctx, next) {
 
   return next()
 }
+
+// Exports for testing only
+export const _getEnabledAuthenticationTypesFromConfig = getEnabledAuthenticationTypesFromConfig
