@@ -18,7 +18,7 @@ async function composeTransaction (transaction, body) {
 // Should save the body into GridFS directly
 // Should still return the body in the result
 async function decomposeTransaction (transaction) {
-  const body = transaction.body
+  const body = Object.assign({}, transaction.body)
   const debodied = transaction
   debodied.body = ''
 

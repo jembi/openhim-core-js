@@ -13,6 +13,7 @@ describe('Transform transactions Tests', () => {
     const result = await transform.decomposeTransaction(transaction)
     result.should.have.property('transaction', result.transaction)
     result.should.have.property('body', result.body)
+    should.equal(result.transaction.body, '')
   })
 
   it('should compose a transaction from message and body', async () => {
@@ -24,5 +25,6 @@ describe('Transform transactions Tests', () => {
     const result = await transform.composeTransaction(transaction, body)
     result.should.have.property('_id', result._id)
     result.should.have.property('body', result.body)
+    should.equal(result.body, body)
   })
 })
