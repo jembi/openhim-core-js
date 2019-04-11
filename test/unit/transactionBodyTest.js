@@ -29,25 +29,25 @@ describe('retrieveTransactionBody()', async () => {
     }, 10000)
   })
 
-  it('should return an error when the db handle is falsy', async () => {
+  it('should return an error when the db handle is falsy', () => {
       const db = null
       const fileId = uuid()
 
-      await retrieveTransactionBody(db, fileId, (err, body) => {
+      retrieveTransactionBody(db, fileId, (err, body) => {
         err.message.should.eql(`Transaction body retrieval failed. Database handle: ${db} is invalid`)
       })
   })
 
-  it('should return an error when the file id is null', async () => {
+  it('should return an error when the file id is null', () => {
       const db = {}
       const fileId = null
 
-      await retrieveTransactionBody(db, fileId, (err, body) => {
+      retrieveTransactionBody(db, fileId, (err, body) => {
         err.message.should.eql(`Transaction body retrieval failed: Transaction id: ${fileId}`)
       })
   })
 
-  it('should return the body', async() => {
+  it('should return the body', () => {
     const bucket = new mongodb.GridFSBucket(db)
     const stream = bucket.openUploadStream()
     const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
@@ -57,11 +57,11 @@ describe('retrieveTransactionBody()', async () => {
                       `
     let fileId
 
-    stream.on('finish', async (doc) => {
+    stream.on('finish', (doc) => {
       if(doc) {
         fileId = doc._id
 
-        await retrieveTransactionBody(db, fileId, (err, body) => {
+        retrieveTransactionBody(db, fileId, (err, body) => {
           body.should.eql(fileString)
         })
       }
@@ -70,7 +70,7 @@ describe('retrieveTransactionBody()', async () => {
     stream.end(fileString)
   })
 
-  it('should return an error and null when file does not exist', async() => {
+  it('should return an error and null when file does not exist', () => {
     const bucket = new mongodb.GridFSBucket(db)
     const stream = bucket.openUploadStream()
     const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
@@ -84,7 +84,7 @@ describe('retrieveTransactionBody()', async () => {
       if(doc) {
         fileId = '1222332'
 
-        await retrieveTransactionBody(db, fileId, (err, body) => {
+        retrieveTransactionBody(db, fileId, (err, body) => {
           should(body).eql(null)
           err.message.should.eql(
             `Transaction body retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)

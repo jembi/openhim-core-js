@@ -1,6 +1,6 @@
 import mongodb from 'mongodb'
 
-export const retrieveTransactionBody = async (db, fileId, callback) => {
+export const retrieveTransactionBody = (db, fileId, callback) => {
   if (!db) {
       const err = new Error(`Transaction body retrieval failed. Database handle: ${db} is invalid`)
       return callback(err, null)
