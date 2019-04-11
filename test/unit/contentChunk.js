@@ -56,21 +56,24 @@ describe('contentChunk: ', () => {
       }
     })
   
-    it('should throw an error when payload is not of type string', async () => {
+    it('should throw an error when payload type is not supported', async () => {
       const jsonPayload = {
-        string: 'string',
-        boolean: true
+        'string': 'string',
+        'boolean': true,
+        'object': {
+          'property': 'property'
+        }
       }
   
       try {
         await extractStringPayloadIntoChunks(jsonPayload)
       } catch (err) {
         should.equal(err instanceof Error, true)
-        should.equal(err.message, 'payload not in the correct format, expecting a string')
+        should.equal(err.message, 'payload not in the correct format, expecting a string, Buffer, ArrayBuffer, Array, or Array-like Object')
       }
     })
-  
-    it('should create the string payload as chucks and return a document id', async () => {
+
+    it('should create the String payload as chucks and return a document id', async () => {
       const payload = 'This is a basic small string payload'
       const payloadLength = payload.length
   
@@ -82,8 +85,71 @@ describe('contentChunk: ', () => {
         should.deepEqual(result.length, payloadLength)
       })
     })
+
+    it('should create the Buffer payload as chucks and return a document id', async () => {
+      const payload = Buffer.from('This is a basic small string payload')
+      const payloadLength = payload.length
   
-    it('should create the JSON payload as chucks and return a document id', async () => {
+      const docId = await extractStringPayloadIntoChunks(payload)
+  
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+        should.ok(result)
+        should.deepEqual(result._id, docId)
+        should.deepEqual(result.length, payloadLength)
+      })
+    })
+
+    it('should create the Array payload as chucks and return a document id', async () => {
+      const payload = [
+        'one',
+        'two',
+        'three'
+      ]
+      const payloadLength = payload.length
+  
+      const docId = await extractStringPayloadIntoChunks(payload)
+  
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+        should.ok(result)
+        should.deepEqual(result._id, docId)
+        should.deepEqual(result.length, payloadLength)
+      })
+    })
+
+    it('should create the ArrayBuffer payload as chucks and return a document id', async () => {
+      const arrayBufferLength = 100
+      const payload = new ArrayBuffer(arrayBufferLength);
+
+      const docId = await extractStringPayloadIntoChunks(payload)
+  
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+        should.ok(result)
+        should.deepEqual(result._id, docId)
+        should.deepEqual(result.length, arrayBufferLength)
+      })
+    })
+
+    it('should create the Array-like Object payload as chucks and return a document id', async () => {
+      const payload = {
+        length: 5, // object contains a length property, making it Array-Like
+        0: 'First index in array object',
+        2: [0,1,2,3,4],
+        4: {
+          property: "test"
+        }
+      }
+      const payloadLength = payload.length
+  
+      const docId = await extractStringPayloadIntoChunks(payload)
+  
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+        should.ok(result)
+        should.deepEqual(result._id, docId)
+        should.deepEqual(result.length, payloadLength)
+      })
+    })
+  
+    it('should create the stringified JSON payload as chucks and return a document id', async () => {
       const payload = JSON.stringify({
         string: 'string',
         boolean: true,
