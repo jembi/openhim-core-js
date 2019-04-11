@@ -20,7 +20,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
     })
     .on('finish', (doc) => {
       if (!doc) {
-        return reject('GridFS create failed')
+        return reject(new Error('GridFS create failed'))
       }
 
       return resolve(doc._id)
