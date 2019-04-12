@@ -181,7 +181,6 @@ describe('retrievePayload()', async () => {
   })
 
   after(() => {
-    setTimeout(() => {
       if(db) {
         db.collection('fs.files').deleteMany({})
         db.collection('fs.chunks').deleteMany({})
@@ -190,19 +189,19 @@ describe('retrievePayload()', async () => {
       if(client) {
         client.close()
       }
-    }, 30000)
   })
 
-  it('should return an error when the file id is null', () => {
+  it('should return an error when the file id is null', (done) => {
       const db = {}
       const fileId = null
 
       retrievePayload(fileId, (err, body) => {
         err.message.should.eql(`Payload retrieval failed: Payload id: ${fileId} is invalid`)
+        done()
       })
   })
 
-  it('should return the body', () => {
+  it('should return the body', (done) => {
     const bucket = new mongodb.GridFSBucket(db)
     const stream = bucket.openUploadStream()
     const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
@@ -219,13 +218,14 @@ describe('retrievePayload()', async () => {
         retrievePayload(fileId, (err, body) => {
           body.should.eql(fileString)
         })
+        done()
       }
     })
 
     stream.end(fileString)
   })
 
-  it('should return an error and null when file does not exist', () => {
+  it('should return an error and null when file does not exist', (done) => {
     const bucket = new mongodb.GridFSBucket(db)
     const stream = bucket.openUploadStream()
     const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
@@ -235,13 +235,14 @@ describe('retrievePayload()', async () => {
                       `
     let fileId
 
-    stream.on('finish', async (doc) => {
+    stream.on('finish', (doc) => {
       if(doc) {
         fileId = '1222332'
 
         retrievePayload(fileId, (err, body) => {
           err.message.should.eql(
             `Payload retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)
+          done()
         })
       }
     })
