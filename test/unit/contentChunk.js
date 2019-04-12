@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from 'should'
-import { extractStringPayloadIntoChunks, retrieveTransactionBody } from '../../src/contentChunk'
+import { extractStringPayloadIntoChunks, retrievePayload } from '../../src/contentChunk'
 import { connectionDefault } from '../../src/config'
 import mongodb from 'mongodb'
 
@@ -172,7 +172,7 @@ describe('contentChunk: ', () => {
   })
 })
 
-describe('retrieveTransactionBody()', async () => {
+describe('retrievePayload()', async () => {
   let client
   let db
   before(async () => {
@@ -197,7 +197,7 @@ describe('retrieveTransactionBody()', async () => {
       const db = {}
       const fileId = null
 
-      retrieveTransactionBody(fileId, (err, body) => {
+      retrievePayload(fileId, (err, body) => {
         err.message.should.eql(`Transaction body retrieval failed: Transaction id: ${fileId}`)
       })
   })
@@ -216,7 +216,7 @@ describe('retrieveTransactionBody()', async () => {
       if(doc) {
         fileId = doc._id
 
-        retrieveTransactionBody(fileId, (err, body) => {
+        retrievePayload(fileId, (err, body) => {
           body.should.eql(fileString)
         })
       }
@@ -239,7 +239,7 @@ describe('retrieveTransactionBody()', async () => {
       if(doc) {
         fileId = '1222332'
 
-        retrieveTransactionBody(fileId, (err, body) => {
+        retrievePayload(fileId, (err, body) => {
           should(body).eql(null)
           err.message.should.eql(
             `Transaction body retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)

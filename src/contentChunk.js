@@ -62,7 +62,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
   })
 }
 
-export const retrieveTransactionBody = (fileId, callback) => {
+export const retrievePayload = (fileId, callback) => {
   const db = connectionDefault.client.db()
   if (!db) {
       const err = new Error(`Transaction body retrieval failed. Database handle: ${db} is invalid`)
