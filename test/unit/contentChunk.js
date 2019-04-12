@@ -198,7 +198,7 @@ describe('retrievePayload()', async () => {
       const fileId = null
 
       retrievePayload(fileId, (err, body) => {
-        err.message.should.eql(`Transaction body retrieval failed: Transaction id: ${fileId}`)
+        err.message.should.eql(`Payload retrieval failed: Payload id: ${fileId} is invalid`)
       })
   })
 
@@ -242,7 +242,7 @@ describe('retrievePayload()', async () => {
         retrievePayload(fileId, (err, body) => {
           should(body).eql(null)
           err.message.should.eql(
-            `Transaction body retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)
+            `Payload retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)
         })
       }
     })
