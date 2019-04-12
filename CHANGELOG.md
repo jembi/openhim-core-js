@@ -1,5 +1,13 @@
 # Changelog
 
+## v5.2.0 / 2019-02-19
+
+* Handle authentication types when supplied as a JSON string. This allows the authentication types to be configured through environment variables.
+
+## v5.1.0 / 2019-02-18
+
+* Support basic authentication for the API. This is disabled by default to maintain the existing behaviour but can be enabled via configuration (under `api.authenticationTypes`).
+
 ## v5.0.0 / 2019-02-04
 
 ### Final stable release

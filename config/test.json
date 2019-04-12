@@ -15,7 +15,8 @@
     "maxBodiesSizeMB": 15,
     "maxPayloadSizeMB": 50,
     "truncateSize": 10,
-    "truncateAppend": "\n[truncated ...]"
+    "truncateAppend": "\n[truncated ...]",
+    "authenticationTypes": ["token", "basic"]
   },
   "caching": {
     "enabled": false

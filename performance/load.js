@@ -11,7 +11,9 @@ export const options = {
   ],
   thresholds: {
     http_req_duration: ['p(95)<600']
-  }
+  },
+  noVUConnectionReuse: true,
+  discardResponseBodies: true
 }
 
 function makeGetRequest() {
