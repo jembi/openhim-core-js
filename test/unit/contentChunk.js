@@ -172,7 +172,7 @@ describe('contentChunk: ', () => {
   })
 })
 
-describe('retrievePayload()', async () => {
+describe('retrievePayload()', () => {
   let client
   let db
   before(async () => {
