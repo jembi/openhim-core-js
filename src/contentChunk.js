@@ -66,12 +66,12 @@ export const retrievePayload = (fileId, callback) => {
   const db = connectionDefault.client.db()
   if (!db) {
       const err = new Error(`Payload retrieval failed. Database handle: ${db} is invalid`)
-      return callback(err, null)
+      return callback(err)
   }
 
   if (!fileId) {
     const err = new Error(`Payload retrieval failed: Payload id: ${fileId} is invalid`)
-    return callback(err, null)
+    return callback(err)
   }
 
   const bucket = new mongodb.GridFSBucket(db)
@@ -80,7 +80,7 @@ export const retrievePayload = (fileId, callback) => {
   bucket.openDownloadStream(fileId)
     .on('error', err => {
       const error = new Error(`Payload retrieval failed: Error in reading stream: ${err.message}`)
-      return callback(error, null)
+      return callback(error)
     })
     .on('data', chunk => body += chunk)
     .on('end', () => {

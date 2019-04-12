@@ -240,7 +240,6 @@ describe('retrievePayload()', async () => {
         fileId = '1222332'
 
         retrievePayload(fileId, (err, body) => {
-          should(body).eql(null)
           err.message.should.eql(
             `Payload retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)
         })
