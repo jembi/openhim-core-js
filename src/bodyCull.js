@@ -2,6 +2,7 @@ import moment from 'moment'
 import { config } from './config'
 import { ChannelModel, TransactionModel } from './model'
 import logger from 'winston'
+import { removeBodyById } from './contentChunk'
 
 config.bodyCull = config.get('bodyCull')
 
@@ -46,4 +47,13 @@ async function clearTransactions (channel) {
   if (updateResp.nModified > 0) {
     logger.info(`Culled ${updateResp.nModified} transactions for channel ${channel.name}`)
   }
+
+  // remove all the body chucks after the transactions have been updated
+  const transactionsToCullBody = await TransactionModel.find(query)
+  console.log(transactionsToCullBody)
+  transactionsToCullBody.forEach(async (tx) => {
+    console.log(tx.request.bodyId)
+    await removeBodyById(tx.request.bodyId)
+    await removeBodyById(tx.response.bodyId)
+  })
 }

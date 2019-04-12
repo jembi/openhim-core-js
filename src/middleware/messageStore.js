@@ -44,7 +44,6 @@ export async function storeTransaction (ctx, done) {
       path: ctx.path,
       headers,
       querystring: ctx.querystring,
-      bodyId: null,
       method: ctx.method,
       timestamp: ctx.requestTimestamp
     }

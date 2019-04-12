@@ -131,7 +131,6 @@ export function enforceMaxBodiesSize (ctx, body) {
   // running total for all bodies
   if ((ctx.totalBodyLength == null)) { ctx.totalBodyLength = 0 }
 
-  console.log(body)
   let len = Buffer.byteLength(body)
   if ((ctx.totalBodyLength + len) > MAX_BODIES_SIZE) {
     len = Math.max(0, MAX_BODIES_SIZE - ctx.totalBodyLength)
