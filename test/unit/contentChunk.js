@@ -1,8 +1,9 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from 'should'
-import { extractStringPayloadIntoChunks } from '../../src/contentChunk'
+import { extractStringPayloadIntoChunks, retrieveTransactionBody } from '../../src/contentChunk'
 import { connectionDefault } from '../../src/config'
+import mongodb from 'mongodb'
 
 const MongoClient = connectionDefault.client
 let db = null
@@ -22,10 +23,10 @@ describe('contentChunk: ', () => {
       db.collection('fs.files').deleteMany({})
       db.collection('fs.chunks').deleteMany({})
     })
-  
+
     it('should throw an error when undefined payload is supplied', async () => {
       const payload = undefined
-  
+
       try {
         await extractStringPayloadIntoChunks(payload)
       } catch (err) {
@@ -33,10 +34,10 @@ describe('contentChunk: ', () => {
         should.equal(err.message, 'payload not supplied')
       }
     })
-  
+
     it('should throw an error when null payload is supplied', async () => {
       const payload = null
-  
+
       try {
         await extractStringPayloadIntoChunks(payload)
       } catch (err) {
@@ -44,10 +45,10 @@ describe('contentChunk: ', () => {
         should.equal(err.message, 'payload not supplied')
       }
     })
-  
+
     it('should throw an error when empty payload is supplied', async () => {
       const payload = ''
-  
+
       try {
         await extractStringPayloadIntoChunks(payload)
       } catch (err) {
@@ -55,7 +56,7 @@ describe('contentChunk: ', () => {
         should.equal(err.message, 'payload not supplied')
       }
     })
-  
+
     it('should throw an error when payload type is not supported', async () => {
       const jsonPayload = {
         'string': 'string',
@@ -64,7 +65,7 @@ describe('contentChunk: ', () => {
           'property': 'property'
         }
       }
-  
+
       try {
         await extractStringPayloadIntoChunks(jsonPayload)
       } catch (err) {
@@ -76,9 +77,9 @@ describe('contentChunk: ', () => {
     it('should create the String payload as chucks and return a document id', async () => {
       const payload = 'This is a basic small string payload'
       const payloadLength = payload.length
-  
+
       const docId = await extractStringPayloadIntoChunks(payload)
-  
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -89,9 +90,9 @@ describe('contentChunk: ', () => {
     it('should create the Buffer payload as chucks and return a document id', async () => {
       const payload = Buffer.from('This is a basic small string payload')
       const payloadLength = payload.length
-  
+
       const docId = await extractStringPayloadIntoChunks(payload)
-  
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -106,9 +107,9 @@ describe('contentChunk: ', () => {
         'three'
       ]
       const payloadLength = payload.length
-  
+
       const docId = await extractStringPayloadIntoChunks(payload)
-  
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -121,7 +122,7 @@ describe('contentChunk: ', () => {
       const payload = new ArrayBuffer(arrayBufferLength);
 
       const docId = await extractStringPayloadIntoChunks(payload)
-  
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -139,16 +140,16 @@ describe('contentChunk: ', () => {
         }
       }
       const payloadLength = payload.length
-  
+
       const docId = await extractStringPayloadIntoChunks(payload)
-  
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
       })
     })
-  
+
     it('should create the stringified JSON payload as chucks and return a document id', async () => {
       const payload = JSON.stringify({
         string: 'string',
@@ -159,14 +160,93 @@ describe('contentChunk: ', () => {
         }
       })
       const payloadLength = payload.length
-  
+
       const docId = await extractStringPayloadIntoChunks(payload)
-  
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
       })
     })
+  })
+})
+
+describe('retrieveTransactionBody()', async () => {
+  let client
+  let db
+  before(async () => {
+    client = connectionDefault.client
+    db = client.db()
+  })
+
+  after(() => {
+    setTimeout(() => {
+      if(db) {
+        db.collection('fs.files').deleteMany({})
+        db.collection('fs.chunks').deleteMany({})
+      }
+
+      if(client) {
+        client.close()
+      }
+    }, 30000)
+  })
+
+  it('should return an error when the file id is null', () => {
+      const db = {}
+      const fileId = null
+
+      retrieveTransactionBody(fileId, (err, body) => {
+        err.message.should.eql(`Transaction body retrieval failed: Transaction id: ${fileId}`)
+      })
+  })
+
+  it('should return the body', () => {
+    const bucket = new mongodb.GridFSBucket(db)
+    const stream = bucket.openUploadStream()
+    const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                      `
+    let fileId
+
+    stream.on('finish', (doc) => {
+      if(doc) {
+        fileId = doc._id
+
+        retrieveTransactionBody(fileId, (err, body) => {
+          body.should.eql(fileString)
+        })
+      }
+    })
+
+    stream.end(fileString)
+  })
+
+  it('should return an error and null when file does not exist', () => {
+    const bucket = new mongodb.GridFSBucket(db)
+    const stream = bucket.openUploadStream()
+    const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                      `
+    let fileId
+
+    stream.on('finish', async (doc) => {
+      if(doc) {
+        fileId = '1222332'
+
+        retrieveTransactionBody(fileId, (err, body) => {
+          should(body).eql(null)
+          err.message.should.eql(
+            `Transaction body retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)
+        })
+      }
+    })
+
+    stream.end(fileString)
   })
 })
