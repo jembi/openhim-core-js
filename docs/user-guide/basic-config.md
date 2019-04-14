@@ -18,7 +18,7 @@ Adding Clients
 
 Follow the below steps to successfully create/update a **Client**
 
-* Navigate to the **Clients** menu option found in the left sidebar.f
+* Navigate to the **Clients** menu option found in the left sidebar.
 * On the **Clients** page you will be presented with a list of all the created **Clients**
 * Click on the blue "**+ Client**" button to open a popup modal box where you will supply the **Client** details **OR** click on one of the existing **Clients** to open up the popup modal with the **Clients'** saved details.
 * Supply all the required fields (marked with a *) and click the blue "**Save changes**" button when completed.
