@@ -18,7 +18,7 @@ Adding Clients
 
 Follow the below steps to successfully create/update a **Client**
 
-* Navigate to the **Clients** menu option found in the left sidebar.
+* Navigate to the **Clients** menu option found in the left sidebar.f
 * On the **Clients** page you will be presented with a list of all the created **Clients**
 * Click on the blue "**+ Client**" button to open a popup modal box where you will supply the **Client** details **OR** click on one of the existing **Clients** to open up the popup modal with the **Clients'** saved details.
 * Supply all the required fields (marked with a *) and click the blue "**Save changes**" button when completed.
@@ -60,7 +60,7 @@ There are many fields that you may supply and these are spread over a number of 
         * **Polling** - Supply a Polling schedule - Cron format: '*/10 * * * *' or Written format: '10 minutes' - The module 'Agenda' is used to accomplish the polling - You can find more documentation [here](https://github.com/rschmukler/agenda)
     * **Status** - Set whether this channel is enabled to receive requests or if its disbaled*.
 * **Request Matching tab**:
-    * **URL Pattern** - Supply a URL pattern to match an incoming transaction - **Note** this field excepts a RegEx value - More information on RegEx can be found [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) or [here](http://www.regular-expressions.info/)
+    * **URL Pattern** - Supply a URL pattern to match an incoming transaction - **Note** this field accepts a RegEx value - More information on RegEx can be found [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) or [here](http://www.regular-expressions.info/)
         * NB!. This field is not applicable for **Channel Type** of **TCP** or **TLS**
     * **Priority** - If a transaction matches the URL patterns of two or more channels, then the channel with higher priority will be picked. A value of 1 is the highest possible priority (first priority). Larger numbers therefore indicate that a channel should take lower priority.
     * **Authentication Type** - Set whether this channel is **Private** or **Public**
