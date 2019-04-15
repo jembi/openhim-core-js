@@ -68,7 +68,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
 
 export const retrievePayload = (fileId, callback) => {
   if (!fileId) {
-    const err = new Error(`Payload retrieval failed: Payload id: ${fileId} is invalid`)
+    const err = new Error(`Payload id not supplied`)
     return callback(err)
   }
 

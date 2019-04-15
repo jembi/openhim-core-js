@@ -176,7 +176,7 @@ describe('contentChunk: ', () => {
         const fileId = null
 
         retrievePayload(fileId, (err, body) => {
-          err.message.should.eql(`Payload retrieval failed: Payload id: ${fileId} is invalid`)
+          err.message.should.eql(`Payload id not supplied`)
           done()
         })
     })
