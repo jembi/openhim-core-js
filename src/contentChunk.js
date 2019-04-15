@@ -35,6 +35,10 @@ const isValidGridFsPayload = (payload) => {
   return false
 }
 
+const getGridFSBucket = () => {
+  return new mongodb.GridFSBucket(connectionDefault.client.db())
+}
+
 exports.extractStringPayloadIntoChunks = (payload) => {
   return new Promise((resolve, reject) => {
     if (!payload) {
@@ -45,7 +49,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
       return reject(new Error('payload not in the correct format, expecting a string, Buffer, ArrayBuffer, Array, or Array-like Object'))
     }
 
-    const bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
+    const bucket = getGridFSBucket()
     const stream = bucket.openUploadStream()
 
     stream.on('error', (err) => {
@@ -63,18 +67,12 @@ exports.extractStringPayloadIntoChunks = (payload) => {
 }
 
 export const retrievePayload = (fileId, callback) => {
-  const db = connectionDefault.client.db()
-  if (!db) {
-      const err = new Error(`Payload retrieval failed. Database handle: ${db} is invalid`)
-      return callback(err)
-  }
-
   if (!fileId) {
     const err = new Error(`Payload retrieval failed: Payload id: ${fileId} is invalid`)
     return callback(err)
   }
 
-  const bucket = new mongodb.GridFSBucket(db)
+  const bucket = getGridFSBucket()
 
   let body = ''
   bucket.openDownloadStream(fileId)
