@@ -204,7 +204,7 @@ describe('contentChunk: ', () => {
       stream.end(fileString)
     })
 
-    it('should return an error and null when file does not exist', (done) => {
+    it('should return an error when file does not exist', (done) => {
       const bucket = new mongodb.GridFSBucket(db)
       const stream = bucket.openUploadStream()
       const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
@@ -219,7 +219,7 @@ describe('contentChunk: ', () => {
 
           retrievePayload(fileId, (err, body) => {
             err.message.should.eql(
-              `Payload retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)
+              `FileNotFound: file ${fileId} was not found`)
             done()
           })
         }

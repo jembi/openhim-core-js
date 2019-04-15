@@ -77,8 +77,7 @@ export const retrievePayload = (fileId, callback) => {
   let body = ''
   bucket.openDownloadStream(fileId)
     .on('error', err => {
-      const error = new Error(`Payload retrieval failed: Error in reading stream: ${err.message}`)
-      return callback(error)
+      return callback(err)
     })
     .on('data', chunk => body += chunk)
     .on('end', () => {
