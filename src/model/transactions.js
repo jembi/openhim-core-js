@@ -23,7 +23,7 @@ const RequestDefMain = {
 const ResponseDefMain = {
   status: Number,
   headers: Object,
-  body: String,
+  bodyId: ObjectId,
   timestamp: Date
 }
 
