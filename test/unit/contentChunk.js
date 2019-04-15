@@ -170,83 +170,62 @@ describe('contentChunk: ', () => {
       })
     })
   })
-})
 
-describe('retrievePayload()', () => {
-  let client
-  let db
-  before(async () => {
-    client = connectionDefault.client
-    db = client.db()
-  })
-
-  after(() => {
-      if(db) {
-        db.collection('fs.files').deleteMany({})
-        db.collection('fs.chunks').deleteMany({})
-      }
-
-      if(client) {
-        client.close()
-      }
-  })
-
-  it('should return an error when the file id is null', (done) => {
-      const db = {}
-      const fileId = null
-
-      retrievePayload(fileId, (err, body) => {
-        err.message.should.eql(`Payload retrieval failed: Payload id: ${fileId} is invalid`)
-        done()
-      })
-  })
-
-  it('should return the body', (done) => {
-    const bucket = new mongodb.GridFSBucket(db)
-    const stream = bucket.openUploadStream()
-    const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                      `
-    let fileId
-
-    stream.on('finish', (doc) => {
-      if(doc) {
-        fileId = doc._id
+  describe('retrievePayload()', () => {
+    it('should return an error when the file id is null', (done) => {
+        const fileId = null
 
         retrievePayload(fileId, (err, body) => {
-          body.should.eql(fileString)
-        })
-        done()
-      }
-    })
-
-    stream.end(fileString)
-  })
-
-  it('should return an error and null when file does not exist', (done) => {
-    const bucket = new mongodb.GridFSBucket(db)
-    const stream = bucket.openUploadStream()
-    const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                        JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                      `
-    let fileId
-
-    stream.on('finish', (doc) => {
-      if(doc) {
-        fileId = '1222332'
-
-        retrievePayload(fileId, (err, body) => {
-          err.message.should.eql(
-            `Payload retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)
+          err.message.should.eql(`Payload retrieval failed: Payload id: ${fileId} is invalid`)
           done()
         })
-      }
     })
 
-    stream.end(fileString)
+    it('should return the body', (done) => {
+      const bucket = new mongodb.GridFSBucket(db)
+      const stream = bucket.openUploadStream()
+      const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                        `
+
+      stream.on('finish', (doc) => {
+        if(doc) {
+          const fileId = doc._id
+
+          retrievePayload(fileId, (err, body) => {
+            body.should.eql(fileString)
+            done()
+          })
+        }
+      })
+
+      stream.end(fileString)
+    })
+
+    it('should return an error and null when file does not exist', (done) => {
+      const bucket = new mongodb.GridFSBucket(db)
+      const stream = bucket.openUploadStream()
+      const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
+                        `
+
+      stream.on('finish', (doc) => {
+        if(doc) {
+          const fileId = '1222332'
+
+          retrievePayload(fileId, (err, body) => {
+            err.message.should.eql(
+              `Payload retrieval failed: Error in reading stream: FileNotFound: file ${fileId} was not found`)
+            done()
+          })
+        }
+      })
+
+      stream.end(fileString)
+    })
   })
 })
