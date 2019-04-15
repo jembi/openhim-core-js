@@ -71,9 +71,12 @@ const channelNeverCullDoc = Object.freeze({
   }
 })
 
+const requestBodyId = new ObjectId()
+const responseBodyId = new ObjectId()
+
 const baseTransaction = Object.freeze({
-  request: { path: '/sample/api', method: 'POST', body: 'test' },
-  response: { status: '200', body: 'test' },
+  request: { path: '/sample/api', method: 'POST', bodyId: requestBodyId },
+  response: { status: '200', bodyId: responseBodyId },
   status: 'Completed'
 })
 

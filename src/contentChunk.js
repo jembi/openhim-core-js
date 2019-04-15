@@ -2,6 +2,16 @@
 import mongodb from 'mongodb'
 import { connectionDefault } from './config'
 
+let bucket
+const getGridFSBucket = () => {
+  if (!bucket) {
+    bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
+    return bucket
+  }
+
+  return bucket
+}
+
 const isValidGridFsPayload = (payload) => {
   if (typeof payload === 'string' || payload instanceof String) {
     return true
@@ -44,11 +54,11 @@ exports.extractStringPayloadIntoChunks = (payload) => {
     if (!isValidGridFsPayload(payload)) {
       return reject(new Error('payload not in the correct format, expecting a string, Buffer, ArrayBuffer, Array, or Array-like Object'))
     }
-    
-    const bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
-    const stream = bucket.openUploadStream()
 
-    stream.on('error', (err) => {
+    const bucket = getGridFSBucket()
+    const uploadStream = bucket.openUploadStream()
+
+    uploadStream.on('error', (err) => {
       return reject(err)
     })
     .on('finish', (doc) => {
@@ -56,8 +66,24 @@ exports.extractStringPayloadIntoChunks = (payload) => {
         return reject(new Error('GridFS create failed'))
       }
 
-      return resolve(doc._id)
+      resolve(doc._id)
     })
-    stream.end(payload)
+    uploadStream.end(payload)
+  })
+}
+
+exports.removeBodyById = (id) => {
+  new Promise((resolve, reject) => {
+    if (!id) {
+      return reject(new Error('No ID supplied when trying to remove chucked body'))
+    }
+
+    const bucket = getGridFSBucket()
+    bucket.delete(id, (err, result) => {
+      console.log("Err: ", err)
+      console.log("Result: ", result)
+
+      resolve()
+    })
   })
 }

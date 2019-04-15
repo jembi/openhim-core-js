@@ -1,5 +1,31 @@
-import { Schema } from 'mongoose'
+import { Schema, ObjectId } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
+
+// TODO: OHM-691: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
+// This is duplicated due to the secondary routes and orchestrations using the same schema, and updating theu request/response bodies are done in a different story
+// Request Schema definition
+const RequestDefMain = {
+  host: String,
+  port: String,
+  path: String,
+  headers: Object,
+  querystring: String,
+  bodyId: ObjectId,
+  method: String,
+  timestamp: {
+    type: Date, required: true
+  }
+}
+
+// TODO: OHM-691: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
+// This is duplicated due to the secondary routes and orchestrations using the same schema, and updating theu request/response bodies are done in a different story
+// Response Schema definition
+const ResponseDefMain = {
+  status: Number,
+  headers: Object,
+  body: String,
+  timestamp: Date
+}
 
 // Request Schema definition
 const RequestDef = {
@@ -64,8 +90,8 @@ const TransactionSchema = new Schema({
   channelID: {
     type: Schema.Types.ObjectId
   },
-  request: RequestDef,
-  response: ResponseDef,
+  request: RequestDefMain,
+  response: ResponseDefMain,
   routes: [RouteMetadataDef],
   orchestrations: [OrchestrationMetadataDef],
   properties: Object,

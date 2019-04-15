@@ -2,9 +2,9 @@ import logger from 'winston'
 import * as transactions from '../model/transactions'
 import * as autoRetryUtils from '../autoRetry'
 import * as utils from '../utils'
-import { config } from '../config'
 import * as metrics from '../metrics'
 import { promisify } from 'util'
+import { extractStringPayloadIntoChunks } from '../contentChunk'
 
 export const transactionStatus = {
   PROCESSING: 'Processing',
@@ -26,7 +26,7 @@ function copyMapWithEscapedReservedCharacters (map) {
   return escapedMap
 }
 
-export function storeTransaction (ctx, done) {
+export async function storeTransaction (ctx, done) {
   logger.info('Storing request metadata for inbound transaction')
 
   ctx.requestTimestamp = new Date()
@@ -44,7 +44,6 @@ export function storeTransaction (ctx, done) {
       path: ctx.path,
       headers,
       querystring: ctx.querystring,
-      body: ctx.body,
       method: ctx.method,
       timestamp: ctx.requestTimestamp
     }
@@ -62,14 +61,18 @@ export function storeTransaction (ctx, done) {
   // check if channel request body is false and remove - or if request body is empty
   if ((ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
     // reset request body
-    tx.request.body = ''
+    ctx.body = ''
     // check if method is POST|PUT|PATCH - rerun not possible without request body
     if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
       tx.canRerun = false
     }
   }
 
-  if (utils.enforceMaxBodiesSize(ctx, tx.request)) { tx.canRerun = false }
+  if (utils.enforceMaxBodiesSize(ctx, ctx.body)) { tx.canRerun = false }
+
+  // extract body into chucks before saving transaction
+  const requestBodyChuckFileId = await extractStringPayloadIntoChunks(ctx.body)
+  tx.request.bodyId = requestBodyChuckFileId
 
   return tx.save((err, tx) => {
     if (err) {

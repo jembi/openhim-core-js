@@ -125,19 +125,19 @@ export const MAX_BODIES_SIZE = mbs >= 1 && mbs <= 15 ? mbs * 1024 * 1024 : 15 * 
 const appendText = config.api.truncateAppend
 const appendTextLength = Buffer.byteLength(appendText)
 
-export function enforceMaxBodiesSize (ctx, tx) {
+export function enforceMaxBodiesSize (ctx, body) {
   let enforced = false
 
   // running total for all bodies
   if ((ctx.totalBodyLength == null)) { ctx.totalBodyLength = 0 }
 
-  let len = Buffer.byteLength(tx.body)
+  let len = Buffer.byteLength(body)
   if ((ctx.totalBodyLength + len) > MAX_BODIES_SIZE) {
     len = Math.max(0, MAX_BODIES_SIZE - ctx.totalBodyLength)
     if (len > appendTextLength) {
-      tx.body = tx.body.slice(0, len - appendTextLength) + appendText
+      body = body.slice(0, len - appendTextLength) + appendText
     } else {
-      tx.body = appendText
+      body = appendText
     }
     enforced = true
     logger.warn('Truncated body for storage as it exceeds limits')
