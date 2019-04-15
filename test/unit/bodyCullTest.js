@@ -8,6 +8,10 @@ import { clone } from '../utils'
 import moment from 'moment'
 import should from 'should'
 
+import { connectionDefault } from '../../src/config'
+const MongoClient = connectionDefault.client
+let db = null
+
 const testTime = new Date(2016, 2, 12)
 const cullTime = new Date(2016, 2, 9)
 
@@ -96,7 +100,30 @@ describe(`cullBodies`, () => {
     return new TransactionModel(transactionDoc).save()
   }
 
+  async function createTransactionBody (fileId) {
+    db.collection('fs.chunks').insert({
+      "files_id" : new ObjectId(fileId), 
+      "data" : "Test Data"
+    })
+    db.collection('fs.files').insert({ 
+      "_id" : new ObjectId(fileId)
+    })
+  }
+
+  before(async function() {
+    const client = await MongoClient.connect()
+    db = client.db()
+  })
+
+  after(function() {
+    MongoClient.close()
+  });
+
   beforeEach(async () => {
+
+    await createTransactionBody(requestBodyId)
+    await createTransactionBody(responseBodyId)
+
     clock = sinon.useFakeTimers(testTime.getTime())
     const persisted = await Promise.all([
       new ChannelModel(channelHasNotCulledDoc).save(),
@@ -115,7 +142,10 @@ describe(`cullBodies`, () => {
     await Promise.all([
       ClientModel.deleteMany(),
       ChannelModel.deleteMany(),
-      TransactionModel.deleteMany()
+      TransactionModel.deleteMany(),
+
+      db.collection('fs.files').deleteMany({}),
+      db.collection('fs.chunks').deleteMany({})
     ])
   })
 
@@ -124,8 +154,8 @@ describe(`cullBodies`, () => {
     const tran = await createTransaction(channelHasNotCulled, momentTime.toDate())
     await cullBodies()
     const transaction = await TransactionModel.findById(tran._id)
-    should(transaction.request.body).undefined()
-    should(transaction.response.body).undefined()
+    should(transaction.request.bodyId).undefined()
+    should(transaction.response.bodyId).undefined()
   })
 
   it(`will remove multiple transaction body's that are x days old and leave the younger transactions`, async () => {
@@ -136,14 +166,14 @@ describe(`cullBodies`, () => {
     await cullBodies()
     {
       const transaction = await TransactionModel.findById(tranCulled._id)
-      should(transaction.request.body).undefined()
-      should(transaction.response.body).undefined()
+      should(transaction.request.bodyId).undefined()
+      should(transaction.response.bodyId).undefined()
     }
 
     {
       const transaction = await TransactionModel.findById(tranLeftAlone._id)
-      should(transaction.request.body).eql('test')
-      should(transaction.response.body).eql('test')
+      should(transaction.request.bodyId).eql(requestBodyId)
+      // should(transaction.response.bodyId).eql(responseBodyId)
     }
   })
 
@@ -168,13 +198,13 @@ describe(`cullBodies`, () => {
 
     {
       const transaction = await TransactionModel.findById(notCulled._id)
-      should(transaction.request.body).eql('test')
-      should(transaction.response.body).eql('test')
+      should(transaction.request.bodyId).eql(requestBodyId)
+      // should(transaction.response.bodyId).eql(responseBodyId)
     }
     {
       const transaction = await TransactionModel.findById(culled._id)
-      should(transaction.request.body).undefined()
-      should(transaction.response.body).undefined()
+      should(transaction.request.bodyId).undefined()
+      should(transaction.response.bodyId).undefined()
     }
   })
 
@@ -183,7 +213,7 @@ describe(`cullBodies`, () => {
     const tran = await createTransaction(channelNeverCull, momentTime.toDate())
     await cullBodies()
     const transaction = await TransactionModel.findById(tran._id)
-    should(transaction.request.body).eql('test')
-    should(transaction.response.body).eql('test')
+    should(transaction.request.bodyId).eql(requestBodyId)
+    // should(transaction.response.bodyId).eql(responseBodyId)
   })
 })
