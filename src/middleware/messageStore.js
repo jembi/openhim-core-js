@@ -267,5 +267,4 @@ export async function koaMiddleware (ctx, next) {
   const saveTransaction = promisify(storeTransaction)
   await saveTransaction(ctx)
   await next()
-  storeResponse(ctx, () => { })
 }
