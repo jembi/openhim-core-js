@@ -172,16 +172,16 @@ describe('contentChunk: ', () => {
   })
 
   describe('retrievePayload()', () => {
-    it('should return an error when the file id is null', (done) => {
+    it('should return an error when the file id is null', async () => {
         const fileId = null
 
-        retrievePayload(fileId, (err, body) => {
-          err.message.should.eql(`Payload id not supplied`)
-          done()
-        })
+          retrievePayload(fileId).catch((err) => {
+            err.message.should.eql(`Payload id not supplied`)
+          })
+
     })
 
-    it('should return the body', (done) => {
+    it('should return the body', async () => {
       const bucket = new mongodb.GridFSBucket(db)
       const stream = bucket.openUploadStream()
       const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
@@ -190,42 +190,25 @@ describe('contentChunk: ', () => {
                           JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
                         `
 
-      stream.on('finish', (doc) => {
+      stream.on('finish', async (doc) => {
         if(doc) {
           const fileId = doc._id
 
-          retrievePayload(fileId, (err, body) => {
-            body.should.eql(fileString)
-            done()
-          })
+          const body = await retrievePayload(fileId)
+          body.should.eql(fileString)
         }
       })
 
       stream.end(fileString)
     })
 
-    it('should return an error when file does not exist', (done) => {
-      const bucket = new mongodb.GridFSBucket(db)
-      const stream = bucket.openUploadStream()
-      const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                          JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
-                        `
+    it('should return an error when file does not exist', () => {
+        const fileId = 'NotAvalidID'
 
-      stream.on('finish', (doc) => {
-        if(doc) {
-          const fileId = '1222332'
-
-          retrievePayload(fileId, (err, body) => {
-            err.message.should.eql(
-              `FileNotFound: file ${fileId} was not found`)
-            done()
-          })
-        }
+        retrievePayload(fileId).catch(err =>
+          err.message.should.eql(
+            `FileNotFound: file ${fileId} was not found`)
+        )
       })
-
-      stream.end(fileString)
-    })
   })
 })

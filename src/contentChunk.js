@@ -66,21 +66,18 @@ exports.extractStringPayloadIntoChunks = (payload) => {
   })
 }
 
-export const retrievePayload = (fileId, callback) => {
-  if (!fileId) {
-    const err = new Error(`Payload id not supplied`)
-    return callback(err)
-  }
+export const retrievePayload = fileId => {
+  return new Promise((resolve, reject) => {
+    if (!fileId) {
+      return reject(new Error(`Payload id not supplied`))
+    }
 
-  const bucket = getGridFSBucket()
+    const bucket = getGridFSBucket()
+    const chunks = []
 
-  let body = ''
-  bucket.openDownloadStream(fileId)
-    .on('error', err => {
-      return callback(err)
-    })
-    .on('data', chunk => body += chunk)
-    .on('end', () => {
-      return callback(null, body)
-    })
+    bucket.openDownloadStream(fileId)
+      .on('error', reject)
+      .on('data', chunk => chunks.push(chunk))
+      .on('end', () => resolve(Buffer.concat(chunks).toString()))
+  })
 }
