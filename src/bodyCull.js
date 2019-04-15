@@ -40,20 +40,26 @@ async function clearTransactions (channel) {
     query['request.timestamp'].$gte = lastBodyCleared
   }
 
+  // constrcut promises array for removing transaction bodies
+  const transactionsToCullBody = await TransactionModel.find(query, { 'request.bodyId': 1, 'response.bodyId': 1, })
+  const removeBodyPromises = []
+  transactionsToCullBody.map((tx) => {
+    if (tx.request.bodyId) {
+      removeBodyPromises.push(removeBodyById(tx.request.bodyId))
+    }
+    if (tx.response.bodyId) {
+      removeBodyPromises.push(removeBodyById(tx.response.bodyId))
+    }
+  })
+
   channel.lastBodyCleared = Date.now()
   channel.updatedBy = { name: 'Cron' }
   await channel.save()
-  const updateResp = await TransactionModel.updateMany(query, { $unset: { 'request.body': '', 'response.body': '' } })
+  const updateResp = await TransactionModel.updateMany(query, { $unset: { 'request.bodyId': '', 'response.bodyId': '' } })
   if (updateResp.nModified > 0) {
     logger.info(`Culled ${updateResp.nModified} transactions for channel ${channel.name}`)
   }
-
-  // remove all the body chucks after the transactions have been updated
-  const transactionsToCullBody = await TransactionModel.find(query)
-  console.log(transactionsToCullBody)
-  transactionsToCullBody.forEach(async (tx) => {
-    console.log(tx.request.bodyId)
-    await removeBodyById(tx.request.bodyId)
-    await removeBodyById(tx.response.bodyId)
-  })
+  
+  // execute the promises to remove all relevant bodies
+  await Promise.all(removeBodyPromises)
 }

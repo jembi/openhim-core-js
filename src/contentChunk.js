@@ -73,17 +73,17 @@ exports.extractStringPayloadIntoChunks = (payload) => {
 }
 
 exports.removeBodyById = (id) => {
-  new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (!id) {
       return reject(new Error('No ID supplied when trying to remove chucked body'))
     }
 
-    const bucket = getGridFSBucket()
-    bucket.delete(id, (err, result) => {
-      console.log("Err: ", err)
-      console.log("Result: ", result)
-
-      resolve()
-    })
+    try {
+      const bucket = getGridFSBucket()
+      const result = await bucket.delete(id)
+      resolve(result)
+    } catch (err) {
+      reject(err)
+    }    
   })
 }
