@@ -7,13 +7,14 @@ import * as testUtils from '../utils'
 import { TransactionModel } from '../../src/model/transactions'
 import { ChannelModel } from '../../src/model/channels'
 import * as server from '../../src/server'
-import { config } from '../../src/config'
+import { config, connectionDefault } from '../../src/config'
 import { EventModelAPI } from '../../src/model/events'
 import { AutoRetryModelAPI } from '../../src/model/autoRetry'
 import * as constants from '../constants'
 import { promisify } from 'util'
-import { ObjectId } from 'mongodb'
+import mongodb from 'mongodb'
 
+const ObjectId = mongodb.ObjectId
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
 
@@ -36,7 +37,17 @@ const clearTransactionBodies = function (transaction) {
 const MAX_BODY_MB = 1
 const MAX_BODY_SIZE = MAX_BODY_MB * 1024 * 1024
 
+const mongoClient = await connectionDefault.client()
+const db = await mongoClient.db()
+const bucket = new mongodb.GridFSBucket(db)
+
 describe('API Integration Tests', () => {
+  after(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+      await mongoClient.close()
+  })
+
   const { SERVER_PORTS } = constants
   const LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
 
@@ -716,7 +727,67 @@ describe('API Integration Tests', () => {
       })
     })
 
-    describe('*getTransactions()', () => {
+    describe('*getTransactions()', async () => {
+      const requestDoc = {
+        path: '/api/test',
+        headers: {
+          'header-title': 'header1-value',
+          'another-header': 'another-header-value'
+        },
+        querystring: 'param1=value1&param2=value2',
+        body: '',
+        method: 'POST',
+        timestamp: '2014-06-09T11:17:25.929Z'
+      }
+
+      const responseDoc = {
+        status: '200',
+        headers: {
+          header: 'value',
+          header2: 'value2'
+        },
+        bodyId: '',
+        timestamp: '2014-06-09T11:17:25.929Z'
+      }
+
+      const stream = bucket.openUploadStream()
+      var x = 0
+      stream.on('finish', doc => {
+          if(x<1) requestDoc.bodyId = doc._id
+          responseDoc.bodyId = doc._id
+          x += 1
+      })
+
+      stream.end('<HTTP body request>')
+      stream.end('<HTTP body request>')
+
+      const transactionData = {
+        _id: '111111111111111111111111',
+        status: 'Processing',
+        clientID: '999999999999999999999999',
+        channelID: '888888888888888888888888',
+        request: requestDoc,
+        response: responseDoc,
+
+        routes: [{
+          name: 'dummy-route',
+          request: requestDoc,
+          response: responseDoc
+        }
+        ],
+
+        orchestrations: [{
+          name: 'dummy-orchestration',
+          request: requestDoc,
+          response: responseDoc
+        }
+        ],
+        properties: {
+          prop1: 'prop1-value1',
+          prop2: 'prop-value1'
+        }
+      }
+
       it('should call getTransactions ', async () => {
         const countBefore = await TransactionModel.countDocuments({})
         countBefore.should.equal(0)
@@ -950,6 +1021,67 @@ describe('API Integration Tests', () => {
     })
 
     describe('*getTransactionById (transactionId)', () => {
+        const requestDoc = {
+          path: '/api/test',
+          headers: {
+            'header-title': 'header1-value',
+            'another-header': 'another-header-value'
+          },
+          querystring: 'param1=value1&param2=value2',
+          bodyId: '',
+          method: 'POST',
+          timestamp: '2014-06-09T11:17:25.929Z'
+        }
+
+        const responseDoc = {
+          status: '200',
+          headers: {
+            header: 'value',
+            header2: 'value2'
+          },
+          body: '',
+          bodyId: '',
+          timestamp: '2014-06-09T11:17:25.929Z'
+        }
+
+        const stream = bucket.openUploadStream()
+        var x = 0
+        stream.on('finish', doc => {
+            if(x<1) requestDoc.bodyId = doc._id
+            responseDoc.bodyId = doc._id
+            x += 1
+        })
+
+        stream.end('<HTTP body request>')
+        stream.end('<HTTP body request>')
+
+        const transactionData = {
+          _id: '111111111111111111111111',
+          status: 'Processing',
+          clientID: '999999999999999999999999',
+          channelID: '888888888888888888888888',
+          request: requestDoc,
+          response: responseDoc,
+
+          routes: [{
+            name: 'dummy-route',
+            request: requestDoc,
+            response: responseDoc
+          }
+          ],
+
+          orchestrations: [{
+            name: 'dummy-orchestration',
+            request: requestDoc,
+            response: responseDoc
+          }
+          ],
+          properties: {
+            prop1: 'prop1-value1',
+            prop2: 'prop-value1'
+          }
+        }
+
       it('should fetch a transaction by ID - admin user', async () => {
         const tx = await new TransactionModel(transactionData).save()
 
@@ -1024,6 +1156,66 @@ describe('API Integration Tests', () => {
     })
 
     describe('*findTransactionByClientId (clientId)', () => {
+        const requestDoc = {
+          path: '/api/test',
+          headers: {
+            'header-title': 'header1-value',
+            'another-header': 'another-header-value'
+          },
+          querystring: 'param1=value1&param2=value2',
+          bodyId: '',
+          method: 'POST',
+          timestamp: '2014-06-09T11:17:25.929Z'
+        }
+
+        const responseDoc = {
+          status: '200',
+          headers: {
+            header: 'value',
+            header2: 'value2'
+          },
+          bodyId: '',
+          timestamp: '2014-06-09T11:17:25.929Z'
+        }
+
+        const stream = bucket.openUploadStream()
+        var x = 0
+        stream.on('finish', doc => {
+            if(x<1) requestDoc.bodyId = doc._id
+            responseDoc.bodyId = doc._id
+            x += 1
+        })
+
+        stream.end('<HTTP body request>')
+        stream.end('<HTTP body request>')
+
+        const transactionData = {
+          _id: '111111111111111111111111',
+          status: 'Processing',
+          clientID: '999999999999999999999999',
+          channelID: '888888888888888888888888',
+          request: requestDoc,
+          response: responseDoc,
+
+          routes: [{
+            name: 'dummy-route',
+            request: requestDoc,
+            response: responseDoc
+          }
+          ],
+
+          orchestrations: [{
+            name: 'dummy-orchestration',
+            request: requestDoc,
+            response: responseDoc
+          }
+          ],
+          properties: {
+            prop1: 'prop1-value1',
+            prop2: 'prop-value1'
+          }
+        }
+
       it('should call findTransactionByClientId', async () => {
         const tx = await new TransactionModel(Object.assign({}, transactionData, { clientID: '555555555555555555555555' })).save()
         const res = await request(constants.BASE_URL)
