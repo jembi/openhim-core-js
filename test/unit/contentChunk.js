@@ -14,10 +14,10 @@ describe('contentChunk: ', () => {
     db = client.db()
   });
 
-  after(function() {
-    db.collection('fs.files').deleteMany({})
-    db.collection('fs.chunks').deleteMany({})
-    MongoClient.close()
+  after(async () => {
+    await db.collection('fs.files').deleteMany({})
+    await db.collection('fs.chunks').deleteMany({})
+    await MongoClient.close()
   });
 
   describe('extractStringPayloadIntoChunks', () => {
