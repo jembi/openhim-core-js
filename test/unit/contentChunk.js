@@ -15,15 +15,12 @@ describe('contentChunk: ', () => {
   });
 
   after(function() {
+    db.collection('fs.files').deleteMany({})
+    db.collection('fs.chunks').deleteMany({})
     MongoClient.close()
   });
 
   describe('extractStringPayloadIntoChunks', () => {
-    beforeEach(async () => {
-      db.collection('fs.files').deleteMany({})
-      db.collection('fs.chunks').deleteMany({})
-    })
-
     it('should throw an error when undefined payload is supplied', async () => {
       const payload = undefined
 
@@ -181,7 +178,7 @@ describe('contentChunk: ', () => {
 
     })
 
-    it('should return the body', async () => {
+    it('should return the body', (done) => {
       const bucket = new mongodb.GridFSBucket(db)
       const stream = bucket.openUploadStream()
       const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
@@ -191,12 +188,13 @@ describe('contentChunk: ', () => {
                         `
 
       stream.on('finish', async (doc) => {
-        if(doc) {
           const fileId = doc._id
 
-          const body = await retrievePayload(fileId)
-          body.should.eql(fileString)
-        }
+          retrievePayload(fileId).then(body => {
+            body.should.eql(fileString)
+            done()
+          })
+
       })
 
       stream.end(fileString)
