@@ -87,3 +87,19 @@ exports.removeBodyById = (id) => {
     }    
   })
 }
+
+export const retrievePayload = fileId => {
+  return new Promise((resolve, reject) => {
+    if (!fileId) {
+      return reject(new Error(`Payload id not supplied`))
+    }
+
+    const bucket = getGridFSBucket()
+    const chunks = []
+
+    bucket.openDownloadStream(fileId)
+      .on('error', err => reject(err))
+      .on('data', chunk => chunks.push(chunk))
+      .on('end', () => resolve(Buffer.concat(chunks).toString()))
+  })
+}
