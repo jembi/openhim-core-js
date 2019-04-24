@@ -1,7 +1,6 @@
 import { retrievePayload } from './contentChunk'
 
 const addBodiesToTransactions = async (transactions) => {
-console.log('transactions.length='+transactions.length)
   if(!transactions ||
     transactions.length < 1
   ) {
