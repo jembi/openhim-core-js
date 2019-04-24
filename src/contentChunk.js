@@ -52,9 +52,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
     const bucket = getGridFSBucket()
     const stream = bucket.openUploadStream()
 
-    stream.on('error', (err) => {
-      return reject(err)
-    })
+    stream.on('error', reject)
     .on('finish', (doc) => {
       if (!doc) {
         return reject(new Error('GridFS create failed'))

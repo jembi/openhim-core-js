@@ -9,16 +9,19 @@ const MongoClient = connectionDefault.client
 let db = null
 
 describe('contentChunk: ', () => {
-  before(async function() {
+  before(async () => {
     const client = await MongoClient.connect()
     db = client.db()
-  });
+  })
 
-  after(async () => {
+  beforeEach(async () => {
     await db.collection('fs.files').deleteMany({})
     await db.collection('fs.chunks').deleteMany({})
+  })
+
+  after(async () => {
     await MongoClient.close()
-  });
+  })
 
   describe('extractStringPayloadIntoChunks', () => {
     it('should throw an error when undefined payload is supplied', async () => {
@@ -170,12 +173,11 @@ describe('contentChunk: ', () => {
 
   describe('retrievePayload()', () => {
     it('should return an error when the file id is null', async () => {
-        const fileId = null
+      const fileId = null
 
-          retrievePayload(fileId).catch((err) => {
-            err.message.should.eql(`Payload id not supplied`)
-          })
-
+      retrievePayload(fileId).catch((err) => {
+        err.message.should.eql(`Payload id not supplied`)
+      })
     })
 
     it('should return the body', (done) => {
@@ -188,25 +190,24 @@ describe('contentChunk: ', () => {
                         `
 
       stream.on('finish', async (doc) => {
-          const fileId = doc._id
+        const fileId = doc._id
 
-          retrievePayload(fileId).then(body => {
-            body.should.eql(fileString)
-            done()
-          })
-
+        retrievePayload(fileId).then(body => {
+          body.should.eql(fileString)
+          done()
+        })
       })
 
       stream.end(fileString)
     })
 
     it('should return an error when file does not exist', () => {
-        const fileId = 'NotAvalidID'
+      const fileId = 'NotAvalidID'
 
-        retrievePayload(fileId).catch(err =>
-          err.message.should.eql(
-            `FileNotFound: file ${fileId} was not found`)
-        )
-      })
+      retrievePayload(fileId).catch(err =>
+        err.message.should.eql(
+          `FileNotFound: file ${fileId} was not found`)
+      )
+    })
   })
 })
