@@ -7,6 +7,8 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
 import { promisify } from 'util'
+import { retrievePayload } from '../contentChunk'
+import { transformTransaction, addBodiesToTransactions } from '../bodyFix'
 
 const apiConf = config.get('api')
 
@@ -98,7 +100,7 @@ function truncateTransactionDetails (trx) {
 function getActiveRoles (acl, userGroups, channels) {
   const userRoles = new Set(userGroups)
   const channelRoles = new Set()
-  channels.forEach(item => item[acl].forEach(role => channelRoles.add(role)))  
+  channels.forEach(item => item[acl].forEach(role => channelRoles.add(role)))
   return new Set([...userRoles].filter(i => channelRoles.has(i)))
 }
 
@@ -235,16 +237,20 @@ export async function getTransactions (ctx) {
       }
     }
 
-    // execute the query
-    ctx.body = await TransactionModelAPI
+    const transactions = await TransactionModelAPI
       .find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({'request.timestamp': -1})
       .exec()
 
+    // retrieve transaction request and response bodies
+    const transformedTransactions = await addBodiesToTransactions(transactions)
+
+    ctx.body = transformedTransactions
+
     if (filterRepresentation === 'fulltruncate') {
-      Array.from(ctx.body).map((trx) => truncateTransactionDetails(trx))
+    transformedTransactions.map((trx) => truncateTransactionDetails(trx))
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
@@ -364,7 +370,30 @@ export async function getTransactionById (ctx, transactionId) {
     // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
-    const result = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
+    const transaction = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
+    const result = transformTransaction(transaction)
+
+    // Retrieve transaction's request and response bodies
+    if(
+        transaction &&
+        transaction.response &&
+        transaction.response.bodyId
+    ) {
+        await retrievePayload(transaction.response.bodyId).then(body => {
+            result.response.body = body
+        }).catch(err => {throw new Error(err)})
+    }
+
+    if(
+        transaction &&
+        transaction.request &&
+        transaction.request.bodyId
+    ) {
+        await retrievePayload(transaction.request.bodyId).then(body => {
+            result.request.body = body
+        }).catch(err => {throw new Error(err)})
+    }
+
     if (result && (filterRepresentation === 'fulltruncate')) {
       truncateTransactionDetails(result)
     }
@@ -409,11 +438,17 @@ export async function findTransactionByClientId (ctx, clientId) {
       filtersObject.channelID = {$in: getChannelIDsArray(channels)}
     }
 
-    // execute the query
-    ctx.body = await TransactionModelAPI
+    const transactions =  await TransactionModelAPI
       .find(filtersObject, projectionFiltersObject)
       .sort({'request.timestamp': -1})
       .exec()
+
+    // retrieve transaction request and response bodies
+    const transformedTransactions = await addBodiesToTransactions(transactions)
+
+    ctx.body = transformedTransactions
+
+    return transformedTransactions
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not get transaction by clientID via the API: ${e}`, 'error')
   }

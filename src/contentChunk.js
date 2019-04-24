@@ -2,6 +2,16 @@
 import mongodb from 'mongodb'
 import { connectionDefault } from './config'
 
+let bucket
+const getGridFSBucket = () => {
+  if (!bucket) {
+    bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
+    return bucket
+  }
+
+  return bucket
+}
+
 const isValidGridFsPayload = (payload) => {
   if (typeof payload === 'string' || payload instanceof String) {
     return true
@@ -35,10 +45,6 @@ const isValidGridFsPayload = (payload) => {
   return false
 }
 
-const getGridFSBucket = () => {
-  return new mongodb.GridFSBucket(connectionDefault.client.db())
-}
-
 exports.extractStringPayloadIntoChunks = (payload) => {
   return new Promise((resolve, reject) => {
     if (!payload) {
@@ -50,7 +56,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
     }
 
     const bucket = getGridFSBucket()
-    const stream = bucket.openUploadStream()
+    const uploadStream = bucket.openUploadStream()
 
     stream.on('error', reject)
     .on('finish', (doc) => {
@@ -58,9 +64,25 @@ exports.extractStringPayloadIntoChunks = (payload) => {
         return reject(new Error('GridFS create failed'))
       }
 
-      return resolve(doc._id)
+      resolve(doc._id)
     })
-    stream.end(payload)
+    uploadStream.end(payload)
+  })
+}
+
+exports.removeBodyById = (id) => {
+  return new Promise(async (resolve, reject) => {
+    if (!id) {
+      return reject(new Error('No ID supplied when trying to remove chucked body'))
+    }
+
+    try {
+      const bucket = getGridFSBucket()
+      const result = await bucket.delete(id)
+      resolve(result)
+    } catch (err) {
+      reject(err)
+    }    
   })
 }
 
@@ -74,7 +96,7 @@ export const retrievePayload = fileId => {
     const chunks = []
 
     bucket.openDownloadStream(fileId)
-      .on('error', reject)
+      .on('error', err => reject(err))
       .on('data', chunk => chunks.push(chunk))
       .on('end', () => resolve(Buffer.concat(chunks).toString()))
   })

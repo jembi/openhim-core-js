@@ -2,9 +2,9 @@ import logger from 'winston'
 import * as transactions from '../model/transactions'
 import * as autoRetryUtils from '../autoRetry'
 import * as utils from '../utils'
-import { config } from '../config'
 import * as metrics from '../metrics'
 import { promisify } from 'util'
+import { extractStringPayloadIntoChunks } from '../contentChunk'
 
 export const transactionStatus = {
   PROCESSING: 'Processing',
@@ -26,7 +26,7 @@ function copyMapWithEscapedReservedCharacters (map) {
   return escapedMap
 }
 
-export function storeTransaction (ctx, done) {
+export async function storeTransaction (ctx, done) {
   logger.info('Storing request metadata for inbound transaction')
 
   ctx.requestTimestamp = new Date()
@@ -44,7 +44,6 @@ export function storeTransaction (ctx, done) {
       path: ctx.path,
       headers,
       querystring: ctx.querystring,
-      body: ctx.body,
       method: ctx.method,
       timestamp: ctx.requestTimestamp
     }
@@ -62,14 +61,20 @@ export function storeTransaction (ctx, done) {
   // check if channel request body is false and remove - or if request body is empty
   if ((ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
     // reset request body
-    tx.request.body = ''
+    ctx.body = ''
     // check if method is POST|PUT|PATCH - rerun not possible without request body
     if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
       tx.canRerun = false
     }
   }
 
-  if (utils.enforceMaxBodiesSize(ctx, tx.request)) { tx.canRerun = false }
+  if (utils.enforceMaxBodiesSize(ctx, ctx.body)) { tx.canRerun = false }
+
+  // extract body into chucks before saving transaction
+  if (ctx.body) {
+    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(ctx.body)
+    tx.request.bodyId = requestBodyChuckFileId
+  }
 
   return tx.save((err, tx) => {
     if (err) {
@@ -83,9 +88,10 @@ export function storeTransaction (ctx, done) {
   })
 }
 
-export function storeResponse (ctx, done) {
+export async function storeResponse (ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
 
+  
   const res = {
     status: ctx.response.status,
     headers,
@@ -105,7 +111,7 @@ export function storeResponse (ctx, done) {
     orchestrations: []
   }
 
-  utils.enforceMaxBodiesSize(ctx, update.response)
+  utils.enforceMaxBodiesSize(ctx, update.response.body)
 
   if (ctx.mediatorResponse) {
     if (ctx.mediatorResponse.orchestrations) {
@@ -117,6 +123,13 @@ export function storeResponse (ctx, done) {
 
   if (ctx.orchestrations) {
     update.orchestrations.push(...truncateOrchestrationBodies(ctx, ctx.orchestrations))
+  }
+
+  // extract body into chucks before saving transaction
+  if (update.response.body) {
+    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(update.response.body)
+    delete update.response.body
+    update.response.bodyId = responseBodyChuckFileId
   }
 
   return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
@@ -136,8 +149,8 @@ export function storeResponse (ctx, done) {
 function truncateOrchestrationBodies (ctx, orchestrations) {
   return orchestrations.map(orch => {
     const truncatedOrchestration = Object.assign({}, orch)
-    if (truncatedOrchestration.request && truncatedOrchestration.request.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.request) }
-    if (truncatedOrchestration.response && truncatedOrchestration.response.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.response) }
+    if (truncatedOrchestration.request && truncatedOrchestration.request.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.request.body) }
+    if (truncatedOrchestration.response && truncatedOrchestration.response.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.response.body) }
     return truncatedOrchestration
   })
 }
@@ -149,8 +162,8 @@ export function storeNonPrimaryResponse (ctx, route, done) {
   }
 
   if (ctx.transactionId != null) {
-    if ((route.request != null ? route.request.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.request) }
-    if ((route.response != null ? route.response.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.response) }
+    if ((route.request != null ? route.request.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.request.body) }
+    if ((route.response != null ? route.response.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.response.body) }
 
     transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {
       if (err) {
@@ -254,5 +267,4 @@ export async function koaMiddleware (ctx, next) {
   const saveTransaction = promisify(storeTransaction)
   await saveTransaction(ctx)
   await next()
-  storeResponse(ctx, () => { })
 }
