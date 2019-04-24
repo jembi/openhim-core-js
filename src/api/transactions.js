@@ -236,8 +236,7 @@ export async function getTransactions (ctx) {
       }
     }
 
-    // execute the query
-    ctx.body = await TransactionModelAPI
+    const transactions = await TransactionModelAPI
       .find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
@@ -245,44 +244,92 @@ export async function getTransactions (ctx) {
       .exec()
 
     // retrieve transaction request and response bodies
-    const transactions = await addBodiesToTransactions(ctx.body)
+    const transformedTransactions = await addBodiesToTransactions(transactions)
+
+    ctx.body = transformedTransactions
 
     if (filterRepresentation === 'fulltruncate') {
-    transactions.map((trx) => truncateTransactionDetails(trx))
+    transformedTransactions.map((trx) => truncateTransactionDetails(trx))
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
   }
 }
 
-function addBodiesToTransactions(transactions) {
-  if(!transactions) {
+async function addBodiesToTransactions(transactions) {
+  if(!transactions ||
+    transactions.length < 1
+  ) {
     return []
   }
 
-  Array.from(transactions).map(async trans => {
-      if(
-          trans &&
-          trans.request &&
-          trans.request.bodyId
-      ) {
-          await retrievePayload(trans.request.bodyId).then(body => {
-              trans.request.body = body
-          }).catch(err => {throw new Error(err)})
-      }
+  const transformedTransactions = await transactions.map(trans => {
+    let transformedTrans = transformTransaction(trans)
 
-       if(
-          trans &&
-          trans.response &&
-          trans.response.bodyId
-      ) {
-          await retrievePayload(trans.response.bodyId).then(body => {
-              trans.response.body = body
-          }).catch(err => {throw new Error(err)})
-      }
+    if(
+        trans &&
+        trans.request &&
+        trans.request.bodyId
+    ) {
+        retrievePayload(trans.request.bodyId).then(body => {
+            transformedTrans.request.body = body
+            return
+        }).catch(err => {throw new Error(err)})
+    }
 
-      return trans
+    if(
+        trans &&
+        trans.response &&
+        trans.response.bodyId
+    ) {
+        retrievePayload(trans.response.bodyId).then(body => {
+            transformedTrans.response.body = body
+            return
+        }).catch(err => {throw new Error(err)})
+    }
+
+    return transformedTrans
   })
+
+  return transformedTransactions
+}
+
+// removes the bodyId field transaction
+function transformTransaction(trans) {
+  let transformedTrans = {}
+
+  transformedTrans.request = {}
+  transformedTrans.response = {}
+
+  if(trans._id) transformedTrans._id = trans._id
+  if(trans.clientID) transformedTrans.clientID = trans.clientID
+  if(trans.clientIP) transformedTrans.clientIP = trans.clientIP
+  if(trans.parentID) transformedTrans.parentID = trans.parentID
+  if(trans.childIDs) transformedTrans.childIDs = trans.childIDs
+  if(trans.channelID) transformedTrans.channelID = trans.channelID
+  if(trans.routes) transformedTrans.routes = trans.routes
+  if(trans.orchestrations) transformedTrans.orchestrations = trans.orchestrations
+  if(trans.properties) transformedTrans.properties = trans.properties
+  if(trans.canRerun) transformedTrans.canRerun = trans.canRerun
+  if(trans.autoRetry) transformedTrans.autoRetry = trans.autoRetry
+  if(trans.autoRetryAttempt) transformedTrans.autoRetryAttempt = trans.autoRetryAttempt
+  if(trans.wasRerun) transformedTrans.wasRerun = trans.wasRerun
+  if(trans.error) transformedTrans.error = trans.error
+  if(trans.status) transformedTrans.status = trans.status
+
+  if(trans.request.host) transformedTrans.request.host = trans.request.host
+  if(trans.request.port) transformedTrans.request.port = trans.request.port
+  if(trans.request.path) {transformedTrans.request.path = trans.request.path}
+  if(trans.request.headers) transformedTrans.request.headers = trans.request.headers
+  if(trans.request.querystring) transformedTrans.request.querystring = trans.request.querystring
+  if(trans.request.method) transformedTrans.request.method = trans.request.method
+  if(trans.request.timestamp) transformedTrans.request.timestamp = trans.request.timestamp
+
+  if(trans.response.status) transformedTrans.response.status = trans.response.status
+  if(trans.response.headers) transformedTrans.response.headers = trans.response.headers
+  if(trans.response.timestamp) transformedTrans.response.timestamp = trans.response.timestamp
+
+  return transformedTrans
 }
 
 function recursivelySearchObject (ctx, obj, ws, repeat) {
@@ -414,25 +461,26 @@ export async function getTransactionById (ctx, transactionId) {
     // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
-    const result = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
+    const transaction = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
+    const result = transformTransaction(transaction)
 
     // Retrieve transaction's request and response bodies
     if(
-        result &&
-        result.response &&
-        result.response.bodyId
+        transaction &&
+        transaction.response &&
+        transaction.response.bodyId
     ) {
-        await retrievePayload(result.response.bodyId).then(body => {
+        await retrievePayload(transaction.response.bodyId).then(body => {
             result.response.body = body
         }).catch(err => {throw new Error(err)})
     }
 
-     if(
-        result &&
-        result.request &&
-        result.request.bodyId
+    if(
+        transaction &&
+        transaction.request &&
+        transaction.request.bodyId
     ) {
-        await retrievePayload(result.request.bodyId).then(body => {
+        await retrievePayload(transaction.request.bodyId).then(body => {
             result.request.body = body
         }).catch(err => {throw new Error(err)})
     }
@@ -481,15 +529,17 @@ export async function findTransactionByClientId (ctx, clientId) {
       filtersObject.channelID = {$in: getChannelIDsArray(channels)}
     }
 
-    // execute the query
-    ctx.body = await TransactionModelAPI
+    const transactions =  await TransactionModelAPI
       .find(filtersObject, projectionFiltersObject)
       .sort({'request.timestamp': -1})
       .exec()
 
-    const transactions = await addBodiesToTransactions(ctx.body)
+    // retrieve transaction request and response bodies
+    const transformedTransactions = await addBodiesToTransactions(transactions)
 
-    return transactions
+    ctx.body = transformedTransactions
+
+    return transformedTransactions
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not get transaction by clientID via the API: ${e}`, 'error')
   }
