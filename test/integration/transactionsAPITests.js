@@ -220,7 +220,7 @@ describe('API Integration Tests', () => {
 
         const newTransaction = await TransactionModel.findOne({ clientID: transactionData.clientID });
         (newTransaction !== null).should.be.true()
-        newTransaction.response.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
         newTransaction.canRerun.should.be.true()
       })
 
@@ -244,7 +244,7 @@ describe('API Integration Tests', () => {
         newTransaction.request.headers['header-title'].should.equal('header1-value')
         newTransaction.request.headers['another-header'].should.equal('another-header-value')
         newTransaction.request.querystring.should.equal('param1=value1&param2=value2')
-        newTransaction.request.body.should.equal('<HTTP body request>')
+        ObjectId.isValid(newTransaction.request.bodyId).should.be.true()
         newTransaction.request.method.should.equal('POST')
       })
 
@@ -263,7 +263,7 @@ describe('API Integration Tests', () => {
 
         const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true()
-        newTransaction.request.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
         newTransaction.canRerun.should.be.true()
       })
 
@@ -283,8 +283,8 @@ describe('API Integration Tests', () => {
 
         const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true()
-        newTransaction.request.body.length.should.be.exactly(MAX_BODY_SIZE)
-        newTransaction.response.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(newTransaction.request.bodyId).should.be.true()
+        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
         newTransaction.canRerun.should.be.true()
       })
 
@@ -479,7 +479,7 @@ describe('API Integration Tests', () => {
         updatedTrans.request.headers['Content-Type'].should.equal('text/javascript')
         updatedTrans.request.headers['Access-Control'].should.equal('authentication-required')
         updatedTrans.request.querystring.should.equal('updated=value')
-        updatedTrans.request.body.should.equal('<HTTP body update>')
+        ObjectId.isValid(updatedTrans.request.bodyId).should.be.true()
         updatedTrans.request.method.should.equal('PUT')
         updatedTrans.routes[1].name.should.equal('async')
         updatedTrans.routes[1].orchestrations[0].name.should.equal('test')
@@ -513,7 +513,7 @@ describe('API Integration Tests', () => {
 
         const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true()
-        updatedTrans.request.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(updatedTrans.request.bodyId).should.be.true()
         updatedTrans.canRerun.should.be.true()
       })
 
@@ -546,7 +546,7 @@ describe('API Integration Tests', () => {
 
         const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true()
-        updatedTrans.response.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(updatedTrans.response.bodyId).should.be.true()
         updatedTrans.canRerun.should.be.true()
       })
 

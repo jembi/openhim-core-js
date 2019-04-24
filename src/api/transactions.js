@@ -7,7 +7,7 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
 import { promisify } from 'util'
-import { retrievePayload } from '../contentChunk'
+import { extractStringPayloadIntoChunks, retrievePayload } from '../contentChunk'
 
 const apiConf = config.get('api')
 
@@ -308,16 +308,30 @@ function recursivelySearchObject (ctx, obj, ws, repeat) {
 
 function enforceMaxBodiesSize (ctx, obj, ws) {
   if (obj.request && (typeof obj.request.body === 'string')) {
-    if (utils.enforceMaxBodiesSize(ctx, obj.request) && ctx.primaryRequest) { obj.canRerun = false }
+    if (utils.enforceMaxBodiesSize(ctx, obj.request.body) && ctx.primaryRequest) { obj.canRerun = false }
   }
   ctx.primaryRequest = false
-  if (obj.response && (typeof obj.response.body === 'string')) { utils.enforceMaxBodiesSize(ctx, obj.response) }
+  if (obj.response && (typeof obj.response.body === 'string')) { utils.enforceMaxBodiesSize(ctx, obj.response.body) }
   return recursivelySearchObject(ctx, obj, ws, enforceMaxBodiesSize)
 }
 
 function calculateTransactionBodiesByteLength (lengthObj, obj, ws) {
   if (obj.body && (typeof obj.body === 'string')) { lengthObj.length += Buffer.byteLength(obj.body) }
   return recursivelySearchObject(lengthObj, obj, ws, calculateTransactionBodiesByteLength)
+}
+
+async function extractTransactionPayloadIntoChunks (transaction) {
+  if (transaction.request && transaction.request.body) {
+    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.request.body)
+    delete transaction.request.body
+    transaction.request.bodyId = requestBodyChuckFileId
+  }
+
+  if (transaction.response && transaction.response.body) {
+    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.response.body)
+    delete transaction.response.body
+    transaction.response.bodyId = responseBodyChuckFileId
+  }
 }
 
 /*
@@ -335,6 +349,8 @@ export async function addTransaction (ctx) {
     const transactionData = ctx.request.body
     const context = {primaryRequest: true}
     enforceMaxBodiesSize(context, transactionData, new WeakSet())
+
+    await extractTransactionPayloadIntoChunks(transactionData)
 
     const tx = new TransactionModelAPI(transactionData)
 
@@ -528,6 +544,8 @@ export async function updateTransaction (ctx, transactionId) {
       primaryRequest: true
     }
     enforceMaxBodiesSize(context, updates, new WeakSet())
+
+    await extractTransactionPayloadIntoChunks(updates)
 
     const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
 
