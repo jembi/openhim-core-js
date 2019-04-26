@@ -8,6 +8,8 @@ import { TransactionModel } from './model/transactions'
 import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
 import { config } from './config'
 
+import { addBodiesToTransactions } from './bodyFix'
+
 config.rerun = config.get('rerun')
 
 let live = false
@@ -172,7 +174,7 @@ function rerunTransaction (transactionID, taskID, callback) {
 }
 
 function rerunGetTransaction (transactionID, callback) {
-  TransactionModel.findById(transactionID, (err, transaction) => {
+  TransactionModel.findById(transactionID, async (err, transaction) => {
     if ((transaction == null)) {
       return callback((new Error(`Transaction ${transactionID} could not be found`)), null)
     }
@@ -181,6 +183,11 @@ function rerunGetTransaction (transactionID, callback) {
     if (!transaction.canRerun) {
       err = new Error(`Transaction ${transactionID} cannot be rerun as there isn't enough information about the request`)
       return callback(err, null)
+    }
+
+    const transList = await addBodiesToTransactions(new Array(transaction))
+    if (transList && transList.length > 0) {
+      transaction = transList[0]
     }
 
     // send the transactions data in callback

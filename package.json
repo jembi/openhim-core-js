@@ -59,7 +59,7 @@
     "lodash": "4.17.11",
     "moment": "2.24.0",
     "moment-timezone": "0.5.23",
-    "mongodb": "^3.1.10",
+    "mongodb": "3.1.10",
     "mongodb-uri": "0.9.7",
     "mongoose": "5.5.0",
     "mongoose-patch-history": "git+https://github.com/jembi/mongoose-patch-history.git#ff8d7a69e8ed7d728dc76349304ec7ac73a9c5e1",
