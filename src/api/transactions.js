@@ -7,12 +7,8 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
 import { promisify } from 'util'
-<<<<<<< HEAD
 import { extractStringPayloadIntoChunks, retrievePayload } from '../contentChunk'
-=======
-import { retrievePayload } from '../contentChunk'
 import { transformTransaction, addBodiesToTransactions } from '../bodyFix'
->>>>>>> 6df8ca5a3ea05a9ce03070608489056beb6faba7
 
 const apiConf = config.get('api')
 
