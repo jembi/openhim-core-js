@@ -8,7 +8,7 @@ const addBodiesToTransactions = async (transactions) => {
   }
 
   const transformedTransactions = await transactions.map(trans => {
-    let transformedTrans = transformTransaction(trans)
+    // let transformedTrans = transformTransaction(trans)
 
     if(
         trans &&
@@ -16,7 +16,7 @@ const addBodiesToTransactions = async (transactions) => {
         trans.request.bodyId
     ) {
         retrievePayload(trans.request.bodyId).then(body => {
-            transformedTrans.request.body = body
+          trans.request.body = body
             return
         }).catch(err => {throw new Error(err)})
     }
@@ -27,12 +27,12 @@ const addBodiesToTransactions = async (transactions) => {
         trans.response.bodyId
     ) {
         retrievePayload(trans.response.bodyId).then(body => {
-            transformedTrans.response.body = body
+          trans.response.body = body
             return
         }).catch(err => {throw new Error(err)})
     }
 
-    return transformedTrans
+    return trans
   })
 
   return transformedTransactions

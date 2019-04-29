@@ -37,131 +37,170 @@ const MAX_BODY_MB = 1
 const MAX_BODY_SIZE = MAX_BODY_MB * 1024 * 1024
 
 describe('API Integration Tests', () => {
-  const { SERVER_PORTS } = constants
-  const LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
-
-  const requestDoc = {
-    path: '/api/test',
-    headers: {
-      'header-title': 'header1-value',
-      'another-header': 'another-header-value'
-    },
-    querystring: 'param1=value1&param2=value2',
-    body: '<HTTP body request>',
-    method: 'POST',
-    timestamp: '2014-06-09T11:17:25.929Z'
-  }
-
-  Object.freeze(requestDoc)
-
-  const responseDoc = {
-    status: '200',
-    headers: {
-      header: 'value',
-      header2: 'value2'
-    },
-    body: '<HTTP response>',
-    timestamp: '2014-06-09T11:17:25.929Z'
-  }
-
-  Object.freeze(responseDoc)
-
-  const transactionData = {
-    _id: '111111111111111111111111',
-    status: 'Processing',
-    clientID: '999999999999999999999999',
-    channelID: '888888888888888888888888',
-    request: requestDoc,
-    response: responseDoc,
-
-    routes: [{
-      name: 'dummy-route',
-      request: requestDoc,
-      response: responseDoc
-    }
-    ],
-
-    orchestrations: [{
-      name: 'dummy-orchestration',
-      request: requestDoc,
-      response: responseDoc
-    }
-    ],
-    properties: {
-      prop1: 'prop1-value1',
-      prop2: 'prop-value1'
-    }
-  }
-
-  Object.freeze(transactionData)
-
+  let SERVER_PORTS, LARGE_BODY, requestDocMain, responseDocMain, requestDoc, responseDoc, transactionData
   let authDetails = {}
   let channel
   let channel2
   let channel3
+  let channelDoc
+  let channel2Doc
+  let channel3Doc
 
-  const channelDoc = {
-    name: 'TestChannel1',
-    urlPattern: 'test/sample',
-    allow: ['PoC', 'Test1', 'Test2'],
-    routes: [{
-      name: 'test route',
-      host: 'localhost',
-      port: 9876,
-      primary: true
-    }
-    ],
-    txViewAcl: ['group1'],
-    txViewFullAcl: [],
-    updatedBy: {
-      id: new ObjectId(),
-      name: 'Test'
-    }
-  }
+  before(async () => {
+    SERVER_PORTS = constants.SERVER_PORTS
+    LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
 
-  const channel2Doc = {
-    name: 'TestChannel2',
-    urlPattern: 'test2/sample',
-    allow: ['PoC', 'Test1', 'Test2'],
-    routes: [{
-      name: 'test route',
-      host: 'localhost',
-      port: 9876,
-      primary: true
-    }
-    ],
-    txViewAcl: ['not-for-non-root'],
-    txViewFullAcl: [],
-    autoRetryEnabled: true,
-    autoRetryPeriodMinutes: 60,
-    autoRetryMaxAttempts: 5,
-    updatedBy: {
-      id: new ObjectId(),
-      name: 'Test'
-    }
-  }
+    // console.log(await testUtils.createGridFSPayload('<HTTP body request>'))
+    // start the server before using the mongo connection
+    await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+    const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+    console.log(requestBodyId)
+    const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
 
-  const channel3Doc = {
-    name: 'TestChannel3',
-    urlPattern: 'test3/sample',
-    allow: ['PoC', 'Test1', 'Test2'],
-    routes: [{
-      name: 'test route',
-      host: 'localhost',
-      port: 9876,
-      primary: true
+    // The request/response body has been replaced by bodyId which is why we are duplicating this object
+    // TODO: OHM-691: Update accordingly when implementing
+    requestDocMain = {
+      path: '/api/test',
+      headers: {
+        'header-title': 'header1-value',
+        'another-header': 'another-header-value'
+      },
+      querystring: 'param1=value1&param2=value2',
+      bodyId: requestBodyId,
+      method: 'POST',
+      timestamp: '2014-06-09T11:17:25.929Z'
     }
-    ],
-    txViewAcl: [],
-    txViewFullAcl: ['group1'],
-    autoRetryEnabled: true,
-    autoRetryPeriodMinutes: 60,
-    autoRetryMaxAttempts: 5,
-    updatedBy: {
-      id: new ObjectId(),
-      name: 'Test'
+
+    Object.freeze(requestDocMain)
+
+    // The request/response body has been replaced by bodyId which is why we are duplicating this object
+    // TODO: OHM-691: Update accordingly when implementing
+    responseDocMain = {
+      status: '200',
+      headers: {
+        header: 'value',
+        header2: 'value2'
+      },
+      bodyId: responseBodyId,
+      timestamp: '2014-06-09T11:17:25.929Z'
     }
-  }
+
+    Object.freeze(responseDocMain)
+
+    requestDoc = {
+      path: '/api/test',
+      headers: {
+        'header-title': 'header1-value',
+        'another-header': 'another-header-value'
+      },
+      querystring: 'param1=value1&param2=value2',
+      body: '<HTTP body request>',
+      method: 'POST',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    Object.freeze(requestDoc)
+
+    responseDoc = {
+      status: '200',
+      headers: {
+        header: 'value',
+        header2: 'value2'
+      },
+      body: '<HTTP response>',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    Object.freeze(responseDoc)
+
+    transactionData = {
+      _id: '111111111111111111111111',
+      status: 'Processing',
+      clientID: '999999999999999999999999',
+      channelID: '888888888888888888888888',
+      request: requestDocMain,
+      response: responseDocMain,
+      routes: [{
+        name: 'dummy-route',
+        request: requestDoc,
+        response: responseDoc
+      }],
+      orchestrations: [{
+        name: 'dummy-orchestration',
+        request: requestDoc,
+        response: responseDoc
+      }],
+      properties: {
+        prop1: 'prop1-value1',
+        prop2: 'prop-value1'
+      }
+    }
+
+    Object.freeze(transactionData)
+
+    channelDoc = {
+      name: 'TestChannel1',
+      urlPattern: 'test/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 9876,
+        primary: true
+      }
+      ],
+      txViewAcl: ['group1'],
+      txViewFullAcl: [],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
+    channel2Doc = {
+      name: 'TestChannel2',
+      urlPattern: 'test2/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 9876,
+        primary: true
+      }
+      ],
+      txViewAcl: ['not-for-non-root'],
+      txViewFullAcl: [],
+      autoRetryEnabled: true,
+      autoRetryPeriodMinutes: 60,
+      autoRetryMaxAttempts: 5,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
+    channel3Doc = {
+      name: 'TestChannel3',
+      urlPattern: 'test3/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 9876,
+        primary: true
+      }
+      ],
+      txViewAcl: [],
+      txViewFullAcl: ['group1'],
+      autoRetryEnabled: true,
+      autoRetryPeriodMinutes: 60,
+      autoRetryMaxAttempts: 5,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+  })
 
   before(async () => {
     config.api = config.get('api')
@@ -173,7 +212,7 @@ describe('API Integration Tests', () => {
       new ChannelModel(channelDoc).save(),
       new ChannelModel(channel2Doc).save(),
       new ChannelModel(channel3Doc).save(),
-      promisify(server.start)({ apiPort: SERVER_PORTS.apiPort }),
+      // promisify(server.start)({ apiPort: SERVER_PORTS.apiPort }),
       testUtils.setupTestUsers()
     ])
     channel = results[0]
@@ -198,7 +237,8 @@ describe('API Integration Tests', () => {
   afterEach(async () => {
     await Promise.all([
       EventModelAPI.deleteMany({}),
-      TransactionModel.deleteMany({})
+      TransactionModel.deleteMany({}),
+      AutoRetryModelAPI.deleteMany({})
     ])
   })
 
@@ -885,6 +925,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should return the transactions with req/res bodies for all channels that a user has permission to view', async () => {
+        // console.log(transactionData)
         await new TransactionModel(Object.assign({}, transactionData, { channelID: channel3._id })).save()
 
         await new TransactionModel(Object.assign({}, transactionData, {
@@ -907,8 +948,18 @@ describe('API Integration Tests', () => {
 
         res.body.should.have.length(2)
         res.body[0]._id.should.be.equal('111111111111111111111111')
-        res.body[0].request.body.should.equal(`<HTTP body request>`)
-        res.body[0].response.body.should.equal(`<HTTP response>`)
+        // res.body[0].request.body.should.equal(`<HTTP body request>`)
+        // res.body[0].response.body.should.equal(`<HTTP response>`)
+
+        const requestPayload = await testUtils.extractGridFSPayload(res.body[0].request.bodyId) //<HTTP body request>
+        console.log('==============================')
+        console.log(res.body[0].request.bodyId)
+        console.log(requestPayload)
+
+        // console.log(res.body[0].request)
+        // ObjectId.isValid(res.body[0].request.bodyId).should.be.true()
+        // ObjectId.isValid(res.body[0].response.bodyId).should.be.true()
+
         res.body[1]._id.should.be.equal('111111111111111111111113')
         res.body[1].request.body.should.equal(`<HTTP body request>`)
         res.body[1].response.body.should.equal(`<HTTP response>`)
