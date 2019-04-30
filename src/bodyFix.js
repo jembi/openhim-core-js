@@ -7,35 +7,25 @@ const addBodiesToTransactions = async (transactions) => {
     return []
   }
 
-  const transformedTransactions = await transactions.map(trans => {
-    // let transformedTrans = transformTransaction(trans)
+  return await Promise.all(transactions.map(transaction => filterPayloadType(transaction)))
+}
 
-    if(
-        trans &&
-        trans.request &&
-        trans.request.bodyId
-    ) {
-        retrievePayload(trans.request.bodyId).then(body => {
-          trans.request.body = body
-            return
-        }).catch(err => {throw new Error(err)})
+const filterPayloadType = (transaction) => {
+  return new Promise(async (resolve, reject) => {
+    if (!transaction){
+      return resolve(transaction)
     }
 
-    if(
-        trans &&
-        trans.response &&
-        trans.response.bodyId
-    ) {
-        retrievePayload(trans.response.bodyId).then(body => {
-          trans.response.body = body
-            return
-        }).catch(err => {throw new Error(err)})
+    if (transaction.request && transaction.request.bodyId) {
+      transaction.request.body = await retrievePayload(transaction.request.bodyId)
     }
 
-    return trans
+    if(transaction.response && transaction.response.bodyId) {
+      transaction.response.body = await retrievePayload(transaction.response.bodyId)
+    }
+
+    resolve(transaction)
   })
-
-  return transformedTransactions
 }
   
 // removes the bodyId field transaction

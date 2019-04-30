@@ -39,8 +39,8 @@ function getProjectionObject (filterRepresentation) {
     case 'simpledetails':
       // view minimum required data for transaction details view
       return {
-        'request.body': 0,
-        'response.body': 0,
+        'request.bodyId': 0,
+        'response.bodyId': 0,
         'routes.request.body': 0,
         'routes.response.body': 0,
         'orchestrations.request.body': 0,
@@ -59,9 +59,9 @@ function getProjectionObject (filterRepresentation) {
       // no filterRepresentation supplied - simple view
       // view minimum required data for transactions
       return {
-        'request.body': 0,
+        'request.bodyId': 0,
         'request.headers': 0,
-        'response.body': 0,
+        'response.bodyId': 0,
         'response.headers': 0,
         orchestrations: 0,
         routes: 0
@@ -250,7 +250,7 @@ export async function getTransactions (ctx) {
     ctx.body = transformedTransactions
 
     if (filterRepresentation === 'fulltruncate') {
-    transformedTransactions.map((trx) => truncateTransactionDetails(trx))
+      transformedTransactions.map((trx) => truncateTransactionDetails(trx))
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
@@ -387,28 +387,10 @@ export async function getTransactionById (ctx, transactionId) {
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
     const transaction = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
-    const result = transformTransaction(transaction)
 
-    // Retrieve transaction's request and response bodies
-    if(
-        transaction &&
-        transaction.response &&
-        transaction.response.bodyId
-    ) {
-        await retrievePayload(transaction.response.bodyId).then(body => {
-            result.response.body = body
-        }).catch(err => {throw new Error(err)})
-    }
-
-    if(
-        transaction &&
-        transaction.request &&
-        transaction.request.bodyId
-    ) {
-        await retrievePayload(transaction.request.bodyId).then(body => {
-            result.request.body = body
-        }).catch(err => {throw new Error(err)})
-    }
+    // retrieve transaction request and response bodies
+    const resultArray = await addBodiesToTransactions([transaction])
+    const result = resultArray[0]
 
     if (result && (filterRepresentation === 'fulltruncate')) {
       truncateTransactionDetails(result)

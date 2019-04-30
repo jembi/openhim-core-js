@@ -804,7 +804,7 @@ export const createGridFSPayload = (payload) => {
     uploadStream.on('error', (err) => {
       return reject(err)
     })
-    .on('finish', (doc) => {
+    .on('finish', async (doc) => {
       if (!doc) {
         return reject(new Error('GridFS create failed'))
       }
@@ -815,10 +815,10 @@ export const createGridFSPayload = (payload) => {
   })
 }
 
-export const extractGridFSPayload = (fileId) => {
+export const extractGridFSPayload = async (fileId) => {
   return new Promise((resolve, reject) => {
     const bucket = getGridFSBucket()
-    const downloadStream = bucket.openDownloadStream(fileId)
+    const downloadStream = bucket.openDownloadStream(ObjectId(fileId))
 
     let body = ''
     downloadStream.on('error', err => {
@@ -829,4 +829,10 @@ export const extractGridFSPayload = (fileId) => {
       resolve(body)
     })
   })
+}
+
+export const deleteChuckedPayloads = async () => {
+  const db = connectionDefault.client.db()
+  await db.collection('fs.files').deleteMany({})
+  await db.collection('fs.chunks').deleteMany({})
 }

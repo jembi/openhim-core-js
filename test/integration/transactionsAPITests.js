@@ -50,11 +50,11 @@ describe('API Integration Tests', () => {
     SERVER_PORTS = constants.SERVER_PORTS
     LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
 
-    // console.log(await testUtils.createGridFSPayload('<HTTP body request>'))
     // start the server before using the mongo connection
     await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+
+    await testUtils.deleteChuckedPayloads()
     const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
-    console.log(requestBodyId)
     const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
 
     // The request/response body has been replaced by bodyId which is why we are duplicating this object
@@ -200,9 +200,7 @@ describe('API Integration Tests', () => {
         name: 'Test'
       }
     }
-  })
 
-  before(async () => {
     config.api = config.get('api')
     config.api.maxBodiesSizeMB = MAX_BODY_MB
     config.api.truncateAppend = TRUNCATE_APPEND
@@ -925,7 +923,6 @@ describe('API Integration Tests', () => {
       })
 
       it('should return the transactions with req/res bodies for all channels that a user has permission to view', async () => {
-        // console.log(transactionData)
         await new TransactionModel(Object.assign({}, transactionData, { channelID: channel3._id })).save()
 
         await new TransactionModel(Object.assign({}, transactionData, {
@@ -948,21 +945,12 @@ describe('API Integration Tests', () => {
 
         res.body.should.have.length(2)
         res.body[0]._id.should.be.equal('111111111111111111111111')
-        // res.body[0].request.body.should.equal(`<HTTP body request>`)
-        // res.body[0].response.body.should.equal(`<HTTP response>`)
-
-        const requestPayload = await testUtils.extractGridFSPayload(res.body[0].request.bodyId) //<HTTP body request>
-        console.log('==============================')
-        console.log(res.body[0].request.bodyId)
-        console.log(requestPayload)
-
-        // console.log(res.body[0].request)
-        // ObjectId.isValid(res.body[0].request.bodyId).should.be.true()
-        // ObjectId.isValid(res.body[0].response.bodyId).should.be.true()
+        res.body[0].request.body.should.equal(`<HTTP body request>`)
+        res.body[0].response.body.should.equal(`<HTTP body response>`)
 
         res.body[1]._id.should.be.equal('111111111111111111111113')
         res.body[1].request.body.should.equal(`<HTTP body request>`)
-        res.body[1].response.body.should.equal(`<HTTP response>`)
+        res.body[1].response.body.should.equal(`<HTTP body response>`)
       })
 
       it('should return 403 for a channel that a user does NOT have permission to view', async () => {
@@ -992,9 +980,11 @@ describe('API Integration Tests', () => {
 
         res.body.length.should.equal(1)
         res.body[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+        res.body[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+
         res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
         res.body[0].routes[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+
         res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
         res.body[0].orchestrations[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
       })
