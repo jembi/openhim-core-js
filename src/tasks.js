@@ -8,7 +8,7 @@ import { TransactionModel } from './model/transactions'
 import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
 import { config } from './config'
 
-import { addBodiesToTransactions } from './bodyFix'
+import { addBodiesToTransactions } from './contentChunk'
 
 config.rerun = config.get('rerun')
 
