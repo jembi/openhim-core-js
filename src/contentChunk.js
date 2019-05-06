@@ -101,3 +101,31 @@ export const retrievePayload = fileId => {
       .on('end', () => resolve(Buffer.concat(chunks).toString()))
   })
 }
+
+export const addBodiesToTransactions = async (transactions) => {
+  if(!transactions ||
+    transactions.length < 1
+  ) {
+    return []
+  }
+
+  return await Promise.all(transactions.map(transaction => filterPayloadType(transaction)))
+}
+
+const filterPayloadType = (transaction) => {
+  return new Promise(async (resolve, reject) => {
+    if (!transaction){
+      return resolve(transaction)
+    }
+
+    if (transaction.request && transaction.request.bodyId) {
+      transaction.request.body = await retrievePayload(transaction.request.bodyId)
+    }
+
+    if(transaction.response && transaction.response.bodyId) {
+      transaction.response.body = await retrievePayload(transaction.response.bodyId)
+    }
+
+    resolve(transaction)
+  })
+}
