@@ -37,133 +37,170 @@ const MAX_BODY_MB = 1
 const MAX_BODY_SIZE = MAX_BODY_MB * 1024 * 1024
 
 describe('API Integration Tests', () => {
-  const { SERVER_PORTS } = constants
-  const LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
-
-  const requestDoc = {
-    path: '/api/test',
-    headers: {
-      'header-title': 'header1-value',
-      'another-header': 'another-header-value'
-    },
-    querystring: 'param1=value1&param2=value2',
-    body: '<HTTP body request>',
-    method: 'POST',
-    timestamp: '2014-06-09T11:17:25.929Z'
-  }
-
-  Object.freeze(requestDoc)
-
-  const responseDoc = {
-    status: '200',
-    headers: {
-      header: 'value',
-      header2: 'value2'
-    },
-    body: '<HTTP response>',
-    timestamp: '2014-06-09T11:17:25.929Z'
-  }
-
-  Object.freeze(responseDoc)
-
-  const transactionData = {
-    _id: '111111111111111111111111',
-    status: 'Processing',
-    clientID: '999999999999999999999999',
-    channelID: '888888888888888888888888',
-    request: requestDoc,
-    response: responseDoc,
-
-    routes: [{
-      name: 'dummy-route',
-      request: requestDoc,
-      response: responseDoc
-    }
-    ],
-
-    orchestrations: [{
-      name: 'dummy-orchestration',
-      request: requestDoc,
-      response: responseDoc
-    }
-    ],
-    properties: {
-      prop1: 'prop1-value1',
-      prop2: 'prop-value1'
-    }
-  }
-
-  Object.freeze(transactionData)
-
+  let SERVER_PORTS, LARGE_BODY, requestDocMain, responseDocMain, requestDoc, responseDoc, transactionData
   let authDetails = {}
   let channel
   let channel2
   let channel3
-
-  const channelDoc = {
-    name: 'TestChannel1',
-    urlPattern: 'test/sample',
-    allow: ['PoC', 'Test1', 'Test2'],
-    routes: [{
-      name: 'test route',
-      host: 'localhost',
-      port: 9876,
-      primary: true
-    }
-    ],
-    txViewAcl: ['group1'],
-    txViewFullAcl: [],
-    updatedBy: {
-      id: new ObjectId(),
-      name: 'Test'
-    }
-  }
-
-  const channel2Doc = {
-    name: 'TestChannel2',
-    urlPattern: 'test2/sample',
-    allow: ['PoC', 'Test1', 'Test2'],
-    routes: [{
-      name: 'test route',
-      host: 'localhost',
-      port: 9876,
-      primary: true
-    }
-    ],
-    txViewAcl: ['not-for-non-root'],
-    txViewFullAcl: [],
-    autoRetryEnabled: true,
-    autoRetryPeriodMinutes: 60,
-    autoRetryMaxAttempts: 5,
-    updatedBy: {
-      id: new ObjectId(),
-      name: 'Test'
-    }
-  }
-
-  const channel3Doc = {
-    name: 'TestChannel3',
-    urlPattern: 'test3/sample',
-    allow: ['PoC', 'Test1', 'Test2'],
-    routes: [{
-      name: 'test route',
-      host: 'localhost',
-      port: 9876,
-      primary: true
-    }
-    ],
-    txViewAcl: [],
-    txViewFullAcl: ['group1'],
-    autoRetryEnabled: true,
-    autoRetryPeriodMinutes: 60,
-    autoRetryMaxAttempts: 5,
-    updatedBy: {
-      id: new ObjectId(),
-      name: 'Test'
-    }
-  }
+  let channelDoc
+  let channel2Doc
+  let channel3Doc
 
   before(async () => {
+    SERVER_PORTS = constants.SERVER_PORTS
+    LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
+
+    // start the server before using the mongo connection
+    await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+
+    await testUtils.deleteChuckedPayloads()
+    const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+    const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+    // The request/response body has been replaced by bodyId which is why we are duplicating this object
+    // TODO: OHM-691: Update accordingly when implementing
+    requestDocMain = {
+      path: '/api/test',
+      headers: {
+        'header-title': 'header1-value',
+        'another-header': 'another-header-value'
+      },
+      querystring: 'param1=value1&param2=value2',
+      bodyId: requestBodyId,
+      method: 'POST',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    Object.freeze(requestDocMain)
+
+    // The request/response body has been replaced by bodyId which is why we are duplicating this object
+    // TODO: OHM-691: Update accordingly when implementing
+    responseDocMain = {
+      status: '200',
+      headers: {
+        header: 'value',
+        header2: 'value2'
+      },
+      bodyId: responseBodyId,
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    Object.freeze(responseDocMain)
+
+    requestDoc = {
+      path: '/api/test',
+      headers: {
+        'header-title': 'header1-value',
+        'another-header': 'another-header-value'
+      },
+      querystring: 'param1=value1&param2=value2',
+      body: '<HTTP body request>',
+      method: 'POST',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    Object.freeze(requestDoc)
+
+    responseDoc = {
+      status: '200',
+      headers: {
+        header: 'value',
+        header2: 'value2'
+      },
+      body: '<HTTP response>',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    Object.freeze(responseDoc)
+
+    transactionData = {
+      _id: '111111111111111111111111',
+      status: 'Processing',
+      clientID: '999999999999999999999999',
+      channelID: '888888888888888888888888',
+      request: requestDocMain,
+      response: responseDocMain,
+      routes: [{
+        name: 'dummy-route',
+        request: requestDoc,
+        response: responseDoc
+      }],
+      orchestrations: [{
+        name: 'dummy-orchestration',
+        request: requestDoc,
+        response: responseDoc
+      }],
+      properties: {
+        prop1: 'prop1-value1',
+        prop2: 'prop-value1'
+      }
+    }
+
+    Object.freeze(transactionData)
+
+    channelDoc = {
+      name: 'TestChannel1',
+      urlPattern: 'test/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 9876,
+        primary: true
+      }
+      ],
+      txViewAcl: ['group1'],
+      txViewFullAcl: [],
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
+    channel2Doc = {
+      name: 'TestChannel2',
+      urlPattern: 'test2/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 9876,
+        primary: true
+      }
+      ],
+      txViewAcl: ['not-for-non-root'],
+      txViewFullAcl: [],
+      autoRetryEnabled: true,
+      autoRetryPeriodMinutes: 60,
+      autoRetryMaxAttempts: 5,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
+    channel3Doc = {
+      name: 'TestChannel3',
+      urlPattern: 'test3/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [{
+        name: 'test route',
+        host: 'localhost',
+        port: 9876,
+        primary: true
+      }
+      ],
+      txViewAcl: [],
+      txViewFullAcl: ['group1'],
+      autoRetryEnabled: true,
+      autoRetryPeriodMinutes: 60,
+      autoRetryMaxAttempts: 5,
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
+    }
+
     config.api = config.get('api')
     config.api.maxBodiesSizeMB = MAX_BODY_MB
     config.api.truncateAppend = TRUNCATE_APPEND
@@ -173,7 +210,7 @@ describe('API Integration Tests', () => {
       new ChannelModel(channelDoc).save(),
       new ChannelModel(channel2Doc).save(),
       new ChannelModel(channel3Doc).save(),
-      promisify(server.start)({ apiPort: SERVER_PORTS.apiPort }),
+      // promisify(server.start)({ apiPort: SERVER_PORTS.apiPort }),
       testUtils.setupTestUsers()
     ])
     channel = results[0]
@@ -198,7 +235,8 @@ describe('API Integration Tests', () => {
   afterEach(async () => {
     await Promise.all([
       EventModelAPI.deleteMany({}),
-      TransactionModel.deleteMany({})
+      TransactionModel.deleteMany({}),
+      AutoRetryModelAPI.deleteMany({})
     ])
   })
 
@@ -220,7 +258,7 @@ describe('API Integration Tests', () => {
 
         const newTransaction = await TransactionModel.findOne({ clientID: transactionData.clientID });
         (newTransaction !== null).should.be.true()
-        newTransaction.response.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
         newTransaction.canRerun.should.be.true()
       })
 
@@ -244,7 +282,7 @@ describe('API Integration Tests', () => {
         newTransaction.request.headers['header-title'].should.equal('header1-value')
         newTransaction.request.headers['another-header'].should.equal('another-header-value')
         newTransaction.request.querystring.should.equal('param1=value1&param2=value2')
-        newTransaction.request.body.should.equal('<HTTP body request>')
+        ObjectId.isValid(newTransaction.request.bodyId).should.be.true()
         newTransaction.request.method.should.equal('POST')
       })
 
@@ -263,7 +301,7 @@ describe('API Integration Tests', () => {
 
         const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true()
-        newTransaction.request.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
         newTransaction.canRerun.should.be.true()
       })
 
@@ -283,8 +321,8 @@ describe('API Integration Tests', () => {
 
         const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
         (newTransaction !== null).should.be.true()
-        newTransaction.request.body.length.should.be.exactly(MAX_BODY_SIZE)
-        newTransaction.response.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(newTransaction.request.bodyId).should.be.true()
+        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
         newTransaction.canRerun.should.be.true()
       })
 
@@ -479,7 +517,7 @@ describe('API Integration Tests', () => {
         updatedTrans.request.headers['Content-Type'].should.equal('text/javascript')
         updatedTrans.request.headers['Access-Control'].should.equal('authentication-required')
         updatedTrans.request.querystring.should.equal('updated=value')
-        updatedTrans.request.body.should.equal('<HTTP body update>')
+        ObjectId.isValid(updatedTrans.request.bodyId).should.be.true()
         updatedTrans.request.method.should.equal('PUT')
         updatedTrans.routes[1].name.should.equal('async')
         updatedTrans.routes[1].orchestrations[0].name.should.equal('test')
@@ -513,7 +551,7 @@ describe('API Integration Tests', () => {
 
         const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true()
-        updatedTrans.request.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(updatedTrans.request.bodyId).should.be.true()
         updatedTrans.canRerun.should.be.true()
       })
 
@@ -546,7 +584,7 @@ describe('API Integration Tests', () => {
 
         const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true()
-        updatedTrans.response.body.length.should.be.exactly(MAX_BODY_SIZE)
+        ObjectId.isValid(updatedTrans.response.bodyId).should.be.true()
         updatedTrans.canRerun.should.be.true()
       })
 
@@ -908,10 +946,11 @@ describe('API Integration Tests', () => {
         res.body.should.have.length(2)
         res.body[0]._id.should.be.equal('111111111111111111111111')
         res.body[0].request.body.should.equal(`<HTTP body request>`)
-        res.body[0].response.body.should.equal(`<HTTP response>`)
+        res.body[0].response.body.should.equal(`<HTTP body response>`)
+
         res.body[1]._id.should.be.equal('111111111111111111111113')
         res.body[1].request.body.should.equal(`<HTTP body request>`)
-        res.body[1].response.body.should.equal(`<HTTP response>`)
+        res.body[1].response.body.should.equal(`<HTTP body response>`)
       })
 
       it('should return 403 for a channel that a user does NOT have permission to view', async () => {
@@ -941,9 +980,11 @@ describe('API Integration Tests', () => {
 
         res.body.length.should.equal(1)
         res.body[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+        res.body[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+
         res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
         res.body[0].routes[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+
         res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
         res.body[0].orchestrations[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
       })

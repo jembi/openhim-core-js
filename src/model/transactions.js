@@ -4,7 +4,7 @@ import { connectionAPI, connectionDefault } from '../config'
 // TODO: OHM-691: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
 // This is duplicated due to the secondary routes and orchestrations using the same schema, and updating theu request/response bodies are done in a different story
 // Request Schema definition
-const RequestDefMain = {
+const RequestDefMain = new Schema({
   host: String,
   port: String,
   path: String,
@@ -15,17 +15,25 @@ const RequestDefMain = {
   timestamp: {
     type: Date, required: true
   }
-}
+}, {
+  toObject: { virtuals: true },
+  toJSON: { virtuals: true }
+})
+RequestDefMain.virtual('body')
 
 // TODO: OHM-691: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
 // This is duplicated due to the secondary routes and orchestrations using the same schema, and updating theu request/response bodies are done in a different story
 // Response Schema definition
-const ResponseDefMain = {
+const ResponseDefMain = new Schema({
   status: Number,
   headers: Object,
   bodyId: ObjectId,
   timestamp: Date
-}
+}, {
+  toObject: { virtuals: true },
+  toJSON: { virtuals: true }
+})
+ResponseDefMain.virtual('body')
 
 // Request Schema definition
 const RequestDef = {
