@@ -73,7 +73,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
 exports.removeBodyById = (id) => {
   return new Promise(async (resolve, reject) => {
     if (!id) {
-      return reject(new Error('No ID supplied when trying to remove chucked body'))
+      return reject(new Error('No ID supplied when trying to remove chunked body'))
     }
 
     try {
