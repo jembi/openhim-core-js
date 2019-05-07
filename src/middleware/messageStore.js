@@ -89,7 +89,6 @@ export async function storeTransaction (ctx, done) {
 export async function storeResponse (ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
 
-  
   const res = {
     status: ctx.response.status,
     headers,
