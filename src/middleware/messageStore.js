@@ -91,7 +91,6 @@ export async function storeTransaction (ctx, done) {
 export async function storeResponse (ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
 
-  
   const res = {
     status: ctx.response.status,
     headers,
@@ -130,6 +129,23 @@ export async function storeResponse (ctx, done) {
     const responseBodyChuckFileId = await extractStringPayloadIntoChunks(update.response.body)
     delete update.response.body
     update.response.bodyId = responseBodyChuckFileId
+  }
+
+  // Store orchestrations' response and request bodies
+  for (var i = 0; i < update.orchestrations.length; i++) {
+    if (
+      update.orchestrations[i] &&
+      update.orchestrations[i].request &&
+      update.orchestrations[i].request.body) {
+      update.orchestrations[i].request.bodyId =  await extractStringPayloadIntoChunks(update.orchestrations[i].request.body)
+    }
+
+    if (
+      update.orchestrations[i] &&
+      update.orchestrations[i].response &&
+      update.orchestrations[i].response.body) {
+      update.orchestrations[i].response.bodyId = await extractStringPayloadIntoChunks(update.orchestrations[i].response.body)
+    }
   }
 
   return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
