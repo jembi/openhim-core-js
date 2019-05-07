@@ -6,7 +6,6 @@ let bucket
 const getGridFSBucket = () => {
   if (!bucket) {
     bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
-    return bucket
   }
 
   return bucket
