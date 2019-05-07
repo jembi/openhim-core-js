@@ -831,7 +831,7 @@ export const extractGridFSPayload = async (fileId) => {
   })
 }
 
-export const deleteChuckedPayloads = async () => {
+export const deleteChunkedPayloads = async () => {
   const db = connectionDefault.client.db()
   await db.collection('fs.files').deleteMany({})
   await db.collection('fs.chunks').deleteMany({})

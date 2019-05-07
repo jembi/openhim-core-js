@@ -53,7 +53,7 @@ describe('API Integration Tests', () => {
     // start the server before using the mongo connection
     await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
 
-    await testUtils.deleteChuckedPayloads()
+    await testUtils.deleteChunkedPayloads()
     const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
     const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
 
