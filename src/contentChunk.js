@@ -112,7 +112,7 @@ export const addBodiesToTransactions = async (transactions) => {
 }
 
 const filterPayloadType = (transaction) => {
-  return new Promise(async (resolve, reject) => {
+  return new Promise(async (resolve) => {
     if (!transaction){
       return resolve(transaction)
     }
