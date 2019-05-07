@@ -33,8 +33,7 @@ const clearTransactionBodies = function (transaction) {
   })
 }
 
-const MAX_BODY_MB = 1
-const MAX_BODY_SIZE = MAX_BODY_MB * 1024 * 1024
+const LARGE_BODY_SIZE = 1 * 1024 * 1024
 
 describe('API Integration Tests', () => {
   let SERVER_PORTS, LARGE_BODY, requestDocMain, responseDocMain, requestDoc, responseDoc, transactionData
@@ -48,7 +47,7 @@ describe('API Integration Tests', () => {
 
   before(async () => {
     SERVER_PORTS = constants.SERVER_PORTS
-    LARGE_BODY = Buffer.alloc(MAX_BODY_SIZE, '1234567890').toString()
+    LARGE_BODY = Buffer.alloc(LARGE_BODY_SIZE, '1234567890').toString()
 
     // start the server before using the mongo connection
     await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
@@ -202,7 +201,6 @@ describe('API Integration Tests', () => {
     }
 
     config.api = config.get('api')
-    config.api.maxBodiesSizeMB = MAX_BODY_MB
     config.api.truncateAppend = TRUNCATE_APPEND
 
     config.application = config.get('application')
@@ -284,139 +282,6 @@ describe('API Integration Tests', () => {
         newTransaction.request.querystring.should.equal('param1=value1&param2=value2')
         ObjectId.isValid(newTransaction.request.bodyId).should.be.true()
         newTransaction.request.method.should.equal('POST')
-      })
-
-      it('should add a transaction and truncate the large request body', async () => {
-        const td = testUtils.clone(transactionData)
-        td.channelID = channel._id
-        td.request.body = LARGE_BODY
-        await request(constants.BASE_URL)
-          .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(td)
-          .expect(201)
-
-        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
-        (newTransaction !== null).should.be.true()
-        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
-        newTransaction.canRerun.should.be.true()
-      })
-
-      it('should add a transaction and add the correct truncate message', async () => {
-        const td = testUtils.clone(transactionData)
-        td.channelID = channel._id
-        td.request.body = LARGE_BODY
-        td.response.body = LARGE_BODY
-        await request(constants.BASE_URL)
-          .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(td)
-          .expect(201)
-
-        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
-        (newTransaction !== null).should.be.true()
-        ObjectId.isValid(newTransaction.request.bodyId).should.be.true()
-        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
-        newTransaction.canRerun.should.be.true()
-      })
-
-      it('should add a transaction and truncate the routes request body', async () => {
-        // Given
-        const td = testUtils.clone(transactionData)
-        td.channelID = channel._id
-        clearTransactionBodies(td)
-        td.routes[0].request.body = LARGE_BODY
-
-        // When
-        await request(constants.BASE_URL)
-          .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(td)
-          .expect(201)
-
-        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
-        (newTransaction !== null).should.be.true()
-        newTransaction.routes[0].request.body.length.should.be.exactly(MAX_BODY_SIZE)
-        newTransaction.canRerun.should.be.true()
-      })
-
-      it('should add a transaction and truncate the routes response body', async () => {
-        // Given
-        const td = testUtils.clone(transactionData)
-        td.channelID = channel._id
-        clearTransactionBodies(td)
-        td.routes[0].response.body = LARGE_BODY
-
-        // When
-        await request(constants.BASE_URL)
-          .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(td)
-          .expect(201)
-
-        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
-        (newTransaction !== null).should.be.true()
-        newTransaction.routes[0].response.body.length.should.be.exactly(MAX_BODY_SIZE)
-        newTransaction.canRerun.should.be.true()
-      })
-
-      it('should add a transaction and truncate the orchestrations request body', async () => {
-        // Given
-        const td = testUtils.clone(transactionData)
-        td.channelID = channel._id
-        clearTransactionBodies(td)
-        td.orchestrations[0].request.body = LARGE_BODY
-
-        // When
-        await request(constants.BASE_URL)
-          .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(td)
-          .expect(201)
-
-        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
-        (newTransaction !== null).should.be.true
-        newTransaction.orchestrations[0].request.body.length.should.be.exactly(MAX_BODY_SIZE)
-        newTransaction.canRerun.should.be.true
-      })
-
-      it('should add a transaction and truncate the orchestrations response body', async () => {
-        // Given
-        const td = testUtils.clone(transactionData)
-        td.channelID = channel._id
-        clearTransactionBodies(td)
-        td.orchestrations[0].response.body = LARGE_BODY
-
-        // When
-        await request(constants.BASE_URL)
-          .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(td)
-          .expect(201)
-
-        const newTransaction = await TransactionModel.findOne({ clientID: '999999999999999999999999' });
-
-        (newTransaction !== null).should.be.true
-        newTransaction.orchestrations[0].response.body.length.should.be.exactly(MAX_BODY_SIZE)
-        newTransaction.canRerun.should.be.true
       })
 
       it('should only allow admin users to add transactions', async () => {
@@ -630,7 +495,7 @@ describe('API Integration Tests', () => {
 
         const updatedTrans = await TransactionModel.findOne({_id: transactionId});
         (updatedTrans !== null).should.be.true()
-        updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(MAX_BODY_SIZE)
+        updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(LARGE_BODY_SIZE)
         updatedTrans.canRerun.should.be.true()
       })
 

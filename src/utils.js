@@ -119,32 +119,33 @@ export function serverTimezone () {
 
 // Max size allowed for ALL bodies in the transaction together
 // Use min 1 to allow space for all routes on a transation and max 15 MiB leaving 1 MiB available for the transaction metadata
-const mbs = config.api.maxBodiesSizeMB
-export const MAX_BODIES_SIZE = mbs >= 1 && mbs <= 15 ? mbs * 1024 * 1024 : 15 * 1024 * 1024
+// const mbs = config.api.maxBodiesSizeMB
+// export const MAX_BODIES_SIZE = mbs >= 1 && mbs <= 15 ? mbs * 1024 * 1024 : 15 * 1024 * 1024
 
-const appendText = config.api.truncateAppend
-const appendTextLength = Buffer.byteLength(appendText)
+// const appendText = config.api.truncateAppend
+// const appendTextLength = Buffer.byteLength(appendText)
 
 export function enforceMaxBodiesSize (ctx, body) {
-  let enforced = false
+  // let enforced = false
 
-  // running total for all bodies
-  if ((ctx.totalBodyLength == null)) { ctx.totalBodyLength = 0 }
+  // // running total for all bodies
+  // if ((ctx.totalBodyLength == null)) { ctx.totalBodyLength = 0 }
 
-  let len = Buffer.byteLength(body)
-  if ((ctx.totalBodyLength + len) > MAX_BODIES_SIZE) {
-    len = Math.max(0, MAX_BODIES_SIZE - ctx.totalBodyLength)
-    if (len > appendTextLength) {
-      body = body.slice(0, len - appendTextLength) + appendText
-    } else {
-      body = appendText
-    }
-    enforced = true
-    logger.warn('Truncated body for storage as it exceeds limits')
-  }
+  // let len = Buffer.byteLength(body)
+  // if ((ctx.totalBodyLength + len) > MAX_BODIES_SIZE) {
+  //   len = Math.max(0, MAX_BODIES_SIZE - ctx.totalBodyLength)
+  //   if (len > appendTextLength) {
+  //     body = body.slice(0, len - appendTextLength) + appendText
+  //   } else {
+  //     body = appendText
+  //   }
+  //   enforced = true
+  //   logger.warn('Truncated body for storage as it exceeds limits')
+  // }
 
-  ctx.totalBodyLength += len
-  return enforced
+  // ctx.totalBodyLength += len
+  // return enforced
+  return 
 }
 
 /**

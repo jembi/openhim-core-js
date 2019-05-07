@@ -131,6 +131,7 @@ export async function storeResponse (ctx, done) {
     delete update.response.body
     update.response.bodyId = responseBodyChuckFileId
   }
+  // console.log(update.response)
 
   return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
     if (err) {
