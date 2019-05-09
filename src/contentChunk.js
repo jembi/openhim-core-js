@@ -108,13 +108,7 @@ export const addBodiesToTransactions = async (transactions) => {
     return []
   }
 
-  try {
-    const transactionsWithBodies = await Promise.all(transactions.map(transaction => filterPayloadType(transaction)))
-    return transactionsWithBodies
-  } catch (err) {
-    throw new Error(err)
-  }
-  
+  return await Promise.all(transactions.map(transaction => filterPayloadType(transaction)))
 }
 
 const filterPayloadType = (transaction) => {
