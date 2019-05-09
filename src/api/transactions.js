@@ -256,27 +256,6 @@ export async function getTransactions (ctx) {
   }
 }
 
-function recursivelySearchObject (ctx, obj, ws, repeat) {
-  if (Array.isArray(obj)) {
-    return obj.forEach((value) => {
-      if (value && (typeof value === 'object')) {
-        if (ws.has(value)) { return }
-        ws.add(value)
-        return repeat(ctx, value, ws)
-      }
-    })
-  } else if (obj && (typeof obj === 'object')) {
-    for (const k in obj) {
-      const value = obj[k]
-      if (value && (typeof value === 'object')) {
-        if (ws.has(value)) { return }
-        ws.add(value)
-        repeat(ctx, value, ws)
-      }
-    }
-  }
-}
-
 async function extractTransactionPayloadIntoChunks (transaction) {
   if (transaction.request && transaction.request.body) {
     const requestBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.request.body)
