@@ -108,21 +108,31 @@ export const addBodiesToTransactions = async (transactions) => {
     return []
   }
 
-  return await Promise.all(transactions.map(transaction => filterPayloadType(transaction)))
+  try {
+    const transactionsWithBodies = await Promise.all(transactions.map(transaction => filterPayloadType(transaction)))
+    return transactionsWithBodies
+  } catch (err) {
+    throw new Error(err)
+  }
+  
 }
 
 const filterPayloadType = (transaction) => {
-  return new Promise(async (resolve) => {
+  return new Promise(async (resolve, reject) => {
     if (!transaction){
       return resolve(transaction)
     }
 
-    if (transaction.request && transaction.request.bodyId) {
-      transaction.request.body = await retrievePayload(transaction.request.bodyId)
-    }
-
-    if(transaction.response && transaction.response.bodyId) {
-      transaction.response.body = await retrievePayload(transaction.response.bodyId)
+    try {
+      if (transaction.request && transaction.request.bodyId) {
+        transaction.request.body = await retrievePayload(transaction.request.bodyId)
+      }
+  
+      if(transaction.response && transaction.response.bodyId) {
+        transaction.response.body = await retrievePayload(transaction.response.bodyId)
+      }
+    } catch (err) {
+      return reject(err)
     }
 
     resolve(transaction)
