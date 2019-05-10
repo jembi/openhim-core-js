@@ -132,15 +132,25 @@ export async function storeResponse (ctx, done) {
     if (
       update.orchestrations[i] &&
       update.orchestrations[i].request &&
-      update.orchestrations[i].request.body) {
-      update.orchestrations[i].request.bodyId =  await extractStringPayloadIntoChunks(update.orchestrations[i].request.body)
+      update.orchestrations[i].request.hasOwnProperty('body')) {
+        if (update.orchestrations[i].request.body) {
+          delete update.orchestrations[i].request.body
+        } else {
+          update.orchestrations[i].request.bodyId =  await extractStringPayloadIntoChunks(update.orchestrations[i].request.body)
+          delete update.orchestrations[i].request.body
+        }
     }
 
     if (
       update.orchestrations[i] &&
       update.orchestrations[i].response &&
-      update.orchestrations[i].response.body) {
-      update.orchestrations[i].response.bodyId = await extractStringPayloadIntoChunks(update.orchestrations[i].response.body)
+      update.orchestrations[i].response.hasOwnProperty('body')) {
+        if (!update.orchestrations[i].response.body) {
+          delete update.orchestrations[i].response.body
+        } else {
+          update.orchestrations[i].response.bodyId = await extractStringPayloadIntoChunks(update.orchestrations[i].response.body)
+          delete update.orchestrations[i].response.body
+        }
     }
   }
 
