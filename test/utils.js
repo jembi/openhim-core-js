@@ -10,8 +10,8 @@ import https from 'https'
 import serveStatic from 'serve-static'
 import finalhandler from 'finalhandler'
 import sinon from 'sinon'
-import uriFormat from 'mongodb-uri'
 import * as crypto from 'crypto'
+import { connectionDefault } from '../src/config'
 
 import * as constants from './constants'
 import { config, encodeMongoURI } from '../src/config'
@@ -784,13 +784,10 @@ export async function setupMetricsTransactions () {
   await MetricModel.insertMany(metrics)
 }
 
-import { connectionDefault } from '../src/config'
-
 let bucket
 const getGridFSBucket = () => {
   if (!bucket) {
     bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
-    return bucket
   }
 
   return bucket
@@ -831,7 +828,7 @@ export const extractGridFSPayload = async (fileId) => {
   })
 }
 
-export const deleteChuckedPayloads = async () => {
+export const deleteChunkedPayloads = async () => {
   const db = connectionDefault.client.db()
   await db.collection('fs.files').deleteMany({})
   await db.collection('fs.chunks').deleteMany({})
