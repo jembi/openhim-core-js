@@ -80,8 +80,8 @@ const RouteMetadataDef = {
   name: {
     type: String, required: true
   },
-  request: RequestDef,
-  response: ResponseDef,
+  request: RequestDefMain,
+  response: ResponseDefMain,
   orchestrations: [OrchestrationMetadataDef],
   properties: Object,
   error: ErrorDetailsDef
