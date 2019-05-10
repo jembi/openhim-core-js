@@ -46,9 +46,6 @@ The following config option are provided by the OpenHIM. All of these options ha
     // API request are only valid for a particular window once made, this is
     // the size of that window in seconds
     "authWindowSeconds": 10,
-    // Max size allowed for ALL bodies in the transaction together
-    // Use min 1 MB to allow space for all routes on a transation and max 15 MB leaving 1 MB available for the transaction metadata
-    "maxBodiesSizeMB": 15,
     // Max size of a request payload to the API
     // Due to the maximum size of a mongo document, the bodies in the request will be truncated if the request is larger than 16MB
     "maxPayloadSizeMB": 50,

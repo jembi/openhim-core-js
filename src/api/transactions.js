@@ -7,7 +7,7 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
 import { promisify } from 'util'
-import { addBodiesToTransactions, extractStringPayloadIntoChunks, retrievePayload } from '../contentChunk'
+import { addBodiesToTransactions, extractStringPayloadIntoChunks } from '../contentChunk'
 
 const apiConf = config.get('api')
 
@@ -256,41 +256,6 @@ export async function getTransactions (ctx) {
   }
 }
 
-function recursivelySearchObject (ctx, obj, ws, repeat) {
-  if (Array.isArray(obj)) {
-    return obj.forEach((value) => {
-      if (value && (typeof value === 'object')) {
-        if (ws.has(value)) { return }
-        ws.add(value)
-        return repeat(ctx, value, ws)
-      }
-    })
-  } else if (obj && (typeof obj === 'object')) {
-    for (const k in obj) {
-      const value = obj[k]
-      if (value && (typeof value === 'object')) {
-        if (ws.has(value)) { return }
-        ws.add(value)
-        repeat(ctx, value, ws)
-      }
-    }
-  }
-}
-
-function enforceMaxBodiesSize (ctx, obj, ws) {
-  if (obj.request && (typeof obj.request.body === 'string')) {
-    if (utils.enforceMaxBodiesSize(ctx, obj.request.body) && ctx.primaryRequest) { obj.canRerun = false }
-  }
-  ctx.primaryRequest = false
-  if (obj.response && (typeof obj.response.body === 'string')) { utils.enforceMaxBodiesSize(ctx, obj.response.body) }
-  return recursivelySearchObject(ctx, obj, ws, enforceMaxBodiesSize)
-}
-
-function calculateTransactionBodiesByteLength (lengthObj, obj, ws) {
-  if (obj.body && (typeof obj.body === 'string')) { lengthObj.length += Buffer.byteLength(obj.body) }
-  return recursivelySearchObject(lengthObj, obj, ws, calculateTransactionBodiesByteLength)
-}
-
 async function extractTransactionPayloadIntoChunks (transaction) {
   if (transaction.request && transaction.request.body) {
     const requestBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.request.body)
@@ -318,8 +283,6 @@ export async function addTransaction (ctx) {
   try {
     // Get the values to use
     const transactionData = ctx.request.body
-    const context = {primaryRequest: true}
-    enforceMaxBodiesSize(context, transactionData, new WeakSet())
 
     await extractTransactionPayloadIntoChunks(transactionData)
 
@@ -490,18 +453,8 @@ export async function updateTransaction (ctx, transactionId) {
       }
     }
 
-    const transactionToUpdate = await TransactionModelAPI.findOne({_id: transactionId}).exec()
-    const transactionBodiesLength = {length: 0}
-
-    calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet())
-
-    const context = {
-      totalBodyLength: transactionBodiesLength.length,
-      primaryRequest: true
-    }
-    enforceMaxBodiesSize(context, updates, new WeakSet())
-
     await extractTransactionPayloadIntoChunks(updates)
+    // TODO: OHM-782 Delete the old gridfs chucks for this transactions
 
     const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
 
@@ -537,8 +490,4 @@ export async function removeTransaction (ctx, transactionId) {
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not remove transaction via the API: ${e}`, 'error')
   }
-}
-
-if (process.env.NODE_ENV === 'test') {
-  exports.calculateTransactionBodiesByteLength = calculateTransactionBodiesByteLength
 }
