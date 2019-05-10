@@ -75,6 +75,19 @@ const OrchestrationMetadataDef = {
   error: ErrorDetailsDef
 }
 
+// Orchestration def for the routes. TODO - change this and use the OrchestrationMetadataDef
+const RoutesOrchestrationMetadataDef = {
+  name: {
+    type: String, required: true
+  },
+  group: String,
+  request: {
+    type: RequestDef, required: false
+  }, // this is needed to prevent Validation error, see https://github.com/jembi/openhim-console/issues/356#issuecomment-188708443
+  response: ResponseDef,
+  error: ErrorDetailsDef
+}
+
 // Route Schema
 const RouteMetadataDef = {
   name: {
@@ -82,7 +95,7 @@ const RouteMetadataDef = {
   },
   request: RequestDef,
   response: ResponseDef,
-  orchestrations: [OrchestrationMetadataDef],
+  orchestrations: [RoutesOrchestrationMetadataDef],
   properties: Object,
   error: ErrorDetailsDef
 }
