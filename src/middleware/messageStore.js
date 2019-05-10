@@ -128,30 +128,28 @@ export async function storeResponse (ctx, done) {
   }
 
   // Store orchestrations' response and request bodies
-  for (var i = 0; i < update.orchestrations.length; i++) {
-    if (
-      update.orchestrations[i] &&
-      update.orchestrations[i].request &&
-      update.orchestrations[i].request.hasOwnProperty('body')) {
-        if (update.orchestrations[i].request.body) {
-          delete update.orchestrations[i].request.body
-        } else {
-          update.orchestrations[i].request.bodyId =  await extractStringPayloadIntoChunks(update.orchestrations[i].request.body)
-          delete update.orchestrations[i].request.body
-        }
-    }
+  if (update.orchestrations.length > 0) {
+    update.orchestrations.forEach(async (orch, index) => {
+      if (
+        orch &&
+        orch.request &&
+        orch.request.hasOwnProperty('body')) {
+          if (orch.request.body) {
+            update.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+          }
+          delete update.orchestrations[index].request.body
+      }
 
-    if (
-      update.orchestrations[i] &&
-      update.orchestrations[i].response &&
-      update.orchestrations[i].response.hasOwnProperty('body')) {
-        if (!update.orchestrations[i].response.body) {
-          delete update.orchestrations[i].response.body
-        } else {
-          update.orchestrations[i].response.bodyId = await extractStringPayloadIntoChunks(update.orchestrations[i].response.body)
-          delete update.orchestrations[i].response.body
-        }
-    }
+      if (
+        orch &&
+        orch.response &&
+        orch.response.hasOwnProperty('body')) {
+          if (orch.response.body) {
+            update.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+          }
+          delete update.orchestrations[index].response.body
+      }
+    })
   }
 
   return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
