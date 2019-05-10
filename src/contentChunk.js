@@ -69,7 +69,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
   })
 }
 
-exports.removeBodyById = (id) => {
+const removeBodyById = (id) => {
   return new Promise(async (resolve, reject) => {
     if (!id) {
       return reject(new Error('No ID supplied when trying to remove chunked body'))
@@ -83,6 +83,17 @@ exports.removeBodyById = (id) => {
       reject(err)
     }    
   })
+}
+
+exports.promisesToRemoveAllTransactionBodies = (tx) => {
+  const removeBodyPromises = []
+  if (tx.request.bodyId) {
+    removeBodyPromises.push(removeBodyById(tx.request.bodyId))
+  }
+  if (tx.response.bodyId) {
+    removeBodyPromises.push(removeBodyById(tx.response.bodyId))
+  }
+  return removeBodyPromises
 }
 
 export const retrievePayload = fileId => {
