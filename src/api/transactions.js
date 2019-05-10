@@ -273,27 +273,27 @@ async function extractTransactionPayloadIntoChunks (transaction) {
 
   if (transaction.orchestrations) {
     if (transaction.orchestrations.length > 0) {
-      for (var i = 0; i < transaction.orchestrations.length; i++) {
+      transaction.orchestrations.forEach(async (orch, index) => {
         if (
-          transaction.orchestrations[i] &&
-          transaction.orchestrations[i].request &&
-          transaction.orchestrations[i].request.hasOwnProperty('body')) {
-            if (transaction.orchestrations[i].request.body) {
-              transaction.orchestrations[i].request.bodyId =  await extractStringPayloadIntoChunks(transaction.orchestrations[i].request.body)
+          orch &&
+          orch.request &&
+          orch.request.hasOwnProperty('body')) {
+            if (orch.request.body) {
+              transaction.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
             }
-            delete transaction.orchestrations[i].request.body
+            delete transaction.orchestrations[index].request.body
         }
 
         if (
-          transaction.orchestrations[i] &&
-          transaction.orchestrations[i].response &&
-          transaction.orchestrations[i].response.hasOwnProperty('body')) {
-            if (transaction.orchestrations[i].response.body) {
-              transaction.orchestrations[i].response.bodyId = await extractStringPayloadIntoChunks(transaction.orchestrations[i].response.body)
+          orch &&
+          orch.response &&
+          orch.response.hasOwnProperty('body')) {
+            if (orch.response.body) {
+              transaction.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
             }
-            delete transaction.orchestrations[i].response.body
+            delete transaction.orchestrations[index].response.body
         }
-      }
+      })
     }
   }
 }
