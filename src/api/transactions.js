@@ -454,7 +454,7 @@ export async function updateTransaction (ctx, transactionId) {
     }
 
     await extractTransactionPayloadIntoChunks(updates)
-    // TODO: OHM-??? Delete the old gridfs chucks for this transactions
+    // TODO: OHM-782 Delete the old gridfs chucks for this transactions
 
     const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
 
