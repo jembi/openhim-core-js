@@ -257,16 +257,54 @@ export async function getTransactions (ctx) {
 }
 
 async function extractTransactionPayloadIntoChunks (transaction) {
-  if (transaction.request && transaction.request.body) {
-    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.request.body)
-    delete transaction.request.body
-    transaction.request.bodyId = requestBodyChuckFileId
+  if (transaction.request && transaction.request.hasOwnProperty('body')) {
+    if(!transaction.request.body) {
+      delete transaction.request.body
+    } else {
+      const requestBodyChunkFileId = await extractStringPayloadIntoChunks(transaction.request.body)
+      delete transaction.request.body
+      transaction.request.bodyId = requestBodyChunkFileId
+    }
   }
 
-  if (transaction.response && transaction.response.body) {
-    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.response.body)
-    delete transaction.response.body
-    transaction.response.bodyId = responseBodyChuckFileId
+  if (transaction.response && transaction.response.hasOwnProperty('body')) {
+    if(!transaction.response.body) {
+      delete transaction.response.body
+    } else {
+      const responseBodyChunkFileId = await extractStringPayloadIntoChunks(transaction.response.body)
+      delete transaction.response.body
+      transaction.response.bodyId = responseBodyChunkFileId
+    }
+  }
+
+  if (transaction.orchestrations) {
+    if (transaction.orchestrations.length > 0) {
+      for (var i = 0; i < transaction.orchestrations.length; i++) {
+        if (
+          transaction.orchestrations[i] &&
+          transaction.orchestrations[i].request &&
+          transaction.orchestrations[i].request.hasOwnProperty('body')) {
+            if (!transaction.orchestrations[i].request.body) {
+              delete transaction.orchestrations[i].request.body
+            } else {
+              transaction.orchestrations[i].request.bodyId =  await extractStringPayloadIntoChunks(transaction.orchestrations[i].request.body)
+              delete transaction.orchestrations[i].request.body
+            }
+        }
+
+        if (
+          transaction.orchestrations[i] &&
+          transaction.orchestrations[i].response &&
+          transaction.orchestrations[i].response.hasOwnProperty('body')) {
+            if (!transaction.orchestrations[i].response.body) {
+              delete transaction.orchestrations[i].response.body
+            } else {
+              transaction.orchestrations[i].response.bodyId = await extractStringPayloadIntoChunks(transaction.orchestrations[i].response.body)
+              delete transaction.orchestrations[i].response.body
+            }
+        }
+      }
+    }
   }
 }
 
