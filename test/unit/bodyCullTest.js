@@ -10,7 +10,6 @@ import should from 'should'
 
 import { connectionDefault } from '../../src/config'
 const MongoClient = connectionDefault.client
-let db = null
 
 const testTime = new Date(2016, 2, 12)
 const cullTime = new Date(2016, 2, 9)
@@ -85,6 +84,7 @@ const baseTransaction = Object.freeze({
 })
 
 describe(`cullBodies`, () => {
+  let db
   let clock
   let channelHasNotCulled
   let channelHasCulled

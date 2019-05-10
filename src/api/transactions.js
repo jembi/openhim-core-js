@@ -7,8 +7,7 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
 import { promisify } from 'util'
-import { retrievePayload } from '../contentChunk'
-import { transformTransaction, addBodiesToTransactions } from '../bodyFix'
+import { addBodiesToTransactions, extractStringPayloadIntoChunks } from '../contentChunk'
 
 const apiConf = config.get('api')
 
@@ -39,8 +38,8 @@ function getProjectionObject (filterRepresentation) {
     case 'simpledetails':
       // view minimum required data for transaction details view
       return {
-        'request.body': 0,
-        'response.body': 0,
+        'request.bodyId': 0,
+        'response.bodyId': 0,
         'routes.request.body': 0,
         'routes.response.body': 0,
         'orchestrations.request.body': 0,
@@ -59,9 +58,9 @@ function getProjectionObject (filterRepresentation) {
       // no filterRepresentation supplied - simple view
       // view minimum required data for transactions
       return {
-        'request.body': 0,
+        'request.bodyId': 0,
         'request.headers': 0,
-        'response.body': 0,
+        'response.bodyId': 0,
         'response.headers': 0,
         orchestrations: 0,
         routes: 0
@@ -250,46 +249,25 @@ export async function getTransactions (ctx) {
     ctx.body = transformedTransactions
 
     if (filterRepresentation === 'fulltruncate') {
-    transformedTransactions.map((trx) => truncateTransactionDetails(trx))
+      transformedTransactions.map((trx) => truncateTransactionDetails(trx))
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
   }
 }
 
-function recursivelySearchObject (ctx, obj, ws, repeat) {
-  if (Array.isArray(obj)) {
-    return obj.forEach((value) => {
-      if (value && (typeof value === 'object')) {
-        if (ws.has(value)) { return }
-        ws.add(value)
-        return repeat(ctx, value, ws)
-      }
-    })
-  } else if (obj && (typeof obj === 'object')) {
-    for (const k in obj) {
-      const value = obj[k]
-      if (value && (typeof value === 'object')) {
-        if (ws.has(value)) { return }
-        ws.add(value)
-        repeat(ctx, value, ws)
-      }
-    }
+async function extractTransactionPayloadIntoChunks (transaction) {
+  if (transaction.request && transaction.request.body) {
+    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.request.body)
+    delete transaction.request.body
+    transaction.request.bodyId = requestBodyChuckFileId
   }
-}
 
-function enforceMaxBodiesSize (ctx, obj, ws) {
-  if (obj.request && (typeof obj.request.body === 'string')) {
-    if (utils.enforceMaxBodiesSize(ctx, obj.request) && ctx.primaryRequest) { obj.canRerun = false }
+  if (transaction.response && transaction.response.body) {
+    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.response.body)
+    delete transaction.response.body
+    transaction.response.bodyId = responseBodyChuckFileId
   }
-  ctx.primaryRequest = false
-  if (obj.response && (typeof obj.response.body === 'string')) { utils.enforceMaxBodiesSize(ctx, obj.response) }
-  return recursivelySearchObject(ctx, obj, ws, enforceMaxBodiesSize)
-}
-
-function calculateTransactionBodiesByteLength (lengthObj, obj, ws) {
-  if (obj.body && (typeof obj.body === 'string')) { lengthObj.length += Buffer.byteLength(obj.body) }
-  return recursivelySearchObject(lengthObj, obj, ws, calculateTransactionBodiesByteLength)
 }
 
 /*
@@ -305,8 +283,8 @@ export async function addTransaction (ctx) {
   try {
     // Get the values to use
     const transactionData = ctx.request.body
-    const context = {primaryRequest: true}
-    enforceMaxBodiesSize(context, transactionData, new WeakSet())
+
+    await extractTransactionPayloadIntoChunks(transactionData)
 
     const tx = new TransactionModelAPI(transactionData)
 
@@ -371,28 +349,10 @@ export async function getTransactionById (ctx, transactionId) {
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
     const transaction = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
-    const result = transformTransaction(transaction)
 
-    // Retrieve transaction's request and response bodies
-    if(
-        transaction &&
-        transaction.response &&
-        transaction.response.bodyId
-    ) {
-        await retrievePayload(transaction.response.bodyId).then(body => {
-            result.response.body = body
-        }).catch(err => {throw new Error(err)})
-    }
-
-    if(
-        transaction &&
-        transaction.request &&
-        transaction.request.bodyId
-    ) {
-        await retrievePayload(transaction.request.bodyId).then(body => {
-            result.request.body = body
-        }).catch(err => {throw new Error(err)})
-    }
+    // retrieve transaction request and response bodies
+    const resultArray = await addBodiesToTransactions([transaction])
+    const result = resultArray[0]
 
     if (result && (filterRepresentation === 'fulltruncate')) {
       truncateTransactionDetails(result)
@@ -493,16 +453,8 @@ export async function updateTransaction (ctx, transactionId) {
       }
     }
 
-    const transactionToUpdate = await TransactionModelAPI.findOne({_id: transactionId}).exec()
-    const transactionBodiesLength = {length: 0}
-
-    calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet())
-
-    const context = {
-      totalBodyLength: transactionBodiesLength.length,
-      primaryRequest: true
-    }
-    enforceMaxBodiesSize(context, updates, new WeakSet())
+    await extractTransactionPayloadIntoChunks(updates)
+    // TODO: OHM-782 Delete the old gridfs chucks for this transactions
 
     const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
 
@@ -538,8 +490,4 @@ export async function removeTransaction (ctx, transactionId) {
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not remove transaction via the API: ${e}`, 'error')
   }
-}
-
-if (process.env.NODE_ENV === 'test') {
-  exports.calculateTransactionBodiesByteLength = calculateTransactionBodiesByteLength
 }

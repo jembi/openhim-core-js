@@ -8,7 +8,7 @@ import { TransactionModel } from './model/transactions'
 import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
 import { config } from './config'
 
-import { addBodiesToTransactions } from './bodyFix'
+import { addBodiesToTransactions } from './contentChunk'
 
 config.rerun = config.get('rerun')
 
@@ -185,9 +185,13 @@ function rerunGetTransaction (transactionID, callback) {
       return callback(err, null)
     }
 
-    const transList = await addBodiesToTransactions(new Array(transaction))
-    if (transList && transList.length > 0) {
-      transaction = transList[0]
+    try {
+      const transList = await addBodiesToTransactions(new Array(transaction))
+      if (transList && transList.length > 0) {
+        transaction = transList[0]
+      }
+    } catch (err) {
+      return callback(err)
     }
 
     // send the transactions data in callback

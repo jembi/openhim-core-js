@@ -6,7 +6,6 @@ let bucket
 const getGridFSBucket = () => {
   if (!bucket) {
     bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
-    return bucket
   }
 
   return bucket
@@ -73,7 +72,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
 exports.removeBodyById = (id) => {
   return new Promise(async (resolve, reject) => {
     if (!id) {
-      return reject(new Error('No ID supplied when trying to remove chucked body'))
+      return reject(new Error('No ID supplied when trying to remove chunked body'))
     }
 
     try {
@@ -99,5 +98,37 @@ export const retrievePayload = fileId => {
       .on('error', err => reject(err))
       .on('data', chunk => chunks.push(chunk))
       .on('end', () => resolve(Buffer.concat(chunks).toString()))
+  })
+}
+
+export const addBodiesToTransactions = async (transactions) => {
+  if(!transactions ||
+    transactions.length < 1
+  ) {
+    return []
+  }
+
+  return await Promise.all(transactions.map(transaction => filterPayloadType(transaction)))
+}
+
+const filterPayloadType = (transaction) => {
+  return new Promise(async (resolve, reject) => {
+    if (!transaction){
+      return resolve(transaction)
+    }
+
+    try {
+      if (transaction.request && transaction.request.bodyId) {
+        transaction.request.body = await retrievePayload(transaction.request.bodyId)
+      }
+  
+      if(transaction.response && transaction.response.bodyId) {
+        transaction.response.body = await retrievePayload(transaction.response.bodyId)
+      }
+    } catch (err) {
+      return reject(err)
+    }
+
+    resolve(transaction)
   })
 }

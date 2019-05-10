@@ -68,8 +68,6 @@ export async function storeTransaction (ctx, done) {
     }
   }
 
-  if (utils.enforceMaxBodiesSize(ctx, ctx.body)) { tx.canRerun = false }
-
   // extract body into chucks before saving transaction
   if (ctx.body) {
     const requestBodyChuckFileId = await extractStringPayloadIntoChunks(ctx.body)
@@ -91,7 +89,6 @@ export async function storeTransaction (ctx, done) {
 export async function storeResponse (ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
 
-  
   const res = {
     status: ctx.response.status,
     headers,
@@ -111,18 +108,16 @@ export async function storeResponse (ctx, done) {
     orchestrations: []
   }
 
-  utils.enforceMaxBodiesSize(ctx, update.response.body)
-
   if (ctx.mediatorResponse) {
     if (ctx.mediatorResponse.orchestrations) {
-      update.orchestrations.push(...truncateOrchestrationBodies(ctx, ctx.mediatorResponse.orchestrations))
+      update.orchestrations.push(...ctx.mediatorResponse.orchestrations)
     }
 
     if (ctx.mediatorResponse.properties) { update.properties = ctx.mediatorResponse.properties }
   }
 
   if (ctx.orchestrations) {
-    update.orchestrations.push(...truncateOrchestrationBodies(ctx, ctx.orchestrations))
+    update.orchestrations.push(...ctx.orchestrations)
   }
 
   // extract body into chucks before saving transaction
@@ -146,15 +141,6 @@ export async function storeResponse (ctx, done) {
   })
 }
 
-function truncateOrchestrationBodies (ctx, orchestrations) {
-  return orchestrations.map(orch => {
-    const truncatedOrchestration = Object.assign({}, orch)
-    if (truncatedOrchestration.request && truncatedOrchestration.request.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.request.body) }
-    if (truncatedOrchestration.response && truncatedOrchestration.response.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.response.body) }
-    return truncatedOrchestration
-  })
-}
-
 export function storeNonPrimaryResponse (ctx, route, done) {
   // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
@@ -162,9 +148,6 @@ export function storeNonPrimaryResponse (ctx, route, done) {
   }
 
   if (ctx.transactionId != null) {
-    if ((route.request != null ? route.request.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.request.body) }
-    if ((route.response != null ? route.response.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.response.body) }
-
     transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {
       if (err) {
         logger.error(err)
