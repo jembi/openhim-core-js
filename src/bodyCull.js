@@ -40,10 +40,10 @@ async function clearTransactions (channel) {
     query['request.timestamp'].$gte = lastBodyCleared
   }
 
-  // construct promises array for removing transaction bodies
   const transactionsToCullBody = await TransactionModel.find(query, { 'request.bodyId': 1, 'response.bodyId': 1, })
   const removeBodyPromises = []
   transactionsToCullBody.map((tx) => {
+    // construct promises array to remove all old payloads
     removeBodyPromises.concat(promisesToRemoveAllTransactionBodies(tx))
   })
 
@@ -55,6 +55,6 @@ async function clearTransactions (channel) {
     logger.info(`Culled ${updateResp.nModified} transactions for channel ${channel.name}`)
   }
   
-  // execute the promises to remove all relevant bodies
-  await Promise.all(removeBodyPromises)
+  // execute promises to remove old payloads from database
+  await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
 }

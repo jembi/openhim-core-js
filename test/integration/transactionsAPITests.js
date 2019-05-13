@@ -336,7 +336,15 @@ describe('API Integration Tests', () => {
 
       let transactionId
       it('should call /updateTransaction ', async () => {
-        const tx = new TransactionModel(transactionData)
+        const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+
+        const tx = new TransactionModel(td)
         const result = await tx.save()
         transactionId = result._id
         const updates = {
@@ -390,6 +398,13 @@ describe('API Integration Tests', () => {
 
       it('should update transaction with large update request body', async () => {
         const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+
         td.channelID = channel._id
         clearTransactionBodies(td)
         const tx = new TransactionModel(td)
@@ -422,6 +437,13 @@ describe('API Integration Tests', () => {
 
       it('should update transaction with large update response body', async () => {
         const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+
         td.channelID = channel._id
         clearTransactionBodies(td)
         const tx = new TransactionModel(td)
@@ -455,6 +477,13 @@ describe('API Integration Tests', () => {
 
       it('should update transaction with large routes orchestrations request body', async () => {
         const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+
         td.channelID = channel._id
         clearTransactionBodies(td)
         const tx = new TransactionModel(td)
@@ -501,7 +530,16 @@ describe('API Integration Tests', () => {
 
       it('should queue a transaction for auto retry', async () => {
         await ChannelModel.find()
-        const newTransaction = Object.assign({}, transactionData, { channelID: channel2._id })
+
+        const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+
+        const newTransaction = Object.assign({}, td, { channelID: channel2._id })
         let tx = new TransactionModel(newTransaction)
         const result = await tx.save()
         transactionId = result._id
@@ -531,7 +569,15 @@ describe('API Integration Tests', () => {
       })
 
       it('should not queue a transaction for auto retry when max retries have been reached', async () => {
-        const newTransactionData = Object.assign({}, transactionData, { autoRetryAttempt: 5, channelID: channel2._id })
+        const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+
+        const newTransactionData = Object.assign({}, td, { autoRetryAttempt: 5, channelID: channel2._id })
         let tx = new TransactionModel(newTransactionData)
         const result = await tx.save()
         transactionId = result._id
@@ -557,7 +603,15 @@ describe('API Integration Tests', () => {
       })
 
       it('should generate events on update', async () => {
-        const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
+        const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+
+        const newTransactionData = Object.assign({}, td, { channelID: channel._id })
         const tx = new TransactionModel(newTransactionData)
         const result = await tx.save()
         transactionId = result._id
@@ -603,7 +657,15 @@ describe('API Integration Tests', () => {
       })
 
       it('should only allow admin user to update a transaction', async () => {
-        const tx = new TransactionModel(transactionData)
+        const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+
+        const tx = new TransactionModel(td)
         const result = await tx.save()
 
         transactionId = result._id

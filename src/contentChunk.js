@@ -44,7 +44,7 @@ const isValidGridFsPayload = (payload) => {
   return false
 }
 
-exports.extractStringPayloadIntoChunks = (payload) => {
+export const extractStringPayloadIntoChunks = (payload) => {
   return new Promise((resolve, reject) => {
     if (!payload) {
       return reject(new Error('payload not supplied'))
@@ -85,13 +85,13 @@ const removeBodyById = (id) => {
   })
 }
 
-exports.promisesToRemoveAllTransactionBodies = (tx) => {
+export const promisesToRemoveAllTransactionBodies = (tx) => {
   const removeBodyPromises = []
   if (tx.request.bodyId) {
-    removeBodyPromises.push(removeBodyById(tx.request.bodyId))
+    removeBodyPromises.push(() => removeBodyById(tx.request.bodyId))
   }
   if (tx.response.bodyId) {
-    removeBodyPromises.push(removeBodyById(tx.response.bodyId))
+    removeBodyPromises.push(() => removeBodyById(tx.response.bodyId))
   }
   return removeBodyPromises
 }
@@ -113,9 +113,7 @@ export const retrievePayload = fileId => {
 }
 
 export const addBodiesToTransactions = async (transactions) => {
-  if(!transactions ||
-    transactions.length < 1
-  ) {
+  if(!transactions || !Array.isArray(transactions) || transactions.length < 1) {
     return []
   }
 
