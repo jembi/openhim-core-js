@@ -257,44 +257,42 @@ export async function getTransactions (ctx) {
 }
 
 async function extractTransactionPayloadIntoChunks (transaction) {
-  if (transaction.request && transaction.request.hasOwnProperty('body')) {
+  if (transaction.request && 'body' in transaction.request) {
     if (transaction.request.body) {
       transaction.request.bodyId = await extractStringPayloadIntoChunks(transaction.request.body)
     }
     delete transaction.request.body
   }
 
-  if (transaction.response && transaction.response.hasOwnProperty('body')) {
+  if (transaction.response && 'body' in transaction.response) {
     if(transaction.response.body) {
       transaction.response.bodyId = await extractStringPayloadIntoChunks(transaction.response.body)
     }
     delete transaction.response.body
   }
 
-  if (transaction.orchestrations) {
-    if (transaction.orchestrations.length > 0) {
-      transaction.orchestrations.forEach(async (orch, index) => {
-        if (
-          orch &&
-          orch.request &&
-          orch.request.hasOwnProperty('body')) {
-            if (orch.request.body) {
-              transaction.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
-            }
-            delete transaction.orchestrations[index].request.body
-        }
+  if (transaction.orchestrations && transaction.orchestrations.length > 0) {
+    transaction.orchestrations.forEach(async (orch, index) => {
+      if (
+        orch &&
+        orch.request &&
+        'body' in orch.request) {
+          if (orch.request.body) {
+            transaction.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+          }
+          delete transaction.orchestrations[index].request.body
+      }
 
-        if (
-          orch &&
-          orch.response &&
-          orch.response.hasOwnProperty('body')) {
-            if (orch.response.body) {
-              transaction.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
-            }
-            delete transaction.orchestrations[index].response.body
-        }
-      })
-    }
+      if (
+        orch &&
+        orch.response &&
+        'body' in orch.response) {
+          if (orch.response.body) {
+            transaction.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+          }
+          delete transaction.orchestrations[index].response.body
+      }
+    })
   }
 }
 
