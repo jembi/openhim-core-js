@@ -173,7 +173,7 @@ describe(`cullBodies`, () => {
     {
       const transaction = await TransactionModel.findById(tranLeftAlone._id)
       should(transaction.request.bodyId).eql(requestBodyId)
-      // should(transaction.response.bodyId).eql(responseBodyId)
+      should(transaction.response.bodyId).eql(responseBodyId)
     }
   })
 
@@ -199,7 +199,7 @@ describe(`cullBodies`, () => {
     {
       const transaction = await TransactionModel.findById(notCulled._id)
       should(transaction.request.bodyId).eql(requestBodyId)
-      // should(transaction.response.bodyId).eql(responseBodyId)
+      should(transaction.response.bodyId).eql(responseBodyId)
     }
     {
       const transaction = await TransactionModel.findById(culled._id)
@@ -214,6 +214,6 @@ describe(`cullBodies`, () => {
     await cullBodies()
     const transaction = await TransactionModel.findById(tran._id)
     should(transaction.request.bodyId).eql(requestBodyId)
-    // should(transaction.response.bodyId).eql(responseBodyId)
+    should(transaction.response.bodyId).eql(responseBodyId)
   })
 })
