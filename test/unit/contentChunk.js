@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from 'should'
-import { extractStringPayloadIntoChunks, retrievePayload } from '../../src/contentChunk'
+import { extractStringPayloadIntoChunks, retrievePayload, addOrchestrationBodies } from '../../src/contentChunk'
 import { connectionDefault } from '../../src/config'
 import mongodb from 'mongodb'
 
@@ -208,6 +208,57 @@ describe('contentChunk: ', () => {
         err.message.should.eql(
           `FileNotFound: file ${fileId} was not found`)
       )
+    })
+  })
+
+  describe('addOrchestrationBodies()', () => {
+    it('should add orchestration bodies back to transaction', async () => {
+      const beforeOrchestrations = [
+        {
+          request: {
+            body: "Orchestration 1 body for request"
+          },
+          response: {
+            body: "Orchestration 1 body for response"
+          }
+        },
+        {
+          request: {
+            body: "Orchestration 2 body for request"
+          },
+          response: {
+            body: "Orchestration 2 body for response"
+          }
+        }
+      ]
+
+      const fullOrchestrations = [...beforeOrchestrations]
+
+      const orchestrations = fullOrchestrations.map(async (orchestration) => {
+        if (orchestration.request && orchestration.request.body) {
+          const requestId = await extractStringPayloadIntoChunks(orchestration.request.body)
+          delete orchestration.request.body
+          orchestration.request.bodyId = requestId 
+        }
+
+        if (orchestration.response && orchestration.response.body) {
+          const responseId = await extractStringPayloadIntoChunks(orchestration.response.body)
+          delete orchestration.response.body
+          orchestration.response.bodyId = responseId 
+        }
+
+        return orchestration
+      })
+
+      const beforeTransaction = {
+        request: {},
+        response: {},
+        orchestrations
+      }
+
+      const afterTransaction = await addOrchestrationBodies(beforeTransaction)
+      should.equal(afterTransaction.orchestrations.length, 2)
+      should.deepEqual(JSON.stringify(afterTransaction.orchestrations), JSON.stringify(beforeOrchestrations))
     })
   })
 })
