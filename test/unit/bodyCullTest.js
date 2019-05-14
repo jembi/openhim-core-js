@@ -7,7 +7,7 @@ import { cullBodies } from '../../src/bodyCull'
 import { clone } from '../utils'
 import moment from 'moment'
 import should from 'should'
-
+import { extractGridFSPayload, createGridFSPayload } from '../utils'
 import { connectionDefault } from '../../src/config'
 const MongoClient = connectionDefault.client
 
@@ -91,12 +91,15 @@ describe(`cullBodies`, () => {
   let channelNeverCull
   let client
 
-  function createTransaction (channel, timestamp) {
+  function createTransaction (channel, timestamp, orchestrations) {
     const transactionDoc = clone(baseTransaction)
     transactionDoc.request.timestamp = timestamp
     transactionDoc.response.timestamp = timestamp
     transactionDoc.clientID = client._id
     transactionDoc.channelID = channel._id
+    if (orchestrations) {
+      transactionDoc.orchestrations = orchestrations
+    }
     return new TransactionModel(transactionDoc).save()
   }
 
@@ -215,5 +218,71 @@ describe(`cullBodies`, () => {
     const transaction = await TransactionModel.findById(tran._id)
     should(transaction.request.bodyId).eql(requestBodyId)
     should(transaction.response.bodyId).eql(responseBodyId)
+  })
+
+  it (`will cull the orchestration request and response bodies`, async () => {
+    const momentTime = moment().subtract(3, 'd')
+
+    const orchestrationBodyIdRequest0 = await createGridFSPayload('Test body')
+    const orchestrationBodyIdRequest1 = await createGridFSPayload('Test body')
+    const orchestrationBodyIdResponse0 = await createGridFSPayload('Test body')
+    const orchestrationBodyIdResponse1 = await createGridFSPayload('Test body')
+
+    const orchestrations = [
+      {
+        name: '0',
+        request: {
+          bodyId: orchestrationBodyIdRequest0,
+          timestamp: momentTime
+        },
+        response: {
+          bodyId: orchestrationBodyIdResponse0
+        }
+      },
+      {
+        name: '1',
+        request: {
+          bodyId: orchestrationBodyIdRequest1,
+          timestamp: momentTime
+        },
+        response: {
+          bodyId: orchestrationBodyIdResponse1
+        }
+      }
+    ]
+
+
+    const tran = await createTransaction(channelHasNotCulled, momentTime.toDate(), orchestrations)
+    await cullBodies()
+
+    const transaction = await TransactionModel.findById(tran._id)
+
+    // Check that the chunk is now longer stored in the DB
+    try {
+      await extractGridFSPayload(orchestrationBodyIdRequest0)
+    } catch(err) {
+      should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdRequest0} was not found`)
+    }
+    try {
+      await extractGridFSPayload(orchestrationBodyIdRequest1)
+    } catch(err) {
+      should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdRequest1} was not found`)
+    }
+    try {
+      await extractGridFSPayload(orchestrationBodyIdResponse0)
+    } catch(err) {
+      should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdResponse0} was not found`)
+    }
+    try {
+      await extractGridFSPayload(orchestrationBodyIdResponse1)
+    } catch(err) {
+      should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdResponse1} was not found`)
+    }
+
+    // Check that the bodyID field was completely removed
+    should.equal(transaction.orchestrations[0].response.bodyId, undefined)
+    should.equal(transaction.orchestrations[0].request.bodyId, undefined)
+    should.equal(transaction.orchestrations[1].request.bodyId, undefined)
+    should.equal(transaction.orchestrations[1].response.bodyId, undefined)
   })
 })
