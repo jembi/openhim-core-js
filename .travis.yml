@@ -15,7 +15,7 @@ services:
 addons:
   apt:
     sources:
-    - mongodb-3.0-precise
+    - mongodb-4.0-xenial
     packages:
     - mongodb-org-server
 sudo: required
