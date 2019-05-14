@@ -12,6 +12,12 @@ matrix:
 services:
   - docker
   - mongodb
+addons:
+  apt:
+    sources:
+    - mongodb-3.0-precise
+    packages:
+    - mongodb-org-server
 sudo: required
 before_install:
   - export TZ=Africa/Johannesburg
