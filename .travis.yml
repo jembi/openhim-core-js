@@ -1,3 +1,4 @@
+dist: xenial
 language: node_js
 node_js:
   - "lts/carbon"
@@ -12,12 +13,6 @@ matrix:
 services:
   - docker
   - mongodb
-addons:
-  apt:
-    sources:
-    - mongodb-4.0-xenial
-    packages:
-    - mongodb-org-server
 sudo: required
 before_install:
   - export TZ=Africa/Johannesburg
