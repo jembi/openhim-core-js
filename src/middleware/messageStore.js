@@ -4,7 +4,7 @@ import * as autoRetryUtils from '../autoRetry'
 import * as utils from '../utils'
 import * as metrics from '../metrics'
 import { promisify } from 'util'
-import { extractStringPayloadIntoChunks } from '../contentChunk'
+import { extractStringPayloadIntoChunks, extractTransactionPayloadIntoChunks } from '../contentChunk'
 
 export const transactionStatus = {
   PROCESSING: 'Processing',
@@ -120,37 +120,7 @@ export async function storeResponse (ctx, done) {
     update.orchestrations.push(...ctx.orchestrations)
   }
 
-  // extract body into chucks before saving transaction
-  if (update.response.body) {
-    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(update.response.body)
-    delete update.response.body
-    update.response.bodyId = responseBodyChuckFileId
-  }
-
-  // Store orchestrations' response and request bodies
-  if (update.orchestrations.length > 0) {
-    update.orchestrations.forEach(async (orch, index) => {
-      if (
-        orch &&
-        orch.request &&
-        orch.request.hasOwnProperty('body')) {
-          if (orch.request.body) {
-            update.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
-          }
-          delete update.orchestrations[index].request.body
-      }
-
-      if (
-        orch &&
-        orch.response &&
-        orch.response.hasOwnProperty('body')) {
-          if (orch.response.body) {
-            update.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
-          }
-          delete update.orchestrations[index].response.body
-      }
-    })
-  }
+  await extractTransactionPayloadIntoChunks(update)
 
   return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
     if (err) {

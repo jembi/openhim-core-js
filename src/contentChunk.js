@@ -44,7 +44,7 @@ const isValidGridFsPayload = (payload) => {
   return false
 }
 
-exports.extractStringPayloadIntoChunks = (payload) => {
+export const extractStringPayloadIntoChunks = (payload) => {
   return new Promise((resolve, reject) => {
     if (!payload) {
       return reject(new Error('payload not supplied'))
@@ -131,4 +131,46 @@ const filterPayloadType = (transaction) => {
 
     resolve(transaction)
   })
+}
+
+exports.extractTransactionPayloadIntoChunks = async (transaction) => {
+  if (!transaction) {
+    return
+  }
+
+  if (transaction.request && 'body' in transaction.request) {
+    if (transaction.request.body) {
+      transaction.request.bodyId = await extractStringPayloadIntoChunks(transaction.request.body)
+    }
+    delete transaction.request.body
+  }
+
+  if (transaction.response && 'body' in transaction.response) {
+    if(transaction.response.body) {
+      transaction.response.bodyId = await extractStringPayloadIntoChunks(transaction.response.body)
+    }
+    delete transaction.response.body
+  }
+
+  if (transaction.orchestrations && transaction.orchestrations.length > 0) {
+    transaction.orchestrations.forEach(async (orch, index) => {
+      if (!orch) {
+        return
+      }
+
+      if (orch.request && 'body' in orch.request) {
+        if (orch.request.body) {
+          transaction.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+        }
+        delete transaction.orchestrations[index].request.body
+      }
+
+      if (orch.response && 'body' in orch.response) {
+        if (orch.response.body) {
+          transaction.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+        }
+        delete transaction.orchestrations[index].response.body
+      }
+    })
+  }
 }

@@ -1,7 +1,7 @@
 import { Schema, ObjectId } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
 
-// TODO: OHM-691: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
+// TODO: OHM-776: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
 // This is duplicated due to the secondary routes and orchestrations using the same schema, and updating theu request/response bodies are done in a different story
 // Request Schema definition
 const RequestDefMain = new Schema({
@@ -21,7 +21,7 @@ const RequestDefMain = new Schema({
 })
 RequestDefMain.virtual('body')
 
-// TODO: OHM-691: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
+// TODO: OHM-776: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
 // This is duplicated due to the secondary routes and orchestrations using the same schema, and updating theu request/response bodies are done in a different story
 // Response Schema definition
 const ResponseDefMain = new Schema({
@@ -87,7 +87,7 @@ const RouteMetadataDef = {
   error: ErrorDetailsDef
 }
 
-// Trasnaction schema
+// Transaction schema
 const TransactionSchema = new Schema({
   clientID: Schema.Types.ObjectId,
   clientIP: String,
