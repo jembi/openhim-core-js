@@ -153,24 +153,26 @@ exports.extractTransactionPayloadIntoChunks = async (transaction) => {
   }
 
   if (transaction.orchestrations && transaction.orchestrations.length > 0) {
-    transaction.orchestrations.forEach(async (orch, index) => {
+    await Promise.all(transaction.orchestrations.map(async (orch) => {
       if (!orch) {
         return
       }
 
       if (orch.request && 'body' in orch.request) {
         if (orch.request.body) {
-          transaction.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+          orch.request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
         }
-        delete transaction.orchestrations[index].request.body
+        delete orch.request.body
       }
 
       if (orch.response && 'body' in orch.response) {
         if (orch.response.body) {
-          transaction.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+          orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
         }
-        delete transaction.orchestrations[index].response.body
+        delete orch.response.body
       }
-    })
+
+      return orch
+    }))
   }
 }
