@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from 'should'
-import { extractStringPayloadIntoChunks, retrievePayload } from '../../src/contentChunk'
+import { extractStringPayloadIntoChunks, retrievePayload, addOrchestrationBodies } from '../../src/contentChunk'
 import { connectionDefault } from '../../src/config'
 import mongodb from 'mongodb'
 
