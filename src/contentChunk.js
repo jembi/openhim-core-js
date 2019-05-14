@@ -132,12 +132,3 @@ const filterPayloadType = (transaction) => {
     resolve(transaction)
   })
 }
-
-export const addOrchestrationBodies = (transaction) => {
-  if (transaction && 
-      transaction.orchestrations) { 
-      transaction.orchestrations = transaction.orchestrations.map(orchestration => addBodiesToTransactions(orchestration))
-  }
-
-  return transaction
-}
