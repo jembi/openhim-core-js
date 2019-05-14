@@ -257,16 +257,42 @@ export async function getTransactions (ctx) {
 }
 
 async function extractTransactionPayloadIntoChunks (transaction) {
-  if (transaction.request && transaction.request.body) {
-    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.request.body)
+  if (transaction.request && 'body' in transaction.request) {
+    if (transaction.request.body) {
+      transaction.request.bodyId = await extractStringPayloadIntoChunks(transaction.request.body)
+    }
     delete transaction.request.body
-    transaction.request.bodyId = requestBodyChuckFileId
   }
 
-  if (transaction.response && transaction.response.body) {
-    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.response.body)
+  if (transaction.response && 'body' in transaction.response) {
+    if(transaction.response.body) {
+      transaction.response.bodyId = await extractStringPayloadIntoChunks(transaction.response.body)
+    }
     delete transaction.response.body
-    transaction.response.bodyId = responseBodyChuckFileId
+  }
+
+  if (transaction.orchestrations && transaction.orchestrations.length > 0) {
+    transaction.orchestrations.forEach(async (orch, index) => {
+      if (
+        orch &&
+        orch.request &&
+        'body' in orch.request) {
+          if (orch.request.body) {
+            transaction.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+          }
+          delete transaction.orchestrations[index].request.body
+      }
+
+      if (
+        orch &&
+        orch.response &&
+        'body' in orch.response) {
+          if (orch.response.body) {
+            transaction.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+          }
+          delete transaction.orchestrations[index].response.body
+      }
+    })
   }
 }
 

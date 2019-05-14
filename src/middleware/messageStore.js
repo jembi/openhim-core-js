@@ -127,6 +127,31 @@ export async function storeResponse (ctx, done) {
     update.response.bodyId = responseBodyChuckFileId
   }
 
+  // Store orchestrations' response and request bodies
+  if (update.orchestrations.length > 0) {
+    update.orchestrations.forEach(async (orch, index) => {
+      if (
+        orch &&
+        orch.request &&
+        orch.request.hasOwnProperty('body')) {
+          if (orch.request.body) {
+            update.orchestrations[index].request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+          }
+          delete update.orchestrations[index].request.body
+      }
+
+      if (
+        orch &&
+        orch.response &&
+        orch.response.hasOwnProperty('body')) {
+          if (orch.response.body) {
+            update.orchestrations[index].response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+          }
+          delete update.orchestrations[index].response.body
+      }
+    })
+  }
+
   return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
     if (err) {
       logger.error(`Could not save response metadata for transaction: ${ctx.transactionId}. ${err}`)
