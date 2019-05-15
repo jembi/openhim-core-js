@@ -246,10 +246,6 @@ export async function getTransactions (ctx) {
     // retrieve transaction request and response bodies
     const transformedTransactions = await addBodiesToTransactions(transactions)
 
-    if (transformedTransactions.orchestrations && transformedTransactions.orchestrations.length > 0) {
-      transformedTransactions.orchestrations = await addBodiesToTransactions(transformedTransactions.orchestrations)
-    }
-
     ctx.body = transformedTransactions
 
     if (filterRepresentation === 'fulltruncate') {
@@ -344,10 +340,6 @@ export async function getTransactionById (ctx, transactionId) {
     const resultArray = await addBodiesToTransactions([transaction])
     const result = resultArray[0]
 
-    if (result && result.orchestrations && result.orchestrations.length > 0) {
-      result.orchestrations = await addBodiesToTransactions(result.orchestrations)
-    }
-
     if (result && (filterRepresentation === 'fulltruncate')) {
       truncateTransactionDetails(result)
     }
@@ -399,10 +391,6 @@ export async function findTransactionByClientId (ctx, clientId) {
 
     // retrieve transaction request and response bodies
     const transformedTransactions = await addBodiesToTransactions(transactions)
-
-    if (transformedTransactions.orchestrations && transformedTransactions.orchestrations.length > 0) {
-      transformedTransactions.orchestrations = await addBodiesToTransactions(transformedTransactions.orchestrations)
-    }
 
     ctx.body = transformedTransactions
 
