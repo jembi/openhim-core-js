@@ -451,7 +451,7 @@ export async function updateTransaction (ctx, transactionId) {
     ctx.status = 200
     logger.info(`User ${ctx.authenticated.email} updated transaction with id ${transactionId}`)
 
-    // execute promises to remove old payloads from database
+    // execute the promises to remove all relevant bodies
     await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
 
     await generateEvents(updates, updatedTransaction.channelID)
@@ -484,7 +484,7 @@ export async function removeTransaction (ctx, transactionId) {
     ctx.status = 200
     logger.info(`User ${ctx.authenticated.email} removed transaction with id ${transactionId}`)
 
-    // execute promises to remove old payloads from database
+    // execute the promises to remove all relevant bodies
     await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not remove transaction via the API: ${e}`, 'error')

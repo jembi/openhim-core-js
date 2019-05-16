@@ -93,6 +93,13 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
   if (tx.response.bodyId) {
     removeBodyPromises.push(() => removeBodyById(tx.response.bodyId))
   }
+
+  if (tx.orchestrations && tx.orchestrations.length > 0) {
+    tx.orchestrations.forEach((orch) => {
+      removeBodyPromises.concat(promisesToRemoveAllTransactionBodies(orch))
+    })
+  }
+
   return removeBodyPromises
 }
 
@@ -190,21 +197,6 @@ exports.extractTransactionPayloadIntoChunks = async (transaction) => {
       return orch
     }))
   }
-}
-
-exports.promisesToRemoveAllOrchestrationBodies = orchestration => {
-  const removeOrchestrationBodyPromises = []
-  if (orchestration.request && orchestration.request.bodyId) {
-    removeOrchestrationBodyPromises.push(
-      removeBodyById(orchestration.request.bodyId)
-    )
-  }
-  if (orchestration.response && orchestration.response.bodyId) {
-    removeOrchestrationBodyPromises.push(
-      removeBodyById(orchestration.response.bodyId)
-    )
-  }
-  return removeOrchestrationBodyPromises
 }
 
 exports.removeBodyById = removeBodyById

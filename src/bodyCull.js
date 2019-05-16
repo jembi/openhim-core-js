@@ -2,7 +2,7 @@ import moment from 'moment'
 import { config } from './config'
 import { ChannelModel, TransactionModel } from './model'
 import logger from 'winston'
-import { removeBodyById, promisesToRemoveAllOrchestrationBodies, promisesToRemoveAllTransactionBodies } from './contentChunk'
+import { promisesToRemoveAllTransactionBodies } from './contentChunk'
 
 config.bodyCull = config.get('bodyCull')
 
@@ -40,7 +40,7 @@ async function clearTransactions (channel) {
     query['request.timestamp'].$gte = lastBodyCleared
   }
 
-  // constrcut promises array for removing transaction bodies
+  // construct promises array for removing transaction bodies
   const transactionsToCullBody = await TransactionModel.find(query, {
     'request.bodyId': 1,
     'response.bodyId': 1,
@@ -49,17 +49,7 @@ async function clearTransactions (channel) {
   })
   const removeBodyPromises = []
   transactionsToCullBody.forEach((tx) => {
-    if (tx.request.bodyId) {
-      removeBodyPromises.push(removeBodyById(tx.request.bodyId))
-    }
-    if (tx.response.bodyId) {
-      removeBodyPromises.push(removeBodyById(tx.response.bodyId))
-    }
-    if (tx.orchestrations) {
-      tx.orchestrations.forEach((orchestration) => {
-        removeBodyPromises.concat(promisesToRemoveAllOrchestrationBodies(orchestration))
-      })
-    }
+    removeBodyPromises.concat(promisesToRemoveAllTransactionBodies(tx))
   })
 
   channel.lastBodyCleared = Date.now()
@@ -78,5 +68,5 @@ async function clearTransactions (channel) {
   }
 
   // execute the promises to remove all relevant bodies
-  await Promise.all(removeBodyPromises)
+  await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
 }
