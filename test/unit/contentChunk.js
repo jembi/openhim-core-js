@@ -5,7 +5,8 @@ import {
   extractStringPayloadIntoChunks, 
   retrievePayload, 
   promisesToRemoveAllTransactionBodies,
-  addBodiesToTransactions
+  addBodiesToTransactions,
+  promisesToRemoveAllOrchestrationBodies
 } from '../../src/contentChunk'
 import { connectionDefault } from '../../src/config'
 import * as testUtils from '../utils'
@@ -214,6 +215,18 @@ describe('contentChunk: ', () => {
         err.message.should.eql(
           `FileNotFound: file ${fileId} was not found`)
       )
+    })
+
+    it('should succeed when orchestration when bodyID is not included', () => {
+      const orchestration = {
+        request: {},
+        response: {}
+      }
+
+      const promisesToResolve = promisesToRemoveAllOrchestrationBodies(
+        orchestration
+      )
+      promisesToResolve.length.should.equal(0)
     })
   })
 
