@@ -44,7 +44,7 @@ const isValidGridFsPayload = (payload) => {
   return false
 }
 
-exports.extractStringPayloadIntoChunks = (payload) => {
+export const extractStringPayloadIntoChunks = (payload) => {
   return new Promise((resolve, reject) => {
     if (!payload) {
       return reject(new Error('payload not supplied'))
@@ -69,7 +69,7 @@ exports.extractStringPayloadIntoChunks = (payload) => {
   })
 }
 
-exports.removeBodyById = (id) => {
+const removeBodyById = (id) => {
   return new Promise(async (resolve, reject) => {
     if (!id) {
       return reject(new Error('No ID supplied when trying to remove chunked body'))
@@ -81,7 +81,7 @@ exports.removeBodyById = (id) => {
       resolve(result)
     } catch (err) {
       reject(err)
-    }    
+    }
   })
 }
 
@@ -108,7 +108,13 @@ export const addBodiesToTransactions = async (transactions) => {
     return []
   }
 
-  return await Promise.all(transactions.map(transaction => filterPayloadType(transaction)))
+  return await Promise.all(transactions.map(async transaction => {
+    if (transaction.orchestrations && transaction.orchestrations.length > 0) {
+      transaction.orchestrations = await addBodiesToTransactions(transaction.orchestrations)
+    }
+
+    return filterPayloadType(transaction)
+  }))
 }
 
 const filterPayloadType = (transaction) => {
@@ -121,7 +127,7 @@ const filterPayloadType = (transaction) => {
       if (transaction.request && transaction.request.bodyId) {
         transaction.request.body = await retrievePayload(transaction.request.bodyId)
       }
-  
+
       if(transaction.response && transaction.response.bodyId) {
         transaction.response.body = await retrievePayload(transaction.response.bodyId)
       }
@@ -132,3 +138,64 @@ const filterPayloadType = (transaction) => {
     resolve(transaction)
   })
 }
+
+exports.extractTransactionPayloadIntoChunks = async (transaction) => {
+  if (!transaction) {
+    return
+  }
+
+  if (transaction.request && 'body' in transaction.request) {
+    if (transaction.request.body) {
+      transaction.request.bodyId = await extractStringPayloadIntoChunks(transaction.request.body)
+    }
+    delete transaction.request.body
+  }
+
+  if (transaction.response && 'body' in transaction.response) {
+    if(transaction.response.body) {
+      transaction.response.bodyId = await extractStringPayloadIntoChunks(transaction.response.body)
+    }
+    delete transaction.response.body
+  }
+
+  if (transaction.orchestrations && transaction.orchestrations.length > 0) {
+    await Promise.all(transaction.orchestrations.map(async (orch) => {
+      if (!orch) {
+        return
+      }
+
+      if (orch.request && 'body' in orch.request) {
+        if (orch.request.body) {
+          orch.request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+        }
+        delete orch.request.body
+      }
+
+      if (orch.response && 'body' in orch.response) {
+        if (orch.response.body) {
+          orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+        }
+        delete orch.response.body
+      }
+
+      return orch
+    }))
+  }
+}
+
+exports.promisesToRemoveAllOrchestrationBodies = orchestration => {
+  const removeOrchestrationBodyPromises = []
+  if (orchestration.request && orchestration.request.bodyId) {
+    removeOrchestrationBodyPromises.push(
+      removeBodyById(orchestration.request.bodyId)
+    )
+  }
+  if (orchestration.response && orchestration.response.bodyId) {
+    removeOrchestrationBodyPromises.push(
+      removeBodyById(orchestration.response.bodyId)
+    )
+  }
+  return removeOrchestrationBodyPromises
+}
+
+exports.removeBodyById = removeBodyById

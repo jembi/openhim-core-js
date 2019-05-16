@@ -1,7 +1,11 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from 'should'
-import { extractStringPayloadIntoChunks, retrievePayload } from '../../src/contentChunk'
+import {
+  extractStringPayloadIntoChunks,
+  retrievePayload,
+  promisesToRemoveAllOrchestrationBodies
+} from '../../src/contentChunk'
 import { connectionDefault } from '../../src/config'
 import mongodb from 'mongodb'
 
@@ -208,6 +212,18 @@ describe('contentChunk: ', () => {
         err.message.should.eql(
           `FileNotFound: file ${fileId} was not found`)
       )
+    })
+
+    it('should succeed when orchestration when bodyID is not included', () => {
+      const orchestration = {
+        request: {},
+        response: {}
+      }
+
+      const promisesToResolve = promisesToRemoveAllOrchestrationBodies(
+        orchestration
+      )
+      promisesToResolve.length.should.equal(0)
     })
   })
 })
