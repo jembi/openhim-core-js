@@ -184,7 +184,7 @@ export const extractTransactionPayloadIntoChunks = async (transaction) => {
     if (typeof transaction.orchestrations === 'object') {
       await extractTransactionPayloadIntoChunks(transaction.orchestrations)
     }
-    
+
     if (Array.isArray(transaction.orchestrations) && transaction.orchestrations.length > 0) {
       await Promise.all(transaction.orchestrations.map(async (orch) => {
         return await extractTransactionPayloadIntoChunks(orch)
