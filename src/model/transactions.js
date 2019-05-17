@@ -35,28 +35,6 @@ const ResponseDefMain = new Schema({
 })
 ResponseDefMain.virtual('body')
 
-// Request Schema definition
-const RequestDef = {
-  host: String,
-  port: String,
-  path: String,
-  headers: Object,
-  querystring: String,
-  body: String,
-  method: String,
-  timestamp: {
-    type: Date, required: true
-  }
-}
-
-// Response Schema definition
-const ResponseDef = {
-  status: Number,
-  headers: Object,
-  body: String,
-  timestamp: Date
-}
-
 const ErrorDetailsDef = {
   message: String,
   stack: String
@@ -80,8 +58,8 @@ const RouteMetadataDef = {
   name: {
     type: String, required: true
   },
-  request: RequestDef,
-  response: ResponseDef,
+  request: RequestDefMain,
+  response: ResponseDefMain,
   orchestrations: [OrchestrationMetadataDef],
   properties: Object,
   error: ErrorDetailsDef
