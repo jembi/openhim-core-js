@@ -47,10 +47,10 @@ async function clearTransactions (channel) {
     'orchestrations.response.bodyId': 1,
     'orchestrations.request.bodyId': 1
   })
-  const removeBodyPromises = []
-  transactionsToCullBody.forEach((tx) => {
-    removeBodyPromises.concat(promisesToRemoveAllTransactionBodies(tx))
-  })
+  let removeBodyPromises = []
+  for (let tx of transactionsToCullBody) {
+    removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(tx))
+  }
 
   channel.lastBodyCleared = Date.now()
   channel.updatedBy = { name: 'Cron' }

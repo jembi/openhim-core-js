@@ -293,7 +293,7 @@ describe('contentChunk: ', () => {
       td.request.bodyId = requestBodyId
       td.response.bodyId = responseBodyId
 
-      const promiseFunctions = promisesToRemoveAllTransactionBodies(td)
+      const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
 
       promiseFunctions.length.should.eql(2)
     })
@@ -307,7 +307,7 @@ describe('contentChunk: ', () => {
       td.request.bodyId = requestBodyId
       td.response.bodyId = responseBodyId
 
-      const promiseFunctions = promisesToRemoveAllTransactionBodies(td)
+      const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
 
       const resultBeforeRemoval = await db.collection('fs.files').find({}).toArray()
       should.ok(resultBeforeRemoval)
@@ -321,13 +321,13 @@ describe('contentChunk: ', () => {
       resultAfterRemoval.length.should.eql(0)
     })
 
-    it('should succeed when orchestration bodyID is not included', () => {
+    it('should succeed when orchestration bodyID is not included', async () => {
       const orchestration = {
         request: {},
         response: {}
       }
 
-      const promisesToResolve = promisesToRemoveAllTransactionBodies(
+      const promisesToResolve = await promisesToRemoveAllTransactionBodies(
         orchestration
       )
       promisesToResolve.length.should.equal(0)

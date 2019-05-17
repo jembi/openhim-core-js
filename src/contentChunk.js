@@ -86,21 +86,27 @@ const removeBodyById = (id) => {
 }
 
 export const promisesToRemoveAllTransactionBodies = (tx) => {
-  const removeBodyPromises = []
-  if (tx.request.bodyId) {
-    removeBodyPromises.push(() => removeBodyById(tx.request.bodyId))
-  }
-  if (tx.response.bodyId) {
-    removeBodyPromises.push(() => removeBodyById(tx.response.bodyId))
-  }
+  return new Promise(async (resolve, reject) => {
+    let removeBodyPromises = []
+    if (tx.request && tx.request.bodyId) {
+      removeBodyPromises.push(() => removeBodyById(tx.request.bodyId))
+    }
+    if (tx.response && tx.response.bodyId) {
+      removeBodyPromises.push(() => removeBodyById(tx.response.bodyId))
+    }
 
-  if (tx.orchestrations && tx.orchestrations.length > 0) {
-    tx.orchestrations.forEach((orch) => {
-      removeBodyPromises.concat(promisesToRemoveAllTransactionBodies(orch))
-    })
-  }
+    if (tx.orchestrations && tx.orchestrations.length > 0) {
+      for (let orch of tx.orchestrations) {
+        try {
+          removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(orch))
+        } catch (err) {
+          return reject(err)
+        }        
+      }
+    }
 
-  return removeBodyPromises
+    resolve(removeBodyPromises)
+  })
 }
 
 export const retrievePayload = fileId => {

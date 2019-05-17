@@ -441,7 +441,7 @@ export async function updateTransaction (ctx, transactionId) {
     }
 
     // construct promises array to remove all old payloads
-    const removeBodyPromises = promisesToRemoveAllTransactionBodies(transaction)
+    const removeBodyPromises = await promisesToRemoveAllTransactionBodies(transaction)
 
     await extractTransactionPayloadIntoChunks(updates)
 
@@ -477,7 +477,7 @@ export async function removeTransaction (ctx, transactionId) {
     const transaction = await TransactionModelAPI.findById(transactionId).exec()
 
     // construct promises array to remove all old payloads
-    const removeBodyPromises = promisesToRemoveAllTransactionBodies(transaction)
+    const removeBodyPromises = await promisesToRemoveAllTransactionBodies(transaction)
 
     await TransactionModelAPI.findByIdAndRemove(transactionId).exec()
     ctx.body = 'Transaction successfully deleted'
