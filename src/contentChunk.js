@@ -181,6 +181,12 @@ exports.extractTransactionPayloadIntoChunks = async (transaction) => {
       return orch
     }))
   }
+
+  if (transaction.routes && transaction.routes.length > 0) {
+    transaction.routes = await transaction.routes.map(route => {
+      extractTransactionPayloadIntoChunks(route)  
+    })
+  }
 }
 
 exports.promisesToRemoveAllOrchestrationBodies = orchestration => {
