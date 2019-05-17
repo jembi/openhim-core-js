@@ -101,7 +101,7 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
           removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(orch))
         } catch (err) {
           return reject(err)
-        }        
+        }
       }
     }
 

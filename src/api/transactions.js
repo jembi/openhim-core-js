@@ -440,8 +440,16 @@ export async function updateTransaction (ctx, transactionId) {
       }
     }
 
+    // contruct temp transaction object to remove only relevant bodies
+    const transactionBodiesToRemove = {
+      request: updates.request ? transaction.request : undefined,
+      response: updates.response ? transaction.response : undefined,
+      orchestrations: updates.orchestrations ? transaction.orchestrations : undefined,
+      routes: updates.routes ? transaction.routes : undefined
+    }
+
     // construct promises array to remove all old payloads
-    const removeBodyPromises = await promisesToRemoveAllTransactionBodies(transaction)
+    const removeBodyPromises = await promisesToRemoveAllTransactionBodies(transactionBodiesToRemove)
 
     await extractTransactionPayloadIntoChunks(updates)
 
