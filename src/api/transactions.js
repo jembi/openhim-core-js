@@ -440,7 +440,7 @@ export async function updateTransaction (ctx, transactionId) {
       }
     }
 
-    // contruct temp transaction object to remove only relevant bodies
+    // construct temp transaction object to remove only relevant bodies
     const transactionBodiesToRemove = {
       request: updates.request ? transaction.request : undefined,
       response: updates.response ? transaction.response : undefined,

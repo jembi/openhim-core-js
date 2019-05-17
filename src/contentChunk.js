@@ -69,7 +69,7 @@ export const extractStringPayloadIntoChunks = (payload) => {
   })
 }
 
-const removeBodyById = (id) => {
+export const removeBodyById = (id) => {
   return new Promise(async (resolve, reject) => {
     if (!id) {
       return reject(new Error('No ID supplied when trying to remove chunked body'))
@@ -161,7 +161,7 @@ const filterPayloadType = (transaction) => {
   })
 }
 
-exports.extractTransactionPayloadIntoChunks = async (transaction) => {
+export const extractTransactionPayloadIntoChunks = async (transaction) => {
   if (!transaction) {
     return
   }
@@ -180,29 +180,20 @@ exports.extractTransactionPayloadIntoChunks = async (transaction) => {
     delete transaction.response.body
   }
 
-  if (transaction.orchestrations && transaction.orchestrations.length > 0) {
-    await Promise.all(transaction.orchestrations.map(async (orch) => {
-      if (!orch) {
-        return
-      }
+  if (transaction.orchestrations) {
+    if (typeof transaction.orchestrations === 'object') {
+      await extractTransactionPayloadIntoChunks(transaction.orchestrations)
+    }
+    
+    if (Array.isArray(transaction.orchestrations) && transaction.orchestrations.length > 0) {
+      await Promise.all(transaction.orchestrations.map(async (orch) => {
+        return await extractTransactionPayloadIntoChunks(orch)
+      }))
+    }
+  }
 
-      if (orch.request && 'body' in orch.request) {
-        if (orch.request.body) {
-          orch.request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
-        }
-        delete orch.request.body
-      }
-
-      if (orch.response && 'body' in orch.response) {
-        if (orch.response.body) {
-          orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
-        }
-        delete orch.response.body
-      }
-
-      return orch
-    }))
+  // transaction with update data to push into an array
+  if (transaction.$push) {
+    await extractTransactionPayloadIntoChunks(transaction.$push)
   }
 }
-
-exports.removeBodyById = removeBodyById
