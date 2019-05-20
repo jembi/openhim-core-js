@@ -7,7 +7,7 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
 import { promisify } from 'util'
-import { addBodiesToTransactions, extractStringPayloadIntoChunks } from '../contentChunk'
+import { addBodiesToTransactions, extractTransactionPayloadIntoChunks } from '../contentChunk'
 
 const apiConf = config.get('api')
 
@@ -253,20 +253,6 @@ export async function getTransactions (ctx) {
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
-  }
-}
-
-async function extractTransactionPayloadIntoChunks (transaction) {
-  if (transaction.request && transaction.request.body) {
-    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.request.body)
-    delete transaction.request.body
-    transaction.request.bodyId = requestBodyChuckFileId
-  }
-
-  if (transaction.response && transaction.response.body) {
-    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.response.body)
-    delete transaction.response.body
-    transaction.response.bodyId = responseBodyChuckFileId
   }
 }
 
