@@ -69,7 +69,7 @@ export const extractStringPayloadIntoChunks = (payload) => {
   })
 }
 
-const removeBodyById = (id) => {
+export const removeBodyById = (id) => {
   return new Promise(async (resolve, reject) => {
     if (!id) {
       return reject(new Error('No ID supplied when trying to remove chunked body'))
@@ -82,6 +82,30 @@ const removeBodyById = (id) => {
     } catch (err) {
       reject(err)
     }
+  })
+}
+
+export const promisesToRemoveAllTransactionBodies = (tx) => {
+  return new Promise(async (resolve, reject) => {
+    let removeBodyPromises = []
+    if (tx.request && tx.request.bodyId) {
+      removeBodyPromises.push(() => removeBodyById(tx.request.bodyId))
+    }
+    if (tx.response && tx.response.bodyId) {
+      removeBodyPromises.push(() => removeBodyById(tx.response.bodyId))
+    }
+
+    if (tx.orchestrations && tx.orchestrations.length > 0) {
+      for (let orch of tx.orchestrations) {
+        try {
+          removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(orch))
+        } catch (err) {
+          return reject(err)
+        }
+      }
+    }
+
+    resolve(removeBodyPromises)
   })
 }
 
@@ -102,9 +126,7 @@ export const retrievePayload = fileId => {
 }
 
 export const addBodiesToTransactions = async (transactions) => {
-  if(!transactions ||
-    transactions.length < 1
-  ) {
+  if(!transactions || !Array.isArray(transactions) || transactions.length < 1) {
     return []
   }
 
@@ -139,7 +161,7 @@ const filterPayloadType = (transaction) => {
   })
 }
 
-exports.extractTransactionPayloadIntoChunks = async (transaction) => {
+export const extractTransactionPayloadIntoChunks = async (transaction) => {
   if (!transaction) {
     return
   }
@@ -158,44 +180,20 @@ exports.extractTransactionPayloadIntoChunks = async (transaction) => {
     delete transaction.response.body
   }
 
-  if (transaction.orchestrations && transaction.orchestrations.length > 0) {
-    await Promise.all(transaction.orchestrations.map(async (orch) => {
-      if (!orch) {
-        return
-      }
+  if (transaction.orchestrations) {
+    if (typeof transaction.orchestrations === 'object') {
+      await extractTransactionPayloadIntoChunks(transaction.orchestrations)
+    }
 
-      if (orch.request && 'body' in orch.request) {
-        if (orch.request.body) {
-          orch.request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
-        }
-        delete orch.request.body
-      }
+    if (Array.isArray(transaction.orchestrations) && transaction.orchestrations.length > 0) {
+      await Promise.all(transaction.orchestrations.map(async (orch) => {
+        return await extractTransactionPayloadIntoChunks(orch)
+      }))
+    }
+  }
 
-      if (orch.response && 'body' in orch.response) {
-        if (orch.response.body) {
-          orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
-        }
-        delete orch.response.body
-      }
-
-      return orch
-    }))
+  // transaction with update data to push into an array
+  if (transaction.$push) {
+    await extractTransactionPayloadIntoChunks(transaction.$push)
   }
 }
-
-exports.promisesToRemoveAllOrchestrationBodies = orchestration => {
-  const removeOrchestrationBodyPromises = []
-  if (orchestration.request && orchestration.request.bodyId) {
-    removeOrchestrationBodyPromises.push(
-      removeBodyById(orchestration.request.bodyId)
-    )
-  }
-  if (orchestration.response && orchestration.response.bodyId) {
-    removeOrchestrationBodyPromises.push(
-      removeBodyById(orchestration.response.bodyId)
-    )
-  }
-  return removeOrchestrationBodyPromises
-}
-
-exports.removeBodyById = removeBodyById
