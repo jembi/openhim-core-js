@@ -121,13 +121,18 @@ describe('API Integration Tests', () => {
       response: responseDocMain,
       routes: [{
         name: 'dummy-route',
-        request: requestDoc,
-        response: responseDoc
+        request: requestDocMain,
+        response: responseDocMain,
+        orchestrations: [{
+          name: 'dummy-orchestration',
+          request: requestDocMain,
+          response: responseDocMain
+        }]
       }],
       orchestrations: [{
         name: 'dummy-orchestration',
-        request: requestDoc,
-        response: responseDoc
+        request: requestDocMain,
+        response: responseDocMain
       }],
       properties: {
         prop1: 'prop1-value1',
@@ -307,7 +312,7 @@ describe('API Integration Tests', () => {
           .expect(201)
 
         const events = await EventModelAPI.find({})
-        events.length.should.be.exactly(6)
+        events.length.should.be.exactly(8)
         for (const ev of Array.from(events)) {
           ev.channelID.toString().should.be.exactly(channel._id.toString())
         }
@@ -971,11 +976,12 @@ describe('API Integration Tests', () => {
         res.body[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
         res.body[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
 
-        res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].routes[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+        // Uncomment this when the functionality for retrieving the routes bodies is added
+        // res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+        // res.body[0].routes[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
 
-        // res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        // res.body[0].orchestrations[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+        res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+        res.body[0].orchestrations[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
       })
     })
 
