@@ -36,7 +36,7 @@ const clearTransactionBodies = function (transaction) {
 const LARGE_BODY_SIZE = 1 * 1024 * 1024
 
 describe('API Integration Tests', () => {
-  let SERVER_PORTS, LARGE_BODY, requestDocMain, responseDocMain, requestDoc, responseDoc, transactionData
+  let SERVER_PORTS, LARGE_BODY, requestDocMain, responseDocMain, transactionData
   let authDetails = {}
   let channel
   let channel2
@@ -85,32 +85,6 @@ describe('API Integration Tests', () => {
     }
 
     Object.freeze(responseDocMain)
-
-    requestDoc = {
-      path: '/api/test',
-      headers: {
-        'header-title': 'header1-value',
-        'another-header': 'another-header-value'
-      },
-      querystring: 'param1=value1&param2=value2',
-      body: '<HTTP body request>',
-      method: 'POST',
-      timestamp: '2014-06-09T11:17:25.929Z'
-    }
-
-    Object.freeze(requestDoc)
-
-    responseDoc = {
-      status: '200',
-      headers: {
-        header: 'value',
-        header2: 'value2'
-      },
-      body: '<HTTP response>',
-      timestamp: '2014-06-09T11:17:25.929Z'
-    }
-
-    Object.freeze(responseDoc)
 
     transactionData = {
       _id: '111111111111111111111111',
