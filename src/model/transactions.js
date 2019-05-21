@@ -43,9 +43,9 @@ const OrchestrationMetadataDef = {
   },
   group: String,
   request: {
-    type: RequestDefMain, required: false
+    type: RequestDef, required: false
   }, // this is needed to prevent Validation error, see https://github.com/jembi/openhim-console/issues/356#issuecomment-188708443
-  response: ResponseDefMain,
+  response: ResponseDef,
   error: ErrorDetailsDef
 }
 

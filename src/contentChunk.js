@@ -135,6 +135,10 @@ export const addBodiesToTransactions = async (transactions) => {
       transaction.orchestrations = await addBodiesToTransactions(transaction.orchestrations)
     }
 
+    if (transaction.routes && transaction.routes.length > 0) {
+      transaction.routes = await addBodiesToTransactions(transaction.routes)
+    }
+
     return filterPayloadType(transaction)
   }))
 }
