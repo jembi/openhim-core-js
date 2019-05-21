@@ -7,7 +7,7 @@ import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { config } from '../config'
 import { promisify } from 'util'
-import { addBodiesToTransactions, extractStringPayloadIntoChunks } from '../contentChunk'
+import { addBodiesToTransactions, extractTransactionPayloadIntoChunks, promisesToRemoveAllTransactionBodies } from '../contentChunk'
 
 const apiConf = config.get('api')
 
@@ -256,20 +256,6 @@ export async function getTransactions (ctx) {
   }
 }
 
-async function extractTransactionPayloadIntoChunks (transaction) {
-  if (transaction.request && transaction.request.body) {
-    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.request.body)
-    delete transaction.request.body
-    transaction.request.bodyId = requestBodyChuckFileId
-  }
-
-  if (transaction.response && transaction.response.body) {
-    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(transaction.response.body)
-    delete transaction.response.body
-    transaction.response.bodyId = responseBodyChuckFileId
-  }
-}
-
 /*
  * Adds an transaction
  */
@@ -444,8 +430,9 @@ export async function updateTransaction (ctx, transactionId) {
   const updates = ctx.request.body
 
   try {
+    const transaction = await TransactionModelAPI.findById(transactionId).exec()
+
     if (hasError(updates)) {
-      const transaction = await TransactionModelAPI.findById(transactionId).exec()
       const channel = await ChannelModelAPI.findById(transaction.channelID).exec()
       if (!autoRetryUtils.reachedMaxAttempts(transaction, channel)) {
         updates.autoRetry = true
@@ -453,8 +440,18 @@ export async function updateTransaction (ctx, transactionId) {
       }
     }
 
+    // construct temp transaction object to remove only relevant bodies
+    const transactionBodiesToRemove = {
+      request: updates.request ? transaction.request : undefined,
+      response: updates.response ? transaction.response : undefined,
+      orchestrations: updates.orchestrations ? transaction.orchestrations : undefined,
+      routes: updates.routes ? transaction.routes : undefined
+    }
+
+    // construct promises array to remove all old payloads
+    const removeBodyPromises = await promisesToRemoveAllTransactionBodies(transactionBodiesToRemove)
+
     await extractTransactionPayloadIntoChunks(updates)
-    // TODO: OHM-782 Delete the old gridfs chucks for this transactions
 
     const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
 
@@ -462,8 +459,10 @@ export async function updateTransaction (ctx, transactionId) {
     ctx.status = 200
     logger.info(`User ${ctx.authenticated.email} updated transaction with id ${transactionId}`)
 
-    await generateEvents(updates, updatedTransaction.channelID)
+    // execute the promises to remove all relevant bodies
+    await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
 
+    await generateEvents(updates, updatedTransaction.channelID)
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not update transaction via the API: ${e}`, 'error')
   }
@@ -483,10 +482,18 @@ export async function removeTransaction (ctx, transactionId) {
   transactionId = unescape(transactionId)
 
   try {
+    const transaction = await TransactionModelAPI.findById(transactionId).exec()
+
+    // construct promises array to remove all old payloads
+    const removeBodyPromises = await promisesToRemoveAllTransactionBodies(transaction)
+
     await TransactionModelAPI.findByIdAndRemove(transactionId).exec()
     ctx.body = 'Transaction successfully deleted'
     ctx.status = 200
     logger.info(`User ${ctx.authenticated.email} removed transaction with id ${transactionId}`)
+
+    // execute the promises to remove all relevant bodies
+    await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not remove transaction via the API: ${e}`, 'error')
   }

@@ -4,7 +4,7 @@ import * as autoRetryUtils from '../autoRetry'
 import * as utils from '../utils'
 import * as metrics from '../metrics'
 import { promisify } from 'util'
-import { extractStringPayloadIntoChunks } from '../contentChunk'
+import { extractStringPayloadIntoChunks, extractTransactionPayloadIntoChunks } from '../contentChunk'
 
 export const transactionStatus = {
   PROCESSING: 'Processing',
@@ -120,12 +120,7 @@ export async function storeResponse (ctx, done) {
     update.orchestrations.push(...ctx.orchestrations)
   }
 
-  // extract body into chucks before saving transaction
-  if (update.response.body) {
-    const responseBodyChuckFileId = await extractStringPayloadIntoChunks(update.response.body)
-    delete update.response.body
-    update.response.bodyId = responseBodyChuckFileId
-  }
+  await extractTransactionPayloadIntoChunks(update)
 
   return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
     if (err) {

@@ -1,8 +1,14 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from 'should'
-import { extractStringPayloadIntoChunks, retrievePayload } from '../../src/contentChunk'
+import { 
+  extractStringPayloadIntoChunks, 
+  retrievePayload, 
+  promisesToRemoveAllTransactionBodies,
+  addBodiesToTransactions
+} from '../../src/contentChunk'
 import { connectionDefault } from '../../src/config'
+import * as testUtils from '../utils'
 import mongodb from 'mongodb'
 
 const MongoClient = connectionDefault.client
@@ -208,6 +214,215 @@ describe('contentChunk: ', () => {
         err.message.should.eql(
           `FileNotFound: file ${fileId} was not found`)
       )
+    })
+  })
+
+  describe('promisesToRemoveAllTransactionBodies()', () => {
+    // The request/response body has been replaced by bodyId which is why we are duplicating this object
+    // TODO: OHM-691: Update accordingly when implementing
+    const requestDocMain = {
+      path: '/api/test',
+      headers: {
+        'header-title': 'header1-value',
+        'another-header': 'another-header-value'
+      },
+      querystring: 'param1=value1&param2=value2',
+      method: 'POST',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    // The request/response body has been replaced by bodyId which is why we are duplicating this object
+    // TODO: OHM-691: Update accordingly when implementing
+    const responseDocMain = {
+      status: '200',
+      headers: {
+        header: 'value',
+        header2: 'value2'
+      },
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    const requestDoc = {
+      path: '/api/test',
+      headers: {
+        'header-title': 'header1-value',
+        'another-header': 'another-header-value'
+      },
+      querystring: 'param1=value1&param2=value2',
+      method: 'POST',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    const responseDoc = {
+      status: '200',
+      headers: {
+        header: 'value',
+        header2: 'value2'
+      },
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+    const transaction = {
+      _id: '111111111111111111111111',
+      status: 'Processing',
+      clientID: '999999999999999999999999',
+      channelID: '888888888888888888888888',
+      request: requestDocMain,
+      response: responseDocMain,
+      routes: [{
+        name: 'dummy-route',
+        request: requestDoc,
+        response: responseDoc
+      }],
+      orchestrations: [{
+        name: 'dummy-orchestration',
+        request: requestDoc,
+        response: responseDoc
+      }],
+      properties: {
+        prop1: 'prop1-value1',
+        prop2: 'prop-value1'
+      }
+    }
+
+    it('should return an array with promise functions to remove the payloads', async () => {
+      const td = testUtils.clone(transaction)
+
+      const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+      const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+      td.request.bodyId = requestBodyId
+      td.response.bodyId = responseBodyId
+
+      const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
+
+      promiseFunctions.length.should.eql(2)
+    })
+
+    it('should remove the payloads once the promises are executed', async () => {
+      const td = testUtils.clone(transaction)
+
+      const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+      const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+      td.request.bodyId = requestBodyId
+      td.response.bodyId = responseBodyId
+
+      const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
+
+      const resultBeforeRemoval = await db.collection('fs.files').find({}).toArray()
+      should.ok(resultBeforeRemoval)
+      resultBeforeRemoval.length.should.eql(2)
+
+      // execute the promises
+      await Promise.all(promiseFunctions.map((promiseFn) => promiseFn()))
+
+      const resultAfterRemoval = await db.collection('fs.files').find({}).toArray()
+      should.ok(resultAfterRemoval)
+      resultAfterRemoval.length.should.eql(0)
+    })
+
+    it('should succeed when orchestration bodyID is not included', async () => {
+      const orchestration = {
+        request: {},
+        response: {}
+      }
+
+      const promisesToResolve = await promisesToRemoveAllTransactionBodies(
+        orchestration
+      )
+      promisesToResolve.length.should.equal(0)
+    })
+  })
+
+  describe('addBodiesToTransactions()', () => {
+    // The request/response body has been replaced by bodyId which is why we are duplicating this object
+    // TODO: OHM-691: Update accordingly when implementing
+    const requestDocMain = {
+      path: '/api/test',
+      headers: {
+        'header-title': 'header1-value',
+        'another-header': 'another-header-value'
+      },
+      querystring: 'param1=value1&param2=value2',
+      method: 'POST',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    // The request/response body has been replaced by bodyId which is why we are duplicating this object
+    // TODO: OHM-691: Update accordingly when implementing
+    const responseDocMain = {
+      status: '200',
+      headers: {
+        header: 'value',
+        header2: 'value2'
+      },
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    const requestDoc = {
+      path: '/api/test',
+      headers: {
+        'header-title': 'header1-value',
+        'another-header': 'another-header-value'
+      },
+      querystring: 'param1=value1&param2=value2',
+      method: 'POST',
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+
+    const responseDoc = {
+      status: '200',
+      headers: {
+        header: 'value',
+        header2: 'value2'
+      },
+      timestamp: '2014-06-09T11:17:25.929Z'
+    }
+    const transaction = {
+      _id: '111111111111111111111111',
+      status: 'Processing',
+      clientID: '999999999999999999999999',
+      channelID: '888888888888888888888888',
+      request: requestDocMain,
+      response: responseDocMain,
+      routes: [{
+        name: 'dummy-route',
+        request: requestDoc,
+        response: responseDoc
+      }],
+      orchestrations: [{
+        name: 'dummy-orchestration',
+        request: requestDoc,
+        response: responseDoc
+      }],
+      properties: {
+        prop1: 'prop1-value1',
+        prop2: 'prop-value1'
+      }
+    }
+
+    it('should return the transactions with the body payloads', async () => {
+      const tdOne = testUtils.clone(transaction)
+      const tdTwo = testUtils.clone(transaction)
+
+      const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+      const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+      tdOne.request.bodyId = requestBodyId
+      tdOne.response.bodyId = responseBodyId
+
+      const requestTwoBodyId = await testUtils.createGridFSPayload('<HTTP body request two>') // request payload
+      const responseTwoBodyId = await testUtils.createGridFSPayload('<HTTP body response two>') // response payload
+      tdTwo.request.bodyId = requestTwoBodyId
+      tdTwo.response.bodyId = responseTwoBodyId
+
+      const transactions = [tdOne, tdTwo]
+
+      const transactionWithBodies = await addBodiesToTransactions(transactions)
+
+      transactionWithBodies[0].request.body.should.eql('<HTTP body request>')
+      transactionWithBodies[0].response.body.should.eql('<HTTP body response>')
+      transactionWithBodies[1].request.body.should.eql('<HTTP body request two>')
+      transactionWithBodies[1].response.body.should.eql('<HTTP body response two>')
     })
   })
 })

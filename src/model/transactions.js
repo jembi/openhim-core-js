@@ -43,9 +43,9 @@ const OrchestrationMetadataDef = {
   },
   group: String,
   request: {
-    type: RequestDef, required: false
+    type: RequestDefMain, required: false
   }, // this is needed to prevent Validation error, see https://github.com/jembi/openhim-console/issues/356#issuecomment-188708443
-  response: ResponseDef,
+  response: ResponseDefMain,
   error: ErrorDetailsDef
 }
 
@@ -61,7 +61,7 @@ const RouteMetadataDef = {
   error: ErrorDetailsDef
 }
 
-// Trasnaction schema
+// Transaction schema
 const TransactionSchema = new Schema({
   clientID: Schema.Types.ObjectId,
   clientIP: String,

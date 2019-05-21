@@ -2,7 +2,7 @@ import moment from 'moment'
 import { config } from './config'
 import { ChannelModel, TransactionModel } from './model'
 import logger from 'winston'
-import { removeBodyById } from './contentChunk'
+import { promisesToRemoveAllTransactionBodies } from './contentChunk'
 
 config.bodyCull = config.get('bodyCull')
 
@@ -40,26 +40,33 @@ async function clearTransactions (channel) {
     query['request.timestamp'].$gte = lastBodyCleared
   }
 
-  // constrcut promises array for removing transaction bodies
-  const transactionsToCullBody = await TransactionModel.find(query, { 'request.bodyId': 1, 'response.bodyId': 1, })
-  const removeBodyPromises = []
-  transactionsToCullBody.map((tx) => {
-    if (tx.request.bodyId) {
-      removeBodyPromises.push(removeBodyById(tx.request.bodyId))
-    }
-    if (tx.response.bodyId) {
-      removeBodyPromises.push(removeBodyById(tx.response.bodyId))
-    }
+  // construct promises array for removing transaction bodies
+  const transactionsToCullBody = await TransactionModel.find(query, {
+    'request.bodyId': 1,
+    'response.bodyId': 1,
+    'orchestrations.response.bodyId': 1,
+    'orchestrations.request.bodyId': 1
   })
+  let removeBodyPromises = []
+  for (let tx of transactionsToCullBody) {
+    removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(tx))
+  }
 
   channel.lastBodyCleared = Date.now()
   channel.updatedBy = { name: 'Cron' }
   await channel.save()
-  const updateResp = await TransactionModel.updateMany(query, { $unset: { 'request.bodyId': '', 'response.bodyId': '' } })
+  const updateResp = await TransactionModel.updateMany(query, {
+    $unset: {
+      "request.bodyId": "",
+      "response.bodyId": "",
+      "orchestrations.$[].request.bodyId": "",
+      "orchestrations.$[].response.bodyId": ""
+    }
+  })
   if (updateResp.nModified > 0) {
-    logger.info(`Culled ${updateResp.nModified} transactions for channel ${channel.name}`)
+    logger.info(`Culled ${updateResp.nModified} transaction bodies for channel ${channel.name}`)
   }
-  
+
   // execute the promises to remove all relevant bodies
-  await Promise.all(removeBodyPromises)
+  await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
 }
