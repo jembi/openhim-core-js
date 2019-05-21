@@ -192,6 +192,21 @@ export const extractTransactionPayloadIntoChunks = async (transaction) => {
     }
   }
 
+  if (transaction.routes) {
+    if (typeof transaction.routes === 'object') {
+      await extractTransactionPayloadIntoChunks(transaction.routes)
+    }
+
+    if (Array.isArray(transaction.routes) && transaction.routes.length > 0) {
+      await Promise.all(transaction.routes.map(async (route) => {
+        if (!route) {
+          return
+        }
+        return await extractTransactionPayloadIntoChunks(route)
+      }))
+    }
+  }
+
   // transaction with update data to push into an array
   if (transaction.$push) {
     await extractTransactionPayloadIntoChunks(transaction.$push)
