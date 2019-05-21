@@ -142,7 +142,7 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
     logger.error('route is invalid')
   }
 
-  // check if channel response body is false and remove the bodyId (set to null)
+  // check if channel response body is false and remove the body
   if (ctx.authorisedChannel.responseBody === false) {
     route.response.body = ''
   }
