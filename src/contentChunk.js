@@ -105,6 +105,16 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
       }
     }
 
+    if (tx.routes && tx.routes.length > 0) {
+      for (let route of tx.routes) {
+        try {
+          removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(route))
+        } catch (err) {
+          return reject(err)
+        }
+      }
+    }
+
     resolve(removeBodyPromises)
   })
 }
@@ -130,12 +140,16 @@ export const addBodiesToTransactions = async (transactions) => {
     return []
   }
 
-  return await Promise.all(transactions.map(async transaction => {
-    if (transaction.orchestrations && transaction.orchestrations.length > 0) {
+  return Promise.all(transactions.map(async transaction => {
+    if (transaction.orchestrations &&
+        Array.isArray(transaction.orchestrations) &&
+        transaction.orchestrations.length > 0) {
       transaction.orchestrations = await addBodiesToTransactions(transaction.orchestrations)
     }
 
-    if (transaction.routes && transaction.routes.length > 0) {
+    if (transaction.routes &&
+        Array.isArray(transactions.routes) &&
+        transaction.routes.length > 0) {
       transaction.routes = await addBodiesToTransactions(transaction.routes)
     }
 
