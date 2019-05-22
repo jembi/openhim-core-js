@@ -502,11 +502,10 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         const updatedTrans = await TransactionModel.findOne({_id: transactionId});
-        (updatedTrans !== null).should.be.true()
-
-        // TODO: Uncomment the assertion when storing of routes bodies in gridfs is incorporated
-        // The function that does the updating of the transactions does not store the routes request, response and orcherstration bodies in gridfs yet.
-        //updatedTrans.routes[1].orchestrations[0].request.body.length.should.be.exactly(LARGE_BODY_SIZE)
+        (updatedTrans !== null).should.be.true();
+        // The bodyIds should be change after updating the bodies
+        (updatedTrans.routes[1].orchestrations[0].request.bodyId !== requestBodyId).should.be.true();
+        (updatedTrans.routes[1].orchestrations[0].response.bodyId !== responseBodyId).should.be.true();
         updatedTrans.canRerun.should.be.true()
       })
 
@@ -592,6 +591,8 @@ describe('API Integration Tests', () => {
 
         td.request.bodyId = requestBodyId
         td.response.bodyId = responseBodyId
+        td.orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
+        td.orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
 
         const newTransactionData = Object.assign({}, td, { channelID: channel._id })
         const tx = new TransactionModel(newTransactionData)
@@ -1082,7 +1083,21 @@ describe('API Integration Tests', () => {
 
     describe('*removeTransaction (transactionId)', () => {
       it('should call removeTransaction', async () => {
-        const tx = await new TransactionModel(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
+        const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+        td.orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
+        td.orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
+        td.routes[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP route body request>')
+        td.routes[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP route body response>')
+        td.routes[0].orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP route orchestration body request>')
+        td.routes[0].orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP route orchestration body response>')
+
+        const tx = await new TransactionModel(Object.assign({}, td, { clientID: '222222222222222222222222' })).save()
 
         await request(constants.BASE_URL)
           .del(`/transactions/${tx._id}`)
@@ -1097,7 +1112,21 @@ describe('API Integration Tests', () => {
       })
 
       it('should only allow admin users to remove transactions', async () => {
-        const { _id: transactionId } = await new TransactionModel(Object.assign({}, transactionData, { clientID: '222222222222222222222222' })).save()
+        const td = testUtils.clone(transactionData)
+
+        const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
+        const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+
+        td.request.bodyId = requestBodyId
+        td.response.bodyId = responseBodyId
+        td.orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
+        td.orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
+        td.routes[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP route body request>')
+        td.routes[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP route body response>')
+        td.routes[0].orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP route orchestration body request>')
+        td.routes[0].orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP route orchestration body response>')
+
+        const { _id: transactionId } = await new TransactionModel(Object.assign({}, td, { clientID: '222222222222222222222222' })).save()
 
         await request(constants.BASE_URL)
           .del(`/transactions/${transactionId}`)
