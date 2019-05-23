@@ -45,7 +45,9 @@ async function clearTransactions (channel) {
     'request.bodyId': 1,
     'response.bodyId': 1,
     'orchestrations.response.bodyId': 1,
-    'orchestrations.request.bodyId': 1
+    'orchestrations.request.bodyId': 1,
+    'routes.response.bodyId': 1,
+    'routes.request.bodyId': 1
   })
   let removeBodyPromises = []
   for (let tx of transactionsToCullBody) {
@@ -60,7 +62,9 @@ async function clearTransactions (channel) {
       "request.bodyId": "",
       "response.bodyId": "",
       "orchestrations.$[].request.bodyId": "",
-      "orchestrations.$[].response.bodyId": ""
+      "orchestrations.$[].response.bodyId": "",
+      "routes.$[].request.bodyId": "",
+      "routes.$[].response.bodyId": ""
     }
   })
   if (updateResp.nModified > 0) {
