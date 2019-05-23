@@ -108,10 +108,10 @@ describe(`cullBodies`, () => {
 
   async function createTransactionBody (fileId) {
     db.collection('fs.chunks').insert({
-      "files_id" : new ObjectId(fileId), 
+      "files_id" : new ObjectId(fileId),
       "data" : "Test Data"
     })
-    db.collection('fs.files').insert({ 
+    db.collection('fs.files').insert({
       "_id" : new ObjectId(fileId)
     })
   }
@@ -321,7 +321,7 @@ describe(`cullBodies`, () => {
 
     const transaction = await TransactionModel.findById(tran._id)
 
-    // Check that the chunk is now longer stored in the DB
+    // Check that the chunk is no longer stored in the DB
     try {
       await extractGridFSPayload(routeBodyIdRequest0)
     } catch(err) {
@@ -336,5 +336,76 @@ describe(`cullBodies`, () => {
     // Check that the bodyID field was completely removed
     should.equal(transaction.routes[0].response.bodyId, undefined)
     should.equal(transaction.routes[0].request.bodyId, undefined)
+  })
+
+  it (`will cull the routes' orchestrations' request and response bodies`, async () => {
+    const momentTime = moment().subtract(3, 'd')
+
+    const routeBodyIdRequest0 = await createGridFSPayload('Test body')
+    const routeBodyIdResponse0 = await createGridFSPayload('Test body')
+    const routeOrchBodyIdRequest0 = await createGridFSPayload('Test body')
+    const routeOrchBodyIdResponse0 = await createGridFSPayload('Test body')
+
+    const orchestration = {
+      name: 'test',
+      request: {
+        "host" : "google.com",
+        "port" : "80",
+        "path" : "/basic",
+        "querystring" : "",
+        "method" : "POST",
+        "timestamp" : new Date(),
+        "bodyId": routeOrchBodyIdRequest0
+      },
+      response: {
+        "status" : 404,
+        "timestamp" : new Date(),
+        "bodyId" : routeOrchBodyIdResponse0
+      },
+    }
+
+    const routes = [
+      {
+        "name" : "Test",
+        "request" : {
+          "host" : "google.com",
+          "port" : "80",
+          "path" : "/basic",
+          "querystring" : "",
+          "method" : "POST",
+          "timestamp" : new Date(),
+          "bodyId": routeBodyIdRequest0
+        },
+        "response" : {
+          "status" : 404,
+          "timestamp" : new Date(),
+          "bodyId" : routeBodyIdResponse0
+        },
+        "orchestrations" : [
+          orchestration
+        ]
+      }
+    ]
+
+    const tran = await createTransaction(channelHasNotCulled, momentTime.toDate(), null, routes)
+    await cullBodies()
+
+    const transaction = await TransactionModel.findById(tran._id)
+
+    // Check that the orchestrations chunks are no longer stored in the DB
+    try {
+      await extractGridFSPayload(routeOrchBodyIdRequest0)
+    } catch(err) {
+      should.equal(err.message, `FileNotFound: file ${routeOrchBodyIdRequest0} was not found`)
+    }
+    try {
+      await extractGridFSPayload(routeOrchBodyIdResponse0)
+    } catch(err) {
+      should.equal(err.message, `FileNotFound: file ${routeOrchBodyIdResponse0} was not found`)
+    }
+
+    // Check that the bodyID field was completely removed
+    should.equal(transaction.routes[0].orchestrations[0].response.bodyId, undefined)
+    should.equal(transaction.routes[0].orchestrations[0].request.bodyId, undefined)
   })
 })
