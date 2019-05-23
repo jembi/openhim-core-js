@@ -1,9 +1,9 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from 'should'
-import { 
-  extractStringPayloadIntoChunks, 
-  retrievePayload, 
+import {
+  extractStringPayloadIntoChunks,
+  retrievePayload,
   promisesToRemoveAllTransactionBodies,
   addBodiesToTransactions
 } from '../../src/contentChunk'

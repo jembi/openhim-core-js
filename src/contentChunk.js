@@ -148,7 +148,7 @@ export const addBodiesToTransactions = async (transactions) => {
     }
 
     if (transaction.routes &&
-        Array.isArray(transactions.routes) &&
+        Array.isArray(transaction.routes) &&
         transaction.routes.length > 0) {
       transaction.routes = await addBodiesToTransactions(transaction.routes)
     }
@@ -166,10 +166,12 @@ const filterPayloadType = (transaction) => {
     try {
       if (transaction.request && transaction.request.bodyId) {
         transaction.request.body = await retrievePayload(transaction.request.bodyId)
+         delete transaction.request.bodyId
       }
 
       if(transaction.response && transaction.response.bodyId) {
         transaction.response.body = await retrievePayload(transaction.response.bodyId)
+         delete transaction.response.bodyId
       }
     } catch (err) {
       return reject(err)
