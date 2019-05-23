@@ -56,8 +56,6 @@ describe('API Integration Tests', () => {
     const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
     const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
 
-    // The request/response body has been replaced by bodyId which is why we are duplicating this object
-    // TODO: OHM-691: Update accordingly when implementing
     requestDocMain = {
       path: '/api/test',
       headers: {
@@ -72,8 +70,6 @@ describe('API Integration Tests', () => {
 
     Object.freeze(requestDocMain)
 
-    // The request/response body has been replaced by bodyId which is why we are duplicating this object
-    // TODO: OHM-691: Update accordingly when implementing
     responseDocMain = {
       status: '200',
       headers: {
