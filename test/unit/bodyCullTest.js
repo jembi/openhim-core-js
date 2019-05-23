@@ -91,7 +91,7 @@ describe(`cullBodies`, () => {
   let channelNeverCull
   let client
 
-  function createTransaction (channel, timestamp, orchestrations) {
+  function createTransaction (channel, timestamp, orchestrations, routes) {
     const transactionDoc = clone(baseTransaction)
     transactionDoc.request.timestamp = timestamp
     transactionDoc.response.timestamp = timestamp
@@ -99,6 +99,9 @@ describe(`cullBodies`, () => {
     transactionDoc.channelID = channel._id
     if (orchestrations) {
       transactionDoc.orchestrations = orchestrations
+    }
+    if (routes) {
+      transactionDoc.routes = routes
     }
     return new TransactionModel(transactionDoc).save()
   }
@@ -284,5 +287,54 @@ describe(`cullBodies`, () => {
     should.equal(transaction.orchestrations[0].request.bodyId, undefined)
     should.equal(transaction.orchestrations[1].request.bodyId, undefined)
     should.equal(transaction.orchestrations[1].response.bodyId, undefined)
+  })
+
+  it (`will cull the routes request and response bodies`, async () => {
+    const momentTime = moment().subtract(3, 'd')
+
+    const routeBodyIdRequest0 = await createGridFSPayload('Test body')
+    const routeBodyIdResponse0 = await createGridFSPayload('Test body')
+
+    const routes = [
+      {
+        "name" : "Test",
+        "request" : {
+          "host" : "google.com",
+          "port" : "80",
+          "path" : "/basic",
+          "querystring" : "",
+          "method" : "POST",
+          "timestamp" : new Date(),
+          "bodyId": routeBodyIdRequest0
+        },
+        "response" : {
+          "status" : 404,
+          "timestamp" : new Date(),
+          "bodyId" : routeBodyIdResponse0
+        },
+        "orchestrations" : [ ]
+      }
+    ]
+
+    const tran = await createTransaction(channelHasNotCulled, momentTime.toDate(), null, routes)
+    await cullBodies()
+
+    const transaction = await TransactionModel.findById(tran._id)
+
+    // Check that the chunk is now longer stored in the DB
+    try {
+      await extractGridFSPayload(routeBodyIdRequest0)
+    } catch(err) {
+      should.equal(err.message, `FileNotFound: file ${routeBodyIdRequest0} was not found`)
+    }
+    try {
+      await extractGridFSPayload(routeBodyIdResponse0)
+    } catch(err) {
+      should.equal(err.message, `FileNotFound: file ${routeBodyIdResponse0} was not found`)
+    }
+
+    // Check that the bodyID field was completely removed
+    should.equal(transaction.routes[0].response.bodyId, undefined)
+    should.equal(transaction.routes[0].request.bodyId, undefined)
   })
 })
