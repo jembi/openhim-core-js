@@ -1,4 +1,7 @@
-import zlib from 'zlib'
+// All the gzip functionality is being commented out
+// TODO: uncomment the gzip functions
+
+// import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
@@ -419,8 +422,8 @@ function sendHttpRequest (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
 
-    const gunzip = zlib.createGunzip()
-    const inflate = zlib.createInflate()
+    // const gunzip = zlib.createGunzip()
+    // const inflate = zlib.createInflate()
 
     let method = http
 
@@ -432,22 +435,22 @@ function sendHttpRequest (ctx, route, options) {
       response.status = routeRes.statusCode
       response.headers = routeRes.headers
 
-      const uncompressedBodyBufs = []
-      if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
-        routeRes.pipe(gunzip)
+      // const uncompressedBodyBufs = []
+      // if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+      //   routeRes.pipe(gunzip)
+      //
+      //   gunzip.on('data', (data) => {
+      //     uncompressedBodyBufs.push(data)
+      //   })
+      // }
 
-        gunzip.on('data', (data) => {
-          uncompressedBodyBufs.push(data)
-        })
-      }
-
-      if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
-        routeRes.pipe(inflate)
-
-        inflate.on('data', (data) => {
-          uncompressedBodyBufs.push(data)
-        })
-      }
+      // if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+      //   routeRes.pipe(inflate)
+      //
+      //   inflate.on('data', (data) => {
+      //     uncompressedBodyBufs.push(data)
+      //   })
+      // }
 
       const bufs = []
       routeRes.on('data', chunk => bufs.push(chunk))
@@ -456,22 +459,24 @@ function sendHttpRequest (ctx, route, options) {
       routeRes.on('end', () => {
         response.timestamp = new Date()
         const charset = obtainCharset(routeRes.headers)
-        if (routeRes.headers['content-encoding'] === 'gzip') {
-          gunzip.on('end', () => {
-            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-            response.body = uncompressedBody.toString(charset)
-            resolve(response)
-          })
-        } else if (routeRes.headers['content-encoding'] === 'deflate') {
-          inflate.on('end', () => {
-            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-            response.body = uncompressedBody.toString(charset)
-            resolve(response)
-          })
-        } else {
+
+        // TODO: uncomment the code below
+        // if (routeRes.headers['content-encoding'] === 'gzip') {
+        //   gunzip.on('end', () => {
+        //     const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+        //     response.body = uncompressedBody.toString(charset)
+        //     resolve(response)
+        //   })
+        // } else if (routeRes.headers['content-encoding'] === 'deflate') {
+        //   inflate.on('end', () => {
+        //     const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+        //     response.body = uncompressedBody.toString(charset)
+        //     resolve(response)
+        //   })
+        // } else {
           response.body = Buffer.concat(bufs)
           resolve(response)
-        }
+        // }
       })
     })
 
