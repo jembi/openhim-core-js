@@ -948,8 +948,8 @@ describe('API Integration Tests', () => {
         res.body[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
 
         // Uncomment this when the functionality for retrieving the routes bodies is added
-        // res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        // res.body[0].routes[0].response.body.should.equal(`<HTTP resp${TRUNCATE_APPEND}`)
+        res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+        res.body[0].routes[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
 
         res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
         res.body[0].orchestrations[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
