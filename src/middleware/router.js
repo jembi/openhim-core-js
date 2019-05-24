@@ -283,18 +283,20 @@ function sendRequestToRoutes (ctx, routes, next) {
         }
         logger.debug(`Set final status for transaction: ${ctx.transactionId}`)
       })
+
+      // TODO: Uncomment when secondary routes are supported
       // Save events for the secondary routes
-      if (ctx.routes) {
-        const trxEvents = []
-        events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
-        events.saveEvents(trxEvents, err => {
-          if (err) {
-            logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
-            return
-          }
-          logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
-        })
-      }
+      // if (ctx.routes) {
+      //   const trxEvents = []
+      //   events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
+      //   events.saveEvents(trxEvents, err => {
+      //     if (err) {
+      //       logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
+      //       return
+      //     }
+      //     logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
+      //   })
+      // }
     }).catch(err => {
       logger.error(err)
     })

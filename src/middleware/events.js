@@ -163,25 +163,25 @@ function createOrchestrationEvents (dst, transactionId, requestTimestamp, channe
   return Array.from(orchestrations).map((orch) => createRouteEvents(dst, transactionId, channel, orch, 'orchestration', tsDiff))
 }
 
-export function createSecondaryRouteEvents (dst, transactionId, requestTimestamp, channel, routes) {
-  const startTS = timestampAsMillis(requestTimestamp)
-  let tsDiff = calculateEarliestRouteDiff(startTS, routes)
-
-  const result = []
-  for (const route of Array.from(routes)) {
-    let item
-    createRouteEvents(dst, transactionId, channel, route, 'route', tsDiff)
-
-    if (route.orchestrations) {
-      // find TS difference
-      tsDiff = calculateEarliestRouteDiff(startTS, route.orchestrations)
-      item = Array.from(route.orchestrations).map((orch) => createRouteEvents(dst, transactionId, channel, orch, 'orchestration', tsDiff))
-    }
-    result.push(item)
-  }
-
-  return result
-}
+// export function createSecondaryRouteEvents (dst, transactionId, requestTimestamp, channel, routes) {
+//   const startTS = timestampAsMillis(requestTimestamp)
+//   let tsDiff = calculateEarliestRouteDiff(startTS, routes)
+//
+//   const result = []
+//   for (const route of Array.from(routes)) {
+//     let item
+//     createRouteEvents(dst, transactionId, channel, route, 'route', tsDiff)
+//
+//     if (route.orchestrations) {
+//       // find TS difference
+//       tsDiff = calculateEarliestRouteDiff(startTS, route.orchestrations)
+//       item = Array.from(route.orchestrations).map((orch) => createRouteEvents(dst, transactionId, channel, orch, 'orchestration', tsDiff))
+//     }
+//     result.push(item)
+//   }
+//
+//   return result
+// }
 
 export function createTransactionEvents (dst, transaction, channel) {
   function getPrimaryRouteName () {
@@ -199,9 +199,9 @@ export function createTransactionEvents (dst, transaction, channel) {
   if (transaction.orchestrations) {
     createOrchestrationEvents(dst, transaction._id, timestamp, channel, transaction.orchestrations)
   }
-  if (transaction.routes) {
-    return createSecondaryRouteEvents(dst, transaction._id, timestamp, channel, transaction.routes)
-  }
+  // if (transaction.routes) {
+  //   return createSecondaryRouteEvents(dst, transaction._id, timestamp, channel, transaction.routes)
+  // }
 }
 
 export async function koaMiddleware (ctx, next) {
