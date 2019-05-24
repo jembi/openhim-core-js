@@ -286,23 +286,42 @@ describe('contentChunk: ', () => {
 
     it('should return an array with promise functions to remove the payloads', async () => {
       const td = testUtils.clone(transaction)
-      td.orchestrations = [{ request: {}, response: {} }]
-      td.routes = [{ request: {}, response: {}, orchestrations: [{request: {}, response: {} }] }]
-
-      const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
-      const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
-      const orchestrationResId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
-      const orchestrationReqId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
-
-
-      td.request.bodyId = requestBodyId
-      td.response.bodyId = responseBodyId
-      td.orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
-      td.orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
-      td.routes[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP route body response>')
-      td.routes[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP route body request>')
-      td.routes[0].orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP route orch body request>')
-      td.routes[0].orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP route orch body response>')
+      td.orchestrations = [
+        {
+          request: {
+            bodyId: await testUtils.createGridFSPayload('<HTTP orchestration body request>')
+          },
+          response: {
+            bodyId: await testUtils.createGridFSPayload('<HTTP orchestration body response>')
+          }
+        }
+      ]
+      td.routes = [
+        {
+          request: {
+            bodyId: await testUtils.createGridFSPayload('<HTTP route body request>')
+          },
+          response: {
+            bodyId: await testUtils.createGridFSPayload('<HTTP route body response>')
+          },
+          orchestrations: [
+            {
+              request: {
+                bodyId: await testUtils.createGridFSPayload('<HTTP route orch body request>')
+              },
+              response: {
+                bodyId: await testUtils.createGridFSPayload('<HTTP route orch body response>')
+              }
+            }
+          ]
+        }
+      ]
+      td.request = {
+        bodyId: await testUtils.createGridFSPayload('<HTTP body request>')
+      }
+      td.response = {
+        bodyId: await testUtils.createGridFSPayload('<HTTP body response>')
+      }
 
       const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
 
@@ -315,18 +334,42 @@ describe('contentChunk: ', () => {
       const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
       const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
 
-      td.request.bodyId = requestBodyId
-      td.response.bodyId = responseBodyId
-
-      td.orchestrations = [{ request: {}, response: {} }]
-      td.routes = [{ request: {}, response: {}, orchestrations: [{request: {}, response: {} }] }]
-      td.orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
-      td.orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
-      td.routes[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP route body response>')
-      td.routes[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP route body request>')
-      td.routes[0].orchestrations[0].request.bodyId = await testUtils.createGridFSPayload('<HTTP route orch body request>')
-      td.routes[0].orchestrations[0].response.bodyId = await testUtils.createGridFSPayload('<HTTP route orch body response>')
-
+      td.request = {
+        bodyId: requestBodyId
+      }
+      td.response = {
+        bodyId: responseBodyId
+      }
+      td.orchestrations = [
+        {
+          request: {
+            bodyId: await testUtils.createGridFSPayload('<HTTP orchestration body request>')
+          },
+          response: {
+            bodyId: await testUtils.createGridFSPayload('<HTTP orchestration body response>')
+          }
+        }
+      ]
+      td.routes = [
+        {
+          request: {
+            bodyId: await testUtils.createGridFSPayload('<HTTP route body request>')
+          },
+          response: {
+            bodyId: await testUtils.createGridFSPayload('<HTTP route body response>')
+          },
+          orchestrations: [
+            {
+              request: {
+                bodyId: await testUtils.createGridFSPayload('<HTTP route orch body request>')
+              },
+              response: {
+                bodyId: await testUtils.createGridFSPayload('<HTTP route orch body response>')
+              }
+            }
+          ]
+        }
+      ]
 
       const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
 

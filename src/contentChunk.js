@@ -96,10 +96,6 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
     }
 
     if (tx.orchestrations) {
-      if (typeof tx.orchestrations === 'object') {
-        removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(tx.orchestrations))
-      }
-
       if (Array.isArray(tx.orchestrations) && tx.orchestrations.length > 0) {
         for (let orch of tx.orchestrations) {
           try {
@@ -112,10 +108,6 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
     }
 
     if (tx.routes) {
-      if (typeof tx.routes === 'object') {
-        removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(tx.routes))
-      }
-
       if (Array.isArray(tx.routes) && tx.routes.length > 0) {
         for (let route of tx.routes) {
           try {
