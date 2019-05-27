@@ -235,8 +235,9 @@ describe('MessageStore', () => {
               trans.routes.length.should.be.exactly(1)
               trans.routes[0].name.should.equal('route1')
               trans.routes[0].response.status.should.equal(200)
-              trans.routes[0].response.headers.test.should.equal('test')
-              trans.routes[0].response.body.should.equal('route body')
+              trans.routes[0].response.headers.test.should.equal('test');
+              (trans.routes[0].response.bodyId !== null).should.be.true();
+              (trans.routes[0].request.bodyId !== null).should.be.true();
               trans.routes[0].request.path.should.equal('/test')
               trans.routes[0].request.host.should.equal('localhost')
               trans.routes[0].request.port.should.equal('4466')

@@ -282,8 +282,9 @@ describe('Routes enabled/disabled tests', () => {
     const trx = await TransactionModelAPI.findOne()
 
     trx.routes.length.should.be.exactly(1)
-    trx.routes[0].should.have.property('name', 'test route 2')
-    trx.routes[0].response.body.should.be.exactly('target2')
+    trx.routes[0].should.have.property('name', 'test route 2');
+    (trx.routes[0].response.bodyId !== null).should.be.true();
+    (!trx.routes[0].response.body).should.be.true()
   })
 
   it('should NOT route transactions to disabled routes', async () => {

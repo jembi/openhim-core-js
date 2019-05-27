@@ -119,6 +119,16 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
       }
     }
 
+    if (tx.routes && tx.routes.length > 0) {
+      for (let route of tx.routes) {
+        try {
+          removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(route))
+        } catch (err) {
+          return reject(err)
+        }
+      }
+    }
+
     resolve(removeBodyPromises)
   })
 }
@@ -144,9 +154,17 @@ export const addBodiesToTransactions = async (transactions) => {
     return []
   }
 
-  return await Promise.all(transactions.map(async transaction => {
-    if (transaction.orchestrations && transaction.orchestrations.length > 0) {
+  return Promise.all(transactions.map(async transaction => {
+    if (transaction.orchestrations &&
+        Array.isArray(transaction.orchestrations) &&
+        transaction.orchestrations.length > 0) {
       transaction.orchestrations = await addBodiesToTransactions(transaction.orchestrations)
+    }
+
+    if (transaction.routes &&
+        Array.isArray(transaction.routes) &&
+        transaction.routes.length > 0) {
+      transaction.routes = await addBodiesToTransactions(transaction.routes)
     }
 
     return filterPayloadType(transaction)
@@ -162,10 +180,12 @@ const filterPayloadType = (transaction) => {
     try {
       if (transaction.request && transaction.request.bodyId) {
         transaction.request.body = await retrievePayload(transaction.request.bodyId)
+         delete transaction.request.bodyId
       }
 
       if(transaction.response && transaction.response.bodyId) {
         transaction.response.body = await retrievePayload(transaction.response.bodyId)
+         delete transaction.response.bodyId
       }
     } catch (err) {
       return reject(err)
@@ -202,6 +222,21 @@ export const extractTransactionPayloadIntoChunks = async (transaction) => {
     if (Array.isArray(transaction.orchestrations) && transaction.orchestrations.length > 0) {
       await Promise.all(transaction.orchestrations.map(async (orch) => {
         return await extractTransactionPayloadIntoChunks(orch)
+      }))
+    }
+  }
+
+  if (transaction.routes) {
+    if (typeof transaction.routes === 'object') {
+      await extractTransactionPayloadIntoChunks(transaction.routes)
+    }
+
+    if (Array.isArray(transaction.routes) && transaction.routes.length > 0) {
+      await Promise.all(transaction.routes.map(async (route) => {
+        if (!route) {
+          return
+        }
+        return await extractTransactionPayloadIntoChunks(route)
       }))
     }
   }

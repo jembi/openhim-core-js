@@ -136,11 +136,18 @@ export async function storeResponse (ctx, done) {
   })
 }
 
-export function storeNonPrimaryResponse (ctx, route, done) {
-  // check if channel response body is false and remove
+export async function storeNonPrimaryResponse (ctx, route, done) {
+  // check whether route exists and has a response body
+  if (!route || !route.response) {
+    logger.error('route is invalid')
+  }
+
+  // check if channel response body is false and remove the body
   if (ctx.authorisedChannel.responseBody === false) {
     route.response.body = ''
   }
+
+  await extractTransactionPayloadIntoChunks(route)
 
   if (ctx.transactionId != null) {
     transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {

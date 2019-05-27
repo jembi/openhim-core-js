@@ -488,6 +488,14 @@ describe('contentChunk: ', () => {
       const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
       tdOne.request.bodyId = requestBodyId
       tdOne.response.bodyId = responseBodyId
+      const routeRequestBodyId = await testUtils.createGridFSPayload('<HTTP body request route>') // request payload
+      const routeResponseBodyId = await testUtils.createGridFSPayload('<HTTP body response route>') // response payload
+      tdOne.routes[0].request.bodyId = routeRequestBodyId
+      tdOne.routes[0].response.bodyId = routeResponseBodyId
+      const orchRequestBodyId = await testUtils.createGridFSPayload('<HTTP body request orch>') // request payload
+      const orchResponseBodyId = await testUtils.createGridFSPayload('<HTTP body response orch>') // response payload
+      tdOne.orchestrations[0].request.bodyId = orchRequestBodyId
+      tdOne.orchestrations[0].response.bodyId = orchResponseBodyId
 
       const requestTwoBodyId = await testUtils.createGridFSPayload('<HTTP body request two>') // request payload
       const responseTwoBodyId = await testUtils.createGridFSPayload('<HTTP body response two>') // response payload
@@ -500,6 +508,10 @@ describe('contentChunk: ', () => {
 
       transactionWithBodies[0].request.body.should.eql('<HTTP body request>')
       transactionWithBodies[0].response.body.should.eql('<HTTP body response>')
+      transactionWithBodies[0].orchestrations[0].request.body.should.eql('<HTTP body request orch>')
+      transactionWithBodies[0].orchestrations[0].response.body.should.eql('<HTTP body response orch>')
+      transactionWithBodies[0].routes[0].request.body.should.eql('<HTTP body request route>')
+      transactionWithBodies[0].routes[0].response.body.should.eql('<HTTP body response route>')
       transactionWithBodies[1].request.body.should.eql('<HTTP body request two>')
       transactionWithBodies[1].response.body.should.eql('<HTTP body response two>')
     })
