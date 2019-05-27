@@ -24,9 +24,27 @@ import { config } from './config'
 config.authentication = config.get('authentication')
 
 async function rawBodyReader (ctx, next) {
-  const body = await getRawBody(ctx.req)
+  let counter
+  let bodyChunks
+  if (isNaN(counter)) {
+    counter = 0
+    bodyChunks = []
+  }
+  //const body = await getRawBody(ctx.req)
+  ctx.req
+    .on('data', (chunk) => {
+      console.log('\nCHUNK '+counter+' =\n'+chunk.toString())
+      counter++;
+      bodyChunks.push(chunk)
+      // TODO Write chunk to stream...
+    })
+    .on('end', () => {
+      console.log('** END OF STREAM **')
+      counter = NaN
+      ctx.body = Buffer.concat(bodyChunks).toString()
+    })
 
-  if (body) { ctx.body = body }
+  //if (body) { ctx.body = body }
   await next()
 }
 
