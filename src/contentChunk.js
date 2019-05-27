@@ -119,16 +119,6 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
       }
     }
 
-    if (tx.routes && tx.routes.length > 0) {
-      for (let route of tx.routes) {
-        try {
-          removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(route))
-        } catch (err) {
-          return reject(err)
-        }
-      }
-    }
-
     resolve(removeBodyPromises)
   })
 }
