@@ -286,16 +286,55 @@ describe('contentChunk: ', () => {
 
     it('should return an array with promise functions to remove the payloads', async () => {
       const td = testUtils.clone(transaction)
+      const orchReqBodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
+      const orchResBodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
+      const routeReqBodyId = await testUtils.createGridFSPayload('<HTTP route body request>')
+      const routeResBodyId = await testUtils.createGridFSPayload('<HTTP route body response>')
+      const routeOrchReqBodyId = await testUtils.createGridFSPayload('<HTTP route orch body request>')
+      const routeOrchResBodyId = await testUtils.createGridFSPayload('<HTTP route orch body response>')
+      const reqBodyId = await testUtils.createGridFSPayload('<HTTP body request>')
+      const resBodyId = await testUtils.createGridFSPayload('<HTTP body response>')
 
-      const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
-      const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
-
-      td.request.bodyId = requestBodyId
-      td.response.bodyId = responseBodyId
+      td.orchestrations = [
+        {
+          request: {
+            bodyId: orchReqBodyId
+          },
+          response: {
+            bodyId: orchResBodyId
+          }
+        }
+      ]
+      td.routes = [
+        {
+          request: {
+            bodyId: routeReqBodyId
+          },
+          response: {
+            bodyId: routeResBodyId
+          },
+          orchestrations: [
+            {
+              request: {
+                bodyId: routeOrchReqBodyId
+              },
+              response: {
+                bodyId: routeOrchResBodyId
+              }
+            }
+          ]
+        }
+      ]
+      td.request = {
+        bodyId: reqBodyId
+      }
+      td.response = {
+        bodyId: resBodyId
+      }
 
       const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
 
-      promiseFunctions.length.should.eql(2)
+      promiseFunctions.length.should.eql(8)
     })
 
     it('should remove the payloads once the promises are executed', async () => {
@@ -303,15 +342,55 @@ describe('contentChunk: ', () => {
 
       const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
       const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+      const orchReqBodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
+      const orchResBodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
+      const routeReqBodyId = await testUtils.createGridFSPayload('<HTTP route body request>')
+      const routeResBodyId = await testUtils.createGridFSPayload('<HTTP route body response>')
+      const routeOrchReqBodyId = await testUtils.createGridFSPayload('<HTTP route orch body request>')
+      const routeOrchResBodyId = await testUtils.createGridFSPayload('<HTTP route orch body response>')
 
-      td.request.bodyId = requestBodyId
-      td.response.bodyId = responseBodyId
+      td.request = {
+        bodyId: requestBodyId
+      }
+      td.response = {
+        bodyId: responseBodyId
+      }
+      td.orchestrations = [
+        {
+          request: {
+            bodyId: orchReqBodyId
+          },
+          response: {
+            bodyId: orchResBodyId
+          }
+        }
+      ]
+      td.routes = [
+        {
+          request: {
+            bodyId: routeReqBodyId
+          },
+          response: {
+            bodyId: routeResBodyId
+          },
+          orchestrations: [
+            {
+              request: {
+                bodyId: routeOrchReqBodyId
+              },
+              response: {
+                bodyId: routeOrchResBodyId
+              }
+            }
+          ]
+        }
+      ]
 
       const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
 
       const resultBeforeRemoval = await db.collection('fs.files').find({}).toArray()
       should.ok(resultBeforeRemoval)
-      resultBeforeRemoval.length.should.eql(2)
+      resultBeforeRemoval.length.should.eql(8)
 
       // execute the promises
       await Promise.all(promiseFunctions.map((promiseFn) => promiseFn()))
