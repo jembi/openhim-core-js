@@ -1,5 +1,7 @@
 import Koa from 'koa'
 import getRawBody from 'raw-body'
+import mongodb from 'mongodb'
+import { connectionDefault } from './config'
 import compress from 'koa-compress'
 import { Z_SYNC_FLUSH } from 'zlib'
 
@@ -23,29 +25,42 @@ import { config } from './config'
 
 config.authentication = config.get('authentication')
 
-async function rawBodyReader (ctx, next) {
+function rawBodyReader (ctx, next) {
+  let bucket
+  let uploadStream
   let counter
-  let bodyChunks
+
   if (isNaN(counter)) {
     counter = 0
-    bodyChunks = []
+    if (!bucket) {
+      bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
+      uploadStream = bucket.openUploadStream()  
+      uploadStream
+        .on('error', (err) => {
+          console.log('UPLOAD-ERROR='+err)
+        })
+        .on('finish', (file) => {  // Get the GridFS file object that was created
+          console.log('FILE-OBJ='+JSON.stringify(file))
+        })
+    }
   }
-  //const body = await getRawBody(ctx.req)
+
   ctx.req
     .on('data', (chunk) => {
-      console.log('\nCHUNK '+counter+' =\n'+chunk.toString())
+      console.log(`Read CHUNK # ${counter}`)
       counter++;
-      bodyChunks.push(chunk)
-      // TODO Write chunk to stream...
+      uploadStream.write(chunk) // Write chunk to GridFS
     })
     .on('end', () => {
-      console.log('** END OF STREAM **')
-      counter = NaN
-      ctx.body = Buffer.concat(bodyChunks).toString()
+      console.log(`** END OF INPUT STREAM **`)
+      uploadStream.end()   // Close the stream to GridFS
+      counter = NaN       // Reset for next transaction
+    })
+    .on('error', (err) => {
+      console.log('** ERROR OCCURRED ** '+JSON.stringify(err))
     })
 
-  //if (body) { ctx.body = body }
-  await next()
+  next()
 }
 
 // Primary app
