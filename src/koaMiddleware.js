@@ -22,6 +22,7 @@ import * as events from './middleware/events'
 import * as proxy from './middleware/proxy'
 import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
+import { checkServerIdentity } from 'tls';
 
 config.authentication = config.get('authentication')
 
@@ -29,26 +30,30 @@ function rawBodyReader (ctx, next) {
   let bucket
   let uploadStream
   let counter
+  let size
 
   if (isNaN(counter)) {
     counter = 0
+    size = 0
     if (!bucket) {
       bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
       uploadStream = bucket.openUploadStream()  
       uploadStream
         .on('error', (err) => {
-          console.log('UPLOAD-ERROR='+err)
+          console.log('UPLOAD-ERROR='+JSON.stringify(err))
         })
         .on('finish', (file) => {  // Get the GridFS file object that was created
           console.log('FILE-OBJ='+JSON.stringify(file))
+          ctx.request.body = file._id
         })
     }
   }
 
   ctx.req
     .on('data', (chunk) => {
-      console.log(`Read CHUNK # ${counter}`)
       counter++;
+      size += chunk.toString().length
+      console.log(`Read CHUNK # ${counter} [ Cum size ${size}]`)
       uploadStream.write(chunk) // Write chunk to GridFS
     })
     .on('end', () => {
@@ -57,7 +62,7 @@ function rawBodyReader (ctx, next) {
       counter = NaN       // Reset for next transaction
     })
     .on('error', (err) => {
-      console.log('** ERROR OCCURRED ** '+JSON.stringify(err))
+      console.log('** STREAM READ ERROR OCCURRED ** '+JSON.stringify(err))
     })
 
   next()
@@ -79,7 +84,7 @@ export function setupApp (done) {
   }
 
   app.use(rawBodyReader)
-
+/*
   // Request Matching middleware
   app.use(requestMatching.koaMiddleware)
 
@@ -104,7 +109,7 @@ export function setupApp (done) {
 
   // Events
   app.use(events.koaMiddleware)
-
+*/
   // Call router
   app.use(router.koaMiddleware)
 
