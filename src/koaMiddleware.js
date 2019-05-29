@@ -4,6 +4,7 @@ import mongodb from 'mongodb'
 import { connectionDefault } from './config'
 import compress from 'koa-compress'
 import { Z_SYNC_FLUSH } from 'zlib'
+import Stream from 'stream'
 
 import * as router from './middleware/router'
 import * as messageStore from './middleware/messageStore'
@@ -23,6 +24,7 @@ import * as proxy from './middleware/proxy'
 import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
 import { checkServerIdentity } from 'tls';
+import { Readable } from 'stream';
 
 config.authentication = config.get('authentication')
 
@@ -35,6 +37,7 @@ function rawBodyReader (ctx, next) {
   if (isNaN(counter)) {
     counter = 0
     size = 0
+
     if (!bucket) {
       bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
       uploadStream = bucket.openUploadStream()  
@@ -44,8 +47,11 @@ function rawBodyReader (ctx, next) {
         })
         .on('finish', (file) => {  // Get the GridFS file object that was created
           console.log('FILE-OBJ='+JSON.stringify(file))
-          ctx.request.body = file._id
+          ctx.request.bodyId = file._id
         })
+
+      ctx.state.downstream = new Readable()
+      ctx.state.downstream._read = () => {}
     }
   }
 
@@ -55,11 +61,13 @@ function rawBodyReader (ctx, next) {
       size += chunk.toString().length
       console.log(`Read CHUNK # ${counter} [ Cum size ${size}]`)
       uploadStream.write(chunk) // Write chunk to GridFS
+      ctx.state.downstream.push(chunk)
     })
     .on('end', () => {
       console.log(`** END OF INPUT STREAM **`)
       uploadStream.end()   // Close the stream to GridFS
-      counter = NaN       // Reset for next transaction
+      ctx.state.downstream.push(null)
+      counter = NaN      // Reset for next transaction
     })
     .on('error', (err) => {
       console.log('** STREAM READ ERROR OCCURRED ** '+JSON.stringify(err))
@@ -84,7 +92,7 @@ export function setupApp (done) {
   }
 
   app.use(rawBodyReader)
-/*
+
   // Request Matching middleware
   app.use(requestMatching.koaMiddleware)
 
@@ -109,7 +117,7 @@ export function setupApp (done) {
 
   // Events
   app.use(events.koaMiddleware)
-*/
+
   // Call router
   app.use(router.koaMiddleware)
 

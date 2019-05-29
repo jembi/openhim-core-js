@@ -338,6 +338,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
     })
 
 function sendRequest (ctx, route, options) {
+/*
   function buildOrchestration (response) {
     const orchestration = {
       name: route.name,
@@ -379,21 +380,21 @@ function sendRequest (ctx, route, options) {
     }
     ctx.orchestrations.push(buildOrchestration(response))
   }
-
+*/
   if ((route.type === 'tcp') || (route.type === 'mllp')) {
     logger.info('Routing socket request')
     return sendSocketRequest(ctx, route, options)
   } else {
     logger.info('Routing http(s) request')
-    return sendHttpRequest(ctx, route, options).then(response => {
-      recordOrchestration(response)
+    return sendHttpRequest(ctx, route, options)/*.then(response => {
+      //recordOrchestration(response)
       // Return the response as before
       return response
     }).catch(err => {
-      recordOrchestration(err)
+      //recordOrchestration(err)
       // Rethrow the error
       throw err
-    })
+    })*/
   }
 }
 
@@ -406,7 +407,92 @@ function obtainCharset (headers) {
   return 'utf-8'
 }
 
+function sendHttpRequest (ctx, route, options) {
+  return new Promise((resolve, error) => {    
+    const response = {msg: 'Hello'}
+
+    let { downstream } = ctx.state 
+    let method = http
+
+    if (route.secured) {
+      method = https
+    }
+
+    const routeReq = method.request(options, (routeRes) => {
+      response.status = routeRes.statusCode
+      response.headers = routeRes.headers
+
+      const uncompressedBodyBufs = []
+      if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+        routeRes.pipe(gunzip)
+
+        gunzip.on('data', (data) => {
+          uncompressedBodyBufs.push(data)
+        })
+      }
+
+      if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+        routeRes.pipe(inflate)
+
+        inflate.on('data', (data) => {
+          uncompressedBodyBufs.push(data)
+        })
+      }
+
+      const bufs = []
+      routeRes.on('data', chunk => bufs.push(chunk))
+
+      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+      routeRes.on('end', () => {
+        response.timestamp = new Date()
+        const charset = obtainCharset(routeRes.headers)
+        if (routeRes.headers['content-encoding'] === 'gzip') {
+          gunzip.on('end', () => {
+            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+            response.body = uncompressedBody.toString(charset)
+            resolve(response)
+          })
+        } else if (routeRes.headers['content-encoding'] === 'deflate') {
+          inflate.on('end', () => {
+            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+            response.body = uncompressedBody.toString(charset)
+            resolve(response)
+          })
+        } else {
+          response.body = Buffer.concat(bufs)
+          resolve(response)
+        }
+      })
+    })
+
 /*
+    const routeReq = method.request(options)
+      .on('connect', () => {
+        console.log('EVENT CONNECT')
+      })
+      .on('response', () => {
+        console.log('EVENT DATA')
+      })
+      .on('end', () => {
+        console.log('EVENT END')
+      })
+*/    
+    downstream
+      .on('data', (chunk) => {
+        routeReq.write(chunk)
+      })
+      .on('end', () => {
+        routeReq.end()
+        //resolve()
+      })
+      .on('error', (err) => {
+        console.log('downstream error='+err)
+        //error('downstream error='+err)
+      })
+  })
+}
+
+  /*
  * A promise returning function that send a request to the given route and resolves
  * the returned promise with a response object of the following form:
  *   response =
@@ -415,7 +501,7 @@ function obtainCharset (headers) {
  *    headers: <http_headers_object>
  *    timestamp: <the time the response was recieved>
  */
-function sendHttpRequest (ctx, route, options) {
+function sendHttpRequest_OLD (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
 
