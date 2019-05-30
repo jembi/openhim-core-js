@@ -3,7 +3,7 @@ import http from 'http'
 import https from 'https'
 import net from 'net'
 import tls from 'tls'
-import logger from 'winston'
+import logger, { verbose } from 'winston'
 import cookie from 'cookie'
 import { config } from '../config'
 import * as utils from '../utils'
@@ -27,6 +27,11 @@ export function numberOfPrimaryRoutes (routes) {
 const containsMultiplePrimaries = routes => numberOfPrimaryRoutes(routes) > 1
 
 function setKoaResponse (ctx, response) {
+ctx.newField = "Brent"
+console.log('ctx is frozen='+Object.isFrozen(ctx))
+console.log('ctx.response is frozen='+Object.isFrozen(ctx.response))
+console.log('1setKoaResponse='+JSON.stringify(response))
+console.log('1ctx.response='+JSON.stringify(ctx.response))
   // Try and parse the status to an int if it is a string
   let err
   if (typeof response.status === 'string') {
@@ -38,7 +43,9 @@ function setKoaResponse (ctx, response) {
     }
   }
 
+console.log('BEFORE=ctx.response.status='+ctx.response.status+'/response.status='+response.status)
   ctx.response.status = response.status
+console.log(' AFTER=ctx.response.status='+ctx.response.status+'/response.status='+response.status)
   ctx.response.timestamp = response.timestamp
   ctx.response.body = response.body
 
@@ -51,7 +58,8 @@ function setKoaResponse (ctx, response) {
       response.headers['X-OpenHIM-TransactionID'] = ctx.request.header['X-OpenHIM-TransactionID']
     }
   }
-
+console.log('2ctx.response='+JSON.stringify(ctx.response))
+  
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
@@ -80,6 +88,8 @@ function setKoaResponse (ctx, response) {
         break
     }
   }
+
+  console.log('3ctx.response='+JSON.stringify(ctx.response))
 }
 
 if (process.env.NODE_ENV === 'test') {
@@ -215,7 +225,6 @@ function sendRequestToRoutes (ctx, routes, next) {
                 ctx.autoRetry = true
                 ctx.error = responseObj.error
               }
-
               // then set koa response from responseObj.response
               return setKoaResponse(ctx, responseObj.response)
             } else {
@@ -223,6 +232,7 @@ function sendRequestToRoutes (ctx, routes, next) {
             }
           }).then(() => {
             logger.info('primary route completed')
+console.log('ctx.response='+JSON.stringify(ctx.response))
             return next()
           }).catch((reason) => {
             // on failure
@@ -409,9 +419,13 @@ function obtainCharset (headers) {
 
 function sendHttpRequest (ctx, route, options) {
   return new Promise((resolve, error) => {    
-    const response = {msg: 'Hello'}
+    const response = {}
 
-    let { downstream } = ctx.state 
+    let { downstream } = ctx.state
+
+    const gunzip = zlib.createGunzip()
+    const inflate = zlib.createInflate()
+
     let method = http
 
     if (route.secured) {
@@ -463,6 +477,19 @@ function sendHttpRequest (ctx, route, options) {
           resolve(response)
         }
       })
+
+      routeReq.on('error', err => {
+        reject(err)
+      })
+  
+      routeReq.on('clientError', err => {
+        reject(err)
+      })
+  
+      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+      routeReq.setTimeout(timeout, () => {
+        routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
+      })
     })
 
 /*
@@ -479,7 +506,9 @@ function sendHttpRequest (ctx, route, options) {
 */    
     downstream
       .on('data', (chunk) => {
-        routeReq.write(chunk)
+        if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
+          routeReq.write(chunk)
+        }
       })
       .on('end', () => {
         routeReq.end()

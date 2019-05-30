@@ -38,15 +38,20 @@ function rawBodyReader (ctx, next) {
     counter = 0
     size = 0
 
+    // TODO: Store HIM transaction at this point, with trans start time
+
     if (!bucket) {
       bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
-      uploadStream = bucket.openUploadStream()  
+      uploadStream = bucket.openUploadStream()
+      // CONFIRM: Is the file id assigned at this point? Property id ... or files_id... file_id(?)
       uploadStream
         .on('error', (err) => {
           console.log('UPLOAD-ERROR='+JSON.stringify(err))
         })
         .on('finish', (file) => {  // Get the GridFS file object that was created
           console.log('FILE-OBJ='+JSON.stringify(file))
+
+          // TODO: Update HIM transaction with bodyId, trans end time here
           ctx.request.bodyId = file._id
         })
 
