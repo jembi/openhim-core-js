@@ -18,7 +18,7 @@ import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisa
 import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
 import * as events from './middleware/events'
 import * as proxy from './middleware/proxy'
-// TODO: uncomment the line below when url rewrititng is back in support
+// TODO: OHM-696 uncomment the line below
 //import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
 
@@ -68,7 +68,7 @@ export function setupApp (done) {
   app.use(messageStore.koaMiddleware)
 
   // URL rewriting middleware
-  // TODO: uncomment the code below when url rewriting is back in support
+  // TODO: OHM-696 uncomment the code below when url rewriting is back in support
   // app.use(rewrite.koaMiddleware)
 
   // Events

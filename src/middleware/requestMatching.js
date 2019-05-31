@@ -6,7 +6,7 @@ import * as utils from '../utils'
 import * as Channels from '../model/channels'
 import { promisify } from 'util'
 
-// TODO: uncomment the code below when matching on content is back in support
+// TODO: OHM-695 uncomment the code below when working on ticket
 // function matchContent (channel, ctx) {
 //   if (channel.matchContentRegex) {
 //     return matchRegex(channel.matchContentRegex, ctx.body)
@@ -93,7 +93,7 @@ function matchContentTypes (channel, ctx) {
 
 // Needs to be mutable for testing
 // eslint-disable-next-line
-// // TODO: uncomment line below when request matching on content is back in support
+// TODO: OHM-695 uncomment line below when working on ticket
 let matchFunctions = [
   matchUrlPattern,
 //   matchContent,
@@ -135,6 +135,7 @@ export async function koaMiddleware (ctx, next) {
 // export private functions for unit testing
 // note: you cant spy on these method because of this :(
 if (process.env.NODE_ENV === 'test') {
+  // TODO: OHM-695 uncomment line below when working on ticket  
   // exports.matchContent = matchContent
   exports.matchRegex = matchRegex
   exports.matchXpath = matchXpath

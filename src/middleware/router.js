@@ -1,5 +1,5 @@
 // All the gzip functionality is being commented out
-// TODO: uncomment the gzip functions
+// TODO: OHM-693 uncomment the gzip functions when working on ticket
 
 // import zlib from 'zlib'
 import http from 'http'
@@ -284,7 +284,7 @@ function sendRequestToRoutes (ctx, routes, next) {
         logger.debug(`Set final status for transaction: ${ctx.transactionId}`)
       })
 
-      // TODO: Uncomment when secondary routes are supported
+      // TODO: OHM-694 Uncomment when secondary routes are supported
       // Save events for the secondary routes
       // if (ctx.routes) {
       //   const trxEvents = []
@@ -437,6 +437,7 @@ function sendHttpRequest (ctx, route, options) {
       response.status = routeRes.statusCode
       response.headers = routeRes.headers
 
+      // TODO: OHM-693 uncomment code below when working on the gzipping and inflating
       // const uncompressedBodyBufs = []
       // if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
       //   routeRes.pipe(gunzip)
@@ -462,7 +463,7 @@ function sendHttpRequest (ctx, route, options) {
         response.timestamp = new Date()
         const charset = obtainCharset(routeRes.headers)
 
-        // TODO: uncomment the code below
+        // TODO: OHM-693 uncomment code below when working on the gzipping and inflating
         // if (routeRes.headers['content-encoding'] === 'gzip') {
         //   gunzip.on('end', () => {
         //     const uncompressedBody = Buffer.concat(uncompressedBodyBufs)

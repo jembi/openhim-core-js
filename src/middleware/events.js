@@ -163,6 +163,7 @@ function createOrchestrationEvents (dst, transactionId, requestTimestamp, channe
   return Array.from(orchestrations).map((orch) => createRouteEvents(dst, transactionId, channel, orch, 'orchestration', tsDiff))
 }
 
+// TODO: OHM-694 Uncomment method below when working on ticket
 // export function createSecondaryRouteEvents (dst, transactionId, requestTimestamp, channel, routes) {
 //   const startTS = timestampAsMillis(requestTimestamp)
 //   let tsDiff = calculateEarliestRouteDiff(startTS, routes)
@@ -199,6 +200,7 @@ export function createTransactionEvents (dst, transaction, channel) {
   if (transaction.orchestrations) {
     createOrchestrationEvents(dst, transaction._id, timestamp, channel, transaction.orchestrations)
   }
+  // TODO:  OHM-694 Uncomment code below
   // if (transaction.routes) {
   //   return createSecondaryRouteEvents(dst, transaction._id, timestamp, channel, transaction.routes)
   // }
