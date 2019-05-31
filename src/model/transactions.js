@@ -1,10 +1,8 @@
 import { Schema, ObjectId } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
 
-// TODO: OHM-776: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
-// This is duplicated due to the secondary routes and orchestrations using the same schema, and updating theu request/response bodies are done in a different story
 // Request Schema definition
-const RequestDefMain = new Schema({
+const RequestDef = new Schema({
   host: String,
   port: String,
   path: String,
@@ -19,12 +17,10 @@ const RequestDefMain = new Schema({
   toObject: { virtuals: true },
   toJSON: { virtuals: true }
 })
-RequestDefMain.virtual('body')
+RequestDef.virtual('body')
 
-// TODO: OHM-776: Remove this duplicated schema definition once the other requests body properties has been updated to reference a chunk file ID
-// This is duplicated due to the secondary routes and orchestrations using the same schema, and updating theu request/response bodies are done in a different story
 // Response Schema definition
-const ResponseDefMain = new Schema({
+const ResponseDef = new Schema({
   status: Number,
   headers: Object,
   bodyId: ObjectId,
@@ -33,29 +29,7 @@ const ResponseDefMain = new Schema({
   toObject: { virtuals: true },
   toJSON: { virtuals: true }
 })
-ResponseDefMain.virtual('body')
-
-// Request Schema definition
-const RequestDef = {
-  host: String,
-  port: String,
-  path: String,
-  headers: Object,
-  querystring: String,
-  body: String,
-  method: String,
-  timestamp: {
-    type: Date, required: true
-  }
-}
-
-// Response Schema definition
-const ResponseDef = {
-  status: Number,
-  headers: Object,
-  body: String,
-  timestamp: Date
-}
+ResponseDef.virtual('body')
 
 const ErrorDetailsDef = {
   message: String,
@@ -69,9 +43,9 @@ const OrchestrationMetadataDef = {
   },
   group: String,
   request: {
-    type: RequestDefMain, required: false
+    type: RequestDef, required: false
   }, // this is needed to prevent Validation error, see https://github.com/jembi/openhim-console/issues/356#issuecomment-188708443
-  response: ResponseDefMain,
+  response: ResponseDef,
   error: ErrorDetailsDef
 }
 
@@ -98,8 +72,8 @@ const TransactionSchema = new Schema({
   channelID: {
     type: Schema.Types.ObjectId
   },
-  request: RequestDefMain,
-  response: ResponseDefMain,
+  request: RequestDef,
+  response: ResponseDef,
   routes: [RouteMetadataDef],
   orchestrations: [OrchestrationMetadataDef],
   properties: Object,
