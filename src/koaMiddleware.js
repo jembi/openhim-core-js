@@ -28,7 +28,7 @@ import { Readable } from 'stream';
 
 config.authentication = config.get('authentication')
 
-function rawBodyReader (ctx, next) {
+async function rawBodyReader (ctx, next) {
   let bucket
   let uploadStream
   let counter
@@ -78,7 +78,7 @@ function rawBodyReader (ctx, next) {
       console.log('** STREAM READ ERROR OCCURRED ** '+JSON.stringify(err))
     })
 
-  next()
+  await next()
 }
 
 // Primary app

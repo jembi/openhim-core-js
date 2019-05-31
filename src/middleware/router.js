@@ -27,11 +27,6 @@ export function numberOfPrimaryRoutes (routes) {
 const containsMultiplePrimaries = routes => numberOfPrimaryRoutes(routes) > 1
 
 function setKoaResponse (ctx, response) {
-ctx.newField = "Brent"
-console.log('ctx is frozen='+Object.isFrozen(ctx))
-console.log('ctx.response is frozen='+Object.isFrozen(ctx.response))
-console.log('1setKoaResponse='+JSON.stringify(response))
-console.log('1ctx.response='+JSON.stringify(ctx.response))
   // Try and parse the status to an int if it is a string
   let err
   if (typeof response.status === 'string') {
@@ -43,9 +38,7 @@ console.log('1ctx.response='+JSON.stringify(ctx.response))
     }
   }
 
-console.log('BEFORE=ctx.response.status='+ctx.response.status+'/response.status='+response.status)
   ctx.response.status = response.status
-console.log(' AFTER=ctx.response.status='+ctx.response.status+'/response.status='+response.status)
   ctx.response.timestamp = response.timestamp
   ctx.response.body = response.body
 
@@ -58,7 +51,6 @@ console.log(' AFTER=ctx.response.status='+ctx.response.status+'/response.status=
       response.headers['X-OpenHIM-TransactionID'] = ctx.request.header['X-OpenHIM-TransactionID']
     }
   }
-console.log('2ctx.response='+JSON.stringify(ctx.response))
   
   for (const key in response.headers) {
     const value = response.headers[key]
@@ -88,8 +80,6 @@ console.log('2ctx.response='+JSON.stringify(ctx.response))
         break
     }
   }
-
-  console.log('3ctx.response='+JSON.stringify(ctx.response))
 }
 
 if (process.env.NODE_ENV === 'test') {
@@ -226,15 +216,16 @@ function sendRequestToRoutes (ctx, routes, next) {
                 ctx.error = responseObj.error
               }
               // then set koa response from responseObj.response
-              return setKoaResponse(ctx, responseObj.response)
+              /* return */ setKoaResponse(ctx, responseObj.response)
             } else {
-              return setKoaResponse(ctx, response)
+              /* return */ setKoaResponse(ctx, response)
             }
-          }).then(() => {
+          })
+          .then(() => {
             logger.info('primary route completed')
-console.log('ctx.response='+JSON.stringify(ctx.response))
             return next()
-          }).catch((reason) => {
+          })
+          .catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
             return next()
@@ -396,15 +387,16 @@ function sendRequest (ctx, route, options) {
     return sendSocketRequest(ctx, route, options)
   } else {
     logger.info('Routing http(s) request')
-    return sendHttpRequest(ctx, route, options)/*.then(response => {
+    return sendHttpRequest(ctx, route, options)
+      .then(response => {
       //recordOrchestration(response)
       // Return the response as before
-      return response
-    }).catch(err => {
+        return response
+      }).catch(err => {
       //recordOrchestration(err)
       // Rethrow the error
-      throw err
-    })*/
+        throw err
+     })
   }
 }
 
@@ -418,7 +410,7 @@ function obtainCharset (headers) {
 }
 
 function sendHttpRequest (ctx, route, options) {
-  return new Promise((resolve, error) => {    
+  return new Promise((resolve, reject) => {    
     const response = {}
 
     let { downstream } = ctx.state
@@ -435,6 +427,7 @@ function sendHttpRequest (ctx, route, options) {
     const routeReq = method.request(options, (routeRes) => {
       response.status = routeRes.statusCode
       response.headers = routeRes.headers
+      response.body = []
 
       const uncompressedBodyBufs = []
       if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
@@ -454,37 +447,40 @@ function sendHttpRequest (ctx, route, options) {
       }
 
       const bufs = []
-      routeRes.on('data', chunk => bufs.push(chunk))
 
       // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
-      routeRes.on('end', () => {
-        response.timestamp = new Date()
-        const charset = obtainCharset(routeRes.headers)
-        if (routeRes.headers['content-encoding'] === 'gzip') {
-          gunzip.on('end', () => {
-            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-            response.body = uncompressedBody.toString(charset)
+      routeRes
+        .on('data', (chunk) => {
+          bufs.push(chunk)
+        })
+        .on('end', () => {
+          response.timestamp = new Date()
+          const charset = obtainCharset(routeRes.headers)
+          if (routeRes.headers['content-encoding'] === 'gzip') {
+            gunzip.on('end', () => {
+              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+              response.body = uncompressedBody.toString(charset)
+              resolve(response)
+            })
+          } else if (routeRes.headers['content-encoding'] === 'deflate') {
+            inflate.on('end', () => {
+              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+              response.body = uncompressedBody.toString(charset)
+              resolve(response)
+            })
+          } else {
+            response.body = Buffer.concat(bufs)
             resolve(response)
-          })
-        } else if (routeRes.headers['content-encoding'] === 'deflate') {
-          inflate.on('end', () => {
-            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-            response.body = uncompressedBody.toString(charset)
-            resolve(response)
-          })
-        } else {
-          response.body = Buffer.concat(bufs)
-          resolve(response)
-        }
-      })
+          }
+        })
 
-      routeReq.on('error', err => {
-        reject(err)
-      })
-  
-      routeReq.on('clientError', err => {
-        reject(err)
-      })
+      routeReq
+        .on('error', err => {
+          reject(err)
+        })
+        .on('clientError', err => {
+          reject(err)
+        })
   
       const timeout = route.timeout != null ? route.timeout : +config.router.timeout
       routeReq.setTimeout(timeout, () => {
@@ -492,18 +488,6 @@ function sendHttpRequest (ctx, route, options) {
       })
     })
 
-/*
-    const routeReq = method.request(options)
-      .on('connect', () => {
-        console.log('EVENT CONNECT')
-      })
-      .on('response', () => {
-        console.log('EVENT DATA')
-      })
-      .on('end', () => {
-        console.log('EVENT END')
-      })
-*/    
     downstream
       .on('data', (chunk) => {
         if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
@@ -512,11 +496,9 @@ function sendHttpRequest (ctx, route, options) {
       })
       .on('end', () => {
         routeReq.end()
-        //resolve()
       })
       .on('error', (err) => {
         console.log('downstream error='+err)
-        //error('downstream error='+err)
       })
   })
 }
