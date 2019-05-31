@@ -295,32 +295,32 @@ describe('API Integration Tests', () => {
           .expect(403)
       })
 
-      // TODO: uncomment the code below when
-      // it('should generate events after adding a transaction', async () => {
-      //   const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
-      //   await request(constants.BASE_URL)
-      //     .post('/transactions')
-      //     .set('auth-username', testUtils.rootUser.email)
-      //     .set('auth-ts', authDetails.authTS)
-      //     .set('auth-salt', authDetails.authSalt)
-      //     .set('auth-token', authDetails.authToken)
-      //     .send(newTransactionData)
-      //     .expect(201)
-      //
-      //   const events = await EventModelAPI.find({})
-      //   events.length.should.be.exactly(6)
-      //   for (const ev of Array.from(events)) {
-      //     ev.channelID.toString().should.be.exactly(channel._id.toString())
-      //   }
-      //
-      //   const evs = (events.map(event => `${event.type}-${event.name}-${event.event}`))
-      //   evs.should.containEql('primary-test route-start')
-      //   evs.should.containEql('primary-test route-end')
-      //   evs.should.containEql('route-dummy-route-start')
-      //   evs.should.containEql('route-dummy-route-end')
-      //   evs.should.containEql('orchestration-dummy-orchestration-start')
-      //   evs.should.containEql('orchestration-dummy-orchestration-end')
-      // })
+      // TODO: OHM-694 remove the x prepend on it
+      xit('should generate events after adding a transaction', async () => {
+        const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
+        await request(constants.BASE_URL)
+          .post('/transactions')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(newTransactionData)
+          .expect(201)
+
+        const events = await EventModelAPI.find({})
+        events.length.should.be.exactly(6)
+        for (const ev of Array.from(events)) {
+          ev.channelID.toString().should.be.exactly(channel._id.toString())
+        }
+
+        const evs = (events.map(event => `${event.type}-${event.name}-${event.event}`))
+        evs.should.containEql('primary-test route-start')
+        evs.should.containEql('primary-test route-end')
+        evs.should.containEql('route-dummy-route-start')
+        evs.should.containEql('route-dummy-route-end')
+        evs.should.containEql('orchestration-dummy-orchestration-start')
+        evs.should.containEql('orchestration-dummy-orchestration-end')
+      })
     })
 
     describe('*updateTransaction()', () => {
