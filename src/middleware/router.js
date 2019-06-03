@@ -1,4 +1,7 @@
-import zlib from 'zlib'
+// All the gzip functionality is being commented out
+// TODO: OHM-693 uncomment the gzip functions when working on ticket
+
+// import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
@@ -281,18 +284,20 @@ function sendRequestToRoutes (ctx, routes, next) {
         }
         logger.debug(`Set final status for transaction: ${ctx.transactionId}`)
       })
+
+      // TODO: OHM-694 Uncomment when secondary routes are supported
       // Save events for the secondary routes
-      if (ctx.routes) {
-        const trxEvents = []
-        events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
-        events.saveEvents(trxEvents, err => {
-          if (err) {
-            logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
-            return
-          }
-          logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
-        })
-      }
+      // if (ctx.routes) {
+      //   const trxEvents = []
+      //   events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
+      //   events.saveEvents(trxEvents, err => {
+      //     if (err) {
+      //       logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
+      //       return
+      //     }
+      //     logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
+      //   })
+      // }
     }).catch(err => {
       logger.error(err)
     })
@@ -516,8 +521,8 @@ function sendHttpRequest_OLD (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
 
-    const gunzip = zlib.createGunzip()
-    const inflate = zlib.createInflate()
+    // const gunzip = zlib.createGunzip()
+    // const inflate = zlib.createInflate()
 
     let method = http
 
@@ -529,22 +534,23 @@ function sendHttpRequest_OLD (ctx, route, options) {
       response.status = routeRes.statusCode
       response.headers = routeRes.headers
 
-      const uncompressedBodyBufs = []
-      if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
-        routeRes.pipe(gunzip)
+      // TODO: OHM-693 uncomment code below when working on the gzipping and inflating
+      // const uncompressedBodyBufs = []
+      // if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+      //   routeRes.pipe(gunzip)
+      //
+      //   gunzip.on('data', (data) => {
+      //     uncompressedBodyBufs.push(data)
+      //   })
+      // }
 
-        gunzip.on('data', (data) => {
-          uncompressedBodyBufs.push(data)
-        })
-      }
-
-      if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
-        routeRes.pipe(inflate)
-
-        inflate.on('data', (data) => {
-          uncompressedBodyBufs.push(data)
-        })
-      }
+      // if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+      //   routeRes.pipe(inflate)
+      //
+      //   inflate.on('data', (data) => {
+      //     uncompressedBodyBufs.push(data)
+      //   })
+      // }
 
       const bufs = []
       routeRes.on('data', chunk => bufs.push(chunk))
@@ -553,22 +559,24 @@ function sendHttpRequest_OLD (ctx, route, options) {
       routeRes.on('end', () => {
         response.timestamp = new Date()
         const charset = obtainCharset(routeRes.headers)
-        if (routeRes.headers['content-encoding'] === 'gzip') {
-          gunzip.on('end', () => {
-            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-            response.body = uncompressedBody.toString(charset)
-            resolve(response)
-          })
-        } else if (routeRes.headers['content-encoding'] === 'deflate') {
-          inflate.on('end', () => {
-            const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-            response.body = uncompressedBody.toString(charset)
-            resolve(response)
-          })
-        } else {
+
+        // TODO: OHM-693 uncomment code below when working on the gzipping and inflating
+        // if (routeRes.headers['content-encoding'] === 'gzip') {
+        //   gunzip.on('end', () => {
+        //     const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+        //     response.body = uncompressedBody.toString(charset)
+        //     resolve(response)
+        //   })
+        // } else if (routeRes.headers['content-encoding'] === 'deflate') {
+        //   inflate.on('end', () => {
+        //     const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+        //     response.body = uncompressedBody.toString(charset)
+        //     resolve(response)
+        //   })
+        // } else {
           response.body = Buffer.concat(bufs)
           resolve(response)
-        }
+        // }
       })
     })
 
