@@ -116,7 +116,8 @@ export function completeRequest (ctx, done) {
     /*
      *  For short transactions, the 'end' timestamp is before the 'start' timestamp.
      *  (Persisting the transaction initially takes longer than fully processing the transaction) 
-     *  In these cases, swop the 'start' and 'end' values around
+     *  In these cases, swop the 'start' and 'end' values around; the transaction duration is 
+     *  not exactly accurate, but at least it isn't negative.
      */
     let t = tx.request.timestamp
     if (tx.request.timestamp > ctx.requestTimestampEnd) {
