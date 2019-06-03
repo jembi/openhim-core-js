@@ -294,28 +294,28 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should decompress gzip', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
-      await request(constants.HTTP_BASE_URL)
-        .put('/gmo')
-        .set('Accept-Encoding', '') // Unset encoding, because supertest defaults to gzip,deflate
-        .send(testDoc)
-        .auth('testApp', 'password')
-        .expect(201)
-        .expect(testDoc)
-    })
+    // it('should decompress gzip', async () => {
+    //   await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+    //   await request(constants.HTTP_BASE_URL)
+    //     .put('/gmo')
+    //     .set('Accept-Encoding', '') // Unset encoding, because supertest defaults to gzip,deflate
+    //     .send(testDoc)
+    //     .auth('testApp', 'password')
+    //     .expect(201)
+    //     .expect(testDoc)
+    // })
 
-    it('should returned gzipped response', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
-      await request(constants.HTTP_BASE_URL)
-        .put('/gmo')
-        .set('Accept-Encoding', 'gzip')
-        .send(testDoc)
-        .auth('testApp', 'password')
-        .expect(201)
-        .expect('content-encoding', 'gzip')
-        .expect(testDoc)
-    })
+    // it('should returned gzipped response', async () => {
+    //   await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+    //   await request(constants.HTTP_BASE_URL)
+    //     .put('/gmo')
+    //     .set('Accept-Encoding', 'gzip')
+    //     .send(testDoc)
+    //     .auth('testApp', 'password')
+    //     .expect(201)
+    //     .expect('content-encoding', 'gzip')
+    //     .expect(testDoc)
+    // })
   })
 
   describe('HTTP body content matching - XML', () => {

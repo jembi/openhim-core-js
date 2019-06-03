@@ -6,22 +6,23 @@ import * as utils from '../utils'
 import * as Channels from '../model/channels'
 import { promisify } from 'util'
 
-function matchContent (channel, ctx) {
-  if (channel.matchContentRegex) {
-    return matchRegex(channel.matchContentRegex, ctx.body)
-  } else if (channel.matchContentXpath && channel.matchContentValue) {
-    return matchXpath(channel.matchContentXpath, channel.matchContentValue, ctx.body)
-  } else if (channel.matchContentJson && channel.matchContentValue) {
-    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, ctx.body)
-  } else if (channel.matchContentXpath || channel.matchContentJson) {
-    // if only the match expression is given, deny access
-    // this is an invalid channel
-    logger.error(`Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`)
-    return false
-  } else {
-    return true
-  }
-}
+// TODO: OHM-695 uncomment the code below when working on ticket
+// function matchContent (channel, ctx) {
+//   if (channel.matchContentRegex) {
+//     return matchRegex(channel.matchContentRegex, ctx.body)
+//   } else if (channel.matchContentXpath && channel.matchContentValue) {
+//     return matchXpath(channel.matchContentXpath, channel.matchContentValue, ctx.body)
+//   } else if (channel.matchContentJson && channel.matchContentValue) {
+//     return matchJsonPath(channel.matchContentJson, channel.matchContentValue, ctx.body)
+//   } else if (channel.matchContentXpath || channel.matchContentJson) {
+//     // if only the match expression is given, deny access
+//     // this is an invalid channel
+//     logger.error(`Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`)
+//     return false
+//   } else {
+//     return true
+//   }
+// }
 
 function matchRegex (regexPat, body) {
   const regex = new RegExp(regexPat)
@@ -92,9 +93,10 @@ function matchContentTypes (channel, ctx) {
 
 // Needs to be mutable for testing
 // eslint-disable-next-line
+// TODO: OHM-695 uncomment line below when working on ticket
 let matchFunctions = [
   matchUrlPattern,
-  matchContent,
+//   matchContent,
   matchContentTypes
 ]
 
@@ -133,7 +135,8 @@ export async function koaMiddleware (ctx, next) {
 // export private functions for unit testing
 // note: you cant spy on these method because of this :(
 if (process.env.NODE_ENV === 'test') {
-  exports.matchContent = matchContent
+  // TODO: OHM-695 uncomment line below when working on ticket  
+  // exports.matchContent = matchContent
   exports.matchRegex = matchRegex
   exports.matchXpath = matchXpath
   exports.matchJsonPath = matchJsonPath

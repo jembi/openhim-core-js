@@ -7,7 +7,8 @@ import { DOMParser as Dom } from 'xmldom'
 import * as rewriteUrls from '../../src/middleware/rewriteUrls'
 import * as utils from '../../src/utils'
 
-describe('Rewrite URLs middleware', () => {
+// TODO: OHM-699 remove the x prepended to describe when url rewriting is back in support
+xdescribe('Rewrite URLs middleware', () => {
   const sandbox = sinon.createSandbox()
   afterEach(() => {
     sandbox.restore()
