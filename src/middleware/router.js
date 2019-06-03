@@ -3,7 +3,7 @@ import http from 'http'
 import https from 'https'
 import net from 'net'
 import tls from 'tls'
-import logger, { verbose } from 'winston'
+import logger from 'winston'
 import cookie from 'cookie'
 import { config } from '../config'
 import * as utils from '../utils'
@@ -216,9 +216,9 @@ function sendRequestToRoutes (ctx, routes, next) {
                 ctx.error = responseObj.error
               }
               // then set koa response from responseObj.response
-              /* return */ setKoaResponse(ctx, responseObj.response)
+              setKoaResponse(ctx, responseObj.response)
             } else {
-              /* return */ setKoaResponse(ctx, response)
+              setKoaResponse(ctx, response)
             }
           })
           .then(() => {
