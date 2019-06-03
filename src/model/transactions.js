@@ -24,7 +24,9 @@ const ResponseDef = new Schema({
   status: Number,
   headers: Object,
   bodyId: ObjectId,
-  timestamp: Date
+  timestamp: Date,
+  startTimeStart: Date,
+  endTimeStamp: Date
 }, {
   toObject: { virtuals: true },
   toJSON: { virtuals: true }
