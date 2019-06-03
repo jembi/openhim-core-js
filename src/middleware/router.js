@@ -1,7 +1,7 @@
 // All the gzip functionality is being commented out
 // TODO: OHM-693 uncomment the gzip functions when working on ticket
 
-// import zlib from 'zlib'
+import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
