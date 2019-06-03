@@ -76,6 +76,7 @@ async function rawBodyReader (ctx, next) {
       // Create the transaction for Request (started receiving)
       // Side effect: Updates the Koa ctx with the transactionId
       if (counter == 1) {
+        ctx.requestTimestamp = new Date()
         promise = messageStore.initiateRequest(ctx)
       }
 

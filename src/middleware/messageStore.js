@@ -47,7 +47,9 @@ export async function initiateRequest (ctx) {
   return new Promise((resolve, reject) => {
     logger.info('Storing request metadata for inbound transaction')
 
-    ctx.requestTimestamp = new Date()
+    if (ctx && !ctx.requestTimestamp) {
+      ctx.requestTimestamp = new Date()
+    }
 
     const headers = copyMapWithEscapedReservedCharacters(ctx.header)
 
