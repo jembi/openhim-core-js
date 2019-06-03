@@ -13,9 +13,13 @@ import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import * as events from '../middleware/events'
 import { promisify } from 'util'
+import { getGridFSBucket } from '../contentChunk'
 
 config.mongo = config.get('mongo')
 config.router = config.get('router')
+
+
+var bucket
 
 const isRouteEnabled = route => (route.status == null) || (route.status === 'enabled')
 
@@ -456,11 +460,37 @@ function sendHttpRequest (ctx, route, options) {
       // }
 
       const bufs = []
-      routeRes.on('data', chunk => bufs.push(chunk))
+
+      if(!bucket) {
+        bucket = getGridFSBucket()
+      }
+
+      const uploadStream = bucket.openUploadStream()
+
+      uploadStream
+        .on('error', (err) => {
+          logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
+        })
+        .on('finish', (file) => {
+          logger.info(`Response body with body id: ${file._id} stored`)
+
+          // Update HIM transaction with bodyId
+          ctx.response.bodyId = file._id
+        })
+
+      routeRes.on('data', chunk => {
+        if (!response.startTimestamp) {
+          response.startTimestamp = new Date()
+        }
+        uploadStream.write(chunk)
+        bufs.push(chunk)
+      })
 
       // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
       routeRes.on('end', () => {
         response.timestamp = new Date()
+        response.endTimestamp = new Date()
+        uploadStream.end()
         const charset = obtainCharset(routeRes.headers)
 
         // TODO: OHM-693 uncomment code below when working on the gzipping and inflating
