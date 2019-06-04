@@ -1,7 +1,7 @@
 // All the gzip functionality is being commented out
 // TODO: OHM-693 uncomment the gzip functions when working on ticket
 
-import zlib from 'zlib'
+//import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
@@ -423,10 +423,10 @@ function sendHttpRequest (ctx, route, options) {
     const response = {}
 
     let { downstream } = ctx.state
-
+/* 
     const gunzip = zlib.createGunzip()
     const inflate = zlib.createInflate()
-
+ */
     let method = http
 
     if (route.secured) {
@@ -437,7 +437,7 @@ function sendHttpRequest (ctx, route, options) {
       response.status = routeRes.statusCode
       response.headers = routeRes.headers
       response.body = []
-
+/* 
       const uncompressedBodyBufs = []
       if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
         routeRes.pipe(gunzip)
@@ -454,7 +454,7 @@ function sendHttpRequest (ctx, route, options) {
           uncompressedBodyBufs.push(data)
         })
       }
-
+ */
       const bufs = []
 
       // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
@@ -464,6 +464,7 @@ function sendHttpRequest (ctx, route, options) {
         })
         .on('end', () => {
           response.timestamp = new Date()
+/* 
           const charset = obtainCharset(routeRes.headers)
           if (routeRes.headers['content-encoding'] === 'gzip') {
             gunzip.on('end', () => {
@@ -478,9 +479,10 @@ function sendHttpRequest (ctx, route, options) {
               resolve(response)
             })
           } else {
+ */
             response.body = Buffer.concat(bufs)
             resolve(response)
-          }
+//          }
         })
 
       routeReq
