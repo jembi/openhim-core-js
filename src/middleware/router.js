@@ -58,7 +58,7 @@ function setKoaResponse (ctx, response) {
       response.headers['X-OpenHIM-TransactionID'] = ctx.request.header['X-OpenHIM-TransactionID']
     }
   }
-  
+
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
@@ -418,100 +418,6 @@ function obtainCharset (headers) {
   return 'utf-8'
 }
 
-function sendHttpRequest (ctx, route, options) {
-  return new Promise((resolve, reject) => {    
-    const response = {}
-
-    let { downstream } = ctx.state
-
-    const gunzip = zlib.createGunzip()
-    const inflate = zlib.createInflate()
-
-    let method = http
-
-    if (route.secured) {
-      method = https
-    }
-
-    const routeReq = method.request(options, (routeRes) => {
-      response.status = routeRes.statusCode
-      response.headers = routeRes.headers
-      response.body = []
-
-      const uncompressedBodyBufs = []
-      if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
-        routeRes.pipe(gunzip)
-
-        gunzip.on('data', (data) => {
-          uncompressedBodyBufs.push(data)
-        })
-      }
-
-      if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
-        routeRes.pipe(inflate)
-
-        inflate.on('data', (data) => {
-          uncompressedBodyBufs.push(data)
-        })
-      }
-
-      const bufs = []
-
-      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
-      routeRes
-        .on('data', (chunk) => {
-          bufs.push(chunk)
-        })
-        .on('end', () => {
-          response.timestamp = new Date()
-          const charset = obtainCharset(routeRes.headers)
-          if (routeRes.headers['content-encoding'] === 'gzip') {
-            gunzip.on('end', () => {
-              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-              response.body = uncompressedBody.toString(charset)
-              resolve(response)
-            })
-          } else if (routeRes.headers['content-encoding'] === 'deflate') {
-            inflate.on('end', () => {
-              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-              response.body = uncompressedBody.toString(charset)
-              resolve(response)
-            })
-          } else {
-            response.body = Buffer.concat(bufs)
-            resolve(response)
-          }
-        })
-
-      routeReq
-        .on('error', err => {
-          reject(err)
-        })
-        .on('clientError', err => {
-          reject(err)
-        })
-  
-      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-      routeReq.setTimeout(timeout, () => {
-        routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
-      })
-    })
-
-    downstream
-      .on('data', (chunk) => {
-        if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
-          routeReq.write(chunk)
-        }
-      })
-      .on('end', () => {
-        routeReq.end()
-      })
-      .on('error', (err) => {
-        console.log('downstream error='+err)
-      })
-  })
-}
-
   /*
  * A promise returning function that send a request to the given route and resolves
  * the returned promise with a response object of the following form:
@@ -521,10 +427,11 @@ function sendHttpRequest (ctx, route, options) {
  *    headers: <http_headers_object>
  *    timestamp: <the time the response was recieved>
  */
-function sendHttpRequest_OLD (ctx, route, options) {
+function sendHttpRequest (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
     let method = http
+    let { downstream } = ctx.state
 
     if (route.secured) {
       method = https
@@ -552,8 +459,7 @@ function sendHttpRequest_OLD (ctx, route, options) {
         })
 
       routeRes.on('data', chunk => {
-        if (!response.startTimestamp) {
-          response.startTimestamp = new Date()
+        if (!response.timestamp) {
           response.timestamp = new Date()
         }
         uploadStream.write(chunk)
@@ -562,7 +468,7 @@ function sendHttpRequest_OLD (ctx, route, options) {
 
       // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
       routeRes.on('end', () => {
-        response.endTimestamp = new Date()
+        response.timestampEnd = new Date()
         uploadStream.end()
         const charset = obtainCharset(routeRes.headers)
         response.body = Buffer.concat(bufs)
@@ -583,11 +489,16 @@ function sendHttpRequest_OLD (ctx, route, options) {
       routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
+    downstream
+      .on('error', (err) => {
+        logger.error('downstream error='+err)
+      })
+
     if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
-      if (ctx.body != null) {
-        // TODO : Should probally add checks to see if the body is a buffer or string
-        routeReq.write(ctx.body)
-      }
+      downstream
+        .on('data', (chunk) => {
+          routeReq.write(chunk)
+        })
     }
 
     routeReq.end()
