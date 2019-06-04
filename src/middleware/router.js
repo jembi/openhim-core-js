@@ -15,7 +15,6 @@ import * as events from '../middleware/events'
 import { promisify } from 'util'
 import { getGridFSBucket } from '../contentChunk'
 
-config.mongo = config.get('mongo')
 config.router = config.get('router')
 
 

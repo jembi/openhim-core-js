@@ -63,6 +63,17 @@ describe('HTTP Router', () => {
         ctx.response.header.should.be.ok
       })
 
+      it('should route an incomming http request and then stream the response into gridfs', async () => {
+        const respBody = 'We are the response for http request\n'
+        const ctx = createContext(DEFAULT_CHANNEL)
+        server = await testUtils.createMockHttpServer(respBody)
+        await promisify(router.route)(ctx)
+        ctx.response.status.should.be.exactly(201)
+        (ctx.response.bodyId).should.be.true();
+        const gridfsBody = await testUtils.extractGridFSPayload(ctx.response.bodyId)
+        gridfsBody.should.be.eql(respBody)
+      })
+
       it('should route binary data', async () => {
         server = await testUtils.createStaticServer()
         const channel = {
@@ -109,6 +120,36 @@ describe('HTTP Router', () => {
         ctx.response.status.should.be.exactly(201)
         ctx.response.body.toString().should.be.eql(constants.DEFAULT_HTTPS_RESP)
         ctx.response.header.should.be.ok
+      })
+
+      it('should route an incoming https request and stream the response body into gridfs', async () => {
+        server = await testUtils.createMockHttpsServer()
+
+        const keystore = await KeystoreModel.findOne({})
+        const cert = new CertificateModel({
+          data: fs.readFileSync('test/resources/server-tls/cert.pem')
+        })
+        keystore.ca.push(cert)
+        await keystore.save()
+        const channel = {
+          name: 'Mock endpoint',
+          urlPattern: '.+',
+          routes: [{
+            secured: true,
+            host: 'localhost',
+            port: constants.HTTPS_PORT,
+            primary: true,
+            cert: cert._id
+          }
+          ]
+        }
+        const ctx = createContext(channel)
+        await promisify(router.route)(ctx)
+        ctx.response.status.should.be.exactly(201)
+        ctx.response.header.should.be.ok
+        (ctx.response.bodyId !== null).should.be.true();
+        const gridfsBody = await testutils.extractGridFSPayload(ctx.response.bodyId)
+        gridfsBody.should.be.eql(constants.DEFAULT_HTTPS_RESP)
       })
 
       it('should be denied access if the server doesn\'t know the client cert when using mutual TLS authentication', async () => {
