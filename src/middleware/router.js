@@ -427,6 +427,79 @@ function obtainCharset (headers) {
 function sendHttpRequest (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
+    let method = http
+
+    if (route.secured) {
+      method = https
+    }
+
+    const routeReq = method.request(options, (routeRes) => {
+      response.status = routeRes.statusCode
+      response.headers = routeRes.headers
+
+      const bufs = []
+
+      if(!bucket) {
+        bucket = getGridFSBucket()
+      }
+
+      const uploadStream = bucket.openUploadStream()
+      ctx.response.bodyId = uploadStream.id
+
+      uploadStream
+        .on('error', (err) => {
+          logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
+        })
+        .on('finish', (file) => {
+          logger.info(`Response body with body id: ${file._id} stored`)
+        })
+
+      routeRes.on('data', chunk => {
+        if (!response.startTimestamp) {
+          response.startTimestamp = new Date()
+          response.timestamp = new Date()
+        }
+        uploadStream.write(chunk)
+        bufs.push(chunk)
+      })
+
+      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+      routeRes.on('end', () => {
+        response.endTimestamp = new Date()
+        uploadStream.end()
+        const charset = obtainCharset(routeRes.headers)
+        response.body = Buffer.concat(bufs)
+        resolve(response)
+      })
+    })
+
+    routeReq.on('error', err => {
+      reject(err)
+    })
+
+    routeReq.on('clientError', err => {
+      reject(err)
+    })
+
+    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+    routeReq.setTimeout(timeout, () => {
+      routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
+    })
+
+    if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
+      if (ctx.body != null) {
+        // TODO : Should probally add checks to see if the body is a buffer or string
+        routeReq.write(ctx.body)
+      }
+    }
+
+    routeReq.end()
+  })
+}
+
+function sendHttpRequest_Old (ctx, route, options) {
+  return new Promise((resolve, reject) => {
+    const response = {}
 
     // const gunzip = zlib.createGunzip()
     // const inflate = zlib.createInflate()
@@ -473,9 +546,6 @@ function sendHttpRequest (ctx, route, options) {
         })
         .on('finish', (file) => {
           logger.info(`Response body with body id: ${file._id} stored`)
-
-          // Update HIM transaction with bodyId
-          ctx.response.bodyId = file._id
         })
 
       routeRes.on('data', chunk => {
@@ -536,6 +606,7 @@ function sendHttpRequest (ctx, route, options) {
     routeReq.end()
   })
 }
+
 
 /*
  * A promise returning function that send a request to the given route using sockets and resolves
