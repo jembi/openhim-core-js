@@ -1,12 +1,12 @@
 // All the gzip functionality is being commented out
 // TODO: OHM-693 uncomment the gzip functions when working on ticket
 
-// import zlib from 'zlib'
+import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
 import tls from 'tls'
-import logger from 'winston'
+import logger, { verbose } from 'winston'
 import cookie from 'cookie'
 import { config } from '../config'
 import * as utils from '../utils'
@@ -58,7 +58,7 @@ function setKoaResponse (ctx, response) {
       response.headers['X-OpenHIM-TransactionID'] = ctx.request.header['X-OpenHIM-TransactionID']
     }
   }
-
+  
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
@@ -222,16 +222,17 @@ function sendRequestToRoutes (ctx, routes, next) {
                 ctx.autoRetry = true
                 ctx.error = responseObj.error
               }
-
               // then set koa response from responseObj.response
-              return setKoaResponse(ctx, responseObj.response)
+              /* return */ setKoaResponse(ctx, responseObj.response)
             } else {
-              return setKoaResponse(ctx, response)
+              /* return */ setKoaResponse(ctx, response)
             }
-          }).then(() => {
+          })
+          .then(() => {
             logger.info('primary route completed')
             return next()
-          }).catch((reason) => {
+          })
+          .catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
             return next()
@@ -347,6 +348,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
     })
 
 function sendRequest (ctx, route, options) {
+/*
   function buildOrchestration (response) {
     const orchestration = {
       name: route.name,
@@ -388,21 +390,22 @@ function sendRequest (ctx, route, options) {
     }
     ctx.orchestrations.push(buildOrchestration(response))
   }
-
+*/
   if ((route.type === 'tcp') || (route.type === 'mllp')) {
     logger.info('Routing socket request')
     return sendSocketRequest(ctx, route, options)
   } else {
     logger.info('Routing http(s) request')
-    return sendHttpRequest(ctx, route, options).then(response => {
-      recordOrchestration(response)
+    return sendHttpRequest(ctx, route, options)
+      .then(response => {
+      //recordOrchestration(response)
       // Return the response as before
-      return response
-    }).catch(err => {
-      recordOrchestration(err)
+        return response
+      }).catch(err => {
+      //recordOrchestration(err)
       // Rethrow the error
-      throw err
-    })
+        throw err
+     })
   }
 }
 
@@ -415,7 +418,101 @@ function obtainCharset (headers) {
   return 'utf-8'
 }
 
-/*
+function sendHttpRequest (ctx, route, options) {
+  return new Promise((resolve, reject) => {    
+    const response = {}
+
+    let { downstream } = ctx.state
+
+    const gunzip = zlib.createGunzip()
+    const inflate = zlib.createInflate()
+
+    let method = http
+
+    if (route.secured) {
+      method = https
+    }
+
+    const routeReq = method.request(options, (routeRes) => {
+      response.status = routeRes.statusCode
+      response.headers = routeRes.headers
+      response.body = []
+
+      const uncompressedBodyBufs = []
+      if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+        routeRes.pipe(gunzip)
+
+        gunzip.on('data', (data) => {
+          uncompressedBodyBufs.push(data)
+        })
+      }
+
+      if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+        routeRes.pipe(inflate)
+
+        inflate.on('data', (data) => {
+          uncompressedBodyBufs.push(data)
+        })
+      }
+
+      const bufs = []
+
+      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+      routeRes
+        .on('data', (chunk) => {
+          bufs.push(chunk)
+        })
+        .on('end', () => {
+          response.timestamp = new Date()
+          const charset = obtainCharset(routeRes.headers)
+          if (routeRes.headers['content-encoding'] === 'gzip') {
+            gunzip.on('end', () => {
+              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+              response.body = uncompressedBody.toString(charset)
+              resolve(response)
+            })
+          } else if (routeRes.headers['content-encoding'] === 'deflate') {
+            inflate.on('end', () => {
+              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+              response.body = uncompressedBody.toString(charset)
+              resolve(response)
+            })
+          } else {
+            response.body = Buffer.concat(bufs)
+            resolve(response)
+          }
+        })
+
+      routeReq
+        .on('error', err => {
+          reject(err)
+        })
+        .on('clientError', err => {
+          reject(err)
+        })
+  
+      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+      routeReq.setTimeout(timeout, () => {
+        routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
+      })
+    })
+
+    downstream
+      .on('data', (chunk) => {
+        if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
+          routeReq.write(chunk)
+        }
+      })
+      .on('end', () => {
+        routeReq.end()
+      })
+      .on('error', (err) => {
+        console.log('downstream error='+err)
+      })
+  })
+}
+
+  /*
  * A promise returning function that send a request to the given route and resolves
  * the returned promise with a response object of the following form:
  *   response =
@@ -424,7 +521,7 @@ function obtainCharset (headers) {
  *    headers: <http_headers_object>
  *    timestamp: <the time the response was recieved>
  */
-function sendHttpRequest (ctx, route, options) {
+function sendHttpRequest_OLD (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
     let method = http

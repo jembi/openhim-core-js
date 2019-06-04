@@ -1,7 +1,11 @@
 import Koa from 'koa'
 import getRawBody from 'raw-body'
+import mongodb from 'mongodb'
+import { connectionDefault } from './config'
 import compress from 'koa-compress'
 import { Z_SYNC_FLUSH } from 'zlib'
+import Stream from 'stream'
+import logger from 'winston'
 
 import * as router from './middleware/router'
 import * as messageStore from './middleware/messageStore'
@@ -21,13 +25,79 @@ import * as proxy from './middleware/proxy'
 // TODO: OHM-696 uncomment the line below
 //import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
+import { checkServerIdentity } from 'tls';
+import { Readable } from 'stream';
+import { promisify } from 'util';
 
 config.authentication = config.get('authentication')
 
 async function rawBodyReader (ctx, next) {
-  const body = await getRawBody(ctx.req)
+  let bucket
+  let uploadStream
+  let counter
+  let size
+  let promise
 
-  if (body) { ctx.body = body }
+  if (isNaN(counter)) {
+    counter = 0
+    size = 0
+
+    if (!bucket) {
+      bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
+      uploadStream = bucket.openUploadStream()
+
+      // CONFIRM: Is the file id assigned at this point? Property id ... or files_id... file_id(?)
+      uploadStream
+        .on('error', (err) => {
+          console.log('UPLOAD-ERROR='+JSON.stringify(err))
+        })
+        .on('finish', (file) => {  // Get the GridFS file object that was created
+          console.log('FILE-OBJ='+JSON.stringify(file))
+          ctx.request.bodyId = file._id
+
+          // Update the transaction for Request (finished receiving)
+          // Only update after `messageStore.initiateRequest` has completed
+          promise.then(() => {
+            messageStore.completeRequest(ctx, () => {})
+          })
+        })
+
+      ctx.state.downstream = new Readable()
+      ctx.state.downstream._read = () => {}
+    }
+  }
+
+  ctx.req
+    .on('data', (chunk) => {
+      counter++;
+      size += chunk.toString().length
+      console.log(`Read CHUNK # ${counter} [ Cum size ${size}]`)
+
+      // Create the transaction for Request (started receiving)
+      // Side effect: Updates the Koa ctx with the transactionId
+      if (counter == 1) {
+        ctx.requestTimestamp = new Date()
+        promise = messageStore.initiateRequest(ctx)
+      }
+
+      // Write chunk to GridFS & downstream
+      uploadStream.write(chunk)
+      ctx.state.downstream.push(chunk)
+    })
+    .on('end', () => {
+      console.log(`** END OF INPUT STREAM **`)
+
+      // Close streams to gridFS and downstream
+      uploadStream.end()
+      ctx.state.downstream.push(null)
+
+      // Reset for next transaction
+      counter = NaN
+    })
+    .on('error', (err) => {
+      console.log('** STREAM READ ERROR OCCURRED ** '+JSON.stringify(err))
+    })
+
   await next()
 }
 
@@ -65,7 +135,7 @@ export function setupApp (done) {
   app.use(proxy.koaMiddleware)
 
   // Persist message middleware
-  app.use(messageStore.koaMiddleware)
+  //app.use(messageStore.koaMiddleware)
 
   // URL rewriting middleware
   // TODO: OHM-696 uncomment the code below when url rewriting is back in support

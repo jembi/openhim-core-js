@@ -12,6 +12,9 @@ const RequestDef = new Schema({
   method: String,
   timestamp: {
     type: Date, required: true
+  },
+  timestampEnd: {
+    type: Date, required: false
   }
 }, {
   toObject: { virtuals: true },
@@ -25,8 +28,7 @@ const ResponseDef = new Schema({
   headers: Object,
   bodyId: ObjectId,
   timestamp: Date,
-  startTimeStart: Date,
-  endTimeStamp: Date
+  timestampEnd: Date
 }, {
   toObject: { virtuals: true },
   toJSON: { virtuals: true }

@@ -26,63 +26,117 @@ function copyMapWithEscapedReservedCharacters (map) {
   return escapedMap
 }
 
-export async function storeTransaction (ctx, done) {
-  logger.info('Storing request metadata for inbound transaction')
-
-  ctx.requestTimestamp = new Date()
-
-  const headers = copyMapWithEscapedReservedCharacters(ctx.header)
-
-  const tx = new transactions.TransactionModel({
-    status: transactionStatus.PROCESSING,
-    clientID: (ctx.authenticated != null ? ctx.authenticated._id : undefined),
-    channelID: ctx.authorisedChannel._id,
-    clientIP: ctx.ip,
-    request: {
-      host: (ctx.host != null ? ctx.host.split(':')[0] : undefined),
-      port: (ctx.host != null ? ctx.host.split(':')[1] : undefined),
-      path: ctx.path,
-      headers,
-      querystring: ctx.querystring,
-      method: ctx.method,
-      timestamp: ctx.requestTimestamp
-    }
-  })
-
-  if (ctx.parentID && ctx.taskID) {
-    tx.parentID = ctx.parentID
-    tx.taskID = ctx.taskID
-  }
-
-  if (ctx.currentAttempt) {
-    tx.autoRetryAttempt = ctx.currentAttempt
-  }
-
-  // check if channel request body is false and remove - or if request body is empty
-  if ((ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
-    // reset request body
-    ctx.body = ''
-    // check if method is POST|PUT|PATCH - rerun not possible without request body
-    if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
-      tx.canRerun = false
-    }
-  }
-
-  // extract body into chucks before saving transaction
-  if (ctx.body) {
-    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(ctx.body)
-    tx.request.bodyId = requestBodyChuckFileId
-  }
-
-  return tx.save((err, tx) => {
-    if (err) {
-      logger.error(`Could not save transaction metadata: ${err}`)
-      return done(err)
+function getTransactionId (ctx) {
+  if (ctx) {
+    if (ctx.request && ctx.request.header && ctx.request.header['X-OpenHIM-TransactionID']) {
+      return ctx.request.header['X-OpenHIM-TransactionID']
+    } else if (ctx.transactionId) {
+      return ctx.transactionId.toString()
     } else {
-      ctx.transactionId = tx._id
-      ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
-      return done(null, tx)
+      return null
     }
+  }
+  return null
+}
+
+/*
+ *  Persist a new transaction once a Request has started streaming 
+ *    into the HIM
+ */
+export async function initiateRequest (ctx) {
+  return new Promise((resolve, reject) => {
+    logger.info('Storing request metadata for inbound transaction')
+
+    if (ctx && !ctx.requestTimestamp) {
+      ctx.requestTimestamp = new Date()
+    }
+
+    const headers = copyMapWithEscapedReservedCharacters(ctx.header)
+
+    const tx = new transactions.TransactionModel({
+      status: transactionStatus.PROCESSING,
+      clientID: (ctx.authenticated != null ? ctx.authenticated._id : undefined),
+      channelID: (ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined),
+      clientIP: ctx.ip,
+      request: {
+        host: (ctx.host != null ? ctx.host.split(':')[0] : undefined),
+        port: (ctx.host != null ? ctx.host.split(':')[1] : undefined),
+        path: ctx.path,
+        headers,
+        querystring: ctx.querystring,
+        method: ctx.method,
+        timestamp: ctx.requestTimestamp
+      }
+    })
+
+    if (ctx.parentID && ctx.taskID) {
+      tx.parentID = ctx.parentID
+      tx.taskID = ctx.taskID
+    }
+
+    if (ctx.currentAttempt) {
+      tx.autoRetryAttempt = ctx.currentAttempt
+    }
+
+    // check if channel request body is false and remove - or if request body is empty
+    if ((ctx.authorisedChannel && ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
+      // reset request body
+      ctx.body = ''
+      // check if method is POST|PUT|PATCH - rerun not possible without request body
+      if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
+        tx.canRerun = false
+      }
+    }
+
+    tx.save((err, tx) => {
+      if (err) {
+        logger.error(`Could not save transaction metadata: ${err}`)
+        reject(err)
+      } else {
+        ctx.transactionId = tx._id
+        ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
+        resolve(tx)
+      }
+    })
+  })
+}
+
+/*
+ *  Find and update an existing transaction once a Request has completed streaming 
+ *    into the HIM (Not async; Mongo should handle locking issues, etc)
+ */
+export function completeRequest (ctx, done) {
+  ctx.requestTimestampEnd = new Date()
+ 
+  const transactionId = getTransactionId(ctx)
+
+  return transactions.TransactionModel.findById(transactionId, (err, tx) => {
+    if (err) { return done(err) }
+
+    /*
+     *  For short transactions, the 'end' timestamp is before the 'start' timestamp.
+     *  (Persisting the transaction initially takes longer than fully processing the transaction) 
+     *  In these cases, swop the 'start' and 'end' values around; the transaction duration is 
+     *  not exactly accurate, but at least it isn't negative.
+     */
+    let t = tx.request.timestamp
+    if (tx.request.timestamp > ctx.requestTimestampEnd) {
+      t = ctx.requestTimestampEnd
+      ctx.requestTimestampEnd = tx.request.timestamp
+    }
+  
+    const update = {
+      request: {
+        bodyId: ctx.request.bodyId,
+        timestamp: t,
+        timestampEnd: ctx.requestTimestampEnd
+      }
+    }
+    
+    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
+      if (err) { return done(err) }
+      done(null, tx)
+    })
   })
 }
 
@@ -170,12 +224,7 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
  * This should only be called once all routes have responded.
  */
 export function setFinalStatus (ctx, callback) {
-  let transactionId = ''
-  if (ctx.request != null && ctx.request.header != null && ctx.request.header['X-OpenHIM-TransactionID'] != null) {
-    transactionId = ctx.request.header['X-OpenHIM-TransactionID']
-  } else {
-    transactionId = ctx.transactionId.toString()
-  }
+  const transactionId = getTransactionId(ctx)
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
     if (err) { return callback(err) }
@@ -249,7 +298,7 @@ export function setFinalStatus (ctx, callback) {
 }
 
 export async function koaMiddleware (ctx, next) {
-  const saveTransaction = promisify(storeTransaction)
+  const saveTransaction = promisify(initiateRequest)
   await saveTransaction(ctx)
   await next()
 }
