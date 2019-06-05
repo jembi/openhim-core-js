@@ -32,8 +32,8 @@ config.authentication = config.get('authentication')
 let bucket
 
 async function rawBodyReader (ctx, next) {
-  var counter = 0
-  var size = 0
+  let counter = 0
+  let size = 0
 
   if (!bucket) {
     bucket = getGridFSBucket()
