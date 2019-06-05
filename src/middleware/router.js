@@ -535,19 +535,19 @@ function sendHttpRequest (ctx, route, options) {
 //            resolve(response)
 //          }
         })
-
-      routeReq
-        .on('error', (err) => {
-          reject(err)
-        })
-        .on('clientError', (err) => {
-          reject(err)
-        })
-  
-      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-      routeReq.setTimeout(timeout, () => {
-        routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
       })
+
+    routeReq
+      .on('error', (err) => {
+        reject(err)
+      })
+      .on('clientError', (err) => {
+        reject(err)
+      })
+  
+    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+    routeReq.setTimeout(timeout, () => {
+      routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
     downstream
