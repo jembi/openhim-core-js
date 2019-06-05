@@ -31,45 +31,45 @@ import { promisify } from 'util';
 
 config.authentication = config.get('authentication')
 
+let bucket
+
 async function rawBodyReader (ctx, next) {
-  let bucket
-  let uploadStream
-  let counter
-  let size
-  let promise
+  var counter = 0
+  var size = 0
 
-  if (isNaN(counter)) {
-    counter = 0
-    size = 0
-
-    if (!bucket) {
-      bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
-      uploadStream = bucket.openUploadStream()
-
-      // Create the transaction for Request (started receiving)
-      // Side effect: Updates the Koa ctx with the transactionId
-      ctx.requestTimestamp = new Date()
-      ctx.request.bodyId = uploadStream.id
-      promise = messageStore.initiateRequest(ctx)
-
-      uploadStream
-        .on('error', (err) => {
-          console.log('UPLOAD-ERROR='+JSON.stringify(err))
-        })
-        .on('finish', (file) => {  // Get the GridFS file object that was created
-          console.log('FILE-OBJ='+JSON.stringify(file))
-
-          // Update the transaction for Request (finished receiving)
-          // Only update after `messageStore.initiateRequest` has completed
-          promise.then(() => {
-            messageStore.completeRequest(ctx, () => {})
-          })
-        })
-
-      ctx.state.downstream = new Readable()
-      ctx.state.downstream._read = () => {}
-    }
+  if (!bucket) {
+    bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
   }
+
+  const uploadStream = bucket.openUploadStream()
+
+  // Create the transaction for Request (started receiving)
+  // Side effect: Updates the Koa ctx with the transactionId
+  ctx.requestTimestamp = new Date()
+
+  // Only add a bodyId when request method is not get or delete
+  if(ctx.req.method !== "GET" || ctx.req.method !== "DELETE") {
+    ctx.request.bodyId = uploadStream.id
+  }
+
+  const promise = messageStore.initiateRequest(ctx)
+
+  uploadStream
+    .on('error', (err) => {
+      console.log('UPLOAD-ERROR='+JSON.stringify(err))
+    })
+    .on('finish', (file) => {  // Get the GridFS file object that was created
+      console.log('FILE-OBJ='+JSON.stringify(file))
+
+      // Update the transaction for Request (finished receiving)
+      // Only update after `messageStore.initiateRequest` has completed
+      promise.then(() => {
+        messageStore.completeRequest(ctx, () => {})
+      })
+    })
+
+  ctx.state.downstream = new Readable()
+  ctx.state.downstream._read = () => {}
 
   ctx.req
     .on('data', (chunk) => {
@@ -87,9 +87,6 @@ async function rawBodyReader (ctx, next) {
       // Close streams to gridFS and downstream
       uploadStream.end()
       ctx.state.downstream.push(null)
-
-      // Reset for next transaction
-      counter = NaN
     })
     .on('error', (err) => {
       console.log('** STREAM READ ERROR OCCURRED ** '+JSON.stringify(err))
