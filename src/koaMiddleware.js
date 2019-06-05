@@ -4,7 +4,6 @@ import mongodb from 'mongodb'
 import { connectionDefault } from './config'
 import compress from 'koa-compress'
 import { Z_SYNC_FLUSH } from 'zlib'
-import Stream from 'stream'
 import logger from 'winston'
 
 import * as router from './middleware/router'
@@ -56,10 +55,10 @@ async function rawBodyReader (ctx, next) {
 
   uploadStream
     .on('error', (err) => {
-      console.log('UPLOAD-ERROR='+JSON.stringify(err))
+      logger.error('UPLOAD-ERROR='+JSON.stringify(err))
     })
     .on('finish', (file) => {  // Get the GridFS file object that was created
-      console.log('FILE-OBJ='+JSON.stringify(file))
+      logger.info('FILE-OBJ='+JSON.stringify(file))
 
       // Update the transaction for Request (finished receiving)
       // Only update after `messageStore.initiateRequest` has completed
@@ -75,21 +74,21 @@ async function rawBodyReader (ctx, next) {
     .on('data', (chunk) => {
       counter++;
       size += chunk.toString().length
-      console.log(`Read CHUNK # ${counter} [ Cum size ${size}]`)
+      logger.info(`Read CHUNK # ${counter} [ Cum size ${size}]`)
 
       // Write chunk to GridFS & downstream
       uploadStream.write(chunk)
       ctx.state.downstream.push(chunk)
     })
     .on('end', () => {
-      console.log(`** END OF INPUT STREAM **`)
+      logger.info(`** END OF INPUT STREAM **`)
 
       // Close streams to gridFS and downstream
       uploadStream.end()
       ctx.state.downstream.push(null)
     })
     .on('error', (err) => {
-      console.log('** STREAM READ ERROR OCCURRED ** '+JSON.stringify(err))
+      logger.error('** STREAM READ ERROR OCCURRED ** '+JSON.stringify(err))
     })
 
   await next()
