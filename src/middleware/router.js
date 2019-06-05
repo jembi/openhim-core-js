@@ -427,109 +427,108 @@ function sendHttpRequest (ctx, route, options) {
       method = https
     }
 
-    const routeReq = method.request(options, (routeRes) => {
-      response.status = routeRes.statusCode
-      response.headers = routeRes.headers
-      response.body = new Readable()
-      response.body._read = () => {}
+    const routeReq = method.request(options)
+      .on('response', (routeRes) => {
+        response.status = routeRes.statusCode
+        response.headers = routeRes.headers
+        response.body = new Readable()
+        response.body._read = () => {}
 
-      let uploadStream
-      let counter = 0
-      let size = 0
+        let uploadStream
+        let counter = 0
+        let size = 0
 /*
-      const uncompressedBodyBufs = []
-      if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
-        routeRes.pipe(gunzip)
+        const uncompressedBodyBufs = []
+        if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+          routeRes.pipe(gunzip)
 
-        gunzip.on('data', (data) => {
-          uncompressedBodyBufs.push(data)
-        })
-      }
-
-      if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
-        routeRes.pipe(inflate)
-
-        inflate.on('data', (data) => {
-          uncompressedBodyBufs.push(data)
-        })
-      }
-*/
-      if(!bucket) {
-        bucket = getGridFSBucket()
-      }
-
-      ctx.response.body = new Writable({
-        write: function(chunk, encoding, next) {
-          counter++
-          size += chunk.toString().length
-          console.log(`Write Response CHUNK # ${counter} upstream [ Cum size ${size} ]`)
-          next()
+          gunzip.on('data', (data) => {
+            uncompressedBodyBufs.push(data)
+          })
         }
-      }).on('error', (err) => {
-          logger.error('Error sending Response upstream: ' + JSON.stringify(err))
-          reject(err)
-        })
-        .on('finish', () => {
-          logger.info(`Finished sending Response upstream`)
-          resolve(response)
-        })
 
-      uploadStream = bucket.openUploadStream()
-      ctx.response.bodyId = uploadStream.id
+        if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+          routeRes.pipe(inflate)
 
-      uploadStream
-        .on('error', (err) => {
-          logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
-        })
-        .on('finish', (file) => {
-          logger.info(`Response body with body id: ${file._id} stored`)
-        })
+          inflate.on('data', (data) => {
+            uncompressedBodyBufs.push(data)
+          })
+        }
+*/
+        if(!bucket) {
+          bucket = getGridFSBucket()
+        }
 
-      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
-      routeRes
-        .on('data', (chunk) => {
-          if (!ctx.responseTimestamp) {
-            ctx.responseTimestamp = new Date()
-            messageStore.initiateResponse(ctx, () => {})
+        ctx.response.body = new Writable({
+          write: function(chunk, encoding, next) {
+            counter++
+            size += chunk.toString().length
+            console.log(`Write Response CHUNK # ${counter} upstream [ Cum size ${size} ]`)
+            next()
           }
-          uploadStream.write(chunk)
-          ctx.response.body.write(chunk)
-          response.body.push(chunk)
-        })
-        .on('end', () => {
-          console.log(`** END OF OUTPUT STREAM **`)
-          uploadStream.end()
-          response.body.push(null)
-          ctx.response.body.end()
+        }).on('error', (err) => {
+            logger.error('Error sending Response upstream: ' + JSON.stringify(err))
+            reject(err)
+          })
+          .on('finish', () => {
+            logger.info(`Finished sending Response upstream`)
+            resolve(response)
+          })
 
-          ctx.responseTimestampEnd = new Date()
-          messageStore.completeResponse(ctx, () => {})
+        uploadStream = bucket.openUploadStream()
+        ctx.response.bodyId = uploadStream.id
 
-          // Reset for next transaction
-          counter = NaN
+        uploadStream
+          .on('error', (err) => {
+            logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
+          })
+          .on('finish', (file) => {
+            logger.info(`Response body with body id: ${file._id} stored`)
+          })
+
+        // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+        routeRes
+          .on('data', (chunk) => {
+            if (!ctx.responseTimestamp) {
+              ctx.responseTimestamp = new Date()
+              messageStore.initiateResponse(ctx, () => {})
+            }
+            uploadStream.write(chunk)
+            ctx.response.body.write(chunk)
+            response.body.push(chunk)
+          })
+          .on('end', () => {
+            console.log(`** END OF OUTPUT STREAM **`)
+            uploadStream.end()
+            response.body.push(null)
+            ctx.response.body.end()
+
+            ctx.responseTimestampEnd = new Date()
+            messageStore.completeResponse(ctx, () => {})
+
+            // Reset for next transaction
+            counter = NaN
 /*
-          const charset = obtainCharset(routeRes.headers)
-          if (routeRes.headers['content-encoding'] === 'gzip') {
-            gunzip.on('end', () => {
-              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-              response.body = uncompressedBody.toString(charset)
-              resolve(response)
-            })
-          } else if (routeRes.headers['content-encoding'] === 'deflate') {
-            inflate.on('end', () => {
-              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-              response.body = uncompressedBody.toString(charset)
-              resolve(response)
-            })
-          } else {
+            const charset = obtainCharset(routeRes.headers)
+            if (routeRes.headers['content-encoding'] === 'gzip') {
+              gunzip.on('end', () => {
+                const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+                response.body = uncompressedBody.toString(charset)
+                resolve(response)
+              })
+            } else if (routeRes.headers['content-encoding'] === 'deflate') {
+              inflate.on('end', () => {
+                const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+                response.body = uncompressedBody.toString(charset)
+                resolve(response)
+              })
+            } else {
 */
 //            response.body = Buffer.concat(bufs)
 //            resolve(response)
 //          }
         })
       })
-
-    routeReq
       .on('error', (err) => {
         reject(err)
       })
