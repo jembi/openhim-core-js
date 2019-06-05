@@ -434,8 +434,8 @@ function sendHttpRequest (ctx, route, options) {
       response.body._read = () => {}
 
       let uploadStream
-      let counter
-      let size    
+      let counter = 0
+      let size = 0
 /*
       const uncompressedBodyBufs = []
       if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
@@ -454,43 +454,36 @@ function sendHttpRequest (ctx, route, options) {
         })
       }
 */
-//      const bufs = []
- 
-      if (isNaN(counter)) {
-        counter = 0
-        size = 0
-
-        if(!bucket) {
-          bucket = getGridFSBucket()
-        }
-
-        ctx.response.body = new Writable({
-          write: function(chunk, encoding, next) {
-            counter++
-            size += chunk.toString().length
-            console.log(`Write Response CHUNK # ${counter} upstream [ Cum size ${size} ]`)
-            next()
-          }
-        }).on('error', (err) => {
-            logger.error('Error sending Response upstream: ' + JSON.stringify(err))
-            reject(err)
-          })
-          .on('finish', () => {
-            logger.info(`Finished sending Response upstream`)
-            resolve(response)
-          })
-
-        uploadStream = bucket.openUploadStream()
-        ctx.response.bodyId = uploadStream.id
-
-        uploadStream
-          .on('error', (err) => {
-            logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
-          })
-          .on('finish', (file) => {
-            logger.info(`Response body with body id: ${file._id} stored`)
-          })
+      if(!bucket) {
+        bucket = getGridFSBucket()
       }
+
+      ctx.response.body = new Writable({
+        write: function(chunk, encoding, next) {
+          counter++
+          size += chunk.toString().length
+          console.log(`Write Response CHUNK # ${counter} upstream [ Cum size ${size} ]`)
+          next()
+        }
+      }).on('error', (err) => {
+          logger.error('Error sending Response upstream: ' + JSON.stringify(err))
+          reject(err)
+        })
+        .on('finish', () => {
+          logger.info(`Finished sending Response upstream`)
+          resolve(response)
+        })
+
+      uploadStream = bucket.openUploadStream()
+      ctx.response.bodyId = uploadStream.id
+
+      uploadStream
+        .on('error', (err) => {
+          logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
+        })
+        .on('finish', (file) => {
+          logger.info(`Response body with body id: ${file._id} stored`)
+        })
 
       // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
       routeRes
@@ -502,7 +495,6 @@ function sendHttpRequest (ctx, route, options) {
           uploadStream.write(chunk)
           ctx.response.body.write(chunk)
           response.body.push(chunk)
-          //bufs.push(chunk)
         })
         .on('end', () => {
           console.log(`** END OF OUTPUT STREAM **`)
