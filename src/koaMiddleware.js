@@ -43,8 +43,7 @@ async function rawBodyReader (ctx, next) {
 
   ctx.requestTimestamp = new Date()
 
-  // Only add a bodyId when request method is not get or delete
-  if(ctx.req.method !== "GET" || ctx.req.method !== "DELETE") {
+  if(['POST', 'PUT'].includes(ctx.req.method)) {
     ctx.request.bodyId = uploadStream.id
   }
 
