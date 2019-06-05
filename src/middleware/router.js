@@ -467,7 +467,7 @@ function sendHttpRequest (ctx, route, options) {
             next()
           }
         }).on('error', (err) => {
-            logger.error('Error sending Response upstream: ' + JSON.stringify(err))
+            logger.error(`Error streaming response upstream: ${err}`)
             reject(err)
           })
           .on('finish', () => {
@@ -480,7 +480,7 @@ function sendHttpRequest (ctx, route, options) {
 
         uploadStream
           .on('error', (err) => {
-            logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
+            logger.error(`Error streaming response to GridFS: ${err}`)
           })
           .on('finish', (file) => {
             logger.info(`Response body with body id: ${file._id} stored`)
@@ -530,9 +530,11 @@ function sendHttpRequest (ctx, route, options) {
         })
       })
       .on('error', (err) => {
+        logger.error(`Error streaming response upstream: ${err}`)
         reject(err)
       })
       .on('clientError', (err) => {
+        logger.error(`Client error streaming response upstream: ${err}`)
         reject(err)
       })
   
@@ -543,7 +545,7 @@ function sendHttpRequest (ctx, route, options) {
 
     downstream
       .on('data', (chunk) => {
-        if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
+        if (['POST', 'PUT'].includes(ctx.request.method)) {
           routeReq.write(chunk)
         }
       })
@@ -551,7 +553,8 @@ function sendHttpRequest (ctx, route, options) {
         routeReq.end()
       })
       .on('error', (err) => {
-        console.log('downstream error='+err)
+        logger.error(`Error streaming request downstream: ${err}`)
+        reject(err)
       })
   })
 }
