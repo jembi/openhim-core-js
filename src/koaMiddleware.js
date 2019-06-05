@@ -1,7 +1,5 @@
 import Koa from 'koa'
 import getRawBody from 'raw-body'
-import mongodb from 'mongodb'
-import { connectionDefault } from './config'
 import compress from 'koa-compress'
 import { Z_SYNC_FLUSH } from 'zlib'
 import logger from 'winston'
@@ -27,6 +25,7 @@ import { config } from './config'
 import { checkServerIdentity } from 'tls';
 import { Readable } from 'stream';
 import { promisify } from 'util';
+import { getGridFSBucket }  from './contentChunk'
 
 config.authentication = config.get('authentication')
 
@@ -37,7 +36,7 @@ async function rawBodyReader (ctx, next) {
   var size = 0
 
   if (!bucket) {
-    bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
+    bucket = getGridFSBucket()
   }
 
   const uploadStream = bucket.openUploadStream()
