@@ -40,13 +40,11 @@ function getTransactionId (ctx) {
 }
 
 /*
- *  Persist a new transaction once a Request has started streaming 
- *    into the HIM
+ *  Persist a new transaction once a Request has started streaming into the HIM.
+ *  Returns a promise because the other persist routines need to be chained to this one.
  */
 export async function initiateRequest (ctx) {
   return new Promise((resolve, reject) => {
-    logger.info('Storing request metadata for inbound transaction')
-
     if (ctx && !ctx.requestTimestamp) {
       ctx.requestTimestamp = new Date()
     }
@@ -90,9 +88,10 @@ export async function initiateRequest (ctx) {
 
     tx.save((err, tx) => {
       if (err) {
-        logger.error(`Could not save transaction metadata: ${err}`)
+        logger.error(`Could not save transaction metadata (intial request): ${err}`)
         reject(err)
       } else {
+        logger.info(`stored initial primary request for ${tx._id}`)
         ctx.transactionId = tx._id
         ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
         resolve(tx)
@@ -106,7 +105,10 @@ export async function initiateRequest (ctx) {
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
 export function completeRequest (ctx, done) {
-  ctx.requestTimestampEnd = new Date()
+
+  if (ctx && !ctx.requestTimestampEnd) {
+    ctx.requestTimestampEnd = new Date()
+  }
  
   const transactionId = getTransactionId(ctx)
 
@@ -134,30 +136,44 @@ export function completeRequest (ctx, done) {
     }
     
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
-      if (err) { return done(err) }
+      if (err) {
+        logger.error(`Could not save complete request metadata for transaction: ${ctx.transactionId}. ${err}`)
+        return done(err)
+      }
+      if ((tx === undefined) || (tx === null)) {
+        logger.error(`Could not find transaction: ${ctx.transactionId}`)
+        return done(err)
+      }
+      logger.info(`stored completed primary request for ${tx._id}`)
       done(null, tx)
     })
   })
 }
 
-export async function storeResponse (ctx, done) {
-  const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
-
-  const res = {
-    status: ctx.response.status,
-    headers,
-    body: !ctx.response.body ? '' : ctx.response.body.toString(),
-    timestamp: ctx.response.timestamp
+/*
+ *  Update an existing transaction once a Response has started streaming 
+ *    into the HIM
+ */
+export function initiateResponse (ctx, done) {
+  if (ctx && !ctx.responseTimestamp) {
+    ctx.responseTimestamp = new Date()
   }
 
+  const transactionId = getTransactionId(ctx)
+
+  const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
+/* 
   // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
     // reset request body - primary route
     res.body = ''
   }
-
+ */
   const update = {
-    response: res,
+    'response.status': ctx.response.status,
+    'response.headers': headers,
+    'response.bodyId': ctx.response.bodyId,
+    'response.timestamp': ctx.responseTimestamp,  
     error: ctx.error,
     orchestrations: []
   }
@@ -174,19 +190,49 @@ export async function storeResponse (ctx, done) {
     update.orchestrations.push(...ctx.orchestrations)
   }
 
-  await extractTransactionPayloadIntoChunks(update)
+  //await extractTransactionPayloadIntoChunks(update)
 
-  return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
+  transactions.TransactionModel.findOneAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
-      logger.error(`Could not save response metadata for transaction: ${ctx.transactionId}. ${err}`)
-      return done(err)
+      logger.error(`Could not save initial response metadata for transaction: ${ctx.transactionId}. ${err}`)
+      done(err)
+    }
+    if ((tx === undefined) || (tx === null)) {
+      logger.error(`Could not find transaction: ${ctx.transactionId}`)
+      done(err)
+    }
+    logger.info(`stored initial primary response for ${tx._id}`)
+    done(null, tx)
+  })
+}
+
+/*
+ *  Find and update an existing transaction once a Response has completed streaming 
+ *    into the HIM (Not async; Mongo should handle locking issues, etc)
+ */
+export function completeResponse (ctx, done) {
+
+  if (ctx && !ctx.responseTimestampEnd) {
+    ctx.responseTimestampEnd = new Date()
+  }
+ 
+  const transactionId = getTransactionId(ctx)
+
+  const update = {
+    'response.timestampEnd': ctx.responseTimestampEnd
+  }
+  
+  return transactions.TransactionModel.findOneAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+    if (err) { 
+      logger.error(`Could not save completed response metadata for transaction: ${ctx.transactionId}. ${err}`)
+      return done(err) 
     }
     if ((tx === undefined) || (tx === null)) {
       logger.error(`Could not find transaction: ${ctx.transactionId}`)
       return done(err)
     }
-    logger.info(`stored primary response for ${tx._id}`)
-    return done()
+    logger.info(`stored completed primary response for ${tx._id}`)
+    done(null, tx)
   })
 }
 

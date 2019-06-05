@@ -1,7 +1,7 @@
 // All the gzip functionality is being commented out
 // TODO: OHM-693 uncomment the gzip functions when working on ticket
 
-import zlib from 'zlib'
+//import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
@@ -14,7 +14,13 @@ import * as messageStore from '../middleware/messageStore'
 import * as events from '../middleware/events'
 import { promisify } from 'util'
 import { getGridFSBucket } from '../contentChunk'
+import { Writable, Readable } from 'stream';
+import util from 'util'
+import mongodb from 'mongodb'
+import { connectionDefault } from '../config'
+import { brotliCompressSync } from 'zlib';
 
+config.mongo = config.get('mongo')
 config.router = config.get('router')
 
 
@@ -33,18 +39,6 @@ export function numberOfPrimaryRoutes (routes) {
 const containsMultiplePrimaries = routes => numberOfPrimaryRoutes(routes) > 1
 
 function setKoaResponse (ctx, response) {
-  // Try and parse the status to an int if it is a string
-  let err
-  if (typeof response.status === 'string') {
-    try {
-      response.status = parseInt(response.status, 10)
-    } catch (error) {
-      err = error
-      logger.error(err)
-    }
-  }
-
-  ctx.response.status = response.status
   ctx.response.timestamp = response.timestamp
   ctx.response.body = response.body
 
@@ -57,7 +51,7 @@ function setKoaResponse (ctx, response) {
       response.headers['X-OpenHIM-TransactionID'] = ctx.request.header['X-OpenHIM-TransactionID']
     }
   }
-
+  
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
@@ -222,9 +216,9 @@ function sendRequestToRoutes (ctx, routes, next) {
                 ctx.error = responseObj.error
               }
               // then set koa response from responseObj.response
-              /* return */ setKoaResponse(ctx, responseObj.response)
+              setKoaResponse(ctx, responseObj.response)
             } else {
-              /* return */ setKoaResponse(ctx, response)
+              setKoaResponse(ctx, response)
             }
           })
           .then(() => {
@@ -322,7 +316,6 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         method: ctx.request.method,
         timestamp: ctx.requestTimestamp
       }
-
       if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
         // handle mediator reponse
         const responseObj = JSON.parse(response.body)
@@ -396,7 +389,8 @@ function sendRequest (ctx, route, options) {
   } else {
     logger.info('Routing http(s) request')
     return sendHttpRequest(ctx, route, options)
-      .then(response => {
+/* 
+    .then(response => {
       //recordOrchestration(response)
       // Return the response as before
         return response
@@ -405,6 +399,7 @@ function sendRequest (ctx, route, options) {
       // Rethrow the error
         throw err
      })
+*/
   }
 }
 
@@ -417,6 +412,159 @@ function obtainCharset (headers) {
   return 'utf-8'
 }
 
+function sendHttpRequest (ctx, route, options) {
+  return new Promise((resolve, reject) => {    
+    const response = {}
+
+    let { downstream } = ctx.state
+/* 
+    const gunzip = zlib.createGunzip()
+    const inflate = zlib.createInflate()
+*/
+    let method = http
+
+    if (route.secured) {
+      method = https
+    }
+
+    const routeReq = method.request(options, (routeRes) => {
+      response.status = routeRes.statusCode
+      response.headers = routeRes.headers
+      response.body = new Readable()
+      response.body._read = () => {}
+
+      let uploadStream
+      let counter
+      let size    
+/*
+      const uncompressedBodyBufs = []
+      if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+        routeRes.pipe(gunzip)
+
+        gunzip.on('data', (data) => {
+          uncompressedBodyBufs.push(data)
+        })
+      }
+
+      if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+        routeRes.pipe(inflate)
+
+        inflate.on('data', (data) => {
+          uncompressedBodyBufs.push(data)
+        })
+      }
+*/
+//      const bufs = []
+ 
+      if (isNaN(counter)) {
+        counter = 0
+        size = 0
+
+        if(!bucket) {
+          bucket = getGridFSBucket()
+        }
+
+        ctx.response.body = new Writable({
+          write: function(chunk, encoding, next) {
+            counter++
+            size += chunk.toString().length
+            console.log(`Write Response CHUNK # ${counter} upstream [ Cum size ${size} ]`)
+            next()
+          }
+        }).on('error', (err) => {
+            logger.error('Error sending Response upstream: ' + JSON.stringify(err))
+            reject(err)
+          })
+          .on('finish', () => {
+            logger.info(`Finished sending Response upstream`)
+            resolve(response)
+          })
+
+        uploadStream = bucket.openUploadStream()
+        ctx.response.bodyId = uploadStream.id
+
+        uploadStream
+          .on('error', (err) => {
+            logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
+          })
+          .on('finish', (file) => {
+            logger.info(`Response body with body id: ${file._id} stored`)
+          })
+      }
+
+      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
+      routeRes
+        .on('data', (chunk) => {
+          if (!ctx.responseTimestamp) {
+            ctx.responseTimestamp = new Date()
+            messageStore.initiateResponse(ctx, () => {})
+          }
+          uploadStream.write(chunk)
+          ctx.response.body.write(chunk)
+          response.body.push(chunk)
+          //bufs.push(chunk)
+        })
+        .on('end', () => {
+          console.log(`** END OF OUTPUT STREAM **`)
+          uploadStream.end()
+          response.body.push(null)
+          ctx.response.body.end()
+
+          ctx.responseTimestampEnd = new Date()
+          messageStore.completeResponse(ctx, () => {})
+
+          // Reset for next transaction
+          counter = NaN
+/*
+          const charset = obtainCharset(routeRes.headers)
+          if (routeRes.headers['content-encoding'] === 'gzip') {
+            gunzip.on('end', () => {
+              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+              response.body = uncompressedBody.toString(charset)
+              resolve(response)
+            })
+          } else if (routeRes.headers['content-encoding'] === 'deflate') {
+            inflate.on('end', () => {
+              const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+              response.body = uncompressedBody.toString(charset)
+              resolve(response)
+            })
+          } else {
+*/
+//            response.body = Buffer.concat(bufs)
+//            resolve(response)
+//          }
+        })
+
+      routeReq
+        .on('error', (err) => {
+          reject(err)
+        })
+        .on('clientError', (err) => {
+          reject(err)
+        })
+  
+      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+      routeReq.setTimeout(timeout, () => {
+        routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
+      })
+    })
+
+    downstream
+      .on('data', (chunk) => {
+        if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
+          routeReq.write(chunk)
+        }
+      })
+      .on('end', () => {
+        routeReq.end()
+      })
+      .on('error', (err) => {
+        console.log('downstream error='+err)
+      })
+  })
+}
+
   /*
  * A promise returning function that send a request to the given route and resolves
  * the returned promise with a response object of the following form:
@@ -426,85 +574,7 @@ function obtainCharset (headers) {
  *    headers: <http_headers_object>
  *    timestamp: <the time the response was recieved>
  */
-function sendHttpRequest (ctx, route, options) {
-  return new Promise((resolve, reject) => {
-    const response = {}
-    let method = http
-    let { downstream } = ctx.state
-
-    if (route.secured) {
-      method = https
-    }
-
-    const routeReq = method.request(options, (routeRes) => {
-      response.status = routeRes.statusCode
-      response.headers = routeRes.headers
-
-      const bufs = []
-
-      if(!bucket) {
-        bucket = getGridFSBucket()
-      }
-
-      const uploadStream = bucket.openUploadStream()
-      ctx.response.bodyId = uploadStream.id
-
-      uploadStream
-        .on('error', (err) => {
-          logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
-        })
-        .on('finish', (file) => {
-          logger.info(`Response body with body id: ${file._id} stored`)
-        })
-
-      routeRes.on('data', chunk => {
-        if (!response.timestamp) {
-          response.timestamp = new Date()
-        }
-        uploadStream.write(chunk)
-        bufs.push(chunk)
-      })
-
-      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
-      routeRes.on('end', () => {
-        response.timestampEnd = new Date()
-        uploadStream.end()
-        const charset = obtainCharset(routeRes.headers)
-        response.body = Buffer.concat(bufs)
-        resolve(response)
-      })
-    })
-
-    routeReq.on('error', err => {
-      reject(err)
-    })
-
-    routeReq.on('clientError', err => {
-      reject(err)
-    })
-
-    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-    routeReq.setTimeout(timeout, () => {
-      routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
-    })
-
-    downstream
-      .on('error', (err) => {
-        logger.error('downstream error='+err)
-      })
-
-    if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
-      downstream
-        .on('data', (chunk) => {
-          routeReq.write(chunk)
-        })
-    }
-
-    routeReq.end()
-  })
-}
-
-function sendHttpRequest_Old (ctx, route, options) {
+function sendHttpRequest_OLD (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
 
@@ -553,6 +623,9 @@ function sendHttpRequest_Old (ctx, route, options) {
         })
         .on('finish', (file) => {
           logger.info(`Response body with body id: ${file._id} stored`)
+
+          // Update HIM transaction with bodyId
+          ctx.response.bodyId = file._id
         })
 
       routeRes.on('data', chunk => {
@@ -613,7 +686,6 @@ function sendHttpRequest_Old (ctx, route, options) {
     routeReq.end()
   })
 }
-
 
 /*
  * A promise returning function that send a request to the given route using sockets and resolves
@@ -787,6 +859,6 @@ function isMethodAllowed (ctx, channel) {
 export async function koaMiddleware (ctx, next) {
   const _route = promisify(route)
   await _route(ctx)
-  await messageStore.storeResponse(ctx, () => {})
+  //await messageStore.storeResponse(ctx, () => {})
   await next()
 }
