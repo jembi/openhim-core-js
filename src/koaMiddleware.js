@@ -41,8 +41,6 @@ async function rawBodyReader (ctx, next) {
 
   const uploadStream = bucket.openUploadStream()
 
-  // Create the transaction for Request (started receiving)
-  // Side effect: Updates the Koa ctx with the transactionId
   ctx.requestTimestamp = new Date()
 
   // Only add a bodyId when request method is not get or delete
@@ -50,15 +48,15 @@ async function rawBodyReader (ctx, next) {
     ctx.request.bodyId = uploadStream.id
   }
 
+  // Create the transaction for Request (started receiving)
+  // Side effect: Updates the Koa ctx with the transactionId
   const promise = messageStore.initiateRequest(ctx)
 
   uploadStream
     .on('error', (err) => {
-      logger.error('UPLOAD-ERROR='+JSON.stringify(err))
+      logger.error('Error streaming request to GridFS: '+err)
     })
     .on('finish', (file) => {  // Get the GridFS file object that was created
-      logger.info('FILE-OBJ='+JSON.stringify(file))
-
       // Update the transaction for Request (finished receiving)
       // Only update after `messageStore.initiateRequest` has completed
       promise.then(() => {
@@ -87,7 +85,7 @@ async function rawBodyReader (ctx, next) {
       ctx.state.downstream.push(null)
     })
     .on('error', (err) => {
-      logger.error('** STREAM READ ERROR OCCURRED ** '+JSON.stringify(err))
+      logger.error('Error on incoming request stream: '+err)
     })
 
   await next()
