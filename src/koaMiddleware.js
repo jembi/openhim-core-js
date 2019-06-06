@@ -70,7 +70,7 @@ async function rawBodyReader (ctx, next) {
     .on('data', (chunk) => {
       counter++;
       size += chunk.toString().length
-      logger.info(`Read CHUNK # ${counter} [ Cum size ${size}]`)
+      logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
 
       // Write chunk to GridFS & downstream
       uploadStream.write(chunk)

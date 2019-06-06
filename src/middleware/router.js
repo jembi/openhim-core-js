@@ -463,7 +463,7 @@ function sendHttpRequest (ctx, route, options) {
           write: function(chunk, encoding, next) {
             counter++
             size += chunk.toString().length
-            console.log(`Write Response CHUNK # ${counter} upstream [ Cum size ${size} ]`)
+            logger.info(`Write Response CHUNK # ${counter} upstream [ Total size ${size} ]`)
             next()
           }
         }).on('error', (err) => {
@@ -471,7 +471,6 @@ function sendHttpRequest (ctx, route, options) {
             reject(err)
           })
           .on('finish', () => {
-            logger.info(`Finished sending Response upstream`)
             resolve(response)
           })
 
@@ -483,7 +482,7 @@ function sendHttpRequest (ctx, route, options) {
             logger.error(`Error streaming response to GridFS: ${err}`)
           })
           .on('finish', (file) => {
-            logger.info(`Response body with body id: ${file._id} stored`)
+            logger.info(`Streamed response body to GridFS: ${file._id}`)
           })
 
         // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
@@ -498,7 +497,7 @@ function sendHttpRequest (ctx, route, options) {
             response.body.push(chunk)
           })
           .on('end', () => {
-            console.log(`** END OF OUTPUT STREAM **`)
+            logger.info(`** END OF OUTPUT STREAM **`)
             uploadStream.end()
             response.body.push(null)
             ctx.response.body.end()
