@@ -1,21 +1,25 @@
 // All the gzip functionality is being commented out
 // TODO: OHM-693 uncomment the gzip functions when working on ticket
 
-import zlib from 'zlib'
+//import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
 import tls from 'tls'
-import logger, { verbose } from 'winston'
+import logger from 'winston'
 import cookie from 'cookie'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import * as events from '../middleware/events'
 import { promisify } from 'util'
+import { getGridFSBucket } from '../contentChunk'
 
 config.mongo = config.get('mongo')
 config.router = config.get('router')
+
+
+var bucket
 
 const isRouteEnabled = route => (route.status == null) || (route.status === 'enabled')
 
@@ -219,9 +223,9 @@ function sendRequestToRoutes (ctx, routes, next) {
                 ctx.error = responseObj.error
               }
               // then set koa response from responseObj.response
-              /* return */ setKoaResponse(ctx, responseObj.response)
+              setKoaResponse(ctx, responseObj.response)
             } else {
-              /* return */ setKoaResponse(ctx, response)
+              setKoaResponse(ctx, response)
             }
           })
           .then(() => {
@@ -419,10 +423,10 @@ function sendHttpRequest (ctx, route, options) {
     const response = {}
 
     let { downstream } = ctx.state
-
+/* 
     const gunzip = zlib.createGunzip()
     const inflate = zlib.createInflate()
-
+ */
     let method = http
 
     if (route.secured) {
@@ -433,7 +437,7 @@ function sendHttpRequest (ctx, route, options) {
       response.status = routeRes.statusCode
       response.headers = routeRes.headers
       response.body = []
-
+/* 
       const uncompressedBodyBufs = []
       if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
         routeRes.pipe(gunzip)
@@ -450,7 +454,7 @@ function sendHttpRequest (ctx, route, options) {
           uncompressedBodyBufs.push(data)
         })
       }
-
+ */
       const bufs = []
 
       // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
@@ -460,6 +464,7 @@ function sendHttpRequest (ctx, route, options) {
         })
         .on('end', () => {
           response.timestamp = new Date()
+/* 
           const charset = obtainCharset(routeRes.headers)
           if (routeRes.headers['content-encoding'] === 'gzip') {
             gunzip.on('end', () => {
@@ -474,9 +479,10 @@ function sendHttpRequest (ctx, route, options) {
               resolve(response)
             })
           } else {
+ */
             response.body = Buffer.concat(bufs)
             resolve(response)
-          }
+//          }
         })
 
       routeReq
@@ -553,11 +559,37 @@ function sendHttpRequest_OLD (ctx, route, options) {
       // }
 
       const bufs = []
-      routeRes.on('data', chunk => bufs.push(chunk))
+
+      if(!bucket) {
+        bucket = getGridFSBucket()
+      }
+
+      const uploadStream = bucket.openUploadStream()
+
+      uploadStream
+        .on('error', (err) => {
+          logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
+        })
+        .on('finish', (file) => {
+          logger.info(`Response body with body id: ${file._id} stored`)
+
+          // Update HIM transaction with bodyId
+          ctx.response.bodyId = file._id
+        })
+
+      routeRes.on('data', chunk => {
+        if (!response.startTimestamp) {
+          response.startTimestamp = new Date()
+        }
+        uploadStream.write(chunk)
+        bufs.push(chunk)
+      })
 
       // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
       routeRes.on('end', () => {
         response.timestamp = new Date()
+        response.endTimestamp = new Date()
+        uploadStream.end()
         const charset = obtainCharset(routeRes.headers)
 
         // TODO: OHM-693 uncomment code below when working on the gzipping and inflating

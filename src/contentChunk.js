@@ -3,7 +3,7 @@ import mongodb from 'mongodb'
 import { connectionDefault } from './config'
 
 let bucket
-const getGridFSBucket = () => {
+export const getGridFSBucket = () => {
   if (!bucket) {
     bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
   }
