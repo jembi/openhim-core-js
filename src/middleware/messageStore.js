@@ -88,7 +88,7 @@ export async function initiateRequest (ctx) {
 
     tx.save((err, tx) => {
       if (err) {
-        logger.error(`Could not save transaction metadata (intial request): ${err}`)
+        logger.error(`Could not save transaction metadata (initial request): ${err}`)
         reject(err)
       } else {
         logger.info(`stored initial primary request for ${tx._id}`)
@@ -101,7 +101,7 @@ export async function initiateRequest (ctx) {
 }
 
 /*
- *  Find and update an existing transaction once a Request has completed streaming 
+ *  Find and update an existing transaction once a Request has completed streaming
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
 export function completeRequest (ctx, done) {
@@ -109,7 +109,7 @@ export function completeRequest (ctx, done) {
   if (ctx && !ctx.requestTimestampEnd) {
     ctx.requestTimestampEnd = new Date()
   }
- 
+
   const transactionId = getTransactionId(ctx)
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
@@ -117,8 +117,8 @@ export function completeRequest (ctx, done) {
 
     /*
      *  For short transactions, the 'end' timestamp is before the 'start' timestamp.
-     *  (Persisting the transaction initially takes longer than fully processing the transaction) 
-     *  In these cases, swop the 'start' and 'end' values around; the transaction duration is 
+     *  (Persisting the transaction initially takes longer than fully processing the transaction)
+     *  In these cases, swop the 'start' and 'end' values around; the transaction duration is
      *  not exactly accurate, but at least it isn't negative.
      */
     let t = tx.request.timestamp
@@ -126,7 +126,7 @@ export function completeRequest (ctx, done) {
       t = ctx.requestTimestampEnd
       ctx.requestTimestampEnd = tx.request.timestamp
     }
-  
+
     const update = {
       request: {
         bodyId: ctx.request.bodyId,
@@ -134,7 +134,7 @@ export function completeRequest (ctx, done) {
         timestampEnd: ctx.requestTimestampEnd
       }
     }
-    
+
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
       if (err) {
         logger.error(`Could not save complete request metadata for transaction: ${ctx.transactionId}. ${err}`)
@@ -151,7 +151,7 @@ export function completeRequest (ctx, done) {
 }
 
 /*
- *  Update an existing transaction once a Response has started streaming 
+ *  Update an existing transaction once a Response has started streaming
  *    into the HIM
  */
 export function initiateResponse (ctx, done) {
@@ -162,7 +162,7 @@ export function initiateResponse (ctx, done) {
   const transactionId = getTransactionId(ctx)
 
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
-/* 
+/*
   // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
     // reset request body - primary route
@@ -173,7 +173,7 @@ export function initiateResponse (ctx, done) {
     'response.status': ctx.response.status,
     'response.headers': headers,
     'response.bodyId': ctx.response.bodyId,
-    'response.timestamp': ctx.responseTimestamp,  
+    'response.timestamp': ctx.responseTimestamp,
     error: ctx.error,
     orchestrations: []
   }
@@ -207,7 +207,7 @@ export function initiateResponse (ctx, done) {
 }
 
 /*
- *  Find and update an existing transaction once a Response has completed streaming 
+ *  Find and update an existing transaction once a Response has completed streaming
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
 export function completeResponse (ctx, done) {
@@ -215,23 +215,23 @@ export function completeResponse (ctx, done) {
   if (ctx && !ctx.responseTimestampEnd) {
     ctx.responseTimestampEnd = new Date()
   }
- 
+
   const transactionId = getTransactionId(ctx)
 
   const update = {
     'response.timestampEnd': ctx.responseTimestampEnd
   }
-  
+
   return transactions.TransactionModel.findOneAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
-    if (err) { 
+    if (err) {
       logger.error(`Could not save completed response metadata for transaction: ${ctx.transactionId}. ${err}`)
-      return done(err) 
+      return done(err)
     }
     if ((tx === undefined) || (tx === null)) {
       logger.error(`Could not find transaction: ${ctx.transactionId}`)
       return done(err)
     }
-    logger.info(`stored completed primary response for ${tx._id}`)
+    logger.info(`stored primary response for ${tx._id}`)
     done(null, tx)
   })
 }

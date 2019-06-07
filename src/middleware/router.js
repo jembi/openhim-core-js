@@ -24,7 +24,7 @@ config.mongo = config.get('mongo')
 config.router = config.get('router')
 
 
-var bucket
+let bucket
 
 const isRouteEnabled = route => (route.status == null) || (route.status === 'enabled')
 
@@ -51,7 +51,7 @@ function setKoaResponse (ctx, response) {
       response.headers['X-OpenHIM-TransactionID'] = ctx.request.header['X-OpenHIM-TransactionID']
     }
   }
-  
+
   for (const key in response.headers) {
     const value = response.headers[key]
     switch (key.toLowerCase()) {
@@ -389,7 +389,7 @@ function sendRequest (ctx, route, options) {
   } else {
     logger.info('Routing http(s) request')
     return sendHttpRequest(ctx, route, options)
-/* 
+/*
     .then(response => {
       //recordOrchestration(response)
       // Return the response as before
@@ -413,11 +413,11 @@ function obtainCharset (headers) {
 }
 
 function sendHttpRequest (ctx, route, options) {
-  return new Promise((resolve, reject) => {    
+  return new Promise((resolve, reject) => {
     const response = {}
 
     let { downstream } = ctx.state
-/* 
+/*
     const gunzip = zlib.createGunzip()
     const inflate = zlib.createInflate()
 */
@@ -536,7 +536,7 @@ function sendHttpRequest (ctx, route, options) {
         logger.error(`Client error streaming response upstream: ${err}`)
         reject(err)
       })
-  
+
     const timeout = route.timeout != null ? route.timeout : +config.router.timeout
     routeReq.setTimeout(timeout, () => {
       routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))

@@ -53,7 +53,7 @@ describe('HTTP Router', () => {
         }
       })
 
-      it('should route an incomming request to the endpoints specific by the channel config', async () => {
+      it('should route an incoming request to the endpoints specific by the channel config', async () => {
         const respBody = 'Hi I am the response\n'
         const ctx = createContext(DEFAULT_CHANNEL)
         server = await testUtils.createMockHttpServer(respBody)
