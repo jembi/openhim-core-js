@@ -482,9 +482,6 @@ function sendHttpRequest (ctx, route, options) {
 
             ctx.responseTimestampEnd = new Date()
             messageStore.completeResponse(ctx, () => {})
-
-            // Reset for next transaction
-            counter = NaN
         })
       })
       .on('error', (err) => {
