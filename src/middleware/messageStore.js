@@ -128,12 +128,10 @@ export function completeRequest (ctx, done) {
     }
 
     const update = {
-      request: {
-        bodyId: ctx.request.bodyId,
-        timestamp: t,
-        timestampEnd: ctx.requestTimestampEnd
-      }
-    }
+      'request.bodyId': ctx.request.bodyId, 
+      'request.timestamp': t, 
+      'request.timestampEnd': ctx.requestTimestampEnd
+    } 
 
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
       if (err) {
