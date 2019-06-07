@@ -416,10 +416,6 @@ function sendHttpRequest (ctx, route, options) {
     const response = {}
 
     let { downstream } = ctx.state
-/*
-    const gunzip = zlib.createGunzip()
-    const inflate = zlib.createInflate()
-*/
     let method = http
 
     if (route.secured) {
@@ -436,24 +432,7 @@ function sendHttpRequest (ctx, route, options) {
         let uploadStream
         let counter = 0
         let size = 0
-/*
-        const uncompressedBodyBufs = []
-        if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
-          routeRes.pipe(gunzip)
 
-          gunzip.on('data', (data) => {
-            uncompressedBodyBufs.push(data)
-          })
-        }
-
-        if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
-          routeRes.pipe(inflate)
-
-          inflate.on('data', (data) => {
-            uncompressedBodyBufs.push(data)
-          })
-        }
-*/
         if(!bucket) {
           bucket = getGridFSBucket()
         }
@@ -506,25 +485,6 @@ function sendHttpRequest (ctx, route, options) {
 
             // Reset for next transaction
             counter = NaN
-/*
-            const charset = obtainCharset(routeRes.headers)
-            if (routeRes.headers['content-encoding'] === 'gzip') {
-              gunzip.on('end', () => {
-                const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-                response.body = uncompressedBody.toString(charset)
-                resolve(response)
-              })
-            } else if (routeRes.headers['content-encoding'] === 'deflate') {
-              inflate.on('end', () => {
-                const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-                response.body = uncompressedBody.toString(charset)
-                resolve(response)
-              })
-            } else {
-*/
-//            response.body = Buffer.concat(bufs)
-//            resolve(response)
-//          }
         })
       })
       .on('error', (err) => {
