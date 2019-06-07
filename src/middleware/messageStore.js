@@ -81,7 +81,7 @@ export async function initiateRequest (ctx) {
       // reset request body
       ctx.body = ''
       // check if method is POST|PUT|PATCH - rerun not possible without request body
-      if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
+      if (['POST', 'PUT', 'PATCH'].includes(ctx.method)) {
         tx.canRerun = false
       }
     }
