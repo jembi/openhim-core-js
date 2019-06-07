@@ -23,7 +23,6 @@ import { brotliCompressSync } from 'zlib';
 config.mongo = config.get('mongo')
 config.router = config.get('router')
 
-
 let bucket
 
 const isRouteEnabled = route => (route.status == null) || (route.status === 'enabled')
