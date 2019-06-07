@@ -46,14 +46,18 @@ async function rawBodyReader (ctx, next) {
       bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
       uploadStream = bucket.openUploadStream()
 
-      // CONFIRM: Is the file id assigned at this point? Property id ... or files_id... file_id(?)
+      // Create the transaction for Request (started receiving)
+      // Side effect: Updates the Koa ctx with the transactionId
+      ctx.requestTimestamp = new Date()
+      ctx.request.bodyId = uploadStream.id
+      promise = messageStore.initiateRequest(ctx)
+
       uploadStream
         .on('error', (err) => {
           console.log('UPLOAD-ERROR='+JSON.stringify(err))
         })
         .on('finish', (file) => {  // Get the GridFS file object that was created
           console.log('FILE-OBJ='+JSON.stringify(file))
-          ctx.request.bodyId = file._id
 
           // Update the transaction for Request (finished receiving)
           // Only update after `messageStore.initiateRequest` has completed
@@ -72,13 +76,6 @@ async function rawBodyReader (ctx, next) {
       counter++;
       size += chunk.toString().length
       console.log(`Read CHUNK # ${counter} [ Cum size ${size}]`)
-
-      // Create the transaction for Request (started receiving)
-      // Side effect: Updates the Koa ctx with the transactionId
-      if (counter == 1) {
-        ctx.requestTimestamp = new Date()
-        promise = messageStore.initiateRequest(ctx)
-      }
 
       // Write chunk to GridFS & downstream
       uploadStream.write(chunk)

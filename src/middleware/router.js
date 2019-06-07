@@ -6,7 +6,7 @@ import http from 'http'
 import https from 'https'
 import net from 'net'
 import tls from 'tls'
-import logger, { verbose } from 'winston'
+import logger from 'winston'
 import cookie from 'cookie'
 import { config } from '../config'
 import * as utils from '../utils'
@@ -420,7 +420,9 @@ function sendHttpRequest (ctx, route, options) {
 /* 
     const gunzip = zlib.createGunzip()
     const inflate = zlib.createInflate()
+
 */
+
     let method = http
 
     if (route.secured) {
@@ -453,6 +455,7 @@ function sendHttpRequest (ctx, route, options) {
           uncompressedBodyBufs.push(data)
         })
       }
+
 */
 //      const bufs = []
  
@@ -530,10 +533,9 @@ function sendHttpRequest (ctx, route, options) {
               resolve(response)
             })
           } else {
-*/
-//            response.body = Buffer.concat(bufs)
-//            resolve(response)
-//          }
+ */
+            response.body = Buffer.concat(bufs)
+            resolve(response)
         })
 
       routeReq
