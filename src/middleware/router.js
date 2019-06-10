@@ -88,6 +88,8 @@ function setKoaResponse (ctx, response) {
         break
     }
   }
+
+  messageStore.completeResponse(ctx, () => {})
 }
 
 if (process.env.NODE_ENV === 'test') {
@@ -348,7 +350,6 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
     })
 
 function sendRequest (ctx, route, options) {
-/*
   function buildOrchestration (response) {
     const orchestration = {
       name: route.name,
@@ -390,24 +391,22 @@ function sendRequest (ctx, route, options) {
     }
     ctx.orchestrations.push(buildOrchestration(response))
   }
-*/
+
   if ((route.type === 'tcp') || (route.type === 'mllp')) {
     logger.info('Routing socket request')
     return sendSocketRequest(ctx, route, options)
   } else {
     logger.info('Routing http(s) request')
     return sendHttpRequest(ctx, route, options)
-/*
-    .then(response => {
-      //recordOrchestration(response)
-      // Return the response as before
+      .then(response => {
+        recordOrchestration(response)
+        // Return the response as before
         return response
       }).catch(err => {
-      //recordOrchestration(err)
-      // Rethrow the error
+        recordOrchestration(err)
+        // Rethrow the error
         throw err
      })
-*/
   }
 }
 
@@ -472,7 +471,6 @@ function sendHttpRequest (ctx, route, options) {
             uploadStream.end()
             response.body.push(null)
             response.timestampEnd = new Date()
-            messageStore.completeResponse(ctx, () => {})
             resolve(response)
         })
       })
