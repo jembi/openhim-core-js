@@ -437,21 +437,6 @@ function sendHttpRequest (ctx, route, options) {
           bucket = getGridFSBucket()
         }
 
-        ctx.response.body = new Writable({
-          write: function(chunk, encoding, next) {
-            counter++
-            size += chunk.toString().length
-            logger.info(`Write Response CHUNK # ${counter} upstream [ Total size ${size} ]`)
-            next()
-          }
-        }).on('error', (err) => {
-            logger.error(`Error streaming response upstream: ${err}`)
-            reject(err)
-          })
-          .on('finish', () => {
-            resolve(response)
-          })
-
         uploadStream = bucket.openUploadStream()
         ctx.response.bodyId = uploadStream.id
 
@@ -466,22 +451,20 @@ function sendHttpRequest (ctx, route, options) {
         // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
         routeRes
           .on('data', (chunk) => {
-            if (!ctx.responseTimestamp) {
-              ctx.responseTimestamp = new Date()
+            if (!response.timestamp) {
+              response.timestamp = new Date()
               messageStore.initiateResponse(ctx, () => {})
             }
             uploadStream.write(chunk)
-            ctx.response.body.write(chunk)
             response.body.push(chunk)
           })
           .on('end', () => {
             logger.info(`** END OF OUTPUT STREAM **`)
             uploadStream.end()
             response.body.push(null)
-            ctx.response.body.end()
-
-            ctx.responseTimestampEnd = new Date()
+            response.timestampEnd = new Date()
             messageStore.completeResponse(ctx, () => {})
+            resolve(response)
         })
       })
       .on('error', (err) => {
