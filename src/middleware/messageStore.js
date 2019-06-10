@@ -173,8 +173,7 @@ export function initiateResponse (ctx, done) {
     'response.headers': headers,
     'response.bodyId': ctx.response.bodyId,
     'response.timestamp': ctx.responseTimestamp,
-    error: ctx.error,
-    orchestrations: []
+    error: ctx.error
   }
 
   if (ctx.mediatorResponse) {
@@ -222,7 +221,8 @@ export function completeResponse (ctx, done) {
       'response.timestampEnd': ctx.responseTimestampEnd,
       'response.status': ctx.response.status,
       'response.message': ctx.response.message,
-      'response.headers': headers
+      'response.headers': headers,
+      orchestrations: ctx.orchestrations
     }
 
   return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
