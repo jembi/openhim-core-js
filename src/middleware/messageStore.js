@@ -128,6 +128,7 @@ export function completeRequest (ctx, done) {
     }
 
     const update = {
+      channelID: (ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined),
       'request.bodyId': ctx.request.bodyId, 
       'request.timestamp': t, 
       'request.timestampEnd': ctx.requestTimestampEnd
@@ -217,8 +218,8 @@ export function completeResponse (ctx, done) {
   const transactionId = getTransactionId(ctx)
 
   const update = {
-    'response.timestampEnd': ctx.responseTimestampEnd
-  }
+      'response.timestampEnd': ctx.responseTimestampEnd
+    }
 
   return transactions.TransactionModel.findOneAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
     if (err) {
