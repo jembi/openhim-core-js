@@ -81,7 +81,7 @@ export async function initiateRequest (ctx) {
       // reset request body
       ctx.body = ''
       // check if method is POST|PUT|PATCH - rerun not possible without request body
-      if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
+      if (['POST', 'PUT', 'PATCH'].includes(ctx.method)) {
         tx.canRerun = false
       }
     }
@@ -128,12 +128,10 @@ export function completeRequest (ctx, done) {
     }
 
     const update = {
-      request: {
-        bodyId: ctx.request.bodyId,
-        timestamp: t,
-        timestampEnd: ctx.requestTimestampEnd
-      }
-    }
+      'request.bodyId': ctx.request.bodyId, 
+      'request.timestamp': t, 
+      'request.timestampEnd': ctx.requestTimestampEnd
+    } 
 
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
       if (err) {
