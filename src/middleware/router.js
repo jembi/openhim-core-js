@@ -76,6 +76,8 @@ function setKoaResponse (ctx, response) {
         break
     }
   }
+
+  messageStore.completeResponse(ctx, () => {})
 }
 
 if (process.env.NODE_ENV === 'test') {
@@ -460,7 +462,6 @@ function sendHttpRequest (ctx, route, options) {
             uploadStream.end()
             response.body.push(null)
             response.timestampEnd = new Date()
-            messageStore.completeResponse(ctx, () => {})
             resolve(response)
         })
       })

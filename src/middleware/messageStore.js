@@ -91,9 +91,9 @@ export async function initiateRequest (ctx) {
         logger.error(`Could not save transaction metadata (initial request): ${err}`)
         reject(err)
       } else {
-        logger.info(`stored initial primary request for ${tx._id}`)
         ctx.transactionId = tx._id
         ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
+        logger.info(`Done initiateRequest for transaction: ${tx._id}`)
         resolve(tx)
       }
     })
@@ -134,16 +134,16 @@ export function completeRequest (ctx, done) {
       'request.timestampEnd': ctx.requestTimestampEnd
     } 
 
-    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
+    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: false }, (err, tx) => {
       if (err) {
-        logger.error(`Could not save complete request metadata for transaction: ${ctx.transactionId}. ${err}`)
+        logger.error(`Could not save complete request metadata for transaction: ${transactionId}. ${err}`)
         return done(err)
       }
       if ((tx === undefined) || (tx === null)) {
-        logger.error(`Could not find transaction: ${ctx.transactionId}`)
+        logger.error(`Could not find transaction: ${transactionId}`)
         return done(err)
       }
-      logger.info(`stored completed primary request for ${tx._id}`)
+      logger.info(`Done completeRequest for transaction: ${tx._id}`)
       done(null, tx)
     })
   })
@@ -190,17 +190,16 @@ export function initiateResponse (ctx, done) {
   }
 
   //await extractTransactionPayloadIntoChunks(update)
-
-  transactions.TransactionModel.findOneAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
+  transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
-      logger.error(`Could not save initial response metadata for transaction: ${ctx.transactionId}. ${err}`)
+      logger.error(`Could not save initial response metadata for transaction: ${transactionId}. ${err}`)
       done(err)
     }
     if ((tx === undefined) || (tx === null)) {
-      logger.error(`Could not find transaction: ${ctx.transactionId}`)
+      logger.error(`Could not find transaction: ${transactionId}`)
       done(err)
     }
-    logger.info(`stored initial primary response for ${tx._id}`)
+    logger.info(`Done initiateResponse for transaction: ${tx._id}`)
     done(null, tx)
   })
 }
@@ -217,11 +216,16 @@ export function completeResponse (ctx, done) {
 
   const transactionId = getTransactionId(ctx)
 
+  const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
+
   const update = {
-      'response.timestampEnd': ctx.responseTimestampEnd
+      'response.timestampEnd': ctx.responseTimestampEnd,
+      'response.status': ctx.response.status,
+      'response.message': ctx.response.message,
+      'response.headers': headers
     }
 
-  return transactions.TransactionModel.findOneAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
     if (err) {
       logger.error(`Could not save completed response metadata for transaction: ${ctx.transactionId}. ${err}`)
       return done(err)
@@ -230,7 +234,7 @@ export function completeResponse (ctx, done) {
       logger.error(`Could not find transaction: ${ctx.transactionId}`)
       return done(err)
     }
-    logger.info(`stored primary response for ${tx._id}`)
+    logger.info(`Done completeResponse for transaction: ${tx._id}`)
     done(null, tx)
   })
 }
