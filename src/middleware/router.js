@@ -35,6 +35,18 @@ export function numberOfPrimaryRoutes (routes) {
 const containsMultiplePrimaries = routes => numberOfPrimaryRoutes(routes) > 1
 
 function setKoaResponse (ctx, response) {
+  // Try and parse the status to an int if it is a string
+  let err
+  if (typeof response.status === 'string') {
+    try {
+      response.status = parseInt(response.status, 10)
+    } catch (error) {
+      err = error
+      logger.error(err)
+    }
+  }
+
+  ctx.response.status = response.status
   ctx.response.timestamp = response.timestamp
   ctx.response.body = response.body
 
