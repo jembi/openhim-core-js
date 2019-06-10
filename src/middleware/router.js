@@ -16,11 +16,8 @@ import { promisify } from 'util'
 import { getGridFSBucket } from '../contentChunk'
 import { Writable, Readable } from 'stream';
 import util from 'util'
-import mongodb from 'mongodb'
-import { connectionDefault } from '../config'
 import { brotliCompressSync } from 'zlib';
 
-config.mongo = config.get('mongo')
 config.router = config.get('router')
 
 let bucket
