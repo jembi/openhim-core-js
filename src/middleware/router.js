@@ -282,7 +282,7 @@ function sendRequestToRoutes (ctx, routes, next) {
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
       // Set the final status of the transaction
-/* 
+/*
       messageStore.setFinalStatus(ctx, err => {
         if (err) {
           logger.error(`Setting final status failed for transaction: ${ctx.transactionId}`, err)
@@ -447,6 +447,11 @@ function sendHttpRequest (ctx, route, options) {
         uploadStream = bucket.openUploadStream()
         ctx.response.bodyId = uploadStream.id
 
+        if (!ctx.authorisedChannel.responseBody) {
+          // reset response body id
+          ctx.response.bodyId = null
+        }
+
         uploadStream
           .on('error', (err) => {
             logger.error(`Error streaming response to GridFS: ${err}`)
@@ -462,7 +467,11 @@ function sendHttpRequest (ctx, route, options) {
               response.timestamp = new Date()
               messageStore.initiateResponse(ctx, () => {})
             }
-            uploadStream.write(chunk)
+
+            if (ctx.authorisedChannel.responseBody) {
+              // write into gridfs only when the channel responseBody property is true
+              uploadStream.write(chunk)
+            }
             response.body.push(chunk)
           })
           .on('end', () => {
