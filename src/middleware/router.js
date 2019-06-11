@@ -475,7 +475,6 @@ function sendHttpRequest (ctx, route, options) {
         // If request socket closes the connection abnormally
         ctx.res.socket
           .on('finish', (err) => {
-            logger.info('ctx='+JSON.stringify(ctx))
             messageStore.completeResponse(ctx, () => {})
           })
           .on('error', (err) => {
