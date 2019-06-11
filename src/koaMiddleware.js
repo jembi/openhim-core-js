@@ -105,13 +105,13 @@ export function setupApp (done) {
     app.use(tlsAuthentication.koaMiddleware)
   }
 
-  app.use(rawBodyReader)
-
   // Request Matching middleware
   app.use(requestMatching.koaMiddleware)
 
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
+
+  app.use(rawBodyReader)
 
   // Compress response on exit
   app.use(compress({
