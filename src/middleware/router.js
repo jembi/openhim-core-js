@@ -282,6 +282,7 @@ function sendRequestToRoutes (ctx, routes, next) {
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
       // Set the final status of the transaction
+/* 
       messageStore.setFinalStatus(ctx, err => {
         if (err) {
           logger.error(`Setting final status failed for transaction: ${ctx.transactionId}`, err)
@@ -289,7 +290,7 @@ function sendRequestToRoutes (ctx, routes, next) {
         }
         logger.debug(`Set final status for transaction: ${ctx.transactionId}`)
       })
-
+ */
       // TODO: OHM-694 Uncomment when secondary routes are supported
       // Save events for the secondary routes
       // if (ctx.routes) {
@@ -476,6 +477,14 @@ function sendHttpRequest (ctx, route, options) {
         ctx.res.socket
           .on('finish', (err) => {
             messageStore.completeResponse(ctx, () => {})
+            // Set the final status of the transaction
+            messageStore.setFinalStatus(ctx, err => {
+              if (err) {
+                logger.error(`Setting final status failed for transaction: ${ctx.transactionId}`, err)
+                return
+              }
+              logger.debug(`Set final status for transaction: ${ctx.transactionId}`)
+            })
           })
           .on('error', (err) => {
             messageStore.updateWithError(ctx, { errorStatusCode: 410, errorMessage: err }, () => {})
