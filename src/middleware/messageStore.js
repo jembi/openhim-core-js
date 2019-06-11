@@ -299,6 +299,53 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
  * This should only be called once all routes have responded.
  */
 export function setFinalStatus (ctx, callback) {
+
+  function getRoutesStatus () {
+    const routesStatus = {
+      routeFailures: false,
+      routeSuccess: true
+    }
+
+    if (ctx.routes) {
+      for (const route of Array.from(ctx.routes)) {
+        if (route.response.status >= 500 && route.response.status <= 599) {
+          routesStatus.routeFailures = true
+        }
+        if (!(route.response.status >= 200 && route.response.status <= 299)) {
+          routesStatus.routeSuccess = false
+        }
+      }
+    }
+
+    return routesStatus
+  }
+
+  function getContextResult () {
+    let result
+    const routesStatus = getRoutesStatus()
+
+    if (ctx.response.status >= 500 && ctx.response.status <= 599) {
+      result = transactionStatus.FAILED
+    } else {
+      if (routesStatus.routeFailures) {
+        result = transactionStatus.COMPLETED_W_ERR
+      }
+      if ((ctx.response.status >= 200 && ctx.response.status <= 299) && routesStatus.routeSuccess) {
+        result = transactionStatus.SUCCESSFUL
+      }
+      if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routesStatus.routeSuccess) {
+        result = transactionStatus.COMPLETED
+      }
+    }
+
+    // In all other cases mark as completed
+    if (!result) {
+      result = transactionStatus.COMPLETED
+    }
+
+    return result
+  }
+
   const transactionId = getTransactionId(ctx)
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
@@ -309,43 +356,12 @@ export function setFinalStatus (ctx, callback) {
       logger.debug(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
       update.status = ctx.mediatorResponse.status
     } else {
-      let routeFailures = false
-      let routeSuccess = true
-      if (ctx.routes) {
-        for (const route of Array.from(ctx.routes)) {
-          if (route.response.status >= 500 && route.response.status <= 599) {
-            routeFailures = true
-          }
-          if (!(route.response.status >= 200 && route.response.status <= 299)) {
-            routeSuccess = false
-          }
-        }
-      }
-
-      if (ctx.response.status >= 500 && ctx.response.status <= 599) {
-        tx.status = transactionStatus.FAILED
-      } else {
-        if (routeFailures) {
-          tx.status = transactionStatus.COMPLETED_W_ERR
-        }
-        if ((ctx.response.status >= 200 && ctx.response.status <= 299) && routeSuccess) {
-          tx.status = transactionStatus.SUCCESSFUL
-        }
-        if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routeSuccess) {
-          tx.status = transactionStatus.COMPLETED
-        }
-      }
-
-      // In all other cases mark as completed
-      if (tx.status === 'Processing') {
-        tx.status = transactionStatus.COMPLETED
-      }
-
-      ctx.transactionStatus = tx.status
-
+      tx.status = getContextResult()
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
     }
+
+    ctx.transactionStatus = update.status
 
     if (ctx.autoRetry != null) {
       if (!autoRetryUtils.reachedMaxAttempts(tx, ctx.authorisedChannel)) {
