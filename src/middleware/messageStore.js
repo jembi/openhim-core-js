@@ -209,21 +209,19 @@ export function initiateResponse (ctx, done) {
  */
 export function completeResponse (ctx, done) {
 
-  if (ctx && !ctx.responseTimestampEnd) {
-    ctx.responseTimestampEnd = new Date()
-  }
+  ctx.responseTimestampEnd = new Date()
 
   const transactionId = getTransactionId(ctx)
 
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
 
   const update = {
-      'response.timestampEnd': ctx.responseTimestampEnd,
-      'response.status': ctx.response.status,
-      'response.message': ctx.response.message,
-      'response.headers': headers,
-      orchestrations: ctx.orchestrations
-    }
+    'response.timestampEnd': ctx.responseTimestampEnd,
+    'response.status': ctx.response.status,
+    'response.message': ctx.response.message,
+    'response.headers': headers,
+    orchestrations: ctx.orchestrations
+  }
 
   return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
     if (err) {
@@ -235,6 +233,34 @@ export function completeResponse (ctx, done) {
       return done(err)
     }
     logger.info(`Done completeResponse for transaction: ${tx._id}`)
+    done(null, tx)
+  })
+}
+
+/*
+ *  Find and update an existing transaction if a Response doesn't finish streaming
+ *    upstream from the HIM (Not async; Mongo should handle locking issues, etc)
+ */
+export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
+
+  const transactionId = getTransactionId(ctx)
+
+  const update = {
+    'response.timestampEnd': new Date(),
+    'response.status': errorStatusCode,
+    'response.message': errorMessage,
+  }
+
+  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+    if (err) {
+      logger.error(`Could not save error information for transaction: ${ctx.transactionId}. ${err}`)
+      return done(err)
+    }
+    if ((tx === undefined) || (tx === null)) {
+      logger.error(`Could not find transaction: ${ctx.transactionId}`)
+      return done(err)
+    }
+    logger.info(`Done updateWithError for transaction: ${tx._id}`)
     done(null, tx)
   })
 }
