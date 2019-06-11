@@ -88,8 +88,6 @@ function setKoaResponse (ctx, response) {
         break
     }
   }
-
-  messageStore.completeResponse(ctx, () => {})
 }
 
 if (process.env.NODE_ENV === 'test') {
@@ -472,7 +470,17 @@ function sendHttpRequest (ctx, route, options) {
             response.body.push(null)
             response.timestampEnd = new Date()
             resolve(response)
-        })
+          })
+
+        // If request socket closes the connection abnormally
+        ctx.res.socket
+          .on('finish', (err) => {
+            logger.info('ctx='+JSON.stringify(ctx))
+            messageStore.completeResponse(ctx, () => {})
+          })
+          .on('error', (err) => {
+            messageStore.updateWithError(ctx, { errorStatusCode: 410, errorMessage: err }, () => {})
+          })
       })
       .on('error', (err) => {
         logger.error(`Error streaming response upstream: ${err}`)
