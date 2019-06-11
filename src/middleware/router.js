@@ -418,6 +418,17 @@ function obtainCharset (headers) {
   return 'utf-8'
 }
 
+function setTransactionFinalStatus (ctx) {
+  // Set the final status of the transaction
+  messageStore.setFinalStatus(ctx, (err, tx) => {
+    if (err) {
+      logger.error(`Setting final status failed for transaction: ${tx._id}`, err)
+      return
+    }
+    logger.info(`Set final status for transaction: ${tx._id} - ${tx.status}`)
+  })
+}
+
 function sendHttpRequest (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
@@ -485,19 +496,14 @@ function sendHttpRequest (ctx, route, options) {
         // If request socket closes the connection abnormally
         ctx.res.socket
           .on('finish', () => {
-            messageStore.completeResponse(ctx, () => {
-              // Set the final status of the transaction
-              messageStore.setFinalStatus(ctx, (err, tx) => {
-                if (err) {
-                  logger.error(`Setting final status failed for transaction: ${tx._id}`, err)
-                  return
-                }
-                logger.info(`Set final status for transaction: ${tx._id} - ${tx.status}`)
-              })
+            messageStore.completeResponse(ctx, (err, tx) => {
+              setTransactionFinalStatus(ctx)
             })
           })
           .on('error', (err) => {
-            messageStore.updateWithError(ctx, { errorStatusCode: 410, errorMessage: err }, () => {})
+            messageStore.updateWithError(ctx, { errorStatusCode: 410, errorMessage: err }, (err, tx) => {
+              setTransactionFinalStatus(ctx)
+            })
           })
       })
       .on('error', (err) => {
