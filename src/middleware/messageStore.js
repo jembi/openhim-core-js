@@ -88,7 +88,7 @@ export async function initiateRequest (ctx) {
 
     tx.save((err, tx) => {
       if (err) {
-        logger.error(`Could not save transaction metadata (initial request): ${err}`)
+        logger.error(`Could not save transaction metadata (initiateRequest): ${err}`)
         reject(err)
       } else {
         ctx.transactionId = tx._id
@@ -136,7 +136,7 @@ export function completeRequest (ctx, done) {
 
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: false }, (err, tx) => {
       if (err) {
-        logger.error(`Could not save complete request metadata for transaction: ${transactionId}. ${err}`)
+        logger.error(`Could not save transaction metadata (completeRequest): ${transactionId}. ${err}`)
         return done(err)
       }
       if ((tx === undefined) || (tx === null)) {
@@ -191,7 +191,7 @@ export function initiateResponse (ctx, done) {
   //await extractTransactionPayloadIntoChunks(update)
   transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
-      logger.error(`Could not save initial response metadata for transaction: ${transactionId}. ${err}`)
+      logger.error(`Could not save transaction metadata (initiateResponse): ${transactionId}. ${err}`)
       done(err)
     }
     if ((tx === undefined) || (tx === null)) {
@@ -225,7 +225,7 @@ export function completeResponse (ctx, done) {
 
   return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
     if (err) {
-      logger.error(`Could not save completed response metadata for transaction: ${ctx.transactionId}. ${err}`)
+      logger.error(`Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`)
       return done(err)
     }
     if ((tx === undefined) || (tx === null)) {
@@ -253,7 +253,7 @@ export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
 
   return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
     if (err) {
-      logger.error(`Could not save error information for transaction: ${ctx.transactionId}. ${err}`)
+      logger.error(`Could not save transaction metadata (updateWithError): ${ctx.transactionId}. ${err}`)
       return done(err)
     }
     if ((tx === undefined) || (tx === null)) {
