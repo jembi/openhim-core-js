@@ -475,15 +475,16 @@ function sendHttpRequest (ctx, route, options) {
 
         // If request socket closes the connection abnormally
         ctx.res.socket
-          .on('finish', (err) => {
-            messageStore.completeResponse(ctx, () => {})
-            // Set the final status of the transaction
-            messageStore.setFinalStatus(ctx, err => {
-              if (err) {
-                logger.error(`Setting final status failed for transaction: ${ctx.transactionId}`, err)
-                return
-              }
-              logger.debug(`Set final status for transaction: ${ctx.transactionId}`)
+          .on('finish', () => {
+            messageStore.completeResponse(ctx, () => {
+              // Set the final status of the transaction
+              messageStore.setFinalStatus(ctx, (err, tx) => {
+                if (err) {
+                  logger.error(`Setting final status failed for transaction: ${tx._id}`, err)
+                  return
+                }
+                logger.info(`Set final status for transaction: ${tx._id} - ${tx.status}`)
+              })
             })
           })
           .on('error', (err) => {
