@@ -129,10 +129,10 @@ export function completeRequest (ctx, done) {
 
     const update = {
       channelID: (ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined),
-      'request.bodyId': ctx.request.bodyId, 
-      'request.timestamp': t, 
+      'request.bodyId': ctx.request.bodyId,
+      'request.timestamp': t,
       'request.timestampEnd': ctx.requestTimestampEnd
-    } 
+    }
 
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: false }, (err, tx) => {
       if (err) {
@@ -218,7 +218,6 @@ export function completeResponse (ctx, done) {
   const update = {
     'response.timestampEnd': ctx.responseTimestampEnd,
     'response.status': ctx.response.status,
-    'response.message': ctx.response.message,
     'response.headers': headers,
     orchestrations: ctx.orchestrations
   }
@@ -248,7 +247,9 @@ export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
   const update = {
     'response.timestampEnd': new Date(),
     'response.status': errorStatusCode,
-    'response.message': errorMessage,
+    error: {
+      message: errorMessage
+    }
   }
 
   return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
