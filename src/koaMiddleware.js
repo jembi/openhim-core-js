@@ -143,8 +143,6 @@ export function setupApp (done) {
 export function rerunApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
-
   // Rerun bypass authentication middlware
   app.use(rerunBypassAuthentication.koaMiddleware)
 
@@ -154,8 +152,10 @@ export function rerunApp (done) {
   // Update original transaction with rerunned transaction ID
   app.use(rerunUpdateTransactionTask.koaMiddleware)
 
+  app.use(rawBodyReader)
+
   // Persist message middleware
-  app.use(messageStore.koaMiddleware)
+  //app.use(messageStore.koaMiddleware)
 
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
