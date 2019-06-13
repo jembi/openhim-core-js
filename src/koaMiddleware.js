@@ -152,13 +152,13 @@ export function rerunApp (done) {
   // Update original transaction with rerunned transaction ID
   app.use(rerunUpdateTransactionTask.koaMiddleware)
 
-  app.use(rawBodyReader)
-
   // Persist message middleware
   //app.use(messageStore.koaMiddleware)
 
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
+
+  app.use(rawBodyReader)
 
   // Events
   app.use(events.koaMiddleware)
