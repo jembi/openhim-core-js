@@ -39,19 +39,19 @@ async function rawBodyReader (ctx, next) {
     bucket = getGridFSBucket()
   }
 
-  const uploadStream = bucket.openUploadStream()
+  const gridFsStream = bucket.openUploadStream()
 
   ctx.requestTimestamp = new Date()
 
   if(['POST', 'PUT'].includes(ctx.req.method)) {
-    ctx.request.bodyId = uploadStream.id
+    ctx.request.bodyId = gridFsStream.id
   }
 
   // Create the transaction for Request (started receiving)
   // Side effect: Updates the Koa ctx with the transactionId
   const promise = messageStore.initiateRequest(ctx)
 
-  uploadStream
+  gridFsStream
     .on('error', (err) => {
       logger.error('Error streaming request to GridFS: '+err)
     })
@@ -73,14 +73,14 @@ async function rawBodyReader (ctx, next) {
       logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
 
       // Write chunk to GridFS & downstream
-      uploadStream.write(chunk)
+      gridFsStream.write(chunk)
       ctx.state.downstream.push(chunk)
     })
     .on('end', () => {
       logger.info(`** END OF INPUT STREAM **`)
 
       // Close streams to gridFS and downstream
-      uploadStream.end()
+      gridFsStream.end()
       ctx.state.downstream.push(null)
     })
     .on('error', (err) => {
