@@ -215,6 +215,12 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
 
   options.headers.parentID = transaction._id
   options.headers.taskID = taskID
+
+  /*
+   *  For GET and DELETE, bodyId will be null. Still need to supply
+   *     empty header, so that HIM will not expect a body in GridFS
+   *  For POST and PUT, bodyId will be fileId for body stored in GridFS
+   */
   options.headers['X-Body-ID'] = transaction.request.bodyId
 
   if (transaction.request.querystring) {
