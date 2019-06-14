@@ -51,51 +51,56 @@ async function rawBodyReader (ctx, next) {
    * custom header (the GridFS fileId of the body for this transaction)
    */
   const bodyId = ctx.request.headers['x-body-id']
-  const requestHasBody = (bodyId == null)
+  const requestHasBody = (['POST', 'PUT'].includes(ctx.req.method)) && (bodyId == null)
 
-  if (requestHasBody) {
-    /*
-     *   Request has a body, so stream it into GridFs
-     */
-    gridFsStream = bucket.openUploadStream()
+  if (['POST', 'PUT'].includes(ctx.req.method)) {
+    if (requestHasBody) {
+      /*
+      *   Request has a body, so stream it into GridFs
+      */
+      gridFsStream = bucket.openUploadStream()
 
-    ctx.requestTimestamp = new Date()
+      ctx.requestTimestamp = new Date()
 
-    // Get the GridFS file object that was created
-    if(['POST', 'PUT'].includes(ctx.req.method)) {
+      // Get the GridFS file object that was created
       ctx.request.bodyId = gridFsStream.id
+
+      // Create the transaction for Request (started receiving)
+      // Side effect: Updates the Koa ctx with the transactionId
+      promise = messageStore.initiateRequest(ctx)
+
+      gridFsStream
+        .on('error', (err) => {
+          logger.error(`Couldn't stream request into GridFS for fileId: ${ctx.request.bodyId} - ${err}`)
+        })
+    } else {
+      /*
+      *   Request has a bodyId (it's a rerun), so stream the body from GridFs 
+      *      and send it downstream
+      */
+      const fileId = new Types.ObjectId(bodyId)
+      gridFsStream = bucket.openDownloadStream(fileId)
+
+      ctx.request.bodyId = fileId
+      promise = messageStore.initiateRequest(ctx)
+
+      gridFsStream
+        .on('data', (chunk) => {
+          ctx.req.push(chunk)
+        })
+        .on('end', () => {
+          logger.info(`** END OF INPUT GRIDFS STREAM **`)
+          ctx.req.push(null)
+        })
+        .on('error', (err) => {
+          logger.error(`Cannot stream request body from GridFS for fileId: ${bodyId} - ${err}`)
+        })
     }
-
-    // Create the transaction for Request (started receiving)
-    // Side effect: Updates the Koa ctx with the transactionId
-    promise = messageStore.initiateRequest(ctx)
-
-    gridFsStream
-      .on('error', (err) => {
-        logger.error(`Couldn't stream request into GridFS for fileId: ${ctx.request.bodyId} - ${err}`)
-      })
   } else {
     /*
-     *   Request has a bodyId (it's a rerun), so stream the body from GridFs 
-     *      and send it downstream
+     *  GET and DELETE come in here to persist the intial request transaction
      */
-    const fileId = new Types.ObjectId(bodyId)
-    gridFsStream = bucket.openDownloadStream(fileId)
-
-    ctx.request.bodyId = fileId
     promise = messageStore.initiateRequest(ctx)
-
-    gridFsStream
-      .on('data', (chunk) => {
-        ctx.req.push(chunk)
-      })
-      .on('end', () => {
-        logger.info(`** END OF INPUT GRIDFS STREAM **`)
-        ctx.req.push(null)
-      })
-      .on('error', (err) => {
-        logger.error(`Cannot stream request body from GridFS for fileId: ${bodyId} - ${err}`)
-      })
   }
 
   ctx.req

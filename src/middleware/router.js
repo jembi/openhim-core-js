@@ -490,16 +490,14 @@ function sendHttpRequest (ctx, route, options) {
             uploadStream.end()
             response.body.push(null)
             response.timestampEnd = new Date()
+            messageStore.completeResponse(ctx, (err, tx) => {
+              setTransactionFinalStatus(ctx)
+            })
             resolve(response)
           })
 
         // If request socket closes the connection abnormally
         ctx.res.socket
-          .on('finish', () => {
-            messageStore.completeResponse(ctx, (err, tx) => {
-              setTransactionFinalStatus(ctx)
-            })
-          })
           .on('error', (err) => {
             messageStore.updateWithError(ctx, { errorStatusCode: 410, errorMessage: err }, (err, tx) => {
               setTransactionFinalStatus(ctx)
