@@ -358,7 +358,7 @@ function sendRequest (ctx, route, options) {
         path: options.path,
         headers: options.headers,
         method: options.method,
-        body: ctx.body,
+        bodyId: ctx.request.bodyId,
         timestamp: ctx.requestTimestamp
       }
     }
@@ -372,8 +372,9 @@ function sendRequest (ctx, route, options) {
       orchestration.response = {
         headers: response.headers,
         status: response.status,
-        body: response.body,
-        timestamp: response.timestamp
+        bodyId: ctx.response.bodyId,
+        timestamp: response.timestamp,
+        timestampEnd: ctx.timestampEnd
       }
     }
 
