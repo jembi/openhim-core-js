@@ -395,6 +395,18 @@ function sendRequest (ctx, route, options) {
     logger.info('Routing socket request')
     return sendSocketRequest(ctx, route, options)
   } else {
+    if (!route.primary) {
+      logger.info('Routing secondary route http(s) request')
+      return sendSecondaryRouteHttpRequest(ctx, route, options)
+        .then(response => {
+          // Return the response as before
+          return response
+        }).catch(err => {
+          // Rethrow the error
+          throw err
+       })
+    }
+
     logger.info('Routing http(s) request')
     return sendHttpRequest(ctx, route, options)
       .then(response => {
@@ -533,6 +545,91 @@ function sendHttpRequest (ctx, route, options) {
         logger.error(`Error streaming request downstream: ${err}`)
         reject(err)
       })
+  })
+}
+
+// Send secondary route request
+const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
+  return new Promise((resolve, reject) => {
+    const response = {}
+    let { downstream } = ctx.state
+    let method = http
+
+    if (route.secured) {
+      method = https
+    }
+
+    const routeReq = method.request(options)
+      .on('response', routeRes => {
+        response.status = routeRes.statusCode
+        response.headers = routeRes.headers
+
+        if(!bucket) {
+          bucket = getGridFSBucket()
+        }
+
+        const uploadStream = bucket.openUploadStream()
+        response.bodyId = uploadStream.id
+
+        if (!ctx.authorisedChannel.responseBody) {
+          // reset response body id
+          response.bodyId = null
+        }
+
+        uploadStream
+          .on('error', (err) => {
+            logger.error(`Error streaming secondary route '${route.request.path}' response to GridFS: ${err}`)
+          })
+          .on('finish', (file) => {
+            logger.info(`Streamed secondary route '${route.request.path}' response body to GridFS: ${file._id}`)
+          })
+
+        routeRes
+          .on('data', chunk => {
+            if (!response.timestamp) {
+              response.timestamp = new Date()
+            }
+
+            if (ctx.authorisedChannel.responseBody) {
+              // write into gridfs only when the channel responseBody property is true
+              uploadStream.write(chunk)
+            }
+          })
+          .on('end', () => {
+            logger.info(`** END OF OUTPUT STREAM **`)
+            uploadStream.end()
+            response.timestampEnd = new Date()
+            resolve(response)
+          })
+      })
+      .on('error', (err) => {
+        logger.error(`Error streaming secondary route '${route.request.path}' request upstream: ${err}`)
+        reject(err)
+      })
+      .on('clientError', (err) => {
+        logger.error(`Client error streaming '${route.request.path}' request upstream: ${err}`)
+        reject(err)
+      })
+
+
+      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+      routeReq.setTimeout(timeout, () => {
+        routeReq.destroy(new Error(`Request '${route.request.path}' took longer than ${timeout}ms`))
+      })
+
+      downstream
+        .on('data', (chunk) => {
+          if (['POST', 'PUT', 'PATCH'].includes(route.request.method)) {
+            routeReq.write(chunk)
+          }
+        })
+        .on('end', () => {
+          routeReq.end()
+        })
+        .on('error', (err) => {
+          logger.error(`Error streaming request body downstream: ${err}`)
+          reject(err)
+        })
   })
 }
 
