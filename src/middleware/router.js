@@ -523,7 +523,7 @@ function sendHttpRequest (ctx, route, options) {
 
     downstream
       .on('data', (chunk) => {
-        if (['POST', 'PUT'].includes(ctx.request.method)) {
+        if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
           routeReq.write(chunk)
         }
       })
