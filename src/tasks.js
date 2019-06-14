@@ -185,15 +185,6 @@ function rerunGetTransaction (transactionID, callback) {
       return callback(err, null)
     }
 
-    try {
-      const transList = await addBodiesToTransactions(new Array(transaction))
-      if (transList && transList.length > 0) {
-        transaction = transList[0]
-      }
-    } catch (err) {
-      return callback(err)
-    }
-
     // send the transactions data in callback
     return callback(null, transaction)
   })
@@ -224,6 +215,7 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
 
   options.headers.parentID = transaction._id
   options.headers.taskID = taskID
+  options.headers['X-Body-ID'] = transaction.request.bodyId
 
   if (transaction.request.querystring) {
     options.path += `?${transaction.request.querystring}`
@@ -292,12 +284,6 @@ function rerunHttpRequestSend (options, transaction, callback) {
     return callback(null, response)
   })
 
-  // write data to request body
-  if ((transaction.request.method === 'POST') || (transaction.request.method === 'PUT')) {
-    if (transaction.request.body != null) {
-      req.write(transaction.request.body)
-    }
-  }
   return req.end()
 }
 
