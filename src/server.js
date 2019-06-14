@@ -283,7 +283,9 @@ if (cluster.isMaster && !module.parent) {
     })
 
     // log any socket errors
-    return socket.on('error', err => logger.error(err))
+    return socket.on('error', err => {
+      logger.error(`Socket id ${id}: ${err}`)
+    })
   }
 
   exports.isTcpHttpReceiverRunning = () => tcpHttpReceiver != null
