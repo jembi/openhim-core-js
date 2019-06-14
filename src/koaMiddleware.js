@@ -26,6 +26,7 @@ import { checkServerIdentity } from 'tls';
 import { Readable } from 'stream';
 import { promisify } from 'util';
 import { getGridFSBucket }  from './contentChunk'
+import { Types } from 'mongoose'
 
 config.authentication = config.get('authentication')
 
@@ -39,32 +40,63 @@ async function rawBodyReader (ctx, next) {
     bucket = getGridFSBucket()
   }
 
-  const gridFsStream = bucket.openUploadStream()
-
-  ctx.requestTimestamp = new Date()
-
-  if(['POST', 'PUT'].includes(ctx.req.method)) {
-    ctx.request.bodyId = gridFsStream.id
-  }
-
-  // Create the transaction for Request (started receiving)
-  // Side effect: Updates the Koa ctx with the transactionId
-  const promise = messageStore.initiateRequest(ctx)
-
-  gridFsStream
-    .on('error', (err) => {
-      logger.error('Error streaming request to GridFS: '+err)
-    })
-    .on('finish', (file) => {  // Get the GridFS file object that was created
-      // Update the transaction for Request (finished receiving)
-      // Only update after `messageStore.initiateRequest` has completed
-      promise.then(() => {
-        messageStore.completeRequest(ctx, () => {})
-      })
-    })
-
   ctx.state.downstream = new Readable()
   ctx.state.downstream._read = () => {}
+
+  let gridFsStream
+  let promise
+
+  /*
+   * Only transactions that were requested to be rerun should have this 
+   * custom header (the GridFS fileId of the body for this transaction)
+   */
+  const bodyId = ctx.request.headers['x-body-id']
+  const requestHasBody = (bodyId == null)
+
+  if (requestHasBody) {
+    /*
+     *   Request has a body, so stream it into GridFs
+     */
+    gridFsStream = bucket.openUploadStream()
+
+    ctx.requestTimestamp = new Date()
+
+    // Get the GridFS file object that was created
+    if(['POST', 'PUT'].includes(ctx.req.method)) {
+      ctx.request.bodyId = gridFsStream.id
+    }
+
+    // Create the transaction for Request (started receiving)
+    // Side effect: Updates the Koa ctx with the transactionId
+    promise = messageStore.initiateRequest(ctx)
+
+    gridFsStream
+      .on('error', (err) => {
+        logger.error(`Couldn't stream request into GridFS for fileId: ${ctx.request.bodyId} - ${err}`)
+      })
+  } else {
+    /*
+     *   Request has a bodyId (it's a rerun), so stream the body from GridFs 
+     *      and send it downstream
+     */
+    const fileId = new Types.ObjectId(bodyId)
+    gridFsStream = bucket.openDownloadStream(fileId)
+
+    ctx.request.bodyId = fileId
+    promise = messageStore.initiateRequest(ctx)
+
+    gridFsStream
+      .on('data', (chunk) => {
+        ctx.req.push(chunk)
+      })
+      .on('end', () => {
+        logger.info(`** END OF INPUT GRIDFS STREAM **`)
+        ctx.req.push(null)
+      })
+      .on('error', (err) => {
+        logger.error(`Cannot stream request body from GridFS for fileId: ${bodyId} - ${err}`)
+      })
+  }
 
   ctx.req
     .on('data', (chunk) => {
@@ -73,18 +105,28 @@ async function rawBodyReader (ctx, next) {
       logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
 
       // Write chunk to GridFS & downstream
-      gridFsStream.write(chunk)
+      if (requestHasBody) {
+        gridFsStream.write(chunk)
+      }
       ctx.state.downstream.push(chunk)
     })
     .on('end', () => {
       logger.info(`** END OF INPUT STREAM **`)
 
       // Close streams to gridFS and downstream
-      gridFsStream.end()
+      if (requestHasBody) {
+        gridFsStream.end()
+      }
       ctx.state.downstream.push(null)
+
+      // Update the transaction for Request (finished receiving)
+      // Only update after `messageStore.initiateRequest` has completed
+      promise.then(() => {
+        messageStore.completeRequest(ctx, () => {})
+      })
     })
     .on('error', (err) => {
-      logger.error('Error on incoming request stream: '+err)
+      logger.error(`Couldn't read request stream from socket: ${err}`)
     })
 
   await next()
@@ -149,9 +191,6 @@ export function rerunApp (done) {
   // Rerun bypass authorisation middlware
   app.use(rerunBypassAuthorisation.koaMiddleware)
 
-  // Update original transaction with rerunned transaction ID
-  app.use(rerunUpdateTransactionTask.koaMiddleware)
-
   // Persist message middleware
   //app.use(messageStore.koaMiddleware)
 
@@ -159,6 +198,9 @@ export function rerunApp (done) {
   app.use(authorisation.koaMiddleware)
 
   app.use(rawBodyReader)
+
+  // Update original transaction with rerunned transaction ID
+  app.use(rerunUpdateTransactionTask.koaMiddleware)
 
   // Events
   app.use(events.koaMiddleware)
