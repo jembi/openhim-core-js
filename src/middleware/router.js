@@ -323,6 +323,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         headers: ctx.request.header,
         querystring: ctx.request.querystring,
         method: ctx.request.method,
+        bodyId: ctx.request.bodyId,
         timestamp: ctx.requestTimestamp
       }
       if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
@@ -585,6 +586,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
             logger.info(`Streamed secondary route '${route.request.path}' response body to GridFS: ${file._id}`)
           })
 
+        const responseBuf = []
         routeRes
           .on('data', chunk => {
             if (!response.timestamp) {
@@ -595,10 +597,19 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
               // write into gridfs only when the channel responseBody property is true
               uploadStream.write(chunk)
             }
+
+            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+              responseBuf.push(chunk)
+            }
           })
           .on('end', () => {
             logger.info(`** END OF OUTPUT STREAM **`)
             uploadStream.end()
+
+            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+              response.body = Buffer.concat(responseBuf)
+            }
+
             response.timestampEnd = new Date()
             resolve(response)
           })
