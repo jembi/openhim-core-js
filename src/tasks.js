@@ -290,6 +290,10 @@ function rerunHttpRequestSend (options, transaction, callback) {
     return callback(null, response)
   })
 
+  /*
+   *  Rerun transaction request bodies are empty. A bodyId is passed in the headers and
+   *     the request body is streamed in from GridFs.
+   */
   return req.end()
 }
 
