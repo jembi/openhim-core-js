@@ -88,6 +88,10 @@ function setKoaResponse (ctx, response) {
         break
     }
   }
+
+  messageStore.completeResponse(ctx, (err, tx) => {
+    setTransactionFinalStatus(ctx)
+  })
 }
 
 if (process.env.NODE_ENV === 'test') {
@@ -490,12 +494,13 @@ function sendHttpRequest (ctx, route, options) {
             uploadStream.end()
             response.body.push(null)
             response.timestampEnd = new Date()
+/* 
             messageStore.completeResponse(ctx, (err, tx) => {
               setTransactionFinalStatus(ctx)
             })
+*/
             resolve(response)
           })
-
         // If request socket closes the connection abnormally
         ctx.res.socket
           .on('error', (err) => {
