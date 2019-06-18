@@ -580,10 +580,10 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
 
         uploadStream
           .on('error', (err) => {
-            logger.error(`Error streaming secondary route '${route.request.path}' response to GridFS: ${err}`)
+            logger.error(`Error streaming secondary route response body from '${options.path}' into GridFS: ${err}`)
           })
           .on('finish', (file) => {
-            logger.info(`Streamed secondary route '${route.request.path}' response body to GridFS: ${file._id}`)
+            logger.info(`Streamed secondary route response body from '${options.path}' into GridFS, body id ${file._id}`)
           })
 
         const responseBuf = []
@@ -615,18 +615,17 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
           })
       })
       .on('error', (err) => {
-        logger.error(`Error streaming secondary route '${route.request.path}' request upstream: ${err}`)
+        logger.error(`Error in streaming secondary route request '${options.path}' upstream: ${err}`)
         reject(err)
       })
       .on('clientError', (err) => {
-        logger.error(`Client error streaming '${route.request.path}' request upstream: ${err}`)
+        logger.error(`Client error in streaming secondary route request '${options.path}' upstream: ${err}`)
         reject(err)
       })
 
-
       const timeout = route.timeout != null ? route.timeout : +config.router.timeout
       routeReq.setTimeout(timeout, () => {
-        routeReq.destroy(new Error(`Request '${route.request.path}' took longer than ${timeout}ms`))
+        routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
       })
 
       downstream
