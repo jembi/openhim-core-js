@@ -630,7 +630,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
 
       downstream
         .on('data', (chunk) => {
-          if (['POST', 'PUT', 'PATCH'].includes(route.request.method)) {
+          if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
             routeReq.write(chunk)
           }
         })
