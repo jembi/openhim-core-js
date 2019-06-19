@@ -1,6 +1,8 @@
 
 import mongodb from 'mongodb'
-import { connectionDefault } from './config'
+import { config, connectionDefault } from './config'
+
+const apiConf = config.get('api')
 
 let bucket
 export const getGridFSBucket = () => {
@@ -131,11 +133,22 @@ export const retrievePayload = fileId => {
 
     const bucket = getGridFSBucket()
     const chunks = []
+    let payloadSize = 0
+    // Perhaps the truncateSize should be represented in actual size, and not string length
+    const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
 
-    bucket.openDownloadStream(fileId)
-      .on('error', err => reject(err))
-      .on('data', chunk => chunks.push(chunk))
-      .on('end', () => resolve(Buffer.concat(chunks).toString()))
+    const downloadStream = bucket.openDownloadStream(fileId)
+    downloadStream.on('error', err => reject(err))
+    downloadStream.on('data', chunk => {
+      payloadSize += chunk.length
+      if (payloadSize >= truncateSize) {
+        downloadStream.destroy()
+      }
+
+      chunks.push(chunk)
+    })
+    downloadStream.on('end', () => resolve(Buffer.concat(chunks).toString()))
+    downloadStream.on('close', () => resolve(Buffer.concat(chunks).toString()))
   })
 }
 
@@ -170,12 +183,12 @@ const filterPayloadType = (transaction) => {
     try {
       if (transaction.request && transaction.request.bodyId) {
         transaction.request.body = await retrievePayload(transaction.request.bodyId)
-         delete transaction.request.bodyId
+        delete transaction.request.bodyId
       }
 
       if(transaction.response && transaction.response.bodyId) {
         transaction.response.body = await retrievePayload(transaction.response.bodyId)
-         delete transaction.response.bodyId
+        delete transaction.response.bodyId
       }
     } catch (err) {
       return reject(err)
