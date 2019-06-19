@@ -323,6 +323,10 @@ export function setFinalStatus (ctx, callback) {
     let result
     const routesStatus = getRoutesStatus(ctx.routes)
 
+    if ((ctx.response == undefined) || (ctx.response == null)) {
+      return transactionStatus.FAILED
+    }
+
     if (ctx.response.status >= 500 && ctx.response.status <= 599) {
       result = transactionStatus.FAILED
     } else {
@@ -348,6 +352,10 @@ export function setFinalStatus (ctx, callback) {
   function getTransactionResult (tx) {
     let result
     const routesStatus = getRoutesStatus(tx.routes)
+
+    if ((tx.response == undefined) || (tx.response == null)) {
+      return transactionStatus.FAILED
+    }
 
     if (tx.response.status >= 500 && tx.response.status <= 599) {
       result = transactionStatus.FAILED
