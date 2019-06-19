@@ -507,15 +507,19 @@ function sendHttpRequest (ctx, route, options) {
       })
       .on('error', (err) => {
         logger.error(`Error streaming response upstream: ${err}`)
+        setTransactionFinalStatus(ctx)
         reject(err)
       })
       .on('clientError', (err) => {
         logger.error(`Client error streaming response upstream: ${err}`)
+        setTransactionFinalStatus(ctx)
         reject(err)
       })
 
     const timeout = route.timeout != null ? route.timeout : +config.router.timeout
     routeReq.setTimeout(timeout, () => {
+      setTransactionFinalStatus(ctx)
+      routeReq.end()
       routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
