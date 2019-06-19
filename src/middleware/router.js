@@ -281,7 +281,7 @@ function sendRequestToRoutes (ctx, routes, next) {
 
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
-      
+
       // Set the final status of the transaction
       setTransactionFinalStatus(ctx)
 
@@ -452,6 +452,12 @@ function sendHttpRequest (ctx, route, options) {
       method = https
     }
 
+    /*
+     This is used to determine whether the secondary route should finish execution.
+     It should not when there is a failure on the primary route
+    */
+    ctx.primaryRouteFailure = false
+
     const routeReq = method.request(options)
       .on('response', (routeRes) => {
         response.status = routeRes.statusCode
@@ -519,6 +525,7 @@ function sendHttpRequest (ctx, route, options) {
           })
       })
       .on('error', (err) => {
+        ctx.primaryRouteFailure = true
         logger.error(`Error streaming response upstream: ${err}`)
         reject(err)
       })
@@ -589,6 +596,13 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
           .on('data', chunk => {
             if (!response.timestamp) {
               response.timestamp = new Date()
+            }
+
+            // Storing of the secondary route response is not done when the primary route fails
+            if (ctx.primaryRouteFailure) {
+              uploadStream.abort(() => {
+                logger.error('Secondary route stream closed as result of a failure on the primary route')
+              })
             }
 
             if (ctx.authorisedChannel.responseBody) {
