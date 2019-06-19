@@ -281,16 +281,10 @@ function sendRequestToRoutes (ctx, routes, next) {
 
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
+      
       // Set the final status of the transaction
-/*
-      messageStore.setFinalStatus(ctx, err => {
-        if (err) {
-          logger.error(`Setting final status failed for transaction: ${ctx.transactionId}`, err)
-          return
-        }
-        logger.debug(`Set final status for transaction: ${ctx.transactionId}`)
-      })
- */
+      setTransactionFinalStatus(ctx)
+
       // TODO: OHM-694 Uncomment when secondary routes are supported
       // Save events for the secondary routes
       // if (ctx.routes) {
@@ -345,6 +339,10 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
       // on failure
       const routeObj = {}
       routeObj.name = route.name
+
+      if (!ctx.routes) { ctx.routes = [] }
+      ctx.routes.push(routeObj)
+
       handleServerError(ctx, reason, routeObj)
       return routeObj
     })
@@ -511,7 +509,7 @@ function sendHttpRequest (ctx, route, options) {
         ctx.res.socket
           .on('finish', () => {
             messageStore.completeResponse(ctx, (err, tx) => {
-              setTransactionFinalStatus(ctx)
+              // setTransactionFinalStatus(ctx)
             })
           })
           .on('error', (err) => {
@@ -630,7 +628,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
 
       downstream
         .on('data', (chunk) => {
-          if (['POST', 'PUT', 'PATCH'].includes(route.request.method)) {
+          if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
             routeReq.write(chunk)
           }
         })
