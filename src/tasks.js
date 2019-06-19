@@ -257,6 +257,11 @@ function rerunHttpRequestSend (options, transaction, callback) {
 
   logger.info(`Rerun Transaction #${transaction._id} - HTTP Request is being sent...`)
   const req = http.request(options, (res) => {
+    res.on('data', chunk => {
+      // response data
+      response.body += chunk
+    })
+
     return res.on('end', (err) => {
       if (err) {
         response.transaction.status = 'Failed'
@@ -269,7 +274,7 @@ function rerunHttpRequestSend (options, transaction, callback) {
       response.headers = res.headers
       response.timestamp = new Date()
 
-      logger.info(`Rerun Transaction #${transaction._id} - HTTP Response is complete`)
+      logger.info(`Rerun Transaction #${transaction._id} - HTTP Response has been captured`)
       return callback(null, response)
     })
   })
