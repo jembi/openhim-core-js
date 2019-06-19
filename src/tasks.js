@@ -258,8 +258,11 @@ function rerunHttpRequestSend (options, transaction, callback) {
   logger.info(`Rerun Transaction #${transaction._id} - HTTP Request is being sent...`)
   const req = http.request(options, (res) => {
     res.on('data', chunk => {
-      // response data
-      response.body += chunk
+      /*
+       *  Don't need the response body at this point, because it's already been captured 
+       *  in GridFS (from router.js). 
+       *  Still need to have 'data' listener defined, or it changes program behaviour
+       */
     })
 
     return res.on('end', (err) => {
