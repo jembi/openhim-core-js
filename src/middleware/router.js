@@ -526,6 +526,7 @@ function sendHttpRequest (ctx, route, options) {
       })
       .on('error', (err) => {
         ctx.primaryRouteFailure = true
+        messageStore.initiateResponse(ctx, () => {})
         logger.error(`Error streaming response upstream: ${err}`)
         reject(err)
       })
