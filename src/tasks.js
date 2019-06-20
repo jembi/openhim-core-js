@@ -136,6 +136,11 @@ function rerunTransaction (transactionID, taskID, callback) {
   rerunGetTransaction(transactionID, (err, transaction) => {
     if (err) { return callback(err) }
 
+    if (['POST', 'PUT'].includes(transaction.request.method) && (!transaction.request.bodyId)) {
+      const err = new Error('No body for this request - Cannot rerun transaction')
+      return callback(err, null)
+    }
+
     // setup the option object for the HTTP Request
     return ChannelModel.findById(transaction.channelID, (err, channel) => {
       if (err) { return callback(err) }
