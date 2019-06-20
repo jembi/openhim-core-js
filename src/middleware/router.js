@@ -646,6 +646,9 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
           if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
             routeReq.write(chunk)
           }
+          if (ctx.primaryRouteFailure) {
+            routeReq.destroy(new Error(`Aborting secondary route request, primary route request failed`))
+          }
         })
         .on('end', () => {
           routeReq.end()
