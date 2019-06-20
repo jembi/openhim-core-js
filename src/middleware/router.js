@@ -89,9 +89,7 @@ function setKoaResponse (ctx, response) {
     }
   }
 
-  messageStore.completeResponse(ctx, (err, tx) => {
-    setTransactionFinalStatus(ctx)
-  })
+  messageStore.completeResponse(ctx, (err, tx) => {})
 }
 
 if (process.env.NODE_ENV === 'test') {
@@ -285,6 +283,7 @@ function sendRequestToRoutes (ctx, routes, next) {
 
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
+      setTransactionFinalStatus(ctx)
       // Set the final status of the transaction
 /*
       messageStore.setFinalStatus(ctx, err => {
@@ -310,6 +309,7 @@ function sendRequestToRoutes (ctx, routes, next) {
       // }
     }).catch(err => {
       logger.error(err)
+      setTransactionFinalStatus(ctx)
     })
   })
 }
@@ -500,26 +500,20 @@ function sendHttpRequest (ctx, route, options) {
         // If request socket closes the connection abnormally
         ctx.res.socket
           .on('error', (err) => {
-            messageStore.updateWithError(ctx, { errorStatusCode: 410, errorMessage: err }, (err, tx) => {
-              setTransactionFinalStatus(ctx)
-            })
+            messageStore.updateWithError(ctx, { errorStatusCode: 410, errorMessage: err }, (err, tx) => {})
           })
       })
       .on('error', (err) => {
         logger.error(`Error streaming response upstream: ${err}`)
-        setTransactionFinalStatus(ctx)
         reject(err)
       })
       .on('clientError', (err) => {
         logger.error(`Client error streaming response upstream: ${err}`)
-        setTransactionFinalStatus(ctx)
         reject(err)
       })
 
     const timeout = route.timeout != null ? route.timeout : +config.router.timeout
     routeReq.setTimeout(timeout, () => {
-      setTransactionFinalStatus(ctx)
-      routeReq.end()
       routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
