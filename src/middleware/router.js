@@ -500,7 +500,9 @@ function sendHttpRequest (ctx, route, options) {
         // If request socket closes the connection abnormally
         ctx.res.socket
           .on('error', (err) => {
-            messageStore.updateWithError(ctx, { errorStatusCode: 410, errorMessage: err }, (err, tx) => {})
+            messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {
+              setTransactionFinalStatus(ctx)
+            })
           })
       })
       .on('error', (err) => {
