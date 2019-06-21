@@ -242,6 +242,8 @@ export function completeResponse (ctx, done) {
 export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
   const transactionId = getTransactionId(ctx)
 
+  ctx.response.status = errorStatusCode
+
   const update = {
     'response.timestampEnd': new Date(),
     'response.status': errorStatusCode,
@@ -352,7 +354,6 @@ export function setFinalStatus (ctx, callback) {
   function getTransactionResult (tx) {
     let result
     const routesStatus = getRoutesStatus(tx.routes)
-
     if ((tx.response == undefined) || (tx.response == null)) {
       return transactionStatus.FAILED
     }
@@ -389,8 +390,8 @@ export function setFinalStatus (ctx, callback) {
       logger.debug(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
       update.status = ctx.mediatorResponse.status
     } else {
-      //tx.status = getContextResult()
-      tx.status = getTransactionResult(tx)
+      tx.status = getContextResult()
+      //tx.status = getTransactionResult(tx)
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
     }
