@@ -51,9 +51,9 @@ async function rawBodyReader (ctx, next) {
    * custom header (the GridFS fileId of the body for this transaction)
    */
   const bodyId = ctx.request.headers['x-body-id']
-  const requestHasBody = (['POST', 'PUT'].includes(ctx.req.method)) && (bodyId == null)
+  const requestHasBody = (['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) && (bodyId == null)
 
-  if (['POST', 'PUT'].includes(ctx.req.method)) {
+  if (['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) {
     if (requestHasBody) {
       /*
       *   Request has a body, so stream it into GridFs

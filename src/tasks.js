@@ -226,7 +226,7 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
    *     empty header, so that HIM will not expect a body in GridFS
    *  For POST and PUT, bodyId will be fileId for body stored in GridFS
    */
-  options.headers['X-Body-ID'] = transaction.request.bodyId
+  options.headers['x-body-id'] = transaction.request.bodyId
 
   if (transaction.request.querystring) {
     options.path += `?${transaction.request.querystring}`

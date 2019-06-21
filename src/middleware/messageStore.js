@@ -391,7 +391,6 @@ export function setFinalStatus (ctx, callback) {
       update.status = ctx.mediatorResponse.status
     } else {
       tx.status = getContextResult()
-      //tx.status = getTransactionResult(tx)
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
     }
