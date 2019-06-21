@@ -9,6 +9,7 @@ import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
 import { config } from './config'
 
 import { addBodiesToTransactions } from './contentChunk'
+import { JsonPatchError } from 'fast-json-patch';
 
 config.rerun = config.get('rerun')
 
@@ -113,6 +114,7 @@ async function processNextTaskRound (task) {
           logger.error(`An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`)
         } else {
           transaction.tstatus = 'Completed'
+          transaction.rerunStatus = response.transaction.status
         }
 
         task.remainingTransactions--
@@ -136,7 +138,7 @@ function rerunTransaction (transactionID, taskID, callback) {
   rerunGetTransaction(transactionID, (err, transaction) => {
     if (err) { return callback(err) }
 
-    if (['POST', 'PUT'].includes(transaction.request.method) && (!transaction.request.bodyId)) {
+    if (['POST', 'PUT', 'PATCH'].includes(transaction.request.method) && (!transaction.request.bodyId)) {
       const err = new Error('No body for this request - Cannot rerun transaction')
       return callback(err, null)
     }
