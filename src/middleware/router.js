@@ -88,8 +88,6 @@ function setKoaResponse (ctx, response) {
         break
     }
   }
-
-  messageStore.completeResponse(ctx, (err, tx) => {})
 }
 
 if (process.env.NODE_ENV === 'test') {
@@ -233,6 +231,7 @@ function sendRequestToRoutes (ctx, routes, next) {
           })
           .then(() => {
             logger.info('primary route completed')
+            messageStore.completeResponse(ctx, (err, tx) => {})
             return next()
           })
           .catch((reason) => {
