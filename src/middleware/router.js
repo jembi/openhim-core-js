@@ -452,12 +452,6 @@ function sendHttpRequest (ctx, route, options) {
       method = https
     }
 
-    /*
-     This is used to determine whether the secondary route should finish execution.
-     It should not when there is a failure on the primary route
-    */
-    ctx.primaryRouteFailure = false
-
     const routeReq = method.request(options)
       .on('response', (routeRes) => {
         response.status = routeRes.statusCode
@@ -525,7 +519,11 @@ function sendHttpRequest (ctx, route, options) {
           })
       })
       .on('error', (err) => {
-        ctx.primaryRouteFailure = true
+        // Stop secondary routes' requests
+        if (ctx.secondaryRoutes) {
+          ctx.secondaryRoutes.forEach(routeReq => routeReq.destroy())
+        }
+
         messageStore.initiateResponse(ctx, () => {})
         logger.error(`Error streaming response upstream: ${err}`)
         reject(err)
@@ -599,13 +597,6 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
               response.timestamp = new Date()
             }
 
-            // Storing of the secondary route response is not done when the primary route fails
-            if (ctx.primaryRouteFailure) {
-              uploadStream.abort(() => {
-                logger.error('Secondary route stream closed as result of a failure on the primary route')
-              })
-            }
-
             if (ctx.authorisedChannel.responseBody) {
               // write into gridfs only when the channel responseBody property is true
               uploadStream.write(chunk)
@@ -641,13 +632,20 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
         routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
       })
 
+      /*
+        ctx.secondaryRoutes is an array containing the secondary routes' requests (streams). This enables termination of these requests when
+        the primary route's request fails
+      */
+      if (!ctx.secondaryRoutes) {
+        ctx.secondaryRoutes = []
+      }
+
+      ctx.secondaryRoutes.push(routeReq)
+
       downstream
         .on('data', (chunk) => {
           if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
             routeReq.write(chunk)
-          }
-          if (ctx.primaryRouteFailure) {
-            routeReq.destroy(new Error(`Aborting secondary route request, primary route request failed`))
           }
         })
         .on('end', () => {
