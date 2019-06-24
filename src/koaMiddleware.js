@@ -17,6 +17,7 @@ import * as requestMatching from './middleware/requestMatching'
 import * as authorisation from './middleware/authorisation'
 import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisation'
 import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
+import * as rawBodyReader from './middleware/rawBodyReader'
 import * as events from './middleware/events'
 import * as proxy from './middleware/proxy'
 // TODO: OHM-696 uncomment the line below
@@ -29,113 +30,6 @@ import { getGridFSBucket }  from './contentChunk'
 import { Types } from 'mongoose'
 
 config.authentication = config.get('authentication')
-
-let bucket
-
-async function rawBodyReader (ctx, next) {
-  let counter = 0
-  let size = 0
-
-  if (!bucket) {
-    bucket = getGridFSBucket()
-  }
-
-  ctx.state.downstream = new Readable()
-  ctx.state.downstream._read = () => {}
-
-  let gridFsStream
-  let promise
-
-  /*
-   * Only transactions that were requested to be rerun should have this 
-   * custom header (the GridFS fileId of the body for this transaction)
-   */
-  const bodyId = ctx.request.headers['x-body-id']
-  const requestHasBody = (['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) && (bodyId == null)
-
-  if (['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) {
-    if (requestHasBody) {
-      /*
-      *   Request has a body, so stream it into GridFs
-      */
-      gridFsStream = bucket.openUploadStream()
-
-      ctx.requestTimestamp = new Date()
-
-      // Get the GridFS file object that was created
-      ctx.request.bodyId = gridFsStream.id
-
-      // Create the transaction for Request (started receiving)
-      // Side effect: Updates the Koa ctx with the transactionId
-      promise = messageStore.initiateRequest(ctx)
-
-      gridFsStream
-        .on('error', (err) => {
-          logger.error(`Couldn't stream request into GridFS for fileId: ${ctx.request.bodyId} - ${err}`)
-        })
-    } else {
-      /*
-      *   Request has a bodyId (it's a rerun), so stream the body from GridFs 
-      *      and send it downstream
-      */
-      const fileId = new Types.ObjectId(bodyId)
-      gridFsStream = bucket.openDownloadStream(fileId)
-
-      ctx.request.bodyId = fileId
-      promise = messageStore.initiateRequest(ctx)
-
-      gridFsStream
-        .on('data', (chunk) => {
-          ctx.req.push(chunk)
-        })
-        .on('end', () => {
-          logger.info(`** END OF INPUT GRIDFS STREAM **`)
-          ctx.req.push(null)
-        })
-        .on('error', (err) => {
-          logger.error(`Cannot stream request body from GridFS for fileId: ${bodyId} - ${err}`)
-        })
-    }
-  } else {
-    /*
-     *  GET and DELETE come in here to persist the intial request transaction
-     */
-    promise = messageStore.initiateRequest(ctx)
-  }
-
-  ctx.req
-    .on('data', (chunk) => {
-      counter++;
-      size += chunk.toString().length
-      logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
-
-      // Write chunk to GridFS & downstream
-      if (requestHasBody) {
-        gridFsStream.write(chunk)
-      }
-      ctx.state.downstream.push(chunk)
-    })
-    .on('end', () => {
-      logger.info(`** END OF INPUT STREAM **`)
-
-      // Close streams to gridFS and downstream
-      if (requestHasBody) {
-        gridFsStream.end()
-      }
-      ctx.state.downstream.push(null)
-
-      // Update the transaction for Request (finished receiving)
-      // Only update after `messageStore.initiateRequest` has completed
-      promise.then(() => {
-        messageStore.completeRequest(ctx, () => {})
-      })
-    })
-    .on('error', (err) => {
-      logger.error(`Couldn't read request stream from socket: ${err}`)
-    })
-
-  await next()
-}
 
 // Primary app
 
@@ -158,7 +52,7 @@ export function setupApp (done) {
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
 
   // Compress response on exit
   app.use(compress({
@@ -202,7 +96,7 @@ export function rerunApp (done) {
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
 
   // Update original transaction with rerunned transaction ID
   app.use(rerunUpdateTransactionTask.koaMiddleware)
@@ -220,7 +114,7 @@ export function rerunApp (done) {
 export function tcpApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
   app.use(retrieveTCPTransaction.koaMiddleware)
 
   // TCP bypass authentication middlware
@@ -245,7 +139,7 @@ export function tcpApp (done) {
 export function pollingApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
 
   // Polling bypass authentication middlware
   app.use(pollingBypassAuthentication.koaMiddleware)
