@@ -472,6 +472,11 @@ async function sendHttpRequest (ctx, route, options) {
     },
     requestError: function () {},
     responseError: function (err) {
+      // Kill the secondary routes' requests when the primary route request fails
+      if (ctx.secondaryRoutes && Array.isArray(ctx.secondaryRoutes)) {
+        ctx.secondaryRoutes.forEach(routeReq => routeReq.destroy())
+      }
+
       messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {
         setTransactionFinalStatus(ctx)
       })
