@@ -196,7 +196,6 @@ export function initiateResponse (ctx, done) {
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
 export function completeResponse (ctx, done) {
-
   ctx.responseTimestampEnd = new Date()
 
   const transactionId = getTransactionId(ctx)
@@ -248,8 +247,9 @@ export function completeResponse (ctx, done) {
  *    upstream from the HIM (Not async; Mongo should handle locking issues, etc)
  */
 export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
-
   const transactionId = getTransactionId(ctx)
+
+  ctx.response.status = errorStatusCode
 
   const update = {
     'response.timestampEnd': new Date(),
@@ -308,14 +308,14 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
  */
 export function setFinalStatus (ctx, callback) {
 
-  function getRoutesStatus () {
+  function getRoutesStatus (routes) {
     const routesStatus = {
       routeFailures: false,
       routeSuccess: true
     }
 
-    if (ctx.routes) {
-      for (const route of Array.from(ctx.routes)) {
+    if (routes) {
+      for (const route of Array.from(routes)) {
         if (route.response.status >= 500 && route.response.status <= 599) {
           routesStatus.routeFailures = true
         }
@@ -330,7 +330,11 @@ export function setFinalStatus (ctx, callback) {
 
   function getContextResult () {
     let result
-    const routesStatus = getRoutesStatus()
+    const routesStatus = getRoutesStatus(ctx.routes)
+
+    if ((ctx.response == undefined) || (ctx.response == null)) {
+      return transactionStatus.FAILED
+    }
 
     if (ctx.response.status >= 500 && ctx.response.status <= 599) {
       result = transactionStatus.FAILED
@@ -342,6 +346,35 @@ export function setFinalStatus (ctx, callback) {
         result = transactionStatus.SUCCESSFUL
       }
       if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routesStatus.routeSuccess) {
+        result = transactionStatus.COMPLETED
+      }
+    }
+
+    // In all other cases mark as completed
+    if (!result) {
+      result = transactionStatus.COMPLETED
+    }
+
+    return result
+  }
+
+  function getTransactionResult (tx) {
+    let result
+    const routesStatus = getRoutesStatus(tx.routes)
+    if ((tx.response == undefined) || (tx.response == null)) {
+      return transactionStatus.FAILED
+    }
+
+    if (tx.response.status >= 500 && tx.response.status <= 599) {
+      result = transactionStatus.FAILED
+    } else {
+      if (routesStatus.routeFailures) {
+        result = transactionStatus.COMPLETED_W_ERR
+      }
+      if ((tx.response.status >= 200 && tx.response.status <= 299) && routesStatus.routeSuccess) {
+        result = transactionStatus.SUCCESSFUL
+      }
+      if ((tx.response.status >= 400 && tx.response.status <= 499) && routesStatus.routeSuccess) {
         result = transactionStatus.COMPLETED
       }
     }
@@ -368,8 +401,6 @@ export function setFinalStatus (ctx, callback) {
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
     }
-
-    ctx.transactionStatus = update.status
 
     if (ctx.autoRetry != null) {
       if (!autoRetryUtils.reachedMaxAttempts(tx, ctx.authorisedChannel)) {

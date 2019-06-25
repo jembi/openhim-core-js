@@ -17,6 +17,7 @@ import * as requestMatching from './middleware/requestMatching'
 import * as authorisation from './middleware/authorisation'
 import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisation'
 import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
+import * as rawBodyReader from './middleware/rawBodyReader'
 import * as events from './middleware/events'
 import * as proxy from './middleware/proxy'
 // TODO: OHM-696 uncomment the line below
@@ -26,69 +27,9 @@ import { checkServerIdentity } from 'tls';
 import { Readable } from 'stream';
 import { promisify } from 'util';
 import { getGridFSBucket }  from './contentChunk'
+import { Types } from 'mongoose'
 
 config.authentication = config.get('authentication')
-
-let bucket
-
-async function rawBodyReader (ctx, next) {
-  let counter = 0
-  let size = 0
-
-  if (!bucket) {
-    bucket = getGridFSBucket()
-  }
-
-  const uploadStream = bucket.openUploadStream()
-
-  ctx.requestTimestamp = new Date()
-
-  if(['POST', 'PUT'].includes(ctx.req.method)) {
-    ctx.request.bodyId = uploadStream.id
-  }
-
-  // Create the transaction for Request (started receiving)
-  // Side effect: Updates the Koa ctx with the transactionId
-  const promise = messageStore.initiateRequest(ctx)
-
-  uploadStream
-    .on('error', (err) => {
-      logger.error('Error streaming request to GridFS: '+err)
-    })
-    .on('finish', (file) => {  // Get the GridFS file object that was created
-      // Update the transaction for Request (finished receiving)
-      // Only update after `messageStore.initiateRequest` has completed
-      promise.then(() => {
-        messageStore.completeRequest(ctx, () => {})
-      })
-    })
-
-  ctx.state.downstream = new Readable()
-  ctx.state.downstream._read = () => {}
-
-  ctx.req
-    .on('data', (chunk) => {
-      counter++;
-      size += chunk.toString().length
-      logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
-
-      // Write chunk to GridFS & downstream
-      uploadStream.write(chunk)
-      ctx.state.downstream.push(chunk)
-    })
-    .on('end', () => {
-      logger.info(`** END OF INPUT STREAM **`)
-
-      // Close streams to gridFS and downstream
-      uploadStream.end()
-      ctx.state.downstream.push(null)
-    })
-    .on('error', (err) => {
-      logger.error('Error on incoming request stream: '+err)
-    })
-
-  await next()
-}
 
 // Primary app
 
@@ -111,7 +52,7 @@ export function setupApp (done) {
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
 
   // Compress response on exit
   app.use(compress({
@@ -143,22 +84,22 @@ export function setupApp (done) {
 export function rerunApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
-
   // Rerun bypass authentication middlware
   app.use(rerunBypassAuthentication.koaMiddleware)
 
   // Rerun bypass authorisation middlware
   app.use(rerunBypassAuthorisation.koaMiddleware)
 
-  // Update original transaction with rerunned transaction ID
-  app.use(rerunUpdateTransactionTask.koaMiddleware)
-
   // Persist message middleware
-  app.use(messageStore.koaMiddleware)
+  //app.use(messageStore.koaMiddleware)
 
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
+
+  app.use(rawBodyReader.koaMiddleware)
+
+  // Update original transaction with rerunned transaction ID
+  app.use(rerunUpdateTransactionTask.koaMiddleware)
 
   // Events
   app.use(events.koaMiddleware)
@@ -173,7 +114,7 @@ export function rerunApp (done) {
 export function tcpApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
   app.use(retrieveTCPTransaction.koaMiddleware)
 
   // TCP bypass authentication middlware
@@ -198,7 +139,7 @@ export function tcpApp (done) {
 export function pollingApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
 
   // Polling bypass authentication middlware
   app.use(pollingBypassAuthentication.koaMiddleware)
