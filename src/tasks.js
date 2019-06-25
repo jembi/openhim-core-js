@@ -9,7 +9,11 @@ import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
 import { config } from './config'
 
 import { addBodiesToTransactions } from './contentChunk'
-import { JsonPatchError } from 'fast-json-patch';
+import { JsonPatchError } from 'fast-json-patch'
+
+import { Readable } from 'stream'
+import { makeStreamingRequest } from './middleware/streamingRouter'
+import * as messageStore from './middleware/messageStore'
 
 config.rerun = config.get('rerun')
 
@@ -237,15 +241,73 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
   return callback(null, options)
 }
 
-/**
- * Construct HTTP options to be sent #
- */
+async function rerunHttpRequestSend (options, transaction, callback) {
+
+  const response = {
+    body: '',
+    transaction: {}
+  }
+
+  const statusEvents = {
+    badOptions: function () {
+      err = new Error(`An empty 'Options' object was supplied. Aborting HTTP Send Request`)
+      logger.error(err)
+      callback(err, null)
+    },
+    noRequest: function () {
+      err = new Error(`An empty 'Transaction' object was supplied. Aborting HTTP Send Request`)
+      logger.error(err)
+      callback(err, null)
+    },
+    startGridFs: function (fileId) {
+      logger.info(`Storing rerun response body in GridFS: ${fileId}`)
+    },
+    finishGridFs: function () {
+      logger.info(`Finished rerun storing response body in GridFS`)
+    },
+    gridFsError: function (err) {},
+    startRequest: function () {},
+    requestProgress: function () {},
+    finishRequest: function () {},
+    startResponse: function (res) {},
+    responseProgress: function (chunk, counter, size) {
+      logger.info(`Write rerun response CHUNK # ${counter} [ Total size ${size}]`)
+    },
+    finishResponse: function (res, size) {
+      logger.info(`** END OF RERUN OUTPUT STREAM ** ${size} bytes`)
+
+      // This is the response for the TASK (from the rerun port), not the TRANSACTION
+      response.status = res.statusCode
+      response.message = res.statusMessage
+      response.headers = res.headers
+      response.timestamp = new Date()
+      response.transaction.status = 'Completed'
+
+      logger.info(`Rerun Transaction #${transaction._id} - HTTP Response has been captured`)
+    },
+    requestError: function () {},
+    responseError: function (err) {
+      response.transaction.status = 'Failed'
+    },
+    clientError: function (err) {}
+  }
+
+  options.secured = false
+  options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(transaction.request.method)
+  options.responseBodyRequired = false
+
+  const sendable = new Readable()
+  sendable.push(transaction.request.body)
+  sendable.push(null)
+
+  return await makeStreamingRequest(sendable, options, statusEvents)
+}
 
 /**
  * Function for sending HTTP Request #
  */
 
-function rerunHttpRequestSend (options, transaction, callback) {
+function rerunHttpRequestSend_OLD (options, transaction, callback) {
   let err
   if (options == null) {
     err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
