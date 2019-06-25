@@ -55,9 +55,9 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             logger.error(`Error streaming response to GridFS: ${err}`)
             reject(err)
           })
-          .on('finish', (file) => {
+          .on('finish', (fileId) => {
             if (statusEvents.finishGridFs) {
-              statusEvents.finishGridFs()
+              statusEvents.finishGridFs(fileId)
             }
           })
 
@@ -93,7 +93,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
           })
           .on('end', () => {
             if (statusEvents.finishResponse) {
-              statusEvents.finishResponse(size)
+              statusEvents.finishResponse(response, size)
             }
             uploadStream.end()
             response.body.push(null)
