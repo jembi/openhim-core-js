@@ -461,6 +461,13 @@ async function sendHttpRequest (ctx, route, options) {
     requestProgress: function () {},
     finishRequest: function () {},
     startResponse: function (res) {
+      /*
+       *   TODO: Remove call to setKoaResponse
+       *     intiateResponse updates the database based on information stored
+       *     in the koa context (ctx); the messageStore routines need to be
+       *     reworked to update the database based on response object passed
+       *     in as a parameter; then the setKoaResponse call can be removed.
+       */
       setKoaResponse(ctx, res)
       messageStore.initiateResponse(ctx, () => {})
     },
