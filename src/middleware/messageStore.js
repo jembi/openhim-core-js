@@ -176,18 +176,6 @@ export function initiateResponse (ctx, done) {
     error: ctx.error
   }
 
-  if (ctx.mediatorResponse) {
-    if (ctx.mediatorResponse.orchestrations) {
-      update.orchestrations.push(...ctx.mediatorResponse.orchestrations)
-    }
-
-    if (ctx.mediatorResponse.properties) { update.properties = ctx.mediatorResponse.properties }
-  }
-
-  if (ctx.orchestrations) {
-    update.orchestrations.push(...ctx.orchestrations)
-  }
-
   //await extractTransactionPayloadIntoChunks(update)
   transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
@@ -218,8 +206,27 @@ export function completeResponse (ctx, done) {
   const update = {
     'response.timestampEnd': ctx.responseTimestampEnd,
     'response.status': ctx.response.status,
-    'response.headers': headers,
-    orchestrations: ctx.orchestrations
+    'response.headers': headers
+  }
+
+  if (ctx.mediatorResponse) {
+    if (ctx.mediatorResponse.orchestrations) {
+      if (!update.orchestrations) {
+        update.orchestrations = []
+      }
+      update.orchestrations.push(...ctx.mediatorResponse.orchestrations)
+    }
+
+    if (ctx.mediatorResponse.properties) {
+      update.properties = ctx.mediatorResponse.properties
+    }
+  }
+
+  if (ctx.orchestrations) {
+    if (!update.orchestrations) {
+        update.orchestrations = []
+      }
+    update.orchestrations.push(...ctx.orchestrations)
   }
 
   return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
