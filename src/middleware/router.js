@@ -494,6 +494,110 @@ async function sendHttpRequest (ctx, route, options) {
   return makeStreamingRequest(ctx.state.downstream, options, statusEvents)
 }
 
+// Send secondary route request
+const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
+  return new Promise((resolve, reject) => {
+    const response = {}
+    let { downstream } = ctx.state
+    let method = http
+
+    if (route.secured) {
+      method = https
+    }
+
+    const routeReq = method.request(options)
+      .on('response', routeRes => {
+        response.status = routeRes.statusCode
+        response.headers = routeRes.headers
+
+        if(!bucket) {
+          bucket = getGridFSBucket()
+        }
+
+        const uploadStream = bucket.openUploadStream()
+        response.bodyId = uploadStream.id
+
+        if (!ctx.authorisedChannel.responseBody) {
+          // reset response body id
+          response.bodyId = null
+        }
+
+        uploadStream
+          .on('error', (err) => {
+            logger.error(`Error streaming secondary route response body from '${options.path}' into GridFS: ${err}`)
+          })
+          .on('finish', (file) => {
+            logger.info(`Streamed secondary route response body from '${options.path}' into GridFS, body id ${file._id}`)
+          })
+
+        const responseBuf = []
+        routeRes
+          .on('data', chunk => {
+            if (!response.timestamp) {
+              response.timestamp = new Date()
+            }
+
+            if (ctx.authorisedChannel.responseBody) {
+              // write into gridfs only when the channel responseBody property is true
+              uploadStream.write(chunk)
+            }
+
+            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+              responseBuf.push(chunk)
+            }
+          })
+          .on('end', () => {
+            logger.info(`** END OF OUTPUT STREAM **`)
+            uploadStream.end()
+
+            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+              response.body = Buffer.concat(responseBuf)
+            }
+
+            response.timestampEnd = new Date()
+            resolve(response)
+          })
+      })
+      .on('error', (err) => {
+        logger.error(`Error in streaming secondary route request '${options.path}' upstream: ${err}`)
+        reject(err)
+      })
+      .on('clientError', (err) => {
+        logger.error(`Client error in streaming secondary route request '${options.path}' upstream: ${err}`)
+        reject(err)
+      })
+
+      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+      routeReq.setTimeout(timeout, () => {
+        routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
+      })
+
+      /*
+        ctx.secondaryRoutes is an array containing the secondary routes' requests (streams). This enables termination of these requests when
+        the primary route's request fails
+      */
+      if (!ctx.secondaryRoutes) {
+        ctx.secondaryRoutes = []
+      }
+
+      ctx.secondaryRoutes.push(routeReq)
+
+      downstream
+        .on('data', (chunk) => {
+          if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
+            routeReq.write(chunk)
+          }
+        })
+        .on('end', () => {
+          routeReq.end()
+        })
+        .on('error', (err) => {
+          logger.error(`Error streaming request body downstream: ${err}`)
+          reject(err)
+        })
+  })
+}
+
 /*
  * A promise returning function that send a request to the given route and resolves
  * the returned promise with a response object of the following form:
