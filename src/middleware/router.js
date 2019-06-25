@@ -17,6 +17,7 @@ import { getGridFSBucket } from '../contentChunk'
 import { Writable, Readable } from 'stream';
 import util from 'util'
 import { brotliCompressSync } from 'zlib';
+import { makeStreamingRequest } from './streamingRouter'
 
 config.router = config.get('router')
 
@@ -76,6 +77,9 @@ function setKoaResponse (ctx, response) {
       case 'content-type':
         ctx.response.type = value
         break
+      case 'x-body-id':
+          ctx.response.bodyId = value
+          break;
       case 'content-length':
       case 'content-encoding':
       case 'transfer-encoding':
@@ -432,109 +436,56 @@ function setTransactionFinalStatus (ctx) {
   })
 }
 
-function sendHttpRequest (ctx, route, options) {
-  return new Promise((resolve, reject) => {
-    const response = {}
+async function sendHttpRequest (ctx, route, options) {
 
-    let { downstream } = ctx.state
-    let method = http
-
-    if (route.secured) {
-      method = https
+  const statusEvents = {
+    badOptions: function () {},
+    noRequest: function () {},
+    startGridFs: function (fileId) {
+      logger.info(`Started storing response body in GridFS: ${fileId}`)
+    },
+    finishGridFs: function () {
+      logger.info(`Finished storing response body in GridFS`)
+    },
+    gridFsError: function (err) {},
+    startRequest: function () {},
+    requestProgress: function () {},
+    finishRequest: function () {},
+    startResponse: function (res) {
+      setKoaResponse(ctx, res)
+      messageStore.initiateResponse(ctx, () => {})
+    },
+    responseProgress: function (chunk, counter, size) {
+      logger.info(`Write response CHUNK # ${counter} [ Total size ${size}]`)
+    },
+    finishResponse: function () {
+      logger.info(`** END OF OUTPUT STREAM **`)
+    },
+    requestError: function () {},
+    responseError: function (err) {
+      messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {
+        setTransactionFinalStatus(ctx)
+      })
+    },
+    clientError: function (err) {
+      messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {
+        setTransactionFinalStatus(ctx)
+      })
+    },
+    clientError: function (timeout) {
+      logger.error(`Transaction timeout after ${timeout}ms`)
     }
+  }
 
-    const routeReq = method.request(options)
-      .on('response', (routeRes) => {
-        response.status = routeRes.statusCode
-        response.headers = routeRes.headers
-        response.body = new Readable()
-        response.body._read = () => {}
+  options.secured = route.secured
+  options.timeout = route.timeout != null ? route.timeout : +config.router.timeout
+  options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(ctx.request.method)
+  options.responseBodyRequired = ctx.authorisedChannel.responseBody
 
-        let uploadStream
-        let counter = 0
-        let size = 0
-
-        if(!bucket) {
-          bucket = getGridFSBucket()
-        }
-
-        uploadStream = bucket.openUploadStream()
-        ctx.response.bodyId = uploadStream.id
-
-        if (!ctx.authorisedChannel.responseBody) {
-          // reset response body id
-          ctx.response.bodyId = null
-        }
-
-        uploadStream
-          .on('error', (err) => {
-            logger.error(`Error streaming response to GridFS: ${err}`)
-          })
-          .on('finish', (file) => {
-            logger.info(`Streamed response body to GridFS: ${file._id}`)
-          })
-
-        // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
-        routeRes
-          .on('data', (chunk) => {
-            if (!response.timestamp) {
-              response.timestamp = new Date()
-              messageStore.initiateResponse(ctx, () => {})
-            }
-
-            if (ctx.authorisedChannel.responseBody) {
-              // write into gridfs only when the channel responseBody property is true
-              uploadStream.write(chunk)
-            }
-            response.body.push(chunk)
-          })
-          .on('end', () => {
-            logger.info(`** END OF OUTPUT STREAM **`)
-            uploadStream.end()
-            response.body.push(null)
-            response.timestampEnd = new Date()
-            resolve(response)
-          })
-
-        // If request socket closes the connection abnormally
-        ctx.res.socket
-          .on('error', (err) => {
-            messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {
-              setTransactionFinalStatus(ctx)
-            })
-          })
-      })
-      .on('error', (err) => {
-        logger.error(`Error streaming response upstream: ${err}`)
-        reject(err)
-      })
-      .on('clientError', (err) => {
-        logger.error(`Client error streaming response upstream: ${err}`)
-        reject(err)
-      })
-
-    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-    routeReq.setTimeout(timeout, () => {
-      routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
-    })
-
-    downstream
-      .on('data', (chunk) => {
-        if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
-          routeReq.write(chunk)
-        }
-      })
-      .on('end', () => {
-        routeReq.end()
-      })
-      .on('error', (err) => {
-        logger.error(`Error streaming request downstream: ${err}`)
-        reject(err)
-      })
-  })
+  return makeStreamingRequest(ctx.state.downstream, options, statusEvents)
 }
 
-  /*
+/*
  * A promise returning function that send a request to the given route and resolves
  * the returned promise with a response object of the following form:
  *   response =
