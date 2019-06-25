@@ -38,28 +38,30 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
         let counter = 0
         let size = 0
 
-        if(!bucket) {
-          bucket = getGridFSBucket()
-        }
-
-        uploadStream = bucket.openUploadStream()
         if (options.responseBodyRequired) {
-          response.headers['x-body-id'] = uploadStream.id
-        }
+          if(!bucket) {
+            bucket = getGridFSBucket()
+          }
 
-        uploadStream
-          .on('error', (err) => {
-            if (statusEvents.gridFsError) {
-              statusEvents.gridFsError(err)
-            }
-            logger.error(`Error streaming response to GridFS: ${err}`)
-            reject(err)
-          })
-          .on('finish', (fileId) => {
-            if (statusEvents.finishGridFs) {
-              statusEvents.finishGridFs(fileId)
-            }
-          })
+          uploadStream = bucket.openUploadStream()
+          if (options.responseBodyRequired) {
+            response.headers['x-body-id'] = uploadStream.id
+          }
+
+          uploadStream
+            .on('error', (err) => {
+              if (statusEvents.gridFsError) {
+                statusEvents.gridFsError(err)
+              }
+              logger.error(`Error streaming response to GridFS: ${err}`)
+              reject(err)
+            })
+            .on('finish', (fileId) => {
+              if (statusEvents.finishGridFs) {
+                statusEvents.finishGridFs(fileId)
+              }
+            })
+        }
 
         // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
         routeRes
@@ -95,7 +97,9 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             if (statusEvents.finishResponse) {
               statusEvents.finishResponse(response, size)
             }
-            uploadStream.end()
+            if (options.responseBodyRequired) {
+              uploadStream.end()
+            }
             response.body.push(null)
             response.timestampEnd = new Date()
             resolve(response)
