@@ -296,11 +296,7 @@ async function rerunHttpRequestSend (options, transaction, callback) {
   options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(transaction.request.method)
   options.responseBodyRequired = false
 
-  const sendable = new Readable()
-  sendable.push(transaction.request.body)
-  sendable.push(null)
-
-  return await makeStreamingRequest(sendable, options, statusEvents)
+  return await makeStreamingRequest(null, options, statusEvents)
 }
 
 /**

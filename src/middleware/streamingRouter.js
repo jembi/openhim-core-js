@@ -3,7 +3,7 @@ import https from 'https'
 import logger from 'winston'
 import { config } from '../config'
 import { getGridFSBucket } from '../contentChunk'
-import { Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 
 config.router = config.get('router')
 
@@ -24,7 +24,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
       reject(err)
     }
 
-    const downstream = requestBodyStream
+    const downstream = (requestBodyStream != undefined) && (requestBodyStream) ? requestBodyStream : new Writable().end()
     const method = options.secured ? https : http
 
     const routeReq = method.request(options)
