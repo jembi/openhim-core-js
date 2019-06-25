@@ -289,7 +289,10 @@ async function rerunHttpRequestSend (options, transaction, callback) {
     responseError: function (err) {
       response.transaction.status = 'Failed'
     },
-    clientError: function (err) {}
+    clientError: function (err) {},
+    timeoutError: function (timeout) {
+      logger.error(`Transaction timeout after ${timeout}ms`)
+    }
   }
 
   options.secured = false

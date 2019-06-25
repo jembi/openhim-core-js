@@ -488,7 +488,7 @@ async function sendHttpRequest (ctx, route, options) {
         setTransactionFinalStatus(ctx)
       })
     },
-    clientError: function (timeout) {
+    timeoutError: function (timeout) {
       logger.error(`Transaction timeout after ${timeout}ms`)
     }
   }
