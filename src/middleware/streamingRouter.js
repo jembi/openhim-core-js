@@ -80,7 +80,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             if (statusEvents.responseProgress) {
               statusEvents.responseProgress(chunk, counter, size)
             }
-      
+
             // Send the response to GridFS, if the response body is required
             if (options.responseBodyRequired) {
               uploadStream.write(chunk)
@@ -164,4 +164,3 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
       })
   })
 }
-
