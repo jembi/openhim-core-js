@@ -487,17 +487,20 @@ async function sendHttpRequest (ctx, route, options) {
       if (ctx.secondaryRoutes && Array.isArray(ctx.secondaryRoutes)) {
         ctx.secondaryRoutes.forEach(routeReq => routeReq.destroy())
       }
+      messageStore.initiateResponse(ctx, () => {})
 
       messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {
-        setTransactionFinalStatus(ctx)
+        // setTransactionFinalStatus(ctx)
       })
     },
     clientError: function (err) {
+      messageStore.initiateResponse(ctx, () => {})
       messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {
-        setTransactionFinalStatus(ctx)
+        // setTransactionFinalStatus(ctx)
       })
     },
     timeoutError: function (timeout) {
+      messageStore.initiateResponse(ctx, () => {})
       logger.error(`Transaction timeout after ${timeout}ms`)
     }
   }
