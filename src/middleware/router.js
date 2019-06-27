@@ -221,11 +221,11 @@ function sendRequestToRoutes (ctx, routes, next) {
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
               // handle mediator reponse
               let payload = ''
-              response.body.on('data',function(data){
+              response.body.on('data', (data) => {
                 payload += data.toString()
               })
 
-              response.body.on('end',function(){
+              response.body.on('end', () => {
                 const responseObj = JSON.parse(payload)
                 ctx.mediatorResponse = responseObj
 
