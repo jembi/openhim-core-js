@@ -1,7 +1,7 @@
 // All the gzip functionality is being commented out
 // TODO: OHM-693 uncomment the gzip functions when working on ticket
 
-// import zlib from 'zlib'
+//import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
@@ -13,9 +13,15 @@ import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import * as events from '../middleware/events'
 import { promisify } from 'util'
+import { getGridFSBucket } from '../contentChunk'
+import { Writable, Readable } from 'stream';
+import util from 'util'
+import { brotliCompressSync } from 'zlib';
+import { makeStreamingRequest } from './streamingRouter'
 
-config.mongo = config.get('mongo')
 config.router = config.get('router')
+
+let bucket
 
 const isRouteEnabled = route => (route.status == null) || (route.status === 'enabled')
 
@@ -71,6 +77,9 @@ function setKoaResponse (ctx, response) {
       case 'content-type':
         ctx.response.type = value
         break
+      case 'x-body-id':
+          ctx.response.bodyId = value
+          break;
       case 'content-length':
       case 'content-encoding':
       case 'transfer-encoding':
@@ -218,16 +227,20 @@ function sendRequestToRoutes (ctx, routes, next) {
                 ctx.autoRetry = true
                 ctx.error = responseObj.error
               }
-
               // then set koa response from responseObj.response
-              return setKoaResponse(ctx, responseObj.response)
+              setKoaResponse(ctx, responseObj.response)
             } else {
-              return setKoaResponse(ctx, response)
+              setKoaResponse(ctx, response)
             }
-          }).then(() => {
+          })
+          .then(() => {
             logger.info('primary route completed')
+            ctx.state.requestPromise.then(() => {
+              messageStore.completeResponse(ctx, (err, tx) => {})
+            })
             return next()
-          }).catch((reason) => {
+          })
+          .catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
             return next()
@@ -275,13 +288,8 @@ function sendRequestToRoutes (ctx, routes, next) {
 
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
-      // Set the final status of the transaction
-      messageStore.setFinalStatus(ctx, err => {
-        if (err) {
-          logger.error(`Setting final status failed for transaction: ${ctx.transactionId}`, err)
-          return
-        }
-        logger.debug(`Set final status for transaction: ${ctx.transactionId}`)
+      ctx.state.requestPromise.then(() => {
+        setTransactionFinalStatus(ctx)
       })
 
       // TODO: OHM-694 Uncomment when secondary routes are supported
@@ -299,6 +307,9 @@ function sendRequestToRoutes (ctx, routes, next) {
       // }
     }).catch(err => {
       logger.error(err)
+      ctx.state.requestPromise.then(() => {
+        setTransactionFinalStatus(ctx)
+      })
     })
   })
 }
@@ -316,9 +327,9 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         headers: ctx.request.header,
         querystring: ctx.request.querystring,
         method: ctx.request.method,
+        bodyId: ctx.request.bodyId,
         timestamp: ctx.requestTimestamp
       }
-
       if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
         // handle mediator reponse
         const responseObj = JSON.parse(response.body)
@@ -338,6 +349,10 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
       // on failure
       const routeObj = {}
       routeObj.name = route.name
+
+      if (!ctx.routes) { ctx.routes = [] }
+      ctx.routes.push(routeObj)
+
       handleServerError(ctx, reason, routeObj)
       return routeObj
     })
@@ -352,7 +367,7 @@ function sendRequest (ctx, route, options) {
         path: options.path,
         headers: options.headers,
         method: options.method,
-        body: ctx.body,
+        bodyId: ctx.request.bodyId,
         timestamp: ctx.requestTimestamp
       }
     }
@@ -366,8 +381,9 @@ function sendRequest (ctx, route, options) {
       orchestration.response = {
         headers: response.headers,
         status: response.status,
-        body: response.body,
-        timestamp: response.timestamp
+        bodyId: ctx.response.bodyId,
+        timestamp: response.timestamp,
+        timestampEnd: ctx.timestampEnd
       }
     }
 
@@ -389,16 +405,29 @@ function sendRequest (ctx, route, options) {
     logger.info('Routing socket request')
     return sendSocketRequest(ctx, route, options)
   } else {
+    if (!route.primary) {
+      logger.info('Routing secondary route http(s) request')
+      return sendSecondaryRouteHttpRequest(ctx, route, options)
+        .then(response => {
+          // Return the response as before
+          return response
+        }).catch(err => {
+          // Rethrow the error
+          throw err
+       })
+    }
+
     logger.info('Routing http(s) request')
-    return sendHttpRequest(ctx, route, options).then(response => {
-      recordOrchestration(response)
-      // Return the response as before
-      return response
-    }).catch(err => {
-      recordOrchestration(err)
-      // Rethrow the error
-      throw err
-    })
+    return sendHttpRequest(ctx, route, options)
+      .then(response => {
+        recordOrchestration(response)
+        // Return the response as before
+        return response
+      }).catch(err => {
+        recordOrchestration(err)
+        // Rethrow the error
+        throw err
+     })
   }
 }
 
@@ -411,6 +440,188 @@ function obtainCharset (headers) {
   return 'utf-8'
 }
 
+function setTransactionFinalStatus (ctx) {
+  // Set the final status of the transaction
+  messageStore.setFinalStatus(ctx, (err, tx) => {
+    if (err) {
+      logger.error(`Setting final status failed for transaction: ${tx._id}`, err)
+      return
+    }
+    logger.info(`Set final status for transaction: ${tx._id} - ${tx.status}`)
+  })
+}
+
+async function sendHttpRequest (ctx, route, options) {
+
+  const statusEvents = {
+    badOptions: function () {},
+    noRequest: function () {},
+    startGridFs: function (fileId) {
+      logger.info(`Started storing response body in GridFS: ${fileId}`)
+    },
+    finishGridFs: function () {
+      logger.info(`Finished storing response body in GridFS`)
+    },
+    gridFsError: function (err) {},
+    startRequest: function () {},
+    requestProgress: function () {},
+    finishRequest: function () {},
+    startResponse: function (res) {
+      /*
+       *   TODO: Remove call to setKoaResponse
+       *     intiateResponse updates the database based on information stored
+       *     in the koa context (ctx); the messageStore routines need to be
+       *     reworked to update the database based on response object passed
+       *     in as a parameter; then the setKoaResponse call can be removed.
+       */
+      ctx.state.requestPromise.then(() => {
+        setKoaResponse(ctx, res)
+        messageStore.initiateResponse(ctx, () => {})
+      })
+    },
+    responseProgress: function (chunk, counter, size) {
+      logger.info(`Write response CHUNK # ${counter} [ Total size ${size}]`)
+    },
+    finishResponse: function () {
+      logger.info(`** END OF OUTPUT STREAM **`)
+    },
+    requestError: function () {},
+    responseError: function (err) {
+      // Kill the secondary routes' requests when the primary route request fails
+      if (ctx.secondaryRoutes && Array.isArray(ctx.secondaryRoutes)) {
+        ctx.secondaryRoutes.forEach(routeReq => routeReq.destroy())
+      }
+      ctx.state.requestPromise.then(() => {
+        messageStore.initiateResponse(ctx, () => {})
+        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
+      })
+    },
+    clientError: function (err) {
+      ctx.state.requestPromise.then(() => {
+        messageStore.initiateResponse(ctx, () => {})
+        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
+      })
+    },
+    timeoutError: function (timeout) {
+      ctx.state.requestPromise.then(() => {
+        messageStore.initiateResponse(ctx, () => {})
+      })
+      logger.error(`Transaction timeout after ${timeout}ms`)
+    }
+  }
+
+  options.secured = route.secured
+  options.timeout = route.timeout != null ? route.timeout : +config.router.timeout
+  options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(ctx.request.method)
+  options.responseBodyRequired = ctx.authorisedChannel.responseBody
+
+  return makeStreamingRequest(ctx.state.downstream, options, statusEvents)
+}
+
+// Send secondary route request
+const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
+  return new Promise((resolve, reject) => {
+    const response = {}
+    let { downstream } = ctx.state
+    let method = http
+
+    if (route.secured) {
+      method = https
+    }
+
+    const routeReq = method.request(options)
+      .on('response', routeRes => {
+        response.status = routeRes.statusCode
+        response.headers = routeRes.headers
+
+        if(!bucket) {
+          bucket = getGridFSBucket()
+        }
+
+        const uploadStream = bucket.openUploadStream()
+        response.bodyId = uploadStream.id
+
+        if (!ctx.authorisedChannel.responseBody) {
+          // reset response body id
+          response.bodyId = null
+        }
+
+        uploadStream
+          .on('error', (err) => {
+            logger.error(`Error streaming secondary route response body from '${options.path}' into GridFS: ${err}`)
+          })
+          .on('finish', (file) => {
+            logger.info(`Streamed secondary route response body from '${options.path}' into GridFS, body id ${file._id}`)
+          })
+
+        const responseBuf = []
+        routeRes
+          .on('data', chunk => {
+            if (!response.timestamp) {
+              response.timestamp = new Date()
+            }
+
+            if (ctx.authorisedChannel.responseBody) {
+              // write into gridfs only when the channel responseBody property is true
+              uploadStream.write(chunk)
+            }
+
+            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+              responseBuf.push(chunk)
+            }
+          })
+          .on('end', () => {
+            logger.info(`** END OF OUTPUT STREAM **`)
+            uploadStream.end()
+
+            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+              response.body = Buffer.concat(responseBuf)
+            }
+
+            response.timestampEnd = new Date()
+            resolve(response)
+          })
+      })
+      .on('error', (err) => {
+        logger.error(`Error in streaming secondary route request '${options.path}' upstream: ${err}`)
+        reject(err)
+      })
+      .on('clientError', (err) => {
+        logger.error(`Client error in streaming secondary route request '${options.path}' upstream: ${err}`)
+        reject(err)
+      })
+
+      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+      routeReq.setTimeout(timeout, () => {
+        routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
+      })
+
+      /*
+        ctx.secondaryRoutes is an array containing the secondary routes' requests (streams). This enables termination of these requests when
+        the primary route's request fails
+      */
+      if (!ctx.secondaryRoutes) {
+        ctx.secondaryRoutes = []
+      }
+
+      ctx.secondaryRoutes.push(routeReq)
+
+      downstream
+        .on('data', (chunk) => {
+          if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
+            routeReq.write(chunk)
+          }
+        })
+        .on('end', () => {
+          routeReq.end()
+        })
+        .on('error', (err) => {
+          logger.error(`Error streaming request body downstream: ${err}`)
+          reject(err)
+        })
+  })
+}
+
 /*
  * A promise returning function that send a request to the given route and resolves
  * the returned promise with a response object of the following form:
@@ -420,7 +631,7 @@ function obtainCharset (headers) {
  *    headers: <http_headers_object>
  *    timestamp: <the time the response was recieved>
  */
-function sendHttpRequest (ctx, route, options) {
+function sendHttpRequest_OLD (ctx, route, options) {
   return new Promise((resolve, reject) => {
     const response = {}
 
@@ -456,11 +667,37 @@ function sendHttpRequest (ctx, route, options) {
       // }
 
       const bufs = []
-      routeRes.on('data', chunk => bufs.push(chunk))
+
+      if(!bucket) {
+        bucket = getGridFSBucket()
+      }
+
+      const uploadStream = bucket.openUploadStream()
+
+      uploadStream
+        .on('error', (err) => {
+          logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
+        })
+        .on('finish', (file) => {
+          logger.info(`Response body with body id: ${file._id} stored`)
+
+          // Update HIM transaction with bodyId
+          ctx.response.bodyId = file._id
+        })
+
+      routeRes.on('data', chunk => {
+        if (!response.startTimestamp) {
+          response.startTimestamp = new Date()
+        }
+        uploadStream.write(chunk)
+        bufs.push(chunk)
+      })
 
       // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
       routeRes.on('end', () => {
         response.timestamp = new Date()
+        response.endTimestamp = new Date()
+        uploadStream.end()
         const charset = obtainCharset(routeRes.headers)
 
         // TODO: OHM-693 uncomment code below when working on the gzipping and inflating
@@ -679,6 +916,6 @@ function isMethodAllowed (ctx, channel) {
 export async function koaMiddleware (ctx, next) {
   const _route = promisify(route)
   await _route(ctx)
-  await messageStore.storeResponse(ctx, () => {})
+  //await messageStore.storeResponse(ctx, () => {})
   await next()
 }

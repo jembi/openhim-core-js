@@ -2,6 +2,7 @@ import Koa from 'koa'
 import getRawBody from 'raw-body'
 import compress from 'koa-compress'
 import { Z_SYNC_FLUSH } from 'zlib'
+import logger from 'winston'
 
 import * as router from './middleware/router'
 import * as messageStore from './middleware/messageStore'
@@ -16,20 +17,19 @@ import * as requestMatching from './middleware/requestMatching'
 import * as authorisation from './middleware/authorisation'
 import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisation'
 import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
+import * as rawBodyReader from './middleware/rawBodyReader'
 import * as events from './middleware/events'
 import * as proxy from './middleware/proxy'
 // TODO: OHM-696 uncomment the line below
 //import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
+import { checkServerIdentity } from 'tls';
+import { Readable } from 'stream';
+import { promisify } from 'util';
+import { getGridFSBucket }  from './contentChunk'
+import { Types } from 'mongoose'
 
 config.authentication = config.get('authentication')
-
-async function rawBodyReader (ctx, next) {
-  const body = await getRawBody(ctx.req)
-
-  if (body) { ctx.body = body }
-  await next()
-}
 
 // Primary app
 
@@ -46,13 +46,13 @@ export function setupApp (done) {
     app.use(tlsAuthentication.koaMiddleware)
   }
 
-  app.use(rawBodyReader)
-
   // Request Matching middleware
   app.use(requestMatching.koaMiddleware)
 
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
+
+  app.use(rawBodyReader.koaMiddleware)
 
   // Compress response on exit
   app.use(compress({
@@ -65,7 +65,7 @@ export function setupApp (done) {
   app.use(proxy.koaMiddleware)
 
   // Persist message middleware
-  app.use(messageStore.koaMiddleware)
+  //app.use(messageStore.koaMiddleware)
 
   // URL rewriting middleware
   // TODO: OHM-696 uncomment the code below when url rewriting is back in support
@@ -84,22 +84,22 @@ export function setupApp (done) {
 export function rerunApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
-
   // Rerun bypass authentication middlware
   app.use(rerunBypassAuthentication.koaMiddleware)
 
   // Rerun bypass authorisation middlware
   app.use(rerunBypassAuthorisation.koaMiddleware)
 
-  // Update original transaction with rerunned transaction ID
-  app.use(rerunUpdateTransactionTask.koaMiddleware)
-
   // Persist message middleware
-  app.use(messageStore.koaMiddleware)
+  //app.use(messageStore.koaMiddleware)
 
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
+
+  app.use(rawBodyReader.koaMiddleware)
+
+  // Update original transaction with rerunned transaction ID
+  app.use(rerunUpdateTransactionTask.koaMiddleware)
 
   // Events
   app.use(events.koaMiddleware)
@@ -114,7 +114,7 @@ export function rerunApp (done) {
 export function tcpApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
   app.use(retrieveTCPTransaction.koaMiddleware)
 
   // TCP bypass authentication middlware
@@ -139,7 +139,7 @@ export function tcpApp (done) {
 export function pollingApp (done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
+  app.use(rawBodyReader.koaMiddleware)
 
   // Polling bypass authentication middlware
   app.use(pollingBypassAuthentication.koaMiddleware)

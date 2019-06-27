@@ -26,113 +26,250 @@ function copyMapWithEscapedReservedCharacters (map) {
   return escapedMap
 }
 
-export async function storeTransaction (ctx, done) {
-  logger.info('Storing request metadata for inbound transaction')
-
-  ctx.requestTimestamp = new Date()
-
-  const headers = copyMapWithEscapedReservedCharacters(ctx.header)
-
-  const tx = new transactions.TransactionModel({
-    status: transactionStatus.PROCESSING,
-    clientID: (ctx.authenticated != null ? ctx.authenticated._id : undefined),
-    channelID: ctx.authorisedChannel._id,
-    clientIP: ctx.ip,
-    request: {
-      host: (ctx.host != null ? ctx.host.split(':')[0] : undefined),
-      port: (ctx.host != null ? ctx.host.split(':')[1] : undefined),
-      path: ctx.path,
-      headers,
-      querystring: ctx.querystring,
-      method: ctx.method,
-      timestamp: ctx.requestTimestamp
-    }
-  })
-
-  if (ctx.parentID && ctx.taskID) {
-    tx.parentID = ctx.parentID
-    tx.taskID = ctx.taskID
-  }
-
-  if (ctx.currentAttempt) {
-    tx.autoRetryAttempt = ctx.currentAttempt
-  }
-
-  // check if channel request body is false and remove - or if request body is empty
-  if ((ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
-    // reset request body
-    ctx.body = ''
-    // check if method is POST|PUT|PATCH - rerun not possible without request body
-    if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
-      tx.canRerun = false
-    }
-  }
-
-  // extract body into chucks before saving transaction
-  if (ctx.body) {
-    const requestBodyChuckFileId = await extractStringPayloadIntoChunks(ctx.body)
-    tx.request.bodyId = requestBodyChuckFileId
-  }
-
-  return tx.save((err, tx) => {
-    if (err) {
-      logger.error(`Could not save transaction metadata: ${err}`)
-      return done(err)
+function getTransactionId (ctx) {
+  if (ctx) {
+    if (ctx.request && ctx.request.header && ctx.request.header['X-OpenHIM-TransactionID']) {
+      return ctx.request.header['X-OpenHIM-TransactionID']
+    } else if (ctx.transactionId) {
+      return ctx.transactionId.toString()
     } else {
-      ctx.transactionId = tx._id
-      ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
-      return done(null, tx)
+      return null
     }
+  }
+  return null
+}
+
+/*
+ *  Persist a new transaction once a Request has started streaming into the HIM.
+ *  Returns a promise because the other persist routines need to be chained to this one.
+ */
+export async function initiateRequest (ctx) {
+  return new Promise((resolve, reject) => {
+    if (ctx && !ctx.requestTimestamp) {
+      ctx.requestTimestamp = new Date()
+    }
+
+    const headers = copyMapWithEscapedReservedCharacters(ctx.header)
+
+    const tx = new transactions.TransactionModel({
+      status: transactionStatus.PROCESSING,
+      clientID: (ctx.authenticated != null ? ctx.authenticated._id : undefined),
+      channelID: (ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined),
+      clientIP: ctx.ip,
+      request: {
+        host: (ctx.host != null ? ctx.host.split(':')[0] : undefined),
+        port: (ctx.host != null ? ctx.host.split(':')[1] : undefined),
+        path: ctx.path,
+        headers,
+        querystring: ctx.querystring,
+        method: ctx.method,
+        timestamp: ctx.requestTimestamp
+      }
+    })
+
+    if (ctx.parentID && ctx.taskID) {
+      tx.parentID = ctx.parentID
+      tx.taskID = ctx.taskID
+    }
+
+    if (ctx.currentAttempt) {
+      tx.autoRetryAttempt = ctx.currentAttempt
+    }
+
+    // check if channel request body is false and remove - or if request body is empty
+    if ((ctx.authorisedChannel && ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
+      // reset request body
+      ctx.body = ''
+      // check if method is POST|PUT|PATCH - rerun not possible without request body
+      if (['POST', 'PUT', 'PATCH'].includes(ctx.method)) {
+        tx.canRerun = false
+      }
+    }
+
+    tx.save((err, tx) => {
+      if (err) {
+        logger.error(`Could not save transaction metadata (initiateRequest): ${err}`)
+        reject(err)
+      } else {
+        ctx.transactionId = tx._id
+        ctx.header['X-OpenHIM-TransactionID'] = tx._id.toString()
+        logger.info(`Done initiateRequest for transaction: ${tx._id}`)
+        resolve(tx)
+      }
+    })
   })
 }
 
-export async function storeResponse (ctx, done) {
-  const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
+/*
+ *  Find and update an existing transaction once a Request has completed streaming
+ *    into the HIM (Not async; Mongo should handle locking issues, etc)
+ */
+export function completeRequest (ctx, done) {
 
-  const res = {
-    status: ctx.response.status,
-    headers,
-    body: !ctx.response.body ? '' : ctx.response.body.toString(),
-    timestamp: ctx.response.timestamp
+  if (ctx && !ctx.requestTimestampEnd) {
+    ctx.requestTimestampEnd = new Date()
   }
 
+  const transactionId = getTransactionId(ctx)
+
+  return transactions.TransactionModel.findById(transactionId, (err, tx) => {
+    if (err) { return done(err) }
+
+    /*
+     *  For short transactions, the 'end' timestamp is before the 'start' timestamp.
+     *  (Persisting the transaction initially takes longer than fully processing the transaction)
+     *  In these cases, swop the 'start' and 'end' values around; the transaction duration is
+     *  not exactly accurate, but at least it isn't negative.
+     */
+    let t = tx.request.timestamp
+    if (tx.request.timestamp > ctx.requestTimestampEnd) {
+      t = ctx.requestTimestampEnd
+      ctx.requestTimestampEnd = tx.request.timestamp
+    }
+
+    const update = {
+      channelID: (ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined),
+      'request.bodyId': ctx.request.bodyId,
+      'request.timestamp': t,
+      'request.timestampEnd': ctx.requestTimestampEnd
+    }
+
+    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: false }, (err, tx) => {
+      if (err) {
+        logger.error(`Could not save transaction metadata (completeRequest): ${transactionId}. ${err}`)
+        return done(err)
+      }
+      if ((tx === undefined) || (tx === null)) {
+        logger.error(`Could not find transaction: ${transactionId}`)
+        return done(err)
+      }
+      logger.info(`Done completeRequest for transaction: ${tx._id}`)
+      done(null, tx)
+    })
+  })
+}
+
+/*
+ *  Update an existing transaction once a Response has started streaming
+ *    into the HIM
+ */
+export function initiateResponse (ctx, done) {
+  if (ctx && !ctx.responseTimestamp) {
+    ctx.responseTimestamp = new Date()
+  }
+
+  const transactionId = getTransactionId(ctx)
+
+  const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
+/*
   // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
     // reset request body - primary route
     res.body = ''
   }
+ */
+  const update = {
+    'response.status': ctx.response.status,
+    'response.headers': headers,
+    'response.bodyId': ctx.response.bodyId,
+    'response.timestamp': ctx.responseTimestamp,
+    error: ctx.error
+  }
+
+  //await extractTransactionPayloadIntoChunks(update)
+  transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
+    if (err) {
+      logger.error(`Could not save transaction metadata (initiateResponse): ${transactionId}. ${err}`)
+      done(err)
+    }
+    if ((tx === undefined) || (tx === null)) {
+      logger.error(`Could not find transaction: ${transactionId}`)
+      done(err)
+    }
+    logger.info(`Done initiateResponse for transaction: ${tx._id}`)
+    done(null, tx)
+  })
+}
+
+/*
+ *  Find and update an existing transaction once a Response has completed streaming
+ *    into the HIM (Not async; Mongo should handle locking issues, etc)
+ */
+export function completeResponse (ctx, done) {
+  ctx.responseTimestampEnd = new Date()
+
+  const transactionId = getTransactionId(ctx)
+
+  const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
 
   const update = {
-    response: res,
-    error: ctx.error,
-    orchestrations: []
+    'response.timestampEnd': ctx.responseTimestampEnd,
+    'response.status': ctx.response.status,
+    'response.headers': headers
   }
 
   if (ctx.mediatorResponse) {
     if (ctx.mediatorResponse.orchestrations) {
+      if (!update.orchestrations) {
+        update.orchestrations = []
+      }
       update.orchestrations.push(...ctx.mediatorResponse.orchestrations)
     }
 
-    if (ctx.mediatorResponse.properties) { update.properties = ctx.mediatorResponse.properties }
+    if (ctx.mediatorResponse.properties) {
+      update.properties = ctx.mediatorResponse.properties
+    }
   }
 
   if (ctx.orchestrations) {
+    if (!update.orchestrations) {
+        update.orchestrations = []
+      }
     update.orchestrations.push(...ctx.orchestrations)
   }
 
-  await extractTransactionPayloadIntoChunks(update)
-
-  return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
+  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
     if (err) {
-      logger.error(`Could not save response metadata for transaction: ${ctx.transactionId}. ${err}`)
+      logger.error(`Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`)
       return done(err)
     }
     if ((tx === undefined) || (tx === null)) {
       logger.error(`Could not find transaction: ${ctx.transactionId}`)
       return done(err)
     }
-    logger.info(`stored primary response for ${tx._id}`)
-    return done()
+    logger.info(`Done completeResponse for transaction: ${tx._id}`)
+    done(null, tx)
+  })
+}
+
+/*
+ *  Find and update an existing transaction if a Response doesn't finish streaming
+ *    upstream from the HIM (Not async; Mongo should handle locking issues, etc)
+ */
+export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
+  const transactionId = getTransactionId(ctx)
+
+  ctx.response.status = errorStatusCode
+
+  const update = {
+    'response.timestampEnd': new Date(),
+    'response.status': errorStatusCode,
+    error: {
+      message: errorMessage
+    }
+  }
+
+  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+    if (err) {
+      logger.error(`Could not save transaction metadata (updateWithError): ${ctx.transactionId}. ${err}`)
+      return done(err)
+    }
+    if ((tx === undefined) || (tx === null)) {
+      logger.error(`Could not find transaction: ${ctx.transactionId}`)
+      return done(err)
+    }
+    logger.info(`Done updateWithError for transaction: ${tx._id}`)
+    done(null, tx)
   })
 }
 
@@ -170,12 +307,87 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
  * This should only be called once all routes have responded.
  */
 export function setFinalStatus (ctx, callback) {
-  let transactionId = ''
-  if (ctx.request != null && ctx.request.header != null && ctx.request.header['X-OpenHIM-TransactionID'] != null) {
-    transactionId = ctx.request.header['X-OpenHIM-TransactionID']
-  } else {
-    transactionId = ctx.transactionId.toString()
+
+  function getRoutesStatus (routes) {
+    const routesStatus = {
+      routeFailures: false,
+      routeSuccess: true
+    }
+
+    if (routes) {
+      for (const route of Array.from(routes)) {
+        if (route.response.status >= 500 && route.response.status <= 599) {
+          routesStatus.routeFailures = true
+        }
+        if (!(route.response.status >= 200 && route.response.status <= 299)) {
+          routesStatus.routeSuccess = false
+        }
+      }
+    }
+
+    return routesStatus
   }
+
+  function getContextResult () {
+    let result
+    const routesStatus = getRoutesStatus(ctx.routes)
+
+    if ((ctx.response == undefined) || (ctx.response == null)) {
+      return transactionStatus.FAILED
+    }
+
+    if (ctx.response.status >= 500 && ctx.response.status <= 599) {
+      result = transactionStatus.FAILED
+    } else {
+      if (routesStatus.routeFailures) {
+        result = transactionStatus.COMPLETED_W_ERR
+      }
+      if ((ctx.response.status >= 200 && ctx.response.status <= 299) && routesStatus.routeSuccess) {
+        result = transactionStatus.SUCCESSFUL
+      }
+      if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routesStatus.routeSuccess) {
+        result = transactionStatus.COMPLETED
+      }
+    }
+
+    // In all other cases mark as completed
+    if (!result) {
+      result = transactionStatus.COMPLETED
+    }
+
+    return result
+  }
+
+  function getTransactionResult (tx) {
+    let result
+    const routesStatus = getRoutesStatus(tx.routes)
+    if ((tx.response == undefined) || (tx.response == null)) {
+      return transactionStatus.FAILED
+    }
+
+    if (tx.response.status >= 500 && tx.response.status <= 599) {
+      result = transactionStatus.FAILED
+    } else {
+      if (routesStatus.routeFailures) {
+        result = transactionStatus.COMPLETED_W_ERR
+      }
+      if ((tx.response.status >= 200 && tx.response.status <= 299) && routesStatus.routeSuccess) {
+        result = transactionStatus.SUCCESSFUL
+      }
+      if ((tx.response.status >= 400 && tx.response.status <= 499) && routesStatus.routeSuccess) {
+        result = transactionStatus.COMPLETED
+      }
+    }
+
+    // In all other cases mark as completed
+    if (!result) {
+      result = transactionStatus.COMPLETED
+    }
+
+    return result
+  }
+
+  const transactionId = getTransactionId(ctx)
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
     if (err) { return callback(err) }
@@ -185,40 +397,7 @@ export function setFinalStatus (ctx, callback) {
       logger.debug(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
       update.status = ctx.mediatorResponse.status
     } else {
-      let routeFailures = false
-      let routeSuccess = true
-      if (ctx.routes) {
-        for (const route of Array.from(ctx.routes)) {
-          if (route.response.status >= 500 && route.response.status <= 599) {
-            routeFailures = true
-          }
-          if (!(route.response.status >= 200 && route.response.status <= 299)) {
-            routeSuccess = false
-          }
-        }
-      }
-
-      if (ctx.response.status >= 500 && ctx.response.status <= 599) {
-        tx.status = transactionStatus.FAILED
-      } else {
-        if (routeFailures) {
-          tx.status = transactionStatus.COMPLETED_W_ERR
-        }
-        if ((ctx.response.status >= 200 && ctx.response.status <= 299) && routeSuccess) {
-          tx.status = transactionStatus.SUCCESSFUL
-        }
-        if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routeSuccess) {
-          tx.status = transactionStatus.COMPLETED
-        }
-      }
-
-      // In all other cases mark as completed
-      if (tx.status === 'Processing') {
-        tx.status = transactionStatus.COMPLETED
-      }
-
-      ctx.transactionStatus = tx.status
-
+      tx.status = getContextResult()
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
     }
@@ -249,7 +428,7 @@ export function setFinalStatus (ctx, callback) {
 }
 
 export async function koaMiddleware (ctx, next) {
-  const saveTransaction = promisify(storeTransaction)
+  const saveTransaction = promisify(initiateRequest)
   await saveTransaction(ctx)
   await next()
 }
