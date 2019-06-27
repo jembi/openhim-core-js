@@ -220,15 +220,23 @@ function sendRequestToRoutes (ctx, routes, next) {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
               // handle mediator reponse
-              const responseObj = JSON.parse(response.body)
-              ctx.mediatorResponse = responseObj
+              let payload = ''
+              response.body.on('data', (data) => {
+                payload += data.toString()
+              })
 
-              if (responseObj.error != null) {
-                ctx.autoRetry = true
-                ctx.error = responseObj.error
-              }
-              // then set koa response from responseObj.response
-              setKoaResponse(ctx, responseObj.response)
+              response.body.on('end', () => {
+                const responseObj = JSON.parse(payload)
+                ctx.mediatorResponse = responseObj
+
+                if (responseObj.error != null) {
+                  ctx.autoRetry = true
+                  ctx.error = responseObj.error
+                }
+                // then set koa response from responseObj.response
+                setKoaResponse(ctx, responseObj.response)
+              });
+
             } else {
               setKoaResponse(ctx, response)
             }
