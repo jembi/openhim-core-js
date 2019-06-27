@@ -288,7 +288,9 @@ function sendRequestToRoutes (ctx, routes, next) {
 
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
-      setTransactionFinalStatus(ctx)
+      ctx.state.requestPromise.then(() => {
+        setTransactionFinalStatus(ctx)
+      })
 
       // TODO: OHM-694 Uncomment when secondary routes are supported
       // Save events for the secondary routes
@@ -305,7 +307,9 @@ function sendRequestToRoutes (ctx, routes, next) {
       // }
     }).catch(err => {
       logger.error(err)
-      setTransactionFinalStatus(ctx)
+      ctx.state.requestPromise.then(() => {
+        setTransactionFinalStatus(ctx)
+      })
     })
   })
 }
