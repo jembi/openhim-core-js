@@ -29,7 +29,6 @@ async function rawBodyReader (ctx) {
   ctx.state.downstream._read = () => {}
 
   let gridFsStream
-  let promise
 
   /*
    * Only transactions that were requested to be rerun should have this 
@@ -52,7 +51,7 @@ async function rawBodyReader (ctx) {
 
       // Create the transaction for Request (started receiving)
       // Side effect: Updates the Koa ctx with the transactionId
-      promise = messageStore.initiateRequest(ctx)
+      ctx.state.requestPromise = messageStore.initiateRequest(ctx)
 
       gridFsStream
         .on('error', (err) => {
@@ -67,7 +66,7 @@ async function rawBodyReader (ctx) {
       gridFsStream = bucket.openDownloadStream(fileId)
 
       ctx.request.bodyId = fileId
-      promise = messageStore.initiateRequest(ctx)
+      ctx.state.requestPromise = messageStore.initiateRequest(ctx)
 
       gridFsStream
         .on('data', (chunk) => {
@@ -85,7 +84,7 @@ async function rawBodyReader (ctx) {
     /*
      *  GET and DELETE come in here to persist the intial request transaction
      */
-    promise = messageStore.initiateRequest(ctx)
+    ctx.state.requestPromise = messageStore.initiateRequest(ctx)
   }
 
   ctx.req
@@ -111,7 +110,7 @@ async function rawBodyReader (ctx) {
 
       // Update the transaction for Request (finished receiving)
       // Only update after `messageStore.initiateRequest` has completed
-      promise.then(() => {
+      ctx.state.requestPromise.then(() => {
         messageStore.completeRequest(ctx, () => {})
       })
     })

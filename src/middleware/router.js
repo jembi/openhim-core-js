@@ -235,7 +235,9 @@ function sendRequestToRoutes (ctx, routes, next) {
           })
           .then(() => {
             logger.info('primary route completed')
-            messageStore.completeResponse(ctx, (err, tx) => {})
+            ctx.state.requestPromise.then(() => {
+              messageStore.completeResponse(ctx, (err, tx) => {})
+            })
             return next()
           })
           .catch((reason) => {
@@ -468,8 +470,10 @@ async function sendHttpRequest (ctx, route, options) {
        *     reworked to update the database based on response object passed
        *     in as a parameter; then the setKoaResponse call can be removed.
        */
-      setKoaResponse(ctx, res)
-      messageStore.initiateResponse(ctx, () => {})
+      ctx.state.requestPromise.then(() => {
+        setKoaResponse(ctx, res)
+        messageStore.initiateResponse(ctx, () => {})
+      })
     },
     responseProgress: function (chunk, counter, size) {
       logger.info(`Write response CHUNK # ${counter} [ Total size ${size}]`)
