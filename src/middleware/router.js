@@ -236,7 +236,7 @@ function sendRequestToRoutes (ctx, routes, next) {
           .then(() => {
             logger.info('primary route completed')
             ctx.state.requestPromise.then(() => {
-              messageStore.completeResponse(ctx, (err, tx) => {})
+              ctx.state.responsePromise = messageStore.completeResponse(ctx, (err, tx) => {})
             })
             return next()
           })
@@ -275,7 +275,6 @@ function sendRequestToRoutes (ctx, routes, next) {
                   timestamp: ctx.requestTimestamp
                 }
               }
-
               return messageStore.storeNonPrimaryResponse(ctx, routeObj, () => {})
             } catch (err) {
               return logger.error(err)
@@ -289,7 +288,9 @@ function sendRequestToRoutes (ctx, routes, next) {
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
       ctx.state.requestPromise.then(() => {
-        setTransactionFinalStatus(ctx)
+        ctx.state.responsePromise.then(() => {
+          setTransactionFinalStatus(ctx)
+        })
       })
 
       // TODO: OHM-694 Uncomment when secondary routes are supported
@@ -308,7 +309,9 @@ function sendRequestToRoutes (ctx, routes, next) {
     }).catch(err => {
       logger.error(err)
       ctx.state.requestPromise.then(() => {
-        setTransactionFinalStatus(ctx)
+        ctx.state.responsePromise.then(() => {
+          setTransactionFinalStatus(ctx)
+        })
       })
     })
   })

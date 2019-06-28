@@ -196,49 +196,51 @@ export function initiateResponse (ctx, done) {
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
 export function completeResponse (ctx, done) {
-  ctx.responseTimestampEnd = new Date()
+  return new Promise((resolve, reject) => {
+    ctx.responseTimestampEnd = new Date()
 
-  const transactionId = getTransactionId(ctx)
+    const transactionId = getTransactionId(ctx)
 
-  const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
+    const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
 
-  const update = {
-    'response.timestampEnd': ctx.responseTimestampEnd,
-    'response.status': ctx.response.status,
-    'response.headers': headers
-  }
+    const update = {
+      'response.timestampEnd': ctx.responseTimestampEnd,
+      'response.status': ctx.response.status,
+      'response.headers': headers
+    }
 
-  if (ctx.mediatorResponse) {
-    if (ctx.mediatorResponse.orchestrations) {
+    if (ctx.mediatorResponse) {
+      if (ctx.mediatorResponse.orchestrations) {
+        if (!update.orchestrations) {
+          update.orchestrations = []
+        }
+        update.orchestrations.push(...ctx.mediatorResponse.orchestrations)
+      }
+
+      if (ctx.mediatorResponse.properties) {
+        update.properties = ctx.mediatorResponse.properties
+      }
+    }
+
+    if (ctx.orchestrations) {
       if (!update.orchestrations) {
-        update.orchestrations = []
+          update.orchestrations = []
+        }
+      update.orchestrations.push(...ctx.orchestrations)
+    }
+
+    return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+      if (err) {
+        logger.error(`Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`)
+        reject(err)
       }
-      update.orchestrations.push(...ctx.mediatorResponse.orchestrations)
-    }
-
-    if (ctx.mediatorResponse.properties) {
-      update.properties = ctx.mediatorResponse.properties
-    }
-  }
-
-  if (ctx.orchestrations) {
-    if (!update.orchestrations) {
-        update.orchestrations = []
+      if ((tx === undefined) || (tx === null)) {
+        logger.error(`Could not find transaction: ${ctx.transactionId}`)
+        reject(err)
       }
-    update.orchestrations.push(...ctx.orchestrations)
-  }
-
-  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
-    if (err) {
-      logger.error(`Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`)
-      return done(err)
-    }
-    if ((tx === undefined) || (tx === null)) {
-      logger.error(`Could not find transaction: ${ctx.transactionId}`)
-      return done(err)
-    }
-    logger.info(`Done completeResponse for transaction: ${tx._id}`)
-    done(null, tx)
+      logger.info(`Done completeResponse for transaction: ${tx._id}`)
+      resolve(tx)
+    })
   })
 }
 
@@ -421,7 +423,7 @@ export function setFinalStatus (ctx, callback) {
 
       // Asynchronously record transaction metrics
       metrics.recordTransactionMetrics(tx).catch(err => {
-        logger.error('Recording transaction metrics failed', err)
+        logger.error(`Recording transaction metrics failed for transaction: ${tx._id}: ${err}`)
       })
     })
   })
