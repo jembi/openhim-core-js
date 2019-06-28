@@ -343,11 +343,19 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
       }
       if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
         // handle mediator reponse
-        const responseObj = JSON.parse(response.body)
-        routeObj.mediatorURN = responseObj['x-mediator-urn']
-        routeObj.orchestrations = responseObj.orchestrations
-        routeObj.properties = responseObj.properties
-        if (responseObj.metrics) { routeObj.metrics = responseObj.metrics }
+        let payload = ''
+        response.body.on('data', (data) => {
+          payload += data.toString()
+        })
+
+        response.body.on('end', () => {
+          const responseObj = JSON.parse(payload)
+          routeObj.mediatorURN = responseObj['x-mediator-urn']
+          routeObj.orchestrations = responseObj.orchestrations
+          routeObj.properties = responseObj.properties
+          if (responseObj.metrics) { routeObj.metrics = responseObj.metrics }
+          if (responseObj.error) { routeObj.error = responseObj.error }
+        })
         routeObj.response = responseObj.response
       } else {
         routeObj.response = response
