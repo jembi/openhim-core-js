@@ -24,7 +24,11 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
       reject(err)
     }
 
-    const downstream = (requestBodyStream != undefined) && (requestBodyStream) ? requestBodyStream : new Writable().end()
+    const emptyInput = new Readable()
+    emptyInput._read = () => {}
+    emptyInput.push(null)
+
+    const downstream = (requestBodyStream != undefined) && (requestBodyStream) ? requestBodyStream : emptyInput
     const method = options.secured ? https : http
 
     const routeReq = method.request(options)
@@ -132,7 +136,8 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
 
     const timeout = (options.timeout != undefined) && (options.timeout) ? options.timeout : +config.router.timeout
     routeReq.setTimeout(timeout, () => {
-      routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
+      const err = new Error(`Request took longer than ${timeout}ms`)
+      routeReq.destroy(err)
       if (statusEvents.timeoutError) {
         statusEvents.timeoutError(timeout)
       }
