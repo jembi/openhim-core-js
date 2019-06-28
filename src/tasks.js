@@ -300,7 +300,7 @@ async function rerunHttpRequestSend (options, transaction, callback) {
   options.responseBodyRequired = false
 
   try {
-    const response = await makeStreamingRequest(null, options, statusEvents)
+    await makeStreamingRequest(null, options, statusEvents)
     callback(null, response)
   } catch (err) {
     callback(err)
