@@ -235,8 +235,7 @@ function sendRequestToRoutes (ctx, routes, next) {
                 }
                 // then set koa response from responseObj.response
                 setKoaResponse(ctx, responseObj.response)
-              });
-
+              })
             } else {
               setKoaResponse(ctx, response)
             }
@@ -251,6 +250,7 @@ function sendRequestToRoutes (ctx, routes, next) {
           .catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
+            setTransactionFinalStatus(ctx)
             return next()
           })
       } else {
