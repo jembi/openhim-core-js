@@ -22,16 +22,23 @@ async function recordTransactionMetric (fields, update) {
 export async function recordTransactionMetrics (transaction) {
   if (
       !transaction.response ||
-      !transaction.response.timestamp ||
-      !(transaction.response.timestamp instanceof Date)
+      !transaction.response.timestampEnd ||
+      !(transaction.response.timestampEnd instanceof Date)
   ) {
     // Don't record metrics if there is no response i.e. an error
     // or if the response does not have a timestamp
     // or if the timestamp isnt an instance of Date
+    /*
+     *   TODO: This may not be a critical requirement, but we
+     *      shouldn't be doing nothing under these conditions,
+     *      at the bery least, this case will cause a discrepancy
+     *      in the metrics. On the other hand, do we want to throw
+     *      an error here?
+     */
     return
   }
 
-  const responseTime = transaction.response.timestamp.getTime() - transaction.request.timestamp.getTime()
+  const responseTime = transaction.response.timestampEnd.getTime() - transaction.request.timestamp.getTime()
   const statusKey = TRANSACTION_STATUS_KEYS[transaction.status]
   const update = {
     $inc: {
