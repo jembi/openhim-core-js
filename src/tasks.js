@@ -299,7 +299,12 @@ async function rerunHttpRequestSend (options, transaction, callback) {
   options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(transaction.request.method)
   options.responseBodyRequired = false
 
-  return await makeStreamingRequest(null, options, statusEvents)
+  try {
+    await makeStreamingRequest(null, options, statusEvents)
+    callback(null, response)
+  } catch (err) {
+    callback(err)
+  }
 }
 
 /**

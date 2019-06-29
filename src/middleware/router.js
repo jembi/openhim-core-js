@@ -235,8 +235,7 @@ function sendRequestToRoutes (ctx, routes, next) {
                 }
                 // then set koa response from responseObj.response
                 setKoaResponse(ctx, responseObj.response)
-              });
-
+              })
             } else {
               setKoaResponse(ctx, response)
             }
@@ -244,13 +243,14 @@ function sendRequestToRoutes (ctx, routes, next) {
           .then(() => {
             logger.info('primary route completed')
             ctx.state.requestPromise.then(() => {
-              messageStore.completeResponse(ctx, (err, tx) => {})
+              ctx.state.responsePromise = messageStore.completeResponse(ctx, (err, tx) => {})
             })
             return next()
           })
           .catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
+            setTransactionFinalStatus(ctx)
             return next()
           })
       } else {
@@ -283,7 +283,6 @@ function sendRequestToRoutes (ctx, routes, next) {
                   timestamp: ctx.requestTimestamp
                 }
               }
-
               return messageStore.storeNonPrimaryResponse(ctx, routeObj, () => {})
             } catch (err) {
               return logger.error(err)
@@ -297,7 +296,9 @@ function sendRequestToRoutes (ctx, routes, next) {
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
       ctx.state.requestPromise.then(() => {
-        setTransactionFinalStatus(ctx)
+        ctx.state.responsePromise.then(() => {
+          setTransactionFinalStatus(ctx)
+        })
       })
 
       // TODO: OHM-694 Uncomment when secondary routes are supported
@@ -316,7 +317,9 @@ function sendRequestToRoutes (ctx, routes, next) {
     }).catch(err => {
       logger.error(err)
       ctx.state.requestPromise.then(() => {
-        setTransactionFinalStatus(ctx)
+        ctx.state.responsePromise.then(() => {
+          setTransactionFinalStatus(ctx)
+        })
       })
     })
   })
@@ -340,11 +343,19 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
       }
       if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
         // handle mediator reponse
-        const responseObj = JSON.parse(response.body)
-        routeObj.mediatorURN = responseObj['x-mediator-urn']
-        routeObj.orchestrations = responseObj.orchestrations
-        routeObj.properties = responseObj.properties
-        if (responseObj.metrics) { routeObj.metrics = responseObj.metrics }
+        let payload = ''
+        response.body.on('data', (data) => {
+          payload += data.toString()
+        })
+
+        response.body.on('end', () => {
+          const responseObj = JSON.parse(payload)
+          routeObj.mediatorURN = responseObj['x-mediator-urn']
+          routeObj.orchestrations = responseObj.orchestrations
+          routeObj.properties = responseObj.properties
+          if (responseObj.metrics) { routeObj.metrics = responseObj.metrics }
+          if (responseObj.error) { routeObj.error = responseObj.error }
+        })
         routeObj.response = responseObj.response
       } else {
         routeObj.response = response
