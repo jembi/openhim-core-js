@@ -209,6 +209,10 @@ export function completeResponse (ctx, done) {
       'response.headers': headers
     }
 
+    if (ctx.error) {
+      update.error = ctx.error
+    }
+
     if (ctx.mediatorResponse) {
       if (ctx.mediatorResponse.orchestrations) {
         if (!update.orchestrations) {
