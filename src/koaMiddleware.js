@@ -90,16 +90,13 @@ export function rerunApp (done) {
   // Rerun bypass authorisation middlware
   app.use(rerunBypassAuthorisation.koaMiddleware)
 
-  // Persist message middleware
-  //app.use(messageStore.koaMiddleware)
-
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
 
-  app.use(rawBodyReader.koaMiddleware)
-
   // Update original transaction with rerunned transaction ID
   app.use(rerunUpdateTransactionTask.koaMiddleware)
+
+  app.use(rawBodyReader.koaMiddleware)
 
   // Events
   app.use(events.koaMiddleware)
