@@ -20,8 +20,7 @@ import * as pollingBypassAuthentication from './middleware/pollingBypassAuthenti
 import * as rawBodyReader from './middleware/rawBodyReader'
 import * as events from './middleware/events'
 import * as proxy from './middleware/proxy'
-// TODO: OHM-696 uncomment the line below
-//import * as rewrite from './middleware/rewriteUrls'
+import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
 import { checkServerIdentity } from 'tls';
 import { Readable } from 'stream';
@@ -68,8 +67,7 @@ export function setupApp (done) {
   //app.use(messageStore.koaMiddleware)
 
   // URL rewriting middleware
-  // TODO: OHM-696 uncomment the code below when url rewriting is back in support
-  // app.use(rewrite.koaMiddleware)
+  app.use(rewrite.koaMiddleware)
 
   // Events
   app.use(events.koaMiddleware)
