@@ -219,23 +219,14 @@ function sendRequestToRoutes (ctx, routes, next) {
           .then((response) => {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-              // handle mediator reponse
-              let payload = ''
-              response.body.on('data', (data) => {
-                payload += data.toString()
-              })
+              // handle mediator response  
+              const responseObj = JSON.parse(response.body)
 
-              response.body.on('end', () => {
-                const responseObj = JSON.parse(payload)
-                ctx.mediatorResponse = responseObj
-
-                if (responseObj.error != null) {
-                  ctx.autoRetry = true
-                  ctx.error = responseObj.error
-                }
-                // then set koa response from responseObj.response
-                setKoaResponse(ctx, responseObj.response)
-              })
+              if (responseObj.error != null) {
+                ctx.autoRetry = true
+                ctx.error = responseObj.error
+              }
+              setKoaResponse(ctx, responseObj.response)
             } else {
               setKoaResponse(ctx, response)
             }
@@ -494,7 +485,6 @@ async function sendHttpRequest (ctx, route, options) {
        *     in as a parameter; then the setKoaResponse call can be removed.
        */
       ctx.state.requestPromise.then(() => {
-        setKoaResponse(ctx, res)
         messageStore.initiateResponse(ctx, () => {})
       })
     },

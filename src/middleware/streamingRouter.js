@@ -35,8 +35,6 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
       .on('response', (routeRes) => {
         response.status = routeRes.statusCode
         response.headers = routeRes.headers
-        response.body = new Readable()
-        response.body._read = () => {}
 
         let uploadStream
         let counter = 0
@@ -66,6 +64,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
               }
             })
         }
+        const responseBody = []
 
         // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
         routeRes
@@ -94,8 +93,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
               }
             }
 
-            // Send the response upstream to the client making the request
-            response.body.push(chunk)
+            responseBody.push(chunk)
           })
           .on('end', () => {
             if (statusEvents.finishResponse) {
@@ -104,7 +102,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             if (options.responseBodyRequired) {
               uploadStream.end()
             }
-            response.body.push(null)
+            response.body = Buffer.concat(responseBody).toString()
             response.timestampEnd = new Date()
             resolve(response)
           })
