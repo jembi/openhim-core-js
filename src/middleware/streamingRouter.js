@@ -184,5 +184,5 @@ export function collectStream (readableStream) {
       .on('error', (error) => {
         reject(error)
       })
-    })
+  })
 }

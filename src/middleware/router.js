@@ -17,7 +17,7 @@ import { getGridFSBucket } from '../contentChunk'
 import { Writable, Readable } from 'stream';
 import util from 'util'
 import { brotliCompressSync } from 'zlib';
-import { makeStreamingRequest } from './streamingRouter'
+import { makeStreamingRequest, collectStream } from './streamingRouter'
 
 config.router = config.get('router')
 
@@ -220,13 +220,8 @@ function sendRequestToRoutes (ctx, routes, next) {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
               // handle mediator reponse
-              let payload = ''
-              response.body.on('data', (data) => {
-                payload += data.toString()
-              })
-
-              response.body.on('end', () => {
-                const responseObj = JSON.parse(payload)
+              collectStream(response.body).then((response) => {
+                const responseObj = JSON.parse(response)
                 ctx.mediatorResponse = responseObj
 
                 if (responseObj.error != null) {
