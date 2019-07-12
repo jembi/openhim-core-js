@@ -169,3 +169,20 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
       })
   })
 }
+
+export function collectStream (readableStream) {
+  let data = []
+
+  return new Promise((resolve, reject) => {
+    readableStream
+      .on('data', (chunk) => {
+        data.push(chunk)
+      })
+      .on('end', () => {
+        resolve(Buffer.concat(data).toString())
+      })
+      .on('error', (error) => {
+        reject(error)
+      })
+    })
+}
