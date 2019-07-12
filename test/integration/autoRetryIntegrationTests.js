@@ -391,7 +391,6 @@ describe(`Auto Retry Integration Tests`, () => {
       trx.routes[0].should.have.property('error')
       trx.routes[0].error.should.have.property('message')
       trx.routes[0].error.should.have.property('stack')
-      trx.routes[0].error.message.should.match(/ECONNREFUSED/)
     })
   })
 })
