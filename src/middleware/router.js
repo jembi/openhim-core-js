@@ -221,6 +221,7 @@ function sendRequestToRoutes (ctx, routes, next) {
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
               // handle mediator response  
               const responseObj = JSON.parse(response.body)
+              ctx.mediatorResponse = responseObj
 
               if (responseObj.error != null) {
                 ctx.autoRetry = true
