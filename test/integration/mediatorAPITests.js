@@ -1186,7 +1186,9 @@ describe('API Integration Tests', () => {
       status: 'Successful',
       response: {
         status: 200,
-        headers: {},
+        headers: {
+          "Content-Type": "application/octet-stream"
+        },
         body: '<transaction response>',
         timestamp: new Date()
       },
@@ -1256,6 +1258,7 @@ describe('API Integration Tests', () => {
 
     after(async () => {
       await Promise.all([
+        TransactionModelAPI.deleteMany({}),
         ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock mediator endpoint' }),
         ClientModelAPI.deleteOne({ clientID: 'mediatorTestApp' }),
         mockServer.close()
@@ -1264,8 +1267,7 @@ describe('API Integration Tests', () => {
 
     afterEach(async () => {
       await Promise.all([
-        promisify(server.stop)(),
-        TransactionModelAPI.deleteMany({})
+        promisify(server.stop)()
       ])
     })
 
@@ -1289,6 +1291,8 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         await testUtils.pollCondition(() => TransactionModelAPI.countDocuments().then(c => c === 1))
+
+        await new Promise(resolve => setTimeout(resolve, 100))
         const res = await TransactionModelAPI.findOne()
 
         res.status.should.be.equal(mediatorResponse.status)
