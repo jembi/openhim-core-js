@@ -80,22 +80,15 @@ export function fetchRewriteConfig (channel, authType, callback) {
   }
 }
 
-const rewriteUrls = async (body, channel, authType, callback) => {
-  let fullBody
-  try {
-    fullBody = await collectStream(body)
-  } catch(e) {
-    return callback(e)
-  }
-
-  fetchRewriteConfig(channel, authType, (err, rwConfig) => {
+export function rewriteUrls (body, channel, authType, callback) {
+  return fetchRewriteConfig(channel, authType, (err, rwConfig) => {
     if (err != null) {
       return callback(err)
     }
 
     // rewrite each found href, src or fullUrl attribute (in JSON or XML)
     // See https://regex101.com/r/uY3fO1/1 for an explanation of this regex
-    const newBody = fullBody.replace(/["|']?(?:href|src|fullUrl)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) => {
+    const newBody = body.replace(/["|']?(?:href|src|fullUrl)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) => {
       let relativePath
       const hrefUrlObj = url.parse(hrefUrl)
 

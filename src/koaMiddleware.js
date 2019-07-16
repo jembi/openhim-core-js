@@ -67,7 +67,7 @@ export function setupApp (done) {
   //app.use(messageStore.koaMiddleware)
 
   // URL rewriting middleware
-  app.use(rewrite.koaMiddleware)
+  //app.use(rewrite.koaMiddleware)
 
   // Events
   app.use(events.koaMiddleware)
