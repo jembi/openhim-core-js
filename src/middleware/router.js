@@ -502,7 +502,10 @@ async function sendHttpRequest (ctx, route, options) {
     },
     finishResponseAsString: function(body) {
       return rewrite.rewriteUrls(body, ctx.authorisedChannel, ctx.authenticationType, (err, newBody) => {
-        if (err) logger.error(`Url rewrite error: ${err}`)
+        if (err) {
+          logger.error(`Url rewrite error: ${err}`)
+          return err
+        }
         logger.info(`Rewrite URLs for transaction: ${ctx.transactionId}`)
         return newBody
       })
