@@ -36,7 +36,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
     emptyInput._read = () => {}
     emptyInput.push(null)
 
-    const downstream = (requestBodyStream != undefined) && (requestBodyStream) ? requestBodyStream : emptyInput
+    const downstream = requestBodyStream != undefined && requestBodyStream ? requestBodyStream : emptyInput
     const method = options.secured ? https : http
 
     const routeReq = method.request(options)
@@ -120,9 +120,13 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             if (options.responseBodyRequired) {
               if (options.collectResponseBody) {
                 responseBodyAsString = Buffer.concat(responseChunks).toString()
+
                 // This event is fired once the response is fully-received and ready for URL rewriting
                 if (statusEvents.finishResponseAsString) {
-                  responseBodyAsString = statusEvents.finishResponseAsString(responseBodyAsString)
+                  const returnedResponse = statusEvents.finishResponseAsString(responseBodyAsString)
+                  if (returnedResponse !== undefined && returnedResponse) {
+                    responseBodyAsString = returnedResponse
+                  }
                 }
               } else {
                 uploadStream.end()
@@ -229,6 +233,9 @@ export function storeResponseAsString (bodyString, response, options, statusEven
   const uploadStream = bucket.openUploadStream()
   if (options.responseBodyRequired) {
     response.headers['x-body-id'] = uploadStream.id
+    if (statusEvents.startGridFs) {
+      statusEvents.startGridFs(uploadStream.id)
+    }
   }
 
   uploadStream
@@ -245,15 +252,13 @@ export function storeResponseAsString (bodyString, response, options, statusEven
       }
     })
 
-  if (statusEvents.startGridFs) {
-    statusEvents.startGridFs(uploadStream.id)
+  if (options.responseBodyRequired) {
+    // Store the full response body into GridFS
+    uploadStream.write(bodyString)
+    uploadStream.end()
+
+    // Send the full response body upstream to the client making the request
+    response.body.push(bodyString)
+    response.body.push(null)
   }
-
-  // Store the full response body into GridFS
-  uploadStream.write(bodyString)
-  uploadStream.end()
-
-  // Send the full response body upstream to the client making the request
-  response.body.push(bodyString)
-  response.body.push(null)
 }
