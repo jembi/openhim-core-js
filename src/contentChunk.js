@@ -1,5 +1,7 @@
 
 import mongodb from 'mongodb'
+import zlib from 'zlib'
+import {PassThrough} from 'stream'
 import { config, connectionDefault } from './config'
 
 const apiConf = config.get('api')
@@ -11,6 +13,15 @@ export const getGridFSBucket = () => {
   }
 
   return bucket
+}
+
+export const getFileDetails = async (fileId) => {
+  try {
+    return await connectionDefault.client.db().collection('fs.files').findOne(fileId)
+  } catch (err) {
+    // hanle error
+    console.log(err)
+  }
 }
 
 const isValidGridFsPayload = (payload) => {
@@ -125,31 +136,78 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
   })
 }
 
+const getDecompressionStreamByContentEncoding = (contentEncoding) => {
+  switch (contentEncoding) {
+    case 'gzip':
+        return zlib.createGunzip()
+    case 'deflate':
+        return zlib.createInflate()
+    default:
+      // has nothing to decompress, but still requires a stream to be piped and listened on
+      return new PassThrough()
+  }
+}
+
 export const retrievePayload = fileId => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (!fileId) {
       return reject(new Error(`Payload id not supplied`))
     }
 
-    const bucket = getGridFSBucket()
-    const chunks = []
     let payloadSize = 0
     // Perhaps the truncateSize should be represented in actual size, and not string length
     const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
 
+    const fileDetails = await getFileDetails(fileId)
+    const decompressionStream = getDecompressionStreamByContentEncoding(fileDetails.metadata['content-encoding'])
+
+    const bucket = getGridFSBucket()
     const downloadStream = bucket.openDownloadStream(fileId)
     downloadStream.on('error', err => reject(err))
-    downloadStream.on('data', chunk => {
+
+    const charset = obtainCharset(fileDetails.metadata)
+    const uncompressedBodyBufs = []
+
+    // apply the decompression transformation and start listening for the output chunks
+    downloadStream.pipe(decompressionStream)
+    decompressionStream.on('data', (chunk) => {
       payloadSize += chunk.length
       if (payloadSize >= truncateSize) {
+        decompressionStream.destroy()
         downloadStream.destroy()
       }
-
-      chunks.push(chunk)
+      uncompressedBodyBufs.push(chunk)
     })
-    downloadStream.on('end', () => resolve(Buffer.concat(chunks).toString()))
-    downloadStream.on('close', () => resolve(Buffer.concat(chunks).toString()))
+
+    decompressionStream.on('end', () => {
+      resolveDecompressionBuffer()
+    })
+    decompressionStream.on('close', () => {
+      resolveDecompressionBuffer()
+    })
+
+    downloadStream.on('end', () => {
+      console.log('downloadStream End')
+    })
+    downloadStream.on('close', () => {
+      console.log('downloadStream Close')
+    })
+
+    function resolveDecompressionBuffer () {
+      const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+      const response = uncompressedBody.toString(charset)
+      resolve(response)
+    }
   })
+}
+
+function obtainCharset (headers) {
+  const contentType = headers['content-type'] || ''
+  const matches = contentType.match(/charset=([^;,\r\n]+)/i)
+  if (matches && matches[1]) {
+    return matches[1]
+  }
+  return 'utf-8'
 }
 
 export const addBodiesToTransactions = async (transactions) => {

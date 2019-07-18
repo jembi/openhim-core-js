@@ -1,0 +1,87 @@
+
+@startuml
+participant "HTTP Request"
+box "Koa Middlewares" #LightBlue
+	participant "basicAuthentication"
+	participant "tlsAuthentication"
+	participant "RawBodyParser"
+	participant "RequestMatching"
+	participant "Authorisation"
+	'comment - compress middleware'
+	participant "Proxy"
+	participant "messageStore"
+	participant "Rewrite"
+	participant "events"
+	participant "router"
+end box
+participant "Upstream Server"
+
+== Authentication ==
+
+"HTTP Request" -> "basicAuthentication": (if) Basic Authentication
+"basicAuthentication" -> "basicAuthentication": Authenticate Basic Auth
+"basicAuthentication" --> "HTTP Request": Authentication Failed
+"basicAuthentication" -> "RawBodyParser": Next Middleware
+
+"HTTP Request" -> "tlsAuthentication": (if) TLS Authentication
+"tlsAuthentication" -> "tlsAuthentication": Authenticate TLS Auth
+"tlsAuthentication" --> "HTTP Request": Authentication Failed
+"tlsAuthentication" -> "RawBodyParser": Next Middleware
+
+"HTTP Request" -> "RawBodyParser": (if) No authentication specified
+
+== ==
+
+"RawBodyParser" -> "RawBodyParser": Receive entire payload
+"RawBodyParser" -> "RequestMatching": Next Middleware
+
+== Request Matching ==
+
+"RequestMatching" -> "RequestMatching": URL Pattern Matching
+"RequestMatching" --> "HTTP Request": No matching URL found
+"RequestMatching" -> "Authorisation": Next Middleware
+
+== Authorisation ==
+
+"Authorisation" -> "Authorisation": Authorise client
+"Authorisation" --> "HTTP Request": Client not authorised to access channel
+"Authorisation" -> "Proxy": Next Middleware
+
+== ==
+
+"Proxy" -> "Proxy": Add proxy headers
+"Proxy" -> "messageStore": Next Middleware
+
+group messageStore
+	
+end
+
+"messageStore" -> "messageStore": Store transaction\nrequest Metadata
+"messageStore" -> "Rewrite": Next Middleware
+
+"Rewrite" -> "events": Next Middleware
+
+"events" -> "events": Store channel start event
+"events" -> "router": Next Middleware
+
+"router" -> "Upstream Server": Send transaction \nupstream
+"Upstream Server" -> "router": Receive upstream \nresponse
+"router" -> "router": Set Koa \nresponse
+"router" -> "router": Store transaction\nresponse metadata
+"router" -> "events": Next Middleware
+
+"events" -> "events": Store channel end event / \nprimary route events
+"events" -> "Rewrite": Next Middleware
+
+"Rewrite" -> "Rewrite": (if) Rewrite URLs
+
+"Rewrite" -> "messageStore": Next Middleware
+"messageStore" -> "Proxy": Next Middleware
+"Proxy" -> "Authorisation": Next Middleware
+"Authorisation" -> "RequestMatching": Next Middleware
+"RequestMatching" -> "RawBodyParser": Next Middleware
+"RawBodyParser" -> "tlsAuthentication": Next Middleware
+"tlsAuthentication" -> "basicAuthentication": Next Middleware
+"basicAuthentication" -> "HTTP Request": Respond to client
+
+@enduml
