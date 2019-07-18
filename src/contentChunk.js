@@ -17,12 +17,7 @@ export const getGridFSBucket = () => {
 }
 
 export const getFileDetails = async (fileId) => {
-  try {
-    return await connectionDefault.client.db().collection('fs.files').findOne(fileId)
-  } catch (err) {
-    // hanle error
-    console.log(err)
-  }
+  return await connectionDefault.client.db().collection('fs.files').findOne(fileId)
 }
 
 const isValidGridFsPayload = (payload) => {
@@ -159,8 +154,15 @@ export const retrievePayload = fileId => {
     // Perhaps the truncateSize should be represented in actual size, and not string length
     const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
 
-    const fileDetails = await getFileDetails(fileId)
-    const decompressionStream = getDecompressionStreamByContentEncoding(fileDetails.metadata['content-encoding'])
+    let fileDetails
+    try {
+      fileDetails = await getFileDetails(fileId)
+    } catch (err) {
+      return reject(err)
+    }
+
+    const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
+    const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
 
     const bucket = getGridFSBucket()
     const downloadStream = bucket.openDownloadStream(fileId)
@@ -194,8 +196,8 @@ export const retrievePayload = fileId => {
         const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
         const response = uncompressedBody.toString(charset)
         decompressionBufferHasBeenResolved = true
-        resolve(response)  
-      }      
+        resolve(response)
+      }
     }
   })
 }
