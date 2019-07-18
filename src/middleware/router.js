@@ -450,14 +450,14 @@ function sendRequest (ctx, route, options) {
   }
 }
 
-function obtainCharset (headers) {
-  const contentType = headers['content-type'] || ''
-  const matches = contentType.match(/charset=([^;,\r\n]+)/i)
-  if (matches && matches[1]) {
-    return matches[1]
-  }
-  return 'utf-8'
-}
+// function obtainCharset (headers) {
+//   const contentType = headers['content-type'] || ''
+//   const matches = contentType.match(/charset=([^;,\r\n]+)/i)
+//   if (matches && matches[1]) {
+//     return matches[1]
+//   }
+//   return 'utf-8'
+// }
 
 function setTransactionFinalStatus (ctx) {
   // Set the final status of the transaction
