@@ -3,6 +3,7 @@ import mongodb from 'mongodb'
 import zlib from 'zlib'
 import {PassThrough} from 'stream'
 import { config, connectionDefault } from './config'
+import { obtainCharset } from './utils'
 
 const apiConf = config.get('api')
 
@@ -199,15 +200,6 @@ export const retrievePayload = fileId => {
       resolve(response)
     }
   })
-}
-
-function obtainCharset (headers) {
-  const contentType = headers['content-type'] || ''
-  const matches = contentType.match(/charset=([^;,\r\n]+)/i)
-  if (matches && matches[1]) {
-    return matches[1]
-  }
-  return 'utf-8'
 }
 
 export const addBodiesToTransactions = async (transactions) => {

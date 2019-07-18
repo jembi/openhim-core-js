@@ -129,3 +129,18 @@ export function selectAuditFields (authenticated) {
     name: `${authenticated.firstname} ${authenticated.surname}`
   }
 }
+
+/**
+ * Return the content type encoding charset
+ *
+ * @param {Object} headers The object that contains the request headers.
+ * @return {Object} The content type charset value.
+ */
+export function obtainCharset (headers) {
+  const contentType = headers['content-type'] || ''
+  const matches = contentType.match(/charset=([^;,\r\n]+)/i)
+  if (matches && matches[1]) {
+    return matches[1]
+  }
+  return 'utf-8'
+}

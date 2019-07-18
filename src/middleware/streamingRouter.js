@@ -5,19 +5,11 @@ import { config } from '../config'
 import { getGridFSBucket } from '../contentChunk'
 import { Readable } from 'stream'
 import zlib from 'zlib'
+import { obtainCharset } from '../utils'
 
 config.router = config.get('router')
 
 let bucket
-
-function obtainCharset (headers) {
-  const contentType = headers['content-type'] || ''
-  const matches = contentType.match(/charset=([^;,\r\n]+)/i)
-  if (matches && matches[1]) {
-    return matches[1]
-  }
-  return 'utf-8'
-}
 
 export function makeStreamingRequest (requestBodyStream, options, statusEvents) {
   return new Promise((resolve, reject) => {
