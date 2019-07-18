@@ -1,7 +1,6 @@
 // All the gzip functionality is being commented out
 // TODO: OHM-693 uncomment the gzip functions when working on ticket
 
-//import zlib from 'zlib'
 import http from 'http'
 import https from 'https'
 import net from 'net'
@@ -11,12 +10,8 @@ import cookie from 'cookie'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
-import * as events from '../middleware/events'
 import { promisify } from 'util'
 import { getGridFSBucket } from '../contentChunk'
-import { Writable, Readable } from 'stream';
-import util from 'util'
-import { brotliCompressSync } from 'zlib';
 import { makeStreamingRequest } from './streamingRouter'
 
 config.router = config.get('router')
@@ -449,15 +444,6 @@ function sendRequest (ctx, route, options) {
      })
   }
 }
-
-// function obtainCharset (headers) {
-//   const contentType = headers['content-type'] || ''
-//   const matches = contentType.match(/charset=([^;,\r\n]+)/i)
-//   if (matches && matches[1]) {
-//     return matches[1]
-//   }
-//   return 'utf-8'
-// }
 
 function setTransactionFinalStatus (ctx) {
   // Set the final status of the transaction
