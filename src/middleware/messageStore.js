@@ -169,9 +169,7 @@ export function initiateResponse (ctx, done) {
   }
  */
   const update = {
-    'response.status': ctx.response.status,
     'response.headers': headers,
-    'response.bodyId': ctx.response.bodyId,
     'response.timestamp': ctx.responseTimestamp,
     error: ctx.error
   }
@@ -206,7 +204,8 @@ export function completeResponse (ctx, done) {
     const update = {
       'response.timestampEnd': ctx.responseTimestampEnd,
       'response.status': ctx.response.status,
-      'response.headers': headers
+      'response.headers': headers,
+      'response.bodyId': ctx.response.bodyId
     }
 
     if (ctx.error) {
