@@ -1,6 +1,3 @@
-// All the gzip functionality is being commented out
-// TODO: OHM-693 uncomment the gzip functions when working on ticket
-
 import http from 'http'
 import https from 'https'
 import net from 'net'
@@ -628,128 +625,6 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
 }
 
 /*
- * A promise returning function that send a request to the given route and resolves
- * the returned promise with a response object of the following form:
- *   response =
- *    status: <http_status code>
- *    body: <http body>
- *    headers: <http_headers_object>
- *    timestamp: <the time the response was recieved>
- */
-function sendHttpRequest_OLD (ctx, route, options) {
-  return new Promise((resolve, reject) => {
-    const response = {}
-
-    // const gunzip = zlib.createGunzip()
-    // const inflate = zlib.createInflate()
-
-    let method = http
-
-    if (route.secured) {
-      method = https
-    }
-
-    const routeReq = method.request(options, (routeRes) => {
-      response.status = routeRes.statusCode
-      response.headers = routeRes.headers
-
-      // TODO: OHM-693 uncomment code below when working on the gzipping and inflating
-      // const uncompressedBodyBufs = []
-      // if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
-      //   routeRes.pipe(gunzip)
-      //
-      //   gunzip.on('data', (data) => {
-      //     uncompressedBodyBufs.push(data)
-      //   })
-      // }
-
-      // if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
-      //   routeRes.pipe(inflate)
-      //
-      //   inflate.on('data', (data) => {
-      //     uncompressedBodyBufs.push(data)
-      //   })
-      // }
-
-      const bufs = []
-
-      if(!bucket) {
-        bucket = getGridFSBucket()
-      }
-
-      const uploadStream = bucket.openUploadStream()
-
-      uploadStream
-        .on('error', (err) => {
-          logger.error('Storing of response in gridfs failed, error: ' + JSON.stringify(err))
-        })
-        .on('finish', (file) => {
-          logger.info(`Response body with body id: ${file._id} stored`)
-
-          // Update HIM transaction with bodyId
-          ctx.response.bodyId = file._id
-        })
-
-      routeRes.on('data', chunk => {
-        if (!response.startTimestamp) {
-          response.startTimestamp = new Date()
-        }
-        uploadStream.write(chunk)
-        bufs.push(chunk)
-      })
-
-      // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
-      routeRes.on('end', () => {
-        response.timestamp = new Date()
-        response.endTimestamp = new Date()
-        uploadStream.end()
-        const charset = obtainCharset(routeRes.headers)
-
-        // TODO: OHM-693 uncomment code below when working on the gzipping and inflating
-        // if (routeRes.headers['content-encoding'] === 'gzip') {
-        //   gunzip.on('end', () => {
-        //     const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-        //     response.body = uncompressedBody.toString(charset)
-        //     resolve(response)
-        //   })
-        // } else if (routeRes.headers['content-encoding'] === 'deflate') {
-        //   inflate.on('end', () => {
-        //     const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-        //     response.body = uncompressedBody.toString(charset)
-        //     resolve(response)
-        //   })
-        // } else {
-          response.body = Buffer.concat(bufs)
-          resolve(response)
-        // }
-      })
-    })
-
-    routeReq.on('error', err => {
-      reject(err)
-    })
-
-    routeReq.on('clientError', err => {
-      reject(err)
-    })
-
-    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-    routeReq.setTimeout(timeout, () => {
-      routeReq.destroy(new Error(`Request took longer than ${timeout}ms`))
-    })
-
-    if ((ctx.request.method === 'POST') || (ctx.request.method === 'PUT')) {
-      if (ctx.body != null) {
-        // TODO : Should probally add checks to see if the body is a buffer or string
-        routeReq.write(ctx.body)
-      }
-    }
-
-    routeReq.end()
-  })
-}
-
-/*
  * A promise returning function that send a request to the given route using sockets and resolves
  * the returned promise with a response object of the following form: ()
  *   response =
@@ -921,6 +796,5 @@ function isMethodAllowed (ctx, channel) {
 export async function koaMiddleware (ctx, next) {
   const _route = promisify(route)
   await _route(ctx)
-  //await messageStore.storeResponse(ctx, () => {})
   await next()
 }
