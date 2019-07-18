@@ -218,27 +218,17 @@ function sendRequestToRoutes (ctx, routes, next) {
         promise = sendRequest(ctx, route, options)
           .then((response) => {
             logger.info(`executing primary route : ${route.name}`)
-            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-              // handle mediator reponse
-              let payload = ''
-              response.body.on('data', (data) => {
-                payload += data.toString()
-              })
-
-              response.body.on('end', () => {
-                const responseObj = JSON.parse(payload)
-                ctx.mediatorResponse = responseObj
-
-                if (responseObj.error != null) {
-                  ctx.autoRetry = true
-                  ctx.error = responseObj.error
-                }
-                // then set koa response from responseObj.response
-                setKoaResponse(ctx, responseObj.response)
-              })
-            } else {
-              setKoaResponse(ctx, response)
+        
+            if (response.mediatorResponse) {
+              ctx.mediatorResponse = response.mediatorResponse
+              
+              if (response.mediatorResponse.error != null) {
+                ctx.autoRetry = true
+                ctx.error = response.mediatorResponse.error
+              }
             }
+
+            setKoaResponse(ctx, response)
           })
           .then(() => {
             logger.info('primary route completed')
@@ -357,6 +347,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
           if (responseObj.error) { routeObj.error = responseObj.error }
         })
         routeObj.response = responseObj.response
+        routeObj.response.bodyId = response.bodyId
       } else {
         routeObj.response = response
       }
@@ -494,7 +485,7 @@ async function sendHttpRequest (ctx, route, options) {
        *     in as a parameter; then the setKoaResponse call can be removed.
        */
       ctx.state.requestPromise.then(() => {
-        setKoaResponse(ctx, res)
+       // setKoaResponse(ctx, res)
         messageStore.initiateResponse(ctx, () => {})
       })
     },

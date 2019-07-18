@@ -11,7 +11,7 @@ let bucket
 
 export function makeStreamingRequest (requestBodyStream, options, statusEvents) {
   return new Promise((resolve, reject) => {
-    const response = {}
+    let response = {}
     let startedRequest = false
     let startedGridFs = false
 
@@ -38,6 +38,11 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
         response.body = new Readable()
         response.body._read = () => {}
 
+        let isMediatorResponse = false
+        if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+          isMediatorResponse = true
+        }
+        
         let uploadStream
         let counter = 0
         let size = 0
@@ -67,6 +72,8 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             })
         }
 
+        let responseBuf = ''
+
         // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
         routeRes
           .on('data', (chunk) => {
@@ -86,25 +93,49 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             }
 
             // Send the response to GridFS, if the response body is required
-            if (options.responseBodyRequired) {
-              uploadStream.write(chunk)
+            if (options.responseBodyRequired) { 
               if (!startedGridFs && statusEvents.startGridFs) {
                 statusEvents.startGridFs(uploadStream.id)
                 startedGridFs = true
               }
+
+              if (!isMediatorResponse) {
+                uploadStream.write(chunk)
+              }
             }
 
-            // Send the response upstream to the client making the request
-            response.body.push(chunk)
+            if (isMediatorResponse) {
+              responseBuf += chunk.toString()
+            } else {
+              // Send the response upstream to the client making the request
+              response.body.push(chunk)
+            }
           })
           .on('end', () => {
             if (statusEvents.finishResponse) {
               statusEvents.finishResponse(response, size)
             }
-            if (options.responseBodyRequired) {
-              uploadStream.end()
+            
+            if (isMediatorResponse) {
+              const responseBody = JSON.parse(responseBuf)
+              response = responseBody.response
+              response.mediatorResponse = responseBody
+              
+              if (options.responseBodyRequired) {
+                if (!response.headers) {
+                  response.headers = {}
+                }
+                response.headers['x-body-id'] = uploadStream.id
+                uploadStream.write(responseBody.response.body)
+                uploadStream.end()
+              }
+            } else {
+              if (options.responseBodyRequired) {
+                uploadStream.end()
+              }
+              response.body.push(null)
             }
-            response.body.push(null)
+            
             response.timestampEnd = new Date()
             resolve(response)
           })
