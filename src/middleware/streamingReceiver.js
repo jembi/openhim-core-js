@@ -17,7 +17,7 @@ config.authentication = config.get('authentication')
 
 let bucket
 
-async function rawBodyReader (ctx) {
+async function streamingReceiver (ctx) {
   let counter = 0
   let size = 0
 
@@ -123,6 +123,6 @@ async function rawBodyReader (ctx) {
  * Koa middleware for streaming to GridFS and streaming routing
  */
 export async function koaMiddleware (ctx, next) {
-  rawBodyReader(ctx)
+  streamingReceiver(ctx)
   await next()
 }
