@@ -1,15 +1,8 @@
-import Koa from 'koa'
-import getRawBody from 'raw-body'
-import compress from 'koa-compress'
-import { Z_SYNC_FLUSH } from 'zlib'
 import logger from 'winston'
 
 import * as messageStore from './messageStore'
-// TODO: OHM-696 uncomment the line below
-//import * as rewrite from './middleware/rewriteUrls'
 import { config } from '../config'
 import { Readable } from 'stream';
-import { promisify } from 'util';
 import { getGridFSBucket }  from '../contentChunk'
 import { Types } from 'mongoose'
 
