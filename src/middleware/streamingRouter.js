@@ -136,7 +136,6 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             response.body.push(null)
             response.timestampEnd = new Date()
 
-
             const charset = obtainCharset(routeRes.headers)
             if (routeRes.headers['content-encoding'] === 'gzip') {
               gunzip.on('end', () => {

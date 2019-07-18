@@ -180,24 +180,22 @@ export const retrievePayload = fileId => {
       uncompressedBodyBufs.push(chunk)
     })
 
-    decompressionStream.on('end', () => {
-      resolveDecompressionBuffer()
-    })
-    decompressionStream.on('close', () => {
-      resolveDecompressionBuffer()
-    })
+    decompressionStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
+    decompressionStream.on('close', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
+    downloadStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
+    downloadStream.on('close', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
 
-    downloadStream.on('end', () => {
-      console.log('downloadStream End')
-    })
-    downloadStream.on('close', () => {
-      console.log('downloadStream Close')
-    })
-
-    function resolveDecompressionBuffer () {
-      const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
-      const response = uncompressedBody.toString(charset)
-      resolve(response)
+    let decompressionBufferHasBeenResolved = false
+    function resolveDecompressionBuffer (uncompressedBodyBufs) {
+      // only resolve the request once
+      // the resolve could possibly be triggered twice which isnt needed.
+      // closing the decompressionStream will end the downloadStream as well, triggering the resolve function twice
+      if (!decompressionBufferHasBeenResolved) {
+        const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+        const response = uncompressedBody.toString(charset)
+        decompressionBufferHasBeenResolved = true
+        resolve(response)  
+      }      
     }
   })
 }
