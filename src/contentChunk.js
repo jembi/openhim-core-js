@@ -168,7 +168,7 @@ export const retrievePayload = fileId => {
     const downloadStream = bucket.openDownloadStream(fileId)
     downloadStream.on('error', err => reject(err))
 
-    const charset = obtainCharset(fileDetails.metadata)
+    const charset = fileDetails ? (fileDetails.metadata ? obtainCharset(fileDetails.metadata) : 'utf8') : 'utf8'
     const uncompressedBodyBufs = []
 
     // apply the decompression transformation and start listening for the output chunks
