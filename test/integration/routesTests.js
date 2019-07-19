@@ -40,6 +40,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 1',
     urlPattern: '^/test/channel1$',
     allow: ['PoC'],
+    responseBody: true,
     routes: [
       {
         name: 'test route',
@@ -327,7 +328,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(405)
 
-    res.body.toString().should.eql('Request with method POST is not allowed. Only GET methods are allowed')
+    res.text.toString().should.eql('Request with method POST is not allowed. Only GET methods are allowed')
     // routes are async
     restrictedSpy.callCount.should.eql(0)
   })
