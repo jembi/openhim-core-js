@@ -1,8 +1,6 @@
 import Koa from 'koa'
-import getRawBody from 'raw-body'
 import compress from 'koa-compress'
 import { Z_SYNC_FLUSH } from 'zlib'
-import logger from 'winston'
 
 import * as router from './middleware/router'
 import * as messageStore from './middleware/messageStore'
@@ -20,14 +18,7 @@ import * as pollingBypassAuthentication from './middleware/pollingBypassAuthenti
 import * as rawBodyReader from './middleware/rawBodyReader'
 import * as events from './middleware/events'
 import * as proxy from './middleware/proxy'
-// TODO: OHM-696 uncomment the line below
-//import * as rewrite from './middleware/rewriteUrls'
 import { config } from './config'
-import { checkServerIdentity } from 'tls';
-import { Readable } from 'stream';
-import { promisify } from 'util';
-import { getGridFSBucket }  from './contentChunk'
-import { Types } from 'mongoose'
 
 config.authentication = config.get('authentication')
 
@@ -64,13 +55,6 @@ export function setupApp (done) {
   // Proxy
   app.use(proxy.koaMiddleware)
 
-  // Persist message middleware
-  //app.use(messageStore.koaMiddleware)
-
-  // URL rewriting middleware
-  // TODO: OHM-696 uncomment the code below when url rewriting is back in support
-  // app.use(rewrite.koaMiddleware)
-
   // Events
   app.use(events.koaMiddleware)
 
@@ -89,9 +73,6 @@ export function rerunApp (done) {
 
   // Rerun bypass authorisation middlware
   app.use(rerunBypassAuthorisation.koaMiddleware)
-
-  // Persist message middleware
-  //app.use(messageStore.koaMiddleware)
 
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)

@@ -11,6 +11,14 @@ config.router = config.get('router')
 
 let bucket
 
+/**
+ *  @options
+ *    responseBodyRequired: true - If response body from downstream should be stored to GridFS
+ *    requestBodyRequired: true - If the request is for a Http method with a body (POST, PUT, PATCH)
+ *    collectResponseBody: true - Aggregate response body chunks into a buffer and store to GridFs after all chunks received
+ *    timeout: number - Timeout ms to apply to conection
+ *    secured: false - http(false) or https(true)
+ */
 export function makeStreamingRequest (requestBodyStream, options, statusEvents) {
   return new Promise((resolve, reject) => {
     const response = {}
@@ -30,7 +38,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
     emptyInput._read = () => {}
     emptyInput.push(null)
 
-    const downstream = (requestBodyStream != undefined) && (requestBodyStream) ? requestBodyStream : emptyInput
+    const downstream = requestBodyStream != undefined && requestBodyStream ? requestBodyStream : emptyInput
     const method = options.secured ? https : http
 
     const gunzip = zlib.createGunzip()
@@ -62,38 +70,44 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
         response.body._read = () => {}
 
         let uploadStream
+        let responseChunks
+        let responseBodyAsString
         let counter = 0
         let size = 0
 
         if (options.responseBodyRequired) {
-          if(!bucket) {
-            bucket = getGridFSBucket()
-          }
-
-          const fileOptions = {
-            metadata: {
-              'content-type': response.headers['content-type'],
-              'content-encoding': response.headers['content-encoding']
+          if (options.collectResponseBody) {
+            responseChunks = []
+          } else {
+            if(!bucket) {
+              bucket = getGridFSBucket()
             }
-          }
-          uploadStream = bucket.openUploadStream(null, fileOptions)
-          if (options.responseBodyRequired) {
-            response.headers['x-body-id'] = uploadStream.id
-          }
 
-          uploadStream
-            .on('error', (err) => {
-              if (statusEvents.gridFsError) {
-                statusEvents.gridFsError(err)
+            const fileOptions = {
+              metadata: {
+                'content-type': response.headers['content-type'],
+                'content-encoding': response.headers['content-encoding']
               }
-              logger.error(`Error streaming response to GridFS: ${err}`)
-              reject(err)
-            })
-            .on('finish', (fileId) => {
-              if (statusEvents.finishGridFs) {
-                statusEvents.finishGridFs(fileId)
-              }
-            })
+            }
+            uploadStream = bucket.openUploadStream(null, fileOptions)
+            if (options.responseBodyRequired) {
+              response.headers['x-body-id'] = uploadStream.id
+            }
+
+            uploadStream
+              .on('error', (err) => {
+                if (statusEvents.gridFsError) {
+                  statusEvents.gridFsError(err)
+                }
+                logger.error(`Error streaming response to GridFS: ${err}`)
+                reject(err)
+              })
+              .on('finish', (fileId) => {
+                if (statusEvents.finishGridFs) {
+                  statusEvents.finishGridFs(fileId)
+                }
+              })
+          }
         }
 
         // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
@@ -116,25 +130,48 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
 
             // Send the response to GridFS, if the response body is required
             if (options.responseBodyRequired) {
-              uploadStream.write(chunk)
-              if (!startedGridFs && statusEvents.startGridFs) {
-                statusEvents.startGridFs(uploadStream.id)
-                startedGridFs = true
+              if (options.collectResponseBody) {
+                responseChunks.push(chunk)
+              } else {
+                uploadStream.write(chunk)
+
+                // Send the response upstream to the client making the request
+                response.body.push(chunk)
+
+                if (!startedGridFs && statusEvents.startGridFs) {
+                  statusEvents.startGridFs(uploadStream.id)
+                  startedGridFs = true
+                }
+              }
+            }
+          })
+          .on('end', () => {
+            if (options.responseBodyRequired) {
+              if (options.collectResponseBody) {
+                responseBodyAsString = Buffer.concat(responseChunks).toString()
+
+                // This event is fired once the response is fully-received and ready for URL rewriting
+                if (statusEvents.finishResponseAsString) {
+                  const returnedResponse = statusEvents.finishResponseAsString(responseBodyAsString)
+                  if (returnedResponse !== undefined && returnedResponse) {
+                    responseBodyAsString = returnedResponse
+                  }
+                }
+              } else {
+                uploadStream.end()
+                response.body.push(null)
               }
             }
 
-            // Send the response upstream to the client making the request
-            response.body.push(chunk)
-          })
-          .on('end', () => {
+            response.timestampEnd = new Date()
+
             if (statusEvents.finishResponse) {
               statusEvents.finishResponse(response, size)
             }
-            if (options.responseBodyRequired) {
-              uploadStream.end()
+
+            if (options.responseBodyRequired && options.collectResponseBody) {
+              storeResponseAsString(responseBodyAsString, response, options, statusEvents)
             }
-            response.body.push(null)
-            response.timestampEnd = new Date()
 
             const charset = obtainCharset(routeRes.headers)
             if (routeRes.headers['content-encoding'] === 'gzip') {
@@ -213,4 +250,59 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
         reject(err)
       })
   })
+}
+
+export function collectStream (readableStream) {
+  let data = []
+
+  return new Promise((resolve, reject) => {
+    readableStream
+      .on('data', (chunk) => {
+        data.push(chunk)
+      })
+      .on('end', () => {
+        resolve(Buffer.concat(data).toString())
+      })
+      .on('error', (error) => {
+        reject(error)
+      })
+  })
+}
+
+export function storeResponseAsString (bodyString, response, options, statusEvents) {
+  if(!bucket) {
+    bucket = getGridFSBucket()
+  }
+
+  const uploadStream = bucket.openUploadStream()
+  if (options.responseBodyRequired) {
+    response.headers['x-body-id'] = uploadStream.id
+    if (statusEvents.startGridFs) {
+      statusEvents.startGridFs(uploadStream.id)
+    }
+  }
+
+  uploadStream
+    .on('error', (err) => {
+      if (statusEvents.gridFsError) {
+        statusEvents.gridFsError(err)
+      }
+      logger.error(`Error streaming response to GridFS: ${err}`)
+      reject(err)
+    })
+    .on('finish', (fileId) => {
+      if (statusEvents.finishGridFs) {
+        statusEvents.finishGridFs(fileId)
+      }
+    })
+
+  if (options.responseBodyRequired) {
+    // Store the full response body into GridFS
+    uploadStream.write(bodyString)
+    uploadStream.end()
+
+    // Send the full response body upstream to the client making the request
+    response.body.push(bodyString)
+    response.body.push(null)
+  }
 }

@@ -9,7 +9,8 @@ import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import { promisify } from 'util'
 import { getGridFSBucket } from '../contentChunk'
-import { makeStreamingRequest } from './streamingRouter'
+import { makeStreamingRequest, collectStream } from './streamingRouter'
+import * as rewrite from '../middleware/rewriteUrls'
 
 config.router = config.get('router')
 
@@ -212,13 +213,8 @@ function sendRequestToRoutes (ctx, routes, next) {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
               // handle mediator reponse
-              let payload = ''
-              response.body.on('data', (data) => {
-                payload += data.toString()
-              })
-
-              response.body.on('end', () => {
-                const responseObj = JSON.parse(payload)
+              collectStream(response.body).then((response) => {
+                const responseObj = JSON.parse(response)
                 ctx.mediatorResponse = responseObj
 
                 if (responseObj.error != null) {
@@ -484,8 +480,18 @@ async function sendHttpRequest (ctx, route, options) {
     responseProgress: function (chunk, counter, size) {
       logger.info(`Write response CHUNK # ${counter} [ Total size ${size}]`)
     },
-    finishResponse: function () {
+    finishResponse: function (response, size) {
       logger.info(`** END OF OUTPUT STREAM **`)
+    },
+    finishResponseAsString: function (body) {
+      return rewrite.rewriteUrls(body, ctx.authorisedChannel, ctx.authenticationType, (err, newBody) => {
+        if (err) {
+          logger.error(`Url rewrite error: ${err}`)
+          return err
+        }
+        logger.info(`Rewrite URLs for transaction: ${ctx.transactionId}`)
+        return newBody
+      })
     },
     requestError: function () {},
     responseError: function (err) {
@@ -513,6 +519,7 @@ async function sendHttpRequest (ctx, route, options) {
   }
 
   options.secured = route.secured
+  options.collectResponseBody = ctx.authorisedChannel.rewriteUrls
   options.timeout = route.timeout != null ? route.timeout : +config.router.timeout
   options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(ctx.request.method)
   options.responseBodyRequired = ctx.authorisedChannel.responseBody
