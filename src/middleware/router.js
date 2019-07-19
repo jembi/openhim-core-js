@@ -500,7 +500,7 @@ async function sendHttpRequest (ctx, route, options) {
     finishResponse: function (response, size) {
       logger.info(`** END OF OUTPUT STREAM **`)
     },
-    finishResponseAsString: function(body) {
+    finishResponseAsString: function (body) {
       return rewrite.rewriteUrls(body, ctx.authorisedChannel, ctx.authenticationType, (err, newBody) => {
         if (err) {
           logger.error(`Url rewrite error: ${err}`)
