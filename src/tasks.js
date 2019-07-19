@@ -285,6 +285,7 @@ async function rerunHttpRequestSend (options, transaction, callback) {
 
       logger.info(`Rerun Transaction #${transaction._id} - HTTP Response has been captured`)
     },
+    finishResponseAsString: function (body) {},
     requestError: function () {},
     responseError: function (err) {
       response.transaction.status = 'Failed'
@@ -298,6 +299,7 @@ async function rerunHttpRequestSend (options, transaction, callback) {
   options.secured = false
   options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(transaction.request.method)
   options.responseBodyRequired = false
+  options.collectResponseBody = false
 
   try {
     await makeStreamingRequest(null, options, statusEvents)
