@@ -240,6 +240,7 @@ function sendRequestToRoutes (ctx, routes, next) {
           .catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
+            messageStore.completeResponse(ctx, (err, tx) => {})
             setTransactionFinalStatus(ctx)
             return next()
           })
