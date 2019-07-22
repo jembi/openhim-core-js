@@ -243,8 +243,6 @@ export function storeResponseAsString (bodyString, response, options, statusEven
       if (statusEvents.gridFsError) {
         statusEvents.gridFsError(err)
       }
-      logger.error(`Error streaming response to GridFS: ${err}`)
-      reject(err)
     })
     .on('finish', (fileId) => {
       if (statusEvents.finishGridFs) {
