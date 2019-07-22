@@ -6,13 +6,13 @@ import * as utils from '../utils'
 import * as Channels from '../model/channels'
 import { promisify } from 'util'
 
-export function matchContent (channel, ctx) {
+export function matchContent (body, channel) {
   if (channel.matchContentRegex) {
-    return matchRegex(channel.matchContentRegex, ctx.body)
+    return matchRegex(channel.matchContentRegex, body)
   } else if (channel.matchContentXpath && channel.matchContentValue) {
-    return matchXpath(channel.matchContentXpath, channel.matchContentValue, ctx.body)
+    return matchXpath(channel.matchContentXpath, channel.matchContentValue, body)
   } else if (channel.matchContentJson && channel.matchContentValue) {
-    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, ctx.body)
+    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, body)
   } else if (channel.matchContentXpath || channel.matchContentJson) {
     // if only the match expression is given, deny access
     // this is an invalid channel
