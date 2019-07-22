@@ -16,10 +16,12 @@ describe('recordTransactionMetrics', () => {
       status: 'Successful',
       channelID,
       request: {
-        timestamp: new Date('2017-12-07T09:17:58.333Z')
+        timestamp: new Date('2017-12-07T09:17:58.333Z'),
+        timestampEnd: new Date('2017-12-07T09:17:58.703Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestamp: new Date('2017-12-07T09:18:01.200Z'),
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
@@ -86,10 +88,12 @@ describe('recordTransactionMetrics', () => {
       status: 'Successful',
       channelID,
       request: {
-        timestamp: new Date('2017-12-07T09:17:58.333Z')
+        timestamp: new Date('2017-12-07T09:17:58.333Z'),
+        timestampEnd: new Date('2017-12-07T09:17:58.703Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestamp: new Date('2017-12-07T09:18:01.200Z'),
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
@@ -124,10 +128,12 @@ describe('recordTransactionMetrics', () => {
       status: 'Successful',
       channelID,
       request: {
-        timestamp: new Date('2017-12-07T09:17:58.333Z')
+        timestamp: new Date('2017-12-07T09:17:58.333Z'),
+        timestampEnd: new Date('2017-12-07T09:17:58.703Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestamp: new Date('2017-12-07T09:18:01.200Z'),
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
@@ -162,10 +168,12 @@ describe('recordTransactionMetrics', () => {
       status: 'Processing',
       channelID,
       request: {
-        timestamp: new Date('2017-12-07T09:17:58.333Z')
+        timestamp: new Date('2017-12-07T09:17:58.333Z'),
+        timestampEnd: new Date('2017-12-07T09:17:58.703Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestamp: new Date('2017-12-07T09:18:01.200Z'),
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
@@ -187,7 +195,8 @@ describe('recordTransactionMetrics', () => {
       status: 'Failed',
       channelID: new ObjectId(),
       request: {
-        timestamp: new Date('2017-12-07T09:17:58.333Z')
+        timestamp: new Date('2017-12-07T09:17:58.333Z'),
+        timestampEnd: new Date('2017-12-07T09:17:58.703Z')
       }
     }
 
@@ -202,7 +211,8 @@ describe('recordTransactionMetrics', () => {
       status: 'Failed',
       channelID: new ObjectId(),
       request: {
-        timestamp: new Date('2017-12-07T09:17:58.333Z')
+        timestamp: new Date('2017-12-07T09:17:58.333Z'),
+        timestampEnd: new Date('2017-12-07T09:17:58.703Z')
       },
       response: {}
     }
