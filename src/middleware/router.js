@@ -941,7 +941,8 @@ function isMethodAllowed (ctx, channel) {
  */
 export async function koaMiddleware (ctx, next) {
   const _route = promisify(route)
-  await _route(ctx)
-  //await messageStore.storeResponse(ctx, () => {})
-  await next()
+  if (ctx.authorisedChannel != null) {
+    await _route(ctx)
+    await next()
+  }
 }
