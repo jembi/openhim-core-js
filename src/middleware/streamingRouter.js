@@ -3,7 +3,9 @@ import https from 'https'
 import logger from 'winston'
 import { config } from '../config'
 import { getGridFSBucket } from '../contentChunk'
-import { Readable, Writable } from 'stream';
+import { Readable } from 'stream'
+import zlib from 'zlib'
+import { obtainCharset } from '../utils'
 
 config.router = config.get('router')
 
@@ -39,10 +41,31 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
     const downstream = requestBodyStream != undefined && requestBodyStream ? requestBodyStream : emptyInput
     const method = options.secured ? https : http
 
+    const gunzip = zlib.createGunzip()
+    const inflate = zlib.createInflate()
+
     const routeReq = method.request(options)
       .on('response', (routeRes) => {
         response.status = routeRes.statusCode
         response.headers = routeRes.headers
+
+        const uncompressedBodyBufs = []
+        if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+          routeRes.pipe(gunzip)
+
+          gunzip.on('data', (data) => {
+            uncompressedBodyBufs.push(data)
+          })
+        }
+
+        if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+          routeRes.pipe(inflate)
+
+          inflate.on('data', (data) => {
+            uncompressedBodyBufs.push(data)
+          })
+        }
+
         response.body = new Readable()
         response.body._read = () => {}
 
@@ -60,7 +83,13 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
               bucket = getGridFSBucket()
             }
 
-            uploadStream = bucket.openUploadStream()
+            const fileOptions = {
+              metadata: {
+                'content-type': response.headers['content-type'],
+                'content-encoding': response.headers['content-encoding']
+              }
+            }
+            uploadStream = bucket.openUploadStream(null, fileOptions)
             if (options.responseBodyRequired) {
               response.headers['x-body-id'] = uploadStream.id
             }
@@ -144,7 +173,22 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
               storeResponseAsString(responseBodyAsString, response, options, statusEvents)
             }
 
-            resolve(response)
+            const charset = obtainCharset(routeRes.headers)
+            if (routeRes.headers['content-encoding'] === 'gzip') {
+              gunzip.on('end', () => {
+                const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+                response.body = uncompressedBody.toString(charset)
+                resolve(response)
+              })
+            } else if (routeRes.headers['content-encoding'] === 'deflate') {
+              inflate.on('end', () => {
+                const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+                response.body = uncompressedBody.toString(charset)
+                resolve(response)
+              })
+            } else {
+              resolve(response)
+            }
           })
 
         // If request socket closes the connection abnormally
