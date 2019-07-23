@@ -134,7 +134,7 @@ function streamingReceiver (ctx, statusEvents) {
     })
 }
 
-async function collectingReceiver (ctx, statusEvents) {
+function collectingReceiver (ctx, statusEvents) {
   return new Promise((resolve, reject) => {
     let counter = 0
     let size = 0
