@@ -6,36 +6,35 @@ import * as utils from '../utils'
 import * as Channels from '../model/channels'
 import { promisify } from 'util'
 
-// TODO: OHM-695 uncomment the code below when working on ticket
-// function matchContent (channel, ctx) {
-//   if (channel.matchContentRegex) {
-//     return matchRegex(channel.matchContentRegex, ctx.body)
-//   } else if (channel.matchContentXpath && channel.matchContentValue) {
-//     return matchXpath(channel.matchContentXpath, channel.matchContentValue, ctx.body)
-//   } else if (channel.matchContentJson && channel.matchContentValue) {
-//     return matchJsonPath(channel.matchContentJson, channel.matchContentValue, ctx.body)
-//   } else if (channel.matchContentXpath || channel.matchContentJson) {
-//     // if only the match expression is given, deny access
-//     // this is an invalid channel
-//     logger.error(`Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`)
-//     return false
-//   } else {
-//     return true
-//   }
-// }
+export function matchContent (body, channel) {
+  if (channel.matchContentRegex) {
+    return matchRegex(channel.matchContentRegex, body)
+  } else if (channel.matchContentXpath && channel.matchContentValue) {
+    return matchXpath(channel.matchContentXpath, channel.matchContentValue, body)
+  } else if (channel.matchContentJson && channel.matchContentValue) {
+    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, body)
+  } else if (channel.matchContentXpath || channel.matchContentJson) {
+    // if only the match expression is given, deny access
+    // this is an invalid channel
+    logger.error(`Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`)
+    return false
+  } else {
+    return true
+  }
+}
 
-function matchRegex (regexPat, body) {
+export function matchRegex (regexPat, body) {
   const regex = new RegExp(regexPat)
   return regex.test(body.toString())
 }
 
-function matchXpath (xpathStr, val, xml) {
+export function matchXpath (xpathStr, val, xml) {
   const doc = new Dom().parseFromString(xml.toString())
   const xpathVal = xpath.select(xpathStr, doc).toString()
   return val === xpathVal
 }
 
-function matchJsonPath (jsonPath, val, json) {
+export function matchJsonPath (jsonPath, val, json) {
   const jsonObj = JSON.parse(json.toString())
   const jsonVal = getJSONValByString(jsonObj, jsonPath)
   return val === jsonVal.toString()
@@ -96,7 +95,6 @@ function matchContentTypes (channel, ctx) {
 // TODO: OHM-695 uncomment line below when working on ticket
 let matchFunctions = [
   matchUrlPattern,
-//   matchContent,
   matchContentTypes
 ]
 
