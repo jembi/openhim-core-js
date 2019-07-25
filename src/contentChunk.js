@@ -1,6 +1,9 @@
 
 import mongodb from 'mongodb'
+import zlib from 'zlib'
+import {PassThrough} from 'stream'
 import { config, connectionDefault } from './config'
+import { obtainCharset } from './utils'
 
 const apiConf = config.get('api')
 
@@ -11,6 +14,10 @@ export const getGridFSBucket = () => {
   }
 
   return bucket
+}
+
+export const getFileDetails = async (fileId) => {
+  return await connectionDefault.client.db().collection('fs.files').findOne(fileId)
 }
 
 const isValidGridFsPayload = (payload) => {
@@ -125,30 +132,73 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
   })
 }
 
+const getDecompressionStreamByContentEncoding = (contentEncoding) => {
+  switch (contentEncoding) {
+    case 'gzip':
+        return zlib.createGunzip()
+    case 'deflate':
+        return zlib.createInflate()
+    default:
+      // has nothing to decompress, but still requires a stream to be piped and listened on
+      return new PassThrough()
+  }
+}
+
 export const retrievePayload = fileId => {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     if (!fileId) {
       return reject(new Error(`Payload id not supplied`))
     }
 
-    const bucket = getGridFSBucket()
-    const chunks = []
     let payloadSize = 0
     // Perhaps the truncateSize should be represented in actual size, and not string length
     const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
 
+    let fileDetails
+    try {
+      fileDetails = await getFileDetails(fileId)
+    } catch (err) {
+      return reject(err)
+    }
+
+    const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
+    const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
+
+    const bucket = getGridFSBucket()
     const downloadStream = bucket.openDownloadStream(fileId)
     downloadStream.on('error', err => reject(err))
-    downloadStream.on('data', chunk => {
+
+    const charset = fileDetails ? (fileDetails.metadata ? obtainCharset(fileDetails.metadata) : 'utf8') : 'utf8'
+    const uncompressedBodyBufs = []
+
+    // apply the decompression transformation and start listening for the output chunks
+    downloadStream.pipe(decompressionStream)
+    decompressionStream.on('data', (chunk) => {
       payloadSize += chunk.length
       if (payloadSize >= truncateSize) {
+        decompressionStream.destroy()
         downloadStream.destroy()
       }
-
-      chunks.push(chunk)
+      uncompressedBodyBufs.push(chunk)
     })
-    downloadStream.on('end', () => resolve(Buffer.concat(chunks).toString()))
-    downloadStream.on('close', () => resolve(Buffer.concat(chunks).toString()))
+
+    decompressionStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
+    decompressionStream.on('close', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
+    downloadStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
+    downloadStream.on('close', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
+
+    let decompressionBufferHasBeenResolved = false
+    function resolveDecompressionBuffer (uncompressedBodyBufs) {
+      // only resolve the request once
+      // the resolve could possibly be triggered twice which isnt needed.
+      // closing the decompressionStream will end the downloadStream as well, triggering the resolve function twice
+      if (!decompressionBufferHasBeenResolved) {
+        const uncompressedBody = Buffer.concat(uncompressedBodyBufs)
+        const response = uncompressedBody.toString(charset)
+        decompressionBufferHasBeenResolved = true
+        resolve(response)
+      }
+    }
   })
 }
 
