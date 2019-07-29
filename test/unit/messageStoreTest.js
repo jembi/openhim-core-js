@@ -121,45 +121,41 @@ describe('MessageStore', () => {
     ])
   })
 
-  xdescribe('.storeTransaction', () => {
-    it('should be able to save the transaction in the db', done => {
-      messageStore.storeTransaction(ctx, (error, result) => {
-        should.not.exist(error)
-        TransactionModel.findOne({ _id: result._id }, (error, trans) => {
-          should.not.exist(error);
-          (trans !== null).should.be.true()
-          trans.clientID.toString().should.equal('313233343536373839319999')
-          trans.status.should.equal('Processing')
-          trans.status.should.not.equal('None')
-          trans.request.path.should.equal('/api/test/request')
-          trans.request.headers['Content-Type'].should.equal('application/json')
-          trans.request.querystring.should.equal('param1=value1&param2=value2')
-          trans.request.host.should.equal('localhost')
-          trans.request.port.should.equal('5000')
-          trans.channelID.toString().should.equal(channel1._id.toString())
-          return done()
-        })
-      })
+  describe('.initiateRequest', () => {
+    it('should be able to save the transaction in the db', async () => {
+      const initiateRequestTx = await messageStore.initiateRequest(ctx)
+
+      // find the transaction in the database
+      const trans = await TransactionModel.findOne({ _id: initiateRequestTx._id })
+
+      should.exist(trans);
+      trans.clientID.toString().should.equal('313233343536373839319999')
+      trans.status.should.equal('Processing')
+      trans.status.should.not.equal('None')
+      trans.request.path.should.equal('/api/test/request')
+      trans.request.headers['Content-Type'].should.equal('application/json')
+      trans.request.querystring.should.equal('param1=value1&param2=value2')
+      trans.request.host.should.equal('localhost')
+      trans.request.port.should.equal('5000')
+      trans.channelID.toString().should.equal(channel1._id.toString())
     })
 
-    it('should be able to save the transaction if the headers contain Mongo reserved characters ($ or .)', (done) => {
+    it('should be able to save the transaction if the headers contain Mongo reserved characters ($ or .)', async () => {
       ctx.header['dot.header'] = '123'
       ctx.header.dollar$header = '124'
-      messageStore.storeTransaction(ctx, (error, result) => {
-        // cleanup ctx before moving on in case there's a failure
-        delete ctx.header['dot.header']
-        delete ctx.header.dollar$header
+      const initiateRequestTx = await messageStore.initiateRequest(ctx)
 
-        should.not.exist(error)
-        TransactionModel.findOne({ _id: result._id }, (error, trans) => {
-          should.not.exist(error);
-          (trans !== null).should.be.true()
-          trans.request.headers['dot．header'].should.equal('123')
-          trans.request.headers['dollar＄header'].should.equal('124')
-          ctx.header['X-OpenHIM-TransactionID'].should.equal(result._id.toString())
-          return done()
-        })
-      })
+      // cleanup ctx before moving on in case there's a failure
+      delete ctx.header['dot.header']
+      delete ctx.header.dollar$header
+
+      // find the transaction in the database
+      const trans = await TransactionModel.findOne({ _id: initiateRequestTx._id })
+
+      should.exist(trans);
+      trans.request.headers['dot．header'].should.equal('123')
+      trans.request.headers['dollar＄header'].should.equal('124')
+      ctx.header['X-OpenHIM-TransactionID'].should.equal(initiateRequestTx._id.toString())
     })
   })
 
