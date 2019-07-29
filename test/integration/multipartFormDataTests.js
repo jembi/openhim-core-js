@@ -98,7 +98,7 @@ describe('Multipart form data tests', () => {
     ])
   })
 
-  it('should return 201 CREATED on POST', async () => {
+  xit('should return 201 CREATED on POST', async () => {
     const form = await new FormData()
 
     form.append('my_field', 'my value')

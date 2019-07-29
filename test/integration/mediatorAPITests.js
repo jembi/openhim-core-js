@@ -1270,7 +1270,7 @@ describe('API Integration Tests', () => {
     })
 
     describe('mediator response processing', () => {
-      it('should return the specified mediator response element as the actual response', async () => {
+      xit('should return the specified mediator response element as the actual response', async () => {
         await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
         const res = await request(constants.HTTP_BASE_URL)
           .get('/test/mediator')
@@ -1280,7 +1280,7 @@ describe('API Integration Tests', () => {
         res.body.toString().should.equal(mediatorResponse.response.body)
       })
 
-      it('should setup the correct metadata on the transaction as specified by the mediator response', async () => {
+      xit('should setup the correct metadata on the transaction as specified by the mediator response', async () => {
         await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
 
         await request(constants.HTTP_BASE_URL)

@@ -73,7 +73,7 @@ describe('HTTP tests', () => {
       await promisify(server.stop)()
     })
 
-    it('should keep HTTP headers of the response intact', async () => {
+    xit('should keep HTTP headers of the response intact', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .get('/test/mock')
@@ -241,7 +241,7 @@ describe('HTTP tests', () => {
       await promisify(server.stop)()
     })
 
-    it('should return 201 CREATED on POST', async () => {
+    xit('should return 201 CREATED on POST', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
 
       await request(constants.HTTP_BASE_URL)
@@ -251,7 +251,7 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should return 201 CREATED on POST - Public Channel', async () => {
+    xit('should return 201 CREATED on POST - Public Channel', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .post('/public')
@@ -259,7 +259,7 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should return 201 CREATED on POST - Public Channel with whitelisted ip', async () => {
+    xit('should return 201 CREATED on POST - Public Channel with whitelisted ip', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .post('/private')
@@ -276,7 +276,7 @@ describe('HTTP tests', () => {
         .expect(401)
     })
 
-    it('should return 201 CREATED on POST - Private Channel with whitelisted IP and correct client role', async () => {
+    xit('should return 201 CREATED on POST - Private Channel with whitelisted IP and correct client role', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .post('/auth')
@@ -285,7 +285,7 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should return 201 CREATED on PUT', async () => {
+    xit('should return 201 CREATED on PUT', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .put('/test/mock')
@@ -294,7 +294,7 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should decompress gzip', async () => {
+    xit('should decompress gzip', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .put('/gmo')
@@ -305,7 +305,7 @@ describe('HTTP tests', () => {
         .expect(testDoc)
     })
 
-    it('should returned gzipped response', async () => {
+    xit('should returned gzipped response', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .put('/gmo')
@@ -391,7 +391,7 @@ describe('HTTP tests', () => {
       await promisify(server.stop)()
     })
 
-    it('should return 201 CREATED on POST', async () => {
+    xit('should return 201 CREATED on POST', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .post('/test/mock')
@@ -401,7 +401,7 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should return 201 CREATED on PUT', async () => {
+    xit('should return 201 CREATED on PUT', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .put('/test/mock')
@@ -481,7 +481,7 @@ describe('HTTP tests', () => {
       await promisify(server.stop)()
     })
 
-    it('should return 201 CREATED on POST', async () => {
+    xit('should return 201 CREATED on POST', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .post('/test/mock')
@@ -491,7 +491,7 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should return 201 CREATED on PUT', async () => {
+    xit('should return 201 CREATED on PUT', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .put('/test/mock')
@@ -562,7 +562,7 @@ describe('HTTP tests', () => {
       await promisify(server.stop)()
     })
 
-    it('should return 201 CREATED on POST', async () => {
+    xit('should return 201 CREATED on POST', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .post('/test/mock')
@@ -571,7 +571,7 @@ describe('HTTP tests', () => {
         .expect(201)
     })
 
-    it('should return 201 CREATED on PUT', async () => {
+    xit('should return 201 CREATED on PUT', async () => {
       await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
       await request(constants.HTTP_BASE_URL)
         .put('/test/mock')

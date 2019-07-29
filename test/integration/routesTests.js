@@ -270,7 +270,7 @@ describe('Routes enabled/disabled tests', () => {
 
   beforeEach(async () => { await TransactionModelAPI.deleteMany({}) })
 
-  it('should route transactions to routes that have no status specified (default: enabled)', async () => {
+  xit('should route transactions to routes that have no status specified (default: enabled)', async () => {
     const res = await request(constants.HTTP_BASE_URL)
       .get('/test/channel1')
       .auth('testApp', 'password')
@@ -287,7 +287,7 @@ describe('Routes enabled/disabled tests', () => {
     (!trx.routes[0].response.body).should.be.true()
   })
 
-  it('should NOT route transactions to disabled routes', async () => {
+  xit('should NOT route transactions to disabled routes', async () => {
     const res = await request(constants.HTTP_BASE_URL)
       .get('/test/channel2')
       .auth('testApp', 'password')
@@ -298,7 +298,7 @@ describe('Routes enabled/disabled tests', () => {
     trx.routes.length.should.be.exactly(0)
   })
 
-  it('should ignore disabled primary routes (multiple primary routes)', async () => {
+  xit('should ignore disabled primary routes (multiple primary routes)', async () => {
     const res = await request(constants.HTTP_BASE_URL)
       .get('/test/channel3')
       .auth('testApp', 'password')
@@ -309,7 +309,7 @@ describe('Routes enabled/disabled tests', () => {
     trx.routes.length.should.be.exactly(0)
   })
 
-  it('should allow a request if the method is in the "methods"', async () => {
+  xit('should allow a request if the method is in the "methods"', async () => {
     const res = await request(constants.HTTP_BASE_URL)
       .get('/test/restricted')
       .auth('testApp', 'password')
@@ -321,7 +321,7 @@ describe('Routes enabled/disabled tests', () => {
     req.method.should.eql('GET')
   })
 
-  it('should deny a request if the method is not in the "methods"', async () => {
+  xit('should deny a request if the method is not in the "methods"', async () => {
     const res = await request(constants.HTTP_BASE_URL)
       .post('/test/restricted')
       .auth('testApp', 'password')
@@ -332,7 +332,7 @@ describe('Routes enabled/disabled tests', () => {
     restrictedSpy.callCount.should.eql(0)
   })
 
-  it('should allow a request and produce an orchestration recording the openhim\'s request and received response', async () => {
+  xit('should allow a request and produce an orchestration recording the openhim\'s request and received response', async () => {
     await request(constants.HTTP_BASE_URL)
       .get('/test/channel4')
       .auth('testApp', 'password')
@@ -346,7 +346,7 @@ describe('Routes enabled/disabled tests', () => {
     newTransaction[0].orchestrations[0].request.path.should.eql('/test/channel4')
   })
 
-  it('should allow a request with multiple routes and produce an orchestration recording the openhim\'s request and received response', async () => {
+  xit('should allow a request with multiple routes and produce an orchestration recording the openhim\'s request and received response', async () => {
     await request(constants.HTTP_BASE_URL)
       .get('/test/channel6')
       .auth('testApp', 'password')
@@ -358,7 +358,7 @@ describe('Routes enabled/disabled tests', () => {
     newTransaction[0].orchestrations[0].name.should.eql('test route')
   })
 
-  it('should error the request and produce an orchestration recording the openhim\'s request and received response', async () => {
+  xit('should error the request and produce an orchestration recording the openhim\'s request and received response', async () => {
     await request(constants.HTTP_BASE_URL)
       .get('/test/channel5')
       .auth('testApp', 'password')
@@ -373,7 +373,7 @@ describe('Routes enabled/disabled tests', () => {
     newTransaction[0].orchestrations[0].error.message.should.eql('connect ECONNREFUSED 127.0.0.1:32043')
   })
 
-  it('should respect the channel timeout', async () => {
+  xit('should respect the channel timeout', async () => {
     await request(constants.HTTP_BASE_URL)
       .get('/test/timeoutChannel')
       .auth('testApp', 'password')

@@ -128,7 +128,7 @@ describe(`Auto Retry Integration Tests`, () => {
       ])
     })
 
-    it('should mark transaction as available to auto retry if an internal server error occurs', async () => {
+    xit('should mark transaction as available to auto retry if an internal server error occurs', async () => {
       await request(baseUrl)
         .get('/test/nowhere')
         .auth('testApp', 'password')
@@ -158,7 +158,7 @@ describe(`Auto Retry Integration Tests`, () => {
       autoRetry.channelID.toString().should.be.equal(channel1._id.toString())
     })
 
-    it(`should auto retry a failed transaction`, async () => {
+    xit(`should auto retry a failed transaction`, async () => {
       await request(baseUrl)
         .get('/test/nowhere')
         .auth('testApp', 'password')
@@ -176,7 +176,7 @@ describe(`Auto Retry Integration Tests`, () => {
       transactions[1].autoRetry.should.be.true()
     })
 
-    it(`should not auto retry a transaction that has reached the max retry limit`, async () => {
+    xit(`should not auto retry a transaction that has reached the max retry limit`, async () => {
       await request(baseUrl)
         .get('/test/nowhere/2')
         .auth('testApp', 'password')
@@ -252,7 +252,7 @@ describe(`Auto Retry Integration Tests`, () => {
       ])
     })
 
-    it('should mark transaction as available to auto retry if an internal server error occurs on a secondary route', async () => {
+    xit('should mark transaction as available to auto retry if an internal server error occurs on a secondary route', async () => {
       await request(baseUrl)
         .get('/test/nowhere')
         .auth('testApp', 'password')
@@ -319,7 +319,7 @@ describe(`Auto Retry Integration Tests`, () => {
       ])
     })
 
-    it('should mark transaction as available to auto retry if an internal server error occurs in a mediator', async () => {
+    xit('should mark transaction as available to auto retry if an internal server error occurs in a mediator', async () => {
       await request(baseUrl)
         .get('/test/nowhere')
         .auth('testApp', 'password')
@@ -374,7 +374,7 @@ describe(`Auto Retry Integration Tests`, () => {
       ])
     })
 
-    it('should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes', async () => {
+    xit('should mark transaction as available to auto retry if an internal server error occurs on both primary and secondary routes', async () => {
       await request(baseUrl)
         .get('/test/nowhere')
         .auth('testApp', 'password')

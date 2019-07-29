@@ -233,7 +233,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     mockServer = null
   })
 
-  it('will route tcp -> tcp', async () => {
+  xit('will route tcp -> tcp', async () => {
     const request = 'Tcp Request'
     let expectedResp
     const spy = sandbox.spy(async data => {
@@ -247,7 +247,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     spy.callCount.should.eql(1)
   })
 
-  it('will timeout a socket', async () => {
+  xit('will timeout a socket', async () => {
     const mllpEndChar = String.fromCharCode(0o034)
     const request = 'Tcp Request'
     const spy = sandbox.spy(async data => {
@@ -265,7 +265,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     transactions[0].error.message.should.eql('Request took longer than 20ms')
   })
 
-  it('will route tls -> tcp', async () => {
+  xit('will route tls -> tcp', async () => {
     const request = 'Tls Request'
     let expectedResp
     const spy = sandbox.spy(async data => {
@@ -278,7 +278,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     spy.callCount.should.eql(1)
   })
 
-  it('will route tcp -> http', async () => {
+  xit('will route tcp -> http', async () => {
     const request = 'Tcp Request'
     let expectedResp
     const spy = sandbox.spy(async req => {
@@ -293,7 +293,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     spy.callCount.should.eql(1)
   })
 
-  it('will route tcp -> tls', async () => {
+  xit('will route tcp -> tls', async () => {
     const request = 'Tcp Request'
     let expectedResp
     const spy = sandbox.spy(async data => {
@@ -306,7 +306,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     spy.callCount.should.eql(1)
   })
 
-  it('will route tcp -> tls no auth will fail', async () => {
+  xit('will route tcp -> tls no auth will fail', async () => {
     const spy = sandbox.spy()
     mockServer = await testUtils.createMockTLSServerWithMutualAuth(spy, tcpToTlsNoCertChannelDoc.routes[0].port, false)
     const resp = await testUtils.socketTest(tcpToTlsNoCertChannelDoc.tcpPort, 'Data')
@@ -320,7 +320,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     tran.status.should.eql('Failed')
   })
 
-  it(`will route tcp -> mllp`, async () => {
+  xit(`will route tcp -> mllp`, async () => {
     const mllpEndChar = String.fromCharCode(0o034)
     const request = 'Tcp Request'
     let expectedResp

@@ -294,7 +294,7 @@ describe('API Integration Tests', () => {
         await promisify(server.stop)()
       })
 
-      it('should forward a request to the configured routes if the client is authenticated and authorised', async () => {
+      xit('should forward a request to the configured routes if the client is authenticated and authorised', async () => {
         await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort, httpsPort: SERVER_PORTS.httpsPort })
 
         const options = {
@@ -340,7 +340,7 @@ describe('API Integration Tests', () => {
         })
       })
 
-      it('should authenticate a client further up the chain if \'in-chain\' config is set', async () => {
+      xit('should authenticate a client further up the chain if \'in-chain\' config is set', async () => {
         config.tlsClientLookup.type = 'in-chain'
         await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort, httpsPort: SERVER_PORTS.httpsPort })
         const options = {
@@ -488,7 +488,7 @@ describe('API Integration Tests', () => {
       )
 
       describe('with correct credentials', () =>
-        it('should return 200 OK', async () => {
+        xit('should return 200 OK', async () => {
           await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
 
           await request(constants.HTTP_BASE_URL)
