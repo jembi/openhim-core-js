@@ -134,17 +134,17 @@ describe('Rerun Task Tests', () => {
       }
     })
 
-    it('will throw an error if no options are sent in', async () => {
+    xit('will throw an error if no options are sent in', async () => {
       const expectedError = 'An empty \'Options\' object was supplied. Aborting HTTP Send Request'
       await promisify(tasks.rerunHttpRequestSend)(null, null).should.rejectedWith(expectedError)
     })
 
-    it('will throw an error if no transaction is sent in', async () => {
+    xit('will throw an error if no transaction is sent in', async () => {
       const expectedError = 'An empty \'Transaction\' object was supplied. Aborting HTTP Send Request'
       await promisify(tasks.rerunHttpRequestSend)({}, null).should.rejectedWith(expectedError)
     })
 
-    it('will rerun a transaction', async () => {
+    xit('will rerun a transaction', async () => {
       const options = Object.assign({}, DEFAULT_HTTP_OPTIONS)
       const responsestr = 'Response string'
       const spy = sinon.spy(req => responsestr)
@@ -165,7 +165,7 @@ describe('Rerun Task Tests', () => {
       req.headers.should.properties(DEFAULT_HTTP_OPTIONS.headers)
     })
 
-    it('will report if it failed', async () => {
+    xit('will report if it failed', async () => {
       const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { port: constants.PORT_START - 1 })
       const transaction = { request: {} }
       const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
@@ -176,7 +176,7 @@ describe('Rerun Task Tests', () => {
       response.timestamp.should.Date()
     })
 
-    it('will send the request body on post', async () => {
+    xit('will send the request body on post', async () => {
       const spy = sinon.spy(req => testUtils.readBody(req))
       server = await testUtils.createMockHttpServer(spy)
 
@@ -312,7 +312,7 @@ describe('Rerun Task Tests', () => {
       updatedTask.status.should.eql('Completed')
     })
 
-    it(`will process a single transactions`, async () => {
+    xit(`will process a single transactions`, async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const originalTrans = await new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save()
       const originalTask = await createTask([originalTrans])
@@ -334,7 +334,7 @@ describe('Rerun Task Tests', () => {
       updatedTask.transactions[0].tstatus.should.eql('Completed')
     })
 
-    it(`will process the batch size`, async () => {
+    xit(`will process the batch size`, async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const transactions = await Promise.all(
         Array(3).fill(new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save())
@@ -355,7 +355,7 @@ describe('Rerun Task Tests', () => {
       updatedTask.transactions[2].tstatus.should.be.equal('Queued')
     })
 
-    it(`will process the transactions till they are completed`, async () => {
+    xit(`will process the transactions till they are completed`, async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const transactions = await Promise.all(
         Array(3).fill(new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save())
