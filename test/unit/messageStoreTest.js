@@ -7,6 +7,7 @@ import { TransactionModel } from '../../src/model/transactions'
 import { ChannelModel } from '../../src/model/channels'
 import * as utils from '../../src/utils'
 import * as testUtils from '../utils'
+import { promisify } from 'util'
 
 const { ObjectId } = Types
 
@@ -159,7 +160,7 @@ describe('MessageStore', () => {
     })
   })
 
-  xdescribe('.storeResponse', () => {
+  describe('.storeResponse', () => {
     const createResponse = status =>
       ({
         status,
@@ -189,289 +190,241 @@ describe('MessageStore', () => {
         }
       })
 
-    it('should update the transaction with the response', (done) => {
+    it('should update the transaction with the response', async () => {
       ctx.response = createResponse(201)
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        should.not.exist(err)
-        if (err != null) done(err)
-        ctx.transactionId = storedTrans._id
-        messageStore.storeResponse(ctx, (err2) => {
-          should.not.exist(err2)
-          if (err2 != null) done(err2)
-          messageStore.setFinalStatus(ctx, () =>
-            TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-              should.not.exist(err3);
-              (trans !== null).should.be.true()
-              trans.response.status.should.equal(201)
-              trans.response.headers.testHeader.should.equal('value')
-              trans.response.bodyId.should.be.ok()
-              ObjectId.isValid(trans.request.bodyId).should.be.true()
-              trans.status.should.equal('Successful')
-              return done(err3)
-            })
-          )
-        })
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.transactionId = storedTrans._id
+      ctx.response.bodyId = new ObjectId() // bodyId is created when streaming router receives the response and added to the response context
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.response.status.should.equal(201)
+      trans.response.headers.testHeader.should.equal('value')
+      trans.response.bodyId.should.be.ok()
+      ObjectId.isValid(trans.response.bodyId).should.be.true()
+      trans.status.should.equal('Successful')
     })
 
-    it('should update the transaction with the responses from non-primary routes', (done) => {
+    it('should update the transaction with the responses from non-primary routes', async () => {
       ctx.response = createResponse(201)
       const route = createRoute('route1', 200)
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.transactionId = storedTrans._id
-        messageStore.storeResponse(ctx, (err2) => {
-          should.not.exist(err2)
-          messageStore.storeNonPrimaryResponse(ctx, route, () =>
-            TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-              should.not.exist(err3);
-              (trans !== null).should.be.true()
-              trans.routes.length.should.be.exactly(1)
-              trans.routes[0].name.should.equal('route1')
-              trans.routes[0].response.status.should.equal(200)
-              trans.routes[0].response.headers.test.should.equal('test');
-              (trans.routes[0].response.bodyId !== null).should.be.true();
-              (trans.routes[0].request.bodyId !== null).should.be.true();
-              trans.routes[0].request.path.should.equal('/test')
-              trans.routes[0].request.host.should.equal('localhost')
-              trans.routes[0].request.port.should.equal('4466')
-              return done()
-            })
-          )
-        })
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.transactionId = storedTrans._id
+      ctx.response.bodyId = new ObjectId() // bodyId is created when streaming router receives the response and added to the response context
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, route)
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.routes.length.should.be.exactly(1)
+      trans.routes[0].name.should.equal('route1')
+      trans.routes[0].response.status.should.equal(200)
+      trans.routes[0].response.headers.test.should.equal('test')
+      should.exist(trans.routes[0].response.bodyId)
+      trans.routes[0].request.path.should.equal('/test')
+      trans.routes[0].request.host.should.equal('localhost')
+      trans.routes[0].request.port.should.equal('4466')
     })
 
-    it('should set the ctx.transactionStatus variable with the final status', (done) => {
-      ctx.response = createResponse(201)
-      ctx.transactionStatus = null
-
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.request = storedTrans.request
-        ctx.request.header = {}
-        ctx.transactionId = storedTrans._id
-        ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-        messageStore.storeResponse(ctx, (err2) => {
-          should.not.exist(err2)
-          messageStore.setFinalStatus(ctx, () => {
-            should(ctx.transactionStatus).be.exactly('Successful')
-            return done()
-          })
-        })
-      })
-    })
-
-    it('should set the status to successful if all route return a status in 2xx', (done) => {
+    it('should set the status to successful if all route return a status in 2xx', async () => {
       ctx.response = createResponse(201)
       const route1 = createRoute('route1', 200)
       const route2 = createRoute('route2', 201)
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.request = storedTrans.request
-        ctx.request.header = {}
-        ctx.transactionId = storedTrans._id
-        ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-        messageStore.storeResponse(ctx, err2 =>
-          messageStore.storeNonPrimaryResponse(ctx, route1, () =>
-            messageStore.storeNonPrimaryResponse(ctx, route2, () =>
-              messageStore.setFinalStatus(ctx, () => {
-                should.not.exist(err2)
-                return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                  should.not.exist(err3);
-                  (trans !== null).should.be.true()
-                  trans.status.should.be.exactly('Successful')
-                  return done()
-                })
-              })
-            )
-          )
-        )
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.request = storedTrans.request
+      ctx.request.header = {}
+      ctx.transactionId = storedTrans._id
+      ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, route1)
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, route2)
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Successful')
     })
 
-    it('should set the status to failed if the primary route return a status in 5xx', (done) => {
+    it('should set the status to failed if the primary route return a status in 5xx', async () => {
       ctx.response = createResponse(500)
       ctx.routes = []
       ctx.routes.push(createRoute('route1', 200))
       ctx.routes.push(createRoute('route2', 201))
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.request = storedTrans.request
-        ctx.request.header = {}
-        ctx.transactionId = storedTrans._id
-        ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-        messageStore.storeResponse(ctx, err2 =>
-          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-              messageStore.setFinalStatus(ctx, () => {
-                should.not.exist(err2)
-                return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                  should.not.exist(err3);
-                  (trans !== null).should.be.true()
-                  trans.status.should.be.exactly('Failed')
-                  return done()
-                })
-              })
-            )
-          )
-        )
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.request = storedTrans.request
+      ctx.request.header = {}
+      ctx.transactionId = storedTrans._id
+      ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[0])
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[1])
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Failed')
     })
 
-    it('should set the status to completed with errors if the primary route return a status in 2xx or 4xx but one or more routes return 5xx',
-      (done) => {
-        ctx.response = createResponse(404)
-        ctx.routes = []
-        ctx.routes.push(createRoute('route1', 201))
-        ctx.routes.push(createRoute('route2', 501))
+    it('should set the status to completed with errors if the primary route return a status in 2xx or 4xx but one or more routes return 5xx', async () => {
+      ctx.response = createResponse(404)
+      ctx.routes = []
+      ctx.routes.push(createRoute('route1', 201))
+      ctx.routes.push(createRoute('route2', 501))
 
-        messageStore.storeTransaction(ctx, (err, storedTrans) => {
-          if (err) { return done(err) }
-          ctx.request = storedTrans.request
-          ctx.request.header = {}
-          ctx.transactionId = storedTrans._id
-          ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-          messageStore.storeResponse(ctx, err2 =>
-            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-              messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-                messageStore.setFinalStatus(ctx, () => {
-                  should.not.exist(err2)
-                  return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                    should.not.exist(err3);
-                    (trans !== null).should.be.true()
-                    trans.status.should.be.exactly('Completed with error(s)')
-                    return done()
-                  })
-                })
-              )
-            )
-          )
-        })
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
 
-    it('should set the status to completed if any route returns a status in 4xx (test 1)', (done) => {
+      ctx.request = storedTrans.request
+      ctx.request.header = {}
+      ctx.transactionId = storedTrans._id
+      ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[0])
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[1])
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Completed with error(s)')
+    })
+
+    it('should set the status to completed if any route returns a status in 4xx (test 1)', async () => {
       ctx.response = createResponse(201)
       ctx.routes = []
       ctx.routes.push(createRoute('route1', 201))
       ctx.routes.push(createRoute('route2', 404))
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.request = storedTrans.request
-        ctx.request.header = {}
-        ctx.transactionId = storedTrans._id
-        ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-        messageStore.storeResponse(ctx, err2 =>
-          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-              messageStore.setFinalStatus(ctx, () => {
-                should.not.exist(err2)
-                return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                  should.not.exist(err3);
-                  (trans !== null).should.be.true()
-                  trans.status.should.be.exactly('Completed')
-                  return done()
-                })
-              })
-            )
-          )
-        )
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.request = storedTrans.request
+      ctx.request.header = {}
+      ctx.transactionId = storedTrans._id
+      ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[0])
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[1])
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Completed')
     })
 
-    it('should set the status to completed if any route returns a status in 4xx (test 2)', (done) => {
+    it('should set the status to completed if any route returns a status in 4xx (test 2)', async () => {
       ctx.response = createResponse(404)
       ctx.routes = []
       ctx.routes.push(createRoute('route1', 201))
       ctx.routes.push(createRoute('route2', 404))
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.request = storedTrans.request
-        ctx.request.header = {}
-        ctx.transactionId = storedTrans._id
-        ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-        messageStore.storeResponse(ctx, err2 =>
-          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-              messageStore.setFinalStatus(ctx, () => {
-                should.not.exist(err2)
-                return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                  should.not.exist(err3);
-                  (trans !== null).should.be.true()
-                  trans.status.should.be.exactly('Completed')
-                  return done()
-                })
-              })
-            )
-          )
-        )
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.request = storedTrans.request
+      ctx.request.header = {}
+      ctx.transactionId = storedTrans._id
+      ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[0])
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[1])
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Completed')
     })
 
-    it('should set the status to completed if any other response code is recieved on primary', (done) => {
+    it('should set the status to completed if any other response code is received on primary', async () => {
       ctx.response = createResponse(302)
       ctx.routes = []
       ctx.routes.push(createRoute('route1', 201))
       ctx.routes.push(createRoute('route2', 200))
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.request = storedTrans.request
-        ctx.request.header = {}
-        ctx.transactionId = storedTrans._id
-        ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-        messageStore.storeResponse(ctx, err2 =>
-          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-              messageStore.setFinalStatus(ctx, () => {
-                should.not.exist(err2)
-                return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                  should.not.exist(err3);
-                  (trans !== null).should.be.true()
-                  trans.status.should.be.exactly('Completed')
-                  return done()
-                })
-              })
-            )
-          )
-        )
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.request = storedTrans.request
+      ctx.request.header = {}
+      ctx.transactionId = storedTrans._id
+      ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[0])
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[1])
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Completed')
     })
 
-    it('should set the status to completed if any other response code is recieved on secondary routes', (done) => {
+    it('should set the status to completed if any other response code is received on secondary routes', async () => {
       ctx.response = createResponse(200)
       ctx.routes = []
       ctx.routes.push(createRoute('route1', 302))
       ctx.routes.push(createRoute('route2', 200))
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.request = storedTrans.request
-        ctx.request.header = {}
-        ctx.transactionId = storedTrans._id
-        ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
-        messageStore.storeResponse(ctx, err2 =>
-          messageStore.storeNonPrimaryResponse(ctx, ctx.routes[0], () =>
-            messageStore.storeNonPrimaryResponse(ctx, ctx.routes[1], () =>
-              messageStore.setFinalStatus(ctx, () => {
-                should.not.exist(err2)
-                return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-                  should.not.exist(err3);
-                  (trans !== null).should.be.true()
-                  trans.status.should.be.exactly('Completed')
-                  return done()
-                })
-              })
-            )
-          )
-        )
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.request = storedTrans.request
+      ctx.request.header = {}
+      ctx.transactionId = storedTrans._id
+      ctx.request.header['X-OpenHIM-TransactionID'] = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[0])
+      await promisify(messageStore.storeNonPrimaryResponse)(ctx, ctx.routes[1])
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Completed')
     })
 
     const createResponseWithReservedChars = status =>
@@ -485,117 +438,99 @@ describe('MessageStore', () => {
         timestamp: new Date()
       })
 
-    it('should be able to save the response if the headers contain Mongo reserved characters ($ or .)', (done) => {
+    it('should be able to save the response if the headers contain Mongo reserved characters ($ or .)', async () => {
       ctx.response = createResponseWithReservedChars(200)
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.transactionId = storedTrans._id
-        messageStore.storeResponse(ctx, (err2) => {
-          should.not.exist(err2)
-          return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-            should.not.exist(err3);
-            (trans !== null).should.be.true()
-            trans.response.headers['dot．header'].should.equal('123')
-            trans.response.headers['dollar＄header'].should.equal('124')
-            return done()
-          })
-        })
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.transactionId = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.response.headers['dot．header'].should.equal('123')
+      trans.response.headers['dollar＄header'].should.equal('124')
     })
 
-    it('should remove the request body if set in channel settings and save to the DB', (done) => {
+    it('should remove the request body if set in channel settings and save to the DB', async () => {
       ctx.authorisedChannel.requestBody = false
 
-      messageStore.storeTransaction(ctx, (error, result) => {
-        should.not.exist(error)
-        return TransactionModel.findOne({ _id: result._id }, (error, trans) => {
-          should.not.exist(error);
-          (trans !== null).should.be.true()
-          trans.clientID.toString().should.equal('313233343536373839319999')
-          trans.channelID.toString().should.equal(channel1._id.toString())
-          trans.status.should.equal('Processing')
-          should(trans.request.body).undefined()
-          trans.canRerun.should.equal(false)
-          return done()
-        })
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.clientID.toString().should.equal('313233343536373839319999')
+      trans.channelID.toString().should.equal(channel1._id.toString())
+      trans.status.should.equal('Processing')
+      should(trans.request.body).undefined()
+      trans.canRerun.should.equal(false)
     })
 
-    it('should update the transaction with the response and remove the response body', (done) => {
+    it('should update the transaction with the response and remove the response body', async () => {
       ctx.response = createResponse(201)
-
       ctx.authorisedChannel.responseBody = false
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        if (err) { return done(err) }
-        ctx.transactionId = storedTrans._id
-        messageStore.storeResponse(ctx, (err2) => {
-          should.not.exist(err2)
-          return TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-            should.not.exist(err3);
-            (trans !== null).should.be.true()
-            trans.response.status.should.equal(201)
-            should(trans.response.body).undefined()
-            return done()
-          })
-        })
-      })
+      const storedTrans = await messageStore.initiateRequest(ctx)
+
+      ctx.transactionId = storedTrans._id
+
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.response.status.should.equal(201)
+      should(trans.response.bodyId).null()
     })
 
 
-    it('should update the transaction status with the mediatorResponse\'s status. case 1 -mediator status set to Successful', (done) => {
+    it('should update the transaction status with the mediatorResponse\'s status. case 1 -mediator status set to Successful', async () => {
       ctx.response = createResponse(201)
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        should.not.exist(err)
-        if (err != null) done(err)
-        ctx.transactionId = storedTrans._id
+      const storedTrans = await messageStore.initiateRequest(ctx)
 
-        messageStore.storeResponse(ctx, (err2) => {
-          should.not.exist(err2)
-          if (err2 != null) done(err2)
-          ctx.mediatorResponse = {}
-          //Set the mediatorResponse's status
-          ctx.mediatorResponse.status = 'Successful'
-          messageStore.setFinalStatus(ctx, () => {
+      ctx.transactionId = storedTrans._id
 
-            TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-              should.not.exist(err3);
-              (trans !== null).should.be.true()
-              trans.status.should.equal('Successful')
-              return done(err3)
-            })
-          })
-        })
-      })
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      ctx.mediatorResponse = {}
+      // Set the mediatorResponse's status
+      ctx.mediatorResponse.status = 'Successful'
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Successful')
     })
 
-    it('should update the transaction status with the mediatorResponse\'s status. Case 2 -mediator status set to Failed', (done) => {
+    it('should update the transaction status with the mediatorResponse\'s status. Case 2 -mediator status set to Failed', async () => {
       ctx.response = createResponse(201)
 
-      messageStore.storeTransaction(ctx, (err, storedTrans) => {
-        should.not.exist(err)
-        if (err != null) done(err)
-        ctx.transactionId = storedTrans._id
+      const storedTrans = await messageStore.initiateRequest(ctx)
 
-        messageStore.storeResponse(ctx, (err2) => {
-          should.not.exist(err2)
-          if (err2 != null) done(err2)
-          ctx.mediatorResponse = {}
-          //Set the mediatorResponse's status
-          ctx.mediatorResponse.status = 'Failed'
-          messageStore.setFinalStatus(ctx, () => {
+      ctx.transactionId = storedTrans._id
 
-            TransactionModel.findOne({ _id: storedTrans._id }, (err3, trans) => {
-              should.not.exist(err3);
-              (trans !== null).should.be.true()
-              trans.status.should.equal('Failed')
-              return done(err3)
-            })
-          })
-        })
-      })
+      await promisify(messageStore.initiateResponse)(ctx) // function returns a promise
+      await messageStore.completeResponse(ctx)
+
+      ctx.mediatorResponse = {}
+      // Set the mediatorResponse's status
+      ctx.mediatorResponse.status = 'Failed'
+
+      await promisify(messageStore.setFinalStatus)(ctx)
+
+      const trans = await TransactionModel.findOne({ _id: storedTrans._id })
+
+      should.exist(trans)
+      trans.status.should.be.exactly('Failed')
     })
   })
 })

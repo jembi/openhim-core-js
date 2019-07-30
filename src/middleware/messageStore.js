@@ -293,7 +293,7 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
       if (err) {
         logger.error(err)
       }
-      return done(tx)
+      return done(null, tx)
     })
   } else {
     return logger.error('the request has no transactionId')

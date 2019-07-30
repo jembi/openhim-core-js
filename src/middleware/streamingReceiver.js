@@ -86,7 +86,7 @@ function streamingReceiver (ctx, statusEvents) {
     }
   } else {
     /*
-    *  GET and DELETE come in here to persist the intial request transaction
+    *  GET and DELETE come in here to persist the initial request transaction
     */
     ctx.state.requestPromise = messageStore.initiateRequest(ctx)
   }
