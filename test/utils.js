@@ -167,7 +167,6 @@ export async function readBody (req) {
       req.once('error', reject)
     })
     if (chunks.every(Buffer.isBuffer)) {
-      console.log('Buffer???')
       return Buffer.concat(chunks)
     }
 

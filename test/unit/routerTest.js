@@ -11,7 +11,6 @@ import * as constants from '../constants'
 import { promisify } from 'util'
 import * as messageStore from '../../src/middleware/messageStore'
 import stream, { PassThrough } from 'stream'
-import { utils } from 'mocha';
 
 const DEFAULT_CHANNEL = Object.freeze({
   name: 'Mock endpoint',
