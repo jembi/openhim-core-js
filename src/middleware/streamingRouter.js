@@ -16,7 +16,7 @@ let bucket
  *    responseBodyRequired: true - If response body from downstream should be stored to GridFS
  *    requestBodyRequired: true - If the request is for a Http method with a body (POST, PUT, PATCH)
  *    collectResponseBody: true - Aggregate response body chunks into a buffer and store to GridFs after all chunks received
- *    timeout: number - Timeout ms to apply to conection
+ *    timeout: number - Timeout ms to apply to connection
  *    secured: false - http(false) or https(true)
  */
 export function makeStreamingRequest (requestBodyStream, options, statusEvents) {
@@ -45,6 +45,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
     const inflate = zlib.createInflate()
 
     const routeReq = method.request(options)
+      .end() // method.request requires a manual .end of the request
       .on('response', (routeRes) => {
         response.status = routeRes.statusCode
         response.headers = routeRes.headers
@@ -102,9 +103,9 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
                 logger.error(`Error streaming response to GridFS: ${err}`)
                 reject(err)
               })
-              .on('finish', (fileId) => {
+              .on('finish', (file) => {
                 if (statusEvents.finishGridFs) {
-                  statusEvents.finishGridFs(fileId)
+                  statusEvents.finishGridFs(file)
                 }
               })
           }
@@ -237,7 +238,6 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
         }
       })
       .on('end', () => {
-        routeReq.end()
         if (statusEvents.finishRequest) {
           statusEvents.finishRequest()
         }

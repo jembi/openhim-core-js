@@ -156,7 +156,7 @@ function handleServerError (ctx, err, route) {
     }
   }
 
-  logger.error(`[${(ctx.transactionId != null ? ctx.transactionId.toString() : undefined)}] Internal server error occured: ${err}`)
+  logger.error(`[${(ctx.transactionId != null ? ctx.transactionId.toString() : undefined)}] Internal server error occurred: ${err}`)
   if (err.stack) { return logger.error(`${err.stack}`) }
 }
 
@@ -212,7 +212,7 @@ function sendRequestToRoutes (ctx, routes, next) {
           .then((response) => {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-              // handle mediator reponse
+              // handle mediator response
               collectStream(response.body).then((response) => {
                 const responseObj = JSON.parse(response)
                 ctx.mediatorResponse = responseObj
@@ -330,7 +330,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         timestamp: ctx.requestTimestamp
       }
       if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-        // handle mediator reponse
+        // handle mediator response
         let payload = ''
         response.body.on('data', (data) => {
           payload += data.toString()
@@ -450,15 +450,14 @@ function setTransactionFinalStatus (ctx) {
 }
 
 async function sendHttpRequest (ctx, route, options) {
-
   const statusEvents = {
     badOptions: function () {},
     noRequest: function () {},
     startGridFs: function (fileId) {
       logger.info(`Started storing response body in GridFS: ${fileId}`)
     },
-    finishGridFs: function () {
-      logger.info(`Finished storing response body in GridFS`)
+    finishGridFs: function (file) {
+      logger.info(`Finished storing response body in GridFS: ${file._id.toString()}`)
     },
     gridFsError: function (err) {},
     startRequest: function () {},
@@ -539,6 +538,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
     }
 
     const routeReq = method.request(options)
+      .end() // method.request requires a manual .end of the request
       .on('response', routeRes => {
         response.status = routeRes.statusCode
         response.headers = routeRes.headers
@@ -621,9 +621,9 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
             routeReq.write(chunk)
           }
         })
-        .on('end', () => {
-          routeReq.end()
-        })
+        // .on('end', () => {
+        //   routeReq.end()
+        // })
         .on('error', (err) => {
           logger.error(`Error streaming request body downstream: ${err}`)
           reject(err)
