@@ -167,6 +167,7 @@ export async function readBody (req) {
       req.once('error', reject)
     })
     if (chunks.every(Buffer.isBuffer)) {
+      console.log('Buffer???')
       return Buffer.concat(chunks)
     }
 
@@ -369,7 +370,7 @@ export async function createMockHttpServer (respBodyOrFn = constants.DEFAULT_HTT
   return server
 }
 
-export async function createMockHttpMediator (respBodyOrFn = constants.MEDIATOR_REPONSE, port = constants.MEDIATOR_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.MEDIATOR_HEADERS) {
+export async function createMockHttpMediator (respBodyOrFn = constants.MEDIATOR_RESPONSE, port = constants.MEDIATOR_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.MEDIATOR_HEADERS) {
   return createMockHttpServer(respBodyOrFn, port, resStatusCode, resHeadersOrFn)
 }
 

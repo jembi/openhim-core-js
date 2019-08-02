@@ -33,7 +33,7 @@ export const DEFAULT_STATIC_PATH = 'test/resources'
 
 export const MEDIATOR_HEADERS = { 'Content-Type': 'application/json+openhim; charset=utf-8' }
 export const DEFAULT_HEADERS = { 'Content-Type': 'text/plain' }
-export const MEDIATOR_REPONSE = Object.freeze({
+export const MEDIATOR_RESPONSE = Object.freeze({
   status: 'Successful',
   response: {
     status: 201,
