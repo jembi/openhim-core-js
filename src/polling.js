@@ -40,12 +40,15 @@ export async function registerPollingChannel (channel, callback) {
   }
 }
 
-export function removePollingChannel (channel, callback) {
+export async function removePollingChannel (channel, callback) {
   logger.info(`Removing polling schedule for channel: ${channel._id}`)
-  return exports.agendaGlobal.cancel({name: `polling-job-${channel._id}`}, (err) => {
-    if (err) { return callback(err) }
+
+  try {
+    await exports.agendaGlobal.cancel({name: `polling-job-${channel._id}`})
     return callback(null)
-  })
+  } catch (err) {
+    return callback(err)
+  }
 }
 
 export function setupAgenda (agenda, callback) {
