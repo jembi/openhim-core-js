@@ -64,7 +64,7 @@ describe('Polling tests', () => {
 
   const createSpy = function () {
     const agenda = {
-      cancel: sinon.stub().callsArg(1),
+      cancel: sinon.spy(),
       define: sinon.spy(),
       every: sinon.spy()
     }
