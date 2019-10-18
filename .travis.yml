@@ -11,6 +11,8 @@ services:
   - mongodb
 before_install:
   - export TZ=Africa/Johannesburg
+script:
+  - npm test
 after_success:
   - npm run coverage
 notifications:
