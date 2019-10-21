@@ -2,22 +2,19 @@ language: node_js
 node_js:
   - "lts/carbon"
   - "lts/dubnium"
-  - "10.15.0"
   - "node"
 matrix:
   fast_finish: true
   allow_failures:
     - node_js: 'node'
-    - node_js: 'lts/dubnium'
 services:
-  - docker
   - mongodb
-sudo: required
 before_install:
   - export TZ=Africa/Johannesburg
+script:
+  - npm test
 after_success:
   - npm run coverage
-  - ".travis/build_docker.sh"
 notifications:
   slack:
     rooms:
