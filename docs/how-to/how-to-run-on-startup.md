@@ -1,9 +1,8 @@
-How to run the OpenHIM on startup
----------------------------------
+# How to run the OpenHIM on startup
 
 To help you get the OpenHIM server running on boot we supply a upstart config file (good for Ubuntu or other system that use upstart). Install the upstart config by doing the following:
 
-```
+```sh
 wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/resources/openhim-core.conf
 sudo cp openhim-core.conf /etc/init/
 ```

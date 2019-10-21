@@ -1,16 +1,14 @@
-RESTful API
-===========
+# RESTful API
 
 Each and every API call that is made to the OpenHIM has to be authenticated. The authentication mechanism that is used can be fairly complex to work with however it provides decent security.
 
-The authentication mechanism is based on http://stackoverflow.com/a/9387289/588776.
+The authentication mechanism is based on <http://stackoverflow.com/a/9387289/588776>.
 
-Initial authentication notification
------------------------------------
+## Initial authentication notification
 
 The user notifies the API that it wants to use its authenticated service:
 
-```GET https://<server>:8080/authenticate/<user_email>```
+`GET https://<server>:8080/authenticate/<user_email>`
 
 If you don't have a user account yet, you can use the root user. The default root user details are as follows:
 
@@ -19,7 +17,7 @@ password: openhim-password (you should change this on a production installation!
 
 The server will respond with the salt that was used to calculate the clients passwordHash (during user registration):
 
-```
+```json
 {
     "salt": "xxx",
     "ts": "xxx"
@@ -28,12 +26,11 @@ The server will respond with the salt that was used to calculate the clients pas
 
 You must calculate a passwordhash using the received salt and the supplied user password. `passwordhash = (sha512(salt + password))`
 
-For subsequent requests to the API
-----------------------------------
+## For subsequent requests to the API
 
 For every request you must add the following additional HTTP headers to the request:
 
-```
+```http
 auth-username: <username>
 auth-ts: <the current timestamp - in the following format '2014-10-20T13:19:32.380Z' - user time must be in sync with server time for request to work>
 auth-salt: <random uuid salt that you generate>
@@ -42,20 +39,18 @@ auth-token: <= sha512(passwordhash + auth-salt + auth-ts) >
 
 The server will authorise this request by calculating sha512(passwordhash + auth-salt + auth-ts) using the passwordhash from its own database and ensuring that:
 
-* this is equal to auth-token
-* the auth-ts isn't more than 2 seconds old
+- this is equal to auth-token
+- the auth-ts isn't more than 2 seconds old
 
 If these 2 conditions true the request is allowed.
 
-Example implementations
------------------------
+## Example implementations
 
 An example of how this authentication mechanism can implemented for use with curl is show here: https://github.com/jembi/openhim-core-js/blob/master/resources/openhim-api-curl.sh
 
-An example of how this is implemented in the OpenHIM Console see: https://github.com/jembi/openhim-console/blob/master/app/scripts/services/login.js#L12-L39 and https://github.com/jembi/openhim-console/blob/master/app/scripts/services/authinterceptor.js#L20-L50
+An example of how this is implemented in the OpenHIM Console see: <https://github.com/jembi/openhim-console/blob/master/app/scripts/services/login.js#L12-L39> and <https://github.com/jembi/openhim-console/blob/master/app/scripts/services/authinterceptor.js#L20-L50>
 
-API Reference
--------------
+## API Reference
 
 ### Channels resource
 
@@ -105,7 +100,7 @@ The response code will be `200` if successful.
 
 'POST /channels/:channelId/trigger'
 
-where ':channelId' is the '_id' property of the channel to manually trigger.
+where ':channelId' is the '\_id' property of the channel to manually trigger.
 
 ### Clients resource
 
@@ -170,6 +165,7 @@ It should be noted that there is no actual roles collection in the database. The
 `GET /roles`
 
 The response status will be `200` if successful and the response body will contain an array of role objects, each consisting of a `name`, an array of `channels` and an array of `clients`, e.g.:
+
 ```json
 [
   {
@@ -223,8 +219,9 @@ The response status will be `200` if successful and the response body will conta
 
 `GET /roles/:name`
 
-The response status code will be `200` if successful and the response body will contain a role object in the same format as the role elements in the *Fetch all roles* operation response above. E.g.
-```js
+The response status code will be `200` if successful and the response body will contain a role object in the same format as the role elements in the _Fetch all roles_ operation response above. E.g.
+
+```json
 {
   "name": "Role1",
   "channels": [
@@ -252,8 +249,9 @@ The response status code will be `200` if successful and the response body will 
 
 with a json body containing the role name and channels and clients to apply to. At least one channel or client has to be specified. Channels and clients can be specified either by their `_id` or `name` for a channel and `clientID` for a client.
 
-An example role that will give a client named *jembi* permission to access *channel1* and *channel2*.
-```js
+An example role that will give a client named _jembi_ permission to access _channel1_ and _channel2_.
+
+```json
 {
   "name": "Role1",
   "channels": [
@@ -278,12 +276,13 @@ The response status code will be `201` if successful.
 
 `PUT /roles/:name`
 
-with a json body containing any updates to channels and clients. As with the *Add a new role* operation, channels and clients can be specified either by their `_id` or `name` for a channel and `clientID` for a client.
+with a json body containing any updates to channels and clients. As with the _Add a new role_ operation, channels and clients can be specified either by their `_id` or `name` for a channel and `clientID` for a client.
 
 Note that the channel and client arrays, if specified, must contain the complete list of items to apply to, i.e. roles will be removed if they exist on any channels and clients that are not contained in the respective arrays. This also means that if `channels` and `clients` are specified as empty arrays, the result will be the same as deleting the role. If the fields are not specified, then the existing setup will be left as is.
 
-The following example will change `Role1` by giving the clients *jembi* and *client-service* permission to access *channel1*. Any other channels will be removed, e.g. following from the *Add a new role* example above, access to *channel2* will be removed:
-```js
+The following example will change `Role1` by giving the clients _jembi_ and _client-service_ permission to access _channel1_. Any other channels will be removed, e.g. following from the _Add a new role_ example above, access to _channel2_ will be removed:
+
+```json
 {
   "channels": [
     {
@@ -365,11 +364,11 @@ Transactions store details about request and responses send through specifc chan
 
 An important concept to grasp with a transaction is the meaning of a transactions status. Here is a description of what each state means:
 
-* Processing - We are waiting for responses from one or more routes
-* Successful - The primary route and all other routes returned successful http response codes (2xx).
-* Failed - The primary route has returned a failed http response code (5xx)
-* Completed - The primary route and the other routes did not return a failure http response code (5xx) but some weren't successful (2xx).
-* Completed with error(s) - The primary route did not return a failure http response code (5xx) but one of the routes did.
+- Processing - We are waiting for responses from one or more routes
+- Successful - The primary route and all other routes returned successful http response codes (2xx).
+- Failed - The primary route has returned a failed http response code (5xx)
+- Completed - The primary route and the other routes did not return a failure http response code (5xx) but some weren't successful (2xx).
+- Completed with error(s) - The primary route did not return a failure http response code (5xx) but one of the routes did.
 
 #### Fetch all transactions
 
@@ -378,16 +377,17 @@ An important concept to grasp with a transaction is the meaning of a transaction
 The response status code will be `200` if successful and the response body will contain an array of transaction objects. See the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js).
 
 The following query parameters are supported:
-* `filterLimit`: The max number of transactions to return
-* `filterPage`: The page to return (used in conjunction with `filterLimit`)
-* `filterRepresentation`: Determines how much information for a transaction to return; options are
-  * `simple`: minimal transaction information
-  * `simpledetails`: minimal transaction information, but with more fields than simple
-  * `bulkrerun`: minimal transaction information required in order to determine rerun status
-  * `full`: Full transaction information
-  * `fulltruncate`: The same as full except that large transaction bodies will be truncated
-* `channelID`: Only return transactions that are linked to the specified channel
-* `filters`: Advanced filters specified as an object. Transaction fields can be specified based on the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js#L40-L56). For example, in order to filter by response status 200 and a property called `prop` with a value `val`, the following query could be used: `/transactions?filterLimit=100&filterPage=0&filters=%7B%22response.status%22:%22200%22,%22properties%22:%7B%22prop%22:%22val%22%7D%7D`
+
+- `filterLimit`: The max number of transactions to return
+- `filterPage`: The page to return (used in conjunction with `filterLimit`)
+- `filterRepresentation`: Determines how much information for a transaction to return; options are
+  - `simple`: minimal transaction information
+  - `simpledetails`: minimal transaction information, but with more fields than simple
+  - `bulkrerun`: minimal transaction information required in order to determine rerun status
+  - `full`: Full transaction information
+  - `fulltruncate`: The same as full except that large transaction bodies will be truncated
+- `channelID`: Only return transactions that are linked to the specified channel
+- `filters`: Advanced filters specified as an object. Transaction fields can be specified based on the [transaction schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/transactions.js#L40-L56). For example, in order to filter by response status 200 and a property called `prop` with a value `val`, the following query could be used: `/transactions?filterLimit=100&filterPage=0&filters=%7B%22response.status%22:%22200%22,%22properties%22:%7B%22prop%22:%22val%22%7D%7D`
 
 #### Add a transaction
 
@@ -429,7 +429,7 @@ where `:transactionId` is the `_id` property of the transaction to delete.
 
 The response code will be `200` if successful.
 
-###Contact groups resource
+### Contact groups resource
 
 A contact group (or contact list) defines logical groups of users used for contacting users en masse.
 
@@ -490,7 +490,8 @@ The response status code will be `200` if successful and the response body will 
 `POST /tasks`
 
 with a json body representing the task to be added in the following format:
-```js
+
+```json
 {
   "tids": [
     "id#1",
@@ -585,7 +586,7 @@ with an http body of:
 }
 ```
 
-The response will always have a `200` status if successful or a `404` if the mediator specified by the urn cannot be found. The response body will contain the latest mediator config that has been set on the OpenHIM-core server only if the config has changed since the last time a heartbeat was received from this mediator. Otherise, the response body is left empty.
+The response will always have a `200` status if successful or a `404` if the mediator specified by the urn cannot be found. The response body will contain the latest mediator config that has been set on the OpenHIM-core server only if the config has changed since the last time a heartbeat was received from this mediator. Otherwise, the response body is left empty.
 
 This endpoint can only be called by an admin user.
 
@@ -614,7 +615,7 @@ This endpoint can only be called by an admin user.
 
 Installs channels that are listed in the mediator's config (`defaultChannelConfig` property). This endpoint can install all listed channels or a subset of channels depending on the post body the of request.
 
-`POST /mediaotrs/:urn/channels`
+`POST /mediators/:urn/channels`
 
 where `:urn` is the `urn` property of the mediator that is installing the channels.
 
@@ -623,7 +624,7 @@ with an http body that contains a JSON array of channel names to install. These 
 e.g.
 
 ```js
-[ 'Channel 1', 'Channel 2' ]
+;['Channel 1', 'Channel 2']
 ```
 
 The response will be an http status code of `201` if the channels were successfully created and `400` if you provide a channel name that doesn't exist.
@@ -636,16 +637,16 @@ The base url is `https://<server>:<api_port>/metrics`
 
 All calls to the metrics API **MUST** include request parameter with both the start date and end date for the metrics query. E.g. `/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z`
 
-There are a few diffferent forms of this endpoint that returns metrics broken down in different ways:
+There are a few different forms of this endpoint that returns metrics broken down in different ways:
 
-* Use `/metrics` to get overall metrics about every transaction.
-* Use `/metrics/channels` to get metrics broken down by each channel.
-* Use `/metrics/channels/:channelID` to get metrics for a specific channel.
-* Use `/metrics/timeseries/:timeSeries` to get overall metrics returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
-* Use `/metrics/timeseries/:timeSeries/channels` to get metrics broken down by each channel returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
-* Use `/metrics/timeseries/:timeSeries/channels/:channelID` to get metrics for a specific channel returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
+- Use `/metrics` to get overall metrics about every transaction.
+- Use `/metrics/channels` to get metrics broken down by each channel.
+- Use `/metrics/channels/:channelID` to get metrics for a specific channel.
+- Use `/metrics/timeseries/:timeSeries` to get overall metrics returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
+- Use `/metrics/timeseries/:timeSeries/channels` to get metrics broken down by each channel returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
+- Use `/metrics/timeseries/:timeSeries/channels/:channelID` to get metrics for a specific channel returned in the specified time series. Time series values are one of 'minute', 'hour', 'day', 'month', 'year'.
 
-The metrics API always returns a JSON array, even if it is returning just one metrics object. It retuns a `200` response along with the metrics array. A `401` response will be returned if a specified channel doesn't exist. Each metrics object in the array has the following format:
+The metrics API always returns a JSON array, even if it is returning just one metrics object. It returns a `200` response along with the metrics array. A `401` response will be returned if a specified channel doesn't exist. Each metrics object in the array has the following format:
 
 ```js
 {
@@ -743,36 +744,37 @@ A maximum of 100 000 log messages will ever be returned. So don't make unreasona
 
 The following filters are available:
 
-* `from` - an ISO8601 formatted date to query from. Defaults to 5 mins ago.
-* `until` - an ISO8601 formatted date to query until. Defaults to now.
-* `start` - a number n: the log message to start from, if specified the first `n` message are NOT returned. Useful along with limit for pagination. Defaults to 0.
-* `limit` - a number n: the max number of log messages to return. Useful along with `start` for pagination. Defaults to 100 000.
-* `level` - The log level to return. Possible values are `debug`, `info`, `warn` and `error`. All messages with a level equal to or of higher severity to the specified value will be returned. Defaults to `info`.
+- `from` - an ISO8601 formatted date to query from. Defaults to 5 mins ago.
+- `until` - an ISO8601 formatted date to query until. Defaults to now.
+- `start` - a number n: the log message to start from, if specified the first `n` message are NOT returned. Useful along with limit for pagination. Defaults to 0.
+- `limit` - a number n: the max number of log messages to return. Useful along with `start` for pagination. Defaults to 100 000.
+- `level` - The log level to return. Possible values are `debug`, `info`, `warn` and `error`. All messages with a level equal to or of higher severity to the specified value will be returned. Defaults to `info`.
 
 The logs will be returned in the following format with a `200` status code:
 
 ```js
-[
+;[
   {
-    "label": "worker1",
-    "meta": {},
-    "level": "info",
-    "timestamp": "2015-10-29T09:40:31.536Z",
-    "message": "Some message"
+    label: 'worker1',
+    meta: {},
+    level: 'info',
+    timestamp: '2015-10-29T09:40:31.536Z',
+    message: 'Some message'
   },
   {
-    "label": "worker1",
-    "meta": {},
-    "level": "info",
-    "timestamp": "2015-10-29T09:40:39.128Z",
-    "message": "Another message"
+    label: 'worker1',
+    meta: {},
+    level: 'info',
+    timestamp: '2015-10-29T09:40:39.128Z',
+    message: 'Another message'
   }
   // ...
 ]
 ```
 
 For example a sample request could look like this:
-```
+
+```http
 https://localhost:8080/logs?from=2015-10-28T12:31:46&until=2015-10-28T12:38:55&limit=100&start=10&level=error`
 ```
 
@@ -792,13 +794,13 @@ The metadata resource allows the user to export and import Channels, Clients, Me
 
 Use `GET` to retrieve all available metadata, and `POST` to import metadata.
 
-The import checks for conflicts in the database and either updates or inserts based on the result.  For more control over the import, the validate endpoint accepts the same payload as the import endpoint and returns a validation status per metadata record.
+The import checks for conflicts in the database and either updates or inserts based on the result. For more control over the import, the validate endpoint accepts the same payload as the import endpoint and returns a validation status per metadata record.
 
 #### Export Metadata
 
 `Get /metadata` Returns `200` and an object with the following format:
 
-```js
+```json
 [
   {
     "Channels": [
@@ -844,7 +846,6 @@ The import checks for conflicts in the database and either updates or inserts ba
 ]
 ```
 
-
 #### Import Metadata
 
 `Post /metadata` Returns `201` and an object with the following format:
@@ -880,7 +881,7 @@ The visualizer resource allows the user to manage the visualizers that are prese
 
 An example visualizer object conforming to the [visualizer schema](https://github.com/jembi/openhim-core-js/blob/master/src/model/visualizer.js):
 
-```js
+```json
 [
   {
     "_id": "57a4a09078ae562b26d5b2b0",
