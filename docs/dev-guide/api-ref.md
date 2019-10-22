@@ -19,8 +19,8 @@ The server will respond with the salt that was used to calculate the clients pas
 
 ```json
 {
-    "salt": "xxx",
-    "ts": "xxx"
+  "salt": "xxx",
+  "ts": "xxx"
 }
 ```
 
