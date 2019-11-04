@@ -16,7 +16,7 @@ let bucket
  *    responseBodyRequired: true - If response body from downstream should be stored to GridFS
  *    requestBodyRequired: true - If the request is for a Http method with a body (POST, PUT, PATCH)
  *    collectResponseBody: true - Aggregate response body chunks into a buffer and store to GridFs after all chunks received
- *    timeout: number - Timeout ms to apply to conection
+ *    timeout: number - Timeout ms to apply to connection
  *    secured: false - http(false) or https(true)
  */
 export function makeStreamingRequest (requestBodyStream, options, statusEvents) {
