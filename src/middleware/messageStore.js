@@ -206,7 +206,8 @@ export function completeResponse (ctx, done) {
     const update = {
       'response.timestampEnd': ctx.responseTimestampEnd,
       'response.status': ctx.response.status,
-      'response.headers': headers
+      'response.headers': headers,
+      error: ctx.error
     }
 
     if (ctx.mediatorResponse) {
