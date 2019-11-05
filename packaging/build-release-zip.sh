@@ -1,9 +1,9 @@
 #!/bin/bash
 
 if (( $# < 1)); then
-	echo "OpenHIM release build: Builds a specific tagged release ready for deployment";
-	echo "Usage: $0 TAG";
-	exit 0;
+  echo "OpenHIM release build: Builds a specific tagged release ready for deployment";
+  echo "Usage: $0 TAG";
+  exit 0;
 fi
 
 tag=$1;
