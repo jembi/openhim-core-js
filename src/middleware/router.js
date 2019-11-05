@@ -209,24 +209,22 @@ function sendRequestToRoutes (ctx, routes, next) {
       if (route.primary) {
         ctx.primaryRoute = route
         promise = sendRequest(ctx, route, options)
-          .then((response) => {
+          .then(async (response) => {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-              // handle mediator reponse
-              collectStream(response.body).then((response) => {
-                const responseObj = JSON.parse(response)
-                ctx.mediatorResponse = responseObj
+              // handle mediator response
+              response = await collectStream(response.body)
+              const responseObj = JSON.parse(response)
+              ctx.mediatorResponse = responseObj
 
-                if (responseObj.error != null) {
-                  ctx.autoRetry = true
-                  ctx.error = responseObj.error
-                }
-                // then set koa response from responseObj.response
-                setKoaResponse(ctx, responseObj.response)
-              })
-            } else {
-              setKoaResponse(ctx, response)
+              if (responseObj.error != null) {
+                ctx.autoRetry = true
+                ctx.error = responseObj.error
+              }
+              // then set koa response from responseObj.response
+              response = responseObj.response
             }
+            setKoaResponse(ctx, response)
           })
           .then(() => {
             logger.info('primary route completed')
