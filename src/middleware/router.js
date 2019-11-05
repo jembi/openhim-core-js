@@ -490,13 +490,11 @@ async function sendHttpRequest (ctx, route, options) {
         ctx.secondaryRoutes.forEach(routeReq => routeReq.destroy())
       }
       ctx.state.requestPromise.then(() => {
-        messageStore.initiateResponse(ctx, () => {})
         messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
       })
     },
     clientError: function (err) {
       ctx.state.requestPromise.then(() => {
-        messageStore.initiateResponse(ctx, () => {})
         messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
       })
     },
