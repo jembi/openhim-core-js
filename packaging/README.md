@@ -16,9 +16,9 @@ PPA: release
 
 # Bundled Release
 
-A bundled release will ensure all the relevant dependencies re downloaded and bundled into a built version of the OpenHIM core. Only the relevant scripts need to to run the OpenHIM core is added to the bundled release.
+A bundled release will ensure all the relevant dependencies are downloaded and bundled into a built version of the OpenHIM core. Only the relevant scripts needed to run the OpenHIM core is added to the bundled release.
 
-To create a new build release, execute to the below command. This does assume that your Linux distribution has the `zip` module installed
+To create a new build release execute to the below command. This does assume that your Linux distribution has the `zip` module installed
 
 `./build-release-zip.sh <TAG>`
 
