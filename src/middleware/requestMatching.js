@@ -6,13 +6,13 @@ import * as utils from '../utils'
 import * as Channels from '../model/channels'
 import { promisify } from 'util'
 
-function matchContent (channel, ctx) {
+export function matchContent (body, channel) {
   if (channel.matchContentRegex) {
-    return matchRegex(channel.matchContentRegex, ctx.body)
+    return matchRegex(channel.matchContentRegex, body)
   } else if (channel.matchContentXpath && channel.matchContentValue) {
-    return matchXpath(channel.matchContentXpath, channel.matchContentValue, ctx.body)
+    return matchXpath(channel.matchContentXpath, channel.matchContentValue, body)
   } else if (channel.matchContentJson && channel.matchContentValue) {
-    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, ctx.body)
+    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, body)
   } else if (channel.matchContentXpath || channel.matchContentJson) {
     // if only the match expression is given, deny access
     // this is an invalid channel
@@ -23,18 +23,18 @@ function matchContent (channel, ctx) {
   }
 }
 
-function matchRegex (regexPat, body) {
+export function matchRegex (regexPat, body) {
   const regex = new RegExp(regexPat)
   return regex.test(body.toString())
 }
 
-function matchXpath (xpathStr, val, xml) {
+export function matchXpath (xpathStr, val, xml) {
   const doc = new Dom().parseFromString(xml.toString())
   const xpathVal = xpath.select(xpathStr, doc).toString()
   return val === xpathVal
 }
 
-function matchJsonPath (jsonPath, val, json) {
+export function matchJsonPath (jsonPath, val, json) {
   const jsonObj = JSON.parse(json.toString())
   const jsonVal = getJSONValByString(jsonObj, jsonPath)
   return val === jsonVal.toString()
@@ -92,9 +92,9 @@ function matchContentTypes (channel, ctx) {
 
 // Needs to be mutable for testing
 // eslint-disable-next-line
+// TODO: OHM-695 uncomment line below when working on ticket
 let matchFunctions = [
   matchUrlPattern,
-  matchContent,
   matchContentTypes
 ]
 
@@ -133,7 +133,8 @@ export async function koaMiddleware (ctx, next) {
 // export private functions for unit testing
 // note: you cant spy on these method because of this :(
 if (process.env.NODE_ENV === 'test') {
-  exports.matchContent = matchContent
+  // TODO: OHM-695 uncomment line below when working on ticket  
+  // exports.matchContent = matchContent
   exports.matchRegex = matchRegex
   exports.matchXpath = matchXpath
   exports.matchJsonPath = matchJsonPath

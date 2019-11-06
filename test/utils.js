@@ -1,4 +1,4 @@
-import { MongoClient, ObjectId } from 'mongodb'
+import mongodb, { MongoClient, ObjectId } from 'mongodb'
 import * as fs from 'fs'
 import * as pem from 'pem'
 import { promisify } from 'util'
@@ -10,8 +10,8 @@ import https from 'https'
 import serveStatic from 'serve-static'
 import finalhandler from 'finalhandler'
 import sinon from 'sinon'
-import uriFormat from 'mongodb-uri'
 import * as crypto from 'crypto'
+import { connectionDefault } from '../src/config'
 
 import * as constants from './constants'
 import { config, encodeMongoURI } from '../src/config'
@@ -782,4 +782,54 @@ export async function setupMetricsTransactions () {
   ]
 
   await MetricModel.insertMany(metrics)
+}
+
+let bucket
+const getGridFSBucket = () => {
+  if (!bucket) {
+    bucket = new mongodb.GridFSBucket(connectionDefault.client.db())
+  }
+
+  return bucket
+}
+
+export const createGridFSPayload = (payload) => {
+  return new Promise((resolve, reject) => {
+    const bucket = getGridFSBucket()
+    const uploadStream = bucket.openUploadStream()
+
+    uploadStream.on('error', (err) => {
+      return reject(err)
+    })
+    .on('finish', async (doc) => {
+      if (!doc) {
+        return reject(new Error('GridFS create failed'))
+      }
+
+      resolve(doc._id)
+    })
+    uploadStream.end(payload)
+  })
+}
+
+export const extractGridFSPayload = async (fileId) => {
+  return new Promise((resolve, reject) => {
+    const bucket = getGridFSBucket()
+    const downloadStream = bucket.openDownloadStream(ObjectId(fileId))
+
+    let body = ''
+    downloadStream.on('error', err => {
+      return reject(err)
+    })
+    .on('data', chunk => body += chunk)
+    .on('end', () => {
+      resolve(body)
+    })
+  })
+}
+
+export const deleteChunkedPayloads = async () => {
+  const db = connectionDefault.client.db()
+  await db.collection('fs.files').deleteMany({})
+  await db.collection('fs.chunks').deleteMany({})
 }

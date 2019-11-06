@@ -1,27 +1,37 @@
-import { Schema } from 'mongoose'
+import { Schema, ObjectId } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
 
 // Request Schema definition
-const RequestDef = {
+const RequestDef = new Schema({
   host: String,
   port: String,
   path: String,
   headers: Object,
   querystring: String,
-  body: String,
+  bodyId: ObjectId,
   method: String,
   timestamp: {
     type: Date, required: true
-  }
-}
+  },
+  timestampEnd: Date
+}, {
+  toObject: { virtuals: true },
+  toJSON: { virtuals: true }
+})
+RequestDef.virtual('body')
 
 // Response Schema definition
-const ResponseDef = {
+const ResponseDef = new Schema({
   status: Number,
   headers: Object,
-  body: String,
-  timestamp: Date
-}
+  bodyId: ObjectId,
+  timestamp: Date,
+  timestampEnd: Date
+}, {
+  toObject: { virtuals: true },
+  toJSON: { virtuals: true }
+})
+ResponseDef.virtual('body')
 
 const ErrorDetailsDef = {
   message: String,
@@ -53,7 +63,7 @@ const RouteMetadataDef = {
   error: ErrorDetailsDef
 }
 
-// Trasnaction schema
+// Transaction schema
 const TransactionSchema = new Schema({
   clientID: Schema.Types.ObjectId,
   clientIP: String,
