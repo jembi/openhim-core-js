@@ -24,9 +24,9 @@ The following is an explanation of the fields that are used in the `Add Client` 
 - **Client ID** - This is a unique ID which a client will use as a reference when adding channels as well as for authorisation checking.
 - **Client Name** - This is a descriptive name of the client.
 - **Domain** - A domain that is associated with a client.
-    > **Note**: The domain needs to match the CN of the certificate if a certificate is used otherwise the client won’t be authorised successfully.
+  > **Note**: The domain needs to match the CN of the certificate if a certificate is used otherwise the client won’t be authorised successfully.
 - **Roles** - The client roles field is a list of authorized user groups that are allowed to access this channel. You can either select a role from the suggested roles that appear when you start typing, or you can add a new role to the list by typing in the role and pressing Enter.
-    > **Note**: suggested roles will only appear as you type, if they already exist in the OpenHIM.
+  > **Note**: suggested roles will only appear as you type, if they already exist in the OpenHIM.
 - **Certificate** - The certificate field is used when the OpenHIM core is running using mutual TLS authentication and needs to authenticate requests coming from the client. By default, the OpenHIM core uses mutual TLS authentication.
 - **Basic Auth Password** - The password field is used when the OpenHIM core is running in basic auth mode and does not require a certificate, it does however require a password.
 
@@ -43,9 +43,9 @@ The following is an explanation of the fields that are used in the `Add Client` 
 1. Capture the client details.
 1. Assign an existing role or enter a name for a new role which will be created and linked to this client.
 1. You may choose to make use of a basic auth password or client certificate, depending on your OpenHIM configuration. If basic auth is enabled in the OpenHIM core configuration, then only a password is required and if mutual TLS authentication is enabled, then only a client certificate is required:
-    - *Certificate*: You may choose one of the available client certificates from the `Client Certificate` drop down.
-      > **Note**: This will only be possible if you have already configured one or more client certificates in the OpenHIM Console.
-    - *Basic Auth Password*: Enter a `Basic Auth Password` and confirm it by retyping it in the confirm password textbox.
+   - _Certificate_: You may choose one of the available client certificates from the `Client Certificate` drop down.
+     > **Note**: This will only be possible if you have already configured one or more client certificates in the OpenHIM Console.
+   - _Basic Auth Password_: Enter a `Basic Auth Password` and confirm it by retyping it in the confirm password textbox.
 1. Click on the `Save Changes` button to save your new client.
 
 > **Note**: When a client certificate is added or updated in the certificates component of the OpenHIM, the OpenHIM console will inform the OpenHIM administrator that a server restart is required. This is for the new certificate to be applied correctly. The user can either decide to manually restart the server at a later time or to click the red `Restart Server Now!` button.
@@ -111,7 +111,7 @@ The following rules apply to roles:
 1. Log in to your OpenHIM console.
 1. Click on `Clients` found in the left navigation menu.
 1. Under the Roles section, Enable or disable channels to be used by the role by clicking on either the green `✓` or the red `X`.
-    > **Note**: You will not see the green `✓` or the red `X` if you don't have any channels configured.
+   > **Note**: You will not see the green `✓` or the red `X` if you don't have any channels configured.
 1. The changes are automatically saved.
 
 > **Note**: A `✓` means enabled whereas a `X` means disabled.
@@ -130,34 +130,36 @@ The allowed roles and clients field identifies which clients are allowed to send
 
 The following is an explanation of the fields that are used in the `Add Channels` form.
 
-<u>**Basic Info Tab**</u>
+### Basic Info Tab
 
 1. Channel Name - This is a descriptive name of the Channel.
 1. Channel Type - The type of channel to be configured:
-    - ***Hypertext Transfer Protocol (HTTP)*** - Default channel type.
-    - ***Transmission Control Protocol (TCP)*** - Supply a TCP host and port number.
-    - ***TLS*** - Supply a TLS host and port number.
-    - ***Polling*** - Supply a Polling schedule in a cron format: `*/10 * * * *` or written format: `10 minutes`.
 
-        > **Note**: The module called `Agenda` is used to accomplish the polling. Please visit the [Agenda documentation](https://github.com/agenda/agenda) for more information.
-1. ***Status*** - Enable or disable the channel.
+   - **_Hypertext Transfer Protocol (HTTP)_** - Default channel type.
+   - **_Transmission Control Protocol (TCP)_** - Supply a TCP host and port number.
+   - **_TLS_** - Supply a TLS host and port number.
+   - **_Polling_** - Supply a Polling schedule in a cron format: `*/10 * * * *` or written format: `10 minutes`.
 
-<u>**Request Matching Tab**</u>
+     > **Note**: The module called `Agenda` is used to accomplish the polling. Please visit the [Agenda documentation](https://github.com/agenda/agenda) for more information.
+
+1. **_Status_** - Enable or disable the channel.
+
+### Request Matching Tab
 
 1. URL Pattern - Supply a URL pattern to match an incoming transaction.
-    > **Note**: this field accepts a RegEx value. This field is not applicable for Channel Type of TCP or TLS.
+   > **Note**: this field accepts a RegEx value. This field is not applicable for Channel Type of TCP or TLS.
 1. Priority - If a transaction matches the URL patterns of two or more channels, then the channel with higher priority will be picked. A value of 1 is the highest possible priority (first priority). Larger numbers therefore indicate that a channel should take lower priority.
 1. Authentication Type - Set whether this channel is private or public.
 1. Whitelisted IP Addresses - A list of IP addresses that will be given access without authentication required.
 1. Allowed Roles and Clients - Only applicable when Authentication Type is set to private. Supply the Roles and Clients allowed to make requests to this channel.
 1. Match Content Types - Supply what content type to match too. (e.g text/json).
 1. Matching Options - These options allow a Channel to be used if the request body matches certain conditions.
-    - No Matching - No matching applicable.
-    - RegEx Matching - Supply a RegEx to match.
-    - XML Matching - Supply an X Path as well as a value to match.
-    - JSON Matching - Supply a JSON property as well as a value to match.
+   - No Matching - No matching applicable.
+   - RegEx Matching - Supply a RegEx to match.
+   - XML Matching - Supply an X Path as well as a value to match.
+   - JSON Matching - Supply a JSON property as well as a value to match.
 
-<u>**Routes Tab**</u>
+### Routes Tab
 
 1. **Mediator Route** - Select a mediator route if any, to populate the required route fields.
 1. **Name** - This is a descriptive name of the route.
@@ -172,47 +174,49 @@ The following is an explanation of the fields that are used in the `Add Channels
 1. **Status** - Set whether the route is enabled/disabled.
 1. '**+ Save**' - All required fields need to be supplied before the blue `+ Save` button becomes active.
 
-    > **Note**: At least one route needs to be added to the Channel and only one route is allowed to be set to primary.
+   > **Note**: At least one route needs to be added to the Channel and only one route is allowed to be set to primary.
 
-<u>**Data Control Tab**</u>
+### Data Control Tab
 
 1. **Store Request Body** - Select whether to store the request body.
 
-    > **Note**: If a transaction is made through a POST/PUT/PATCH method and request body is NOT saved, then the transaction cannot be rerun.
+   > **Note**: If a transaction is made through a POST/PUT/PATCH method and request body is NOT saved, then the transaction cannot be rerun.
+
 1. **Store Response Body** - Select whether to store the response body.
 1. **Auto Retry** - A feature that allows the OpenHIM to periodically resend failed transactions. Only transactions that have failed due to a connection type error, e.g. if a server is unavailable, or an internal OpenHIM error will be retried. I.e. if a target server responds with a status of 500, then that transaction won’t be retried since the transaction was delivered by the OpenHIM.
 
-    - *Automatically resend failed transactions* - Enable/disable auto retry for the channel.
-    - *How often* - A minimum period to wait (in minutes) before retrying a transaction.
-    - *Enabled max number of attempts* - Enable/disable a limit for the number of times a transaction should be retried.
-    - *Time* - Value for maximum number of retries.
+   - _Automatically resend failed transactions_ - Enable/disable auto retry for the channel.
+   - _How often_ - A minimum period to wait (in minutes) before retrying a transaction.
+   - _Enabled max number of attempts_ - Enable/disable a limit for the number of times a transaction should be retried.
+   - _Time_ - Value for maximum number of retries.
+
 1. **URL Rewriting Enabled** - URL rewriting allows the OpenHIM to look for URLs in a response and rewrite them so that they point to the correct location.
-     - *From Host/Port* - Supply the host and port value you are looking to rewrite.
-     - *To Host/Por*t - Supply the host and port value that will replace the ‘From Host/Port’ matches.
-     - *Path Transform* - Applies a said-like expression to the path string - multiple endpoints can be reached using the same route.
+   - _From Host/Port_ - Supply the host and port value you are looking to rewrite.
+   - *To Host/Por*t - Supply the host and port value that will replace the ‘From Host/Port’ matches.
+   - _Path Transform_ - Applies a said-like expression to the path string - multiple endpoints can be reached using the same route.
 1. **Add Auto Rewrite Rules** - Determines whether automatic rewrite rules are used. These rules enabled URLs to be automatically rewritten for any URLs that points to a host that the OpenHIM proxies (any host on a primary route). These can be overridden by user specified rules if need be.
 
-<u>**User Access Tab**</u>
+### User Access Tab
 
 1. **User groups allowed to view this channel’s transactions** - Supply the groups allowed to view this Channel’s transactions.
 1. **User groups allowed to view this channel’s transactions request/response body** - Supply the groups allowed to view the request/response body of this Channel’s transactions.
 1. **User groups allowed to rerun this channel’s transactions** - Supply the groups allowed to rerun this Channel’s transactions.
 
-<u>**Alerts Tab**</u>
+### Alerts Tab
 
 1. **Status** - Supply the status of a transaction when the alert should be sent. This can be supplied in a range format (e.g 2xx or 4xx).
 1. **Failure Rate (%)** - Supply the failure rate of when to start sending the alerts (e.g 50 - once failure rate above 50% then alerts will be sent).
 1. **Add Users** - Add individual users to receive alerts.
-    - *User* - Select a user from the drop down to receive an alert.
-    - *Method* - Select the method of how the alert should be delivered [Email | SMS].
-    - *Max Alerts* - Select the frequency of how often to send an alert [no max | 1 per hour | 1 per day].
+   - _User_ - Select a user from the drop down to receive an alert.
+   - _Method_ - Select the method of how the alert should be delivered [Email | SMS].
+   - _Max Alerts_ - Select the frequency of how often to send an alert [no max | 1 per hour | 1 per day].
 1. **Add Groups** - Add an entire group to receive alerts.
 1. **Add a new group** - Select a group from the drop down to be added to alerts.
 1. '**+ Alert**' - All required fields need to be supplied before the blue `+ Save` button becomes active.
 
 ### How to add a channel
 
-> **Note**: All fields marked with a * or ** indicates a mandatory field.
+> **Note**: All fields marked with a \* or \*\* indicates a mandatory field.
 
     * - Indicates a required field which means that it cannot be left blank.
     ** - Indicates that one of the fields are required, no both.
@@ -258,6 +262,7 @@ The following is an explanation of the fields that are used in the visualization
 
 - **Visualizer Name** - A unique name to identify the visualizer.
 - **Components** - The components to be added to the visualizer.
+
   - Event Type - The nature of the event being triggered:
     - Primary Route - These routes are created during the creation of a channel.
     - Secondary Route - These routes are created during the creation of a channel and are not set as the primary route.
@@ -267,16 +272,17 @@ The following is an explanation of the fields that are used in the visualization
   - Display - An easily identifiable name to be displayed in the visualizers list of components being monitored.
 
     > **Note**: You may add one or more components by completing the fields above and clicking on the green `+` button. The red `X` button allows you to delete a component.
+
 - **Channels** - A dropdown list of channels where you can select a channel to be monitored. You may select one or more channels by clicking on the Select Channel dropdown and choose a channel name. The red `X` button allows you to delete a channel.
 - **Mediators** - The mediators to be added to the visualizer. Select a mediator from the dropdown list of mediator names. See [OpenHIM Mediators](#openhim-mediators) for more information regarding mediators.
 - **Advanced Settings** - Allows you to customize your OpenHIM visualizer:
-    - *Visualizer Color Management* - Choose your desired color styles for events monitoring.
-    - *Visualizer Size Management* - Choose your desired size for the visualizer.
-    - *Visualizer Time Management* - Choose when and for how long to display an event.
+  - _Visualizer Color Management_ - Choose your desired color styles for events monitoring.
+  - _Visualizer Size Management_ - Choose your desired size for the visualizer.
+  - _Visualizer Time Management_ - Choose when and for how long to display an event.
 
 ### How to add a visualizer
 
-> **Note**: All fields marked with a * indicates a mandatory field.
+> **Note**: All fields marked with a \* indicates a mandatory field.
 
 1. Log in to your OpenHIM console.
 1. Click on `Visualizers` found in the left navigation menu.
@@ -319,13 +325,13 @@ The following is an explanation of the fields that are used in the `Add Contact`
 
 - **List Name** - A uniquely identifiable display name for the list.
 - **Users** - A dropdown of available users for selection to receive alerts.
-    > **Note**: You may add one or more users to the contact list by clicking on the green `+ User` button. The red `X` button allows you to delete a user alert.
+  > **Note**: You may add one or more users to the contact list by clicking on the green `+ User` button. The red `X` button allows you to delete a user alert.
 - **Method** - Delivery method for alerts.
 - **Max Alerts** - Select a limit for alerts.
 
 ### How to add a contact list
 
-> **Note**: All fields marked with a * indicates a mandatory field. Before you can select a user to receive alerts, you must first create all necessary users. See [OpenHIM Users](#openhim-users) for more information regarding users.
+> **Note**: All fields marked with a \* indicates a mandatory field. Before you can select a user to receive alerts, you must first create all necessary users. See [OpenHIM Users](#openhim-users) for more information regarding users.
 
 1. Log in to your OpenHIM console.
 1. Click on `Contact List` found in the left navigation menu.
@@ -383,10 +389,12 @@ The following is an explanation of the fields that are used in the `Add a Channe
 - **Phone Number** - Mobile contact number in the MSISDN format (eg. 27825555555) should you want to receive sms alerts.
 - **Permissions Group** - The group name to which the user will be assigned. You may use an existing group or create a new group.
 
-    > **Note**: While typing in the textbox, the OpenHIM will validate each keystroke to lookup any matching group names.
+  > **Note**: While typing in the textbox, the OpenHIM will validate each keystroke to lookup any matching group names.
+
 - **Password** - The user's password.
 
-    > **Note**: Confirmation for a user account will need activation via email. A user's account will remain disabled/locked until he/she has confirmed.
+  > **Note**: Confirmation for a user account will need activation via email. A user's account will remain disabled/locked until he/she has confirmed.
+
 - **Reports** - Choose which reports the user needs to receive via email. These reports include the following transaction statuses:
   - Completed
   - Completed with errors
@@ -406,7 +414,8 @@ Clients are different from users in that they represent systems that can route t
 There are two kinds of groups:
 
 1. Admin - This is a special group that grants users all permissions.
-    > Note: The Admin group is created automatically.
+
+   > Note: The Admin group is created automatically.
 
 1. The rest are defined by the system administrator.
 
@@ -420,13 +429,13 @@ User permissions comprise the following:
 
 1. Ability to view channel transactions.
 1. Ability to view channel transaction bodies.
-    > **Note**: bodies may contain private patient data
+   > **Note**: bodies may contain private patient data
 1. Ability to re-run transactions.
-    > **Note**: enabling this permission needs to be done with care because it may cause downstream duplicates and data corruption if the user hasn’t received sufficient training around this process.
+   > **Note**: enabling this permission needs to be done with care because it may cause downstream duplicates and data corruption if the user hasn’t received sufficient training around this process.
 
 ### How to add users
 
-> **Note**: All fields marked with a * indicates a mandatory field.
+> **Note**: All fields marked with a \* indicates a mandatory field.
 
 1. Log in to your OpenHIM console.
 1. Click on `Users` found in the left navigation menu.
@@ -503,10 +512,10 @@ Import and export the OpenHIM's configuration as desired. The configuration will
 1. Log in to your OpenHIM console.
 1. Click on `Export/Import` found in the left navigation menu.
 1. Choose the values per category that you wish to export. By default, all values per category are selected. The categories are:
-    - Channels
-    - Clients
-    - Contact Groups
-    - Keystore
-    - Mediators
-    - Users
+   - Channels
+   - Clients
+   - Contact Groups
+   - Keystore
+   - Mediators
+   - Users
 1. Click on the green `Generate Export Script` button

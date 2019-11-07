@@ -1,11 +1,10 @@
-Adding Users
-============
+# Adding Users
 
 In order to configure the OpenHIM you have to be a registered user account with relevant permissions. A default super/admin user is provided when you first run the OpenHIM.
 
 The default admin user is as follows:
 
-```
+```txt
 username: root@openhim.org
 password: openhim-password
 ```
@@ -22,15 +21,14 @@ Users accounts are created in order to give users of the system an certain capab
 
 Clients are different from users, they represent systems that can route transactions through the OpenHIM. Users are people accessing and configuring the OpenHIM and clients are systems that are allowed to send requests to the OpenHIM.
 
-## User Groups:
+## User Groups
 
 Groups are created automatically by just adding a new group name in the user form. You do not need to add a group explicitly. When you go on to create the channel, you just need to make sure the group name matches the one you specified when you created the user.
 
 There are 2 kinds of group
 
 1. The 'admin' group: this is a special group that grants users all permissions
-2. Then the rest are defined by the system administrator and in the channels, an admin can
-set whether the group has any the permissions below.
+2. Then the rest are defined by the system administrator and in the channels, an admin can set whether the group has any the permissions below.
 
 ## Permissions
 
