@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -eu
+
 if (( $# < 1)); then
   echo "OpenHIM release build: Builds a specific tagged release ready for deployment";
   echo "Usage: $0 TAG";
