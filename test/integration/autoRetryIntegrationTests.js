@@ -220,6 +220,7 @@ describe(`Auto Retry Integration Tests`, () => {
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
       responseBody: true,
+      autoRetryEnabled: true,
       routes: [{
         name: 'available route',
         host: 'localhost',
@@ -278,6 +279,7 @@ describe(`Auto Retry Integration Tests`, () => {
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
       responseBody: true,
+      autoRetryEnabled: true,
       routes: [{
         name: 'mediator route',
         host: 'localhost',
@@ -345,6 +347,7 @@ describe(`Auto Retry Integration Tests`, () => {
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
       responseBody: true,
+      autoRetryEnabled: true,
       routes: [{
         name: 'unavailable route 1',
         host: 'localhost',
