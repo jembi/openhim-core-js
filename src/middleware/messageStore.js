@@ -207,6 +207,7 @@ export function completeResponse (ctx, done) {
       'response.timestampEnd': ctx.responseTimestampEnd,
       'response.status': ctx.response.status,
       'response.headers': headers,
+      'response.bodyId': ctx.response.bodyId,
       error: ctx.error
     }
 
