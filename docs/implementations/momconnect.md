@@ -1,5 +1,4 @@
-MomConnect
-===============
+# MomConnect
 
 MomConnect is a South African National Department of Health (NDoH) initiative to use cellphone SMS technology to register every pregnant woman in South Africa.
 

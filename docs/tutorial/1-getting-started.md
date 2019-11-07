@@ -1,16 +1,15 @@
-Tutorial start
-==============
+# Tutorial start
 
 Before getting started with the tutorials, please ensure that
 
-*   the OpenHIM has been installed (see [here](../getting-started.html#installing-the-openhim-core "What is the easiest way to install the OpenHIM?") for tips on proceeding with this if not done so already)
-*   the [tutorial services](../_static/mediators/openhim-tutorial-services.zip "Tutorial services") are set up and running.
+- the OpenHIM has been installed (see [here](../getting-started.html#installing-the-openhim-core 'What is the easiest way to install the OpenHIM?') for tips on proceeding with this if not done so already)
+- the [tutorial services](/_static/mediators/openhim-tutorial-services.zip 'Tutorial services') are set up and running.
 
 The tutorial services consist of three mock health registries that we'll be routing to and retrieving data from during the tutorials. They provide simple endpoints, hosting mock patients, their health records and healthcare providers. Once you've downloaded the services, you will need to open up three terminals so that each service can be started individually. To do so, follow the below steps:
 
-*   Unzip the folder and open up three terminal windows
-*   Navigate to where you have unzipped your OpenHIM Tutorial Services
-*   Make sure that all node dependencies are installed
+- Unzip the folder and open up three terminal windows
+- Navigate to where you have unzipped your OpenHIM Tutorial Services
+- Make sure that all node dependencies are installed
 
 `$ npm install`
 
@@ -90,4 +89,4 @@ The service will indicate that it is running on a specific port. You can test th
 }
 ```
 
-Once you have these running you are ready to continute to the next tutorial.
+Once you have these running you are ready to continue to the next tutorial.

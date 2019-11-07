@@ -1,40 +1,39 @@
-Detailed design using Node.js
-=============================
+# Detailed design using Node.js
 
 **Note:** this design document was written before the development OpenHIM an as such some of the detail have changed or evolved with the OpenHIM's continuted development. It is a good starting point but not a complete picture.
 
 Node.js is a good technology option on which to develop the interoperability layer core component for the following reasons:
 
-*   It is very lightweight
-*   It has a robust HTTP library
-*   It has robust support from 3rd party libraries for reading and modifying HTTP requests
-*   It is highly performant
+- It is very lightweight
+- It has a robust HTTP library
+- It has robust support from 3rd party libraries for reading and modifying HTTP requests
+- It is highly performant
 
 ## Libraries to use
 
-*   [Koa](http://koajs.com/) - Koa is a new web application framework for node.js. It provides easy mechanisms to expose web endpoints and process requests and responses in a stack-like approach.
-*   [Passport.js](http://passportjs.org/) - Middleware to provide authentication mechanisms (in the current implementation this has not yet been used).
+- [Koa](http://koajs.com/) - Koa is a new web application framework for node.js. It provides easy mechanisms to expose web endpoints and process requests and responses in a stack-like approach.
+- [Passport.js](http://passportjs.org/) - Middleware to provide authentication mechanisms (in the current implementation this has not yet been used).
 
 ## General Overview
 
-The Koa framework provides an easy way to modify HTTP request and responses as they are being processed. Each step that the OpenHIM needs to perform can be written as Koa middleware. Each middleware can handle a different aspect of processing that the OpenHIM need to perform such as authentication, authorization, message persistence and message routing. Developing each of these steps as Koa middleware allows them to be easily reused and allows us to add new steps for future versions. Koa stack approach to processing requests also fit our usecase well as it allows the middleware to affect both the request and the response as it is travelling through the system.
+The Koa framework provides an easy way to modify HTTP request and responses as they are being processed. Each step that the OpenHIM needs to perform can be written as Koa middleware. Each middleware can handle a different aspect of processing that the OpenHIM need to perform such as authentication, authorization, message persistence and message routing. Developing each of these steps as Koa middleware allows them to be easily reused and allows us to add new steps for future versions. Koa stack approach to processing requests also fit our use case well as it allows the middleware to affect both the request and the response as it is travelling through the system.
 
-The Koa framework also gives us some convenience ctx.request and ctx.respose objects that are designed to be used for web applications but they are equally useful for handling web services.
+The Koa framework also gives us some convenience ctx.request and ctx.response objects that are designed to be used for web applications but they are equally useful for handling web services.
 
 ## Design
 
-The OpenHIM-core will use Koa middleware to act on HTTP requests and Responses. Koa allows you to setup a stack of middleware, each middleware is called in order and gets an opportunity to do something with the request (going down the stack) and is then suspended. Once the end of the stack is reached Koa traverses back up the stack allowing each middelware to do something with the response.
+The OpenHIM-core will use Koa middleware to act on HTTP requests and Responses. Koa allows you to setup a stack of middleware, each middleware is called in order and gets an opportunity to do something with the request (going down the stack) and is then suspended. Once the end of the stack is reached Koa traverses back up the stack allowing each middleware to do something with the response.
 
 Each row in the diagram representing the OpenHIM-core is a middleware component. Each of the components of the OpenHIM-core will be described further in the following sections. The OpenHIM-core will also have a REST API that will allow a web UI to be created for easy of management.
 
-![](/_static/design/OpenHIM-js-design.png)
+![openhim-design](/_static/design/OpenHIM-js-design.png)
 
 ## Authentication and Authorization
 
 The are two possible combinations of authentication that the interoperability layer should provide to determine a client's identity:
 
-*   HTTP basic authentication
-*   ATNAs Node Authentication (PKI)
+- HTTP basic authentication
+- ATNAs Node Authentication (PKI)
 
 Once identify has been established the IL core component should check if that client has the authority to access the requested service.
 
@@ -42,8 +41,8 @@ The HIM should also provide a single-sign-on (SSO) facility to allow users of th
 
 The two main workflows that we wish to enable for authentication and authorization are described in the following workflows:
 
-*   [Common message security workflow](https://wiki.ohie.org/display/documents/Common+message+security+workflow)
-*   [SSO User workflow](https://wiki.ohie.org/display/documents/SSO+User+workflow)
+- [Common message security workflow](https://wiki.ohie.org/display/documents/Common+message+security+workflow)
+- [SSO User workflow](https://wiki.ohie.org/display/documents/SSO+User+workflow)
 
 ### Authentication
 
@@ -82,7 +81,7 @@ Each request and response will be persisted so that it can be logged and so that
 
 In addition the ability to store orchestration steps exists in the structure. We anticipate exposing a web service to enable mediators to report requests and responses that they make to/receive from external services and have these stored alongside the actual transaction.
 
-```js
+```json
 {
     "_id": "123",
     "status": "Processing|Failed|Completed",
@@ -140,7 +139,7 @@ A channel may be access controlled via the 'allow' field. This field will specif
 
 A custom router will have to be developed that can route according to these rules. The router can be built using the node.js functions provided to make HTTP requests and responses can be relayed using the .pipe() function.
 
-```js
+```json
 [
     {
         "name": "Some Registry Channel",
@@ -149,7 +148,7 @@ A custom router will have to be developed that can route according to these rule
         "routes": [
             {
                 "name": "Some Registry",
-                "path": "some/other/path" // this is optional if left out original path is used
+                "path": "some/other/path", // this is optional if left out original path is used
                 "host": "localhost",
                 "port": 8080
             }
@@ -176,7 +175,7 @@ A custom router will have to be developed that can route according to these rule
                 "host": "log-host",
                 "port": 4789
             }
-        ]
+        ],
         "properties": [ // optional meta data about a channel
             { "prop1": "value1" },
             { "prop2": "value2" }
@@ -187,18 +186,18 @@ A custom router will have to be developed that can route according to these rule
 
 ## Restful API
 
-The OpenHIM must also expose a restful API that enables it to be configured and to allow access to the logged transations. This restful API will drive a web application that can allow the OpenHIM to be configured and will allow transactions to be viewed and monitored.
+The OpenHIM must also expose a restful API that enables it to be configured and to allow access to the logged transactions. This restful API will drive a web application that can allow the OpenHIM to be configured and will allow transactions to be viewed and monitored.
 
 The API must supply CRUD access to the following constructs:
 
-*   transaction logs
-*   transaction channels
-*   client details
+- transaction logs
+- transaction channels
+- client details
 
 It should also allow for the following actions:
 
-*   single and batch re-processing of transactions
-*   querying for monitoring statistics
+- single and batch re-processing of transactions
+- querying for monitoring statistics
 
 The API reference as it currently exists can be [found here](./dev-guide/api-ref.html).
 
@@ -208,7 +207,7 @@ For details follow the following issue: [https://github.com/jembi/openhim-core-j
 
 The users collection should look as follows:
 
-```js
+```json
 {
     "firstname": "Ryan",
     "surname": "Crichton",
