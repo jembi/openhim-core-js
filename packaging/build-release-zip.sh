@@ -26,8 +26,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   git checkout master
   git pull origin master
   git fetch --tags
-  git branch -D $tag
-  git checkout tags/$tag -b $tag
+  git checkout tags/$tag -b "build-release-$tag"
 
   echo "npm: clean and build package"
   rm -rf node_modules
@@ -42,7 +41,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
   echo "Git cleanup"
   git checkout -- .
   git checkout master
-  git branch -D $tag
+  git branch -D "build-release-$tag"
 
   echo "New OpenHIM Core build zipped";
 fi
