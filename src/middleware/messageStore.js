@@ -405,7 +405,7 @@ export function setFinalStatus (ctx, callback) {
       update.status = tx.status
     }
 
-    if (ctx.autoRetry != null) {
+    if (ctx.autoRetry && ctx.authorisedChannel.autoRetryEnabled) {
       if (!autoRetryUtils.reachedMaxAttempts(tx, ctx.authorisedChannel)) {
         update.autoRetry = ctx.autoRetry
       } else {
