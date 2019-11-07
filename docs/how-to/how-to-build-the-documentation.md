@@ -1,7 +1,6 @@
-How to build the documentation
-==============================
+# How to build the documentation
 
-To build the documentation execute the commands below from the 'docs' directory:
+To build the documentation execute the commands below from the `/docs` directory:
 
 1. `$ sudo pip install -r requirements.txt`
 2. `$ make html`

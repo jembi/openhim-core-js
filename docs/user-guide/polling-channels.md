@@ -1,5 +1,4 @@
-Polling Channels (scheduled tasks)
-==================================
+# Polling Channels (scheduled tasks)
 
 A great feature of the OpenHIM is the ability to trigger tasks in other systems.
 This is made possible by a special type of channel called a polling channel. Polling
@@ -17,7 +16,7 @@ endpoint for them to be triggered. The triggering will always happen as an HTTP
 To configure a polling channel, in the console click on 'Channels' on the menu,
 choose add channel and set the type of the channel to 'polling'. You will be able
 to provide a schedule for the polling channel to be executed. You may provide this
-in cron format (ie. 0 4 * * * ) or in a descriptive format (ie. 5 minutes). See
+in cron format (ie. 0 4 \* \* \* ) or in a descriptive format (ie. 5 minutes). See
 [the agenda documentation](https://github.com/rschmukler/agenda#everyinterval-name-data-options-cb)
 for a more complete description of this format. From there you may configure the
 rest of the channel as usual and add routes for each external system that is to

@@ -4,9 +4,9 @@
 
 The OpenHIM core component is responsible for providing a single entry-point into an HIE as well as providing the following key features:
 
-* Point of service client authentication and authorization
-* Persistence and audit logging of all messages that flow through the OpenHIM
-* Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
+- Point of service client authentication and authorization
+- Persistence and audit logging of all messages that flow through the OpenHIM
+- Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
 
 > **To get started and to learn more about using the [OpenHIM](http://openhim.org)** see [the full documentation](https://openhim.readthedocs.io).
 
@@ -20,14 +20,14 @@ Some of the important information is repeated here, however, the the above docum
 
 Last 2 versions of NodeJS LTS will be supported
 
-NodeJS (LTS)  | MongoDB
-------------  | -------------
-8.x | >= 2.6 &#124;&#124; <= 4.0
-10.15.0 | >= 2.6 &#124;&#124; <= 4.0
+| NodeJS (LTS) | MongoDB                    |
+| ------------ | -------------------------- |
+| 8.x          | >= 3.6 &#124;&#124; <= 4.0 |
+| 10.x      | >= 3.6 &#124;&#124; <= 4.0 |
 
-* [NodeJS Release Versions](https://github.com/nodejs/Release)
-* [MongoDB NodeJS Driver Versions](https://mongodb.github.io/node-mongodb-native/)
-* [MongoDB Driver Compatibility](https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#node-js-driver-compatibility)
+- [NodeJS Release Versions](https://github.com/nodejs/Release)
+- [MongoDB NodeJS Driver Versions](https://mongodb.github.io/node-mongodb-native/)
+- [MongoDB Driver Compatibility](https://docs.mongodb.com/ecosystem/drivers/driver-compatibility-reference/#node-js-driver-compatibility)
 
 ## Getting started with the OpenHIM-core
 
@@ -41,7 +41,7 @@ NodeJS (LTS)  | MongoDB
 ### NPM Package
 
 1. Install the latest stable [Node.js](http://nodejs.org/) **>=8.9 <9 || >=10.13 <10.15.1**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
-1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v2.6** up to **v4.0**. Please refer to the requirements table for accurate versions to use.
+1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v3.6** up to **v4.0**. Please refer to the requirements table for accurate versions to use.
 1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your `PATH`.
 1. Start the server by executing `openhim-core` from anywhere.
 
@@ -67,20 +67,20 @@ Clone the `https://github.com/jembi/openhim-core-js.git` repository.
 
 Ensure you have the following installed:
 
-* [Node.js](http://nodejs.org/) v8.9 or greater but less than 10.15.1
-* [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
+- [Node.js](http://nodejs.org/) v8.x -> 10.x (not 10.15.1)
+- [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
 
-The OpenHIM core makes use of the [Koa framework](http://koajs.com/) (async/awaits), which requires node version v7 or greater but less than 10.15.1.
+The OpenHIM core makes use of the [Koa framework](http://koajs.com/) (async/awaits), which requires node version v7 or greater (not 10.15.1)
 
 The easiest way to use the latest version of node is to install [`nvm`](https://github.com/creationix/nvm). On Ubuntu, you can install using the install script but you have to add `[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh # This loads NVM` to the end of your `~/.bashrc` file as well.
 
 Once `nvm` is installed, run the following:
 
-`nvm install 8`
+`nvm install 10`
 
-`nvm alias default 8`
+`nvm alias default 10`
 
-The latest version of node 8 should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
+The latest version of node 10 should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
 
 `npm install`
 
@@ -104,22 +104,17 @@ This project uses [mocha](https://mochajs.org/) as a unit testing framework with
 
 **Pro tips:**
 
-* `grunt watch` - will automatically build the project on any changes.
-* `npm run lint` - ensure the code is lint free, this is also run before an `npm test`
-* `npm link` - will symlink you local working directory to the globally installed openhim-core module. Use this so you can use the global openhim-core binary to run your current work in progress. Also, if you build any local changes the server will automatically restart.
-* `npm test -- --grep <regex>` - will only run tests with names matching the regex.
-* `npm test -- --inspect` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
-* `npm test -- --bail` - exit on first test failure.
+- `npm run lint` - ensure the code is lint free, this is also run before an `npm test`
+- `npm link` - will symlink you local working directory to the globally installed openhim-core module. Use this so you can use the global openhim-core binary to run your current work in progress. Also, if you build any local changes the server will automatically restart.
+- `npm test -- --grep <regex>` - will only run tests with names matching the regex.
+- `npm test -- --inspect` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
+- `npm test -- --bail` - exit on first test failure.
 
 ---
 
 ## Deployments
 
 All commits to the `master` branch will automatically trigger a build of the latest changes into a docker image on dockerhub.
-
-All commits directly to `staging` or `test` will automatically build and deploy a docker image to the test and staging servers respectively.
-
-Deployments are handled by travis, which uses the bash script `deploy.sh` to upload the dockerfile to the target server, build it and backup existing containers and deploy the latest changes.
 
 ---
 
@@ -131,83 +126,83 @@ Refer to this [blog](https://developers.redhat.com/blog/2014/05/05/running-syste
 
 1. Setup environment
 
-    Navigate to the infrastructure folder: `infrastructure/centos`
+   Navigate to the infrastructure folder: `infrastructure/centos`
 
-    Provision VM and automatically build RPM package:
+   Provision VM and automatically build RPM package:
 
-    ```bash
-    vagrant up
-    ```
+   ```bash
+   vagrant up
+   ```
 
-    or without automatic provisioning (useful if you prefer manual control of the process):
+   or without automatic provisioning (useful if you prefer manual control of the process):
 
-    ```bash
-    vagrant up --no-provision
-    ```
+   ```bash
+   vagrant up --no-provision
+   ```
 
 1. [Optional] The Vagrant file provisions the VM with the latest source code from master and attempts to compile the RPM package for you. However in the event an error occurs, or if you prefer to have manual control over the process, then you'll need to do the following:
 
-    * Remote into the VM: `vagrant ssh`
-    * Download or sync all source code into VM.
-    * Ensure all dependencies are installed.
+   - Remote into the VM: `vagrant ssh`
+   - Download or sync all source code into VM.
+   - Ensure all dependencies are installed.
 
-    ```bash
-    npm i && npm i speculate
-    ```
+   ```bash
+   npm i && npm i speculate
+   ```
 
-    * Run speculate to generate the SPEC files needed to build the RPM package.
+   - Run speculate to generate the SPEC files needed to build the RPM package.
 
-    ```bash
-    npm run spec
-    ```
+   ```bash
+   npm run spec
+   ```
 
-    * Ensure the directory with the source code is linked to the rpmbuild directory - the folder RPMBUILD will use.
+   - Ensure the directory with the source code is linked to the rpmbuild directory - the folder RPMBUILD will use.
 
-    ```bash
-    ln -s ~/openhim-core ~/rpmbuild
-    ```
+   ```bash
+   ln -s ~/openhim-core ~/rpmbuild
+   ```
 
-    * Build RPM package.
+   - Build RPM package.
 
-    ```bash
-    rpmbuild -bb ~/rpmbuild/SPECS/openhim-core.spec
-    ```
+   ```bash
+   rpmbuild -bb ~/rpmbuild/SPECS/openhim-core.spec
+   ```
 
 1. Install & Test package
 
-    ```bash
-    sudo yum install -y ~/rpmbuild/RPMS/x86_64/openhim-core-{current_version}.x86_64.rpm
-    sudo systemctl start openhim-core
-    curl https://localhost:8080/heartbeat -k
-    ```
+   ```bash
+   sudo yum install -y ~/rpmbuild/RPMS/x86_64/openhim-core-{current_version}.x86_64.rpm
+   sudo systemctl start openhim-core
+   curl https://localhost:8080/heartbeat -k
+   ```
 
-    Note: In order for openhim-core to run successfully, you'll need to point it to a valid instance of Mongo or install it locally:
+   Note: In order for openhim-core to run successfully, you'll need to point it to a valid instance of Mongo or install it locally:
 
-    ```bash
-    sudo yum install mongodb-org
-    sudo service mongod start
-    ```
+   ```bash
+   sudo yum install mongodb-org
+   sudo service mongod start
+   ```
 
 1. How to check the logs?
 
-    ```bash
-    sudo systemctl status openhim-core
-    sudo tail -f -n 100 /var/log/messages
-    ```
+   ```bash
+   sudo systemctl status openhim-core
+   sudo tail -f -n 100 /var/log/messages
+   ```
 
 1. If everything checks out then extract the RPM package by leaving the VM.
 
-    Install Vagrant scp [plugin](https://github.com/invernizzi/vagrant-scp):
+   Install Vagrant scp [plugin](https://github.com/invernizzi/vagrant-scp):
 
-    ```bash
-    vagrant plugin install vagrant-scp
-    ```
+   ```bash
+   vagrant plugin install vagrant-scp
+   ```
 
-    Then copy the file from the VM:
+   Then copy the file from the VM:
 
-    ```bash
-    vagrant scp default:/home/vagrant/rpmbuild/RPMS/x86_64/{filename}.rpm .
-    ```
+   ```bash
+   vagrant scp default:/home/vagrant/rpmbuild/RPMS/x86_64/{filename}.rpm .
+   ```
 
 ---
 
