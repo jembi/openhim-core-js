@@ -35,10 +35,11 @@ function streamingReceiver (ctx, statusEvents) {
   * custom header (the GridFS fileId of the body for this transaction)
   */
   const bodyId = ctx.request.headers['x-body-id']
-  const requestHasBody = (['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) && (bodyId == null)
 
-  if (['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) {
-    if (requestHasBody) {
+  const storeRequestBody = (['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) && ctx.authorisedChannel.requestBody
+
+  if (storeRequestBody) {
+    if (!bodyId) {
       /*
       *   Request has a body, so stream it into GridFs
       */
@@ -86,7 +87,7 @@ function streamingReceiver (ctx, statusEvents) {
     }
   } else {
     /*
-    *  GET and DELETE come in here to persist the intial request transaction
+    *  GET and DELETE come in here to persist the initial request transaction
     */
     ctx.state.requestPromise = messageStore.initiateRequest(ctx)
   }
@@ -98,14 +99,14 @@ function streamingReceiver (ctx, statusEvents) {
       logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
 
       // Write chunk to GridFS & downstream
-      if (requestHasBody) {
+      if (storeRequestBody && !bodyId) {
         gridFsStream.write(chunk)
       }
 
       ctx.state.downstream.push(chunk)
     })
     .on('end', () => {
-      if (requestHasBody) {
+      if (storeRequestBody && !bodyId) {
         // Close streams to gridFS and downstream
         gridFsStream.end()
         if (statusEvents && statusEvents.finishGridFs) {
