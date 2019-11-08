@@ -212,6 +212,12 @@ function sendRequestToRoutes (ctx, routes, next) {
           .then(async (response) => {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+              let bodyId
+
+              if (response.headers && response.headers['x-body-id']) {
+                bodyId = response.headers['x-body-id']
+              }
+
               // handle mediator response
               response = await collectStream(response.body)
               const responseObj = JSON.parse(response)
@@ -223,6 +229,11 @@ function sendRequestToRoutes (ctx, routes, next) {
               }
               // then set koa response from responseObj.response
               response = responseObj.response
+
+              // add the response body id
+              if (bodyId) {
+                response.headers['x-body-id'] = bodyId
+              }
             }
             setKoaResponse(ctx, response)
           })
