@@ -397,7 +397,7 @@ function sendRequest (ctx, route, options) {
       orchestration.response = {
         headers: response.headers,
         status: response.status,
-        bodyId: ctx.response.bodyId,
+        bodyId: response.headers['x-body-id'],
         timestamp: response.timestamp,
         timestampEnd: ctx.timestampEnd
       }
