@@ -232,6 +232,9 @@ function sendRequestToRoutes (ctx, routes, next) {
 
               // add the response body id
               if (bodyId) {
+                if (!response.headers) {
+                  response.headers = {}
+                }
                 response.headers['x-body-id'] = bodyId
               }
             }
