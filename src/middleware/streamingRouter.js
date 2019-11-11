@@ -266,3 +266,29 @@ export function collectStream (readableStream) {
       })
   })
 }
+
+export function storeBodyInGridFs (body) {
+  if (!body) {
+    uploadStream.close()
+  }
+
+  if(!bucket) {
+    bucket = getGridFSBucket()
+  }
+
+  const uploadStream = bucket.openUploadStream()
+
+  uploadStream.on('error', (err) => {
+    logger.error(new Error(`Storing of mediator response body failure: ${err.message}`))
+  })
+  .on('finish', (doc) => {
+    if (!doc) {
+      logger.error(new Error('Storing of mediator response body in gridfs failed'))
+    }
+    logger.info('Mediator response body stored in gridfs')
+  })
+
+  uploadStream.end(body)
+
+  return uploadStream.id
+}

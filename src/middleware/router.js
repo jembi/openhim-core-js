@@ -9,7 +9,7 @@ import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import { promisify } from 'util'
 import { getGridFSBucket } from '../contentChunk'
-import { makeStreamingRequest, collectStream } from './streamingRouter'
+import { makeStreamingRequest, collectStream, storeBodyInGridFs } from './streamingRouter'
 import * as rewrite from '../middleware/rewriteUrls'
 
 config.router = config.get('router')
@@ -212,12 +212,6 @@ function sendRequestToRoutes (ctx, routes, next) {
           .then(async (response) => {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-              let bodyId
-
-              if (response.headers && response.headers['x-body-id']) {
-                bodyId = response.headers['x-body-id']
-              }
-
               // handle mediator response
               response = await collectStream(response.body)
               const responseObj = JSON.parse(response)
@@ -230,12 +224,26 @@ function sendRequestToRoutes (ctx, routes, next) {
               // then set koa response from responseObj.response
               response = responseObj.response
 
-              // add the response body id
-              if (bodyId) {
+              /*
+                Store the mediator response's body and the orchestrations' request and response bodies and add the body ids
+              */
+              if (ctx.authorisedChannel.responseBody) {
                 if (!response.headers) {
                   response.headers = {}
                 }
-                response.headers['x-body-id'] = bodyId
+                response.headers['x-body-id'] = storeBodyInGridFs(responseObj.response.body)
+                
+                if (ctx.mediatorResponse && ctx.mediatorResponse.orchestrations) {
+                  ctx.mediatorResponse.orchestrations = responseObj.orchestrations.map(orch => {
+                    if (orch.request && orch.request.body && ctx.authorisedChannel.requestBody) {
+                      orch.request.bodyId = storeBodyInGridFs(orch.request.body)
+                    }
+                    if (orch.response && orch.response.body) {
+                      orch.response.bodyId = storeBodyInGridFs(orch.response.body)
+                    }
+                    return orch
+                  })
+                }
               }
             }
             setKoaResponse(ctx, response)
