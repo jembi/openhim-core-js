@@ -19,7 +19,7 @@ describe('recordTransactionMetrics', () => {
         timestamp: new Date('2017-12-07T09:17:58.333Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
@@ -89,7 +89,7 @@ describe('recordTransactionMetrics', () => {
         timestamp: new Date('2017-12-07T09:17:58.333Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
@@ -127,7 +127,7 @@ describe('recordTransactionMetrics', () => {
         timestamp: new Date('2017-12-07T09:17:58.333Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
@@ -165,7 +165,7 @@ describe('recordTransactionMetrics', () => {
         timestamp: new Date('2017-12-07T09:17:58.333Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
