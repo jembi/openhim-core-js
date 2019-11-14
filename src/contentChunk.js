@@ -71,10 +71,12 @@ export const extractStringPayloadIntoChunks = (payload) => {
       if (!doc) {
         return reject(new Error('GridFS create failed'))
       }
-
-      resolve(doc._id)
     })
+    
     uploadStream.end(payload)
+
+    resolve(uploadStream.id)
+    return
   })
 }
 
