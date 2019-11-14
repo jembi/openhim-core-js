@@ -463,7 +463,7 @@ function setTransactionFinalStatus (ctx) {
   // Set the final status of the transaction
   messageStore.setFinalStatus(ctx, (err, tx) => {
     if (err) {
-      logger.error(`Setting final status failed for transaction: ${tx._id}`, err)
+      logger.error(`Setting final status failed for transaction:`, err)
       return
     }
     logger.info(`Set final status for transaction: ${tx._id} - ${tx.status}`)
