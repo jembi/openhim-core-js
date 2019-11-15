@@ -4,7 +4,6 @@ import net from 'net'
 import tls from 'tls'
 import logger from 'winston'
 import cookie from 'cookie'
-import { Readable } from 'stream'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
@@ -335,21 +334,11 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         // handle mediator response
         const responseObj = JSON.parse(response.body)
         
-        if (responseObj['x-mediator-urn']) {
-          routeObj.mediatorURN = responseObj['x-mediator-urn']
-        }
-        if (responseObj.orchestrations) {
-          routeObj.orchestrations = responseObj.orchestrations
-        }
-        if (responseObj.properties) {
-          routeObj.properties = responseObj.properties
-        }
-        if (responseObj.metrics) {
-          routeObj.metrics = responseObj.metrics
-        }
-        if (responseObj.error) {
-          routeObj.error = responseObj.error
-        }
+        routeObj.mediatorURN = responseObj['x-mediator-urn'] ? responseObj['x-mediator-urn'] : undefined
+        routeObj.orchestrations = responseObj.orchestrations ? responseObj.orchestrations : undefined
+        routeObj.properties = responseObj.properties ? responseObj.properties : undefined
+        routeObj.metrics = responseObj.metrics ? responseObj.metrics : undefined
+        routeObj.error = responseObj.error ? responseObj.error : undefined
         routeObj.response = response
       } else {
         routeObj.response = response
