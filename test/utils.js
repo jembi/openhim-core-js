@@ -833,3 +833,25 @@ export const deleteChunkedPayloads = async () => {
   await db.collection('fs.files').deleteMany({})
   await db.collection('fs.chunks').deleteMany({})
 }
+
+export const getResponseBodyFromStream = ctx => {
+  let responseBody = ''
+
+  return new Promise((resolve, _reject) => {
+    ctx.response.body.on('data', chunk => {
+      responseBody += chunk.toString()
+    })
+    ctx.response.body.on('end', () => {
+      resolve(responseBody)
+    })
+    ctx.response.body.on('error', err => {
+      reject()
+    })
+  })
+}
+
+export const awaitGridfsBodyStreaming = () => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => resolve(), 50)
+  })
+}
