@@ -206,7 +206,9 @@ export function completeResponse (ctx, done) {
     const update = {
       'response.timestampEnd': ctx.responseTimestampEnd,
       'response.status': ctx.response.status,
-      'response.headers': headers
+      'response.headers': headers,
+      'response.bodyId': ctx.response.bodyId,
+      error: ctx.error
     }
 
     if (ctx.mediatorResponse) {
@@ -404,7 +406,7 @@ export function setFinalStatus (ctx, callback) {
       update.status = tx.status
     }
 
-    if (ctx.autoRetry != null) {
+    if (ctx.autoRetry && ctx.authorisedChannel.autoRetryEnabled) {
       if (!autoRetryUtils.reachedMaxAttempts(tx, ctx.authorisedChannel)) {
         update.autoRetry = ctx.autoRetry
       } else {

@@ -68,19 +68,19 @@ export function setupApp (done) {
 export function rerunApp (done) {
   const app = new Koa()
 
-  // Rerun bypass authentication middlware
+  // Rerun bypass authentication middelware
   app.use(rerunBypassAuthentication.koaMiddleware)
 
-  // Rerun bypass authorisation middlware
+  // Rerun bypass authorisation middleware
   app.use(rerunBypassAuthorisation.koaMiddleware)
 
   // Authorisation middleware
   app.use(authorisation.koaMiddleware)
 
-  app.use(streamingReceiver.koaMiddleware)
-
-  // Update original transaction with rerunned transaction ID
+  // Update original transaction with rerun's transaction ID
   app.use(rerunUpdateTransactionTask.koaMiddleware)
+
+  app.use(streamingReceiver.koaMiddleware)
 
   // Events
   app.use(events.koaMiddleware)
@@ -98,7 +98,7 @@ export function tcpApp (done) {
   app.use(streamingReceiver.koaMiddleware)
   app.use(retrieveTCPTransaction.koaMiddleware)
 
-  // TCP bypass authentication middlware
+  // TCP bypass authentication middelware
   app.use(tcpBypassAuthentication.koaMiddleware)
 
   // Proxy
@@ -122,7 +122,7 @@ export function pollingApp (done) {
 
   app.use(streamingReceiver.koaMiddleware)
 
-  // Polling bypass authentication middlware
+  // Polling bypass authentication middleware
   app.use(pollingBypassAuthentication.koaMiddleware)
 
   // Polling bypass authorisation middleware

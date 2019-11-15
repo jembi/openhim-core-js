@@ -219,6 +219,8 @@ describe(`Auto Retry Integration Tests`, () => {
       name: 'TEST DATA - Secondary route will break channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
+      responseBody: true,
+      autoRetryEnabled: true,
       routes: [{
         name: 'available route',
         host: 'localhost',
@@ -276,6 +278,8 @@ describe(`Auto Retry Integration Tests`, () => {
       name: 'TEST DATA - Mediator has error channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
+      responseBody: true,
+      autoRetryEnabled: true,
       routes: [{
         name: 'mediator route',
         host: 'localhost',
@@ -342,6 +346,8 @@ describe(`Auto Retry Integration Tests`, () => {
       name: 'TEST DATA - Both will break channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
+      responseBody: true,
+      autoRetryEnabled: true,
       routes: [{
         name: 'unavailable route 1',
         host: 'localhost',
@@ -391,7 +397,7 @@ describe(`Auto Retry Integration Tests`, () => {
       trx.routes[0].should.have.property('error')
       trx.routes[0].error.should.have.property('message')
       trx.routes[0].error.should.have.property('stack')
-      trx.routes[0].error.message.should.match(/ECONNREFUSED/)
+      trx.routes[0].error.message.should.match(/socket hang up/)
     })
   })
 })

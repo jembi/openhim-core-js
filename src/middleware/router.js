@@ -8,7 +8,7 @@ import { config } from '../config'
 import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import { promisify } from 'util'
-import { getGridFSBucket } from '../contentChunk'
+import { getGridFSBucket, extractStringPayloadIntoChunks } from '../contentChunk'
 import { makeStreamingRequest, collectStream } from './streamingRouter'
 import * as rewrite from '../middleware/rewriteUrls'
 
@@ -209,24 +209,60 @@ function sendRequestToRoutes (ctx, routes, next) {
       if (route.primary) {
         ctx.primaryRoute = route
         promise = sendRequest(ctx, route, options)
-          .then((response) => {
+          .then(async (response) => {
             logger.info(`executing primary route : ${route.name}`)
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-              // handle mediator reponse
-              collectStream(response.body).then((response) => {
-                const responseObj = JSON.parse(response)
-                ctx.mediatorResponse = responseObj
+              // handle mediator response
+              response = await collectStream(response.body)
+              const responseObj = JSON.parse(response)
+              ctx.mediatorResponse = responseObj
 
-                if (responseObj.error != null) {
-                  ctx.autoRetry = true
-                  ctx.error = responseObj.error
+              if (responseObj.error != null) {
+                ctx.autoRetry = true
+                ctx.error = responseObj.error
+              }
+              // then set koa response from responseObj.response
+              response = responseObj.response
+
+              /*
+                Store the mediator response's body and the orchestrations' request and response bodies and add the body ids
+              */
+              if (ctx.authorisedChannel.responseBody) {
+                if (!response.headers) {
+                  response.headers = {}
                 }
-                // then set koa response from responseObj.response
-                setKoaResponse(ctx, responseObj.response)
-              })
-            } else {
-              setKoaResponse(ctx, response)
+                response.headers['x-body-id'] = await extractStringPayloadIntoChunks(responseObj.response.body)
+                
+                if (ctx.mediatorResponse && ctx.mediatorResponse.orchestrations) {
+                  const promises = []
+
+                  ctx.mediatorResponse.orchestrations = responseObj.orchestrations.map(orch => {
+                    const promise = new Promise(async (resolve, _reject) => {
+                      if (
+                        orch.request &&
+                        orch.request.body &&
+                        ctx.authorisedChannel.requestBody
+                        ) {
+                        orch.request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+                      }
+                      if (
+                        orch.response &&
+                        orch.response.body &&
+                        ctx.authorisedChannel.responseBody
+                        ) {
+                        orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+                      }
+                      resolve()
+                    })
+
+                    promises.push(promise)
+                    return orch
+                  })
+                  await Promise.all(promises)
+                }
+              }
             }
+            setKoaResponse(ctx, response)
           })
           .then(() => {
             logger.info('primary route completed')
@@ -388,7 +424,7 @@ function sendRequest (ctx, route, options) {
       orchestration.response = {
         headers: response.headers,
         status: response.status,
-        bodyId: ctx.response.bodyId,
+        bodyId: response.headers['x-body-id'],
         timestamp: response.timestamp,
         timestampEnd: ctx.timestampEnd
       }
@@ -465,15 +501,7 @@ async function sendHttpRequest (ctx, route, options) {
     requestProgress: function () {},
     finishRequest: function () {},
     startResponse: function (res) {
-      /*
-       *   TODO: Remove call to setKoaResponse
-       *     intiateResponse updates the database based on information stored
-       *     in the koa context (ctx); the messageStore routines need to be
-       *     reworked to update the database based on response object passed
-       *     in as a parameter; then the setKoaResponse call can be removed.
-       */
       ctx.state.requestPromise.then(() => {
-        setKoaResponse(ctx, res)
         messageStore.initiateResponse(ctx, () => {})
       })
     },
@@ -500,13 +528,11 @@ async function sendHttpRequest (ctx, route, options) {
         ctx.secondaryRoutes.forEach(routeReq => routeReq.destroy())
       }
       ctx.state.requestPromise.then(() => {
-        messageStore.initiateResponse(ctx, () => {})
         messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
       })
     },
     clientError: function (err) {
       ctx.state.requestPromise.then(() => {
-        messageStore.initiateResponse(ctx, () => {})
         messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
       })
     },
