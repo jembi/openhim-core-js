@@ -8,8 +8,8 @@ import { config } from '../config'
 import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
 import { promisify } from 'util'
-import { getGridFSBucket } from '../contentChunk'
-import { makeStreamingRequest, collectStream, storeBodyInGridFs } from './streamingRouter'
+import { getGridFSBucket, extractStringPayloadIntoChunks } from '../contentChunk'
+import { makeStreamingRequest, collectStream } from './streamingRouter'
 import * as rewrite from '../middleware/rewriteUrls'
 
 config.router = config.get('router')
@@ -231,18 +231,34 @@ function sendRequestToRoutes (ctx, routes, next) {
                 if (!response.headers) {
                   response.headers = {}
                 }
-                response.headers['x-body-id'] = storeBodyInGridFs(responseObj.response.body)
+                response.headers['x-body-id'] = await extractStringPayloadIntoChunks(responseObj.response.body)
                 
                 if (ctx.mediatorResponse && ctx.mediatorResponse.orchestrations) {
+                  const promises = []
+
                   ctx.mediatorResponse.orchestrations = responseObj.orchestrations.map(orch => {
-                    if (orch.request && orch.request.body && ctx.authorisedChannel.requestBody) {
-                      orch.request.bodyId = storeBodyInGridFs(orch.request.body)
-                    }
-                    if (orch.response && orch.response.body) {
-                      orch.response.bodyId = storeBodyInGridFs(orch.response.body)
-                    }
+                    const promise = new Promise(async (resolve, _reject) => {
+                      if (
+                        orch.request &&
+                        orch.request.body &&
+                        ctx.authorisedChannel.requestBody
+                        ) {
+                        orch.request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+                      }
+                      if (
+                        orch.response &&
+                        orch.response.body &&
+                        ctx.authorisedChannel.responseBody
+                        ) {
+                        orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+                      }
+                      resolve()
+                    })
+
+                    promises.push(promise)
                     return orch
                   })
+                  await Promise.all(promises)
                 }
               }
             }
