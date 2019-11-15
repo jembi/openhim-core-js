@@ -4,6 +4,7 @@ import net from 'net'
 import tls from 'tls'
 import logger from 'winston'
 import cookie from 'cookie'
+import { Readable } from 'stream'
 import { config } from '../config'
 import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
@@ -366,22 +367,27 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         bodyId: ctx.request.bodyId,
         timestamp: ctx.requestTimestamp
       }
-      if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-        // handle mediator reponse
-        let payload = ''
-        response.body.on('data', (data) => {
-          payload += data.toString()
-        })
 
-        response.body.on('end', () => {
-          const responseObj = JSON.parse(payload)
+      if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+        // handle mediator response
+        const responseObj = JSON.parse(response.body)
+        
+        if (responseObj['x-mediator-urn']) {
           routeObj.mediatorURN = responseObj['x-mediator-urn']
+        }
+        if (responseObj.orchestrations) {
           routeObj.orchestrations = responseObj.orchestrations
+        }
+        if (responseObj.properties) {
           routeObj.properties = responseObj.properties
-          if (responseObj.metrics) { routeObj.metrics = responseObj.metrics }
-          if (responseObj.error) { routeObj.error = responseObj.error }
-        })
-        routeObj.response = responseObj.response
+        }
+        if (responseObj.metrics) {
+          routeObj.metrics = responseObj.metrics
+        }
+        if (responseObj.error) {
+          routeObj.error = responseObj.error
+        }
+        routeObj.response = response
       } else {
         routeObj.response = response
       }
