@@ -86,6 +86,11 @@ describe('contentChunk: ', () => {
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
+      /*
+      * The function extractStringPayloadIntoChunks has been modified. It returns the id and then continues with the streaming (into gridfs)
+      */
+      await testUtils.awaitGridfsBodyStreaming()
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -98,6 +103,8 @@ describe('contentChunk: ', () => {
       const payloadLength = payload.length
 
       const docId = await extractStringPayloadIntoChunks(payload)
+
+      await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
@@ -116,6 +123,8 @@ describe('contentChunk: ', () => {
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
+      await testUtils.awaitGridfsBodyStreaming()
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -128,6 +137,8 @@ describe('contentChunk: ', () => {
       const payload = new ArrayBuffer(arrayBufferLength);
 
       const docId = await extractStringPayloadIntoChunks(payload)
+
+      await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
@@ -149,6 +160,8 @@ describe('contentChunk: ', () => {
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
+      await testUtils.awaitGridfsBodyStreaming()
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -168,6 +181,8 @@ describe('contentChunk: ', () => {
       const payloadLength = payload.length
 
       const docId = await extractStringPayloadIntoChunks(payload)
+
+      await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
