@@ -365,22 +365,17 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         bodyId: ctx.request.bodyId,
         timestamp: ctx.requestTimestamp
       }
-      if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
-        // handle mediator reponse
-        let payload = ''
-        response.body.on('data', (data) => {
-          payload += data.toString()
-        })
 
-        response.body.on('end', () => {
-          const responseObj = JSON.parse(payload)
-          routeObj.mediatorURN = responseObj['x-mediator-urn']
-          routeObj.orchestrations = responseObj.orchestrations
-          routeObj.properties = responseObj.properties
-          if (responseObj.metrics) { routeObj.metrics = responseObj.metrics }
-          if (responseObj.error) { routeObj.error = responseObj.error }
-        })
-        routeObj.response = responseObj.response
+      if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+        // handle mediator response
+        const responseObj = JSON.parse(response.body)
+        
+        routeObj.mediatorURN = responseObj['x-mediator-urn'] ? responseObj['x-mediator-urn'] : undefined
+        routeObj.orchestrations = responseObj.orchestrations ? responseObj.orchestrations : undefined
+        routeObj.properties = responseObj.properties ? responseObj.properties : undefined
+        routeObj.metrics = responseObj.metrics ? responseObj.metrics : undefined
+        routeObj.error = responseObj.error ? responseObj.error : undefined
+        routeObj.response = response
       } else {
         routeObj.response = response
       }
