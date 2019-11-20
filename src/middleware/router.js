@@ -267,16 +267,11 @@ function sendRequestToRoutes (ctx, routes, next) {
           })
           .then(() => {
             logger.info('primary route completed')
-            ctx.state.requestPromise.then(() => {
-              ctx.state.responsePromise = messageStore.completeResponse(ctx, (err, tx) => {})
-            })
             return next()
           })
           .catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
-            messageStore.completeResponse(ctx, () => {})
-            setTransactionFinalStatus(ctx)
             return next()
           })
       } else {
@@ -321,8 +316,8 @@ function sendRequestToRoutes (ctx, routes, next) {
 
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
-      ctx.state.requestPromise.then(() => {
-        ctx.state.responsePromise.then(() => {
+      messageStore.initiateResponse(ctx, () => {
+        messageStore.completeResponse(ctx, () => {}).then(() => {
           setTransactionFinalStatus(ctx)
         })
       })
@@ -342,8 +337,8 @@ function sendRequestToRoutes (ctx, routes, next) {
       // }
     }).catch(err => {
       logger.error(err)
-      ctx.state.requestPromise.then(() => {
-        ctx.state.responsePromise.then(() => {
+      messageStore.initiateResponse(ctx, () => {
+        messageStore.completeResponse(ctx, () => {}).then(() => {
           setTransactionFinalStatus(ctx)
         })
       })
