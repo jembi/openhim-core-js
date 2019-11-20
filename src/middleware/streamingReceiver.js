@@ -133,6 +133,16 @@ function streamingReceiver (ctx, statusEvents) {
         statusEvents.requestError(err)
       }
     })
+
+  /*
+    Push ctx request body into the downstream for the http routes.
+    This is for cases when we are routing from tcp to http.
+    The streaming for the ctx.req finishes before the 'data' event for the stream has been registered.
+  */
+  if (ctx.tcpChannelHasHttpRoute) {
+    ctx.state.downstream.push(ctx.body)
+    ctx.state.downstream.push(null)
+  }
 }
 
 function collectingReceiver (ctx, statusEvents) {
@@ -319,14 +329,28 @@ export async function koaMiddleware (ctx, next) {
       ['POST', 'PUT', 'PATCH'].includes(ctx.req.method)
   }
 
-  if (collectBody && ['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) {
-    try {
-      await collectingReceiver(ctx, statusEvents)
-    } catch(err) {
-      logger.error(`collectingReceiver error: ${err}`)
+  if (ctx.isTcpChannel) {
+    if (ctx.tcpChannelHasHttpRoute) {
+      if (collectBody) {
+        try {
+          await collectingReceiver(ctx, statusEvents)
+        } catch(err) {
+          logger.error(`collectingReceiver error: ${err}`)
+        }
+      } else {
+        streamingReceiver(ctx, statusEvents)
+      }
     }
   } else {
-    streamingReceiver(ctx, statusEvents)
+    if (collectBody) {
+      try {
+        await collectingReceiver(ctx, statusEvents)
+      } catch(err) {
+        logger.error(`collectingReceiver error: ${err}`)
+      }
+    } else {
+      streamingReceiver(ctx, statusEvents)
+    }
   }
 
   if (ctx.authorisedChannel) {
