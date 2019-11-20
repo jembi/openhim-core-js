@@ -434,6 +434,12 @@ export function setFinalStatus (ctx, callback) {
       if (err) { return callback(err) }
       callback(null, tx)
 
+      if (!tx) {
+        const errorMessage = `Could not find transaction: ${transactionId}`
+        logger.error(errorMessage)
+        return callback(new Error(errorMessage))
+      }
+
       // queue for autoRetry
       if (update.autoRetry) {
         autoRetryUtils.queueForRetry(tx)
