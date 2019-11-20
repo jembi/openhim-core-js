@@ -310,10 +310,13 @@ export async function koaMiddleware (ctx, next) {
   }
 
   if (channel) {
-    collectBody = (channel.matchContentRegex !== null ||
-      channel.matchContentXpath !== null ||
-      channel.matchContentValue !== null ||
-      channel.matchContentJson !== null)
+    collectBody = (
+      channel.matchContentRegex ||
+      channel.matchContentXpath ||
+      channel.matchContentValue ||
+      channel.matchContentJson
+      ) &&
+      ['POST', 'PUT', 'PATCH'].includes(ctx.req.method)
   }
 
   if (collectBody && ['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) {
