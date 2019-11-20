@@ -670,10 +670,23 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
  * Supports both normal and MLLP sockets
  */
 function sendSocketRequest (ctx, route, options) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const mllpEndChar = String.fromCharCode(0o034)
-
     const requestBody = ctx.body
+
+    if (
+      requestBody &&
+      ctx.authorisedChannel &&
+      ctx.authorisedChannel.requestBody &&
+      !ctx.request.bodyId
+      ) {
+      ctx.request.bodyId = await extractStringPayloadIntoChunks(requestBody)
+    }
+
+    messageStore.initiateRequest(ctx).then(() => {
+      messageStore.completeRequest(ctx, () => {})
+    })
+
     const response = {}
 
     let method = net
@@ -717,7 +730,7 @@ function sendSocketRequest (ctx, route, options) {
       client.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
-    client.on('end', () => {
+    client.on('end', async () => {
       logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
 
       if (route.secured && !client.authorized) {
@@ -726,6 +739,10 @@ function sendSocketRequest (ctx, route, options) {
       response.body = Buffer.concat(bufs)
       response.status = 200
       response.timestamp = new Date()
+
+      if (response.body && ctx.authorisedChannel && ctx.authorisedChannel.responseBody) {
+        ctx.response.bodyId = await extractStringPayloadIntoChunks(response.body)
+      }
       return resolve(response)
     })
   })
