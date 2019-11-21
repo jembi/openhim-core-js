@@ -11,6 +11,7 @@ import { promisify } from 'util'
 import { getGridFSBucket, extractStringPayloadIntoChunks } from '../contentChunk'
 import { makeStreamingRequest, collectStream } from './streamingRouter'
 import * as rewrite from '../middleware/rewriteUrls'
+import * as events from './events'
 
 config.router = config.get('router')
 
@@ -318,27 +319,31 @@ function sendRequestToRoutes (ctx, routes, next) {
       messageStore.initiateResponse(ctx, () => {
         messageStore.completeResponse(ctx, () => {}).then(() => {
           setTransactionFinalStatus(ctx)
+        }).catch(err => {
+          logger.error(err)
         })
       })
 
-      // TODO: OHM-694 Uncomment when secondary routes are supported
       // Save events for the secondary routes
-      // if (ctx.routes) {
-      //   const trxEvents = []
-      //   events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
-      //   events.saveEvents(trxEvents, err => {
-      //     if (err) {
-      //       logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
-      //       return
-      //     }
-      //     logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
-      //   })
-      // }
+      if (ctx.routes) {
+        const trxEvents = []
+        events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
+        events.saveEvents(trxEvents, err => {
+          if (err) {
+            logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
+            return
+          }
+          logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
+        })
+      }
     }).catch(err => {
       logger.error(err)
       messageStore.initiateResponse(ctx, () => {
         messageStore.completeResponse(ctx, () => {}).then(() => {
           setTransactionFinalStatus(ctx)
+        })
+        .catch(err => {
+          logger.error(err)
         })
       })
     })
