@@ -432,13 +432,14 @@ export function setFinalStatus (ctx, callback) {
 
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {new: true}, (err, tx) => {
       if (err) { return callback(err) }
-      callback(null, tx)
 
       if (!tx) {
         const errorMessage = `Could not find transaction: ${transactionId}`
         logger.error(errorMessage)
         return callback(new Error(errorMessage))
       }
+
+      callback(null, tx)
 
       // queue for autoRetry
       if (update.autoRetry) {
