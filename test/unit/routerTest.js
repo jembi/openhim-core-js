@@ -18,6 +18,7 @@ const DEFAULT_CHANNEL = Object.freeze({
   responseBody: true,
   requestBody: true,
   routes: [{
+    name: 'test',
     host: 'localhost',
     port: constants.HTTP_PORT,
     primary: true
@@ -106,6 +107,7 @@ describe('HTTP Router', () => {
           name: 'Static Server Endpoint',
           urlPattern: '/openhim-logo-green.png',
           routes: [{
+            name: 'Test',
             host: 'localhost',
             port: constants.STATIC_PORT,
             primary: true
@@ -137,6 +139,7 @@ describe('HTTP Router', () => {
           name: 'Mock endpoint',
           urlPattern: '.+',
           routes: [{
+            name: 'test',
             secured: true,
             host: 'localhost',
             port: constants.HTTPS_PORT,
@@ -207,6 +210,7 @@ describe('HTTP Router', () => {
           name: 'Mock endpoint',
           urlPattern: '.+',
           routes: [{
+            name: 'test',
             secured: true,
             host: 'localhost',
             port: constants.HTTPS_PORT,
@@ -230,6 +234,7 @@ describe('HTTP Router', () => {
           name: 'POST channel',
           urlPattern: '.+',
           routes: [{
+            name: 'test',
             host: 'localhost',
             port: constants.HTTP_PORT,
             primary: true
@@ -258,6 +263,7 @@ describe('HTTP Router', () => {
           name: 'POST channel',
           urlPattern: '.+',
           routes: [{
+            name: 'test',
             host: 'localhost',
             port: constants.HTTP_PORT,
             primary: true
@@ -299,6 +305,7 @@ describe('HTTP Router', () => {
           name: 'Mock endpoint',
           urlPattern: '.+',
           routes: [{
+            name: 'test',
             host: 'localhost',
             port: constants.MEDIATOR_PORT,
             primary: true
@@ -331,6 +338,7 @@ describe('HTTP Router', () => {
           name: 'Mock endpoint',
           urlPattern: '.+',
           routes: [{
+            name: 'test',
             host: 'localhost',
             port: constants.MEDIATOR_PORT,
             primary: true
@@ -365,6 +373,7 @@ describe('HTTP Router', () => {
           name: 'Mock endpoint',
           urlPattern: '.+',
           routes: [{
+            name: 'test',
             host: 'localhost',
             port: constants.MEDIATOR_PORT,
             primary: true
@@ -610,6 +619,7 @@ describe('HTTP Router', () => {
         name: 'Mock endpoint',
         urlPattern: '.+',
         routes: [{
+          name: 'test',
           host: 'localhost',
           port: constants.HTTP_PORT,
           primary: true,
@@ -684,6 +694,7 @@ describe('HTTP Router', () => {
         name: 'Mock endpoint',
         urlPattern: '.+',
         routes: [{
+          name: 'test',
           host: 'localhost',
           port: constants.HTTP_PORT,
           primary: true,
