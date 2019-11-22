@@ -142,6 +142,15 @@ function streamingReceiver (ctx, statusEvents) {
   if (ctx.tcpChannelHasHttpRoute) {
     ctx.state.downstream.push(ctx.body)
     ctx.state.downstream.push(null)
+
+    // Write chunk to GridFS & downstream
+    if (storeRequestBody && !bodyId) {
+      gridFsStream.end(ctx.body)
+    }
+
+    ctx.state.requestPromise.then(() => {
+      messageStore.completeRequest(ctx, () => {})
+    })
   }
 }
 
