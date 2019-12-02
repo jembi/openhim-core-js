@@ -11,8 +11,8 @@ import * as utils from './utils'
 
 config.reports = config.get('reports')
 
-const utcOffset = config.reports.utcOffset
-const dateTimeFormat = 'Do MMM YYYY HH:mm:ss Z'
+const utcOffset = config.reports.utcOffset || 0
+const dateTimeFormat = 'dddd Do MMMM YYYY h:mm:ss A Z'
 
 // Function Sends the reports
 function sendReports (job, flag, done) {
@@ -25,15 +25,11 @@ function sendReports (job, flag, done) {
   const channelMap = {}
 
   if (flag === 'dailyReport') {
-    reportPeriodStart = (!utcOffset) ? moment().subtract(1, 'days').startOf('day').format(dateTimeFormat) :
-      moment().subtract(1, 'days').startOf('day').utcOffset(utcOffset).format(dateTimeFormat)
-    reportPeriodEnd = (!utcOffset) ? moment().subtract(1, 'days').endOf('day').format(dateTimeFormat) :
-      moment().subtract(1, 'days').endOf('day').utcOffset(utcOffset).format(dateTimeFormat)
+    reportPeriodStart = moment().utcOffset(utcOffset).startOf('day').subtract(1, 'day')
+    reportPeriodEnd = moment().utcOffset(utcOffset).endOf('day').subtract(1, 'day')
   } else {
-    reportPeriodStart = (!utcOffset) ? moment().startOf('isoWeek').subtract(1, 'weeks').format(dateTimeFormat) :
-      moment().startOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format(dateTimeFormat)
-    reportPeriodEnd = (!utcOffset) ? moment().endOf('isoWeek').subtract(1, 'weeks').format(dateTimeFormat) :
-      moment().endOf('isoWeek').subtract(1, 'weeks').utcOffset(utcOffset).format(dateTimeFormat)
+    reportPeriodStart = moment().utcOffset(utcOffset).startOf('isoWeek').subtract(1, 'weeks')
+    reportPeriodEnd = moment().utcOffset(utcOffset).endOf('isoWeek').subtract(1, 'weeks')
   }
 
   // Select the right subscribers for the report
@@ -115,8 +111,8 @@ function sendReports (job, flag, done) {
           report.instance = config.alerts.himInstance
           report.consoleURL = config.alerts.consoleURL
 
-          report.from = reportPeriodStart
-          report.to = reportPeriodEnd
+          report.from = reportPeriodStart.format(dateTimeFormat)
+          report.to = reportPeriodEnd.format(dateTimeFormat)
 
           try {
             for (let i = 0; i < report.data.length; i++) {
@@ -193,7 +189,7 @@ function calculateAverage (total, count) {
 }
 
 function sendUserEmail (report) {
-  report.date = (!utcOffset) ? moment().toString() : moment().utcOffset(utcOffset).toString()
+  report.date = moment().utcOffset(utcOffset).toString()
   return renderTemplate('report/html.handlebars', report, reportHtml => contact.contactUser('email', report.email, `${report.type} report for: ${report.instance}`, plainTemplate(report), reportHtml, (err) => afterEmail(err, report.type, report.email)))
 }
 
@@ -210,8 +206,8 @@ function fetchChannelReport (channel, user, flag, from, to, callback) {
   logger.info(`fetching ${flag} for #${channel.name} ${user.email} ${channel._id}`)
 
   const filters = {
-    startDate: from,
-    endDate: to,
+    startDate: from.toDate(),
+    endDate: to.toDate(),
     timeSeries: period,
     channels: [channel._id]
   }
