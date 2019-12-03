@@ -278,7 +278,7 @@ const renderToString = (source, data, callback) => {
 
 const afterEmail = (err, type, email) => {
   if (err) {
-    return logger.error(err)
+    return logger.error(`Failed sending email: ${err}`)
   }
   logger.info(`${type} report email sent to ${email}`)
 }
