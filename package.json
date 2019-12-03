@@ -78,9 +78,10 @@
     "xpath": "0.0.27"
   },
   "devDependencies": {
-    "babel-cli": "6.26.0",
-    "babel-preset-env": "1.7.0",
-    "babel-register": "6.26.0",
+    "@babel/cli": "^7.7.4",
+    "@babel/core": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "@babel/register": "^7.7.4",
     "codecov": "^3.6.1",
     "cross-env": "5.2.0",
     "faker": "4.1.0",
