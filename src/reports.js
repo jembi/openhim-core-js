@@ -111,8 +111,11 @@ function sendReports (job, flag, done) {
           report.instance = config.alerts.himInstance
           report.consoleURL = config.alerts.consoleURL
 
-          report.from = reportPeriodStart.format(dateTimeFormat)
-          report.to = reportPeriodEnd.format(dateTimeFormat)
+          report.from = reportPeriodStart.clone().format(dateTimeFormat)
+          report.to = reportPeriodEnd.clone().format(dateTimeFormat)
+
+          report.reportStartDate = reportPeriodStart.toISOString()
+          report.reportEndDate = reportPeriodEnd.toISOString()
 
           try {
             for (let i = 0; i < report.data.length; i++) {
