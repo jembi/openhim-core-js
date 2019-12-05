@@ -20,6 +20,6 @@ packaging/builds
 .vagrant
 artillery
 
-coverage
+coverage.lcov
 .nyc_output
 .data

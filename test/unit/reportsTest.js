@@ -110,8 +110,8 @@ describe('Transaction Reports', () => {
 
   describe('Reports', () => {
     it('should return a daily channel Report', async () => {
-      const from = moment('2014-07-15').startOf('day').toDate()
-      const to = moment('2014-07-15').endOf('day').toDate()
+      const from = moment('2014-07-15').startOf('day')
+      const to = moment('2014-07-15').endOf('day')
       const item = await promisify(reports.fetchChannelReport)(channel2, testUser1, 'dailyReport', from, to)
       item.data.length.should.eql(1)
       item.data[0].should.have.property('requests', 1)
@@ -121,8 +121,8 @@ describe('Transaction Reports', () => {
 
     it('should return a weekly channel Report', async () => {
       const date = '2014-07-22'
-      const from = moment(date).startOf('isoWeek').subtract(1, 'weeks').toDate()
-      const to = moment(date).endOf('isoWeek').subtract(1, 'weeks').toDate()
+      const from = moment(date).startOf('isoWeek').subtract(1, 'weeks')
+      const to = moment(date).endOf('isoWeek').subtract(1, 'weeks')
       const item = await promisify(reports.fetchChannelReport)(channel2, testUser1, 'dailyReport', from, to)
 
       item.data.length.should.eql(5)
