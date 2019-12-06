@@ -340,29 +340,25 @@ export async function koaMiddleware (ctx, next) {
 
   if (ctx.isTcpChannel) {
     if (ctx.tcpChannelHasHttpRoute) {
-      if (collectBody) {
-        try {
-          await collectingReceiver(ctx, statusEvents)
-        } catch(err) {
-          logger.error(`collectingReceiver error: ${err}`)
-        }
-      } else {
-        streamingReceiver(ctx, statusEvents)
-      }
+      executeStreaming(ctx, statusEvents, collectBody)
     }
   } else {
-    if (collectBody) {
-      try {
-        await collectingReceiver(ctx, statusEvents)
-      } catch(err) {
-        logger.error(`collectingReceiver error: ${err}`)
-      }
-    } else {
-      streamingReceiver(ctx, statusEvents)
-    }
+    executeStreaming(ctx, statusEvents, collectBody)
   }
 
   if (ctx.authorisedChannel) {
     await next()
+  }
+}
+
+const executeStreaming = async (ctx, statusEvents, collectBody) => {
+  if (collectBody) {
+    try {
+      await collectingReceiver(ctx, statusEvents)
+    } catch(err) {
+      logger.error(`collectingReceiver error: ${err}`)
+    }
+  } else {
+    streamingReceiver(ctx, statusEvents)
   }
 }
