@@ -35,12 +35,17 @@ Last 2 versions of NodeJS LTS are supported
 
 1. Ensure that you have [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
 1. Navigate to the [docker-compose.yml](https://github.com/jembi/openhim-core-js/blob/master/infrastructure/docker-compose.yml) file found in the `/infrastructure` directory.
-1. Execute the Docker Compose file to pull the docker images and start the services in a detached mode: `docker-compose up -d`
+1. Execute the Docker Compose file to pull the docker images and start the services in a detached mode:
+
+  ```sh
+  docker-compose up -d
+  ```
+
 1. Once the services have all started, you will be able to view the [OpenHIM Console](http://localhost:9000) in your browser.
 
 ### NPM Package
 
-1. Install the latest stable [Node.js](http://nodejs.org/) **>=8.9 <9 || >=10.13 <10.15.1**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
+1. Install the latest stable [Node.js](http://nodejs.org/) **>= 8.9 < 9 || >= 10.13 && != 10.15.1**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
 1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v3.6** up to **v4.0**. Please refer to the requirements table for accurate versions to use.
 1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your `PATH`.
 1. Start the server by executing `openhim-core` from anywhere.
