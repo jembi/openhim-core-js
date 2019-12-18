@@ -3,7 +3,7 @@ OpenHIM documentation
 
 .. warning::
 
-   **Documentation Moved**: The OpenHIM documentation has been moved to a new home and will no longer be maintained here. The      updated documentation can be found on the [openhim.org](http://www.openhim.org) website
+   **Documentation Moved**: The OpenHIM documentation has been moved to a new home and will no longer be maintained here. The      updated documentation can be found on the http://www.openhim.org website
 
 Contents:
 
