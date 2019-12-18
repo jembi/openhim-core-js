@@ -8,17 +8,17 @@ The OpenHIM core component is responsible for providing a single entry-point int
 - Persistence and audit logging of all messages that flow through the OpenHIM
 - Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
 
-> **To get started and to learn more about using the [OpenHIM](http://openhim.org)** see [the full documentation](https://openhim.readthedocs.io).
+> **To get started and to learn more about using the OpenHIM** see [the full documentation](http://openhim.org).
 
-Some of the important information is repeated here, however, the the above documentation is much more comprehensive.
+Some of the important information is repeated here, however, the above documentation is much more comprehensive.
 
-> The OpenHIM Road Map is available on [our wiki](https://github.com/jembi/openhim-core-js/wiki/OpenHIM-core-Development-Roadmap)
+> The OpenHIM Road Map is available on [our wiki](https://jembiprojects.jira.com/wiki/spaces/OHI/pages/edit-v2/679575553)
 
 ---
 
 ## Requirements
 
-Last 2 versions of NodeJS LTS will be supported
+Last 2 versions of NodeJS LTS are supported
 
 | NodeJS (LTS) | MongoDB                    |
 | ------------ | -------------------------- |
