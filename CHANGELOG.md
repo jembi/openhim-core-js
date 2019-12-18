@@ -1,5 +1,24 @@
 # Changelog
 
+## v5.2.5 / 2019-12-05
+
+* Fixed issue with pulling data into daily and weekly transaction reports
+* Fixed npm scripts for running only unit or only integration tests
+* Updated Babel Major version
+
+## v5.2.4 / 2019-11-05
+
+* Dependency Updates
+
+## v5.2.3 / 2019-11-05
+
+* Dependency Updates
+
+## v5.2.2 / 2019-09-11
+
+* Fixed polling channel functionality
+* Dependency updates
+
 ## v5.2.0 / 2019-02-19
 
 * Handle authentication types when supplied as a JSON string. This allows the authentication types to be configured through environment variables.
