@@ -27,7 +27,7 @@ An incorrect version has been released which required this release version bump.
 * Fix channel filtering for non-admins
 * Handle responses without timestamps
 * Updated a metrics check that verifies the timestamp value to check that its a object (Date) instead of a number
-  * Replace the verifification mechanism to be instanceof Date instead of typeof
+  * Replace the verification mechanism to be instance of Date instead of type of
 * Add a shebang character to the url of the transaction link
   * Add missing ! to links
 * update the 'update' object which is checked when creating metrics so that metrics are created with mediators
@@ -41,7 +41,7 @@ An incorrect version has been released which required this release version bump.
 * Remove the load testing code run by Artillery
 * Remove un-used packages
 * Remove the declaration of the Log model schema as this is only used within the tests
-* Remove package script command that isnt being used
+* Remove package script command that isn't being used
 * Remove the use of StatsD
 * Remove the out-dated Vagrant script for development
 
@@ -69,7 +69,7 @@ An incorrect version has been released which required this release version bump.
 * Make MongoDB filter out channel audit change entries logged by the body-culling job
 * Clean up transaction status handling
 * Ensure mongo connection string is properly encoded when creating the connection
-* Ensure the test starts with a clean database to ensure the assertations are correct and valid
+* Ensure the test starts with a clean database to ensure the assertions are correct and valid
 * Updated the mongo options object structure to be one level up.
 * Updated mongo options to make use of the new URL parser for mongo
 * Updated the deprecated mongo functions with the appropriate alternative (.remove / .count / .insert / .ensureIndex)
