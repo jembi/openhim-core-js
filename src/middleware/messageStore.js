@@ -396,12 +396,13 @@ export function setFinalStatus (ctx, callback) {
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
     if (err) { return callback(err) }
     const update = {}
+    const status = getContextResult()
 
-    if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
+    if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null && status === 'Successful') {
       logger.debug(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
       update.status = ctx.mediatorResponse.status
     } else {
-      tx.status = getContextResult()
+      tx.status = status
       logger.info(`Final status for transaction ${tx._id} : ${tx.status}`)
       update.status = tx.status
     }
