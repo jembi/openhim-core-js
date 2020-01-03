@@ -61,7 +61,7 @@ Navigate to the directory where the openhim-core-js source is located and run th
 
 > This will install all the required modules and then build the project files.
 
-In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must be installed and running. Please refer to the requirements table for accurate versions to use.
+In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must be installed and running. Please refer to the [requirements table](https://github.com/jembi/openhim-core-js/tree/TRACE-92-update-readme#requirements) for accurate versions to use.
 
 To run the server, execute:
 
