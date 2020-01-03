@@ -12,7 +12,7 @@ The OpenHIM core component is responsible for providing a single entry-point int
 
 Some of the important information is repeated here, however, the above documentation is much more comprehensive.
 
-> The OpenHIM Road Map is available on [our wiki](https://jembiprojects.jira.com/wiki/spaces/OHI/pages/edit-v2/679575553)
+See the [development road-map](http://openhim.org/docs/introduction/roadmap) for more details on what is to come!
 
 ---
 
