@@ -46,7 +46,7 @@ An incorrect version has been released which required this release version bump.
 * Fix channel filtering for non-admins
 * Handle responses without timestamps
 * Updated a metrics check that verifies the timestamp value to check that its a object (Date) instead of a number
-  * Replace the verification mechanism to be instance of Date instead of type of
+  * Replace the verification mechanism to be `instanceof` **Date** instead of `typeof`
 * Add a shebang character to the url of the transaction link
   * Add missing ! to links
 * update the 'update' object which is checked when creating metrics so that metrics are created with mediators
