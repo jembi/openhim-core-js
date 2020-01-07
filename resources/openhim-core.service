@@ -1,0 +1,14 @@
+[Unit]
+Description=OpenHIM Core
+Documentation=http://openhim.org
+After=network.target
+
+[Service]
+Environment=NODE_ENV=production
+Type=simple
+User=<non-root-user>
+ExecStart=/path/to/node /path/to/openhim-core/lib/server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
