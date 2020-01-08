@@ -11,6 +11,7 @@ import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
 import * as constants from '../constants'
 import sinon from 'sinon'
+import should from 'should'
 
 const { SERVER_PORTS } = constants
 nconf.set('router', { httpPort: SERVER_PORTS.httpPort })
@@ -40,6 +41,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 1',
     urlPattern: '^/test/channel1$',
     allow: ['PoC'],
+    responseBody: true,
     routes: [
       {
         name: 'test route',
@@ -327,7 +329,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(405)
 
-    res.body.toString().should.eql('Request with method POST is not allowed. Only GET methods are allowed')
+    res.text.should.eql('Request with method POST is not allowed. Only GET methods are allowed')
     // routes are async
     restrictedSpy.callCount.should.eql(0)
   })
@@ -366,7 +368,7 @@ describe('Routes enabled/disabled tests', () => {
 
     await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
-
+    
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
     newTransaction[0].orchestrations[0].name.should.eql('test transaction fail orchestration')

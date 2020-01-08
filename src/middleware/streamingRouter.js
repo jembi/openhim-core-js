@@ -48,6 +48,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
       .on('response', (routeRes) => {
         response.status = routeRes.statusCode
         response.headers = routeRes.headers
+        response.statusMessage = routeRes.statusMessage
 
         const uncompressedBodyBufs = []
         if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip

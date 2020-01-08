@@ -133,6 +133,25 @@ function streamingReceiver (ctx, statusEvents) {
         statusEvents.requestError(err)
       }
     })
+
+  /*
+    Push ctx request body into the downstream for the http routes.
+    This is for cases when we are routing from tcp to http.
+    The streaming for the ctx.req finishes before the 'data' event for the stream has been registered.
+  */
+  if (ctx.tcpChannelHasHttpRoute) {
+    ctx.state.downstream.push(ctx.body)
+    ctx.state.downstream.push(null)
+
+    // Write chunk to GridFS & downstream
+    if (storeRequestBody && !bodyId) {
+      gridFsStream.end(ctx.body)
+    }
+
+    ctx.state.requestPromise.then(() => {
+      messageStore.completeRequest(ctx, () => {})
+    })
+  }
 }
 
 function collectingReceiver (ctx, statusEvents) {
@@ -310,13 +329,30 @@ export async function koaMiddleware (ctx, next) {
   }
 
   if (channel) {
-    collectBody = (channel.matchContentRegex !== null ||
-      channel.matchContentXpath !== null ||
-      channel.matchContentValue !== null ||
-      channel.matchContentJson !== null)
+    collectBody = (
+      channel.matchContentRegex ||
+      channel.matchContentXpath ||
+      channel.matchContentValue ||
+      channel.matchContentJson
+      ) &&
+      ['POST', 'PUT', 'PATCH'].includes(ctx.req.method)
   }
 
-  if (collectBody && ['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) {
+  if (ctx.isTcpChannel) {
+    if (ctx.tcpChannelHasHttpRoute) {
+      executeStreaming(ctx, statusEvents, collectBody)
+    }
+  } else {
+    executeStreaming(ctx, statusEvents, collectBody)
+  }
+
+  if (ctx.authorisedChannel) {
+    await next()
+  }
+}
+
+const executeStreaming = async (ctx, statusEvents, collectBody) => {
+  if (collectBody) {
     try {
       await collectingReceiver(ctx, statusEvents)
     } catch(err) {
@@ -324,9 +360,5 @@ export async function koaMiddleware (ctx, next) {
     }
   } else {
     streamingReceiver(ctx, statusEvents)
-  }
-
-  if (ctx.authorisedChannel) {
-    await next()
   }
 }

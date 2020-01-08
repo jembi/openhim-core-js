@@ -11,6 +11,7 @@ import { promisify } from 'util'
 import { getGridFSBucket, extractStringPayloadIntoChunks } from '../contentChunk'
 import { makeStreamingRequest, collectStream } from './streamingRouter'
 import * as rewrite from '../middleware/rewriteUrls'
+import * as events from './events'
 
 config.router = config.get('router')
 
@@ -266,15 +267,11 @@ function sendRequestToRoutes (ctx, routes, next) {
           })
           .then(() => {
             logger.info('primary route completed')
-            ctx.state.requestPromise.then(() => {
-              ctx.state.responsePromise = messageStore.completeResponse(ctx, (err, tx) => {})
-            })
             return next()
           })
           .catch((reason) => {
             // on failure
             handleServerError(ctx, reason)
-            setTransactionFinalStatus(ctx)
             return next()
           })
       } else {
@@ -319,30 +316,34 @@ function sendRequestToRoutes (ctx, routes, next) {
 
     Promise.all(promises).then(() => {
       logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
-      ctx.state.requestPromise.then(() => {
-        ctx.state.responsePromise.then(() => {
+      messageStore.initiateResponse(ctx, () => {
+        messageStore.completeResponse(ctx, () => {}).then(() => {
           setTransactionFinalStatus(ctx)
+        }).catch(err => {
+          logger.error(err)
         })
       })
 
-      // TODO: OHM-694 Uncomment when secondary routes are supported
       // Save events for the secondary routes
-      // if (ctx.routes) {
-      //   const trxEvents = []
-      //   events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
-      //   events.saveEvents(trxEvents, err => {
-      //     if (err) {
-      //       logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
-      //       return
-      //     }
-      //     logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
-      //   })
-      // }
+      if (ctx.routes) {
+        const trxEvents = []
+        events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
+        events.saveEvents(trxEvents, err => {
+          if (err) {
+            logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
+            return
+          }
+          logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
+        })
+      }
     }).catch(err => {
       logger.error(err)
-      ctx.state.requestPromise.then(() => {
-        ctx.state.responsePromise.then(() => {
+      messageStore.initiateResponse(ctx, () => {
+        messageStore.completeResponse(ctx, () => {}).then(() => {
           setTransactionFinalStatus(ctx)
+        })
+        .catch(err => {
+          logger.error(err)
         })
       })
     })
@@ -473,7 +474,7 @@ function setTransactionFinalStatus (ctx) {
   // Set the final status of the transaction
   messageStore.setFinalStatus(ctx, (err, tx) => {
     if (err) {
-      logger.error(`Setting final status failed for transaction: ${tx._id}`, err)
+      logger.error(`Setting final status failed for transaction:`, err)
       return
     }
     logger.info(`Set final status for transaction: ${tx._id} - ${tx.status}`)
@@ -663,10 +664,23 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
  * Supports both normal and MLLP sockets
  */
 function sendSocketRequest (ctx, route, options) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const mllpEndChar = String.fromCharCode(0o034)
-
     const requestBody = ctx.body
+
+    if (
+      requestBody &&
+      ctx.authorisedChannel &&
+      ctx.authorisedChannel.requestBody &&
+      !ctx.request.bodyId
+      ) {
+      ctx.request.bodyId = await extractStringPayloadIntoChunks(requestBody)
+    }
+
+    messageStore.initiateRequest(ctx).then(() => {
+      messageStore.completeRequest(ctx, () => {})
+    })
+
     const response = {}
 
     let method = net
@@ -710,7 +724,7 @@ function sendSocketRequest (ctx, route, options) {
       client.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
-    client.on('end', () => {
+    client.on('end', async () => {
       logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
 
       if (route.secured && !client.authorized) {
@@ -719,6 +733,10 @@ function sendSocketRequest (ctx, route, options) {
       response.body = Buffer.concat(bufs)
       response.status = 200
       response.timestamp = new Date()
+
+      if (response.body && ctx.authorisedChannel && ctx.authorisedChannel.responseBody) {
+        ctx.response.bodyId = await extractStringPayloadIntoChunks(response.body)
+      }
       return resolve(response)
     })
   })

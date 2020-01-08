@@ -20,16 +20,16 @@ describe('contentChunk: ', () => {
     db = client.db()
   })
 
-  beforeEach(async () => {
-    await db.collection('fs.files').deleteMany({})
-    await db.collection('fs.chunks').deleteMany({})
-  })
-
   after(async () => {
     await MongoClient.close()
   })
 
   describe('extractStringPayloadIntoChunks', () => {
+    after(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+    })
+    
     it('should throw an error when undefined payload is supplied', async () => {
       const payload = undefined
 
@@ -86,6 +86,11 @@ describe('contentChunk: ', () => {
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
+      /*
+      * The function extractStringPayloadIntoChunks has been modified. It returns the id and then continues with the streaming (into gridfs)
+      */
+      await testUtils.awaitGridfsBodyStreaming()
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -98,6 +103,8 @@ describe('contentChunk: ', () => {
       const payloadLength = payload.length
 
       const docId = await extractStringPayloadIntoChunks(payload)
+
+      await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
@@ -116,6 +123,8 @@ describe('contentChunk: ', () => {
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
+      await testUtils.awaitGridfsBodyStreaming()
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -128,6 +137,8 @@ describe('contentChunk: ', () => {
       const payload = new ArrayBuffer(arrayBufferLength);
 
       const docId = await extractStringPayloadIntoChunks(payload)
+
+      await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
@@ -149,6 +160,8 @@ describe('contentChunk: ', () => {
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
+      await testUtils.awaitGridfsBodyStreaming()
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -169,6 +182,8 @@ describe('contentChunk: ', () => {
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
+      await testUtils.awaitGridfsBodyStreaming()
+
       db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -178,6 +193,11 @@ describe('contentChunk: ', () => {
   })
 
   describe('retrievePayload()', () => {
+    beforeEach(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+    })
+
     it('should return an error when the file id is null', async () => {
       const fileId = null
 
@@ -218,6 +238,11 @@ describe('contentChunk: ', () => {
   })
 
   describe('promisesToRemoveAllTransactionBodies()', () => {
+    beforeEach(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+    })
+
     // The request/response body has been replaced by bodyId which is why we are duplicating this object
     // TODO: OHM-691: Update accordingly when implementing
     const requestDocMain = {
@@ -414,6 +439,11 @@ describe('contentChunk: ', () => {
   })
 
   describe('addBodiesToTransactions()', () => {
+    beforeEach(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+    })
+
     // The request/response body has been replaced by bodyId which is why we are duplicating this object
     // TODO: OHM-691: Update accordingly when implementing
     const requestDocMain = {

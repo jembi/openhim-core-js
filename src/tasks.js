@@ -231,8 +231,11 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
    *  For GET and DELETE, bodyId will be null. Still need to supply
    *     empty header, so that HIM will not expect a body in GridFS
    *  For POST and PUT, bodyId will be fileId for body stored in GridFS
-   */
-  options.headers['x-body-id'] = transaction.request.bodyId
+  */
+
+  if (transaction.request.bodyId) {
+    options.headers['x-body-id'] = transaction.request.bodyId
+  }
 
   if (transaction.request.querystring) {
     options.path += `?${transaction.request.querystring}`
@@ -242,6 +245,17 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
 }
 
 async function rerunHttpRequestSend (options, transaction, callback) {
+  let err
+  if (options == null) {
+    
+    err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
+    return callback(err, null)
+  }
+
+  if (transaction == null) {
+    err = new Error('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
+    return callback(err, null)
+  }
 
   const response = {
     body: '',
@@ -277,7 +291,8 @@ async function rerunHttpRequestSend (options, transaction, callback) {
       logger.info(`** END OF RERUN OUTPUT STREAM ** ${size} bytes`)
 
       // This is the response for the TASK (from the rerun port), not the TRANSACTION
-      response.status = res.statusCode
+      response.status = res.status
+      response.body = res.body
       response.message = res.statusMessage
       response.headers = res.headers
       response.timestamp = new Date()
@@ -305,7 +320,11 @@ async function rerunHttpRequestSend (options, transaction, callback) {
     await makeStreamingRequest(null, options, statusEvents)
     callback(null, response)
   } catch (err) {
-    callback(err)
+    response.transaction.status = 'Failed'
+    response.status = 500
+    response.message = 'Internal Server Error'
+    response.timestamp = new Date()
+    callback(null, response)
   }
 }
 

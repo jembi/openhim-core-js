@@ -115,6 +115,12 @@ export function completeRequest (ctx, done) {
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
     if (err) { return done(err) }
 
+    if (!tx) {
+      const errorMessage = `Could not find transaction with id ${transactionId}`
+      logger.error(errorMessage)
+      return done(new Error(errorMessage))
+    }
+
     /*
      *  For short transactions, the 'end' timestamp is before the 'start' timestamp.
      *  (Persisting the transaction initially takes longer than fully processing the transaction)
@@ -180,11 +186,12 @@ export function initiateResponse (ctx, done) {
   transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
       logger.error(`Could not save transaction metadata (initiateResponse): ${transactionId}. ${err}`)
-      done(err)
+      return done(err)
     }
-    if ((tx === undefined) || (tx === null)) {
-      logger.error(`Could not find transaction: ${transactionId}`)
-      done(err)
+    if (!tx) {
+      const errorMessage = `Could not find transaction: ${transactionId}`
+      logger.error(errorMessage)
+      return done(new Error(errorMessage))
     }
     logger.info(`Done initiateResponse for transaction: ${tx._id}`)
     done(null, tx)
@@ -234,11 +241,12 @@ export function completeResponse (ctx, done) {
     return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
       if (err) {
         logger.error(`Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`)
-        reject(err)
+        return reject(err)
       }
-      if ((tx === undefined) || (tx === null)) {
-        logger.error(`Could not find transaction: ${ctx.transactionId}`)
-        reject(err)
+      if (!tx) {
+        const errorMessage = `Could not find transaction: ${ctx.transactionId}`
+        logger.error(errorMessage)
+        return reject(new Error(errorMessage))
       }
       logger.info(`Done completeResponse for transaction: ${tx._id}`)
       resolve(tx)
@@ -268,9 +276,10 @@ export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
       logger.error(`Could not save transaction metadata (updateWithError): ${ctx.transactionId}. ${err}`)
       return done(err)
     }
-    if ((tx === undefined) || (tx === null)) {
-      logger.error(`Could not find transaction: ${ctx.transactionId}`)
-      return done(err)
+    if (!tx) {
+      const errorMessage = `Could not find transaction: ${ctx.transactionId}`
+      logger.error(errorMessage)
+      return done(new Error(errorMessage))
     }
     logger.info(`Done updateWithError for transaction: ${tx._id}`)
     done(null, tx)
@@ -395,6 +404,13 @@ export function setFinalStatus (ctx, callback) {
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
     if (err) { return callback(err) }
+
+    if (!tx) {
+      const errorMessage = `Could not find transaction: ${transactionId}`
+      logger.error(errorMessage)
+      return callback(new Error(errorMessage))
+    }
+
     const update = {}
 
     if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
@@ -416,6 +432,13 @@ export function setFinalStatus (ctx, callback) {
 
     transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {new: true}, (err, tx) => {
       if (err) { return callback(err) }
+
+      if (!tx) {
+        const errorMessage = `Could not find transaction: ${transactionId}`
+        logger.error(errorMessage)
+        return callback(new Error(errorMessage))
+      }
+
       callback(null, tx)
 
       // queue for autoRetry

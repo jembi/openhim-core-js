@@ -271,7 +271,7 @@ describe('API Integration Tests', () => {
       })
 
       // TODO: OHM-694 remove the x prepend on it
-      xit('should generate events after adding a transaction', async () => {
+      it('should generate events after adding a transaction', async () => {
         const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
         await request(constants.BASE_URL)
           .post('/transactions')
@@ -283,7 +283,7 @@ describe('API Integration Tests', () => {
           .expect(201)
 
         const events = await EventModelAPI.find({})
-        events.length.should.be.exactly(6)
+        events.length.should.be.exactly(8)
         for (const ev of Array.from(events)) {
           ev.channelID.toString().should.be.exactly(channel._id.toString())
         }

@@ -1,6 +1,7 @@
 import Koa from 'koa'
 import compress from 'koa-compress'
 import { Z_SYNC_FLUSH } from 'zlib'
+import getRawBody from 'raw-body'
 
 import * as router from './middleware/router'
 import * as messageStore from './middleware/messageStore'
@@ -21,6 +22,13 @@ import * as proxy from './middleware/proxy'
 import { config } from './config'
 
 config.authentication = config.get('authentication')
+
+async function rawBodyReader (ctx, next) {
+  const body = await getRawBody(ctx.req)
+
+  if (body) { ctx.body = body }
+  await next()
+}
 
 // Primary app
 
@@ -95,17 +103,17 @@ export function rerunApp (done) {
 export function tcpApp (done) {
   const app = new Koa()
 
-  app.use(streamingReceiver.koaMiddleware)
+  app.use(rawBodyReader)
+  
   app.use(retrieveTCPTransaction.koaMiddleware)
+
+  app.use(streamingReceiver.koaMiddleware)
 
   // TCP bypass authentication middelware
   app.use(tcpBypassAuthentication.koaMiddleware)
 
   // Proxy
   app.use(proxy.koaMiddleware)
-
-  // Persist message middleware
-  app.use(messageStore.koaMiddleware)
 
   // Events
   app.use(events.koaMiddleware)
