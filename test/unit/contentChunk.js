@@ -20,16 +20,16 @@ describe('contentChunk: ', () => {
     db = client.db()
   })
 
-  beforeEach(async () => {
-    await db.collection('fs.files').deleteMany({})
-    await db.collection('fs.chunks').deleteMany({})
-  })
-
   after(async () => {
     await MongoClient.close()
   })
 
   describe('extractStringPayloadIntoChunks', () => {
+    after(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+    })
+    
     it('should throw an error when undefined payload is supplied', async () => {
       const payload = undefined
 
@@ -193,6 +193,11 @@ describe('contentChunk: ', () => {
   })
 
   describe('retrievePayload()', () => {
+    beforeEach(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+    })
+
     it('should return an error when the file id is null', async () => {
       const fileId = null
 
@@ -233,6 +238,11 @@ describe('contentChunk: ', () => {
   })
 
   describe('promisesToRemoveAllTransactionBodies()', () => {
+    beforeEach(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+    })
+
     // The request/response body has been replaced by bodyId which is why we are duplicating this object
     // TODO: OHM-691: Update accordingly when implementing
     const requestDocMain = {
@@ -429,6 +439,11 @@ describe('contentChunk: ', () => {
   })
 
   describe('addBodiesToTransactions()', () => {
+    beforeEach(async () => {
+      await db.collection('fs.files').deleteMany({})
+      await db.collection('fs.chunks').deleteMany({})
+    })
+
     // The request/response body has been replaced by bodyId which is why we are duplicating this object
     // TODO: OHM-691: Update accordingly when implementing
     const requestDocMain = {

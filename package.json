@@ -50,7 +50,7 @@
     "forever-monitor": "1.7.1",
     "form-data": "^2.5.1",
     "glossy": "0.1.7",
-    "handlebars": "^4.4.3",
+    "handlebars": "^4.5.3",
     "kcors": "2.2.2",
     "koa": "^2.10.0",
     "koa-bodyparser": "4.2.1",
