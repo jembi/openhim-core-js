@@ -35,7 +35,7 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
 
   echo "zip: build release version: $tag"
   zip \
-    -i 'lib/*' 'config/*' 'node_modules/*' 'docs/*' 'resources/*' 'CHANGELOG.md' 'LICENSE' 'package.json' 'package-lock.json' 'README.md' \
+    -i 'lib/*' 'config/*' 'node_modules/*' 'resources/*' 'CHANGELOG.md' 'LICENSE' 'package.json' 'package-lock.json' 'README.md' \
     -r packaging/build.openhim-core.$tag.zip .
 
   echo "Git cleanup"
