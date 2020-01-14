@@ -517,7 +517,15 @@ function sendSocketRequest (ctx, route, options) {
     const response = {}
 
     let method = net
+    let secureContext
+
     if (route.secured) {
+      secureContext = tls.createSecureContext({
+        maxVersion: 'TLSv1.2',
+        key: options.key,
+        cert: options.cert,
+        ca: options.ca
+      })
       method = tls
     }
 
@@ -528,6 +536,10 @@ function sendSocketRequest (ctx, route, options) {
       key: options.key,
       cert: options.cert,
       ca: options.ca
+    }
+
+    if (secureContext) {
+      options.secureContext = secureContext
     }
 
     const client = method.connect(options, () => {
