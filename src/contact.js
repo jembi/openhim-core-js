@@ -31,7 +31,13 @@ export function sendEmail (contactAddress, title, messagePlain, messageHTML, cal
     subject: title,
     text: messagePlain,
     html: messageHTML
-  }, (error, response) => callback(error != null ? error : null))
+  }, (error, response) => {
+    if (error) {
+      return callback(error)
+    }
+    logger.debug(JSON.stringify(response))
+    callback(null)
+  })
 }
 
 function sendSMS (contactAddress, message, callback) {

@@ -5,7 +5,7 @@ networks:
 services:
   mongo-db:
     container_name: mongo-db
-    image: mongo:3.4
+    image: mongo:4.0
     networks:
       - openhim
     volumes:

@@ -1,4 +1,4 @@
-require('babel-register')
+require('@babel/register')
 const { ClientModel, ChannelModel, TransactionModel, UserModel } = require('../src/model')
 const { dropTestDb, rootUser } = require('../test/utils')
 const Progress = require('progress')

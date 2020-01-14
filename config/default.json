@@ -83,8 +83,8 @@
   "alerts": {
     "enableAlerts": true,
     "pollPeriodMinutes": 1,
-    "himInstance": "openhim.jembi.org",
-    "consoleURL": "http://openhim.jembi.org"
+    "himInstance": "Local OpenHIM",
+    "consoleURL": "http://localhost:9000"
   },
   "reports": {
     "enableReports": true,
