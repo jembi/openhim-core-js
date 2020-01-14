@@ -8,22 +8,22 @@ The OpenHIM core component is responsible for providing a single entry-point int
 - Persistence and audit logging of all messages that flow through the OpenHIM
 - Routing of messages to the correct service provider (be it an HIM orchestrator for further orchestration or the actual intended service provider)
 
-> **To get started and to learn more about using the [OpenHIM](http://openhim.org)** see [the full documentation](https://openhim.readthedocs.io).
+> **To get started and to learn more about using the OpenHIM** see [the full documentation](http://openhim.org).
 
-Some of the important information is repeated here, however, the the above documentation is much more comprehensive.
+Some of the important information is repeated here, however, the above documentation is much more comprehensive.
 
-> The OpenHIM Road Map is available on [our wiki](https://github.com/jembi/openhim-core-js/wiki/OpenHIM-core-Development-Roadmap)
+See the [development road-map](http://openhim.org/docs/introduction/roadmap) for more details on what is to come!
 
 ---
 
 ## Requirements
 
-Last 2 versions of NodeJS LTS will be supported
+Last 2 versions of NodeJS LTS are supported
 
 | NodeJS (LTS) | MongoDB                    |
 | ------------ | -------------------------- |
-| 8.x          | >= 3.6 &#124;&#124; <= 4.0 |
-| 10.x      | >= 3.6 &#124;&#124; <= 4.0 |
+| 10.x         | >= 3.6 &#124;&#124; <= 4.0 |
+| 12.x         | >= 3.6 &#124;&#124; <= 4.0 |
 
 - [NodeJS Release Versions](https://github.com/nodejs/Release)
 - [MongoDB NodeJS Driver Versions](https://mongodb.github.io/node-mongodb-native/)
@@ -35,29 +35,13 @@ Last 2 versions of NodeJS LTS will be supported
 
 1. Ensure that you have [Docker](https://docs.docker.com/install/) and [Docker Compose](https://docs.docker.com/compose/install/) installed.
 1. Navigate to the [docker-compose.yml](https://github.com/jembi/openhim-core-js/blob/master/infrastructure/docker-compose.yml) file found in the `/infrastructure` directory.
-1. Execute the Docker Compose file to pull the docker images and start the services in a detached mode: `docker-compose up -d`
+1. Execute the Docker Compose file to pull the docker images and start the services in a detached mode:
+
+  ```sh
+  docker-compose up -d
+  ```
+
 1. Once the services have all started, you will be able to view the [OpenHIM Console](http://localhost:9000) in your browser.
-
-### NPM Package
-
-1. Install the latest stable [Node.js](http://nodejs.org/) **>=8.9 <9 || >=10.13 <10.15.1**. The latest [active LTS](https://github.com/nodejs/LTS) is recommended.
-1. Install and start a [MongoDB](http://www.mongodb.org/) instance **v3.6** up to **v4.0**. Please refer to the requirements table for accurate versions to use.
-1. Install the OpenHIM-core package globally: `npm install openhim-core -g`, this will also install an openhim-core binary to your `PATH`.
-1. Start the server by executing `openhim-core` from anywhere.
-
-To make use of your own custom configurations you can copy the [default.json](https://github.com/jembi/openhim-core-js/blob/master/config/default.json) config file and override the default setting:
-
-```bash
-wget https://raw.githubusercontent.com/jembi/openhim-core-js/master/config/default.json
-# edit default.json, then
-openhim-core --conf=path/to/default.json
-```
-
-> To specify the timezone in which the openhim services are used, change the utcOffset value in the default.json file. If the time-zone's offset value is not specified, the default server time will be used. This ensures that weekly and daily channel reports have the expected timestamps.
-
-For more information about the config options, [click here](https://github.com/jembi/openhim-core-js/blob/master/config/config.md).
-
-> **Note:** one of the first things that you should do once the OpenHIM is up and running is setup a properly signed TLS certificate. You can do this through the [OpenHIM console](https://github.com/jembi/openhim-console) under 'Certificates' on the sidebar.
 
 ---
 
@@ -67,28 +51,17 @@ Clone the `https://github.com/jembi/openhim-core-js.git` repository.
 
 Ensure you have the following installed:
 
-- [Node.js](http://nodejs.org/) v8.x -> 10.x (not 10.15.1)
+- [Node.js](http://nodejs.org/) **v10(LTS) && != 10.15.1 || v12(LTS)**
+- [NPM](https://www.npmjs.com/)
 - [MongoDB](http://www.mongodb.org/) (in Ubuntu run `sudo apt install mongodb`, in OSX using [Homebrew](http://brew.sh), run `brew update` followed by `brew install mongodb`)
 
-The OpenHIM core makes use of the [Koa framework](http://koajs.com/) (async/awaits), which requires node version v7 or greater (not 10.15.1)
-
-The easiest way to use the latest version of node is to install [`nvm`](https://github.com/creationix/nvm). On Ubuntu, you can install using the install script but you have to add `[[ -s $HOME/.nvm/nvm.sh ]] && . $HOME/.nvm/nvm.sh # This loads NVM` to the end of your `~/.bashrc` file as well.
-
-Once `nvm` is installed, run the following:
-
-`nvm install 10`
-
-`nvm alias default 10`
-
-The latest version of node 10 should now be installed and set as default. The next step is to get all the required dependencies using `npm`. Navigate to the directory where the openhim-core-js source is located and run the following:
+Navigate to the directory where the openhim-core-js source is located and run the following:
 
 `npm install`
 
-Then build the project:
+> This will install all the required modules and then build the project files.
 
-`npm run build`
-
-In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must be installed and running. Please refer to the requirements table for accurate versions to use.
+In order to run the OpenHIM core server, [MongoDB](http://www.mongodb.org/) must be installed and running. Please refer to the [requirements table](#requirements) for accurate versions to use.
 
 To run the server, execute:
 
