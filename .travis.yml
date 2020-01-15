@@ -1,8 +1,8 @@
 dist: xenial
 language: node_js
 node_js:
-  - "lts/carbon"
   - "lts/dubnium"
+  - "lts/erbium"
   - "node"
 matrix:
   fast_finish: true
