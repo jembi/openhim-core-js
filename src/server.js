@@ -255,7 +255,7 @@ if (cluster.isMaster && !module.parent) {
 
   let httpServer = null
   let httpsServer = null
-  let apiHttpsServer = null
+  let apiServer = null
   let rerunServer = null
   let tcpHttpReceiver = null
   let pollingServer = null
@@ -344,26 +344,24 @@ if (cluster.isMaster && !module.parent) {
     })
   }
 
-  function startHttpServer (httpPort, bindAddress, app) {
+  function startHttpServer (httpPort, bindAddress, server) {
     const deferred = defer()
 
-    httpServer = http.createServer(app.callback())
-
     // set the socket timeout
-    httpServer.setTimeout(+config.router.timeout, () => logger.info('HTTP socket timeout reached'))
+    server.setTimeout(+config.router.timeout, () => logger.info('HTTP socket timeout reached'))
 
-    httpServer.listen(httpPort, bindAddress, () => {
+    server.listen(httpPort, bindAddress, () => {
       logger.info(`HTTP listening on port ${httpPort}`)
       return deferred.resolve()
     })
 
     // listen for server error
-    httpServer.on('error', err => logger.error(`An httpServer error occured: ${err}`))
+    server.on('error', err => logger.error(`An httpServer error occured: ${err}`))
 
     // listen for client error
-    httpServer.on('clientError', err => logger.error(`An httpServer clientError occured: ${err}`))
+    server.on('clientError', err => logger.error(`An httpServer clientError occured: ${err}`))
 
-    httpServer.on('connection', socket => trackConnection(activeHttpConnections, socket))
+    server.on('connection', socket => trackConnection(activeHttpConnections, socket))
 
     return deferred.promise
   }
@@ -500,13 +498,13 @@ if (cluster.isMaster && !module.parent) {
     tlsAuthentication.getServerOptions(mutualTLS, (err, options) => {
       if (err) { logger.error(`Could not fetch https server options: ${err}`) }
 
-      apiHttpsServer = https.createServer(options, app.callback())
-      apiHttpsServer.listen(apiPort, bindAddress, () => {
+      apiServer = https.createServer(options, app.callback())
+      apiServer.listen(apiPort, bindAddress, () => {
         logger.info(`API HTTPS listening on port ${apiPort}`)
         return ensureRootUser(() => deferred.resolve())
       })
 
-      return apiHttpsServer.on('secureConnection', socket => trackConnection(activeApiConnections, socket))
+      return apiServer.on('secureConnection', socket => trackConnection(activeApiConnections, socket))
     })
 
     return deferred.promise
@@ -671,7 +669,11 @@ if (cluster.isMaster && !module.parent) {
     return ensureKeystore(() => {
       if (ports.httpPort || ports.httpsPort) {
         koaMiddleware.setupApp((app) => {
-          if (ports.httpPort) { promises.push(startHttpServer(ports.httpPort, bindAddress, app)) }
+          if (ports.httpPort) {
+            httpServer = http.createServer(app.callback())
+            promises.push(startHttpServer(ports.httpPort, bindAddress, httpServer))
+          }
+
           if (ports.httpsPort) { promises.push(startHttpsServer(ports.httpsPort, bindAddress, app)) }
           return promises
         })
@@ -680,7 +682,10 @@ if (cluster.isMaster && !module.parent) {
       if (ports.apiPort && config.api.enabled) {
         ports.apiProtocol === 'https'
           ? koaApi.setupApp(app => promises.push(startApiServer(ports.apiPort, bindAddress, app)))
-          : koaApi.setupApp(app => promises.push(startHttpServer(ports.apiPort, bindAddress, app)))
+          : koaApi.setupApp(app => {
+            apiServer = http.createServer(app.callback())
+            return promises.push(startHttpServer(ports.apiPort, bindAddress, apiServer))
+          })
       }
 
       if (ports.rerunHttpPort) {
@@ -756,7 +761,7 @@ if (cluster.isMaster && !module.parent) {
 
     if (httpServer) { promises.push(stopServer(httpServer, 'HTTP')) }
     if (httpsServer) { promises.push(stopServer(httpsServer, 'HTTPS')) }
-    if (apiHttpsServer) { promises.push(stopServer(apiHttpsServer, 'API HTTP')) }
+    if (apiServer) { promises.push(stopServer(apiServer, 'API HTTP')) }
     if (rerunServer) { promises.push(stopServer(rerunServer, 'Rerun HTTP')) }
     if (pollingServer) { promises.push(stopServer(pollingServer, 'Polling HTTP')) }
     if (agenda) { stopAgenda() }
@@ -816,7 +821,7 @@ if (cluster.isMaster && !module.parent) {
     return Promise.all(promises).then(() => {
       httpServer = null
       httpsServer = null
-      apiHttpsServer = null
+      apiServer = null
       rerunServer = null
       tcpHttpReceiver = null
       pollingServer = null
