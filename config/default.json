@@ -31,8 +31,9 @@
     "pollPeriodMins": 60
   },
   "api": {
-    "enabled" : true,
-    "httpsPort": 8080,
+    "enabled": true,
+    "protocol": "https",
+    "port": 8080,
     "authWindowSeconds": 10,
     "maxBodiesSizeMB": 15,
     "maxPayloadSizeMB": 50,

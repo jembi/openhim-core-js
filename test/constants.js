@@ -15,6 +15,7 @@ export const SERVER_PORTS = Object.freeze({
   httpPort: SERVER_PORT_START,
   httpsPort: SERVER_PORT_START + 1,
   apiPort: SERVER_PORT_START + 2,
+  apiProtocol: 'https',
   rerunPort: SERVER_PORT_START + 3,
   tcpHttpReceiverPort: SERVER_PORT_START + 4,
   pollingPort: SERVER_PORT_START + 5,

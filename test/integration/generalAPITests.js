@@ -23,7 +23,11 @@ describe('API Integration Tests', () => {
     // password is 'password'
     before(async () => {
       await Promise.all([
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, httpsPort: SERVER_PORTS.httpsPort }),
+        promisify(server.start)({
+          apiPort: SERVER_PORTS.apiPort,
+          apiProtocol: SERVER_PORTS.apiProtocol,
+          httpsPort: SERVER_PORTS.httpsPort
+        }),
         new UserModel(userDoc).save()
       ])
     })

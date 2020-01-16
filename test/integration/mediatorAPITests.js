@@ -103,7 +103,7 @@ describe('API Integration Tests', () => {
       await testUtils.setupTestUsers()
       await ChannelModelAPI.createIndexes()
       await MediatorModelAPI.createIndexes()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol })
     })
 
     after(async () => {

@@ -30,7 +30,7 @@ describe('API Integration Tests', () =>
     before(async () => {
       await Promise.all([
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort })
+        promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort, apiProtocol: constants.SERVER_PORTS.apiProtocol })
       ])
     })
 

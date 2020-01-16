@@ -66,7 +66,7 @@ describe('API Integration Tests', () => {
         newUser.save(),
         newUserExpired.save(),
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol })
       ])
     })
 

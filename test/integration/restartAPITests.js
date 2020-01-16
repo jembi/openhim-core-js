@@ -39,7 +39,7 @@ describe('API Integration Tests', () => {
       await Promise.all([
         testUtils.setupTestUsers(),
         channel.save(),
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol })
       ])
     })
 

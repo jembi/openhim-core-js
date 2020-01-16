@@ -230,7 +230,7 @@ describe('API Integration Tests', () => {
       await channel3.save()
       await channel4.save()
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol })
     })
 
     after(async () => {
