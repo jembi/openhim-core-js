@@ -42,7 +42,9 @@ The following config option are provided by the OpenHIM. All of these options ha
   },
   "api": {
     // The port that the OpenHIM API uses
-    "httpsPort": 8080,
+    "port": 8080,
+    // The protocol that the OpenHIM API uses
+    "protocol": "https",
     // API request are only valid for a particular window once made, this is
     // the size of that window in seconds
     "authWindowSeconds": 10,
