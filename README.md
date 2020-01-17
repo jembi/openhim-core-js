@@ -22,8 +22,8 @@ Last 2 versions of NodeJS LTS are supported
 
 | NodeJS (LTS) | MongoDB                    |
 | ------------ | -------------------------- |
-| 10.x         | >= 3.6 &#124;&#124; <= 4.0 |
-| 12.x         | >= 3.6 &#124;&#124; <= 4.0 |
+| 10.x         | >= 3.6 &#124;&#124; <= 4.2 |
+| 12.x         | >= 3.6 &#124;&#124; <= 4.2 |
 
 - [NodeJS Release Versions](https://github.com/nodejs/Release)
 - [MongoDB NodeJS Driver Versions](https://mongodb.github.io/node-mongodb-native/)
@@ -82,12 +82,6 @@ This project uses [mocha](https://mochajs.org/) as a unit testing framework with
 - `npm test -- --grep <regex>` - will only run tests with names matching the regex.
 - `npm test -- --inspect` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.
 - `npm test -- --bail` - exit on first test failure.
-
----
-
-## Deployments
-
-All commits to the `master` branch will automatically trigger a build of the latest changes into a docker image on dockerhub.
 
 ---
 
