@@ -317,6 +317,7 @@ describe('Auditing', () => {
     it('should send an audit event via UDP', async () => {
       config.auditing.auditEvents.interface = 'udp'
       config.auditing.auditEvents.port = constants.UDP_PORT
+      config.auditing.auditEvents.host = '127.0.0.1'
 
       await promisify(auditing.sendAuditEvent)(testString)
       // Needs to wait for event loop to catch up

@@ -456,6 +456,8 @@ export async function createMockTCPServer (onRequest = async data => data, port 
         throw err
       })
     })
+
+    socket.on('error', () => {})
   })
 
   server.close = promisify(server.close.bind(server))

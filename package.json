@@ -8,10 +8,10 @@
   },
   "license": "MPL-2.0",
   "engines": {
-    "node": ">=8.9 <9 || >=10.13 <10.15.1"
+    "node": ">= 10.13 < 11 || >= 12.14 < 13"
   },
   "spec": {
-    "nodeVersion": ">= 2:10.13.0, nodejs < 2:10.15.1",
+    "nodeVersion": ">= 2:10.13, nodejs < 13",
     "requires": [
       "nodejs"
     ],
@@ -28,9 +28,9 @@
     "migrate:metrics": "node lib/migrateMetrics.js",
     "lint": "standard src/ test/ bin/",
     "lint:fix": "standard --fix src/ test/ bin/",
-    "test": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 nyc mocha --timeout 10000 --exit --require @babel/register test/setupTest.js test/**/*.js",
+    "test": "export $(cat .env.test | xargs) && cross-env nyc mocha --timeout 10000 --exit --require @babel/register test/setupTest.js test/**/*.js",
     "test:unit": "cross-env NODE_ENV=test mocha --require @babel/register test/setupTest.js test/unit/**/*.js --watch",
-    "test:int": "cross-env NODE_ENV=test NODE_TLS_REJECT_UNAUTHORIZED=0 mocha --timeout 10000 --require @babel/register test/setupTest.js test/integration/**/*.js --watch",
+    "test:int": "export $(cat .env.test | xargs) && cross-env mocha --timeout 10000 --require @babel/register test/setupTest.js test/integration/**/*.js --watch",
     "test:replica:set": "./test/resources/replica-set-test/setup.sh",
     "test:replica:set:cleanup": "./test/resources/replica-set-test/tear-down.sh",
     "test:seed": "node performance/seed.js",
