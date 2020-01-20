@@ -184,8 +184,7 @@ describe('API Integration Tests', () => {
 
       it('should generate an \'audit log used\' audit when using non-basic representation', async () => {
         const result = await new AuditModel(auditData).save()
-        console.log(`Base url: ${BASE_URL}`)
-        
+
         await request(BASE_URL)
           .get('/audits?filterRepresentation=full')
           .set('auth-username', testUtils.rootUser.email)
