@@ -278,7 +278,7 @@ describe('API Integration Tests', () => {
         await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 2))
         const newAudits = await AuditModel.find()
         newAudits.length.should.eql(2)
-        const participantObjectID = `https://${router.externalHostname}:${api.port}/audits/${auditId}`
+        const participantObjectID = `${config.api.protocol}://${router.externalHostname}:${api.port}/audits/${auditId}`
 
         if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
           newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
