@@ -510,6 +510,27 @@ if (cluster.isMaster && !module.parent) {
     return deferred.promise
   }
 
+  function startApiHttpServer (apiPort, bindAddress, app) {
+    const deferred = defer()
+
+    apiServer = https.createServer()
+
+    apiServer.listen(apiPort, bindAddress, () => {
+      logger.info(`API HTTP listening on port ${apiPort}`)
+      return ensureRootUser(() => deferred.resolve())
+    })
+
+    // listen for server error
+    apiServer.on('error', err => logger.error(`An httpServer error occured: ${err}`))
+
+    // listen for client error
+    apiServer.on('clientError', err => logger.error(`An httpServer clientError occured: ${err}`))
+
+    apiServer.on('connection', socket => trackConnection(activeHttpConnections, socket))
+
+    return deferred.promise
+  }
+
   function startTCPServersAndHttpReceiver (tcpHttpReceiverPort, app) {
     const deferred = defer()
 
@@ -682,10 +703,7 @@ if (cluster.isMaster && !module.parent) {
       if (ports.apiPort && config.api.enabled) {
         config.api.protocol === 'https'
           ? koaApi.setupApp(app => promises.push(startApiServer(ports.apiPort, bindAddress, app)))
-          : koaApi.setupApp(app => {
-            apiServer = http.createServer(app.callback())
-            return promises.push(startHttpServer(ports.apiPort, bindAddress, apiServer))
-          })
+          : koaApi.setupApp(app => promises.push(startApiHttpServer(ports.apiPort, bindAddress, app)))
       }
 
       if (ports.rerunHttpPort) {
