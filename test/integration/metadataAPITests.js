@@ -77,7 +77,7 @@ describe('API Integration Tests', () => {
 
   describe('Metadata REST Api Testing', () => {
     before(async () => {
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol })
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
       await testUtils.setupTestUsers()
     })
 

@@ -12,7 +12,7 @@ describe('API Integration Tests', () =>
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol })
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
 
       authDetails = testUtils.getAuthDetails()
     })

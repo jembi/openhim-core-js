@@ -23,7 +23,7 @@ describe(`API Integration Tests`, () => {
 
       await Promise.all([
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort, apiProtocol: constants.SERVER_PORTS.apiProtocol }),
+        promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort }),
         connectionDefault.db.collection('log').deleteMany({}), 
       ])
 

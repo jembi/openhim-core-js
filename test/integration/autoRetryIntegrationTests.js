@@ -47,8 +47,7 @@ describe(`Auto Retry Integration Tests`, () => {
     config.rerun.httpPort = constants.SERVER_PORTS.rerunPort
     await promisify(server.start)({
       httpPort: constants.SERVER_PORTS.httpPort,
-      rerunHttpPort: constants.SERVER_PORTS.rerunPort,
-      apiProtocol: constants.SERVER_PORTS.apiProtocol
+      rerunHttpPort: constants.SERVER_PORTS.rerunPort
     })
   })
 

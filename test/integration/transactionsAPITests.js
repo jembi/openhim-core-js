@@ -173,7 +173,7 @@ describe('API Integration Tests', () => {
       new ChannelModel(channelDoc).save(),
       new ChannelModel(channel2Doc).save(),
       new ChannelModel(channel3Doc).save(),
-      promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol }),
+      promisify(server.start)({ apiPort: SERVER_PORTS.apiPort }),
       testUtils.setupTestUsers()
     ])
     channel = results[0]

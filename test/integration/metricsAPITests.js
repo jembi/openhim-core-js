@@ -51,7 +51,6 @@ describe('API Metrics Tests', () =>
         testUtils.setupTestUsers(),
         promisify(server.start)({
           apiPort: SERVER_PORTS.apiPort,
-          apiProtocol: SERVER_PORTS.apiProtocol,
           tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort
         })
       ])

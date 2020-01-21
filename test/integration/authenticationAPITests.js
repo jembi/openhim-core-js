@@ -25,7 +25,7 @@ describe('API Integration Tests', () => {
       await testUtils.setupTestUsers()
       authDetails = testUtils.getAuthDetails()
       const startPromise = promisify(server.start)
-      await startPromise({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol })
+      await startPromise({ apiPort: SERVER_PORTS.apiPort })
       await testUtils.setImmediatePromise()
       await AuditModel.deleteMany({})
     })

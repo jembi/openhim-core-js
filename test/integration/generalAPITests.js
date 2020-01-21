@@ -25,7 +25,6 @@ describe('API Integration Tests', () => {
       await Promise.all([
         promisify(server.start)({
           apiPort: SERVER_PORTS.apiPort,
-          apiProtocol: SERVER_PORTS.apiProtocol,
           httpsPort: SERVER_PORTS.httpsPort
         }),
         new UserModel(userDoc).save()

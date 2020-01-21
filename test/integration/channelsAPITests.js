@@ -66,7 +66,6 @@ describe('API Integration Tests', () => {
       await testUtils.setupTestUsers()
       await promisify(server.start)({
         apiPort: SERVER_PORTS.apiPort,
-        apiProtocol: SERVER_PORTS.apiProtocol,
         tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort,
         pollingPort: SERVER_PORTS.pollingPort
       })

@@ -72,7 +72,7 @@ describe('API Integration Tests', () => {
       await Promise.all([
         VisualizerModelAPI.deleteMany({}),
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, apiProtocol: SERVER_PORTS.apiProtocol })
+        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
       ])
     })
 
