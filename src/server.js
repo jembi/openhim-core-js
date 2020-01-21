@@ -490,7 +490,7 @@ if (cluster.isMaster && !module.parent) {
     })
   }
 
-  function startApiServer (apiPort, bindAddress, app) {
+  function startApiHttpsServer (apiPort, bindAddress, app) {
     const deferred = defer()
 
     // mutualTLS not applicable for the API - set false
@@ -702,7 +702,7 @@ if (cluster.isMaster && !module.parent) {
 
       if (ports.apiPort && config.api.enabled) {
         config.api.protocol === 'https'
-          ? koaApi.setupApp(app => promises.push(startApiServer(ports.apiPort, bindAddress, app)))
+          ? koaApi.setupApp(app => promises.push(startApiHttpsServer(ports.apiPort, bindAddress, app)))
           : koaApi.setupApp(app => promises.push(startApiHttpServer(ports.apiPort, bindAddress, app)))
       }
 
