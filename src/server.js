@@ -344,24 +344,25 @@ if (cluster.isMaster && !module.parent) {
     })
   }
 
-  function startHttpServer (httpPort, bindAddress, server) {
+  function startHttpServer (httpPort, bindAddress, app) {
     const deferred = defer()
+    httpServer = http.createServer(app.callback())
 
     // set the socket timeout
-    server.setTimeout(+config.router.timeout, () => logger.info('HTTP socket timeout reached'))
+    httpServer.setTimeout(+config.router.timeout, () => logger.info('HTTP socket timeout reached'))
 
-    server.listen(httpPort, bindAddress, () => {
+    httpServer.listen(httpPort, bindAddress, () => {
       logger.info(`HTTP listening on port ${httpPort}`)
       return deferred.resolve()
     })
 
     // listen for server error
-    server.on('error', err => logger.error(`An httpServer error occured: ${err}`))
+    httpServer.on('error', err => logger.error(`An httpServer error occured: ${err}`))
 
     // listen for client error
-    server.on('clientError', err => logger.error(`An httpServer clientError occured: ${err}`))
+    httpServer.on('clientError', err => logger.error(`An httpServer clientError occured: ${err}`))
 
-    server.on('connection', socket => trackConnection(activeHttpConnections, socket))
+    httpServer.on('connection', socket => trackConnection(activeHttpConnections, socket))
 
     return deferred.promise
   }
@@ -691,8 +692,7 @@ if (cluster.isMaster && !module.parent) {
       if (ports.httpPort || ports.httpsPort) {
         koaMiddleware.setupApp((app) => {
           if (ports.httpPort) {
-            httpServer = http.createServer(app.callback())
-            promises.push(startHttpServer(ports.httpPort, bindAddress, httpServer))
+            promises.push(startHttpServer(ports.httpPort, bindAddress, app))
           }
 
           if (ports.httpsPort) { promises.push(startHttpsServer(ports.httpsPort, bindAddress, app)) }
