@@ -11,7 +11,7 @@
     "node": ">= 10.13 < 11 || >= 12.14 < 13"
   },
   "spec": {
-    "nodeVersion": ">= 2:10.13, nodejs < 13",
+    "nodeVersion": ">= 2:12.14.0, nodejs < 2:13.0.0",
     "requires": [
       "nodejs"
     ],
