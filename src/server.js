@@ -514,7 +514,7 @@ if (cluster.isMaster && !module.parent) {
   function startApiHttpServer (apiPort, bindAddress, app) {
     const deferred = defer()
 
-    apiServer = https.createServer()
+    apiServer = http.createServer(app.callback())
 
     apiServer.listen(apiPort, bindAddress, () => {
       logger.info(`API HTTP listening on port ${apiPort}`)
