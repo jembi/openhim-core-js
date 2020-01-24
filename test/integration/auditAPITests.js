@@ -200,11 +200,11 @@ describe('API Integration Tests', () => {
         newAudits.length.should.be.exactly(2)
         if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
           newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
-          newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
+          newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly(`${config.api.protocol}://localhost:8080/audits/${result._id}`)
         } else {
           newAudits[1].eventIdentification.eventID.displayName === 'Audit Log Used'
           newAudits[1].participantObjectIdentification.length.should.be.exactly(1)
-          newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
+          newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly(`${config.api.protocol}://localhost:8080/audits/${result._id}`)
         }
       })
 
