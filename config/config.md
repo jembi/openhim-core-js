@@ -2,7 +2,7 @@
 
 The following config option are provided by the OpenHIM. All of these options have default values. You only need to provide config options if they differ from the defaults.
 
-```json
+```js
 {
   "bindAddress": "0.0.0.0",
   "mongo": {
