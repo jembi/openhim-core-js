@@ -34,6 +34,7 @@ import * as upgradeDB from './upgradeDB'
 import * as autoRetry from './autoRetry'
 import * as bodyCull from './bodyCull'
 import { config, appRoot, connectionAgenda } from './config'
+import * as constants from './constants'
 
 mongoose.Promise = Promise
 
@@ -863,7 +864,7 @@ if (cluster.isMaster && !module.parent) {
     ({
       httpPort: config.router.httpPort,
       httpsPort: config.router.httpsPort,
-      apiPort: config.api.port || 8080,
+      apiPort: config.api.port || constants.DEFAULT_API_PORT,
       rerunHttpPort: config.rerun.httpPort,
       tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort,
       pollingPort: config.polling.pollingPort,
