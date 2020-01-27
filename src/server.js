@@ -701,9 +701,9 @@ if (cluster.isMaster && !module.parent) {
       }
 
       if (ports.apiPort && config.api.enabled) {
-        config.api.protocol === 'https'
-          ? koaApi.setupApp(app => promises.push(startApiHttpsServer(ports.apiPort, bindAddress, app)))
-          : koaApi.setupApp(app => promises.push(startApiHttpServer(ports.apiPort, bindAddress, app)))
+        config.api.protocol === 'http'
+          ? koaApi.setupApp(app => promises.push(startApiHttpServer(ports.apiPort, bindAddress, app)))
+          : koaApi.setupApp(app => promises.push(startApiHttpsServer(ports.apiPort, bindAddress, app)))
       }
 
       if (ports.rerunHttpPort) {
@@ -863,7 +863,7 @@ if (cluster.isMaster && !module.parent) {
     ({
       httpPort: config.router.httpPort,
       httpsPort: config.router.httpsPort,
-      apiPort: config.api.port,
+      apiPort: config.api.port || 8080,
       rerunHttpPort: config.rerun.httpPort,
       tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort,
       pollingPort: config.polling.pollingPort,
