@@ -1,3 +1,5 @@
+import { config } from '../src/config'
+
 export const PORT_START = parseInt(process.env.TEST_PORT, 10) || 32000
 export const UDP_PORT = PORT_START + 1
 export const TCP_PORT = PORT_START + 2
@@ -23,7 +25,7 @@ export const SERVER_PORTS = Object.freeze({
   auditTcpPort: SERVER_PORT_START + 8
 })
 
-export const BASE_URL = `https://localhost:${SERVER_PORTS.apiPort}`
+export const BASE_URL = `${config.get('api').protocol}://localhost:${SERVER_PORTS.apiPort}`
 export const HTTP_BASE_URL = `http://localhost:${SERVER_PORTS.httpPort}`
 
 export const UPD_SOCKET_TYPE = 'udp4'

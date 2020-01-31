@@ -23,3 +23,4 @@ artillery
 coverage.lcov
 .nyc_output
 .data
+coverage/

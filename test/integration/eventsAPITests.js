@@ -135,7 +135,10 @@ describe('Events API Integration Tests', () => {
   })
 
   beforeEach(async () => {
-    await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort, apiPort: SERVER_PORTS.apiPort })
+    await promisify(server.start)({
+      httpPort: SERVER_PORTS.httpPort,
+      apiPort: SERVER_PORTS.apiPort
+    })
     authDetails = await testUtils.getAuthDetails()
     await EventModel.deleteMany({})
   })

@@ -49,7 +49,10 @@ describe('API Metrics Tests', () =>
         new ChannelModel(channel2Doc).save(),
         testUtils.setupMetricsTransactions(),
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort })
+        promisify(server.start)({
+          apiPort: SERVER_PORTS.apiPort,
+          tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort
+        })
       ])
     })
 

@@ -64,7 +64,11 @@ describe('API Integration Tests', () => {
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort, pollingPort: SERVER_PORTS.pollingPort })
+      await promisify(server.start)({
+        apiPort: SERVER_PORTS.apiPort,
+        tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort,
+        pollingPort: SERVER_PORTS.pollingPort
+      })
       authDetails = await testUtils.getAuthDetails()
       await Promise.all([
         TransactionModelAPI.deleteMany({}),

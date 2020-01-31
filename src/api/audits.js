@@ -32,7 +32,7 @@ function getProjectionObject (filterRepresentation) {
 // Audit the audit record retrieval
 function auditLogUsed (auditId, outcome, user) {
   const groups = user.groups.join(',')
-  const uri = `https://${config.router.externalHostname}:${config.api.httpsPort}/audits/${auditId}`
+  const uri = `${config.api.protocol}://${config.router.externalHostname}:${config.api.port}/audits/${auditId}`
   let audit = atna.construct.auditLogUsedAudit(outcome, himSourceID, os.hostname(), user.email, groups, groups, uri)
   audit = atna.construct.wrapInSyslog(audit)
   return auditing.sendAuditEvent(audit, () => logger.debug(`Processed audit log used message for user '${user.email}' and audit '${auditId}'`))
