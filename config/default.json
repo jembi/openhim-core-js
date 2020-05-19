@@ -65,7 +65,7 @@
     "enableBasicAuthentication": true,
     "enableCustomTokenAuthentication": false,
     "enableJWTAuthentication": false,
-    "jwtSecretOrPublicKey": "",
+    "jwtSecretOrPrivateKey": "",
     "jwtAlgorithms": [],
     "jwtAudience": [],
     "jwtIssuer": ""
