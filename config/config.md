@@ -99,7 +99,19 @@ The following config option are provided by the OpenHIM. All of these options ha
   "authentication": {
     // What kind of authentication methods to allow
     "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": true
+    "enableBasicAuthentication": true,
+    "enableCustomTokenAuthentication": false,
+    "enableJWTAuthentication": false,
+    // The secret or public key used by the encryption algorithm in signing the token
+    "jwtSecretOrPublicKey": "",
+    // The algorithm used to sign the token. i.e. HS256, RS256, ES384, etc
+    "jwtAlgorithms": [],
+    // The JWT Audience (aud) is a registered claim field in the payload.
+    // It identifies the intended recipients of the JWT. These values are usually case sensitive strings.
+    "jwtAudience": [],
+    // The JWT Issuer (iss) is a registered claim field in the payload.
+    // It identifiers the principal JWT issuer. This value is a case sensitive string.
+    "jwtIssuer": ""
   },
   "email": {
     // The address to use in the "from" field of the emails
