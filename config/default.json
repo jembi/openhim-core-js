@@ -62,7 +62,13 @@
   },
   "authentication": {
     "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": true
+    "enableBasicAuthentication": true,
+    "enableCustomTokenAuthentication": false,
+    "enableJWTAuthentication": false,
+    "jwtSecretOrPrivateKey": "",
+    "jwtAlgorithms": [],
+    "jwtAudience": [],
+    "jwtIssuer": ""
   },
   "email": {
     "fromAddress": "address@example.com",
