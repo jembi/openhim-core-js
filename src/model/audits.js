@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose'
+
 import { connectionATNA } from '../config'
 
 const codeTypeDef = {

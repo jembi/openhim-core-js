@@ -10,7 +10,6 @@ import https from 'https'
 import serveStatic from 'serve-static'
 import finalhandler from 'finalhandler'
 import sinon from 'sinon'
-import uriFormat from 'mongodb-uri'
 import * as crypto from 'crypto'
 
 import * as constants from './constants'

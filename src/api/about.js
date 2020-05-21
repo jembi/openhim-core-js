@@ -1,4 +1,5 @@
 import logger from 'winston'
+
 import * as utils from '../utils'
 import { version as currentCoreVersion } from '../../package.json'
 

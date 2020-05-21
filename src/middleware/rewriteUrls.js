@@ -1,9 +1,10 @@
 import url from 'url'
 import winston from 'winston'
-import * as utils from '../utils'
-import * as router from '../middleware/router'
-import { config } from '../config'
 import { promisify } from 'util'
+
+import * as router from '../middleware/router'
+import * as utils from '../utils'
+import { config } from '../config'
 
 const routerConf = config.get('router')
 

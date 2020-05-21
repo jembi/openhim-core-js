@@ -1,5 +1,3 @@
-import { config } from '../config'
-
 export function setupProxyHeaders (ctx) {
   // Headers
   function setOrAppendHeader (ctx, header, value) {

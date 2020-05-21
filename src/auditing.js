@@ -1,12 +1,12 @@
+import dgram from 'dgram'
 import logger from 'winston'
+import net from 'net'
+import tls from 'tls'
 import { Parse as syslogParser } from 'glossy'
 import { parseString } from 'xml2js'
-import dgram from 'dgram'
-import tls from 'tls'
-import net from 'net'
 
-import { AuditModel, AuditMetaModel } from './model/audits'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
+import { AuditMetaModel, AuditModel } from './model/audits'
 import { config } from './config'
 
 config.auditing = config.get('auditing')

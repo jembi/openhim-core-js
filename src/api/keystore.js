@@ -1,9 +1,10 @@
 import pem from 'pem'
-import { KeystoreModelAPI } from '../model/keystore'
+import { promisify } from 'util'
+
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { KeystoreModelAPI } from '../model/keystore'
 import { config } from '../config'
-import { promisify } from 'util'
 
 config.certificateManagement = config.get('certificateManagement')
 

@@ -1,7 +1,8 @@
 import logger from 'winston'
-import { VisualizerModelAPI } from '../model/visualizer'
+
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { VisualizerModelAPI } from '../model/visualizer'
 
 // Endpoint that returns all visualizers
 export async function getVisualizers (ctx) {

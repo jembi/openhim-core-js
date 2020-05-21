@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose'
+
 import { connectionAPI } from '../config'
 
 export const METRIC_TYPE_MINUTE = 'm'

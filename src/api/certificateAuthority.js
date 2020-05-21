@@ -1,8 +1,9 @@
 import logger from 'winston'
 import pem from 'pem'
-import { KeystoreModelAPI } from '../model/keystore'
-import * as utils from '../utils'
+
 import * as authorisation from './authorisation'
+import * as utils from '../utils'
+import { KeystoreModelAPI } from '../model/keystore'
 import { promisify } from 'util'
 
 const readCertificateInfo = promisify(pem.readCertificateInfo)

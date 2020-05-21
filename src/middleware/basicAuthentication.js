@@ -1,10 +1,10 @@
 import auth from 'basic-auth'
-import logger from 'winston'
-import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
-import { ClientModel } from '../model/clients'
-import { config } from '../config'
+import crypto from 'crypto'
+import logger from 'winston'
 import { promisify } from 'util'
+
+import { ClientModel } from '../model/clients'
 
 const bcryptCompare = (pass, client, callback) => bcrypt.compare(pass, client.passwordHash, callback)
 

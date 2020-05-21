@@ -1,5 +1,6 @@
 import mongoose from 'mongoose'
 import uriFormat from 'mongodb-uri'
+
 import { config } from './'
 
 config.mongo = config.get('mongo')

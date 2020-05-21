@@ -1,6 +1,7 @@
 import logger from 'winston'
 import nodemailer from 'nodemailer'
 import request from 'request'
+
 import { config } from './config'
 
 config.email = config.get('email')

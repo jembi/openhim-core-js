@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose'
+
 import { connectionAPI, connectionDefault } from '../config'
 
 const AutoRetrySchema = new Schema({

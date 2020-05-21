@@ -1,9 +1,10 @@
 import logger from 'winston'
-import { ContactGroupModelAPI } from '../model/contactGroups'
-import * as authorisation from './authorisation'
-import { ChannelModelAPI } from '../model/channels'
 
+import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { ChannelModelAPI } from '../model/channels'
+import { ContactGroupModelAPI } from '../model/contactGroups'
+
 
 export async function addContactGroup (ctx) {
   // Must be admin

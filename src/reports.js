@@ -2,12 +2,13 @@ import Handlebars from 'handlebars'
 import fs from 'fs'
 import logger from 'winston'
 import moment from 'moment'
+
 import * as authorisation from './api/authorisation'
-import { config, appRoot } from './config'
 import * as contact from './contact'
 import * as metrics from './metrics'
-import { UserModel } from './model/users'
 import * as utils from './utils'
+import { UserModel } from './model/users'
+import { appRoot, config } from './config'
 
 config.reports = config.get('reports')
 

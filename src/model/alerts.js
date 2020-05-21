@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose'
+
 import { connectionAPI, connectionDefault } from '../config'
 
 // A collection for keeping a day-long log of any alerts that got sent out to users

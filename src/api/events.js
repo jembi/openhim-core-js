@@ -1,6 +1,6 @@
-import { EventModelAPI } from '../model/events'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { EventModelAPI } from '../model/events'
 
 export async function getLatestEvents (ctx, receivedTime) {
   if (!authorisation.inGroup('admin', ctx.authenticated)) {

@@ -1,7 +1,7 @@
-import nconf from 'nconf'
-import path from 'path'
 import fs from 'fs'
 import logger from 'winston'
+import nconf from 'nconf'
+import path from 'path'
 
 export const appRoot = path.resolve(__dirname, '../..')
 

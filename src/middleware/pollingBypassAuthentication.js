@@ -1,6 +1,6 @@
-import { ClientModel } from '../model/clients'
-import { config } from '../config'
 import { promisify } from 'util'
+
+import { ClientModel } from '../model/clients'
 
 const dummyClient = new ClientModel({
   clientID: 'DUMMY-POLLING-USER',

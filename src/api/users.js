@@ -1,15 +1,16 @@
+import atna from 'atna-audit'
+import crypto from 'crypto'
 import logger from 'winston'
 import moment from 'moment'
-import atna from 'atna-audit'
 import os from 'os'
-import { UserModelAPI } from '../model/users'
+import { promisify } from 'util'
+
+import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as contact from '../contact'
-import { config } from '../config'
 import * as utils from '../utils'
-import * as auditing from '../auditing'
-import crypto from 'crypto'
-import { promisify } from 'util'
+import { UserModelAPI } from '../model/users'
+import { config } from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
 config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')

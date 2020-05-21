@@ -1,6 +1,7 @@
 import { Schema } from 'mongoose'
-import { connectionAPI, connectionDefault } from '../config'
+
 import * as events from './events'
+import { connectionAPI, connectionDefault } from '../config'
 
 const EventLinkDef = {
   eventType: {

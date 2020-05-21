@@ -1,8 +1,9 @@
-import { Schema } from 'mongoose'
-import { connectionAPI, connectionDefault } from '../config'
-import { ContactUserDef } from './contactGroups'
 import patchHistory from 'mongoose-patch-history'
+import { Schema } from 'mongoose'
 import { camelize, pascalize } from 'humps'
+
+import { ContactUserDef } from './contactGroups'
+import { connectionAPI, connectionDefault } from '../config'
 
 const RouteDef = {
   name: {

@@ -1,7 +1,8 @@
 import http from 'http'
+import logger from 'winston'
 import net from 'net'
 import tls from 'tls'
-import logger from 'winston'
+
 import * as Channels from './model/channels'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
 import { config } from './config'

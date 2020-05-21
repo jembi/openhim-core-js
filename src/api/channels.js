@@ -1,13 +1,14 @@
 import logger from 'winston'
 import request from 'request'
+
 import * as Channels from '../model/channels'
-import { TransactionModelAPI } from '../model/transactions'
 import * as authorisation from './authorisation'
-import * as tcpAdapter from '../tcpAdapter'
-import * as server from '../server'
 import * as polling from '../polling'
 import * as routerMiddleware from '../middleware/router'
+import * as server from '../server'
+import * as tcpAdapter from '../tcpAdapter'
 import * as utils from '../utils'
+import { TransactionModelAPI } from '../model/transactions'
 import { config } from '../config'
 
 const { ChannelModel } = Channels

@@ -1,6 +1,7 @@
-import logger from 'winston'
 import atna from 'atna-audit'
+import logger from 'winston'
 import os from 'os'
+
 import * as auditing from '../auditing'
 import { config } from '../config'
 import { promisify } from 'util'

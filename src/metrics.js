@@ -1,5 +1,6 @@
-import { METRIC_TYPE_MINUTE, METRIC_TYPE_HOUR, METRIC_TYPE_DAY, MetricModel } from './model'
 import moment from 'moment'
+
+import { METRIC_TYPE_DAY, METRIC_TYPE_HOUR, METRIC_TYPE_MINUTE, MetricModel } from './model'
 
 const TRANSACTION_STATUS_KEYS = {
   Processing: 'processing',

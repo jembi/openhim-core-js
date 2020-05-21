@@ -1,11 +1,12 @@
 import logger from 'winston'
+import { promisify } from 'util'
+
+import { AutoRetryModelAPI } from '../model/autoRetry'
 import { TaskModelAPI } from '../model/tasks'
 import { TransactionModelAPI } from '../model/transactions'
-import { AutoRetryModelAPI } from '../model/autoRetry'
 import * as Channels from '../model/channels'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import { promisify } from 'util'
 
 const { ChannelModelAPI } = Channels
 

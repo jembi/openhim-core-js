@@ -1,8 +1,9 @@
 import logger from 'winston'
 import moment from 'moment'
+
+import * as Channels from './model/channels'
 import { AutoRetryModel } from './model/autoRetry'
 import { TaskModel } from './model/tasks'
-import * as Channels from './model/channels'
 
 const { ChannelModel } = Channels
 
