@@ -102,8 +102,8 @@ The following config option are provided by the OpenHIM. All of these options ha
     "enableBasicAuthentication": true,
     "enableCustomTokenAuthentication": false,
     "enableJWTAuthentication": false,
-    // The secret or private key used by the encryption algorithm in signing the token
-    "jwtSecretOrPrivateKey": "",
+    // The secret or public key used by the encryption algorithm in signing the token
+    "jwtSecretOrPublicKey": "",
     // The algorithm used to sign the token. i.e. HS256, RS256, ES384, etc
     "jwtAlgorithms": [],
     // The JWT Audience (aud) is a registered claim field in the payload.
