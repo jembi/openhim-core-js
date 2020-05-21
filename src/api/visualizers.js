@@ -56,7 +56,7 @@ export async function addVisualizer (ctx) {
 
     ctx.body = 'Visualizer successfully created'
     ctx.status = 201
-    logger.info('User %s created visualizer with id %s', ctx.authenticated.email, visualizer.id)
+    logger.info(`User ${ctx.authenticated.email} created visualizer with id ${visualizer.id}`)
   } catch (err) {
     utils.logAndSetResponse(ctx, 500, `Could not add visualizer via the API: ${err}`, 'error')
   }

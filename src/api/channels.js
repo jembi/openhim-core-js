@@ -164,7 +164,7 @@ export async function addChannel (ctx) {
     // All ok! So set the result
     ctx.body = 'Channel successfully created'
     ctx.status = 201
-    logger.info('User %s created channel with id %s', ctx.authenticated.email, channel.id)
+    logger.info(`User ${ctx.authenticated.email} created channel with id ${channel.id}`)
 
     channelData._id = channel._id
     processPostAddTriggers(channelData)
@@ -352,7 +352,7 @@ export async function updateChannel (ctx, channelId) {
 
     // All ok! So set the result
     ctx.body = 'The channel was successfully updated'
-    logger.info('User %s updated channel with id %s', ctx.authenticated.email, id)
+    logger.info(`User ${ctx.authenticated.email} updated channel with id ${id}`)
 
     return processPostUpdateTriggers(channel)
   } catch (err) {

@@ -44,7 +44,7 @@ export function authenticateUser (ctx, done) {
           if (err) { return done(err) }
 
           if (res) {
-            logger.info(`${user.name} is authenticated.`)
+            logger.info(`Client (${client.name}) is Authenticated.`)
             ctx.authenticated = client
             ctx.authenticationType = 'basic'
             return done(null, client)
