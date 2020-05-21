@@ -36,6 +36,11 @@ async function rawBodyReader (ctx, next) {
 export function setupApp (done) {
   const app = new Koa()
 
+  // JWT authentication middleware
+  if (config.authentication.enableJWTAuthentication) {
+    app.use(jwtAuthentication.koaMiddleware)
+  }
+
   // Basic authentication middleware
   if (config.authentication.enableBasicAuthentication) {
     app.use(basicAuthentication.koaMiddleware)
