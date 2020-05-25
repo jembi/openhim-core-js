@@ -106,11 +106,11 @@ The following config option are provided by the OpenHIM. All of these options ha
     "jwt": {
       // The secret or public key used by the encryption algorithm in signing the token
       "secretOrPublicKey": "",
-    // The algorithm used to sign the token. i.e. HS256, RS256, ES384, etc
-      "algorithms": [],
+    // The algorithm used to sign the token. i.e. HS256, RS256, ES256, PS256, etc
+      "algorithms": "",
     // The JWT Audience (aud) is a registered claim field in the payload.
     // It identifies the intended recipients of the JWT. These values are usually case sensitive strings.
-      "audience": [],
+      "audience": "",
     // The JWT Issuer (iss) is a registered claim field in the payload.
     // It identifiers the principal JWT issuer. This value is a case sensitive string.
       "issuer": ""

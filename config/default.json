@@ -67,8 +67,8 @@
     "enableJWTAuthentication": true,
     "jwt": {
       "secretOrPublicKey": "",
-      "algorithms": [],
-      "audience": [],
+      "algorithms": "",
+      "audience": "",
       "issuer": ""
     }
   },
