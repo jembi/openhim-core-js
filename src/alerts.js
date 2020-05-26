@@ -1,6 +1,6 @@
+import _ from 'lodash'
 import logger from 'winston'
 import moment from 'moment'
-import _ from 'lodash'
 
 import * as Channels from './model/channels'
 import * as contact from './contact'

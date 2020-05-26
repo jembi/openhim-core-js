@@ -1,12 +1,12 @@
 'use strict'
 
+import fs from 'fs'
 import jwt from 'jsonwebtoken'
 import logger from 'winston'
+import path from 'path'
 
 import * as client from '../model/clients'
 import * as configIndex from '../config'
-import fs from 'fs'
-import path from 'path'
 
 const TOKEN_PATTERN = /^ *(?:[Bb][Ee][Aa][Rr][Ee][Rr]) +([A-Za-z0-9\-._~+/]+=*) *$/
 

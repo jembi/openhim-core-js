@@ -1,10 +1,10 @@
 import logger from 'winston'
 import xpath from 'xpath'
 import { DOMParser as Dom } from 'xmldom'
-
-import * as utils from '../utils'
-import * as Channels from '../model/channels'
 import { promisify } from 'util'
+
+import * as Channels from '../model/channels'
+import * as utils from '../utils'
 
 function matchContent (channel, ctx) {
   if (channel.matchContentRegex) {

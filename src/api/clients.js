@@ -1,9 +1,9 @@
 import logger from 'winston'
 
-import { ChannelModelAPI } from '../model/channels'
-import { ClientModelAPI } from '../model/clients'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { ChannelModelAPI } from '../model/channels'
+import { ClientModelAPI } from '../model/clients'
 
 /*
  * Adds a client
