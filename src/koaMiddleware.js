@@ -34,31 +34,25 @@ async function rawBodyReader(ctx, next) {
 }
 
 // Primary app
-
 export function setupApp(done) {
   const app = new Koa()
 
-  // JWT authentication middleware
   if (config.authentication.enableJWTAuthentication) {
     app.use(jwtAuthentication.koaMiddleware)
   }
 
-  // Basic authentication middleware
   if (config.authentication.enableBasicAuthentication) {
     app.use(basicAuthentication.koaMiddleware)
   }
 
-  // TLS authentication middleware
   if (config.authentication.enableMutualTLSAuthentication) {
     app.use(tlsAuthentication.koaMiddleware)
   }
 
   app.use(rawBodyReader)
 
-  // Request Matching middleware
   app.use(requestMatching.koaMiddleware)
 
-  // Authorisation middleware
   app.use(authorisation.koaMiddleware)
 
   // Compress response on exit
@@ -69,19 +63,14 @@ export function setupApp(done) {
     })
   )
 
-  // Proxy
   app.use(proxy.koaMiddleware)
 
-  // Persist message middleware
   app.use(messageStore.koaMiddleware)
 
-  // URL rewriting middleware
   app.use(rewrite.koaMiddleware)
 
-  // Events
   app.use(events.koaMiddleware)
 
-  // Call router
   app.use(router.koaMiddleware)
 
   return done(app)
@@ -93,25 +82,18 @@ export function rerunApp(done) {
 
   app.use(rawBodyReader)
 
-  // Rerun bypass authentication middleware
   app.use(rerunBypassAuthentication.koaMiddleware)
 
-  // Rerun bypass authorisation middleware
   app.use(rerunBypassAuthorisation.koaMiddleware)
 
-  // Update original transaction with rerun transaction ID
   app.use(rerunUpdateTransactionTask.koaMiddleware)
 
-  // Persist message middleware
   app.use(messageStore.koaMiddleware)
 
-  // Authorisation middleware
   app.use(authorisation.koaMiddleware)
 
-  // Events
   app.use(events.koaMiddleware)
 
-  // Call router
   app.use(router.koaMiddleware)
 
   return done(app)
@@ -124,19 +106,14 @@ export function tcpApp(done) {
   app.use(rawBodyReader)
   app.use(retrieveTCPTransaction.koaMiddleware)
 
-  // TCP bypass authentication middleware
   app.use(tcpBypassAuthentication.koaMiddleware)
 
-  // Proxy
   app.use(proxy.koaMiddleware)
 
-  // Persist message middleware
   app.use(messageStore.koaMiddleware)
 
-  // Events
   app.use(events.koaMiddleware)
 
-  // Call router
   app.use(router.koaMiddleware)
 
   return done(app)
@@ -148,19 +125,14 @@ export function pollingApp(done) {
 
   app.use(rawBodyReader)
 
-  // Polling bypass authentication middleware
   app.use(pollingBypassAuthentication.koaMiddleware)
 
-  // Polling bypass authorisation middleware
   app.use(pollingBypassAuthorisation.koaMiddleware)
 
-  // Persist message middleware
   app.use(messageStore.koaMiddleware)
 
-  // Events
   app.use(events.koaMiddleware)
 
-  // Call router
   app.use(router.koaMiddleware)
 
   return done(app)
