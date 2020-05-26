@@ -2,13 +2,14 @@
 /* eslint no-unused-expressions:0 */
 
 import fs from 'fs'
+import should from 'should'
+import { promisify } from 'util'
+
+import * as testUtils from '../utils'
 import * as tlsAuthentication from '../../src/middleware/tlsAuthentication'
 import { ClientModel } from '../../src/model/clients'
-import * as testUtils from '../utils'
 import { KeystoreModel } from '../../src/model/keystore'
 import { config } from '../../src/config'
-import { promisify } from 'util'
-import should from 'should'
 
 describe('tlsAuthentication', () => {
   const originalTlsClientLookup = config.tlsClientLookup

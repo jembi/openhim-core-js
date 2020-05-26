@@ -7,9 +7,9 @@ import logger from 'winston'
 import should from 'should'
 import sinon from 'sinon'
 
-import * as jwtAuthentication from '../../src/middleware/jwtAuthentication'
 import * as configIndex from '../../src/config'
 import * as client from '../../src/model/clients'
+import * as jwtAuthentication from '../../src/middleware/jwtAuthentication'
 
 describe('JWT Authorisation Test', () => {
   describe('koa middleware', () => {

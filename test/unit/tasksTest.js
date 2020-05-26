@@ -1,14 +1,14 @@
 /* eslint-env mocha */
-import { TransactionModel, TaskModel, ChannelModel } from '../../src/model'
+
+import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as tasks from '../../src/tasks'
 import * as testUtils from '../utils'
-import { promisify } from 'util'
-import * as constants from '../constants'
+import { ChannelModel, TaskModel, TransactionModel } from '../../src/model'
 import { config } from '../../src/config'
-import sinon from 'sinon'
-import {ObjectId} from 'mongodb'
-
-// const {ObjectId} = require('mongoose').Types
 
 if (config.rerun == null) {
   config.rerun = config.get('rerun')
@@ -181,7 +181,7 @@ describe('Rerun Task Tests', () => {
       server = await testUtils.createMockHttpServer(spy)
 
       const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { method: 'POST' })
-      const transaction = { request: { method: 'POST', body: 'Hello  Post' } }
+      const transaction = { request: { method: 'POST', body: 'Hello Post' } }
       const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
 
       response.body.should.eql(transaction.request.body) // The spy just sends back the data

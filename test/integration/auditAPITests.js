@@ -3,12 +3,13 @@
 
 import should from 'should'
 import request from 'supertest'
-import * as server from '../../src/server'
-import { AuditModel, AuditMetaModel } from '../../src/model'
-import * as testUtils from '../utils'
-import { SERVER_PORTS, BASE_URL } from '../constants'
-import { config } from '../../src/config'
 import { promisify } from 'util'
+
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { AuditMetaModel, AuditModel } from '../../src/model'
+import { BASE_URL, SERVER_PORTS } from '../constants'
+import { config } from '../../src/config'
 
 describe('API Integration Tests', () => {
   const router = config.get('router')

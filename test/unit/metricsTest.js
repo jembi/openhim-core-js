@@ -1,9 +1,11 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
+
 import should from 'should'
-import { MetricModel } from '../../src/model'
-import * as metrics from '../../src/metrics'
 import { ObjectId } from 'mongodb'
+
+import * as metrics from '../../src/metrics'
+import { MetricModel } from '../../src/model'
 
 describe('recordTransactionMetrics', () => {
   beforeEach(async () => {

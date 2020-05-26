@@ -1,13 +1,14 @@
 /* eslint-env mocha */
 
-import request from 'supertest'
 import fs from 'fs'
-import * as testUtils from '../utils'
+import request from 'supertest'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
+import * as testUtils from '../utils'
 import { KeystoreModelAPI } from '../../src/model/keystore'
 import { config } from '../../src/config'
-import * as constants from '../constants'
-import { promisify } from 'util'
 
 describe('API Integration Tests', () => {
   const ORIGINAL_CERTIFICATE_MANAGEMENT = config.certificateManagement

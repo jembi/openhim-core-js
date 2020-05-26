@@ -3,13 +3,14 @@
 
 import should from 'should'
 import request from 'supertest'
-import { ContactGroupModelAPI } from '../../src/model/contactGroups'
-import { ChannelModelAPI } from '../../src/model/channels'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { promisify } from 'util'
-import * as constants from '../constants'
-import {ObjectId} from 'mongodb'
+import { ChannelModelAPI } from '../../src/model/channels'
+import { ContactGroupModelAPI } from '../../src/model/contactGroups'
 
 const { SERVER_PORTS } = constants
 

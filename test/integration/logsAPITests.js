@@ -1,13 +1,13 @@
 /* eslint-env mocha */
 
-import request from 'supertest'
 import moment from 'moment'
+import request from 'supertest'
 import { promisify } from 'util'
-import { connectionDefault  } from '../../src/config/connection'
 
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import * as constants from '../constants'
+import { connectionDefault } from '../../src/config/connection'
 
 describe(`API Integration Tests`, () => {
   describe(`Log REST API`, () => {
@@ -24,7 +24,7 @@ describe(`API Integration Tests`, () => {
       await Promise.all([
         testUtils.setupTestUsers(),
         promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort }),
-        connectionDefault.db.collection('log').deleteMany({}), 
+        connectionDefault.db.collection('log').deleteMany({}),
       ])
 
       const timestamp = moment(beforeTS)

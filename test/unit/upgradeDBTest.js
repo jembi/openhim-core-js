@@ -2,12 +2,13 @@
 
 import sinon from 'sinon'
 import should from 'should'
-import * as upgradeDB from '../../src/upgradeDB'
+
 import * as testUtils from '../utils'
+import * as upgradeDB from '../../src/upgradeDB'
 import {
-  KeystoreModel,
   ClientModel,
   DbVersionModel,
+  KeystoreModel,
   UserModel,
   VisualizerModel
 } from '../../src/model'

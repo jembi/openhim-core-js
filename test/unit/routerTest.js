@@ -3,11 +3,12 @@
 
 import fs from 'fs'
 import sinon from 'sinon'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as router from '../../src/middleware/router'
 import * as testUtils from '../utils'
-import { KeystoreModel, CertificateModel } from '../../src/model'
-import * as constants from '../constants'
-import { promisify } from 'util'
+import { CertificateModel, KeystoreModel } from '../../src/model'
 
 const DEFAULT_CHANNEL = Object.freeze({
   name: 'Mock endpoint',

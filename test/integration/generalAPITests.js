@@ -1,11 +1,12 @@
 /* eslint-env mocha */
 
-import request from 'supertest'
 import crypto from 'crypto'
+import request from 'supertest'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import { UserModel } from '../../src/model'
-import { promisify } from 'util'
-import * as constants from '../constants'
 
 const { SERVER_PORTS } = constants
 

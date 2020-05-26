@@ -1,21 +1,22 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import request from 'supertest'
-import sinon from 'sinon'
 import mongoose from 'mongoose'
+import request from 'supertest'
+import should from 'should'
+import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as polling from '../../src/polling'
 import * as server from '../../src/server'
 import * as tcpAdapter from '../../src/tcpAdapter'
-import * as polling from '../../src/polling'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { TransactionModelAPI } from '../../src/model/transactions'
 import * as testUtils from '../utils'
-import { promisify } from 'util'
-import * as constants from '../constants'
-import should from 'should'
-import { ObjectId } from 'mongodb'
-import { config } from '../../src/config'
+import { ChannelModelAPI } from '../../src/model/channels'
 import { ClientModelAPI } from '../../src/model/clients'
+import { TransactionModelAPI } from '../../src/model/transactions'
+import { config } from '../../src/config'
 
 const { SERVER_PORTS } = constants
 let sandbox = sinon.createSandbox()

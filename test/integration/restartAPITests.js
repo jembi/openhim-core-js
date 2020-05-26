@@ -1,14 +1,15 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import sinon from 'sinon'
 import request from 'supertest'
-import { ChannelModelAPI } from '../../src/model/channels'
+import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { promisify } from 'util'
-import {ObjectId} from 'mongodb'
+import { ChannelModelAPI } from '../../src/model/channels'
 
 describe('API Integration Tests', () => {
   const { SERVER_PORTS } = constants

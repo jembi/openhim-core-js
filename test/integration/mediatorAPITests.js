@@ -1,17 +1,18 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
-import request from 'supertest'
-import { TransactionModelAPI } from '../../src/model/transactions'
 import nconf from 'nconf'
-import { ClientModelAPI } from '../../src/model/clients'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { MediatorModelAPI } from '../../src/model/mediators'
-import * as testUtils from '../utils'
-import * as constants from '../constants'
-import { promisify } from 'util'
+import request from 'supertest'
+import should from 'should'
 import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as testUtils from '../utils'
+import { ChannelModelAPI } from '../../src/model/channels'
+import { ClientModelAPI } from '../../src/model/clients'
+import { MediatorModelAPI } from '../../src/model/mediators'
+import { TransactionModelAPI } from '../../src/model/transactions'
 import { config } from '../../src/config'
 
 describe('API Integration Tests', () => {

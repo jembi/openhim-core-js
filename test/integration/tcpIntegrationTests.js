@@ -1,16 +1,16 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should' // eslint-disable-line no-unused-vars
 import fs from 'fs'
-import sinon from 'sinon'
-import { ChannelModel, CertificateModel, TransactionModel } from '../../src/model'
-import * as testUtils from '../utils'
-import { config } from '../../src/config'
-import * as constants from '../constants'
-import { promisify } from 'util'
 import nconf from 'nconf'
+import sinon from 'sinon'
 import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as testUtils from '../utils'
+import { CertificateModel, ChannelModel, TransactionModel } from '../../src/model'
+import { config } from '../../src/config'
 
 const { SERVER_PORTS } = constants
 

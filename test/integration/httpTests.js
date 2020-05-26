@@ -1,15 +1,16 @@
 /* eslint-env mocha */
 
-import request from 'supertest'
 import nconf from 'nconf'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { ClientModelAPI } from '../../src/model/clients'
-import * as testUtils from '../utils'
+import request from 'supertest'
 import { ObjectId } from 'mongodb'
-import { config } from '../../src/config'
 import { promisify } from 'util'
+
 import * as constants from '../constants'
 import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { ChannelModelAPI } from '../../src/model/channels'
+import { ClientModelAPI } from '../../src/model/clients'
+import { config } from '../../src/config'
 
 const { SERVER_PORTS } = constants
 nconf.set('router', { httpPort: SERVER_PORTS.httpPort })

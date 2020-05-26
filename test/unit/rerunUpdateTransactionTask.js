@@ -1,24 +1,26 @@
 /* eslint-env mocha */
 
 import should from 'should'
-import * as rerunUpdateTransactionTask from '../../src/middleware/rerunUpdateTransactionTask'
-import { TransactionModel } from '../../src/model/transactions'
-import { TaskModel } from '../../src/model/tasks'
+import mongoose from 'mongoose'
 
-const { ObjectId } = require('mongoose').Types
+import * as rerunUpdateTransactionTask from '../../src/middleware/rerunUpdateTransactionTask'
+import { TaskModel } from '../../src/model/tasks'
+import { TransactionModel } from '../../src/model/transactions'
+
+const { ObjectId } = mongoose.Types
 
 const ctx = {
   parentID: '53e096fea0af3105689acd6a',
   transactionId: '53e34b955d0180cf6eef2d03',
   taskID: '53e34b915d0180cf6eef2d01',
-  transactionStatus: 'Successfull'
+  transactionStatus: 'Successful'
 }
 
 const ctx2 = {
   parentID: '53e096fea0af3105689acd6b',
   transactionId: '53e34b955d0180cf6eef2d03',
   taskID: '53e34b915d0180cf6eef2d01',
-  transactionStatus: 'Successfull'
+  transactionStatus: 'Successful'
 }
 
 const ctx3 =
@@ -200,7 +202,7 @@ describe('rerunUpdateTransactionTask middleware', () => {
         task.should.have.property('remainingTransactions', 2)
         task.transactions[0].tid.should.be.eql('53e096fea0af3105689acd6a')
         task.transactions[0].rerunID.should.be.eql('53e34b955d0180cf6eef2d03')
-        task.transactions[0].rerunStatus.should.be.eql('Successfull')
+        task.transactions[0].rerunStatus.should.be.eql('Successful')
         return done()
       })
     })

@@ -1,9 +1,10 @@
 /* eslint-env mocha */
 
+import { ObjectId } from 'mongodb'
+
 import * as authorisation from '../../src/api/authorisation'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { UserModelAPI } from '../../src/model/users'
-import {ObjectId} from 'mongodb'
 
 describe('API authorisation test', () => {
   const user = new UserModelAPI({

@@ -1,9 +1,11 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
+
 import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
+
 import * as polling from '../../src/polling'
 import { ChannelModel } from '../../src/model/channels'
-import {ObjectId} from 'mongodb'
 
 describe('Polling tests', () => {
   const testChannel = new ChannelModel({

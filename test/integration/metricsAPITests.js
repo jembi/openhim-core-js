@@ -1,14 +1,14 @@
 /* eslint-env mocha */
 
-import should from 'should'
 import request from 'supertest'
-import { ChannelModel, MetricModel } from '../../src/model'
-import * as testUtils from '../utils'
-import { config } from '../../src/config'
-import * as server from '../../src/server'
-import * as constants from '../constants'
+import should from 'should'
+import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
-import {ObjectId} from 'mongodb'
+
+import * as constants from '../constants'
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { ChannelModel, MetricModel } from '../../src/model'
 
 const { SERVER_PORTS } = constants
 

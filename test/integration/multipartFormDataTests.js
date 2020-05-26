@@ -1,14 +1,15 @@
 /* eslint-env mocha */
 
-import fs from 'fs'
 import FormData from 'form-data'
+import fs from 'fs'
 import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
-import * as testUtils from '../utils'
-import { config } from '../../src/config'
+
 import * as constants from '../constants'
 import * as server from '../../src/server'
+import * as testUtils from '../utils'
 import { ChannelModel, ClientModel } from '../../src/model'
+import { config } from '../../src/config'
 
 const { SERVER_PORTS } = constants
 

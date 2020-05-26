@@ -1,15 +1,15 @@
 /* eslint-env mocha */
 
-import should from 'should' // eslint-disable-line no-unused-vars
-import request from 'supertest'
-import * as server from '../../src/server'
-import { AuditModel } from '../../src/model/audits'
-import * as testUtils from '../utils'
-import * as constants from '../constants'
-import { promisify } from 'util'
-import { ObjectId } from 'mongodb'
-import https from 'https'
 import fs from 'fs'
+import https from 'https'
+import request from 'supertest'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { AuditModel } from '../../src/model/audits'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { ClientModelAPI } from '../../src/model/clients'
 import { KeystoreModelAPI } from '../../src/model/keystore'

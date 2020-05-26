@@ -1,13 +1,21 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
-import sinon from 'sinon'
+
 import moment from 'moment'
-import * as alerts from '../../src/alerts'
-import { ChannelModel, UserModel, ContactGroupModel, EventModel, AlertModel } from '../../src/model'
-import { config } from '../../src/config'
+import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
+
+import * as alerts from '../../src/alerts'
+import {
+  AlertModel,
+  ChannelModel,
+  ContactGroupModel,
+  EventModel,
+  UserModel
+} from '../../src/model'
+import { config } from '../../src/config'
 import { dropTestDb } from '../utils'
-import {ObjectId} from 'mongodb'
 
 config.alerts = config.get('alerts')
 

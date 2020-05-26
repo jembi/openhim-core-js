@@ -2,10 +2,11 @@
 
 import should from 'should'
 import { Types } from 'mongoose'
+
 import * as messageStore from '../../src/middleware/messageStore'
-import { TransactionModel } from '../../src/model/transactions'
-import { ChannelModel } from '../../src/model/channels'
 import * as utils from '../../src/utils'
+import { ChannelModel } from '../../src/model/channels'
+import { TransactionModel } from '../../src/model/transactions'
 
 const { ObjectId } = Types
 

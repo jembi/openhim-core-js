@@ -4,6 +4,7 @@ import should from 'should'
 import sinon from 'sinon'
 import xpath from 'xpath'
 import { DOMParser as Dom } from 'xmldom'
+
 import * as rewriteUrls from '../../src/middleware/rewriteUrls'
 import * as utils from '../../src/utils'
 

@@ -2,17 +2,17 @@
 /* eslint no-unused-expressions:0 */
 
 import request from 'supertest'
-
-import { ChannelModelAPI } from '../../src/model/channels'
-import { ClientModelAPI } from '../../src/model/clients'
-import { MediatorModelAPI } from '../../src/model/mediators'
-import { UserModelAPI } from '../../src/model/users'
-import { ContactGroupModelAPI } from '../../src/model/contactGroups'
-import * as constants from '../constants'
+import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import {ObjectId} from 'mongodb'
+import { ChannelModelAPI } from '../../src/model/channels'
+import { ClientModelAPI } from '../../src/model/clients'
+import { ContactGroupModelAPI } from '../../src/model/contactGroups'
+import { MediatorModelAPI } from '../../src/model/mediators'
+import { UserModelAPI } from '../../src/model/users'
 
 const sampleMetadata = {
   Channels: [{
