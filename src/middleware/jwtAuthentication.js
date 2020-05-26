@@ -51,16 +51,16 @@ function getJwtOptions() {
   const jwtConfig = configIndex.config.get('authentication:jwt')
   const jwtOptions = {}
 
-  // Algorithms can be input as an environment variable therefore the string needs to be split
   if (jwtConfig.algorithms) {
+    // Algorithms can be input as an environment variable therefore the string needs to be split
     jwtOptions.algorithms = jwtConfig.algorithms.split(' ')
   } else {
     // The jsonwebtoken package does not require this field, but allowing any algorithm to be used opens a security risk
     throw new Error('JWT Algorithm not specified')
   }
 
-  // Audience can be input as an environment variable therefore the string needs to be split
   if (jwtConfig.audience) {
+    // Audience can be input as an environment variable therefore the string needs to be split
     jwtOptions.audience = jwtConfig.audience.split(' ')
   }
 
