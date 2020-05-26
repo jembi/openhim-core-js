@@ -64,7 +64,7 @@
     "enableMutualTLSAuthentication": true,
     "enableBasicAuthentication": true,
     "enableCustomTokenAuthentication": false,
-    "enableJWTAuthentication": true,
+    "enableJWTAuthentication": false,
     "jwt": {
       "secretOrPublicKey": "",
       "algorithms": "",
