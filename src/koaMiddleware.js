@@ -24,16 +24,18 @@ import { config } from './config'
 
 config.authentication = config.get('authentication')
 
-async function rawBodyReader (ctx, next) {
+async function rawBodyReader(ctx, next) {
   const body = await getRawBody(ctx.req)
 
-  if (body) { ctx.body = body }
+  if (body) {
+    ctx.body = body
+  }
   await next()
 }
 
 // Primary app
 
-export function setupApp (done) {
+export function setupApp(done) {
   const app = new Koa()
 
   // JWT authentication middleware
@@ -60,10 +62,11 @@ export function setupApp (done) {
   app.use(authorisation.koaMiddleware)
 
   // Compress response on exit
-  app.use(compress({
-    threshold: 8,
-    flush: Z_SYNC_FLUSH
-  })
+  app.use(
+    compress({
+      threshold: 8,
+      flush: Z_SYNC_FLUSH
+    })
   )
 
   // Proxy
@@ -85,18 +88,18 @@ export function setupApp (done) {
 }
 
 // Rerun app that bypasses auth
-export function rerunApp (done) {
+export function rerunApp(done) {
   const app = new Koa()
 
   app.use(rawBodyReader)
 
-  // Rerun bypass authentication middlware
+  // Rerun bypass authentication middleware
   app.use(rerunBypassAuthentication.koaMiddleware)
 
-  // Rerun bypass authorisation middlware
+  // Rerun bypass authorisation middleware
   app.use(rerunBypassAuthorisation.koaMiddleware)
 
-  // Update original transaction with rerunned transaction ID
+  // Update original transaction with rerun transaction ID
   app.use(rerunUpdateTransactionTask.koaMiddleware)
 
   // Persist message middleware
@@ -115,13 +118,13 @@ export function rerunApp (done) {
 }
 
 // App for TCP/TLS sockets
-export function tcpApp (done) {
+export function tcpApp(done) {
   const app = new Koa()
 
   app.use(rawBodyReader)
   app.use(retrieveTCPTransaction.koaMiddleware)
 
-  // TCP bypass authentication middlware
+  // TCP bypass authentication middleware
   app.use(tcpBypassAuthentication.koaMiddleware)
 
   // Proxy
@@ -140,12 +143,12 @@ export function tcpApp (done) {
 }
 
 // App used by scheduled polling
-export function pollingApp (done) {
+export function pollingApp(done) {
   const app = new Koa()
 
   app.use(rawBodyReader)
 
-  // Polling bypass authentication middlware
+  // Polling bypass authentication middleware
   app.use(pollingBypassAuthentication.koaMiddleware)
 
   // Polling bypass authorisation middleware
