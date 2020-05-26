@@ -15,7 +15,7 @@ The config can be supplied to the OpenHIM in the following ways:
 
   - Public Key Filename.
 
-    ```json
+    ```js
     // production.json
     {
       ...
@@ -32,7 +32,7 @@ The config can be supplied to the OpenHIM in the following ways:
 
   - Public Key Literal.
 
-    ```json
+    ```js
     // production.json
     {
       ...
@@ -48,7 +48,6 @@ The config can be supplied to the OpenHIM in the following ways:
     ```
 
     > Note: Use newline characters in the string to ensure the key structure.
-
 
 - Environment Variable
 
