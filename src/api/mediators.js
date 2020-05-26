@@ -1,3 +1,5 @@
+'use strict'
+
 import atna from 'atna-audit'
 import logger from 'winston'
 import semver from 'semver'

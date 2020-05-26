@@ -1,3 +1,5 @@
+'use strict'
+
 import atna from 'atna-audit'
 import crypto from 'crypto'
 import logger from 'winston'

@@ -1,3 +1,5 @@
+'use strict'
+
 /* eslint-env mocha */
 
 import fs from 'fs'

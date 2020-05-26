@@ -1,3 +1,5 @@
+'use strict'
+
 import * as tcpAdapter from '../tcpAdapter'
 
 export async function koaMiddleware (ctx, next) {

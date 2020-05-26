@@ -1,3 +1,5 @@
+'use strict'
+
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { EventModelAPI } from '../model/events'

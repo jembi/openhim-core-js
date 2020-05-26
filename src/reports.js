@@ -1,3 +1,5 @@
+'use strict'
+
 import Handlebars from 'handlebars'
 import fs from 'fs'
 import logger from 'winston'

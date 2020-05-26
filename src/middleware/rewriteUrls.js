@@ -1,3 +1,5 @@
+'use strict'
+
 import url from 'url'
 import winston from 'winston'
 import { promisify } from 'util'

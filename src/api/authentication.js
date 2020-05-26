@@ -1,3 +1,5 @@
+'use strict'
+
 import atna from 'atna-audit'
 import basicAuth from 'basic-auth'
 import crypto from 'crypto'

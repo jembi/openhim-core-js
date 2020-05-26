@@ -1,3 +1,5 @@
+'use strict'
+
 import Koa from 'koa'
 import compress from 'koa-compress'
 import getRawBody from 'raw-body'

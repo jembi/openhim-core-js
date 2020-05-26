@@ -1,3 +1,5 @@
+'use strict'
+
 import { Schema } from 'mongoose'
 
 import { connectionATNA } from '../config'

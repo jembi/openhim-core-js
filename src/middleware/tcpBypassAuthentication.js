@@ -1,3 +1,5 @@
+'use strict'
+
 import { promisify } from 'util'
 
 import { ClientModel } from '../model/clients'

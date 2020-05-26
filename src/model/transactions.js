@@ -1,3 +1,5 @@
+'use strict'
+
 import { Schema } from 'mongoose'
 
 import { connectionAPI, connectionDefault } from '../config'
@@ -54,7 +56,7 @@ const RouteMetadataDef = {
   error: ErrorDetailsDef
 }
 
-// Trasnaction schema
+// Transaction schema
 const TransactionSchema = new Schema({
   clientID: Schema.Types.ObjectId,
   clientIP: String,

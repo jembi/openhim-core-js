@@ -1,3 +1,5 @@
+'use strict'
+
 import logger from 'winston'
 
 import * as authorisation from './authorisation'

@@ -1,3 +1,5 @@
+'use strict'
+
 import { config } from '../src/config'
 
 export const PORT_START = parseInt(process.env.TEST_PORT, 10) || 32000

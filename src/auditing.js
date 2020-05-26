@@ -1,3 +1,5 @@
+'use strict'
+
 import dgram from 'dgram'
 import logger from 'winston'
 import net from 'net'

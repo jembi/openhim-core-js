@@ -1,3 +1,5 @@
+'use strict'
+
 import logger from 'winston'
 import http from 'http'
 import net from 'net'

@@ -1,3 +1,5 @@
+'use strict'
+
 import auth from 'basic-auth'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'

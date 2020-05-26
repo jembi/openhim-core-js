@@ -1,3 +1,5 @@
+'use strict'
+
 import dgram from 'dgram'
 import finalhandler from 'finalhandler'
 import http from 'http'

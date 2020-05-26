@@ -1,3 +1,5 @@
+'use strict'
+
 import { promisify } from 'util'
 
 import { ChannelModel } from '../model/channels'

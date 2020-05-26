@@ -1,3 +1,5 @@
+'use strict'
+
 import logger from 'winston'
 import moment from 'moment'
 import { promisify } from 'util'

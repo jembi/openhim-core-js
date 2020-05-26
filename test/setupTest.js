@@ -1,3 +1,5 @@
+'use strict'
+
 /* eslint-env mocha */
 
 require('../src/config/config')

@@ -1,3 +1,5 @@
+'use strict'
+
 import cookie from 'cookie'
 import http from 'http'
 import https from 'https'

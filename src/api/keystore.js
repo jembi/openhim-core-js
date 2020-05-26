@@ -1,3 +1,5 @@
+'use strict'
+
 import pem from 'pem'
 import { promisify } from 'util'
 

@@ -1,3 +1,5 @@
+'use strict'
+
 import logger from 'winston'
 import momentTZ from 'moment-timezone'
 import _ from 'lodash'

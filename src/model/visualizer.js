@@ -1,3 +1,5 @@
+'use strict'
+
 import { Schema } from 'mongoose'
 
 import * as events from './events'
@@ -68,6 +70,5 @@ const VisualizerSchema = new Schema({
   }
 })
 
-// Compile schema into Model
 export const VisualizerModelAPI = connectionAPI.model('Visualizer', VisualizerSchema)
 export const VisualizerModel = connectionDefault.model('Visualizer', VisualizerSchema)

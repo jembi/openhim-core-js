@@ -1,3 +1,5 @@
+'use strict'
+
 import _ from 'lodash'
 import logger from 'winston'
 import moment from 'moment'

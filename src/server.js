@@ -1,3 +1,5 @@
+'use strict'
+
 import './winston-transport-workaround'
 
 import 'babel-polyfill'

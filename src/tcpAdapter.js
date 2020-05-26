@@ -1,3 +1,5 @@
+'use strict'
+
 import http from 'http'
 import logger from 'winston'
 import net from 'net'
@@ -16,10 +18,10 @@ const datastore = {}
 
 process.on('message', (msg) => {
   if (msg.type === 'start-tcp-channel') {
-    logger.debug(`Recieved message to start tcp channel: ${msg.channelID}`)
+    logger.debug(`Received message to start tcp channel: ${msg.channelID}`)
     return exports.startupTCPServer(msg.channelID, () => { })
   } else if (msg.type === 'stop-tcp-channel') {
-    logger.debug(`Recieved message to stop tcp channel: ${msg.channelID}`)
+    logger.debug(`Received message to stop tcp channel: ${msg.channelID}`)
     return exports.stopServerForChannel(msg.channelID, () => { })
   }
 })

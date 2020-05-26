@@ -1,3 +1,5 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 

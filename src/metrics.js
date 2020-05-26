@@ -1,3 +1,5 @@
+'use strict'
+
 import moment from 'moment'
 
 import { METRIC_TYPE_DAY, METRIC_TYPE_HOUR, METRIC_TYPE_MINUTE, MetricModel } from './model'
@@ -28,7 +30,7 @@ export async function recordTransactionMetrics (transaction) {
   ) {
     // Don't record metrics if there is no response i.e. an error
     // or if the response does not have a timestamp
-    // or if the timestamp isnt an instance of Date
+    // or if the timestamp isn't an instance of Date
     return
   }
 

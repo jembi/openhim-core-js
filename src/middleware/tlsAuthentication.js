@@ -1,3 +1,5 @@
+'use strict'
+
 import logger from 'winston'
 import pem from 'pem'
 import { rootCas as rootCAs } from 'ssl-root-cas/latest'
