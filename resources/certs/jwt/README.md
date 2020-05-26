@@ -5,7 +5,9 @@ The OpenHIM can configure this public key in two ways.
 
 Firstly, the public key literal can be supplied in the config.
 
-Second, a file containing the public key in the `pem` format can be placed in the this directory. The file name can then be specified to the config.
+Second, a file containing the public key in the `pem` format can be placed in the this directory. The **file name** can then be specified to the config.
+
+> If you are using a Public Key file, it must be placed in this directory. i.e `openhim-core-js/resources/certs/jwt`
 
 The config can be supplied to the OpenHIM in the following ways:
 
@@ -63,8 +65,6 @@ The config can be supplied to the OpenHIM in the following ways:
     ```
 
     > Note: Use newline characters in the string to ensure the key structure.
-
-The Public Key file must be placed in this directory. i.e `openhim-core-js/resources/certs/jwt`
 
 ## Generate RSASSA-PKCS1-v1_5 keys for **RS256**, **RS384**, and **RS512**
 
