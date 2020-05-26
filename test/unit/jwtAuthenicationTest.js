@@ -35,7 +35,6 @@ describe('JWT Authorisation Test', () => {
 
     it('should succeed when JWT is decoded and client is returned', async () => {
       const ctx = {
-        authenticated: null,
         header: {},
         request: {
           header: {
@@ -78,7 +77,6 @@ describe('JWT Authorisation Test', () => {
     // The jsonwebtoken package is forgiving :|
     it('should succeed when both valid and invalid JWT encryption algorithms supplied', async () => {
       const ctx = {
-        authenticated: null,
         header: {},
         request: {
           header: {
@@ -119,7 +117,6 @@ describe('JWT Authorisation Test', () => {
 
     it('should succeed when RSASSA-PKCS1-v1_5 Public key literal (RS256) is supplied', async () => {
       const ctx = {
-        authenticated: null,
         header: {},
         request: {
           header: {
@@ -163,7 +160,6 @@ describe('JWT Authorisation Test', () => {
 
     it('should succeed when ECDSA Public key file (ES256) name supplied', async () => {
       const ctx = {
-        authenticated: null,
         header: {},
         request: {
           header: {
@@ -216,7 +212,6 @@ describe('JWT Authorisation Test', () => {
 
     it('should succeed when RSASSA-PSS Public key file (PS384) name supplied', async () => {
       const ctx = {
-        authenticated: null,
         header: {},
         request: {
           header: {
@@ -269,7 +264,6 @@ describe('JWT Authorisation Test', () => {
 
     it('should fail and log warning on invalid auth header and proceed to next Authentication middleware', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization: 'Invalid',
@@ -283,13 +277,12 @@ describe('JWT Authorisation Test', () => {
       await jwtAuthentication.koaMiddleware(ctx, next)
 
       next.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
       loggerStub.callCount.should.eql(1)
     })
 
     it('should fail and log warning on missing auth header and proceed to next Authentication middleware', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization: null,
@@ -303,13 +296,12 @@ describe('JWT Authorisation Test', () => {
       await jwtAuthentication.koaMiddleware(ctx, next)
 
       next.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
       loggerStub.callCount.should.eql(1)
     })
 
     it('should fail due to unknown JWT encryption algorithm', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization:
@@ -335,12 +327,11 @@ describe('JWT Authorisation Test', () => {
       next.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail due to missing subject field in JWT', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization:
@@ -367,12 +358,11 @@ describe('JWT Authorisation Test', () => {
       next.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail due to incorrect secret in config', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization:
@@ -399,12 +389,11 @@ describe('JWT Authorisation Test', () => {
       next.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail due to unknown audience in config', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization:
@@ -433,12 +422,11 @@ describe('JWT Authorisation Test', () => {
       next.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail due to unknown issuer in config', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization:
@@ -467,12 +455,11 @@ describe('JWT Authorisation Test', () => {
       next.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail due to mongoose error', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization:
@@ -506,12 +493,11 @@ describe('JWT Authorisation Test', () => {
       clientStub.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail when client does not exist', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization:
@@ -545,12 +531,11 @@ describe('JWT Authorisation Test', () => {
       clientStub.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail when incorrect algorithm supplied', async () => {
       const ctx = {
-        authenticated: null,
         header: {},
         request: {
           header: {
@@ -581,12 +566,11 @@ describe('JWT Authorisation Test', () => {
       next.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail when invalid public key supplied', async () => {
       const ctx = {
-        authenticated: null,
         request: {
           header: {
             authorization:
@@ -615,12 +599,11 @@ describe('JWT Authorisation Test', () => {
       next.callCount.should.eql(1)
       configStub.callCount.should.eql(2)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
 
     it('should fail when Public key file read errors', async () => {
       const ctx = {
-        authenticated: null,
         header: {},
         request: {
           header: {
@@ -657,7 +640,7 @@ describe('JWT Authorisation Test', () => {
       fsExistsSyncStub.callCount.should.eql(1)
       fsReadFileSyncStub.callCount.should.eql(1)
       loggerStub.callCount.should.eql(1)
-      should(ctx.authenticated).be.null()
+      should(ctx.authenticated).be.undefined()
     })
   })
 })
