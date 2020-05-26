@@ -7,7 +7,7 @@ const ClientSchema = new Schema({
     type: String, required: true, unique: true, index: true
   },
   clientDomain: {
-    type: String, unqiue: true, index: true
+    type: String, index: true
   },
   name: {
     type: String, required: true
