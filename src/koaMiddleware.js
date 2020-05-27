@@ -7,6 +7,7 @@ import { Z_SYNC_FLUSH } from 'zlib'
 
 import * as authorisation from './middleware/authorisation'
 import * as basicAuthentication from './middleware/basicAuthentication'
+import * as cache from './jwtSecretOrPublicKeyCache'
 import * as events from './middleware/events'
 import * as jwtAuthentication from './middleware/jwtAuthentication'
 import * as messageStore from './middleware/messageStore'
@@ -40,6 +41,7 @@ export function setupApp(done) {
   const app = new Koa()
 
   if (config.authentication.enableJWTAuthentication) {
+    cache.populateCache()
     app.use(jwtAuthentication.koaMiddleware)
   }
 

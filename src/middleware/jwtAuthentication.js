@@ -1,12 +1,11 @@
 'use strict'
 
-import fs from 'fs'
 import jwt from 'jsonwebtoken'
 import logger from 'winston'
-import path from 'path'
 
 import * as client from '../model/clients'
 import * as configIndex from '../config'
+import * as cache from '../jwtSecretOrPublicKeyCache'
 
 const TOKEN_PATTERN = /^ *(?:[Bb][Ee][Aa][Rr][Ee][Rr]) +([A-Za-z0-9\-._~+/]+=*) *$/
 
@@ -17,34 +16,6 @@ async function authenticateClient(clientID) {
     }
     return client
   })
-}
-
-function resolveJwtSecretOrPublicKey() {
-  let secretOrPublicKey = configIndex.config.get(
-    'authentication:jwt:secretOrPublicKey'
-  )
-
-  try {
-    const publicKeyFilePath = path.resolve(
-      __dirname,
-      '..',
-      '..',
-      'resources',
-      'certs',
-      'jwt',
-      secretOrPublicKey
-    )
-
-    // Check file exists
-    if (fs.existsSync(publicKeyFilePath)) {
-      secretOrPublicKey = fs.readFileSync(publicKeyFilePath).toString()
-    }
-    return secretOrPublicKey
-  } catch (error) {
-    throw new Error(
-      `Could not read public key file to verify asymmetric JWT: ${error}`
-    )
-  }
 }
 
 function getJwtOptions() {
@@ -85,7 +56,7 @@ async function authenticateToken(ctx) {
   try {
     const decodedToken = jwt.verify(
       token[1],
-      resolveJwtSecretOrPublicKey(),
+      cache.getSecretOrPublicKey(),
       getJwtOptions()
     )
 
@@ -99,7 +70,7 @@ async function authenticateToken(ctx) {
     ctx.authenticated = client
     ctx.authenticationType = 'token'
   } catch (error) {
-    logger.error(`Token could not be verified: ${error}`)
+    logger.error(`Token could not be verified: ${error.message}`)
     return
   }
 }
