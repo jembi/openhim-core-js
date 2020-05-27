@@ -613,9 +613,7 @@ describe('JWT Authorisation Test', () => {
         .stub(cache, 'getSecretOrPublicKey')
         .returns('Invalid Public Key')
 
-      const loggerStub = sandbox
-        .stub(logger, 'error')
-        .withArgs('Token could not be verified: PEM_read_bio_PUBKEY failed')
+      const loggerStub = sandbox.stub(logger, 'error')
 
       const mockJwtConfig = {
         algorithms: 'RS256',
