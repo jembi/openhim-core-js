@@ -43,7 +43,6 @@ describe('JWT Cache Test', () => {
     })
 
     it('should succeed on file read ', () => {
-
       const secretOrPublicKey = 'jwtecdsa256.pem'
 
       const configStub = sandbox
