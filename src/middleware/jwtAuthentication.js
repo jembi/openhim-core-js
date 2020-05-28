@@ -70,6 +70,7 @@ async function authenticateToken(ctx) {
     ctx.authenticated = client
     ctx.authenticationType = 'token'
   } catch (error) {
+    // JWT
     logger.error(`Token could not be verified: ${error.message}`)
     return
   }
