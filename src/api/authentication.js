@@ -239,7 +239,7 @@ export async function getEnabledAuthenticationTypes (ctx, next) {
 
     if (
       !config.authentication ||
-      Object.keys(config.authenticationTypes).length
+      !Object.keys(config.authentication).length
     ) {
       throw Error('Invalid authentication Types')
     }
