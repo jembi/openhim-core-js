@@ -1,10 +1,13 @@
+'use strict'
+
 import logger from 'winston'
+import { promisify } from 'util'
+
+import * as KeystoreAPI from '../api/keystore'
 import * as authorisation from '../api/authorisation'
 import * as server from '../server'
-import { config } from '../config'
-import * as KeystoreAPI from '../api/keystore'
 import * as utils from '../utils'
-import { promisify } from 'util'
+import { config } from '../config'
 
 config.router = config.get('router')
 config.api = config.get('api')

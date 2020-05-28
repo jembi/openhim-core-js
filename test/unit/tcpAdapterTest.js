@@ -1,12 +1,15 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
 import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as tcpAdapter from '../../src/tcpAdapter'
 import { ChannelModel } from '../../src/model/channels'
-import * as constants from '../constants'
-import { promisify } from 'util'
-import {ObjectId} from 'mongodb'
 
 describe('TCP adapter tests', () => {
   const testChannel = new ChannelModel({

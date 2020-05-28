@@ -65,10 +65,12 @@
     "enableBasicAuthentication": true,
     "enableCustomTokenAuthentication": false,
     "enableJWTAuthentication": false,
-    "jwtSecretOrPrivateKey": "",
-    "jwtAlgorithms": [],
-    "jwtAudience": [],
-    "jwtIssuer": ""
+    "jwt": {
+      "secretOrPublicKey": "",
+      "algorithms": "",
+      "audience": "",
+      "issuer": ""
+    }
   },
   "email": {
     "fromAddress": "address@example.com",

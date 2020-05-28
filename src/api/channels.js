@@ -1,13 +1,16 @@
+'use strict'
+
 import logger from 'winston'
 import request from 'request'
+
 import * as Channels from '../model/channels'
-import { TransactionModelAPI } from '../model/transactions'
 import * as authorisation from './authorisation'
-import * as tcpAdapter from '../tcpAdapter'
-import * as server from '../server'
 import * as polling from '../polling'
 import * as routerMiddleware from '../middleware/router'
+import * as server from '../server'
+import * as tcpAdapter from '../tcpAdapter'
 import * as utils from '../utils'
+import { TransactionModelAPI } from '../model/transactions'
 import { config } from '../config'
 
 const { ChannelModel } = Channels
@@ -164,7 +167,7 @@ export async function addChannel (ctx) {
     // All ok! So set the result
     ctx.body = 'Channel successfully created'
     ctx.status = 201
-    logger.info('User %s created channel with id %s', ctx.authenticated.email, channel.id)
+    logger.info(`User ${ctx.authenticated.email} created channel with id ${channel.id}`)
 
     channelData._id = channel._id
     processPostAddTriggers(channelData)
@@ -352,7 +355,7 @@ export async function updateChannel (ctx, channelId) {
 
     // All ok! So set the result
     ctx.body = 'The channel was successfully updated'
-    logger.info('User %s updated channel with id %s', ctx.authenticated.email, id)
+    logger.info(`User ${ctx.authenticated.email} updated channel with id ${id}`)
 
     return processPostUpdateTriggers(channel)
   } catch (err) {

@@ -1,12 +1,15 @@
+'use strict'
+
+import atna from 'atna-audit'
 import basicAuth from 'basic-auth'
 import crypto from 'crypto'
 import logger from 'winston'
-import atna from 'atna-audit'
 import os from 'os'
-import { UserModelAPI } from '../model/users'
-import { config } from '../config'
+
 import * as auditing from '../auditing'
+import { UserModelAPI } from '../model/users'
 import { caseInsensitiveRegex } from '../utils'
+import { config } from '../config'
 
 config.api = config.get('api')
 config.auditing = config.get('auditing')

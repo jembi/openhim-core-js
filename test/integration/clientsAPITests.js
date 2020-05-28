@@ -1,13 +1,16 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import request from 'supertest'
-import { ClientModelAPI } from '../../src/model/clients'
+import should from 'should'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { promisify } from 'util'
-import * as constants from '../constants'
+import { ClientModelAPI } from '../../src/model/clients'
 
 const { SERVER_PORTS } = constants
 

@@ -1,4 +1,5 @@
-export const testAuditParticipantQuery = 'TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAzMDUxMjUyMzErMDIwMHx8UUJQXlEyM15RQlBfUTIxfGJiMDczYjg1LTU3YTktNDBiYS05MjkxLTE1ZDIxMThkNDhmM3xQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXxmZmQ4ZTlmNy1hYzJiLTQ2MjUtYmQ4MC1kZTcwNDU5MmQ5ZjN8MTExMTExMTExMV5eXiYxLjIuMyZJU09eUEl8Xl5eRUNJRCZFQ0lEJklTT15QSQ1SQ1B8SQ0='
+export const testAuditParticipantQuery =
+  'TVNIfF5+XCZ8b3BlbmhpbXxvcGVuaGltLW1lZGlhdG9yLW9oaWUteGRzfHBpeHxwaXh8MjAxNTAzMDUxMjUyMzErMDIwMHx8UUJQXlEyM15RQlBfUTIxfGJiMDczYjg1LTU3YTktNDBiYS05MjkxLTE1ZDIxMThkNDhmM3xQfDIuNQ1RUER8SUhFIFBJWCBRdWVyeXxmZmQ4ZTlmNy1hYzJiLTQ2MjUtYmQ4MC1kZTcwNDU5MmQ5ZjN8MTExMTExMTExMV5eXiYxLjIuMyZJU09eUEl8Xl5eRUNJRCZFQ0lEJklTT15QSQ1SQ1B8SQ0='
 
 export const testAuditMessage = `\
 <85>1 2015-03-05T12:52:31.358+02:00 Hanness-MBP.jembi.local java 9293 IHE+RFC-3881 - <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
@@ -27,61 +28,34 @@ export const testAuditMessage = `\
 
 // an example from IHE http://ihewiki.wustl.edu/wiki/index.php/Syslog_Collector
 export const testAuditIHERFC3881 = `\
-<85>1 2010-12-17T15:12:04.287-06:00 cabig-h1 OHT 521 IHE+RFC-3881 - 
-<?xml version="1.0" encoding="UTF-8"?>
+<85>1 2010-12-17T15:12:04.287-06:00 cabig-h1 OHT 521 IHE+RFC-3881 - <?xml version="1.0" encoding="UTF-8"?>
 <AuditMessage>
-
-   <EventIdentification EventDateTime="2010-12-17T15:12:04.287-06:00" 
-      EventOutcomeIndicator="0" 
-      EventActionCode="E">
-      <EventID code="110114" codeSystemName="DCM" 
-         displayName="UserAuthenticated" />
-      <EventTypeCode code="110122" codeSystemName="DCM" 
-         displayName="Login" />
+   <EventIdentification EventDateTime="2010-12-17T15:12:04.287-06:00" EventOutcomeIndicator="0" EventActionCode="E">
+      <EventID code="110114" codeSystemName="DCM" displayName="UserAuthenticated" />
+      <EventTypeCode code="110122" codeSystemName="DCM" displayName="Login" />
     </EventIdentification>
-    
-   <ActiveParticipant UserID="fe80::5999:d1ef:63de:a8bb%11" 
-      UserIsRequestor="true" 
-      NetworkAccessPointTypeCode="1" 
-      NetworkAccessPointID="125.20.175.12">
-      <RoleIDCode code="110150" codeSystemName="DCM" 
-         displayName="Application" />
+   <ActiveParticipant UserID="fe80::5999:d1ef:63de:a8bb%11" UserIsRequestor="true" NetworkAccessPointTypeCode="1" NetworkAccessPointID="125.20.175.12">
+      <RoleIDCode code="110150" codeSystemName="DCM" displayName="Application" />
    </ActiveParticipant>
-    
    <ActiveParticipant UserID="farley.granger@wb.com" UserIsRequestor="true"/>
-    
-   <AuditSourceIdentification AuditEnterpriseSiteID="End User" 
-      AuditSourceID="farley.granger@wb.com">
+   <AuditSourceIdentification AuditEnterpriseSiteID="End User" AuditSourceID="farley.granger@wb.com">
       <AuditSourceTypeCode code="1" />
    </AuditSourceIdentification>
-    
 </AuditMessage>\
 `
 
 // an example from IHE http://ihewiki.wustl.edu/wiki/index.php/Syslog_Collector
 export const testAuditIHEDICOM = `\
-<85>1 2013-10-17T15:12:04.287-06:00 cabig-h1 OHT 521 IHE+DICOM - 
-<?xml version="1.0" encoding="UTF-8"?>
+<85>1 2013-10-17T15:12:04.287-06:00 cabig-h1 OHT 521 IHE+DICOM - <?xml version="1.0" encoding="UTF-8"?>
 <AuditMessage>
-
-   <EventIdentification EventDateTime="2013-10-17T15:12:04.287-06:00" 
-      EventOutcomeIndicator="0" 
-      EventActionCode="E">
+   <EventIdentification EventDateTime="2013-10-17T15:12:04.287-06:00" EventOutcomeIndicator="0" EventActionCode="E">
       <EventID csd-code="110114" codeSystemName="DCM" originalText="UserAuthenticated" />
       <EventTypeCode csd-code="110122" codeSystemName="DCM" originalText="Login" />
    </EventIdentification>
-    
-   <ActiveParticipant UserID="fe80::5999:d1ef:63de:a8bb%11" 
-      UserIsRequestor="true" 
-      NetworkAccessPointTypeCode="1" 
-      NetworkAccessPointID="125.20.175.12">
+   <ActiveParticipant UserID="fe80::5999:d1ef:63de:a8bb%11" UserIsRequestor="true" NetworkAccessPointTypeCode="1" NetworkAccessPointID="125.20.175.12">
       <RoleIDCode csd-code="110150" codeSystemName="DCM" originalText="Application" />
    </ActiveParticipant>
-    
    <ActiveParticipant UserID="farley.granger@wb.com" UserIsRequestor="true"/>
-    
-   <AuditSourceIdentification code="1" 
-      AuditEnterpriseSiteID="End User" AuditSourceID="farley.granger@wb.com"/>
-    
+   <AuditSourceIdentification code="1" AuditEnterpriseSiteID="End User" AuditSourceID="farley.granger@wb.com"/>
 </AuditMessage>\
 `

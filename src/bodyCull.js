@@ -1,7 +1,10 @@
-import moment from 'moment'
-import { config } from './config'
-import { ChannelModel, TransactionModel } from './model'
+'use strict'
+
 import logger from 'winston'
+import moment from 'moment'
+
+import { ChannelModel, TransactionModel } from './model'
+import { config } from './config'
 
 config.bodyCull = config.get('bodyCull')
 

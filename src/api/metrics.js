@@ -1,8 +1,11 @@
+'use strict'
+
 import logger from 'winston'
+import moment from 'moment'
 import mongoose from 'mongoose'
+
 import * as authorisation from './authorisation'
 import * as metrics from '../metrics'
-import moment from 'moment'
 
 // all in one getMetrics generator function for metrics API
 export async function getMetrics (ctx, groupChannels, timeSeries, channelID) {

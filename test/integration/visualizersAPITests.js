@@ -1,11 +1,14 @@
+'use strict'
+
 /* eslint-env mocha */
 
 import request from 'supertest'
-import * as server from '../../src/server'
-import { VisualizerModelAPI } from '../../src/model/visualizer'
-import * as testUtils from '../utils'
-import * as constants from '../constants'
 import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { VisualizerModelAPI } from '../../src/model/visualizer'
 
 describe('API Integration Tests', () => {
   const { SERVER_PORTS } = constants

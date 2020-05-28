@@ -1,15 +1,18 @@
+'use strict'
+
 /* eslint-env mocha */
 
-import should from 'should'
-import request from 'supertest'
-import sinon from 'sinon'
 import moment from 'moment'
-import * as server from '../../src/server'
-import * as contact from '../../src/contact'
-import { UserModelAPI } from '../../src/model/users'
-import * as testUtils from '../utils'
-import * as constants from '../constants'
+import request from 'supertest'
+import should from 'should'
+import sinon from 'sinon'
 import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as contact from '../../src/contact'
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { UserModelAPI } from '../../src/model/users'
 
 describe('API Integration Tests', () => {
   const { SERVER_PORTS } = constants

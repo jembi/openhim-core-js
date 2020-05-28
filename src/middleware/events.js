@@ -1,5 +1,8 @@
-import moment from 'moment'
+'use strict'
+
 import logger from 'winston'
+import moment from 'moment'
+
 import * as events from '../model/events'
 import { config } from '../config'
 

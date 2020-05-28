@@ -1,9 +1,12 @@
+'use strict'
+
 import logger from 'winston'
 import pem from 'pem'
 import { rootCas as rootCAs } from 'ssl-root-cas/latest'
+
+import * as utils from '../utils'
 import { ClientModel } from '../model/clients'
 import { KeystoreModel } from '../model/keystore'
-import * as utils from '../utils'
 import { config } from '../config'
 
 config.tlsClientLookup = config.get('tlsClientLookup')

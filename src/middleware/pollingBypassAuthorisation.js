@@ -1,6 +1,8 @@
-import { ChannelModel } from '../model/channels'
-import { config } from '../config'
+'use strict'
+
 import { promisify } from 'util'
+
+import { ChannelModel } from '../model/channels'
 
 export function authoriseUser (ctx, done) {
   return ChannelModel.findOne({_id: ctx.request.header['channel-id']}, (err, channel) => {

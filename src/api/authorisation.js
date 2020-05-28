@@ -1,3 +1,5 @@
+'use strict'
+
 import { ChannelModelAPI } from '../model/channels'
 
 export function inGroup (group, user) {

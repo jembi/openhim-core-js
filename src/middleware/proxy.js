@@ -1,7 +1,6 @@
-import { config } from '../config'
+'use strict'
 
 export function setupProxyHeaders (ctx) {
-  // Headers
   function setOrAppendHeader (ctx, header, value) {
     if (!value) { return }
     if (ctx.header[header]) {

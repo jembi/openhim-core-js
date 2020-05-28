@@ -1,4 +1,7 @@
+'use strict'
+
 import Mongoose from 'mongoose'
+
 Mongoose.Promise = Promise
 
 export * from './alerts'

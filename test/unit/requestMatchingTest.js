@@ -1,10 +1,15 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
-import should from 'should'
+
 import rewire from 'rewire'
-import {ObjectId} from 'mongodb'
+import should from 'should'
+import { ObjectId } from 'mongodb'
+
+import { ChannelModel } from '../../src/model/channels'
+
 const requestMatching = rewire('../../src/middleware/requestMatching')
-const { ChannelModel } = require('../../src/model/channels')
 
 const truthy = () => true
 const falsey = () => false
