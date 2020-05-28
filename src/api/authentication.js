@@ -7,12 +7,20 @@ import logger from 'winston'
 import os from 'os'
 
 import * as auditing from '../auditing'
+import * as authorisation from './authorisation'
 import { UserModelAPI } from '../model/users'
-import { caseInsensitiveRegex } from '../utils'
+import { caseInsensitiveRegex, logAndSetResponse } from '../utils'
 import { config } from '../config'
+import {
+  MUTUAL_TLS_AUTH_TYPE,
+  BASIC_AUTH_TYPE,
+  CUSTOM_TOKEN_AUTH_TYPE,
+  JWT_TOKEN_AUTH_TYPE
+} from '../constants'
 
 config.api = config.get('api')
 config.auditing = config.get('auditing')
+config.authentication = config.get('authentication')
 const himSourceID = config.auditing.auditEvents.auditSourceID
 
 // will NOT audit any successful logins on the following paths (specified as regex patterns)
@@ -215,6 +223,42 @@ export async function authenticate (ctx, next) {
   auditing.sendAuditEvent(audit, handleAuditResponse)
 
   return next()
+}
+
+export async function getEnabledAuthenticationTypes (ctx, next) {
+  // Log level for messages logged
+  let logLevel = 'error'
+
+  try {
+    if (!authorisation.inGroup('admin', ctx.authenticated)) {
+      ctx.statusCode = 403
+      const error = `User ${ctx.authenticated.email} is not an admin, API access to get enabled authentication types denied.`
+      logLevel = 'info'
+      throw Error(error)
+    }
+
+    if (
+      !config.authentication ||
+      Object.keys(config.authenticationTypes).length
+    ) {
+      throw Error('Invalid authentication Types')
+    }
+
+    const enabledAuthTypes = []
+
+    if (config.authentication.enableMutualTLSAuthentication) enabledAuthTypes.push(MUTUAL_TLS_AUTH_TYPE)
+    if (config.authentication.enableBasicAuthentication) enabledAuthTypes.push(BASIC_AUTH_TYPE)
+    if (config.authentication.enableMutualCustomTokenAuthentication) enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
+    if (config.authentication.enableJWTAuthentication) enabledAuthTypes.push(JWT_TOKEN_AUTH_TYPE)
+
+    ctx.body = enabledAuthTypes
+    ctx.status = 200
+    logger.info(`User ${ctx.authenticated.email} retrieved the enabled authentication types`)
+    next()
+  } catch (err) {
+    logAndSetResponse(ctx, 500, err.message, logLevel)
+    next()
+  }
 }
 
 // Exports for testing only

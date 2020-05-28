@@ -47,6 +47,9 @@ export function setupApp (done) {
   // Authenticate the API request
   app.use(authentication.authenticate)
 
+  // Get enabled authentication types
+  app.use(route.get('/authentication/types', authentication.getEnabledAuthenticationTypes))
+
   // Define the api routes
   app.use(route.get('/users', users.getUsers))
   app.use(route.get('/users/:email', users.getUser))
