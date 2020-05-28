@@ -241,14 +241,14 @@ export async function getEnabledAuthenticationTypes (ctx, next) {
       !config.authentication ||
       !Object.keys(config.authentication).length
     ) {
-      throw Error('Invalid authentication Types')
+      throw Error('Invalid authentication Types, openhim not configured correctly')
     }
 
     const enabledAuthTypes = []
 
     if (config.authentication.enableMutualTLSAuthentication) enabledAuthTypes.push(MUTUAL_TLS_AUTH_TYPE)
     if (config.authentication.enableBasicAuthentication) enabledAuthTypes.push(BASIC_AUTH_TYPE)
-    if (config.authentication.enableMutualCustomTokenAuthentication) enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
+    if (config.authentication.enableCustomTokenAuthentication) enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
     if (config.authentication.enableJWTAuthentication) enabledAuthTypes.push(JWT_TOKEN_AUTH_TYPE)
 
     ctx.body = enabledAuthTypes
@@ -256,7 +256,8 @@ export async function getEnabledAuthenticationTypes (ctx, next) {
     logger.info(`User ${ctx.authenticated.email} retrieved the enabled authentication types`)
     next()
   } catch (err) {
-    logAndSetResponse(ctx, 500, err.message, logLevel)
+    const status = ctx.statusCode ? ctx.statusCode : 500
+    logAndSetResponse(ctx, status, err.message, logLevel)
     next()
   }
 }
