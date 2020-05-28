@@ -20,6 +20,7 @@ const ClientSchema = new Schema({
     required: true
   },
   roles: [{ type: String, required: true }],
+  customTokenID: { type: String, unique: true, sparse: true },
   passwordAlgorithm: String,
   passwordHash: String,
   passwordSalt: String,
