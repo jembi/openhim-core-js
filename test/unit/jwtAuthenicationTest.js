@@ -302,7 +302,7 @@ describe('JWT Authorisation Test', () => {
 
       const loggerStub = sandbox
         .stub(logger, 'error')
-        .withArgs('Token could not be verified: invalid algorithm')
+        .withArgs('JWT could not be verified: invalid algorithm')
 
       const mockJwtConfig = {
         // This should be HS256 to succeed
@@ -340,7 +340,7 @@ describe('JWT Authorisation Test', () => {
 
       const loggerStub = sandbox
         .stub(logger, 'error')
-        .withArgs('Token could not be verified: JWT Algorithm not specified')
+        .withArgs('JWT could not be verified: JWT Algorithm not specified')
 
       const mockJwtConfig = {
         algorithms: '',
@@ -413,7 +413,7 @@ describe('JWT Authorisation Test', () => {
 
       const loggerStub = sandbox
         .stub(logger, 'error')
-        .withArgs('Token could not be verified: invalid signature')
+        .withArgs('JWT could not be verified: invalid signature')
 
       const mockJwtConfig = {
         algorithms: 'HS256'
@@ -450,7 +450,7 @@ describe('JWT Authorisation Test', () => {
       const loggerStub = sandbox
         .stub(logger, 'error')
         .withArgs(
-          'Token could not be verified: jwt audience invalid. expected: differentAudience'
+          'JWT could not be verified: jwt audience invalid. expected: differentAudience'
         )
 
       const mockJwtConfig = {
@@ -490,7 +490,7 @@ describe('JWT Authorisation Test', () => {
       const loggerStub = sandbox
         .stub(logger, 'error')
         .withArgs(
-          'Token could not be verified: jwt issuer invalid. expected: differentIssuer'
+          'JWT could not be verified: jwt issuer invalid. expected: differentIssuer'
         )
 
       const mockJwtConfig = {
@@ -529,7 +529,7 @@ describe('JWT Authorisation Test', () => {
 
       const loggerStub = sandbox
         .stub(logger, 'error')
-        .withArgs('Token could not be verified: Boom!')
+        .withArgs('JWT could not be verified: Boom!')
 
       const mockJwtConfig = {
         algorithms: 'HS256',
@@ -572,7 +572,7 @@ describe('JWT Authorisation Test', () => {
 
       const loggerStub = sandbox
         .stub(logger, 'error')
-        .withArgs('Token could not be verified: Client does not exist')
+        .withArgs('JWT could not be verified: Client does not exist')
 
       const mockJwtConfig = {
         algorithms: 'HS256',
