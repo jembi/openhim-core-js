@@ -16,7 +16,7 @@ async function authenticateClient(customTokenID) {
 }
 
 async function authenticateToken(ctx) {
-  if (ctx.authenticated != null) {
+  if (ctx.authenticated) {
     return
   }
 
@@ -41,7 +41,7 @@ async function authenticateToken(ctx) {
 
 export async function koaMiddleware(ctx, next) {
   await authenticateToken(ctx)
-  if (ctx.authenticated != null && ctx.authenticated.clientID != null) {
+  if (ctx.authenticated && ctx.authenticated.clientID) {
     ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID
   }
   await next()
