@@ -68,7 +68,7 @@ describe('Custom Token Authorization Test', () => {
       }
       const next = sandbox.spy()
 
-      const loggerStub = sandbox.stub(logger, 'warn')
+      const loggerStub = sandbox.stub(logger, 'debug')
 
       await customTokenAuthentication.koaMiddleware(ctx, next)
 

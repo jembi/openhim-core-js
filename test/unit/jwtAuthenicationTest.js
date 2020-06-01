@@ -224,7 +224,7 @@ describe('JWT Authorisation Test', () => {
       }
       const next = sandbox.spy()
 
-      const loggerStub = sandbox.stub(logger, 'warn')
+      const loggerStub = sandbox.stub(logger, 'debug')
 
       await jwtAuthentication.koaMiddleware(ctx, next)
 
@@ -241,7 +241,7 @@ describe('JWT Authorisation Test', () => {
       }
       const next = sandbox.spy()
 
-      const loggerStub = sandbox.stub(logger, 'warn')
+      const loggerStub = sandbox.stub(logger, 'debug')
 
       await jwtAuthentication.koaMiddleware(ctx, next)
 

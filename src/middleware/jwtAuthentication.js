@@ -48,7 +48,7 @@ async function authenticateToken(ctx) {
   const token = JWT_PATTERN.exec(authHeader)
 
   if (!token) {
-    logger.warn(`Missing or invalid JWT 'Authorization' header`)
+    logger.debug(`Missing or invalid JWT 'Authorization' header`)
     return
   }
 

@@ -23,7 +23,7 @@ async function authenticateToken(ctx) {
   const token = CUSTOM_TOKEN_PATTERN.exec(authHeader)
 
   if (!token) {
-    logger.warn(`Missing or invalid Custom Token 'Authorization' header`)
+    logger.debug(`Missing or invalid Custom Token 'Authorization' header`)
     return
   }
 
