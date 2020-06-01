@@ -241,7 +241,7 @@ export async function getEnabledAuthenticationTypes (ctx, next) {
       !config.authentication ||
       !Object.keys(config.authentication).length
     ) {
-      throw Error('Invalid authentication Types, openhim not configured correctly')
+      throw Error('No authentication enabled, invalid OpenHIM configuration')
     }
 
     const enabledAuthTypes = []
