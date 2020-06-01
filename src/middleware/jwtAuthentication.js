@@ -6,8 +6,7 @@ import logger from 'winston'
 import * as client from '../model/clients'
 import * as configIndex from '../config'
 import * as cache from '../jwtSecretOrPublicKeyCache'
-
-const TOKEN_PATTERN = /^ *(?:[Bb][Ee][Aa][Rr][Ee][Rr]) +([A-Za-z0-9\-._~+/]+=*) *$/
+import { JWT_PATTERN } from '../constants'
 
 async function authenticateClient(clientID) {
   return client.ClientModel.findOne({ clientID }).then((client) => {
@@ -46,7 +45,7 @@ async function authenticateToken(ctx) {
   }
 
   const authHeader = ctx.request.header.authorization || ''
-  const token = TOKEN_PATTERN.exec(authHeader)
+  const token = JWT_PATTERN.exec(authHeader)
 
   if (!token) {
     logger.warn(`Missing or invalid JWT 'Authorization' header`)

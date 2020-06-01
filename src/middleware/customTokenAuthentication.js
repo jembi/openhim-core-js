@@ -3,8 +3,7 @@
 import logger from 'winston'
 
 import * as client from '../model/clients'
-
-const TOKEN_PATTERN = /^ *(?:[Cc][Uu][Ss][Tt][Oo][Mm]) +([A-Za-z0-9\-._~+/]+=*) *$/
+import { CUSTOM_TOKEN_PATTERN } from '../constants'
 
 async function authenticateClient(customTokenID) {
   return client.ClientModel.findOne({ customTokenID }).then((client) => {
@@ -21,7 +20,7 @@ async function authenticateToken(ctx) {
   }
 
   const authHeader = ctx.request.header.authorization || ''
-  const token = TOKEN_PATTERN.exec(authHeader)
+  const token = CUSTOM_TOKEN_PATTERN.exec(authHeader)
 
   if (!token) {
     logger.warn(`Missing or invalid Custom Token 'Authorization' header`)
