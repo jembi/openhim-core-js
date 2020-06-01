@@ -13,6 +13,10 @@ describe('JWT Cache Test', () => {
   describe('populate cache', () => {
     let sandbox = sinon.createSandbox()
 
+    before(() => {
+      cache.clearSecretOrPublicKey()
+    })
+
     afterEach(() => {
       cache.clearSecretOrPublicKey()
       sandbox.restore()
