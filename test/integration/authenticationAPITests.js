@@ -89,6 +89,7 @@ describe('API Integration Tests', () => {
       result.body[1].should.be.equal('custom-token-auth')
     })
   })
+
   describe('Authentication API tests', () => {
     let authDetails = null
 

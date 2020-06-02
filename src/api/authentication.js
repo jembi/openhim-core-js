@@ -12,10 +12,10 @@ import { UserModelAPI } from '../model/users'
 import { caseInsensitiveRegex, logAndSetResponse } from '../utils'
 import { config } from '../config'
 import {
-  MUTUAL_TLS_AUTH_TYPE,
   BASIC_AUTH_TYPE,
   CUSTOM_TOKEN_AUTH_TYPE,
-  JWT_TOKEN_AUTH_TYPE
+  JWT_AUTH_TYPE,
+  MUTUAL_TLS_AUTH_TYPE
 } from '../constants'
 
 config.api = config.get('api')
@@ -244,7 +244,7 @@ export async function getEnabledAuthenticationTypes (ctx, next) {
   if (config.authentication.enableMutualTLSAuthentication) enabledAuthTypes.push(MUTUAL_TLS_AUTH_TYPE)
   if (config.authentication.enableBasicAuthentication) enabledAuthTypes.push(BASIC_AUTH_TYPE)
   if (config.authentication.enableCustomTokenAuthentication) enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
-  if (config.authentication.enableJWTAuthentication) enabledAuthTypes.push(JWT_TOKEN_AUTH_TYPE)
+  if (config.authentication.enableJWTAuthentication) enabledAuthTypes.push(JWT_AUTH_TYPE)
 
   ctx.body = enabledAuthTypes
   ctx.status = 200
