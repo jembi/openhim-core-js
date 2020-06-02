@@ -8,4 +8,4 @@ export const BASIC_AUTH_TYPE = 'basic-auth'
 
 export const CUSTOM_TOKEN_AUTH_TYPE = 'custom-token-auth'
 
-export const JWT_TOKEN_AUTH_TYPE = 'jwt-token-auth'
+export const JWT_AUTH_TYPE = 'jwt-token-auth'
