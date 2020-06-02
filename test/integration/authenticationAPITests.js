@@ -22,6 +22,7 @@ const { SERVER_PORTS } = constants
 describe('API Integration Tests', () => {
   describe('Retrieve Enabled Authentication types', () => {
     let authDetails = null
+    const authConfig = config.authentication
 
     before(async () => {
       await testUtils.setupTestUsers()
@@ -34,6 +35,10 @@ describe('API Integration Tests', () => {
 
     afterEach(async () => {
       await AuditModel.deleteMany({})
+    })
+
+    beforeEach(() => {
+      config.authentication = authConfig
     })
 
     after(async () => {
@@ -51,6 +56,18 @@ describe('API Integration Tests', () => {
         .set('auth-salt', authDetails.authSalt)
         .set('auth-token', authDetails.authToken)
         .expect(403)
+    })
+
+    it('should return an error when the authentication object is invalid', async () => {
+      config.authentication = {}
+
+      await request(constants.BASE_URL)
+        .get('/authentication/types')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(500)
     })
 
     it('should retrieve enabled authentication types', async () => {
