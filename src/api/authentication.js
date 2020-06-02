@@ -226,40 +226,30 @@ export async function authenticate (ctx, next) {
 }
 
 export async function getEnabledAuthenticationTypes (ctx, next) {
-  // Log level for messages logged
-  let logLevel = 'error'
-
-  try {
-    if (!authorisation.inGroup('admin', ctx.authenticated)) {
-      ctx.statusCode = 403
-      const error = `User ${ctx.authenticated.email} is not an admin, API access to get enabled authentication types denied.`
-      logLevel = 'info'
-      throw Error(error)
-    }
-
-    if (
-      !config.authentication ||
-      !Object.keys(config.authentication).length
-    ) {
-      throw Error('Invalid authentication Types, openhim not configured correctly')
-    }
-
-    const enabledAuthTypes = []
-
-    if (config.authentication.enableMutualTLSAuthentication) enabledAuthTypes.push(MUTUAL_TLS_AUTH_TYPE)
-    if (config.authentication.enableBasicAuthentication) enabledAuthTypes.push(BASIC_AUTH_TYPE)
-    if (config.authentication.enableCustomTokenAuthentication) enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
-    if (config.authentication.enableJWTAuthentication) enabledAuthTypes.push(JWT_TOKEN_AUTH_TYPE)
-
-    ctx.body = enabledAuthTypes
-    ctx.status = 200
-    logger.info(`User ${ctx.authenticated.email} retrieved the enabled authentication types`)
-    next()
-  } catch (err) {
-    const status = ctx.statusCode ? ctx.statusCode : 500
-    logAndSetResponse(ctx, status, err.message, logLevel)
-    next()
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to get enabled authentication types denied.`, 'info')
+    return next()
   }
+
+  if (
+    !config.authentication ||
+    !Object.keys(config.authentication).length
+  ) {
+    logAndSetResponse(ctx, 500, 'No authentication enabled, invalid OpenHIM configuration', 'error')
+    return next()
+  }
+
+  const enabledAuthTypes = []
+
+  if (config.authentication.enableMutualTLSAuthentication) enabledAuthTypes.push(MUTUAL_TLS_AUTH_TYPE)
+  if (config.authentication.enableBasicAuthentication) enabledAuthTypes.push(BASIC_AUTH_TYPE)
+  if (config.authentication.enableCustomTokenAuthentication) enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
+  if (config.authentication.enableJWTAuthentication) enabledAuthTypes.push(JWT_TOKEN_AUTH_TYPE)
+
+  ctx.body = enabledAuthTypes
+  ctx.status = 200
+  logger.info(`User ${ctx.authenticated.email} retrieved the enabled authentication types`)
+  next()
 }
 
 // Exports for testing only
