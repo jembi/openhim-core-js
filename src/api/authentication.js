@@ -7,12 +7,20 @@ import logger from 'winston'
 import os from 'os'
 
 import * as auditing from '../auditing'
+import * as authorisation from './authorisation'
 import { UserModelAPI } from '../model/users'
-import { caseInsensitiveRegex } from '../utils'
+import { caseInsensitiveRegex, logAndSetResponse } from '../utils'
 import { config } from '../config'
+import {
+  BASIC_AUTH_TYPE,
+  CUSTOM_TOKEN_AUTH_TYPE,
+  JWT_AUTH_TYPE,
+  MUTUAL_TLS_AUTH_TYPE
+} from '../constants'
 
 config.api = config.get('api')
 config.auditing = config.get('auditing')
+config.authentication = config.get('authentication')
 const himSourceID = config.auditing.auditEvents.auditSourceID
 
 // will NOT audit any successful logins on the following paths (specified as regex patterns)
@@ -215,6 +223,33 @@ export async function authenticate (ctx, next) {
   auditing.sendAuditEvent(audit, handleAuditResponse)
 
   return next()
+}
+
+export async function getEnabledAuthenticationTypes (ctx, next) {
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to get enabled authentication types denied.`, 'info')
+    return next()
+  }
+
+  if (
+    !config.authentication ||
+    !Object.keys(config.authentication).length
+  ) {
+    logAndSetResponse(ctx, 500, 'No authentication enabled, invalid OpenHIM configuration', 'error')
+    return next()
+  }
+
+  const enabledAuthTypes = []
+
+  if (config.authentication.enableMutualTLSAuthentication) enabledAuthTypes.push(MUTUAL_TLS_AUTH_TYPE)
+  if (config.authentication.enableBasicAuthentication) enabledAuthTypes.push(BASIC_AUTH_TYPE)
+  if (config.authentication.enableCustomTokenAuthentication) enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
+  if (config.authentication.enableJWTAuthentication) enabledAuthTypes.push(JWT_AUTH_TYPE)
+
+  ctx.body = enabledAuthTypes
+  ctx.status = 200
+  logger.info(`User ${ctx.authenticated.email} retrieved the enabled authentication types`)
+  next()
 }
 
 // Exports for testing only

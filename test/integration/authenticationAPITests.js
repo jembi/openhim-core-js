@@ -20,6 +20,98 @@ import { config } from '../../src/config'
 const { SERVER_PORTS } = constants
 
 describe('API Integration Tests', () => {
+  describe('Retrieve Enabled Authentication types', () => {
+    let authDetails = null
+    const authConfig = config.authentication
+
+    before(async () => {
+      await testUtils.setupTestUsers()
+      authDetails = testUtils.getAuthDetails()
+      const startPromise = promisify(server.start)
+      await startPromise({ apiPort: SERVER_PORTS.apiPort })
+      await testUtils.setImmediatePromise()
+      await AuditModel.deleteMany({})
+    })
+
+    afterEach(async () => {
+      await AuditModel.deleteMany({})
+    })
+
+    beforeEach(() => {
+      config.authentication = authConfig
+    })
+
+    after(async () => {
+      await Promise.all([
+        testUtils.cleanupTestUsers(),
+        promisify(server.stop)()
+      ])
+    })
+
+    it('should only allow an admin user to retrieve authentication types', async () => {
+      await request(constants.BASE_URL)
+        .get('/authentication/types')
+        .set('auth-username', testUtils.nonRootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(403)
+    })
+
+    it('should return an error when the authentication object is invalid', async () => {
+      config.authentication = {}
+
+      await request(constants.BASE_URL)
+        .get('/authentication/types')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(500)
+    })
+
+    it('should retrieve enabled authentication types', async () => {
+      config.authentication.enableMutualTLSAuthentication = true
+      config.authentication.enableBasicAuthentication = true
+      config.authentication.enableJWTAuthentication = false
+      config.authentication.enableCustomTokenAuthentication = true
+
+      const result = await request(constants.BASE_URL)
+        .get('/authentication/types')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(200)
+
+      result.body.length.should.be.equal(3)
+      result.body[0].should.be.equal('mutual-tls-auth')
+      result.body[1].should.be.equal('basic-auth')
+      result.body[2].should.be.equal('custom-token-auth')
+    })
+
+    it('should retrieve enabled authentication types (all auth types enabled)', async () => {
+      config.authentication.enableMutualTLSAuthentication = true
+      config.authentication.enableBasicAuthentication = true
+      config.authentication.enableJWTAuthentication = true
+      config.authentication.enableCustomTokenAuthentication = true
+
+      const result = await request(constants.BASE_URL)
+        .get('/authentication/types')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(200)
+
+      result.body.length.should.be.equal(4)
+      result.body[0].should.be.equal('mutual-tls-auth')
+      result.body[1].should.be.equal('basic-auth')
+      result.body[2].should.be.equal('custom-token-auth')
+      result.body[3].should.be.equal('jwt-auth')
+    })
+  })
+
   describe('Authentication API tests', () => {
     let authDetails = null
 
