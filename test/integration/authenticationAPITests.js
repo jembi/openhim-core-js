@@ -89,6 +89,27 @@ describe('API Integration Tests', () => {
       result.body[1].should.be.equal('basic-auth')
       result.body[2].should.be.equal('custom-token-auth')
     })
+
+    it('should retrieve enabled authentication types (all auth types enabled)', async () => {
+      config.authentication.enableMutualTLSAuthentication = true
+      config.authentication.enableBasicAuthentication = true
+      config.authentication.enableJWTAuthentication = true
+      config.authentication.enableCustomTokenAuthentication = true
+
+      const result = await request(constants.BASE_URL)
+        .get('/authentication/types')
+        .set('auth-username', testUtils.rootUser.email)
+        .set('auth-ts', authDetails.authTS)
+        .set('auth-salt', authDetails.authSalt)
+        .set('auth-token', authDetails.authToken)
+        .expect(200)
+
+      result.body.length.should.be.equal(4)
+      result.body[0].should.be.equal('mutual-tls-auth')
+      result.body[1].should.be.equal('basic-auth')
+      result.body[2].should.be.equal('custom-token-auth')
+      result.body[3].should.be.equal('jwt-auth')
+    })
   })
 
   describe('Authentication API tests', () => {
