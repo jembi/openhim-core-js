@@ -6,8 +6,7 @@ import logger from 'winston'
 import * as client from '../model/clients'
 import * as configIndex from '../config'
 import * as cache from '../jwtSecretOrPublicKeyCache'
-
-const TOKEN_PATTERN = /^ *(?:[Bb][Ee][Aa][Rr][Ee][Rr]) +([A-Za-z0-9\-._~+/]+=*) *$/
+import { JWT_PATTERN } from '../constants'
 
 async function authenticateClient(clientID) {
   return client.ClientModel.findOne({ clientID }).then((client) => {
@@ -41,15 +40,15 @@ function getJwtOptions() {
 }
 
 async function authenticateToken(ctx) {
-  if (ctx.authenticated != null) {
+  if (ctx.authenticated) {
     return
   }
 
   const authHeader = ctx.request.header.authorization || ''
-  const token = TOKEN_PATTERN.exec(authHeader)
+  const token = JWT_PATTERN.exec(authHeader)
 
   if (!token) {
-    logger.warn(`Missing or invalid JWT 'Authorization' header`)
+    logger.debug(`Missing or invalid JWT 'Authorization' header`)
     return
   }
 
@@ -70,14 +69,14 @@ async function authenticateToken(ctx) {
     ctx.authenticated = client
     ctx.authenticationType = 'token'
   } catch (error) {
-    logger.error(`Token could not be verified: ${error.message}`)
+    logger.error(`JWT could not be verified: ${error.message}`)
     return
   }
 }
 
 export async function koaMiddleware(ctx, next) {
   await authenticateToken(ctx)
-  if (ctx.authenticated != null && ctx.authenticated.clientID != null) {
+  if (ctx.authenticated && ctx.authenticated.clientID) {
     ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID
   }
   await next()

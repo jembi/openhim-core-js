@@ -8,6 +8,7 @@ import { Z_SYNC_FLUSH } from 'zlib'
 import * as authorisation from './middleware/authorisation'
 import * as basicAuthentication from './middleware/basicAuthentication'
 import * as cache from './jwtSecretOrPublicKeyCache'
+import * as customTokenAuthentication from './middleware/customTokenAuthentication'
 import * as events from './middleware/events'
 import * as jwtAuthentication from './middleware/jwtAuthentication'
 import * as messageStore from './middleware/messageStore'
@@ -43,6 +44,10 @@ export function setupApp(done) {
   if (config.authentication.enableJWTAuthentication) {
     cache.populateCache()
     app.use(jwtAuthentication.koaMiddleware)
+  }
+
+  if (config.authentication.enableCustomTokenAuthentication) {
+    app.use(customTokenAuthentication.koaMiddleware)
   }
 
   if (config.authentication.enableBasicAuthentication) {
