@@ -72,7 +72,7 @@ describe('API Integration Tests', () => {
 
     it('should retrieve enabled authentication types', async () => {
       config.authentication.enableMutualTLSAuthentication = true
-      config.authentication.enableBasicAuthentication = false
+      config.authentication.enableBasicAuthentication = true
       config.authentication.enableJWTAuthentication = false
       config.authentication.enableCustomTokenAuthentication = true
 
@@ -84,9 +84,10 @@ describe('API Integration Tests', () => {
         .set('auth-token', authDetails.authToken)
         .expect(200)
 
-      result.body.length.should.be.equal(2)
+      result.body.length.should.be.equal(3)
       result.body[0].should.be.equal('mutual-tls-auth')
-      result.body[1].should.be.equal('custom-token-auth')
+      result.body[1].should.be.equal('basic-auth')
+      result.body[2].should.be.equal('custom-token-auth')
     })
   })
 
