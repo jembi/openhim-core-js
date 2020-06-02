@@ -570,4 +570,158 @@ describe('API Integration Tests', () => {
       })
     })
   })
+
+  describe('JWT Authentication', () => {
+    let mockServer = null
+
+    before(async () => {
+      await new ChannelModelAPI({
+        name: 'TEST DATA - Mock endpoint',
+        urlPattern: 'test/mock',
+        allow: ['PoC'],
+        routes: [
+          {
+            name: 'test route',
+            host: 'localhost',
+            port: constants.MEDIATOR_PORT,
+            primary: true
+          }
+        ],
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
+      }).save()
+
+      const testAppDoc = {
+        clientID: 'testApp',
+        clientDomain: 'openhim.jembi.org',
+        name: 'TEST Client',
+        roles: ['OpenMRS_PoC', 'PoC']
+      }
+
+      new ClientModelAPI(testAppDoc).save()
+
+      mockServer = await testUtils.createMockHttpServer(
+        'Mock response body 1\n',
+        constants.MEDIATOR_PORT,
+        200
+      )
+    })
+
+    after(async () => {
+      await Promise.all([
+        ChannelModelAPI.deleteOne({}),
+        ClientModelAPI.deleteMany({}),
+        mockServer.close()
+      ])
+    })
+
+    afterEach(async () => {
+      await promisify(server.stop)()
+    })
+
+    it('should `throw` 401 when no credentials provided', async () => {
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+
+      await request(constants.HTTP_BASE_URL).get('/test/mock').expect(401)
+    })
+
+    it('should `throw` 401 when incorrect details provided', async () => {
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+
+      await request(constants.HTTP_BASE_URL)
+        .get('/test/mock')
+        .auth('invalid', { type: 'bearer' })
+        .expect(401)
+    })
+
+    it('should return 200 OK with correct credentials', async () => {
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+
+      await request(constants.HTTP_BASE_URL)
+        .get('/test/mock')
+        .auth(
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QXBwIiwiYXVkIjoidGVzdCIsImlzcyI6InRlc3QifQ.k1xpH4HiyL-V7lspRqK_xLYhuQ3EIQfj7CrWJWgA0YA',
+          { type: 'bearer' }
+        )
+        .expect(200)
+    })
+  })
+
+  describe('Custom Token Authentication', () => {
+    let mockServer = null
+
+    before(async () => {
+      await new ChannelModelAPI({
+        name: 'TEST DATA - Mock endpoint',
+        urlPattern: 'test/mock',
+        allow: ['PoC'],
+        routes: [
+          {
+            name: 'test route',
+            host: 'localhost',
+            port: constants.MEDIATOR_PORT,
+            primary: true
+          }
+        ],
+        updatedBy: {
+          id: new ObjectId(),
+          name: 'Test'
+        }
+      }).save()
+
+      const testAppDoc = {
+        clientID: 'testApp',
+        clientDomain: 'openhim.jembi.org',
+        name: 'TEST Client',
+        roles: ['OpenMRS_PoC', 'PoC'],
+        customTokenID: 'test1'
+      }
+
+      new ClientModelAPI(testAppDoc).save()
+
+      mockServer = await testUtils.createMockHttpServer(
+        'Mock response body 1\n',
+        constants.MEDIATOR_PORT,
+        200
+      )
+    })
+
+    after(async () => {
+      await Promise.all([
+        ChannelModelAPI.deleteOne({}),
+        ClientModelAPI.deleteMany({}),
+        mockServer.close()
+      ])
+    })
+
+    afterEach(async () => {
+      await promisify(server.stop)()
+    })
+
+    it('should `throw` 401 when no credentials provided', async () => {
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+
+      await request(constants.HTTP_BASE_URL).get('/test/mock').expect(401)
+    })
+
+    it('should `throw` 401 when incorrect details provided', async () => {
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+
+      await request(constants.HTTP_BASE_URL)
+        .get('/test/mock')
+        .set({ Authorization: 'Custom Invalid' })
+        .expect(401)
+    })
+
+    it('should return 200 OK with correct credentials', async () => {
+      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+
+      await request(constants.HTTP_BASE_URL)
+        .get('/test/mock')
+        .set({ Authorization: 'Custom test1' })
+        .expect(200)
+    })
+  })
 })
