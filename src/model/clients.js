@@ -6,15 +6,21 @@ import { connectionAPI, connectionDefault } from '../config'
 
 const ClientSchema = new Schema({
   clientID: {
-    type: String, required: true, unique: true, index: true
+    type: String,
+    required: true,
+    unique: true,
+    index: true
   },
   clientDomain: {
-    type: String, index: true
+    type: String,
+    index: true
   },
   name: {
-    type: String, required: true
+    type: String,
+    required: true
   },
-  roles: [{type: String, required: true}],
+  roles: [{ type: String, required: true }],
+  customTokenID: { type: String, unique: true, sparse: true },
   passwordAlgorithm: String,
   passwordHash: String,
   passwordSalt: String,
@@ -27,6 +33,5 @@ const ClientSchema = new Schema({
   contactPersonEmail: String
 })
 
-// compile the Client Schema into a Model
 export const ClientModelAPI = connectionAPI.model('Client', ClientSchema)
 export const ClientModel = connectionDefault.model('Client', ClientSchema)
