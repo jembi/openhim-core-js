@@ -31,6 +31,12 @@ describe('JWT Cache Test', () => {
 
       const fsExistsSyncStub = sandbox.stub(fs, 'existsSync').returns(true)
 
+      const fsIsFileStub = sandbox.stub(fs, 'lstatSync').returns({
+        isFile: () => {
+          return true
+        }
+      })
+
       const fsReadFileSyncStub = sandbox
         .stub(fs, 'readFileSync')
         .throws(new Error('Boom!'))
@@ -42,11 +48,12 @@ describe('JWT Cache Test', () => {
       }
       configStub.callCount.should.eql(1)
       fsExistsSyncStub.callCount.should.eql(1)
+      fsIsFileStub.callCount.should.eql(1)
       fsReadFileSyncStub.callCount.should.eql(1)
       should(cache.getSecretOrPublicKey()).be.null()
     })
 
-    it('should succeed on file read ', () => {
+    it('should succeed on file read', () => {
       const secretOrPublicKey = 'jwtecdsa256.pem'
 
       const configStub = sandbox
@@ -54,6 +61,12 @@ describe('JWT Cache Test', () => {
         .returns(secretOrPublicKey)
 
       const fsExistsSyncStub = sandbox.stub(fs, 'existsSync').returns(true)
+
+      const fsIsFileStub = sandbox.stub(fs, 'lstatSync').returns({
+        isFile: () => {
+          return true
+        }
+      })
 
       const fsReadFileSyncStub = sandbox
         .stub(fs, 'readFileSync')
@@ -65,11 +78,12 @@ describe('JWT Cache Test', () => {
 
       configStub.callCount.should.eql(1)
       fsExistsSyncStub.callCount.should.eql(1)
+      fsIsFileStub.callCount.should.eql(1)
       fsReadFileSyncStub.callCount.should.eql(1)
       should(cache.getSecretOrPublicKey()).equal('test')
     })
 
-    it('should succeed when file does not exist ', () => {
+    it('should succeed when file does not exist', () => {
       const secretOrPublicKey = 'test'
 
       const configStub = sandbox
@@ -85,6 +99,29 @@ describe('JWT Cache Test', () => {
       configStub.callCount.should.eql(1)
       fsExistsSyncStub.callCount.should.eql(1)
       should(cache.getSecretOrPublicKey()).equal('test')
+    })
+
+    it('should succeed when no value specified', () => {
+      const secretOrPublicKey = ''
+
+      const configStub = sandbox
+        .stub(configIndex.config, 'get')
+        .returns(secretOrPublicKey)
+
+      const fsExistsSyncStub = sandbox.stub(fs, 'existsSync').returns(true)
+
+      const fsIsFileStub = sandbox.stub(fs, 'lstatSync').returns({
+        isFile: () => {
+          return false
+        }
+      })
+
+      cache.populateCache()
+
+      configStub.callCount.should.eql(1)
+      fsExistsSyncStub.callCount.should.eql(1)
+      fsIsFileStub.callCount.should.eql(1)
+      should(cache.getSecretOrPublicKey()).equal('')
     })
   })
 })
