@@ -51,6 +51,7 @@
     "form-data": "^2.5.1",
     "glossy": "0.1.7",
     "handlebars": "^4.7.6",
+    "jsonwebtoken": "^8.5.1",
     "kcors": "2.2.2",
     "koa": "^2.12.0",
     "koa-bodyparser": "^4.3.0",

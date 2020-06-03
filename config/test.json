@@ -8,6 +8,15 @@
     "logToDB": true,
     "capDBLogs": false
   },
+  "authentication": {
+    "enableCustomTokenAuthentication": true,
+    "enableJWTAuthentication": true,
+    "jwt": {
+      "secretOrPublicKey": "test",
+      "algorithms": "HS256",
+      "issuer": "test"
+    }
+  },
   "api": {
     "enabled": true,
     "protocol": "https",

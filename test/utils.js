@@ -1,21 +1,28 @@
-import { MongoClient, ObjectId } from 'mongodb'
-import * as fs from 'fs'
-import * as pem from 'pem'
-import { promisify } from 'util'
-import tls from 'tls'
+'use strict'
+
 import dgram from 'dgram'
-import net from 'net'
+import finalhandler from 'finalhandler'
 import http from 'http'
 import https from 'https'
+import net from 'net'
 import serveStatic from 'serve-static'
-import finalhandler from 'finalhandler'
 import sinon from 'sinon'
-import uriFormat from 'mongodb-uri'
+import tls from 'tls'
 import * as crypto from 'crypto'
+import * as fs from 'fs'
+import * as pem from 'pem'
+import { MongoClient, ObjectId } from 'mongodb'
+import { promisify } from 'util'
 
 import * as constants from './constants'
+import {
+  KeystoreModel,
+  MetricModel,
+  UserModel,
+  METRIC_TYPE_HOUR,
+  METRIC_TYPE_DAY
+} from '../src/model'
 import { config, encodeMongoURI } from '../src/config'
-import { KeystoreModel, MetricModel, UserModel, METRIC_TYPE_HOUR, METRIC_TYPE_DAY } from '../src/model'
 
 config.mongo = config.get('mongo')
 
@@ -30,7 +37,8 @@ export const rootUser = {
   surname: 'User',
   email: 'root@jembi.org',
   passwordAlgorithm: 'sha512',
-  passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+  passwordHash:
+    '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
   passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
   groups: ['HISP', 'admin']
 }
@@ -41,13 +49,14 @@ export const nonRootUser = {
   surname: 'Root',
   email: 'nonroot@jembi.org',
   passwordAlgorithm: 'sha512',
-  passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+  passwordHash:
+    '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
   passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
   groups: ['group1', 'group2']
 }
 // password is 'password'
 
-export function secureSocketTest (portOrOptions, data, waitForResponse = true) {
+export function secureSocketTest(portOrOptions, data, waitForResponse = true) {
   const options = {}
   if (typeof portOrOptions === 'number') {
     Object.assign(options, {
@@ -62,11 +71,11 @@ export function secureSocketTest (portOrOptions, data, waitForResponse = true) {
   return socketCallInternal(tls.connect, options, data, waitForResponse)
 }
 
-export async function socketTest (portOrOptions, data, waitForResponse = true) {
+export async function socketTest(portOrOptions, data, waitForResponse = true) {
   return socketCallInternal(net.connect, portOrOptions, data, waitForResponse)
 }
 
-async function socketCallInternal (connectFn, portOrOptions, data) {
+async function socketCallInternal(connectFn, portOrOptions, data) {
   if (portOrOptions == null) {
     throw new Error('Please enter in a port number or connection object')
   }
@@ -83,7 +92,7 @@ async function socketCallInternal (connectFn, portOrOptions, data) {
       socket.write(data || '')
     })
     const chunks = []
-    socket.once('data', d => {
+    socket.once('data', (d) => {
       chunks.push(d)
       /*
        * End this side of the socket once data has been received. The OpenHIM
@@ -108,20 +117,20 @@ async function socketCallInternal (connectFn, portOrOptions, data) {
  * @param {Function} pollPredicate Function that will return a boolean or a promise that will resolve as a boolean
  * @param {number} [pollBreak=30] Time to wait between checks
  */
-export async function pollCondition (pollPredicate, pollBreak = 20) {
+export async function pollCondition(pollPredicate, pollBreak = 20) {
   while (!(await pollPredicate())) {
     await wait(pollBreak)
   }
 }
 
-export function setupTestUsers () {
+export function setupTestUsers() {
   return Promise.all([
     new UserModel(rootUser).save(),
     new UserModel(nonRootUser).save()
   ])
 }
 
-export function getAuthDetails () {
+export function getAuthDetails() {
   const authTS = new Date().toISOString()
   const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
   const tokenhash = crypto.createHash('sha512')
@@ -138,11 +147,13 @@ export function getAuthDetails () {
   return auth
 }
 
-export function cleanupTestUsers () {
-  return UserModel.deleteMany({ email: { $in: [rootUser.email, nonRootUser.email] } })
+export function cleanupTestUsers() {
+  return UserModel.deleteMany({
+    email: { $in: [rootUser.email, nonRootUser.email] }
+  })
 }
 
-export function cleanupAllTestUsers () {
+export function cleanupAllTestUsers() {
   return UserModel.deleteMany({})
 }
 
@@ -153,7 +164,7 @@ export function cleanupAllTestUsers () {
  * @param {any} req
  * @returns {Buffer|string}
  */
-export async function readBody (req) {
+export async function readBody(req) {
   const chunks = []
   const dataFn = (data) => chunks.push(data)
   let endFn
@@ -170,7 +181,7 @@ export async function readBody (req) {
       return Buffer.concat(chunks)
     }
 
-    return chunks.map(p => (p || '').toString()).join('')
+    return chunks.map((p) => (p || '').toString()).join('')
   } finally {
     req.removeListener('data', dataFn)
     req.removeListener('end', endFn)
@@ -184,7 +195,7 @@ export async function readBody (req) {
  * @export
  * @param {any} object
  */
-export function lowerCaseMembers (object) {
+export function lowerCaseMembers(object) {
   if (object == null || typeof object !== 'object') {
     throw new Error(`Please pass in an object`)
   }
@@ -203,7 +214,7 @@ export function lowerCaseMembers (object) {
  * @param {any} value object to clone
  * @returns deep clone of the object
  */
-export function clone (value) {
+export function clone(value) {
   if (value == null || Number.isNaN(value)) {
     return value
   }
@@ -217,12 +228,12 @@ export function clone (value) {
  * @export
  * @return {Promise}
  */
-export async function dropTestDb () {
+export async function dropTestDb() {
   const client = await getMongoClient()
   await client.db().dropDatabase()
 }
 
-export function getMongoClient () {
+export function getMongoClient() {
   const url = config.get('mongo:url')
   return MongoClient.connect(encodeMongoURI(url), { useNewUrlParser: true })
 }
@@ -234,7 +245,7 @@ export function getMongoClient () {
  * @param {any} maybePromise
  * @returns {boolean}
  */
-export function isPromise (maybePromise) {
+export function isPromise(maybePromise) {
   if (maybePromise == null) {
     return false
   }
@@ -253,7 +264,7 @@ export function isPromise (maybePromise) {
  * @param {any} spyFnOrContent function to be called or content
  * @returns {object} spy with .callPromise
  */
-export function createSpyWithResolve (spyFnOrContent) {
+export function createSpyWithResolve(spyFnOrContent) {
   let outerResolve, outerReject
   if (typeof spyFnOrContent !== 'function') {
     spyFnOrContent = () => spyFnOrContent
@@ -290,13 +301,13 @@ export function createSpyWithResolve (spyFnOrContent) {
  * @param {number} [port=constants.STATIC_PORT]
  * @returns {Promise} promise that will resolve to a server
  */
-export async function createStaticServer (path = constants.DEFAULT_STATIC_PATH, port = constants.STATIC_PORT) {
+export async function createStaticServer(
+  path = constants.DEFAULT_STATIC_PATH,
+  port = constants.STATIC_PORT
+) {
   // Serve up public/ftp folder
   const serve = serveStatic(path, {
-    index: [
-      'index.html',
-      'index.htm'
-    ]
+    index: ['index.html', 'index.htm']
   })
 
   // Create server
@@ -311,7 +322,13 @@ export async function createStaticServer (path = constants.DEFAULT_STATIC_PATH, 
   return server
 }
 
-export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HTTPS_RESP, useClientCert = true, port = constants.HTTPS_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.DEFAULT_HEADERS) {
+export async function createMockHttpsServer(
+  respBodyOrFn = constants.DEFAULT_HTTPS_RESP,
+  useClientCert = true,
+  port = constants.HTTPS_PORT,
+  resStatusCode = constants.DEFAULT_STATUS,
+  resHeadersOrFn = constants.DEFAULT_HEADERS
+) {
   const options = {
     key: fs.readFileSync('test/resources/server-tls/key.pem'),
     cert: fs.readFileSync('test/resources/server-tls/cert.pem'),
@@ -324,8 +341,14 @@ export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HT
   }
 
   const server = https.createServer(options, async (req, res) => {
-    const respBody = typeof respBodyOrFn === 'function' ? await respBodyOrFn() : respBodyOrFn
-    res.writeHead(resStatusCode, typeof resHeadersOrFn === 'function' ? await resHeadersOrFn() : resHeadersOrFn)
+    const respBody =
+      typeof respBodyOrFn === 'function' ? await respBodyOrFn() : respBodyOrFn
+    res.writeHead(
+      resStatusCode,
+      typeof resHeadersOrFn === 'function'
+        ? await resHeadersOrFn()
+        : resHeadersOrFn
+    )
     res.end(respBody)
   })
 
@@ -334,7 +357,12 @@ export async function createMockHttpsServer (respBodyOrFn = constants.DEFAULT_HT
   return server
 }
 
-export function createMockServerForPost (successStatusCode, errStatusCode, bodyToMatch, returnBody) {
+export function createMockServerForPost(
+  successStatusCode,
+  errStatusCode,
+  bodyToMatch,
+  returnBody
+) {
   const mockServer = http.createServer((req, res) =>
     req.on('data', (chunk) => {
       if (chunk.toString() === bodyToMatch) {
@@ -353,14 +381,31 @@ export function createMockServerForPost (successStatusCode, errStatusCode, bodyT
   return mockServer
 }
 
-export async function createMockHttpServer (respBodyOrFn = constants.DEFAULT_HTTP_RESP, port = constants.HTTP_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.DEFAULT_HEADERS) {
+export async function createMockHttpServer(
+  respBodyOrFn = constants.DEFAULT_HTTP_RESP,
+  port = constants.HTTP_PORT,
+  resStatusCode = constants.DEFAULT_STATUS,
+  resHeadersOrFn = constants.DEFAULT_HEADERS
+) {
   const server = http.createServer(async (req, res) => {
-    const respBody = typeof respBodyOrFn === 'function' ? await respBodyOrFn(req) : respBodyOrFn
-    res.writeHead(resStatusCode, typeof resHeadersOrFn === 'function' ? await resHeadersOrFn() : resHeadersOrFn)
+    const respBody =
+      typeof respBodyOrFn === 'function'
+        ? await respBodyOrFn(req)
+        : respBodyOrFn
+    res.writeHead(
+      resStatusCode,
+      typeof resHeadersOrFn === 'function'
+        ? await resHeadersOrFn()
+        : resHeadersOrFn
+    )
     if (respBody == null) {
       res.end()
     } else {
-      res.end(Buffer.isBuffer(respBody) || typeof respBody === 'string' ? respBody : JSON.stringify(respBody))
+      res.end(
+        Buffer.isBuffer(respBody) || typeof respBody === 'string'
+          ? respBody
+          : JSON.stringify(respBody)
+      )
     }
   })
 
@@ -369,22 +414,32 @@ export async function createMockHttpServer (respBodyOrFn = constants.DEFAULT_HTT
   return server
 }
 
-export async function createMockHttpMediator (respBodyOrFn = constants.MEDIATOR_REPONSE, port = constants.MEDIATOR_PORT, resStatusCode = constants.DEFAULT_STATUS, resHeadersOrFn = constants.MEDIATOR_HEADERS) {
+export async function createMockHttpMediator(
+  respBodyOrFn = constants.MEDIATOR_REPONSE,
+  port = constants.MEDIATOR_PORT,
+  resStatusCode = constants.DEFAULT_STATUS,
+  resHeadersOrFn = constants.MEDIATOR_HEADERS
+) {
   return createMockHttpServer(respBodyOrFn, port, resStatusCode, resHeadersOrFn)
 }
 
 /*
-* Sets up a keystore of testing. serverCert, serverKey, ca are optional, however if
-* you provide a serverCert you must provide the serverKey or null one out and vice
-* versa.
-*/
-export async function setupTestKeystore (serverCert, serverKey, ca, callback = () => { }) {
+ * Sets up a keystore of testing. serverCert, serverKey, ca are optional, however if
+ * you provide a serverCert you must provide the serverKey or null one out and vice
+ * versa.
+ */
+export async function setupTestKeystore(
+  serverCert,
+  serverKey,
+  ca,
+  callback = () => {}
+) {
   if (typeof serverCert === 'function') {
     callback = serverCert
     serverCert = null
   }
 
-  if (Array.isArray(serverCert) && (typeof serverKey === 'function')) {
+  if (Array.isArray(serverCert) && typeof serverKey === 'function') {
     ca = serverCert
     callback = serverKey
     serverCert = null
@@ -421,8 +476,8 @@ export async function setupTestKeystore (serverCert, serverKey, ca, callback = (
     })
 
     const [caCerts, caFingerprints] = await Promise.all([
-      Promise.all(ca.map(c => readCertificateInfoPromised(c))),
-      Promise.all(ca.map(c => getFingerprintPromised(c)))
+      Promise.all(ca.map((c) => readCertificateInfoPromised(c))),
+      Promise.all(ca.map((c) => getFingerprintPromised(c)))
     ])
 
     if (caCerts.length !== caFingerprints.length) {
@@ -443,16 +498,19 @@ export async function setupTestKeystore (serverCert, serverKey, ca, callback = (
   }
 }
 
-export async function createMockTCPServer (onRequest = async data => data, port = constants.TCP_PORT) {
+export async function createMockTCPServer(
+  onRequest = async (data) => data,
+  port = constants.TCP_PORT
+) {
   const server = await net.createServer()
-  server.on('connection', socket => {
-    socket.on('data', data => {
-      async function sendRequest (data) {
+  server.on('connection', (socket) => {
+    socket.on('data', (data) => {
+      async function sendRequest(data) {
         const response = await onRequest(data)
         socket.write(response || '')
       }
       // Throw errors to make them obvious
-      sendRequest(data).catch(err => {
+      sendRequest(data).catch((err) => {
         throw err
       })
     })
@@ -465,7 +523,10 @@ export async function createMockTCPServer (onRequest = async data => data, port 
   return server
 }
 
-export async function createMockUdpServer (onRequest = data => { }, port = constants.UDP_PORT) {
+export async function createMockUdpServer(
+  onRequest = (data) => {},
+  port = constants.UDP_PORT
+) {
   const server = dgram.createSocket(constants.UPD_SOCKET_TYPE)
   server.on('error', console.error)
   server.on('message', async (msg) => {
@@ -480,7 +541,11 @@ export async function createMockUdpServer (onRequest = data => { }, port = const
   return server
 }
 
-export function createMockTLSServerWithMutualAuth (onRequest = async data => data, port = constants.TLS_PORT, useClientCert = true) {
+export function createMockTLSServerWithMutualAuth(
+  onRequest = async (data) => data,
+  port = constants.TLS_PORT,
+  useClientCert = true
+) {
   const options = {
     key: fs.readFileSync('test/resources/server-tls/key.pem'),
     cert: fs.readFileSync('test/resources/server-tls/cert.pem'),
@@ -492,7 +557,7 @@ export function createMockTLSServerWithMutualAuth (onRequest = async data => dat
     options.ca = fs.readFileSync('test/resources/server-tls/cert.pem')
   }
 
-  const server = tls.createServer(options, sock =>
+  const server = tls.createServer(options, (sock) =>
     sock.on('data', async (data) => {
       const response = await onRequest(data)
       return sock.write(response || '')
@@ -512,7 +577,7 @@ export function createMockTLSServerWithMutualAuth (onRequest = async data => dat
   })
 }
 
-export async function cleanupTestKeystore (cb = () => { }) {
+export async function cleanupTestKeystore(cb = () => {}) {
   try {
     await KeystoreModel.deleteMany({})
     cb()
@@ -522,17 +587,17 @@ export async function cleanupTestKeystore (cb = () => { }) {
   }
 }
 
-export function wait (time = 100) {
+export function wait(time = 100) {
   return new Promise((resolve) => {
     setTimeout(() => resolve(), time)
   })
 }
 
-export function random (start = 32000, end = start + 100) {
+export function random(start = 32000, end = start + 100) {
   return Math.ceil(Math.random() * end - start) + start
 }
 
-export async function setupMetricsTransactions () {
+export async function setupMetricsTransactions() {
   const metrics = [
     // One month before the others
     {

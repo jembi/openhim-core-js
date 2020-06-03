@@ -1,13 +1,16 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import request from 'supertest'
-import { ClientModelAPI } from '../../src/model/clients'
+import should from 'should'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { promisify } from 'util'
-import * as constants from '../constants'
+import { ClientModelAPI } from '../../src/model/clients'
 
 const { SERVER_PORTS } = constants
 
@@ -63,6 +66,68 @@ describe('API Integration Tests', () => {
         client.roles[1].should.equal('PoC')
         client.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
         client.certFingerprint.should.equal('23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC')
+      })
+
+      it('should add two clients without customTokenIDs to db - clients created', async () => {
+        const clientNoToken1 = Object.assign({}, testAppDoc)
+        clientNoToken1.clientID = 'test1'
+
+        const clientNoToken2 = Object.assign({}, testAppDoc)
+        clientNoToken2.clientID = 'test2'
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientNoToken1)
+          .expect(201)
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientNoToken2)
+          .expect(201)
+
+        const client1 = await ClientModelAPI.findOne({ clientID: 'test1' })
+        should(client1.customTokenID).be.undefined()
+        const client2 = await ClientModelAPI.findOne({ clientID: 'test2' })
+        should(client2.customTokenID).be.undefined()
+      })
+
+      it('should fail to add client with duplicate customTokenID', async () => {
+        const clientNoToken1 = Object.assign({}, testAppDoc)
+        clientNoToken1.clientID = 'test1'
+        clientNoToken1.customTokenID = 'test'
+
+        const clientNoToken2 = Object.assign({}, testAppDoc)
+        clientNoToken2.clientID = 'test2'
+        clientNoToken2.customTokenID = 'test'
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientNoToken1)
+          .expect(201)
+
+          const client1 = await ClientModelAPI.findOne({ clientID: 'test1' })
+          should(client1.customTokenID).equal('test')
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientNoToken2)
+          .expect(400)
       })
 
       it('should only allow an admin user to add a client', async () => {

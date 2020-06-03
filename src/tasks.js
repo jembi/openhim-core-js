@@ -1,11 +1,13 @@
+'use strict'
+
 import logger from 'winston'
 import http from 'http'
 import net from 'net'
 
-import { TaskModel } from './model/tasks'
-import { ChannelModel } from './model/channels'
-import { TransactionModel } from './model/transactions'
 import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
+import { ChannelModel } from './model/channels'
+import { TaskModel } from './model/tasks'
+import { TransactionModel } from './model/transactions'
 import { config } from './config'
 
 config.rerun = config.get('rerun')

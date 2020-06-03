@@ -1,14 +1,17 @@
-import zlib from 'zlib'
+'use strict'
+
+import cookie from 'cookie'
 import http from 'http'
 import https from 'https'
+import logger from 'winston'
 import net from 'net'
 import tls from 'tls'
-import logger from 'winston'
-import cookie from 'cookie'
-import { config } from '../config'
-import * as utils from '../utils'
-import * as messageStore from '../middleware/messageStore'
+import zlib from 'zlib'
+
 import * as events from '../middleware/events'
+import * as messageStore from '../middleware/messageStore'
+import * as utils from '../utils'
+import { config } from '../config'
 import { promisify } from 'util'
 
 config.mongo = config.get('mongo')

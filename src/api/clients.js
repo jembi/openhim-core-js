@@ -1,8 +1,11 @@
+'use strict'
+
 import logger from 'winston'
-import { ClientModelAPI } from '../model/clients'
-import { ChannelModelAPI } from '../model/channels'
+
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { ChannelModelAPI } from '../model/channels'
+import { ClientModelAPI } from '../model/clients'
 
 /*
  * Adds a client

@@ -1,10 +1,13 @@
-import logger from 'winston'
+'use strict'
+
 import atna from 'atna-audit'
+import logger from 'winston'
 import os from 'os'
-import { AuditModel, AuditMetaModel } from '../model/audits'
+
+import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import * as auditing from '../auditing'
+import { AuditMetaModel, AuditModel } from '../model/audits'
 import { config } from '../config'
 import { promisify } from 'util'
 

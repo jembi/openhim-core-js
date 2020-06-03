@@ -1,15 +1,18 @@
+'use strict'
+
 /* eslint-env mocha */
 
 import request from 'supertest'
 import { Types } from 'mongoose'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
-import { TaskModelAPI } from '../../src/model/tasks'
-import { TransactionModelAPI } from '../../src/model/transactions'
+import * as testUtils from '../utils'
 import { AutoRetryModelAPI } from '../../src/model/autoRetry'
 import { ChannelModelAPI } from '../../src/model/channels'
-import * as testUtils from '../utils'
-import * as constants from '../constants'
-import { promisify } from 'util'
+import { TaskModelAPI } from '../../src/model/tasks'
+import { TransactionModelAPI } from '../../src/model/transactions'
 
 const { ObjectId } = Types
 

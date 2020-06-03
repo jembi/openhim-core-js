@@ -1,16 +1,19 @@
+'use strict'
+
 /* eslint-env mocha */
 
-import request from 'supertest'
 import nconf from 'nconf'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { ClientModelAPI } from '../../src/model/clients'
-import { TransactionModelAPI, TransactionModel } from '../../src/model/transactions'
-import * as testUtils from '../utils'
-import { config } from '../../src/config'
+import request from 'supertest'
+import sinon from 'sinon'
 import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
+
 import * as constants from '../constants'
-import sinon from 'sinon'
+import * as testUtils from '../utils'
+import { ChannelModelAPI } from '../../src/model/channels'
+import { ClientModelAPI } from '../../src/model/clients'
+import { TransactionModel, TransactionModelAPI } from '../../src/model/transactions'
+import { config } from '../../src/config'
 
 const { SERVER_PORTS } = constants
 nconf.set('router', { httpPort: SERVER_PORTS.httpPort })

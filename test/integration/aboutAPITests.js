@@ -1,9 +1,13 @@
+'use strict'
+
 /* eslint-env mocha */
+
 import request from 'supertest'
+import { promisify } from 'util'
+
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { SERVER_PORTS, BASE_URL } from '../constants'
-import { promisify } from 'util'
+import { BASE_URL, SERVER_PORTS } from '../constants'
 
 describe('API Integration Tests', () =>
 
