@@ -70,6 +70,11 @@ export async function getClient (ctx, clientId, property) {
     if (result === null) {
       utils.logAndSetResponse(ctx, 404, `Client with id ${clientId} could not be found.`, 'info')
     } else {
+      // Remove the Custom Token ID from response
+      if (result.customTokenID) {
+        result.customTokenID = null
+        result.customTokenSet = true
+      }
       ctx.body = result
     }
   } catch (e) {
@@ -162,7 +167,15 @@ export async function getClients (ctx) {
   }
 
   try {
-    ctx.body = await ClientModelAPI.find().exec()
+    let clients = await ClientModelAPI.find().lean().exec()
+    // Remove the Custom Token IDs from response
+    ctx.body = clients.map((client) => {
+      if (client.customTokenID) {
+        client.customTokenSet = true
+        client.customTokenID = null
+      }
+      return client
+    })
   } catch (e) {
     logger.error(`Could not fetch all clients via the API: ${e.message}`)
     ctx.message = e.message
