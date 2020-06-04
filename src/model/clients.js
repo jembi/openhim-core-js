@@ -20,7 +20,13 @@ const ClientSchema = new Schema({
     required: true
   },
   roles: [{ type: String, required: true }],
-  customTokenID: { type: String, unique: true, sparse: true },
+  customTokenID: {
+    type: String,
+    index: {
+      unique: true,
+      partialFilterExpression: { customTokenID: { $type: 'string' } }
+    }
+  },
   passwordAlgorithm: String,
   passwordHash: String,
   passwordSalt: String,
