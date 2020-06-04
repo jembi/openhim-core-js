@@ -66,13 +66,13 @@ export async function getClient (ctx, clientId, property) {
   clientId = unescape(clientId)
 
   try {
-    const result = await ClientModelAPI.findById(clientId, projectionRestriction).exec()
+    const result = await ClientModelAPI.findById(clientId, projectionRestriction).lean().exec()
     if (result === null) {
       utils.logAndSetResponse(ctx, 404, `Client with id ${clientId} could not be found.`, 'info')
     } else {
       // Remove the Custom Token ID from response
       if (result.customTokenID) {
-        result.customTokenID = null
+        delete result.customTokenID
         result.customTokenSet = true
       }
       ctx.body = result
@@ -129,13 +129,6 @@ export async function updateClient (ctx, clientId) {
   }
 
   try {
-    // Check that the token has been set and the incoming customTokenID is falsey.
-    // This indicates that the Token must remain as is.
-    // Therefore delete the customTokenID field from the object to prevent the original being overwritten
-    if (clientData.customTokenSet === true && !clientData.customTokenID) {
-      delete clientData.customTokenID
-    }
-
     await ClientModelAPI.findByIdAndUpdate(clientId, clientData).exec()
     logger.info(`User ${ctx.authenticated.email} updated client with id ${clientId}`)
     ctx.body = 'Successfully updated client.'
@@ -178,8 +171,8 @@ export async function getClients (ctx) {
     // Remove the Custom Token IDs from response
     ctx.body = clients.map((client) => {
       if (client.customTokenID) {
+        delete client.customTokenID
         client.customTokenSet = true
-        client.customTokenID = null
       }
       return client
     })
