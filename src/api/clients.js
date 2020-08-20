@@ -25,6 +25,9 @@ export async function addClient (ctx) {
     if (((chResult != null ? chResult.length : undefined) > 0) || ((clResult != null ? clResult.length : undefined) > 0)) {
       return utils.logAndSetResponse(ctx, 409, `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`, 'info')
     }
+    if (clientData.roles.includes(clientData.clientID)) {
+      return utils.logAndSetResponse(ctx, 400, `ClientID '${clientData.clientID}' cannot be the same as a role name.`, 'info')
+    }
   }
 
   try {
