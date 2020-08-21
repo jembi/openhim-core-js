@@ -1,13 +1,16 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import request from 'supertest'
-import { ClientModelAPI } from '../../src/model/clients'
+import should from 'should'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { promisify } from 'util'
-import * as constants from '../constants'
+import { ClientModelAPI } from '../../src/model/clients'
 
 const { SERVER_PORTS } = constants
 
@@ -63,6 +66,68 @@ describe('API Integration Tests', () => {
         client.roles[1].should.equal('PoC')
         client.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
         client.certFingerprint.should.equal('23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC')
+      })
+
+      it('should add two clients without customTokenIDs to db - clients created', async () => {
+        const clientNoToken1 = Object.assign({}, testAppDoc)
+        clientNoToken1.clientID = 'test1'
+
+        const clientNoToken2 = Object.assign({}, testAppDoc)
+        clientNoToken2.clientID = 'test2'
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientNoToken1)
+          .expect(201)
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientNoToken2)
+          .expect(201)
+
+        const client1 = await ClientModelAPI.findOne({ clientID: 'test1' })
+        should(client1.customTokenID).be.undefined()
+        const client2 = await ClientModelAPI.findOne({ clientID: 'test2' })
+        should(client2.customTokenID).be.undefined()
+      })
+
+      it('should fail to add client with duplicate customTokenID', async () => {
+        const clientNoToken1 = Object.assign({}, testAppDoc)
+        clientNoToken1.clientID = 'test1'
+        clientNoToken1.customTokenID = 'test'
+
+        const clientNoToken2 = Object.assign({}, testAppDoc)
+        clientNoToken2.clientID = 'test2'
+        clientNoToken2.customTokenID = 'test'
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientNoToken1)
+          .expect(201)
+
+          const client1 = await ClientModelAPI.findOne({ clientID: 'test1' })
+          should(client1.customTokenID).equal('test')
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientNoToken2)
+          .expect(400)
       })
 
       it('should only allow an admin user to add a client', async () => {
@@ -125,6 +190,32 @@ describe('API Integration Tests', () => {
         res.body.roles[0].should.equal('test_role_PoC')
         res.body.roles[1].should.equal('monitoring')
         res.body.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
+      })
+
+      it('should get client by clientId excluding custom token ID', async () => {
+        const updates = {
+          customTokenID: 'test'
+        }
+
+        await request(constants.BASE_URL)
+          .put(`/clients/${clientId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+
+        const res = await request(constants.BASE_URL)
+          .get(`/clients/${clientId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        should.not.exist(res.body.customTokenID)
+        res.body.customTokenSet.should.be.ok()
       })
 
       it('should return status 404 if not found', async () => {
@@ -217,23 +308,15 @@ describe('API Integration Tests', () => {
       }
 
       it('should return all clients ', async () => {
-        const countBefore = await ClientModelAPI.countDocuments()
+        should(await ClientModelAPI.countDocuments()).eql(0)
 
-        let client = await new ClientModelAPI(testDocument)
-        client.clientID += '1'
-        await client.save()
+        await new ClientModelAPI(Object.assign({}, testDocument, {clientID: 'test1', customTokenID: 'token1'})).save()
 
-        client = await new ClientModelAPI(testDocument)
-        client.clientID += '2'
-        await client.save()
+        await new ClientModelAPI(Object.assign({}, testDocument, {clientID: 'test2', customTokenID: 'token2'})).save()
 
-        client = await new ClientModelAPI(testDocument)
-        client.clientID += '3'
-        client.save()
+        await new ClientModelAPI(Object.assign({}, testDocument, {clientID: 'test3', customTokenID: 'token3'})).save()
 
-        client = await new ClientModelAPI(testDocument)
-        client.clientID += '4'
-        client.save()
+        await new ClientModelAPI(Object.assign({}, testDocument, {clientID: 'test4', customTokenID: 'token4'})).save()
 
         const res = await request(constants.BASE_URL)
           .get('/clients')
@@ -242,7 +325,12 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
-        res.body.length.should.equal(countBefore + 4)
+
+        res.body.length.should.equal(4)
+        res.body.forEach((client) => {
+          client.customTokenSet.should.be.ok()
+          should.not.exist(client.customTokenID)
+        })
       })
 
       it('should not allow a non admin user to fetch all clients', async () => {
@@ -293,6 +381,69 @@ describe('API Integration Tests', () => {
         clientDoc.roles[0].should.equal('clientTest_update')
         clientDoc.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
         clientDoc.name.should.equal('Devil_may_Cry')
+      })
+
+      it('should update the specified client with custom token ID', async () => {
+        testDocument
+        const client = await new ClientModelAPI(testDocument).save()
+
+        const updates = {
+          customTokenID: 'test'
+        }
+
+        await request(constants.BASE_URL)
+          .put(`/clients/${client._id}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+
+        const clientDoc = await ClientModelAPI.findById(client._id)
+        clientDoc.customTokenID.should.equal('test')
+      })
+
+      it('should update the specified client with custom token ID set to null', async () => {
+        testDocument
+        const client = await new ClientModelAPI(testDocument).save()
+
+        const updates = {
+          customTokenID: null
+        }
+
+        await request(constants.BASE_URL)
+          .put(`/clients/${client._id}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+
+        const clientDoc = await ClientModelAPI.findById(client._id)
+        should(clientDoc.customTokenID).be.null()
+      })
+
+      it('should update the specified client with basic auth password details set to null', async () => {
+        testDocument
+        const client = await new ClientModelAPI(testDocument).save()
+
+        const updates = {
+          passwordHash: null
+        }
+
+        await request(constants.BASE_URL)
+          .put(`/clients/${client._id}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(updates)
+          .expect(200)
+
+        const clientDoc = await ClientModelAPI.findById(client._id)
+        should(clientDoc.passwordHash).be.null()
       })
 
       it('should update successfully if the _id field is present in update, ignoring it', async () => {

@@ -1,14 +1,17 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
 import should from 'should'
 import request from 'supertest'
-import * as server from '../../src/server'
-import { AuditModel, AuditMetaModel } from '../../src/model'
-import * as testUtils from '../utils'
-import * as constants from '../constants'
-import { config } from '../../src/config'
 import { promisify } from 'util'
+
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { AuditMetaModel, AuditModel } from '../../src/model'
+import { BASE_URL, SERVER_PORTS } from '../constants'
+import { config } from '../../src/config'
 
 describe('API Integration Tests', () => {
   const router = config.get('router')
@@ -16,7 +19,7 @@ describe('API Integration Tests', () => {
   let authDetails
   before(async () => {
     await testUtils.setupTestUsers()
-    await promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort })
+    await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
 
     authDetails = testUtils.getAuthDetails()
   })
@@ -111,7 +114,7 @@ describe('API Integration Tests', () => {
 
     describe('*addAudit()', () => {
       it('should add a audit and return status 201 - audit created', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/audits')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -139,7 +142,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should only allow admin users to add audits', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/audits')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -154,7 +157,7 @@ describe('API Integration Tests', () => {
       it('should call getAudits ', async () => {
         const countBefore = await AuditModel.countDocuments()
         await new AuditModel(auditData).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/audits?filterPage=0&filterLimit=10&filters={}')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -171,7 +174,7 @@ describe('API Integration Tests', () => {
         filters = JSON.stringify(filters)
         const countBefore = await AuditModel.countDocuments()
         await new AuditModel(auditData).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(filters)}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -184,7 +187,8 @@ describe('API Integration Tests', () => {
 
       it('should generate an \'audit log used\' audit when using non-basic representation', async () => {
         const result = await new AuditModel(auditData).save()
-        await request(constants.BASE_URL)
+
+        await request(BASE_URL)
           .get('/audits?filterRepresentation=full')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -199,17 +203,17 @@ describe('API Integration Tests', () => {
         newAudits.length.should.be.exactly(2)
         if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
           newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
-          newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
+          newAudits[0].participantObjectIdentification[0].participantObjectID.should.be.exactly(`${config.api.protocol}://localhost:8080/audits/${result._id}`)
         } else {
           newAudits[1].eventIdentification.eventID.displayName === 'Audit Log Used'
           newAudits[1].participantObjectIdentification.length.should.be.exactly(1)
-          newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly(`https://localhost:8080/audits/${result._id}`)
+          newAudits[1].participantObjectIdentification[0].participantObjectID.should.be.exactly(`${config.api.protocol}://localhost:8080/audits/${result._id}`)
         }
       })
 
       it('should NOT generate an \'audit log used\' audit when using basic (default) representation', async () => {
         await new AuditModel(auditData).save()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/audits')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -226,7 +230,7 @@ describe('API Integration Tests', () => {
       it('should fetch a audit by ID - admin user', async () => {
         const audit = await new AuditModel(auditData).save()
         const auditId = audit._id
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/audits/${auditId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -253,7 +257,7 @@ describe('API Integration Tests', () => {
       it('should NOT return a audit that a user is not allowed to view', async () => {
         const audit = await new AuditModel(auditData).save()
         const auditId = audit._id
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(`/audits/${auditId}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -265,7 +269,7 @@ describe('API Integration Tests', () => {
       it('should generate an \'audit log used\' audit', async () => {
         const audit = await new AuditModel(auditData).save()
         const auditId = audit._id
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(`/audits/${auditId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -276,7 +280,7 @@ describe('API Integration Tests', () => {
         await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 2))
         const newAudits = await AuditModel.find()
         newAudits.length.should.eql(2)
-        const participantObjectID = `https://${router.externalHostname}:${api.httpsPort}/audits/${auditId}`
+        const participantObjectID = `${config.api.protocol}://${router.externalHostname}:${api.port}/audits/${auditId}`
 
         if (newAudits[0].eventIdentification.eventID.displayName === 'Audit Log Used') {
           newAudits[0].participantObjectIdentification.length.should.be.exactly(1)
@@ -291,7 +295,7 @@ describe('API Integration Tests', () => {
 
     describe('*getAuditsFilterOptions', () => {
       it('should fetch dropdown filter options - admin user', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/audits')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -300,7 +304,7 @@ describe('API Integration Tests', () => {
           .send(auditData)
           .expect(201)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/audits-filter-options')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -316,7 +320,7 @@ describe('API Integration Tests', () => {
 
       it('should NOT return a filter dropdown object if user is not admin', async () => {
         await new AuditModel(auditData).save()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/audits-filter-options')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)

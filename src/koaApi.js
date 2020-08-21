@@ -1,28 +1,31 @@
+'use strict'
+
 import Koa from 'koa'
-import route from 'koa-route'
-import cors from 'kcors'
 import bodyParser from 'koa-bodyparser'
+import cors from 'kcors'
+import route from 'koa-route'
+
+import * as about from './api/about'
+import * as audits from './api/audits'
 import * as authentication from './api/authentication'
-import * as users from './api/users'
-import * as clients from './api/clients'
-import * as roles from './api/roles'
-import * as transactions from './api/transactions'
+import * as certificateAuthority from './api/certificateAuthority'
 import * as channels from './api/channels'
-import * as tasks from './api/tasks'
+import * as clients from './api/clients'
 import * as contactGroups from './api/contactGroups'
 import * as events from './api/events'
+import * as heartbeat from './api/heartbeat'
+import * as keystore from './api/keystore'
+import * as logs from './api/logs'
 import * as mediators from './api/mediators'
 import * as metrics from './api/metrics'
-import * as keystore from './api/keystore'
-import * as serverRestart from './api/restart'
-import * as audits from './api/audits'
-import { config } from './config'
-import * as heartbeat from './api/heartbeat'
-import * as certificateAuthority from './api/certificateAuthority'
-import * as logs from './api/logs'
 import * as metadata from './api/metadata'
+import * as roles from './api/roles'
+import * as serverRestart from './api/restart'
+import * as tasks from './api/tasks'
+import * as transactions from './api/transactions'
+import * as users from './api/users'
 import * as visualizers from './api/visualizers'
-import * as about from './api/about'
+import { config } from './config'
 
 export function setupApp (done) {
   // Create an instance of the koa-server and add a body-parser
@@ -43,6 +46,9 @@ export function setupApp (done) {
   app.use(route.get('/authenticate/:username', users.authenticate))
   // Authenticate the API request
   app.use(authentication.authenticate)
+
+  // Get enabled authentication types
+  app.use(route.get('/authentication/types', authentication.getEnabledAuthenticationTypes))
 
   // Define the api routes
   app.use(route.get('/users', users.getUsers))

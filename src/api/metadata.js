@@ -1,12 +1,15 @@
+'use strict'
+
 import logger from 'winston'
+
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import { ChannelModelAPI } from '../model/channels'
 import { ClientModelAPI } from '../model/clients'
-import { MediatorModelAPI } from '../model/mediators'
-import { UserModelAPI } from '../model/users'
 import { ContactGroupModelAPI } from '../model/contactGroups'
 import { KeystoreModelAPI } from '../model/keystore'
+import { MediatorModelAPI } from '../model/mediators'
+import { UserModelAPI } from '../model/users'
 
 // Map string parameters to collections
 const collections = {

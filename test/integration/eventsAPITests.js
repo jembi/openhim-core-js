@@ -1,16 +1,19 @@
+'use strict'
+
 /* eslint-env mocha */
 
 import request from 'supertest'
+import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { ClientModelAPI } from '../../src/model/clients'
 import { EventModel } from '../../src/model'
-import * as testUtils from '../utils'
-import * as server from '../../src/server'
 import { config } from '../../src/config'
-import { promisify } from 'util'
-import * as constants from '../constants'
-import sinon from 'sinon'
-import {ObjectId} from 'mongodb'
 
 config.authentication = config.get('authentication')
 config.tlsClientLookup = config.get('tlsClientLookup')
@@ -135,7 +138,10 @@ describe('Events API Integration Tests', () => {
   })
 
   beforeEach(async () => {
-    await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort, apiPort: SERVER_PORTS.apiPort })
+    await promisify(server.start)({
+      httpPort: SERVER_PORTS.httpPort,
+      apiPort: SERVER_PORTS.apiPort
+    })
     authDetails = await testUtils.getAuthDetails()
     await EventModel.deleteMany({})
   })

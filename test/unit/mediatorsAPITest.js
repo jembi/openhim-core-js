@@ -1,6 +1,9 @@
+'use strict'
+
 /* eslint-env mocha */
 
 import rewire from 'rewire'
+
 const mediators = rewire('../../src/api/mediators')
 
 describe('Mediator API unit tests', () => {

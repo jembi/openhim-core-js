@@ -1,8 +1,11 @@
-import { Schema } from 'mongoose'
-import { connectionAPI, connectionDefault } from '../config'
-import { ContactUserDef } from './contactGroups'
+'use strict'
+
 import patchHistory from 'mongoose-patch-history'
+import { Schema } from 'mongoose'
 import { camelize, pascalize } from 'humps'
+
+import { ContactUserDef } from './contactGroups'
+import { connectionAPI, connectionDefault } from '../config'
 
 const RouteDef = {
   name: {
@@ -151,12 +154,12 @@ export { RouteDef }
 
 /*
  * The Channel object that describes a specific channel within the OpenHIM.
- * It provides some metadata describing a channel and contians a number of
+ * It provides some metadata describing a channel and contains a number of
  * route objects. If a request matches the urlPattern of a channel it should
  * be routed to each of the routes described in that channel.
  *
  * A channel also has an allow property. This property should contain a list
- * of users or group that are authroised to send messages to this channel.
+ * of users or group that are authorised to send messages to this channel.
  */
 const ChannelSchema = new Schema(ChannelDef)
 

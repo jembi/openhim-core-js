@@ -2,12 +2,12 @@
 
 The following config option are provided by the OpenHIM. All of these options have default values. You only need to provide config options if they differ from the defaults.
 
-```json
+```js
 {
   "bindAddress": "0.0.0.0",
   "mongo": {
     // The address of 1 or more mongo servers. If you are using a replicaSet
-    // you must specify the '?replicatSet=<name>' option in the url and list
+    // you must specify the '?replicaSet=<name>' option in the url and list
     // all of the hosts in the replica set in a comma separated list.
     // eg. mongodb://localhost:27017,localhost:27018,localhost:27019/openhim?replicaSet=rs0
     "url": "mongodb://localhost/openhim",
@@ -22,8 +22,8 @@ The following config option are provided by the OpenHIM. All of these options ha
     // logs API will NOT work!
     "logToDB": true,
     // Whether to cap the size of the log message stored in mongo. This only
-    // takes effect if the collection is being created for the first time. Ie.
-    // the first time the OpenHIM is run.
+    // takes effect if the collection is being created for the first time.
+    // i.e. the first time the OpenHIM is run.
     "capDBLogs": true,
     // The max size in bytes of the logs collection
     "capSize": 10000000,
@@ -42,7 +42,9 @@ The following config option are provided by the OpenHIM. All of these options ha
   },
   "api": {
     // The port that the OpenHIM API uses
-    "httpsPort": 8080,
+    "port": 8080,
+    // The protocol that the OpenHIM API uses
+    "protocol": "https",
     // API request are only valid for a particular window once made, this is
     // the size of that window in seconds
     "authWindowSeconds": 10,
@@ -60,7 +62,7 @@ The following config option are provided by the OpenHIM. All of these options ha
   },
   "rerun": {
     // The port that the transaction re-run processor runs on, this port is
-    // used internally and SHOULD NOT be expposed past your firewall
+    // used internally and SHOULD NOT be exposed past your firewall
     "httpPort": 7786,
     // The host where the re-run processor is running (always the OpenHIM
     // server)
@@ -78,7 +80,7 @@ The following config option are provided by the OpenHIM. All of these options ha
       // is an internally used port and SHOULD NOT be exposed past your
       // firewall.
       "httpPort": 7787,
-      // The host where the tcp adpater's http receiver is running (always
+      // The host where the tcp adapter's http receiver is running (always
       // the OpenHIM server)
       "host": "localhost"
     }
@@ -94,7 +96,22 @@ The following config option are provided by the OpenHIM. All of these options ha
   "authentication": {
     // What kind of authentication methods to allow
     "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": true
+    "enableBasicAuthentication": true,
+    "enableCustomTokenAuthentication": false,
+    "enableJWTAuthentication": false,
+    // JWT specific config
+    "jwt": {
+      // The secret or public key used by the encryption algorithm in signing the token
+      "secretOrPublicKey": "",
+    // The algorithm used to sign the token. i.e. HS256, RS256, ES256, PS256, etc
+      "algorithms": "",
+    // The JWT Audience (aud) is a registered claim field in the payload.
+    // It identifies the intended recipients of the JWT. These values are usually case sensitive strings.
+      "audience": "",
+    // The JWT Issuer (iss) is a registered claim field in the payload.
+    // It identifiers the principal JWT issuer. This value is a case sensitive string.
+      "issuer": ""
+    }
   },
   "email": {
     // The address to use in the "from" field of the emails
@@ -130,7 +147,8 @@ The following config option are provided by the OpenHIM. All of these options ha
   "reports": {
     // To enable daily and weekly reporting
     "enableReports": true,
-    // To configure the timezone to be used for the Openhim daily and weekly reports. Defaults to server's time. "+0200" for example is the South African timezone.
+    // To configure the timezone to be used for the Openhim daily and weekly reports.
+    // Defaults to server's time. "+0200" for example is the South African timezone.
     "utcOffset": null
   },
   "events": {
@@ -165,7 +183,8 @@ The following config option are provided by the OpenHIM. All of these options ha
       // Connection type. Options are 'tcp', 'tls', 'udp' or 'internal'
       // If 'internal' then audits will be sent to the HIM's internal audit repository.
       "interface": "internal",
-      // Host and port are mandatory for all interfaces except 'internal', in which case the values are ignored
+      // Host and port are mandatory for all interfaces except 'internal',
+      // in which case the values are ignored
       "host": "localhost",
       "port": 5051
     }
@@ -190,7 +209,7 @@ The following config option are provided by the OpenHIM. All of these options ha
   },
   "certificateManagement": {
     // Toggle whether to watch the file systems for the server certificate to
-    // use or to manage certifcates manually. If enables whenever certifcate
+    // use or to manage certificates manually. If enables whenever certificate
     // changes are detected then the new certificate is loaded and the server
     // user automatically restarted.
     "watchFSForCert": false,

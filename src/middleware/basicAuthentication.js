@@ -1,10 +1,12 @@
+'use strict'
+
 import auth from 'basic-auth'
-import logger from 'winston'
-import crypto from 'crypto'
 import bcrypt from 'bcryptjs'
-import { ClientModel } from '../model/clients'
-import { config } from '../config'
+import crypto from 'crypto'
+import logger from 'winston'
 import { promisify } from 'util'
+
+import { ClientModel } from '../model/clients'
 
 const bcryptCompare = (pass, client, callback) => bcrypt.compare(pass, client.passwordHash, callback)
 
@@ -44,7 +46,7 @@ export function authenticateUser (ctx, done) {
           if (err) { return done(err) }
 
           if (res) {
-            logger.info(`${user.name} is authenticated.`)
+            logger.info(`Client (${client.name}) is Authenticated.`)
             ctx.authenticated = client
             ctx.authenticationType = 'basic'
             return done(null, client)

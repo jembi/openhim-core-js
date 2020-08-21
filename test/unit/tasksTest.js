@@ -1,15 +1,17 @@
+'use strict'
+
 /* eslint-env mocha */
-import { TransactionModel, TaskModel, ChannelModel } from '../../src/model'
+
+import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as tasks from '../../src/tasks'
 import * as testUtils from '../utils'
-import { promisify } from 'util'
-import * as constants from '../constants'
+import { ChannelModel, TaskModel, TransactionModel } from '../../src/model'
 import { config } from '../../src/config'
-import sinon from 'sinon'
-import {ObjectId} from 'mongodb'
 import should from 'should'
-
-// const {ObjectId} = require('mongoose').Types
 
 if (config.rerun == null) {
   config.rerun = config.get('rerun')

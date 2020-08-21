@@ -1,12 +1,15 @@
+'use strict'
+
 /* eslint-env mocha */
 
-import should from 'should'
 import request from 'supertest'
-import * as server from '../../src/server'
-import { MediatorModel } from '../../src/model/mediators'
-import * as constants from '../constants'
-import * as testUtils from '../utils'
+import should from 'should'
 import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { MediatorModel } from '../../src/model/mediators'
 
 describe('API Integration Tests', () =>
   describe('Heartbeat REST API testing', () => {

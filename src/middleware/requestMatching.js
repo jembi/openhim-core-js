@@ -1,12 +1,14 @@
+'use strict'
+
+import logger from 'winston'
 import xpath from 'xpath'
 import { DOMParser as Dom } from 'xmldom'
-import logger from 'winston'
-import { config } from '../config'
-import * as utils from '../utils'
-import * as Channels from '../model/channels'
 import { promisify } from 'util'
 
-export function matchContent (body, channel) {
+import * as Channels from '../model/channels'
+import * as utils from '../utils'
+
+function matchContent (channel, ctx) {
   if (channel.matchContentRegex) {
     return matchRegex(channel.matchContentRegex, body)
   } else if (channel.matchContentXpath && channel.matchContentValue) {
@@ -133,8 +135,7 @@ export async function koaMiddleware (ctx, next) {
 // export private functions for unit testing
 // note: you cant spy on these method because of this :(
 if (process.env.NODE_ENV === 'test') {
-  // TODO: OHM-695 uncomment line below when working on ticket  
-  // exports.matchContent = matchContent
+  exports.matchContent = matchContent
   exports.matchRegex = matchRegex
   exports.matchXpath = matchXpath
   exports.matchJsonPath = matchJsonPath

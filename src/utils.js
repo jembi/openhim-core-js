@@ -1,6 +1,9 @@
-import momentTZ from 'moment-timezone'
+'use strict'
+
 import logger from 'winston'
+import momentTZ from 'moment-timezone'
 import _ from 'lodash'
+
 import { ChannelModel } from './model/channels'
 import { KeystoreModel } from './model/keystore'
 import { config } from './config'

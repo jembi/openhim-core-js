@@ -1,8 +1,11 @@
+'use strict'
+
 import logger from 'winston'
 import moment from 'moment'
+import { promisify } from 'util'
+
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import { promisify } from 'util'
 
 const levels = {
   debug: 1,

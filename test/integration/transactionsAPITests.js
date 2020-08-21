@@ -1,18 +1,21 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import should from 'should'
 import request from 'supertest'
-import * as testUtils from '../utils'
-import { TransactionModel } from '../../src/model/transactions'
-import { ChannelModel } from '../../src/model/channels'
-import * as server from '../../src/server'
-import { config } from '../../src/config'
-import { EventModelAPI } from '../../src/model/events'
-import { AutoRetryModelAPI } from '../../src/model/autoRetry'
-import * as constants from '../constants'
-import { promisify } from 'util'
+import should from 'should'
 import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { AutoRetryModelAPI } from '../../src/model/autoRetry'
+import { ChannelModel } from '../../src/model/channels'
+import { EventModelAPI } from '../../src/model/events'
+import { TransactionModel } from '../../src/model/transactions'
+import { config } from '../../src/config'
 
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application

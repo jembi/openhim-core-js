@@ -1,5 +1,12 @@
 # Changelog
 
+## v5.2.6 / 2020-01-23
+
+* Deprecated support for out-dated unsupported Nodejs 8
+* Included the support of the latest Nodejs LTS version (12 - Erbium)
+* Minor test fixes due to new Nodejs version
+* Base Docker image has been updated to use Nodejs 12
+
 ## v5.2.5 / 2019-12-05
 
 * Fixed issue with pulling data into daily and weekly transaction reports

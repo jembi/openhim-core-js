@@ -1,3 +1,5 @@
+'use strict'
+
 /* eslint-env mocha */
 
 import { _getEnabledAuthenticationTypesFromConfig } from '../../src/api/authentication'
