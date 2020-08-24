@@ -40,7 +40,7 @@
     "spec": "speculate"
   },
   "dependencies": {
-    "agenda": "2.0.2",
+    "agenda": "3.1.0",
     "atna-audit": "1.0.1",
     "babel-polyfill": "6.26.0",
     "basic-auth": "2.0.1",
