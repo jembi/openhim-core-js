@@ -10,6 +10,9 @@ matrix:
     - node_js: 'node'
 services:
   - mongodb
+before_script:
+  # wait for MongoDB to startup
+  - sleep 15
 before_install:
   - export TZ=Africa/Johannesburg
 script:
