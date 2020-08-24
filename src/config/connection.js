@@ -7,6 +7,7 @@ import { config } from './'
 
 config.mongo = config.get('mongo')
 
+mongoose.set('useCreateIndex', true);
 mongoose.set('useNewUrlParser', true)
 mongoose.set('useUnifiedTopology', true)
 
