@@ -8,6 +8,7 @@ import { config } from './'
 config.mongo = config.get('mongo')
 
 mongoose.set('useNewUrlParser', true)
+mongoose.set('useUnifiedTopology', true)
 
 export const connectionAgenda = mongoose.createConnection(encodeMongoURI(config.mongo.url))
 export const connectionAPI = mongoose.createConnection(encodeMongoURI(config.mongo.url), getMongoOptions())

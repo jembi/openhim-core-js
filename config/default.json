@@ -17,7 +17,8 @@
   "mongoLogger": {
     "options": {
       "w": 0,
-      "useNewUrlParser": true
+      "useNewUrlParser": true,
+      "useUnifiedTopology": true
     }
   },
   "router": {
