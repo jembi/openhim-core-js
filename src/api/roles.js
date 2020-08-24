@@ -4,7 +4,7 @@ import logger from 'winston'
 
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import { ChannelModelAPI } from '../model/channels'
+import { ChannelModelAPI, ChannelModel } from '../model/channels'
 import { ClientModelAPI } from '../model/clients'
 
 /*
@@ -323,8 +323,13 @@ export async function deleteRole (ctx, name) {
       return utils.logAndSetResponse(ctx, 404, `Role with name '${name}' could not be found.`, 'info')
     }
 
-    await ChannelModelAPI.updateMany({}, { $pull: { allow: name } })
-    await ClientModelAPI.updateMany({}, { $pull: { roles: name } })
+    if (channels.length) {
+      await ChannelModelAPI.updateMany({ allow: { $in: [name] } }, { $pull: { allow: name } })
+    }
+
+    if (clients.length) {
+      await ClientModelAPI.updateMany({ roles: { $in: [name] } }, { $pull: { roles: name } })
+    }
 
     logger.info(`User ${ctx.authenticated.email} deleted role with name '${name}'`)
     ctx.body = 'Successfully deleted role'

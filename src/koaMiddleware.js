@@ -12,14 +12,16 @@ import * as customTokenAuthentication from './middleware/customTokenAuthenticati
 import * as events from './middleware/events'
 import * as jwtAuthentication from './middleware/jwtAuthentication'
 import * as messageStore from './middleware/messageStore'
-import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
-import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisation'
 import * as proxy from './middleware/proxy'
 import * as requestMatching from './middleware/requestMatching'
 import * as rerunBypassAuthentication from './middleware/rerunBypassAuthentication'
 import * as rerunBypassAuthorisation from './middleware/rerunBypassAuthorisation'
 import * as rerunUpdateTransactionTask from './middleware/rerunUpdateTransactionTask'
 import * as retrieveTCPTransaction from './middleware/retrieveTCPTransaction'
+import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisation'
+import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
+import * as streamingReceiver from './middleware/streamingReceiver'
+
 import * as rewrite from './middleware/rewriteUrls'
 import * as router from './middleware/router'
 import * as tcpBypassAuthentication from './middleware/tcpBypassAuthentication'
@@ -58,11 +60,12 @@ export function setupApp(done) {
     app.use(tlsAuthentication.koaMiddleware)
   }
 
-  app.use(rawBodyReader)
-
+  // Request Matching middleware
   app.use(requestMatching.koaMiddleware)
 
   app.use(authorisation.koaMiddleware)
+
+  app.use(streamingReceiver.koaMiddleware)
 
   // Compress response on exit
   app.use(
@@ -74,10 +77,7 @@ export function setupApp(done) {
 
   app.use(proxy.koaMiddleware)
 
-  app.use(messageStore.koaMiddleware)
-
-  app.use(rewrite.koaMiddleware)
-
+  // Events
   app.use(events.koaMiddleware)
 
   app.use(router.koaMiddleware)
@@ -89,18 +89,21 @@ export function setupApp(done) {
 export function rerunApp(done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
-
+  // Rerun bypass authentication middelware
   app.use(rerunBypassAuthentication.koaMiddleware)
 
+  // Rerun bypass authorisation middleware
   app.use(rerunBypassAuthorisation.koaMiddleware)
 
-  app.use(rerunUpdateTransactionTask.koaMiddleware)
-
-  app.use(messageStore.koaMiddleware)
-
+  // Authorisation middleware
   app.use(authorisation.koaMiddleware)
 
+  // Update original transaction with rerun's transaction ID
+  app.use(rerunUpdateTransactionTask.koaMiddleware)
+
+  app.use(streamingReceiver.koaMiddleware)
+
+  // Events
   app.use(events.koaMiddleware)
 
   app.use(router.koaMiddleware)
@@ -113,14 +116,17 @@ export function tcpApp(done) {
   const app = new Koa()
 
   app.use(rawBodyReader)
+  
   app.use(retrieveTCPTransaction.koaMiddleware)
 
+  app.use(streamingReceiver.koaMiddleware)
+
+  // TCP bypass authentication middelware
   app.use(tcpBypassAuthentication.koaMiddleware)
 
   app.use(proxy.koaMiddleware)
 
-  app.use(messageStore.koaMiddleware)
-
+  // Events
   app.use(events.koaMiddleware)
 
   app.use(router.koaMiddleware)
@@ -132,8 +138,9 @@ export function tcpApp(done) {
 export function pollingApp(done) {
   const app = new Koa()
 
-  app.use(rawBodyReader)
+  app.use(streamingReceiver.koaMiddleware)
 
+  // Polling bypass authentication middleware
   app.use(pollingBypassAuthentication.koaMiddleware)
 
   app.use(pollingBypassAuthorisation.koaMiddleware)

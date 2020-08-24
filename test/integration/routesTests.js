@@ -9,6 +9,7 @@ import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
 
 import * as constants from '../constants'
+import should from 'should'
 import * as testUtils from '../utils'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { ClientModelAPI } from '../../src/model/clients'
@@ -43,6 +44,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 1',
     urlPattern: '^/test/channel1$',
     allow: ['PoC'],
+    responseBody: true,
     routes: [
       {
         name: 'test route',
@@ -285,8 +287,9 @@ describe('Routes enabled/disabled tests', () => {
     const trx = await TransactionModelAPI.findOne()
 
     trx.routes.length.should.be.exactly(1)
-    trx.routes[0].should.have.property('name', 'test route 2')
-    trx.routes[0].response.body.should.be.exactly('target2')
+    trx.routes[0].should.have.property('name', 'test route 2');
+    (trx.routes[0].response.bodyId !== null).should.be.true();
+    (!trx.routes[0].response.body).should.be.true()
   })
 
   it('should NOT route transactions to disabled routes', async () => {
@@ -329,7 +332,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(405)
 
-    res.body.toString().should.eql('Request with method POST is not allowed. Only GET methods are allowed')
+    res.text.should.eql('Request with method POST is not allowed. Only GET methods are allowed')
     // routes are async
     restrictedSpy.callCount.should.eql(0)
   })
@@ -368,7 +371,7 @@ describe('Routes enabled/disabled tests', () => {
 
     await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
-
+    
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
     newTransaction[0].orchestrations[0].name.should.eql('test transaction fail orchestration')

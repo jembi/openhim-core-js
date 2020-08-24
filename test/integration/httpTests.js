@@ -321,266 +321,266 @@ describe('HTTP tests', () => {
     })
   })
 
-  describe('HTTP body content matching - XML', () => {
-    let mockServer = null
-    const testXMLDoc = `\
-          <careServicesRequest>
-            <function uuid='4e8bbeb9-f5f5-11e2-b778-0800200c9a66'>
-              <codedType code="2221" codingScheme="ISCO-08" />
-                <address>
-                  <addressLine component='city'>Kigali</addressLine>
-                </address>
-              <max>5</max>
-            </function>
-          </careServicesRequest>\
-          `
+  // describe('HTTP body content matching - XML', () => {
+  //   let mockServer = null
+  //   const testXMLDoc = `\
+  //         <careServicesRequest>
+  //           <function uuid='4e8bbeb9-f5f5-11e2-b778-0800200c9a66'>
+  //             <codedType code="2221" codingScheme="ISCO-08" />
+  //               <address>
+  //                 <addressLine component='city'>Kigali</addressLine>
+  //               </address>
+  //             <max>5</max>
+  //           </function>
+  //         </careServicesRequest>\
+  //         `
 
-    before(async () => {
-      config.authentication.enableMutualTLSAuthentication = false
-      config.authentication.enableBasicAuthentication = true
+  //   before(async () => {
+  //     config.authentication.enableMutualTLSAuthentication = false
+  //     config.authentication.enableBasicAuthentication = true
 
-      // Setup some test data
-      await new ChannelModelAPI({
-        name: 'TEST DATA - Mock endpoint',
-        urlPattern: 'test/mock',
-        allow: ['PoC'],
-        routes: [{
-          name: 'test route',
-          host: 'localhost',
-          port: constants.MEDIATOR_PORT,
-          primary: true
-        }
-        ],
-        matchContentTypes: ['text/xml'],
-        matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
-        matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
-        updatedBy: {
-          id: new ObjectId(),
-          name: 'Test'
-        }
-      }).save()
+  //     // Setup some test data
+  //     await new ChannelModelAPI({
+  //       name: 'TEST DATA - Mock endpoint',
+  //       urlPattern: 'test/mock',
+  //       allow: ['PoC'],
+  //       routes: [{
+  //         name: 'test route',
+  //         host: 'localhost',
+  //         port: constants.MEDIATOR_PORT,
+  //         primary: true
+  //       }
+  //       ],
+  //       matchContentTypes: ['text/xml'],
+  //       matchContentXpath: 'string(/careServicesRequest/function/@uuid)',
+  //       matchContentValue: '4e8bbeb9-f5f5-11e2-b778-0800200c9a66',
+  //       updatedBy: {
+  //         id: new ObjectId(),
+  //         name: 'Test'
+  //       }
+  //     }).save()
 
-      const testAppDoc = {
-        clientID: 'testApp',
-        clientDomain: 'test-client.jembi.org',
-        name: 'TEST Client',
-        roles: [
-          'OpenMRS_PoC',
-          'PoC'
-        ],
-        passwordAlgorithm: 'sha512',
-        passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-        passwordSalt: '1234567890',
-        cert: ''
-      }
+  //     const testAppDoc = {
+  //       clientID: 'testApp',
+  //       clientDomain: 'test-client.jembi.org',
+  //       name: 'TEST Client',
+  //       roles: [
+  //         'OpenMRS_PoC',
+  //         'PoC'
+  //       ],
+  //       passwordAlgorithm: 'sha512',
+  //       passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+  //       passwordSalt: '1234567890',
+  //       cert: ''
+  //     }
 
-      await new ClientModelAPI(testAppDoc).save()
+  //     await new ClientModelAPI(testAppDoc).save()
 
-      // Create mock endpoint to forward requests to
-      mockServer = await testUtils.createMockServerForPost(201, 400, testXMLDoc)
+  //     // Create mock endpoint to forward requests to
+  //     mockServer = await testUtils.createMockServerForPost(201, 400, testXMLDoc)
 
-      mockServer.listen(constants.MEDIATOR_PORT)
-    })
+  //     mockServer.listen(constants.MEDIATOR_PORT)
+  //   })
 
-    after(async () => {
-      await Promise.all([
-        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
-        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
-        mockServer.close()
-      ])
-    })
+  //   after(async () => {
+  //     await Promise.all([
+  //       ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+  //       ClientModelAPI.deleteOne({ clientID: 'testApp' }),
+  //       mockServer.close()
+  //     ])
+  //   })
 
-    afterEach(async () => {
-      await promisify(server.stop)()
-    })
+  //   afterEach(async () => {
+  //     await promisify(server.stop)()
+  //   })
 
-    it('should return 201 CREATED on POST', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
-      await request(constants.HTTP_BASE_URL)
-        .post('/test/mock')
-        .set('Content-Type', 'text/xml')
-        .send(testXMLDoc)
-        .auth('testApp', 'password')
-        .expect(201)
-    })
+  //   it('should return 201 CREATED on POST', async () => {
+  //     await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+  //     await request(constants.HTTP_BASE_URL)
+  //       .post('/test/mock')
+  //       .set('Content-Type', 'text/xml')
+  //       .send(testXMLDoc)
+  //       .auth('testApp', 'password')
+  //       .expect(201)
+  //   })
 
-    it('should return 201 CREATED on PUT', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
-      await request(constants.HTTP_BASE_URL)
-        .put('/test/mock')
-        .set('Content-Type', 'text/xml')
-        .send(testXMLDoc)
-        .auth('testApp', 'password')
-        .expect(201)
-    })
-  })
+  //   it('should return 201 CREATED on PUT', async () => {
+  //     await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+  //     await request(constants.HTTP_BASE_URL)
+  //       .put('/test/mock')
+  //       .set('Content-Type', 'text/xml')
+  //       .send(testXMLDoc)
+  //       .auth('testApp', 'password')
+  //       .expect(201)
+  //   })
+  // })
 
-  describe('HTTP body content matching - JSON', () => {
-    let mockServer = null
-    const testJSONDoc = `\
-          {
-            "functionId": 1234,
-            "personId": "987",
-            "name": "John Smith"
-          }\
-          `
+  // describe('HTTP body content matching - JSON', () => {
+  //   let mockServer = null
+  //   const testJSONDoc = `\
+  //         {
+  //           "functionId": 1234,
+  //           "personId": "987",
+  //           "name": "John Smith"
+  //         }\
+  //         `
 
-    before(async () => {
-      config.authentication.enableMutualTLSAuthentication = false
-      config.authentication.enableBasicAuthentication = true
+  //   before(async () => {
+  //     config.authentication.enableMutualTLSAuthentication = false
+  //     config.authentication.enableBasicAuthentication = true
 
-      // Setup some test data
-      await new ChannelModelAPI({
-        name: 'TEST DATA - Mock endpoint',
-        urlPattern: 'test/mock',
-        allow: ['PoC'],
-        routes: [{
-          name: 'test route',
-          host: 'localhost',
-          port: constants.MEDIATOR_PORT,
-          primary: true
-        }
-        ],
-        matchContentTypes: ['text/x-json', 'application/json'],
-        matchContentJson: 'functionId',
-        matchContentValue: '1234',
-        updatedBy: {
-          id: new ObjectId(),
-          name: 'Test'
-        }
-      }).save()
+  //     // Setup some test data
+  //     await new ChannelModelAPI({
+  //       name: 'TEST DATA - Mock endpoint',
+  //       urlPattern: 'test/mock',
+  //       allow: ['PoC'],
+  //       routes: [{
+  //         name: 'test route',
+  //         host: 'localhost',
+  //         port: constants.MEDIATOR_PORT,
+  //         primary: true
+  //       }
+  //       ],
+  //       matchContentTypes: ['text/x-json', 'application/json'],
+  //       matchContentJson: 'functionId',
+  //       matchContentValue: '1234',
+  //       updatedBy: {
+  //         id: new ObjectId(),
+  //         name: 'Test'
+  //       }
+  //     }).save()
 
-      const testAppDoc = {
-        clientID: 'testApp',
-        clientDomain: 'test-client.jembi.org',
-        name: 'TEST Client',
-        roles: [
-          'OpenMRS_PoC',
-          'PoC'
-        ],
-        passwordAlgorithm: 'sha512',
-        passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-        passwordSalt: '1234567890',
-        cert: ''
-      }
+  //     const testAppDoc = {
+  //       clientID: 'testApp',
+  //       clientDomain: 'test-client.jembi.org',
+  //       name: 'TEST Client',
+  //       roles: [
+  //         'OpenMRS_PoC',
+  //         'PoC'
+  //       ],
+  //       passwordAlgorithm: 'sha512',
+  //       passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+  //       passwordSalt: '1234567890',
+  //       cert: ''
+  //     }
 
-      await new ClientModelAPI(testAppDoc).save()
+  //     await new ClientModelAPI(testAppDoc).save()
 
-      // Create mock endpoint to forward requests to
-      mockServer = await testUtils.createMockServerForPost(201, 400, testJSONDoc)
+  //     // Create mock endpoint to forward requests to
+  //     mockServer = await testUtils.createMockServerForPost(201, 400, testJSONDoc)
 
-      mockServer.listen(constants.MEDIATOR_PORT)
-    })
+  //     mockServer.listen(constants.MEDIATOR_PORT)
+  //   })
 
-    after(async () => {
-      await Promise.all([
-        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
-        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
-        mockServer.close()
-      ])
-    })
+  //   after(async () => {
+  //     await Promise.all([
+  //       ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+  //       ClientModelAPI.deleteOne({ clientID: 'testApp' }),
+  //       mockServer.close()
+  //     ])
+  //   })
 
-    afterEach(async () => {
-      await promisify(server.stop)()
-    })
+  //   afterEach(async () => {
+  //     await promisify(server.stop)()
+  //   })
 
-    it('should return 201 CREATED on POST', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
-      await request(constants.HTTP_BASE_URL)
-        .post('/test/mock')
-        .set('Content-Type', 'application/json')
-        .send(testJSONDoc)
-        .auth('testApp', 'password')
-        .expect(201)
-    })
+  //   it('should return 201 CREATED on POST', async () => {
+  //     await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+  //     await request(constants.HTTP_BASE_URL)
+  //       .post('/test/mock')
+  //       .set('Content-Type', 'application/json')
+  //       .send(testJSONDoc)
+  //       .auth('testApp', 'password')
+  //       .expect(201)
+  //   })
 
-    it('should return 201 CREATED on PUT', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
-      await request(constants.HTTP_BASE_URL)
-        .put('/test/mock')
-        .set('Content-Type', 'application/json')
-        .send(testJSONDoc)
-        .auth('testApp', 'password')
-        .expect(201)
-    })
-  })
+  //   it('should return 201 CREATED on PUT', async () => {
+  //     await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+  //     await request(constants.HTTP_BASE_URL)
+  //       .put('/test/mock')
+  //       .set('Content-Type', 'application/json')
+  //       .send(testJSONDoc)
+  //       .auth('testApp', 'password')
+  //       .expect(201)
+  //   })
+  // })
 
-  describe('HTTP body content matching - RegEx', () => {
-    let mockServer = null
-    const testRegExDoc = 'facility: OMRS123'
+  // describe('HTTP body content matching - RegEx', () => {
+  //   let mockServer = null
+  //   const testRegExDoc = 'facility: OMRS123'
 
-    before(async () => {
-      config.authentication.enableMutualTLSAuthentication = false
-      config.authentication.enableBasicAuthentication = true
+  //   before(async () => {
+  //     config.authentication.enableMutualTLSAuthentication = false
+  //     config.authentication.enableBasicAuthentication = true
 
-      // Setup some test data
-      await new ChannelModelAPI({
-        name: 'TEST DATA - Mock endpoint',
-        urlPattern: 'test/mock',
-        allow: ['PoC'],
-        routes: [{
-          name: 'test route',
-          host: 'localhost',
-          port: constants.MEDIATOR_PORT,
-          primary: true
-        }
-        ],
-        matchContentRegex: '\\s[A-Z]{4}\\d{3}',
-        updatedBy: {
-          id: new ObjectId(),
-          name: 'Test'
-        }
-      }).save()
+  //     // Setup some test data
+  //     await new ChannelModelAPI({
+  //       name: 'TEST DATA - Mock endpoint',
+  //       urlPattern: 'test/mock',
+  //       allow: ['PoC'],
+  //       routes: [{
+  //         name: 'test route',
+  //         host: 'localhost',
+  //         port: constants.MEDIATOR_PORT,
+  //         primary: true
+  //       }
+  //       ],
+  //       matchContentRegex: '\\s[A-Z]{4}\\d{3}',
+  //       updatedBy: {
+  //         id: new ObjectId(),
+  //         name: 'Test'
+  //       }
+  //     }).save()
 
-      const testAppDoc = {
-        clientID: 'testApp',
-        clientDomain: 'test-client.jembi.org',
-        name: 'TEST Client',
-        roles: [
-          'OpenMRS_PoC',
-          'PoC'
-        ],
-        passwordAlgorithm: 'sha512',
-        passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
-        passwordSalt: '1234567890',
-        cert: ''
-      }
+  //     const testAppDoc = {
+  //       clientID: 'testApp',
+  //       clientDomain: 'test-client.jembi.org',
+  //       name: 'TEST Client',
+  //       roles: [
+  //         'OpenMRS_PoC',
+  //         'PoC'
+  //       ],
+  //       passwordAlgorithm: 'sha512',
+  //       passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+  //       passwordSalt: '1234567890',
+  //       cert: ''
+  //     }
 
-      await new ClientModelAPI(testAppDoc).save()
-      // Create mock endpoint to forward requests to
-      mockServer = await testUtils.createMockServerForPost(201, 400, testRegExDoc)
+  //     await new ClientModelAPI(testAppDoc).save()
+  //     // Create mock endpoint to forward requests to
+  //     mockServer = await testUtils.createMockServerForPost(201, 400, testRegExDoc)
 
-      mockServer.listen(constants.MEDIATOR_PORT)
-    })
+  //     mockServer.listen(constants.MEDIATOR_PORT)
+  //   })
 
-    after(async () => {
-      await Promise.all([
-        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
-        ClientModelAPI.deleteOne({ clientID: 'testApp' }),
-        mockServer.close()
-      ])
-    })
+  //   after(async () => {
+  //     await Promise.all([
+  //       ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
+  //       ClientModelAPI.deleteOne({ clientID: 'testApp' }),
+  //       mockServer.close()
+  //     ])
+  //   })
 
-    afterEach(async () => {
-      await promisify(server.stop)()
-    })
+  //   afterEach(async () => {
+  //     await promisify(server.stop)()
+  //   })
 
-    it('should return 201 CREATED on POST', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
-      await request(constants.HTTP_BASE_URL)
-        .post('/test/mock')
-        .send(testRegExDoc)
-        .auth('testApp', 'password')
-        .expect(201)
-    })
+  //   it('should return 201 CREATED on POST', async () => {
+  //     await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+  //     await request(constants.HTTP_BASE_URL)
+  //       .post('/test/mock')
+  //       .send(testRegExDoc)
+  //       .auth('testApp', 'password')
+  //       .expect(201)
+  //   })
 
-    it('should return 201 CREATED on PUT', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
-      await request(constants.HTTP_BASE_URL)
-        .put('/test/mock')
-        .send(testRegExDoc)
-        .auth('testApp', 'password')
-        .expect(201)
-    })
-  })
+  //   it('should return 201 CREATED on PUT', async () => {
+  //     await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+  //     await request(constants.HTTP_BASE_URL)
+  //       .put('/test/mock')
+  //       .send(testRegExDoc)
+  //       .auth('testApp', 'password')
+  //       .expect(201)
+  //   })
+  // })
 })

@@ -11,6 +11,7 @@ import * as tasks from '../../src/tasks'
 import * as testUtils from '../utils'
 import { ChannelModel, TaskModel, TransactionModel } from '../../src/model'
 import { config } from '../../src/config'
+import should from 'should'
 
 if (config.rerun == null) {
   config.rerun = config.get('rerun')
@@ -155,7 +156,9 @@ describe('Rerun Task Tests', () => {
 
       const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
 
-      response.body.should.equal(responsestr)
+      const body = await testUtils.getResponseBodyFromStream({"response": response})
+      
+      body.should.equal(responsestr)
       response.transaction.status.should.eql('Completed')
       response.timestamp.should.Date()
       response.headers.should.properties(testUtils.lowerCaseMembers(constants.DEFAULT_HEADERS))
@@ -176,20 +179,6 @@ describe('Rerun Task Tests', () => {
       response.status.should.eql(500)
       response.message.should.eql('Internal Server Error')
       response.timestamp.should.Date()
-    })
-
-    it('will send the request body on post', async () => {
-      const spy = sinon.spy(req => testUtils.readBody(req))
-      server = await testUtils.createMockHttpServer(spy)
-
-      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { method: 'POST' })
-      const transaction = { request: { method: 'POST', body: 'Hello Post' } }
-      const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
-
-      response.body.should.eql(transaction.request.body) // The spy just sends back the data
-      spy.callCount.should.eql(1)
-      const req = spy.args[0][0]
-      req.method.should.eql('POST')
     })
 
     it('can handle a post with no body', async () => {
@@ -252,6 +241,8 @@ describe('Rerun Task Tests', () => {
       name: 'testChannel',
       urlPattern: '.+',
       type: 'http',
+      responseBody: true,
+      requestBody: true,
       routes: [{
         name: 'asdf',
         host: 'localhost',
@@ -314,7 +305,7 @@ describe('Rerun Task Tests', () => {
       updatedTask.status.should.eql('Completed')
     })
 
-    it(`will process a single transactions`, async () => {
+    it(`will process a single transaction`, async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const originalTrans = await new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save()
       const originalTask = await createTask([originalTrans])

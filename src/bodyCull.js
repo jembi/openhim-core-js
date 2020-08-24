@@ -4,6 +4,7 @@ import logger from 'winston'
 import moment from 'moment'
 
 import { ChannelModel, TransactionModel } from './model'
+import { promisesToRemoveAllTransactionBodies } from './contentChunk'
 import { config } from './config'
 
 config.bodyCull = config.get('bodyCull')
@@ -42,11 +43,41 @@ async function clearTransactions (channel) {
     query['request.timestamp'].$gte = lastBodyCleared
   }
 
+  // construct promises array for removing transaction bodies
+  const transactionsToCullBody = await TransactionModel.find(query, {
+    'request.bodyId': 1,
+    'response.bodyId': 1,
+    'orchestrations.response.bodyId': 1,
+    'orchestrations.request.bodyId': 1,
+    'routes.response.bodyId': 1,
+    'routes.request.bodyId': 1,
+    'routes.orchestrations.request.bodyId': 1,
+    'routes.orchestrations.response.bodyId': 1
+  })
+  let removeBodyPromises = []
+  for (let tx of transactionsToCullBody) {
+    removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(tx))
+  }
+
   channel.lastBodyCleared = Date.now()
   channel.updatedBy = { name: 'Cron' }
   await channel.save()
-  const updateResp = await TransactionModel.updateMany(query, { $unset: { 'request.body': '', 'response.body': '' } })
+  const updateResp = await TransactionModel.updateMany(query, {
+    $unset: {
+      "request.bodyId": "",
+      "response.bodyId": "",
+      "orchestrations.$[].request.bodyId": "",
+      "orchestrations.$[].response.bodyId": "",
+      "routes.$[].request.bodyId": "",
+      "routes.$[].response.bodyId": "",
+      "routes.$[].orchestrations.$[].request.bodyId": "",
+      "routes.$[].orchestrations.$[].response.bodyId": ""
+    }
+  })
   if (updateResp.nModified > 0) {
-    logger.info(`Culled ${updateResp.nModified} transactions for channel ${channel.name}`)
+    logger.info(`Culled ${updateResp.nModified} transaction bodies for channel ${channel.name}`)
   }
+
+  // execute the promises to remove all relevant bodies
+  await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
 }

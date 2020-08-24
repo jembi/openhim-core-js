@@ -6,6 +6,8 @@ import { ChannelModel } from '../model/channels'
 import { TransactionModel } from '../model/transactions'
 
 export function authoriseUser (ctx, done) {
+  ctx.matchingChannel = ctx.authorisedChannel
+
   // Use the original transaction's channel to setup the authorised channel
   TransactionModel.findOne({_id: ctx.parentID}, (err, originalTransaction) => {
     if (err) { return done(err) }
