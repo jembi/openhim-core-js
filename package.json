@@ -96,7 +96,7 @@
     "should": "13.2.3",
     "sinon": "^9.0.3",
     "speculate": "2.1.1",
-    "standard": "12.0.1",
+    "standard": "14.3.4",
     "supertest": "4.0.2"
   },
   "repository": {
