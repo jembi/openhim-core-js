@@ -63,7 +63,7 @@
     "mongodb": "^3.5.7",
     "mongodb-uri": "0.9.7",
     "mongoose": "^5.7.5",
-    "mongoose-patch-history": "^1.4.0",
+    "mongoose-patch-history": "git+https://github.com/jembi/mongoose-patch-history.git#ff8d7a69e8ed7d728dc76349304ec7ac73a9c5e1",
     "nconf": "0.10.0",
     "nodemailer": "^6.3.1",
     "pem": "^1.14.3",
