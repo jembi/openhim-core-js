@@ -45,7 +45,7 @@
     "babel-polyfill": "6.26.0",
     "basic-auth": "2.0.1",
     "bcryptjs": "2.4.3",
-    "chokidar": "2.1.5",
+    "chokidar": "3.4.2",
     "cookie": "^0.4.1",
     "forever-monitor": "1.7.1",
     "form-data": "^2.5.1",
@@ -80,7 +80,7 @@
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
-    "@babel/core": "^7.9.6",
+    "@babel/core": "^7.11.4",
     "@babel/preset-env": "^7.9.6",
     "@babel/register": "^7.9.0",
     "codecov": "^3.7.0",
