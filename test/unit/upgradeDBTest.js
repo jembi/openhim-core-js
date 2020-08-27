@@ -9,7 +9,8 @@ import {
   ClientModel,
   DbVersionModel,
   UserModel,
-  VisualizerModel
+  VisualizerModel,
+  TransactionModel
 } from '../../src/model'
 
 describe('Upgrade DB Tests', () => {
@@ -30,10 +31,10 @@ describe('Upgrade DB Tests', () => {
         description: 'testFunc 1',
         func: sinon.spy(() => calls.push(1))
       },
-        {
-          description: 'testFunc 2',
-          func: sinon.spy(() => calls.push(2))
-        }
+      {
+        description: 'testFunc 2',
+        func: sinon.spy(() => calls.push(2))
+      }
       )
 
       await upgradeDB.upgradeDb()
@@ -412,6 +413,116 @@ describe('Upgrade DB Tests', () => {
 
       const visualizers = await VisualizerModel.find()
       visualizers.length.should.eql(2)
+    })
+  })
+
+  describe(`updateFunction3 - Migrate transaction bodies to GridFS`, () => {
+    const upgradeFunc = originalUpgradeFuncs[3].func
+    let requestDocMain, responseDocMain, transactionData
+
+    before(async () => {
+      requestDocMain = {
+        path: '/api/test',
+        headers: {
+          'header-title': 'header1-value',
+          'another-header': 'another-header-value'
+        },
+        querystring: 'param1=value1&param2=value2',
+        body: '<HTTP request Body>',
+        method: 'POST',
+        timestamp: '2014-06-09T11:17:25.929Z'
+      }
+      Object.freeze(requestDocMain)
+
+      responseDocMain = {
+        status: '200',
+        headers: {
+          header: 'value',
+          header2: 'value2'
+        },
+        body: '<HTTP response body>',
+        timestamp: '2014-06-09T11:17:25.929Z'
+      }
+      Object.freeze(responseDocMain)
+
+      transactionData = {
+        status: 'Processing',
+        clientID: '999999999999999999999999',
+        channelID: '888888888888888888888888',
+        request: requestDocMain,
+        response: responseDocMain,
+        routes: [{
+          name: 'dummy-route',
+          request: requestDocMain,
+          response: responseDocMain,
+          orchestrations: [{
+            name: 'dummy-orchestration',
+            request: requestDocMain,
+            response: responseDocMain
+          }]
+        }],
+        orchestrations: [{
+          name: 'dummy-orchestration',
+          request: requestDocMain,
+          response: responseDocMain
+        }],
+        properties: {
+          prop1: 'prop1-value1',
+          prop2: 'prop-value1'
+        }
+      }
+      Object.freeze(transactionData)
+    })
+
+    afterEach(async () => {
+      await TransactionModel.deleteMany().exec()
+    })
+
+    it(`should migrate transactions`, async () => {
+      await TransactionModel.collection.insert(Object.assign({}, transactionData))
+
+      await upgradeFunc()
+
+      const migratedTransactions = await TransactionModel.find().exec()
+      migratedTransactions.should.have.length(1)
+      for (const migratedTx of migratedTransactions) {
+        should.exist(migratedTx.request.bodyId)
+        should.exist(migratedTx.response.bodyId)
+        should.exist(migratedTx.routes[0].request.bodyId)
+        should.exist(migratedTx.routes[0].response.bodyId)
+        should.exist(migratedTx.routes[0].orchestrations[0].request.bodyId)
+        should.exist(migratedTx.routes[0].orchestrations[0].response.bodyId)
+        should.exist(migratedTx.orchestrations[0].request.bodyId)
+        should.exist(migratedTx.orchestrations[0].response.bodyId)
+      }
+    })
+
+    it(`should migrate all transactions across multiple batches`, async () => {
+      await TransactionModel.collection.insertMany(Array(5).fill({}).map(() => Object.assign({}, transactionData)))
+
+      await upgradeFunc()
+
+      const migratedTransactions = await TransactionModel.find().exec()
+      migratedTransactions.should.have.length(5)
+      for (const migratedTx of migratedTransactions) {
+        should.exist(migratedTx.request.bodyId)
+        should.exist(migratedTx.response.bodyId)
+        should.exist(migratedTx.routes[0].request.bodyId)
+        should.exist(migratedTx.routes[0].response.bodyId)
+        should.exist(migratedTx.routes[0].orchestrations[0].request.bodyId)
+        should.exist(migratedTx.routes[0].orchestrations[0].response.bodyId)
+        should.exist(migratedTx.orchestrations[0].request.bodyId)
+        should.exist(migratedTx.orchestrations[0].response.bodyId)
+      }
+    })
+
+    it(`should throw an error when a transaction migration fails`, async () => {
+      const replaceOneStub = sinon.stub(TransactionModel, 'replaceOne').returns({ exec: () => Promise.reject(new Error('boom')) })
+      await TransactionModel.collection.insert(Object.assign({}, transactionData))
+
+      await (upgradeFunc().should.be.rejectedWith(Error, { message: 'boom' }))
+
+      replaceOneStub.restore()
     })
   })
 })

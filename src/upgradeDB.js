@@ -5,6 +5,8 @@ import { KeystoreModel } from './model/keystore'
 import { ClientModel } from './model/clients'
 import { UserModel } from './model/users'
 import { VisualizerModel } from './model/visualizer'
+import { TransactionModel } from './model/transactions'
+import { extractTransactionPayloadIntoChunks } from './contentChunk'
 
 function dedupName (name, names, num) {
   let newName
@@ -189,6 +191,30 @@ upgradeFuncs.push({
         Promise.all(promises).then(() => resolve()).catch(err => reject(err))
       })
     })
+  }
+})
+
+upgradeFuncs.push({
+  description: 'Migrate transaction bodies to GridFS',
+  async func (batchSize = 100) {
+    const totalTransactions = await TransactionModel.countDocuments().exec()
+    let batchNum = 0
+
+    do {
+      batchNum += 1
+      const transactions = await TransactionModel.find().skip(batchSize * (batchNum - 1)).limit(batchSize).exec()
+      for (const transaction of transactions) {
+        logger.info(`Batch ${batchNum}: Processing transaction ${transaction._id}`)
+        try {
+          const rawTransaction = transaction.toObject()
+          await extractTransactionPayloadIntoChunks(rawTransaction)
+          await TransactionModel.replaceOne({ _id: rawTransaction._id }, rawTransaction).exec()
+        } catch (err) {
+          logger.error(`Error migrating transaction with ID: ${transaction._id}`)
+          throw err
+        }
+      }
+    } while (totalTransactions > (batchSize * batchNum))
   }
 })
 
