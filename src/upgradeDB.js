@@ -242,6 +242,7 @@ async function upgradeDbInternal () {
     }
   } catch (err) {
     logger.error(`There was an error upgrading your database, you will need to fix this manually to continue. ${err.stack}`)
+    process.exit()
   }
 }
 
