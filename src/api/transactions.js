@@ -1,12 +1,15 @@
+'use strict'
+
 import logger from 'winston'
-import { TransactionModelAPI } from '../model/transactions'
-import * as events from '../middleware/events'
-import { ChannelModelAPI } from '../model/channels'
-import * as autoRetryUtils from '../autoRetry'
-import * as authorisation from './authorisation'
-import * as utils from '../utils'
-import { config } from '../config'
 import { promisify } from 'util'
+
+import * as authorisation from './authorisation'
+import * as autoRetryUtils from '../autoRetry'
+import * as events from '../middleware/events'
+import * as utils from '../utils'
+import { ChannelModelAPI } from '../model/channels'
+import { TransactionModelAPI } from '../model/transactions'
+import { config } from '../config'
 import { addBodiesToTransactions, extractTransactionPayloadIntoChunks, promisesToRemoveAllTransactionBodies } from '../contentChunk'
 
 const apiConf = config.get('api')

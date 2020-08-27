@@ -1,8 +1,11 @@
+'use strict'
+
 import logger from 'winston'
-import { ClientModelAPI } from '../model/clients'
-import { ChannelModelAPI } from '../model/channels'
+
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
+import { ChannelModelAPI } from '../model/channels'
+import { ClientModelAPI } from '../model/clients'
 
 /*
  * Adds a client
@@ -21,6 +24,9 @@ export async function addClient (ctx) {
     const clResult = await ClientModelAPI.find({roles: {$in: [clientData.clientID]}}, {clientID: 1}).exec()
     if (((chResult != null ? chResult.length : undefined) > 0) || ((clResult != null ? clResult.length : undefined) > 0)) {
       return utils.logAndSetResponse(ctx, 409, `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`, 'info')
+    }
+    if (clientData.roles.includes(clientData.clientID)) {
+      return utils.logAndSetResponse(ctx, 400, `ClientID '${clientData.clientID}' cannot be the same as a role name.`, 'info')
     }
   }
 
@@ -63,10 +69,15 @@ export async function getClient (ctx, clientId, property) {
   clientId = unescape(clientId)
 
   try {
-    const result = await ClientModelAPI.findById(clientId, projectionRestriction).exec()
+    const result = await ClientModelAPI.findById(clientId, projectionRestriction).lean().exec()
     if (result === null) {
       utils.logAndSetResponse(ctx, 404, `Client with id ${clientId} could not be found.`, 'info')
     } else {
+      // Remove the Custom Token ID from response
+      if (result.customTokenID) {
+        delete result.customTokenID
+        result.customTokenSet = true
+      }
       ctx.body = result
     }
   } catch (e) {
@@ -113,9 +124,8 @@ export async function updateClient (ctx, clientId) {
   if (clientData._id) { delete clientData._id }
 
   if (clientData.clientID) {
-    const chResult = await ChannelModelAPI.find({allow: {$in: [clientData.clientID]}}, {name: 1}).exec()
     const clResult = await ClientModelAPI.find({roles: {$in: [clientData.clientID]}}, {clientID: 1}).exec()
-    if (((chResult != null ? chResult.length : undefined) > 0) || ((clResult != null ? clResult.length : undefined) > 0)) {
+    if ((clResult != null ? clResult.length : undefined) > 0) {
       return utils.logAndSetResponse(ctx, 409, `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`, 'info')
     }
   }
@@ -159,7 +169,15 @@ export async function getClients (ctx) {
   }
 
   try {
-    ctx.body = await ClientModelAPI.find().exec()
+    let clients = await ClientModelAPI.find().lean().exec()
+    // Remove the Custom Token IDs from response
+    ctx.body = clients.map((client) => {
+      if (client.customTokenID) {
+        delete client.customTokenID
+        client.customTokenSet = true
+      }
+      return client
+    })
   } catch (e) {
     logger.error(`Could not fetch all clients via the API: ${e.message}`)
     ctx.message = e.message

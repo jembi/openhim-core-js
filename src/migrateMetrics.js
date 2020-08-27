@@ -1,7 +1,9 @@
-import logger from 'winston'
-import Progress from 'progress'
+'use strict'
 
-import { TransactionModel, MetricModel } from './model'
+import Progress from 'progress'
+import logger from 'winston'
+
+import { MetricModel, TransactionModel } from './model'
 import { recordTransactionMetrics } from './metrics'
 
 export async function aggregateTransactionToMetrics () {

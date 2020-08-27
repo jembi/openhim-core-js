@@ -1,11 +1,14 @@
+'use strict'
+
 /* eslint-env mocha */
 
-import request from 'supertest'
 import crypto from 'crypto'
+import request from 'supertest'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import { UserModel } from '../../src/model'
-import { promisify } from 'util'
-import * as constants from '../constants'
 
 const { SERVER_PORTS } = constants
 
@@ -23,7 +26,10 @@ describe('API Integration Tests', () => {
     // password is 'password'
     before(async () => {
       await Promise.all([
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort, httpsPort: SERVER_PORTS.httpsPort }),
+        promisify(server.start)({
+          apiPort: SERVER_PORTS.apiPort,
+          httpsPort: SERVER_PORTS.httpsPort
+        }),
         new UserModel(userDoc).save()
       ])
     })

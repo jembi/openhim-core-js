@@ -1,8 +1,10 @@
+'use strict'
+
 import logger from 'winston'
-import { TransactionModel } from '../model/transactions'
-import { TaskModel } from '../model/tasks'
-import { config } from '../config'
 import { promisify } from 'util'
+
+import { TaskModel } from '../model/tasks'
+import { TransactionModel } from '../model/transactions'
 
 export function setAttemptNumber (ctx, done) {
   return TransactionModel.findOne({_id: ctx.parentID}, (err, transaction) => {

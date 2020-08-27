@@ -1,15 +1,17 @@
+'use strict'
+
+import _ from 'lodash'
 import logger from 'winston'
 import moment from 'moment'
-import _ from 'lodash'
 
-import * as contact from './contact'
-import { config } from './config'
-import { EventModel } from './model/events'
-import { ContactGroupModel } from './model/contactGroups'
-import { AlertModel } from './model/alerts'
-import { UserModel } from './model/users'
-import * as utils from './utils'
 import * as Channels from './model/channels'
+import * as contact from './contact'
+import * as utils from './utils'
+import { AlertModel } from './model/alerts'
+import { ContactGroupModel } from './model/contactGroups'
+import { EventModel } from './model/events'
+import { UserModel } from './model/users'
+import { config } from './config'
 
 config.alerts = config.get('alerts')
 const {ChannelModel} = Channels

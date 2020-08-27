@@ -8,9 +8,19 @@
     "logToDB": true,
     "capDBLogs": false
   },
+  "authentication": {
+    "enableCustomTokenAuthentication": true,
+    "enableJWTAuthentication": true,
+    "jwt": {
+      "secretOrPublicKey": "test",
+      "algorithms": "HS256",
+      "issuer": "test"
+    }
+  },
   "api": {
     "enabled": true,
-    "httpsPort": 8080,
+    "protocol": "https",
+    "port": 8080,
     "authWindowSeconds": 50,
     "maxPayloadSizeMB": 50,
     "truncateSize": 10,

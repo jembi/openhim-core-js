@@ -1,16 +1,18 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
 import moment from 'moment'
 import mongoose from 'mongoose'
 import should from 'should'
+import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
 
 import * as reports from '../../src/reports'
 import * as testUtils from '../utils'
+import { ChannelModel, TransactionModel, UserModel } from '../../src/model'
 import { config } from '../../src/config'
-import { ChannelModel, UserModel, TransactionModel } from '../../src/model'
-import { promisify } from 'util'
-import {ObjectId} from 'mongodb'
 
 const testUser1 = new UserModel({
   firstname: 'User',

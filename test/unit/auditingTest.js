@@ -1,14 +1,23 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
+
 import fs from 'fs'
+import * as sinon from 'sinon'
+import { promisify } from 'util'
+
 import * as auditing from '../../src/auditing'
+import * as constants from '../constants'
+import * as utils from '../utils'
 import { AuditModel, AuditMetaModel } from '../../src/model/audits'
 import { config } from '../../src/config'
-import * as utils from '../utils'
-import { promisify } from 'util'
-import * as sinon from 'sinon'
-import * as constants from '../constants'
-import {testAuditIHEDICOM, testAuditIHERFC3881, testAuditMessage, testAuditParticipantQuery} from '../fixtures'
+import {
+  testAuditIHEDICOM,
+  testAuditIHERFC3881,
+  testAuditMessage,
+  testAuditParticipantQuery
+} from '../fixtures'
 
 config.auditing = config.get('auditing')
 describe('Auditing', () => {

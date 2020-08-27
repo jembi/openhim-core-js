@@ -1,16 +1,19 @@
+'use strict'
+
 /* eslint-env mocha */
 
-import sinon from 'sinon'
-import { ObjectId } from 'mongodb'
-import { ChannelModel, TransactionModel, ClientModel } from '../../src/model'
-import { cullBodies } from '../../src/bodyCull'
-import { clone } from '../utils'
 import moment from 'moment'
 import should from 'should'
+import sinon from 'sinon'
+import { ObjectId } from 'mongodb'
+
+import { ChannelModel, ClientModel, TransactionModel } from '../../src/model'
+import { clone } from '../utils'
 import { extractGridFSPayload, createGridFSPayload } from '../utils'
 import { connectionDefault } from '../../src/config'
-const MongoClient = connectionDefault.client
+import { cullBodies } from '../../src/bodyCull'
 
+const MongoClient = connectionDefault.client
 const testTime = new Date(2016, 2, 12)
 const cullTime = new Date(2016, 2, 9)
 

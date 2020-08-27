@@ -1,14 +1,17 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
-import request from 'supertest'
 import fs from 'fs'
-import * as testUtils from '../utils'
-import * as server from '../../src/server'
-import { KeystoreModelAPI } from '../../src/model/keystore'
-import * as constants from '../constants'
-import { promisify } from 'util'
+import request from 'supertest'
 import should from 'should'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
+import * as server from '../../src/server'
+import * as testUtils from '../utils'
+import { KeystoreModelAPI } from '../../src/model/keystore'
 
 const { SERVER_PORTS } = constants
 

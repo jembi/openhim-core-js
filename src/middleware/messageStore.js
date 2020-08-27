@@ -1,10 +1,13 @@
+'use strict'
+
 import logger from 'winston'
-import * as transactions from '../model/transactions'
+import { promisify } from 'util'
+
 import * as autoRetryUtils from '../autoRetry'
 import * as utils from '../utils'
 import * as metrics from '../metrics'
-import { promisify } from 'util'
 import { extractStringPayloadIntoChunks, extractTransactionPayloadIntoChunks } from '../contentChunk'
+import * as transactions from '../model/transactions'
 
 export const transactionStatus = {
   PROCESSING: 'Processing',

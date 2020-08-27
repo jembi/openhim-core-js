@@ -1,10 +1,13 @@
-import logger from 'winston'
+'use strict'
+
 import atna from 'atna-audit'
+import logger from 'winston'
 import os from 'os'
-import { AuditModel, AuditMetaModel } from '../model/audits'
+
+import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import * as auditing from '../auditing'
+import { AuditMetaModel, AuditModel } from '../model/audits'
 import { config } from '../config'
 import { promisify } from 'util'
 
@@ -32,7 +35,7 @@ function getProjectionObject (filterRepresentation) {
 // Audit the audit record retrieval
 function auditLogUsed (auditId, outcome, user) {
   const groups = user.groups.join(',')
-  const uri = `https://${config.router.externalHostname}:${config.api.httpsPort}/audits/${auditId}`
+  const uri = `${config.api.protocol}://${config.router.externalHostname}:${config.api.port}/audits/${auditId}`
   let audit = atna.construct.auditLogUsedAudit(outcome, himSourceID, os.hostname(), user.email, groups, groups, uri)
   audit = atna.construct.wrapInSyslog(audit)
   return auditing.sendAuditEvent(audit, () => logger.debug(`Processed audit log used message for user '${user.email}' and audit '${auditId}'`))

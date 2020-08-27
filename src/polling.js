@@ -1,9 +1,11 @@
-import request from 'request'
+'use strict'
+
 import logger from 'winston'
+import request from 'request'
 
 import * as Channels from './model/channels'
-import { config } from './config'
 import * as utils from './utils'
+import { config } from './config'
 import { promisify } from 'util'
 
 const {ChannelModel} = Channels
@@ -14,10 +16,10 @@ export let agendaGlobal = null
 export async function registerPollingChannel (channel, callback) {
   logger.info(`Registering polling channel: ${channel._id}`)
   if (!channel.pollingSchedule) { return callback(new Error('no polling schedule set on this channel')) }
-  
+
   try {
     await exports.agendaGlobal.cancel({name: `polling-job-${channel._id}`})
-    
+
     exports.agendaGlobal.define(`polling-job-${channel._id}`, (job, done) => {
       logger.info(`Polling channel ${channel._id}`)
 

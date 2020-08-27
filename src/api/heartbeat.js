@@ -1,8 +1,11 @@
+'use strict'
+
 import moment from 'moment'
-import * as utils from '../utils'
-import * as server from '../server'
-import { MediatorModelAPI } from '../model/mediators'
 import { promisify } from 'util'
+
+import * as server from '../server'
+import * as utils from '../utils'
+import { MediatorModelAPI } from '../model/mediators'
 
 export async function getHeartbeat (ctx) {
   try {

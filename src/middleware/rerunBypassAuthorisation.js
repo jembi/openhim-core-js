@@ -1,7 +1,9 @@
+'use strict'
+
+import { promisify } from 'util'
+
 import { ChannelModel } from '../model/channels'
 import { TransactionModel } from '../model/transactions'
-import { config } from '../config'
-import { promisify } from 'util'
 
 export function authoriseUser (ctx, done) {
   ctx.matchingChannel = ctx.authorisedChannel

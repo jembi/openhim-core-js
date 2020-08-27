@@ -1,8 +1,11 @@
+'use strict'
+
 import logger from 'winston'
 import pem from 'pem'
+
+import { ClientModel } from './model/clients'
 import { DbVersionModel } from './model/dbVersion'
 import { KeystoreModel } from './model/keystore'
-import { ClientModel } from './model/clients'
 import { UserModel } from './model/users'
 import { VisualizerModel } from './model/visualizer'
 import { TransactionModel } from './model/transactions'

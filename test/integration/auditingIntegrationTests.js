@@ -1,14 +1,17 @@
+'use strict'
+
 /* eslint-env mocha */
 
-import { AuditModel } from '../../src/model/audits'
+import fs from 'fs'
+import net from 'net'
+import tls from 'tls'
+import { promisify } from 'util'
+
+import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import * as constants from '../constants'
+import { AuditModel } from '../../src/model/audits'
 import { testAuditMessage } from '../fixtures'
-import { promisify } from 'util'
-import fs from 'fs'
-import tls from 'tls'
-import net from 'net'
 
 describe('Auditing Integration Tests', () => {
   let client
