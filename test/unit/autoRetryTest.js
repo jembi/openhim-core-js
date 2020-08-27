@@ -1,11 +1,14 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
 import moment from 'moment'
 import { Types } from 'mongoose'
+
 import * as autoRetry from '../../src/autoRetry'
-import { ChannelModel } from '../../src/model/channels'
 import { AutoRetryModel } from '../../src/model/autoRetry'
+import { ChannelModel } from '../../src/model/channels'
 import { TaskModel } from '../../src/model/tasks'
 
 const { ObjectId } = Types

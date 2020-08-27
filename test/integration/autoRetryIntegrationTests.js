@@ -1,18 +1,28 @@
+'use strict'
+
 /* eslint-env mocha */
 
-import should from 'should'
 import request from 'supertest'
-import { ChannelModel, ClientModel, TransactionModel, AutoRetryModel, EventModel, TaskModel } from '../../src/model'
-import * as testUtils from '../utils'
-import * as server from '../../src/server'
-import * as autoRetry from '../../src/autoRetry'
-import * as tasks from '../../src/tasks'
-import * as constants from '../constants'
-import { config } from '../../src/config'
-import { promisify } from 'util'
+import should from 'should'
 import { ObjectId } from 'mongodb'
+import { promisify } from 'util'
 
-// TODO : Check the tasks have beeen removed before trying the next test
+import * as autoRetry from '../../src/autoRetry'
+import * as constants from '../constants'
+import * as server from '../../src/server'
+import * as tasks from '../../src/tasks'
+import * as testUtils from '../utils'
+import {
+  AutoRetryModel,
+  ChannelModel,
+  ClientModel,
+  EventModel,
+  TaskModel,
+  TransactionModel
+} from '../../src/model'
+import { config } from '../../src/config'
+
+// TODO : Check the tasks have been removed before trying the next test
 
 function waitForAutoRetry () {
   return testUtils.pollCondition(() => AutoRetryModel.countDocuments().then(count => count === 1))
@@ -45,7 +55,10 @@ describe(`Auto Retry Integration Tests`, () => {
     config.authentication.enableMutualTLSAuthentication = false
     config.authentication.enableBasicAuthentication = true
     config.rerun.httpPort = constants.SERVER_PORTS.rerunPort
-    await promisify(server.start)({ httpPort: constants.SERVER_PORTS.httpPort, rerunHttpPort: constants.SERVER_PORTS.rerunPort })
+    await promisify(server.start)({
+      httpPort: constants.SERVER_PORTS.httpPort,
+      rerunHttpPort: constants.SERVER_PORTS.rerunPort
+    })
   })
 
   after(async () => {

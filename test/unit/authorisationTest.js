@@ -1,9 +1,12 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
 import rewire from 'rewire'
+import { ObjectId } from 'mongodb'
+
 import { ChannelModel } from '../../src/model/channels'
-import {ObjectId} from 'mongodb'
 
 const authorisation = rewire('../../src/middleware/authorisation')
 

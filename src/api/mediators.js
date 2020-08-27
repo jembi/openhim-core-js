@@ -1,11 +1,14 @@
+'use strict'
+
+import atna from 'atna-audit'
 import logger from 'winston'
 import semver from 'semver'
-import atna from 'atna-audit'
-import { ChannelModelAPI } from '../model/channels'
-import { MediatorModelAPI } from '../model/mediators'
+
+import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import * as auditing from '../auditing'
+import { ChannelModelAPI } from '../model/channels'
+import { MediatorModelAPI } from '../model/mediators'
 
 const mask = '**********'
 

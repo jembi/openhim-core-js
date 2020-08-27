@@ -1,39 +1,42 @@
+'use strict'
+
 import './winston-transport-workaround'
 
 import 'babel-polyfill'
-import cluster from 'cluster'
-import nconf from 'nconf'
+import 'winston-mongodb'
+import Agenda from 'agenda'
 import atna from 'atna-audit'
-import os from 'os'
 import chokidar from 'chokidar'
+import cluster from 'cluster'
+import dgram from 'dgram'
 import fs from 'fs'
 import http from 'http'
 import https from 'https'
-import tls from 'tls'
-import net from 'net'
-import dgram from 'dgram'
-import uuidv4 from 'uuid/v4'
-import pem from 'pem'
 import logger from 'winston'
-import 'winston-mongodb'
-import Agenda from 'agenda'
 import mongoose from 'mongoose'
+import net from 'net'
+import nconf from 'nconf'
+import os from 'os'
+import pem from 'pem'
+import tls from 'tls'
+import { v4 as uuidv4 } from 'uuid'
 
-import * as koaMiddleware from './koaMiddleware'
-import * as koaApi from './koaApi'
-import * as tlsAuthentication from './middleware/tlsAuthentication'
-import { UserModel } from './model/users'
-import { KeystoreModel } from './model/keystore'
 import * as alerts from './alerts'
-import * as reports from './reports'
-import * as polling from './polling'
-import * as tcpAdapter from './tcpAdapter'
 import * as auditing from './auditing'
-import * as tasks from './tasks'
-import * as upgradeDB from './upgradeDB'
 import * as autoRetry from './autoRetry'
 import * as bodyCull from './bodyCull'
-import { config, appRoot, connectionAgenda } from './config'
+import * as constants from './constants'
+import * as koaMiddleware from './koaMiddleware'
+import * as koaApi from './koaApi'
+import * as polling from './polling'
+import * as reports from './reports'
+import * as tasks from './tasks'
+import * as tcpAdapter from './tcpAdapter'
+import * as tlsAuthentication from './middleware/tlsAuthentication'
+import * as upgradeDB from './upgradeDB'
+import { KeystoreModel } from './model/keystore'
+import { UserModel } from './model/users'
+import { appRoot, config, connectionAgenda } from './config'
 
 mongoose.Promise = Promise
 
@@ -255,7 +258,7 @@ if (cluster.isMaster && !module.parent) {
 
   let httpServer = null
   let httpsServer = null
-  let apiHttpsServer = null
+  let apiServer = null
   let rerunServer = null
   let tcpHttpReceiver = null
   let pollingServer = null
@@ -348,7 +351,6 @@ if (cluster.isMaster && !module.parent) {
 
   function startHttpServer (httpPort, bindAddress, app) {
     const deferred = defer()
-
     httpServer = http.createServer(app.callback())
 
     // set the socket timeout
@@ -494,7 +496,7 @@ if (cluster.isMaster && !module.parent) {
     })
   }
 
-  function startApiServer (apiPort, bindAddress, app) {
+  function startApiHttpsServer (apiPort, bindAddress, app) {
     const deferred = defer()
 
     // mutualTLS not applicable for the API - set false
@@ -502,14 +504,35 @@ if (cluster.isMaster && !module.parent) {
     tlsAuthentication.getServerOptions(mutualTLS, (err, options) => {
       if (err) { logger.error(`Could not fetch https server options: ${err}`) }
 
-      apiHttpsServer = https.createServer(options, app.callback())
-      apiHttpsServer.listen(apiPort, bindAddress, () => {
+      apiServer = https.createServer(options, app.callback())
+      apiServer.listen(apiPort, bindAddress, () => {
         logger.info(`API HTTPS listening on port ${apiPort}`)
         return ensureRootUser(() => deferred.resolve())
       })
 
-      return apiHttpsServer.on('secureConnection', socket => trackConnection(activeApiConnections, socket))
+      return apiServer.on('secureConnection', socket => trackConnection(activeApiConnections, socket))
     })
+
+    return deferred.promise
+  }
+
+  function startApiHttpServer (apiPort, bindAddress, app) {
+    const deferred = defer()
+
+    apiServer = http.createServer(app.callback())
+
+    apiServer.listen(apiPort, bindAddress, () => {
+      logger.info(`API HTTP listening on port ${apiPort}`)
+      return ensureRootUser(() => deferred.resolve())
+    })
+
+    // listen for server error
+    apiServer.on('error', err => logger.error(`An httpServer error occured: ${err}`))
+
+    // listen for client error
+    apiServer.on('clientError', err => logger.error(`An httpServer clientError occured: ${err}`))
+
+    apiServer.on('connection', socket => trackConnection(activeHttpConnections, socket))
 
     return deferred.promise
   }
@@ -673,14 +696,19 @@ if (cluster.isMaster && !module.parent) {
     return ensureKeystore(() => {
       if (ports.httpPort || ports.httpsPort) {
         koaMiddleware.setupApp((app) => {
-          if (ports.httpPort) { promises.push(startHttpServer(ports.httpPort, bindAddress, app)) }
+          if (ports.httpPort) {
+            promises.push(startHttpServer(ports.httpPort, bindAddress, app))
+          }
+
           if (ports.httpsPort) { promises.push(startHttpsServer(ports.httpsPort, bindAddress, app)) }
           return promises
         })
       }
 
       if (ports.apiPort && config.api.enabled) {
-        koaApi.setupApp(app => promises.push(startApiServer(ports.apiPort, bindAddress, app)))
+        config.api.protocol === 'http'
+          ? koaApi.setupApp(app => promises.push(startApiHttpServer(ports.apiPort, bindAddress, app)))
+          : koaApi.setupApp(app => promises.push(startApiHttpsServer(ports.apiPort, bindAddress, app)))
       }
 
       if (ports.rerunHttpPort) {
@@ -756,7 +784,7 @@ if (cluster.isMaster && !module.parent) {
 
     if (httpServer) { promises.push(stopServer(httpServer, 'HTTP')) }
     if (httpsServer) { promises.push(stopServer(httpsServer, 'HTTPS')) }
-    if (apiHttpsServer) { promises.push(stopServer(apiHttpsServer, 'API HTTP')) }
+    if (apiServer) { promises.push(stopServer(apiServer, 'API HTTP')) }
     if (rerunServer) { promises.push(stopServer(rerunServer, 'Rerun HTTP')) }
     if (pollingServer) { promises.push(stopServer(pollingServer, 'Polling HTTP')) }
     if (agenda) { stopAgenda() }
@@ -828,7 +856,7 @@ if (cluster.isMaster && !module.parent) {
     return Promise.all(promises).then(() => {
       httpServer = null
       httpsServer = null
-      apiHttpsServer = null
+      apiServer = null
       rerunServer = null
       tcpHttpReceiver = null
       pollingServer = null
@@ -852,7 +880,7 @@ if (cluster.isMaster && !module.parent) {
     ({
       httpPort: config.router.httpPort,
       httpsPort: config.router.httpsPort,
-      apiPort: config.api.httpsPort,
+      apiPort: config.api.port || constants.DEFAULT_API_PORT,
       rerunHttpPort: config.rerun.httpPort,
       tcpHttpReceiverPort: config.tcpAdapter.httpReceiver.httpPort,
       pollingPort: config.polling.pollingPort,

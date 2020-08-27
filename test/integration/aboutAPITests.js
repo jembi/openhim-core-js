@@ -1,9 +1,13 @@
+'use strict'
+
 /* eslint-env mocha */
+
 import request from 'supertest'
+import { promisify } from 'util'
+
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import * as constants from '../constants'
-import { promisify } from 'util'
+import { BASE_URL, SERVER_PORTS } from '../constants'
 
 describe('API Integration Tests', () =>
 
@@ -12,7 +16,7 @@ describe('API Integration Tests', () =>
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort })
+      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
 
       authDetails = testUtils.getAuthDetails()
     })
@@ -26,7 +30,7 @@ describe('API Integration Tests', () =>
 
     describe('*getAboutInformation', () => {
       it('should fetch core version and return status 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/about')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -38,7 +42,7 @@ describe('API Integration Tests', () =>
       })
 
       it('should return 404 if not found', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/about/bleh')
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)

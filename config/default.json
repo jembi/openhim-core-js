@@ -17,7 +17,8 @@
   "mongoLogger": {
     "options": {
       "w": 0,
-      "useNewUrlParser": true
+      "useNewUrlParser": true,
+      "useUnifiedTopology": true
     }
   },
   "router": {
@@ -31,8 +32,9 @@
     "pollPeriodMins": 60
   },
   "api": {
-    "enabled" : true,
-    "httpsPort": 8080,
+    "enabled": true,
+    "protocol": "https",
+    "port": 8080,
     "authWindowSeconds": 10,
     "maxPayloadSizeMB": 50,
     "truncateSize": 15000,
@@ -60,7 +62,15 @@
   },
   "authentication": {
     "enableMutualTLSAuthentication": true,
-    "enableBasicAuthentication": true
+    "enableBasicAuthentication": true,
+    "enableCustomTokenAuthentication": false,
+    "enableJWTAuthentication": false,
+    "jwt": {
+      "secretOrPublicKey": "",
+      "algorithms": "",
+      "audience": "",
+      "issuer": ""
+    }
   },
   "email": {
     "fromAddress": "address@example.com",

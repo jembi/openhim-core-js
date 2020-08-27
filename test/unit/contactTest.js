@@ -1,9 +1,12 @@
+'use strict'
+
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 
+import nodemailer from 'nodemailer'
 import should from 'should'
 import sinon from 'sinon'
-import nodemailer from 'nodemailer'
+
 import * as contact from '../../src/contact'
 import { config } from '../../src/config'
 
