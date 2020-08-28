@@ -520,10 +520,6 @@ async function sendHttpRequest (ctx, route, options) {
     },
     requestError: function () {},
     responseError: function (err) {
-      // Kill the secondary routes' requests when the primary route request fails
-      if (ctx.secondaryRoutes && Array.isArray(ctx.secondaryRoutes)) {
-        ctx.secondaryRoutes.forEach(routeReq => routeReq.destroy())
-      }
       ctx.state.requestPromise.then(() => {
         messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
       })
@@ -623,34 +619,24 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
         reject(err)
       })
 
-      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-      routeReq.setTimeout(timeout, () => {
-        routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
+    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+    routeReq.setTimeout(timeout, () => {
+      routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
+    })
+
+    downstream
+      .on('data', (chunk) => {
+        if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
+          routeReq.write(chunk)
+        }
       })
-
-      /*
-        ctx.secondaryRoutes is an array containing the secondary routes' requests (streams). This enables termination of these requests when
-        the primary route's request fails
-      */
-      if (!ctx.secondaryRoutes) {
-        ctx.secondaryRoutes = []
-      }
-
-      ctx.secondaryRoutes.push(routeReq)
-
-      downstream
-        .on('data', (chunk) => {
-          if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
-            routeReq.write(chunk)
-          }
-        })
-        .on('end', () => {
-          routeReq.end()
-        })
-        .on('error', (err) => {
-          logger.error(`Error streaming request body downstream: ${err}`)
-          reject(err)
-        })
+      .on('end', () => {
+        routeReq.end()
+      })
+      .on('error', (err) => {
+        logger.error(`Error streaming request body downstream: ${err}`)
+        reject(err)
+      })
   })
 }
 
