@@ -12,19 +12,19 @@ const TRANSACTION_STATUS_KEYS = {
   Failed: 'failed'
 }
 
-const METRIC_UPDATE_OPTIONS = {upsert: true, setDefaultsOnInsert: true}
+const METRIC_UPDATE_OPTIONS = { upsert: true, setDefaultsOnInsert: true }
 
 async function recordTransactionMetric (fields, update) {
   return MetricModel.updateOne(
     fields,
-    Object.assign({}, update, {$setOnInsert: fields}),
+    Object.assign({}, update, { $setOnInsert: fields }),
     METRIC_UPDATE_OPTIONS
   )
 }
 
 export async function recordTransactionMetrics (transaction) {
   if (
-      !transaction.response ||
+    !transaction.response ||
       !transaction.response.timestampEnd ||
       !(transaction.response.timestampEnd instanceof Date)
   ) {
@@ -82,15 +82,15 @@ export async function recordTransactionMetrics (transaction) {
 }
 
 const METRICS_GROUPINGS = {
-  requests: {$sum: '$requests'},
-  responseTime: {$sum: '$responseTime'},
-  minResponseTime: {$min: '$minResponseTime'},
-  maxResponseTime: {$max: '$maxResponseTime'},
-  successful: {$sum: '$successful'},
-  failed: {$sum: '$failed'},
-  processing: {$sum: '$processing'},
-  completed: {$sum: '$completed'},
-  completedWithErrors: {$sum: '$completedWithErrors'}
+  requests: { $sum: '$requests' },
+  responseTime: { $sum: '$responseTime' },
+  minResponseTime: { $min: '$minResponseTime' },
+  maxResponseTime: { $max: '$maxResponseTime' },
+  successful: { $sum: '$successful' },
+  failed: { $sum: '$failed' },
+  processing: { $sum: '$processing' },
+  completed: { $sum: '$completed' },
+  completedWithErrors: { $sum: '$completedWithErrors' }
 }
 
 /**
@@ -127,8 +127,8 @@ export async function calculateMetrics (filters, groupByChannel = true) {
           startTime: '$startTime',
           type: '$type'
         },
-        startTime: {$first: '$startTime'},
-        type: {$first: '$type'}
+        startTime: { $first: '$startTime' },
+        type: { $first: '$type' }
       })
     })
   }
@@ -140,13 +140,13 @@ export async function calculateMetrics (filters, groupByChannel = true) {
         _id: {
           channelID: '$channelID'
         },
-        channelID: {$first: '$channelID'}
+        channelID: { $first: '$channelID' }
       })
     })
   }
 
   pipeline.push(
-    {$sort: {startTime: 1, channelID: 1}}
+    { $sort: { startTime: 1, channelID: 1 } }
   )
 
   return MetricModel.aggregate(pipeline)

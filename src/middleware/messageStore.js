@@ -108,7 +108,6 @@ export async function initiateRequest (ctx) {
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
 export function completeRequest (ctx, done) {
-
   if (ctx && !ctx.requestTimestampEnd) {
     ctx.requestTimestampEnd = new Date()
   }
@@ -170,7 +169,7 @@ export function initiateResponse (ctx, done) {
   const transactionId = getTransactionId(ctx)
 
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
-/*
+  /*
   // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
     // reset request body - primary route
@@ -185,7 +184,7 @@ export function initiateResponse (ctx, done) {
     error: ctx.error
   }
 
-  //await extractTransactionPayloadIntoChunks(update)
+  // await extractTransactionPayloadIntoChunks(update)
   transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
       logger.error(`Could not save transaction metadata (initiateResponse): ${transactionId}. ${err}`)
@@ -236,12 +235,12 @@ export function completeResponse (ctx, done) {
 
     if (ctx.orchestrations) {
       if (!update.orchestrations) {
-          update.orchestrations = []
-        }
+        update.orchestrations = []
+      }
       update.orchestrations.push(...ctx.orchestrations)
     }
 
-    return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+    return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
       if (err) {
         logger.error(`Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`)
         return reject(err)
@@ -274,7 +273,7 @@ export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
     }
   }
 
-  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
       logger.error(`Could not save transaction metadata (updateWithError): ${ctx.transactionId}. ${err}`)
       return done(err)
@@ -303,7 +302,7 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
   await extractTransactionPayloadIntoChunks(route)
 
   if (ctx.transactionId != null) {
-    transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {
+    transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, { $push: { routes: route } }, (err, tx) => {
       if (err) {
         logger.error(err)
       }
@@ -323,7 +322,6 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
  * This should only be called once all routes have responded.
  */
 export function setFinalStatus (ctx, callback) {
-
   function getRoutesStatus (routes) {
     const routesStatus = {
       routeFailures: false,
@@ -433,7 +431,7 @@ export function setFinalStatus (ctx, callback) {
       }
     }
 
-    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {new: true}, (err, tx) => {
+    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
       if (err) { return callback(err) }
 
       if (!tx) {

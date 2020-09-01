@@ -1,7 +1,7 @@
 
 import mongodb from 'mongodb'
 import zlib from 'zlib'
-import {PassThrough} from 'stream'
+import { PassThrough } from 'stream'
 import { config, connectionDefault } from './config'
 import { obtainCharset } from './utils'
 
@@ -67,16 +67,15 @@ export const extractStringPayloadIntoChunks = (payload) => {
     const uploadStream = bucket.openUploadStream()
 
     uploadStream.on('error', reject)
-    .on('finish', (doc) => {
-      if (!doc) {
-        return reject(new Error('GridFS create failed'))
-      }
-    })
-    
+      .on('finish', (doc) => {
+        if (!doc) {
+          return reject(new Error('GridFS create failed'))
+        }
+      })
+
     uploadStream.end(payload)
 
     resolve(uploadStream.id)
-    return
   })
 }
 
@@ -108,7 +107,7 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
 
     if (tx.orchestrations) {
       if (Array.isArray(tx.orchestrations) && tx.orchestrations.length > 0) {
-        for (let orch of tx.orchestrations) {
+        for (const orch of tx.orchestrations) {
           try {
             removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(orch))
           } catch (err) {
@@ -120,7 +119,7 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
 
     if (tx.routes) {
       if (Array.isArray(tx.routes) && tx.routes.length > 0) {
-        for (let route of tx.routes) {
+        for (const route of tx.routes) {
           try {
             removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(route))
           } catch (err) {
@@ -137,9 +136,9 @@ export const promisesToRemoveAllTransactionBodies = (tx) => {
 const getDecompressionStreamByContentEncoding = (contentEncoding) => {
   switch (contentEncoding) {
     case 'gzip':
-        return zlib.createGunzip()
+      return zlib.createGunzip()
     case 'deflate':
-        return zlib.createInflate()
+      return zlib.createInflate()
     default:
       // has nothing to decompress, but still requires a stream to be piped and listened on
       return new PassThrough()
@@ -149,7 +148,7 @@ const getDecompressionStreamByContentEncoding = (contentEncoding) => {
 export const retrievePayload = fileId => {
   return new Promise(async (resolve, reject) => {
     if (!fileId) {
-      return reject(new Error(`Payload id not supplied`))
+      return reject(new Error('Payload id not supplied'))
     }
 
     let payloadSize = 0
@@ -205,7 +204,7 @@ export const retrievePayload = fileId => {
 }
 
 export const addBodiesToTransactions = async (transactions) => {
-  if(!transactions || !Array.isArray(transactions) || transactions.length < 1) {
+  if (!transactions || !Array.isArray(transactions) || transactions.length < 1) {
     return []
   }
 
@@ -228,7 +227,7 @@ export const addBodiesToTransactions = async (transactions) => {
 
 const filterPayloadType = (transaction) => {
   return new Promise(async (resolve, reject) => {
-    if (!transaction){
+    if (!transaction) {
       return resolve(transaction)
     }
 
@@ -238,7 +237,7 @@ const filterPayloadType = (transaction) => {
         delete transaction.request.bodyId
       }
 
-      if(transaction.response && transaction.response.bodyId) {
+      if (transaction.response && transaction.response.bodyId) {
         transaction.response.body = await retrievePayload(transaction.response.bodyId)
         delete transaction.response.bodyId
       }
@@ -263,7 +262,7 @@ export const extractTransactionPayloadIntoChunks = async (transaction) => {
   }
 
   if (transaction.response && 'body' in transaction.response) {
-    if(transaction.response.body) {
+    if (transaction.response.body) {
       transaction.response.bodyId = await extractStringPayloadIntoChunks(transaction.response.body)
     }
     delete transaction.response.body

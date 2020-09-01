@@ -8,7 +8,7 @@ import * as configIndex from '../config'
 import * as cache from '../jwtSecretOrPublicKeyCache'
 import { JWT_PATTERN } from '../constants'
 
-async function authenticateClient(clientID) {
+async function authenticateClient (clientID) {
   return client.ClientModel.findOne({ clientID }).then((client) => {
     if (!client) {
       throw new Error('Client does not exist')
@@ -17,7 +17,7 @@ async function authenticateClient(clientID) {
   })
 }
 
-function getJwtOptions() {
+function getJwtOptions () {
   const jwtConfig = configIndex.config.get('authentication:jwt')
   const jwtOptions = {}
 
@@ -39,7 +39,7 @@ function getJwtOptions() {
   return jwtOptions
 }
 
-async function authenticateToken(ctx) {
+async function authenticateToken (ctx) {
   if (ctx.authenticated) {
     return
   }
@@ -48,7 +48,7 @@ async function authenticateToken(ctx) {
   const token = JWT_PATTERN.exec(authHeader)
 
   if (!token) {
-    logger.debug(`Missing or invalid JWT 'Authorization' header`)
+    logger.debug('Missing or invalid JWT \'Authorization\' header')
     return
   }
 
@@ -70,11 +70,10 @@ async function authenticateToken(ctx) {
     ctx.authenticationType = 'token'
   } catch (error) {
     logger.error(`JWT could not be verified: ${error.message}`)
-    return
   }
 }
 
-export async function koaMiddleware(ctx, next) {
+export async function koaMiddleware (ctx, next) {
   await authenticateToken(ctx)
   if (ctx.authenticated && ctx.authenticated.clientID) {
     ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID

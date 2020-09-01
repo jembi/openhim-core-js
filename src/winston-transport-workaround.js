@@ -2,7 +2,7 @@
 // necessary hacks for winston 3.1.0
 // https://github.com/winstonjs/winston/issues/1130
 
-let Transport = require('winston-transport')
+const Transport = require('winston-transport')
 
 Transport.prototype.normalizeQuery = function (options) {
   options = options || {}

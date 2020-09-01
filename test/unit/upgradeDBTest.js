@@ -33,10 +33,10 @@ describe('Upgrade DB Tests', () => {
         description: 'testFunc 1',
         func: sinon.spy(() => calls.push(1))
       },
-        {
-          description: 'testFunc 2',
-          func: sinon.spy(() => calls.push(2))
-        }
+      {
+        description: 'testFunc 2',
+        func: sinon.spy(() => calls.push(2))
+      }
       )
 
       await upgradeDB.upgradeDb()
@@ -60,7 +60,7 @@ describe('Upgrade DB Tests', () => {
       await keystore.save()
     })
 
-    it(`should add the fingerprint property to ca certificates`, async () => {
+    it('should add the fingerprint property to ca certificates', async () => {
       await upgradeFunc()
       const keystore = await KeystoreModel.findOne()
       for (const cert of keystore.ca) {
@@ -68,14 +68,14 @@ describe('Upgrade DB Tests', () => {
       }
     })
 
-    it(`should add the fingerprint property to server certificate`, async () => {
+    it('should add the fingerprint property to server certificate', async () => {
       await upgradeFunc()
       const keystore = await KeystoreModel.findOne()
       should.exist(keystore.cert.fingerprint)
     })
   })
 
-  describe(`updateFunction1 - Convert client.domain to client.fingerprint`, () => {
+  describe('updateFunction1 - Convert client.domain to client.fingerprint', () => {
     const upgradeFunc = originalUpgradeFuncs[1].func
 
     const clientData = {
@@ -93,14 +93,14 @@ describe('Upgrade DB Tests', () => {
       await ClientModel(clientData).save()
     })
 
-    it(`should convert client.domain match to client.certFingerprint match`, async () => {
+    it('should convert client.domain match to client.certFingerprint match', async () => {
       await upgradeFunc()
       const client = await ClientModel.findOne({ clientID: 'test' })
       client.certFingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54')
     })
   })
 
-  describe(`updateFunction2 - Migrate visualizer settings from user profile to shared collection`, () => {
+  describe('updateFunction2 - Migrate visualizer settings from user profile to shared collection', () => {
     const upgradeFunc = originalUpgradeFuncs[2].func
 
     const userObj1 = {
@@ -374,7 +374,7 @@ describe('Upgrade DB Tests', () => {
       visualizers.length.should.eql(0)
     })
 
-    it(`should ignore users that have visualizer settings with no mediators, components or channels`, async () => {
+    it('should ignore users that have visualizer settings with no mediators, components or channels', async () => {
       await new UserModel(userObj3).save()
       await upgradeFunc()
 
@@ -382,7 +382,7 @@ describe('Upgrade DB Tests', () => {
       visualizers.length.should.eql(2)
     })
 
-    it(`should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)`, async () => {
+    it('should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)', async () => {
       await new UserModel(userObj4).save()
       await upgradeFunc()
 
@@ -409,7 +409,7 @@ describe('Upgrade DB Tests', () => {
       visualizers[idx].components[1].display.should.be.equal('Test Route')
     })
 
-    it(`should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)`, async () => {
+    it('should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)', async () => {
       await new UserModel(userObj5).save()
       await upgradeFunc()
 

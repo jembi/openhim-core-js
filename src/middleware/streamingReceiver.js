@@ -3,7 +3,7 @@ import logger from 'winston'
 import * as messageStore from './messageStore'
 import { config } from '../config'
 import { Readable } from 'stream'
-import { getGridFSBucket }  from '../contentChunk'
+import { getGridFSBucket } from '../contentChunk'
 import { Types } from 'mongoose'
 import * as auditing from '../auditing'
 import { genAuthAudit } from './authorisation'
@@ -76,7 +76,7 @@ function streamingReceiver (ctx, statusEvents) {
           ctx.req.push(chunk)
         })
         .on('end', () => {
-          logger.info(`** END OF INPUT GRIDFS STREAM **`)
+          logger.info('** END OF INPUT GRIDFS STREAM **')
           ctx.req.push(null)
         })
         .on('error', (err) => {
@@ -94,7 +94,7 @@ function streamingReceiver (ctx, statusEvents) {
 
   ctx.req
     .on('data', (chunk) => {
-      counter++;
+      counter++
       size += chunk.toString().length
       logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
 
@@ -158,7 +158,7 @@ function collectingReceiver (ctx, statusEvents) {
   return new Promise((resolve, reject) => {
     let counter = 0
     let size = 0
-    let bodyCopy = []
+    const bodyCopy = []
 
     if (!bucket) {
       bucket = getGridFSBucket()
@@ -208,7 +208,7 @@ function collectingReceiver (ctx, statusEvents) {
           ctx.req.push(chunk)
         })
         .on('end', () => {
-          logger.info(`** END OF INPUT GRIDFS STREAM **`)
+          logger.info('** END OF INPUT GRIDFS STREAM **')
           ctx.req.push(null)
         })
         .on('error', (err) => {
@@ -222,7 +222,7 @@ function collectingReceiver (ctx, statusEvents) {
     ctx.req
       .on('data', (chunk) => {
         if (allowRequest) {
-          counter++;
+          counter++
           size += chunk.toString().length
           logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
 
@@ -263,7 +263,7 @@ function collectingReceiver (ctx, statusEvents) {
 }
 
 export function storeRequestAsString (bodyString, request, statusEvents) {
-  if(!bucket) {
+  if (!bucket) {
     bucket = getGridFSBucket()
   }
 
@@ -294,14 +294,13 @@ export function storeRequestAsString (bodyString, request, statusEvents) {
  * Koa middleware for streaming to GridFS and streaming routing
  */
 export async function koaMiddleware (ctx, next) {
-
-  let channel = ctx.authorisedChannel || null
+  const channel = ctx.authorisedChannel || null
   let collectBody = false
 
   const statusEvents = {
     startRequest: function (headers) {},
     finishRequest: function (body) {
-      logger.info(`** END OF INPUT STREAM **`)
+      logger.info('** END OF INPUT STREAM **')
       if (!collectBody) {
         return true
       }
@@ -334,7 +333,7 @@ export async function koaMiddleware (ctx, next) {
       channel.matchContentXpath ||
       channel.matchContentValue ||
       channel.matchContentJson
-      ) &&
+    ) &&
       ['POST', 'PUT', 'PATCH'].includes(ctx.req.method)
   }
 
@@ -355,7 +354,7 @@ const executeStreaming = async (ctx, statusEvents, collectBody) => {
   if (collectBody) {
     try {
       await collectingReceiver(ctx, statusEvents)
-    } catch(err) {
+    } catch (err) {
       logger.error(`collectingReceiver error: ${err}`)
     }
   } else {

@@ -1,6 +1,6 @@
 import http from 'k6/http'
-import {check, group} from 'k6'
-import {getTestAuthHeaders} from './auth.js'
+import { check, group } from 'k6'
+import { getTestAuthHeaders } from './auth.js'
 
 const BASE_URL = __ENV.BASE_URL || 'https://localhost:8080'
 
@@ -13,7 +13,7 @@ export const options = {
   insecureSkipTLSVerify: true
 }
 
-function getMetricsByMinute() {
+function getMetricsByMinute () {
   const res = http.get(
     `${BASE_URL}/metrics/timeseries/minute?startDate=2017-12-01T10:00:00.000Z&endDate=2017-12-01T11:00:00.000Z`,
     {
@@ -30,7 +30,7 @@ function getMetricsByMinute() {
   })
 }
 
-function getMetricsByHour() {
+function getMetricsByHour () {
   const res = http.get(
     `${BASE_URL}/metrics/timeseries/hour?startDate=2017-12-01T00:00:00.000Z&endDate=2017-12-01T23:59:59.999Z`,
     {
@@ -47,7 +47,7 @@ function getMetricsByHour() {
   })
 }
 
-function getMetricsByDay() {
+function getMetricsByDay () {
   const res = http.get(
     `${BASE_URL}/metrics/timeseries/day?startDate=2017-12-01&endDate=2017-12-08`,
     {
@@ -64,7 +64,7 @@ function getMetricsByDay() {
   })
 }
 
-function getMetricsByMonth() {
+function getMetricsByMonth () {
   const res = http.get(
     `${BASE_URL}/metrics/timeseries/month?startDate=2017-01-01&endDate=2017-12-31`,
     {
@@ -81,7 +81,7 @@ function getMetricsByMonth() {
   })
 }
 
-function getMetricsByChannel() {
+function getMetricsByChannel () {
   const res = http.get(
     `${BASE_URL}/metrics/channels/303030303030303030303030?startDate=2017-01-01T00:00:00.000Z&endDate=2017-01-01T23:59:59.999Z`,
     {
@@ -98,7 +98,7 @@ function getMetricsByChannel() {
   })
 }
 
-export default function execute() {
+export default function execute () {
   group('Metrics', () => {
     group('By time range', () => {
       group('By minute', getMetricsByMinute)

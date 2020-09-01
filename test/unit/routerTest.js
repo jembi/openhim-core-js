@@ -37,9 +37,9 @@ describe('HTTP Router', () => {
   after(() => testUtils.cleanupTestKeystore())
 
   function createContext (channel, path = '/test', method = 'GET', body = undefined) {
-   const downstream = new Readable()
-   downstream._read = () => {}
-   
+    const downstream = new Readable()
+    downstream._read = () => {}
+
     return {
       authorisedChannel: testUtils.clone(channel),
       request: {
@@ -92,14 +92,14 @@ describe('HTTP Router', () => {
         ctx.state.downstream.push(null)
 
         await promisify(router.route)(ctx)
-        
+
         ctx.response.status.should.equal(201)
-        const bodyId = ctx.response.bodyId ? true : false
+        const bodyId = !!ctx.response.bodyId
         bodyId.should.be.equal(true)
 
         // Wait for the gridfs streaming of the response to finish
         await awaitGridfsBodyStreaming()
-        
+
         const gridfsBody = await testUtils.extractGridFSPayload(ctx.response.bodyId)
         gridfsBody.should.be.eql(respBody)
       })
@@ -189,8 +189,8 @@ describe('HTTP Router', () => {
         await promisify(router.route)(ctx)
         ctx.response.status.should.be.exactly(201)
         ctx.response.header.should.be.ok
-        
-        const bodyId = ctx.response.bodyId ? true : false
+
+        const bodyId = !!ctx.response.bodyId
         bodyId.should.be.true()
 
         // Wait for body to be streamed into gridfs
@@ -441,7 +441,7 @@ describe('HTTP Router', () => {
         ctx.response.status.should.be.exactly(201)
         ctx.response.header.should.be.ok
 
-        const bodyId = ctx.routes[0].response.bodyId ? true : false
+        const bodyId = !!ctx.routes[0].response.bodyId
         bodyId.should.be.true()
 
         await awaitGridfsBodyStreaming()
@@ -462,11 +462,11 @@ describe('HTTP Router', () => {
 
         await promisify(router.route)(ctx)
         await testUtils.setImmediatePromise()
-        
+
         ctx.routes.length.should.be.exactly(2)
         ctx.routes[0].response.status.should.be.exactly(200)
 
-        const primaryBodyId = ctx.routes[0].response.bodyId ? true : false
+        const primaryBodyId = !!ctx.routes[0].response.bodyId
         primaryBodyId.should.be.true()
 
         await awaitGridfsBodyStreaming()
@@ -542,7 +542,7 @@ describe('HTTP Router', () => {
 
         await promisify(router.route)(ctx)
 
-        const bodyId = ctx.routes[0].response.bodyId ? true : false
+        const bodyId = !!ctx.routes[0].response.bodyId
         bodyId.should.be.true()
 
         await awaitGridfsBodyStreaming()
@@ -581,7 +581,7 @@ describe('HTTP Router', () => {
         await promisify(router.route)(ctx)
         ctx.response.status.should.eql(405)
         ctx.response.timestamp.should.Date()
-        ctx.response.body.should.eql(`Request with method POST is not allowed. Only GET, PUT methods are allowed`)
+        ctx.response.body.should.eql('Request with method POST is not allowed. Only GET, PUT methods are allowed')
         spy.callCount.should.eql(0)
       })
 
@@ -889,7 +889,7 @@ describe('HTTP Router', () => {
       }
 
       router.setKoaResponse(ctx, response)
-      ctx.cookies.set.calledWith("maximus", "Thegreat", {path: false, httpOnly: false, maxage: 18}).should.be.true()
+      ctx.cookies.set.calledWith('maximus', 'Thegreat', { path: false, httpOnly: false, maxage: 18 }).should.be.true()
     })
   })
 })

@@ -235,8 +235,8 @@ const fetchWeeklySubscribers = callback => { UserModel.find({ weeklyReport: true
 
 function plainTemplate (report) {
   let text = `Generated on: ${
-    (!utcOffset) ? moment().format(dateTimeFormat) :
-       moment().utcOffset(utcOffset).format(dateTimeFormat)
+    (!utcOffset) ? moment().format(dateTimeFormat)
+       : moment().utcOffset(utcOffset).format(dateTimeFormat)
   }`
 
   text += `\n\nReport period: ${report.from} to ${report.to}\n`

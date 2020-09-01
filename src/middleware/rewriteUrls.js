@@ -7,7 +7,7 @@ import { promisify } from 'util'
 import * as router from '../middleware/router'
 import * as utils from '../utils'
 import { config } from '../config'
-import { collectStream } from './streamingRouter';
+import { collectStream } from './streamingRouter'
 
 const routerConf = config.get('router')
 

@@ -74,8 +74,8 @@ function setKoaResponse (ctx, response) {
         ctx.response.type = value
         break
       case 'x-body-id':
-          ctx.response.bodyId = value
-          break;
+        ctx.response.bodyId = value
+        break
       case 'content-length':
       case 'content-encoding':
       case 'transfer-encoding':
@@ -235,7 +235,7 @@ function sendRequestToRoutes (ctx, routes, next) {
                   response.headers = {}
                 }
                 response.headers['x-body-id'] = await extractStringPayloadIntoChunks(responseObj.response.body)
-                
+
                 if (ctx.mediatorResponse && ctx.mediatorResponse.orchestrations) {
                   const promises = []
 
@@ -245,14 +245,14 @@ function sendRequestToRoutes (ctx, routes, next) {
                         orch.request &&
                         orch.request.body &&
                         ctx.authorisedChannel.requestBody
-                        ) {
-                        orch.request.bodyId =  await extractStringPayloadIntoChunks(orch.request.body)
+                      ) {
+                        orch.request.bodyId = await extractStringPayloadIntoChunks(orch.request.body)
                       }
                       if (
                         orch.response &&
                         orch.response.body &&
                         ctx.authorisedChannel.responseBody
-                        ) {
+                      ) {
                         orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
                       }
                       resolve()
@@ -344,9 +344,9 @@ function sendRequestToRoutes (ctx, routes, next) {
         messageStore.completeResponse(ctx, () => {}).then(() => {
           setTransactionFinalStatus(ctx)
         })
-        .catch(err => {
-          logger.error(err)
-        })
+          .catch(err => {
+            logger.error(err)
+          })
       })
     })
   })
@@ -372,7 +372,7 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
       if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
         // handle mediator response
         const responseObj = JSON.parse(response.body)
-        
+
         routeObj.mediatorURN = responseObj['x-mediator-urn'] ? responseObj['x-mediator-urn'] : undefined
         routeObj.orchestrations = responseObj.orchestrations ? responseObj.orchestrations : undefined
         routeObj.properties = responseObj.properties ? responseObj.properties : undefined
@@ -455,7 +455,7 @@ function sendRequest (ctx, route, options) {
         }).catch(err => {
           // Rethrow the error
           throw err
-       })
+        })
     }
 
     logger.info('Routing http(s) request')
@@ -468,7 +468,7 @@ function sendRequest (ctx, route, options) {
         recordOrchestration(err)
         // Rethrow the error
         throw err
-     })
+      })
   }
 }
 
@@ -476,7 +476,7 @@ function setTransactionFinalStatus (ctx) {
   // Set the final status of the transaction
   messageStore.setFinalStatus(ctx, (err, tx) => {
     if (err) {
-      logger.error(`Setting final status failed for transaction:`, err)
+      logger.error('Setting final status failed for transaction:', err)
       return
     }
     logger.info(`Set final status for transaction: ${tx._id} - ${tx.status}`)
@@ -484,7 +484,6 @@ function setTransactionFinalStatus (ctx) {
 }
 
 async function sendHttpRequest (ctx, route, options) {
-
   const statusEvents = {
     badOptions: function () {},
     noRequest: function () {},
@@ -492,7 +491,7 @@ async function sendHttpRequest (ctx, route, options) {
       logger.info(`Started storing response body in GridFS: ${fileId}`)
     },
     finishGridFs: function () {
-      logger.info(`Finished storing response body in GridFS`)
+      logger.info('Finished storing response body in GridFS')
     },
     gridFsError: function (err) {},
     startRequest: function () {},
@@ -507,7 +506,7 @@ async function sendHttpRequest (ctx, route, options) {
       logger.info(`Write response CHUNK # ${counter} [ Total size ${size}]`)
     },
     finishResponse: function (response, size) {
-      logger.info(`** END OF OUTPUT STREAM **`)
+      logger.info('** END OF OUTPUT STREAM **')
     },
     finishResponseAsString: function (body) {
       return rewrite.rewriteUrls(body, ctx.authorisedChannel, ctx.authenticationType, (err, newBody) => {
@@ -555,7 +554,7 @@ async function sendHttpRequest (ctx, route, options) {
 const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
   return new Promise((resolve, reject) => {
     const response = {}
-    let { downstream } = ctx.state
+    const { downstream } = ctx.state
     let method = http
 
     if (route.secured) {
@@ -567,7 +566,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
         response.status = routeRes.statusCode
         response.headers = routeRes.headers
 
-        if(!bucket) {
+        if (!bucket) {
           bucket = getGridFSBucket()
         }
 
@@ -604,7 +603,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
             }
           })
           .on('end', () => {
-            logger.info(`** END OF OUTPUT STREAM **`)
+            logger.info('** END OF OUTPUT STREAM **')
             uploadStream.end()
 
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
@@ -624,34 +623,34 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
         reject(err)
       })
 
-      const timeout = route.timeout != null ? route.timeout : +config.router.timeout
-      routeReq.setTimeout(timeout, () => {
-        routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
-      })
+    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+    routeReq.setTimeout(timeout, () => {
+      routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
+    })
 
-      /*
+    /*
         ctx.secondaryRoutes is an array containing the secondary routes' requests (streams). This enables termination of these requests when
         the primary route's request fails
       */
-      if (!ctx.secondaryRoutes) {
-        ctx.secondaryRoutes = []
-      }
+    if (!ctx.secondaryRoutes) {
+      ctx.secondaryRoutes = []
+    }
 
-      ctx.secondaryRoutes.push(routeReq)
+    ctx.secondaryRoutes.push(routeReq)
 
-      downstream
-        .on('data', (chunk) => {
-          if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
-            routeReq.write(chunk)
-          }
-        })
-        .on('end', () => {
-          routeReq.end()
-        })
-        .on('error', (err) => {
-          logger.error(`Error streaming request body downstream: ${err}`)
-          reject(err)
-        })
+    downstream
+      .on('data', (chunk) => {
+        if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
+          routeReq.write(chunk)
+        }
+      })
+      .on('end', () => {
+        routeReq.end()
+      })
+      .on('error', (err) => {
+        logger.error(`Error streaming request body downstream: ${err}`)
+        reject(err)
+      })
   })
 }
 
@@ -675,7 +674,7 @@ function sendSocketRequest (ctx, route, options) {
       ctx.authorisedChannel &&
       ctx.authorisedChannel.requestBody &&
       !ctx.request.bodyId
-      ) {
+    ) {
       ctx.request.bodyId = await extractStringPayloadIntoChunks(requestBody)
     }
 

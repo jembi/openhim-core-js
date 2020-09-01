@@ -8,8 +8,8 @@ import sinon from 'sinon'
 import { ObjectId } from 'mongodb'
 
 import { ChannelModel, ClientModel, TransactionModel } from '../../src/model'
-import { clone } from '../utils'
-import { extractGridFSPayload, createGridFSPayload } from '../utils'
+import { clone, extractGridFSPayload, createGridFSPayload } from '../utils'
+
 import { connectionDefault } from '../../src/config'
 import { cullBodies } from '../../src/bodyCull'
 
@@ -86,7 +86,7 @@ const baseTransaction = Object.freeze({
   status: 'Completed'
 })
 
-describe(`cullBodies`, () => {
+describe('cullBodies', () => {
   let db
   let clock
   let channelHasNotCulled
@@ -111,25 +111,24 @@ describe(`cullBodies`, () => {
 
   async function createTransactionBody (fileId) {
     db.collection('fs.chunks').insert({
-      "files_id" : new ObjectId(fileId),
-      "data" : "Test Data"
+      files_id: new ObjectId(fileId),
+      data: 'Test Data'
     })
     db.collection('fs.files').insert({
-      "_id" : new ObjectId(fileId)
+      _id: new ObjectId(fileId)
     })
   }
 
-  before(async function() {
+  before(async function () {
     const client = await MongoClient.connect()
     db = client.db()
   })
 
-  after(function() {
+  after(function () {
     MongoClient.close()
-  });
+  })
 
   beforeEach(async () => {
-
     await createTransactionBody(requestBodyId)
     await createTransactionBody(responseBodyId)
 
@@ -158,7 +157,7 @@ describe(`cullBodies`, () => {
     ])
   })
 
-  it(`will remove transaction body's that are x days old`, async () => {
+  it('will remove transaction body\'s that are x days old', async () => {
     const momentTime = moment().subtract(3, 'd')
     const tran = await createTransaction(channelHasNotCulled, momentTime.toDate())
     await cullBodies()
@@ -167,7 +166,7 @@ describe(`cullBodies`, () => {
     should(transaction.response.bodyId).undefined()
   })
 
-  it(`will remove multiple transaction body's that are x days old and leave the younger transactions`, async () => {
+  it('will remove multiple transaction body\'s that are x days old and leave the younger transactions', async () => {
     const momentTime = moment().subtract(3, 'd')
     const tranCulled = await createTransaction(channelHasNotCulled, momentTime.toDate())
     momentTime.add(2, 'd')
@@ -186,11 +185,11 @@ describe(`cullBodies`, () => {
     }
   })
 
-  it(`will set the lastBodyCleared to the current date if they are to be culled`, async () => {
+  it('will set the lastBodyCleared to the current date if they are to be culled', async () => {
     await cullBodies()
-    const neverCulled = await ChannelModel.findOne({name: 'neverCulled'})
-    const hasCulled = await ChannelModel.findOne({name: 'hasCulled'})
-    const dontCull = await ChannelModel.findOne({name: 'dontCull'})
+    const neverCulled = await ChannelModel.findOne({ name: 'neverCulled' })
+    const hasCulled = await ChannelModel.findOne({ name: 'hasCulled' })
+    const dontCull = await ChannelModel.findOne({ name: 'dontCull' })
 
     neverCulled.lastBodyCleared.should.eql(testTime)
     hasCulled.lastBodyCleared.should.eql(testTime)
@@ -217,7 +216,7 @@ describe(`cullBodies`, () => {
     }
   })
 
-  it(`will never cull the body of transaction who does not have a maxBodyAgeDays`, async () => {
+  it('will never cull the body of transaction who does not have a maxBodyAgeDays', async () => {
     const momentTime = moment().subtract(7, 'd')
     const tran = await createTransaction(channelNeverCull, momentTime.toDate())
     await cullBodies()
@@ -226,7 +225,7 @@ describe(`cullBodies`, () => {
     should(transaction.response.bodyId).eql(responseBodyId)
   })
 
-  it (`will cull the orchestration request and response bodies`, async () => {
+  it('will cull the orchestration request and response bodies', async () => {
     const momentTime = moment().subtract(3, 'd')
 
     const orchestrationBodyIdRequest0 = await createGridFSPayload('Test body')
@@ -257,7 +256,6 @@ describe(`cullBodies`, () => {
       }
     ]
 
-
     const tran = await createTransaction(channelHasNotCulled, momentTime.toDate(), orchestrations)
     await cullBodies()
 
@@ -266,22 +264,22 @@ describe(`cullBodies`, () => {
     // Check that the chunk is now longer stored in the DB
     try {
       await extractGridFSPayload(orchestrationBodyIdRequest0)
-    } catch(err) {
+    } catch (err) {
       should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdRequest0} was not found`)
     }
     try {
       await extractGridFSPayload(orchestrationBodyIdRequest1)
-    } catch(err) {
+    } catch (err) {
       should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdRequest1} was not found`)
     }
     try {
       await extractGridFSPayload(orchestrationBodyIdResponse0)
-    } catch(err) {
+    } catch (err) {
       should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdResponse0} was not found`)
     }
     try {
       await extractGridFSPayload(orchestrationBodyIdResponse1)
-    } catch(err) {
+    } catch (err) {
       should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdResponse1} was not found`)
     }
 
@@ -292,7 +290,7 @@ describe(`cullBodies`, () => {
     should.equal(transaction.orchestrations[1].response.bodyId, undefined)
   })
 
-  it (`will cull the routes request and response bodies`, async () => {
+  it('will cull the routes request and response bodies', async () => {
     const momentTime = moment().subtract(3, 'd')
 
     const routeBodyIdRequest0 = await createGridFSPayload('Test body')
@@ -300,22 +298,22 @@ describe(`cullBodies`, () => {
 
     const routes = [
       {
-        "name" : "Test",
-        "request" : {
-          "host" : "google.com",
-          "port" : "80",
-          "path" : "/basic",
-          "querystring" : "",
-          "method" : "POST",
-          "timestamp" : new Date(),
-          "bodyId": routeBodyIdRequest0
+        name: 'Test',
+        request: {
+          host: 'google.com',
+          port: '80',
+          path: '/basic',
+          querystring: '',
+          method: 'POST',
+          timestamp: new Date(),
+          bodyId: routeBodyIdRequest0
         },
-        "response" : {
-          "status" : 404,
-          "timestamp" : new Date(),
-          "bodyId" : routeBodyIdResponse0
+        response: {
+          status: 404,
+          timestamp: new Date(),
+          bodyId: routeBodyIdResponse0
         },
-        "orchestrations" : [ ]
+        orchestrations: []
       }
     ]
 
@@ -327,12 +325,12 @@ describe(`cullBodies`, () => {
     // Check that the chunk is no longer stored in the DB
     try {
       await extractGridFSPayload(routeBodyIdRequest0)
-    } catch(err) {
+    } catch (err) {
       should.equal(err.message, `FileNotFound: file ${routeBodyIdRequest0} was not found`)
     }
     try {
       await extractGridFSPayload(routeBodyIdResponse0)
-    } catch(err) {
+    } catch (err) {
       should.equal(err.message, `FileNotFound: file ${routeBodyIdResponse0} was not found`)
     }
 
@@ -341,7 +339,7 @@ describe(`cullBodies`, () => {
     should.equal(transaction.routes[0].request.bodyId, undefined)
   })
 
-  it (`will cull the routes' orchestrations' request and response bodies`, async () => {
+  it('will cull the routes\' orchestrations\' request and response bodies', async () => {
     const momentTime = moment().subtract(3, 'd')
 
     const routeBodyIdRequest0 = await createGridFSPayload('Test body')
@@ -352,39 +350,39 @@ describe(`cullBodies`, () => {
     const orchestration = {
       name: 'test',
       request: {
-        "host" : "google.com",
-        "port" : "80",
-        "path" : "/basic",
-        "querystring" : "",
-        "method" : "POST",
-        "timestamp" : new Date(),
-        "bodyId": routeOrchBodyIdRequest0
+        host: 'google.com',
+        port: '80',
+        path: '/basic',
+        querystring: '',
+        method: 'POST',
+        timestamp: new Date(),
+        bodyId: routeOrchBodyIdRequest0
       },
       response: {
-        "status" : 404,
-        "timestamp" : new Date(),
-        "bodyId" : routeOrchBodyIdResponse0
-      },
+        status: 404,
+        timestamp: new Date(),
+        bodyId: routeOrchBodyIdResponse0
+      }
     }
 
     const routes = [
       {
-        "name" : "Test",
-        "request" : {
-          "host" : "google.com",
-          "port" : "80",
-          "path" : "/basic",
-          "querystring" : "",
-          "method" : "POST",
-          "timestamp" : new Date(),
-          "bodyId": routeBodyIdRequest0
+        name: 'Test',
+        request: {
+          host: 'google.com',
+          port: '80',
+          path: '/basic',
+          querystring: '',
+          method: 'POST',
+          timestamp: new Date(),
+          bodyId: routeBodyIdRequest0
         },
-        "response" : {
-          "status" : 404,
-          "timestamp" : new Date(),
-          "bodyId" : routeBodyIdResponse0
+        response: {
+          status: 404,
+          timestamp: new Date(),
+          bodyId: routeBodyIdResponse0
         },
-        "orchestrations" : [
+        orchestrations: [
           orchestration
         ]
       }
@@ -398,12 +396,12 @@ describe(`cullBodies`, () => {
     // Check that the orchestrations chunks are no longer stored in the DB
     try {
       await extractGridFSPayload(routeOrchBodyIdRequest0)
-    } catch(err) {
+    } catch (err) {
       should.equal(err.message, `FileNotFound: file ${routeOrchBodyIdRequest0} was not found`)
     }
     try {
       await extractGridFSPayload(routeOrchBodyIdResponse0)
-    } catch(err) {
+    } catch (err) {
       should.equal(err.message, `FileNotFound: file ${routeOrchBodyIdResponse0} was not found`)
     }
 

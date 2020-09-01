@@ -249,7 +249,6 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
 async function rerunHttpRequestSend (options, transaction, callback) {
   let err
   if (options == null) {
-    
     err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
     return callback(err, null)
   }
@@ -266,12 +265,12 @@ async function rerunHttpRequestSend (options, transaction, callback) {
 
   const statusEvents = {
     badOptions: function () {
-      err = new Error(`An empty 'Options' object was supplied. Aborting HTTP Send Request`)
+      err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
       logger.error(err)
       callback(err, null)
     },
     noRequest: function () {
-      err = new Error(`An empty 'Transaction' object was supplied. Aborting HTTP Send Request`)
+      err = new Error('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
       logger.error(err)
       callback(err, null)
     },
@@ -279,7 +278,7 @@ async function rerunHttpRequestSend (options, transaction, callback) {
       logger.info(`Storing rerun response body in GridFS: ${fileId}`)
     },
     finishGridFs: function () {
-      logger.info(`Finished rerun storing response body in GridFS`)
+      logger.info('Finished rerun storing response body in GridFS')
     },
     gridFsError: function (err) {},
     startRequest: function () {},
@@ -355,8 +354,8 @@ function rerunHttpRequestSend_OLD (options, transaction, callback) {
   const req = http.request(options, (res) => {
     res.on('data', chunk => {
       /*
-       *  Don't need the response body at this point, because it's already been captured 
-       *  in GridFS (from router.js). 
+       *  Don't need the response body at this point, because it's already been captured
+       *  in GridFS (from router.js).
        *  Still need to have 'data' listener defined, or it changes program behaviour
        */
     })

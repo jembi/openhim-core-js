@@ -56,7 +56,7 @@ function getProjectionObject (filterRepresentation) {
       return {}
     case 'bulkrerun':
       // view only 'bulkrerun' properties
-      return {_id: 1, childIDs: 1, canRerun: 1, channelID: 1}
+      return { _id: 1, childIDs: 1, canRerun: 1, channelID: 1 }
     default:
       // no filterRepresentation supplied - simple view
       // view minimum required data for transactions
@@ -115,9 +115,9 @@ export async function getTransactions (ctx) {
     const filtersObject = ctx.request.query
 
     // get limit and page values
-    const {filterLimit} = filtersObject
-    const {filterPage} = filtersObject
-    let {filterRepresentation} = filtersObject
+    const { filterLimit } = filtersObject
+    const { filterPage } = filtersObject
+    let { filterRepresentation } = filtersObject
 
     // remove limit/page/filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
     delete filtersObject.filterLimit
@@ -142,15 +142,15 @@ export async function getTransactions (ctx) {
           return utils.logAndSetResponse(ctx, 403, `Forbidden: Unauthorized channel ${filters.channelID}`, 'info')
         }
       } else {
-        filters.channelID = {$in: getChannelIDsArray(allChannels)}
+        filters.channelID = { $in: getChannelIDsArray(allChannels) }
       }
 
       if (getActiveRoles('txViewFullAcl', ctx.authenticated.groups, allChannels).size > 0) {
-        filterRepresentation='full'
+        filterRepresentation = 'full'
       } else if (getActiveRoles('txViewAcl', ctx.authenticated.groups, allChannels).size > 0) {
-        filterRepresentation='simpledetails'
+        filterRepresentation = 'simpledetails'
       } else {
-        filterRepresentation=''
+        filterRepresentation = ''
       }
     }
 
@@ -189,7 +189,7 @@ export async function getTransactions (ctx) {
 
       // if property has no value then check if property exists instead
       if (filters.properties[key] === null) {
-        filters[`properties.${key}`] = {$exists: true}
+        filters[`properties.${key}`] = { $exists: true }
       }
 
       // delete the old properties filter as its not needed
@@ -197,8 +197,8 @@ export async function getTransactions (ctx) {
     }
 
     // parse childIDs query to get it into the correct format for querying
-    if (filters['childIDs']) {
-      filters['childIDs'] = JSON.parse(filters['childIDs'])
+    if (filters.childIDs) {
+      filters.childIDs = JSON.parse(filters.childIDs)
     }
 
     /* Route Filters */
@@ -243,7 +243,7 @@ export async function getTransactions (ctx) {
       .find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
-      .sort({'request.timestamp': -1})
+      .sort({ 'request.timestamp': -1 })
       .exec()
 
     // retrieve transaction request and response bodies
@@ -297,7 +297,7 @@ export async function getTransactionById (ctx, transactionId) {
 
   try {
     const filtersObject = ctx.request.query
-    let {filterRepresentation} = filtersObject
+    let { filterRepresentation } = filtersObject
 
     // remove filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
     delete filtersObject.filterRepresentation
@@ -309,7 +309,7 @@ export async function getTransactionById (ctx, transactionId) {
     // if user NOT admin, determine their representation privileges.
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // retrieve transaction channelID
-      const txChannelID = await TransactionModelAPI.findById(transactionId, {channelID: 1}, {_id: 0}).exec()
+      const txChannelID = await TransactionModelAPI.findById(transactionId, { channelID: 1 }, { _id: 0 }).exec()
       if ((txChannelID != null ? txChannelID.length : undefined) === 0) {
         ctx.body = `Could not find transaction with ID: ${transactionId}`
         ctx.status = 404
@@ -319,7 +319,7 @@ export async function getTransactionById (ctx, transactionId) {
         filterRepresentation = 'simpledetails'
 
         // get channel.txViewFullAcl information by channelID
-        const channel = await ChannelModelAPI.findById(txChannelID.channelID, {txViewFullAcl: 1}, {_id: 0}).exec()
+        const channel = await ChannelModelAPI.findById(txChannelID.channelID, { txViewFullAcl: 1 }, { _id: 0 }).exec()
 
         // loop through user groups
         for (const group of Array.from(ctx.authenticated.groups)) {
@@ -377,19 +377,19 @@ export async function findTransactionByClientId (ctx, clientId) {
     // get projection object
     const projectionFiltersObject = getProjectionObject(ctx.request.query.filterRepresentation)
 
-    const filtersObject = {clientID: clientId}
+    const filtersObject = { clientID: clientId }
 
     // Test if the user is authorised
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // if not an admin, restrict by transactions that this user can view
       const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
 
-      filtersObject.channelID = {$in: getChannelIDsArray(channels)}
+      filtersObject.channelID = { $in: getChannelIDsArray(channels) }
     }
 
-    const transactions =  await TransactionModelAPI
+    const transactions = await TransactionModelAPI
       .find(filtersObject, projectionFiltersObject)
-      .sort({'request.timestamp': -1})
+      .sort({ 'request.timestamp': -1 })
       .exec()
 
     // retrieve transaction request and response bodies
@@ -456,7 +456,7 @@ export async function updateTransaction (ctx, transactionId) {
 
     await extractTransactionPayloadIntoChunks(updates)
 
-    const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
+    const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, { new: true }).exec()
 
     ctx.body = `Transaction with ID: ${transactionId} successfully updated`
     ctx.status = 200

@@ -1,5 +1,5 @@
 import http from 'k6/http'
-import {check} from 'k6'
+import { check } from 'k6'
 
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:5001/http'
 
@@ -14,7 +14,7 @@ export const options = {
   discardResponseBodies: true
 }
 
-function makeGetRequest() {
+function makeGetRequest () {
   const response = http.get(
     `${BASE_URL}/body`,
     {
@@ -33,6 +33,6 @@ function makeGetRequest() {
   })
 }
 
-export default function() {
+export default function () {
   makeGetRequest()
 }

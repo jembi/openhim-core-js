@@ -11,7 +11,7 @@ import https from 'https'
 import net from 'net'
 import serveStatic from 'serve-static'
 import sinon from 'sinon'
-import { connectionDefault } from '../src/config'
+import { connectionDefault, config, encodeMongoURI } from '../src/config'
 import * as crypto from 'crypto'
 import * as pem from 'pem'
 
@@ -23,7 +23,6 @@ import {
   METRIC_TYPE_HOUR,
   METRIC_TYPE_DAY
 } from '../src/model'
-import { config, encodeMongoURI } from '../src/config'
 
 config.mongo = config.get('mongo')
 
@@ -57,7 +56,7 @@ export const nonRootUser = {
 }
 // password is 'password'
 
-export function secureSocketTest(portOrOptions, data, waitForResponse = true) {
+export function secureSocketTest (portOrOptions, data, waitForResponse = true) {
   const options = {}
   if (typeof portOrOptions === 'number') {
     Object.assign(options, {
@@ -72,11 +71,11 @@ export function secureSocketTest(portOrOptions, data, waitForResponse = true) {
   return socketCallInternal(tls.connect, options, data, waitForResponse)
 }
 
-export async function socketTest(portOrOptions, data, waitForResponse = true) {
+export async function socketTest (portOrOptions, data, waitForResponse = true) {
   return socketCallInternal(net.connect, portOrOptions, data, waitForResponse)
 }
 
-async function socketCallInternal(connectFn, portOrOptions, data) {
+async function socketCallInternal (connectFn, portOrOptions, data) {
   if (portOrOptions == null) {
     throw new Error('Please enter in a port number or connection object')
   }
@@ -118,20 +117,20 @@ async function socketCallInternal(connectFn, portOrOptions, data) {
  * @param {Function} pollPredicate Function that will return a boolean or a promise that will resolve as a boolean
  * @param {number} [pollBreak=30] Time to wait between checks
  */
-export async function pollCondition(pollPredicate, pollBreak = 20) {
+export async function pollCondition (pollPredicate, pollBreak = 20) {
   while (!(await pollPredicate())) {
     await wait(pollBreak)
   }
 }
 
-export function setupTestUsers() {
+export function setupTestUsers () {
   return Promise.all([
     new UserModel(rootUser).save(),
     new UserModel(nonRootUser).save()
   ])
 }
 
-export function getAuthDetails() {
+export function getAuthDetails () {
   const authTS = new Date().toISOString()
   const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
   const tokenhash = crypto.createHash('sha512')
@@ -148,13 +147,13 @@ export function getAuthDetails() {
   return auth
 }
 
-export function cleanupTestUsers() {
+export function cleanupTestUsers () {
   return UserModel.deleteMany({
     email: { $in: [rootUser.email, nonRootUser.email] }
   })
 }
 
-export function cleanupAllTestUsers() {
+export function cleanupAllTestUsers () {
   return UserModel.deleteMany({})
 }
 
@@ -165,7 +164,7 @@ export function cleanupAllTestUsers() {
  * @param {any} req
  * @returns {Buffer|string}
  */
-export async function readBody(req) {
+export async function readBody (req) {
   const chunks = []
   const dataFn = (data) => chunks.push(data)
   let endFn
@@ -196,9 +195,9 @@ export async function readBody(req) {
  * @export
  * @param {any} object
  */
-export function lowerCaseMembers(object) {
+export function lowerCaseMembers (object) {
   if (object == null || typeof object !== 'object') {
-    throw new Error(`Please pass in an object`)
+    throw new Error('Please pass in an object')
   }
 
   const keys = Object.keys(object)
@@ -215,7 +214,7 @@ export function lowerCaseMembers(object) {
  * @param {any} value object to clone
  * @returns deep clone of the object
  */
-export function clone(value) {
+export function clone (value) {
   if (value == null || Number.isNaN(value)) {
     return value
   }
@@ -229,12 +228,12 @@ export function clone(value) {
  * @export
  * @return {Promise}
  */
-export async function dropTestDb() {
+export async function dropTestDb () {
   const client = await getMongoClient()
   await client.db().dropDatabase()
 }
 
-export function getMongoClient() {
+export function getMongoClient () {
   const url = config.get('mongo:url')
   return MongoClient.connect(encodeMongoURI(url), { useNewUrlParser: true })
 }
@@ -246,7 +245,7 @@ export function getMongoClient() {
  * @param {any} maybePromise
  * @returns {boolean}
  */
-export function isPromise(maybePromise) {
+export function isPromise (maybePromise) {
   if (maybePromise == null) {
     return false
   }
@@ -265,7 +264,7 @@ export function isPromise(maybePromise) {
  * @param {any} spyFnOrContent function to be called or content
  * @returns {object} spy with .callPromise
  */
-export function createSpyWithResolve(spyFnOrContent) {
+export function createSpyWithResolve (spyFnOrContent) {
   let outerResolve, outerReject
   if (typeof spyFnOrContent !== 'function') {
     spyFnOrContent = () => spyFnOrContent
@@ -302,7 +301,7 @@ export function createSpyWithResolve(spyFnOrContent) {
  * @param {number} [port=constants.STATIC_PORT]
  * @returns {Promise} promise that will resolve to a server
  */
-export async function createStaticServer(
+export async function createStaticServer (
   path = constants.DEFAULT_STATIC_PATH,
   port = constants.STATIC_PORT
 ) {
@@ -323,7 +322,7 @@ export async function createStaticServer(
   return server
 }
 
-export async function createMockHttpsServer(
+export async function createMockHttpsServer (
   respBodyOrFn = constants.DEFAULT_HTTPS_RESP,
   useClientCert = true,
   port = constants.HTTPS_PORT,
@@ -358,7 +357,7 @@ export async function createMockHttpsServer(
   return server
 }
 
-export function createMockServerForPost(
+export function createMockServerForPost (
   successStatusCode,
   errStatusCode,
   bodyToMatch,
@@ -382,7 +381,7 @@ export function createMockServerForPost(
   return mockServer
 }
 
-export async function createMockHttpServer(
+export async function createMockHttpServer (
   respBodyOrFn = constants.DEFAULT_HTTP_RESP,
   port = constants.HTTP_PORT,
   resStatusCode = constants.DEFAULT_STATUS,
@@ -415,7 +414,7 @@ export async function createMockHttpServer(
   return server
 }
 
-export async function createMockHttpMediator(
+export async function createMockHttpMediator (
   respBodyOrFn = constants.MEDIATOR_REPONSE,
   port = constants.MEDIATOR_PORT,
   resStatusCode = constants.DEFAULT_STATUS,
@@ -429,7 +428,7 @@ export async function createMockHttpMediator(
  * you provide a serverCert you must provide the serverKey or null one out and vice
  * versa.
  */
-export async function setupTestKeystore(
+export async function setupTestKeystore (
   serverCert,
   serverKey,
   ca,
@@ -499,14 +498,14 @@ export async function setupTestKeystore(
   }
 }
 
-export async function createMockTCPServer(
+export async function createMockTCPServer (
   onRequest = async (data) => data,
   port = constants.TCP_PORT
 ) {
   const server = await net.createServer()
   server.on('connection', (socket) => {
     socket.on('data', (data) => {
-      async function sendRequest(data) {
+      async function sendRequest (data) {
         const response = await onRequest(data)
         socket.write(response || '')
       }
@@ -524,7 +523,7 @@ export async function createMockTCPServer(
   return server
 }
 
-export async function createMockUdpServer(
+export async function createMockUdpServer (
   onRequest = (data) => {},
   port = constants.UDP_PORT
 ) {
@@ -542,7 +541,7 @@ export async function createMockUdpServer(
   return server
 }
 
-export function createMockTLSServerWithMutualAuth(
+export function createMockTLSServerWithMutualAuth (
   onRequest = async (data) => data,
   port = constants.TLS_PORT,
   useClientCert = true
@@ -578,7 +577,7 @@ export function createMockTLSServerWithMutualAuth(
   })
 }
 
-export async function cleanupTestKeystore(cb = () => {}) {
+export async function cleanupTestKeystore (cb = () => {}) {
   try {
     await KeystoreModel.deleteMany({})
     cb()
@@ -588,17 +587,17 @@ export async function cleanupTestKeystore(cb = () => {}) {
   }
 }
 
-export function wait(time = 100) {
+export function wait (time = 100) {
   return new Promise((resolve) => {
     setTimeout(() => resolve(), time)
   })
 }
 
-export function random(start = 32000, end = start + 100) {
+export function random (start = 32000, end = start + 100) {
   return Math.ceil(Math.random() * end - start) + start
 }
 
-export async function setupMetricsTransactions() {
+export async function setupMetricsTransactions () {
   const metrics = [
     // One month before the others
     {
@@ -869,13 +868,13 @@ export const createGridFSPayload = (payload) => {
     uploadStream.on('error', (err) => {
       return reject(err)
     })
-    .on('finish', async (doc) => {
-      if (!doc) {
-        return reject(new Error('GridFS create failed'))
-      }
+      .on('finish', async (doc) => {
+        if (!doc) {
+          return reject(new Error('GridFS create failed'))
+        }
 
-      resolve(doc._id)
-    })
+        resolve(doc._id)
+      })
     uploadStream.end(payload)
   })
 }
@@ -889,10 +888,10 @@ export const extractGridFSPayload = async (fileId) => {
     downloadStream.on('error', err => {
       return reject(err)
     })
-    .on('data', chunk => body += chunk)
-    .on('end', () => {
-      resolve(body)
-    })
+      .on('data', chunk => body += chunk)
+      .on('end', () => {
+        resolve(body)
+      })
   })
 }
 

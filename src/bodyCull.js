@@ -21,7 +21,7 @@ export function setupAgenda (agenda) {
       done(err)
     }
   })
-  agenda.every(`${config.bodyCull.pollPeriodMins} minutes`, `transaction body culling`)
+  agenda.every(`${config.bodyCull.pollPeriodMins} minutes`, 'transaction body culling')
 }
 
 export async function cullBodies () {
@@ -55,7 +55,7 @@ async function clearTransactions (channel) {
     'routes.orchestrations.response.bodyId': 1
   })
   let removeBodyPromises = []
-  for (let tx of transactionsToCullBody) {
+  for (const tx of transactionsToCullBody) {
     removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(tx))
   }
 
@@ -64,14 +64,14 @@ async function clearTransactions (channel) {
   await channel.save()
   const updateResp = await TransactionModel.updateMany(query, {
     $unset: {
-      "request.bodyId": "",
-      "response.bodyId": "",
-      "orchestrations.$[].request.bodyId": "",
-      "orchestrations.$[].response.bodyId": "",
-      "routes.$[].request.bodyId": "",
-      "routes.$[].response.bodyId": "",
-      "routes.$[].orchestrations.$[].request.bodyId": "",
-      "routes.$[].orchestrations.$[].response.bodyId": ""
+      'request.bodyId': '',
+      'response.bodyId': '',
+      'orchestrations.$[].request.bodyId': '',
+      'orchestrations.$[].response.bodyId': '',
+      'routes.$[].request.bodyId': '',
+      'routes.$[].response.bodyId': '',
+      'routes.$[].orchestrations.$[].request.bodyId': '',
+      'routes.$[].orchestrations.$[].response.bodyId': ''
     }
   })
   if (updateResp.nModified > 0) {

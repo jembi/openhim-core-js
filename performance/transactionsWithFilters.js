@@ -1,6 +1,6 @@
 import http from 'k6/http'
 import { check, group } from 'k6'
-import {getTestAuthHeaders} from './auth.js'
+import { getTestAuthHeaders } from './auth.js'
 
 const BASE_URL = __ENV.BASE_URL || 'https://127.0.0.1:8080'
 const status = 'Failed'
@@ -135,15 +135,15 @@ function makeGetRequestWithAllFilters () {
   const query = encodeURIComponent(`{"channelID":"${channelID}","request.timestamp":"{\\"$gte\\":${startDate},\\"$lte\\":${endDate}}", "status":"${status}"}`)
   const response = http.get(
   `${BASE_URL}/transactions?filterLimit=100&filters=${query}`,
-    {
-      headers: Object.assign(getTestAuthHeaders(), {
-        Accept: 'application/json',
-        'Content-Type': 'apllication/json'
-      }),
-      tags: {
-        name: 'Transactions with Status, Channel and Date Range Filters'
-      }
+  {
+    headers: Object.assign(getTestAuthHeaders(), {
+      Accept: 'application/json',
+      'Content-Type': 'apllication/json'
+    }),
+    tags: {
+      name: 'Transactions with Status, Channel and Date Range Filters'
     }
+  }
   )
   check(response, {
     'status code is 200': r => r.status === 200

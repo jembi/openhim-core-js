@@ -1,6 +1,6 @@
 import http from 'k6/http'
 import { check } from 'k6'
-import {getTestAuthHeaders} from './auth.js'
+import { getTestAuthHeaders } from './auth.js'
 
 const BASE_URL = __ENV.BASE_URL || 'https://127.0.0.1:8080'
 

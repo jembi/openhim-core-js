@@ -501,11 +501,11 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const updatedTrans = await TransactionModel.findOne({_id: transactionId});
+        const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true();
         // The bodyIds should be change after updating the bodies
         (updatedTrans.routes[1].orchestrations[0].request.bodyId !== requestBodyId).should.be.true();
-        (updatedTrans.routes[1].orchestrations[0].response.bodyId !== responseBodyId).should.be.true();
+        (updatedTrans.routes[1].orchestrations[0].response.bodyId !== responseBodyId).should.be.true()
         updatedTrans.canRerun.should.be.true()
       })
 
@@ -707,7 +707,7 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const updatedTrans = await TransactionModel.findOne({_id: transactionId});
+        const updatedTrans = await TransactionModel.findOne({ _id: transactionId });
         (updatedTrans !== null).should.be.true()
 
         updatedTrans.request.bodyId.should.deepEqual(requestBodyId)
@@ -905,7 +905,7 @@ describe('API Integration Tests', () => {
         })).save()
 
         const res = await request(constants.BASE_URL)
-          .get(`/transactions?filterRepresentation=full`)
+          .get('/transactions?filterRepresentation=full')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -914,12 +914,12 @@ describe('API Integration Tests', () => {
 
         res.body.should.have.length(2)
         res.body[0]._id.should.be.equal('111111111111111111111111')
-        res.body[0].request.body.should.equal(`<HTTP body request>`)
-        res.body[0].response.body.should.equal(`<HTTP body response>`)
+        res.body[0].request.body.should.equal('<HTTP body request>')
+        res.body[0].response.body.should.equal('<HTTP body response>')
 
         res.body[1]._id.should.be.equal('111111111111111111111113')
-        res.body[1].request.body.should.equal(`<HTTP body request>`)
-        res.body[1].response.body.should.equal(`<HTTP body response>`)
+        res.body[1].request.body.should.equal('<HTTP body request>')
+        res.body[1].response.body.should.equal('<HTTP body response>')
       })
 
       it('should return 403 for a channel that a user does NOT have permission to view', async () => {

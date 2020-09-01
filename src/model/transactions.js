@@ -98,9 +98,9 @@ const TransactionSchema = new Schema({
 })
 
 TransactionSchema.index('request.timestamp')
-TransactionSchema.index({channelID: 1, 'request.timestamp': -1})
-TransactionSchema.index({status: 1, 'request.timestamp': -1})
-TransactionSchema.index({childIDs: 1, 'request.timestamp': -1})
+TransactionSchema.index({ channelID: 1, 'request.timestamp': -1 })
+TransactionSchema.index({ status: 1, 'request.timestamp': -1 })
+TransactionSchema.index({ childIDs: 1, 'request.timestamp': -1 })
 
 // Compile schema into Model
 export const TransactionModelAPI = connectionAPI.model('Transaction', TransactionSchema)

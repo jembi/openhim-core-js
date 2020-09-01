@@ -30,9 +30,9 @@ import { config } from './config'
 export function setupApp (done) {
   // Create an instance of the koa-server and add a body-parser
   const app = new Koa()
-  app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE'}))
+  app.use(cors({ allowMethods: 'GET,HEAD,PUT,POST,DELETE' }))
   const limitMB = config.api.maxPayloadSizeMB || 16
-  app.use(bodyParser({jsonLimit: limitMB * 1024 * 1024}))
+  app.use(bodyParser({ jsonLimit: limitMB * 1024 * 1024 }))
 
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))

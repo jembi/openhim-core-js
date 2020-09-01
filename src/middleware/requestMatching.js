@@ -45,8 +45,8 @@ export function matchJsonPath (jsonPath, val, json) {
 // taken from http://stackoverflow.com/a/6491621/588776
 // readbility improved from the stackoverflow answer
 function getJSONValByString (jsonObj, jsonPath) {
-  jsonPath = jsonPath.replace(/\[(\w+)\]/g, '.$1')  // convert indexes to properties
-  jsonPath = jsonPath.replace(/^\./, '')            // strip a leading dot
+  jsonPath = jsonPath.replace(/\[(\w+)\]/g, '.$1') // convert indexes to properties
+  jsonPath = jsonPath.replace(/^\./, '') // strip a leading dot
   const parts = jsonPath.split('.')
   while (parts.length) {
     const part = parts.shift()
@@ -95,7 +95,7 @@ function matchContentTypes (channel, ctx) {
 // Needs to be mutable for testing
 // eslint-disable-next-line
 // TODO: OHM-695 uncomment line below when working on ticket
-let matchFunctions = [
+const matchFunctions = [
   matchUrlPattern,
   matchContentTypes
 ]

@@ -17,16 +17,16 @@ export const connectionDefault = mongoose.createConnection(encodeMongoURI(config
 
 function encodeMongoURI (urlString) {
   if (urlString) {
-    let parsed = uriFormat.parse(urlString)
-    urlString = uriFormat.format(parsed);
+    const parsed = uriFormat.parse(urlString)
+    urlString = uriFormat.format(parsed)
   }
-  return urlString;
+  return urlString
 }
 
 function getMongoOptions () {
   return {
     readPreference: config.mongo.openHIMApiReadPreference,
-    readConcern: {level: config.mongo.openHIMApiReadConcern},
+    readConcern: { level: config.mongo.openHIMApiReadConcern },
     w: config.mongo.openHIMApiWriteConcern
   }
 }
