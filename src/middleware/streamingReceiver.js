@@ -36,9 +36,9 @@ function streamingReceiver (ctx, statusEvents) {
   */
   const bodyId = ctx.request.headers['x-body-id']
 
-  const storeRequestBody = (['POST', 'PUT', 'PATCH'].includes(ctx.req.method)) && ctx.authorisedChannel.requestBody
+  const hasRequestBody = (['POST', 'PUT', 'PATCH'].includes(ctx.req.method))
 
-  if (storeRequestBody) {
+  if (hasRequestBody) {
     if (!bodyId) {
       /*
       *   Request has a body, so stream it into GridFs
@@ -62,8 +62,8 @@ function streamingReceiver (ctx, statusEvents) {
         })
     } else {
       /*
-      *   Request is a rerun, therefore has a bodyId, but no body.
-      *      So, stream the body from GridFs and send it downstream
+      *   Request is a rerun, therefore has a bodyId, but no body on the request.
+      *   So, stream the body from GridFs and send it downstream
       */
       const fileId = new Types.ObjectId(bodyId)
       gridFsStream = bucket.openDownloadStream(fileId)
@@ -99,14 +99,14 @@ function streamingReceiver (ctx, statusEvents) {
       logger.info(`Read request CHUNK # ${counter} [ Total size ${size}]`)
 
       // Write chunk to GridFS & downstream
-      if (storeRequestBody && !bodyId) {
+      if (hasRequestBody && !bodyId) {
         gridFsStream.write(chunk)
       }
 
       ctx.state.downstream.push(chunk)
     })
     .on('end', () => {
-      if (storeRequestBody && !bodyId) {
+      if (hasRequestBody && !bodyId) {
         // Close streams to gridFS and downstream
         gridFsStream.end()
         if (statusEvents && statusEvents.finishGridFs) {
@@ -144,7 +144,7 @@ function streamingReceiver (ctx, statusEvents) {
     ctx.state.downstream.push(null)
 
     // Write chunk to GridFS & downstream
-    if (storeRequestBody && !bodyId) {
+    if (hasRequestBody && !bodyId) {
       gridFsStream.end(ctx.body)
     }
 
