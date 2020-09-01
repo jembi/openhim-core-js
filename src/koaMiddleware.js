@@ -22,7 +22,6 @@ import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisa
 import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
 import * as streamingReceiver from './middleware/streamingReceiver'
 
-import * as rewrite from './middleware/rewriteUrls'
 import * as router from './middleware/router'
 import * as tcpBypassAuthentication from './middleware/tcpBypassAuthentication'
 import * as tlsAuthentication from './middleware/tlsAuthentication'

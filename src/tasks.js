@@ -1,7 +1,6 @@
 'use strict'
 
 import logger from 'winston'
-import http from 'http'
 import net from 'net'
 
 import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
@@ -10,12 +9,7 @@ import { TaskModel } from './model/tasks'
 import { TransactionModel } from './model/transactions'
 import { config } from './config'
 
-import { addBodiesToTransactions } from './contentChunk'
-import { JsonPatchError } from 'fast-json-patch'
-
-import { Readable } from 'stream'
 import { makeStreamingRequest } from './middleware/streamingRouter'
-import * as messageStore from './middleware/messageStore'
 
 config.rerun = config.get('rerun')
 
@@ -280,11 +274,11 @@ async function rerunHttpRequestSend (options, transaction, callback) {
     finishGridFs: function () {
       logger.info('Finished rerun storing response body in GridFS')
     },
-    gridFsError: function (err) {},
+    gridFsError: function () {},
     startRequest: function () {},
     requestProgress: function () {},
     finishRequest: function () {},
-    startResponse: function (res) {},
+    startResponse: function () {},
     responseProgress: function (chunk, counter, size) {
       logger.info(`Write rerun response CHUNK # ${counter} [ Total size ${size}]`)
     },
@@ -301,12 +295,12 @@ async function rerunHttpRequestSend (options, transaction, callback) {
 
       logger.info(`Rerun Transaction #${transaction._id} - HTTP Response has been captured`)
     },
-    finishResponseAsString: function (body) {},
+    finishResponseAsString: function () {},
     requestError: function () {},
-    responseError: function (err) {
+    responseError: function () {
       response.transaction.status = 'Failed'
     },
-    clientError: function (err) {},
+    clientError: function () {},
     timeoutError: function (timeout) {
       logger.error(`Transaction timeout after ${timeout}ms`)
     }
@@ -329,72 +323,6 @@ async function rerunHttpRequestSend (options, transaction, callback) {
   }
 }
 
-/**
- * Function for sending HTTP Request #
- */
-
-function rerunHttpRequestSend_OLD (options, transaction, callback) {
-  let err
-  if (options == null) {
-    err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
-    return callback(err, null)
-  }
-
-  if (transaction == null) {
-    err = new Error('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
-    return callback(err, null)
-  }
-
-  const response = {
-    body: '',
-    transaction: {}
-  }
-
-  logger.info(`Rerun Transaction #${transaction._id} - HTTP Request is being sent...`)
-  const req = http.request(options, (res) => {
-    res.on('data', chunk => {
-      /*
-       *  Don't need the response body at this point, because it's already been captured
-       *  in GridFS (from router.js).
-       *  Still need to have 'data' listener defined, or it changes program behaviour
-       */
-    })
-
-    return res.on('end', (err) => {
-      if (err) {
-        response.transaction.status = 'Failed'
-      } else {
-        response.transaction.status = 'Completed'
-      }
-
-      response.status = res.statusCode
-      response.message = res.statusMessage
-      response.headers = res.headers
-      response.timestamp = new Date()
-
-      logger.info(`Rerun Transaction #${transaction._id} - HTTP Response has been captured`)
-      return callback(null, response)
-    })
-  })
-
-  req.on('error', (err) => {
-    // update the status of the transaction that was processed to indicate it failed to process
-    if (err) { response.transaction.status = 'Failed' }
-
-    response.status = 500
-    response.message = 'Internal Server Error'
-    response.timestamp = new Date()
-
-    return callback(null, response)
-  })
-
-  /*
-   *  Rerun transaction request bodies are empty. A bodyId is passed in the headers and
-   *     the request body is streamed in from GridFs.
-   */
-  return req.end()
-}
-
 function rerunTcpRequestSend (channel, transaction, callback) {
   const response = {
     body: '',
@@ -410,7 +338,7 @@ function rerunTcpRequestSend (channel, transaction, callback) {
 
   client.on('data', data => { response.body += data })
 
-  client.on('end', (data) => {
+  client.on('end', () => {
     response.status = 200
     response.transaction.status = 'Completed'
     response.message = ''

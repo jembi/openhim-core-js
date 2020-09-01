@@ -11,9 +11,7 @@ import * as constants from '../constants'
 import * as router from '../../src/middleware/router'
 import * as testUtils from '../utils'
 import { KeystoreModel, CertificateModel } from '../../src/model'
-import should from 'should'
 import { Readable } from 'stream'
-import { getResponseBodyFromStream, awaitGridfsBodyStreaming } from '../utils'
 
 const DEFAULT_CHANNEL = Object.freeze({
   name: 'Mock endpoint',
@@ -25,8 +23,7 @@ const DEFAULT_CHANNEL = Object.freeze({
     host: 'localhost',
     port: constants.HTTP_PORT,
     primary: true
-  }
-  ]
+  }]
 })
 
 describe('HTTP Router', () => {
@@ -53,7 +50,7 @@ describe('HTTP Router', () => {
       body,
       state: {
         downstream: downstream,
-        requestPromise: new Promise((resolve, reject) => resolve)
+        requestPromise: new Promise((resolve) => resolve)
       }
     }
   }
@@ -81,7 +78,7 @@ describe('HTTP Router', () => {
         ctx.response.header.should.be.ok
 
         // Ctx response body is a readable stream.
-        const responseBody = await getResponseBodyFromStream(ctx)
+        const responseBody = await testUtils.getResponseBodyFromStream(ctx)
         responseBody.should.be.equal(respBody)
       })
 
@@ -98,7 +95,7 @@ describe('HTTP Router', () => {
         bodyId.should.be.equal(true)
 
         // Wait for the gridfs streaming of the response to finish
-        await awaitGridfsBodyStreaming()
+        await testUtils.awaitGridfsBodyStreaming()
 
         const gridfsBody = await testUtils.extractGridFSPayload(ctx.response.bodyId)
         gridfsBody.should.be.eql(respBody)
@@ -124,7 +121,7 @@ describe('HTTP Router', () => {
 
         ctx.response.type.should.equal('image/png')
 
-        const responseBody = await getResponseBodyFromStream(ctx)
+        const responseBody = await testUtils.getResponseBodyFromStream(ctx)
 
         responseBody.should.be.equal((fs.readFileSync('test/resources/openhim-logo-green.png')).toString())
       })
@@ -158,7 +155,7 @@ describe('HTTP Router', () => {
         ctx.response.status.should.be.exactly(201)
         ctx.response.header.should.be.ok
 
-        const responseBody = await getResponseBodyFromStream(ctx)
+        const responseBody = await testUtils.getResponseBodyFromStream(ctx)
         responseBody.should.be.equal(constants.DEFAULT_HTTPS_RESP)
       })
 
@@ -194,7 +191,7 @@ describe('HTTP Router', () => {
         bodyId.should.be.true()
 
         // Wait for body to be streamed into gridfs
-        await awaitGridfsBodyStreaming()
+        await testUtils.awaitGridfsBodyStreaming()
 
         const gridfsBody = await testUtils.extractGridFSPayload(ctx.response.bodyId)
         gridfsBody.should.be.eql(constants.DEFAULT_HTTPS_RESP)
@@ -231,7 +228,7 @@ describe('HTTP Router', () => {
 
       it('should forward PUT and POST requests correctly', async () => {
         const response = 'Hello Post'
-        const postSpy = sinon.spy(req => response)
+        const postSpy = sinon.spy(() => response)
         server = await testUtils.createMockHttpServer(postSpy, constants.HTTP_PORT, 200)
         const channel = {
           name: 'POST channel',
@@ -249,7 +246,7 @@ describe('HTTP Router', () => {
 
         await promisify(router.route)(ctx)
 
-        const responseBody = await getResponseBodyFromStream(ctx)
+        const responseBody = await testUtils.getResponseBodyFromStream(ctx)
         responseBody.should.be.equal(response)
 
         postSpy.callCount.should.be.eql(1)
@@ -260,7 +257,7 @@ describe('HTTP Router', () => {
 
       it('should handle empty put and post requests correctly', async () => {
         const response = 'Hello Empty Post'
-        const postSpy = sinon.spy(req => response)
+        const postSpy = sinon.spy(() => response)
         server = await testUtils.createMockHttpServer(postSpy, constants.HTTP_PORT, 200)
         const channel = {
           name: 'POST channel',
@@ -278,7 +275,7 @@ describe('HTTP Router', () => {
 
         await promisify(router.route)(ctx)
 
-        const responseBody = await getResponseBodyFromStream(ctx)
+        const responseBody = await testUtils.getResponseBodyFromStream(ctx)
         responseBody.should.be.equal(response)
 
         postSpy.callCount.should.be.eql(1)
@@ -288,7 +285,7 @@ describe('HTTP Router', () => {
       })
 
       it('should send request params if these where received from the incoming request', async () => {
-        const requestSpy = sinon.spy((req) => { })
+        const requestSpy = sinon.spy(() => { })
         server = await testUtils.createMockHttpServer(requestSpy, constants.HTTP_PORT, 200)
         const ctx = createContext(DEFAULT_CHANNEL)
         ctx.request.querystring = 'parma1=val1&parma2=val2'
@@ -444,7 +441,7 @@ describe('HTTP Router', () => {
         const bodyId = !!ctx.routes[0].response.bodyId
         bodyId.should.be.true()
 
-        await awaitGridfsBodyStreaming()
+        await testUtils.awaitGridfsBodyStreaming()
 
         const gridfsBody = await testUtils.extractGridFSPayload(ctx.routes[0].response.bodyId)
         gridfsBody.should.be.eql('Non Primary 1')
@@ -469,7 +466,7 @@ describe('HTTP Router', () => {
         const primaryBodyId = !!ctx.routes[0].response.bodyId
         primaryBodyId.should.be.true()
 
-        await awaitGridfsBodyStreaming()
+        await testUtils.awaitGridfsBodyStreaming()
 
         const gridfsBodyPrimary = await testUtils.extractGridFSPayload(ctx.routes[0].response.bodyId)
         gridfsBodyPrimary.should.be.eql('Non Primary 1')
@@ -545,7 +542,7 @@ describe('HTTP Router', () => {
         const bodyId = !!ctx.routes[0].response.bodyId
         bodyId.should.be.true()
 
-        await awaitGridfsBodyStreaming()
+        await testUtils.awaitGridfsBodyStreaming()
 
         const gridfsBodyPrimary = await testUtils.extractGridFSPayload(ctx.routes[0].response.bodyId)
         JSON.parse(gridfsBodyPrimary).should.be.deepEqual(mediatorResponse)
@@ -616,7 +613,7 @@ describe('HTTP Router', () => {
     })
 
     it('should have valid authorization header if username and password is set in options', async () => {
-      const requestSpy = sinon.spy((req) => { })
+      const requestSpy = sinon.spy(() => { })
       server = await testUtils.createMockHttpServer(requestSpy)
       const channel = {
         name: 'Mock endpoint',
@@ -643,7 +640,7 @@ describe('HTTP Router', () => {
     })
 
     it('should not have authorization header if username and password is absent from options', async () => {
-      const requestSpy = sinon.spy((req) => { })
+      const requestSpy = sinon.spy(() => { })
       server = await testUtils.createMockHttpServer(requestSpy)
 
       const ctx = createContext(DEFAULT_CHANNEL)
@@ -657,7 +654,7 @@ describe('HTTP Router', () => {
     })
 
     it('should not propagate the authorization header present in the request headers', async () => {
-      const requestSpy = sinon.spy((req) => { })
+      const requestSpy = sinon.spy(() => { })
       server = await testUtils.createMockHttpServer(requestSpy)
 
       const ctx = createContext(DEFAULT_CHANNEL)
@@ -672,7 +669,7 @@ describe('HTTP Router', () => {
     })
 
     it('should propagate the authorization header present in the request headers if forwardAuthHeader is set to true', async () => {
-      const requestSpy = sinon.spy((req) => { })
+      const requestSpy = sinon.spy(() => { })
       server = await testUtils.createMockHttpServer(requestSpy)
 
       const channel = testUtils.clone(DEFAULT_CHANNEL)
@@ -691,7 +688,7 @@ describe('HTTP Router', () => {
     })
 
     it('should have valid authorization header if username and password is set in options', async () => {
-      const requestSpy = sinon.spy((req) => { })
+      const requestSpy = sinon.spy(() => { })
       server = await testUtils.createMockHttpServer(requestSpy)
       const channel = {
         name: 'Mock endpoint',

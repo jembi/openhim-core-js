@@ -17,7 +17,7 @@ export const getGridFSBucket = () => {
 }
 
 export const getFileDetails = async (fileId) => {
-  return await connectionDefault.client.db().collection('fs.files').findOne(fileId)
+  return connectionDefault.client.db().collection('fs.files').findOne(fileId)
 }
 
 const isValidGridFsPayload = (payload) => {
@@ -79,58 +79,41 @@ export const extractStringPayloadIntoChunks = (payload) => {
   })
 }
 
-export const removeBodyById = (id) => {
-  return new Promise(async (resolve, reject) => {
-    if (!id) {
-      return reject(new Error('No ID supplied when trying to remove chunked body'))
-    }
+export const removeBodyById = async (id) => {
+  if (!id) {
+    throw new Error('No ID supplied when trying to remove chunked body')
+  }
 
-    try {
-      const bucket = getGridFSBucket()
-      const result = await bucket.delete(id)
-      resolve(result)
-    } catch (err) {
-      reject(err)
-    }
-  })
+  const bucket = getGridFSBucket()
+  return bucket.delete(id)
 }
 
-export const promisesToRemoveAllTransactionBodies = (tx) => {
-  return new Promise(async (resolve, reject) => {
-    let removeBodyPromises = []
-    if (tx.request && tx.request.bodyId) {
-      removeBodyPromises.push(() => removeBodyById(tx.request.bodyId))
-    }
-    if (tx.response && tx.response.bodyId) {
-      removeBodyPromises.push(() => removeBodyById(tx.response.bodyId))
-    }
+export const promisesToRemoveAllTransactionBodies = async (tx) => {
+  let removeBodyPromises = []
+  if (tx.request && tx.request.bodyId) {
+    removeBodyPromises.push(() => removeBodyById(tx.request.bodyId))
+  }
+  if (tx.response && tx.response.bodyId) {
+    removeBodyPromises.push(() => removeBodyById(tx.response.bodyId))
+  }
 
-    if (tx.orchestrations) {
-      if (Array.isArray(tx.orchestrations) && tx.orchestrations.length > 0) {
-        for (const orch of tx.orchestrations) {
-          try {
-            removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(orch))
-          } catch (err) {
-            return reject(err)
-          }
-        }
+  if (tx.orchestrations) {
+    if (Array.isArray(tx.orchestrations) && tx.orchestrations.length > 0) {
+      for (const orch of tx.orchestrations) {
+        removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(orch))
       }
     }
+  }
 
-    if (tx.routes) {
-      if (Array.isArray(tx.routes) && tx.routes.length > 0) {
-        for (const route of tx.routes) {
-          try {
-            removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(route))
-          } catch (err) {
-            return reject(err)
-          }
-        }
+  if (tx.routes) {
+    if (Array.isArray(tx.routes) && tx.routes.length > 0) {
+      for (const route of tx.routes) {
+        removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(route))
       }
     }
+  }
 
-    resolve(removeBodyPromises)
-  })
+  return removeBodyPromises
 }
 
 const getDecompressionStreamByContentEncoding = (contentEncoding) => {
@@ -145,44 +128,39 @@ const getDecompressionStreamByContentEncoding = (contentEncoding) => {
   }
 }
 
-export const retrievePayload = fileId => {
-  return new Promise(async (resolve, reject) => {
-    if (!fileId) {
-      return reject(new Error('Payload id not supplied'))
+export const retrievePayload = async fileId => {
+  if (!fileId) {
+    throw new Error('Payload id not supplied')
+  }
+
+  let payloadSize = 0
+  // Perhaps the truncateSize should be represented in actual size, and not string length
+  const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
+
+  const fileDetails = await getFileDetails(fileId)
+
+  const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
+  const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
+
+  const bucket = getGridFSBucket()
+  const downloadStream = bucket.openDownloadStream(fileId)
+  downloadStream.on('error', err => { throw err })
+
+  const charset = fileDetails ? (fileDetails.metadata ? obtainCharset(fileDetails.metadata) : 'utf8') : 'utf8'
+  const uncompressedBodyBufs = []
+
+  // apply the decompression transformation and start listening for the output chunks
+  downloadStream.pipe(decompressionStream)
+  decompressionStream.on('data', (chunk) => {
+    payloadSize += chunk.length
+    if (payloadSize >= truncateSize) {
+      decompressionStream.destroy()
+      downloadStream.destroy()
     }
+    uncompressedBodyBufs.push(chunk)
+  })
 
-    let payloadSize = 0
-    // Perhaps the truncateSize should be represented in actual size, and not string length
-    const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
-
-    let fileDetails
-    try {
-      fileDetails = await getFileDetails(fileId)
-    } catch (err) {
-      return reject(err)
-    }
-
-    const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
-    const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
-
-    const bucket = getGridFSBucket()
-    const downloadStream = bucket.openDownloadStream(fileId)
-    downloadStream.on('error', err => reject(err))
-
-    const charset = fileDetails ? (fileDetails.metadata ? obtainCharset(fileDetails.metadata) : 'utf8') : 'utf8'
-    const uncompressedBodyBufs = []
-
-    // apply the decompression transformation and start listening for the output chunks
-    downloadStream.pipe(decompressionStream)
-    decompressionStream.on('data', (chunk) => {
-      payloadSize += chunk.length
-      if (payloadSize >= truncateSize) {
-        decompressionStream.destroy()
-        downloadStream.destroy()
-      }
-      uncompressedBodyBufs.push(chunk)
-    })
-
+  return new Promise((resolve) => {
     decompressionStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
     decompressionStream.on('close', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
     downloadStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
@@ -225,28 +203,22 @@ export const addBodiesToTransactions = async (transactions) => {
   }))
 }
 
-const filterPayloadType = (transaction) => {
-  return new Promise(async (resolve, reject) => {
-    if (!transaction) {
-      return resolve(transaction)
-    }
+const filterPayloadType = async (transaction) => {
+  if (!transaction) {
+    return transaction
+  }
 
-    try {
-      if (transaction.request && transaction.request.bodyId) {
-        transaction.request.body = await retrievePayload(transaction.request.bodyId)
-        delete transaction.request.bodyId
-      }
+  if (transaction.request && transaction.request.bodyId) {
+    transaction.request.body = await retrievePayload(transaction.request.bodyId)
+    delete transaction.request.bodyId
+  }
 
-      if (transaction.response && transaction.response.bodyId) {
-        transaction.response.body = await retrievePayload(transaction.response.bodyId)
-        delete transaction.response.bodyId
-      }
-    } catch (err) {
-      return reject(err)
-    }
+  if (transaction.response && transaction.response.bodyId) {
+    transaction.response.body = await retrievePayload(transaction.response.bodyId)
+    delete transaction.response.bodyId
+  }
 
-    resolve(transaction)
-  })
+  return transaction
 }
 
 export const extractTransactionPayloadIntoChunks = async (transaction) => {
@@ -275,7 +247,7 @@ export const extractTransactionPayloadIntoChunks = async (transaction) => {
 
     if (Array.isArray(transaction.orchestrations) && transaction.orchestrations.length > 0) {
       await Promise.all(transaction.orchestrations.map(async (orch) => {
-        return await extractTransactionPayloadIntoChunks(orch)
+        return extractTransactionPayloadIntoChunks(orch)
       }))
     }
   }
@@ -290,7 +262,7 @@ export const extractTransactionPayloadIntoChunks = async (transaction) => {
         if (!route) {
           return
         }
-        return await extractTransactionPayloadIntoChunks(route)
+        return extractTransactionPayloadIntoChunks(route)
       }))
     }
   }

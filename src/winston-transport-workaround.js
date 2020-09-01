@@ -28,9 +28,6 @@ Transport.prototype.normalizeQuery = function (options) {
   // 'asc' or 'desc'
   options.order = options.order || 'desc'
 
-  // which fields to select
-  options.fields = options.fields
-
   return options
 }
 

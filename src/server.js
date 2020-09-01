@@ -818,37 +818,37 @@ if (cluster.isMaster && !module.parent) {
     // close active connection so that servers can stop
     for (const key in activeHttpConnections) {
       socket = activeHttpConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activeHttpsConnections) {
       socket = activeHttpsConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activeApiConnections) {
       socket = activeApiConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activeRerunConnections) {
       socket = activeRerunConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activeTcpConnections) {
       socket = activeTcpConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activePollingConnections) {
       socket = activePollingConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }

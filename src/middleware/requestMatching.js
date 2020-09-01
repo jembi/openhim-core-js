@@ -8,13 +8,14 @@ import { promisify } from 'util'
 import * as Channels from '../model/channels'
 import * as utils from '../utils'
 
+// TODO matching needs to be fixed, body is not defined
 function matchContent (channel, ctx) {
   if (channel.matchContentRegex) {
-    return matchRegex(channel.matchContentRegex, body)
+    return matchRegex(channel.matchContentRegex, body) // eslint-disable-line no-undef
   } else if (channel.matchContentXpath && channel.matchContentValue) {
-    return matchXpath(channel.matchContentXpath, channel.matchContentValue, body)
+    return matchXpath(channel.matchContentXpath, channel.matchContentValue, body) // eslint-disable-line no-undef
   } else if (channel.matchContentJson && channel.matchContentValue) {
-    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, body)
+    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, body) // eslint-disable-line no-undef
   } else if (channel.matchContentXpath || channel.matchContentJson) {
     // if only the match expression is given, deny access
     // this is an invalid channel

@@ -65,7 +65,7 @@ function respondAsMediator (req, res, delay) {
 }
 
 function handleRequest (req, res) {
-  const parsed = url.parse(req.url)
+  const parsed = url.parse(req.url) // eslint-disable-line node/no-deprecated-api
   if (parsed.pathname === '/immediate') {
     return respondImmediately(req, res)
   }

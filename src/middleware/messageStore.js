@@ -4,9 +4,8 @@ import logger from 'winston'
 import { promisify } from 'util'
 
 import * as autoRetryUtils from '../autoRetry'
-import * as utils from '../utils'
 import * as metrics from '../metrics'
-import { extractStringPayloadIntoChunks, extractTransactionPayloadIntoChunks } from '../contentChunk'
+import { extractTransactionPayloadIntoChunks } from '../contentChunk'
 import * as transactions from '../model/transactions'
 
 export const transactionStatus = {
@@ -204,7 +203,7 @@ export function initiateResponse (ctx, done) {
  *  Find and update an existing transaction once a Response has completed streaming
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
-export function completeResponse (ctx, done) {
+export function completeResponse (ctx) {
   return new Promise((resolve, reject) => {
     ctx.responseTimestampEnd = new Date()
 
@@ -346,7 +345,7 @@ export function setFinalStatus (ctx, callback) {
     let result
     const routesStatus = getRoutesStatus(ctx.routes)
 
-    if ((ctx.response == undefined) || (ctx.response == null)) {
+    if (ctx.response) {
       return transactionStatus.FAILED
     }
 
@@ -360,35 +359,6 @@ export function setFinalStatus (ctx, callback) {
         result = transactionStatus.SUCCESSFUL
       }
       if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routesStatus.routeSuccess) {
-        result = transactionStatus.COMPLETED
-      }
-    }
-
-    // In all other cases mark as completed
-    if (!result) {
-      result = transactionStatus.COMPLETED
-    }
-
-    return result
-  }
-
-  function getTransactionResult (tx) {
-    let result
-    const routesStatus = getRoutesStatus(tx.routes)
-    if ((tx.response == undefined) || (tx.response == null)) {
-      return transactionStatus.FAILED
-    }
-
-    if (tx.response.status >= 500 && tx.response.status <= 599) {
-      result = transactionStatus.FAILED
-    } else {
-      if (routesStatus.routeFailures) {
-        result = transactionStatus.COMPLETED_W_ERR
-      }
-      if ((tx.response.status >= 200 && tx.response.status <= 299) && routesStatus.routeSuccess) {
-        result = transactionStatus.SUCCESSFUL
-      }
-      if ((tx.response.status >= 400 && tx.response.status <= 499) && routesStatus.routeSuccess) {
         result = transactionStatus.COMPLETED
       }
     }

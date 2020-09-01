@@ -2,7 +2,6 @@
 
 /* eslint-env mocha */
 
-import request from 'supertest'
 import sinon from 'sinon'
 import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
@@ -19,7 +18,6 @@ config.authentication = config.get('authentication')
 config.tlsClientLookup = config.get('tlsClientLookup')
 
 const { SERVER_PORTS } = constants
-const { HTTP_BASE_URL: baseUrl } = constants
 
 describe('Events API Integration Tests', () => {
   let mockServer = null
@@ -28,7 +26,6 @@ describe('Events API Integration Tests', () => {
   const mediatorPortPlus40 = constants.PORT_START + 40
   const mediatorPortPlus41 = constants.PORT_START + 41
   const mediatorPortPlus42 = constants.PORT_START + 42
-  let authDetails = {}
   let slowSpy
   let sandbox
 
@@ -142,7 +139,6 @@ describe('Events API Integration Tests', () => {
       httpPort: SERVER_PORTS.httpPort,
       apiPort: SERVER_PORTS.apiPort
     })
-    authDetails = await testUtils.getAuthDetails()
     await EventModel.deleteMany({})
   })
 

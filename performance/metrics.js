@@ -2,7 +2,7 @@ import http from 'k6/http'
 import { check, group } from 'k6'
 import { getTestAuthHeaders } from './auth.js'
 
-const BASE_URL = __ENV.BASE_URL || 'https://localhost:8080'
+const BASE_URL = __ENV.BASE_URL || 'https://localhost:8080' // eslint-disable-line no-undef
 
 export const options = {
   vus: 1,

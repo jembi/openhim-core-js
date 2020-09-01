@@ -259,6 +259,8 @@ export async function heartbeat (ctx, urn) {
   }
 }
 
+let templateFields
+
 function validateConfigField (param, def, field) {
   switch (def.type) {
     case 'string':
@@ -307,7 +309,7 @@ function validateConfigField (param, def, field) {
       if (typeof field !== 'object') {
         throw constructError(`Expected config param ${param} to be an object.`, 'ValidationError')
       }
-      const templateFields = (def.template.map(tp => tp.param))
+      templateFields = (def.template.map(tp => tp.param))
 
       for (const paramField in field) {
         if (!Array.from(templateFields).includes(paramField)) {

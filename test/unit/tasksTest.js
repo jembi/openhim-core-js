@@ -11,7 +11,6 @@ import * as tasks from '../../src/tasks'
 import * as testUtils from '../utils'
 import { ChannelModel, TaskModel, TransactionModel } from '../../src/model'
 import { config } from '../../src/config'
-import should from 'should'
 
 if (config.rerun == null) {
   config.rerun = config.get('rerun')
@@ -150,7 +149,7 @@ describe('Rerun Task Tests', () => {
     it('will rerun a transaction', async () => {
       const options = Object.assign({}, DEFAULT_HTTP_OPTIONS)
       const responsestr = 'Response string'
-      const spy = sinon.spy(req => responsestr)
+      const spy = sinon.spy(() => responsestr)
       const transaction = { request: {} }
       server = await testUtils.createMockHttpServer(spy, undefined, 200)
 

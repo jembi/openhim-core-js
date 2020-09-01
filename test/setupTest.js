@@ -1,8 +1,8 @@
+'use strict'
+
 import nconf from 'nconf'
 
 import { SERVER_PORTS } from './constants'
-
-'use strict'
 
 /* eslint-env mocha */
 

@@ -26,8 +26,8 @@
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "prepare": "npm run build",
     "migrate:metrics": "node lib/migrateMetrics.js",
-    "lint": "standard",
-    "lint:fix": "standard --fix",
+    "lint": "standard --verbose | snazzy",
+    "lint:fix": "standard --verbose --fix | snazzy",
     "test": "export $(cat .env.test | xargs) && cross-env nyc mocha --timeout 30000 --exit --require @babel/register test/setupTest.js test/**/*.js && npm run lint",
     "test:unit": "cross-env NODE_ENV=test mocha --require @babel/register test/setupTest.js test/unit/**/*.js --watch",
     "test:int": "export $(cat .env.test | xargs) && cross-env mocha --timeout 30000 --require @babel/register test/setupTest.js test/integration/**/*.js --watch",
@@ -95,6 +95,7 @@
     "serve-static": "^1.14.1",
     "should": "13.2.3",
     "sinon": "^9.0.3",
+    "snazzy": "^8.0.0",
     "speculate": "2.1.1",
     "standard": "14.3.4",
     "supertest": "4.0.2"

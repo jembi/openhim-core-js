@@ -237,31 +237,27 @@ function sendRequestToRoutes (ctx, routes, next) {
                 response.headers['x-body-id'] = await extractStringPayloadIntoChunks(responseObj.response.body)
 
                 if (ctx.mediatorResponse && ctx.mediatorResponse.orchestrations) {
-                  const promises = []
+                  const promises = responseObj.orchestrations.map(async orch => {
+                    if (
+                      orch.request &&
+                      orch.request.body &&
+                      ctx.authorisedChannel.requestBody
+                    ) {
+                      orch.request.bodyId = await extractStringPayloadIntoChunks(orch.request.body)
+                    }
 
-                  ctx.mediatorResponse.orchestrations = responseObj.orchestrations.map(orch => {
-                    const promise = new Promise(async (resolve, _reject) => {
-                      if (
-                        orch.request &&
-                        orch.request.body &&
-                        ctx.authorisedChannel.requestBody
-                      ) {
-                        orch.request.bodyId = await extractStringPayloadIntoChunks(orch.request.body)
-                      }
-                      if (
-                        orch.response &&
-                        orch.response.body &&
-                        ctx.authorisedChannel.responseBody
-                      ) {
-                        orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
-                      }
-                      resolve()
-                    })
+                    if (
+                      orch.response &&
+                      orch.response.body &&
+                      ctx.authorisedChannel.responseBody
+                    ) {
+                      orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+                    }
 
-                    promises.push(promise)
                     return orch
                   })
-                  await Promise.all(promises)
+
+                  ctx.mediatorResponse.orchestrations = await Promise.all(promises)
                 }
               }
             }
@@ -493,7 +489,7 @@ async function sendHttpRequest (ctx, route, options) {
     finishGridFs: function () {
       logger.info('Finished storing response body in GridFS')
     },
-    gridFsError: function (err) {},
+    gridFsError: function () {},
     startRequest: function () {},
     requestProgress: function () {},
     finishRequest: function () {},
@@ -525,12 +521,12 @@ async function sendHttpRequest (ctx, route, options) {
         ctx.secondaryRoutes.forEach(routeReq => routeReq.destroy())
       }
       ctx.state.requestPromise.then(() => {
-        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
+        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, () => {})
       })
     },
     clientError: function (err) {
       ctx.state.requestPromise.then(() => {
-        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
+        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, () => {})
       })
     },
     timeoutError: function (timeout) {
@@ -629,9 +625,9 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
     })
 
     /*
-        ctx.secondaryRoutes is an array containing the secondary routes' requests (streams). This enables termination of these requests when
-        the primary route's request fails
-      */
+      ctx.secondaryRoutes is an array containing the secondary routes' requests (streams). This enables termination of these requests when
+      the primary route's request fails
+    */
     if (!ctx.secondaryRoutes) {
       ctx.secondaryRoutes = []
     }
@@ -655,7 +651,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
 }
 
 /*
- * A promise returning function that send a request to the given route using sockets and resolves
+ * An async function that send a request to the given route using sockets and resolves
  * the returned promise with a response object of the following form: ()
  *   response =
  *    status: <200 if all work, else 500>
@@ -664,60 +660,60 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
  *
  * Supports both normal and MLLP sockets
  */
-function sendSocketRequest (ctx, route, options) {
-  return new Promise(async (resolve, reject) => {
-    const mllpEndChar = String.fromCharCode(0o034)
-    const requestBody = ctx.body
+async function sendSocketRequest (ctx, route, options) {
+  const mllpEndChar = String.fromCharCode(0o034)
+  const requestBody = ctx.body
 
-    if (
-      requestBody &&
-      ctx.authorisedChannel &&
-      ctx.authorisedChannel.requestBody &&
-      !ctx.request.bodyId
-    ) {
-      ctx.request.bodyId = await extractStringPayloadIntoChunks(requestBody)
+  if (
+    requestBody &&
+    ctx.authorisedChannel &&
+    ctx.authorisedChannel.requestBody &&
+    !ctx.request.bodyId
+  ) {
+    ctx.request.bodyId = await extractStringPayloadIntoChunks(requestBody)
+  }
+
+  messageStore.initiateRequest(ctx).then(() => {
+    messageStore.completeRequest(ctx, () => {})
+  })
+
+  const response = {}
+
+  let method = net
+  if (route.secured) {
+    method = tls
+  }
+
+  options = {
+    host: options.hostname,
+    port: options.port,
+    rejectUnauthorized: options.rejectUnauthorized,
+    key: options.key,
+    cert: options.cert,
+    ca: options.ca
+  }
+
+  const client = method.connect(options, () => {
+    logger.info(`Opened ${route.type} connection to ${options.host}:${options.port}`)
+    if (route.type === 'tcp') {
+      return client.end(requestBody)
+    } else if (route.type === 'mllp') {
+      return client.write(requestBody)
+    } else {
+      return logger.error(`Unkown route type ${route.type}`)
     }
+  })
 
-    messageStore.initiateRequest(ctx).then(() => {
-      messageStore.completeRequest(ctx, () => {})
-    })
-
-    const response = {}
-
-    let method = net
-    if (route.secured) {
-      method = tls
+  const bufs = []
+  client.on('data', (chunk) => {
+    bufs.push(chunk)
+    if ((route.type === 'mllp') && (chunk.toString().indexOf(mllpEndChar) > -1)) {
+      logger.debug('Received MLLP response end character')
+      return client.end()
     }
+  })
 
-    options = {
-      host: options.hostname,
-      port: options.port,
-      rejectUnauthorized: options.rejectUnauthorized,
-      key: options.key,
-      cert: options.cert,
-      ca: options.ca
-    }
-
-    const client = method.connect(options, () => {
-      logger.info(`Opened ${route.type} connection to ${options.host}:${options.port}`)
-      if (route.type === 'tcp') {
-        return client.end(requestBody)
-      } else if (route.type === 'mllp') {
-        return client.write(requestBody)
-      } else {
-        return logger.error(`Unkown route type ${route.type}`)
-      }
-    })
-
-    const bufs = []
-    client.on('data', (chunk) => {
-      bufs.push(chunk)
-      if ((route.type === 'mllp') && (chunk.toString().indexOf(mllpEndChar) > -1)) {
-        logger.debug('Received MLLP response end character')
-        return client.end()
-      }
-    })
-
+  return new Promise((resolve, reject) => {
     client.on('error', err => reject(err))
 
     const timeout = route.timeout != null ? route.timeout : +config.router.timeout

@@ -7,7 +7,6 @@ import { promisify } from 'util'
 import * as router from '../middleware/router'
 import * as utils from '../utils'
 import { config } from '../config'
-import { collectStream } from './streamingRouter'
 
 const routerConf = config.get('router')
 
@@ -93,7 +92,7 @@ export function rewriteUrls (body, channel, authType, callback) {
     // See https://regex101.com/r/uY3fO1/1 for an explanation of this regex
     const newBody = body.replace(/["|']?(?:href|src|fullUrl)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) => {
       let relativePath
-      const hrefUrlObj = url.parse(hrefUrl)
+      const hrefUrlObj = url.parse(hrefUrl) // eslint-disable-line node/no-deprecated-api
 
       // default to using this channel's host if no host so we can match a rewrite rule
       if ((hrefUrlObj.host == null)) {

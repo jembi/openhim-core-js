@@ -25,9 +25,9 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
     let startedRequest = false
     let startedGridFs = false
 
-    if ((options == undefined) || (!options)) {
+    if (!options) {
       const err = 'No options supplied for request'
-      if ((statusEvents.badOptions != undefined) && (statusEvents.badOptions)) {
+      if (statusEvents.badOptions) {
         statusEvents.badOptions(err)
       }
       logger.error(err)
@@ -38,7 +38,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
     emptyInput._read = () => {}
     emptyInput.push(null)
 
-    const downstream = requestBodyStream != undefined && requestBodyStream ? requestBodyStream : emptyInput
+    const downstream = requestBodyStream || emptyInput
     const method = options.secured ? https : http
 
     const gunzip = zlib.createGunzip()
@@ -215,7 +215,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
         reject(err)
       })
 
-    const timeout = (options.timeout != undefined) && (options.timeout) ? options.timeout : +config.router.timeout
+    const timeout = options.timeout || +config.router.timeout
     routeReq.setTimeout(timeout, () => {
       const err = new Error(`Request took longer than ${timeout}ms`)
       routeReq.destroy(err)

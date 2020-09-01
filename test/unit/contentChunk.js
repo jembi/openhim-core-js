@@ -92,6 +92,7 @@ describe('contentChunk: ', () => {
       await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -107,6 +108,7 @@ describe('contentChunk: ', () => {
       await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -126,6 +128,7 @@ describe('contentChunk: ', () => {
       await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -141,6 +144,7 @@ describe('contentChunk: ', () => {
       await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, arrayBufferLength)
@@ -163,6 +167,7 @@ describe('contentChunk: ', () => {
       await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -185,6 +190,7 @@ describe('contentChunk: ', () => {
       await testUtils.awaitGridfsBodyStreaming()
 
       db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)

@@ -888,7 +888,7 @@ export const extractGridFSPayload = async (fileId) => {
     downloadStream.on('error', err => {
       return reject(err)
     })
-      .on('data', chunk => body += chunk)
+      .on('data', chunk => { body += chunk })
       .on('end', () => {
         resolve(body)
       })
@@ -904,7 +904,7 @@ export const deleteChunkedPayloads = async () => {
 export const getResponseBodyFromStream = ctx => {
   let responseBody = ''
 
-  return new Promise((resolve, _reject) => {
+  return new Promise((resolve, reject) => {
     ctx.response.body.on('data', chunk => {
       responseBody += chunk.toString()
     })
@@ -912,7 +912,7 @@ export const getResponseBodyFromStream = ctx => {
       resolve(responseBody)
     })
     ctx.response.body.on('error', err => {
-      reject()
+      reject(err)
     })
   })
 }
