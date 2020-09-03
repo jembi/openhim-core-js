@@ -213,6 +213,9 @@ upgradeFuncs.push({
     const totalBatches = Math.ceil(totalTransactions / batchSize)
     const startTime = new Date()
 
+    logger.info(`Migrating ${totalTransactions} to GridFS`)
+    logger.info(`Using concurrency of ${concurrency}`)
+
     do {
       batchNum += 1
       const transactions = await TransactionModel.find().skip(batchSize * (batchNum - 1)).limit(batchSize).exec()
@@ -243,7 +246,7 @@ upgradeFuncs.push({
     await Promise.all(currentlyExecuting)
 
     const endTime = new Date()
-    logger.info(`GridFS migration took ${endTime.getMilliseconds() - startTime.getMilliseconds()}ms`)
+    logger.info(`GridFS migration took ${endTime - startTime}ms`)
   }
 })
 
