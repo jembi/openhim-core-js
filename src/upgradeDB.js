@@ -206,7 +206,7 @@ async function processTransaction (transaction) {
 
 upgradeFuncs.push({
   description: 'Migrate transaction bodies to GridFS',
-  async func (batchSize = 100, concurrency = 1) {
+  async func (batchSize = 100, concurrency = 5) {
     const totalTransactions = await TransactionModel.countDocuments().exec()
     let batchNum = 0
     let currentlyExecuting = []
