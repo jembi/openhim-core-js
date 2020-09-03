@@ -1,4 +1,4 @@
-import { Schema, ObjectId } from 'mongoose'
+import { Schema, ObjectId, connection } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
 
 // Request Schema definition
@@ -96,6 +96,10 @@ const TransactionSchema = new Schema({
     enum: ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
   }
 })
+
+export const compactTransactionCollection = async () => {
+  return (await connectionAPI).db.command({compact: 'transactions'})
+}
 
 TransactionSchema.index('request.timestamp')
 TransactionSchema.index({channelID: 1, 'request.timestamp': -1})

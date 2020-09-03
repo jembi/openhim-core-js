@@ -8,7 +8,7 @@ import { DbVersionModel } from './model/dbVersion'
 import { KeystoreModel } from './model/keystore'
 import { UserModel } from './model/users'
 import { VisualizerModel } from './model/visualizer'
-import { TransactionModel } from './model/transactions'
+import { TransactionModel, compactTransactionCollection } from './model/transactions'
 import { extractTransactionPayloadIntoChunks } from './contentChunk'
 
 function dedupName (name, names, num) {
@@ -217,6 +217,8 @@ upgradeFuncs.push({
           throw err
         }
       }
+      logger.debug('Compacting Transactions Collection...')
+      await compactTransactionCollection()
     } while (totalTransactions > (batchSize * batchNum))
   }
 })
