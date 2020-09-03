@@ -210,12 +210,14 @@ upgradeFuncs.push({
     const totalTransactions = await TransactionModel.countDocuments().exec()
     let batchNum = 0
     let currentlyExecuting = []
+    const totalBatches = Math.ceil(totalTransactions / batchSize)
+    const startTime = new Date()
 
     do {
       batchNum += 1
       const transactions = await TransactionModel.find().skip(batchSize * (batchNum - 1)).limit(batchSize).exec()
       for (const transaction of transactions) {
-        logger.info(`Batch ${batchNum}: Processing transaction ${transaction._id}`)
+        logger.info(`Batch [${batchNum}/${totalBatches}]: Processing transaction ${transaction._id}`)
 
         const promise = makeQuerablePromise(processTransaction(transaction))
         promise.catch((err) => {
@@ -239,6 +241,9 @@ upgradeFuncs.push({
 
     // wait for remaining transaction to process
     await Promise.all(currentlyExecuting)
+
+    const endTime = new Date()
+    logger.info(`GridFS migration took ${endTime.getMilliseconds() - startTime.getMilliseconds()}ms`)
   }
 })
 
