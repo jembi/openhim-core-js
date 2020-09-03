@@ -98,7 +98,7 @@ const TransactionSchema = new Schema({
 })
 
 export const compactTransactionCollection = async () => {
-  return (await connectionAPI).db.command({compact: 'transactions'})
+  return (await connectionAPI).db.command({compact: 'transactions', force: true})
 }
 
 TransactionSchema.index('request.timestamp')
