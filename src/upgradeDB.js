@@ -213,7 +213,7 @@ upgradeFuncs.push({
     const totalBatches = Math.ceil(totalTransactions / batchSize)
     const startTime = new Date()
 
-    logger.info(`Migrating ${totalTransactions} to GridFS`)
+    logger.info(`Migrating ${totalTransactions} to GridFS in batches of ${batchSize}`)
     logger.info(`Using concurrency of ${concurrency}`)
 
     do {
