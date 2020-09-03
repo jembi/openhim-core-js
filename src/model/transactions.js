@@ -1,4 +1,4 @@
-import { Schema, ObjectId, connection } from 'mongoose'
+import { Schema, ObjectId } from 'mongoose'
 import { connectionAPI, connectionDefault } from '../config'
 
 // Request Schema definition
