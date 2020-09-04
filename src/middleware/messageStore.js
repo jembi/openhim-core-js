@@ -345,7 +345,7 @@ export function setFinalStatus (ctx, callback) {
     let result
     const routesStatus = getRoutesStatus(ctx.routes)
 
-    if (ctx.response) {
+    if (!ctx.response) {
       return transactionStatus.FAILED
     }
 
