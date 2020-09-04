@@ -237,31 +237,27 @@ function sendRequestToRoutes (ctx, routes, next) {
                 response.headers['x-body-id'] = await extractStringPayloadIntoChunks(responseObj.response.body)
 
                 if (ctx.mediatorResponse && ctx.mediatorResponse.orchestrations) {
-                  const promises = []
+                  const promises = responseObj.orchestrations.map(async orch => {
+                    if (
+                      orch.request &&
+                      orch.request.body &&
+                      ctx.authorisedChannel.requestBody
+                    ) {
+                      orch.request.bodyId = await extractStringPayloadIntoChunks(orch.request.body)
+                    }
 
-                  ctx.mediatorResponse.orchestrations = responseObj.orchestrations.map(orch => {
-                    const promise = new Promise(async (resolve) => {
-                      if (
-                        orch.request &&
-                        orch.request.body &&
-                        ctx.authorisedChannel.requestBody
-                      ) {
-                        orch.request.bodyId = await extractStringPayloadIntoChunks(orch.request.body)
-                      }
-                      if (
-                        orch.response &&
-                        orch.response.body &&
-                        ctx.authorisedChannel.responseBody
-                      ) {
-                        orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
-                      }
-                      resolve()
-                    })
+                    if (
+                      orch.response &&
+                      orch.response.body &&
+                      ctx.authorisedChannel.responseBody
+                    ) {
+                      orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
+                    }
 
-                    promises.push(promise)
                     return orch
                   })
-                  await Promise.all(promises)
+
+                  ctx.mediatorResponse.orchestrations = await Promise.all(promises)
                 }
               }
             }
@@ -476,7 +472,7 @@ function setTransactionFinalStatus (ctx) {
   // Set the final status of the transaction
   messageStore.setFinalStatus(ctx, (err, tx) => {
     if (err) {
-      logger.error(`Setting final status failed for transaction:`, err)
+      logger.error('Setting final status failed for transaction:', err)
       return
     }
     logger.info(`Set final status for transaction: ${tx._id} - ${tx.status}`)
@@ -491,7 +487,7 @@ async function sendHttpRequest (ctx, route, options) {
       logger.info(`Started storing response body in GridFS: ${fileId}`)
     },
     finishGridFs: function () {
-      logger.info(`Finished storing response body in GridFS`)
+      logger.info('Finished storing response body in GridFS')
     },
     gridFsError: function () {},
     startRequest: function () {},
@@ -506,7 +502,7 @@ async function sendHttpRequest (ctx, route, options) {
       logger.info(`Write response CHUNK # ${counter} [ Total size ${size}]`)
     },
     finishResponse: function (response, size) {
-      logger.info(`** END OF OUTPUT STREAM **`)
+      logger.info('** END OF OUTPUT STREAM **')
     },
     finishResponseAsString: function (body) {
       return rewrite.rewriteUrls(body, ctx.authorisedChannel, ctx.authenticationType, (err, newBody) => {
@@ -521,12 +517,12 @@ async function sendHttpRequest (ctx, route, options) {
     requestError: function () {},
     responseError: function (err) {
       ctx.state.requestPromise.then(() => {
-        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
+        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, () => {})
       })
     },
     clientError: function (err) {
       ctx.state.requestPromise.then(() => {
-        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, (err, tx) => {})
+        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, () => {})
       })
     },
     timeoutError: function (timeout) {
@@ -550,7 +546,7 @@ async function sendHttpRequest (ctx, route, options) {
 const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
   return new Promise((resolve, reject) => {
     const response = {}
-    let { downstream } = ctx.state
+    const { downstream } = ctx.state
     let method = http
 
     if (route.secured) {
@@ -599,7 +595,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
             }
           })
           .on('end', () => {
-            logger.info(`** END OF OUTPUT STREAM **`)
+            logger.info('** END OF OUTPUT STREAM **')
             uploadStream.end()
 
             if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
@@ -641,7 +637,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
 }
 
 /*
- * A promise returning function that send a request to the given route using sockets and resolves
+ * An async function that send a request to the given route using sockets and resolves
  * the returned promise with a response object of the following form: ()
  *   response =
  *    status: <200 if all work, else 500>
@@ -650,60 +646,60 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
  *
  * Supports both normal and MLLP sockets
  */
-function sendSocketRequest (ctx, route, options) {
-  return new Promise(async (resolve, reject) => {
-    const mllpEndChar = String.fromCharCode(0o034)
-    const requestBody = ctx.body
+async function sendSocketRequest (ctx, route, options) {
+  const mllpEndChar = String.fromCharCode(0o034)
+  const requestBody = ctx.body
 
-    if (
-      requestBody &&
-      ctx.authorisedChannel &&
-      ctx.authorisedChannel.requestBody &&
-      !ctx.request.bodyId
-    ) {
-      ctx.request.bodyId = await extractStringPayloadIntoChunks(requestBody)
+  if (
+    requestBody &&
+    ctx.authorisedChannel &&
+    ctx.authorisedChannel.requestBody &&
+    !ctx.request.bodyId
+  ) {
+    ctx.request.bodyId = await extractStringPayloadIntoChunks(requestBody)
+  }
+
+  messageStore.initiateRequest(ctx).then(() => {
+    messageStore.completeRequest(ctx, () => {})
+  })
+
+  const response = {}
+
+  let method = net
+  if (route.secured) {
+    method = tls
+  }
+
+  options = {
+    host: options.hostname,
+    port: options.port,
+    rejectUnauthorized: options.rejectUnauthorized,
+    key: options.key,
+    cert: options.cert,
+    ca: options.ca
+  }
+
+  const client = method.connect(options, () => {
+    logger.info(`Opened ${route.type} connection to ${options.host}:${options.port}`)
+    if (route.type === 'tcp') {
+      return client.end(requestBody)
+    } else if (route.type === 'mllp') {
+      return client.write(requestBody)
+    } else {
+      return logger.error(`Unkown route type ${route.type}`)
     }
+  })
 
-    messageStore.initiateRequest(ctx).then(() => {
-      messageStore.completeRequest(ctx, () => {})
-    })
-
-    const response = {}
-
-    let method = net
-    if (route.secured) {
-      method = tls
+  const bufs = []
+  client.on('data', (chunk) => {
+    bufs.push(chunk)
+    if ((route.type === 'mllp') && (chunk.toString().indexOf(mllpEndChar) > -1)) {
+      logger.debug('Received MLLP response end character')
+      return client.end()
     }
+  })
 
-    options = {
-      host: options.hostname,
-      port: options.port,
-      rejectUnauthorized: options.rejectUnauthorized,
-      key: options.key,
-      cert: options.cert,
-      ca: options.ca
-    }
-
-    const client = method.connect(options, () => {
-      logger.info(`Opened ${route.type} connection to ${options.host}:${options.port}`)
-      if (route.type === 'tcp') {
-        return client.end(requestBody)
-      } else if (route.type === 'mllp') {
-        return client.write(requestBody)
-      } else {
-        return logger.error(`Unkown route type ${route.type}`)
-      }
-    })
-
-    const bufs = []
-    client.on('data', (chunk) => {
-      bufs.push(chunk)
-      if ((route.type === 'mllp') && (chunk.toString().indexOf(mllpEndChar) > -1)) {
-        logger.debug('Received MLLP response end character')
-        return client.end()
-      }
-    })
-
+  return new Promise((resolve, reject) => {
     client.on('error', err => reject(err))
 
     const timeout = route.timeout != null ? route.timeout : +config.router.timeout

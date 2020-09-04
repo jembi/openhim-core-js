@@ -29,7 +29,7 @@ describe('contentChunk: ', () => {
       await db.collection('fs.files').deleteMany({})
       await db.collection('fs.chunks').deleteMany({})
     })
-    
+
     it('should throw an error when undefined payload is supplied', async () => {
       const payload = undefined
 
@@ -65,10 +65,10 @@ describe('contentChunk: ', () => {
 
     it('should throw an error when payload type is not supported', async () => {
       const jsonPayload = {
-        'string': 'string',
-        'boolean': true,
-        'object': {
-          'property': 'property'
+        string: 'string',
+        boolean: true,
+        object: {
+          property: 'property'
         }
       }
 
@@ -91,7 +91,8 @@ describe('contentChunk: ', () => {
       */
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -106,7 +107,8 @@ describe('contentChunk: ', () => {
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -125,7 +127,8 @@ describe('contentChunk: ', () => {
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -134,13 +137,14 @@ describe('contentChunk: ', () => {
 
     it('should create the ArrayBuffer payload as chucks and return a document id', async () => {
       const arrayBufferLength = 100
-      const payload = new ArrayBuffer(arrayBufferLength);
+      const payload = new ArrayBuffer(arrayBufferLength)
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, arrayBufferLength)
@@ -151,9 +155,9 @@ describe('contentChunk: ', () => {
       const payload = {
         length: 5, // object contains a length property, making it Array-Like
         0: 'First index in array object',
-        2: [0,1,2,3,4],
+        2: [0, 1, 2, 3, 4],
         4: {
-          property: "test"
+          property: 'test'
         }
       }
       const payloadLength = payload.length
@@ -162,7 +166,8 @@ describe('contentChunk: ', () => {
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -173,7 +178,7 @@ describe('contentChunk: ', () => {
       const payload = JSON.stringify({
         string: 'string',
         boolean: true,
-        array: [0,1,2,3,4,5],
+        array: [0, 1, 2, 3, 4, 5],
         object: {
           property: 'property'
         }
@@ -184,7 +189,8 @@ describe('contentChunk: ', () => {
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
+      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+        should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
         should.deepEqual(result.length, payloadLength)
@@ -202,7 +208,7 @@ describe('contentChunk: ', () => {
       const fileId = null
 
       retrievePayload(fileId).catch((err) => {
-        err.message.should.eql(`Payload id not supplied`)
+        err.message.should.eql('Payload id not supplied')
       })
     })
 

@@ -4,9 +4,8 @@ import logger from 'winston'
 import { promisify } from 'util'
 
 import * as autoRetryUtils from '../autoRetry'
-import * as utils from '../utils'
 import * as metrics from '../metrics'
-import { extractStringPayloadIntoChunks, extractTransactionPayloadIntoChunks } from '../contentChunk'
+import { extractTransactionPayloadIntoChunks } from '../contentChunk'
 import * as transactions from '../model/transactions'
 
 export const transactionStatus = {
@@ -108,7 +107,6 @@ export async function initiateRequest (ctx) {
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
 export function completeRequest (ctx, done) {
-
   if (ctx && !ctx.requestTimestampEnd) {
     ctx.requestTimestampEnd = new Date()
   }
@@ -170,7 +168,7 @@ export function initiateResponse (ctx, done) {
   const transactionId = getTransactionId(ctx)
 
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
-/*
+  /*
   // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
     // reset request body - primary route
@@ -185,7 +183,7 @@ export function initiateResponse (ctx, done) {
     error: ctx.error
   }
 
-  //await extractTransactionPayloadIntoChunks(update)
+  // await extractTransactionPayloadIntoChunks(update)
   transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
       logger.error(`Could not save transaction metadata (initiateResponse): ${transactionId}. ${err}`)
@@ -205,7 +203,7 @@ export function initiateResponse (ctx, done) {
  *  Find and update an existing transaction once a Response has completed streaming
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
-export function completeResponse (ctx, done) {
+export function completeResponse (ctx) {
   return new Promise((resolve, reject) => {
     ctx.responseTimestampEnd = new Date()
 
@@ -236,12 +234,12 @@ export function completeResponse (ctx, done) {
 
     if (ctx.orchestrations) {
       if (!update.orchestrations) {
-          update.orchestrations = []
-        }
+        update.orchestrations = []
+      }
       update.orchestrations.push(...ctx.orchestrations)
     }
 
-    return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+    return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
       if (err) {
         logger.error(`Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`)
         return reject(err)
@@ -274,7 +272,7 @@ export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
     }
   }
 
-  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {runValidators: true}, (err, tx) => {
+  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
     if (err) {
       logger.error(`Could not save transaction metadata (updateWithError): ${ctx.transactionId}. ${err}`)
       return done(err)
@@ -303,7 +301,7 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
   await extractTransactionPayloadIntoChunks(route)
 
   if (ctx.transactionId != null) {
-    transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {
+    transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, { $push: { routes: route } }, (err, tx) => {
       if (err) {
         logger.error(err)
       }
@@ -323,7 +321,6 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
  * This should only be called once all routes have responded.
  */
 export function setFinalStatus (ctx, callback) {
-
   function getRoutesStatus (routes) {
     const routesStatus = {
       routeFailures: false,
@@ -348,7 +345,7 @@ export function setFinalStatus (ctx, callback) {
     let result
     const routesStatus = getRoutesStatus(ctx.routes)
 
-    if ((ctx.response == undefined) || (ctx.response == null)) {
+    if (!ctx.response) {
       return transactionStatus.FAILED
     }
 
@@ -362,35 +359,6 @@ export function setFinalStatus (ctx, callback) {
         result = transactionStatus.SUCCESSFUL
       }
       if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routesStatus.routeSuccess) {
-        result = transactionStatus.COMPLETED
-      }
-    }
-
-    // In all other cases mark as completed
-    if (!result) {
-      result = transactionStatus.COMPLETED
-    }
-
-    return result
-  }
-
-  function getTransactionResult (tx) {
-    let result
-    const routesStatus = getRoutesStatus(tx.routes)
-    if ((tx.response == undefined) || (tx.response == null)) {
-      return transactionStatus.FAILED
-    }
-
-    if (tx.response.status >= 500 && tx.response.status <= 599) {
-      result = transactionStatus.FAILED
-    } else {
-      if (routesStatus.routeFailures) {
-        result = transactionStatus.COMPLETED_W_ERR
-      }
-      if ((tx.response.status >= 200 && tx.response.status <= 299) && routesStatus.routeSuccess) {
-        result = transactionStatus.SUCCESSFUL
-      }
-      if ((tx.response.status >= 400 && tx.response.status <= 499) && routesStatus.routeSuccess) {
         result = transactionStatus.COMPLETED
       }
     }
@@ -433,7 +401,7 @@ export function setFinalStatus (ctx, callback) {
       }
     }
 
-    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {new: true}, (err, tx) => {
+    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
       if (err) { return callback(err) }
 
       if (!tx) {

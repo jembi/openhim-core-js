@@ -65,7 +65,7 @@ let ensureKeystore
 logger.remove(logger.transports.Console)
 
 const winstonLogFormat = logger.format.printf(info => {
-  return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`;
+  return `${info.timestamp} [${info.label}] ${info.level}: ${info.message}`
 })
 
 let clusterArg = nconf.get('cluster')
@@ -115,7 +115,7 @@ if (cluster.isMaster && !module.parent) {
   let clusterSize
   logger.add(new logger.transports.Console({
     format: logger.format.combine(
-      logger.format.label({label: 'master'}),
+      logger.format.label({ label: 'master' }),
       logger.format.timestamp(),
       logger.format.colorize(),
       winstonLogFormat
@@ -238,7 +238,7 @@ if (cluster.isMaster && !module.parent) {
   let stop
   logger.add(new logger.transports.Console({
     format: logger.format.combine(
-      logger.format.label({label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined}),
+      logger.format.label({ label: ((cluster.worker != null ? cluster.worker.id : undefined) != null) ? `worker${cluster.worker.id}` : undefined }),
       logger.format.timestamp(),
       logger.format.colorize(),
       winstonLogFormat
@@ -332,7 +332,7 @@ if (cluster.isMaster && !module.parent) {
             deferred.resolve()
             return logger.info('Started agenda job scheduler')
           }
-            , config.agenda.startupDelay)
+          , config.agenda.startupDelay)
         )
       }
       // Start agenda anyway for the other servers
@@ -818,37 +818,37 @@ if (cluster.isMaster && !module.parent) {
     // close active connection so that servers can stop
     for (const key in activeHttpConnections) {
       socket = activeHttpConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activeHttpsConnections) {
       socket = activeHttpsConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activeApiConnections) {
       socket = activeApiConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activeRerunConnections) {
       socket = activeRerunConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activeTcpConnections) {
       socket = activeTcpConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
     for (const key in activePollingConnections) {
       socket = activePollingConnections[key]
-      if ((socket != undefined) && (socket != null)) {
+      if (socket) {
         socket.destroy()
       }
     }
@@ -929,7 +929,7 @@ if (cluster.isMaster && !module.parent) {
         logger.debug('Master restarting itself...')
         return exports.restartServer()
       }
-        , 2000)
+      , 2000)
     } else {
       // notify master to restart all workers in 2s
       setTimeout(() => {
@@ -938,7 +938,7 @@ if (cluster.isMaster && !module.parent) {
           type: 'restart-all'
         })
       }
-        , 2000)
+      , 2000)
     }
     return done()
   }

@@ -36,7 +36,7 @@ describe('Request Matching middleware', () => {
 
     it('should return false if the xpath value DOES NOT match', () => (requestMatching
       .matchXpath('string(/root/function/@uuid)', 'not-correct',
-      Buffer.from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.false)
+        Buffer.from('<root><function uuid="da98db33-dd94-4e2a-ba6c-ac3f016dbdf1" /></root>'))).should.be.false)
   })
 
   describe('.matchJsonPath(xpath, val, xml)', () => {
@@ -58,14 +58,14 @@ describe('Request Matching middleware', () => {
         matchContentXpath: 'string(/function/uuid)',
         matchContentValue: '123456789'
       },
-      channelJson:{
+      channelJson: {
         matchContentJson: 'function.uuid',
         matchContentValue: '123456789'
       }
     }
 
     const noMatchChannel = {
-      channelInvalid: { 
+      channelInvalid: {
         matchContentJson: 'function.uuid'
       }
     }
@@ -215,10 +215,10 @@ describe('Request Matching middleware', () => {
 </careServicesRequest>\
 `
 
-    let addedChannelNames = []
+    const addedChannelNames = []
 
-    afterEach(() => ChannelModel.deleteMany({name: { $in: addedChannelNames }}))
-/*
+    afterEach(() => ChannelModel.deleteMany({ name: { $in: addedChannelNames } }))
+    /*
     it('should match if message content matches the channel rules', (done) => {
       // Setup a channel for the mock endpoint
       const channel = new ChannelModel({

@@ -1,13 +1,13 @@
 'use strict'
 
-const {Readable} = require('stream')
+const { Readable } = require('stream')
 const crypto = require('crypto')
 
 const RANDOM_BUFFER = crypto.randomBytes(2 * 1024 * 1024)
 
 class BodyStream extends Readable {
   constructor (length) {
-    super({encoding: 'hex'})
+    super({ encoding: 'hex' })
     this.remainingLength = length / 2
   }
 

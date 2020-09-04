@@ -4,7 +4,7 @@ import logger from 'winston'
 
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import { ChannelModelAPI, ChannelModel } from '../model/channels'
+import { ChannelModelAPI } from '../model/channels'
 import { ClientModelAPI } from '../model/clients'
 
 /*

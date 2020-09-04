@@ -21,11 +21,11 @@ describe('API Integration Tests', () => {
     let contactGroupData = {
       group: 'Group 1',
       users: [{ user: 'User 1', method: 'sms', maxAlerts: 'no max' },
-      { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
-      { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
-      { user: 'User 4', method: 'email', maxAlerts: 'no max' },
-      { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
-      { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
+        { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
+        { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
+        { user: 'User 4', method: 'email', maxAlerts: 'no max' },
+        { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
+        { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
     }
 
     let authDetails = {}
@@ -80,11 +80,11 @@ describe('API Integration Tests', () => {
       contactGroupData = {
         group: 'Group 1',
         users: [{ user: 'User 1', method: 'sms', maxAlerts: 'no max' },
-        { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
-        { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
-        { user: 'User 4', method: 'email', maxAlerts: 'no max' },
-        { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
-        { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
+          { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
+          { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
+          { user: 'User 4', method: 'email', maxAlerts: 'no max' },
+          { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
+          { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
       }
 
       let contactGroupId = null
@@ -135,29 +135,29 @@ describe('API Integration Tests', () => {
       const contactGroupData1 = {
         group: 'Group 1',
         users: [{ user: 'User 1', method: 'sms', maxAlerts: 'no max' },
-        { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
-        { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
-        { user: 'User 4', method: 'email', maxAlerts: 'no max' },
-        { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
-        { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
+          { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
+          { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
+          { user: 'User 4', method: 'email', maxAlerts: 'no max' },
+          { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
+          { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
       }
 
       const contactGroupData2 = {
         group: 'Group 2222',
         users: [{ user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
-        { user: 'User 2', method: 'email', maxAlerts: '1 per hour' }]
+          { user: 'User 2', method: 'email', maxAlerts: '1 per hour' }]
       }
 
       const contactGroupData3 = {
         group: 'Group 33333333',
         users: [{ user: 'User 4', method: 'sms', maxAlerts: 'no max' },
-        { user: 'User 2', method: 'sms', maxAlerts: '1 per day' }]
+          { user: 'User 2', method: 'sms', maxAlerts: '1 per day' }]
       }
 
       const contactGroupData4 = {
         group: 'Group 444444444444',
         users: [{ user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
-        { user: 'User 2', method: 'email', maxAlerts: '1 per hour' }]
+          { user: 'User 2', method: 'email', maxAlerts: '1 per hour' }]
       }
 
       it('should return all contactGroups ', async () => {
@@ -190,11 +190,11 @@ describe('API Integration Tests', () => {
       contactGroupData = {
         group: 'Group 1',
         users: [{ user: 'User 1', method: 'sms', maxAlerts: 'no max' },
-        { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
-        { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
-        { user: 'User 4', method: 'email', maxAlerts: 'no max' },
-        { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
-        { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
+          { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
+          { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
+          { user: 'User 4', method: 'email', maxAlerts: 'no max' },
+          { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
+          { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
       }
 
       it('should update the specified contactGroup ', async () => {
@@ -202,7 +202,7 @@ describe('API Integration Tests', () => {
         const updates = {
           group: 'Group New Name',
           users: [{ user: 'User 11111', method: 'sms', maxAlerts: 'no max' },
-          { user: 'User 222222', method: 'email', maxAlerts: '1 per hour' }]
+            { user: 'User 222222', method: 'email', maxAlerts: '1 per hour' }]
         }
 
         await request(constants.BASE_URL)
@@ -240,11 +240,11 @@ describe('API Integration Tests', () => {
         contactGroupData = {
           group: 'Group 1',
           users: [{ user: 'User 1', method: 'sms', maxAlerts: 'no max' },
-          { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
-          { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
-          { user: 'User 4', method: 'email', maxAlerts: 'no max' },
-          { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
-          { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
+            { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
+            { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
+            { user: 'User 4', method: 'email', maxAlerts: 'no max' },
+            { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
+            { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
         }
         const contactGroup = await new ContactGroupModelAPI(contactGroupData).save()
         const countBefore = await ContactGroupModelAPI.countDocuments()
@@ -265,11 +265,11 @@ describe('API Integration Tests', () => {
         contactGroupData = {
           group: 'Group 2',
           users: [{ user: 'User 1', method: 'sms', maxAlerts: 'no max' },
-          { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
-          { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
-          { user: 'User 4', method: 'email', maxAlerts: 'no max' },
-          { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
-          { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
+            { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
+            { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
+            { user: 'User 4', method: 'email', maxAlerts: 'no max' },
+            { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
+            { user: 'User 6', method: 'email', maxAlerts: '1 per day' }]
         }
         const contactGroup = await new ContactGroupModelAPI(contactGroupData).save()
         const channel1 = {

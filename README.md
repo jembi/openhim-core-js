@@ -77,7 +77,7 @@ This project uses [mocha](https://mochajs.org/) as a unit testing framework with
 
 **Pro tips:**
 
-- `npm run lint` - ensure the code is lint free, this is also run before an `npm test`
+- `npm run lint` - ensure the code is lint free, this is also run after an `npm test`
 - `npm link` - will symlink you local working directory to the globally installed openhim-core module. Use this so you can use the global openhim-core binary to run your current work in progress. Also, if you build any local changes the server will automatically restart.
 - `npm test -- --grep <regex>` - will only run tests with names matching the regex.
 - `npm test -- --inspect` - enabled the node debugger while running unit tests. Add `debugger` statements and use `node debug localhost:5858` to connect to the debugger instance.

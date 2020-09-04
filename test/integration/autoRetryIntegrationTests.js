@@ -29,7 +29,7 @@ function waitForAutoRetry () {
 }
 
 // TODO : This test suite could be written a bit neater
-describe(`Auto Retry Integration Tests`, () => {
+describe('Auto Retry Integration Tests', () => {
   const { HTTP_BASE_URL: baseUrl } = constants
   const ORIGINAL_AUTH = config.authentication
   const ORIGNAL_RERUN = config.rerun
@@ -85,7 +85,7 @@ describe(`Auto Retry Integration Tests`, () => {
     ])
   })
 
-  describe(`Primary route auto retry tests`, () => {
+  describe('Primary route auto retry tests', () => {
     const channel1Doc = {
       name: 'TEST DATA - Will break channel',
       urlPattern: '^/test/nowhere$',
@@ -157,7 +157,7 @@ describe(`Auto Retry Integration Tests`, () => {
       trx.error.message.should.match(/ECONNREFUSED/)
     })
 
-    it(`should push an auto retry transaction to the auto retry queue`, async () => {
+    it('should push an auto retry transaction to the auto retry queue', async () => {
       await request(baseUrl)
         .get('/test/nowhere')
         .auth('testApp', 'password')
@@ -171,7 +171,7 @@ describe(`Auto Retry Integration Tests`, () => {
       autoRetry.channelID.toString().should.be.equal(channel1._id.toString())
     })
 
-    it(`should auto retry a failed transaction`, async () => {
+    it('should auto retry a failed transaction', async () => {
       await request(baseUrl)
         .get('/test/nowhere')
         .auth('testApp', 'password')
@@ -189,7 +189,7 @@ describe(`Auto Retry Integration Tests`, () => {
       transactions[1].autoRetry.should.be.true()
     })
 
-    it(`should not auto retry a transaction that has reached the max retry limit`, async () => {
+    it('should not auto retry a transaction that has reached the max retry limit', async () => {
       await request(baseUrl)
         .get('/test/nowhere/2')
         .auth('testApp', 'password')
@@ -207,7 +207,7 @@ describe(`Auto Retry Integration Tests`, () => {
       transactions[1].autoRetry.should.be.false()
     })
 
-    it(`should contain the attempt number in transaction events`, async () => {
+    it('should contain the attempt number in transaction events', async () => {
       await request(baseUrl)
         .get('/test/nowhere')
         .auth('testApp', 'password')
@@ -284,7 +284,7 @@ describe(`Auto Retry Integration Tests`, () => {
     })
   })
 
-  describe(`Mediator auto retry tests`, () => {
+  describe('Mediator auto retry tests', () => {
     let server
 
     const channelDoc = {

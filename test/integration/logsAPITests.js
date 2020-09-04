@@ -3,14 +3,14 @@
 import request from 'supertest'
 import moment from 'moment'
 import { promisify } from 'util'
-import { connectionDefault  } from '../../src/config/connection'
+import { connectionDefault } from '../../src/config/connection'
 
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
 
-describe(`API Integration Tests`, () => {
-  describe(`Log REST API`, () => {
+describe('API Integration Tests', () => {
+  describe('Log REST API', () => {
     let authDetails
     let beforeTS
     let middleTS
@@ -24,7 +24,7 @@ describe(`API Integration Tests`, () => {
       await Promise.all([
         testUtils.setupTestUsers(),
         promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort }),
-        connectionDefault.db.collection('log').deleteMany({}), 
+        connectionDefault.db.collection('log').deleteMany({})
       ])
 
       const timestamp = moment(beforeTS)

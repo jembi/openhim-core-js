@@ -22,7 +22,6 @@ import * as pollingBypassAuthorisation from './middleware/pollingBypassAuthorisa
 import * as pollingBypassAuthentication from './middleware/pollingBypassAuthentication'
 import * as streamingReceiver from './middleware/streamingReceiver'
 
-import * as rewrite from './middleware/rewriteUrls'
 import * as router from './middleware/router'
 import * as tcpBypassAuthentication from './middleware/tcpBypassAuthentication'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
@@ -30,7 +29,7 @@ import { config } from './config'
 
 config.authentication = config.get('authentication')
 
-async function rawBodyReader(ctx, next) {
+async function rawBodyReader (ctx, next) {
   const body = await getRawBody(ctx.req)
 
   if (body) {
@@ -40,7 +39,7 @@ async function rawBodyReader(ctx, next) {
 }
 
 // Primary app
-export function setupApp(done) {
+export function setupApp (done) {
   const app = new Koa()
 
   if (config.authentication.enableJWTAuthentication) {
@@ -86,7 +85,7 @@ export function setupApp(done) {
 }
 
 // Rerun app that bypasses auth
-export function rerunApp(done) {
+export function rerunApp (done) {
   const app = new Koa()
 
   // Rerun bypass authentication middelware
@@ -112,11 +111,11 @@ export function rerunApp(done) {
 }
 
 // App for TCP/TLS sockets
-export function tcpApp(done) {
+export function tcpApp (done) {
   const app = new Koa()
 
   app.use(rawBodyReader)
-  
+
   app.use(retrieveTCPTransaction.koaMiddleware)
 
   app.use(streamingReceiver.koaMiddleware)
@@ -135,7 +134,7 @@ export function tcpApp(done) {
 }
 
 // App used by scheduled polling
-export function pollingApp(done) {
+export function pollingApp (done) {
   const app = new Koa()
 
   app.use(streamingReceiver.koaMiddleware)

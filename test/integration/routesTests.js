@@ -9,7 +9,6 @@ import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
 
 import * as constants from '../constants'
-import should from 'should'
 import * as testUtils from '../utils'
 import { ChannelModelAPI } from '../../src/model/channels'
 import { ClientModelAPI } from '../../src/model/clients'
@@ -34,8 +33,8 @@ describe('Routes enabled/disabled tests', () => {
   const httpPortPlus44 = constants.PORT_START + 44
 
   const sandbox = sinon.createSandbox()
-  const restrictedSpy = sandbox.spy(async (req) => 'Restricted response')
-  const timeoutSpy = sandbox.spy(async (req) => {
+  const restrictedSpy = sandbox.spy(async () => 'Restricted response')
+  const timeoutSpy = sandbox.spy(async () => {
     await testUtils.wait(30)
     return 'timeout'
   })
@@ -371,7 +370,7 @@ describe('Routes enabled/disabled tests', () => {
 
     await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
     const newTransaction = await TransactionModel.find()
-    
+
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
     newTransaction[0].orchestrations[0].name.should.eql('test transaction fail orchestration')
