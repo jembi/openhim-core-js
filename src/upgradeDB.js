@@ -234,7 +234,7 @@ upgradeFuncs.push({
           // wait for at least one promise to settle
           await Promise.race(currentlyExecuting)
           for (const [i, promise] of currentlyExecuting.entries()) {
-            if (promise.isSettled) {
+            if (promise.isSettled()) {
               currentlyExecuting.splice(i, 1)
             }
           }
