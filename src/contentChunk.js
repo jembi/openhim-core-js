@@ -133,10 +133,6 @@ export const retrievePayload = async fileId => {
     throw new Error('Payload id not supplied')
   }
 
-  let payloadSize = 0
-  // Perhaps the truncateSize should be represented in actual size, and not string length
-  const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
-
   const fileDetails = await getFileDetails(fileId)
 
   const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
@@ -151,14 +147,7 @@ export const retrievePayload = async fileId => {
 
   // apply the decompression transformation and start listening for the output chunks
   downloadStream.pipe(decompressionStream)
-  decompressionStream.on('data', (chunk) => {
-    payloadSize += chunk.length
-    if (payloadSize >= truncateSize) {
-      decompressionStream.destroy()
-      downloadStream.destroy()
-    }
-    uncompressedBodyBufs.push(chunk)
-  })
+  decompressionStream.on('data', (chunk) => uncompressedBodyBufs.push(chunk))
 
   return new Promise((resolve) => {
     decompressionStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })

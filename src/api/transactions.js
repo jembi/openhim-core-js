@@ -51,9 +51,6 @@ function getProjectionObject (filterRepresentation) {
     case 'full':
       // view all transaction data
       return {}
-    case 'fulltruncate':
-      // same as full
-      return {}
     case 'bulkrerun':
       // view only 'bulkrerun' properties
       return { _id: 1, childIDs: 1, canRerun: 1, channelID: 1 }
@@ -68,30 +65,6 @@ function getProjectionObject (filterRepresentation) {
         orchestrations: 0,
         routes: 0
       }
-  }
-}
-
-function truncateTransactionDetails (trx) {
-  const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
-  const truncateAppend = apiConf.truncateAppend != null ? apiConf.truncateAppend : '\n[truncated ...]'
-
-  function trunc (t) {
-    if (((t.request != null ? t.request.body : undefined) != null) && (t.request.body.length > truncateSize)) {
-      t.request.body = t.request.body.slice(0, truncateSize) + truncateAppend
-    }
-    if (((t.response != null ? t.response.body : undefined) != null) && (t.response.body.length > truncateSize)) {
-      t.response.body = t.response.body.slice(0, truncateSize) + truncateAppend
-    }
-  }
-
-  trunc(trx)
-
-  if (trx.routes != null) {
-    for (const r of Array.from(trx.routes)) { trunc(r) }
-  }
-
-  if (trx.orchestrations != null) {
-    return Array.from(trx.orchestrations).map((o) => trunc(o))
   }
 }
 
@@ -250,10 +223,6 @@ export async function getTransactions (ctx) {
     const transformedTransactions = await addBodiesToTransactions(transactions)
 
     ctx.body = transformedTransactions
-
-    if (filterRepresentation === 'fulltruncate') {
-      transformedTransactions.map((trx) => truncateTransactionDetails(trx))
-    }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
   }
@@ -342,10 +311,6 @@ export async function getTransactionById (ctx, transactionId) {
     // retrieve transaction request and response bodies
     const resultArray = await addBodiesToTransactions([transaction])
     const result = resultArray[0]
-
-    if (result && (filterRepresentation === 'fulltruncate')) {
-      truncateTransactionDetails(result)
-    }
 
     // Test if the result if valid
     if (!result) {

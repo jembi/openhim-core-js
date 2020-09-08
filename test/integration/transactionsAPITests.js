@@ -20,8 +20,6 @@ import { config } from '../../src/config'
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
 
-const TRUNCATE_APPEND = '\n[truncated ...]'
-
 const clearTransactionBodies = function (transaction) {
   transaction.request.body = ''
   transaction.response.body = ''
@@ -179,7 +177,6 @@ describe('API Integration Tests', () => {
     }
 
     config.api = config.get('api')
-    config.api.truncateAppend = TRUNCATE_APPEND
 
     config.application = config.get('application')
     const results = await Promise.all([
@@ -218,25 +215,6 @@ describe('API Integration Tests', () => {
 
   describe('Transactions REST Api testing', () => {
     describe('*addTransaction()', () => {
-      it('should add a transaction and truncate the large response body', async () => {
-        const td = testUtils.clone(transactionData)
-        td.channelID = channel._id
-        td.request.body = ''
-        td.response.body = LARGE_BODY
-        await request(constants.BASE_URL)
-          .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(td)
-          .expect(201)
-
-        const newTransaction = await TransactionModel.findOne({ clientID: transactionData.clientID });
-        (newTransaction !== null).should.be.true()
-        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
-        newTransaction.canRerun.should.be.true()
-      })
 
       it('should add a transaction and return status 201 - transaction created', async () => {
         const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
@@ -935,29 +913,6 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(403)
       })
-
-      it('should truncate transaction details if filterRepresentation is fulltruncate ', async () => {
-        await new TransactionModel(transactionData).save()
-
-        const res = await request(constants.BASE_URL)
-          .get('/transactions?filterRepresentation=fulltruncate')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .expect(200)
-
-        res.body.length.should.equal(1)
-        res.body[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-
-        // Uncomment this when the functionality for retrieving the routes bodies is added
-        res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].routes[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-
-        res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].orchestrations[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-      })
     })
 
     describe('*getTransactionById (transactionId)', () => {
@@ -1015,22 +970,6 @@ describe('API Integration Tests', () => {
         res.body.request.querystring.should.equal('param1=value1&param2=value2')
         should.not.exist(res.body.request.body)
         res.body.request.method.should.equal('POST')
-      })
-
-      it('should truncate a large body if filterRepresentation is \'fulltruncate\'', async () => {
-        // transactionData body lengths > config.truncateSize
-
-        const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
-
-        const res = await request(constants.BASE_URL)
-          .get(`/transactions/${tx._id}?filterRepresentation=fulltruncate`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .expect(200)
-
-        res.body.request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
       })
     })
 
