@@ -9,10 +9,7 @@ import * as events from '../middleware/events'
 import * as utils from '../utils'
 import { ChannelModelAPI } from '../model/channels'
 import { TransactionModelAPI } from '../model/transactions'
-import { config } from '../config'
 import { addBodiesToTransactions, extractTransactionPayloadIntoChunks, promisesToRemoveAllTransactionBodies } from '../contentChunk'
-
-const apiConf = config.get('api')
 
 function hasError (updates) {
   if (updates.error != null) { return true }

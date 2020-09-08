@@ -215,7 +215,6 @@ describe('API Integration Tests', () => {
 
   describe('Transactions REST Api testing', () => {
     describe('*addTransaction()', () => {
-
       it('should add a transaction and return status 201 - transaction created', async () => {
         const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
         await request(constants.BASE_URL)
