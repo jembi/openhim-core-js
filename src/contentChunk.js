@@ -2,10 +2,8 @@
 import mongodb from 'mongodb'
 import zlib from 'zlib'
 import { PassThrough } from 'stream'
-import { config, connectionDefault } from './config'
+import { connectionDefault } from './config'
 import { obtainCharset } from './utils'
-
-const apiConf = config.get('api')
 
 let bucket
 export const getGridFSBucket = () => {
