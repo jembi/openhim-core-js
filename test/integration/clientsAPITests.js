@@ -155,6 +155,20 @@ describe('API Integration Tests', () => {
           .send(conflict)
           .expect(409)
       })
+
+      it('should reject a new client with a client ID and role that conflict', async () => {
+        const clientWithConflict = Object.assign({}, testAppDoc)
+        clientWithConflict.clientID = 'PoC'
+
+        await request(constants.BASE_URL)
+          .post('/clients')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(clientWithConflict)
+          .expect(400)
+      })
     })
 
     describe('*getClient(_id)', () => {
