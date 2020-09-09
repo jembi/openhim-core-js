@@ -369,6 +369,36 @@ describe('API Integration Tests', () => {
         task.should.have.property('remainingTransactions', 3)
       })
 
+
+      it('should add a new task and update the transactions\' autoRetry attempt number', async () => {
+        const tids = ['888888888888888888888888', '999999999999999999999999', '101010101010101010101010']
+        const newTask = { tids }
+
+        await request(constants.BASE_URL)
+          .post('/tasks')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(newTask)
+          .expect(201)
+
+        const task = await TaskModelAPI.findOne({
+          $and: [{ transactions: { $elemMatch: { tid: '888888888888888888888888' } } },
+          { transactions: { $elemMatch: { tid: '999999999999999999999999' } } },
+          { transactions: { $elemMatch: { tid: '101010101010101010101010' } } }]
+        })
+
+        const transactionsToRerun = await TransactionModelAPI.find({_id: { $in: tids }})
+
+        task.should.have.property('status', 'Queued')
+        task.transactions.should.have.length(3)
+        transactionsToRerun.should.have.length(3)
+        transactionsToRerun[0].autoRetryAttempt.should.equal(0)
+        transactionsToRerun[1].autoRetryAttempt.should.equal(0)
+        transactionsToRerun[2].autoRetryAttempt.should.equal(0)
+      })
+
       it('should NOT add a new task (non Admin user - No permission for one transaction)', async () => {
         const newTask =
           { tids: ['112233445566778899101122', '888888888888888888888888', '999999999999999999999999', '101010101010101010101010'] }
