@@ -43,10 +43,10 @@ function getProjectionObject (filterRepresentation) {
       return {
         'request.bodyId': 0,
         'response.bodyId': 0,
-        'routes.request.body': 0,
-        'routes.response.body': 0,
-        'orchestrations.request.body': 0,
-        'orchestrations.response.body': 0
+        'routes.request.bodyId': 0,
+        'routes.response.bodyId': 0,
+        'orchestrations.request.bodyId': 0,
+        'orchestrations.response.bodyId': 0
       }
     case 'full':
       // view all transaction data
