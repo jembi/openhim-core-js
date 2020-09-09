@@ -933,7 +933,8 @@ describe('API Integration Tests', () => {
         res.body.request.headers['header-title'].should.equal('header1-value')
         res.body.request.headers['another-header'].should.equal('another-header-value')
         res.body.request.querystring.should.equal('param1=value1&param2=value2')
-        res.body.request.body.should.equal('<HTTP body request>')
+        should.exist(res.body.request.bodyId)
+        should.not.exist(res.body.request.body)
         res.body.request.method.should.equal('POST')
       })
 

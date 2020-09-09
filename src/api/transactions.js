@@ -302,27 +302,20 @@ export async function getTransactionById (ctx, transactionId) {
     // --------------Check if user has permission to view full content----------------- #
     // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
-
     const transaction = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
 
-    // retrieve transaction request and response bodies
-    const resultArray = await addBodiesToTransactions([transaction])
-    const result = resultArray[0]
-
-    // Test if the result if valid
-    if (!result) {
+    if (!transaction) {
       ctx.body = `Could not find transaction with ID: ${transactionId}`
       ctx.status = 404
-      // Test if the user is authorised
     } else if (!authorisation.inGroup('admin', ctx.authenticated)) {
       const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
-      if (getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0) {
-        ctx.body = result
+      if (getChannelIDsArray(channels).indexOf(transaction.channelID.toString()) >= 0) {
+        ctx.body = transaction
       } else {
         return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`, 'info')
       }
     } else {
-      ctx.body = result
+      ctx.body = transaction
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not get transaction by ID via the API: ${e}`, 'error')
