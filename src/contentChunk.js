@@ -181,6 +181,24 @@ export const retrievePayload = async fileId => {
   })
 }
 
+export const retrieveBody = async (bodyId, range) => {
+  if (!bodyId) {
+    throw new Error('bodyID not supplied')
+  }
+
+  const fileDetails = await getFileDetails(bodyId)
+
+  const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
+  const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
+
+  const bucket = getGridFSBucket()
+  const downloadStream = bucket.openDownloadStream(bodyId, range)
+  downloadStream.on('error', err => { throw err }) // TODO what would this do?
+
+  // apply the decompression transformation
+  return { stream: downloadStream.pipe(decompressionStream), fileDetails }
+}
+
 export const addBodiesToTransactions = async (transactions) => {
   if (!transactions || !Array.isArray(transactions) || transactions.length < 1) {
     return []

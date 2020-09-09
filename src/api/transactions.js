@@ -2,6 +2,7 @@
 
 import logger from 'winston'
 import { promisify } from 'util'
+import { Types } from 'mongoose'
 
 import * as authorisation from './authorisation'
 import * as autoRetryUtils from '../autoRetry'
@@ -10,7 +11,7 @@ import * as utils from '../utils'
 import { ChannelModelAPI } from '../model/channels'
 import { TransactionModelAPI } from '../model/transactions'
 import { config } from '../config'
-import { addBodiesToTransactions, extractTransactionPayloadIntoChunks, promisesToRemoveAllTransactionBodies } from '../contentChunk'
+import { addBodiesToTransactions, extractTransactionPayloadIntoChunks, promisesToRemoveAllTransactionBodies, retrieveBody } from '../contentChunk'
 
 const apiConf = config.get('api')
 
@@ -500,4 +501,45 @@ export async function removeTransaction (ctx, transactionId) {
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not remove transaction via the API: ${e}`, 'error')
   }
+}
+
+/*
+ * Streams a transaction body
+ */
+export async function getTransactionBodyById (ctx, transactionId, bodyId) {
+  transactionId = unescape(transactionId)
+
+  // Test if the user is authorised
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    const transaction = await TransactionModelAPI.findById(transactionId).exec()
+    const channels = await authorisation.getUserViewableChannels(ctx.authenticated, 'txViewFullAcl')
+    if (!getChannelIDsArray(channels).includes(transaction.channelID.toString())) {
+      return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`, 'info')
+    }
+  }
+
+  // parse range header
+  const rangeHeader = ctx.request.header.range || ''
+  const match = rangeHeader.match(/bytes=(?<start>\d+)-(?<end>\d+)/)
+  const range = match ? match.groups : {}
+
+  if (rangeHeader && !(range.start && range.end)) {
+    return utils.logAndSetResponse(ctx, 400, 'Only accepts single ranges with both a start and an end', 'info')
+  }
+
+  const body = await retrieveBody(new Types.ObjectId(bodyId), range)
+
+  // set response
+  ctx.status = rangeHeader ? 206 : 200
+  ctx.set('accept-ranges', 'bytes')
+  ctx.set('content-type', 'application/text')
+  if (rangeHeader) {
+    ctx.set('content-range', `bytes ${range.start || ''}-${range.end || ''}/${body.fileDetails.length}`)
+    ctx.set('content-length', Math.min((range.end - range.start) + 1, body.fileDetails.length))
+  } else {
+    ctx.set('content-length', body.fileDetails.length)
+  }
+
+  // assign body to a stream
+  ctx.body = body.stream
 }

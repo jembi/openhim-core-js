@@ -1137,5 +1137,91 @@ describe('API Integration Tests', () => {
           .expect(403)
       })
     })
+
+    describe('*getTransactionBodyById', () => {
+      it('should stream back a full transaction body', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        res.text.should.be.exactly('<HTTP body request>')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-length': '19'
+        })
+      })
+
+      it('should stream back a RANGE of a transaction body', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=1-5')
+          .expect(206)
+
+        res.text.should.be.exactly('HTTP')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-range': 'bytes 1-5/19',
+          'content-length': '5'
+        })
+      })
+
+      it('should error on an unsupported range', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=1-')
+          .expect(400)
+      })
+
+      it('should error on an invalid range', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', '???')
+          .expect(400)
+      })
+
+      it('should stream back a full transaction body for the non-root user that has access', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel3._id })).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+      })
+
+      it('should return forbidden for the non-root user that doesn\'t have access', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(403)
+      })
+    })
   })
 })
