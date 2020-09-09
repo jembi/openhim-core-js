@@ -357,12 +357,14 @@ describe('API Integration Tests', () => {
           .expect(201)
 
         const task = await TaskModelAPI.findOne({
-          $and: [{ transactions: { $elemMatch: { tid: '888888888888888888888888' } } },
-          { transactions: { $elemMatch: { tid: '999999999999999999999999' } } },
-          { transactions: { $elemMatch: { tid: '101010101010101010101010' } } }]
+          $and: [
+            { transactions: { $elemMatch: { tid: '888888888888888888888888' } } },
+            { transactions: { $elemMatch: { tid: '999999999999999999999999' } } },
+            { transactions: { $elemMatch: { tid: '101010101010101010101010' } } }
+          ]
         })
 
-        const transactionsToRerun = await TransactionModelAPI.find({_id: { $in: tids }})
+        const transactionsToRerun = await TransactionModelAPI.find({ _id: { $in: tids } })
 
         task.should.have.property('status', 'Queued')
         task.transactions.should.have.length(3)
