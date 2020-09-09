@@ -2,6 +2,8 @@
 import mongodb from 'mongodb'
 import zlib from 'zlib'
 import { PassThrough } from 'stream'
+import logger from 'winston'
+
 import { config, connectionDefault } from './config'
 import { obtainCharset } from './utils'
 
@@ -193,7 +195,7 @@ export const retrieveBody = async (bodyId, range) => {
 
   const bucket = getGridFSBucket()
   const downloadStream = bucket.openDownloadStream(bodyId, range)
-  downloadStream.on('error', err => { throw err }) // TODO what would this do?
+  downloadStream.on('error', err => { logger.error(err) })
 
   // apply the decompression transformation
   return { stream: downloadStream.pipe(decompressionStream), fileDetails }
