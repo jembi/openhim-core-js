@@ -149,7 +149,7 @@ export async function addTask (ctx) {
         This to ensure that any transaction to be rerun is auto retried as per the channel's configuration (autoRetryNumber),
         if there is a failure.
       */
-      await TransactionModelAPI.updateMany({ _id: { $in: transactions.tids }}, { autoRetry: false, autoRetryAttempt: 0 })
+      await TransactionModelAPI.updateMany({ _id: { $in: transactions.tids } }, { autoRetry: false, autoRetryAttempt: 0 })
 
       const task = await new TaskModelAPI(taskObject).save()
 
