@@ -343,7 +343,7 @@ describe('API Integration Tests', () => {
         task.should.have.property('remainingTransactions', 3)
       })
 
-      it('should add a new task and update the transactions\' autoRetry attempt number', async () => {
+      it('should add a new task and update the transactions\' autoRetryAttempt number', async () => {
         const tids = ['888888888888888888888888', '999999999999999999999999', '101010101010101010101010']
         const newTask = { tids }
 
