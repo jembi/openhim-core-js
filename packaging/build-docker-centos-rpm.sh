@@ -25,11 +25,12 @@ echo "Install needed packages: "
 docker exec -it $containerName sh -c "yum install -y git rpm-build redhat-rpm-config gcc-c++ make"
 
 echo "Install needed packages: "
-docker exec -it $containerName sh -c "curl -sL https://rpm.nodesource.com/setup_10.x | bash -"
+docker exec -it $containerName sh -c "curl -sL https://rpm.nodesource.com/setup_12.x | bash -"
 
 echo "Install needed packages: "
-docker exec -it $containerName sh -c "yum -y install nodejs-10.15.0"
+docker exec -it $containerName sh -c "yum -y install nodejs-12.18.1"
 
+echo "https://github.com/jembi/openhim-core-js/archive/v$RELEASE_VERSION.tar.gz"
 echo "Fetch release version from Github"
 docker exec -it $containerName sh -c "mkdir /openhim-core-js && curl -sL 'https://github.com/jembi/openhim-core-js/archive/v$RELEASE_VERSION.tar.gz' | tar --strip-components=1 -zxv -C /openhim-core-js"
 
