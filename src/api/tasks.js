@@ -146,7 +146,7 @@ export async function addTask (ctx) {
 
       /*
         Update the transactions' auto retry attempt number and the autoRetry flag to false
-        This to ensure that any transaction to be rerun is auto retried as per the channel's configuration (autoRetryNumber),
+        This is to ensure that any transaction to be rerun is auto retried as per the channel's configuration (autoRetryNumber),
         if there is a failure.
       */
       await TransactionModelAPI.updateMany({ _id: { $in: transactions.tids } }, { autoRetry: false, autoRetryAttempt: 0 })
