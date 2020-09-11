@@ -523,18 +523,41 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
   const match = rangeHeader.match(/bytes=(?<start>\d+)-(?<end>\d+)/)
   const range = match ? match.groups : {}
 
-  if (rangeHeader && !(range.start && range.end)) {
-    return utils.logAndSetResponse(ctx, 400, 'Only accepts single ranges with both a start and an end', 'info')
+  let gridFsRange
+  if (rangeHeader) {
+    if (!(range.start && range.end)) {
+      return utils.logAndSetResponse(ctx, 400, 'Only accepts single ranges with both a start and an end', 'info')
+    }
+
+    range.start = Number(range.start)
+    range.end = Number(range.end)
+
+    if (range.start >= range.end) {
+      return utils.logAndSetResponse(ctx, 400, `Start range [${range.start}] cannot be greater than or equal to end [${range.end}]`, 'info')
+    }
+
+    // gridfs uses an exclusive end value
+    gridFsRange = Object.assign({}, range)
+    gridFsRange.end += 1
   }
 
-  const body = await retrieveBody(new Types.ObjectId(bodyId), range)
+  let body
+  try {
+    body = await retrieveBody(new Types.ObjectId(bodyId), gridFsRange || {})
+  } catch (err) {
+    return utils.logAndSetResponse(ctx, 400, err.message, 'info')
+  }
+
+  if (range.end && range.end >= body.fileDetails.length) {
+    range.end = body.fileDetails.length - 1
+  }
 
   // set response
   ctx.status = rangeHeader ? 206 : 200
   ctx.set('accept-ranges', 'bytes')
   ctx.set('content-type', 'application/text')
   if (rangeHeader) {
-    ctx.set('content-range', `bytes ${range.start || ''}-${range.end || ''}/${body.fileDetails.length}`)
+    ctx.set('content-range', `bytes ${range.start}-${range.end >= body.fileDetails.length ? body.fileDetails.length - 1 : range.end}/${body.fileDetails.length}`)
     ctx.set('content-length', Math.min((range.end - range.start) + 1, body.fileDetails.length))
   } else {
     ctx.set('content-length', body.fileDetails.length)

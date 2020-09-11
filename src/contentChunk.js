@@ -190,12 +190,24 @@ export const retrieveBody = async (bodyId, range) => {
 
   const fileDetails = await getFileDetails(bodyId)
 
+  if (!fileDetails) {
+    throw new Error('Could not file specified file')
+  }
+  if (range.start && range.start >= fileDetails.length) {
+    throw new Error('Start range cannot be greater than file length')
+  }
+  if (range.end && range.end > fileDetails.length) {
+    range.end = fileDetails.length
+  }
+
   const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
   const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
 
   const bucket = getGridFSBucket()
   const downloadStream = bucket.openDownloadStream(bodyId, range)
-  downloadStream.on('error', err => { logger.error(err) })
+  downloadStream.on('error', err => {
+    logger.error(err)
+  })
 
   // apply the decompression transformation
   return { stream: downloadStream.pipe(decompressionStream), fileDetails }

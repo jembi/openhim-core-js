@@ -1168,12 +1168,32 @@ describe('API Integration Tests', () => {
           .set('range', 'bytes=1-5')
           .expect(206)
 
-        res.text.should.be.exactly('HTTP')
+        res.text.should.be.exactly('HTTP ')
         res.headers.should.have.properties({
           'accept-ranges': 'bytes',
           'content-type': 'application/text',
           'content-range': 'bytes 1-5/19',
           'content-length': '5'
+        })
+      })
+
+      it('should stream back a RANGE of a transaction body, even if the end is greater than the file length', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=5-1024')
+          .expect(206)
+
+        res.text.should.be.exactly(' body request>')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-range': 'bytes 5-18/19',
+          'content-length': '14'
         })
       })
 
@@ -1186,10 +1206,10 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .set('range', 'bytes=1-')
-          .expect(400)
+          .expect(400, 'Only accepts single ranges with both a start and an end')
       })
 
-      it('should error on an invalid range', async () => {
+      it('should error on an invalid range - incorrect format', async () => {
         const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
         await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
@@ -1198,7 +1218,54 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .set('range', '???')
-          .expect(400)
+          .expect(400, 'Only accepts single ranges with both a start and an end')
+      })
+
+      it('should error on an invalid range - start equals end', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=0-0')
+          .expect(400, 'Start range [0] cannot be greater than or equal to end [0]')
+      })
+
+      it('should error on an invalid range - start equals end', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=0-0')
+          .expect(400, 'Start range [0] cannot be greater than or equal to end [0]')
+      })
+
+      it('should error if file cannot be found', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/222222222222222222222222`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(400, 'Could not file specified file')
+      })
+
+      it('should error on an invalid range - start greather than file length', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=100-105')
+          .expect(400, 'Start range cannot be greater than file length')
       })
 
       it('should stream back a full transaction body for the non-root user that has access', async () => {
