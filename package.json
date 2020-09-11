@@ -1,7 +1,7 @@
 {
   "name": "openhim-core",
   "description": "The OpenHIM core application that provides logging and routing of http requests",
-  "version": "5.4.0",
+  "version": "5.4.1",
   "main": "./lib/server.js",
   "bin": {
     "openhim-core": "./bin/openhim-core.js"
@@ -57,7 +57,7 @@
     "koa-bodyparser": "^4.3.0",
     "koa-compress": "3.0.0",
     "koa-route": "3.2.0",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.20",
     "moment": "^2.25.3",
     "moment-timezone": "^0.5.31",
     "mongodb": "^3.5.7",
