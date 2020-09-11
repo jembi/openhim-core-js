@@ -10,10 +10,7 @@ import * as events from '../middleware/events'
 import * as utils from '../utils'
 import { ChannelModelAPI } from '../model/channels'
 import { TransactionModelAPI } from '../model/transactions'
-import { config } from '../config'
 import { addBodiesToTransactions, extractTransactionPayloadIntoChunks, promisesToRemoveAllTransactionBodies, retrieveBody } from '../contentChunk'
-
-const apiConf = config.get('api')
 
 function hasError (updates) {
   if (updates.error != null) { return true }
@@ -52,9 +49,6 @@ function getProjectionObject (filterRepresentation) {
     case 'full':
       // view all transaction data
       return {}
-    case 'fulltruncate':
-      // same as full
-      return {}
     case 'bulkrerun':
       // view only 'bulkrerun' properties
       return { _id: 1, childIDs: 1, canRerun: 1, channelID: 1 }
@@ -69,30 +63,6 @@ function getProjectionObject (filterRepresentation) {
         orchestrations: 0,
         routes: 0
       }
-  }
-}
-
-function truncateTransactionDetails (trx) {
-  const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
-  const truncateAppend = apiConf.truncateAppend != null ? apiConf.truncateAppend : '\n[truncated ...]'
-
-  function trunc (t) {
-    if (((t.request != null ? t.request.body : undefined) != null) && (t.request.body.length > truncateSize)) {
-      t.request.body = t.request.body.slice(0, truncateSize) + truncateAppend
-    }
-    if (((t.response != null ? t.response.body : undefined) != null) && (t.response.body.length > truncateSize)) {
-      t.response.body = t.response.body.slice(0, truncateSize) + truncateAppend
-    }
-  }
-
-  trunc(trx)
-
-  if (trx.routes != null) {
-    for (const r of Array.from(trx.routes)) { trunc(r) }
-  }
-
-  if (trx.orchestrations != null) {
-    return Array.from(trx.orchestrations).map((o) => trunc(o))
   }
 }
 
@@ -251,10 +221,6 @@ export async function getTransactions (ctx) {
     const transformedTransactions = await addBodiesToTransactions(transactions)
 
     ctx.body = transformedTransactions
-
-    if (filterRepresentation === 'fulltruncate') {
-      transformedTransactions.map((trx) => truncateTransactionDetails(trx))
-    }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
   }
@@ -337,31 +303,20 @@ export async function getTransactionById (ctx, transactionId) {
     // --------------Check if user has permission to view full content----------------- #
     // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
-
     const transaction = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
 
-    // retrieve transaction request and response bodies
-    const resultArray = await addBodiesToTransactions([transaction])
-    const result = resultArray[0]
-
-    if (result && (filterRepresentation === 'fulltruncate')) {
-      truncateTransactionDetails(result)
-    }
-
-    // Test if the result if valid
-    if (!result) {
+    if (!transaction) {
       ctx.body = `Could not find transaction with ID: ${transactionId}`
       ctx.status = 404
-      // Test if the user is authorised
     } else if (!authorisation.inGroup('admin', ctx.authenticated)) {
       const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
-      if (getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0) {
-        ctx.body = result
+      if (getChannelIDsArray(channels).indexOf(transaction.channelID.toString()) >= 0) {
+        ctx.body = transaction
       } else {
         return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`, 'info')
       }
     } else {
-      ctx.body = result
+      ctx.body = transaction
     }
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not get transaction by ID via the API: ${e}`, 'error')

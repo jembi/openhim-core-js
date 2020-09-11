@@ -37,8 +37,6 @@
     "port": 8080,
     "authWindowSeconds": 10,
     "maxPayloadSizeMB": 50,
-    "truncateSize": 15000,
-    "truncateAppend": "\n[truncated ...]",
     "authenticationTypes": ["token"]
   },
   "rerun": {
