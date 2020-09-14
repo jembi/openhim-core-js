@@ -209,7 +209,7 @@ upgradeFuncs.push({
   async func (batchSize = 100, concurrency = 5) {
     const totalTransactions = await TransactionModel.countDocuments().exec()
     let batchNum = 0
-    let currentlyExecuting = []
+    const currentlyExecuting = []
     const totalBatches = Math.ceil(totalTransactions / batchSize)
     const startTime = new Date()
 

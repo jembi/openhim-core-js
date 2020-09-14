@@ -419,7 +419,7 @@ describe('Upgrade DB Tests', () => {
     })
   })
 
-  describe(`updateFunction3 - Migrate transaction bodies to GridFS`, () => {
+  describe('updateFunction3 - Migrate transaction bodies to GridFS', () => {
     const upgradeFunc = originalUpgradeFuncs[3].func
     let requestDocMain, responseDocMain, transactionData
 
@@ -481,7 +481,7 @@ describe('Upgrade DB Tests', () => {
       await TransactionModel.deleteMany().exec()
     })
 
-    it(`should migrate transactions`, async () => {
+    it('should migrate transactions', async () => {
       await TransactionModel.collection.insert(Object.assign({}, transactionData))
 
       await upgradeFunc()
@@ -500,7 +500,7 @@ describe('Upgrade DB Tests', () => {
       }
     })
 
-    it(`should migrate all transactions across multiple batches`, async () => {
+    it('should migrate all transactions across multiple batches', async () => {
       await TransactionModel.collection.insertMany(Array(5).fill({}).map(() => Object.assign({}, transactionData)))
 
       await upgradeFunc(2)
@@ -519,7 +519,7 @@ describe('Upgrade DB Tests', () => {
       }
     })
 
-    it(`should throw an error when a transaction migration fails`, async () => {
+    it('should throw an error when a transaction migration fails', async () => {
       const replaceOneStub = sinon.stub(TransactionModel, 'replaceOne').returns({ exec: () => Promise.reject(new Error('boom')) })
       await TransactionModel.collection.insert(Object.assign({}, transactionData))
 
@@ -528,7 +528,7 @@ describe('Upgrade DB Tests', () => {
       replaceOneStub.restore()
     })
 
-    it(`should throw an error when a transaction migration fails at concurrency limit`, async () => {
+    it('should throw an error when a transaction migration fails at concurrency limit', async () => {
       const replaceOneStub = sinon.stub(TransactionModel, 'replaceOne').returns({ exec: () => Promise.reject(new Error('boom2')) })
       await TransactionModel.collection.insert(Object.assign({}, transactionData))
 
