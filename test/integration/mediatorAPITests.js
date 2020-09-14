@@ -1280,7 +1280,7 @@ describe('API Integration Tests', () => {
           .auth('mediatorTestApp', 'password')
           .expect(200)
 
-        res.body.toString().should.equal(mediatorResponse.response.body)
+        res.text.should.equal(mediatorResponse.response.body)
       })
 
       it('should setup the correct metadata on the transaction as specified by the mediator response', async () => {

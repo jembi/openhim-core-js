@@ -381,7 +381,7 @@ describe('API Integration Tests', () => {
         res.body.groups.should.have.length(2)
       })
 
-      it(`should find a user regardless of email case`, async () => {
+      it('should find a user regardless of email case', async () => {
         const res = await request(constants.BASE_URL)
           .get(`/users/${user1.email.toUpperCase()}`)
           .set('auth-username', testUtils.rootUser.email)

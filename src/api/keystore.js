@@ -66,7 +66,7 @@ export async function setServerPassphrase (ctx) {
   }
 
   try {
-    const {passphrase} = ctx.request.body
+    const { passphrase } = ctx.request.body
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
     keystoreDoc.passphrase = passphrase
     await keystoreDoc.save()
@@ -92,7 +92,7 @@ export async function setServerCert (ctx) {
   try {
     let certInfo
     let fingerprint
-    const {cert, passphrase} = ctx.request.body
+    const { cert, passphrase } = ctx.request.body
     const readCertificateInfo = promisify(pem.readCertificateInfo)
     const getFingerprint = promisify(pem.getFingerprint)
     try {
@@ -125,7 +125,7 @@ export async function setServerKey (ctx) {
   }
 
   try {
-    const {key, passphrase} = ctx.request.body
+    const { key, passphrase } = ctx.request.body
     const keystoreDoc = await KeystoreModelAPI.findOne().exec()
     keystoreDoc.key = key
     keystoreDoc.passphrase = passphrase
@@ -232,7 +232,7 @@ export async function verifyServerKeys (ctx) {
       return utils.logAndSetResponse(ctx, 400, `Could not verify certificate and key, are they valid? ${error}`, 'error')
     }
 
-    ctx.body = {valid: result}
+    ctx.body = { valid: result }
     ctx.status = 200
   } catch (error) {
     utils.logAndSetResponse(ctx, 500, `Could not determine validity via the API: ${error}`, 'error')

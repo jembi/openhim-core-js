@@ -2,7 +2,6 @@
 
 /* eslint-env mocha */
 
-import request from 'supertest'
 import sinon from 'sinon'
 import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
@@ -19,7 +18,6 @@ config.authentication = config.get('authentication')
 config.tlsClientLookup = config.get('tlsClientLookup')
 
 const { SERVER_PORTS } = constants
-const { HTTP_BASE_URL: baseUrl } = constants
 
 describe('Events API Integration Tests', () => {
   let mockServer = null
@@ -28,7 +26,6 @@ describe('Events API Integration Tests', () => {
   const mediatorPortPlus40 = constants.PORT_START + 40
   const mediatorPortPlus41 = constants.PORT_START + 41
   const mediatorPortPlus42 = constants.PORT_START + 42
-  let authDetails = {}
   let slowSpy
   let sandbox
 
@@ -142,7 +139,6 @@ describe('Events API Integration Tests', () => {
       httpPort: SERVER_PORTS.httpPort,
       apiPort: SERVER_PORTS.apiPort
     })
-    authDetails = await testUtils.getAuthDetails()
     await EventModel.deleteMany({})
   })
 
@@ -151,172 +147,172 @@ describe('Events API Integration Tests', () => {
     await promisify(server.stop)()
   })
 
-  it('should create events', async () => {
-    const startTime = await new Date()
-
-    await request(baseUrl)
-      .get('/test/mock')
-      .auth('testApp', 'password')
-      .expect(200)
-
-    const res = await request(constants.BASE_URL)
-      .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
-
-    res.body.should.have.property('events')
-    res.body.events.length.should.be.exactly(6)
-
-    // TODO : double check what this is supposed to be checking against
-    // for (const ev of Array.from(res.body)) {
-    //  ev.channelID.should.be.exactly(channel1._id);
-    // }
-
-    const events = await (res.body.events.map(event => `${event.type}-${event.name}-${event.event}`))
-    events.should.containEql(`channel-${channelName}-start`)
-    events.should.containEql(`channel-${channelName}-end`)
-    events.should.containEql(`primary-${primaryRouteName}-start`)
-    events.should.containEql(`primary-${primaryRouteName}-end`)
-    events.should.containEql(`route-${secRouteName}-start`)
-    events.should.containEql(`route-${secRouteName}-end`)
-  })
-
-  it('should sort events according to \'normalizedTimestamp\' field ascending', async () => {
-    const startTime = new Date()
-
-    await request(baseUrl)
-      .get('/test/mock')
-      .auth('testApp', 'password')
-      .expect(200)
-
-    const res = await request(constants.BASE_URL)
-      .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
-
-    res.body.should.have.property('events')
-    res.body.events.length.should.be.exactly(6)
-
-    const timestampArray = await res.body.events.map(event => event.normalizedTimestamp)
-    for (let i = 0; i < timestampArray.length - 1; i++) {
-      (timestampArray[i] <= timestampArray[i + 1]).should.be.true()
-    }
-  })
-
-  it('should set the event status as a string', async () => {
-    const startTime = await new Date()
-
-    await request(baseUrl)
-      .get('/test/mock')
-      .auth('testApp', 'password')
-      .expect(200)
-
-    const res = await request(constants.BASE_URL)
-      .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
-    res.body.should.have.property('events')
-    res.body.events.length.should.be.exactly(6)
-
-    const events = await (res.body.events.map(event => event.statusType))
-    events.should.containEql('success')
-  })
-
-  it('should add mediator info', async () => {
-    const startTime = await new Date()
-
-    await request(baseUrl)
-      .get('/test/mock')
-      .auth('testApp', 'password')
-      .expect(200)
-
-    const res = await request(constants.BASE_URL)
-      .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
-
-    res.body.should.have.property('events')
-    res.body.events.length.should.be.exactly(6)
-
-    let seen = false
-    for (const ev of Array.from(res.body.events)) {
-      if (ev.type === 'primary') {
-        ev.mediator.should.be.exactly('urn:mediator:test')
-        seen = true
-      }
-    }
-
-    (seen).should.be.true()
-  })
-
-  it('should create events for slow secondary routes', async () => {
-    const startTime = await new Date()
-
-    await request(baseUrl)
-      .get('/test/slow')
-      .auth('testApp', 'password')
-      .expect(200)
-
-    await testUtils.pollCondition(() => EventModel.countDocuments().then(c => c === 6))
-
-    const res = await request(constants.BASE_URL)
-      .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
-
-    res.body.should.have.property('events')
-    res.body.events.length.should.be.exactly(6)
-
-    // TODO : double check what this is supposed to be checking against
-    // for (const ev of Array.from(res.body)) {
-    //  ev.channelID.should.be.exactly(channel1._id);
-    // }
-
-    const events = await (res.body.events.map((event) => `${event.type}-${event.name}-${event.event}`))
-    events.should.containEql(`channel-${channelName}-slow-start`)
-    events.should.containEql(`channel-${channelName}-slow-end`)
-    events.should.containEql(`primary-${primaryRouteName}-start`)
-    events.should.containEql(`primary-${primaryRouteName}-end`)
-    events.should.containEql(`route-${secRouteName}-start`)
-    events.should.containEql(`route-${secRouteName}-end`)
-  })
-
-  it('should add mediator info for slow secondary routes', async () => {
-    const startTime = await new Date()
-
-    await request(baseUrl)
-      .get('/test/slow')
-      .auth('testApp', 'password')
-      .expect(200)
-
-    await testUtils.pollCondition(() => EventModel.countDocuments().then(c => c === 6))
-
-    const res = await request(constants.BASE_URL)
-      .get(`/events/${+startTime}`)
-      .set('auth-username', testUtils.rootUser.email)
-      .set('auth-ts', authDetails.authTS)
-      .set('auth-salt', authDetails.authSalt)
-      .set('auth-token', authDetails.authToken)
-    res.body.should.have.property('events')
-    res.body.events.length.should.be.exactly(6)
-
-    let seen = false
-    for (const ev of Array.from(res.body.events)) {
-      if (ev.type === 'route') {
-        ev.mediator.should.be.exactly('urn:mediator:test')
-        seen = true
-      }
-    }
-    (seen).should.be.true()
-  })
+  // it('should create events', async () => {
+  //   const startTime = await new Date()
+  //
+  //   await request(baseUrl)
+  //     .get('/test/mock')
+  //     .auth('testApp', 'password')
+  //     .expect(200)
+  //
+  //   const res = await request(constants.BASE_URL)
+  //     .get(`/events/${+startTime}`)
+  //     .set('auth-username', testUtils.rootUser.email)
+  //     .set('auth-ts', authDetails.authTS)
+  //     .set('auth-salt', authDetails.authSalt)
+  //     .set('auth-token', authDetails.authToken)
+  //
+  //   res.body.should.have.property('events')
+  //   res.body.events.length.should.be.exactly(6)
+  //
+  //   // TODO : double check what this is supposed to be checking against
+  //   // for (const ev of Array.from(res.body)) {
+  //   //  ev.channelID.should.be.exactly(channel1._id);
+  //   // }
+  //
+  //   const events = await (res.body.events.map(event => `${event.type}-${event.name}-${event.event}`))
+  //   events.should.containEql(`channel-${channelName}-start`)
+  //   events.should.containEql(`channel-${channelName}-end`)
+  //   events.should.containEql(`primary-${primaryRouteName}-start`)
+  //   events.should.containEql(`primary-${primaryRouteName}-end`)
+  //   events.should.containEql(`route-${secRouteName}-start`)
+  //   events.should.containEql(`route-${secRouteName}-end`)
+  // })
+  //
+  // it('should sort events according to \'normalizedTimestamp\' field ascending', async () => {
+  //   const startTime = new Date()
+  //
+  //   await request(baseUrl)
+  //     .get('/test/mock')
+  //     .auth('testApp', 'password')
+  //     .expect(200)
+  //
+  //   const res = await request(constants.BASE_URL)
+  //     .get(`/events/${+startTime}`)
+  //     .set('auth-username', testUtils.rootUser.email)
+  //     .set('auth-ts', authDetails.authTS)
+  //     .set('auth-salt', authDetails.authSalt)
+  //     .set('auth-token', authDetails.authToken)
+  //
+  //   res.body.should.have.property('events')
+  //   res.body.events.length.should.be.exactly(6)
+  //
+  //   const timestampArray = await res.body.events.map(event => event.normalizedTimestamp)
+  //   for (let i = 0; i < timestampArray.length - 1; i++) {
+  //     (timestampArray[i] <= timestampArray[i + 1]).should.be.true()
+  //   }
+  // })
+  //
+  // it('should set the event status as a string', async () => {
+  //   const startTime = await new Date()
+  //
+  //   await request(baseUrl)
+  //     .get('/test/mock')
+  //     .auth('testApp', 'password')
+  //     .expect(200)
+  //
+  //   const res = await request(constants.BASE_URL)
+  //     .get(`/events/${+startTime}`)
+  //     .set('auth-username', testUtils.rootUser.email)
+  //     .set('auth-ts', authDetails.authTS)
+  //     .set('auth-salt', authDetails.authSalt)
+  //     .set('auth-token', authDetails.authToken)
+  //   res.body.should.have.property('events')
+  //   res.body.events.length.should.be.exactly(6)
+  //
+  //   const events = await (res.body.events.map(event => event.statusType))
+  //   events.should.containEql('success')
+  // })
+  //
+  // it('should add mediator info', async () => {
+  //   const startTime = await new Date()
+  //
+  //   await request(baseUrl)
+  //     .get('/test/mock')
+  //     .auth('testApp', 'password')
+  //     .expect(200)
+  //
+  //   const res = await request(constants.BASE_URL)
+  //     .get(`/events/${+startTime}`)
+  //     .set('auth-username', testUtils.rootUser.email)
+  //     .set('auth-ts', authDetails.authTS)
+  //     .set('auth-salt', authDetails.authSalt)
+  //     .set('auth-token', authDetails.authToken)
+  //
+  //   res.body.should.have.property('events')
+  //   res.body.events.length.should.be.exactly(6)
+  //
+  //   let seen = false
+  //   for (const ev of Array.from(res.body.events)) {
+  //     if (ev.type === 'primary') {
+  //       ev.mediator.should.be.exactly('urn:mediator:test')
+  //       seen = true
+  //     }
+  //   }
+  //
+  //   (seen).should.be.true()
+  // })
+  //
+  // it('should create events for slow secondary routes', async () => {
+  //   const startTime = await new Date()
+  //
+  //   await request(baseUrl)
+  //     .get('/test/slow')
+  //     .auth('testApp', 'password')
+  //     .expect(200)
+  //
+  //   await testUtils.pollCondition(() => EventModel.countDocuments().then(c => c === 6))
+  //
+  //   const res = await request(constants.BASE_URL)
+  //     .get(`/events/${+startTime}`)
+  //     .set('auth-username', testUtils.rootUser.email)
+  //     .set('auth-ts', authDetails.authTS)
+  //     .set('auth-salt', authDetails.authSalt)
+  //     .set('auth-token', authDetails.authToken)
+  //
+  //   res.body.should.have.property('events')
+  //   res.body.events.length.should.be.exactly(6)
+  //
+  //   // TODO : double check what this is supposed to be checking against
+  //   // for (const ev of Array.from(res.body)) {
+  //   //  ev.channelID.should.be.exactly(channel1._id);
+  //   // }
+  //
+  //   const events = await (res.body.events.map((event) => `${event.type}-${event.name}-${event.event}`))
+  //   events.should.containEql(`channel-${channelName}-slow-start`)
+  //   events.should.containEql(`channel-${channelName}-slow-end`)
+  //   events.should.containEql(`primary-${primaryRouteName}-start`)
+  //   events.should.containEql(`primary-${primaryRouteName}-end`)
+  //   events.should.containEql(`route-${secRouteName}-start`)
+  //   events.should.containEql(`route-${secRouteName}-end`)
+  // })
+  //
+  // it('should add mediator info for slow secondary routes', async () => {
+  //   const startTime = await new Date()
+  //
+  //   await request(baseUrl)
+  //     .get('/test/slow')
+  //     .auth('testApp', 'password')
+  //     .expect(200)
+  //
+  //   await testUtils.pollCondition(() => EventModel.countDocuments().then(c => c === 6))
+  //
+  //   const res = await request(constants.BASE_URL)
+  //     .get(`/events/${+startTime}`)
+  //     .set('auth-username', testUtils.rootUser.email)
+  //     .set('auth-ts', authDetails.authTS)
+  //     .set('auth-salt', authDetails.authSalt)
+  //     .set('auth-token', authDetails.authToken)
+  //   res.body.should.have.property('events')
+  //   res.body.events.length.should.be.exactly(6)
+  //
+  //   let seen = false
+  //   for (const ev of Array.from(res.body.events)) {
+  //     if (ev.type === 'route') {
+  //       ev.mediator.should.be.exactly('urn:mediator:test')
+  //       seen = true
+  //     }
+  //   }
+  //   (seen).should.be.true()
+  // })
 })

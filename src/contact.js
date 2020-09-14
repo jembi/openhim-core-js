@@ -16,7 +16,7 @@ export function sendEmail (contactAddress, title, messagePlain, messageHTML, cal
 
   if (config.email) {
     nodemailerConfig = config.email.nodemailer;
-    ({fromAddress} = config.email)
+    ({ fromAddress } = config.email)
   } else if (config.nodemailer) {
     // Support old config format for backwards compatibility
     nodemailerConfig = config.nodemailer

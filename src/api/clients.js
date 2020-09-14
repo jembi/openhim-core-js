@@ -20,8 +20,8 @@ export async function addClient (ctx) {
   const clientData = ctx.request.body
 
   if (clientData.clientID) {
-    const chResult = await ChannelModelAPI.find({allow: {$in: [clientData.clientID]}}, {name: 1}).exec()
-    const clResult = await ClientModelAPI.find({roles: {$in: [clientData.clientID]}}, {clientID: 1}).exec()
+    const chResult = await ChannelModelAPI.find({ allow: { $in: [clientData.clientID] } }, { name: 1 }).exec()
+    const clResult = await ClientModelAPI.find({ roles: { $in: [clientData.clientID] } }, { clientID: 1 }).exec()
     if (((chResult != null ? chResult.length : undefined) > 0) || ((clResult != null ? clResult.length : undefined) > 0)) {
       return utils.logAndSetResponse(ctx, 409, `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`, 'info')
     }
@@ -97,7 +97,7 @@ export async function findClientByDomain (ctx, clientDomain) {
   clientDomain = unescape(clientDomain)
 
   try {
-    const result = await ClientModelAPI.findOne({clientDomain}).exec()
+    const result = await ClientModelAPI.findOne({ clientDomain }).exec()
     if (result === null) {
       utils.logAndSetResponse(ctx, 404, `Could not find client with clientDomain ${clientDomain}`, 'info')
     } else {
@@ -124,7 +124,7 @@ export async function updateClient (ctx, clientId) {
   if (clientData._id) { delete clientData._id }
 
   if (clientData.clientID) {
-    const clResult = await ClientModelAPI.find({roles: {$in: [clientData.clientID]}}, {clientID: 1}).exec()
+    const clResult = await ClientModelAPI.find({ roles: { $in: [clientData.clientID] } }, { clientID: 1 }).exec()
     if ((clResult != null ? clResult.length : undefined) > 0) {
       return utils.logAndSetResponse(ctx, 409, `A role name conflicts with clientID '${clientData.clientID}'. A role name cannot be the same as a clientID.`, 'info')
     }
@@ -169,7 +169,7 @@ export async function getClients (ctx) {
   }
 
   try {
-    let clients = await ClientModelAPI.find().lean().exec()
+    const clients = await ClientModelAPI.find().lean().exec()
     // Remove the Custom Token IDs from response
     ctx.body = clients.map((client) => {
       if (client.customTokenID) {

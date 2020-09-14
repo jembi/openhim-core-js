@@ -1,15 +1,12 @@
-'use strict'
-
 /* eslint-env mocha */
 
 import request from 'supertest'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
-
-import * as constants from '../constants'
 import * as server from '../../src/server'
+import { ClientModel, ChannelModel } from '../../src/model'
 import * as testUtils from '../utils'
-import { ChannelModel, ClientModel } from '../../src/model'
+import * as constants from '../constants'
+import { promisify } from 'util'
+import { ObjectId } from 'mongodb'
 
 const { SERVER_PORTS } = constants
 
