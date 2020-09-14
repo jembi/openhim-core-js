@@ -97,6 +97,10 @@ const TransactionSchema = new Schema({
   }
 })
 
+export const compactTransactionCollection = async () => {
+  return (await connectionAPI).db.command({compact: 'transactions', force: true})
+}
+
 TransactionSchema.index('request.timestamp')
 TransactionSchema.index({ channelID: 1, 'request.timestamp': -1 })
 TransactionSchema.index({ status: 1, 'request.timestamp': -1 })
