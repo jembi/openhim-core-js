@@ -110,11 +110,11 @@ describe('cullBodies', () => {
   }
 
   async function createTransactionBody (fileId) {
-    db.collection('fs.chunks').insert({
+    db.collection('fs.chunks').insertOne({
       files_id: new ObjectId(fileId),
       data: 'Test Data'
     })
-    db.collection('fs.files').insert({
+    db.collection('fs.files').insertOne({
       _id: new ObjectId(fileId)
     })
   }
