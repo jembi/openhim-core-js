@@ -73,7 +73,7 @@
     "ssl-root-cas": "1.3.1",
     "uuid": "^8.3.0",
     "winston": "3.3.3",
-    "winston-mongodb": "5.0.3",
+    "winston-mongodb": "5.0.5",
     "xml2js": "^0.4.22",
     "xmldom": "0.3.0",
     "xpath": "0.0.29"
