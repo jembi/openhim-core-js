@@ -178,7 +178,7 @@ export const retrieveBody = async (bodyId, range) => {
   const fileDetails = await getFileDetails(bodyId)
 
   if (!fileDetails) {
-    throw new Error('Could not file specified file')
+    throw new Error('Could not find specified file')
   }
   if (range.start && range.start >= fileDetails.length) {
     throw new Error('Start range cannot be greater than file length')

@@ -1192,7 +1192,7 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .expect(400, 'Could not file specified file')
+          .expect(400, 'Could not find specified file')
       })
 
       it('should error on an invalid range - start greather than file length', async () => {
