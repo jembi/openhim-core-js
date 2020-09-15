@@ -1165,7 +1165,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .set('range', 'bytes=1-')
-          .expect(400, 'Only accepts single ranges with both a start and an end')
+          .expect(416, 'Only accepts single ranges with both a start and an end')
       })
 
       it('should error on an invalid range - incorrect format', async () => {
@@ -1177,7 +1177,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .set('range', '???')
-          .expect(400, 'Only accepts single ranges with both a start and an end')
+          .expect(416, 'Only accepts single ranges with both a start and an end')
       })
 
       it('should error on an invalid range - start greater than end', async () => {
@@ -1189,7 +1189,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .set('range', 'bytes=2-0')
-          .expect(400, 'Start range [2] cannot be greater than end [0]')
+          .expect(416, 'Start range [2] cannot be greater than end [0]')
       })
 
       it('should error if file cannot be found', async () => {
@@ -1200,7 +1200,7 @@ describe('API Integration Tests', () => {
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
-          .expect(400, 'Could not find specified file')
+          .expect(404, 'Could not find specified file')
       })
 
       it('should error on an invalid range - start greather than file length', async () => {
@@ -1212,7 +1212,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .set('range', 'bytes=100-105')
-          .expect(400, 'Start range cannot be greater than file length')
+          .expect(416, 'Start range cannot be greater than file length')
       })
 
       it('should stream back a full transaction body for the non-root user that has access', async () => {

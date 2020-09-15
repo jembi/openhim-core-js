@@ -481,14 +481,14 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
   let gridFsRange
   if (rangeHeader) {
     if (!(range.start && range.end)) {
-      return utils.logAndSetResponse(ctx, 400, 'Only accepts single ranges with both a start and an end', 'info')
+      return utils.logAndSetResponse(ctx, 416, 'Only accepts single ranges with both a start and an end', 'info')
     }
 
     range.start = Number(range.start)
     range.end = Number(range.end)
 
     if (range.start > range.end) {
-      return utils.logAndSetResponse(ctx, 400, `Start range [${range.start}] cannot be greater than end [${range.end}]`, 'info')
+      return utils.logAndSetResponse(ctx, 416, `Start range [${range.start}] cannot be greater than end [${range.end}]`, 'info')
     }
 
     // gridfs uses an exclusive end value
@@ -500,7 +500,8 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
   try {
     body = await retrieveBody(new Types.ObjectId(bodyId), gridFsRange || {})
   } catch (err) {
-    return utils.logAndSetResponse(ctx, 400, err.message, 'info')
+    const status = err.status || 400
+    return utils.logAndSetResponse(ctx, status, err.message, 'info')
   }
 
   if (range.end && range.end >= body.fileDetails.length) {
