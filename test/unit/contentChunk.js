@@ -1,15 +1,17 @@
 /* eslint-env mocha */
 /* eslint no-unused-expressions:0 */
 import should from 'should'
+import mongodb from 'mongodb'
+
 import {
   extractStringPayloadIntoChunks,
   retrievePayload,
+  retrieveBody,
   promisesToRemoveAllTransactionBodies,
   addBodiesToTransactions
 } from '../../src/contentChunk'
 import { connectionDefault } from '../../src/config'
 import * as testUtils from '../utils'
-import mongodb from 'mongodb'
 
 const MongoClient = connectionDefault.client
 let db = null
@@ -240,6 +242,13 @@ describe('contentChunk: ', () => {
         err.message.should.eql(
           `FileNotFound: file ${fileId} was not found`)
       )
+    })
+  })
+
+  describe('retrieveBody()', () => {
+    it('should return an error when the file id is null', async () => {
+      const fileId = null
+      await retrieveBody(fileId, {}).should.be.rejectedWith('bodyID not supplied')
     })
   })
 
