@@ -487,8 +487,8 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
     range.start = Number(range.start)
     range.end = Number(range.end)
 
-    if (range.start >= range.end) {
-      return utils.logAndSetResponse(ctx, 400, `Start range [${range.start}] cannot be greater than or equal to end [${range.end}]`, 'info')
+    if (range.start > range.end) {
+      return utils.logAndSetResponse(ctx, 400, `Start range [${range.start}] cannot be greater than end [${range.end}]`, 'info')
     }
 
     // gridfs uses an exclusive end value
