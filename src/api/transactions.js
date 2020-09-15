@@ -475,25 +475,31 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
 
   // parse range header
   const rangeHeader = ctx.request.header.range || ''
-  const match = rangeHeader.match(/bytes=(?<start>\d+)-(?<end>\d+)/)
+  const match = rangeHeader.match(/bytes=(?<start>\d+)-(?<end>\d*)/)
   const range = match ? match.groups : {}
 
   let gridFsRange
   if (rangeHeader) {
-    if (!(range.start && range.end)) {
-      return utils.logAndSetResponse(ctx, 416, 'Only accepts single ranges with both a start and an end', 'info')
+    if (!range.start) {
+      return utils.logAndSetResponse(ctx, 416, 'Only accepts single ranges with at least start value', 'info')
     }
 
     range.start = Number(range.start)
-    range.end = Number(range.end)
+    if (range.end) {
+      range.end = Number(range.end)
+    } else {
+      delete range.end
+    }
 
-    if (range.start > range.end) {
+    if (range.end !== undefined && range.start > range.end) {
       return utils.logAndSetResponse(ctx, 416, `Start range [${range.start}] cannot be greater than end [${range.end}]`, 'info')
     }
 
     // gridfs uses an exclusive end value
     gridFsRange = Object.assign({}, range)
-    gridFsRange.end += 1
+    if (gridFsRange.end !== undefined) {
+      gridFsRange.end += 1
+    }
   }
 
   let body
@@ -502,6 +508,10 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
   } catch (err) {
     const status = err.status || 400
     return utils.logAndSetResponse(ctx, status, err.message, 'info')
+  }
+
+  if (range.start && !range.end) {
+    range.end = body.fileDetails.length
   }
 
   if (range.end && range.end >= body.fileDetails.length) {
@@ -513,7 +523,7 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
   ctx.set('accept-ranges', 'bytes')
   ctx.set('content-type', 'application/text')
   if (rangeHeader) {
-    ctx.set('content-range', `bytes ${range.start}-${range.end >= body.fileDetails.length ? body.fileDetails.length - 1 : range.end}/${body.fileDetails.length}`)
+    ctx.set('content-range', `bytes ${range.start}-${range.end}/${body.fileDetails.length}`)
     ctx.set('content-length', Math.min((range.end - range.start) + 1, body.fileDetails.length))
   } else {
     ctx.set('content-length', body.fileDetails.length)

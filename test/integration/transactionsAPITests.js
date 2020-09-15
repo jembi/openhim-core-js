@@ -1156,16 +1156,24 @@ describe('API Integration Tests', () => {
         })
       })
 
-      it('should error on an unsupported range', async () => {
+      it('should stream back range with wildcard end value', async () => {
         const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
-        await request(constants.BASE_URL)
+        const res = await request(constants.BASE_URL)
           .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .set('range', 'bytes=1-')
-          .expect(416, 'Only accepts single ranges with both a start and an end')
+          .expect(206)
+
+        res.text.should.be.exactly('HTTP body request>')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-range': 'bytes 1-18/19',
+          'content-length': '18'
+        })
       })
 
       it('should error on an invalid range - incorrect format', async () => {
@@ -1177,7 +1185,31 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .set('range', '???')
-          .expect(416, 'Only accepts single ranges with both a start and an end')
+          .expect(416, 'Only accepts single ranges with at least start value')
+      })
+
+      it('should error on an invalid range - multiple ranges', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes 1-18/19, 5-40')
+          .expect(416, 'Only accepts single ranges with at least start value')
+      })
+
+      it('should error on an invalid range - last n bytes', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes -5/19')
+          .expect(416, 'Only accepts single ranges with at least start value')
       })
 
       it('should error on an invalid range - start greater than end', async () => {
