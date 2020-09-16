@@ -2,10 +2,10 @@
 import mongodb from 'mongodb'
 import zlib from 'zlib'
 import { PassThrough } from 'stream'
-import { config, connectionDefault } from './config'
-import { obtainCharset } from './utils'
+import logger from 'winston'
 
-const apiConf = config.get('api')
+import { connectionDefault } from './config'
+import { obtainCharset } from './utils'
 
 let bucket
 export const getGridFSBucket = () => {
@@ -133,10 +133,6 @@ export const retrievePayload = async fileId => {
     throw new Error('Payload id not supplied')
   }
 
-  let payloadSize = 0
-  // Perhaps the truncateSize should be represented in actual size, and not string length
-  const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
-
   const fileDetails = await getFileDetails(fileId)
 
   const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
@@ -151,14 +147,7 @@ export const retrievePayload = async fileId => {
 
   // apply the decompression transformation and start listening for the output chunks
   downloadStream.pipe(decompressionStream)
-  decompressionStream.on('data', (chunk) => {
-    payloadSize += chunk.length
-    if (payloadSize >= truncateSize) {
-      decompressionStream.destroy()
-      downloadStream.destroy()
-    }
-    uncompressedBodyBufs.push(chunk)
-  })
+  decompressionStream.on('data', (chunk) => uncompressedBodyBufs.push(chunk))
 
   return new Promise((resolve) => {
     decompressionStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
@@ -179,6 +168,40 @@ export const retrievePayload = async fileId => {
       }
     }
   })
+}
+
+export const retrieveBody = async (bodyId, range) => {
+  if (!bodyId) {
+    throw new Error('bodyID not supplied')
+  }
+
+  const fileDetails = await getFileDetails(bodyId)
+
+  if (!fileDetails) {
+    const err = new Error('Could not find specified file')
+    err.status = 404
+    throw err
+  }
+  if (range.start && range.start >= fileDetails.length) {
+    const err = new Error('Start range cannot be greater than file length')
+    err.status = 416
+    throw err
+  }
+  if (range.end && range.end > fileDetails.length) {
+    range.end = fileDetails.length
+  }
+
+  const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
+  const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
+
+  const bucket = getGridFSBucket()
+  const downloadStream = bucket.openDownloadStream(bodyId, range)
+  downloadStream.on('error', err => {
+    logger.error(err)
+  })
+
+  // apply the decompression transformation
+  return { stream: downloadStream.pipe(decompressionStream), fileDetails }
 }
 
 export const addBodiesToTransactions = async (transactions) => {
