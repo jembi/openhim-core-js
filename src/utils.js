@@ -156,7 +156,7 @@ export function makeQuerablePromise (promise) {
   let isRejected = false
 
   // Observe the promise, saving the fulfillment in a closure scope.
-  let result = promise.then(
+  const result = promise.then(
     val => {
       isResolved = true
       return val
