@@ -2,6 +2,7 @@
 
 import logger from 'winston'
 import { promisify } from 'util'
+import { Types } from 'mongoose'
 
 import * as authorisation from './authorisation'
 import * as autoRetryUtils from '../autoRetry'
@@ -9,7 +10,7 @@ import * as events from '../middleware/events'
 import * as utils from '../utils'
 import { ChannelModelAPI } from '../model/channels'
 import { TransactionModelAPI } from '../model/transactions'
-import { addBodiesToTransactions, extractTransactionPayloadIntoChunks, promisesToRemoveAllTransactionBodies } from '../contentChunk'
+import { addBodiesToTransactions, extractTransactionPayloadIntoChunks, promisesToRemoveAllTransactionBodies, retrieveBody } from '../contentChunk'
 
 function hasError (updates) {
   if (updates.error != null) { return true }
@@ -40,10 +41,10 @@ function getProjectionObject (filterRepresentation) {
       return {
         'request.bodyId': 0,
         'response.bodyId': 0,
-        'routes.request.body': 0,
-        'routes.response.body': 0,
-        'orchestrations.request.body': 0,
-        'orchestrations.response.body': 0
+        'routes.request.bodyId': 0,
+        'routes.response.bodyId': 0,
+        'orchestrations.request.bodyId': 0,
+        'orchestrations.response.bodyId': 0
       }
     case 'full':
       // view all transaction data
@@ -455,4 +456,79 @@ export async function removeTransaction (ctx, transactionId) {
   } catch (e) {
     utils.logAndSetResponse(ctx, 500, `Could not remove transaction via the API: ${e}`, 'error')
   }
+}
+
+/*
+ * Streams a transaction body
+ */
+export async function getTransactionBodyById (ctx, transactionId, bodyId) {
+  transactionId = unescape(transactionId)
+
+  // Test if the user is authorised
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    const transaction = await TransactionModelAPI.findById(transactionId).exec()
+    const channels = await authorisation.getUserViewableChannels(ctx.authenticated, 'txViewFullAcl')
+    if (!getChannelIDsArray(channels).includes(transaction.channelID.toString())) {
+      return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`, 'info')
+    }
+  }
+
+  // parse range header
+  const rangeHeader = ctx.request.header.range || ''
+  const match = rangeHeader.match(/bytes=(?<start>\d+)-(?<end>\d*)/)
+  const range = match ? match.groups : {}
+
+  let gridFsRange
+  if (rangeHeader) {
+    if (!range.start) {
+      return utils.logAndSetResponse(ctx, 416, 'Only accepts single ranges with at least start value', 'info')
+    }
+
+    range.start = Number(range.start)
+    if (range.end) {
+      range.end = Number(range.end)
+    } else {
+      delete range.end
+    }
+
+    if (range.end !== undefined && range.start > range.end) {
+      return utils.logAndSetResponse(ctx, 416, `Start range [${range.start}] cannot be greater than end [${range.end}]`, 'info')
+    }
+
+    // gridfs uses an exclusive end value
+    gridFsRange = Object.assign({}, range)
+    if (gridFsRange.end !== undefined) {
+      gridFsRange.end += 1
+    }
+  }
+
+  let body
+  try {
+    body = await retrieveBody(new Types.ObjectId(bodyId), gridFsRange || {})
+  } catch (err) {
+    const status = err.status || 400
+    return utils.logAndSetResponse(ctx, status, err.message, 'info')
+  }
+
+  if (range.start && !range.end) {
+    range.end = body.fileDetails.length
+  }
+
+  if (range.end && range.end >= body.fileDetails.length) {
+    range.end = body.fileDetails.length - 1
+  }
+
+  // set response
+  ctx.status = rangeHeader ? 206 : 200
+  ctx.set('accept-ranges', 'bytes')
+  ctx.set('content-type', 'application/text')
+  if (rangeHeader) {
+    ctx.set('content-range', `bytes ${range.start}-${range.end}/${body.fileDetails.length}`)
+    ctx.set('content-length', Math.min((range.end - range.start) + 1, body.fileDetails.length))
+  } else {
+    ctx.set('content-length', body.fileDetails.length)
+  }
+
+  // assign body to a stream
+  ctx.body = body.stream
 }
