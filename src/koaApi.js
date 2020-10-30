@@ -77,6 +77,7 @@ export function setupApp (done) {
   app.use(route.get('/transactions/clients/:clientId', transactions.findTransactionByClientId))
   app.use(route.put('/transactions/:transactionId', transactions.updateTransaction))
   app.use(route.delete('/transactions/:transactionId', transactions.removeTransaction))
+  app.use(route.get('/transactions/:transactionId/bodies/:bodyId', transactions.getTransactionBodyById))
 
   app.use(route.get('/groups', contactGroups.getContactGroups))
   app.use(route.get('/groups/:contactGroupId', contactGroups.getContactGroup))

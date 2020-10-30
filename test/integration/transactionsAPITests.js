@@ -20,8 +20,6 @@ import { config } from '../../src/config'
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
 
-const TRUNCATE_APPEND = '\n[truncated ...]'
-
 const clearTransactionBodies = function (transaction) {
   transaction.request.body = ''
   transaction.response.body = ''
@@ -179,7 +177,6 @@ describe('API Integration Tests', () => {
     }
 
     config.api = config.get('api')
-    config.api.truncateAppend = TRUNCATE_APPEND
 
     config.application = config.get('application')
     const results = await Promise.all([
@@ -218,26 +215,6 @@ describe('API Integration Tests', () => {
 
   describe('Transactions REST Api testing', () => {
     describe('*addTransaction()', () => {
-      it('should add a transaction and truncate the large response body', async () => {
-        const td = testUtils.clone(transactionData)
-        td.channelID = channel._id
-        td.request.body = ''
-        td.response.body = LARGE_BODY
-        await request(constants.BASE_URL)
-          .post('/transactions')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .send(td)
-          .expect(201)
-
-        const newTransaction = await TransactionModel.findOne({ clientID: transactionData.clientID });
-        (newTransaction !== null).should.be.true()
-        ObjectId.isValid(newTransaction.response.bodyId).should.be.true()
-        newTransaction.canRerun.should.be.true()
-      })
-
       it('should add a transaction and return status 201 - transaction created', async () => {
         const newTransactionData = Object.assign({}, transactionData, { channelID: channel._id })
         await request(constants.BASE_URL)
@@ -935,29 +912,6 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(403)
       })
-
-      it('should truncate transaction details if filterRepresentation is fulltruncate ', async () => {
-        await new TransactionModel(transactionData).save()
-
-        const res = await request(constants.BASE_URL)
-          .get('/transactions?filterRepresentation=fulltruncate')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .expect(200)
-
-        res.body.length.should.equal(1)
-        res.body[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-
-        // Uncomment this when the functionality for retrieving the routes bodies is added
-        res.body[0].routes[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].routes[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-
-        res.body[0].orchestrations[0].request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-        res.body[0].orchestrations[0].response.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
-      })
     })
 
     describe('*getTransactionById (transactionId)', () => {
@@ -979,7 +933,8 @@ describe('API Integration Tests', () => {
         res.body.request.headers['header-title'].should.equal('header1-value')
         res.body.request.headers['another-header'].should.equal('another-header-value')
         res.body.request.querystring.should.equal('param1=value1&param2=value2')
-        res.body.request.body.should.equal('<HTTP body request>')
+        should.exist(res.body.request.bodyId)
+        should.not.exist(res.body.request.body)
         res.body.request.method.should.equal('POST')
       })
 
@@ -1015,22 +970,6 @@ describe('API Integration Tests', () => {
         res.body.request.querystring.should.equal('param1=value1&param2=value2')
         should.not.exist(res.body.request.body)
         res.body.request.method.should.equal('POST')
-      })
-
-      it('should truncate a large body if filterRepresentation is \'fulltruncate\'', async () => {
-        // transactionData body lengths > config.truncateSize
-
-        const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel._id })).save()
-
-        const res = await request(constants.BASE_URL)
-          .get(`/transactions/${tx._id}?filterRepresentation=fulltruncate`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .expect(200)
-
-        res.body.request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
       })
     })
 
@@ -1130,6 +1069,199 @@ describe('API Integration Tests', () => {
 
         await request(constants.BASE_URL)
           .del(`/transactions/${transactionId}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(403)
+      })
+    })
+
+    describe('*getTransactionBodyById', () => {
+      it('should stream back a full transaction body', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        res.text.should.be.exactly('<HTTP body request>')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-length': '19'
+        })
+      })
+
+      it('should stream back a RANGE of a transaction body', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=1-5')
+          .expect(206)
+
+        res.text.should.be.exactly('HTTP ')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-range': 'bytes 1-5/19',
+          'content-length': '5'
+        })
+      })
+
+      it('should stream back a single byte of a transaction body', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=0-0')
+          .expect(206)
+
+        res.text.should.be.exactly('<')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-range': 'bytes 0-0/19',
+          'content-length': '1'
+        })
+      })
+
+      it('should stream back a RANGE of a transaction body, even if the end is greater than the file length', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=5-1024')
+          .expect(206)
+
+        res.text.should.be.exactly(' body request>')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-range': 'bytes 5-18/19',
+          'content-length': '14'
+        })
+      })
+
+      it('should stream back range with wildcard end value', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        const res = await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=1-')
+          .expect(206)
+
+        res.text.should.be.exactly('HTTP body request>')
+        res.headers.should.have.properties({
+          'accept-ranges': 'bytes',
+          'content-type': 'application/text',
+          'content-range': 'bytes 1-18/19',
+          'content-length': '18'
+        })
+      })
+
+      it('should error on an invalid range - incorrect format', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', '???')
+          .expect(416, 'Only accepts single ranges with at least start value')
+      })
+
+      it('should error on an invalid range - multiple ranges', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes 1-18/19, 5-40')
+          .expect(416, 'Only accepts single ranges with at least start value')
+      })
+
+      it('should error on an invalid range - last n bytes', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes -5/19')
+          .expect(416, 'Only accepts single ranges with at least start value')
+      })
+
+      it('should error on an invalid range - start greater than end', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=2-0')
+          .expect(416, 'Start range [2] cannot be greater than end [0]')
+      })
+
+      it('should error if file cannot be found', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/222222222222222222222222`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(404, 'Could not find specified file')
+      })
+
+      it('should error on an invalid range - start greather than file length', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .set('range', 'bytes=100-105')
+          .expect(416, 'Start range cannot be greater than file length')
+      })
+
+      it('should stream back a full transaction body for the non-root user that has access', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData, { channelID: channel3._id })).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+      })
+
+      it('should return forbidden for the non-root user that doesn\'t have access', async () => {
+        const tx = await new TransactionModel(Object.assign({}, transactionData)).save()
+        await request(constants.BASE_URL)
+          .get(`/transactions/${tx._id}/bodies/${tx.request.bodyId}`)
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
