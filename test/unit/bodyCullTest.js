@@ -4,7 +4,6 @@
 
 import moment from 'moment'
 import should from 'should'
-import sinon from 'sinon'
 import { ObjectId } from 'mongodb'
 
 import { ChannelModel, ClientModel, TransactionModel } from '../../src/model'
@@ -14,7 +13,6 @@ import { connectionDefault } from '../../src/config'
 import { cullBodies } from '../../src/bodyCull'
 
 const MongoClient = connectionDefault.client
-const testTime = new Date(2016, 2, 12)
 const cullTime = new Date(2016, 2, 9)
 
 const clientDoc = Object.freeze({
@@ -88,7 +86,6 @@ const baseTransaction = Object.freeze({
 
 describe('cullBodies', () => {
   let db
-  let clock
   let channelHasNotCulled
   let channelHasCulled
   let channelNeverCull
@@ -132,7 +129,6 @@ describe('cullBodies', () => {
     await createTransactionBody(requestBodyId)
     await createTransactionBody(responseBodyId)
 
-    clock = sinon.useFakeTimers(testTime.getTime())
     const persisted = await Promise.all([
       new ChannelModel(channelHasNotCulledDoc).save(),
       new ChannelModel(channelHasCulledDoc).save(),
@@ -146,7 +142,6 @@ describe('cullBodies', () => {
   })
 
   afterEach(async () => {
-    clock.restore()
     await Promise.all([
       ClientModel.deleteMany(),
       ChannelModel.deleteMany(),
@@ -191,8 +186,8 @@ describe('cullBodies', () => {
     const hasCulled = await ChannelModel.findOne({ name: 'hasCulled' })
     const dontCull = await ChannelModel.findOne({ name: 'dontCull' })
 
-    neverCulled.lastBodyCleared.should.eql(testTime)
-    hasCulled.lastBodyCleared.should.eql(testTime)
+    neverCulled.lastBodyCleared.getDate().should.eql(new Date().getDate())
+    hasCulled.lastBodyCleared.getDate().should.eql(new Date().getDate())
     should(dontCull.lastBodyCleared).undefined()
   })
 
