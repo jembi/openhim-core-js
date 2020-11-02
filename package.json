@@ -76,7 +76,7 @@
     "winston-mongodb": "5.0.5",
     "xml2js": "^0.4.23",
     "xmldom": "^0.4.0",
-    "xpath": "0.0.29"
+    "xpath": "0.0.32"
   },
   "devDependencies": {
     "@babel/cli": "^7.11.6",
