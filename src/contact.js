@@ -2,7 +2,7 @@
 
 import logger from 'winston'
 import nodemailer from 'nodemailer'
-import request from 'request'
+import axios from 'axios'
 
 import { config } from './config'
 
@@ -53,12 +53,16 @@ function sendSMS (contactAddress, message, callback) {
 
 function sendSMSClickatell (contactAddress, message, callback) {
   logger.info(`Sending SMS to '${contactAddress}' using Clickatell`)
-  return request(`http://api.clickatell.com/http/sendmsg?api_id=${config.smsGateway.config.apiID}&` +
+
+  return axios(`http://api.clickatell.com/http/sendmsg?api_id=${config.smsGateway.config.apiID}&` +
     `user=${config.smsGateway.config.user}&password=${config.smsGateway.config.pass}&` +
-    `to=${contactAddress}&text=${escapeSpaces(message)}`, (err, response, body) => {
-    if (body != null) { logger.info(`Received response from Clickatell: ${body}`) }
-    return callback(err != null ? err : null)
-  })
+    `to=${contactAddress}&text=${escapeSpaces(message)}`).then(response => {
+      if (response.data != null) { logger.info(`Received response from Clickatell: ${response.data}`) }
+      return callback(null)
+    })
+    .catch(err => {
+      return callback(err)
+    })
 }
 
 const escapeSpaces = str => str.replace(' ', '+')
