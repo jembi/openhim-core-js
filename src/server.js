@@ -19,7 +19,7 @@ import nconf from 'nconf'
 import os from 'os'
 import pem from 'pem'
 import tls from 'tls'
-import uuidv4 from 'uuid/v4'
+import {v4 as uuidv4} from 'uuid'
 
 import * as alerts from './alerts'
 import * as auditing from './auditing'
