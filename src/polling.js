@@ -1,7 +1,7 @@
 'use strict'
 
 import logger from 'winston'
-import request from 'request'
+import axios from 'axios'
 
 import * as Channels from './model/channels'
 import * as utils from './utils'
@@ -31,7 +31,7 @@ export async function registerPollingChannel (channel, callback) {
         }
       }
 
-      return request(options, () => done())
+      return axios(options).then(() => done())
     })
 
     exports.agendaGlobal.every(channel.pollingSchedule, `polling-job-${channel._id}`, null, { timezone: utils.serverTimezone() })

@@ -1,7 +1,7 @@
 'use strict'
 
 import logger from 'winston'
-import request from 'request'
+import axios from 'axios'
 
 import * as Channels from '../model/channels'
 import * as authorisation from './authorisation'
@@ -447,16 +447,15 @@ export async function triggerChannel (ctx, channelId) {
       }
 
       await new Promise((resolve) => {
-        request(options, function (err) {
-          if (err) {
+        ctx.status = 200
+        axios(options).then(() => {
+          logger.info(`Channel Successfully polled ${channel._id}`)
+          resolve()
+        }).catch(err => {
+          if (err.message.match(/ECONNREFUSED/)) {
             logger.error(err)
             ctx.status = 500
-            resolve()
-            return
           }
-          logger.info(`Channel Successfully polled ${channel._id}`)
-          // Return success status
-          ctx.status = 200
           resolve()
         })
       })
