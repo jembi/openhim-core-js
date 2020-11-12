@@ -78,7 +78,7 @@ upgradeFuncs.push({
           return reject(err)
         }
 
-        KeystoreModel.findOne((err, keystore) => {
+        return KeystoreModel.findOne((err, keystore) => {
           if (err != null) {
             logger.error(`Couldn't fetch keystore to upgrade db: ${err}`)
             return reject(err)
@@ -98,7 +98,7 @@ upgradeFuncs.push({
             }
           })
 
-          Promise.all(promises).then(resolve).catch(reject)
+          return Promise.all(promises).then(resolve).catch(reject)
         })
       })
     })
@@ -192,7 +192,7 @@ upgradeFuncs.push({
           }
         })
 
-        Promise.all(promises).then(() => resolve()).catch(err => reject(err))
+        return Promise.all(promises).then(() => resolve()).catch(err => reject(err))
       })
     })
   }
