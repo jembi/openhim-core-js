@@ -53,16 +53,14 @@ function sendSMS (contactAddress, message, callback) {
 
 function sendSMSClickatell (contactAddress, message, callback) {
   logger.info(`Sending SMS to '${contactAddress}' using Clickatell`)
-
   return axios(`http://api.clickatell.com/http/sendmsg?api_id=${config.smsGateway.config.apiID}&` +
     `user=${config.smsGateway.config.user}&password=${config.smsGateway.config.pass}&` +
     `to=${contactAddress}&text=${escapeSpaces(message)}`).then(response => {
-      if (response.data != null) { logger.info(`Received response from Clickatell: ${response.data}`) }
-      return callback(null)
-    })
-    .catch(err => {
-      return callback(err)
-    })
+    if (response && response.data) {
+      logger.info(`Received response from Clickatell: ${response.data}`)
+    }
+    return callback(null)
+  }).catch(err => callback(err))
 }
 
 const escapeSpaces = str => str.replace(' ', '+')

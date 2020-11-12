@@ -482,7 +482,7 @@ describe('Upgrade DB Tests', () => {
     })
 
     it('should migrate transactions', async () => {
-      await TransactionModel.collection.insert(Object.assign({}, transactionData))
+      await TransactionModel.collection.insertOne(Object.assign({}, transactionData))
 
       await upgradeFunc()
 
@@ -521,7 +521,7 @@ describe('Upgrade DB Tests', () => {
 
     it('should throw an error when a transaction migration fails', async () => {
       const replaceOneStub = sinon.stub(TransactionModel, 'replaceOne').returns({ exec: () => Promise.reject(new Error('boom')) })
-      await TransactionModel.collection.insert(Object.assign({}, transactionData))
+      await TransactionModel.collection.insertOne(Object.assign({}, transactionData))
 
       await (upgradeFunc().should.be.rejectedWith(Error, { message: 'boom' }))
 
@@ -530,7 +530,7 @@ describe('Upgrade DB Tests', () => {
 
     it('should throw an error when a transaction migration fails at concurrency limit', async () => {
       const replaceOneStub = sinon.stub(TransactionModel, 'replaceOne').returns({ exec: () => Promise.reject(new Error('boom2')) })
-      await TransactionModel.collection.insert(Object.assign({}, transactionData))
+      await TransactionModel.collection.insertOne(Object.assign({}, transactionData))
 
       await (upgradeFunc(5, 1).should.be.rejectedWith(Error, { message: 'boom2' }))
 

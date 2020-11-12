@@ -450,15 +450,18 @@ export async function triggerChannel (ctx, channelId) {
       await new Promise((resolve) => {
         axios(options).then(() => {
           logger.info(`Channel Successfully polled ${channel._id}`)
-          // Return success status
           ctx.status = 200
           resolve()
-        })
-        .catch(err => {
+        }).catch(err => {
           logger.error(err.message)
           ctx.status = 500
           resolve()
         })
+          .catch(err => {
+            logger.error(err.message)
+            ctx.status = 500
+            resolve()
+          })
       })
     }
   } catch (err) {
