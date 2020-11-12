@@ -1687,6 +1687,7 @@ describe('API Integration Tests', () => {
 
     describe('*manuallyPollChannel', () => {
       it('should manually poll a channel', async () => {
+        const mockServer = await testUtils.createMockHttpServer('body', 9876, 200)
         config.polling.pollingPort = SERVER_PORTS.pollingPort
 
         await request(constants.BASE_URL)
@@ -1696,6 +1697,8 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(200)
+
+        mockServer.close()
       })
 
       it('should fail when polling channel cannot be triggered', async () => {

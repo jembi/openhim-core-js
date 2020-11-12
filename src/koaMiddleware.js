@@ -137,14 +137,12 @@ export function tcpApp (done) {
 export function pollingApp (done) {
   const app = new Koa()
 
-  app.use(streamingReceiver.koaMiddleware)
-
   // Polling bypass authentication middleware
   app.use(pollingBypassAuthentication.koaMiddleware)
 
   app.use(pollingBypassAuthorisation.koaMiddleware)
 
-  app.use(messageStore.koaMiddleware)
+  app.use(streamingReceiver.koaMiddleware)
 
   app.use(events.koaMiddleware)
 
