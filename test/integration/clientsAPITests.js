@@ -117,8 +117,8 @@ describe('API Integration Tests', () => {
           .send(clientNoToken1)
           .expect(201)
 
-          const client1 = await ClientModelAPI.findOne({ clientID: 'test1' })
-          should(client1.customTokenID).equal('test')
+        const client1 = await ClientModelAPI.findOne({ clientID: 'test1' })
+        should(client1.customTokenID).equal('test')
 
         await request(constants.BASE_URL)
           .post('/clients')
@@ -324,13 +324,13 @@ describe('API Integration Tests', () => {
       it('should return all clients ', async () => {
         should(await ClientModelAPI.countDocuments()).eql(0)
 
-        await new ClientModelAPI(Object.assign({}, testDocument, {clientID: 'test1', customTokenID: 'token1'})).save()
+        await new ClientModelAPI(Object.assign({}, testDocument, { clientID: 'test1', customTokenID: 'token1' })).save()
 
-        await new ClientModelAPI(Object.assign({}, testDocument, {clientID: 'test2', customTokenID: 'token2'})).save()
+        await new ClientModelAPI(Object.assign({}, testDocument, { clientID: 'test2', customTokenID: 'token2' })).save()
 
-        await new ClientModelAPI(Object.assign({}, testDocument, {clientID: 'test3', customTokenID: 'token3'})).save()
+        await new ClientModelAPI(Object.assign({}, testDocument, { clientID: 'test3', customTokenID: 'token3' })).save()
 
-        await new ClientModelAPI(Object.assign({}, testDocument, {clientID: 'test4', customTokenID: 'token4'})).save()
+        await new ClientModelAPI(Object.assign({}, testDocument, { clientID: 'test4', customTokenID: 'token4' })).save()
 
         const res = await request(constants.BASE_URL)
           .get('/clients')

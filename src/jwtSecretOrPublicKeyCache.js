@@ -8,7 +8,7 @@ import * as configIndex from './config'
 let secretOrPublicKey = null
 
 export const populateCache = () => {
-  let secretOrPublicKeyConfig = configIndex.config.get(
+  const secretOrPublicKeyConfig = configIndex.config.get(
     'authentication:jwt:secretOrPublicKey'
   )
 

@@ -8,6 +8,9 @@ import { DbVersionModel } from './model/dbVersion'
 import { KeystoreModel } from './model/keystore'
 import { UserModel } from './model/users'
 import { VisualizerModel } from './model/visualizer'
+import { TransactionModel, compactTransactionCollection } from './model/transactions'
+import { extractTransactionPayloadIntoChunks } from './contentChunk'
+import { makeQuerablePromise } from './utils'
 
 function dedupName (name, names, num) {
   let newName
@@ -195,6 +198,60 @@ upgradeFuncs.push({
   }
 })
 
+async function processTransaction (transaction) {
+  const rawTransaction = transaction.toObject()
+  await extractTransactionPayloadIntoChunks(rawTransaction)
+  await TransactionModel.replaceOne({ _id: rawTransaction._id }, rawTransaction).exec()
+}
+
+upgradeFuncs.push({
+  description: 'Migrate transaction bodies to GridFS',
+  async func (batchSize = 100, concurrency = 5) {
+    const totalTransactions = await TransactionModel.countDocuments().exec()
+    let batchNum = 0
+    const currentlyExecuting = []
+    const totalBatches = Math.ceil(totalTransactions / batchSize)
+    const startTime = new Date()
+
+    logger.info(`Migrating ${totalTransactions} to GridFS in batches of ${batchSize}`)
+    logger.info(`Using concurrency of ${concurrency}`)
+
+    do {
+      batchNum += 1
+      const transactions = await TransactionModel.find().skip(batchSize * (batchNum - 1)).limit(batchSize).exec()
+      for (const transaction of transactions) {
+        logger.info(`Batch [${batchNum}/${totalBatches}]: Processing transaction ${transaction._id}`)
+
+        const promise = makeQuerablePromise(processTransaction(transaction))
+        promise.catch((err) => {
+          logger.error(`Error migrating transaction with ID: ${transaction._id}`)
+          throw err
+        })
+
+        currentlyExecuting.push(promise)
+
+        if (currentlyExecuting.length === concurrency) {
+          // wait for at least one promise to settle
+          await Promise.race(currentlyExecuting)
+          for (const [i, promise] of currentlyExecuting.entries()) {
+            if (promise.isSettled()) {
+              currentlyExecuting.splice(i, 1)
+            }
+          }
+        }
+      }
+      logger.debug('Compacting Transactions Collection...')
+      await compactTransactionCollection()
+    } while (totalTransactions > (batchSize * batchNum))
+
+    // wait for remaining transaction to process
+    await Promise.all(currentlyExecuting)
+
+    const endTime = new Date()
+    logger.info(`GridFS migration took ${endTime - startTime}ms`)
+  }
+})
+
 if (process.env.NODE_ENV === 'test') {
   exports.upgradeFuncs = upgradeFuncs
   exports.dedupName = dedupName
@@ -202,7 +259,7 @@ if (process.env.NODE_ENV === 'test') {
 
 async function upgradeDbInternal () {
   try {
-    const dbVer = (await DbVersionModel.findOne()) || new DbVersionModel({version: 0, lastUpdated: new Date()})
+    const dbVer = (await DbVersionModel.findOne()) || new DbVersionModel({ version: 0, lastUpdated: new Date() })
     const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version)
 
     for (const upgradeFunc of upgradeFuncsToRun) {
@@ -219,6 +276,7 @@ async function upgradeDbInternal () {
     }
   } catch (err) {
     logger.error(`There was an error upgrading your database, you will need to fix this manually to continue. ${err.stack}`)
+    process.exit()
   }
 }
 

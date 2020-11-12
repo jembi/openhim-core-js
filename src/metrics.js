@@ -12,29 +12,36 @@ const TRANSACTION_STATUS_KEYS = {
   Failed: 'failed'
 }
 
-const METRIC_UPDATE_OPTIONS = {upsert: true, setDefaultsOnInsert: true}
+const METRIC_UPDATE_OPTIONS = { upsert: true, setDefaultsOnInsert: true }
 
 async function recordTransactionMetric (fields, update) {
   return MetricModel.updateOne(
     fields,
-    Object.assign({}, update, {$setOnInsert: fields}),
+    Object.assign({}, update, { $setOnInsert: fields }),
     METRIC_UPDATE_OPTIONS
   )
 }
 
 export async function recordTransactionMetrics (transaction) {
   if (
-      !transaction.response ||
-      !transaction.response.timestamp ||
-      !(transaction.response.timestamp instanceof Date)
+    !transaction.response ||
+      !transaction.response.timestampEnd ||
+      !(transaction.response.timestampEnd instanceof Date)
   ) {
     // Don't record metrics if there is no response i.e. an error
     // or if the response does not have a timestamp
-    // or if the timestamp isn't an instance of Date
+    // or if the timestamp isnt an instance of Date
+    /*
+     *   TODO: This may not be a critical requirement, but we
+     *      shouldn't be doing nothing under these conditions,
+     *      at the bery least, this case will cause a discrepancy
+     *      in the metrics. On the other hand, do we want to throw
+     *      an error here?
+     */
     return
   }
 
-  const responseTime = transaction.response.timestamp.getTime() - transaction.request.timestamp.getTime()
+  const responseTime = transaction.response.timestampEnd.getTime() - transaction.request.timestamp.getTime()
   const statusKey = TRANSACTION_STATUS_KEYS[transaction.status]
   const update = {
     $inc: {
@@ -75,15 +82,15 @@ export async function recordTransactionMetrics (transaction) {
 }
 
 const METRICS_GROUPINGS = {
-  requests: {$sum: '$requests'},
-  responseTime: {$sum: '$responseTime'},
-  minResponseTime: {$min: '$minResponseTime'},
-  maxResponseTime: {$max: '$maxResponseTime'},
-  successful: {$sum: '$successful'},
-  failed: {$sum: '$failed'},
-  processing: {$sum: '$processing'},
-  completed: {$sum: '$completed'},
-  completedWithErrors: {$sum: '$completedWithErrors'}
+  requests: { $sum: '$requests' },
+  responseTime: { $sum: '$responseTime' },
+  minResponseTime: { $min: '$minResponseTime' },
+  maxResponseTime: { $max: '$maxResponseTime' },
+  successful: { $sum: '$successful' },
+  failed: { $sum: '$failed' },
+  processing: { $sum: '$processing' },
+  completed: { $sum: '$completed' },
+  completedWithErrors: { $sum: '$completedWithErrors' }
 }
 
 /**
@@ -120,8 +127,8 @@ export async function calculateMetrics (filters, groupByChannel = true) {
           startTime: '$startTime',
           type: '$type'
         },
-        startTime: {$first: '$startTime'},
-        type: {$first: '$type'}
+        startTime: { $first: '$startTime' },
+        type: { $first: '$type' }
       })
     })
   }
@@ -133,13 +140,13 @@ export async function calculateMetrics (filters, groupByChannel = true) {
         _id: {
           channelID: '$channelID'
         },
-        channelID: {$first: '$channelID'}
+        channelID: { $first: '$channelID' }
       })
     })
   }
 
   pipeline.push(
-    {$sort: {startTime: 1, channelID: 1}}
+    { $sort: { startTime: 1, channelID: 1 } }
   )
 
   return MetricModel.aggregate(pipeline)
