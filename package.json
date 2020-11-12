@@ -61,12 +61,12 @@
     "lodash": "^4.17.20",
     "moment": "^2.29.1",
     "moment-timezone": "^0.5.31",
-    "mongodb": "^3.6.2",
+    "mongodb": "^3.6.3",
     "mongodb-uri": "0.9.7",
-    "mongoose": "^5.10.11",
+    "mongoose": "^5.10.13",
     "mongoose-patch-history": "2.0.0",
     "nconf": "0.10.0",
-    "nodemailer": "^6.4.14",
+    "nodemailer": "^6.4.16",
     "pem": "^1.14.4",
     "raw-body": "^2.4.1",
     "semver": "^7.3.2",
@@ -98,7 +98,7 @@
     "snazzy": "^9.0.0",
     "speculate": "2.1.1",
     "standard": "^14.3.4",
-    "supertest": "^6.0.0"
+    "supertest": "^6.0.1"
   },
   "repository": {
     "type": "git",
