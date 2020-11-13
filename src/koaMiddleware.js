@@ -11,7 +11,6 @@ import * as cache from './jwtSecretOrPublicKeyCache'
 import * as customTokenAuthentication from './middleware/customTokenAuthentication'
 import * as events from './middleware/events'
 import * as jwtAuthentication from './middleware/jwtAuthentication'
-import * as messageStore from './middleware/messageStore'
 import * as proxy from './middleware/proxy'
 import * as requestMatching from './middleware/requestMatching'
 import * as rerunBypassAuthentication from './middleware/rerunBypassAuthentication'
@@ -137,14 +136,12 @@ export function tcpApp (done) {
 export function pollingApp (done) {
   const app = new Koa()
 
-  app.use(streamingReceiver.koaMiddleware)
-
   // Polling bypass authentication middleware
   app.use(pollingBypassAuthentication.koaMiddleware)
 
   app.use(pollingBypassAuthorisation.koaMiddleware)
 
-  app.use(messageStore.koaMiddleware)
+  app.use(streamingReceiver.koaMiddleware)
 
   app.use(events.koaMiddleware)
 
