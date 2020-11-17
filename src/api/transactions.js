@@ -522,6 +522,7 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
   ctx.status = rangeHeader ? 206 : 200
   ctx.set('accept-ranges', 'bytes')
   ctx.set('content-type', 'application/text')
+  ctx.set('access-control-expose-headers', 'content-range, content-length, content-type')
   if (rangeHeader) {
     ctx.set('content-range', `bytes ${range.start}-${range.end}/${body.fileDetails.length}`)
     ctx.set('content-length', Math.min((range.end - range.start) + 1, body.fileDetails.length))
