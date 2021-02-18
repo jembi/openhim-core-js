@@ -22,9 +22,9 @@ const statusTemplate = (transactions, channel, alert) =>
   ({
     plain () {
       return `\
-OpenHIM Transactions Alert
+TanzaniaHIM Transactions Alert
 
-The following transaction(s) have completed with status ${alert.status} on the OpenHIM instance running on ${config.alerts.himInstance}:
+The following transaction(s) have completed with status ${alert.status} on the TanzaniaHIM instance running on ${config.alerts.himInstance}:
 Channel - ${channel.name}
 ${(transactions.map(trx => trxURL(trx))).join('\n')}
 \
@@ -35,9 +35,9 @@ ${(transactions.map(trx => trxURL(trx))).join('\n')}
 <html>
     <head></head>
     <body>
-      <h1>OpenHIM Transactions Alert</h1>
+      <h1>TanzaniaHIM Transactions Alert</h1>
       <div>
-        <p>The following transaction(s) have completed with status <b>${alert.status}</b> on the OpenHIM instance running on <b>${config.alerts.himInstance}</b>:</p>
+        <p>The following transaction(s) have completed with status <b>${alert.status}</b> on the TanzaniaHIM instance running on <b>${config.alerts.himInstance}</b>:</p>
         <table>
           <tr><td>Channel - <b>${channel.name}</b></td></td>\n\
 `
@@ -61,7 +61,7 @@ ${(transactions.map(trx => trxURL(trx))).join('\n')}
       } else {
         text += 'no transactions have'
       }
-      text += ` completed with status ${alert.status} on the OpenHIM running on ${config.alerts.himInstance} (${channel.name})`
+      text += ` completed with status ${alert.status} on the TanzaniaHIM running on ${config.alerts.himInstance} (${channel.name})`
       return text
     }
   })
@@ -70,14 +70,14 @@ const maxRetriesTemplate = (transactions, channel) =>
   ({
     plain () {
       return `\
-OpenHIM Transactions Alert - ${config.alerts.himInstance}
+TanzaniaHIM Transactions Alert - ${config.alerts.himInstance}
 
 The following transaction(s) have been retried ${channel.autoRetryMaxAttempts} times, but are still failing:
 
 Channel - ${channel.name}
 ${(transactions.map(trx => trxURL(trx))).join('\n')}
 
-Please note that they will not be retried any further by the OpenHIM automatically.\
+Please note that they will not be retried any further by the TanzaniaHIM automatically.\
 `
     },
     html () {
@@ -85,7 +85,7 @@ Please note that they will not be retried any further by the OpenHIM automatical
 <html>
     <head></head>
     <body>
-      <h1>OpenHIM Transactions Alert - ${config.alerts.himInstance}</h1>
+      <h1>TanzaniaHIM Transactions Alert - ${config.alerts.himInstance}</h1>
       <div>
         <p>The following transaction(s) have been retried <b>${channel.autoRetryMaxAttempts}</b> times, but are still failing:</p>
         <table>
@@ -95,7 +95,7 @@ Please note that they will not be retried any further by the OpenHIM automatical
       text += '\n'
       text += `\
         </table>
-        <p>Please note that they will not be retried any further by the OpenHIM automatically.</p>
+        <p>Please note that they will not be retried any further by the TanzaniaHIM automatically.</p>
       </div>
     </body>
 </html>\
@@ -110,7 +110,7 @@ Please note that they will not be retried any further by the OpenHIM automatical
       } else if (transactions.length === 1) {
         text += '1 transaction has'
       }
-      text += ` been retried ${channel.autoRetryMaxAttempts} times but are still failing on the OpenHIM on ${config.alerts.himInstance} (${channel.name})`
+      text += ` been retried ${channel.autoRetryMaxAttempts} times but are still failing on the TanzaniaHIM on ${config.alerts.himInstance} (${channel.name})`
       return text
     }
   })
@@ -281,12 +281,12 @@ const sendAlert = (channel, alert, user, transactions, contactHandler, done) =>
         if (user.method === 'email') {
           const plainMsg = template.plain()
           const htmlMsg = template.html()
-          return contactHandler('email', user.user, 'OpenHIM Alert', plainMsg, htmlMsg, done)
+          return contactHandler('email', user.user, 'TanzaniaHIM Alert', plainMsg, htmlMsg, done)
         } else if (user.method === 'sms') {
           if (!dbUser.msisdn) { return done(`Cannot send alert: MSISDN not specified for user '${user.user}'`) }
 
           const smsMsg = template.sms()
-          return contactHandler('sms', dbUser.msisdn, 'OpenHIM Alert', smsMsg, null, done)
+          return contactHandler('sms', dbUser.msisdn, 'TanzaniaHIM Alert', smsMsg, null, done)
         }
         return done(`Unknown method '${user.method}' specified for user '${user.user}'`)
       })
