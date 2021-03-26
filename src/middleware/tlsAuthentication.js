@@ -149,7 +149,6 @@ export async function koaMiddleware (ctx, next) {
     await next()
   } else if (ctx.req.client.authorized === true) {
     const cert = ctx.req.connection.getPeerCertificate(true)
-    logger.info(`${cert.subject.CN} is authenticated via TLS.`)
 
     // lookup client by cert fingerprint and set them as the authenticated user
     try {
@@ -163,6 +162,7 @@ export async function koaMiddleware (ctx, next) {
         ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID
       }
       ctx.authenticationType = 'tls'
+      logger.info(`${cert.subject.CN} is authenticated via TLS.`)
       await next()
     } else {
       ctx.authenticated = null
