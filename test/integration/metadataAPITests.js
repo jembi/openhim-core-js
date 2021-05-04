@@ -592,7 +592,7 @@ describe('API Integration Tests', () => {
         })
 
         it('should ignore invalid metadata, insert valid metadata and return 201', async () => {
-          let testMetadata = await JSON.parse(JSON.stringify(sampleMetadata))
+          const testMetadata = await JSON.parse(JSON.stringify(sampleMetadata))
           testMetadata.Channels = [{ InvalidChannel: 'InvalidChannel' }]
 
           await request(constants.BASE_URL)
@@ -676,7 +676,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should validate partially valid metadata and return status 201', async () => {
-        let testMetadata = await JSON.parse(JSON.stringify(sampleMetadata))
+        const testMetadata = await JSON.parse(JSON.stringify(sampleMetadata))
         testMetadata.Channels = [{ 'Invalid Channel': 'Invalid Channel' }]
 
         const res = await request(constants.BASE_URL)

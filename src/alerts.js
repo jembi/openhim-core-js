@@ -14,7 +14,7 @@ import { UserModel } from './model/users'
 import { config } from './config'
 
 config.alerts = config.get('alerts')
-const {ChannelModel} = Channels
+const { ChannelModel } = Channels
 
 const trxURL = trx => `${config.alerts.consoleURL}/#!/transactions/${trx.transactionID}`
 
@@ -117,7 +117,7 @@ Please note that they will not be retried any further by the OpenHIM automatical
 
 const getAllChannels = callback => ChannelModel.find({}, callback)
 
-const findGroup = (groupID, callback) => ContactGroupModel.findOne({_id: groupID}, callback)
+const findGroup = (groupID, callback) => ContactGroupModel.findOne({ _id: groupID }, callback)
 
 const findTransactions = (channel, dateFrom, status, callback) =>
   EventModel
@@ -129,8 +129,8 @@ const findTransactions = (channel, dateFrom, status, callback) =>
       event: 'end',
       status,
       type: 'channel'
-    }, {transactionID: 'transactionID'})
-    .hint({created: 1})
+    }, { transactionID: 'transactionID' })
+    .hint({ created: 1 })
     .exec(callback)
 
 const countTotalTransactionsForChannel = (channel, dateFrom, callback) =>
@@ -145,7 +145,7 @@ const countTotalTransactionsForChannel = (channel, dateFrom, callback) =>
 
 function findOneAlert (channel, alert, dateFrom, user, alertStatus, callback) {
   const criteria = {
-    timestamp: {$gte: dateFrom},
+    timestamp: { $gte: dateFrom },
     channelID: channel._id,
     condition: alert.condition,
     status: alert.condition === 'auto-retry-max-attempted' ? '500' : alert.status,
@@ -161,7 +161,7 @@ function findTransactionsMatchingStatus (channel, alert, dateFrom, callback) {
   let statusMatch
   const pat = /\dxx/.exec(alert.status)
   if (pat) {
-    statusMatch = {$gte: alert.status[0] * 100, $lt: (alert.status[0] * 100) + 100}
+    statusMatch = { $gte: alert.status[0] * 100, $lt: (alert.status[0] * 100) + 100 }
   } else {
     statusMatch = alert.status
   }
@@ -210,7 +210,7 @@ const findTransactionsMaxRetried = (channel, alert, dateFrom, callback) =>
       type: 'channel',
       status: 500,
       autoRetryAttempt: channel.autoRetryMaxAttempts
-    }, {transactionID: 'transactionID'})
+    }, { transactionID: 1 })
     // .hint({created: 1})
     .exec((err, transactions) => {
       if (err) { return callback(err) }
@@ -261,7 +261,7 @@ function getTransactionsForAlert (channel, alert, user, transactions, callback) 
 }
 
 const sendAlert = (channel, alert, user, transactions, contactHandler, done) =>
-  UserModel.findOne({email: user.user}, (err, dbUser) => {
+  UserModel.findOne({ email: user.user }, (err, dbUser) => {
     if (err) { return done(err) }
     if (!dbUser) { return done(`Cannot send alert: Unknown user '${user.user}'`) }
 

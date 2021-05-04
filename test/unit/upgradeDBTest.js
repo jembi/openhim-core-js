@@ -12,7 +12,8 @@ import {
   DbVersionModel,
   KeystoreModel,
   UserModel,
-  VisualizerModel
+  VisualizerModel,
+  TransactionModel
 } from '../../src/model'
 
 describe('Upgrade DB Tests', () => {
@@ -33,10 +34,10 @@ describe('Upgrade DB Tests', () => {
         description: 'testFunc 1',
         func: sinon.spy(() => calls.push(1))
       },
-        {
-          description: 'testFunc 2',
-          func: sinon.spy(() => calls.push(2))
-        }
+      {
+        description: 'testFunc 2',
+        func: sinon.spy(() => calls.push(2))
+      }
       )
 
       await upgradeDB.upgradeDb()
@@ -60,7 +61,7 @@ describe('Upgrade DB Tests', () => {
       await keystore.save()
     })
 
-    it(`should add the fingerprint property to ca certificates`, async () => {
+    it('should add the fingerprint property to ca certificates', async () => {
       await upgradeFunc()
       const keystore = await KeystoreModel.findOne()
       for (const cert of keystore.ca) {
@@ -68,14 +69,14 @@ describe('Upgrade DB Tests', () => {
       }
     })
 
-    it(`should add the fingerprint property to server certificate`, async () => {
+    it('should add the fingerprint property to server certificate', async () => {
       await upgradeFunc()
       const keystore = await KeystoreModel.findOne()
       should.exist(keystore.cert.fingerprint)
     })
   })
 
-  describe(`updateFunction1 - Convert client.domain to client.fingerprint`, () => {
+  describe('updateFunction1 - Convert client.domain to client.fingerprint', () => {
     const upgradeFunc = originalUpgradeFuncs[1].func
 
     const clientData = {
@@ -93,14 +94,14 @@ describe('Upgrade DB Tests', () => {
       await ClientModel(clientData).save()
     })
 
-    it(`should convert client.domain match to client.certFingerprint match`, async () => {
+    it('should convert client.domain match to client.certFingerprint match', async () => {
       await upgradeFunc()
       const client = await ClientModel.findOne({ clientID: 'test' })
       client.certFingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54')
     })
   })
 
-  describe(`updateFunction2 - Migrate visualizer settings from user profile to shared collection`, () => {
+  describe('updateFunction2 - Migrate visualizer settings from user profile to shared collection', () => {
     const upgradeFunc = originalUpgradeFuncs[2].func
 
     const userObj1 = {
@@ -374,7 +375,7 @@ describe('Upgrade DB Tests', () => {
       visualizers.length.should.eql(0)
     })
 
-    it(`should ignore users that have visualizer settings with no mediators, components or channels`, async () => {
+    it('should ignore users that have visualizer settings with no mediators, components or channels', async () => {
       await new UserModel(userObj3).save()
       await upgradeFunc()
 
@@ -382,7 +383,7 @@ describe('Upgrade DB Tests', () => {
       visualizers.length.should.eql(2)
     })
 
-    it(`should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)`, async () => {
+    it('should migrate old visualizers (core 2.0.0, console 1.6.0 and earlier)', async () => {
       await new UserModel(userObj4).save()
       await upgradeFunc()
 
@@ -409,12 +410,131 @@ describe('Upgrade DB Tests', () => {
       visualizers[idx].components[1].display.should.be.equal('Test Route')
     })
 
-    it(`should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)`, async () => {
+    it('should ignore users that have visualizer settings with no components or endpoints (core 2.0.0, console 1.6.0 and earlier)', async () => {
       await new UserModel(userObj5).save()
       await upgradeFunc()
 
       const visualizers = await VisualizerModel.find()
       visualizers.length.should.eql(2)
+    })
+  })
+
+  describe('updateFunction3 - Migrate transaction bodies to GridFS', () => {
+    const upgradeFunc = originalUpgradeFuncs[3].func
+    let requestDocMain, responseDocMain, transactionData
+
+    before(async () => {
+      requestDocMain = {
+        path: '/api/test',
+        headers: {
+          'header-title': 'header1-value',
+          'another-header': 'another-header-value'
+        },
+        querystring: 'param1=value1&param2=value2',
+        body: '<HTTP request Body>',
+        method: 'POST',
+        timestamp: '2014-06-09T11:17:25.929Z'
+      }
+      Object.freeze(requestDocMain)
+
+      responseDocMain = {
+        status: '200',
+        headers: {
+          header: 'value',
+          header2: 'value2'
+        },
+        body: '<HTTP response body>',
+        timestamp: '2014-06-09T11:17:25.929Z'
+      }
+      Object.freeze(responseDocMain)
+
+      transactionData = {
+        status: 'Processing',
+        clientID: '999999999999999999999999',
+        channelID: '888888888888888888888888',
+        request: requestDocMain,
+        response: responseDocMain,
+        routes: [{
+          name: 'dummy-route',
+          request: requestDocMain,
+          response: responseDocMain,
+          orchestrations: [{
+            name: 'dummy-orchestration',
+            request: requestDocMain,
+            response: responseDocMain
+          }]
+        }],
+        orchestrations: [{
+          name: 'dummy-orchestration',
+          request: requestDocMain,
+          response: responseDocMain
+        }],
+        properties: {
+          prop1: 'prop1-value1',
+          prop2: 'prop-value1'
+        }
+      }
+      Object.freeze(transactionData)
+    })
+
+    afterEach(async () => {
+      await TransactionModel.deleteMany().exec()
+    })
+
+    it('should migrate transactions', async () => {
+      await TransactionModel.collection.insertOne(Object.assign({}, transactionData))
+
+      await upgradeFunc()
+
+      const migratedTransactions = await TransactionModel.find().exec()
+      migratedTransactions.should.have.length(1)
+      for (const migratedTx of migratedTransactions) {
+        should.exist(migratedTx.request.bodyId)
+        should.exist(migratedTx.response.bodyId)
+        should.exist(migratedTx.routes[0].request.bodyId)
+        should.exist(migratedTx.routes[0].response.bodyId)
+        should.exist(migratedTx.routes[0].orchestrations[0].request.bodyId)
+        should.exist(migratedTx.routes[0].orchestrations[0].response.bodyId)
+        should.exist(migratedTx.orchestrations[0].request.bodyId)
+        should.exist(migratedTx.orchestrations[0].response.bodyId)
+      }
+    })
+
+    it('should migrate all transactions across multiple batches', async () => {
+      await TransactionModel.collection.insertMany(Array(5).fill({}).map(() => Object.assign({}, transactionData)))
+
+      await upgradeFunc(2)
+
+      const migratedTransactions = await TransactionModel.find().exec()
+      migratedTransactions.should.have.length(5)
+      for (const migratedTx of migratedTransactions) {
+        should.exist(migratedTx.request.bodyId)
+        should.exist(migratedTx.response.bodyId)
+        should.exist(migratedTx.routes[0].request.bodyId)
+        should.exist(migratedTx.routes[0].response.bodyId)
+        should.exist(migratedTx.routes[0].orchestrations[0].request.bodyId)
+        should.exist(migratedTx.routes[0].orchestrations[0].response.bodyId)
+        should.exist(migratedTx.orchestrations[0].request.bodyId)
+        should.exist(migratedTx.orchestrations[0].response.bodyId)
+      }
+    })
+
+    it('should throw an error when a transaction migration fails', async () => {
+      const replaceOneStub = sinon.stub(TransactionModel, 'replaceOne').returns({ exec: () => Promise.reject(new Error('boom')) })
+      await TransactionModel.collection.insertOne(Object.assign({}, transactionData))
+
+      await (upgradeFunc().should.be.rejectedWith(Error, { message: 'boom' }))
+
+      replaceOneStub.restore()
+    })
+
+    it('should throw an error when a transaction migration fails at concurrency limit', async () => {
+      const replaceOneStub = sinon.stub(TransactionModel, 'replaceOne').returns({ exec: () => Promise.reject(new Error('boom2')) })
+      await TransactionModel.collection.insertOne(Object.assign({}, transactionData))
+
+      await (upgradeFunc(5, 1).should.be.rejectedWith(Error, { message: 'boom2' }))
+
+      replaceOneStub.restore()
     })
   })
 })

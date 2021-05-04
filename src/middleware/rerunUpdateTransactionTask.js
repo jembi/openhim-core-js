@@ -7,7 +7,7 @@ import { TaskModel } from '../model/tasks'
 import { TransactionModel } from '../model/transactions'
 
 export function setAttemptNumber (ctx, done) {
-  return TransactionModel.findOne({_id: ctx.parentID}, (err, transaction) => {
+  return TransactionModel.findOne({ _id: ctx.parentID }, (err, transaction) => {
     if (err) { return done(err) }
     if (transaction.autoRetry) {
       if (transaction.autoRetryAttempt != null) {
@@ -29,7 +29,7 @@ export function setAttemptNumber (ctx, done) {
 }
 
 export function updateOriginalTransaction (ctx, done) {
-  return TransactionModel.findOne({_id: ctx.parentID}, (err, transaction) => {
+  return TransactionModel.findOne({ _id: ctx.parentID }, (err, transaction) => {
     if (err) { return done(err) }
     transaction.childIDs.push(ctx.transactionId)
     transaction.wasRerun = true
@@ -47,7 +47,7 @@ export function updateOriginalTransaction (ctx, done) {
 }
 
 export function updateTask (ctx, done) {
-  return TaskModel.findOne({_id: ctx.taskID}, (err, task) => {
+  return TaskModel.findOne({ _id: ctx.taskID }, (err, task) => {
     if (err) { return done(err) }
     task.transactions.forEach((tx) => {
       if (tx.tid === ctx.parentID) {

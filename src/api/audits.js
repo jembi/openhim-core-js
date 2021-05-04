@@ -28,7 +28,7 @@ function getProjectionObject (filterRepresentation) {
     default:
       // no filterRepresentation supplied - simple view
       // view minimum required data for audits
-      return {participantObjectIdentification: 0, activeParticipant: 0, rawMessage: 0}
+      return { participantObjectIdentification: 0, activeParticipant: 0, rawMessage: 0 }
   }
 }
 
@@ -85,7 +85,7 @@ export async function getAudits (ctx) {
     // get limit and page values
     const filterLimit = filtersObject.filterLimit != null ? filtersObject.filterLimit : 0
     const filterPage = filtersObject.filterPage != null ? filtersObject.filterPage : 0
-    const {filterRepresentation} = filtersObject
+    const { filterRepresentation } = filtersObject
 
     // remove limit/page/filterRepresentation values from filtersObject (Not apart of filtering and will break filter if present)
     delete filtersObject.filterLimit
@@ -114,7 +114,7 @@ export async function getAudits (ctx) {
       if (filters['participantObjectIdentification.participantObjectID'].type) {
         const patientID = new RegExp(filters['participantObjectIdentification.participantObjectID'].patientID)
         const objectID = new RegExp(filters['participantObjectIdentification.participantObjectID'].objectID)
-        filters.$and = [{'participantObjectIdentification.participantObjectID': patientID}, {'participantObjectIdentification.participantObjectID': objectID}]
+        filters.$and = [{ 'participantObjectIdentification.participantObjectID': patientID }, { 'participantObjectIdentification.participantObjectID': objectID }]
         // remove participantObjectIdentification.participantObjectID property as we create a new '$and' operator
         delete filters['participantObjectIdentification.participantObjectID']
       } else {
@@ -128,7 +128,7 @@ export async function getAudits (ctx) {
       .find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
-      .sort({'eventIdentification.eventDateTime': -1})
+      .sort({ 'eventIdentification.eventDateTime': -1 })
       .exec()
 
     // audit each retrieved record, but only for non-basic representation requests

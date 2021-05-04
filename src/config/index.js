@@ -1,4 +1,4 @@
 'use strict'
 
-export * from './config'
-export * from './connection'
+export { appRoot, config } from './config'
+export { connectionAPI, connectionATNA, connectionAgenda, connectionDefault, encodeMongoURI } from './connection'

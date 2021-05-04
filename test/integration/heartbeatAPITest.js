@@ -114,8 +114,8 @@ describe('API Integration Tests', () =>
         await registerMediator()
         await sendUptime()
         const res = await request(constants.BASE_URL)
-         .get('/heartbeat')
-         .expect(200)
+          .get('/heartbeat')
+          .expect(200)
 
         res.body.should.have.property('mediators')
         res.body.mediators[mediatorDoc.urn].should.be.exactly(200)

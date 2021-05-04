@@ -82,8 +82,8 @@ export function fetchRewriteConfig (channel, authType, callback) {
   }
 }
 
-const rewriteUrls = (body, channel, authType, callback) =>
-  fetchRewriteConfig(channel, authType, (err, rwConfig) => {
+export function rewriteUrls (body, channel, authType, callback) {
+  return fetchRewriteConfig(channel, authType, (err, rwConfig) => {
     if (err != null) {
       return callback(err)
     }
@@ -92,7 +92,7 @@ const rewriteUrls = (body, channel, authType, callback) =>
     // See https://regex101.com/r/uY3fO1/1 for an explanation of this regex
     const newBody = body.replace(/["|']?(?:href|src|fullUrl)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) => {
       let relativePath
-      const hrefUrlObj = url.parse(hrefUrl)
+      const hrefUrlObj = url.parse(hrefUrl) // eslint-disable-line node/no-deprecated-api
 
       // default to using this channel's host if no host so we can match a rewrite rule
       if ((hrefUrlObj.host == null)) {
@@ -146,6 +146,7 @@ const rewriteUrls = (body, channel, authType, callback) =>
 
     return callback(null, newBody)
   })
+}
 
 if (process.env.NODE_ENV === 'test') {
   exports.invertPathTransform = invertPathTransform
@@ -158,7 +159,7 @@ export async function koaMiddleware (ctx, next) {
   // on response rewrite urls
   if (ctx.authorisedChannel.rewriteUrls) {
     const rewrite = promisify(rewriteUrls)
-    ctx.response.body = await rewrite(ctx.response.body.toString(), ctx.authorisedChannel, ctx.authenticationType)
+    ctx.response.body = await rewrite(ctx.response.body, ctx.authorisedChannel, ctx.authenticationType)
     return winston.info(`Rewrote url in the response of transaction: ${ctx.transactionId}`)
   }
 }

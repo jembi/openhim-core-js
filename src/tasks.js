@@ -1,7 +1,6 @@
 'use strict'
 
 import logger from 'winston'
-import http from 'http'
 import net from 'net'
 
 import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
@@ -9,6 +8,8 @@ import { ChannelModel } from './model/channels'
 import { TaskModel } from './model/tasks'
 import { TransactionModel } from './model/transactions'
 import { config } from './config'
+
+import { makeStreamingRequest } from './middleware/streamingRouter'
 
 config.rerun = config.get('rerun')
 
@@ -113,6 +114,7 @@ async function processNextTaskRound (task) {
           logger.error(`An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`)
         } else {
           transaction.tstatus = 'Completed'
+          transaction.rerunStatus = response.transaction.status
         }
 
         task.remainingTransactions--
@@ -135,6 +137,11 @@ async function processNextTaskRound (task) {
 function rerunTransaction (transactionID, taskID, callback) {
   rerunGetTransaction(transactionID, (err, transaction) => {
     if (err) { return callback(err) }
+
+    if (['POST', 'PUT', 'PATCH'].includes(transaction.request.method) && (!transaction.request.bodyId)) {
+      const err = new Error('No body for this request - Cannot rerun transaction')
+      return callback(err, null)
+    }
 
     // setup the option object for the HTTP Request
     return ChannelModel.findById(transaction.channelID, (err, channel) => {
@@ -174,7 +181,7 @@ function rerunTransaction (transactionID, taskID, callback) {
 }
 
 function rerunGetTransaction (transactionID, callback) {
-  TransactionModel.findById(transactionID, (err, transaction) => {
+  TransactionModel.findById(transactionID, async (err, transaction) => {
     if ((transaction == null)) {
       return callback((new Error(`Transaction ${transactionID} could not be found`)), null)
     }
@@ -216,6 +223,16 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
   options.headers.parentID = transaction._id
   options.headers.taskID = taskID
 
+  /*
+   *  For GET and DELETE, bodyId will be null. Still need to supply
+   *     empty header, so that HIM will not expect a body in GridFS
+   *  For POST and PUT, bodyId will be fileId for body stored in GridFS
+  */
+
+  if (transaction.request.bodyId) {
+    options.headers['x-body-id'] = transaction.request.bodyId
+  }
+
   if (transaction.request.querystring) {
     options.path += `?${transaction.request.querystring}`
   }
@@ -223,15 +240,7 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
   return callback(null, options)
 }
 
-/**
- * Construct HTTP options to be sent #
- */
-
-/**
- * Function for sending HTTP Request #
- */
-
-function rerunHttpRequestSend (options, transaction, callback) {
+async function rerunHttpRequestSend (options, transaction, callback) {
   let err
   if (options == null) {
     err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
@@ -248,48 +257,70 @@ function rerunHttpRequestSend (options, transaction, callback) {
     transaction: {}
   }
 
-  logger.info(`Rerun Transaction #${transaction._id} - HTTP Request is being sent...`)
-  const req = http.request(options, (res) => {
-    res.on('data', chunk => {
-      // response data
-      response.body += chunk
-    })
+  const statusEvents = {
+    badOptions: function () {
+      err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
+      logger.error(err)
+      callback(err, null)
+    },
+    noRequest: function () {
+      err = new Error('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
+      logger.error(err)
+      callback(err, null)
+    },
+    startGridFs: function (fileId) {
+      logger.info(`Storing rerun response body in GridFS: ${fileId}`)
+    },
+    finishGridFs: function () {
+      logger.info('Finished rerun storing response body in GridFS')
+    },
+    gridFsError: function () {},
+    startRequest: function () {},
+    requestProgress: function () {},
+    finishRequest: function () {},
+    startResponse: function () {},
+    responseProgress: function (chunk, counter, size) {
+      logger.info(`Write rerun response CHUNK # ${counter} [ Total size ${size}]`)
+    },
+    finishResponse: function (res, size) {
+      logger.info(`** END OF RERUN OUTPUT STREAM ** ${size} bytes`)
 
-    return res.on('end', (err) => {
-      if (err) {
-        response.transaction.status = 'Failed'
-      } else {
-        response.transaction.status = 'Completed'
-      }
-
-      response.status = res.statusCode
+      // This is the response for the TASK (from the rerun port), not the TRANSACTION
+      response.status = res.status
+      response.body = res.body
       response.message = res.statusMessage
       response.headers = res.headers
       response.timestamp = new Date()
+      response.transaction.status = 'Completed'
 
       logger.info(`Rerun Transaction #${transaction._id} - HTTP Response has been captured`)
-      return callback(null, response)
-    })
-  })
+    },
+    finishResponseAsString: function () {},
+    requestError: function () {},
+    responseError: function () {
+      response.transaction.status = 'Failed'
+    },
+    clientError: function () {},
+    timeoutError: function (timeout) {
+      logger.error(`Transaction timeout after ${timeout}ms`)
+    }
+  }
 
-  req.on('error', (err) => {
-    // update the status of the transaction that was processed to indicate it failed to process
-    if (err) { response.transaction.status = 'Failed' }
+  options.secured = false
+  options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(transaction.request.method)
+  options.responseBodyRequired = false
+  options.collectResponseBody = false
 
+  try {
+    await makeStreamingRequest(null, options, statusEvents)
+    callback(null, response)
+  } catch (err) {
+    response.transaction.status = 'Failed'
     response.status = 500
     response.message = 'Internal Server Error'
     response.timestamp = new Date()
-
-    return callback(null, response)
-  })
-
-  // write data to request body
-  if ((transaction.request.method === 'POST') || (transaction.request.method === 'PUT')) {
-    if (transaction.request.body != null) {
-      req.write(transaction.request.body)
-    }
+    callback(null, response)
   }
-  return req.end()
 }
 
 function rerunTcpRequestSend (channel, transaction, callback) {
@@ -307,7 +338,7 @@ function rerunTcpRequestSend (channel, transaction, callback) {
 
   client.on('data', data => { response.body += data })
 
-  client.on('end', (data) => {
+  client.on('end', () => {
     response.status = 200
     response.transaction.status = 'Completed'
     response.message = ''

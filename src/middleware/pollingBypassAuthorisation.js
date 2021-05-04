@@ -5,7 +5,7 @@ import { promisify } from 'util'
 import { ChannelModel } from '../model/channels'
 
 export function authoriseUser (ctx, done) {
-  return ChannelModel.findOne({_id: ctx.request.header['channel-id']}, (err, channel) => {
+  return ChannelModel.findOne({ _id: ctx.request.header['channel-id'] }, (err, channel) => {
     if (err) { return done(err) }
     ctx.authorisedChannel = channel
     return done(null, channel)

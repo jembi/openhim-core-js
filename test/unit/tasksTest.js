@@ -53,12 +53,12 @@ describe('Rerun Task Tests', () => {
       await TransactionModel.deleteMany({})
     })
 
-    it(`will fail if the transaction can't be found`, async () => {
-      const transactionID = `transactioniddoesntexist`
+    it('will fail if the transaction can\'t be found', async () => {
+      const transactionID = 'transactioniddoesntexist'
       await promisify(tasks.rerunGetTransaction)(transactionID).should.rejectedWith(`Transaction ${transactionID} could not be found`)
     })
 
-    it(`will fail if the transaction can't be rerun`, async () => {
+    it('will fail if the transaction can\'t be rerun', async () => {
       const transaction = new TransactionModel(Object.assign({}, DEFAULT_TRANSACTION, { canRerun: false }))
       await transaction.save()
 
@@ -89,7 +89,7 @@ describe('Rerun Task Tests', () => {
     })
 
     it('will throw if the transaction is not set', async () => {
-      const rejectedMessage = `An empty Transaction object was supplied. Aborting HTTP options configuration`
+      const rejectedMessage = 'An empty Transaction object was supplied. Aborting HTTP options configuration'
       await promisify(tasks.rerunSetHTTPRequestOptions)(null, null).should.rejectedWith(rejectedMessage)
       await promisify(tasks.rerunSetHTTPRequestOptions)(undefined, undefined).should.rejectedWith(rejectedMessage)
     })
@@ -149,13 +149,15 @@ describe('Rerun Task Tests', () => {
     it('will rerun a transaction', async () => {
       const options = Object.assign({}, DEFAULT_HTTP_OPTIONS)
       const responsestr = 'Response string'
-      const spy = sinon.spy(req => responsestr)
+      const spy = sinon.spy(() => responsestr)
       const transaction = { request: {} }
       server = await testUtils.createMockHttpServer(spy, undefined, 200)
 
       const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
 
-      response.body.should.equal(responsestr)
+      const body = await testUtils.getResponseBodyFromStream({ response: response })
+
+      body.should.equal(responsestr)
       response.transaction.status.should.eql('Completed')
       response.timestamp.should.Date()
       response.headers.should.properties(testUtils.lowerCaseMembers(constants.DEFAULT_HEADERS))
@@ -176,20 +178,6 @@ describe('Rerun Task Tests', () => {
       response.status.should.eql(500)
       response.message.should.eql('Internal Server Error')
       response.timestamp.should.Date()
-    })
-
-    it('will send the request body on post', async () => {
-      const spy = sinon.spy(req => testUtils.readBody(req))
-      server = await testUtils.createMockHttpServer(spy)
-
-      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { method: 'POST' })
-      const transaction = { request: { method: 'POST', body: 'Hello Post' } }
-      const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
-
-      response.body.should.eql(transaction.request.body) // The spy just sends back the data
-      spy.callCount.should.eql(1)
-      const req = spy.args[0][0]
-      req.method.should.eql('POST')
     })
 
     it('can handle a post with no body', async () => {
@@ -252,6 +240,8 @@ describe('Rerun Task Tests', () => {
       name: 'testChannel',
       urlPattern: '.+',
       type: 'http',
+      responseBody: true,
+      requestBody: true,
       routes: [{
         name: 'asdf',
         host: 'localhost',
@@ -303,7 +293,7 @@ describe('Rerun Task Tests', () => {
       await clearTasksFn()
     })
 
-    it(`will not throw if it doesn't find any tasks`, async () => {
+    it('will not throw if it doesn\'t find any tasks', async () => {
       await tasks.findAndProcessAQueuedTask().should.not.rejected()
     })
 
@@ -314,7 +304,7 @@ describe('Rerun Task Tests', () => {
       updatedTask.status.should.eql('Completed')
     })
 
-    it(`will process a single transactions`, async () => {
+    it('will process a single transaction', async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const originalTrans = await new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save()
       const originalTask = await createTask([originalTrans])
@@ -336,7 +326,7 @@ describe('Rerun Task Tests', () => {
       updatedTask.transactions[0].tstatus.should.eql('Completed')
     })
 
-    it(`will process the batch size`, async () => {
+    it('will process the batch size', async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const transactions = await Promise.all(
         Array(3).fill(new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save())
@@ -357,7 +347,7 @@ describe('Rerun Task Tests', () => {
       updatedTask.transactions[2].tstatus.should.be.equal('Queued')
     })
 
-    it(`will process the transactions till they are completed`, async () => {
+    it('will process the transactions till they are completed', async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const transactions = await Promise.all(
         Array(3).fill(new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save())
@@ -386,7 +376,7 @@ describe('Rerun Task Tests', () => {
       updatedTask.transactions[2].tstatus.should.be.equal('Completed')
     })
 
-    it(`not process a paused transaction`, async () => {
+    it('not process a paused transaction', async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const originalTrans = await new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save()
       const originalTask = await createTask([originalTrans], { status: 'Paused' })
