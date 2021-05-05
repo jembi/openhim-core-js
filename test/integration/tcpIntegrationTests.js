@@ -194,7 +194,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   const ORIGINAL_TCP_ADAPTER = config.tcpAdapter
 
   before(async () => {
-    config.tcpAdapter = config.get(`tcpAdapter`)
+    config.tcpAdapter = config.get('tcpAdapter')
 
     const keystore = await testUtils.setupTestKeystore()
     const cert = new CertificateModel({
@@ -254,12 +254,12 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     const request = 'Tcp Request'
     const spy = sandbox.spy(async data => {
       await testUtils.wait(30)
-      return `should never get this with tcp response` + mllpEndChar
+      return 'should never get this with tcp response' + mllpEndChar
     })
     mockServer = await testUtils.createMockTCPServer(spy, tcpTimeoutChannel.routes[0].port)
     const res = await testUtils.socketTest(tcpTimeoutChannel.tcpPort, request)
 
-    res.toString().should.eql(`An internal server error occurred`)
+    res.toString().should.eql('An internal server error occurred')
     spy.callCount.should.eql(1)
 
     const transactions = await TransactionModel.find({})
@@ -322,7 +322,7 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
     tran.status.should.eql('Failed')
   })
 
-  it(`will route tcp -> mllp`, async () => {
+  it('will route tcp -> mllp', async () => {
     const mllpEndChar = String.fromCharCode(0o034)
     const request = 'Tcp Request'
     let expectedResp

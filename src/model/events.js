@@ -33,13 +33,13 @@ const EventsSchema = new Schema({
   status: Number,
   statusType: {
     type: String, enum: ['success', 'error']
-  },  // status string supported by visualizer (e.g. 'error' is red)
+  }, // status string supported by visualizer (e.g. 'error' is red)
   normalizedTimestamp: String,
   mediator: String,
   autoRetryAttempt: Number
 })
 
-EventsSchema.index({created: 1}, {expireAfterSeconds: 3600})
+EventsSchema.index({ created: 1 }, { expireAfterSeconds: 3600 })
 
 export const EventModelAPI = connectionAPI.model('Event', EventsSchema)
 export const EventModel = connectionDefault.model('Event', EventsSchema)

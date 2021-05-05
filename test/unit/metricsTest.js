@@ -23,13 +23,13 @@ describe('recordTransactionMetrics', () => {
         timestamp: new Date('2017-12-07T09:17:58.333Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
     await metrics.recordTransactionMetrics(transaction)
 
-    const minuteMetrics = await MetricModel.find({type: 'm'})
+    const minuteMetrics = await MetricModel.find({ type: 'm' })
     should.equal(minuteMetrics.length, 1)
     should.deepEqual(minuteMetrics[0].startTime, new Date('2017-12-07T09:17:00.000Z'))
     should.ok(channelID.equals(minuteMetrics[0].channelID))
@@ -43,7 +43,7 @@ describe('recordTransactionMetrics', () => {
     should.equal(minuteMetrics[0].completed, 0)
     should.equal(minuteMetrics[0].completedWithErrors, 0)
 
-    const hourMetrics = await MetricModel.find({type: 'h'})
+    const hourMetrics = await MetricModel.find({ type: 'h' })
     should.equal(hourMetrics.length, 1)
     should.deepEqual(hourMetrics[0].startTime, new Date('2017-12-07T09:00:00.000Z'))
     should.ok(channelID.equals(hourMetrics[0].channelID))
@@ -57,7 +57,7 @@ describe('recordTransactionMetrics', () => {
     should.equal(hourMetrics[0].completed, 0)
     should.equal(hourMetrics[0].completedWithErrors, 0)
 
-    const dayMetrics = await MetricModel.find({type: 'd'})
+    const dayMetrics = await MetricModel.find({ type: 'd' })
     should.equal(dayMetrics.length, 1)
     should.deepEqual(dayMetrics[0].startTime, new Date('2017-12-06T22:00:00.000Z')) // N.B. This will fail in non SAST environments
     should.ok(channelID.equals(dayMetrics[0].channelID))
@@ -93,13 +93,13 @@ describe('recordTransactionMetrics', () => {
         timestamp: new Date('2017-12-07T09:17:58.333Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
     await metrics.recordTransactionMetrics(transaction)
 
-    const minuteMetrics = await MetricModel.find({type: 'm'})
+    const minuteMetrics = await MetricModel.find({ type: 'm' })
     should.equal(minuteMetrics.length, 1)
     should.deepEqual(minuteMetrics[0].startTime, new Date('2017-12-07T09:17:00.000Z'))
     should.ok(channelID.equals(minuteMetrics[0].channelID))
@@ -131,13 +131,13 @@ describe('recordTransactionMetrics', () => {
         timestamp: new Date('2017-12-07T09:17:58.333Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
     await metrics.recordTransactionMetrics(transaction)
 
-    const minuteMetrics = await MetricModel.find({type: 'h'})
+    const minuteMetrics = await MetricModel.find({ type: 'h' })
     should.equal(minuteMetrics.length, 1)
     should.deepEqual(minuteMetrics[0].startTime, new Date('2017-12-07T09:00:00.000Z'))
     should.ok(channelID.equals(minuteMetrics[0].channelID))
@@ -169,13 +169,13 @@ describe('recordTransactionMetrics', () => {
         timestamp: new Date('2017-12-07T09:17:58.333Z')
       },
       response: {
-        timestamp: new Date('2017-12-07T09:18:01.500Z')
+        timestampEnd: new Date('2017-12-07T09:18:01.500Z')
       }
     }
 
     await metrics.recordTransactionMetrics(transaction)
 
-    const minuteMetrics = await MetricModel.find({type: 'h'})
+    const minuteMetrics = await MetricModel.find({ type: 'h' })
     should.equal(minuteMetrics.length, 1)
     should.deepEqual(minuteMetrics[0].startTime, new Date('2017-12-07T09:00:00.000Z'))
     should.ok(channelID.equals(minuteMetrics[0].channelID))

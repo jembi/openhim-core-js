@@ -110,8 +110,8 @@ const task1 = new TaskModel({
   totalTransactions: 3,
   status: 'Processing',
   transactions: [{ tid: '53e096fea0af3105689acd6a', tstatus: 'Completed' },
-  { tid: '53bfbcd06a2b417f6cd14872', tstatus: 'Queued' },
-  { tid: 'aaaaaaaaaabbbbbbbbbbcccc', tstatus: 'Queued' }],
+    { tid: '53bfbcd06a2b417f6cd14872', tstatus: 'Queued' },
+    { tid: 'aaaaaaaaaabbbbbbbbbbcccc', tstatus: 'Queued' }],
   user: 'root@openhim.org'
 })
 

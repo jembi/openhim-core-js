@@ -8,7 +8,7 @@ import * as utils from './utils'
 import { config } from './config'
 import { promisify } from 'util'
 
-const {ChannelModel} = Channels
+const { ChannelModel } = Channels
 config.polling = config.get('polling')
 
 export let agendaGlobal = null
@@ -18,7 +18,7 @@ export async function registerPollingChannel (channel, callback) {
   if (!channel.pollingSchedule) { return callback(new Error('no polling schedule set on this channel')) }
 
   try {
-    await exports.agendaGlobal.cancel({name: `polling-job-${channel._id}`})
+    await exports.agendaGlobal.cancel({ name: `polling-job-${channel._id}` })
 
     exports.agendaGlobal.define(`polling-job-${channel._id}`, (job, done) => {
       logger.info(`Polling channel ${channel._id}`)
@@ -33,7 +33,7 @@ export async function registerPollingChannel (channel, callback) {
       return axios(options).then(() => done())
     })
 
-    exports.agendaGlobal.every(channel.pollingSchedule, `polling-job-${channel._id}`, null, {timezone: utils.serverTimezone()})
+    exports.agendaGlobal.every(channel.pollingSchedule, `polling-job-${channel._id}`, null, { timezone: utils.serverTimezone() })
 
     return callback(null)
   } catch (err) {
@@ -45,7 +45,7 @@ export async function removePollingChannel (channel, callback) {
   logger.info(`Removing polling schedule for channel: ${channel._id}`)
 
   try {
-    await exports.agendaGlobal.cancel({name: `polling-job-${channel._id}`})
+    await exports.agendaGlobal.cancel({ name: `polling-job-${channel._id}` })
     return callback(null)
   } catch (err) {
     return callback(err)
@@ -56,7 +56,7 @@ export function setupAgenda (agenda, callback) {
   logger.info('Starting polling server...')
   const registerPollingChannelPromise = promisify(registerPollingChannel)
   agendaGlobal = agenda
-  return ChannelModel.find({type: 'polling'}, (err, channels) => {
+  return ChannelModel.find({ type: 'polling' }, (err, channels) => {
     if (err) { return err }
 
     const promises = []

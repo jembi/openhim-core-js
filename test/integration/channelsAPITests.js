@@ -21,7 +21,7 @@ import { TransactionModelAPI } from '../../src/model/transactions'
 import { config } from '../../src/config'
 
 const { SERVER_PORTS } = constants
-let sandbox = sinon.createSandbox()
+const sandbox = sinon.createSandbox()
 
 describe('API Integration Tests', () => {
   const httpPortPlus40 = constants.PORT_START + 40
@@ -492,7 +492,7 @@ describe('API Integration Tests', () => {
         channel.methods.should.containDeep(methodChannelDoc.methods)
       })
 
-      it(`will reject the request if the channel has methods but is not http`, async () => {
+      it('will reject the request if the channel has methods but is not http', async () => {
         const methodChannelDocRejected = {
           name: 'method channel rejected',
           urlPattern: 'test/method',
@@ -519,7 +519,7 @@ describe('API Integration Tests', () => {
         channelCount.should.eql(0)
       })
 
-      it(`will reject the request if the channel repeats methods`, async () => {
+      it('will reject the request if the channel repeats methods', async () => {
         const methodChannelDocRejected = {
           name: 'method channel rejected',
           urlPattern: 'test/method',
@@ -628,7 +628,7 @@ describe('API Integration Tests', () => {
         channel.maxBodyAgeDays.should.eql(5)
       })
 
-      it(`will create a channel with a timeout`, async () => {
+      it('will create a channel with a timeout', async () => {
         const timeoutChannelDoc = {
           name: 'timeout',
           urlPattern: 'test/method',
@@ -654,7 +654,7 @@ describe('API Integration Tests', () => {
         channel.timeout.should.eql(10)
       })
 
-      it(`will reject a channel with a timeout with negative value`, async () => {
+      it('will reject a channel with a timeout with negative value', async () => {
         const timeoutChannelDoc = {
           name: 'timeout',
           urlPattern: 'test/method',
@@ -718,7 +718,7 @@ describe('API Integration Tests', () => {
         res.body.allow.should.have.length(3)
       })
 
-      it(`will default the channel methods as an empty array on existing channels`, async () => {
+      it('will default the channel methods as an empty array on existing channels', async () => {
         const mongoClient = await testUtils.getMongoClient()
         const noMethodChannelDoc = {
           name: 'method channel',
@@ -1262,7 +1262,7 @@ describe('API Integration Tests', () => {
         channel.methods[0].should.eql('GET')
       })
 
-      it(`should reject the update if the channel repeats methods`, async () => {
+      it('should reject the update if the channel repeats methods', async () => {
         const methodChannelDocRejected = {
           name: 'method channel rejected',
           urlPattern: 'test/method',
@@ -1301,7 +1301,7 @@ describe('API Integration Tests', () => {
         channel.methods.length.should.eql(0)
       })
 
-      it(`should fail to update a channel with maxBodyAgeDays if requestBody nor responseBody is true`, async () => {
+      it('should fail to update a channel with maxBodyAgeDays if requestBody nor responseBody is true', async () => {
         const methodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
@@ -1332,7 +1332,7 @@ describe('API Integration Tests', () => {
         should(channel.maxBodyAgeDays == null).true()
       })
 
-      it(`should update the channel with maxBodyAgeDays`, async () => {
+      it('should update the channel with maxBodyAgeDays', async () => {
         const methodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
@@ -1364,7 +1364,7 @@ describe('API Integration Tests', () => {
         channel.maxBodyAgeDays.should.eql(2)
       })
 
-      it(`should fail to update the channel with maxBodyAgeDays with a negative value`, async () => {
+      it('should fail to update the channel with maxBodyAgeDays with a negative value', async () => {
         const methodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
@@ -1396,7 +1396,7 @@ describe('API Integration Tests', () => {
         channel.should.not.property('maxBodyAge')
       })
 
-      it(`should fail to update the channel with maxBodyAgeDays a value greater than 36500`, async () => {
+      it('should fail to update the channel with maxBodyAgeDays a value greater than 36500', async () => {
         const methodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
@@ -1428,7 +1428,7 @@ describe('API Integration Tests', () => {
         channel.should.not.property('maxBodyAge')
       })
 
-      it(`should be able to remove the maxBodyAgeDays value`, async () => {
+      it('should be able to remove the maxBodyAgeDays value', async () => {
         const methodChannelDoc = {
           name: 'method channel',
           urlPattern: 'test/method',
@@ -1460,7 +1460,7 @@ describe('API Integration Tests', () => {
         channel.should.not.property('maxBodyAge')
       })
 
-      it(`will clear the lastBodyCleared if the maxBodyAgeDays is cleared`, async () => {
+      it('will clear the lastBodyCleared if the maxBodyAgeDays is cleared', async () => {
         // if the maxBodyAgeDays differ then clear the lastTime it was cleared
         const methodChannelDoc = {
           name: 'method channel',
@@ -1687,7 +1687,7 @@ describe('API Integration Tests', () => {
 
     describe('*manuallyPollChannel', () => {
       it('should manually poll a channel', async () => {
-        const mockServer = await testUtils.createMockHttpServer('target1', 9876, 200)
+        const mockServer = await testUtils.createMockHttpServer('body', 9876, 200)
         config.polling.pollingPort = SERVER_PORTS.pollingPort
 
         await request(constants.BASE_URL)
@@ -1698,7 +1698,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-         mockServer.close
+        mockServer.close()
       })
 
       it('should fail when polling channel cannot be triggered', async () => {

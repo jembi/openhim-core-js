@@ -10,7 +10,7 @@ import * as tlsAuthentication from './middleware/tlsAuthentication'
 import { config } from './config'
 
 config.tcpAdapter = config.get('tcpAdapter')
-const {ChannelModel} = Channels
+const { ChannelModel } = Channels
 
 let tcpServers = []
 let newKey = 0
@@ -34,7 +34,7 @@ export function popTransaction (key) {
 
 function startListening (channel, tcpServer, host, port, callback) {
   tcpServer.listen(port, host, () => {
-    tcpServers.push({channelID: channel._id, server: tcpServer})
+    tcpServers.push({ channelID: channel._id, server: tcpServer })
     return callback(null)
   })
   return tcpServer.on('error', err => logger.error(`${err} Host: ${host} Port: ${port}`))
@@ -100,7 +100,7 @@ export function startupTCPServer (channelID, callback) {
 
 // Startup a TCP server for each TCP channel
 export function startupServers (callback) {
-  return ChannelModel.find({$or: [{type: 'tcp'}, {type: 'tls'}]}, (err, channels) => {
+  return ChannelModel.find({ $or: [{ type: 'tcp' }, { type: 'tls' }] }, (err, channels) => {
     if (err) { return callback(err) }
 
     const promises = []

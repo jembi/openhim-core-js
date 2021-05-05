@@ -323,11 +323,12 @@ export async function deleteRole (ctx, name) {
       return utils.logAndSetResponse(ctx, 404, `Role with name '${name}' could not be found.`, 'info')
     }
 
-    if (channels && channels.length) {
-      await ChannelModelAPI.updateMany({}, { $pull: { allow: name } })
+    if (channels.length) {
+      await ChannelModelAPI.updateMany({ allow: { $in: [name] } }, { $pull: { allow: name } })
     }
-    if (clients && clients.length) {
-      await ClientModelAPI.updateMany({}, { $pull: { roles: name } })
+
+    if (clients.length) {
+      await ClientModelAPI.updateMany({ roles: { $in: [name] } }, { $pull: { roles: name } })
     }
 
     logger.info(`User ${ctx.authenticated.email} deleted role with name '${name}'`)
