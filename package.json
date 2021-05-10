@@ -63,7 +63,7 @@
     "moment-timezone": "^0.5.33",
     "mongodb": "^3.6.6",
     "mongodb-uri": "0.9.7",
-    "mongoose": "^5.10.13",
+    "mongoose": "^5.12.7",
     "mongoose-patch-history": "2.0.0",
     "nconf": "0.11.2",
     "nodemailer": "^6.6.0",
