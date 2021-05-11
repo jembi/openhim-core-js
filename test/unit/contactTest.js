@@ -47,7 +47,7 @@ describe('Contact Users', () => {
 
     it('should propagate errors from nodemailer', (done) => {
       // Stub nodemailer and the transport
-      const transportStub = {sendMail: sandbox.stub().yields(new Error('Nodemailer error'))}
+      const transportStub = { sendMail: sandbox.stub().yields(new Error('Nodemailer error')) }
       sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method
@@ -73,7 +73,7 @@ describe('Contact Users', () => {
       sendMailStub.withArgs(sinon.match(expectedFields), sinon.match.func).yields(null)
 
       // Stub nodemailer and the transport
-      const transportStub = {sendMail: sendMailStub}
+      const transportStub = { sendMail: sendMailStub }
       sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method
@@ -103,7 +103,7 @@ describe('Contact Users', () => {
       sendMailStub.withArgs(sinon.match(expectedFields), sinon.match.func).yields(null)
 
       // Stub nodemailer and the transport
-      const transportStub = {sendMail: sendMailStub}
+      const transportStub = { sendMail: sendMailStub }
       sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method

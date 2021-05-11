@@ -103,7 +103,7 @@ describe('Transaction Reports', () => {
       results[0].email.should.eql(testUser1.email)
     })
 
-    it(`should fetch daily subscribers`, async () => {
+    it('should fetch daily subscribers', async () => {
       const results = await promisify(reports.fetchDailySubscribers)()
       results.length.should.be.exactly(1)
       results[0].email.should.eql(testUser2.email)

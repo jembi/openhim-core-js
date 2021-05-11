@@ -7,7 +7,6 @@ import * as utils from '../utils'
 import { ChannelModelAPI } from '../model/channels'
 import { ContactGroupModelAPI } from '../model/contactGroups'
 
-
 export async function addContactGroup (ctx) {
   // Must be admin
   if (!authorisation.inGroup('admin', ctx.authenticated)) {

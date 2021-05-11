@@ -11,7 +11,7 @@ import * as cache from '../../src/jwtSecretOrPublicKeyCache'
 
 describe('JWT Cache Test', () => {
   describe('populate cache', () => {
-    let sandbox = sinon.createSandbox()
+    const sandbox = sinon.createSandbox()
 
     before(() => {
       cache.clearSecretOrPublicKey()

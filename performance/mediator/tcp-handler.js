@@ -35,6 +35,6 @@ exports.handleImmediateRequest = (conn) => {
   conn.on('error', console.error)
   conn.once('data', () => {
     sendHttpHeaders(conn)
-    conn.end(`Immediate tcp response`)
+    conn.end('Immediate tcp response')
   })
 }

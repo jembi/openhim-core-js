@@ -1,7 +1,7 @@
 'use strict'
 
 import logger from 'winston'
-import request from 'request'
+import axios from 'axios'
 
 import * as Channels from '../model/channels'
 import * as authorisation from './authorisation'
@@ -15,8 +15,8 @@ import { config } from '../config'
 
 const { ChannelModel } = Channels
 
-const MAX_BODY_AGE_MESSAGE = `Channel property maxBodyAgeDays has to be a number that's valid and requestBody or responseBody must be true.`
-const TIMEOUT_SECONDS_MESSAGE = `Channel property timeoutSeconds has to be a number greater than 1 and less than an 3600`
+const MAX_BODY_AGE_MESSAGE = 'Channel property maxBodyAgeDays has to be a number that\'s valid and requestBody or responseBody must be true.'
+const TIMEOUT_SECONDS_MESSAGE = 'Channel property timeoutSeconds has to be a number greater than 1 and less than an 3600'
 
 config.polling = config.get('polling')
 
@@ -60,7 +60,7 @@ export function validateMethod (channel) {
   }
 
   if (!/http/i.test(channel.type || 'http')) {
-    return `Channel method can't be defined if channel type is not http`
+    return 'Channel method can\'t be defined if channel type is not http'
   }
 
   const mapCount = methods.reduce((dictionary, method) => {
@@ -130,7 +130,7 @@ export async function addChannel (ctx) {
       return
     }
 
-    let methodValidation = validateMethod(channel)
+    const methodValidation = validateMethod(channel)
 
     if (methodValidation != null) {
       ctx.body = methodValidation
@@ -229,7 +229,7 @@ export async function getChannelAudits (ctx, channelId) {
   try {
     const channel = await ChannelModel.findById(channelId).exec()
     if (channel) {
-      ctx.body = await channel.patches.find({ $and: [{ ref: channel.id }, { ops: { $elemMatch: { path: { $ne: '/lastBodyCleared' }}}}] }).sort({ _id: -1 }).exec()
+      ctx.body = await channel.patches.find({ $and: [{ ref: channel.id }, { ops: { $elemMatch: { path: { $ne: '/lastBodyCleared' } } } }] }).sort({ _id: -1 }).exec()
     } else {
       ctx.body = []
     }
@@ -292,8 +292,8 @@ export async function updateChannel (ctx, channelId) {
     }
   } else {
     const { type } = updatedChannel
-    let { methods } = updatedChannel
-    let methodValidation = validateMethod({ type, methods })
+    const { methods } = updatedChannel
+    const methodValidation = validateMethod({ type, methods })
 
     if (methodValidation != null) {
       ctx.body = methodValidation
@@ -443,22 +443,25 @@ export async function triggerChannel (ctx, channelId) {
         headers: {
           'channel-id': channel._id,
           'X-OpenHIM-LastRunAt': new Date()
-        }
+        },
+        method: 'GET'
       }
 
       await new Promise((resolve) => {
-        request(options, function (err) {
-          if (err) {
-            logger.error(err)
-            ctx.status = 500
-            resolve()
-            return
-          }
+        axios(options).then(() => {
           logger.info(`Channel Successfully polled ${channel._id}`)
-          // Return success status
           ctx.status = 200
           resolve()
+        }).catch(err => {
+          logger.error(err.message)
+          ctx.status = 500
+          resolve()
         })
+          .catch(err => {
+            logger.error(err.message)
+            ctx.status = 500
+            resolve()
+          })
       })
     }
   } catch (err) {

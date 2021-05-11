@@ -48,17 +48,8 @@ The following config option are provided by the OpenHIM. All of these options ha
     // API request are only valid for a particular window once made, this is
     // the size of that window in seconds
     "authWindowSeconds": 10,
-    // Max size allowed for ALL bodies in the transaction together
-    // Use min 1 MB to allow space for all routes on a transaction and max 15 MB leaving 1 MB available for the transaction metadata
-    "maxBodiesSizeMB": 15,
     // Max size of a request payload to the API
-    // Due to the maximum size of a mongo document, the bodies in the request will be truncated if the request is larger than 16MB
     "maxPayloadSizeMB": 50,
-    // Certain API endpoints allow for details to be truncated, e.g. transactions with very large bodies
-    // This setting sets the size to truncate to (number of characters)
-    "truncateSize": 15000,
-    // A message to append to detail strings that have been truncated
-    "truncateAppend": "\n[truncated ...]",
     // The types of authentication to use for the API
     // Supported types are "token" and "basic"
     "authenicationTypes": ["token"]

@@ -80,7 +80,7 @@ export async function getMediator (ctx, mediatorURN) {
   const urn = unescape(mediatorURN)
 
   try {
-    const result = await MediatorModelAPI.findOne({urn}).exec()
+    const result = await MediatorModelAPI.findOne({ urn }).exec()
     if (result === null) {
       ctx.status = 404
     } else {
@@ -162,7 +162,7 @@ export async function addMediator (ctx) {
       }
     }
 
-    const existing = await MediatorModelAPI.findOne({urn: mediator.urn}).exec()
+    const existing = await MediatorModelAPI.findOne({ urn: mediator.urn }).exec()
     if (existing != null) {
       if (semver.gt(mediator.version, existing.version)) {
         // update the mediator
@@ -204,7 +204,7 @@ export async function removeMediator (ctx, urn) {
   urn = unescape(urn)
 
   try {
-    await MediatorModelAPI.findOneAndRemove({urn}).exec()
+    await MediatorModelAPI.findOneAndRemove({ urn }).exec()
     ctx.body = `Mediator with urn ${urn} has been successfully removed by ${ctx.authenticated.email}`
     return logger.info(`Mediator with urn ${urn} has been successfully removed by ${ctx.authenticated.email}`)
   } catch (err) {
@@ -222,7 +222,7 @@ export async function heartbeat (ctx, urn) {
   urn = unescape(urn)
 
   try {
-    const mediator = await MediatorModelAPI.findOne({urn}).exec()
+    const mediator = await MediatorModelAPI.findOne({ urn }).exec()
 
     if (mediator == null) {
       ctx.status = 404
@@ -258,6 +258,8 @@ export async function heartbeat (ctx, urn) {
     utils.logAndSetResponse(ctx, 500, `Could not process mediator heartbeat (urn: ${urn}): ${err}`, 'error')
   }
 }
+
+let templateFields
 
 function validateConfigField (param, def, field) {
   switch (def.type) {
@@ -307,7 +309,7 @@ function validateConfigField (param, def, field) {
       if (typeof field !== 'object') {
         throw constructError(`Expected config param ${param} to be an object.`, 'ValidationError')
       }
-      const templateFields = (def.template.map(tp => tp.param))
+      templateFields = (def.template.map(tp => tp.param))
 
       for (const paramField in field) {
         if (!Array.from(templateFields).includes(paramField)) {
@@ -370,7 +372,7 @@ export async function setConfig (ctx, urn) {
   const config = ctx.request.body
 
   try {
-    const mediator = await MediatorModelAPI.findOne({urn}).exec()
+    const mediator = await MediatorModelAPI.findOne({ urn }).exec()
 
     if (mediator == null) {
       ctx.status = 404
@@ -386,7 +388,7 @@ export async function setConfig (ctx, urn) {
       return
     }
 
-    await MediatorModelAPI.findOneAndUpdate({urn}, {config: ctx.request.body, _configModifiedTS: new Date()}).exec()
+    await MediatorModelAPI.findOneAndUpdate({ urn }, { config: ctx.request.body, _configModifiedTS: new Date() }).exec()
     ctx.status = 200
   } catch (error) {
     utils.logAndSetResponse(ctx, 500, `Could not set mediator config (urn: ${urn}): ${error}`, 'error')
@@ -417,7 +419,7 @@ export async function loadDefaultChannels (ctx, urn) {
   const channels = ctx.request.body
 
   try {
-    const mediator = await MediatorModelAPI.findOne({urn}).lean().exec()
+    const mediator = await MediatorModelAPI.findOne({ urn }).lean().exec()
 
     if ((mediator == null)) {
       ctx.status = 404

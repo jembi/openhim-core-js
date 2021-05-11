@@ -11,7 +11,7 @@ import { promisify } from 'util'
 config.authentication = config.get('authentication')
 const himSourceID = config.get('auditing').auditEvents.auditSourceID
 
-function genAuthAudit (remoteAddress) {
+export function genAuthAudit (remoteAddress) {
   let audit = atna.construct.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.constants.OUTCOME_MINOR_FAILURE)
   audit = atna.construct.wrapInSyslog(audit)
   return audit

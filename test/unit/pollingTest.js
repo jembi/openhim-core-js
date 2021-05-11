@@ -133,7 +133,7 @@ describe('Polling tests', () => {
 
   describe('setupAgenda', () => {
     it('should set the global agenda', (done) => {
-      polling.agendaGlobal = null
+      polling.agendaGlobal.should.be.null
       const mockAgenda = createSpy()
       polling.setupAgenda(mockAgenda)
       polling.agendaGlobal.should.be.exactly(mockAgenda)

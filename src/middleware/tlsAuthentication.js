@@ -64,7 +64,7 @@ export function getServerOptions (mutualTLS, done) {
 
         options.ca = certs
         options.requestCert = true
-        options.rejectUnauthorized = false  // we test authority ourselves
+        options.rejectUnauthorized = false // we test authority ourselves
         return done(null, options)
       })
     } else {
@@ -83,7 +83,7 @@ function clientLookup (fingerprint, subjectCN, issuerCN) {
   return new Promise((resolve, reject) => {
     logger.debug(`Looking up client linked to cert with fingerprint ${fingerprint} with subject ${subjectCN} and issuer ${issuerCN}`)
 
-    ClientModel.findOne({certFingerprint: fingerprint}, (err, result) => {
+    ClientModel.findOne({ certFingerprint: fingerprint }, (err, result) => {
       if (err) { return reject(err) }
 
       if (result != null) {
@@ -108,23 +108,23 @@ function clientLookup (fingerprint, subjectCN, issuerCN) {
           } else {
             return Array.from(keystore.ca).map((cert) =>
               (cert =>
-                  pem.readCertificateInfo(cert.data, (err, info) => {
-                    if (err) {
-                      return reject(err)
-                    }
+                pem.readCertificateInfo(cert.data, (err, info) => {
+                  if (err) {
+                    return reject(err)
+                  }
 
-                    if (info.commonName === issuerCN) {
-                      const promise = clientLookup(cert.fingerprint, info.commonName, info.issuer.commonName)
-                      promise.then(resolve)
-                    } else {
-                      missedMatches++
-                    }
+                  if (info.commonName === issuerCN) {
+                    const promise = clientLookup(cert.fingerprint, info.commonName, info.issuer.commonName)
+                    promise.then(resolve)
+                  } else {
+                    missedMatches++
+                  }
 
-                    if (missedMatches === keystore.ca.length) {
-                      logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
-                      return resolve(null)
-                    }
-                  }))(cert))
+                  if (missedMatches === keystore.ca.length) {
+                    logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
+                    return resolve(null)
+                  }
+                }))(cert))
           }
         })
       } else {
@@ -149,7 +149,6 @@ export async function koaMiddleware (ctx, next) {
     await next()
   } else if (ctx.req.client.authorized === true) {
     const cert = ctx.req.connection.getPeerCertificate(true)
-    logger.info(`${cert.subject.CN} is authenticated via TLS.`)
 
     // lookup client by cert fingerprint and set them as the authenticated user
     try {
@@ -163,6 +162,7 @@ export async function koaMiddleware (ctx, next) {
         ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID
       }
       ctx.authenticationType = 'tls'
+      logger.info(`${cert.subject.CN} is authenticated via TLS.`)
       await next()
     } else {
       ctx.authenticated = null

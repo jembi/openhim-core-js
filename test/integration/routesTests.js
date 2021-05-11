@@ -33,8 +33,8 @@ describe('Routes enabled/disabled tests', () => {
   const httpPortPlus44 = constants.PORT_START + 44
 
   const sandbox = sinon.createSandbox()
-  const restrictedSpy = sandbox.spy(async (req) => 'Restricted response')
-  const timeoutSpy = sandbox.spy(async (req) => {
+  const restrictedSpy = sandbox.spy(async () => 'Restricted response')
+  const timeoutSpy = sandbox.spy(async () => {
     await testUtils.wait(30)
     return 'timeout'
   })
@@ -43,6 +43,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 1',
     urlPattern: '^/test/channel1$',
     allow: ['PoC'],
+    responseBody: true,
     routes: [
       {
         name: 'test route',
@@ -285,8 +286,9 @@ describe('Routes enabled/disabled tests', () => {
     const trx = await TransactionModelAPI.findOne()
 
     trx.routes.length.should.be.exactly(1)
-    trx.routes[0].should.have.property('name', 'test route 2')
-    trx.routes[0].response.body.should.be.exactly('target2')
+    trx.routes[0].should.have.property('name', 'test route 2');
+    (trx.routes[0].response.bodyId !== null).should.be.true();
+    (!trx.routes[0].response.body).should.be.true()
   })
 
   it('should NOT route transactions to disabled routes', async () => {
@@ -329,7 +331,7 @@ describe('Routes enabled/disabled tests', () => {
       .auth('testApp', 'password')
       .expect(405)
 
-    res.body.toString().should.eql('Request with method POST is not allowed. Only GET methods are allowed')
+    res.text.should.eql('Request with method POST is not allowed. Only GET methods are allowed')
     // routes are async
     restrictedSpy.callCount.should.eql(0)
   })

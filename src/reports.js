@@ -133,7 +133,8 @@ function sendReports (job, flag, done) {
               for (const key in totals) {
                 report.data[i][key] = totals[key]
               }
-
+              report.data[i].channelName = data.channel.name
+              report.data[i].channelID = data.channel._id
               report.data[i].totalStyle = (report.data[i].total > 0 ? '' : colorGrey)
               report.data[i].avgRespStyle = (report.data[i].avgResp > 0 ? '' : colorGrey)
               report.data[i].failedStyle = (report.data[i].failed > 0 ? 'color: red;' : colorGrey)
@@ -235,8 +236,7 @@ const fetchWeeklySubscribers = callback => { UserModel.find({ weeklyReport: true
 
 function plainTemplate (report) {
   let text = `Generated on: ${
-    (!utcOffset) ? moment().format(dateTimeFormat) :
-       moment().utcOffset(utcOffset).format(dateTimeFormat)
+    (!utcOffset) ? moment().format(dateTimeFormat) : moment().utcOffset(utcOffset).format(dateTimeFormat)
   }`
 
   text += `\n\nReport period: ${report.from} to ${report.to}\n`
