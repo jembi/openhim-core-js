@@ -10,6 +10,7 @@ import { ContactGroupModelAPI } from '../model/contactGroups'
 import { KeystoreModelAPI } from '../model/keystore'
 import { MediatorModelAPI } from '../model/mediators'
 import { UserModelAPI } from '../model/users'
+import * as polling from '../polling'
 
 // Map string parameters to collections
 const collections = {
@@ -147,13 +148,22 @@ async function handleMetadataPost (ctx, action) {
               result = await collections[key].findById(result[0]._id).exec()
               result.set(doc)
               result.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
-              await result.save()
+              result = await result.save()
               status = 'Updated'
             } else {
               doc = new (collections[key])(doc)
               doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
               result = await doc.save()
               status = 'Inserted'
+            }
+
+            // Ideally we should rather use our APIs to insert object rather than go directly to the DB
+            // Then we would have to do this sort on thing as it's already covered there.
+            // E.g. https://github.com/jembi/openhim-core-js/blob/cd7d1fbbe0e122101186ecba9cf1de37711580b8/src/api/channels.js#L241-L257
+            if (key === 'Channels' && result.type === 'polling' && result.status === 'enabled') {
+              polling.registerPollingChannel(result, (err) => {
+                logger.error(err)
+              })
             }
           }
 
