@@ -115,22 +115,6 @@ describe('Request Matching middleware', () => {
     })
   })
 
-  describe('.matchMethod', () => {
-      let matchMethod = requestMatching.__get__('matchMethod')
-      let channel = { methods: ['GET', 'POST', 'DELETE'] }
-
-      it('should match a request http method', () => {
-          let actual = matchMethod(channel, { request: { method: 'GET'}})
-          return actual.should.be.true()
-      })
-
-      it('should reject request with excluded method', () => {
-          // PUT is not included in the channel definition
-          let actual = matchMethod(channel, { request: { method: 'PUT'}})
-          return actual.should.be.false()
-      })
-  })
-
   describe('.matchContentTypes', () => {
     it('should match correct content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
