@@ -6,6 +6,7 @@
 import request from 'supertest'
 import { ObjectId } from 'mongodb'
 import { promisify } from 'util'
+import sinon from 'sinon'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
@@ -15,6 +16,7 @@ import { ClientModelAPI } from '../../src/model/clients'
 import { ContactGroupModelAPI } from '../../src/model/contactGroups'
 import { MediatorModelAPI } from '../../src/model/mediators'
 import { UserModelAPI } from '../../src/model/users'
+import * as polling from '../../src/polling'
 
 const sampleMetadata = {
   Channels: [{
@@ -295,6 +297,85 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Error')
+        })
+
+        it('should register a polling channel when inserted', async () => {
+          const testPollingChannelImport = {
+            Channels: [
+              {
+                methods: [],
+                type: 'polling',
+                allow: [],
+                whitelist: [],
+                authType: 'public',
+                matchContentTypes: [],
+                properties: [],
+                txViewAcl: [],
+                txViewFullAcl: [],
+                txRerunAcl: [],
+                status: 'enabled',
+                rewriteUrls: false,
+                addAutoRewriteRules: true,
+                autoRetryEnabled: false,
+                autoRetryPeriodMinutes: 60,
+                routes: [
+                  {
+                    type: 'http',
+                    status: 'enabled',
+                    forwardAuthHeader: false,
+                    name: 'FHIR Extractor',
+                    secured: false,
+                    host: 'fhir-extractor',
+                    port: 3000,
+                    path: '/fhir-extract',
+                    pathTransform: '',
+                    primary: true,
+                    username: '',
+                    password: ''
+                  }
+                ],
+                requestBody: true,
+                responseBody: true,
+                rewriteUrlsConfig: [],
+                name: 'Poll FHIR Extractor',
+                pollingSchedule: '10 seconds',
+                urlPattern: '^/fhir-extractor$',
+                matchContentRegex: null,
+                matchContentXpath: null,
+                matchContentValue: null,
+                matchContentJson: null,
+                tcpHost: null,
+                tcpPort: null,
+                updatedBy: {
+                  id: '607026dc7008390013ecec42',
+                  name: 'Super User'
+                },
+                alerts: []
+              }
+            ]
+          }
+
+          const spy = sinon.spy(polling, 'registerPollingChannel')
+
+          const res = await request(constants.BASE_URL)
+            .post('/metadata')
+            .set('auth-username', testUtils.rootUser.email)
+            .set('auth-ts', authDetails.authTS)
+            .set('auth-salt', authDetails.authSalt)
+            .set('auth-token', authDetails.authToken)
+            .send(testPollingChannelImport)
+            .expect(201)
+
+          res.body[0].should.have.property('status', 'Inserted')
+          const channel = await ChannelModelAPI.findOne({ name: 'Poll FHIR Extractor' })
+
+          channel.should.have.property('urlPattern', '^/fhir-extractor$')
+
+          spy.restore()
+          spy.calledOnce.should.be.true()
+          spy.getCall(0).args[0].should.have.property('name', 'Poll FHIR Extractor')
+          spy.getCall(0).args[0].should.have.property('urlPattern', '^/fhir-extractor$')
+          spy.getCall(0).args[0].should.have.property('type', 'polling')
         })
       })
 
