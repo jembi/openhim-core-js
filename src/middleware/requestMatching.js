@@ -74,6 +74,12 @@ function matchUrlPattern (channel, ctx) {
   return pat.test(ctx.request.path)
 }
 
+function matchMethod(channel, ctx) {
+    let found = channel.methods.find(method => ctx.request.method.toUpperCase() === method);
+    if(found) return true;
+    return false;
+}
+
 function matchContentTypes (channel, ctx) {
   if ((channel.matchContentTypes != null ? channel.matchContentTypes.length : undefined) > 0) {
     if (ctx.request.header && ctx.request.header['content-type']) {
@@ -98,6 +104,8 @@ function matchContentTypes (channel, ctx) {
 // TODO: OHM-695 uncomment line below when working on ticket
 const matchFunctions = [
   matchUrlPattern,
+  matchMethod,
+  matchContent,
   matchContentTypes
 ]
 
