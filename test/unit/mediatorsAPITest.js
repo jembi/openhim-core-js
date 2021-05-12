@@ -38,7 +38,7 @@ describe('Mediator API unit tests', () => {
           type: 'string'
         }
         ],
-        {param1: 'val1'}
+        { param1: 'val1' }
       )
     )
 
@@ -51,7 +51,7 @@ describe('Mediator API unit tests', () => {
             type: 'number'
           }
           ],
-          {param1: 'val1'}
+          { param1: 'val1' }
         )
       } catch (error) {
         errors++
@@ -64,7 +64,7 @@ describe('Mediator API unit tests', () => {
             type: 'string'
           }
           ],
-          {param1: 5}
+          { param1: 5 }
         )
       } catch (error1) {
         errors++
@@ -77,7 +77,7 @@ describe('Mediator API unit tests', () => {
             type: 'bool'
           }
           ],
-          {param1: 5}
+          { param1: 5 }
         )
       } catch (error2) {
         errors++
@@ -91,7 +91,7 @@ describe('Mediator API unit tests', () => {
             values: ['test1', 'test2']
           }
           ],
-          {param1: true}
+          { param1: true }
         )
       } catch (error3) {
         errors++
@@ -104,7 +104,7 @@ describe('Mediator API unit tests', () => {
             type: 'password'
           }
           ],
-          {pass: true}
+          { pass: true }
         )
       } catch (error4) {
         errors++
@@ -120,7 +120,7 @@ describe('Mediator API unit tests', () => {
           type: 'number'
         }
         ],
-        {param1: 5}
+        { param1: 5 }
       )
       mediators.validateConfig(
         [{
@@ -128,7 +128,7 @@ describe('Mediator API unit tests', () => {
           type: 'string'
         }
         ],
-        {param1: 'val1'}
+        { param1: 'val1' }
       )
       mediators.validateConfig(
         [{
@@ -136,7 +136,7 @@ describe('Mediator API unit tests', () => {
           type: 'bool'
         }
         ],
-        {param1: true}
+        { param1: true }
       )
       mediators.validateConfig(
         [{
@@ -145,7 +145,7 @@ describe('Mediator API unit tests', () => {
           values: ['test1', 'test2']
         }
         ],
-        {param1: 'test2'}
+        { param1: 'test2' }
       )
       return mediators.validateConfig(
         [{
@@ -153,7 +153,7 @@ describe('Mediator API unit tests', () => {
           type: 'password'
         }
         ],
-        {pass: 'secret123'}
+        { pass: 'secret123' }
       )
     })
 
@@ -202,7 +202,7 @@ describe('Mediator API unit tests', () => {
             type: 'map'
           }
           ],
-          {param1: 'blah'}
+          { param1: 'blah' }
         )
       } catch (err) {
         // eslint-disable-next-line
@@ -302,7 +302,7 @@ describe('Mediator API unit tests', () => {
           [
             testStruct
           ],
-          {param1: 'localhost'}
+          { param1: 'localhost' }
         )
       } catch (err) {
         return
@@ -416,7 +416,7 @@ describe('Mediator API unit tests', () => {
           array: true
         }
         ],
-        {param1: []}
+        { param1: [] }
       )
     )
 
@@ -429,7 +429,7 @@ describe('Mediator API unit tests', () => {
             array: true
           }
           ],
-          {param1: 'value'}
+          { param1: 'value' }
         )
       } catch (err) {
         return

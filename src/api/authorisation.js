@@ -16,7 +16,7 @@ export function getUserViewableChannels (user, access = 'txViewAcl') {
     return ChannelModelAPI.find({}).exec()
   } else {
     // otherwise only channels that this user has access to
-    return ChannelModelAPI.find({[access]: {$in: user.groups}}).exec()
+    return ChannelModelAPI.find({ [access]: { $in: user.groups } }).exec()
   }
 }
 
@@ -30,6 +30,6 @@ export function getUserRerunableChannels (user) {
     return ChannelModelAPI.find({}).exec()
   } else {
     // otherwise figure out what this user can rerun
-    return ChannelModelAPI.find({txRerunAcl: {$in: user.groups}}).exec()
+    return ChannelModelAPI.find({ txRerunAcl: { $in: user.groups } }).exec()
   }
 }
