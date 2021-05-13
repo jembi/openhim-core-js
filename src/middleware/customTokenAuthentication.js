@@ -5,7 +5,7 @@ import logger from 'winston'
 import * as client from '../model/clients'
 import { CUSTOM_TOKEN_PATTERN } from '../constants'
 
-async function authenticateClient(customTokenID) {
+async function authenticateClient (customTokenID) {
   return client.ClientModel.findOne({ customTokenID }).then((client) => {
     if (!client) {
       throw new Error('Client does not exist')
@@ -14,7 +14,7 @@ async function authenticateClient(customTokenID) {
   })
 }
 
-async function authenticateToken(ctx) {
+async function authenticateToken (ctx) {
   if (ctx.authenticated) {
     return
   }
@@ -23,7 +23,7 @@ async function authenticateToken(ctx) {
   const token = CUSTOM_TOKEN_PATTERN.exec(authHeader)
 
   if (!token) {
-    logger.debug(`Missing or invalid Custom Token 'Authorization' header`)
+    logger.debug('Missing or invalid Custom Token \'Authorization\' header')
     return
   }
 
@@ -34,11 +34,10 @@ async function authenticateToken(ctx) {
     ctx.authenticationType = 'token'
   } catch (error) {
     logger.error(`Custom Token could not be verified: ${error.message}`)
-    return
   }
 }
 
-export async function koaMiddleware(ctx, next) {
+export async function koaMiddleware (ctx, next) {
   await authenticateToken(ctx)
   if (ctx.authenticated && ctx.authenticated.clientID) {
     ctx.header['X-OpenHIM-ClientID'] = ctx.authenticated.clientID

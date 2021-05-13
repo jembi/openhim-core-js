@@ -217,7 +217,7 @@ describe('API Integration Tests', () => {
         .get('/channels')
         .set(
           'Authorization',
-          `Basic ${Buffer.from(`wrong@email.org:password`).toString('base64')}`
+          `Basic ${Buffer.from('wrong@email.org:password').toString('base64')}`
         )
         .expect(401)
 

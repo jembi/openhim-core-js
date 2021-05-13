@@ -13,7 +13,7 @@ import * as cache from '../../src/jwtSecretOrPublicKeyCache'
 
 describe('JWT Authorisation Test', () => {
   describe('koa middleware', () => {
-    let sandbox = sinon.createSandbox()
+    const sandbox = sinon.createSandbox()
 
     afterEach(() => {
       sandbox.restore()

@@ -11,7 +11,7 @@ import * as client from '../../src/model/clients'
 
 describe('Custom Token Authorization Test', () => {
   describe('koa middleware', () => {
-    let sandbox = sinon.createSandbox()
+    const sandbox = sinon.createSandbox()
 
     afterEach(() => {
       sandbox.restore()

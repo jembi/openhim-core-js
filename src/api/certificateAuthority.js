@@ -18,7 +18,7 @@ export async function generateCert (ctx) {
     utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getServerKey by id denied.`, 'info')
     return
   }
-  const {request: {body: options}} = ctx
+  const { request: { body: options } } = ctx
   if (options.type === 'server') {
     logger.info('Generating server cert')
     result = await generateServerCert(options, ctx)

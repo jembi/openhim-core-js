@@ -26,9 +26,9 @@ describe('API Integration Tests', () => {
       remainingTransactions: 0,
       totalTransactions: 4,
       transactions: [{ tid: '11111', tstatus: 'Completed' },
-      { tid: '22222', tstatus: 'Completed' },
-      { tid: '33333', tstatus: 'Failed' },
-      { tid: '44444', tstatus: 'Completed' }],
+        { tid: '22222', tstatus: 'Completed' },
+        { tid: '33333', tstatus: 'Failed' },
+        { tid: '44444', tstatus: 'Completed' }],
       created: '2014-06-18T12:00:00.929Z',
       completed: '12014-06-18T12:01:00.929Z',
       user: 'root@openhim.org'
@@ -39,8 +39,8 @@ describe('API Integration Tests', () => {
       remainingTransactions: 3,
       totalTransactions: 3,
       transactions: [{ tid: '55555', tstatus: 'Queued' },
-      { tid: '66666', tstatus: 'Queued' },
-      { tid: '77777', tstatus: 'Queued' }],
+        { tid: '66666', tstatus: 'Queued' },
+        { tid: '77777', tstatus: 'Queued' }],
       created: '2014-06-18T12:00:00.929Z',
       user: 'root@openhim.org'
     })
@@ -51,28 +51,28 @@ describe('API Integration Tests', () => {
       remainingTransactions: 11,
       totalTransactions: 23,
       transactions: [{ tid: '11111', tstatus: 'Completed', rerunID: '111111111111', rerunStatus: 'Successful' },
-      { tid: '22222', tstatus: 'Completed', rerunID: '22222222222', rerunStatus: 'Successful' },
-      { tid: '33333', tstatus: 'Completed', rerunID: '33333333333', rerunStatus: 'Successful' },
-      { tid: 'fakeIDShouldFail', tstatus: 'Failed', error: 'Failed due to incorrect format of ID' },
-      { tid: '55555', tstatus: 'Completed', rerunID: '55555555555', rerunStatus: 'Failed' },
-      { tid: '66666', tstatus: 'Completed', rerunID: '66666666666', rerunStatus: 'Completed' },
-      { tid: '77777', tstatus: 'Completed', rerunID: '77777777777', rerunStatus: 'Successful' },
-      { tid: '88888', tstatus: 'Completed', rerunID: '88888888888', rerunStatus: 'Failed' },
-      { tid: 'fakeIDShouldFail2', tstatus: 'Failed', error: 'Failed due to incorrect format of ID' },
-      { tid: '10101', tstatus: 'Completed', rerunID: '10101010101', rerunStatus: 'Failed' },
-      { tid: '11011', tstatus: 'Completed', rerunID: '11011011011', rerunStatus: 'Failed' },
-      { tid: '12121', tstatus: 'Processing' },
-      { tid: '13131', tstatus: 'Queued' },
-      { tid: '14141', tstatus: 'Queued' },
-      { tid: '15151', tstatus: 'Queued' },
-      { tid: '16161', tstatus: 'Queued' },
-      { tid: '17171', tstatus: 'Queued' },
-      { tid: '18181', tstatus: 'Queued' },
-      { tid: '19191', tstatus: 'Queued' },
-      { tid: '20202', tstatus: 'Queued' },
-      { tid: '21212', tstatus: 'Queued' },
-      { tid: '22022', tstatus: 'Queued' },
-      { tid: '23232', tstatus: 'Queued' }],
+        { tid: '22222', tstatus: 'Completed', rerunID: '22222222222', rerunStatus: 'Successful' },
+        { tid: '33333', tstatus: 'Completed', rerunID: '33333333333', rerunStatus: 'Successful' },
+        { tid: 'fakeIDShouldFail', tstatus: 'Failed', error: 'Failed due to incorrect format of ID' },
+        { tid: '55555', tstatus: 'Completed', rerunID: '55555555555', rerunStatus: 'Failed' },
+        { tid: '66666', tstatus: 'Completed', rerunID: '66666666666', rerunStatus: 'Completed' },
+        { tid: '77777', tstatus: 'Completed', rerunID: '77777777777', rerunStatus: 'Successful' },
+        { tid: '88888', tstatus: 'Completed', rerunID: '88888888888', rerunStatus: 'Failed' },
+        { tid: 'fakeIDShouldFail2', tstatus: 'Failed', error: 'Failed due to incorrect format of ID' },
+        { tid: '10101', tstatus: 'Completed', rerunID: '10101010101', rerunStatus: 'Failed' },
+        { tid: '11011', tstatus: 'Completed', rerunID: '11011011011', rerunStatus: 'Failed' },
+        { tid: '12121', tstatus: 'Processing' },
+        { tid: '13131', tstatus: 'Queued' },
+        { tid: '14141', tstatus: 'Queued' },
+        { tid: '15151', tstatus: 'Queued' },
+        { tid: '16161', tstatus: 'Queued' },
+        { tid: '17171', tstatus: 'Queued' },
+        { tid: '18181', tstatus: 'Queued' },
+        { tid: '19191', tstatus: 'Queued' },
+        { tid: '20202', tstatus: 'Queued' },
+        { tid: '21212', tstatus: 'Queued' },
+        { tid: '22022', tstatus: 'Queued' },
+        { tid: '23232', tstatus: 'Queued' }],
       created: '2014-06-18T12:00:00.929Z',
       user: 'root@openhim.org'
     })
@@ -332,15 +332,46 @@ describe('API Integration Tests', () => {
 
         const task = await TaskModelAPI.findOne({
           $and: [{ transactions: { $elemMatch: { tid: '888888888888888888888888' } } },
-          { transactions: { $elemMatch: { tid: '999999999999999999999999' } } }, {
-            transactions: {
-              $elemMatch: { tid: '101010101010101010101010' }
-            }
-          }]
+            { transactions: { $elemMatch: { tid: '999999999999999999999999' } } }, {
+              transactions: {
+                $elemMatch: { tid: '101010101010101010101010' }
+              }
+            }]
         })
         task.should.have.property('status', 'Queued')
         task.transactions.should.have.length(3)
         task.should.have.property('remainingTransactions', 3)
+      })
+
+      it('should add a new task and update the transactions\' autoRetryAttempt number', async () => {
+        const tids = ['888888888888888888888888', '999999999999999999999999', '101010101010101010101010']
+        const newTask = { tids }
+
+        await request(constants.BASE_URL)
+          .post('/tasks')
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send(newTask)
+          .expect(201)
+
+        const task = await TaskModelAPI.findOne({
+          $and: [
+            { transactions: { $elemMatch: { tid: '888888888888888888888888' } } },
+            { transactions: { $elemMatch: { tid: '999999999999999999999999' } } },
+            { transactions: { $elemMatch: { tid: '101010101010101010101010' } } }
+          ]
+        })
+
+        const transactionsToRerun = await TransactionModelAPI.find({ _id: { $in: tids } })
+
+        task.should.have.property('status', 'Queued')
+        task.transactions.should.have.length(3)
+        transactionsToRerun.should.have.length(3)
+        transactionsToRerun[0].autoRetryAttempt.should.equal(0)
+        transactionsToRerun[1].autoRetryAttempt.should.equal(0)
+        transactionsToRerun[2].autoRetryAttempt.should.equal(0)
       })
 
       it('should add a new task (non Admin user)', async () => {
@@ -358,11 +389,11 @@ describe('API Integration Tests', () => {
 
         const task = await TaskModelAPI.findOne({
           $and: [{ transactions: { $elemMatch: { tid: '888888888888888888888888' } } },
-          { transactions: { $elemMatch: { tid: '999999999999999999999999' } } }, {
-            transactions: {
-              $elemMatch: { tid: '101010101010101010101010' }
-            }
-          }]
+            { transactions: { $elemMatch: { tid: '999999999999999999999999' } } }, {
+              transactions: {
+                $elemMatch: { tid: '101010101010101010101010' }
+              }
+            }]
         })
         task.should.have.property('status', 'Queued')
         task.transactions.should.have.length(3)
@@ -384,11 +415,11 @@ describe('API Integration Tests', () => {
 
         const task = await TaskModelAPI.findOne({
           $and: [{ transactions: { $elemMatch: { tid: '888888888888888888888888' } } },
-          { transactions: { $elemMatch: { tid: '999999999999999999999999' } } },
-          { transactions: { $elemMatch: { tid: '101010101010101010101010' } } }]
+            { transactions: { $elemMatch: { tid: '999999999999999999999999' } } },
+            { transactions: { $elemMatch: { tid: '101010101010101010101010' } } }]
         })
 
-        const transactionsToRerun = await TransactionModelAPI.find({_id: { $in: tids }})
+        const transactionsToRerun = await TransactionModelAPI.find({ _id: { $in: tids } })
 
         task.should.have.property('status', 'Queued')
         task.transactions.should.have.length(3)
@@ -457,11 +488,11 @@ describe('API Integration Tests', () => {
 
         const task = await TaskModelAPI.findOne({
           $and: [{ transactions: { $elemMatch: { tid: '222288888888888888888888' } } },
-          { transactions: { $elemMatch: { tid: '333399999999999999999999' } } }, {
-            transactions: {
-              $elemMatch: { tid: '444410101010101010101010' }
-            }
-          }]
+            { transactions: { $elemMatch: { tid: '333399999999999999999999' } } }, {
+              transactions: {
+                $elemMatch: { tid: '444410101010101010101010' }
+              }
+            }]
         })
 
         task.should.have.property('status', 'Paused')

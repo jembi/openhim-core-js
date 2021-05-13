@@ -69,7 +69,7 @@ async function seedValues (clients = 1, channelsPerClient = 2, transactionsPerCh
       }
     }
   }
-  console.log(`completed seed`)
+  console.log('completed seed')
 }
 
 async function createClient (clientNum) {
@@ -105,7 +105,7 @@ async function creatChannel (client, channelNum, user) {
     type: 'http'
   }
 
-  const id = `0`.repeat(12 - channelNum.toString().length) + channelNum
+  const id = '0'.repeat(12 - channelNum.toString().length) + channelNum
 
   const channel = new ChannelModel({
     _id: new ObjectId(id),
@@ -182,7 +182,7 @@ function getBody () {
     case 0: return Buffer.alloc(100000, 'Large Response ').toString()
     case 1:
     case 2:
-    case 3: return `Response Body`
+    case 3: return 'Response Body'
     default: return ''
   }
 }
