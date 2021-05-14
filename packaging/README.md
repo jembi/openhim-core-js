@@ -24,7 +24,7 @@ To create a new build release execute the below command. This does assume that y
 
 E.g
 
-`./build-release-zip.sh v5.2.4`
+`./build-release-zip.sh v7.0.0`
 
 # CentOS RPM Packaging
 
@@ -32,7 +32,7 @@ Building the CentOS package makes uses of a CentOS docker container which runs v
 
 Execute the `build-docker-centos-rpm.sh` bash script with a specific release version as an argument to build the RPM package on a specific release version.
 
-`build-docker-centos-rpm.sh 4.0.5` will build and RPM package for the 4.0.5 release of the OpenHIM
+`build-docker-centos-rpm.sh 7.0.0` will build and RPM package for the 7.0.0 release of the OpenHIM
 
 Once the bash script has completed and cleaned up after itself, you will see the built rpm package in the directory of this script. The package will look something like:
-`openhim-core-4.0.5-1.x86_64.rpm`
+`openhim-core-7.0.0-1.x86_64.rpm`
