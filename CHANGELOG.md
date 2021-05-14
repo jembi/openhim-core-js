@@ -1,5 +1,31 @@
 # Changelog
 
+## v7.0.0 / 2021-05-14
+
+* Deprecated support for out-dated unsupported Nodejs 10
+* Included the support of the latest Nodejs LTS version (14 - Fermium)
+* Base Docker image has been updated to use Nodejs 14
+* Updated node dependencies
+* Skipped release major version v6 as that is an alpha prerelease containing experimental streaming features
+
+## v6.0.0-alpha-1 / 2020-06-29
+
+* Routing Refactor - use request streaming
+
+## v5.4.2 / 2021-01-7
+
+* Channel Names were not displaying in the daily and weekly email reports
+
+## v5.4.1 / 2020-11-11
+
+* All the outdated dependencies have been updated to remove most of the vulnerabilities
+* A bug fix has also been applied where adding a client for channel was allowed when the clientId and role were the same, however isnt allowed and prevented the record from being updated correctly
+
+## v5.4.0 / 2020-06-29
+
+* JWT authentication - Enable and configure the JWT settings within the OpenHIM config
+* Custom Token authentication - Configure the use of custom token within the OpenHIM config. Custom tokens are configured via the specific channel
+
 ## v5.2.6 / 2020-01-23
 
 * Deprecated support for out-dated unsupported Nodejs 8
