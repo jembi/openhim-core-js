@@ -1,7 +1,7 @@
 language: node_js
 node_js:
-  - "lts/dubnium"
   - "lts/erbium"
+  - "lts/fermium"
   - "node"
 matrix:
   fast_finish: true
