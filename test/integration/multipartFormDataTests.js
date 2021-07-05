@@ -49,6 +49,7 @@ describe('Multipart form data tests', () => {
     name: 'TEST DATA - Mock endpoint - multipart',
     urlPattern: '/test/multipart',
     allow: ['PoC'],
+    methods: ['POST', 'PUT'],
     routes: [{
       name: 'test route',
       host: 'localhost',

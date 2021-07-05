@@ -35,6 +35,7 @@ describe('URL rewriting test', () => {
       name: 'TEST DATA - Mock endpoint',
       urlPattern: 'test/mock',
       allow: ['PoC'],
+      methods: ['GET'],
       routes: [{
         name: 'test route',
         host: 'localhost',

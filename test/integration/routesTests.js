@@ -43,6 +43,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 1',
     urlPattern: '^/test/channel1$',
     allow: ['PoC'],
+    methods: ['GET'],
     routes: [
       {
         name: 'test route',
@@ -65,6 +66,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 2',
     urlPattern: '^/test/channel2$',
     allow: ['PoC'],
+    methods: ['GET'],
     routes: [
       {
         name: 'test route',
@@ -89,6 +91,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 3',
     urlPattern: '^/test/channel3$',
     allow: ['PoC'],
+    methods: ['GET'],
     routes: [
       {
         name: 'test route',
@@ -114,6 +117,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 4',
     urlPattern: '^/test/channel4$',
     allow: ['PoC'],
+    methods: ['GET'],
     routes: [
       {
         name: 'test transaction orchestration',
@@ -133,6 +137,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 5',
     urlPattern: '^/test/channel5$',
     allow: ['PoC'],
+    methods: ['GET'],
     routes: [
       {
         name: 'test transaction fail orchestration',
@@ -152,6 +157,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - Mock endpoint 6',
     urlPattern: '^/test/channel6$',
     allow: ['PoC'],
+    methods: ['GET'],
     routes: [
       {
         name: 'test route',
@@ -176,6 +182,7 @@ describe('Routes enabled/disabled tests', () => {
     name: 'TEST DATA - timeoutChannel',
     urlPattern: '^/test/timeoutChannel$',
     allow: ['PoC'],
+    methods: ['GET'],
     timeout: 20,
     routes: [
       {
@@ -323,15 +330,11 @@ describe('Routes enabled/disabled tests', () => {
     req.method.should.eql('GET')
   })
 
-  it('should deny a request if the method is not in the "methods"', async () => {
+  it('should deny a request if the method is not in the "methods" (returns 404)', async () => {
     const res = await request(constants.HTTP_BASE_URL)
       .post('/test/restricted')
       .auth('testApp', 'password')
-      .expect(405)
-
-    res.body.toString().should.eql('Request with method POST is not allowed. Only GET methods are allowed')
-    // routes are async
-    restrictedSpy.callCount.should.eql(0)
+      .expect(404)
   })
 
   it('should allow a request and produce an orchestration recording the openhim\'s request and received response', async () => {

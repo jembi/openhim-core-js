@@ -223,6 +223,7 @@ describe('Request Matching middleware', () => {
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
         allow: ['Test1', 'Musha_OpenMRS', 'Test2'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -256,6 +257,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/authorisation'
         ctx.request.path = 'test/authorisation'
         ctx.response = {}
@@ -273,6 +275,7 @@ describe('Request Matching middleware', () => {
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
         allow: ['Test1', 'Musha_OpenMRS', 'Test2'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -306,6 +309,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/authorisation'
         ctx.request.path = 'test/authorisation'
         ctx.response = {}
@@ -324,6 +328,7 @@ describe('Request Matching middleware', () => {
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
         allow: ['Test1', 'Musha_OpenMRS', 'Test2'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -358,6 +363,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/authorisation'
         ctx.request.path = 'test/authorisation'
         ctx.request.header = {}
@@ -377,6 +383,7 @@ describe('Request Matching middleware', () => {
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
         allow: ['Test1', 'Musha_OpenMRS', 'Test2'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -411,6 +418,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/authorisation'
         ctx.request.path = 'test/authorisation'
         ctx.request.header = {}
@@ -431,6 +439,7 @@ describe('Request Matching middleware', () => {
         name: 'Mock for Channel Status Test (enabled)',
         urlPattern: 'test/status/enabled',
         allow: ['PoC', 'Test1', 'Test2'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -462,6 +471,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/status/enabled'
         ctx.request.path = 'test/status/enabled'
         ctx.response = {}

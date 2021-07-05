@@ -33,6 +33,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - Mock endpoint',
         urlPattern: 'test/mock',
         allow: ['PoC'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -101,6 +102,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - Mock endpoint',
         urlPattern: '/test/mock',
         allow: ['PoC'],
+        methods: ['POST', 'PUT'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -117,6 +119,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - Mock With Return endpoint',
         urlPattern: '/gmo',
         allow: ['PoC'],
+        methods: ['POST', 'PUT'],
         routes: [{
           name: 'test route return',
           host: 'localhost',
@@ -133,6 +136,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - Mock With Return endpoint public',
         urlPattern: '/public',
         allow: [],
+        methods: ['POST', 'PUT'],
         authType: 'public',
         routes: [{
           name: 'test route',
@@ -152,6 +156,7 @@ describe('HTTP tests', () => {
         allow: [],
         whitelist: ['::ffff:127.0.0.1', '127.0.0.1'], // localhost in IPV6
         authType: 'public',
+        methods: ['POST', 'PUT'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -168,6 +173,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - whitelist but un-authorised',
         urlPattern: '/un-auth',
         allow: ['private'],
+        methods: ['POST', 'PUT'],
         whitelist: ['::ffff:127.0.0.1', '127.0.0.1'], // localhost in IPV6
         authType: 'private',
         routes: [{
@@ -186,6 +192,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - whitelist but authorised',
         urlPattern: '/auth',
         allow: ['PoC'],
+        methods: ['POST', 'PUT'],
         whitelist: ['::ffff:127.0.0.1', '127.0.0.1'], // localhost in IPV6
         authType: 'private',
         routes: [{
@@ -344,6 +351,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - Mock endpoint',
         urlPattern: 'test/mock',
         allow: ['PoC'],
+        methods: ['POST', 'PUT'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -434,6 +442,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - Mock endpoint',
         urlPattern: 'test/mock',
         allow: ['PoC'],
+        methods: ['POST', 'PUT'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -518,6 +527,7 @@ describe('HTTP tests', () => {
         name: 'TEST DATA - Mock endpoint',
         urlPattern: 'test/mock',
         allow: ['PoC'],
+        methods: ['POST', 'PUT'],
         routes: [{
           name: 'test route',
           host: 'localhost',

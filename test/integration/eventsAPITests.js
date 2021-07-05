@@ -55,6 +55,7 @@ describe('Events API Integration Tests', () => {
       name: channelName,
       urlPattern: 'test/mock',
       allow: ['PoC'],
+      methods: ['GET'],
       routes: [
         {
           name: primaryRouteName,
@@ -78,6 +79,7 @@ describe('Events API Integration Tests', () => {
       name: `${channelName}-slow`,
       urlPattern: 'test/slow',
       allow: ['PoC'],
+      methods: ['GET'],
       routes: [
         {
           name: primaryRouteName,
