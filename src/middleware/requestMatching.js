@@ -26,6 +26,10 @@ function matchContent (channel, ctx) {
   }
 }
 
+function matchMethod (channel, ctx) {
+  return !!channel.methods.find(method => ctx.request.method.toUpperCase() === method)
+}
+
 export function matchRegex (regexPat, body) {
   const regex = new RegExp(regexPat)
   return regex.test(body.toString())
@@ -98,6 +102,7 @@ function matchContentTypes (channel, ctx) {
 // TODO: OHM-695 uncomment line below when working on ticket
 const matchFunctions = [
   matchUrlPattern,
+  matchMethod,
   matchContentTypes
 ]
 
