@@ -26,7 +26,7 @@ function matchContent (channel, ctx) {
 }
 
 function matchMethod(channel, ctx) {
-  return channel.methods.find(method => ctx.request.method.toUpperCase() === method) ? true : false
+  return !!channel.methods.find(method => ctx.request.method.toUpperCase() === method)
 }
 
 function matchRegex (regexPat, body) {
