@@ -90,6 +90,7 @@ describe('Auto Retry Integration Tests', () => {
       name: 'TEST DATA - Will break channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
+      methods: ['GET'],
       routes: [{
         name: 'unavailable route',
         host: 'localhost',
@@ -110,6 +111,7 @@ describe('Auto Retry Integration Tests', () => {
       name: 'TEST DATA - Will break channel - attempt once',
       urlPattern: '^/test/nowhere/2$',
       allow: ['PoC'],
+      methods: ['GET'],
       routes: [{
         name: 'unavailable route',
         host: 'localhost',
@@ -232,6 +234,7 @@ describe('Auto Retry Integration Tests', () => {
       name: 'TEST DATA - Secondary route will break channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
+      methods: ['GET'],
       responseBody: true,
       autoRetryEnabled: true,
       routes: [{
@@ -291,6 +294,7 @@ describe('Auto Retry Integration Tests', () => {
       name: 'TEST DATA - Mediator has error channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
+      methods: ['GET'],
       responseBody: true,
       autoRetryEnabled: true,
       routes: [{
@@ -359,6 +363,7 @@ describe('Auto Retry Integration Tests', () => {
       name: 'TEST DATA - Both will break channel',
       urlPattern: '^/test/nowhere$',
       allow: ['PoC'],
+      methods: ['GET'],
       responseBody: true,
       autoRetryEnabled: true,
       routes: [{

@@ -1225,6 +1225,7 @@ describe('API Integration Tests', () => {
         name: 'TEST DATA - Mock mediator endpoint',
         urlPattern: 'test/mediator',
         allow: ['PoC'],
+        methods: ['GET'],
         routes: [{
           name: 'mediator route',
           host: 'localhost',
