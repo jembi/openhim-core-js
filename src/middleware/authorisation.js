@@ -49,6 +49,9 @@ export async function authorise (ctx, done) {
     // authorisation succeeded
     ctx.authorisedChannel = channel
     logger.info(`The request, '${ctx.request.path}' is authorised to access ${ctx.authorisedChannel.name}`)
+  } else if (!channel) {
+    // No channel found
+    ctx.response.status = 404
   } else {
     // authorisation failed
     ctx.response.status = 401

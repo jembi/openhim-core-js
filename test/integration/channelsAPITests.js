@@ -1744,6 +1744,7 @@ describe('API Integration Tests', () => {
       name: 'TEST DATA - Mock endpoint 1',
       urlPattern: '^/test/undefined/priority$',
       allow: ['PoC'],
+      methods: ['GET'],
       routes: [{
         name: 'test route',
         host: 'localhost',
@@ -1760,6 +1761,7 @@ describe('API Integration Tests', () => {
       name: 'TEST DATA - Mock endpoint 2',
       urlPattern: '^/.*$',
       priority: 3,
+      methods: ['GET'],
       allow: ['PoC'],
       routes: [{
         name: 'test route',
@@ -1777,6 +1779,7 @@ describe('API Integration Tests', () => {
       name: 'TEST DATA - Mock endpoint 3',
       urlPattern: '^/test/mock$',
       priority: 2,
+      methods: ['GET'],
       allow: ['PoC'],
       routes: [{
         name: 'test route',
@@ -1860,6 +1863,7 @@ describe('API Integration Tests', () => {
         name: 'TEST DATA - Mock endpoint 4',
         urlPattern: '^/test/mock$',
         priority: 1,
+        methods: ['GET'],
         allow: ['something else'],
         routes: [{
           name: 'test route',

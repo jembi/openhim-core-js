@@ -115,6 +115,22 @@ describe('Request Matching middleware', () => {
     })
   })
 
+  describe('.matchMethod', () => {
+    const matchMethod = requestMatching.__get__('matchMethod')
+    const channel = { methods: ['GET', 'POST', 'DELETE'] }
+
+    it('should match a request http method', () => {
+      const actual = matchMethod(channel, { request: { method: 'GET' } })
+      return actual.should.be.true()
+    })
+
+    it('should reject request with excluded method', () => {
+      // PUT is not included in the channel definition
+      const actual = matchMethod(channel, { request: { method: 'PUT' } })
+      return actual.should.be.false()
+    })
+  })
+
   describe('.matchContentTypes', () => {
     it('should match correct content types', () => {
       const matchContentTypes = requestMatching.__get__('matchContentTypes')
@@ -326,6 +342,7 @@ describe('Request Matching middleware', () => {
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
         allow: ['Test1', 'Musha_OpenMRS', 'Test2'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -360,6 +377,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/authorisation'
         ctx.request.path = 'test/authorisation'
         ctx.request.header = {}
@@ -379,6 +397,7 @@ describe('Request Matching middleware', () => {
         name: 'Authorisation mock channel 4',
         urlPattern: 'test/authorisation',
         allow: ['Test1', 'Musha_OpenMRS', 'Test2'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -414,6 +433,7 @@ describe('Request Matching middleware', () => {
         }
         ctx.request = {}
         ctx.request.url = 'test/authorisation'
+        ctx.request.method = 'GET'
         ctx.request.path = 'test/authorisation'
         ctx.request.header = {}
         ctx.request.header['content-type'] = 'text/dodgy-xml; charset=utf-8'
@@ -433,6 +453,7 @@ describe('Request Matching middleware', () => {
         name: 'Mock for Channel Status Test (enabled)',
         urlPattern: 'test/status/enabled',
         allow: ['PoC', 'Test1', 'Test2'],
+        methods: ['GET'],
         routes: [{
           name: 'test route',
           host: 'localhost',
@@ -464,6 +485,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/status/enabled'
         ctx.request.path = 'test/status/enabled'
         ctx.response = {}
@@ -512,6 +534,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/status/disabled'
         ctx.request.path = 'test/status/disabled'
         ctx.response = {}
@@ -561,6 +584,7 @@ describe('Request Matching middleware', () => {
           cert: ''
         }
         ctx.request = {}
+        ctx.request.method = 'GET'
         ctx.request.url = 'test/status/deleted'
         ctx.request.path = 'test/status/deleted'
         ctx.response = {}
