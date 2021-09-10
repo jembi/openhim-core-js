@@ -6,10 +6,10 @@ import logger from 'winston'
 import * as client from '../model/clients'
 import * as configIndex from '../config'
 import * as cache from '../jwtSecretOrPublicKeyCache'
-import { JWT_PATTERN } from '../constants'
+import {JWT_PATTERN} from '../constants'
 
 async function authenticateClient(clientID) {
-  return client.ClientModel.findOne({ clientID }).then((client) => {
+  return client.ClientModel.findOne({clientID}).then(client => {
     if (!client) {
       throw new Error('Client does not exist')
     }

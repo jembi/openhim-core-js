@@ -25,9 +25,9 @@ import * as tasks from './api/tasks'
 import * as transactions from './api/transactions'
 import * as users from './api/users'
 import * as visualizers from './api/visualizers'
-import { config } from './config'
+import {config} from './config'
 
-export function setupApp (done) {
+export function setupApp(done) {
   // Create an instance of the koa-server and add a body-parser
   const app = new Koa()
   app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE'}))
@@ -38,7 +38,9 @@ export function setupApp (done) {
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
 
   // Expose the set-user-password route before the auth middleware so that it is publicly accessible
-  app.use(route.get('/password-reset-request/:email', users.userPasswordResetRequest))
+  app.use(
+    route.get('/password-reset-request/:email', users.userPasswordResetRequest)
+  )
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
 
@@ -48,7 +50,12 @@ export function setupApp (done) {
   app.use(authentication.authenticate)
 
   // Get enabled authentication types
-  app.use(route.get('/authentication/types', authentication.getEnabledAuthenticationTypes))
+  app.use(
+    route.get(
+      '/authentication/types',
+      authentication.getEnabledAuthenticationTypes
+    )
+  )
 
   // Define the api routes
   app.use(route.get('/users', users.getUsers))
@@ -60,7 +67,9 @@ export function setupApp (done) {
   app.use(route.get('/clients', clients.getClients))
   app.use(route.get('/clients/:clientId', clients.getClient))
   app.use(route.post('/clients', clients.addClient))
-  app.use(route.get('/clients/domain/:clientDomain', clients.findClientByDomain))
+  app.use(
+    route.get('/clients/domain/:clientDomain', clients.findClientByDomain)
+  )
   app.use(route.put('/clients/:clientId', clients.updateClient))
   app.use(route.delete('/clients/:clientId', clients.removeClient))
   app.use(route.get('/clients/:clientId/:property', clients.getClient))
@@ -73,16 +82,31 @@ export function setupApp (done) {
 
   app.use(route.get('/transactions', transactions.getTransactions))
   app.use(route.post('/transactions', transactions.addTransaction))
-  app.use(route.get('/transactions/:transactionId', transactions.getTransactionById))
-  app.use(route.get('/transactions/clients/:clientId', transactions.findTransactionByClientId))
-  app.use(route.put('/transactions/:transactionId', transactions.updateTransaction))
-  app.use(route.delete('/transactions/:transactionId', transactions.removeTransaction))
+  app.use(
+    route.get('/transactions/:transactionId', transactions.getTransactionById)
+  )
+  app.use(
+    route.get(
+      '/transactions/clients/:clientId',
+      transactions.findTransactionByClientId
+    )
+  )
+  app.use(
+    route.put('/transactions/:transactionId', transactions.updateTransaction)
+  )
+  app.use(
+    route.delete('/transactions/:transactionId', transactions.removeTransaction)
+  )
 
   app.use(route.get('/groups', contactGroups.getContactGroups))
   app.use(route.get('/groups/:contactGroupId', contactGroups.getContactGroup))
   app.use(route.post('/groups', contactGroups.addContactGroup))
-  app.use(route.put('/groups/:contactGroupId', contactGroups.updateContactGroup))
-  app.use(route.delete('/groups/:contactGroupId', contactGroups.removeContactGroup))
+  app.use(
+    route.put('/groups/:contactGroupId', contactGroups.updateContactGroup)
+  )
+  app.use(
+    route.delete('/groups/:contactGroupId', contactGroups.removeContactGroup)
+  )
 
   app.use(route.get('/channels', channels.getChannels))
   app.use(route.post('/channels', channels.addChannel))
@@ -98,12 +122,30 @@ export function setupApp (done) {
   app.use(route.put('/tasks/:taskId', tasks.updateTask))
   app.use(route.delete('/tasks/:taskId', tasks.removeTask))
 
-  app.use(route.get('/metrics', (ctx) => metrics.getMetrics(ctx, false)))
-  app.use(route.get('/metrics/channels', (ctx) => metrics.getMetrics(ctx, true)))
-  app.use(route.get('/metrics/channels/:channelID', (ctx, channelID) => metrics.getMetrics(ctx, true, null, channelID)))
-  app.use(route.get('/metrics/timeseries/:timeSeries', (ctx, timeseries) => metrics.getMetrics(ctx, false, timeseries)))
-  app.use(route.get('/metrics/timeseries/:timeSeries/channels', (ctx, timeseries) => metrics.getMetrics(ctx, true, timeseries)))
-  app.use(route.get('/metrics/timeseries/:timeSeries/channels/:channelID', (ctx, timeseries, channelID) => metrics.getMetrics(ctx, true, timeseries, channelID)))
+  app.use(route.get('/metrics', ctx => metrics.getMetrics(ctx, false)))
+  app.use(route.get('/metrics/channels', ctx => metrics.getMetrics(ctx, true)))
+  app.use(
+    route.get('/metrics/channels/:channelID', (ctx, channelID) =>
+      metrics.getMetrics(ctx, true, null, channelID)
+    )
+  )
+  app.use(
+    route.get('/metrics/timeseries/:timeSeries', (ctx, timeseries) =>
+      metrics.getMetrics(ctx, false, timeseries)
+    )
+  )
+  app.use(
+    route.get('/metrics/timeseries/:timeSeries/channels', (ctx, timeseries) =>
+      metrics.getMetrics(ctx, true, timeseries)
+    )
+  )
+  app.use(
+    route.get(
+      '/metrics/timeseries/:timeSeries/channels/:channelID',
+      (ctx, timeseries, channelID) =>
+        metrics.getMetrics(ctx, true, timeseries, channelID)
+    )
+  )
 
   app.use(route.get('/mediators', mediators.getAllMediators))
   app.use(route.get('/mediators/:uuid', mediators.getMediator))
@@ -154,7 +196,9 @@ export function setupApp (done) {
   app.use(route.get('/visualizers/:visualizerId', visualizers.getVisualizer))
   app.use(route.post('/visualizers', visualizers.addVisualizer))
   app.use(route.put('/visualizers/:visualizerId', visualizers.updateVisualizer))
-  app.use(route.delete('/visualizers/:visualizerId', visualizers.removeVisualizer))
+  app.use(
+    route.delete('/visualizers/:visualizerId', visualizers.removeVisualizer)
+  )
 
   // Return the result
   return done(app)

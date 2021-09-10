@@ -9,8 +9,8 @@ import * as authorisation from './api/authorisation'
 import * as contact from './contact'
 import * as metrics from './metrics'
 import * as utils from './utils'
-import { UserModel } from './model/users'
-import { appRoot, config } from './config'
+import {UserModel} from './model/users'
+import {appRoot, config} from './config'
 
 config.reports = config.get('reports')
 
@@ -18,7 +18,7 @@ const utcOffset = config.reports.utcOffset || 0
 const dateTimeFormat = 'dddd Do MMMM YYYY h:mm:ss A Z'
 
 // Function Sends the reports
-function sendReports (job, flag, done) {
+function sendReports(job, flag, done) {
   let fetchUsers
   let reportPeriodStart
   let reportPeriodEnd
@@ -28,11 +28,23 @@ function sendReports (job, flag, done) {
   const channelMap = {}
 
   if (flag === 'dailyReport') {
-    reportPeriodStart = moment().utcOffset(utcOffset).startOf('day').subtract(1, 'day')
-    reportPeriodEnd = moment().utcOffset(utcOffset).endOf('day').subtract(1, 'day')
+    reportPeriodStart = moment()
+      .utcOffset(utcOffset)
+      .startOf('day')
+      .subtract(1, 'day')
+    reportPeriodEnd = moment()
+      .utcOffset(utcOffset)
+      .endOf('day')
+      .subtract(1, 'day')
   } else {
-    reportPeriodStart = moment().utcOffset(utcOffset).startOf('isoWeek').subtract(1, 'weeks')
-    reportPeriodEnd = moment().utcOffset(utcOffset).endOf('isoWeek').subtract(1, 'weeks')
+    reportPeriodStart = moment()
+      .utcOffset(utcOffset)
+      .startOf('isoWeek')
+      .subtract(1, 'weeks')
+    reportPeriodEnd = moment()
+      .utcOffset(utcOffset)
+      .endOf('isoWeek')
+      .subtract(1, 'weeks')
   }
 
   // Select the right subscribers for the report
@@ -44,20 +56,23 @@ function sendReports (job, flag, done) {
   }
 
   return fetchUsers((err, users) => {
-    if (err) { return done(err) }
+    if (err) {
+      return done(err)
+    }
     const usersArray = []
     const promises = Array.from(users).map((user, userIndex) => {
-      return authorisation.getUserViewableChannels(user)
-        .then((channels) => {
-          usersArray[userIndex] = user
-          usersArray[userIndex].allowedChannels = channels
-          for (const channel of Array.from(usersArray[userIndex].allowedChannels)) {
-            channelMap[channel._id] = {
-              user,
-              channel
-            }
+      return authorisation.getUserViewableChannels(user).then(channels => {
+        usersArray[userIndex] = user
+        usersArray[userIndex].allowedChannels = channels
+        for (const channel of Array.from(
+          usersArray[userIndex].allowedChannels
+        )) {
+          channelMap[channel._id] = {
+            user,
+            channel
           }
-        })
+        }
+      })
     })
 
     // Loop through the enriched user array
@@ -65,121 +80,153 @@ function sendReports (job, flag, done) {
       // Pre-Fetch report data into Channel Map
       const innerPromises = Object.entries(channelMap).map(([key, obj]) => {
         return new Promise((resolve, reject) => {
-          fetchChannelReport(obj.channel, obj.user, flag, reportPeriodStart, reportPeriodEnd, (err, item) => {
-            if (err) { return reject(err) }
-            channelReportMap[key] = item
-            return resolve()
-          })
+          fetchChannelReport(
+            obj.channel,
+            obj.user,
+            flag,
+            reportPeriodStart,
+            reportPeriodEnd,
+            (err, item) => {
+              if (err) {
+                return reject(err)
+              }
+              channelReportMap[key] = item
+              return resolve()
+            }
+          )
         })
       })
 
-      return Promise.all(innerPromises).then(() => {
-        for (const user of Array.from(usersArray)) {
-          const userKey = user.email
-          for (const channel of Array.from(user.allowedChannels)) {
-            if (reportMap[userKey]) {
-              // Do nothing since object already exists
+      return Promise.all(innerPromises)
+        .then(() => {
+          for (const user of Array.from(usersArray)) {
+            const userKey = user.email
+            for (const channel of Array.from(user.allowedChannels)) {
+              if (reportMap[userKey]) {
+                // Do nothing since object already exists
+              } else {
+                // Create the object
+                reportMap[userKey] = {
+                  email: user.email,
+                  data: []
+                }
+              }
+
+              // If report has been fetched get it from the map
+              if (channelReportMap[channel._id]) {
+                const data = channelReportMap[channel._id]
+                // add report - always add if the channel is enabled (treating undefined status as enabled), otherwise only if there is data
+                if (
+                  data.channel.status == null ||
+                  data.channel.status === 'enabled' ||
+                  data.data.length !== 0
+                ) {
+                  reportMap[userKey].data.push(data)
+                }
+              } else {
+                return logger.error(
+                  'should never be here since channels have been pre-fetched'
+                )
+              }
+            }
+          }
+
+          // Iterate over reports and send the emails
+          for (const key in reportMap) {
+            const report = reportMap[key]
+            if (flag === 'dailyReport') {
+              report.type = 'Daily'
+              report.isDaily = true
             } else {
-              // Create the object
-              reportMap[userKey] = {
-                email: user.email,
-                data: []
-              }
+              report.type = 'Weekly'
+              report.isDaily = false
             }
 
-            // If report has been fetched get it from the map
-            if (channelReportMap[channel._id]) {
-              const data = channelReportMap[channel._id]
-              // add report - always add if the channel is enabled (treating undefined status as enabled), otherwise only if there is data
-              if ((data.channel.status == null) || (data.channel.status === 'enabled') || (data.data.length !== 0)) {
-                reportMap[userKey].data.push(data)
+            report.instance = config.alerts.himInstance
+            report.consoleURL = config.alerts.consoleURL
+
+            report.from = reportPeriodStart.clone().format(dateTimeFormat)
+            report.to = reportPeriodEnd.clone().format(dateTimeFormat)
+
+            report.reportStartDate = reportPeriodStart.toISOString()
+            report.reportEndDate = reportPeriodEnd.toISOString()
+
+            try {
+              for (let i = 0; i < report.data.length; i++) {
+                const data = report.data[i]
+                const colorGrey = 'color: grey;'
+                let rowColor = 'background-color: #d9ead3'
+                if (i % 2) {
+                  rowColor = 'background-color: #b6d7a8;'
+                }
+
+                const totals = calculateTotalsFromGrouping(data)
+                for (const key in totals) {
+                  report.data[i][key] = totals[key]
+                }
+                report.data[i].channelName = data.channel.name
+                report.data[i].channelID = data.channel._id
+                report.data[i].totalStyle =
+                  report.data[i].total > 0 ? '' : colorGrey
+                report.data[i].avgRespStyle =
+                  report.data[i].avgResp > 0 ? '' : colorGrey
+                report.data[i].failedStyle =
+                  report.data[i].failed > 0 ? 'color: red;' : colorGrey
+                report.data[i].successfulStyle =
+                  report.data[i].successful > 0 ? '' : colorGrey
+                report.data[i].processingStyle =
+                  report.data[i].processing > 0 ? '' : colorGrey
+                report.data[i].completedStyle =
+                  report.data[i].completed > 0 ? 'color: orange;' : colorGrey
+                report.data[i].completedWErrorsStyle =
+                  report.data[i].completedWErrors > 0
+                    ? 'color: orangered;'
+                    : colorGrey
+                report.data[i].rowColor = rowColor
               }
-            } else {
-              return logger.error('should never be here since channels have been pre-fetched')
+
+              sendUserEmail(report)
+            } catch (err) {
+              logger.error(err)
+              job.fail(`Failed to send report reason: ${err}`)
             }
           }
-        }
 
-        // Iterate over reports and send the emails
-        for (const key in reportMap) {
-          const report = reportMap[key]
-          if (flag === 'dailyReport') {
-            report.type = 'Daily'
-            report.isDaily = true
-          } else {
-            report.type = 'Weekly'
-            report.isDaily = false
-          }
-
-          report.instance = config.alerts.himInstance
-          report.consoleURL = config.alerts.consoleURL
-
-          report.from = reportPeriodStart.clone().format(dateTimeFormat)
-          report.to = reportPeriodEnd.clone().format(dateTimeFormat)
-
-          report.reportStartDate = reportPeriodStart.toISOString()
-          report.reportEndDate = reportPeriodEnd.toISOString()
-
-          try {
-            for (let i = 0; i < report.data.length; i++) {
-              const data = report.data[i]
-              const colorGrey = 'color: grey;'
-              let rowColor = 'background-color: #d9ead3'
-              if (i % 2) {
-                rowColor = 'background-color: #b6d7a8;'
-              }
-
-              const totals = calculateTotalsFromGrouping(data)
-              for (const key in totals) {
-                report.data[i][key] = totals[key]
-              }
-              report.data[i].channelName = data.channel.name
-              report.data[i].channelID = data.channel._id
-              report.data[i].totalStyle = (report.data[i].total > 0 ? '' : colorGrey)
-              report.data[i].avgRespStyle = (report.data[i].avgResp > 0 ? '' : colorGrey)
-              report.data[i].failedStyle = (report.data[i].failed > 0 ? 'color: red;' : colorGrey)
-              report.data[i].successfulStyle = (report.data[i].successful > 0 ? '' : colorGrey)
-              report.data[i].processingStyle = (report.data[i].processing > 0 ? '' : colorGrey)
-              report.data[i].completedStyle = (report.data[i].completed > 0 ? 'color: orange;' : colorGrey)
-              report.data[i].completedWErrorsStyle = (report.data[i].completedWErrors > 0 ? 'color: orangered;' : colorGrey)
-              report.data[i].rowColor = rowColor
-            }
-
-            sendUserEmail(report)
-          } catch (err) {
-            logger.error(err)
-            job.fail(`Failed to send report reason: ${err}`)
-          }
-        }
-
-        return done()
-      }).catch(done)
+          return done()
+        })
+        .catch(done)
     })
   })
 }
 
-function calculateTotalsFromGrouping (data) {
-  const reduced = data.data.reduce((totals, metric, index) => ({
-    requests: totals.requests + metric.requests,
-    responseTime: totals.responseTime + metric.responseTime,
-    successful: totals.successful + metric.successful,
-    failed: totals.failed + metric.failed,
-    processing: totals.processing + metric.processing,
-    completed: totals.completed + metric.completed,
-    completedWithErrors: totals.completedWithErrors + metric.completedWithErrors
-  }), {
-    requests: 0,
-    responseTime: 0,
-    successful: 0,
-    failed: 0,
-    processing: 0,
-    completed: 0,
-    completedWithErrors: 0
-  })
+function calculateTotalsFromGrouping(data) {
+  const reduced = data.data.reduce(
+    (totals, metric) => ({
+      requests: totals.requests + metric.requests,
+      responseTime: totals.responseTime + metric.responseTime,
+      successful: totals.successful + metric.successful,
+      failed: totals.failed + metric.failed,
+      processing: totals.processing + metric.processing,
+      completed: totals.completed + metric.completed,
+      completedWithErrors:
+        totals.completedWithErrors + metric.completedWithErrors
+    }),
+    {
+      requests: 0,
+      responseTime: 0,
+      successful: 0,
+      failed: 0,
+      processing: 0,
+      completed: 0,
+      completedWithErrors: 0
+    }
+  )
 
   return {
     total: reduced.requests,
-    avgResp: Math.round(calculateAverage(reduced.responseTime, reduced.requests) / 1000),
+    avgResp: Math.round(
+      calculateAverage(reduced.responseTime, reduced.requests) / 1000
+    ),
     failed: reduced.failed,
     successful: reduced.successful,
     processing: reduced.processing,
@@ -188,19 +235,28 @@ function calculateTotalsFromGrouping (data) {
   }
 }
 
-function calculateAverage (total, count) {
+function calculateAverage(total, count) {
   if (count === 0) {
     return 0
   }
   return total / count
 }
 
-function sendUserEmail (report) {
+function sendUserEmail(report) {
   report.date = moment().utcOffset(utcOffset).toString()
-  return renderTemplate('report/html.handlebars', report, reportHtml => contact.contactUser('email', report.email, `${report.type} report for: ${report.instance}`, plainTemplate(report), reportHtml, (err) => afterEmail(err, report.type, report.email)))
+  return renderTemplate('report/html.handlebars', report, reportHtml =>
+    contact.contactUser(
+      'email',
+      report.email,
+      `${report.type} report for: ${report.instance}`,
+      plainTemplate(report),
+      reportHtml,
+      err => afterEmail(err, report.type, report.email)
+    )
+  )
 }
 
-function fetchChannelReport (channel, user, flag, from, to, callback) {
+function fetchChannelReport(channel, user, flag, from, to, callback) {
   let period
   if (flag === 'dailyReport') {
     period = 'day'
@@ -210,7 +266,9 @@ function fetchChannelReport (channel, user, flag, from, to, callback) {
 
   const item = {}
 
-  logger.info(`fetching ${flag} for #${channel.name} ${user.email} ${channel._id}`)
+  logger.info(
+    `fetching ${flag} for #${channel.name} ${user.email} ${channel._id}`
+  )
 
   const filters = {
     startDate: from.toDate(),
@@ -219,38 +277,75 @@ function fetchChannelReport (channel, user, flag, from, to, callback) {
     channels: [channel._id]
   }
 
-  return metrics.calculateMetrics(filters)
-    .then((data) => {
+  return metrics
+    .calculateMetrics(filters)
+    .then(data => {
       item.channel = channel
       item.data = data
       return callback(null, item)
-    }).catch((err) => {
+    })
+    .catch(err => {
       logger.error('Error calculating metrics: ', err)
       return callback(err)
     })
 }
 
-const fetchDailySubscribers = callback => { UserModel.find({ dailyReport: true }, callback) }
+const fetchDailySubscribers = callback => {
+  UserModel.find({dailyReport: true}, callback)
+}
 
-const fetchWeeklySubscribers = callback => { UserModel.find({ weeklyReport: true }, callback) }
+const fetchWeeklySubscribers = callback => {
+  UserModel.find({weeklyReport: true}, callback)
+}
 
-function plainTemplate (report) {
+function plainTemplate(report) {
   let text = `Generated on: ${
-    (!utcOffset) ? moment().format(dateTimeFormat) :
-       moment().utcOffset(utcOffset).format(dateTimeFormat)
+    !utcOffset
+      ? moment().format(dateTimeFormat)
+      : moment().utcOffset(utcOffset).format(dateTimeFormat)
   }`
 
   text += `\n\nReport period: ${report.from} to ${report.to}\n`
   for (const data of Array.from(report.data)) {
-    text += ` \r\n \r\n <---------- Start Channel  ${data.channel.name} ---------------------------> \r\n \r\n \
+    text += ` \r\n \r\n <---------- Start Channel  ${
+      data.channel.name
+    } ---------------------------> \r\n \r\n \
 Channel Name: ${data.channel.name} \r\n \
-Channel total: ${((data.data[0] != null ? data.data[0].total : undefined) != null) ? data.data[0].total : 0} transactions  \r\n \
-Ave response time: ${((data.data[0] != null ? data.data[0].avgResp : undefined) != null) ? data.data[0].avgResp : 0} \r\n \
-Failed:  ${((data.data[0] != null ? data.data[0].failed : undefined) != null) ? data.data[0].failed : 0}  \r\n \
-Successful:  ${((data.data[0] != null ? data.data[0].successful : undefined) != null) ? data.data[0].successful : 0}  \r\n \
-Processing: ${((data.data[0] != null ? data.data[0].processing : undefined) != null) ? data.data[0].processing : 0}  \r\n \
-Completed:  ${((data.data[0] != null ? data.data[0].completed : undefined) != null) ? data.data[0].completed : 0}  \r\n \
-Completed with errors: ${((data.data[0] != null ? data.data[0].completedWErrors : undefined) != null) ? data.data[0].completedWErrors : 0} \r\n \r\n \
+Channel total: ${
+      (data.data[0] != null ? data.data[0].total : undefined) != null
+        ? data.data[0].total
+        : 0
+    } transactions  \r\n \
+Ave response time: ${
+      (data.data[0] != null ? data.data[0].avgResp : undefined) != null
+        ? data.data[0].avgResp
+        : 0
+    } \r\n \
+Failed:  ${
+      (data.data[0] != null ? data.data[0].failed : undefined) != null
+        ? data.data[0].failed
+        : 0
+    }  \r\n \
+Successful:  ${
+      (data.data[0] != null ? data.data[0].successful : undefined) != null
+        ? data.data[0].successful
+        : 0
+    }  \r\n \
+Processing: ${
+      (data.data[0] != null ? data.data[0].processing : undefined) != null
+        ? data.data[0].processing
+        : 0
+    }  \r\n \
+Completed:  ${
+      (data.data[0] != null ? data.data[0].completed : undefined) != null
+        ? data.data[0].completed
+        : 0
+    }  \r\n \
+Completed with errors: ${
+      (data.data[0] != null ? data.data[0].completedWErrors : undefined) != null
+        ? data.data[0].completedWErrors
+        : 0
+    } \r\n \r\n \
 <---------- End Channel -------------------------------------------------> \r\n \r\n \
 \r\n \
 \r\n\
@@ -259,7 +354,7 @@ Completed with errors: ${((data.data[0] != null ? data.data[0].completedWErrors 
   return text
 }
 
-function renderTemplate (templateName, templateData, callback) {
+function renderTemplate(templateName, templateData, callback) {
   const templateDir = `${appRoot}/templates/${templateName}`
 
   fs.readFile(templateDir, (err, data) => {
@@ -290,13 +385,27 @@ const afterEmail = (err, type, email) => {
   logger.info(`${type} report email sent to ${email}`)
 }
 
-export function setupAgenda (agenda) {
-  agenda.define('send weekly channel metrics', (job, done) => sendReports(job, 'weeklyReport', done))
+export function setupAgenda(agenda) {
+  agenda.define('send weekly channel metrics', (job, done) =>
+    sendReports(job, 'weeklyReport', done)
+  )
 
-  agenda.define('send daily channel metrics', (job, done) => sendReports(job, 'dailyReport', done))
+  agenda.define('send daily channel metrics', (job, done) =>
+    sendReports(job, 'dailyReport', done)
+  )
 
-  agenda.every(config.reports.weeklyReportAt, 'send weekly channel metrics', null, { timezone: utils.serverTimezone() })
-  return agenda.every(config.reports.dailyReportAt, 'send daily channel metrics', null, { timezone: utils.serverTimezone() })
+  agenda.every(
+    config.reports.weeklyReportAt,
+    'send weekly channel metrics',
+    null,
+    {timezone: utils.serverTimezone()}
+  )
+  return agenda.every(
+    config.reports.dailyReportAt,
+    'send daily channel metrics',
+    null,
+    {timezone: utils.serverTimezone()}
+  )
 }
 
 if (process.env.NODE_ENV === 'test') {

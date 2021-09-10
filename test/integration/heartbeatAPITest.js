@@ -4,12 +4,12 @@
 
 import request from 'supertest'
 import should from 'should'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { MediatorModel } from '../../src/model/mediators'
+import {MediatorModel} from '../../src/model/mediators'
 
 describe('API Integration Tests', () =>
   describe('Heartbeat REST API testing', () => {
@@ -33,7 +33,7 @@ describe('API Integration Tests', () =>
     before(async () => {
       await Promise.all([
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: constants.SERVER_PORTS.apiPort })
+        promisify(server.start)({apiPort: constants.SERVER_PORTS.apiPort})
       ])
     })
 
@@ -76,9 +76,7 @@ describe('API Integration Tests', () =>
 
     describe('*getHeartbeat()', () => {
       it('should fetch the heartbeat without requiring authentication', async () => {
-        await request(constants.BASE_URL)
-          .get('/heartbeat')
-          .expect(200)
+        await request(constants.BASE_URL).get('/heartbeat').expect(200)
       })
 
       it('should return core uptime', async () => {
@@ -114,8 +112,8 @@ describe('API Integration Tests', () =>
         await registerMediator()
         await sendUptime()
         const res = await request(constants.BASE_URL)
-         .get('/heartbeat')
-         .expect(200)
+          .get('/heartbeat')
+          .expect(200)
 
         res.body.should.have.property('mediators')
         res.body.mediators[mediatorDoc.urn].should.be.exactly(200)
@@ -131,7 +129,7 @@ describe('API Integration Tests', () =>
           _lastHeartbeat: new Date(prev.setMinutes(now.getMinutes() - 5))
         }
 
-        await MediatorModel.findOneAndUpdate({ urn: mediatorDoc.urn }, update)
+        await MediatorModel.findOneAndUpdate({urn: mediatorDoc.urn}, update)
         const res = await request(constants.BASE_URL)
           .get('/heartbeat')
           .expect(200)
@@ -140,5 +138,4 @@ describe('API Integration Tests', () =>
         should(res.body.mediators[mediatorDoc.urn]).be.null()
       })
     })
-  })
-)
+  }))

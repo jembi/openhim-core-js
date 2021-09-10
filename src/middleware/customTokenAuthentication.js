@@ -3,10 +3,10 @@
 import logger from 'winston'
 
 import * as client from '../model/clients'
-import { CUSTOM_TOKEN_PATTERN } from '../constants'
+import {CUSTOM_TOKEN_PATTERN} from '../constants'
 
 async function authenticateClient(customTokenID) {
-  return client.ClientModel.findOne({ customTokenID }).then((client) => {
+  return client.ClientModel.findOne({customTokenID}).then(client => {
     if (!client) {
       throw new Error('Client does not exist')
     }

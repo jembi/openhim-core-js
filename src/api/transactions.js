@@ -1,32 +1,40 @@
 'use strict'
 
 import logger from 'winston'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as authorisation from './authorisation'
 import * as autoRetryUtils from '../autoRetry'
 import * as events from '../middleware/events'
 import * as utils from '../utils'
-import { ChannelModelAPI } from '../model/channels'
-import { TransactionModelAPI } from '../model/transactions'
-import { config } from '../config'
+import {ChannelModelAPI} from '../model/channels'
+import {TransactionModelAPI} from '../model/transactions'
+import {config} from '../config'
 
 const apiConf = config.get('api')
 
-function hasError (updates) {
-  if (updates.error != null) { return true }
+function hasError(updates) {
+  if (updates.error != null) {
+    return true
+  }
   if (updates.routes != null) {
     for (const route of updates.routes) {
-      if (route.error) { return true }
+      if (route.error) {
+        return true
+      }
     }
   }
-  if (updates.$push != null && updates.$push.routes != null && updates.$push.routes.error != null) {
+  if (
+    updates.$push != null &&
+    updates.$push.routes != null &&
+    updates.$push.routes.error != null
+  ) {
     return true
   }
   return false
 }
 
-function getChannelIDsArray (channels) {
+function getChannelIDsArray(channels) {
   const channelIDs = []
   for (const channel of Array.from(channels)) {
     channelIDs.push(channel._id.toString())
@@ -35,7 +43,7 @@ function getChannelIDsArray (channels) {
 }
 
 // function to construct projection object
-function getProjectionObject (filterRepresentation) {
+function getProjectionObject(filterRepresentation) {
   switch (filterRepresentation) {
     case 'simpledetails':
       // view minimum required data for transaction details view
@@ -70,15 +78,25 @@ function getProjectionObject (filterRepresentation) {
   }
 }
 
-function truncateTransactionDetails (trx) {
-  const truncateSize = apiConf.truncateSize != null ? apiConf.truncateSize : 15000
-  const truncateAppend = apiConf.truncateAppend != null ? apiConf.truncateAppend : '\n[truncated ...]'
+function truncateTransactionDetails(trx) {
+  const truncateSize =
+    apiConf.truncateSize != null ? apiConf.truncateSize : 15000
+  const truncateAppend =
+    apiConf.truncateAppend != null
+      ? apiConf.truncateAppend
+      : '\n[truncated ...]'
 
-  function trunc (t) {
-    if (((t.request != null ? t.request.body : undefined) != null) && (t.request.body.length > truncateSize)) {
+  function trunc(t) {
+    if (
+      (t.request != null ? t.request.body : undefined) != null &&
+      t.request.body.length > truncateSize
+    ) {
       t.request.body = t.request.body.slice(0, truncateSize) + truncateAppend
     }
-    if (((t.response != null ? t.response.body : undefined) != null) && (t.response.body.length > truncateSize)) {
+    if (
+      (t.response != null ? t.response.body : undefined) != null &&
+      t.response.body.length > truncateSize
+    ) {
       t.response.body = t.response.body.slice(0, truncateSize) + truncateAppend
     }
   }
@@ -86,11 +104,13 @@ function truncateTransactionDetails (trx) {
   trunc(trx)
 
   if (trx.routes != null) {
-    for (const r of Array.from(trx.routes)) { trunc(r) }
+    for (const r of Array.from(trx.routes)) {
+      trunc(r)
+    }
   }
 
   if (trx.orchestrations != null) {
-    return Array.from(trx.orchestrations).map((o) => trunc(o))
+    return Array.from(trx.orchestrations).map(o => trunc(o))
   }
 }
 
@@ -98,7 +118,7 @@ function truncateTransactionDetails (trx) {
  * Returns intersection of user and channel roles/permission groups
  */
 
-function getActiveRoles (acl, userGroups, channels) {
+function getActiveRoles(acl, userGroups, channels) {
   const userRoles = new Set(userGroups)
   const channelRoles = new Set()
   channels.forEach(item => item[acl].forEach(role => channelRoles.add(role)))
@@ -109,7 +129,7 @@ function getActiveRoles (acl, userGroups, channels) {
  * Retrieves the list of transactions
  */
 
-export async function getTransactions (ctx) {
+export async function getTransactions(ctx) {
   try {
     const filtersObject = ctx.request.query
 
@@ -127,29 +147,46 @@ export async function getTransactions (ctx) {
     const filterSkip = filterPage * filterLimit
 
     // get filters object
-    const filters = (filtersObject.filters != null) ? JSON.parse(filtersObject.filters) : {}
+    const filters =
+      filtersObject.filters != null ? JSON.parse(filtersObject.filters) : {}
 
     // Test if the user is authorised
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // if not an admin, restrict by transactions that this user can view
-      const fullViewChannels = await authorisation.getUserViewableChannels(ctx.authenticated, 'txViewFullAcl')
-      const partViewChannels = await authorisation.getUserViewableChannels(ctx.authenticated)
+      const fullViewChannels = await authorisation.getUserViewableChannels(
+        ctx.authenticated,
+        'txViewFullAcl'
+      )
+      const partViewChannels = await authorisation.getUserViewableChannels(
+        ctx.authenticated
+      )
       const allChannels = fullViewChannels.concat(partViewChannels)
 
       if (filters.channelID) {
         if (!getChannelIDsArray(allChannels).includes(filters.channelID)) {
-          return utils.logAndSetResponse(ctx, 403, `Forbidden: Unauthorized channel ${filters.channelID}`, 'info')
+          return utils.logAndSetResponse(
+            ctx,
+            403,
+            `Forbidden: Unauthorized channel ${filters.channelID}`,
+            'info'
+          )
         }
       } else {
         filters.channelID = {$in: getChannelIDsArray(allChannels)}
       }
 
-      if (getActiveRoles('txViewFullAcl', ctx.authenticated.groups, allChannels).size > 0) {
-        filterRepresentation='full'
-      } else if (getActiveRoles('txViewAcl', ctx.authenticated.groups, allChannels).size > 0) {
-        filterRepresentation='simpledetails'
+      if (
+        getActiveRoles('txViewFullAcl', ctx.authenticated.groups, allChannels)
+          .size > 0
+      ) {
+        filterRepresentation = 'full'
+      } else if (
+        getActiveRoles('txViewAcl', ctx.authenticated.groups, allChannels)
+          .size > 0
+      ) {
+        filterRepresentation = 'simpledetails'
       } else {
-        filterRepresentation=''
+        filterRepresentation = ''
       }
     }
 
@@ -169,14 +206,20 @@ export async function getTransactions (ctx) {
 
     // build RegExp for transaction request querystring filter
     if (filters['request.querystring']) {
-      filters['request.querystring'] = new RegExp(filters['request.querystring'], 'i')
+      filters['request.querystring'] = new RegExp(
+        filters['request.querystring'],
+        'i'
+      )
     }
 
     // response status pattern match checking
-    if (filters['response.status'] && utils.statusCodePatternMatch(filters['response.status'])) {
+    if (
+      filters['response.status'] &&
+      utils.statusCodePatternMatch(filters['response.status'])
+    ) {
       filters['response.status'] = {
         $gte: filters['response.status'][0] * 100,
-        $lt: (filters['response.status'][0] * 100) + 100
+        $lt: filters['response.status'][0] * 100 + 100
       }
     }
 
@@ -203,71 +246,97 @@ export async function getTransactions (ctx) {
     /* Route Filters */
     // build RegExp for route request path filter
     if (filters['routes.request.path']) {
-      filters['routes.request.path'] = new RegExp(filters['routes.request.path'], 'i')
+      filters['routes.request.path'] = new RegExp(
+        filters['routes.request.path'],
+        'i'
+      )
     }
 
     // build RegExp for transaction request querystring filter
     if (filters['routes.request.querystring']) {
-      filters['routes.request.querystring'] = new RegExp(filters['routes.request.querystring'], 'i')
+      filters['routes.request.querystring'] = new RegExp(
+        filters['routes.request.querystring'],
+        'i'
+      )
     }
 
     // route response status pattern match checking
-    if (filters['routes.response.status'] && utils.statusCodePatternMatch(filters['routes.response.status'])) {
+    if (
+      filters['routes.response.status'] &&
+      utils.statusCodePatternMatch(filters['routes.response.status'])
+    ) {
       filters['routes.response.status'] = {
         $gte: filters['routes.response.status'][0] * 100,
-        $lt: (filters['routes.response.status'][0] * 100) + 100
+        $lt: filters['routes.response.status'][0] * 100 + 100
       }
     }
 
     /* orchestration Filters */
     // build RegExp for orchestration request path filter
     if (filters['orchestrations.request.path']) {
-      filters['orchestrations.request.path'] = new RegExp(filters['orchestrations.request.path'], 'i')
+      filters['orchestrations.request.path'] = new RegExp(
+        filters['orchestrations.request.path'],
+        'i'
+      )
     }
 
     // build RegExp for transaction request querystring filter
     if (filters['orchestrations.request.querystring']) {
-      filters['orchestrations.request.querystring'] = new RegExp(filters['orchestrations.request.querystring'], 'i')
+      filters['orchestrations.request.querystring'] = new RegExp(
+        filters['orchestrations.request.querystring'],
+        'i'
+      )
     }
 
     // orchestration response status pattern match checking
-    if (filters['orchestrations.response.status'] && utils.statusCodePatternMatch(filters['orchestrations.response.status'])) {
+    if (
+      filters['orchestrations.response.status'] &&
+      utils.statusCodePatternMatch(filters['orchestrations.response.status'])
+    ) {
       filters['orchestrations.response.status'] = {
         $gte: filters['orchestrations.response.status'][0] * 100,
-        $lt: (filters['orchestrations.response.status'][0] * 100) + 100
+        $lt: filters['orchestrations.response.status'][0] * 100 + 100
       }
     }
 
     // execute the query
-    ctx.body = await TransactionModelAPI
-      .find(filters, projectionFiltersObject)
+    ctx.body = await TransactionModelAPI.find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({'request.timestamp': -1})
       .exec()
 
     if (filterRepresentation === 'fulltruncate') {
-      Array.from(ctx.body).map((trx) => truncateTransactionDetails(trx))
+      Array.from(ctx.body).map(trx => truncateTransactionDetails(trx))
     }
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not retrieve transactions via the API: ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not retrieve transactions via the API: ${e}`,
+      'error'
+    )
   }
 }
 
-function recursivelySearchObject (ctx, obj, ws, repeat) {
+function recursivelySearchObject(ctx, obj, ws, repeat) {
   if (Array.isArray(obj)) {
-    return obj.forEach((value) => {
-      if (value && (typeof value === 'object')) {
-        if (ws.has(value)) { return }
+    return obj.forEach(value => {
+      if (value && typeof value === 'object') {
+        if (ws.has(value)) {
+          return
+        }
         ws.add(value)
         return repeat(ctx, value, ws)
       }
     })
-  } else if (obj && (typeof obj === 'object')) {
+  } else if (obj && typeof obj === 'object') {
     for (const k in obj) {
       const value = obj[k]
-      if (value && (typeof value === 'object')) {
-        if (ws.has(value)) { return }
+      if (value && typeof value === 'object') {
+        if (ws.has(value)) {
+          return
+        }
         ws.add(value)
         repeat(ctx, value, ws)
       }
@@ -275,27 +344,43 @@ function recursivelySearchObject (ctx, obj, ws, repeat) {
   }
 }
 
-function enforceMaxBodiesSize (ctx, obj, ws) {
-  if (obj.request && (typeof obj.request.body === 'string')) {
-    if (utils.enforceMaxBodiesSize(ctx, obj.request) && ctx.primaryRequest) { obj.canRerun = false }
+function enforceMaxBodiesSize(ctx, obj, ws) {
+  if (obj.request && typeof obj.request.body === 'string') {
+    if (utils.enforceMaxBodiesSize(ctx, obj.request) && ctx.primaryRequest) {
+      obj.canRerun = false
+    }
   }
   ctx.primaryRequest = false
-  if (obj.response && (typeof obj.response.body === 'string')) { utils.enforceMaxBodiesSize(ctx, obj.response) }
+  if (obj.response && typeof obj.response.body === 'string') {
+    utils.enforceMaxBodiesSize(ctx, obj.response)
+  }
   return recursivelySearchObject(ctx, obj, ws, enforceMaxBodiesSize)
 }
 
-function calculateTransactionBodiesByteLength (lengthObj, obj, ws) {
-  if (obj.body && (typeof obj.body === 'string')) { lengthObj.length += Buffer.byteLength(obj.body) }
-  return recursivelySearchObject(lengthObj, obj, ws, calculateTransactionBodiesByteLength)
+function calculateTransactionBodiesByteLength(lengthObj, obj, ws) {
+  if (obj.body && typeof obj.body === 'string') {
+    lengthObj.length += Buffer.byteLength(obj.body)
+  }
+  return recursivelySearchObject(
+    lengthObj,
+    obj,
+    ws,
+    calculateTransactionBodiesByteLength
+  )
 }
 
 /*
  * Adds an transaction
  */
-export async function addTransaction (ctx) {
+export async function addTransaction(ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addTransaction denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to addTransaction denied.`,
+      'info'
+    )
     return
   }
 
@@ -310,18 +395,25 @@ export async function addTransaction (ctx) {
     // Try to add the new transaction (Call the function that emits a promise and Koa will wait for the function to complete)
     await tx.save()
     ctx.status = 201
-    logger.info(`User ${ctx.authenticated.email} created transaction with id ${tx.id}`)
+    logger.info(
+      `User ${ctx.authenticated.email} created transaction with id ${tx.id}`
+    )
 
     await generateEvents(tx, tx.channelID)
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not add a transaction via the API: ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not add a transaction via the API: ${e}`,
+      'error'
+    )
   }
 }
 
 /*
  * Retrieves the details for a specific transaction
  */
-export async function getTransactionById (ctx, transactionId) {
+export async function getTransactionById(ctx, transactionId) {
   // Get the values to use
   transactionId = unescape(transactionId)
 
@@ -333,13 +425,19 @@ export async function getTransactionById (ctx, transactionId) {
     delete filtersObject.filterRepresentation
 
     // set filterRepresentation to 'full' if not supplied
-    if (!filterRepresentation) { filterRepresentation = 'full' }
+    if (!filterRepresentation) {
+      filterRepresentation = 'full'
+    }
 
     // --------------Check if user has permission to view full content----------------- #
     // if user NOT admin, determine their representation privileges.
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // retrieve transaction channelID
-      const txChannelID = await TransactionModelAPI.findById(transactionId, {channelID: 1}, {_id: 0}).exec()
+      const txChannelID = await TransactionModelAPI.findById(
+        transactionId,
+        {channelID: 1},
+        {_id: 0}
+      ).exec()
       if ((txChannelID != null ? txChannelID.length : undefined) === 0) {
         ctx.body = `Could not find transaction with ID: ${transactionId}`
         ctx.status = 404
@@ -349,7 +447,11 @@ export async function getTransactionById (ctx, transactionId) {
         filterRepresentation = 'simpledetails'
 
         // get channel.txViewFullAcl information by channelID
-        const channel = await ChannelModelAPI.findById(txChannelID.channelID, {txViewFullAcl: 1}, {_id: 0}).exec()
+        const channel = await ChannelModelAPI.findById(
+          txChannelID.channelID,
+          {txViewFullAcl: 1},
+          {_id: 0}
+        ).exec()
 
         // loop through user groups
         for (const group of Array.from(ctx.authenticated.groups)) {
@@ -367,8 +469,11 @@ export async function getTransactionById (ctx, transactionId) {
     // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
-    const result = await TransactionModelAPI.findById(transactionId, projectionFiltersObject).exec()
-    if (result && (filterRepresentation === 'fulltruncate')) {
+    const result = await TransactionModelAPI.findById(
+      transactionId,
+      projectionFiltersObject
+    ).exec()
+    if (result && filterRepresentation === 'fulltruncate') {
       truncateTransactionDetails(result)
     }
 
@@ -378,51 +483,76 @@ export async function getTransactionById (ctx, transactionId) {
       ctx.status = 404
       // Test if the user is authorised
     } else if (!authorisation.inGroup('admin', ctx.authenticated)) {
-      const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
-      if (getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0) {
+      const channels = await authorisation.getUserViewableChannels(
+        ctx.authenticated
+      )
+      if (
+        getChannelIDsArray(channels).indexOf(result.channelID.toString()) >= 0
+      ) {
         ctx.body = result
       } else {
-        return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`, 'info')
+        return utils.logAndSetResponse(
+          ctx,
+          403,
+          `User ${ctx.authenticated.email} is not authenticated to retrieve transaction ${transactionId}`,
+          'info'
+        )
       }
     } else {
       ctx.body = result
     }
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not get transaction by ID via the API: ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not get transaction by ID via the API: ${e}`,
+      'error'
+    )
   }
 }
 
 /*
  * Retrieves all transactions specified by clientId
  */
-export async function findTransactionByClientId (ctx, clientId) {
+export async function findTransactionByClientId(ctx, clientId) {
   clientId = unescape(clientId)
 
   try {
     // get projection object
-    const projectionFiltersObject = getProjectionObject(ctx.request.query.filterRepresentation)
+    const projectionFiltersObject = getProjectionObject(
+      ctx.request.query.filterRepresentation
+    )
 
     const filtersObject = {clientID: clientId}
 
     // Test if the user is authorised
     if (!authorisation.inGroup('admin', ctx.authenticated)) {
       // if not an admin, restrict by transactions that this user can view
-      const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
+      const channels = await authorisation.getUserViewableChannels(
+        ctx.authenticated
+      )
 
       filtersObject.channelID = {$in: getChannelIDsArray(channels)}
     }
 
     // execute the query
-    ctx.body = await TransactionModelAPI
-      .find(filtersObject, projectionFiltersObject)
+    ctx.body = await TransactionModelAPI.find(
+      filtersObject,
+      projectionFiltersObject
+    )
       .sort({'request.timestamp': -1})
       .exec()
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not get transaction by clientID via the API: ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not get transaction by clientID via the API: ${e}`,
+      'error'
+    )
   }
 }
 
-async function generateEvents (transaction, channelID) {
+async function generateEvents(transaction, channelID) {
   try {
     logger.debug(`Storing events for transaction: ${transaction._id}`)
     const channel = await ChannelModelAPI.findById(channelID)
@@ -441,10 +571,15 @@ async function generateEvents (transaction, channelID) {
 /*
  * Updates a transaction record specified by transactionId
  */
-export async function updateTransaction (ctx, transactionId) {
+export async function updateTransaction(ctx, transactionId) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to updateTransaction denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to updateTransaction denied.`,
+      'info'
+    )
     return
   }
 
@@ -453,18 +588,28 @@ export async function updateTransaction (ctx, transactionId) {
 
   try {
     if (hasError(updates)) {
-      const transaction = await TransactionModelAPI.findById(transactionId).exec()
-      const channel = await ChannelModelAPI.findById(transaction.channelID).exec()
+      const transaction = await TransactionModelAPI.findById(
+        transactionId
+      ).exec()
+      const channel = await ChannelModelAPI.findById(
+        transaction.channelID
+      ).exec()
       if (!autoRetryUtils.reachedMaxAttempts(transaction, channel)) {
         updates.autoRetry = true
         await autoRetryUtils.queueForRetry(transaction)
       }
     }
 
-    const transactionToUpdate = await TransactionModelAPI.findOne({_id: transactionId}).exec()
+    const transactionToUpdate = await TransactionModelAPI.findOne({
+      _id: transactionId
+    }).exec()
     const transactionBodiesLength = {length: 0}
 
-    calculateTransactionBodiesByteLength(transactionBodiesLength, transactionToUpdate, new WeakSet())
+    calculateTransactionBodiesByteLength(
+      transactionBodiesLength,
+      transactionToUpdate,
+      new WeakSet()
+    )
 
     const context = {
       totalBodyLength: transactionBodiesLength.length,
@@ -472,26 +617,41 @@ export async function updateTransaction (ctx, transactionId) {
     }
     enforceMaxBodiesSize(context, updates, new WeakSet())
 
-    const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(transactionId, updates, {new: true}).exec()
+    const updatedTransaction = await TransactionModelAPI.findByIdAndUpdate(
+      transactionId,
+      updates,
+      {new: true}
+    ).exec()
 
     ctx.body = `Transaction with ID: ${transactionId} successfully updated`
     ctx.status = 200
-    logger.info(`User ${ctx.authenticated.email} updated transaction with id ${transactionId}`)
+    logger.info(
+      `User ${ctx.authenticated.email} updated transaction with id ${transactionId}`
+    )
 
     await generateEvents(updates, updatedTransaction.channelID)
-
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not update transaction via the API: ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not update transaction via the API: ${e}`,
+      'error'
+    )
   }
 }
 
 /*
  * Removes a transaction
  */
-export async function removeTransaction (ctx, transactionId) {
+export async function removeTransaction(ctx, transactionId) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeTransaction denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to removeTransaction denied.`,
+      'info'
+    )
     return
   }
 
@@ -502,12 +662,20 @@ export async function removeTransaction (ctx, transactionId) {
     await TransactionModelAPI.findByIdAndRemove(transactionId).exec()
     ctx.body = 'Transaction successfully deleted'
     ctx.status = 200
-    logger.info(`User ${ctx.authenticated.email} removed transaction with id ${transactionId}`)
+    logger.info(
+      `User ${ctx.authenticated.email} removed transaction with id ${transactionId}`
+    )
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not remove transaction via the API: ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not remove transaction via the API: ${e}`,
+      'error'
+    )
   }
 }
 
 if (process.env.NODE_ENV === 'test') {
-  exports.calculateTransactionBodiesByteLength = calculateTransactionBodiesByteLength
+  exports.calculateTransactionBodiesByteLength =
+    calculateTransactionBodiesByteLength
 }

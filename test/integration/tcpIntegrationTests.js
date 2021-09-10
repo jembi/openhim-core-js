@@ -6,15 +6,15 @@
 import fs from 'fs'
 import nconf from 'nconf'
 import sinon from 'sinon'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as testUtils from '../utils'
-import { CertificateModel, ChannelModel, TransactionModel } from '../../src/model'
-import { config } from '../../src/config'
+import {CertificateModel, ChannelModel, TransactionModel} from '../../src/model'
+import {config} from '../../src/config'
 
-const { SERVER_PORTS } = constants
+const {SERVER_PORTS} = constants
 
 nconf.set('tcpAdapter', {
   httpReceiver: {
@@ -34,13 +34,14 @@ const tcpToTcpChannelDoc = {
   type: 'tcp',
   tcpPort: CHANNEL_PORT_START,
   tcpHost: 'localhost',
-  routes: [{
-    name: 'tcp route',
-    host: 'localhost',
-    port: SERVER_PORT_START,
-    type: 'tcp',
-    primary: true
-  }
+  routes: [
+    {
+      name: 'tcp route',
+      host: 'localhost',
+      port: SERVER_PORT_START,
+      type: 'tcp',
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -55,13 +56,14 @@ const tlsToTcpChannelDoc = {
   type: 'tls',
   tcpPort: CHANNEL_PORT_START + 1,
   tcpHost: 'localhost',
-  routes: [{
-    name: 'tcp route',
-    host: 'localhost',
-    port: SERVER_PORT_START + 1,
-    type: 'tcp',
-    primary: true
-  }
+  routes: [
+    {
+      name: 'tcp route',
+      host: 'localhost',
+      port: SERVER_PORT_START + 1,
+      type: 'tcp',
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -76,13 +78,14 @@ const tcpToHttpChannelDoc = {
   type: 'tcp',
   tcpPort: CHANNEL_PORT_START + 2,
   tcpHost: 'localhost',
-  routes: [{
-    name: 'http route',
-    host: 'localhost',
-    port: SERVER_PORT_START + 2,
-    type: 'http',
-    primary: true
-  }
+  routes: [
+    {
+      name: 'http route',
+      host: 'localhost',
+      port: SERVER_PORT_START + 2,
+      type: 'http',
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -97,14 +100,15 @@ const tcpToTlsChannelDoc = {
   type: 'tcp',
   tcpPort: CHANNEL_PORT_START + 3,
   tcpHost: 'localhost',
-  routes: [{
-    name: 'tls route',
-    host: 'localhost',
-    port: SERVER_PORT_START + 3,
-    type: 'tcp',
-    secured: true,
-    primary: true
-  }
+  routes: [
+    {
+      name: 'tls route',
+      host: 'localhost',
+      port: SERVER_PORT_START + 3,
+      type: 'tcp',
+      secured: true,
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -119,14 +123,15 @@ const tcpToTlsNoCertChannelDoc = {
   type: 'tcp',
   tcpPort: CHANNEL_PORT_START + 4,
   tcpHost: 'localhost',
-  routes: [{
-    name: 'tls route',
-    host: 'localhost',
-    port: SERVER_PORT_START + 4,
-    type: 'tcp',
-    secured: true,
-    primary: true
-  }
+  routes: [
+    {
+      name: 'tls route',
+      host: 'localhost',
+      port: SERVER_PORT_START + 4,
+      type: 'tcp',
+      secured: true,
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -141,13 +146,14 @@ const tcpToMllpChannelDoc = {
   type: 'tcp',
   tcpPort: CHANNEL_PORT_START + 5,
   tcpHost: 'localhost',
-  routes: [{
-    name: 'mllp route',
-    host: 'localhost',
-    port: SERVER_PORT_START + 5,
-    type: 'mllp',
-    primary: true
-  }
+  routes: [
+    {
+      name: 'mllp route',
+      host: 'localhost',
+      port: SERVER_PORT_START + 5,
+      type: 'mllp',
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -164,13 +170,14 @@ const tcpTimeoutChannel = {
   tcpPort: CHANNEL_PORT_START + 6,
   timeout: 20,
   tcpHost: 'localhost',
-  routes: [{
-    name: 'tcp route',
-    host: 'localhost',
-    port: SERVER_PORT_START + 6,
-    type: 'mllp', // DONT CHANGE TO TCP, it's currently bugged on waiting responses
-    primary: true
-  }
+  routes: [
+    {
+      name: 'tcp route',
+      host: 'localhost',
+      port: SERVER_PORT_START + 6,
+      type: 'mllp', // DONT CHANGE TO TCP, it's currently bugged on waiting responses
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -214,23 +221,19 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
       })
     ])
 
-    return promisify(server.start)({ tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort })
+    return promisify(server.start)({
+      tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort
+    })
   })
 
   after(async () => {
     config.tcpAdapter = ORIGINAL_TCP_ADAPTER
 
-    await Promise.all([
-      promisify(server.stop)(),
-      testUtils.cleanupTestUsers()
-    ])
+    await Promise.all([promisify(server.stop)(), testUtils.cleanupTestUsers()])
   })
 
   afterEach(async () => {
-    await Promise.all([
-      mockServer.close(),
-      TransactionModel.deleteMany({})
-    ])
+    await Promise.all([mockServer.close(), TransactionModel.deleteMany({})])
     sandbox.reset()
     mockServer = null
   })
@@ -242,7 +245,10 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
       expectedResp = data + ' with tcp response'
       return expectedResp
     })
-    mockServer = await testUtils.createMockTCPServer(spy, tcpToTcpChannelDoc.routes[0].port)
+    mockServer = await testUtils.createMockTCPServer(
+      spy,
+      tcpToTcpChannelDoc.routes[0].port
+    )
     const res = await testUtils.socketTest(tcpToTcpChannelDoc.tcpPort, request)
 
     res.toString().should.eql(expectedResp)
@@ -252,11 +258,14 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
   it('will timeout a socket', async () => {
     const mllpEndChar = String.fromCharCode(0o034)
     const request = 'Tcp Request'
-    const spy = sandbox.spy(async data => {
+    const spy = sandbox.spy(async () => {
       await testUtils.wait(30)
       return `should never get this with tcp response` + mllpEndChar
     })
-    mockServer = await testUtils.createMockTCPServer(spy, tcpTimeoutChannel.routes[0].port)
+    mockServer = await testUtils.createMockTCPServer(
+      spy,
+      tcpTimeoutChannel.routes[0].port
+    )
     const res = await testUtils.socketTest(tcpTimeoutChannel.tcpPort, request)
 
     res.toString().should.eql(`An internal server error occurred`)
@@ -274,8 +283,14 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
       expectedResp = data + ' with tcp response'
       return expectedResp
     })
-    mockServer = await testUtils.createMockTCPServer(spy, tlsToTcpChannelDoc.routes[0].port)
-    const res = await testUtils.secureSocketTest(tlsToTcpChannelDoc.tcpPort, request)
+    mockServer = await testUtils.createMockTCPServer(
+      spy,
+      tlsToTcpChannelDoc.routes[0].port
+    )
+    const res = await testUtils.secureSocketTest(
+      tlsToTcpChannelDoc.tcpPort,
+      request
+    )
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
   })
@@ -288,7 +303,10 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
       expectedResp = body + ' with http response'
       return expectedResp
     })
-    mockServer = await testUtils.createMockHttpServer(spy, tcpToHttpChannelDoc.routes[0].port)
+    mockServer = await testUtils.createMockHttpServer(
+      spy,
+      tcpToHttpChannelDoc.routes[0].port
+    )
     const res = await testUtils.socketTest(tcpToHttpChannelDoc.tcpPort, request)
 
     res.toString().should.eql(expectedResp)
@@ -302,7 +320,10 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
       expectedResp = data + ' with tls response'
       return expectedResp
     })
-    mockServer = await testUtils.createMockTLSServerWithMutualAuth(spy, tcpToTlsChannelDoc.routes[0].port)
+    mockServer = await testUtils.createMockTLSServerWithMutualAuth(
+      spy,
+      tcpToTlsChannelDoc.routes[0].port
+    )
     const res = await testUtils.socketTest(tcpToTlsChannelDoc.tcpPort, request)
     res.toString().should.eql(expectedResp)
     spy.callCount.should.eql(1)
@@ -310,13 +331,22 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
 
   it('will route tcp -> tls no auth will fail', async () => {
     const spy = sandbox.spy()
-    mockServer = await testUtils.createMockTLSServerWithMutualAuth(spy, tcpToTlsNoCertChannelDoc.routes[0].port, false)
-    const resp = await testUtils.socketTest(tcpToTlsNoCertChannelDoc.tcpPort, 'Data')
+    mockServer = await testUtils.createMockTLSServerWithMutualAuth(
+      spy,
+      tcpToTlsNoCertChannelDoc.routes[0].port,
+      false
+    )
+    const resp = await testUtils.socketTest(
+      tcpToTlsNoCertChannelDoc.tcpPort,
+      'Data'
+    )
 
     resp.toString().should.eql('An internal server error occurred')
     spy.callCount.should.eql(0)
 
-    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
+    await testUtils.pollCondition(() =>
+      TransactionModel.countDocuments().then(c => c === 1)
+    )
     const tran = await TransactionModel.findOne()
 
     tran.status.should.eql('Failed')
@@ -330,7 +360,10 @@ describe('TCP/TLS/MLLP Integration Tests', () => {
       expectedResp = data + ' with tcp response' + mllpEndChar
       return expectedResp
     })
-    mockServer = await testUtils.createMockTCPServer(spy, tcpToMllpChannelDoc.routes[0].port)
+    mockServer = await testUtils.createMockTCPServer(
+      spy,
+      tcpToMllpChannelDoc.routes[0].port
+    )
     const res = await testUtils.socketTest(tcpToMllpChannelDoc.tcpPort, request)
 
     res.toString().should.eql(expectedResp)

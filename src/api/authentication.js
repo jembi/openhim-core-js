@@ -8,9 +8,9 @@ import os from 'os'
 
 import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
-import { UserModelAPI } from '../model/users'
-import { caseInsensitiveRegex, logAndSetResponse } from '../utils'
-import { config } from '../config'
+import {UserModelAPI} from '../model/users'
+import {caseInsensitiveRegex, logAndSetResponse} from '../utils'
+import {config} from '../config'
 import {
   BASIC_AUTH_TYPE,
   CUSTOM_TOKEN_AUTH_TYPE,
@@ -36,22 +36,24 @@ const auditingExemptPaths = [
   /\/logs/
 ]
 
-const isUndefOrEmpty = string => (string == null) || (string === '')
+const isUndefOrEmpty = string => string == null || string === ''
 
-async function authenticateBasic (ctx) {
+async function authenticateBasic(ctx) {
   const credentials = basicAuth(ctx)
   if (credentials == null) {
     // No basic auth details found
     return null
   }
-  const { name: email, pass: password } = credentials
-  const user = await UserModelAPI.findOne({ email: caseInsensitiveRegex(email) })
+  const {name: email, pass: password} = credentials
+  const user = await UserModelAPI.findOne({
+    email: caseInsensitiveRegex(email)
+  })
   if (user == null) {
     // not authenticated - user not found
     ctx.throw(
       401,
       `No user exists for ${email}, denying access to API, request originated from ${ctx.request.host}`,
-      { email }
+      {email}
     )
   }
 
@@ -63,32 +65,38 @@ async function authenticateBasic (ctx) {
     ctx.throw(
       401,
       `Password did not match expected value, denying access to API, the request was made by ${email} from ${ctx.request.host}`,
-      { email }
+      {email}
     )
   }
   return user
 }
 
-async function authenticateToken (ctx) {
-  const { header } = ctx.request
+async function authenticateToken(ctx) {
+  const {header} = ctx.request
   const email = header['auth-username']
   const authTS = header['auth-ts']
   const authSalt = header['auth-salt']
   const authToken = header['auth-token']
 
   // if any of the required headers aren't present
-  if (isUndefOrEmpty(email) || isUndefOrEmpty(authTS) || isUndefOrEmpty(authSalt) || isUndefOrEmpty(authToken)) {
+  if (
+    isUndefOrEmpty(email) ||
+    isUndefOrEmpty(authTS) ||
+    isUndefOrEmpty(authSalt) ||
+    isUndefOrEmpty(authToken)
+  ) {
     ctx.throw(
       401,
       `API request made by ${email} from ${ctx.request.host} is missing required API authentication headers, denying access`,
-      { email }
+      {email}
     )
   }
 
   // check if request is recent
   const requestDate = new Date(Date.parse(authTS))
 
-  const authWindowSeconds = config.api.authWindowSeconds != null ? config.api.authWindowSeconds : 10
+  const authWindowSeconds =
+    config.api.authWindowSeconds != null ? config.api.authWindowSeconds : 10
   const to = new Date()
   to.setSeconds(to.getSeconds() + authWindowSeconds)
   const from = new Date()
@@ -99,17 +107,19 @@ async function authenticateToken (ctx) {
     ctx.throw(
       401,
       `API request made by ${email} from ${ctx.request.host} has expired, denying access`,
-      { email }
+      {email}
     )
   }
 
-  const user = await UserModelAPI.findOne({ email: caseInsensitiveRegex(email) })
+  const user = await UserModelAPI.findOne({
+    email: caseInsensitiveRegex(email)
+  })
   if (user == null) {
     // not authenticated - user not found
     ctx.throw(
       401,
       `No user exists for ${email}, denying access to API, request originated from ${ctx.request.host}`,
-      { email }
+      {email}
     )
   }
 
@@ -123,14 +133,14 @@ async function authenticateToken (ctx) {
     ctx.throw(
       401,
       `API token did not match expected value, denying access to API, the request was made by ${email} from ${ctx.request.host}`,
-      { email }
+      {email}
     )
   }
 
   return user
 }
 
-function getEnabledAuthenticationTypesFromConfig (config) {
+function getEnabledAuthenticationTypesFromConfig(config) {
   if (Array.isArray(config.api.authenticationTypes)) {
     return config.api.authenticationTypes
   }
@@ -144,15 +154,17 @@ function getEnabledAuthenticationTypesFromConfig (config) {
   } catch (err) {
     // Squash parsing errors
   }
-  logger.warn(`Invalid value for API authenticationTypes config: ${config.api.authenticationTypes}`)
+  logger.warn(
+    `Invalid value for API authenticationTypes config: ${config.api.authenticationTypes}`
+  )
   return []
 }
 
-function isAuthenticationTypeEnabled (type) {
+function isAuthenticationTypeEnabled(type) {
   return getEnabledAuthenticationTypesFromConfig(config).includes(type)
 }
 
-async function authenticateRequest (ctx) {
+async function authenticateRequest(ctx) {
   let user
   // First attempt basic authentication if enabled
   if (user == null && isAuthenticationTypeEnabled('basic')) {
@@ -164,13 +176,17 @@ async function authenticateRequest (ctx) {
   }
   // User could not be authenticated
   if (user == null) {
-    const enabledTypes = getEnabledAuthenticationTypesFromConfig(config).join(', ')
-    ctx.throw(401, `API request could not be authenticated with configured authentication types: "${enabledTypes}"`)
+    const enabledTypes =
+      getEnabledAuthenticationTypesFromConfig(config).join(', ')
+    ctx.throw(
+      401,
+      `API request could not be authenticated with configured authentication types: "${enabledTypes}"`
+    )
   }
   return user
 }
 
-function handleAuditResponse (err) {
+function handleAuditResponse(err) {
   if (err) {
     logger.error('Sending audit event failed', err)
     return
@@ -178,7 +194,7 @@ function handleAuditResponse (err) {
   logger.debug('Processed internal audit')
 }
 
-export async function authenticate (ctx, next) {
+export async function authenticate(ctx, next) {
   let user
   try {
     user = await authenticateRequest(ctx)
@@ -190,7 +206,12 @@ export async function authenticate (ctx, next) {
       // We do not want to expose any sensitive information in the body
       ctx.status = err.status
       // Send an auth failure audit event
-      let audit = atna.construct.userLoginAudit(atna.constants.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), err.email)
+      let audit = atna.construct.userLoginAudit(
+        atna.constants.OUTCOME_SERIOUS_FAILURE,
+        himSourceID,
+        os.hostname(),
+        err.email
+      )
       audit = atna.construct.wrapInSyslog(audit)
       auditing.sendAuditEvent(audit, handleAuditResponse)
       return
@@ -204,7 +225,10 @@ export async function authenticate (ctx, next) {
 
   // Deal with paths exempt from audit
   if (ctx.path === '/transactions') {
-    if (!ctx.query.filterRepresentation || ctx.query.filterRepresentation !== 'full') {
+    if (
+      !ctx.query.filterRepresentation ||
+      ctx.query.filterRepresentation !== 'full'
+    ) {
       // exempt from auditing success
       return next()
     }
@@ -218,39 +242,60 @@ export async function authenticate (ctx, next) {
   }
 
   // Send an auth success audit event
-  let audit = atna.construct.userLoginAudit(atna.constants.OUTCOME_SUCCESS, himSourceID, os.hostname(), user.email, user.groups.join(','), user.groups.join(','))
+  let audit = atna.construct.userLoginAudit(
+    atna.constants.OUTCOME_SUCCESS,
+    himSourceID,
+    os.hostname(),
+    user.email,
+    user.groups.join(','),
+    user.groups.join(',')
+  )
   audit = atna.construct.wrapInSyslog(audit)
   auditing.sendAuditEvent(audit, handleAuditResponse)
 
   return next()
 }
 
-export async function getEnabledAuthenticationTypes (ctx, next) {
+export async function getEnabledAuthenticationTypes(ctx, next) {
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to get enabled authentication types denied.`, 'info')
+    logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to get enabled authentication types denied.`,
+      'info'
+    )
     return next()
   }
 
-  if (
-    !config.authentication ||
-    !Object.keys(config.authentication).length
-  ) {
-    logAndSetResponse(ctx, 500, 'No authentication enabled, invalid OpenHIM configuration', 'error')
+  if (!config.authentication || !Object.keys(config.authentication).length) {
+    logAndSetResponse(
+      ctx,
+      500,
+      'No authentication enabled, invalid OpenHIM configuration',
+      'error'
+    )
     return next()
   }
 
   const enabledAuthTypes = []
 
-  if (config.authentication.enableMutualTLSAuthentication) enabledAuthTypes.push(MUTUAL_TLS_AUTH_TYPE)
-  if (config.authentication.enableBasicAuthentication) enabledAuthTypes.push(BASIC_AUTH_TYPE)
-  if (config.authentication.enableCustomTokenAuthentication) enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
-  if (config.authentication.enableJWTAuthentication) enabledAuthTypes.push(JWT_AUTH_TYPE)
+  if (config.authentication.enableMutualTLSAuthentication)
+    enabledAuthTypes.push(MUTUAL_TLS_AUTH_TYPE)
+  if (config.authentication.enableBasicAuthentication)
+    enabledAuthTypes.push(BASIC_AUTH_TYPE)
+  if (config.authentication.enableCustomTokenAuthentication)
+    enabledAuthTypes.push(CUSTOM_TOKEN_AUTH_TYPE)
+  if (config.authentication.enableJWTAuthentication)
+    enabledAuthTypes.push(JWT_AUTH_TYPE)
 
   ctx.body = enabledAuthTypes
   ctx.status = 200
-  logger.info(`User ${ctx.authenticated.email} retrieved the enabled authentication types`)
+  logger.info(
+    `User ${ctx.authenticated.email} retrieved the enabled authentication types`
+  )
   next()
 }
 
 // Exports for testing only
-export const _getEnabledAuthenticationTypesFromConfig = getEnabledAuthenticationTypesFromConfig
+export const _getEnabledAuthenticationTypesFromConfig =
+  getEnabledAuthenticationTypesFromConfig

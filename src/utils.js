@@ -4,9 +4,9 @@ import logger from 'winston'
 import momentTZ from 'moment-timezone'
 import _ from 'lodash'
 
-import { ChannelModel } from './model/channels'
-import { KeystoreModel } from './model/keystore'
-import { config } from './config'
+import {ChannelModel} from './model/channels'
+import {KeystoreModel} from './model/keystore'
+import {config} from './config'
 
 config.caching = config.get('caching')
 config.api = config.get('api')
@@ -18,11 +18,11 @@ config.api = config.get('api')
  * @param {string} value that needs to be matched
  * @returns {RegExp} regex that will match case insensitive
  */
-export function caseInsensitiveRegex (value) {
+export function caseInsensitiveRegex(value) {
   return new RegExp(`^${_.escapeRegExp(value)}$`, 'i')
 }
 
-export function isNullOrEmpty (arr) {
+export function isNullOrEmpty(arr) {
   if (arr == null) {
     return true
   }
@@ -30,12 +30,12 @@ export function isNullOrEmpty (arr) {
   return arr.length === 0
 }
 
-export function isNullOrWhitespace (value) {
+export function isNullOrWhitespace(value) {
   return /^\s*$/.test(value || '')
 }
 
 // function to log errors and return response
-export function logAndSetResponse (ctx, status, msg, logLevel) {
+export function logAndSetResponse(ctx, status, msg, logLevel) {
   logger[logLevel](msg)
   ctx.body = msg
   ctx.status = status
@@ -45,17 +45,28 @@ export function logAndSetResponse (ctx, status, msg, logLevel) {
 
 const cacheValueStore = {}
 
-const { refreshMillis } = config.caching
+const {refreshMillis} = config.caching
 
-function getCachedValues (store, callback) {
-  const lastCheck = cacheValueStore[`${store}`] != null ? cacheValueStore[`${store}`].lastCheck : undefined
+function getCachedValues(store, callback) {
+  const lastCheck =
+    cacheValueStore[`${store}`] != null
+      ? cacheValueStore[`${store}`].lastCheck
+      : undefined
 
-  if (!config.caching.enabled || (lastCheck == null) || (((new Date()) - lastCheck) > refreshMillis)) {
+  if (
+    !config.caching.enabled ||
+    lastCheck == null ||
+    new Date() - lastCheck > refreshMillis
+  ) {
     const handler = (err, results) => {
-      if (err) { return callback(err) }
+      if (err) {
+        return callback(err)
+      }
 
       if (config.caching.enabled) {
-        if (!lastCheck) { cacheValueStore[`${store}`] = {} }
+        if (!lastCheck) {
+          cacheValueStore[`${store}`] = {}
+        }
         cacheValueStore[`${store}`].value = results
         cacheValueStore[`${store}`].lastCheck = new Date()
       }
@@ -65,21 +76,23 @@ function getCachedValues (store, callback) {
 
     // TODO make this more generic (had issues passing Channel.find as a param [higher order function])
     if (store === 'channels') {
-      return ChannelModel.find({}).sort({ priority: 1 }).exec((err, channels) => {
-        if (err) {
-          return handler(err)
-        }
-        const noPriorityChannels = []
-        const sortedChannels = []
-        channels.forEach((channel) => {
-          if (channel.priority == null) {
-            return noPriorityChannels.push(channel)
-          } else {
-            return sortedChannels.push(channel)
+      return ChannelModel.find({})
+        .sort({priority: 1})
+        .exec((err, channels) => {
+          if (err) {
+            return handler(err)
           }
+          const noPriorityChannels = []
+          const sortedChannels = []
+          channels.forEach(channel => {
+            if (channel.priority == null) {
+              return noPriorityChannels.push(channel)
+            } else {
+              return sortedChannels.push(channel)
+            }
+          })
+          return handler(null, sortedChannels.concat(noPriorityChannels))
         })
-        return handler(null, sortedChannels.concat(noPriorityChannels))
-      })
     } else if (store === 'keystore') {
       return KeystoreModel.findOne({}, handler)
     } else {
@@ -90,15 +103,21 @@ function getCachedValues (store, callback) {
   }
 }
 
-export function getAllChannelsInPriorityOrder (callback) { return getCachedValues('channels', callback) }
+export function getAllChannelsInPriorityOrder(callback) {
+  return getCachedValues('channels', callback)
+}
 
-export function getKeystore (callback) { return getCachedValues('keystore', callback) }
+export function getKeystore(callback) {
+  return getCachedValues('keystore', callback)
+}
 
 // function to check if string match status code pattern
-export function statusCodePatternMatch (string, callback) { return /\dxx/.test(string) }
+export function statusCodePatternMatch(string) {
+  return /\dxx/.test(string)
+}
 
 // returns an array with no duplicates
-export function uniqArray (arr) {
+export function uniqArray(arr) {
   const dict = arr.reduce((p, c) => {
     p[c] = c
     return p
@@ -113,29 +132,33 @@ export function uniqArray (arr) {
 }
 
 // thanks to https://coffeescript-cookbook.github.io/chapters/arrays/check-type-is-array
-export const typeIsArray = Array.isArray || (value => ({}.toString.call(value) === '[object Array]'))
+export const typeIsArray =
+  Array.isArray || (value => ({}.toString.call(value) === '[object Array]'))
 
 // get the server timezone
-export function serverTimezone () {
+export function serverTimezone() {
   return momentTZ.tz.guess()
 }
 
 // Max size allowed for ALL bodies in the transaction together
 // Use min 1 to allow space for all routes on a transation and max 15 MiB leaving 1 MiB available for the transaction metadata
 const mbs = config.api.maxBodiesSizeMB
-export const MAX_BODIES_SIZE = mbs >= 1 && mbs <= 15 ? mbs * 1024 * 1024 : 15 * 1024 * 1024
+export const MAX_BODIES_SIZE =
+  mbs >= 1 && mbs <= 15 ? mbs * 1024 * 1024 : 15 * 1024 * 1024
 
 const appendText = config.api.truncateAppend
 const appendTextLength = Buffer.byteLength(appendText)
 
-export function enforceMaxBodiesSize (ctx, tx) {
+export function enforceMaxBodiesSize(ctx, tx) {
   let enforced = false
 
   // running total for all bodies
-  if ((ctx.totalBodyLength == null)) { ctx.totalBodyLength = 0 }
+  if (ctx.totalBodyLength == null) {
+    ctx.totalBodyLength = 0
+  }
 
   let len = Buffer.byteLength(tx.body)
-  if ((ctx.totalBodyLength + len) > MAX_BODIES_SIZE) {
+  if (ctx.totalBodyLength + len > MAX_BODIES_SIZE) {
     len = Math.max(0, MAX_BODIES_SIZE - ctx.totalBodyLength)
     if (len > appendTextLength) {
       tx.body = tx.body.slice(0, len - appendTextLength) + appendText
@@ -156,7 +179,7 @@ export function enforceMaxBodiesSize (ctx, tx) {
  * @param {Object} authenticated The authenticated user.
  * @return {Object} The object containing selected audit fields.
  */
-export function selectAuditFields (authenticated) {
+export function selectAuditFields(authenticated) {
   return {
     id: authenticated._id,
     name: `${authenticated.firstname} ${authenticated.surname}`

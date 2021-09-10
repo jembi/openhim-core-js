@@ -4,17 +4,17 @@
 
 import fs from 'fs'
 import request from 'supertest'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { KeystoreModelAPI } from '../../src/model/keystore'
-import { config } from '../../src/config'
+import {KeystoreModelAPI} from '../../src/model/keystore'
+import {config} from '../../src/config'
 
 describe('API Integration Tests', () => {
   const ORIGINAL_CERTIFICATE_MANAGEMENT = config.certificateManagement
-  const { SERVER_PORTS } = constants
+  const {SERVER_PORTS} = constants
 
   before(() => {
     config.certificateManagement = config.get('certificateManagement')
@@ -30,7 +30,7 @@ describe('API Integration Tests', () => {
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
     })
 
     after(async () => {
@@ -118,7 +118,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should add a new server certificate', async () => {
-      const postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/cert')
@@ -136,7 +138,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should calculate and store the correct certificate fingerprint', async () => {
-      const postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/cert')
@@ -148,11 +152,13 @@ describe('API Integration Tests', () => {
         .expect(201)
 
       keystore = await KeystoreModelAPI.findOne({})
-      keystore.cert.fingerprint.should.be.exactly('35:B1:95:80:45:F6:39:A8:1E:75:E1:B1:16:16:32:EB:12:EA:1A:24')
+      keystore.cert.fingerprint.should.be.exactly(
+        '35:B1:95:80:45:F6:39:A8:1E:75:E1:B1:16:16:32:EB:12:EA:1A:24'
+      )
     })
 
-    it('Should return a 400 if the server certificate isn\'t valid', async () => {
-      const postData = { cert: 'junkjunkjunk' }
+    it("Should return a 400 if the server certificate isn't valid", async () => {
+      const postData = {cert: 'junkjunkjunk'}
 
       await request(constants.BASE_URL)
         .post('/keystore/cert')
@@ -165,7 +171,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should not allow a non-admin user to add a new server certificate', async () => {
-      const postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/cert')
@@ -179,7 +187,9 @@ describe('API Integration Tests', () => {
 
     it('Should return 400 if watchFSForCert option is true when adding a cert.', async () => {
       config.certificateManagement.watchFSForCert = true
-      const postData = { cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/server-tls/cert.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/cert')
@@ -192,7 +202,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should add a new server key', async () => {
-      const postData = { key: fs.readFileSync('test/resources/server-tls/key.pem').toString() }
+      const postData = {
+        key: fs.readFileSync('test/resources/server-tls/key.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/key')
@@ -208,7 +220,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should not allow a non-admin user to add a new server key', async () => {
-      const postData = { key: fs.readFileSync('test/resources/server-tls/key.pem').toString() }
+      const postData = {
+        key: fs.readFileSync('test/resources/server-tls/key.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/key')
@@ -221,7 +235,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should add a new trusted certificate', async () => {
-      const postData = { cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/ca/cert')
@@ -240,7 +256,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should calculate fingerprint for new trusted certificate', async () => {
-      const postData = { cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/ca/cert')
@@ -252,11 +270,13 @@ describe('API Integration Tests', () => {
         .expect(201)
 
       keystore = await KeystoreModelAPI.findOne()
-      keystore.ca[2].fingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54')
+      keystore.ca[2].fingerprint.should.be.exactly(
+        '23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54'
+      )
     })
 
     it('Should respond with a 400 if one or more certs are invalid', async () => {
-      const postData = { cert: 'junkjunkjunk' }
+      const postData = {cert: 'junkjunkjunk'}
 
       await request(constants.BASE_URL)
         .post('/keystore/ca/cert')
@@ -269,7 +289,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should not allow a non-admin user to add a new trusted certificate', async () => {
-      const postData = { cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/trust-tls/cert1.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/ca/cert')
@@ -282,7 +304,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should add each certificate in a certificate chain', async () => {
-      const postData = { cert: fs.readFileSync('test/resources/chain.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/chain.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/ca/cert')
@@ -300,7 +324,9 @@ describe('API Integration Tests', () => {
     })
 
     it('Should return 400 with there is an invlaid cert in the chain', async () => {
-      const postData = { cert: fs.readFileSync('test/resources/invalid-chain.pem').toString() }
+      const postData = {
+        cert: fs.readFileSync('test/resources/invalid-chain.pem').toString()
+      }
 
       await request(constants.BASE_URL)
         .post('/keystore/ca/cert')

@@ -2,7 +2,7 @@
 
 import logger from 'winston'
 import moment from 'moment'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
@@ -14,14 +14,19 @@ const levels = {
   error: 4
 }
 
-export async function getLogs (ctx) {
+export async function getLogs(ctx) {
   // Only admins can view server logs
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getLogs denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to getLogs denied.`,
+      'info'
+    )
     return
   }
 
-  let { query } = ctx.request || {}
+  let {query} = ctx.request || {}
   if (query == null) {
     query = {}
   }
@@ -32,7 +37,10 @@ export async function getLogs (ctx) {
   }
 
   const options = {
-    from: query.from != null ? moment(query.from).toDate() : moment().subtract(5, 'minutes').toDate(),
+    from:
+      query.from != null
+        ? moment(query.from).toDate()
+        : moment().subtract(5, 'minutes').toDate(),
     until: moment(query.until || undefined).toDate(),
     order: 'asc',
     start: parseInt(query.start, 10) || 0,

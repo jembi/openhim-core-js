@@ -1,18 +1,22 @@
 'use strict'
 
-import { Schema } from 'mongoose'
+import {Schema} from 'mongoose'
 
-import { connectionAPI, connectionDefault } from '../config'
+import {connectionAPI, connectionDefault} from '../config'
 
 const UserSchema = new Schema({
   firstname: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   surname: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   email: {
-    type: String, required: true, unique: true
+    type: String,
+    required: true,
+    unique: true
   },
   passwordAlgorithm: String,
   passwordHash: String,

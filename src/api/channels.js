@@ -10,21 +10,24 @@ import * as routerMiddleware from '../middleware/router'
 import * as server from '../server'
 import * as tcpAdapter from '../tcpAdapter'
 import * as utils from '../utils'
-import { TransactionModelAPI } from '../model/transactions'
-import { config } from '../config'
+import {TransactionModelAPI} from '../model/transactions'
+import {config} from '../config'
 
-const { ChannelModel } = Channels
+const {ChannelModel} = Channels
 
 const MAX_BODY_AGE_MESSAGE = `Channel property maxBodyAgeDays has to be a number that's valid and requestBody or responseBody must be true.`
 const TIMEOUT_SECONDS_MESSAGE = `Channel property timeoutSeconds has to be a number greater than 1 and less than an 3600`
 
 config.polling = config.get('polling')
 
-function isPathValid (channel) {
+function isPathValid(channel) {
   if (channel.routes != null) {
     for (const route of Array.from(channel.routes)) {
       // There cannot be both path and pathTransform. pathTransform must be valid
-      if ((route.path && route.pathTransform) || (route.pathTransform && !/s\/.*\/.*/.test(route.pathTransform))) {
+      if (
+        (route.path && route.pathTransform) ||
+        (route.pathTransform && !/s\/.*\/.*/.test(route.pathTransform))
+      ) {
         return false
       }
     }
@@ -35,26 +38,42 @@ function isPathValid (channel) {
 /*
  * Retrieves the list of active channels
  */
-export async function getChannels (ctx) {
+export async function getChannels(ctx) {
   try {
     ctx.body = await authorisation.getUserViewableChannels(ctx.authenticated)
   } catch (err) {
-    utils.logAndSetResponse(ctx, 500, `Could not fetch all channels via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not fetch all channels via the API: ${err}`,
+      'error'
+    )
   }
 }
 
-function processPostAddTriggers (channel) {
+function processPostAddTriggers(channel) {
   if (channel.type && Channels.isChannelEnabled(channel)) {
-    if ((channel.type === 'tcp' || channel.type === 'tls') && server.isTcpHttpReceiverRunning()) {
-      return tcpAdapter.notifyMasterToStartTCPServer(channel._id, (err) => { if (err) { return logger.error(err) } })
+    if (
+      (channel.type === 'tcp' || channel.type === 'tls') &&
+      server.isTcpHttpReceiverRunning()
+    ) {
+      return tcpAdapter.notifyMasterToStartTCPServer(channel._id, err => {
+        if (err) {
+          return logger.error(err)
+        }
+      })
     } else if (channel.type === 'polling') {
-      return polling.registerPollingChannel(channel, (err) => { if (err) { return logger.error(err) } })
+      return polling.registerPollingChannel(channel, err => {
+        if (err) {
+          return logger.error(err)
+        }
+      })
     }
   }
 }
 
-export function validateMethod (channel) {
-  const { methods = [] } = channel || {}
+export function validateMethod(channel) {
+  const {methods = []} = channel || {}
   if (methods.length === 0) {
     return
   }
@@ -75,19 +94,25 @@ export function validateMethod (channel) {
     .filter(k => mapCount[k] > 1)
     .sort()
   if (repeats.length > 0) {
-    return `Channel methods can't be repeated. Repeated methods are ${repeats.join(', ')}`
+    return `Channel methods can't be repeated. Repeated methods are ${repeats.join(
+      ', '
+    )}`
   }
 }
 
-export function isTimeoutValid (channel) {
+export function isTimeoutValid(channel) {
   if (channel.timeout == null) {
     return true
   }
 
-  return typeof channel.timeout === 'number' && channel.timeout > 0 && channel.timeout <= 3600000
+  return (
+    typeof channel.timeout === 'number' &&
+    channel.timeout > 0 &&
+    channel.timeout <= 3600000
+  )
 }
 
-export function isMaxBodyDaysValid (channel) {
+export function isMaxBodyDaysValid(channel) {
   if (channel.maxBodyAgeDays == null) {
     return true
   }
@@ -96,16 +121,25 @@ export function isMaxBodyDaysValid (channel) {
     return false
   }
 
-  return typeof channel.maxBodyAgeDays === 'number' && channel.maxBodyAgeDays > 0 && channel.maxBodyAgeDays < 36500
+  return (
+    typeof channel.maxBodyAgeDays === 'number' &&
+    channel.maxBodyAgeDays > 0 &&
+    channel.maxBodyAgeDays < 36500
+  )
 }
 
 /*
  * Creates a new channel
  */
-export async function addChannel (ctx) {
+export async function addChannel(ctx) {
   // Test if the user is authorised
   if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`,
+      'info'
+    )
     return
   }
 
@@ -119,12 +153,13 @@ export async function addChannel (ctx) {
     const channel = new ChannelModel(channelData)
 
     if (!isPathValid(channel)) {
-      ctx.body = 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]'
+      ctx.body =
+        'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]'
       ctx.status = 400
       return
     }
 
-    if ((channel.priority != null) && (channel.priority < 1)) {
+    if (channel.priority != null && channel.priority < 1) {
       ctx.body = 'Channel priority cannot be below 1 (= Highest priority)'
       ctx.status = 400
       return
@@ -167,20 +202,27 @@ export async function addChannel (ctx) {
     // All ok! So set the result
     ctx.body = 'Channel successfully created'
     ctx.status = 201
-    logger.info(`User ${ctx.authenticated.email} created channel with id ${channel.id}`)
+    logger.info(
+      `User ${ctx.authenticated.email} created channel with id ${channel.id}`
+    )
 
     channelData._id = channel._id
     processPostAddTriggers(channelData)
   } catch (err) {
     // Error! So inform the user
-    utils.logAndSetResponse(ctx, 400, `Could not add channel via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      400,
+      `Could not add channel via the API: ${err}`,
+      'error'
+    )
   }
 }
 
 /*
  * Retrieves the details for a specific channel
  */
-export async function getChannel (ctx, channelId) {
+export async function getChannel(ctx, channelId) {
   // Get the values to use
   const id = unescape(channelId)
 
@@ -190,7 +232,10 @@ export async function getChannel (ctx, channelId) {
     let accessDenied = false
     // if admin allow acces to all channels otherwise restrict result set
     if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-      result = await ChannelModel.findOne({ _id: id, txViewAcl: { $in: ctx.authenticated.groups } }).exec()
+      result = await ChannelModel.findOne({
+        _id: id,
+        txViewAcl: {$in: ctx.authenticated.groups}
+      }).exec()
       const adminResult = await ChannelModel.findById(id).exec()
       if (adminResult != null) {
         accessDenied = true
@@ -216,49 +261,95 @@ export async function getChannel (ctx, channelId) {
     }
   } catch (err) {
     // Error! So inform the user
-    utils.logAndSetResponse(ctx, 500, `Could not fetch channel by Id '${id}' via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not fetch channel by Id '${id}' via the API: ${err}`,
+      'error'
+    )
   }
 }
 
-export async function getChannelAudits (ctx, channelId) {
+export async function getChannelAudits(ctx, channelId) {
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to addChannel denied.`,
+      'info'
+    )
     return
   }
 
   try {
     const channel = await ChannelModel.findById(channelId).exec()
     if (channel) {
-      ctx.body = await channel.patches.find({ $and: [{ ref: channel.id }, { ops: { $elemMatch: { path: { $ne: '/lastBodyCleared' }}}}] }).sort({ _id: -1 }).exec()
+      ctx.body = await channel.patches
+        .find({
+          $and: [
+            {ref: channel.id},
+            {ops: {$elemMatch: {path: {$ne: '/lastBodyCleared'}}}}
+          ]
+        })
+        .sort({_id: -1})
+        .exec()
     } else {
       ctx.body = []
     }
   } catch (err) {
-    utils.logAndSetResponse(ctx, 500, `Could not fetch all channels via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not fetch all channels via the API: ${err}`,
+      'error'
+    )
   }
 }
 
-function processPostUpdateTriggers (channel) {
+function processPostUpdateTriggers(channel) {
   if (channel.type) {
-    if (((channel.type === 'tcp') || (channel.type === 'tls')) && server.isTcpHttpReceiverRunning()) {
+    if (
+      (channel.type === 'tcp' || channel.type === 'tls') &&
+      server.isTcpHttpReceiverRunning()
+    ) {
       if (Channels.isChannelEnabled(channel)) {
-        return tcpAdapter.notifyMasterToStartTCPServer(channel._id, (err) => { if (err) { return logger.error(err) } })
+        return tcpAdapter.notifyMasterToStartTCPServer(channel._id, err => {
+          if (err) {
+            return logger.error(err)
+          }
+        })
       } else {
-        return tcpAdapter.notifyMasterToStopTCPServer(channel._id, (err) => { if (err) { return logger.error(err) } })
+        return tcpAdapter.notifyMasterToStopTCPServer(channel._id, err => {
+          if (err) {
+            return logger.error(err)
+          }
+        })
       }
     } else if (channel.type === 'polling') {
       if (Channels.isChannelEnabled(channel)) {
-        return polling.registerPollingChannel(channel, (err) => { if (err) { return logger.error(err) } })
+        return polling.registerPollingChannel(channel, err => {
+          if (err) {
+            return logger.error(err)
+          }
+        })
       } else {
-        return polling.removePollingChannel(channel, (err) => { if (err) { return logger.error(err) } })
+        return polling.removePollingChannel(channel, err => {
+          if (err) {
+            return logger.error(err)
+          }
+        })
       }
     }
   }
 }
 
-async function findChannelByIdAndUpdate (id, channelData) {
+async function findChannelByIdAndUpdate(id, channelData) {
   const channel = await ChannelModel.findById(id)
-  if (channelData.maxBodyAgeDays != null && channel.maxBodyAgeDays != null && channelData.maxBodyAgeDays !== channel.maxBodyAgeDays) {
+  if (
+    channelData.maxBodyAgeDays != null &&
+    channel.maxBodyAgeDays != null &&
+    channelData.maxBodyAgeDays !== channel.maxBodyAgeDays
+  ) {
     channelData.lastBodyCleared = undefined
   }
   channel.set(channelData)
@@ -268,10 +359,15 @@ async function findChannelByIdAndUpdate (id, channelData) {
 /*
  * Updates the details for a specific channel
  */
-export async function updateChannel (ctx, channelId) {
+export async function updateChannel(ctx, channelId) {
   // Test if the user is authorised
   if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to updateChannel denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to updateChannel denied.`,
+      'info'
+    )
     return
   }
 
@@ -285,15 +381,18 @@ export async function updateChannel (ctx, channelId) {
   // This is so you can see how the channel will look as a whole before saving
   updatedChannel.set(channelData)
 
-  if (!utils.isNullOrWhitespace(channelData.type) && utils.isNullOrEmpty(channelData.methods)) {
+  if (
+    !utils.isNullOrWhitespace(channelData.type) &&
+    utils.isNullOrEmpty(channelData.methods)
+  ) {
     // Empty the methods if the type has changed from http
     if (channelData.type !== 'http') {
       channelData.methods = []
     }
   } else {
-    const { type } = updatedChannel
-    let { methods } = updatedChannel
-    let methodValidation = validateMethod({ type, methods })
+    const {type} = updatedChannel
+    let {methods} = updatedChannel
+    let methodValidation = validateMethod({type, methods})
 
     if (methodValidation != null) {
       ctx.body = methodValidation
@@ -314,18 +413,25 @@ export async function updateChannel (ctx, channelId) {
   }
 
   if (!isPathValid(channelData)) {
-    utils.logAndSetResponse(ctx, 400, 'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]', 'info')
+    utils.logAndSetResponse(
+      ctx,
+      400,
+      'Channel cannot have both path and pathTransform. pathTransform must be of the form s/from/to[/g]',
+      'info'
+    )
     return
   }
 
-  if ((channelData.priority != null) && (channelData.priority < 1)) {
+  if (channelData.priority != null && channelData.priority < 1) {
     ctx.body = 'Channel priority cannot be below 1 (= Highest priority)'
     ctx.status = 400
     return
   }
 
   if (channelData.routes != null) {
-    const numPrimaries = routerMiddleware.numberOfPrimaryRoutes(channelData.routes)
+    const numPrimaries = routerMiddleware.numberOfPrimaryRoutes(
+      channelData.routes
+    )
     if (numPrimaries === 0) {
       ctx.body = 'Channel must have a primary route'
       ctx.status = 400
@@ -360,16 +466,32 @@ export async function updateChannel (ctx, channelId) {
     return processPostUpdateTriggers(channel)
   } catch (err) {
     // Error! So inform the user
-    utils.logAndSetResponse(ctx, 500, `Could not update channel by id: ${id} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not update channel by id: ${id} via the API: ${err}`,
+      'error'
+    )
   }
 }
 
-function processPostDeleteTriggers (channel) {
+function processPostDeleteTriggers(channel) {
   if (channel.type) {
-    if (((channel.type === 'tcp') || (channel.type === 'tls')) && server.isTcpHttpReceiverRunning()) {
-      return tcpAdapter.notifyMasterToStopTCPServer(channel._id, (err) => { if (err) { return logger.error(err) } })
+    if (
+      (channel.type === 'tcp' || channel.type === 'tls') &&
+      server.isTcpHttpReceiverRunning()
+    ) {
+      return tcpAdapter.notifyMasterToStopTCPServer(channel._id, err => {
+        if (err) {
+          return logger.error(err)
+        }
+      })
     } else if (channel.type === 'polling') {
-      return polling.removePollingChannel(channel, (err) => { if (err) { return logger.error(err) } })
+      return polling.removePollingChannel(channel, err => {
+        if (err) {
+          return logger.error(err)
+        }
+      })
     }
   }
 }
@@ -377,10 +499,15 @@ function processPostDeleteTriggers (channel) {
 /*
  * Deletes a specific channels details
  */
-export async function removeChannel (ctx, channelId) {
+export async function removeChannel(ctx, channelId) {
   // Test if the user is authorised
   if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeChannel denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to removeChannel denied.`,
+      'info'
+    )
     return
   }
 
@@ -389,7 +516,9 @@ export async function removeChannel (ctx, channelId) {
 
   try {
     let channel
-    const numExistingTransactions = await TransactionModelAPI.countDocuments({ channelID: id }).exec()
+    const numExistingTransactions = await TransactionModelAPI.countDocuments({
+      channelID: id
+    }).exec()
 
     // Try to get the channel (Call the function that emits a promise and Koa will wait for the function to complete)
     if (numExistingTransactions === 0) {
@@ -397,7 +526,10 @@ export async function removeChannel (ctx, channelId) {
       channel = await ChannelModel.findByIdAndRemove(id).exec()
     } else {
       // not safe to remove. just flag as deleted
-      channel = await findChannelByIdAndUpdate(id, { status: 'deleted', updatedBy: utils.selectAuditFields(ctx.authenticated) })
+      channel = await findChannelByIdAndUpdate(id, {
+        status: 'deleted',
+        updatedBy: utils.selectAuditFields(ctx.authenticated)
+      })
     }
 
     // All ok! So set the result
@@ -407,17 +539,27 @@ export async function removeChannel (ctx, channelId) {
     return processPostDeleteTriggers(channel)
   } catch (err) {
     // Error! So inform the user
-    utils.logAndSetResponse(ctx, 500, `Could not remove channel by id: ${id} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not remove channel by id: ${id} via the API: ${err}`,
+      'error'
+    )
   }
 }
 
 /*
  * Manually Triggers Polling Channel
  */
-export async function triggerChannel (ctx, channelId) {
+export async function triggerChannel(ctx, channelId) {
   // Test if the user is authorised
   if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeChannel denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to removeChannel denied.`,
+      'info'
+    )
     return
   }
 
@@ -447,22 +589,28 @@ export async function triggerChannel (ctx, channelId) {
         method: 'GET'
       }
 
-      await new Promise((resolve) => {
-        axios(options).then(() => {
-          logger.info(`Channel Successfully polled ${channel._id}`)
-          // Return success status
-          ctx.status = 200
-          resolve()
-        })
-        .catch(err => {
-          logger.error(err.message)
-          ctx.status = 500
-          resolve()
-        })
+      await new Promise(resolve => {
+        axios(options)
+          .then(() => {
+            logger.info(`Channel Successfully polled ${channel._id}`)
+            // Return success status
+            ctx.status = 200
+            resolve()
+          })
+          .catch(err => {
+            logger.error(err.message)
+            ctx.status = 500
+            resolve()
+          })
       })
     }
   } catch (err) {
     // Error! So inform the user
-    utils.logAndSetResponse(ctx, 500, `Could not fetch channel by Id '${id}' via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not fetch channel by Id '${id}' via the API: ${err}`,
+      'error'
+    )
   }
 }

@@ -1,13 +1,14 @@
 'use strict'
 
-import { Schema } from 'mongoose'
+import {Schema} from 'mongoose'
 
 import * as events from './events'
-import { connectionAPI, connectionDefault } from '../config'
+import {connectionAPI, connectionDefault} from '../config'
 
 const EventLinkDef = {
   eventType: {
-    type: String, enum: events.eventTypes
+    type: String,
+    enum: events.eventTypes
   },
   eventName: String,
   display: String
@@ -21,54 +22,74 @@ const MediatorLinkDef = {
 
 const VisualizerSchema = new Schema({
   name: {
-    type: String, required: true, unique: true
+    type: String,
+    required: true,
+    unique: true
   },
   components: [EventLinkDef],
   channels: [EventLinkDef],
   mediators: [MediatorLinkDef],
   color: {
     inactive: {
-      type: String, default: '#cccccc'
+      type: String,
+      default: '#cccccc'
     },
     active: {
-      type: String, default: '#4cae4c'
+      type: String,
+      default: '#4cae4c'
     },
     error: {
-      type: String, default: '#d43f3a'
+      type: String,
+      default: '#d43f3a'
     },
     text: {
-      type: String, default: '#000000'
+      type: String,
+      default: '#000000'
     }
   },
   size: {
     responsive: {
-      type: Boolean, default: true
+      type: Boolean,
+      default: true
     },
     width: {
-      type: Number, default: 1000
+      type: Number,
+      default: 1000
     },
     height: {
-      type: Number, default: 400
+      type: Number,
+      default: 400
     },
     padding: {
-      type: Number, default: 20
+      type: Number,
+      default: 20
     }
   },
   time: {
     updatePeriod: {
-      type: Number, default: 200
+      type: Number,
+      default: 200
     },
     minDisplayPeriod: {
-      type: Number, default: 500
+      type: Number,
+      default: 500
     },
     maxSpeed: {
-      type: Number, default: 5
+      type: Number,
+      default: 5
     },
     maxTimeout: {
-      type: Number, default: 5000
+      type: Number,
+      default: 5000
     }
   }
 })
 
-export const VisualizerModelAPI = connectionAPI.model('Visualizer', VisualizerSchema)
-export const VisualizerModel = connectionDefault.model('Visualizer', VisualizerSchema)
+export const VisualizerModelAPI = connectionAPI.model(
+  'Visualizer',
+  VisualizerSchema
+)
+export const VisualizerModel = connectionDefault.model(
+  'Visualizer',
+  VisualizerSchema
+)

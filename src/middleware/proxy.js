@@ -1,8 +1,10 @@
 'use strict'
 
-export function setupProxyHeaders (ctx) {
-  function setOrAppendHeader (ctx, header, value) {
-    if (!value) { return }
+export function setupProxyHeaders(ctx) {
+  function setOrAppendHeader(ctx, header, value) {
+    if (!value) {
+      return
+    }
     if (ctx.header[header]) {
       ctx.header[header] = `${ctx.header[header]}, ${value}`
     } else {
@@ -14,7 +16,7 @@ export function setupProxyHeaders (ctx) {
   return setOrAppendHeader(ctx, 'X-Forwarded-Host', ctx.request.host)
 }
 
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   exports.setupProxyHeaders(ctx)
   await next()
 }

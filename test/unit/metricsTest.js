@@ -4,10 +4,10 @@
 /* eslint no-unused-expressions:0 */
 
 import should from 'should'
-import { ObjectId } from 'mongodb'
+import {ObjectId} from 'mongodb'
 
 import * as metrics from '../../src/metrics'
-import { MetricModel } from '../../src/model'
+import {MetricModel} from '../../src/model'
 
 describe('recordTransactionMetrics', () => {
   beforeEach(async () => {
@@ -31,7 +31,10 @@ describe('recordTransactionMetrics', () => {
 
     const minuteMetrics = await MetricModel.find({type: 'm'})
     should.equal(minuteMetrics.length, 1)
-    should.deepEqual(minuteMetrics[0].startTime, new Date('2017-12-07T09:17:00.000Z'))
+    should.deepEqual(
+      minuteMetrics[0].startTime,
+      new Date('2017-12-07T09:17:00.000Z')
+    )
     should.ok(channelID.equals(minuteMetrics[0].channelID))
     should.equal(minuteMetrics[0].requests, 1)
     should.equal(minuteMetrics[0].responseTime, 3167)
@@ -45,7 +48,10 @@ describe('recordTransactionMetrics', () => {
 
     const hourMetrics = await MetricModel.find({type: 'h'})
     should.equal(hourMetrics.length, 1)
-    should.deepEqual(hourMetrics[0].startTime, new Date('2017-12-07T09:00:00.000Z'))
+    should.deepEqual(
+      hourMetrics[0].startTime,
+      new Date('2017-12-07T09:00:00.000Z')
+    )
     should.ok(channelID.equals(hourMetrics[0].channelID))
     should.equal(hourMetrics[0].requests, 1)
     should.equal(hourMetrics[0].responseTime, 3167)
@@ -59,7 +65,10 @@ describe('recordTransactionMetrics', () => {
 
     const dayMetrics = await MetricModel.find({type: 'd'})
     should.equal(dayMetrics.length, 1)
-    should.deepEqual(dayMetrics[0].startTime, new Date('2017-12-06T22:00:00.000Z')) // N.B. This will fail in non SAST environments
+    should.deepEqual(
+      dayMetrics[0].startTime,
+      new Date('2017-12-06T22:00:00.000Z')
+    ) // N.B. This will fail in non SAST environments
     should.ok(channelID.equals(dayMetrics[0].channelID))
     should.equal(dayMetrics[0].requests, 1)
     should.equal(dayMetrics[0].responseTime, 3167)
@@ -101,7 +110,10 @@ describe('recordTransactionMetrics', () => {
 
     const minuteMetrics = await MetricModel.find({type: 'm'})
     should.equal(minuteMetrics.length, 1)
-    should.deepEqual(minuteMetrics[0].startTime, new Date('2017-12-07T09:17:00.000Z'))
+    should.deepEqual(
+      minuteMetrics[0].startTime,
+      new Date('2017-12-07T09:17:00.000Z')
+    )
     should.ok(channelID.equals(minuteMetrics[0].channelID))
     should.equal(minuteMetrics[0].requests, 2)
     should.equal(minuteMetrics[0].responseTime, 3267)
@@ -139,7 +151,10 @@ describe('recordTransactionMetrics', () => {
 
     const minuteMetrics = await MetricModel.find({type: 'h'})
     should.equal(minuteMetrics.length, 1)
-    should.deepEqual(minuteMetrics[0].startTime, new Date('2017-12-07T09:00:00.000Z'))
+    should.deepEqual(
+      minuteMetrics[0].startTime,
+      new Date('2017-12-07T09:00:00.000Z')
+    )
     should.ok(channelID.equals(minuteMetrics[0].channelID))
     should.equal(minuteMetrics[0].requests, 2)
     should.equal(minuteMetrics[0].responseTime, 8167)
@@ -177,7 +192,10 @@ describe('recordTransactionMetrics', () => {
 
     const minuteMetrics = await MetricModel.find({type: 'h'})
     should.equal(minuteMetrics.length, 1)
-    should.deepEqual(minuteMetrics[0].startTime, new Date('2017-12-07T09:00:00.000Z'))
+    should.deepEqual(
+      minuteMetrics[0].startTime,
+      new Date('2017-12-07T09:00:00.000Z')
+    )
     should.ok(channelID.equals(minuteMetrics[0].channelID))
     should.equal(minuteMetrics[0].failed, 0)
     should.equal(minuteMetrics[0].successful, 1)
@@ -497,12 +515,15 @@ describe('calculateMetrics', () => {
       }
     ])
 
-    const returnedMetrics = await metrics.calculateMetrics({
-      startDate: new Date('2017-12-11T08:00:00Z'),
-      endDate: new Date('2017-12-11T09:00:00Z'),
-      channels: [firstChannelID, secondChannelID],
-      timeSeries: 'hour'
-    }, false)
+    const returnedMetrics = await metrics.calculateMetrics(
+      {
+        startDate: new Date('2017-12-11T08:00:00Z'),
+        endDate: new Date('2017-12-11T09:00:00Z'),
+        channels: [firstChannelID, secondChannelID],
+        timeSeries: 'hour'
+      },
+      false
+    )
 
     returnedMetrics.forEach(metric => {
       // Remove fields not relevant to the test
@@ -609,11 +630,14 @@ describe('calculateMetrics', () => {
       }
     ])
 
-    const returnedMetrics = await metrics.calculateMetrics({
-      startDate: new Date('2017-12-11T08:00:00Z'),
-      endDate: new Date('2017-12-11T09:00:00Z'),
-      channels: [firstChannelID, secondChannelID]
-    }, false)
+    const returnedMetrics = await metrics.calculateMetrics(
+      {
+        startDate: new Date('2017-12-11T08:00:00Z'),
+        endDate: new Date('2017-12-11T09:00:00Z'),
+        channels: [firstChannelID, secondChannelID]
+      },
+      false
+    )
 
     returnedMetrics.forEach(metric => {
       // Remove fields not relevant to the test

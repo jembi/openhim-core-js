@@ -1,7 +1,7 @@
 'use strict'
 
 import logger from 'winston'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as autoRetryUtils from '../autoRetry'
 import * as metrics from '../metrics'
@@ -16,11 +16,11 @@ export const transactionStatus = {
   FAILED: 'Failed'
 }
 
-function copyMapWithEscapedReservedCharacters (map) {
+function copyMapWithEscapedReservedCharacters(map) {
   const escapedMap = {}
   for (let k in map) {
     const v = map[k]
-    if ((k.indexOf('.') > -1) || (k.indexOf('$') > -1)) {
+    if (k.indexOf('.') > -1 || k.indexOf('$') > -1) {
       k = k.replace('.', '\uff0e').replace('$', '\uff04')
     }
     escapedMap[k] = v
@@ -28,7 +28,7 @@ function copyMapWithEscapedReservedCharacters (map) {
   return escapedMap
 }
 
-export function storeTransaction (ctx, done) {
+export function storeTransaction(ctx, done) {
   logger.info('Storing request metadata for inbound transaction')
 
   ctx.requestTimestamp = new Date()
@@ -37,12 +37,12 @@ export function storeTransaction (ctx, done) {
 
   const tx = new transactions.TransactionModel({
     status: transactionStatus.PROCESSING,
-    clientID: (ctx.authenticated != null ? ctx.authenticated._id : undefined),
+    clientID: ctx.authenticated != null ? ctx.authenticated._id : undefined,
     channelID: ctx.authorisedChannel._id,
     clientIP: ctx.ip,
     request: {
-      host: (ctx.host != null ? ctx.host.split(':')[0] : undefined),
-      port: (ctx.host != null ? ctx.host.split(':')[1] : undefined),
+      host: ctx.host != null ? ctx.host.split(':')[0] : undefined,
+      port: ctx.host != null ? ctx.host.split(':')[1] : undefined,
       path: ctx.path,
       headers,
       querystring: ctx.querystring,
@@ -62,16 +62,22 @@ export function storeTransaction (ctx, done) {
   }
 
   // check if channel request body is false and remove - or if request body is empty
-  if ((ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
+  if (ctx.authorisedChannel.requestBody === false || tx.request.body === '') {
     // reset request body
     tx.request.body = ''
     // check if method is POST|PUT|PATCH - rerun not possible without request body
-    if ((ctx.method === 'POST') || (ctx.method === 'PUT') || (ctx.method === 'PATCH')) {
+    if (
+      ctx.method === 'POST' ||
+      ctx.method === 'PUT' ||
+      ctx.method === 'PATCH'
+    ) {
       tx.canRerun = false
     }
   }
 
-  if (utils.enforceMaxBodiesSize(ctx, tx.request)) { tx.canRerun = false }
+  if (utils.enforceMaxBodiesSize(ctx, tx.request)) {
+    tx.canRerun = false
+  }
 
   return tx.save((err, tx) => {
     if (err) {
@@ -85,7 +91,7 @@ export function storeTransaction (ctx, done) {
   })
 }
 
-export function storeResponse (ctx, done) {
+export function storeResponse(ctx, done) {
   const headers = copyMapWithEscapedReservedCharacters(ctx.response.header)
 
   const res = {
@@ -111,55 +117,83 @@ export function storeResponse (ctx, done) {
 
   if (ctx.mediatorResponse) {
     if (ctx.mediatorResponse.orchestrations) {
-      update.orchestrations.push(...truncateOrchestrationBodies(ctx, ctx.mediatorResponse.orchestrations))
+      update.orchestrations.push(
+        ...truncateOrchestrationBodies(ctx, ctx.mediatorResponse.orchestrations)
+      )
     }
 
-    if (ctx.mediatorResponse.properties) { update.properties = ctx.mediatorResponse.properties }
+    if (ctx.mediatorResponse.properties) {
+      update.properties = ctx.mediatorResponse.properties
+    }
   }
 
   if (ctx.orchestrations) {
-    update.orchestrations.push(...truncateOrchestrationBodies(ctx, ctx.orchestrations))
+    update.orchestrations.push(
+      ...truncateOrchestrationBodies(ctx, ctx.orchestrations)
+    )
   }
 
-  return transactions.TransactionModel.findOneAndUpdate({_id: ctx.transactionId}, update, {runValidators: true}, (err, tx) => {
-    if (err) {
-      logger.error(`Could not save response metadata for transaction: ${ctx.transactionId}. ${err}`)
-      return done(err)
+  return transactions.TransactionModel.findOneAndUpdate(
+    {_id: ctx.transactionId},
+    update,
+    {runValidators: true},
+    (err, tx) => {
+      if (err) {
+        logger.error(
+          `Could not save response metadata for transaction: ${ctx.transactionId}. ${err}`
+        )
+        return done(err)
+      }
+      if (tx === undefined || tx === null) {
+        logger.error(`Could not find transaction: ${ctx.transactionId}`)
+        return done(err)
+      }
+      logger.info(`stored primary response for ${tx._id}`)
+      return done()
     }
-    if ((tx === undefined) || (tx === null)) {
-      logger.error(`Could not find transaction: ${ctx.transactionId}`)
-      return done(err)
-    }
-    logger.info(`stored primary response for ${tx._id}`)
-    return done()
-  })
+  )
 }
 
-function truncateOrchestrationBodies (ctx, orchestrations) {
+function truncateOrchestrationBodies(ctx, orchestrations) {
   return orchestrations.map(orch => {
     const truncatedOrchestration = Object.assign({}, orch)
-    if (truncatedOrchestration.request && truncatedOrchestration.request.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.request) }
-    if (truncatedOrchestration.response && truncatedOrchestration.response.body) { utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.response) }
+    if (truncatedOrchestration.request && truncatedOrchestration.request.body) {
+      utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.request)
+    }
+    if (
+      truncatedOrchestration.response &&
+      truncatedOrchestration.response.body
+    ) {
+      utils.enforceMaxBodiesSize(ctx, truncatedOrchestration.response)
+    }
     return truncatedOrchestration
   })
 }
 
-export function storeNonPrimaryResponse (ctx, route, done) {
+export function storeNonPrimaryResponse(ctx, route, done) {
   // check if channel response body is false and remove
   if (ctx.authorisedChannel.responseBody === false) {
     route.response.body = ''
   }
 
   if (ctx.transactionId != null) {
-    if ((route.request != null ? route.request.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.request) }
-    if ((route.response != null ? route.response.body : undefined) != null) { utils.enforceMaxBodiesSize(ctx, route.response) }
+    if ((route.request != null ? route.request.body : undefined) != null) {
+      utils.enforceMaxBodiesSize(ctx, route.request)
+    }
+    if ((route.response != null ? route.response.body : undefined) != null) {
+      utils.enforceMaxBodiesSize(ctx, route.response)
+    }
 
-    transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, {$push: {routes: route}}, (err, tx) => {
-      if (err) {
-        logger.error(err)
+    transactions.TransactionModel.findByIdAndUpdate(
+      ctx.transactionId,
+      {$push: {routes: route}},
+      (err, tx) => {
+        if (err) {
+          logger.error(err)
+        }
+        return done(tx)
       }
-      return done(tx)
-    })
+    )
   } else {
     return logger.error('the request has no transactionId')
   }
@@ -173,20 +207,32 @@ export function storeNonPrimaryResponse (ctx, route, done) {
  *
  * This should only be called once all routes have responded.
  */
-export function setFinalStatus (ctx, callback) {
+export function setFinalStatus(ctx, callback) {
   let transactionId = ''
-  if (ctx.request != null && ctx.request.header != null && ctx.request.header['X-OpenHIM-TransactionID'] != null) {
+  if (
+    ctx.request != null &&
+    ctx.request.header != null &&
+    ctx.request.header['X-OpenHIM-TransactionID'] != null
+  ) {
     transactionId = ctx.request.header['X-OpenHIM-TransactionID']
   } else {
     transactionId = ctx.transactionId.toString()
   }
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
-    if (err) { return callback(err) }
+    if (err) {
+      return callback(err)
+    }
     const update = {}
 
-    if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
-      logger.debug(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
+    if (
+      (ctx.mediatorResponse != null
+        ? ctx.mediatorResponse.status
+        : undefined) != null
+    ) {
+      logger.debug(
+        `The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`
+      )
       update.status = ctx.mediatorResponse.status
     } else {
       let routeFailures = false
@@ -208,10 +254,18 @@ export function setFinalStatus (ctx, callback) {
         if (routeFailures) {
           tx.status = transactionStatus.COMPLETED_W_ERR
         }
-        if ((ctx.response.status >= 200 && ctx.response.status <= 299) && routeSuccess) {
+        if (
+          ctx.response.status >= 200 &&
+          ctx.response.status <= 299 &&
+          routeSuccess
+        ) {
           tx.status = transactionStatus.SUCCESSFUL
         }
-        if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routeSuccess) {
+        if (
+          ctx.response.status >= 400 &&
+          ctx.response.status <= 499 &&
+          routeSuccess
+        ) {
           tx.status = transactionStatus.COMPLETED
         }
       }
@@ -235,26 +289,33 @@ export function setFinalStatus (ctx, callback) {
       }
     }
 
-    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, {new: true}, (err, tx) => {
-      if (err) { return callback(err) }
-      callback(null, tx)
+    transactions.TransactionModel.findByIdAndUpdate(
+      transactionId,
+      update,
+      {new: true},
+      (err, tx) => {
+        if (err) {
+          return callback(err)
+        }
+        callback(null, tx)
 
-      // queue for autoRetry
-      if (update.autoRetry) {
-        autoRetryUtils.queueForRetry(tx)
+        // queue for autoRetry
+        if (update.autoRetry) {
+          autoRetryUtils.queueForRetry(tx)
+        }
+
+        // Asynchronously record transaction metrics
+        metrics.recordTransactionMetrics(tx).catch(err => {
+          logger.error('Recording transaction metrics failed', err)
+        })
       }
-
-      // Asynchronously record transaction metrics
-      metrics.recordTransactionMetrics(tx).catch(err => {
-        logger.error('Recording transaction metrics failed', err)
-      })
-    })
+    )
   })
 }
 
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   const saveTransaction = promisify(storeTransaction)
   await saveTransaction(ctx)
   await next()
-  storeResponse(ctx, () => { })
+  storeResponse(ctx, () => {})
 }

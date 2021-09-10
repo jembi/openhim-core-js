@@ -4,18 +4,20 @@ import logger from 'winston'
 import moment from 'moment'
 
 import * as Channels from './model/channels'
-import { AutoRetryModel } from './model/autoRetry'
-import { TaskModel } from './model/tasks'
+import {AutoRetryModel} from './model/autoRetry'
+import {TaskModel} from './model/tasks'
 
-const { ChannelModel } = Channels
+const {ChannelModel} = Channels
 
-export function reachedMaxAttempts (tx, channel) {
-  return (channel.autoRetryMaxAttempts != null) &&
-    (channel.autoRetryMaxAttempts > 0) &&
-    (tx.autoRetryAttempt >= channel.autoRetryMaxAttempts)
+export function reachedMaxAttempts(tx, channel) {
+  return (
+    channel.autoRetryMaxAttempts != null &&
+    channel.autoRetryMaxAttempts > 0 &&
+    tx.autoRetryAttempt >= channel.autoRetryMaxAttempts
+  )
 }
 
-export async function queueForRetry (tx) {
+export async function queueForRetry(tx) {
   const retry = new AutoRetryModel({
     transactionID: tx._id,
     channelID: tx.channelID,
@@ -29,14 +31,15 @@ export async function queueForRetry (tx) {
   }
 }
 
-const getChannels = callback => ChannelModel.find({ autoRetryEnabled: true, status: 'enabled' }, callback)
+const getChannels = callback =>
+  ChannelModel.find({autoRetryEnabled: true, status: 'enabled'}, callback)
 
-function popTransactions (channel, callback) {
+function popTransactions(channel, callback) {
   const to = moment().subtract(channel.autoRetryPeriodMinutes - 1, 'minutes')
 
   const query = {
     $and: [
-      { channelID: channel._id },
+      {channelID: channel._id},
       {
         requestTimestamp: {
           $lte: to.toDate()
@@ -45,39 +48,54 @@ function popTransactions (channel, callback) {
     ]
   }
 
-  logger.debug(`Executing query autoRetry.findAndRemove(${JSON.stringify(query)})`)
+  logger.debug(
+    `Executing query autoRetry.findAndRemove(${JSON.stringify(query)})`
+  )
   AutoRetryModel.find(query, (err, transactions) => {
-    if (err) { return callback(err) }
-    if (transactions.length === 0) { return callback(null, []) }
-    AutoRetryModel.deleteMany({ _id: { $in: (transactions.map(t => t._id)) } }, (err) => {
-      if (err) { return callback(err) }
-      return callback(null, transactions)
-    })
+    if (err) {
+      return callback(err)
+    }
+    if (transactions.length === 0) {
+      return callback(null, [])
+    }
+    AutoRetryModel.deleteMany(
+      {_id: {$in: transactions.map(t => t._id)}},
+      err => {
+        if (err) {
+          return callback(err)
+        }
+        return callback(null, transactions)
+      }
+    )
   })
 }
 
-function createRerunTask (transactionIDs, callback) {
+function createRerunTask(transactionIDs, callback) {
   logger.info(`Rerunning failed transactions: ${transactionIDs}`)
   const task = new TaskModel({
-    transactions: (transactionIDs.map(t => ({ tid: t }))),
+    transactions: transactionIDs.map(t => ({tid: t})),
     totalTransactions: transactionIDs.length,
     remainingTransactions: transactionIDs.length,
     user: 'internal'
   })
 
-  task.save((err) => {
-    if (err) { logger.error(err) }
+  task.save(err => {
+    if (err) {
+      logger.error(err)
+    }
     return callback()
   })
 }
 
-function autoRetryTask (job, done) {
+function autoRetryTask(job, done) {
   const _taskStart = new Date()
   const transactionsToRerun = []
 
   getChannels((err, channels) => {
-    if (err) { return done(err) }
-    const promises = channels.map((channel) => {
+    if (err) {
+      return done(err)
+    }
+    const promises = channels.map(channel => {
       return new Promise((resolve, reject) => {
         popTransactions(channel, (err, transactions) => {
           if (err) {
@@ -92,27 +110,33 @@ function autoRetryTask (job, done) {
       })
     })
 
-    Promise.all(promises).then(() => {
-      function end () {
-        logger.debug(`Auto retry task total time: ${new Date() - _taskStart} ms`)
-        return done()
-      }
+    Promise.all(promises)
+      .then(() => {
+        function end() {
+          logger.debug(
+            `Auto retry task total time: ${new Date() - _taskStart} ms`
+          )
+          return done()
+        }
 
-      if (transactionsToRerun.length > 0) {
-        return createRerunTask(transactionsToRerun, end)
-      } else {
-        end()
-      }
-    }).catch(done)
+        if (transactionsToRerun.length > 0) {
+          return createRerunTask(transactionsToRerun, end)
+        } else {
+          end()
+        }
+      })
+      .catch(done)
   })
 }
 
-function setupAgenda (agenda) {
-  agenda.define('auto retry failed transactions', (job, done) => autoRetryTask(job, done))
+function setupAgenda(agenda) {
+  agenda.define('auto retry failed transactions', (job, done) =>
+    autoRetryTask(job, done)
+  )
   return agenda.every('1 minutes', 'auto retry failed transactions')
 }
 
-export { setupAgenda }
+export {setupAgenda}
 
 if (process.env.NODE_ENV === 'test') {
   exports.getChannels = getChannels

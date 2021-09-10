@@ -1,8 +1,8 @@
 'use strict'
 
-import { Schema } from 'mongoose'
+import {Schema} from 'mongoose'
 
-import { connectionAPI, connectionDefault } from '../config'
+import {connectionAPI, connectionDefault} from '../config'
 
 const TaskSchema = new Schema({
   status: {
@@ -12,36 +12,45 @@ const TaskSchema = new Schema({
     default: 'Queued',
     index: true
   },
-  transactions: [{
-    tid: {
-      type: String, required: true
-    },
-    tstatus: {
-      type: String,
-      required: true,
-      enum: ['Queued', 'Processing', 'Completed', 'Failed'],
-      default: 'Queued'
-    },
-    error: String,
-    rerunID: String,
-    rerunStatus: String
-  }
+  transactions: [
+    {
+      tid: {
+        type: String,
+        required: true
+      },
+      tstatus: {
+        type: String,
+        required: true,
+        enum: ['Queued', 'Processing', 'Completed', 'Failed'],
+        default: 'Queued'
+      },
+      error: String,
+      rerunID: String,
+      rerunStatus: String
+    }
   ],
   created: {
-    type: Date, required: true, default: Date.now, index: true
+    type: Date,
+    required: true,
+    default: Date.now,
+    index: true
   },
   completedDate: Date,
   user: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   remainingTransactions: {
-    type: Number, required: true
+    type: Number,
+    required: true
   },
   totalTransactions: {
-    type: Number, required: true
+    type: Number,
+    required: true
   },
   batchSize: {
-    type: Number, default: 1
+    type: Number,
+    default: 1
   }
 })
 

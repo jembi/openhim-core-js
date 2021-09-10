@@ -4,14 +4,18 @@ import logger from 'winston'
 
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import { ChannelModelAPI } from '../model/channels'
-import { ContactGroupModelAPI } from '../model/contactGroups'
+import {ChannelModelAPI} from '../model/channels'
+import {ContactGroupModelAPI} from '../model/contactGroups'
 
-
-export async function addContactGroup (ctx) {
+export async function addContactGroup(ctx) {
   // Must be admin
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addContactGroup denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to addContactGroup denied.`,
+      'info'
+    )
     return
   }
 
@@ -21,16 +25,31 @@ export async function addContactGroup (ctx) {
     const contactGroup = new ContactGroupModelAPI(contactGroupData)
     await contactGroup.save()
 
-    utils.logAndSetResponse(ctx, 201, 'Contact Group successfully created', 'info')
+    utils.logAndSetResponse(
+      ctx,
+      201,
+      'Contact Group successfully created',
+      'info'
+    )
   } catch (err) {
-    utils.logAndSetResponse(ctx, 400, `Could not add a contact group via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      400,
+      `Could not add a contact group via the API: ${err}`,
+      'error'
+    )
   }
 }
 
-export async function getContactGroup (ctx, contactGroupId) {
+export async function getContactGroup(ctx, contactGroupId) {
   // Must be admin
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getContactGroup denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to getContactGroup denied.`,
+      'info'
+    )
     return
   }
 
@@ -46,14 +65,24 @@ export async function getContactGroup (ctx, contactGroupId) {
       ctx.body = result
     }
   } catch (err) {
-    utils.logAndSetResponse(ctx, 500, `Could not find Contact Group by id '${contactGroupId}' via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not find Contact Group by id '${contactGroupId}' via the API: ${err}`,
+      'error'
+    )
   }
 }
 
-export async function updateContactGroup (ctx, contactGroupId) {
+export async function updateContactGroup(ctx, contactGroupId) {
   // Must be admin
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to updateContactGroup denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to updateContactGroup denied.`,
+      'info'
+    )
     return
   }
 
@@ -66,18 +95,33 @@ export async function updateContactGroup (ctx, contactGroupId) {
   }
 
   try {
-    await ContactGroupModelAPI.findByIdAndUpdate(contactGroupId, contactGroupData).exec()
+    await ContactGroupModelAPI.findByIdAndUpdate(
+      contactGroupId,
+      contactGroupData
+    ).exec()
     ctx.body = 'Successfully updated contact group.'
-    logger.info(`User ${ctx.authenticated.email} updated contact group with id ${contactGroupId}`)
+    logger.info(
+      `User ${ctx.authenticated.email} updated contact group with id ${contactGroupId}`
+    )
   } catch (err) {
-    utils.logAndSetResponse(ctx, 500, `Could not update Contact Group by id ${contactGroupId} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not update Contact Group by id ${contactGroupId} via the API: ${err}`,
+      'error'
+    )
   }
 }
 
-export async function removeContactGroup (ctx, contactGroupId) {
+export async function removeContactGroup(ctx, contactGroupId) {
   // Must be admin
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeContactGroup denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to removeContactGroup denied.`,
+      'info'
+    )
     return
   }
 
@@ -98,23 +142,40 @@ export async function removeContactGroup (ctx, contactGroupId) {
     } else {
       await ContactGroupModelAPI.findByIdAndRemove(contactGroupId).exec()
       ctx.body = `Successfully removed contact group with ID '${contactGroupId}'`
-      logger.info(`User ${ctx.authenticated.email} removed contact group with id ${contactGroupId}`)
+      logger.info(
+        `User ${ctx.authenticated.email} removed contact group with id ${contactGroupId}`
+      )
     }
   } catch (err) {
-    utils.logAndSetResponse(ctx, 500, `Could not remove Contact Group by id ${contactGroupId} via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not remove Contact Group by id ${contactGroupId} via the API: ${err}`,
+      'error'
+    )
   }
 }
 
-export async function getContactGroups (ctx) {
+export async function getContactGroups(ctx) {
   // Must be admin
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getContactGroups denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to getContactGroups denied.`,
+      'info'
+    )
     return
   }
 
   try {
     ctx.body = await ContactGroupModelAPI.find().exec()
   } catch (err) {
-    utils.logAndSetResponse(ctx, 500, `Could not fetch all Contact Group via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not fetch all Contact Group via the API: ${err}`,
+      'error'
+    )
   }
 }

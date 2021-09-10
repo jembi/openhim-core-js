@@ -3,20 +3,19 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { BASE_URL, SERVER_PORTS } from '../constants'
+import {BASE_URL, SERVER_PORTS} from '../constants'
 
 describe('API Integration Tests', () =>
-
   describe('About Information REST Api Testing', () => {
     let authDetails = {}
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
 
       authDetails = testUtils.getAuthDetails()
     })
@@ -51,5 +50,4 @@ describe('API Integration Tests', () =>
           .expect(404)
       })
     })
-  })
-)
+  }))

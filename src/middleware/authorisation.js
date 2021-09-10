@@ -5,20 +5,25 @@ import logger from 'winston'
 import os from 'os'
 
 import * as auditing from '../auditing'
-import { config } from '../config'
-import { promisify } from 'util'
+import {config} from '../config'
+import {promisify} from 'util'
 
 config.authentication = config.get('authentication')
 const himSourceID = config.get('auditing').auditEvents.auditSourceID
 
-function genAuthAudit (remoteAddress) {
-  let audit = atna.construct.nodeAuthentication(remoteAddress, himSourceID, os.hostname(), atna.constants.OUTCOME_MINOR_FAILURE)
+function genAuthAudit(remoteAddress) {
+  let audit = atna.construct.nodeAuthentication(
+    remoteAddress,
+    himSourceID,
+    os.hostname(),
+    atna.constants.OUTCOME_MINOR_FAILURE
+  )
   audit = atna.construct.wrapInSyslog(audit)
   return audit
 }
 
-function authoriseClient (channel, ctx) {
-  if ((ctx.authenticated != null) && (channel.allow != null)) {
+function authoriseClient(channel, ctx) {
+  if (ctx.authenticated != null && channel.allow != null) {
     if (ctx.authenticated.roles != null) {
       for (const role of Array.from(channel.allow)) {
         if (Array.from(ctx.authenticated.roles).includes(role)) {
@@ -34,7 +39,7 @@ function authoriseClient (channel, ctx) {
   return false
 }
 
-function authoriseIP (channel, ctx) {
+function authoriseIP(channel, ctx) {
   if ((channel.whitelist != null ? channel.whitelist.length : undefined) > 0) {
     return Array.from(channel.whitelist).includes(ctx.ip)
   } else {
@@ -42,14 +47,20 @@ function authoriseIP (channel, ctx) {
   }
 }
 
-export async function authorise (ctx, done) {
+export async function authorise(ctx, done) {
   const channel = ctx.matchingChannel
 
-  if ((channel != null) && authoriseIP(channel, ctx) && ((channel.authType === 'public') || authoriseClient(channel, ctx))) {
+  if (
+    channel != null &&
+    authoriseIP(channel, ctx) &&
+    (channel.authType === 'public' || authoriseClient(channel, ctx))
+  ) {
     // authorisation succeeded
     ctx.authorisedChannel = channel
-    logger.info(`The request, '${ctx.request.path}' is authorised to access ${ctx.authorisedChannel.name}`)
-  } else if(!channel) {
+    logger.info(
+      `The request, '${ctx.request.path}' is authorised to access ${ctx.authorisedChannel.name}`
+    )
+  } else if (!channel) {
     // Channel not found
     ctx.response.status = 404
   } else {
@@ -58,14 +69,18 @@ export async function authorise (ctx, done) {
     if (config.authentication.enableBasicAuthentication) {
       ctx.set('WWW-Authenticate', 'Basic')
     }
-    logger.info(`The request, '${ctx.request.path}', is not authorised to access any channels.`)
-    auditing.sendAuditEvent(genAuthAudit(ctx.ip), () => logger.debug('Processed nodeAuthentication audit'))
+    logger.info(
+      `The request, '${ctx.request.path}', is not authorised to access any channels.`
+    )
+    auditing.sendAuditEvent(genAuthAudit(ctx.ip), () =>
+      logger.debug('Processed nodeAuthentication audit')
+    )
   }
 
   return done()
 }
 
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   const _authorise = promisify(authorise)
   await _authorise(ctx)
   if (ctx.authorisedChannel != null) {

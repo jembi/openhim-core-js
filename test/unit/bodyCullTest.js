@@ -5,11 +5,11 @@
 import moment from 'moment'
 import should from 'should'
 import sinon from 'sinon'
-import { ObjectId } from 'mongodb'
+import {ObjectId} from 'mongodb'
 
-import { ChannelModel, ClientModel, TransactionModel } from '../../src/model'
-import { clone } from '../utils'
-import { cullBodies } from '../../src/bodyCull'
+import {ChannelModel, ClientModel, TransactionModel} from '../../src/model'
+import {clone} from '../utils'
+import {cullBodies} from '../../src/bodyCull'
 
 const testTime = new Date(2016, 2, 12)
 const cullTime = new Date(2016, 2, 9)
@@ -18,21 +18,20 @@ const clientDoc = Object.freeze({
   clientID: 'testClient',
   name: 'testClient',
   clientDomain: 'test-client.jembi.org',
-  roles: [
-    'PoC'
-  ]
+  roles: ['PoC']
 })
 
 const channelHasNotCulledDoc = Object.freeze({
   name: 'neverCulled',
   urlPattern: 'test/sample',
   maxBodyAgeDays: 2,
-  routes: [{
-    name: 'test route',
-    host: 'localhost',
-    port: 9876,
-    primary: true
-  }
+  routes: [
+    {
+      name: 'test route',
+      host: 'localhost',
+      port: 9876,
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -45,12 +44,13 @@ const channelHasCulledDoc = Object.freeze({
   urlPattern: 'test/sample',
   maxBodyAgeDays: 2,
   lastBodyCleared: cullTime,
-  routes: [{
-    name: 'test route',
-    host: 'localhost',
-    port: 9876,
-    primary: true
-  }
+  routes: [
+    {
+      name: 'test route',
+      host: 'localhost',
+      port: 9876,
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -61,12 +61,13 @@ const channelHasCulledDoc = Object.freeze({
 const channelNeverCullDoc = Object.freeze({
   name: 'dontCull',
   urlPattern: 'test/sample',
-  routes: [{
-    name: 'test route',
-    host: 'localhost',
-    port: 9876,
-    primary: true
-  }
+  routes: [
+    {
+      name: 'test route',
+      host: 'localhost',
+      port: 9876,
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -75,8 +76,8 @@ const channelNeverCullDoc = Object.freeze({
 })
 
 const baseTransaction = Object.freeze({
-  request: { path: '/sample/api', method: 'POST', body: 'test' },
-  response: { status: '200', body: 'test' },
+  request: {path: '/sample/api', method: 'POST', body: 'test'},
+  response: {status: '200', body: 'test'},
   status: 'Completed'
 })
 
@@ -87,7 +88,7 @@ describe(`cullBodies`, () => {
   let channelNeverCull
   let client
 
-  function createTransaction (channel, timestamp) {
+  function createTransaction(channel, timestamp) {
     const transactionDoc = clone(baseTransaction)
     transactionDoc.request.timestamp = timestamp
     transactionDoc.response.timestamp = timestamp
@@ -121,7 +122,10 @@ describe(`cullBodies`, () => {
 
   it(`will remove transaction body's that are x days old`, async () => {
     const momentTime = moment().subtract(3, 'd')
-    const tran = await createTransaction(channelHasNotCulled, momentTime.toDate())
+    const tran = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate()
+    )
     await cullBodies()
     const transaction = await TransactionModel.findById(tran._id)
     should(transaction.request.body).undefined()
@@ -130,9 +134,15 @@ describe(`cullBodies`, () => {
 
   it(`will remove multiple transaction body's that are x days old and leave the younger transactions`, async () => {
     const momentTime = moment().subtract(3, 'd')
-    const tranCulled = await createTransaction(channelHasNotCulled, momentTime.toDate())
+    const tranCulled = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate()
+    )
     momentTime.add(2, 'd')
-    const tranLeftAlone = await createTransaction(channelHasNotCulled, momentTime.toDate())
+    const tranLeftAlone = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate()
+    )
     await cullBodies()
     {
       const transaction = await TransactionModel.findById(tranCulled._id)
@@ -160,9 +170,15 @@ describe(`cullBodies`, () => {
 
   it('will only cull from the lastBodyCleared to the current date', async () => {
     const momentTime = moment(channelHasCulled.lastBodyCleared).subtract(1, 'd')
-    const notCulled = await createTransaction(channelHasCulled, momentTime.toDate())
+    const notCulled = await createTransaction(
+      channelHasCulled,
+      momentTime.toDate()
+    )
     momentTime.add(2, 'd')
-    const culled = await createTransaction(channelHasCulled, momentTime.toDate())
+    const culled = await createTransaction(
+      channelHasCulled,
+      momentTime.toDate()
+    )
 
     await cullBodies()
 

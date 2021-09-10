@@ -2,18 +2,19 @@
 
 import url from 'url'
 import winston from 'winston'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as router from '../middleware/router'
 import * as utils from '../utils'
-import { config } from '../config'
+import {config} from '../config'
 
 const routerConf = config.get('router')
 
 // see https://regex101.com/r/lW0cN0/1 for an explanation of this regex
-const invertPathTransform = pathTransform => pathTransform.replace(/s\/(.*?)\/(.*?)(?:$|\/(.*)$)/, 's/$2/$1/$3')
+const invertPathTransform = pathTransform =>
+  pathTransform.replace(/s\/(.*?)\/(.*?)(?:$|\/(.*)$)/, 's/$2/$1/$3')
 
-export function fetchRewriteConfig (channel, authType, callback) {
+export function fetchRewriteConfig(channel, authType, callback) {
   // set the user defined rewrite config from current channel
   let rwConfig = []
   if (channel.rewriteUrlsConfig != null) {
@@ -90,59 +91,70 @@ const rewriteUrls = (body, channel, authType, callback) =>
 
     // rewrite each found href, src or fullUrl attribute (in JSON or XML)
     // See https://regex101.com/r/uY3fO1/1 for an explanation of this regex
-    const newBody = body.replace(/["|']?(?:href|src|fullUrl)["|']?[:|=]\s?["|'](\S*?)["|']/g, (match, hrefUrl) => {
-      let relativePath
-      const hrefUrlObj = url.parse(hrefUrl)
+    const newBody = body.replace(
+      /["|']?(?:href|src|fullUrl)["|']?[:|=]\s?["|'](\S*?)["|']/g,
+      (match, hrefUrl) => {
+        let relativePath
+        const hrefUrlObj = url.parse(hrefUrl)
 
-      // default to using this channel's host if no host so we can match a rewrite rule
-      if ((hrefUrlObj.host == null)) {
-        for (const route of Array.from(channel.routes)) {
-          if (route.primary) {
-            hrefUrlObj.hostname = route.host
-            hrefUrlObj.port = route.port.toString()
-            relativePath = true
+        // default to using this channel's host if no host so we can match a rewrite rule
+        if (hrefUrlObj.host == null) {
+          for (const route of Array.from(channel.routes)) {
+            if (route.primary) {
+              hrefUrlObj.hostname = route.host
+              hrefUrlObj.port = route.port.toString()
+              relativePath = true
+              break
+            }
+          }
+        }
+
+        for (const rewriteRule of Array.from(rwConfig)) {
+          // if we find a matching rewrite rule
+          if (
+            rewriteRule.fromHost.toLowerCase() === hrefUrlObj.hostname &&
+            (rewriteRule.fromPort.toString() === hrefUrlObj.port ||
+              (rewriteRule.fromPort === 80 && hrefUrlObj.port === null))
+          ) {
+            hrefUrlObj.host = null // so that hostname and port are used separately
+            hrefUrlObj.hostname = rewriteRule.toHost
+            hrefUrlObj.port = rewriteRule.toPort
+
+            // rewrite protocol depending on the port the rewriteRule uses
+            if (hrefUrlObj.protocol) {
+              if (rewriteRule.toPort === routerConf.httpsPort) {
+                hrefUrlObj.protocol = 'https'
+              } else {
+                hrefUrlObj.protocol = 'http'
+              }
+            }
+
+            // if this rewrite rule requires the path to be transformed then do the transform
+            if (rewriteRule.pathTransform) {
+              hrefUrlObj.pathname = router.transformPath(
+                hrefUrlObj.pathname,
+                rewriteRule.pathTransform
+              )
+            }
+
+            // we only run the first matching rule found
             break
           }
         }
-      }
 
-      for (const rewriteRule of Array.from(rwConfig)) {
-        // if we find a matching rewrite rule
-        if ((rewriteRule.fromHost.toLowerCase() === hrefUrlObj.hostname) && ((rewriteRule.fromPort.toString() === hrefUrlObj.port) || ((rewriteRule.fromPort === 80) && (hrefUrlObj.port === null)))) {
-          hrefUrlObj.host = null // so that hostname and port are used separately
-          hrefUrlObj.hostname = rewriteRule.toHost
-          hrefUrlObj.port = rewriteRule.toPort
-
-          // rewrite protocol depending on the port the rewriteRule uses
-          if (hrefUrlObj.protocol) {
-            if (rewriteRule.toPort === routerConf.httpsPort) {
-              hrefUrlObj.protocol = 'https'
-            } else {
-              hrefUrlObj.protocol = 'http'
-            }
-          }
-
-          // if this rewrite rule requires the path to be transformed then do the transform
-          if (rewriteRule.pathTransform) {
-            hrefUrlObj.pathname = router.transformPath(hrefUrlObj.pathname, rewriteRule.pathTransform)
-          }
-
-          // we only run the first matching rule found
-          break
+        if (relativePath) {
+          // remove the host stuff before formating
+          hrefUrlObj.host = null
+          hrefUrlObj.hostname = null
+          hrefUrlObj.port = null
         }
-      }
 
-      if (relativePath) { // remove the host stuff before formating
-        hrefUrlObj.host = null
-        hrefUrlObj.hostname = null
-        hrefUrlObj.port = null
+        // replace the url in the match
+        const replacement = url.format(hrefUrlObj)
+        winston.debug(`Rewriting url ${hrefUrl} as ${replacement}`)
+        return match.replace(hrefUrl, replacement)
       }
-
-      // replace the url in the match
-      const replacement = url.format(hrefUrlObj)
-      winston.debug(`Rewriting url ${hrefUrl} as ${replacement}`)
-      return match.replace(hrefUrl, replacement)
-    })
+    )
 
     return callback(null, newBody)
   })
@@ -152,13 +164,19 @@ if (process.env.NODE_ENV === 'test') {
   exports.rewriteUrls = rewriteUrls
 }
 
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   // do nothing to the request
   await next()
   // on response rewrite urls
   if (ctx.authorisedChannel.rewriteUrls) {
     const rewrite = promisify(rewriteUrls)
-    ctx.response.body = await rewrite(ctx.response.body.toString(), ctx.authorisedChannel, ctx.authenticationType)
-    return winston.info(`Rewrote url in the response of transaction: ${ctx.transactionId}`)
+    ctx.response.body = await rewrite(
+      ctx.response.body.toString(),
+      ctx.authorisedChannel,
+      ctx.authenticationType
+    )
+    return winston.info(
+      `Rewrote url in the response of transaction: ${ctx.transactionId}`
+    )
   }
 }

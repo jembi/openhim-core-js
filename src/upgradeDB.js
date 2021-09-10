@@ -3,13 +3,13 @@
 import logger from 'winston'
 import pem from 'pem'
 
-import { ClientModel } from './model/clients'
-import { DbVersionModel } from './model/dbVersion'
-import { KeystoreModel } from './model/keystore'
-import { UserModel } from './model/users'
-import { VisualizerModel } from './model/visualizer'
+import {ClientModel} from './model/clients'
+import {DbVersionModel} from './model/dbVersion'
+import {KeystoreModel} from './model/keystore'
+import {UserModel} from './model/users'
+import {VisualizerModel} from './model/visualizer'
 
-function dedupName (name, names, num) {
+function dedupName(name, names, num) {
   let newName
   if (num) {
     newName = `${name} ${num}`
@@ -32,33 +32,45 @@ const upgradeFuncs = []
 
 upgradeFuncs.push({
   description: 'Ensure that all certs have a fingerprint property',
-  func () {
+  func() {
     return new Promise((resolve, reject) => {
       KeystoreModel.findOne((err, keystore) => {
-        if (err) { return reject(err) }
-        if (!keystore) { return resolve() }
+        if (err) {
+          return reject(err)
+        }
+        if (!keystore) {
+          return resolve()
+        }
 
         // convert server cert
         pem.getFingerprint(keystore.cert.data, (err, obj) => {
-          if (err) { return reject(err) }
+          if (err) {
+            return reject(err)
+          }
           keystore.cert.fingerprint = obj.fingerprint
 
-          const promises = keystore.ca.map((cert) => {
+          const promises = keystore.ca.map(cert => {
             return new Promise((resolve, reject) => {
               pem.getFingerprint(cert.data, (err, obj) => {
-                if (err) { return reject(err) }
+                if (err) {
+                  return reject(err)
+                }
                 cert.fingerprint = obj.fingerprint
                 return resolve()
               })
             })
           })
 
-          Promise.all(promises).then(() =>
-            keystore.save((err) => {
-              if (err != null) { logger.error(`Failed to save keystore: ${err}`) }
-              return resolve()
-            })
-          ).catch(reject)
+          Promise.all(promises)
+            .then(() =>
+              keystore.save(err => {
+                if (err != null) {
+                  logger.error(`Failed to save keystore: ${err}`)
+                }
+                return resolve()
+              })
+            )
+            .catch(reject)
         })
       })
     })
@@ -66,8 +78,9 @@ upgradeFuncs.push({
 })
 
 upgradeFuncs.push({
-  description: 'Convert clients link to certs via their domain to use the cert fingerprint instead',
-  func () {
+  description:
+    'Convert clients link to certs via their domain to use the cert fingerprint instead',
+  func() {
     return new Promise((resolve, reject) => {
       ClientModel.find((err, clients) => {
         if (err != null) {
@@ -83,10 +96,13 @@ upgradeFuncs.push({
 
           const promises = []
 
-          Array.from(clients).forEach((client) => {
+          Array.from(clients).forEach(client => {
             if (keystore != null && keystore.ca != null) {
               for (const cert of Array.from(keystore.ca)) {
-                if (client.clientDomain === cert.commonName && client.certFingerprint == null) {
+                if (
+                  client.clientDomain === cert.commonName &&
+                  client.certFingerprint == null
+                ) {
                   client.certFingerprint = cert.fingerprint
                   break
                 }
@@ -106,7 +122,7 @@ upgradeFuncs.push({
 //
 // We follow the same migration strategy as console:
 // https://github.com/jembi/openhim-console/blob/1047b49db2050bafa6b4797e3788fa716d1760b3/app/scripts/controllers/profile.js#L83-L109
-function adaptOldVisualizerStructure (visualizer) {
+function adaptOldVisualizerStructure(visualizer) {
   visualizer.channels = []
   visualizer.mediators = []
   visualizer.time.minDisplayPeriod = 100
@@ -144,8 +160,9 @@ function adaptOldVisualizerStructure (visualizer) {
 }
 
 upgradeFuncs.push({
-  description: 'Migrate visualizer setting from a user\'s profile to a shared collection',
-  func () {
+  description:
+    "Migrate visualizer setting from a user's profile to a shared collection",
+  func() {
     return new Promise((resolve, reject) => {
       UserModel.find((err, users) => {
         if (err) {
@@ -154,12 +171,22 @@ upgradeFuncs.push({
 
         const visNames = []
         const promises = []
-        users.forEach((user) => {
-          if ((user.settings != null ? user.settings.visualizer : undefined) != null) {
+        users.forEach(user => {
+          if (
+            (user.settings != null ? user.settings.visualizer : undefined) !=
+            null
+          ) {
             let vis = user.settings.visualizer
-            if (((vis.components != null ? vis.components.length : undefined) > 0) || ((vis.mediators != null ? vis.mediators.length : undefined) > 0) || ((vis.channels != null ? vis.channels.length : undefined) > 0) || ((vis.endpoints != null ? vis.endpoints.length : undefined) > 0)) {
+            if (
+              (vis.components != null ? vis.components.length : undefined) >
+                0 ||
+              (vis.mediators != null ? vis.mediators.length : undefined) > 0 ||
+              (vis.channels != null ? vis.channels.length : undefined) > 0 ||
+              (vis.endpoints != null ? vis.endpoints.length : undefined) > 0
+            ) {
               const promise = new Promise((resolve, reject) => {
-                if (vis.endpoints) { // old version
+                if (vis.endpoints) {
+                  // old version
                   adaptOldVisualizerStructure(vis)
                 }
 
@@ -169,17 +196,23 @@ upgradeFuncs.push({
                 visNames.push(name)
 
                 vis = new VisualizerModel(vis)
-                logger.debug(`Migrating visualizer from user profile ${user.email}, using visualizer name '${name}'`)
-                vis.save((err, vis) => {
+                logger.debug(
+                  `Migrating visualizer from user profile ${user.email}, using visualizer name '${name}'`
+                )
+                vis.save(err => {
                   if (err) {
-                    logger.error(`Error migrating visualizer from user profile ${user.email}: ${err.stack}`)
+                    logger.error(
+                      `Error migrating visualizer from user profile ${user.email}: ${err.stack}`
+                    )
                     return reject(err)
                   }
 
                   // delete the visualizer settings from this user profile
                   user.set('settings.visualizer', null)
-                  user.save((err, user) => {
-                    if (err) { return reject(err) }
+                  user.save(err => {
+                    if (err) {
+                      return reject(err)
+                    }
                     return resolve()
                   })
                 })
@@ -189,7 +222,9 @@ upgradeFuncs.push({
           }
         })
 
-        Promise.all(promises).then(() => resolve()).catch(err => reject(err))
+        Promise.all(promises)
+          .then(() => resolve())
+          .catch(err => reject(err))
       })
     })
   }
@@ -200,9 +235,11 @@ if (process.env.NODE_ENV === 'test') {
   exports.dedupName = dedupName
 }
 
-async function upgradeDbInternal () {
+async function upgradeDbInternal() {
   try {
-    const dbVer = (await DbVersionModel.findOne()) || new DbVersionModel({version: 0, lastUpdated: new Date()})
+    const dbVer =
+      (await DbVersionModel.findOne()) ||
+      new DbVersionModel({version: 0, lastUpdated: new Date()})
     const upgradeFuncsToRun = upgradeFuncs.slice(dbVer.version)
 
     for (const upgradeFunc of upgradeFuncsToRun) {
@@ -218,11 +255,13 @@ async function upgradeDbInternal () {
       logger.info('Completed database upgrade')
     }
   } catch (err) {
-    logger.error(`There was an error upgrading your database, you will need to fix this manually to continue. ${err.stack}`)
+    logger.error(
+      `There was an error upgrading your database, you will need to fix this manually to continue. ${err.stack}`
+    )
   }
 }
 
-export function upgradeDb (callback) {
+export function upgradeDb(callback) {
   return upgradeDbInternal()
     .then((...values) => {
       if (callback) {

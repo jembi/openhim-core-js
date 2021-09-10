@@ -2,7 +2,7 @@
 
 /* eslint-env mocha */
 
-import { _getEnabledAuthenticationTypesFromConfig } from '../../src/api/authentication'
+import {_getEnabledAuthenticationTypesFromConfig} from '../../src/api/authentication'
 
 describe('API authentication', () => {
   describe('getEnabledAuthenticationTypesFromConfig', () => {

@@ -1,22 +1,27 @@
 'use strict'
 
 import patchHistory from 'mongoose-patch-history'
-import { Schema } from 'mongoose'
-import { camelize, pascalize } from 'humps'
+import {Schema} from 'mongoose'
+import {camelize, pascalize} from 'humps'
 
-import { ContactUserDef } from './contactGroups'
-import { connectionAPI, connectionDefault } from '../config'
+import {ContactUserDef} from './contactGroups'
+import {connectionAPI, connectionDefault} from '../config'
 
 const RouteDef = {
   name: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   secured: Boolean,
   host: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   port: {
-    type: Number, required: true, min: 0, max: 65536
+    type: Number,
+    required: true,
+    min: 0,
+    max: 65536
   },
   path: String,
   pathTransform: String,
@@ -24,14 +29,19 @@ const RouteDef = {
   username: String,
   password: String,
   type: {
-    type: String, default: 'http', enum: ['http', 'tcp', 'mllp']
+    type: String,
+    default: 'http',
+    enum: ['http', 'tcp', 'mllp']
   },
   cert: Schema.Types.ObjectId,
   status: {
-    type: String, default: 'enabled', enum: ['enabled', 'disabled']
+    type: String,
+    default: 'enabled',
+    enum: ['enabled', 'disabled']
   },
   forwardAuthHeader: {
-    type: Boolean, default: false
+    type: Boolean,
+    default: false
   }
 }
 
@@ -43,7 +53,9 @@ const RouteDef = {
 //
 const AlertsDef = {
   condition: {
-    type: String, default: 'status', enum: ['status', 'auto-retry-max-attempted']
+    type: String,
+    default: 'status',
+    enum: ['status', 'auto-retry-max-attempted']
   },
   status: {
     type: String
@@ -55,16 +67,22 @@ const AlertsDef = {
 
 const RewriteRuleDef = {
   fromHost: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   toHost: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   fromPort: {
-    type: Number, required: true, default: 80
+    type: Number,
+    required: true,
+    default: 80
   },
   toPort: {
-    type: Number, required: true, default: 80
+    type: Number,
+    required: true,
+    default: 80
   },
   pathTransform: String
 }
@@ -80,41 +98,67 @@ const UpdatedByDef = {
 
 const ChannelDef = {
   name: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   description: String,
   urlPattern: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   maxBodyAgeDays: {
-    type: Number, min: 1, max: 36500
+    type: Number,
+    min: 1,
+    max: 36500
   },
   lastBodyCleared: {
     type: Date
   },
   timeout: {
-    type: Number, min: 1, max: 3600000
+    type: Number,
+    min: 1,
+    max: 3600000
   },
-  methods: [{
-    type: String, enum: ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
-  }],
+  methods: [
+    {
+      type: String,
+      enum: [
+        'GET',
+        'HEAD',
+        'POST',
+        'PUT',
+        'DELETE',
+        'CONNECT',
+        'OPTIONS',
+        'TRACE',
+        'PATCH'
+      ]
+    }
+  ],
   type: {
-    type: String, default: 'http', enum: ['http', 'tcp', 'tls', 'polling']
+    type: String,
+    default: 'http',
+    enum: ['http', 'tcp', 'tls', 'polling']
   },
   priority: {
-    type: Number, min: 1
+    type: Number,
+    min: 1
   },
   tcpPort: {
-    type: Number, min: 0, max: 65536
+    type: Number,
+    min: 0,
+    max: 65536
   },
   tcpHost: String,
   pollingSchedule: String,
   requestBody: Boolean,
   responseBody: Boolean,
-  allow: [{ type: String, required: true }],
+  allow: [{type: String, required: true}],
   whitelist: [String],
   authType: {
-    type: String, default: 'private', enum: ['private', 'public']
+    type: String,
+    default: 'private',
+    enum: ['private', 'public']
   },
   routes: [RouteDef],
   matchContentTypes: [String],
@@ -128,29 +172,37 @@ const ChannelDef = {
   txRerunAcl: [String],
   alerts: [AlertsDef],
   status: {
-    type: String, default: 'enabled', enum: ['enabled', 'disabled', 'deleted']
+    type: String,
+    default: 'enabled',
+    enum: ['enabled', 'disabled', 'deleted']
   },
   rewriteUrls: {
-    type: Boolean, default: false
+    type: Boolean,
+    default: false
   },
   addAutoRewriteRules: {
-    type: Boolean, default: true
+    type: Boolean,
+    default: true
   },
   rewriteUrlsConfig: [RewriteRuleDef],
   autoRetryEnabled: {
-    type: Boolean, default: false
+    type: Boolean,
+    default: false
   },
   autoRetryPeriodMinutes: {
-    type: Number, default: 60, min: 1
+    type: Number,
+    default: 60,
+    min: 1
   },
   autoRetryMaxAttempts: {
-    type: Number, min: 0
+    type: Number,
+    min: 0
   }, // 0 means unlimited
   updatedBy: UpdatedByDef
 }
 
 // Expose the route schema
-export { RouteDef }
+export {RouteDef}
 
 /*
  * The Channel object that describes a specific channel within the OpenHIM.
@@ -167,10 +219,7 @@ const ChannelSchema = new Schema(ChannelDef)
 ChannelSchema.plugin(patchHistory, {
   mongoose: connectionDefault,
   name: 'ChannelAudits',
-  transforms: [
-    pascalize,
-    camelize
-  ],
+  transforms: [pascalize, camelize],
   includes: {
     updatedBy: {
       type: {
@@ -183,12 +232,14 @@ ChannelSchema.plugin(patchHistory, {
 })
 
 // Create a unique index on the name field
-ChannelSchema.index('name', { unique: true })
+ChannelSchema.index('name', {unique: true})
 
 export const ChannelModelAPI = connectionAPI.model('Channel', ChannelSchema)
 export const ChannelModel = connectionDefault.model('Channel', ChannelSchema)
-export { ChannelDef }
+export {ChannelDef}
 
 // Is the channel enabled?
 // If there is no status field then the channel IS enabled
-export function isChannelEnabled (channel) { return !channel.status || (channel.status === 'enabled') }
+export function isChannelEnabled(channel) {
+  return !channel.status || channel.status === 'enabled'
+}

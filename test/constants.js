@@ -1,6 +1,6 @@
 'use strict'
 
-import { config } from '../src/config'
+import {config} from '../src/config'
 
 export const PORT_START = parseInt(process.env.TEST_PORT, 10) || 32000
 export const UDP_PORT = PORT_START + 1
@@ -27,7 +27,9 @@ export const SERVER_PORTS = Object.freeze({
   auditTcpPort: SERVER_PORT_START + 8
 })
 
-export const BASE_URL = `${config.get('api').protocol}://localhost:${SERVER_PORTS.apiPort}`
+export const BASE_URL = `${config.get('api').protocol}://localhost:${
+  SERVER_PORTS.apiPort
+}`
 export const HTTP_BASE_URL = `http://localhost:${SERVER_PORTS.httpPort}`
 
 export const UPD_SOCKET_TYPE = 'udp4'
@@ -35,8 +37,10 @@ export const DEFAULT_HTTP_RESP = 'Mock response body\n'
 export const DEFAULT_HTTPS_RESP = 'Secured Mock response body\n'
 export const DEFAULT_STATIC_PATH = 'test/resources'
 
-export const MEDIATOR_HEADERS = { 'Content-Type': 'application/json+openhim; charset=utf-8' }
-export const DEFAULT_HEADERS = { 'Content-Type': 'text/plain' }
+export const MEDIATOR_HEADERS = {
+  'Content-Type': 'application/json+openhim; charset=utf-8'
+}
+export const DEFAULT_HEADERS = {'Content-Type': 'text/plain'}
 export const MEDIATOR_REPONSE = Object.freeze({
   status: 'Successful',
   response: {
@@ -49,12 +53,12 @@ export const MEDIATOR_REPONSE = Object.freeze({
     request: {
       path: '/some/path',
       method: 'GET',
-      timestamp: (new Date()).toString()
+      timestamp: new Date().toString()
     },
     response: {
       status: 200,
       body: 'Orchestrated response',
-      timestamp: (new Date()).toString()
+      timestamp: new Date().toString()
     }
   },
   properties: {

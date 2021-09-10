@@ -29,10 +29,11 @@ describe('Upgrade DB Tests', () => {
   describe('.upgradeDB', () => {
     it('should run each upgrade function sequentially', async () => {
       const calls = []
-      upgradeDB.upgradeFuncs.push({
-        description: 'testFunc 1',
-        func: sinon.spy(() => calls.push(1))
-      },
+      upgradeDB.upgradeFuncs.push(
+        {
+          description: 'testFunc 1',
+          func: sinon.spy(() => calls.push(1))
+        },
         {
           description: 'testFunc 2',
           func: sinon.spy(() => calls.push(2))
@@ -82,10 +83,7 @@ describe('Upgrade DB Tests', () => {
       clientID: 'test',
       clientDomain: 'trust1.org', // in default test keystore
       name: 'Test client',
-      roles: [
-        'OpenMRS_PoC',
-        'PoC'
-      ]
+      roles: ['OpenMRS_PoC', 'PoC']
     }
 
     beforeEach(async () => {
@@ -95,8 +93,10 @@ describe('Upgrade DB Tests', () => {
 
     it(`should convert client.domain match to client.certFingerprint match`, async () => {
       await upgradeFunc()
-      const client = await ClientModel.findOne({ clientID: 'test' })
-      client.certFingerprint.should.be.exactly('23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54')
+      const client = await ClientModel.findOne({clientID: 'test'})
+      client.certFingerprint.should.be.exactly(
+        '23:1D:0B:AA:70:06:A5:D4:DC:E9:B9:C3:BD:2C:56:7F:29:D2:3E:54'
+      )
     })
   })
 
@@ -109,16 +109,17 @@ describe('Upgrade DB Tests', () => {
       email: 'test1@user.org',
       settings: {
         visualizer: {
-          components: [{
-            eventType: 'primary',
-            eventName: 'OpenHIM Mediator FHIR Proxy Route',
-            display: 'FHIR Server'
-          },
-          {
-            eventType: 'primary',
-            eventName: 'echo',
-            display: 'Echo'
-          }
+          components: [
+            {
+              eventType: 'primary',
+              eventName: 'OpenHIM Mediator FHIR Proxy Route',
+              display: 'FHIR Server'
+            },
+            {
+              eventType: 'primary',
+              eventName: 'echo',
+              display: 'Echo'
+            }
           ],
           color: {
             inactive: '#c8cacf',
@@ -138,27 +139,29 @@ describe('Upgrade DB Tests', () => {
             maxTimeout: 5000,
             minDisplayPeriod: 500
           },
-          channels: [{
-            eventType: 'channel',
-            eventName: 'FHIR Proxy',
-            display: 'FHIR Proxy'
-          },
-          {
-            eventType: 'channel',
-            eventName: 'Echo',
-            display: 'Echo'
-          }
+          channels: [
+            {
+              eventType: 'channel',
+              eventName: 'FHIR Proxy',
+              display: 'FHIR Proxy'
+            },
+            {
+              eventType: 'channel',
+              eventName: 'Echo',
+              display: 'Echo'
+            }
           ],
-          mediators: [{
-            mediator: 'urn:mediator:fhir-proxy',
-            name: 'OpenHIM Mediator FHIR Proxy',
-            display: 'OpenHIM Mediator FHIR Proxy'
-          },
-          {
-            mediator: 'urn:mediator:shell-script',
-            name: 'OpenHIM Shell Script Mediator',
-            display: 'OpenHIM Shell Script Mediator'
-          }
+          mediators: [
+            {
+              mediator: 'urn:mediator:fhir-proxy',
+              name: 'OpenHIM Mediator FHIR Proxy',
+              display: 'OpenHIM Mediator FHIR Proxy'
+            },
+            {
+              mediator: 'urn:mediator:shell-script',
+              name: 'OpenHIM Shell Script Mediator',
+              display: 'OpenHIM Shell Script Mediator'
+            }
           ]
         }
       }
@@ -169,11 +172,12 @@ describe('Upgrade DB Tests', () => {
       email: 'test2@user.org',
       settings: {
         visualizer: {
-          components: [{
-            eventType: 'primary',
-            eventName: 'OpenHIM Mediator FHIR Proxy Route',
-            display: 'FHIR Server'
-          }
+          components: [
+            {
+              eventType: 'primary',
+              eventName: 'OpenHIM Mediator FHIR Proxy Route',
+              display: 'FHIR Server'
+            }
           ],
           color: {
             inactive: '#c8cacf',
@@ -193,17 +197,19 @@ describe('Upgrade DB Tests', () => {
             maxTimeout: 5000,
             minDisplayPeriod: 500
           },
-          channels: [{
-            eventType: 'channel',
-            eventName: 'FHIR Proxy',
-            display: 'FHIR Proxy'
-          }
+          channels: [
+            {
+              eventType: 'channel',
+              eventName: 'FHIR Proxy',
+              display: 'FHIR Proxy'
+            }
           ],
-          mediators: [{
-            mediator: 'urn:mediator:fhir-proxy',
-            name: 'OpenHIM Mediator FHIR Proxy',
-            display: 'OpenHIM Mediator FHIR Proxy'
-          }
+          mediators: [
+            {
+              mediator: 'urn:mediator:fhir-proxy',
+              name: 'OpenHIM Mediator FHIR Proxy',
+              display: 'OpenHIM Mediator FHIR Proxy'
+            }
           ]
         }
       }
@@ -260,19 +266,21 @@ describe('Upgrade DB Tests', () => {
             active: '4cae4c',
             inactive: 'CCCCCC'
           },
-          endpoints: [{
-            desc: 'Test Channel',
-            event: 'channel-test'
-          }
+          endpoints: [
+            {
+              desc: 'Test Channel',
+              event: 'channel-test'
+            }
           ],
-          components: [{
-            desc: 'Test',
-            event: 'test'
-          },
-          {
-            desc: 'Test Route',
-            event: 'route-testroute'
-          }
+          components: [
+            {
+              desc: 'Test',
+              event: 'test'
+            },
+            {
+              desc: 'Test Route',
+              event: 'route-testroute'
+            }
           ]
         },
         filter: {
@@ -282,9 +290,7 @@ describe('Upgrade DB Tests', () => {
       email: 'test4@user.org',
       firstname: 'Test',
       surname: 'User4',
-      groups: [
-        'admin'
-      ]
+      groups: ['admin']
     }
     // from structure for Console v1.6.0
     const userObj5 = {
@@ -318,16 +324,11 @@ describe('Upgrade DB Tests', () => {
       email: 'test5@user.org',
       firstname: 'Test',
       surname: 'User5',
-      groups: [
-        'admin'
-      ]
+      groups: ['admin']
     }
 
     afterEach(async () => {
-      await Promise.all([
-        UserModel.deleteMany(),
-        VisualizerModel.deleteMany()
-      ])
+      await Promise.all([UserModel.deleteMany(), VisualizerModel.deleteMany()])
       await testUtils.setImmediatePromise()
     })
 
@@ -341,13 +342,15 @@ describe('Upgrade DB Tests', () => {
     it('should migrate visualizer settings from user setting to shared collection', async () => {
       await upgradeFunc()
 
-      await testUtils.pollCondition(() => VisualizerModel.countDocuments().then(c => c === 2))
+      await testUtils.pollCondition(() =>
+        VisualizerModel.countDocuments().then(c => c === 2)
+      )
       const visualizers = await VisualizerModel.find()
 
       visualizers.length.should.be.exactly(2)
       const names = visualizers.map(v => v.name)
-      const idx1 = names.indexOf('Test User1\'s visualizer')
-      const idx2 = names.indexOf('Test User2\'s visualizer')
+      const idx1 = names.indexOf("Test User1's visualizer")
+      const idx2 = names.indexOf("Test User2's visualizer")
 
       idx1.should.be.above(-1)
       visualizers[idx1].components.length.should.be.exactly(2)
@@ -357,11 +360,11 @@ describe('Upgrade DB Tests', () => {
 
     it('should remove the users visualizer setting from their profile', async () => {
       await upgradeFunc()
-      const user = await UserModel.findOne({ email: 'test1@user.org' })
+      const user = await UserModel.findOne({email: 'test1@user.org'})
       should.not.exist(user.settings.visualizer)
     })
 
-    it('should ignore users that don\'t have a settings.visualizer or settings set', async () => {
+    it("should ignore users that don't have a settings.visualizer or settings set", async () => {
       const users = await UserModel.find()
 
       users[0].set('settings.visualizer', null)
@@ -390,7 +393,7 @@ describe('Upgrade DB Tests', () => {
       visualizers.length.should.be.exactly(3)
 
       const names = visualizers.map(v => v.name)
-      const idx = names.indexOf('Test User4\'s visualizer')
+      const idx = names.indexOf("Test User4's visualizer")
 
       visualizers[idx].time.minDisplayPeriod.should.be.exactly(100)
       visualizers[idx].mediators.length.should.be.exactly(0)
