@@ -68,6 +68,10 @@ export async function addAudit (ctx) {
   }
 }
 
+function checkPatientID (patientID) {
+  return new RegExp('^[\\d\\w\\-]*$').test(patientID) //PatientID should only be alpha numerical and may contain hyphens
+}
+
 /*
  * Retrieves the list of Audits
  */
@@ -112,14 +116,29 @@ export async function getAudits (ctx) {
     if (filters['participantObjectIdentification.participantObjectID']) {
       // filter by AND on same property for patientID and objectID
       if (filters['participantObjectIdentification.participantObjectID'].type) {
-        const patientID = new RegExp(filters['participantObjectIdentification.participantObjectID'].patientID)
-        const objectID = new RegExp(filters['participantObjectIdentification.participantObjectID'].objectID)
-        filters.$and = [{'participantObjectIdentification.participantObjectID': patientID}, {'participantObjectIdentification.participantObjectID': objectID}]
-        // remove participantObjectIdentification.participantObjectID property as we create a new '$and' operator
-        delete filters['participantObjectIdentification.participantObjectID']
+        const patientID = JSON.parse(filters['participantObjectIdentification.participantObjectID'].patientID)
+        if(checkPatientID(patientID.substring(0, patientID.indexOf('\\^'))))
+        {
+          const patientIDRegEx = new RegExp(patientID)
+          const objectIDRegEx = new RegExp(filters['participantObjectIdentification.participantObjectID'].objectID)
+          filters.$and = [{'participantObjectIdentification.participantObjectID': patientIDRegEx}, {'participantObjectIdentification.participantObjectID': objectIDRegEx}]
+          // remove participantObjectIdentification.participantObjectID property as we create a new '$and' operator
+          delete filters['participantObjectIdentification.participantObjectID']
+        }
+        else {
+          utils.logAndSetResponse(ctx, 400, `Special characters (except for hyphens(-)) not allowed in PatientID filter field`, 'error')
+          return
+        }
       } else {
         const participantObjectID = JSON.parse(filters['participantObjectIdentification.participantObjectID'])
-        filters['participantObjectIdentification.participantObjectID'] = new RegExp(`${participantObjectID}`)
+        if(checkPatientID(participantObjectID.substring(0, participantObjectID.indexOf('\\^'))))
+        {
+          filters['participantObjectIdentification.participantObjectID'] = new RegExp(`${participantObjectID}`)
+        }
+        else {
+          utils.logAndSetResponse(ctx, 400, `Special characters (except for hyphens(-)) not allowed in PatientID filter field`, 'error')
+          return
+        }
       }
     }
 
