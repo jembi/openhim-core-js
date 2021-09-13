@@ -475,6 +475,7 @@ export async function getTransactionBodyById (ctx, transactionId, bodyId) {
 
   // parse range header
   const rangeHeader = ctx.request.header.range || ''
+  // eslint-disable-next-line
   const match = rangeHeader.match(/bytes=(?<start>\d+)-(?<end>\d*)/)
   const range = match ? match.groups : {}
 

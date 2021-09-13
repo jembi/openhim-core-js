@@ -3,13 +3,13 @@
 import logger from 'winston'
 import moment from 'moment'
 
-import { ChannelModel, TransactionModel } from './model'
-import { promisesToRemoveAllTransactionBodies } from './contentChunk'
-import { config } from './config'
+import {ChannelModel, TransactionModel} from './model'
+import {promisesToRemoveAllTransactionBodies} from './contentChunk'
+import {config} from './config'
 
 config.bodyCull = config.get('bodyCull')
 
-export function setupAgenda (agenda) {
+export function setupAgenda(agenda) {
   if (config.bodyCull == null) {
     return
   }
@@ -21,16 +21,19 @@ export function setupAgenda (agenda) {
       done(err)
     }
   })
-  agenda.every(`${config.bodyCull.pollPeriodMins} minutes`, 'transaction body culling')
+  agenda.every(
+    `${config.bodyCull.pollPeriodMins} minutes`,
+    'transaction body culling'
+  )
 }
 
-export async function cullBodies () {
-  const channels = await ChannelModel.find({ maxBodyAgeDays: { $exists: true } })
+export async function cullBodies() {
+  const channels = await ChannelModel.find({maxBodyAgeDays: {$exists: true}})
   await Promise.all(channels.map(channel => clearTransactions(channel)))
 }
 
-async function clearTransactions (channel) {
-  const { maxBodyAgeDays, lastBodyCleared } = channel
+async function clearTransactions(channel) {
+  const {maxBodyAgeDays, lastBodyCleared} = channel
   const maxAge = moment().subtract(maxBodyAgeDays, 'd').toDate()
   const query = {
     channelID: channel._id,
@@ -56,11 +59,13 @@ async function clearTransactions (channel) {
   })
   let removeBodyPromises = []
   for (const tx of transactionsToCullBody) {
-    removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(tx))
+    removeBodyPromises = removeBodyPromises.concat(
+      await promisesToRemoveAllTransactionBodies(tx)
+    )
   }
 
   channel.lastBodyCleared = Date.now()
-  channel.updatedBy = { name: 'Cron' }
+  channel.updatedBy = {name: 'Cron'}
   await channel.save()
   const updateResp = await TransactionModel.updateMany(query, {
     $unset: {
@@ -75,9 +80,11 @@ async function clearTransactions (channel) {
     }
   })
   if (updateResp.nModified > 0) {
-    logger.info(`Culled ${updateResp.nModified} transaction bodies for channel ${channel.name}`)
+    logger.info(
+      `Culled ${updateResp.nModified} transaction bodies for channel ${channel.name}`
+    )
   }
 
   // execute the promises to remove all relevant bodies
-  await Promise.all(removeBodyPromises.map((promiseFn) => promiseFn()))
+  await Promise.all(removeBodyPromises.map(promiseFn => promiseFn()))
 }

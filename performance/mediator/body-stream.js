@@ -1,17 +1,17 @@
 'use strict'
 
-const { Readable } = require('stream')
+const {Readable} = require('stream')
 const crypto = require('crypto')
 
 const RANDOM_BUFFER = crypto.randomBytes(2 * 1024 * 1024)
 
 class BodyStream extends Readable {
-  constructor (length) {
-    super({ encoding: 'hex' })
+  constructor(length) {
+    super({encoding: 'hex'})
     this.remainingLength = length / 2
   }
 
-  _read (size) {
+  _read(size) {
     const length = Math.min(size, this.remainingLength)
     const lastChunk = length === this.remainingLength
     this.remainingLength -= length

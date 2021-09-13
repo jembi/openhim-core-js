@@ -3,14 +3,14 @@
 /* eslint-env mocha */
 
 import sinon from 'sinon'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as tasks from '../../src/tasks'
 import * as testUtils from '../utils'
-import { ChannelModel, TaskModel, TransactionModel } from '../../src/model'
-import { config } from '../../src/config'
+import {ChannelModel, TaskModel, TransactionModel} from '../../src/model'
+import {config} from '../../src/config'
 
 if (config.rerun == null) {
   config.rerun = config.get('rerun')
@@ -53,25 +53,37 @@ describe('Rerun Task Tests', () => {
       await TransactionModel.deleteMany({})
     })
 
-    it('will fail if the transaction can\'t be found', async () => {
+    it("will fail if the transaction can't be found", async () => {
       const transactionID = 'transactioniddoesntexist'
-      await promisify(tasks.rerunGetTransaction)(transactionID).should.rejectedWith(`Transaction ${transactionID} could not be found`)
+      await promisify(tasks.rerunGetTransaction)(
+        transactionID
+      ).should.rejectedWith(`Transaction ${transactionID} could not be found`)
     })
 
-    it('will fail if the transaction can\'t be rerun', async () => {
-      const transaction = new TransactionModel(Object.assign({}, DEFAULT_TRANSACTION, { canRerun: false }))
+    it("will fail if the transaction can't be rerun", async () => {
+      const transaction = new TransactionModel(
+        Object.assign({}, DEFAULT_TRANSACTION, {canRerun: false})
+      )
       await transaction.save()
 
       const transactionID = transaction._id
-      await promisify(tasks.rerunGetTransaction)(transactionID).should.rejectedWith(`Transaction ${transactionID} cannot be rerun as there isn't enough information about the request`)
+      await promisify(tasks.rerunGetTransaction)(
+        transactionID
+      ).should.rejectedWith(
+        `Transaction ${transactionID} cannot be rerun as there isn't enough information about the request`
+      )
     })
 
     it('will find a transaction', async () => {
-      const transaction = new TransactionModel(Object.assign({}, DEFAULT_TRANSACTION, { canRerun: true }))
+      const transaction = new TransactionModel(
+        Object.assign({}, DEFAULT_TRANSACTION, {canRerun: true})
+      )
       await transaction.save()
 
       const transactionID = transaction._id
-      const foundTransaction = await promisify(tasks.rerunGetTransaction)(transactionID)
+      const foundTransaction = await promisify(tasks.rerunGetTransaction)(
+        transactionID
+      )
       foundTransaction._id.toString().should.equal(transaction._id.toString())
     })
   })
@@ -89,15 +101,25 @@ describe('Rerun Task Tests', () => {
     })
 
     it('will throw if the transaction is not set', async () => {
-      const rejectedMessage = 'An empty Transaction object was supplied. Aborting HTTP options configuration'
-      await promisify(tasks.rerunSetHTTPRequestOptions)(null, null).should.rejectedWith(rejectedMessage)
-      await promisify(tasks.rerunSetHTTPRequestOptions)(undefined, undefined).should.rejectedWith(rejectedMessage)
+      const rejectedMessage =
+        'An empty Transaction object was supplied. Aborting HTTP options configuration'
+      await promisify(tasks.rerunSetHTTPRequestOptions)(
+        null,
+        null
+      ).should.rejectedWith(rejectedMessage)
+      await promisify(tasks.rerunSetHTTPRequestOptions)(
+        undefined,
+        undefined
+      ).should.rejectedWith(rejectedMessage)
     })
 
     it('will set the options', async () => {
       const transaction = testUtils.clone(DEFAULT_TRANSACTION)
       const taskId = 'testTaskId'
-      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(transaction, taskId)
+      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(
+        transaction,
+        taskId
+      )
 
       options.hostname.should.equal(config.rerun.host)
       options.port.should.equal(config.rerun.httpPort)
@@ -112,17 +134,26 @@ describe('Rerun Task Tests', () => {
     it('will set client id in the header if defined', async () => {
       const transaction = testUtils.clone(DEFAULT_TRANSACTION)
       transaction.clientID = 'testClientID'
-      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(transaction, null)
+      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(
+        transaction,
+        null
+      )
 
       options.headers.clientID.should.equal(transaction.clientID)
     })
 
     it('will add the request.querystring to the path if defined', async () => {
       const transaction = testUtils.clone(DEFAULT_TRANSACTION)
-      const testQueryString = transaction.request.querystring = 'testQueryStringValue'
-      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(transaction, null)
+      const testQueryString = (transaction.request.querystring =
+        'testQueryStringValue')
+      const options = await promisify(tasks.rerunSetHTTPRequestOptions)(
+        transaction,
+        null
+      )
 
-      options.path.should.equal(`${transaction.request.path}?${testQueryString}`)
+      options.path.should.equal(
+        `${transaction.request.path}?${testQueryString}`
+      )
     })
   })
 
@@ -137,30 +168,44 @@ describe('Rerun Task Tests', () => {
     })
 
     it('will throw an error if no options are sent in', async () => {
-      const expectedError = 'An empty \'Options\' object was supplied. Aborting HTTP Send Request'
-      await promisify(tasks.rerunHttpRequestSend)(null, null).should.rejectedWith(expectedError)
+      const expectedError =
+        "An empty 'Options' object was supplied. Aborting HTTP Send Request"
+      await promisify(tasks.rerunHttpRequestSend)(
+        null,
+        null
+      ).should.rejectedWith(expectedError)
     })
 
     it('will throw an error if no transaction is sent in', async () => {
-      const expectedError = 'An empty \'Transaction\' object was supplied. Aborting HTTP Send Request'
-      await promisify(tasks.rerunHttpRequestSend)({}, null).should.rejectedWith(expectedError)
+      const expectedError =
+        "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
+      await promisify(tasks.rerunHttpRequestSend)({}, null).should.rejectedWith(
+        expectedError
+      )
     })
 
     it('will rerun a transaction', async () => {
       const options = Object.assign({}, DEFAULT_HTTP_OPTIONS)
       const responsestr = 'Response string'
       const spy = sinon.spy(() => responsestr)
-      const transaction = { request: {} }
+      const transaction = {request: {}}
       server = await testUtils.createMockHttpServer(spy, undefined, 200)
 
-      const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
+      const response = await promisify(tasks.rerunHttpRequestSend)(
+        options,
+        transaction
+      )
 
-      const body = await testUtils.getResponseBodyFromStream({ response: response })
+      const body = await testUtils.getResponseBodyFromStream({
+        response: response
+      })
 
       body.should.equal(responsestr)
       response.transaction.status.should.eql('Completed')
       response.timestamp.should.Date()
-      response.headers.should.properties(testUtils.lowerCaseMembers(constants.DEFAULT_HEADERS))
+      response.headers.should.properties(
+        testUtils.lowerCaseMembers(constants.DEFAULT_HEADERS)
+      )
       response.status.should.eql(200)
       response.message.should.eql('OK')
 
@@ -170,9 +215,14 @@ describe('Rerun Task Tests', () => {
     })
 
     it('will report if it failed', async () => {
-      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { port: constants.PORT_START - 1 })
-      const transaction = { request: {} }
-      const response = await promisify(tasks.rerunHttpRequestSend)(options, transaction)
+      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, {
+        port: constants.PORT_START - 1
+      })
+      const transaction = {request: {}}
+      const response = await promisify(tasks.rerunHttpRequestSend)(
+        options,
+        transaction
+      )
 
       response.transaction.status.should.eql('Failed')
       response.status.should.eql(500)
@@ -184,8 +234,8 @@ describe('Rerun Task Tests', () => {
       const spy = sinon.spy(req => testUtils.readBody(req))
       server = await testUtils.createMockHttpServer(spy)
 
-      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, { method: 'POST' })
-      const transaction = { request: { method: 'POST', body: null } }
+      const options = Object.assign({}, DEFAULT_HTTP_OPTIONS, {method: 'POST'})
+      const transaction = {request: {method: 'POST', body: null}}
       await promisify(tasks.rerunHttpRequestSend)(options, transaction)
 
       spy.callCount.should.eql(1)
@@ -207,12 +257,15 @@ describe('Rerun Task Tests', () => {
     })
 
     it('will do a tcp request', async () => {
-      const spy = sinon.spy((data) => data.toString().toLowerCase())
+      const spy = sinon.spy(data => data.toString().toLowerCase())
       server = await testUtils.createMockTCPServer(spy)
 
       const channel = Object.assign({}, DEFAULT_CHANNEL)
       const transaction = Object.assign({}, DEFAULT_TRANSACTION)
-      const response = await promisify(tasks.rerunTcpRequestSend)(channel, transaction)
+      const response = await promisify(tasks.rerunTcpRequestSend)(
+        channel,
+        transaction
+      )
 
       spy.callCount.should.eql(1)
       response.status.should.eql(200)
@@ -224,9 +277,14 @@ describe('Rerun Task Tests', () => {
     })
 
     it('will correctly record an error', async () => {
-      const channel = Object.assign({}, DEFAULT_CHANNEL, { tcpPort: constants.PORT_START - 1 })
+      const channel = Object.assign({}, DEFAULT_CHANNEL, {
+        tcpPort: constants.PORT_START - 1
+      })
       const transaction = Object.assign({}, DEFAULT_TRANSACTION)
-      const response = await promisify(tasks.rerunTcpRequestSend)(channel, transaction)
+      const response = await promisify(tasks.rerunTcpRequestSend)(
+        channel,
+        transaction
+      )
 
       response.transaction.status.should.eql('Failed')
       response.status.should.eql(500)
@@ -242,12 +300,14 @@ describe('Rerun Task Tests', () => {
       type: 'http',
       responseBody: true,
       requestBody: true,
-      routes: [{
-        name: 'asdf',
-        host: 'localhost',
-        path: '/test1',
-        port: '12345'
-      }],
+      routes: [
+        {
+          name: 'asdf',
+          host: 'localhost',
+          path: '/test1',
+          port: '12345'
+        }
+      ],
       updatedBy: {
         id: new ObjectId(),
         name: 'Test'
@@ -266,24 +326,30 @@ describe('Rerun Task Tests', () => {
       }
     })
 
-    function createTask (transactions = [], taskOverrides = {}) {
-      const taskDoc = Object.assign({}, DEFAULT_TASK, {
-        remainingTransactions: transactions.length,
-        totalTransactions: transactions.length,
-        transactions: transactions.map(t => ({
-          tid: t._id,
-          tstatus: 'Queued'
-        }))
-      }, taskOverrides)
+    function createTask(transactions = [], taskOverrides = {}) {
+      const taskDoc = Object.assign(
+        {},
+        DEFAULT_TASK,
+        {
+          remainingTransactions: transactions.length,
+          totalTransactions: transactions.length,
+          transactions: transactions.map(t => ({
+            tid: t._id,
+            tstatus: 'Queued'
+          }))
+        },
+        taskOverrides
+      )
 
       return new TaskModel(taskDoc).save()
     }
 
-    const clearTasksFn = () => Promise.all([
-      TaskModel.deleteMany({}),
-      TransactionModel.deleteMany({}),
-      ChannelModel.deleteMany({})
-    ])
+    const clearTasksFn = () =>
+      Promise.all([
+        TaskModel.deleteMany({}),
+        TransactionModel.deleteMany({}),
+        ChannelModel.deleteMany({})
+      ])
 
     before(async () => {
       await clearTasksFn()
@@ -293,7 +359,7 @@ describe('Rerun Task Tests', () => {
       await clearTasksFn()
     })
 
-    it('will not throw if it doesn\'t find any tasks', async () => {
+    it("will not throw if it doesn't find any tasks", async () => {
       await tasks.findAndProcessAQueuedTask().should.not.rejected()
     })
 
@@ -306,11 +372,16 @@ describe('Rerun Task Tests', () => {
 
     it('will process a single transaction', async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
-      const originalTrans = await new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save()
+      const originalTrans = await new TransactionModel(
+        Object.assign({channelID: channel._id}, DEFAULT_TRANSACTION)
+      ).save()
       const originalTask = await createTask([originalTrans])
 
       const spy = sinon.spy()
-      server = await testUtils.createMockHttpServer(spy, constants.SERVER_PORTS.rerunPort)
+      server = await testUtils.createMockHttpServer(
+        spy,
+        constants.SERVER_PORTS.rerunPort
+      )
       await tasks.findAndProcessAQueuedTask()
 
       spy.callCount.should.eql(1)
@@ -329,12 +400,19 @@ describe('Rerun Task Tests', () => {
     it('will process the batch size', async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const transactions = await Promise.all(
-        Array(3).fill(new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save())
+        Array(3).fill(
+          new TransactionModel(
+            Object.assign({channelID: channel._id}, DEFAULT_TRANSACTION)
+          ).save()
+        )
       )
-      const originalTask = await createTask(transactions, { batchSize: 2 })
+      const originalTask = await createTask(transactions, {batchSize: 2})
 
       const spy = sinon.spy()
-      server = await testUtils.createMockHttpServer(spy, constants.SERVER_PORTS.rerunPort)
+      server = await testUtils.createMockHttpServer(
+        spy,
+        constants.SERVER_PORTS.rerunPort
+      )
       await tasks.findAndProcessAQueuedTask()
 
       spy.callCount.should.eql(2)
@@ -350,12 +428,19 @@ describe('Rerun Task Tests', () => {
     it('will process the transactions till they are completed', async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
       const transactions = await Promise.all(
-        Array(3).fill(new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save())
+        Array(3).fill(
+          new TransactionModel(
+            Object.assign({channelID: channel._id}, DEFAULT_TRANSACTION)
+          ).save()
+        )
       )
-      const originalTask = await createTask(transactions, { batchSize: 2 })
+      const originalTask = await createTask(transactions, {batchSize: 2})
 
       const spy = sinon.spy()
-      server = await testUtils.createMockHttpServer(spy, constants.SERVER_PORTS.rerunPort)
+      server = await testUtils.createMockHttpServer(
+        spy,
+        constants.SERVER_PORTS.rerunPort
+      )
 
       await tasks.findAndProcessAQueuedTask()
       spy.callCount.should.eql(2)
@@ -378,11 +463,16 @@ describe('Rerun Task Tests', () => {
 
     it('not process a paused transaction', async () => {
       const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
-      const originalTrans = await new TransactionModel(Object.assign({ channelID: channel._id }, DEFAULT_TRANSACTION)).save()
-      const originalTask = await createTask([originalTrans], { status: 'Paused' })
+      const originalTrans = await new TransactionModel(
+        Object.assign({channelID: channel._id}, DEFAULT_TRANSACTION)
+      ).save()
+      const originalTask = await createTask([originalTrans], {status: 'Paused'})
 
       const spy = sinon.spy()
-      server = await testUtils.createMockHttpServer(spy, constants.SERVER_PORTS.rerunPort)
+      server = await testUtils.createMockHttpServer(
+        spy,
+        constants.SERVER_PORTS.rerunPort
+      )
       await tasks.findAndProcessAQueuedTask()
 
       spy.callCount.should.eql(0)

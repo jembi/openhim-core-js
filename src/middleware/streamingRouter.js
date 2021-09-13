@@ -1,11 +1,11 @@
 import http from 'http'
 import https from 'https'
 import logger from 'winston'
-import { config } from '../config'
-import { getGridFSBucket } from '../contentChunk'
-import { Readable } from 'stream'
+import {config} from '../config'
+import {getGridFSBucket} from '../contentChunk'
+import {Readable} from 'stream'
 import zlib from 'zlib'
-import { obtainCharset } from '../utils'
+import {obtainCharset} from '../utils'
 
 config.router = config.get('router')
 
@@ -19,7 +19,7 @@ let bucket
  *    timeout: number - Timeout ms to apply to connection
  *    secured: false - http(false) or https(true)
  */
-export function makeStreamingRequest (requestBodyStream, options, statusEvents) {
+export function makeStreamingRequest(requestBodyStream, options, statusEvents) {
   return new Promise((resolve, reject) => {
     const response = {}
     let startedRequest = false
@@ -44,25 +44,28 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
     const gunzip = zlib.createGunzip()
     const inflate = zlib.createInflate()
 
-    const routeReq = method.request(options)
-      .on('response', (routeRes) => {
+    const routeReq = method
+      .request(options)
+      .on('response', routeRes => {
         response.status = routeRes.statusCode
         response.headers = routeRes.headers
         response.statusMessage = routeRes.statusMessage
 
         const uncompressedBodyBufs = []
-        if (routeRes.headers['content-encoding'] === 'gzip') { // attempt to gunzip
+        if (routeRes.headers['content-encoding'] === 'gzip') {
+          // attempt to gunzip
           routeRes.pipe(gunzip)
 
-          gunzip.on('data', (data) => {
+          gunzip.on('data', data => {
             uncompressedBodyBufs.push(data)
           })
         }
 
-        if (routeRes.headers['content-encoding'] === 'deflate') { // attempt to inflate
+        if (routeRes.headers['content-encoding'] === 'deflate') {
+          // attempt to inflate
           routeRes.pipe(inflate)
 
-          inflate.on('data', (data) => {
+          inflate.on('data', data => {
             uncompressedBodyBufs.push(data)
           })
         }
@@ -96,14 +99,14 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
             }
 
             uploadStream
-              .on('error', (err) => {
+              .on('error', err => {
                 if (statusEvents.gridFsError) {
                   statusEvents.gridFsError(err)
                 }
                 logger.error(`Error streaming response to GridFS: ${err}`)
                 reject(err)
               })
-              .on('finish', (fileId) => {
+              .on('finish', fileId => {
                 if (statusEvents.finishGridFs) {
                   statusEvents.finishGridFs(fileId)
                 }
@@ -113,7 +116,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
 
         // See https://www.exratione.com/2014/07/nodejs-handling-uncertain-http-response-compression/
         routeRes
-          .on('data', (chunk) => {
+          .on('data', chunk => {
             // Special handling on the first chunk of data
             if (!response.timestamp) {
               response.timestamp = new Date()
@@ -156,7 +159,8 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
 
               // This event is fired once the response is fully-received and ready for URL rewriting
               if (statusEvents.finishResponseAsString) {
-                const returnedResponse = statusEvents.finishResponseAsString(responseBodyAsString)
+                const returnedResponse =
+                  statusEvents.finishResponseAsString(responseBodyAsString)
                 if (returnedResponse !== undefined && returnedResponse) {
                   responseBodyAsString = returnedResponse
                 }
@@ -191,23 +195,22 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
           })
 
         // If request socket closes the connection abnormally
-        routeRes.connection
-          .on('error', (err) => {
-            if (statusEvents.responseError) {
-              statusEvents.responseError(err)
-            }
-            logger.error(`Connection Error on socket: ${err}`)
-            reject(err)
-          })
+        routeRes.connection.on('error', err => {
+          if (statusEvents.responseError) {
+            statusEvents.responseError(err)
+          }
+          logger.error(`Connection Error on socket: ${err}`)
+          reject(err)
+        })
       })
-      .on('error', (err) => {
+      .on('error', err => {
         if (statusEvents.responseError) {
           statusEvents.responseError(err)
         }
         logger.error(`Error streaming response upstream: ${err}`)
         reject(err)
       })
-      .on('clientError', (err) => {
+      .on('clientError', err => {
         if (statusEvents.clientError) {
           statusEvents.clientError(err)
         }
@@ -226,7 +229,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
     })
 
     downstream
-      .on('data', (chunk) => {
+      .on('data', chunk => {
         if (options.requestBodyRequired) {
           routeReq.write(chunk)
         }
@@ -241,7 +244,7 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
           statusEvents.finishRequest()
         }
       })
-      .on('error', (err) => {
+      .on('error', err => {
         if (statusEvents.requestError) {
           statusEvents.requestError(err)
         }
@@ -251,18 +254,18 @@ export function makeStreamingRequest (requestBodyStream, options, statusEvents) 
   })
 }
 
-export function collectStream (readableStream) {
+export function collectStream(readableStream) {
   const data = []
 
   return new Promise((resolve, reject) => {
     readableStream
-      .on('data', (chunk) => {
+      .on('data', chunk => {
         data.push(chunk)
       })
       .on('end', () => {
         resolve(Buffer.concat(data).toString())
       })
-      .on('error', (error) => {
+      .on('error', error => {
         reject(error)
       })
   })

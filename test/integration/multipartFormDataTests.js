@@ -4,16 +4,16 @@
 
 import FormData from 'form-data'
 import fs from 'fs'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { ChannelModel, ClientModel } from '../../src/model'
-import { config } from '../../src/config'
+import {ChannelModel, ClientModel} from '../../src/model'
+import {config} from '../../src/config'
 
-const { SERVER_PORTS } = constants
+const {SERVER_PORTS} = constants
 
 describe('Multipart form data tests', () => {
   let mockServer
@@ -25,24 +25,26 @@ describe('Multipart form data tests', () => {
       body: '<transaction response>',
       timestamp: new Date()
     },
-    orchestrations: [{
-      name: 'Lab API',
-      request: {
-        path: 'api/patient/lab',
-        headers: {
-          'Content-Type': 'text/plain'
+    orchestrations: [
+      {
+        name: 'Lab API',
+        request: {
+          path: 'api/patient/lab',
+          headers: {
+            'Content-Type': 'text/plain'
+          },
+          body: '<route request>',
+          method: 'POST',
+          timestamp: new Date()
         },
-        body: '<route request>',
-        method: 'POST',
-        timestamp: new Date()
-      },
-      response: {
-        status: 200,
-        headers: {},
-        body: '<route response>',
-        timestamp: new Date()
+        response: {
+          status: 200,
+          headers: {},
+          body: '<route response>',
+          timestamp: new Date()
+        }
       }
-    }]
+    ]
   }
 
   const channelDoc = {
@@ -50,12 +52,14 @@ describe('Multipart form data tests', () => {
     urlPattern: '/test/multipart',
     allow: ['PoC'],
     methods: ['POST'],
-    routes: [{
-      name: 'test route',
-      host: 'localhost',
-      port: constants.MEDIATOR_PORT,
-      primary: true
-    }],
+    routes: [
+      {
+        name: 'test route',
+        host: 'localhost',
+        port: constants.MEDIATOR_PORT,
+        primary: true
+      }
+    ],
     updatedBy: {
       id: new ObjectId(),
       name: 'Test'
@@ -66,12 +70,10 @@ describe('Multipart form data tests', () => {
     clientID: 'testAppMultipart',
     clientDomain: 'test-client.jembi.org',
     name: 'TEST Client',
-    roles: [
-      'OpenMRS_PoC',
-      'PoC'
-    ],
+    roles: ['OpenMRS_PoC', 'PoC'],
     passwordAlgorithm: 'sha512',
-    passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+    passwordHash:
+      '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
     passwordSalt: '1234567890',
     cert: ''
   }
@@ -83,7 +85,7 @@ describe('Multipart form data tests', () => {
     await Promise.all([
       new ChannelModel(channelDoc).save(),
       new ClientModel(testClientDoc).save(),
-      promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
     ])
 
     mockServer = await testUtils.createMockHttpMediator(mediatorResponse)

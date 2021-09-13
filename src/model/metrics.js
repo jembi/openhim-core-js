@@ -1,8 +1,8 @@
 'use strict'
 
-import { Schema } from 'mongoose'
+import {Schema} from 'mongoose'
 
-import { connectionAPI } from '../config'
+import {connectionAPI} from '../config'
 
 export const METRIC_TYPE_MINUTE = 'm'
 export const METRIC_TYPE_HOUR = 'h'

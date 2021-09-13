@@ -5,14 +5,14 @@ import crypto from 'crypto'
 import logger from 'winston'
 import moment from 'moment'
 import os from 'os'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as contact from '../contact'
 import * as utils from '../utils'
-import { UserModelAPI } from '../model/users'
-import { config } from '../config'
+import {UserModelAPI} from '../model/users'
+import {config} from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
 config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')
@@ -24,18 +24,32 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
  * Get authentication details
  */
 
-export async function authenticate (ctx, email) {
+export async function authenticate(ctx, email) {
   email = unescape(email)
 
   try {
-    const user = await UserModelAPI.findOne({ email: utils.caseInsensitiveRegex(email) })
+    const user = await UserModelAPI.findOne({
+      email: utils.caseInsensitiveRegex(email)
+    })
 
     if (!user) {
-      utils.logAndSetResponse(ctx, 404, `Could not find user by email ${email}`, 'info')
+      utils.logAndSetResponse(
+        ctx,
+        404,
+        `Could not find user by email ${email}`,
+        'info'
+      )
       // Audit unknown user requested
-      let audit = atna.construct.userLoginAudit(atna.constants.OUTCOME_SERIOUS_FAILURE, himSourceID, os.hostname(), email)
+      let audit = atna.construct.userLoginAudit(
+        atna.constants.OUTCOME_SERIOUS_FAILURE,
+        himSourceID,
+        os.hostname(),
+        email
+      )
       audit = atna.construct.wrapInSyslog(audit)
-      return auditing.sendAuditEvent(audit, () => logger.debug('Processed internal audit'))
+      return auditing.sendAuditEvent(audit, () =>
+        logger.debug('Processed internal audit')
+      )
     } else {
       ctx.body = {
         salt: user.passwordSalt,
@@ -43,7 +57,12 @@ export async function authenticate (ctx, email) {
       }
     }
   } catch (e) {
-    return utils.logAndSetResponse(ctx, 500, `Error during authentication ${e}`, 'error')
+    return utils.logAndSetResponse(
+      ctx,
+      500,
+      `Error during authentication ${e}`,
+      'error'
+    )
   }
 }
 
@@ -68,17 +87,17 @@ const passwordResetHtmlMessageTemplate = (firstname, setPasswordLink) => `\
 <p>${setPasswordLink}</p>\
 `
 
-function generateRandomToken () {
+function generateRandomToken() {
   return crypto.randomBytes(16).toString('hex')
 }
 
 /*
  * update user token/expiry and send new password email
  */
-export async function userPasswordResetRequest (ctx, email) {
+export async function userPasswordResetRequest(ctx, email) {
   email = unescape(email)
   if (email === 'root@openhim.org') {
-    ctx.body = 'Cannot request password reset for \'root@openhim.org\''
+    ctx.body = "Cannot request password reset for 'root@openhim.org'"
     ctx.status = 403
     return
   }
@@ -86,7 +105,7 @@ export async function userPasswordResetRequest (ctx, email) {
   // Generate the new user token here
   // set expiry date = true
   const token = generateRandomToken()
-  const { duration, durationType } = config.userPasswordResetExpiry
+  const {duration, durationType} = config.userPasswordResetExpiry
   const expiry = moment().add(duration, durationType).utc().format()
 
   const updateUserTokenExpiry = {
@@ -96,25 +115,47 @@ export async function userPasswordResetRequest (ctx, email) {
   }
 
   try {
-    const user = await UserModelAPI.findOneAndUpdate({ email: utils.caseInsensitiveRegex(email) }, updateUserTokenExpiry)
+    const user = await UserModelAPI.findOneAndUpdate(
+      {email: utils.caseInsensitiveRegex(email)},
+      updateUserTokenExpiry
+    )
     if (!user) {
       ctx.body = `Tried to request password reset for invalid email address: ${email}`
       ctx.status = 404
-      logger.info(`Tried to request password reset for invalid email address: ${email}`)
+      logger.info(
+        `Tried to request password reset for invalid email address: ${email}`
+      )
       return
     }
 
-    const { consoleURL } = config.alerts
+    const {consoleURL} = config.alerts
     const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
 
     // Send email to user to reset password
-    const plainMessage = passwordResetPlainMessageTemplate(user.firstname, setPasswordLink)
-    const htmlMessage = passwordResetHtmlMessageTemplate(user.firstname, setPasswordLink)
+    const plainMessage = passwordResetPlainMessageTemplate(
+      user.firstname,
+      setPasswordLink
+    )
+    const htmlMessage = passwordResetHtmlMessageTemplate(
+      user.firstname,
+      setPasswordLink
+    )
 
     const sendEmail = promisify(contact.contactUser)
-    const sendEmailError = await sendEmail('email', email, 'OpenHIM Console Password Reset', plainMessage, htmlMessage)
+    const sendEmailError = await sendEmail(
+      'email',
+      email,
+      'OpenHIM Console Password Reset',
+      plainMessage,
+      htmlMessage
+    )
     if (sendEmailError) {
-      utils.logAndSetResponse(ctx, 500, `Could not send email to user via the API ${sendEmailError}`, 'error')
+      utils.logAndSetResponse(
+        ctx,
+        500,
+        `Could not send email to user via the API ${sendEmailError}`,
+        'error'
+      )
       return
     }
 
@@ -123,7 +164,12 @@ export async function userPasswordResetRequest (ctx, email) {
     ctx.status = 201
     return logger.info(`User updated token/expiry for password reset ${email}`)
   } catch (error) {
-    utils.logAndSetResponse(ctx, 500, `Could not update user with email ${email} via the API ${error}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not update user with email ${email} via the API ${error}`,
+      'error'
+    )
   }
 }
 
@@ -132,7 +178,7 @@ export async function userPasswordResetRequest (ctx, email) {
  */
 
 // get the new user details
-export async function getUserByToken (ctx, token) {
+export async function getUserByToken(ctx, token) {
   token = unescape(token)
 
   try {
@@ -148,7 +194,7 @@ export async function getUserByToken (ctx, token) {
       _id: 0
     }
 
-    const result = await UserModelAPI.findOne({ token }, projectionRestriction)
+    const result = await UserModelAPI.findOne({token}, projectionRestriction)
     if (!result) {
       ctx.body = `User with token ${token} could not be found.`
       ctx.status = 404
@@ -160,19 +206,24 @@ export async function getUserByToken (ctx, token) {
       ctx.body = result
     }
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not find user with token ${token} via the API ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not find user with token ${token} via the API ${e}`,
+      'error'
+    )
   }
 }
 
 // update the password/details for the new user
-export async function updateUserByToken (ctx, token) {
+export async function updateUserByToken(ctx, token) {
   let userDataExpiry
   token = unescape(token)
   const userData = ctx.request.body
 
   try {
     // first try get new user details to check expiry date
-    userDataExpiry = await UserModelAPI.findOne({ token })
+    userDataExpiry = await UserModelAPI.findOne({token})
 
     if (!userDataExpiry) {
       ctx.body = `User with token ${token} could not be found.`
@@ -185,7 +236,12 @@ export async function updateUserByToken (ctx, token) {
       return
     }
   } catch (error) {
-    utils.logAndSetResponse(ctx, 500, `Could not find user with token ${token} via the API ${error}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not find user with token ${token} via the API ${error}`,
+      'error'
+    )
     return
   }
 
@@ -213,11 +269,16 @@ export async function updateUserByToken (ctx, token) {
   }
 
   try {
-    await UserModelAPI.findOneAndUpdate({ token }, userUpdateObj)
+    await UserModelAPI.findOneAndUpdate({token}, userUpdateObj)
     ctx.body = 'Successfully set new user password.'
     return logger.info(`User updated by token ${token}`)
   } catch (error) {
-    return utils.logAndSetResponse(ctx, 500, `Could not update user with token ${token} via the API ${error}`, 'error')
+    return utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not update user with token ${token} via the API ${error}`,
+      'error'
+    )
   }
 }
 
@@ -245,10 +306,15 @@ const htmlMessageTemplate = (firstname, setPasswordLink) => `\
 /*
  * Adds a user
  */
-export async function addUser (ctx) {
+export async function addUser(ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to addUser denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to addUser denied.`,
+      'info'
+    )
     return
   }
 
@@ -263,7 +329,7 @@ export async function addUser (ctx) {
   userData.locked = true
   userData.email = userData.email.toLowerCase()
 
-  const { duration, durationType } = config.newUserExpiry
+  const {duration, durationType} = config.newUserExpiry
   userData.expiry = moment().add(duration, durationType).utc().format()
 
   const consoleURL = config.alerts.consoleURL
@@ -275,39 +341,68 @@ export async function addUser (ctx) {
 
     // Send email to new user to set password
 
-    const plainMessage = plainMessageTemplate(userData.firstname, setPasswordLink)
+    const plainMessage = plainMessageTemplate(
+      userData.firstname,
+      setPasswordLink
+    )
     const htmlMessage = htmlMessageTemplate(userData.firstname, setPasswordLink)
 
-    contact.contactUser('email', userData.email, 'OpenHIM Console Profile', plainMessage, htmlMessage, (err) => {
-      if (err) {
-        return logger.error(`The email could not be sent to the user via the API ${err}`)
-      } else {
-        return logger.info('The email has been sent to the new user')
+    contact.contactUser(
+      'email',
+      userData.email,
+      'OpenHIM Console Profile',
+      plainMessage,
+      htmlMessage,
+      err => {
+        if (err) {
+          return logger.error(
+            `The email could not be sent to the user via the API ${err}`
+          )
+        } else {
+          return logger.info('The email has been sent to the new user')
+        }
       }
-    })
+    )
 
     ctx.body = 'User successfully created'
     ctx.status = 201
-    logger.info(`User ${ctx.authenticated.email} created user ${userData.email}`)
+    logger.info(
+      `User ${ctx.authenticated.email} created user ${userData.email}`
+    )
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not add user via the API ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not add user via the API ${e}`,
+      'error'
+    )
   }
 }
 
 /*
  * Retrieves the details of a specific user
  */
-export async function getUser (ctx, email) {
+export async function getUser(ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to fetch their own details
-  if (!authorisation.inGroup('admin', ctx.authenticated) && (ctx.authenticated.email !== email)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getUser denied.`, 'info')
+  if (
+    !authorisation.inGroup('admin', ctx.authenticated) &&
+    ctx.authenticated.email !== email
+  ) {
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to getUser denied.`,
+      'info'
+    )
     return
   }
 
   try {
-    const result = await UserModelAPI.findOne({ email: utils.caseInsensitiveRegex(email) })
+    const result = await UserModelAPI.findOne({
+      email: utils.caseInsensitiveRegex(email)
+    })
     if (!result) {
       ctx.body = `User with email ${email} could not be found.`
       ctx.status = 404
@@ -315,23 +410,40 @@ export async function getUser (ctx, email) {
       ctx.body = result
     }
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not get user via the API ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not get user via the API ${e}`,
+      'error'
+    )
   }
 }
 
-export async function updateUser (ctx, email) {
+export async function updateUser(ctx, email) {
   email = unescape(email)
 
   // Test if the user is authorised, allow a user to update their own details
-  if (!authorisation.inGroup('admin', ctx.authenticated) && (ctx.authenticated.email !== email)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to updateUser denied.`, 'info')
+  if (
+    !authorisation.inGroup('admin', ctx.authenticated) &&
+    ctx.authenticated.email !== email
+  ) {
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to updateUser denied.`,
+      'info'
+    )
     return
   }
 
   const userData = ctx.request.body
 
   // reset token/locked/expiry when user is updated and password supplied
-  if (userData.passwordAlgorithm && userData.passwordHash && userData.passwordSalt) {
+  if (
+    userData.passwordAlgorithm &&
+    userData.passwordHash &&
+    userData.passwordSalt
+  ) {
     userData.token = null
     userData.tokenType = null
     userData.locked = false
@@ -339,24 +451,46 @@ export async function updateUser (ctx, email) {
   }
 
   // Don't allow a non-admin user to change their groups
-  if ((ctx.authenticated.email === email) && !authorisation.inGroup('admin', ctx.authenticated)) { delete userData.groups }
+  if (
+    ctx.authenticated.email === email &&
+    !authorisation.inGroup('admin', ctx.authenticated)
+  ) {
+    delete userData.groups
+  }
 
   // Ignore _id if it exists (update is by email)
-  if (userData._id) { delete userData._id }
+  if (userData._id) {
+    delete userData._id
+  }
 
   try {
-    await UserModelAPI.findOneAndUpdate({ email: utils.caseInsensitiveRegex(email) }, userData)
+    await UserModelAPI.findOneAndUpdate(
+      {email: utils.caseInsensitiveRegex(email)},
+      userData
+    )
     ctx.body = 'Successfully updated user.'
-    logger.info(`User ${ctx.authenticated.email} updated user ${userData.email}`)
+    logger.info(
+      `User ${ctx.authenticated.email} updated user ${userData.email}`
+    )
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not update user ${email} via the API ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not update user ${email} via the API ${e}`,
+      'error'
+    )
   }
 }
 
-export async function removeUser (ctx, email) {
+export async function removeUser(ctx, email) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to removeUser denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to removeUser denied.`,
+      'info'
+    )
     return
   }
 
@@ -364,29 +498,51 @@ export async function removeUser (ctx, email) {
 
   // Test if the user is root@openhim.org
   if (email === 'root@openhim.org') {
-    utils.logAndSetResponse(ctx, 403, 'User root@openhim.org is OpenHIM root, User cannot be deleted through the API', 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      'User root@openhim.org is OpenHIM root, User cannot be deleted through the API',
+      'info'
+    )
     return
   }
 
   try {
-    await UserModelAPI.findOneAndRemove({ email: utils.caseInsensitiveRegex(email) })
+    await UserModelAPI.findOneAndRemove({
+      email: utils.caseInsensitiveRegex(email)
+    })
     ctx.body = `Successfully removed user with email ${email}`
     logger.info(`User ${ctx.authenticated.email} removed user ${email}`)
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not remove user ${email} via the API ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not remove user ${email} via the API ${e}`,
+      'error'
+    )
   }
 }
 
-export async function getUsers (ctx) {
+export async function getUsers(ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getUsers denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to getUsers denied.`,
+      'info'
+    )
     return
   }
 
   try {
     ctx.body = await UserModelAPI.find()
   } catch (e) {
-    utils.logAndSetResponse(ctx, 500, `Could not fetch all users via the API ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not fetch all users via the API ${e}`,
+      'error'
+    )
   }
 }

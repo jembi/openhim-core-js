@@ -1,8 +1,8 @@
 'use strict'
 
-import { Schema } from 'mongoose'
+import {Schema} from 'mongoose'
 
-import { connectionAPI, connectionDefault } from '../config'
+import {connectionAPI, connectionDefault} from '../config'
 
 const ClientSchema = new Schema({
   clientID: {
@@ -19,12 +19,12 @@ const ClientSchema = new Schema({
     type: String,
     required: true
   },
-  roles: [{ type: String, required: true }],
+  roles: [{type: String, required: true}],
   customTokenID: {
     type: String,
     index: {
       unique: true,
-      partialFilterExpression: { customTokenID: { $type: 'string' } }
+      partialFilterExpression: {customTokenID: {$type: 'string'}}
     }
   },
   passwordAlgorithm: String,

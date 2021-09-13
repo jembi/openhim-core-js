@@ -2,46 +2,58 @@
 
 import logger from 'winston'
 import xpath from 'xpath'
-import { DOMParser as Dom } from 'xmldom'
-import { promisify } from 'util'
+import {DOMParser as Dom} from 'xmldom'
+import {promisify} from 'util'
 
 import * as Channels from '../model/channels'
 import * as utils from '../utils'
 
 // TODO matching needs to be fixed, body is not defined
-function matchContent (channel, ctx) {
+function matchContent(channel, body) {
   if (channel.matchContentRegex) {
     return matchRegex(channel.matchContentRegex, body) // eslint-disable-line no-undef
   } else if (channel.matchContentXpath && channel.matchContentValue) {
-    return matchXpath(channel.matchContentXpath, channel.matchContentValue, body) // eslint-disable-line no-undef
+    return matchXpath(
+      channel.matchContentXpath,
+      channel.matchContentValue,
+      body
+    ) // eslint-disable-line no-undef
   } else if (channel.matchContentJson && channel.matchContentValue) {
-    return matchJsonPath(channel.matchContentJson, channel.matchContentValue, body) // eslint-disable-line no-undef
+    return matchJsonPath(
+      channel.matchContentJson,
+      channel.matchContentValue,
+      body
+    ) // eslint-disable-line no-undef
   } else if (channel.matchContentXpath || channel.matchContentJson) {
     // if only the match expression is given, deny access
     // this is an invalid channel
-    logger.error(`Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`)
+    logger.error(
+      `Channel with name '${channel.name}' is invalid as it has a content match expression but no value to match`
+    )
     return false
   } else {
     return true
   }
 }
 
-function matchMethod (channel, ctx) {
-  return !!channel.methods.find(method => ctx.request.method.toUpperCase() === method)
+function matchMethod(channel, ctx) {
+  return !!channel.methods.find(
+    method => ctx.request.method.toUpperCase() === method
+  )
 }
 
-export function matchRegex (regexPat, body) {
+export function matchRegex(regexPat, body) {
   const regex = new RegExp(regexPat)
   return regex.test(body.toString())
 }
 
-export function matchXpath (xpathStr, val, xml) {
+export function matchXpath(xpathStr, val, xml) {
   const doc = new Dom().parseFromString(xml.toString())
   const xpathVal = xpath.select(xpathStr, doc).toString()
   return val === xpathVal
 }
 
-export function matchJsonPath (jsonPath, val, json) {
+export function matchJsonPath(jsonPath, val, json) {
   const jsonObj = JSON.parse(json.toString())
   const jsonVal = getJSONValByString(jsonObj, jsonPath)
   return val === jsonVal.toString()
@@ -49,7 +61,7 @@ export function matchJsonPath (jsonPath, val, json) {
 
 // taken from http://stackoverflow.com/a/6491621/588776
 // readbility improved from the stackoverflow answer
-function getJSONValByString (jsonObj, jsonPath) {
+function getJSONValByString(jsonObj, jsonPath) {
   jsonPath = jsonPath.replace(/\[(\w+)\]/g, '.$1') // convert indexes to properties
   jsonPath = jsonPath.replace(/^\./, '') // strip a leading dot
   const parts = jsonPath.split('.')
@@ -64,7 +76,7 @@ function getJSONValByString (jsonObj, jsonPath) {
   return jsonObj
 }
 
-function extractContentType (ctHeader) {
+function extractContentType(ctHeader) {
   const index = ctHeader.indexOf(';')
   if (index !== -1) {
     return ctHeader.substring(0, index).trim()
@@ -73,13 +85,17 @@ function extractContentType (ctHeader) {
   }
 }
 
-function matchUrlPattern (channel, ctx) {
+function matchUrlPattern(channel, ctx) {
   const pat = new RegExp(channel.urlPattern)
   return pat.test(ctx.request.path)
 }
 
-function matchContentTypes (channel, ctx) {
-  if ((channel.matchContentTypes != null ? channel.matchContentTypes.length : undefined) > 0) {
+function matchContentTypes(channel, ctx) {
+  if (
+    (channel.matchContentTypes != null
+      ? channel.matchContentTypes.length
+      : undefined) > 0
+  ) {
     if (ctx.request.header && ctx.request.header['content-type']) {
       const ct = extractContentType(ctx.request.header['content-type'])
       if (Array.from(channel.matchContentTypes).includes(ct)) {
@@ -100,15 +116,13 @@ function matchContentTypes (channel, ctx) {
 // Needs to be mutable for testing
 // eslint-disable-next-line
 // TODO: OHM-695 uncomment line below when working on ticket
-const matchFunctions = [
-  matchUrlPattern,
-  matchMethod,
-  matchContentTypes
-]
+const matchFunctions = [matchUrlPattern, matchMethod, matchContentTypes]
 
-const matchChannel = (channel, ctx) => matchFunctions.every(matchFunc => matchFunc(channel, ctx))
+const matchChannel = (channel, ctx) =>
+  matchFunctions.every(matchFunc => matchFunc(channel, ctx))
 
-const findMatchingChannel = (channels, ctx) => channels.find(channel => matchChannel(channel, ctx))
+const findMatchingChannel = (channels, ctx) =>
+  channels.find(channel => matchChannel(channel, ctx))
 
 const matchRequest = (ctx, done) =>
   utils.getAllChannelsInPriorityOrder((err, channels) => {
@@ -124,12 +138,14 @@ const matchRequest = (ctx, done) =>
     return done(null, match)
   })
 
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   const matchReq = promisify(matchRequest)
   const match = await matchReq(ctx)
 
   if (match != null) {
-    logger.info(`The channel that matches the request ${ctx.request.path} is: ${match.name}`)
+    logger.info(
+      `The channel that matches the request ${ctx.request.path} is: ${match.name}`
+    )
     ctx.matchingChannel = match
   } else {
     logger.info(`No channel matched the request ${ctx.request.path}`)

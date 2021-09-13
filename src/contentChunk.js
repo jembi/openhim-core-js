@@ -1,11 +1,10 @@
-
 import mongodb from 'mongodb'
 import zlib from 'zlib'
-import { PassThrough } from 'stream'
+import {PassThrough} from 'stream'
 import logger from 'winston'
 
-import { connectionDefault } from './config'
-import { obtainCharset } from './utils'
+import {connectionDefault} from './config'
+import {obtainCharset} from './utils'
 
 let bucket
 export const getGridFSBucket = () => {
@@ -16,11 +15,11 @@ export const getGridFSBucket = () => {
   return bucket
 }
 
-export const getFileDetails = async (fileId) => {
+export const getFileDetails = async fileId => {
   return connectionDefault.client.db().collection('fs.files').findOne(fileId)
 }
 
-const isValidGridFsPayload = (payload) => {
+const isValidGridFsPayload = payload => {
   if (typeof payload === 'string' || payload instanceof String) {
     return true
   }
@@ -45,7 +44,10 @@ const isValidGridFsPayload = (payload) => {
     }
 
     const convertedArrayLike = Array.prototype.slice.call(payload)
-    if (typeof convertedArrayLike === 'object' && convertedArrayLike instanceof Array) {
+    if (
+      typeof convertedArrayLike === 'object' &&
+      convertedArrayLike instanceof Array
+    ) {
       return true
     }
   }
@@ -53,25 +55,28 @@ const isValidGridFsPayload = (payload) => {
   return false
 }
 
-export const extractStringPayloadIntoChunks = (payload) => {
+export const extractStringPayloadIntoChunks = payload => {
   return new Promise((resolve, reject) => {
     if (!payload) {
       return reject(new Error('payload not supplied'))
     }
 
     if (!isValidGridFsPayload(payload)) {
-      return reject(new Error('payload not in the correct format, expecting a string, Buffer, ArrayBuffer, Array, or Array-like Object'))
+      return reject(
+        new Error(
+          'payload not in the correct format, expecting a string, Buffer, ArrayBuffer, Array, or Array-like Object'
+        )
+      )
     }
 
     const bucket = getGridFSBucket()
     const uploadStream = bucket.openUploadStream()
 
-    uploadStream.on('error', reject)
-      .on('finish', (doc) => {
-        if (!doc) {
-          return reject(new Error('GridFS create failed'))
-        }
-      })
+    uploadStream.on('error', reject).on('finish', doc => {
+      if (!doc) {
+        return reject(new Error('GridFS create failed'))
+      }
+    })
 
     uploadStream.end(payload)
 
@@ -79,7 +84,7 @@ export const extractStringPayloadIntoChunks = (payload) => {
   })
 }
 
-export const removeBodyById = async (id) => {
+export const removeBodyById = async id => {
   if (!id) {
     throw new Error('No ID supplied when trying to remove chunked body')
   }
@@ -88,7 +93,7 @@ export const removeBodyById = async (id) => {
   return bucket.delete(id)
 }
 
-export const promisesToRemoveAllTransactionBodies = async (tx) => {
+export const promisesToRemoveAllTransactionBodies = async tx => {
   let removeBodyPromises = []
   if (tx.request && tx.request.bodyId) {
     removeBodyPromises.push(() => removeBodyById(tx.request.bodyId))
@@ -100,7 +105,9 @@ export const promisesToRemoveAllTransactionBodies = async (tx) => {
   if (tx.orchestrations) {
     if (Array.isArray(tx.orchestrations) && tx.orchestrations.length > 0) {
       for (const orch of tx.orchestrations) {
-        removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(orch))
+        removeBodyPromises = removeBodyPromises.concat(
+          await promisesToRemoveAllTransactionBodies(orch)
+        )
       }
     }
   }
@@ -108,7 +115,9 @@ export const promisesToRemoveAllTransactionBodies = async (tx) => {
   if (tx.routes) {
     if (Array.isArray(tx.routes) && tx.routes.length > 0) {
       for (const route of tx.routes) {
-        removeBodyPromises = removeBodyPromises.concat(await promisesToRemoveAllTransactionBodies(route))
+        removeBodyPromises = removeBodyPromises.concat(
+          await promisesToRemoveAllTransactionBodies(route)
+        )
       }
     }
   }
@@ -116,7 +125,7 @@ export const promisesToRemoveAllTransactionBodies = async (tx) => {
   return removeBodyPromises
 }
 
-const getDecompressionStreamByContentEncoding = (contentEncoding) => {
+const getDecompressionStreamByContentEncoding = contentEncoding => {
   switch (contentEncoding) {
     case 'gzip':
       return zlib.createGunzip()
@@ -135,28 +144,47 @@ export const retrievePayload = async fileId => {
 
   const fileDetails = await getFileDetails(fileId)
 
-  const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
-  const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
+  const contentEncoding = fileDetails
+    ? fileDetails.metadata
+      ? fileDetails.metadata['content-encoding']
+      : null
+    : null
+  const decompressionStream =
+    getDecompressionStreamByContentEncoding(contentEncoding)
 
   const bucket = getGridFSBucket()
   const downloadStream = bucket.openDownloadStream(fileId)
-  downloadStream.on('error', err => { throw err })
+  downloadStream.on('error', err => {
+    throw err
+  })
 
-  const charset = fileDetails ? (fileDetails.metadata ? obtainCharset(fileDetails.metadata) : 'utf8') : 'utf8'
+  const charset = fileDetails
+    ? fileDetails.metadata
+      ? obtainCharset(fileDetails.metadata)
+      : 'utf8'
+    : 'utf8'
   const uncompressedBodyBufs = []
 
   // apply the decompression transformation and start listening for the output chunks
   downloadStream.pipe(decompressionStream)
-  decompressionStream.on('data', (chunk) => uncompressedBodyBufs.push(chunk))
+  decompressionStream.on('data', chunk => uncompressedBodyBufs.push(chunk))
 
-  return new Promise((resolve) => {
-    decompressionStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
-    decompressionStream.on('close', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
-    downloadStream.on('end', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
-    downloadStream.on('close', () => { resolveDecompressionBuffer(uncompressedBodyBufs) })
+  return new Promise(resolve => {
+    decompressionStream.on('end', () => {
+      resolveDecompressionBuffer(uncompressedBodyBufs)
+    })
+    decompressionStream.on('close', () => {
+      resolveDecompressionBuffer(uncompressedBodyBufs)
+    })
+    downloadStream.on('end', () => {
+      resolveDecompressionBuffer(uncompressedBodyBufs)
+    })
+    downloadStream.on('close', () => {
+      resolveDecompressionBuffer(uncompressedBodyBufs)
+    })
 
     let decompressionBufferHasBeenResolved = false
-    function resolveDecompressionBuffer (uncompressedBodyBufs) {
+    function resolveDecompressionBuffer(uncompressedBodyBufs) {
       // only resolve the request once
       // the resolve could possibly be triggered twice which isnt needed.
       // closing the decompressionStream will end the downloadStream as well, triggering the resolve function twice
@@ -191,8 +219,13 @@ export const retrieveBody = async (bodyId, range) => {
     range.end = fileDetails.length
   }
 
-  const contentEncoding = fileDetails ? (fileDetails.metadata ? fileDetails.metadata['content-encoding'] : null) : null
-  const decompressionStream = getDecompressionStreamByContentEncoding(contentEncoding)
+  const contentEncoding = fileDetails
+    ? fileDetails.metadata
+      ? fileDetails.metadata['content-encoding']
+      : null
+    : null
+  const decompressionStream =
+    getDecompressionStreamByContentEncoding(contentEncoding)
 
   const bucket = getGridFSBucket()
   const downloadStream = bucket.openDownloadStream(bodyId, range)
@@ -201,32 +234,44 @@ export const retrieveBody = async (bodyId, range) => {
   })
 
   // apply the decompression transformation
-  return { stream: downloadStream.pipe(decompressionStream), fileDetails }
+  return {stream: downloadStream.pipe(decompressionStream), fileDetails}
 }
 
-export const addBodiesToTransactions = async (transactions) => {
-  if (!transactions || !Array.isArray(transactions) || transactions.length < 1) {
+export const addBodiesToTransactions = async transactions => {
+  if (
+    !transactions ||
+    !Array.isArray(transactions) ||
+    transactions.length < 1
+  ) {
     return []
   }
 
-  return Promise.all(transactions.map(async transaction => {
-    if (transaction.orchestrations &&
+  return Promise.all(
+    transactions.map(async transaction => {
+      if (
+        transaction.orchestrations &&
         Array.isArray(transaction.orchestrations) &&
-        transaction.orchestrations.length > 0) {
-      transaction.orchestrations = await addBodiesToTransactions(transaction.orchestrations)
-    }
+        transaction.orchestrations.length > 0
+      ) {
+        transaction.orchestrations = await addBodiesToTransactions(
+          transaction.orchestrations
+        )
+      }
 
-    if (transaction.routes &&
+      if (
+        transaction.routes &&
         Array.isArray(transaction.routes) &&
-        transaction.routes.length > 0) {
-      transaction.routes = await addBodiesToTransactions(transaction.routes)
-    }
+        transaction.routes.length > 0
+      ) {
+        transaction.routes = await addBodiesToTransactions(transaction.routes)
+      }
 
-    return filterPayloadType(transaction)
-  }))
+      return filterPayloadType(transaction)
+    })
+  )
 }
 
-const filterPayloadType = async (transaction) => {
+const filterPayloadType = async transaction => {
   if (!transaction) {
     return transaction
   }
@@ -237,28 +282,34 @@ const filterPayloadType = async (transaction) => {
   }
 
   if (transaction.response && transaction.response.bodyId) {
-    transaction.response.body = await retrievePayload(transaction.response.bodyId)
+    transaction.response.body = await retrievePayload(
+      transaction.response.bodyId
+    )
     delete transaction.response.bodyId
   }
 
   return transaction
 }
 
-export const extractTransactionPayloadIntoChunks = async (transaction) => {
+export const extractTransactionPayloadIntoChunks = async transaction => {
   if (!transaction) {
     return
   }
 
   if (transaction.request && 'body' in transaction.request) {
     if (transaction.request.body) {
-      transaction.request.bodyId = await extractStringPayloadIntoChunks(transaction.request.body)
+      transaction.request.bodyId = await extractStringPayloadIntoChunks(
+        transaction.request.body
+      )
     }
     delete transaction.request.body
   }
 
   if (transaction.response && 'body' in transaction.response) {
     if (transaction.response.body) {
-      transaction.response.bodyId = await extractStringPayloadIntoChunks(transaction.response.body)
+      transaction.response.bodyId = await extractStringPayloadIntoChunks(
+        transaction.response.body
+      )
     }
     delete transaction.response.body
   }
@@ -268,10 +319,15 @@ export const extractTransactionPayloadIntoChunks = async (transaction) => {
       await extractTransactionPayloadIntoChunks(transaction.orchestrations)
     }
 
-    if (Array.isArray(transaction.orchestrations) && transaction.orchestrations.length > 0) {
-      await Promise.all(transaction.orchestrations.map(async (orch) => {
-        return extractTransactionPayloadIntoChunks(orch)
-      }))
+    if (
+      Array.isArray(transaction.orchestrations) &&
+      transaction.orchestrations.length > 0
+    ) {
+      await Promise.all(
+        transaction.orchestrations.map(async orch => {
+          return extractTransactionPayloadIntoChunks(orch)
+        })
+      )
     }
   }
 
@@ -281,12 +337,14 @@ export const extractTransactionPayloadIntoChunks = async (transaction) => {
     }
 
     if (Array.isArray(transaction.routes) && transaction.routes.length > 0) {
-      await Promise.all(transaction.routes.map(async (route) => {
-        if (!route) {
-          return
-        }
-        return extractTransactionPayloadIntoChunks(route)
-      }))
+      await Promise.all(
+        transaction.routes.map(async route => {
+          if (!route) {
+            return
+          }
+          return extractTransactionPayloadIntoChunks(route)
+        })
+      )
     }
   }
 

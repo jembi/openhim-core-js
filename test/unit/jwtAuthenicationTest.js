@@ -62,7 +62,7 @@ describe('JWT Authorisation Test', () => {
 
       const clientStub = sandbox
         .stub(client.ClientModel, 'findOne')
-        .resolves({ name: 'Test', clientID: 'test' })
+        .resolves({name: 'Test', clientID: 'test'})
 
       await jwtAuthentication.koaMiddleware(ctx, next)
 
@@ -107,7 +107,7 @@ describe('JWT Authorisation Test', () => {
 
       const clientStub = sandbox
         .stub(client.ClientModel, 'findOne')
-        .resolves({ name: 'Test', clientID: 'test' })
+        .resolves({name: 'Test', clientID: 'test'})
 
       await jwtAuthentication.koaMiddleware(ctx, next)
 
@@ -153,7 +153,7 @@ describe('JWT Authorisation Test', () => {
 
       const clientStub = sandbox
         .stub(client.ClientModel, 'findOne')
-        .resolves({ name: 'Test', clientID: 'test' })
+        .resolves({name: 'Test', clientID: 'test'})
 
       await jwtAuthentication.koaMiddleware(ctx, next)
 
@@ -200,7 +200,7 @@ describe('JWT Authorisation Test', () => {
 
       const clientStub = sandbox
         .stub(client.ClientModel, 'findOne')
-        .resolves({ name: 'Test', clientID: 'test' })
+        .resolves({name: 'Test', clientID: 'test'})
 
       await jwtAuthentication.koaMiddleware(ctx, next)
 

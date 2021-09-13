@@ -6,12 +6,12 @@ import https from 'https'
 import logger from 'winston'
 import net from 'net'
 import tls from 'tls'
-import { config } from '../config'
+import {config} from '../config'
 import * as utils from '../utils'
 import * as messageStore from '../middleware/messageStore'
-import { promisify } from 'util'
-import { getGridFSBucket, extractStringPayloadIntoChunks } from '../contentChunk'
-import { makeStreamingRequest, collectStream } from './streamingRouter'
+import {promisify} from 'util'
+import {getGridFSBucket, extractStringPayloadIntoChunks} from '../contentChunk'
+import {makeStreamingRequest, collectStream} from './streamingRouter'
 import * as rewrite from '../middleware/rewriteUrls'
 import * as events from './events'
 
@@ -19,19 +19,22 @@ config.router = config.get('router')
 
 let bucket
 
-const isRouteEnabled = route => (route.status == null) || (route.status === 'enabled')
+const isRouteEnabled = route =>
+  route.status == null || route.status === 'enabled'
 
-export function numberOfPrimaryRoutes (routes) {
+export function numberOfPrimaryRoutes(routes) {
   let numPrimaries = 0
   for (const route of Array.from(routes)) {
-    if (isRouteEnabled(route) && route.primary) { numPrimaries++ }
+    if (isRouteEnabled(route) && route.primary) {
+      numPrimaries++
+    }
   }
   return numPrimaries
 }
 
 const containsMultiplePrimaries = routes => numberOfPrimaryRoutes(routes) > 1
 
-function setKoaResponse (ctx, response) {
+function setKoaResponse(ctx, response) {
   // Try and parse the status to an int if it is a string
   let err
   if (typeof response.status === 'string') {
@@ -51,9 +54,14 @@ function setKoaResponse (ctx, response) {
     ctx.response.header = {}
   }
 
-  if (ctx.request != null && ctx.request.header != null && ctx.request.header['X-OpenHIM-TransactionID'] != null) {
+  if (
+    ctx.request != null &&
+    ctx.request.header != null &&
+    ctx.request.header['X-OpenHIM-TransactionID'] != null
+  ) {
     if ((response != null ? response.headers : undefined) != null) {
-      response.headers['X-OpenHIM-TransactionID'] = ctx.request.header['X-OpenHIM-TransactionID']
+      response.headers['X-OpenHIM-TransactionID'] =
+        ctx.request.header['X-OpenHIM-TransactionID']
     }
   }
 
@@ -94,13 +102,13 @@ if (process.env.NODE_ENV === 'test') {
   exports.setKoaResponse = setKoaResponse
 }
 
-function setCookiesOnContext (ctx, value) {
+function setCookiesOnContext(ctx, value) {
   logger.info('Setting cookies on context')
   const result = []
   for (let cValue = 0; cValue < value.length; cValue++) {
     let pVal
     const cKey = value[cValue]
-    const cOpts = { path: false, httpOnly: false } // clear out default values in cookie module
+    const cOpts = {path: false, httpOnly: false} // clear out default values in cookie module
     const cVals = {}
     const object = cookie.parse(cKey)
     for (const pKey in object) {
@@ -129,19 +137,21 @@ function setCookiesOnContext (ctx, value) {
     }
 
     // TODO : Refactor this code when possible
-    result.push((() => {
-      const result1 = []
-      for (const pKey in cVals) {
-        pVal = cVals[pKey]
-        result1.push(ctx.cookies.set(pKey, pVal, cOpts))
-      }
-      return result1
-    })())
+    result.push(
+      (() => {
+        const result1 = []
+        for (const pKey in cVals) {
+          pVal = cVals[pKey]
+          result1.push(ctx.cookies.set(pKey, pVal, cOpts))
+        }
+        return result1
+      })()
+    )
   }
   return result
 }
 
-function handleServerError (ctx, err, route) {
+function handleServerError(ctx, err, route) {
   ctx.autoRetry = true
   if (route) {
     route.error = {
@@ -159,23 +169,37 @@ function handleServerError (ctx, err, route) {
     }
   }
 
-  logger.error(`[${(ctx.transactionId != null ? ctx.transactionId.toString() : undefined)}] Internal server error occured: ${err}`)
-  if (err.stack) { return logger.error(`${err.stack}`) }
+  logger.error(
+    `[${
+      ctx.transactionId != null ? ctx.transactionId.toString() : undefined
+    }] Internal server error occured: ${err}`
+  )
+  if (err.stack) {
+    return logger.error(`${err.stack}`)
+  }
 }
 
-function sendRequestToRoutes (ctx, routes, next) {
+function sendRequestToRoutes(ctx, routes, next) {
   const promises = []
   let promise = {}
   ctx.timer = new Date()
 
   if (containsMultiplePrimaries(routes)) {
-    return next(new Error('Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed'))
+    return next(
+      new Error(
+        'Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed'
+      )
+    )
   }
 
   return utils.getKeystore((err, keystore) => {
-    if (err) { return (err) }
+    if (err) {
+      return err
+    }
     for (const route of Array.from(routes)) {
-      if (!isRouteEnabled(route)) { continue }
+      if (!isRouteEnabled(route)) {
+        continue
+      }
       const path = getDestinationPath(route, ctx.path)
       const options = {
         hostname: route.host,
@@ -197,7 +221,11 @@ function sendRequestToRoutes (ctx, routes, next) {
         options.path += `?${ctx.request.querystring}`
       }
 
-      if (options.headers && options.headers.authorization && !route.forwardAuthHeader) {
+      if (
+        options.headers &&
+        options.headers.authorization &&
+        !route.forwardAuthHeader
+      ) {
         delete options.headers.authorization
       }
 
@@ -212,9 +240,15 @@ function sendRequestToRoutes (ctx, routes, next) {
       if (route.primary) {
         ctx.primaryRoute = route
         promise = sendRequest(ctx, route, options)
-          .then(async (response) => {
+          .then(async response => {
             logger.info(`executing primary route : ${route.name}`)
-            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+            if (
+              response.headers != null &&
+              response.headers['content-type'] != null &&
+              response.headers['content-type'].indexOf(
+                'application/json+openhim'
+              ) > -1
+            ) {
               // handle mediator response
               response = await collectStream(response.body)
               const responseObj = JSON.parse(response)
@@ -234,30 +268,46 @@ function sendRequestToRoutes (ctx, routes, next) {
                 if (!response.headers) {
                   response.headers = {}
                 }
-                response.headers['x-body-id'] = await extractStringPayloadIntoChunks(responseObj.response.body)
+                response.headers['x-body-id'] =
+                  await extractStringPayloadIntoChunks(
+                    responseObj.response.body
+                  )
 
-                if (ctx.mediatorResponse && ctx.mediatorResponse.orchestrations) {
-                  const promises = responseObj.orchestrations.map(async orch => {
-                    if (
-                      orch.request &&
-                      orch.request.body &&
-                      ctx.authorisedChannel.requestBody
-                    ) {
-                      orch.request.bodyId = await extractStringPayloadIntoChunks(orch.request.body)
+                if (
+                  ctx.mediatorResponse &&
+                  ctx.mediatorResponse.orchestrations
+                ) {
+                  const promises = responseObj.orchestrations.map(
+                    async orch => {
+                      if (
+                        orch.request &&
+                        orch.request.body &&
+                        ctx.authorisedChannel.requestBody
+                      ) {
+                        orch.request.bodyId =
+                          await extractStringPayloadIntoChunks(
+                            orch.request.body
+                          )
+                      }
+
+                      if (
+                        orch.response &&
+                        orch.response.body &&
+                        ctx.authorisedChannel.responseBody
+                      ) {
+                        orch.response.bodyId =
+                          await extractStringPayloadIntoChunks(
+                            orch.response.body
+                          )
+                      }
+
+                      return orch
                     }
+                  )
 
-                    if (
-                      orch.response &&
-                      orch.response.body &&
-                      ctx.authorisedChannel.responseBody
-                    ) {
-                      orch.response.bodyId = await extractStringPayloadIntoChunks(orch.response.body)
-                    }
-
-                    return orch
-                  })
-
-                  ctx.mediatorResponse.orchestrations = await Promise.all(promises)
+                  ctx.mediatorResponse.orchestrations = await Promise.all(
+                    promises
+                  )
                 }
               }
             }
@@ -267,91 +317,115 @@ function sendRequestToRoutes (ctx, routes, next) {
             logger.info('primary route completed')
             return next()
           })
-          .catch((reason) => {
+          .catch(reason => {
             // on failure
             handleServerError(ctx, reason)
             return next()
           })
       } else {
         logger.info(`executing non primary: ${route.name}`)
-        promise = buildNonPrimarySendRequestPromise(ctx, route, options, path)
-          .then((routeObj) => {
-            logger.info(`Storing non primary route responses ${route.name}`)
+        promise = buildNonPrimarySendRequestPromise(
+          ctx,
+          route,
+          options,
+          path
+        ).then(routeObj => {
+          logger.info(`Storing non primary route responses ${route.name}`)
 
-            try {
-              if (((routeObj != null ? routeObj.name : undefined) == null)) {
-                routeObj =
-                  { name: route.name }
-              }
-
-              if (((routeObj != null ? routeObj.response : undefined) == null)) {
-                routeObj.response = {
-                  status: 500,
-                  timestamp: ctx.requestTimestamp
-                }
-              }
-
-              if (((routeObj != null ? routeObj.request : undefined) == null)) {
-                routeObj.request = {
-                  host: options.hostname,
-                  port: options.port,
-                  path,
-                  headers: ctx.request.header,
-                  querystring: ctx.request.querystring,
-                  method: ctx.request.method,
-                  timestamp: ctx.requestTimestamp
-                }
-              }
-              return messageStore.storeNonPrimaryResponse(ctx, routeObj, () => {})
-            } catch (err) {
-              return logger.error(err)
+          try {
+            if ((routeObj != null ? routeObj.name : undefined) == null) {
+              routeObj = {name: route.name}
             }
-          })
+
+            if ((routeObj != null ? routeObj.response : undefined) == null) {
+              routeObj.response = {
+                status: 500,
+                timestamp: ctx.requestTimestamp
+              }
+            }
+
+            if ((routeObj != null ? routeObj.request : undefined) == null) {
+              routeObj.request = {
+                host: options.hostname,
+                port: options.port,
+                path,
+                headers: ctx.request.header,
+                querystring: ctx.request.querystring,
+                method: ctx.request.method,
+                timestamp: ctx.requestTimestamp
+              }
+            }
+            return messageStore.storeNonPrimaryResponse(ctx, routeObj, () => {})
+          } catch (err) {
+            return logger.error(err)
+          }
+        })
       }
 
       promises.push(promise)
     }
 
-    Promise.all(promises).then(() => {
-      logger.info(`All routes completed for transaction: ${ctx.transactionId}`)
-      messageStore.initiateResponse(ctx, () => {
-        messageStore.completeResponse(ctx, () => {}).then(() => {
-          setTransactionFinalStatus(ctx)
-        }).catch(err => {
-          logger.error(err)
+    Promise.all(promises)
+      .then(() => {
+        logger.info(
+          `All routes completed for transaction: ${ctx.transactionId}`
+        )
+        messageStore.initiateResponse(ctx, () => {
+          messageStore
+            .completeResponse(ctx, () => {})
+            .then(() => {
+              setTransactionFinalStatus(ctx)
+            })
+            .catch(err => {
+              logger.error(err)
+            })
         })
-      })
 
-      // Save events for the secondary routes
-      if (ctx.routes) {
-        const trxEvents = []
-        events.createSecondaryRouteEvents(trxEvents, ctx.transactionId, ctx.requestTimestamp, ctx.authorisedChannel, ctx.routes, ctx.currentAttempt)
-        events.saveEvents(trxEvents, err => {
-          if (err) {
-            logger.error(`Saving route events failed for transaction: ${ctx.transactionId}`, err)
-            return
-          }
-          logger.debug(`Saving route events succeeded for transaction: ${ctx.transactionId}`)
-        })
-      }
-    }).catch(err => {
-      logger.error(err)
-      messageStore.initiateResponse(ctx, () => {
-        messageStore.completeResponse(ctx, () => {}).then(() => {
-          setTransactionFinalStatus(ctx)
-        })
-          .catch(err => {
-            logger.error(err)
+        // Save events for the secondary routes
+        if (ctx.routes) {
+          const trxEvents = []
+          events.createSecondaryRouteEvents(
+            trxEvents,
+            ctx.transactionId,
+            ctx.requestTimestamp,
+            ctx.authorisedChannel,
+            ctx.routes,
+            ctx.currentAttempt
+          )
+          events.saveEvents(trxEvents, err => {
+            if (err) {
+              logger.error(
+                `Saving route events failed for transaction: ${ctx.transactionId}`,
+                err
+              )
+              return
+            }
+            logger.debug(
+              `Saving route events succeeded for transaction: ${ctx.transactionId}`
+            )
           })
+        }
       })
-    })
+      .catch(err => {
+        logger.error(err)
+        messageStore.initiateResponse(ctx, () => {
+          messageStore
+            .completeResponse(ctx, () => {})
+            .then(() => {
+              setTransactionFinalStatus(ctx)
+            })
+            .catch(err => {
+              logger.error(err)
+            })
+        })
+      })
   })
 }
 
 // function to build fresh promise for transactions routes
 const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
   sendRequest(ctx, route, options)
-    .then((response) => {
+    .then(response => {
       const routeObj = {}
       routeObj.name = route.name
       routeObj.request = {
@@ -365,13 +439,24 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         timestamp: ctx.requestTimestamp
       }
 
-      if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+      if (
+        response.headers != null &&
+        response.headers['content-type'] != null &&
+        response.headers['content-type'].indexOf('application/json+openhim') >
+          -1
+      ) {
         // handle mediator response
         const responseObj = JSON.parse(response.body)
 
-        routeObj.mediatorURN = responseObj['x-mediator-urn'] ? responseObj['x-mediator-urn'] : undefined
-        routeObj.orchestrations = responseObj.orchestrations ? responseObj.orchestrations : undefined
-        routeObj.properties = responseObj.properties ? responseObj.properties : undefined
+        routeObj.mediatorURN = responseObj['x-mediator-urn']
+          ? responseObj['x-mediator-urn']
+          : undefined
+        routeObj.orchestrations = responseObj.orchestrations
+          ? responseObj.orchestrations
+          : undefined
+        routeObj.properties = responseObj.properties
+          ? responseObj.properties
+          : undefined
         routeObj.metrics = responseObj.metrics ? responseObj.metrics : undefined
         routeObj.error = responseObj.error ? responseObj.error : undefined
         routeObj.response = response
@@ -379,23 +464,28 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
         routeObj.response = response
       }
 
-      if (!ctx.routes) { ctx.routes = [] }
+      if (!ctx.routes) {
+        ctx.routes = []
+      }
       ctx.routes.push(routeObj)
       return routeObj
-    }).catch((reason) => {
+    })
+    .catch(reason => {
       // on failure
       const routeObj = {}
       routeObj.name = route.name
 
-      if (!ctx.routes) { ctx.routes = [] }
+      if (!ctx.routes) {
+        ctx.routes = []
+      }
       ctx.routes.push(routeObj)
 
       handleServerError(ctx, reason, routeObj)
       return routeObj
     })
 
-function sendRequest (ctx, route, options) {
-  function buildOrchestration (response) {
+function sendRequest(ctx, route, options) {
+  function buildOrchestration(response) {
     const orchestration = {
       name: route.name,
       request: {
@@ -427,7 +517,7 @@ function sendRequest (ctx, route, options) {
     return orchestration
   }
 
-  function recordOrchestration (response) {
+  function recordOrchestration(response) {
     if (!route.primary) {
       // Only record orchestrations for primary routes
       return
@@ -438,7 +528,7 @@ function sendRequest (ctx, route, options) {
     ctx.orchestrations.push(buildOrchestration(response))
   }
 
-  if ((route.type === 'tcp') || (route.type === 'mllp')) {
+  if (route.type === 'tcp' || route.type === 'mllp') {
     logger.info('Routing socket request')
     return sendSocketRequest(ctx, route, options)
   } else {
@@ -448,7 +538,8 @@ function sendRequest (ctx, route, options) {
         .then(response => {
           // Return the response as before
           return response
-        }).catch(err => {
+        })
+        .catch(err => {
           // Rethrow the error
           throw err
         })
@@ -460,7 +551,8 @@ function sendRequest (ctx, route, options) {
         recordOrchestration(response)
         // Return the response as before
         return response
-      }).catch(err => {
+      })
+      .catch(err => {
         recordOrchestration(err)
         // Rethrow the error
         throw err
@@ -468,7 +560,7 @@ function sendRequest (ctx, route, options) {
   }
 }
 
-function setTransactionFinalStatus (ctx) {
+function setTransactionFinalStatus(ctx) {
   // Set the final status of the transaction
   messageStore.setFinalStatus(ctx, (err, tx) => {
     if (err) {
@@ -479,7 +571,7 @@ function setTransactionFinalStatus (ctx) {
   })
 }
 
-async function sendHttpRequest (ctx, route, options) {
+async function sendHttpRequest(ctx, route, options) {
   const statusEvents = {
     badOptions: function () {},
     noRequest: function () {},
@@ -493,7 +585,7 @@ async function sendHttpRequest (ctx, route, options) {
     startRequest: function () {},
     requestProgress: function () {},
     finishRequest: function () {},
-    startResponse: function (res) {
+    startResponse: function () {
       ctx.state.requestPromise.then(() => {
         messageStore.initiateResponse(ctx, () => {})
       })
@@ -501,28 +593,41 @@ async function sendHttpRequest (ctx, route, options) {
     responseProgress: function (chunk, counter, size) {
       logger.info(`Write response CHUNK # ${counter} [ Total size ${size}]`)
     },
-    finishResponse: function (response, size) {
+    finishResponse: function () {
       logger.info('** END OF OUTPUT STREAM **')
     },
     finishResponseAsString: function (body) {
-      return rewrite.rewriteUrls(body, ctx.authorisedChannel, ctx.authenticationType, (err, newBody) => {
-        if (err) {
-          logger.error(`Url rewrite error: ${err}`)
-          return err
+      return rewrite.rewriteUrls(
+        body,
+        ctx.authorisedChannel,
+        ctx.authenticationType,
+        (err, newBody) => {
+          if (err) {
+            logger.error(`Url rewrite error: ${err}`)
+            return err
+          }
+          logger.info(`Rewrite URLs for transaction: ${ctx.transactionId}`)
+          return newBody
         }
-        logger.info(`Rewrite URLs for transaction: ${ctx.transactionId}`)
-        return newBody
-      })
+      )
     },
     requestError: function () {},
     responseError: function (err) {
       ctx.state.requestPromise.then(() => {
-        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, () => {})
+        messageStore.updateWithError(
+          ctx,
+          {errorStatusCode: 500, errorMessage: err},
+          () => {}
+        )
       })
     },
     clientError: function (err) {
       ctx.state.requestPromise.then(() => {
-        messageStore.updateWithError(ctx, { errorStatusCode: 500, errorMessage: err }, () => {})
+        messageStore.updateWithError(
+          ctx,
+          {errorStatusCode: 500, errorMessage: err},
+          () => {}
+        )
       })
     },
     timeoutError: function (timeout) {
@@ -535,8 +640,11 @@ async function sendHttpRequest (ctx, route, options) {
 
   options.secured = route.secured
   options.collectResponseBody = ctx.authorisedChannel.rewriteUrls
-  options.timeout = route.timeout != null ? route.timeout : +config.router.timeout
-  options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(ctx.request.method)
+  options.timeout =
+    route.timeout != null ? route.timeout : +config.router.timeout
+  options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(
+    ctx.request.method
+  )
   options.responseBodyRequired = ctx.authorisedChannel.responseBody
 
   return makeStreamingRequest(ctx.state.downstream, options, statusEvents)
@@ -546,14 +654,15 @@ async function sendHttpRequest (ctx, route, options) {
 const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
   return new Promise((resolve, reject) => {
     const response = {}
-    const { downstream } = ctx.state
+    const {downstream} = ctx.state
     let method = http
 
     if (route.secured) {
       method = https
     }
 
-    const routeReq = method.request(options)
+    const routeReq = method
+      .request(options)
       .on('response', routeRes => {
         response.status = routeRes.statusCode
         response.headers = routeRes.headers
@@ -571,11 +680,15 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
         }
 
         uploadStream
-          .on('error', (err) => {
-            logger.error(`Error streaming secondary route response body from '${options.path}' into GridFS: ${err}`)
+          .on('error', err => {
+            logger.error(
+              `Error streaming secondary route response body from '${options.path}' into GridFS: ${err}`
+            )
           })
-          .on('finish', (file) => {
-            logger.info(`Streamed secondary route response body from '${options.path}' into GridFS, body id ${file._id}`)
+          .on('finish', file => {
+            logger.info(
+              `Streamed secondary route response body from '${options.path}' into GridFS, body id ${file._id}`
+            )
           })
 
         const responseBuf = []
@@ -590,7 +703,13 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
               uploadStream.write(chunk)
             }
 
-            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+            if (
+              response.headers != null &&
+              response.headers['content-type'] != null &&
+              response.headers['content-type'].indexOf(
+                'application/json+openhim'
+              ) > -1
+            ) {
               responseBuf.push(chunk)
             }
           })
@@ -598,7 +717,13 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
             logger.info('** END OF OUTPUT STREAM **')
             uploadStream.end()
 
-            if (response.headers != null && response.headers['content-type'] != null && response.headers['content-type'].indexOf('application/json+openhim') > -1) {
+            if (
+              response.headers != null &&
+              response.headers['content-type'] != null &&
+              response.headers['content-type'].indexOf(
+                'application/json+openhim'
+              ) > -1
+            ) {
               response.body = Buffer.concat(responseBuf)
             }
 
@@ -606,22 +731,31 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
             resolve(response)
           })
       })
-      .on('error', (err) => {
-        logger.error(`Error in streaming secondary route request '${options.path}' upstream: ${err}`)
+      .on('error', err => {
+        logger.error(
+          `Error in streaming secondary route request '${options.path}' upstream: ${err}`
+        )
         reject(err)
       })
-      .on('clientError', (err) => {
-        logger.error(`Client error in streaming secondary route request '${options.path}' upstream: ${err}`)
+      .on('clientError', err => {
+        logger.error(
+          `Client error in streaming secondary route request '${options.path}' upstream: ${err}`
+        )
         reject(err)
       })
 
-    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+    const timeout =
+      route.timeout != null ? route.timeout : +config.router.timeout
     routeReq.setTimeout(timeout, () => {
-      routeReq.destroy(new Error(`Secondary route request '${options.path}' took longer than ${timeout}ms`))
+      routeReq.destroy(
+        new Error(
+          `Secondary route request '${options.path}' took longer than ${timeout}ms`
+        )
+      )
     })
 
     downstream
-      .on('data', (chunk) => {
+      .on('data', chunk => {
         if (['POST', 'PUT', 'PATCH'].includes(ctx.request.method)) {
           routeReq.write(chunk)
         }
@@ -629,7 +763,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
       .on('end', () => {
         routeReq.end()
       })
-      .on('error', (err) => {
+      .on('error', err => {
         logger.error(`Error streaming request body downstream: ${err}`)
         reject(err)
       })
@@ -646,7 +780,7 @@ const sendSecondaryRouteHttpRequest = (ctx, route, options) => {
  *
  * Supports both normal and MLLP sockets
  */
-async function sendSocketRequest (ctx, route, options) {
+async function sendSocketRequest(ctx, route, options) {
   const mllpEndChar = String.fromCharCode(0o034)
   const requestBody = ctx.body
 
@@ -680,7 +814,9 @@ async function sendSocketRequest (ctx, route, options) {
   }
 
   const client = method.connect(options, () => {
-    logger.info(`Opened ${route.type} connection to ${options.host}:${options.port}`)
+    logger.info(
+      `Opened ${route.type} connection to ${options.host}:${options.port}`
+    )
     if (route.type === 'tcp') {
       return client.end(requestBody)
     } else if (route.type === 'mllp') {
@@ -691,9 +827,9 @@ async function sendSocketRequest (ctx, route, options) {
   })
 
   const bufs = []
-  client.on('data', (chunk) => {
+  client.on('data', chunk => {
     bufs.push(chunk)
-    if ((route.type === 'mllp') && (chunk.toString().indexOf(mllpEndChar) > -1)) {
+    if (route.type === 'mllp' && chunk.toString().indexOf(mllpEndChar) > -1) {
       logger.debug('Received MLLP response end character')
       return client.end()
     }
@@ -702,13 +838,16 @@ async function sendSocketRequest (ctx, route, options) {
   return new Promise((resolve, reject) => {
     client.on('error', err => reject(err))
 
-    const timeout = route.timeout != null ? route.timeout : +config.router.timeout
+    const timeout =
+      route.timeout != null ? route.timeout : +config.router.timeout
     client.setTimeout(timeout, () => {
       client.destroy(new Error(`Request took longer than ${timeout}ms`))
     })
 
     client.on('end', async () => {
-      logger.info(`Closed ${route.type} connection to ${options.host}:${options.port}`)
+      logger.info(
+        `Closed ${route.type} connection to ${options.host}:${options.port}`
+      )
 
       if (route.secured && !client.authorized) {
         return reject(new Error('Client authorization failed'))
@@ -717,15 +856,21 @@ async function sendSocketRequest (ctx, route, options) {
       response.status = 200
       response.timestamp = new Date()
 
-      if (response.body && ctx.authorisedChannel && ctx.authorisedChannel.responseBody) {
-        ctx.response.bodyId = await extractStringPayloadIntoChunks(response.body)
+      if (
+        response.body &&
+        ctx.authorisedChannel &&
+        ctx.authorisedChannel.responseBody
+      ) {
+        ctx.response.bodyId = await extractStringPayloadIntoChunks(
+          response.body
+        )
       }
       return resolve(response)
     })
   })
 }
 
-function getDestinationPath (route, requestPath) {
+function getDestinationPath(route, requestPath) {
   if (route.path) {
     return route.path
   } else if (route.pathTransform) {
@@ -744,7 +889,7 @@ function getDestinationPath (route, requestPath) {
  *
  * Slashes can be escaped as \/
  */
-export function transformPath (path, expression) {
+export function transformPath(path, expression) {
   // replace all \/'s with a temporary ':' char so that we don't split on those
   // (':' is safe for substitution since it cannot be part of the path)
   let fromRegex
@@ -755,7 +900,7 @@ export function transformPath (path, expression) {
   let to = sub.length > 2 ? sub[2] : ''
   to = to.replace(/:/g, '/')
 
-  if ((sub.length > 3) && (sub[3] === 'g')) {
+  if (sub.length > 3 && sub[3] === 'g') {
     fromRegex = new RegExp(from, 'g')
   } else {
     fromRegex = new RegExp(from)
@@ -775,7 +920,7 @@ export function transformPath (path, expression) {
  * primary has returned an the ctx.response object has been updated to
  * reflect the response from that route.
  */
-export function route (ctx, next) {
+export function route(ctx, next) {
   const channel = ctx.authorisedChannel
   if (!isMethodAllowed(ctx, channel)) {
     next()
@@ -796,20 +941,26 @@ export function route (ctx, next) {
  * @param {any} channel Channel that is getting fired against
  * @returns {Boolean}
  */
-function isMethodAllowed (ctx, channel) {
-  const { request: { method } = {} } = ctx || {}
-  const { methods = [] } = channel || {}
+function isMethodAllowed(ctx, channel) {
+  const {request: {method} = {}} = ctx || {}
+  const {methods = []} = channel || {}
   if (utils.isNullOrWhitespace(method) || methods.length === 0) {
     return true
   }
 
   const isAllowed = methods.indexOf(method.toUpperCase()) !== -1
   if (!isAllowed) {
-    logger.info(`Attempted to use method ${method} with channel ${channel.name} valid methods are ${methods.join(', ')}`)
+    logger.info(
+      `Attempted to use method ${method} with channel ${
+        channel.name
+      } valid methods are ${methods.join(', ')}`
+    )
     Object.assign(ctx.response, {
       status: 405,
       timestamp: new Date(),
-      body: `Request with method ${method} is not allowed. Only ${methods.join(', ')} methods are allowed`
+      body: `Request with method ${method} is not allowed. Only ${methods.join(
+        ', '
+      )} methods are allowed`
     })
   }
 
@@ -822,7 +973,7 @@ function isMethodAllowed (ctx, channel) {
  *
  * Use with: app.use(router.koaMiddleware)
  */
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   const _route = promisify(route)
   if (ctx.authorisedChannel != null) {
     await _route(ctx)

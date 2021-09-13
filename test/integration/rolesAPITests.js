@@ -2,13 +2,13 @@
 
 import request from 'supertest'
 import * as server from '../../src/server'
-import { ClientModel, ChannelModel } from '../../src/model'
+import {ClientModel, ChannelModel} from '../../src/model'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
-import { promisify } from 'util'
-import { ObjectId } from 'mongodb'
+import {promisify} from 'util'
+import {ObjectId} from 'mongodb'
 
-const { SERVER_PORTS } = constants
+const {SERVER_PORTS} = constants
 
 describe('API Integration Tests', () => {
   describe('Roles REST Api testing', () => {
@@ -16,12 +16,14 @@ describe('API Integration Tests', () => {
       name: 'TestChannel1',
       urlPattern: 'test/sample',
       allow: ['role1', 'role2', 'client4'],
-      routes: [{
-        name: 'test route',
-        host: 'localhost',
-        port: 9876,
-        primary: true
-      }],
+      routes: [
+        {
+          name: 'test route',
+          host: 'localhost',
+          port: 9876,
+          primary: true
+        }
+      ],
       updatedBy: {
         id: new ObjectId(),
         name: 'Test'
@@ -32,12 +34,14 @@ describe('API Integration Tests', () => {
       name: 'TestChannel2',
       urlPattern: 'test/sample',
       allow: ['role2', 'role3'],
-      routes: [{
-        name: 'test route',
-        host: 'localhost',
-        port: 9876,
-        primary: true
-      }],
+      routes: [
+        {
+          name: 'test route',
+          host: 'localhost',
+          port: 9876,
+          primary: true
+        }
+      ],
       updatedBy: {
         id: new ObjectId(),
         name: 'Test'
@@ -48,12 +52,14 @@ describe('API Integration Tests', () => {
       name: 'TestChannel3',
       urlPattern: 'test/sample',
       allow: ['channelOnlyRole'],
-      routes: [{
-        name: 'test route',
-        host: 'localhost',
-        port: 9876,
-        primary: true
-      }],
+      routes: [
+        {
+          name: 'test route',
+          host: 'localhost',
+          port: 9876,
+          primary: true
+        }
+      ],
       updatedBy: {
         id: new ObjectId(),
         name: 'Test'
@@ -63,42 +69,31 @@ describe('API Integration Tests', () => {
     const client1Doc = {
       clientID: 'client1',
       name: 'Client 1',
-      roles: [
-        'role1'
-      ]
+      roles: ['role1']
     }
 
     const client2Doc = {
       clientID: 'client2',
       name: 'Client 2',
-      roles: [
-        'role2'
-      ]
+      roles: ['role2']
     }
 
     const client3Doc = {
       clientID: 'client3',
       name: 'Client 3',
-      roles: [
-        'role1',
-        'role3'
-      ]
+      roles: ['role1', 'role3']
     }
 
     const client4Doc = {
       clientID: 'client4',
       name: 'Client 4',
-      roles: [
-        'other-role'
-      ]
+      roles: ['other-role']
     }
 
     const client5Doc = {
       clientID: 'client5',
       name: 'Client 5',
-      roles: [
-        'clientOnlyRole'
-      ]
+      roles: ['clientOnlyRole']
     }
 
     let authDetails
@@ -112,7 +107,7 @@ describe('API Integration Tests', () => {
     before(async () => {
       await Promise.all([
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+        promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
       ])
     })
 
@@ -352,7 +347,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send({
             name: 'role1',
-            channels: [{ _id: `${channel2._id}` }]
+            channels: [{_id: `${channel2._id}`}]
           })
           .expect(400)
       })
@@ -369,7 +364,9 @@ describe('API Integration Tests', () => {
           })
           .expect(400)
 
-        res.text.should.eql('Must specify at least one channel or client to link the role to')
+        res.text.should.eql(
+          'Must specify at least one channel or client to link the role to'
+        )
       })
 
       it('should add a role', async () => {
@@ -381,15 +378,11 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send({
             name: 'role4',
-            channels: [
-              { _id: `${channel1._id}` },
-
-              { _id: `${channel2._id}` }
-            ]
+            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}]
           })
           .expect(201)
 
-        const channels = await ChannelModel.find({ allow: { $in: ['role4'] } })
+        const channels = await ChannelModel.find({allow: {$in: ['role4']}})
         channels.length.should.be.exactly(2)
 
         const mapChId = chns => chns.map(ch => `${ch._id}`)
@@ -406,20 +399,12 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send({
             name: 'role4',
-            channels: [
-              { _id: `${channel1._id}` },
-
-              { _id: `${channel2._id}` }
-            ],
-            clients: [
-              { _id: `${client1._id}` },
-
-              { _id: `${client2._id}` }
-            ]
+            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}],
+            clients: [{_id: `${client1._id}`}, {_id: `${client2._id}`}]
           })
           .expect(201)
 
-        const clients = await ClientModel.find({ roles: { $in: ['role4'] } })
+        const clients = await ClientModel.find({roles: {$in: ['role4']}})
         clients.length.should.be.exactly(2)
         const mapId = arr => arr.map(a => `${a._id}`)
         mapId(clients).should.containEql(`${client1._id}`)
@@ -435,15 +420,11 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send({
             name: 'role4',
-            channels: [
-              { _id: `${channel1._id}` },
-
-              { name: channel2.name }
-            ]
+            channels: [{_id: `${channel1._id}`}, {name: channel2.name}]
           })
           .expect(201)
 
-        const channels = await ChannelModel.find({ allow: { $in: ['role4'] } })
+        const channels = await ChannelModel.find({allow: {$in: ['role4']}})
         channels.length.should.be.exactly(2)
         const mapChId = chns => chns.map(ch => `${ch._id}`)
         mapChId(channels).should.containEql(`${channel1._id}`)
@@ -459,20 +440,16 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send({
             name: 'role4',
-            channels: [
-              { _id: `${channel1._id}` },
-
-              { _id: `${channel2._id}` }
-            ],
+            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}],
             clients: [
-              { _id: `${client1._id}` },
+              {_id: `${client1._id}`},
 
-              { clientID: `${client2.clientID}` }
+              {clientID: `${client2.clientID}`}
             ]
           })
           .expect(201)
 
-        const clients = await ClientModel.find({ roles: { $in: ['role4'] } })
+        const clients = await ClientModel.find({roles: {$in: ['role4']}})
         clients.length.should.be.exactly(2)
         const mapId = arr => arr.map(a => `${a._id}`)
         mapId(clients).should.containEql(`${client1._id}`)
@@ -487,11 +464,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send({
-            channels: [
-              { _id: `${channel1._id}` },
-
-              { _id: `${channel2._id}` }
-            ]
+            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}]
           })
           .expect(400)
       })
@@ -532,7 +505,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send({
             name: 'role4',
-            channels: [{ _id: `${channel1._id}` }]
+            channels: [{_id: `${channel1._id}`}]
           })
           .expect(403)
       })
@@ -546,15 +519,11 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send({
             name: 'role4',
-            clients: [
-              { _id: `${client1._id}` },
-
-              { _id: `${client2._id}` }
-            ]
+            clients: [{_id: `${client1._id}`}, {_id: `${client2._id}`}]
           })
           .expect(201)
 
-        const clients = await ClientModel.find({ roles: { $in: ['role4'] } })
+        const clients = await ClientModel.find({roles: {$in: ['role4']}})
         clients.length.should.be.exactly(2)
 
         const mapId = arr => arr.map(a => `${a._id}`)
@@ -571,14 +540,14 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send({
             name: 'client1',
-            channels: [{ _id: `${channel1._id}` }]
+            channels: [{_id: `${channel1._id}`}]
           })
           .expect(409)
       })
     })
 
     describe('*updateRole()', () => {
-      it('should respond with 404 Not Found if role doesn\'t exist', async () => {
+      it("should respond with 404 Not Found if role doesn't exist", async () => {
         await request(constants.BASE_URL)
           .put('/roles/role4')
           .set('auth-username', testUtils.rootUser.email)
@@ -586,7 +555,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send({
-            channels: [{ _id: `${channel1._id}` }]
+            channels: [{_id: `${channel1._id}`}]
           })
           .expect(404)
       })
@@ -639,10 +608,10 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send({
-            channels: [{ _id: `${channel2._id}` }]
+            channels: [{_id: `${channel2._id}`}]
           })
           .expect(200)
-        const channels = await ChannelModel.find({ allow: { $in: ['role1'] } })
+        const channels = await ChannelModel.find({allow: {$in: ['role1']}})
         channels.length.should.be.exactly(1)
         const mapChId = chns => chns.map(ch => `${ch._id}`)
         mapChId(channels).should.containEql(`${channel2._id}`)
@@ -656,15 +625,11 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send({
-            clients: [
-              { _id: `${client2._id}` },
-
-              { _id: `${client3._id}` }
-            ]
+            clients: [{_id: `${client2._id}`}, {_id: `${client3._id}`}]
           })
           .expect(200)
 
-        const clients = await ClientModel.find({ roles: { $in: ['role1'] } })
+        const clients = await ClientModel.find({roles: {$in: ['role1']}})
         clients.length.should.be.exactly(2)
         const mapId = arr => arr.map(a => `${a._id}`)
         mapId(clients).should.containEql(`${client2._id}`)
@@ -679,15 +644,11 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send({
-            channels: [
-              { _id: `${channel1._id}` },
-
-              { _id: `${channel2._id}` }
-            ]
+            channels: [{_id: `${channel1._id}`}, {_id: `${channel2._id}`}]
           })
           .expect(200)
 
-        const channels = await ChannelModel.find({ allow: { $in: ['role1'] } })
+        const channels = await ChannelModel.find({allow: {$in: ['role1']}})
         channels.length.should.be.exactly(2)
         const mapChId = chns => chns.map(ch => `${ch._id}`)
         mapChId(channels).should.containEql(`${channel1._id}`)
@@ -706,7 +667,7 @@ describe('API Integration Tests', () => {
           })
           .expect(200)
 
-        const channels = await ChannelModel.find({ allow: { $in: ['role2'] } })
+        const channels = await ChannelModel.find({allow: {$in: ['role2']}})
         channels.length.should.be.exactly(0)
       })
 
@@ -722,7 +683,7 @@ describe('API Integration Tests', () => {
           })
           .expect(200)
 
-        const clients = await ClientModel.find({ roles: { $in: ['role2'] } })
+        const clients = await ClientModel.find({roles: {$in: ['role2']}})
         clients.length.should.be.exactly(1)
       })
 
@@ -734,11 +695,11 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send({
-            channels: [{ name: channel2.name }]
+            channels: [{name: channel2.name}]
           })
           .expect(200)
 
-        const channels = await ChannelModel.find({ allow: { $in: ['role1'] } })
+        const channels = await ChannelModel.find({allow: {$in: ['role1']}})
         channels.length.should.be.exactly(1)
         const mapChId = chns => chns.map(ch => `${ch._id}`)
         mapChId(channels).should.containEql(`${channel2._id}`)
@@ -752,7 +713,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send({
-            channels: [{ _id: `${channel2._id}` }]
+            channels: [{_id: `${channel2._id}`}]
           })
           .expect(403)
       })
@@ -769,12 +730,16 @@ describe('API Integration Tests', () => {
           })
           .expect(200)
 
-        const channels = await ChannelModel.find({ allow: { $in: ['the-new-role-name'] } })
+        const channels = await ChannelModel.find({
+          allow: {$in: ['the-new-role-name']}
+        })
         channels.length.should.be.exactly(1)
         const mapChId = chns => chns.map(ch => `${ch._id}`)
         mapChId(channels).should.containEql(`${channel1._id}`)
 
-        const clients = await ClientModel.find({ roles: { $in: ['the-new-role-name'] } })
+        const clients = await ClientModel.find({
+          roles: {$in: ['the-new-role-name']}
+        })
         clients.length.should.be.exactly(2)
         const mapClId = cls => cls.map(cl => `${cl._id}`)
         mapClId(clients).should.containEql(`${client1._id}`)
@@ -809,7 +774,7 @@ describe('API Integration Tests', () => {
     })
 
     describe('*deleteRole()', () => {
-      it('should respond with 404 Not Found if role doesn\'t exist', async () => {
+      it("should respond with 404 Not Found if role doesn't exist", async () => {
         await request(constants.BASE_URL)
           .put('/roles/role4')
           .set('auth-username', testUtils.rootUser.email)
@@ -817,7 +782,7 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .send({
-            channels: [{ _id: `${channel1._id}` }]
+            channels: [{_id: `${channel1._id}`}]
           })
           .expect(404)
       })
@@ -831,14 +796,14 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const channels = await ChannelModel.find({ allow: { $in: ['role2'] } })
+        const channels = await ChannelModel.find({allow: {$in: ['role2']}})
         channels.length.should.be.exactly(0)
 
-        const clients = await ClientModel.find({ roles: { $in: ['role2'] } })
+        const clients = await ClientModel.find({roles: {$in: ['role2']}})
         clients.length.should.be.exactly(0)
       })
 
-      it('should delete a role that\'s only linked to a client', async () => {
+      it("should delete a role that's only linked to a client", async () => {
         await request(constants.BASE_URL)
           .delete('/roles/other-role')
           .set('auth-username', testUtils.rootUser.email)
@@ -847,7 +812,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const clients = await ClientModel.find({ roles: { $in: ['other-role'] } })
+        const clients = await ClientModel.find({roles: {$in: ['other-role']}})
         clients.length.should.be.exactly(0)
       })
 

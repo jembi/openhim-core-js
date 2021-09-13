@@ -1,11 +1,11 @@
 'use strict'
 
 import logger from 'winston'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as autoRetryUtils from '../autoRetry'
 import * as metrics from '../metrics'
-import { extractTransactionPayloadIntoChunks } from '../contentChunk'
+import {extractTransactionPayloadIntoChunks} from '../contentChunk'
 import * as transactions from '../model/transactions'
 
 export const transactionStatus = {
@@ -16,11 +16,11 @@ export const transactionStatus = {
   FAILED: 'Failed'
 }
 
-function copyMapWithEscapedReservedCharacters (map) {
+function copyMapWithEscapedReservedCharacters(map) {
   const escapedMap = {}
   for (let k in map) {
     const v = map[k]
-    if ((k.indexOf('.') > -1) || (k.indexOf('$') > -1)) {
+    if (k.indexOf('.') > -1 || k.indexOf('$') > -1) {
       k = k.replace('.', '\uff0e').replace('$', '\uff04')
     }
     escapedMap[k] = v
@@ -28,9 +28,13 @@ function copyMapWithEscapedReservedCharacters (map) {
   return escapedMap
 }
 
-function getTransactionId (ctx) {
+function getTransactionId(ctx) {
   if (ctx) {
-    if (ctx.request && ctx.request.header && ctx.request.header['X-OpenHIM-TransactionID']) {
+    if (
+      ctx.request &&
+      ctx.request.header &&
+      ctx.request.header['X-OpenHIM-TransactionID']
+    ) {
       return ctx.request.header['X-OpenHIM-TransactionID']
     } else if (ctx.transactionId) {
       return ctx.transactionId.toString()
@@ -45,7 +49,7 @@ function getTransactionId (ctx) {
  *  Persist a new transaction once a Request has started streaming into the HIM.
  *  Returns a promise because the other persist routines need to be chained to this one.
  */
-export async function initiateRequest (ctx) {
+export async function initiateRequest(ctx) {
   return new Promise((resolve, reject) => {
     if (ctx && !ctx.requestTimestamp) {
       ctx.requestTimestamp = new Date()
@@ -55,12 +59,13 @@ export async function initiateRequest (ctx) {
 
     const tx = new transactions.TransactionModel({
       status: transactionStatus.PROCESSING,
-      clientID: (ctx.authenticated != null ? ctx.authenticated._id : undefined),
-      channelID: (ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined),
+      clientID: ctx.authenticated != null ? ctx.authenticated._id : undefined,
+      channelID:
+        ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined,
       clientIP: ctx.ip,
       request: {
-        host: (ctx.host != null ? ctx.host.split(':')[0] : undefined),
-        port: (ctx.host != null ? ctx.host.split(':')[1] : undefined),
+        host: ctx.host != null ? ctx.host.split(':')[0] : undefined,
+        port: ctx.host != null ? ctx.host.split(':')[1] : undefined,
         path: ctx.path,
         headers,
         querystring: ctx.querystring,
@@ -79,7 +84,10 @@ export async function initiateRequest (ctx) {
     }
 
     // check if channel request body is false and remove - or if request body is empty
-    if ((ctx.authorisedChannel && ctx.authorisedChannel.requestBody === false) || (tx.request.body === '')) {
+    if (
+      (ctx.authorisedChannel && ctx.authorisedChannel.requestBody === false) ||
+      tx.request.body === ''
+    ) {
       // reset request body
       ctx.body = ''
       // check if method is POST|PUT|PATCH - rerun not possible without request body
@@ -90,7 +98,9 @@ export async function initiateRequest (ctx) {
 
     tx.save((err, tx) => {
       if (err) {
-        logger.error(`Could not save transaction metadata (initiateRequest): ${err}`)
+        logger.error(
+          `Could not save transaction metadata (initiateRequest): ${err}`
+        )
         reject(err)
       } else {
         ctx.transactionId = tx._id
@@ -106,7 +116,7 @@ export async function initiateRequest (ctx) {
  *  Find and update an existing transaction once a Request has completed streaming
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
-export function completeRequest (ctx, done) {
+export function completeRequest(ctx, done) {
   if (ctx && !ctx.requestTimestampEnd) {
     ctx.requestTimestampEnd = new Date()
   }
@@ -114,7 +124,9 @@ export function completeRequest (ctx, done) {
   const transactionId = getTransactionId(ctx)
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
-    if (err) { return done(err) }
+    if (err) {
+      return done(err)
+    }
 
     if (!tx) {
       const errorMessage = `Could not find transaction with id ${transactionId}`
@@ -135,24 +147,32 @@ export function completeRequest (ctx, done) {
     }
 
     const update = {
-      channelID: (ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined),
+      channelID:
+        ctx.authorisedChannel != null ? ctx.authorisedChannel._id : undefined,
       'request.bodyId': ctx.request.bodyId,
       'request.timestamp': t,
       'request.timestampEnd': ctx.requestTimestampEnd
     }
 
-    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: false }, (err, tx) => {
-      if (err) {
-        logger.error(`Could not save transaction metadata (completeRequest): ${transactionId}. ${err}`)
-        return done(err)
+    transactions.TransactionModel.findByIdAndUpdate(
+      transactionId,
+      update,
+      {new: false},
+      (err, tx) => {
+        if (err) {
+          logger.error(
+            `Could not save transaction metadata (completeRequest): ${transactionId}. ${err}`
+          )
+          return done(err)
+        }
+        if (tx === undefined || tx === null) {
+          logger.error(`Could not find transaction: ${transactionId}`)
+          return done(err)
+        }
+        logger.info(`Done completeRequest for transaction: ${tx._id}`)
+        done(null, tx)
       }
-      if ((tx === undefined) || (tx === null)) {
-        logger.error(`Could not find transaction: ${transactionId}`)
-        return done(err)
-      }
-      logger.info(`Done completeRequest for transaction: ${tx._id}`)
-      done(null, tx)
-    })
+    )
   })
 }
 
@@ -160,7 +180,7 @@ export function completeRequest (ctx, done) {
  *  Update an existing transaction once a Response has started streaming
  *    into the HIM
  */
-export function initiateResponse (ctx, done) {
+export function initiateResponse(ctx, done) {
   if (ctx && !ctx.responseTimestamp) {
     ctx.responseTimestamp = new Date()
   }
@@ -184,26 +204,33 @@ export function initiateResponse (ctx, done) {
   }
 
   // await extractTransactionPayloadIntoChunks(update)
-  transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
-    if (err) {
-      logger.error(`Could not save transaction metadata (initiateResponse): ${transactionId}. ${err}`)
-      return done(err)
+  transactions.TransactionModel.findByIdAndUpdate(
+    transactionId,
+    update,
+    {runValidators: true},
+    (err, tx) => {
+      if (err) {
+        logger.error(
+          `Could not save transaction metadata (initiateResponse): ${transactionId}. ${err}`
+        )
+        return done(err)
+      }
+      if (!tx) {
+        const errorMessage = `Could not find transaction: ${transactionId}`
+        logger.error(errorMessage)
+        return done(new Error(errorMessage))
+      }
+      logger.info(`Done initiateResponse for transaction: ${tx._id}`)
+      done(null, tx)
     }
-    if (!tx) {
-      const errorMessage = `Could not find transaction: ${transactionId}`
-      logger.error(errorMessage)
-      return done(new Error(errorMessage))
-    }
-    logger.info(`Done initiateResponse for transaction: ${tx._id}`)
-    done(null, tx)
-  })
+  )
 }
 
 /*
  *  Find and update an existing transaction once a Response has completed streaming
  *    into the HIM (Not async; Mongo should handle locking issues, etc)
  */
-export function completeResponse (ctx) {
+export function completeResponse(ctx) {
   return new Promise((resolve, reject) => {
     ctx.responseTimestampEnd = new Date()
 
@@ -239,19 +266,26 @@ export function completeResponse (ctx) {
       update.orchestrations.push(...ctx.orchestrations)
     }
 
-    return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
-      if (err) {
-        logger.error(`Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`)
-        return reject(err)
+    return transactions.TransactionModel.findByIdAndUpdate(
+      transactionId,
+      update,
+      {runValidators: true},
+      (err, tx) => {
+        if (err) {
+          logger.error(
+            `Could not save transaction metadata (completeResponse): ${ctx.transactionId}. ${err}`
+          )
+          return reject(err)
+        }
+        if (!tx) {
+          const errorMessage = `Could not find transaction: ${ctx.transactionId}`
+          logger.error(errorMessage)
+          return reject(new Error(errorMessage))
+        }
+        logger.info(`Done completeResponse for transaction: ${tx._id}`)
+        resolve(tx)
       }
-      if (!tx) {
-        const errorMessage = `Could not find transaction: ${ctx.transactionId}`
-        logger.error(errorMessage)
-        return reject(new Error(errorMessage))
-      }
-      logger.info(`Done completeResponse for transaction: ${tx._id}`)
-      resolve(tx)
-    })
+    )
   })
 }
 
@@ -259,7 +293,7 @@ export function completeResponse (ctx) {
  *  Find and update an existing transaction if a Response doesn't finish streaming
  *    upstream from the HIM (Not async; Mongo should handle locking issues, etc)
  */
-export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
+export function updateWithError(ctx, {errorStatusCode, errorMessage}, done) {
   const transactionId = getTransactionId(ctx)
 
   ctx.response.status = errorStatusCode
@@ -272,22 +306,29 @@ export function updateWithError (ctx, { errorStatusCode, errorMessage }, done) {
     }
   }
 
-  return transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { runValidators: true }, (err, tx) => {
-    if (err) {
-      logger.error(`Could not save transaction metadata (updateWithError): ${ctx.transactionId}. ${err}`)
-      return done(err)
+  return transactions.TransactionModel.findByIdAndUpdate(
+    transactionId,
+    update,
+    {runValidators: true},
+    (err, tx) => {
+      if (err) {
+        logger.error(
+          `Could not save transaction metadata (updateWithError): ${ctx.transactionId}. ${err}`
+        )
+        return done(err)
+      }
+      if (!tx) {
+        const errorMessage = `Could not find transaction: ${ctx.transactionId}`
+        logger.error(errorMessage)
+        return done(new Error(errorMessage))
+      }
+      logger.info(`Done updateWithError for transaction: ${tx._id}`)
+      done(null, tx)
     }
-    if (!tx) {
-      const errorMessage = `Could not find transaction: ${ctx.transactionId}`
-      logger.error(errorMessage)
-      return done(new Error(errorMessage))
-    }
-    logger.info(`Done updateWithError for transaction: ${tx._id}`)
-    done(null, tx)
-  })
+  )
 }
 
-export async function storeNonPrimaryResponse (ctx, route, done) {
+export async function storeNonPrimaryResponse(ctx, route, done) {
   // check whether route exists and has a response body
   if (!route || !route.response) {
     logger.error('route is invalid')
@@ -301,12 +342,16 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
   await extractTransactionPayloadIntoChunks(route)
 
   if (ctx.transactionId != null) {
-    transactions.TransactionModel.findByIdAndUpdate(ctx.transactionId, { $push: { routes: route } }, (err, tx) => {
-      if (err) {
-        logger.error(err)
+    transactions.TransactionModel.findByIdAndUpdate(
+      ctx.transactionId,
+      {$push: {routes: route}},
+      (err, tx) => {
+        if (err) {
+          logger.error(err)
+        }
+        return done(tx)
       }
-      return done(tx)
-    })
+    )
   } else {
     return logger.error('the request has no transactionId')
   }
@@ -320,8 +365,8 @@ export async function storeNonPrimaryResponse (ctx, route, done) {
  *
  * This should only be called once all routes have responded.
  */
-export function setFinalStatus (ctx, callback) {
-  function getRoutesStatus (routes) {
+export function setFinalStatus(ctx, callback) {
+  function getRoutesStatus(routes) {
     const routesStatus = {
       routeFailures: false,
       routeSuccess: true
@@ -341,7 +386,7 @@ export function setFinalStatus (ctx, callback) {
     return routesStatus
   }
 
-  function getContextResult () {
+  function getContextResult() {
     let result
     const routesStatus = getRoutesStatus(ctx.routes)
 
@@ -355,10 +400,18 @@ export function setFinalStatus (ctx, callback) {
       if (routesStatus.routeFailures) {
         result = transactionStatus.COMPLETED_W_ERR
       }
-      if ((ctx.response.status >= 200 && ctx.response.status <= 299) && routesStatus.routeSuccess) {
+      if (
+        ctx.response.status >= 200 &&
+        ctx.response.status <= 299 &&
+        routesStatus.routeSuccess
+      ) {
         result = transactionStatus.SUCCESSFUL
       }
-      if ((ctx.response.status >= 400 && ctx.response.status <= 499) && routesStatus.routeSuccess) {
+      if (
+        ctx.response.status >= 400 &&
+        ctx.response.status <= 499 &&
+        routesStatus.routeSuccess
+      ) {
         result = transactionStatus.COMPLETED
       }
     }
@@ -374,7 +427,9 @@ export function setFinalStatus (ctx, callback) {
   const transactionId = getTransactionId(ctx)
 
   return transactions.TransactionModel.findById(transactionId, (err, tx) => {
-    if (err) { return callback(err) }
+    if (err) {
+      return callback(err)
+    }
 
     if (!tx) {
       const errorMessage = `Could not find transaction: ${transactionId}`
@@ -384,8 +439,14 @@ export function setFinalStatus (ctx, callback) {
 
     const update = {}
 
-    if ((ctx.mediatorResponse != null ? ctx.mediatorResponse.status : undefined) != null) {
-      logger.debug(`The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`)
+    if (
+      (ctx.mediatorResponse != null
+        ? ctx.mediatorResponse.status
+        : undefined) != null
+    ) {
+      logger.debug(
+        `The transaction status has been set to ${ctx.mediatorResponse.status} by the mediator`
+      )
       update.status = ctx.mediatorResponse.status
     } else {
       tx.status = getContextResult()
@@ -401,31 +462,40 @@ export function setFinalStatus (ctx, callback) {
       }
     }
 
-    transactions.TransactionModel.findByIdAndUpdate(transactionId, update, { new: true }, (err, tx) => {
-      if (err) { return callback(err) }
+    transactions.TransactionModel.findByIdAndUpdate(
+      transactionId,
+      update,
+      {new: true},
+      (err, tx) => {
+        if (err) {
+          return callback(err)
+        }
 
-      if (!tx) {
-        const errorMessage = `Could not find transaction: ${transactionId}`
-        logger.error(errorMessage)
-        return callback(new Error(errorMessage))
+        if (!tx) {
+          const errorMessage = `Could not find transaction: ${transactionId}`
+          logger.error(errorMessage)
+          return callback(new Error(errorMessage))
+        }
+
+        callback(null, tx)
+
+        // queue for autoRetry
+        if (update.autoRetry) {
+          autoRetryUtils.queueForRetry(tx)
+        }
+
+        // Asynchronously record transaction metrics
+        metrics.recordTransactionMetrics(tx).catch(err => {
+          logger.error(
+            `Recording transaction metrics failed for transaction: ${tx._id}: ${err}`
+          )
+        })
       }
-
-      callback(null, tx)
-
-      // queue for autoRetry
-      if (update.autoRetry) {
-        autoRetryUtils.queueForRetry(tx)
-      }
-
-      // Asynchronously record transaction metrics
-      metrics.recordTransactionMetrics(tx).catch(err => {
-        logger.error(`Recording transaction metrics failed for transaction: ${tx._id}: ${err}`)
-      })
-    })
+    )
   })
 }
 
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   const saveTransaction = promisify(initiateRequest)
   await saveTransaction(ctx)
   await next()

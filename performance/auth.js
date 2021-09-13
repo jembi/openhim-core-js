@@ -6,12 +6,15 @@ const rootUser = {
   salt: '22a61686-66f6-483c-a524-185aac251fb0'
 }
 
-export function getTestAuthHeaders () {
+export function getTestAuthHeaders() {
   const timestamp = new Date().toISOString()
   return {
     'auth-username': rootUser.email,
     'auth-ts': timestamp,
     'auth-salt': rootUser.salt,
-    'auth-token': crypto.sha512(rootUser.hash + rootUser.salt + timestamp, 'hex')
+    'auth-token': crypto.sha512(
+      rootUser.hash + rootUser.salt + timestamp,
+      'hex'
+    )
   }
 }

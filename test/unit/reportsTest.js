@@ -6,13 +6,13 @@
 import moment from 'moment'
 import mongoose from 'mongoose'
 import should from 'should'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as reports from '../../src/reports'
 import * as testUtils from '../utils'
-import { ChannelModel, TransactionModel, UserModel } from '../../src/model'
-import { config } from '../../src/config'
+import {ChannelModel, TransactionModel, UserModel} from '../../src/model'
+import {config} from '../../src/config'
 
 const testUser1 = new UserModel({
   firstname: 'User',
@@ -41,9 +41,7 @@ const channel1 = new ChannelModel({
   name: 'Test Channel 11111',
   urlPattern: 'test/sample',
   allow: ['PoC', 'Test1', 'Test2'],
-  routes: [
-    { name: 'test route', host: 'localhost', port: 9876 }
-  ],
+  routes: [{name: 'test route', host: 'localhost', port: 9876}],
   updatedBy: {
     id: new ObjectId(),
     name: 'Test'
@@ -55,9 +53,7 @@ const channel2 = new ChannelModel({
   name: 'Test Channel 22222',
   urlPattern: 'test/sample',
   allow: ['PoC', 'Test1', 'Test2'],
-  routes: [
-    { name: 'test route', host: 'localhost', port: 9876 }
-  ],
+  routes: [{name: 'test route', host: 'localhost', port: 9876}],
   updatedBy: {
     id: new ObjectId(),
     name: 'Test'
@@ -93,8 +89,7 @@ describe('Transaction Reports', () => {
     it('default config should contain reporting config fields', () => {
       should.exist(config.reports)
       should.exist(config.reports.enableReports)
-    })
-  )
+    }))
 
   describe('Subscribers', () => {
     it('should fetch weekly subscribers', async () => {
@@ -114,7 +109,13 @@ describe('Transaction Reports', () => {
     it('should return a daily channel Report', async () => {
       const from = moment('2014-07-15').startOf('day')
       const to = moment('2014-07-15').endOf('day')
-      const item = await promisify(reports.fetchChannelReport)(channel2, testUser1, 'dailyReport', from, to)
+      const item = await promisify(reports.fetchChannelReport)(
+        channel2,
+        testUser1,
+        'dailyReport',
+        from,
+        to
+      )
       item.data.length.should.eql(1)
       item.data[0].should.have.property('requests', 1)
       item.data[0].should.have.property('responseTime', 100)
@@ -125,7 +126,13 @@ describe('Transaction Reports', () => {
       const date = '2014-07-22'
       const from = moment(date).startOf('isoWeek').subtract(1, 'weeks')
       const to = moment(date).endOf('isoWeek').subtract(1, 'weeks')
-      const item = await promisify(reports.fetchChannelReport)(channel2, testUser1, 'dailyReport', from, to)
+      const item = await promisify(reports.fetchChannelReport)(
+        channel2,
+        testUser1,
+        'dailyReport',
+        from,
+        to
+      )
 
       item.data.length.should.eql(5)
 

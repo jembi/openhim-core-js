@@ -4,7 +4,7 @@ const BodyStream = require('./body-stream')
 
 const DELAY = +(process.env.DELAY || 500)
 
-function sendHttpHeaders (conn) {
+function sendHttpHeaders(conn) {
   conn.write('HTTP/1.1 200 OK\r\n')
   conn.write('Connection: close\r\n')
   conn.write('Content-Encoding: identity\r\n')
@@ -12,7 +12,7 @@ function sendHttpHeaders (conn) {
   conn.write('\r\n')
 }
 
-exports.handleBodyRequest = (conn) => {
+exports.handleBodyRequest = conn => {
   conn.on('error', console.error)
   conn.once('data', () => {
     sendHttpHeaders(conn)
@@ -20,7 +20,7 @@ exports.handleBodyRequest = (conn) => {
   })
 }
 
-exports.handleDelayRequest = (conn) => {
+exports.handleDelayRequest = conn => {
   conn.on('error', console.error)
   conn.once('data', () => {
     sendHttpHeaders(conn)
@@ -31,7 +31,7 @@ exports.handleDelayRequest = (conn) => {
   })
 }
 
-exports.handleImmediateRequest = (conn) => {
+exports.handleImmediateRequest = conn => {
   conn.on('error', console.error)
   conn.once('data', () => {
     sendHttpHeaders(conn)

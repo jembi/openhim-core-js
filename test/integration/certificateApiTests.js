@@ -6,14 +6,14 @@
 import fs from 'fs'
 import request from 'supertest'
 import should from 'should'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { KeystoreModelAPI } from '../../src/model/keystore'
+import {KeystoreModelAPI} from '../../src/model/keystore'
 
-const { SERVER_PORTS } = constants
+const {SERVER_PORTS} = constants
 
 describe('API Integration Tests', () => {
   describe('Certificate API Tests', () => {
@@ -21,7 +21,7 @@ describe('API Integration Tests', () => {
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
       authDetails = await testUtils.getAuthDetails()
     })
 
@@ -73,8 +73,12 @@ describe('API Integration Tests', () => {
     })
 
     it('Should create a new server certificate', async () => {
-      const serverCert = await fs.readFileSync('test/resources/server-tls/cert.pem')
-      const serverKey = await fs.readFileSync('test/resources/server-tls/key.pem')
+      const serverCert = await fs.readFileSync(
+        'test/resources/server-tls/cert.pem'
+      )
+      const serverKey = await fs.readFileSync(
+        'test/resources/server-tls/key.pem'
+      )
 
       const postData = {
         type: 'server',

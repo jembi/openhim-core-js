@@ -4,9 +4,9 @@ import logger from 'winston'
 import momentTZ from 'moment-timezone'
 import _ from 'lodash'
 
-import { ChannelModel } from './model/channels'
-import { KeystoreModel } from './model/keystore'
-import { config } from './config'
+import {ChannelModel} from './model/channels'
+import {KeystoreModel} from './model/keystore'
+import {config} from './config'
 
 config.caching = config.get('caching')
 config.api = config.get('api')
@@ -18,11 +18,11 @@ config.api = config.get('api')
  * @param {string} value that needs to be matched
  * @returns {RegExp} regex that will match case insensitive
  */
-export function caseInsensitiveRegex (value) {
+export function caseInsensitiveRegex(value) {
   return new RegExp(`^${_.escapeRegExp(value)}$`, 'i')
 }
 
-export function isNullOrEmpty (arr) {
+export function isNullOrEmpty(arr) {
   if (arr == null) {
     return true
   }
@@ -30,12 +30,12 @@ export function isNullOrEmpty (arr) {
   return arr.length === 0
 }
 
-export function isNullOrWhitespace (value) {
+export function isNullOrWhitespace(value) {
   return /^\s*$/.test(value || '')
 }
 
 // function to log errors and return response
-export function logAndSetResponse (ctx, status, msg, logLevel) {
+export function logAndSetResponse(ctx, status, msg, logLevel) {
   logger[logLevel](msg)
   ctx.body = msg
   ctx.status = status
@@ -45,17 +45,28 @@ export function logAndSetResponse (ctx, status, msg, logLevel) {
 
 const cacheValueStore = {}
 
-const { refreshMillis } = config.caching
+const {refreshMillis} = config.caching
 
-function getCachedValues (store, callback) {
-  const lastCheck = cacheValueStore[`${store}`] != null ? cacheValueStore[`${store}`].lastCheck : undefined
+function getCachedValues(store, callback) {
+  const lastCheck =
+    cacheValueStore[`${store}`] != null
+      ? cacheValueStore[`${store}`].lastCheck
+      : undefined
 
-  if (!config.caching.enabled || (lastCheck == null) || (((new Date()) - lastCheck) > refreshMillis)) {
+  if (
+    !config.caching.enabled ||
+    lastCheck == null ||
+    new Date() - lastCheck > refreshMillis
+  ) {
     const handler = (err, results) => {
-      if (err) { return callback(err) }
+      if (err) {
+        return callback(err)
+      }
 
       if (config.caching.enabled) {
-        if (!lastCheck) { cacheValueStore[`${store}`] = {} }
+        if (!lastCheck) {
+          cacheValueStore[`${store}`] = {}
+        }
         cacheValueStore[`${store}`].value = results
         cacheValueStore[`${store}`].lastCheck = new Date()
       }
@@ -65,21 +76,23 @@ function getCachedValues (store, callback) {
 
     // TODO make this more generic (had issues passing Channel.find as a param [higher order function])
     if (store === 'channels') {
-      return ChannelModel.find({}).sort({ priority: 1 }).exec((err, channels) => {
-        if (err) {
-          return handler(err)
-        }
-        const noPriorityChannels = []
-        const sortedChannels = []
-        channels.forEach((channel) => {
-          if (channel.priority == null) {
-            return noPriorityChannels.push(channel)
-          } else {
-            return sortedChannels.push(channel)
+      return ChannelModel.find({})
+        .sort({priority: 1})
+        .exec((err, channels) => {
+          if (err) {
+            return handler(err)
           }
+          const noPriorityChannels = []
+          const sortedChannels = []
+          channels.forEach(channel => {
+            if (channel.priority == null) {
+              return noPriorityChannels.push(channel)
+            } else {
+              return sortedChannels.push(channel)
+            }
+          })
+          return handler(null, sortedChannels.concat(noPriorityChannels))
         })
-        return handler(null, sortedChannels.concat(noPriorityChannels))
-      })
     } else if (store === 'keystore') {
       return KeystoreModel.findOne({}, handler)
     } else {
@@ -90,15 +103,21 @@ function getCachedValues (store, callback) {
   }
 }
 
-export function getAllChannelsInPriorityOrder (callback) { return getCachedValues('channels', callback) }
+export function getAllChannelsInPriorityOrder(callback) {
+  return getCachedValues('channels', callback)
+}
 
-export function getKeystore (callback) { return getCachedValues('keystore', callback) }
+export function getKeystore(callback) {
+  return getCachedValues('keystore', callback)
+}
 
 // function to check if string match status code pattern
-export function statusCodePatternMatch (string, callback) { return /\dxx/.test(string) }
+export function statusCodePatternMatch(string) {
+  return /\dxx/.test(string)
+}
 
 // returns an array with no duplicates
-export function uniqArray (arr) {
+export function uniqArray(arr) {
   const dict = arr.reduce((p, c) => {
     p[c] = c
     return p
@@ -113,10 +132,11 @@ export function uniqArray (arr) {
 }
 
 // thanks to https://coffeescript-cookbook.github.io/chapters/arrays/check-type-is-array
-export const typeIsArray = Array.isArray || (value => ({}.toString.call(value) === '[object Array]'))
+export const typeIsArray =
+  Array.isArray || (value => ({}.toString.call(value) === '[object Array]'))
 
 // get the server timezone
-export function serverTimezone () {
+export function serverTimezone() {
   return momentTZ.tz.guess()
 }
 
@@ -126,7 +146,7 @@ export function serverTimezone () {
  * @param {Object} authenticated The authenticated user.
  * @return {Object} The object containing selected audit fields.
  */
-export function selectAuditFields (authenticated) {
+export function selectAuditFields(authenticated) {
   return {
     id: authenticated._id,
     name: `${authenticated.firstname} ${authenticated.surname}`
@@ -139,7 +159,7 @@ export function selectAuditFields (authenticated) {
  * @param {Object} headers The object that contains the request headers.
  * @return {Object} The content type charset value.
  */
-export function obtainCharset (headers) {
+export function obtainCharset(headers) {
   const contentType = headers['content-type'] || ''
   const matches = contentType.match(/charset=([^;,\r\n]+)/i)
   if (matches && matches[1]) {
@@ -148,9 +168,11 @@ export function obtainCharset (headers) {
   return 'utf-8'
 }
 
-export function makeQuerablePromise (promise) {
+export function makeQuerablePromise(promise) {
   // Don't create a wrapper for promises that can already be queried.
-  if (promise.isResolved) { return promise }
+  if (promise.isResolved) {
+    return promise
+  }
 
   let isResolved = false
   let isRejected = false
@@ -167,9 +189,15 @@ export function makeQuerablePromise (promise) {
     }
   )
 
-  result.isSettled = () => { return isResolved || isRejected }
-  result.isResolved = () => { return isResolved }
-  result.isRejected = () => { return isRejected }
+  result.isSettled = () => {
+    return isResolved || isRejected
+  }
+  result.isResolved = () => {
+    return isResolved
+  }
+  result.isRejected = () => {
+    return isRejected
+  }
 
   return result
 }

@@ -6,16 +6,16 @@ import moment from 'moment'
 import request from 'supertest'
 import should from 'should'
 import sinon from 'sinon'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as contact from '../../src/contact'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { UserModelAPI } from '../../src/model/users'
+import {UserModelAPI} from '../../src/model/users'
 
 describe('API Integration Tests', () => {
-  const { SERVER_PORTS } = constants
+  const {SERVER_PORTS} = constants
 
   describe('Users REST Api testing', () => {
     const user1 = new UserModelAPI({
@@ -69,7 +69,7 @@ describe('API Integration Tests', () => {
         newUser.save(),
         newUserExpired.save(),
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+        promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
       ])
     })
 
@@ -81,7 +81,9 @@ describe('API Integration Tests', () => {
       ])
     })
 
-    beforeEach(() => { authDetails = testUtils.getAuthDetails() })
+    beforeEach(() => {
+      authDetails = testUtils.getAuthDetails()
+    })
 
     describe('*authenticate(email)', () => {
       it('should return the requested users salt', async () => {
@@ -126,7 +128,7 @@ describe('API Integration Tests', () => {
           .get('/password-reset-request/r..@jembi.org')
           .expect(201)
 
-        const user = await UserModelAPI.findOne({ email: 'r..@jembi.org' })
+        const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
         user.should.have.property('firstname', 'Ryan')
         user.should.have.property('surname', 'Chrichton')
         user.should.have.property('token')
@@ -143,7 +145,7 @@ describe('API Integration Tests', () => {
           .get('/password-reset-request/R..@jembi.org')
           .expect(201)
 
-        const user = await UserModelAPI.findOne({ email: user1.email })
+        const user = await UserModelAPI.findOne({email: user1.email})
         user.should.have.property('firstname', 'Ryan')
         user.email.should.eql('r..@jembi.org')
         await stubContact.restore()
@@ -217,12 +219,18 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const user = await UserModelAPI.findOne({ email: 'jane@doe.net' })
+        const user = await UserModelAPI.findOne({email: 'jane@doe.net'})
 
         user.should.have.property('firstname', 'Jane Sally')
         user.should.have.property('surname', 'Doe')
-        user.should.have.property('passwordHash', 'af200ab5-4227-4840-97d1-92ba91206499')
-        user.should.have.property('passwordSalt', 'eca7205c-2129-4558-85da-45845d17bd5f')
+        user.should.have.property(
+          'passwordHash',
+          'af200ab5-4227-4840-97d1-92ba91206499'
+        )
+        user.should.have.property(
+          'passwordSalt',
+          'eca7205c-2129-4558-85da-45845d17bd5f'
+        )
         user.should.have.property('token', null)
         user.should.have.property('tokenType', null)
         user.should.have.property('locked', false)
@@ -292,7 +300,7 @@ describe('API Integration Tests', () => {
           .send(newUser)
           .expect(201)
 
-        const user = await UserModelAPI.findOne({ email: 'bill@newman.com' })
+        const user = await UserModelAPI.findOne({email: 'bill@newman.com'})
 
         user.should.have.property('firstname', 'Bill')
         user.should.have.property('surname', 'Newman')
@@ -323,7 +331,9 @@ describe('API Integration Tests', () => {
           .send(newUser)
           .expect(201)
 
-        const user = await UserModelAPI.findOne({ email: 'matome.phoshoko@jembi.org' })
+        const user = await UserModelAPI.findOne({
+          email: 'matome.phoshoko@jembi.org'
+        })
         user.email.should.eql('matome.phoshoko@jembi.org')
       })
 
@@ -412,7 +422,7 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const user = await UserModelAPI.findOne({ email: 'rg..@jembi.org' })
+        const user = await UserModelAPI.findOne({email: 'rg..@jembi.org'})
         user.should.have.property('surname', 'Crichton')
         user.should.have.property('email', 'rg..@jembi.org')
         user.groups.should.have.length(3)
@@ -435,7 +445,7 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const user = await UserModelAPI.findOne({ email: 'rg..@jembi.org' })
+        const user = await UserModelAPI.findOne({email: 'rg..@jembi.org'})
         user.should.have.property('email', updates.email)
       })
 
@@ -467,7 +477,9 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const user = await UserModelAPI.findOne({ email: testUtils.nonRootUser.email })
+        const user = await UserModelAPI.findOne({
+          email: testUtils.nonRootUser.email
+        })
         user.should.have.property('surname', 'Root-updated')
       })
 
@@ -485,7 +497,9 @@ describe('API Integration Tests', () => {
           .send(updates)
           .expect(200)
 
-        const user = await UserModelAPI.findOne({ email: testUtils.nonRootUser.email })
+        const user = await UserModelAPI.findOne({
+          email: testUtils.nonRootUser.email
+        })
         user.groups.should.be.length(2)
         user.groups.should.not.containEql('admin')
       })
@@ -501,7 +515,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const users = await UserModelAPI.find({ name: 'bfm@crazy.net' })
+        const users = await UserModelAPI.find({name: 'bfm@crazy.net'})
         users.should.have.length(0)
       })
 
@@ -514,7 +528,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-        const users = await UserModelAPI.find({ name: user2.email })
+        const users = await UserModelAPI.find({name: user2.email})
         users.should.have.length(0)
       })
 

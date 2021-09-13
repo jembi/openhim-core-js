@@ -4,7 +4,7 @@ const qs = require('querystring')
 const url = require('url')
 const BodyStream = require('./body-stream')
 
-function buildMediatorResponse () {
+function buildMediatorResponse() {
   const now = Date.now()
   return `{
     "x-mediator-urn": "urn:uuid:5411f30d-3416-44dc-83f9-406ec5c6a259",
@@ -41,31 +41,33 @@ function buildMediatorResponse () {
     ]\n}`
 }
 
-function respondImmediately (req, res) {
-  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
+function respondImmediately(req, res) {
+  res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'})
   res.end('Hello world\n')
 }
 
-function respondWithBody (req, res, length) {
+function respondWithBody(req, res, length) {
   if (!Number.isInteger(length)) {
     length = 2 * 1024 * 1024
   }
-  res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8' })
+  res.writeHead(200, {'Content-Type': 'text/plain; charset=utf-8'})
   new BodyStream(length).pipe(res)
 }
 
-function respondAsMediator (req, res, delay) {
+function respondAsMediator(req, res, delay) {
   if (!Number.isInteger(delay)) {
     delay = 500
   }
   setTimeout(() => {
-    res.writeHead(200, { 'Content-Type': 'application/json+openhim; charset=utf-8' })
+    res.writeHead(200, {
+      'Content-Type': 'application/json+openhim; charset=utf-8'
+    })
     res.end(buildMediatorResponse())
   }, delay)
 }
 
-function handleRequest (req, res) {
-  const parsed = url.parse(req.url) // eslint-disable-line node/no-deprecated-api
+function handleRequest(req, res) {
+  const parsed = url.parse(req.url)
   if (parsed.pathname === '/immediate') {
     return respondImmediately(req, res)
   }
