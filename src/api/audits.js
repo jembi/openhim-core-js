@@ -116,7 +116,7 @@ export async function getAudits (ctx) {
     if (filters['participantObjectIdentification.participantObjectID']) {
       // filter by AND on same property for patientID and objectID
       if (filters['participantObjectIdentification.participantObjectID'].type) {
-        const patientID = filters['participantObjectIdentification.participantObjectID'].patientID
+        const patientID = JSON.parse(filters['participantObjectIdentification.participantObjectID'].patientID)
         if(checkPatientID(patientID.substring(0, patientID.indexOf('\\^'))))
         {
           const patientIDRegEx = new RegExp(patientID)
@@ -131,7 +131,7 @@ export async function getAudits (ctx) {
         }
       } else {
         const participantObjectID = JSON.parse(filters['participantObjectIdentification.participantObjectID'])
-        if(checkPatientID(participantObjectID.substring(1, participantObjectID.indexOf('\\^') - 1)))
+        if(checkPatientID(participantObjectID.substring(0, participantObjectID.indexOf('\\^'))))
         {
           filters['participantObjectIdentification.participantObjectID'] = new RegExp(`${participantObjectID}`)
         }
