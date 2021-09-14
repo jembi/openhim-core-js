@@ -204,6 +204,75 @@ describe('API Integration Tests', () => {
         res.body.length.should.equal(countBefore + 1)
       })
 
+      it('should call getAudits with incorrect participantObjectID ', async () => {
+        let filters = {
+          'participantObjectIdentification.participantObjectID':
+            '"!1234\\\\^\\\\^\\\\^.*&.*&.*"'
+        }
+        filters = JSON.stringify(filters)
+        const res = await request(BASE_URL)
+          .get(
+            `/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(
+              filters
+            )}`
+          )
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(400)
+
+        res.statusCode.should.be.exactly(400)
+      })
+
+      it('should call getAudits with correct participantObjectID ($and) ', async () => {
+        let filters = {
+          'participantObjectIdentification.participantObjectID': {
+            type: 'AND',
+            patientID: '"1234\\\\^\\\\^\\\\^.*&.*&.*"',
+            objectID: '123'
+          }
+        }
+        filters = JSON.stringify(filters)
+        const res = await request(BASE_URL)
+          .get(
+            `/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(
+              filters
+            )}`
+          )
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        res.statusCode.should.be.exactly(200)
+      })
+
+      it('should call getAudits with incorrect participantObjectID ($and) ', async () => {
+        let filters = {
+          'participantObjectIdentification.participantObjectID': {
+            type: 'AND',
+            patientID: '"!1234\\\\^\\\\^\\\\^.*&.*&.*"',
+            objectID: '123'
+          }
+        }
+        filters = JSON.stringify(filters)
+        const res = await request(BASE_URL)
+          .get(
+            `/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(
+              filters
+            )}`
+          )
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(400)
+
+        res.statusCode.should.be.exactly(400)
+      })
+
       it("should generate an 'audit log used' audit when using non-basic representation", async () => {
         const result = await new AuditModel(auditData).save()
 
