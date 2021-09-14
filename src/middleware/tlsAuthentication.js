@@ -2,21 +2,23 @@
 
 import logger from 'winston'
 import pem from 'pem'
-import { rootCas as rootCAs } from 'ssl-root-cas/latest'
+import {rootCas as rootCAs} from 'ssl-root-cas/latest'
 
 import * as utils from '../utils'
-import { ClientModel } from '../model/clients'
-import { KeystoreModel } from '../model/keystore'
-import { config } from '../config'
+import {ClientModel} from '../model/clients'
+import {KeystoreModel} from '../model/keystore'
+import {config} from '../config'
 
 config.tlsClientLookup = config.get('tlsClientLookup')
 
 /*
  * Fetches the trusted certificates, callsback with an array of certs.
  */
-export function getTrustedClientCerts (done) {
+export function getTrustedClientCerts(done) {
   return KeystoreModel.findOne((err, keystore) => {
-    if (err) { done(err, null) }
+    if (err) {
+      done(err, null)
+    }
     const certs = rootCAs
     if (keystore.ca != null) {
       for (const cert of Array.from(keystore.ca)) {
@@ -33,7 +35,7 @@ export function getTrustedClientCerts (done) {
  *
  * mutualTLS is a boolean, when true mutual TLS authentication is enabled
  */
-export function getServerOptions (mutualTLS, done) {
+export function getServerOptions(mutualTLS, done) {
   return KeystoreModel.findOne((err, keystore) => {
     let options
     if (err) {
@@ -64,7 +66,7 @@ export function getServerOptions (mutualTLS, done) {
 
         options.ca = certs
         options.requestCert = true
-        options.rejectUnauthorized = false  // we test authority ourselves
+        options.rejectUnauthorized = false // we test authority ourselves
         return done(null, options)
       })
     } else {
@@ -79,12 +81,16 @@ export function getServerOptions (mutualTLS, done) {
  * recursively walk up the certificate chain and look for clients with certificates
  * higher in the chain.
  */
-function clientLookup (fingerprint, subjectCN, issuerCN) {
+function clientLookup(fingerprint, subjectCN, issuerCN) {
   return new Promise((resolve, reject) => {
-    logger.debug(`Looking up client linked to cert with fingerprint ${fingerprint} with subject ${subjectCN} and issuer ${issuerCN}`)
+    logger.debug(
+      `Looking up client linked to cert with fingerprint ${fingerprint} with subject ${subjectCN} and issuer ${issuerCN}`
+    )
 
     ClientModel.findOne({certFingerprint: fingerprint}, (err, result) => {
-      if (err) { return reject(err) }
+      if (err) {
+        return reject(err)
+      }
 
       if (result != null) {
         // found a match
@@ -99,37 +105,50 @@ function clientLookup (fingerprint, subjectCN, issuerCN) {
       if (config.tlsClientLookup.type === 'in-chain') {
         // walk further up and cert chain and check
         return utils.getKeystore((err, keystore) => {
-          if (err) { return reject(err) }
+          if (err) {
+            return reject(err)
+          }
           let missedMatches = 0
           // find the isser cert
-          if ((keystore.ca == null) || (keystore.ca.length < 1)) {
-            logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
+          if (keystore.ca == null || keystore.ca.length < 1) {
+            logger.info(
+              `Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`
+            )
             return resolve(null)
           } else {
-            return Array.from(keystore.ca).map((cert) =>
+            return Array.from(keystore.ca).map(cert =>
               (cert =>
-                  pem.readCertificateInfo(cert.data, (err, info) => {
-                    if (err) {
-                      return reject(err)
-                    }
+                pem.readCertificateInfo(cert.data, (err, info) => {
+                  if (err) {
+                    return reject(err)
+                  }
 
-                    if (info.commonName === issuerCN) {
-                      const promise = clientLookup(cert.fingerprint, info.commonName, info.issuer.commonName)
-                      promise.then(resolve)
-                    } else {
-                      missedMatches++
-                    }
+                  if (info.commonName === issuerCN) {
+                    const promise = clientLookup(
+                      cert.fingerprint,
+                      info.commonName,
+                      info.issuer.commonName
+                    )
+                    promise.then(resolve)
+                  } else {
+                    missedMatches++
+                  }
 
-                    if (missedMatches === keystore.ca.length) {
-                      logger.info(`Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`)
-                      return resolve(null)
-                    }
-                  }))(cert))
+                  if (missedMatches === keystore.ca.length) {
+                    logger.info(
+                      `Issuer cn=${issuerCN} for cn=${subjectCN} not found in keystore.`
+                    )
+                    return resolve(null)
+                  }
+                }))(cert)
+            )
           }
         })
       } else {
         if (config.tlsClientLookup.type !== 'strict') {
-          logger.warn('tlsClientLookup.type config option does not contain a known value, defaulting to \'strict\'. Available options are \'strict\' and \'in-chain\'.')
+          logger.warn(
+            "tlsClientLookup.type config option does not contain a known value, defaulting to 'strict'. Available options are 'strict' and 'in-chain'."
+          )
         }
         return resolve(null)
       }
@@ -144,7 +163,7 @@ if (process.env.NODE_ENV === 'test') {
 /*
  * Koa middleware for mutual TLS authentication
  */
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   if (ctx.authenticated != null) {
     await next()
   } else if (ctx.req.client.authorized === true) {
@@ -152,7 +171,11 @@ export async function koaMiddleware (ctx, next) {
 
     // lookup client by cert fingerprint and set them as the authenticated user
     try {
-      ctx.authenticated = await clientLookup(cert.fingerprint, cert.subject.CN, cert.issuer.CN)
+      ctx.authenticated = await clientLookup(
+        cert.fingerprint,
+        cert.subject.CN,
+        cert.issuer.CN
+      )
     } catch (err) {
       logger.error(`Failed to lookup client: ${err}`)
     }
@@ -166,12 +189,16 @@ export async function koaMiddleware (ctx, next) {
       await next()
     } else {
       ctx.authenticated = null
-      logger.info(`Certificate Authentication Failed: the certificate's fingerprint ${cert.fingerprint} did not match any client's certFingerprint attribute, trying next auth mechanism if any...`)
+      logger.info(
+        `Certificate Authentication Failed: the certificate's fingerprint ${cert.fingerprint} did not match any client's certFingerprint attribute, trying next auth mechanism if any...`
+      )
       await next()
     }
   } else {
     ctx.authenticated = null
-    logger.info(`Could NOT authenticate via TLS: ${ctx.req.client.authorizationError}, trying next auth mechanism if any...`)
+    logger.info(
+      `Could NOT authenticate via TLS: ${ctx.req.client.authorizationError}, trying next auth mechanism if any...`
+    )
     await next()
   }
 }

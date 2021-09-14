@@ -20,7 +20,7 @@ Transport.prototype.normalizeQuery = function (options) {
   }
 
   // now - 24
-  options.from = options.from || (options.until - (24 * 60 * 60 * 1000))
+  options.from = options.from || options.until - 24 * 60 * 60 * 1000
   if (typeof options.from !== 'object') {
     options.from = new Date(options.from)
   }
@@ -28,12 +28,9 @@ Transport.prototype.normalizeQuery = function (options) {
   // 'asc' or 'desc'
   options.order = options.order || 'desc'
 
-  // which fields to select
-  options.fields = options.fields
-
   return options
 }
 
-Transport.prototype.formatResults = function (results, options) {
+Transport.prototype.formatResults = function (results) {
   return results
 }

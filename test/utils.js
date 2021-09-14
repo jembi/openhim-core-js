@@ -11,8 +11,8 @@ import tls from 'tls'
 import * as crypto from 'crypto'
 import * as fs from 'fs'
 import * as pem from 'pem'
-import { MongoClient, ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {MongoClient, ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from './constants'
 import {
@@ -22,7 +22,7 @@ import {
   METRIC_TYPE_HOUR,
   METRIC_TYPE_DAY
 } from '../src/model'
-import { config, encodeMongoURI } from '../src/config'
+import {config, encodeMongoURI} from '../src/config'
 
 config.mongo = config.get('mongo')
 
@@ -92,7 +92,7 @@ async function socketCallInternal(connectFn, portOrOptions, data) {
       socket.write(data || '')
     })
     const chunks = []
-    socket.once('data', (d) => {
+    socket.once('data', d => {
       chunks.push(d)
       /*
        * End this side of the socket once data has been received. The OpenHIM
@@ -104,7 +104,7 @@ async function socketCallInternal(connectFn, portOrOptions, data) {
     socket.on('close', () => {
       resolve(Buffer.concat(chunks))
     })
-    socket.on('error', (err) => {
+    socket.on('error', err => {
       reject(err)
     })
   })
@@ -149,7 +149,7 @@ export function getAuthDetails() {
 
 export function cleanupTestUsers() {
   return UserModel.deleteMany({
-    email: { $in: [rootUser.email, nonRootUser.email] }
+    email: {$in: [rootUser.email, nonRootUser.email]}
   })
 }
 
@@ -166,7 +166,7 @@ export function cleanupAllTestUsers() {
  */
 export async function readBody(req) {
   const chunks = []
-  const dataFn = (data) => chunks.push(data)
+  const dataFn = data => chunks.push(data)
   let endFn
   let errorFn
   try {
@@ -181,7 +181,7 @@ export async function readBody(req) {
       return Buffer.concat(chunks)
     }
 
-    return chunks.map((p) => (p || '').toString()).join('')
+    return chunks.map(p => (p || '').toString()).join('')
   } finally {
     req.removeListener('data', dataFn)
     req.removeListener('end', endFn)
@@ -235,7 +235,7 @@ export async function dropTestDb() {
 
 export function getMongoClient() {
   const url = config.get('mongo:url')
-  return MongoClient.connect(encodeMongoURI(url), { useNewUrlParser: true })
+  return MongoClient.connect(encodeMongoURI(url), {useNewUrlParser: true})
 }
 
 /**
@@ -364,16 +364,16 @@ export function createMockServerForPost(
   returnBody
 ) {
   const mockServer = http.createServer((req, res) =>
-    req.on('data', (chunk) => {
+    req.on('data', chunk => {
       if (chunk.toString() === bodyToMatch) {
-        res.writeHead(successStatusCode, { 'Content-Type': 'text/plain' })
+        res.writeHead(successStatusCode, {'Content-Type': 'text/plain'})
         if (returnBody) {
           res.end(bodyToMatch)
         } else {
           res.end()
         }
       } else {
-        res.writeHead(errStatusCode, { 'Content-Type': 'text/plain' })
+        res.writeHead(errStatusCode, {'Content-Type': 'text/plain'})
         res.end()
       }
     })
@@ -476,8 +476,8 @@ export async function setupTestKeystore(
     })
 
     const [caCerts, caFingerprints] = await Promise.all([
-      Promise.all(ca.map((c) => readCertificateInfoPromised(c))),
-      Promise.all(ca.map((c) => getFingerprintPromised(c)))
+      Promise.all(ca.map(c => readCertificateInfoPromised(c))),
+      Promise.all(ca.map(c => getFingerprintPromised(c)))
     ])
 
     if (caCerts.length !== caFingerprints.length) {
@@ -499,18 +499,18 @@ export async function setupTestKeystore(
 }
 
 export async function createMockTCPServer(
-  onRequest = async (data) => data,
+  onRequest = async data => data,
   port = constants.TCP_PORT
 ) {
   const server = await net.createServer()
-  server.on('connection', (socket) => {
-    socket.on('data', (data) => {
+  server.on('connection', socket => {
+    socket.on('data', data => {
       async function sendRequest(data) {
         const response = await onRequest(data)
         socket.write(response || '')
       }
       // Throw errors to make them obvious
-      sendRequest(data).catch((err) => {
+      sendRequest(data).catch(err => {
         throw err
       })
     })
@@ -524,25 +524,25 @@ export async function createMockTCPServer(
 }
 
 export async function createMockUdpServer(
-  onRequest = (data) => {},
+  onRequest = () => {},
   port = constants.UDP_PORT
 ) {
   const server = dgram.createSocket(constants.UPD_SOCKET_TYPE)
   server.on('error', console.error)
-  server.on('message', async (msg) => {
+  server.on('message', async msg => {
     onRequest(msg)
   })
 
   server.close = promisify(server.close.bind(server))
-  await new Promise((resolve) => {
-    server.bind({ port })
+  await new Promise(resolve => {
+    server.bind({port})
     server.once('listening', resolve())
   })
   return server
 }
 
 export function createMockTLSServerWithMutualAuth(
-  onRequest = async (data) => data,
+  onRequest = async data => data,
   port = constants.TLS_PORT,
   useClientCert = true
 ) {
@@ -557,8 +557,8 @@ export function createMockTLSServerWithMutualAuth(
     options.ca = fs.readFileSync('test/resources/server-tls/cert.pem')
   }
 
-  const server = tls.createServer(options, (sock) =>
-    sock.on('data', async (data) => {
+  const server = tls.createServer(options, sock =>
+    sock.on('data', async data => {
       const response = await onRequest(data)
       return sock.write(response || '')
     })
@@ -567,7 +567,7 @@ export function createMockTLSServerWithMutualAuth(
   server.close = promisify(server.close.bind(server))
 
   return new Promise((resolve, reject) => {
-    server.listen(port, 'localhost', (error) => {
+    server.listen(port, 'localhost', error => {
       if (error != null) {
         return reject(error)
       }
@@ -588,7 +588,7 @@ export async function cleanupTestKeystore(cb = () => {}) {
 }
 
 export function wait(time = 100) {
-  return new Promise((resolve) => {
+  return new Promise(resolve => {
     setTimeout(() => resolve(), time)
   })
 }

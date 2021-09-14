@@ -8,7 +8,7 @@ import should from 'should'
 import sinon from 'sinon'
 
 import * as contact from '../../src/contact'
-import { config } from '../../src/config'
+import {config} from '../../src/config'
 
 config.email = config.get('email')
 config.smsGateway = config.get('smsGateway')
@@ -45,20 +45,28 @@ describe('Contact Users', () => {
       sandbox.restore()
     })
 
-    it('should propagate errors from nodemailer', (done) => {
+    it('should propagate errors from nodemailer', done => {
       // Stub nodemailer and the transport
-      const transportStub = {sendMail: sandbox.stub().yields(new Error('Nodemailer error'))}
+      const transportStub = {
+        sendMail: sandbox.stub().yields(new Error('Nodemailer error'))
+      }
       sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method
-      contact.sendEmail('test@example.com', 'Test', 'Hello world', '<h1>Hello world</h1>', (err) => {
-        should.exist(err)
-        should.equal(err.message, 'Nodemailer error')
-        return done()
-      })
+      contact.sendEmail(
+        'test@example.com',
+        'Test',
+        'Hello world',
+        '<h1>Hello world</h1>',
+        err => {
+          should.exist(err)
+          should.equal(err.message, 'Nodemailer error')
+          return done()
+        }
+      )
     })
 
-    it('should send mail with the correct fields', (done) => {
+    it('should send mail with the correct fields', done => {
       const expectedFields = {
         from: 'address@example.com',
         to: 'user@example.com',
@@ -70,20 +78,28 @@ describe('Contact Users', () => {
       // Stub the sendMail function
       const sendMailStub = sandbox.stub()
       sendMailStub.yields(new Error('Incorrect fields'))
-      sendMailStub.withArgs(sinon.match(expectedFields), sinon.match.func).yields(null)
+      sendMailStub
+        .withArgs(sinon.match(expectedFields), sinon.match.func)
+        .yields(null)
 
       // Stub nodemailer and the transport
       const transportStub = {sendMail: sendMailStub}
       sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method
-      contact.sendEmail(expectedFields.to, expectedFields.subject, expectedFields.text, expectedFields.html, (err) => {
-        should.not.exist(err)
-        return done()
-      })
+      contact.sendEmail(
+        expectedFields.to,
+        expectedFields.subject,
+        expectedFields.text,
+        expectedFields.html,
+        err => {
+          should.not.exist(err)
+          return done()
+        }
+      )
     })
 
-    it('should send mail with the correct fields with old config', (done) => {
+    it('should send mail with the correct fields with old config', done => {
       // Temporarily switch config
       const emailConfig = config.email
       config.email = null
@@ -100,35 +116,49 @@ describe('Contact Users', () => {
       // Stub the sendMail function
       const sendMailStub = sandbox.stub()
       sendMailStub.yields(new Error('Incorrect fields'))
-      sendMailStub.withArgs(sinon.match(expectedFields), sinon.match.func).yields(null)
+      sendMailStub
+        .withArgs(sinon.match(expectedFields), sinon.match.func)
+        .yields(null)
 
       // Stub nodemailer and the transport
       const transportStub = {sendMail: sendMailStub}
       sandbox.stub(nodemailer, 'createTransport').returns(transportStub)
 
       // Execute the test method
-      contact.sendEmail(expectedFields.to, expectedFields.subject, expectedFields.text, expectedFields.html, (err) => {
-        should.not.exist(err)
-        // Restore config
-        config.nodemailer = null
-        config.email = emailConfig
-        return done()
-      })
+      contact.sendEmail(
+        expectedFields.to,
+        expectedFields.subject,
+        expectedFields.text,
+        expectedFields.html,
+        err => {
+          should.not.exist(err)
+          // Restore config
+          config.nodemailer = null
+          config.email = emailConfig
+          return done()
+        }
+      )
     })
 
-    it('should return an error when no config is found', (done) => {
+    it('should return an error when no config is found', done => {
       // Temporarily remove email config
       const emailConfig = config.email
       config.email = null
 
       // Execute the test method
-      contact.sendEmail('test@example.com', 'Test', 'Hello world', '<h1>Hello world</h1>', (err) => {
-        should.exist(err)
-        should.equal(err.message, 'No email config found')
-        // Restore config
-        config.email = emailConfig
-        return done()
-      })
+      contact.sendEmail(
+        'test@example.com',
+        'Test',
+        'Hello world',
+        '<h1>Hello world</h1>',
+        err => {
+          should.exist(err)
+          should.equal(err.message, 'No email config found')
+          // Restore config
+          config.email = emailConfig
+          return done()
+        }
+      )
     })
   })
 })

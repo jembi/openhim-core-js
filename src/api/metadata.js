@@ -4,12 +4,12 @@ import logger from 'winston'
 
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import { ChannelModelAPI } from '../model/channels'
-import { ClientModelAPI } from '../model/clients'
-import { ContactGroupModelAPI } from '../model/contactGroups'
-import { KeystoreModelAPI } from '../model/keystore'
-import { MediatorModelAPI } from '../model/mediators'
-import { UserModelAPI } from '../model/users'
+import {ChannelModelAPI} from '../model/channels'
+import {ClientModelAPI} from '../model/clients'
+import {ContactGroupModelAPI} from '../model/contactGroups'
+import {KeystoreModelAPI} from '../model/keystore'
+import {MediatorModelAPI} from '../model/mediators'
+import {UserModelAPI} from '../model/users'
 import * as polling from '../polling'
 
 // Map string parameters to collections
@@ -23,14 +23,14 @@ const collections = {
 }
 
 // Function to remove properties from export object
-function removeProperties (obj) {
+function removeProperties(obj) {
   const propertyID = '_id'
   const propertyV = '__v'
 
   for (const prop in obj) {
-    if ((prop === propertyID) || (prop === propertyV)) {
+    if (prop === propertyID || prop === propertyV) {
       delete obj[prop]
-    } else if ((typeof obj[prop] === 'object') || obj[prop] instanceof Array) {
+    } else if (typeof obj[prop] === 'object' || obj[prop] instanceof Array) {
       removeProperties(obj[prop])
     }
   }
@@ -38,7 +38,7 @@ function removeProperties (obj) {
 }
 
 // Function to return unique identifier key and value for a collection
-function getUniqueIdentifierForCollection (collection, doc) {
+function getUniqueIdentifierForCollection(collection, doc) {
   let uid
   let uidKey
   switch (collection) {
@@ -63,7 +63,9 @@ function getUniqueIdentifierForCollection (collection, doc) {
       uid = doc.groups
       break
     default:
-      logger.debug(`Unhandeled case for ${collection} in getUniqueIdentifierForCollection`)
+      logger.debug(
+        `Unhandeled case for ${collection} in getUniqueIdentifierForCollection`
+      )
       break
   }
   const returnObj = {}
@@ -72,7 +74,7 @@ function getUniqueIdentifierForCollection (collection, doc) {
 }
 
 // Build response object
-function buildResponseObject (model, doc, status, message, uid) {
+function buildResponseObject(model, doc, status, message, uid) {
   return {
     model,
     record: doc,
@@ -83,10 +85,15 @@ function buildResponseObject (model, doc, status, message, uid) {
 }
 
 // API endpoint that returns metadata for export
-export async function getMetadata (ctx) {
+export async function getMetadata(ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getMetadata denied.`, 'info')
+    return utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to getMetadata denied.`,
+      'info'
+    )
   }
 
   try {
@@ -106,14 +113,24 @@ export async function getMetadata (ctx) {
     ctx.status = 200
   } catch (e) {
     ctx.body = e.message
-    utils.logAndSetResponse(ctx, 500, `Could not fetch specified metadata via the API ${e}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not fetch specified metadata via the API ${e}`,
+      'error'
+    )
   }
 }
 
-async function handleMetadataPost (ctx, action) {
+async function handleMetadataPost(ctx, action) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
-    return utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to importMetadata denied.`, 'info')
+    return utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to importMetadata denied.`,
+      'info'
+    )
   }
 
   try {
@@ -143,15 +160,20 @@ async function handleMetadataPost (ctx, action) {
           }
 
           if (action === 'import') {
-            if (result && (result.length > 0) && result[0]._id) {
-              if (doc._id) { delete doc._id }
+            if (result && result.length > 0 && result[0]._id) {
+              if (doc._id) {
+                delete doc._id
+              }
               result = await collections[key].findById(result[0]._id).exec()
               result.set(doc)
-              result.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
+              result.set(
+                'updatedBy',
+                utils.selectAuditFields(ctx.authenticated)
+              )
               result = await result.save()
               status = 'Updated'
             } else {
-              doc = new (collections[key])(doc)
+              doc = new collections[key](doc)
               doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
               result = await doc.save()
               status = 'Inserted'
@@ -160,18 +182,22 @@ async function handleMetadataPost (ctx, action) {
             // Ideally we should rather use our APIs to insert object rather than go directly to the DB
             // Then we would have to do this sort on thing as it's already covered there.
             // E.g. https://github.com/jembi/openhim-core-js/blob/cd7d1fbbe0e122101186ecba9cf1de37711580b8/src/api/channels.js#L241-L257
-            if (key === 'Channels' && result.type === 'polling' && result.status === 'enabled') {
-              polling.registerPollingChannel(result, (err) => {
+            if (
+              key === 'Channels' &&
+              result.type === 'polling' &&
+              result.status === 'enabled'
+            ) {
+              polling.registerPollingChannel(result, err => {
                 logger.error(err)
               })
             }
           }
 
           if (action === 'validate') {
-            if (result && (result.length > 0) && result[0]._id) {
+            if (result && result.length > 0 && result[0]._id) {
               status = 'Conflict'
             } else {
-              doc = new (collections[key])(doc)
+              doc = new collections[key](doc)
               doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
               error = doc.validateSync()
               if (error) {
@@ -181,11 +207,17 @@ async function handleMetadataPost (ctx, action) {
             }
           }
 
-          logger.info(`User ${ctx.authenticated.email} performed ${action} action on ${key}, got ${status}`)
+          logger.info(
+            `User ${ctx.authenticated.email} performed ${action} action on ${key}, got ${status}`
+          )
           returnObject.push(buildResponseObject(key, doc, status, '', uid))
         } catch (err) {
-          logger.error(`Failed to ${action} ${key} with unique identifier ${uid}. ${err.message}`)
-          returnObject.push(buildResponseObject(key, doc, 'Error', err.message, uid))
+          logger.error(
+            `Failed to ${action} ${key} with unique identifier ${uid}. ${err.message}`
+          )
+          returnObject.push(
+            buildResponseObject(key, doc, 'Error', err.message, uid)
+          )
         }
       }
     }
@@ -194,17 +226,22 @@ async function handleMetadataPost (ctx, action) {
     ctx.status = 201
   } catch (error2) {
     ctx.body = error2.message
-    utils.logAndSetResponse(ctx, 500, `Could not import metadata via the API ${error2}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not import metadata via the API ${error2}`,
+      'error'
+    )
   }
 }
 
 // API endpoint that upserts metadata
-export async function importMetadata (ctx) {
+export async function importMetadata(ctx) {
   return handleMetadataPost(ctx, 'import')
 }
 
 // API endpoint that checks for conflicts between import object and database
-export async function validateMetadata (ctx) {
+export async function validateMetadata(ctx) {
   return handleMetadataPost(ctx, 'validate')
 }
 

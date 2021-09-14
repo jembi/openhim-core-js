@@ -5,18 +5,21 @@
 import nconf from 'nconf'
 import request from 'supertest'
 import sinon from 'sinon'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as testUtils from '../utils'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { ClientModelAPI } from '../../src/model/clients'
-import { TransactionModel, TransactionModelAPI } from '../../src/model/transactions'
-import { config } from '../../src/config'
+import {ChannelModelAPI} from '../../src/model/channels'
+import {ClientModelAPI} from '../../src/model/clients'
+import {
+  TransactionModel,
+  TransactionModelAPI
+} from '../../src/model/transactions'
+import {config} from '../../src/config'
 
-const { SERVER_PORTS } = constants
-nconf.set('router', { httpPort: SERVER_PORTS.httpPort })
+const {SERVER_PORTS} = constants
+nconf.set('router', {httpPort: SERVER_PORTS.httpPort})
 
 const server = require('../../src/server')
 
@@ -33,8 +36,8 @@ describe('Routes enabled/disabled tests', () => {
   const httpPortPlus44 = constants.PORT_START + 44
 
   const sandbox = sinon.createSandbox()
-  const restrictedSpy = sandbox.spy(async (req) => 'Restricted response')
-  const timeoutSpy = sandbox.spy(async (req) => {
+  const restrictedSpy = sandbox.spy(async () => 'Restricted response')
+  const timeoutSpy = sandbox.spy(async () => {
     await testUtils.wait(30)
     return 'timeout'
   })
@@ -50,7 +53,8 @@ describe('Routes enabled/disabled tests', () => {
         host: 'localhost',
         port: httpPortPlus40,
         primary: true
-      }, {
+      },
+      {
         name: 'test route 2',
         host: 'localhost',
         port: httpPortPlus41
@@ -73,7 +77,8 @@ describe('Routes enabled/disabled tests', () => {
         host: 'localhost',
         port: httpPortPlus40,
         status: 'disabled'
-      }, {
+      },
+      {
         name: 'test route 2',
         host: 'localhost',
         port: httpPortPlus41,
@@ -99,7 +104,8 @@ describe('Routes enabled/disabled tests', () => {
         port: httpPortPlus40,
         primary: true,
         status: 'enabled'
-      }, {
+      },
+      {
         name: 'test route 2',
         host: 'localhost',
         port: httpPortPlus41,
@@ -165,7 +171,8 @@ describe('Routes enabled/disabled tests', () => {
         port: httpPortPlus40,
         primary: true,
         status: 'enabled'
-      }, {
+      },
+      {
         name: 'test route 2',
         host: 'localhost',
         port: httpPortPlus41,
@@ -238,12 +245,10 @@ describe('Routes enabled/disabled tests', () => {
       clientID: 'testApp',
       clientDomain: 'test-client.jembi.org',
       name: 'TEST Client',
-      roles: [
-        'OpenMRS_PoC',
-        'PoC'
-      ],
+      roles: ['OpenMRS_PoC', 'PoC'],
       passwordAlgorithm: 'sha512',
-      passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+      passwordHash:
+        '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
       passwordSalt: '1234567890',
       cert: ''
     }
@@ -251,12 +256,28 @@ describe('Routes enabled/disabled tests', () => {
     await new ClientModelAPI(testAppDoc).save()
 
     // Create mock endpoint to forward requests to
-    mockServer1 = await testUtils.createMockHttpServer('target1', httpPortPlus40, 200)
-    mockServer2 = await testUtils.createMockHttpServer('target2', httpPortPlus41, 200)
-    restrictedServer = await testUtils.createMockHttpServer(restrictedSpy, httpPortPlus42, 200)
-    timeoutServer = await testUtils.createMockHttpServer(timeoutSpy, httpPortPlus44, 200)
+    mockServer1 = await testUtils.createMockHttpServer(
+      'target1',
+      httpPortPlus40,
+      200
+    )
+    mockServer2 = await testUtils.createMockHttpServer(
+      'target2',
+      httpPortPlus41,
+      200
+    )
+    restrictedServer = await testUtils.createMockHttpServer(
+      restrictedSpy,
+      httpPortPlus42,
+      200
+    )
+    timeoutServer = await testUtils.createMockHttpServer(
+      timeoutSpy,
+      httpPortPlus44,
+      200
+    )
 
-    await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+    await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
   })
 
   after(async () => {
@@ -273,12 +294,12 @@ describe('Routes enabled/disabled tests', () => {
 
   afterEach(async () => {
     sandbox.reset()
-    await Promise.all([
-      TransactionModelAPI.deleteMany({})
-    ])
+    await Promise.all([TransactionModelAPI.deleteMany({})])
   })
 
-  beforeEach(async () => { await TransactionModelAPI.deleteMany({}) })
+  beforeEach(async () => {
+    await TransactionModelAPI.deleteMany({})
+  })
 
   it('should route transactions to routes that have no status specified (default: enabled)', async () => {
     const res = await request(constants.HTTP_BASE_URL)
@@ -288,7 +309,9 @@ describe('Routes enabled/disabled tests', () => {
     res.text.should.be.exactly('target1')
     // routes are async
 
-    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
+    await testUtils.pollCondition(() =>
+      TransactionModel.countDocuments().then(c => c === 1)
+    )
     const trx = await TransactionModelAPI.findOne()
 
     trx.routes.length.should.be.exactly(1)
@@ -331,27 +354,33 @@ describe('Routes enabled/disabled tests', () => {
   })
 
   it('should deny a request if the method is not in the "methods" (returns 404)', async () => {
-    const res = await request(constants.HTTP_BASE_URL)
+    await request(constants.HTTP_BASE_URL)
       .post('/test/restricted')
       .auth('testApp', 'password')
       .expect(404)
   })
 
-  it('should allow a request and produce an orchestration recording the openhim\'s request and received response', async () => {
+  it("should allow a request and produce an orchestration recording the openhim's request and received response", async () => {
     await request(constants.HTTP_BASE_URL)
       .get('/test/channel4')
       .auth('testApp', 'password')
       .expect(200)
 
-    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
+    await testUtils.pollCondition(() =>
+      TransactionModel.countDocuments().then(c => c === 1)
+    )
     const newTransaction = await TransactionModel.find()
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
-    newTransaction[0].orchestrations[0].name.should.eql('test transaction orchestration')
-    newTransaction[0].orchestrations[0].request.path.should.eql('/test/channel4')
+    newTransaction[0].orchestrations[0].name.should.eql(
+      'test transaction orchestration'
+    )
+    newTransaction[0].orchestrations[0].request.path.should.eql(
+      '/test/channel4'
+    )
   })
 
-  it('should allow a request with multiple routes and produce an orchestration recording the openhim\'s request and received response', async () => {
+  it("should allow a request with multiple routes and produce an orchestration recording the openhim's request and received response", async () => {
     await request(constants.HTTP_BASE_URL)
       .get('/test/channel6')
       .auth('testApp', 'password')
@@ -363,19 +392,25 @@ describe('Routes enabled/disabled tests', () => {
     newTransaction[0].orchestrations[0].name.should.eql('test route')
   })
 
-  it('should error the request and produce an orchestration recording the openhim\'s request and received response', async () => {
+  it("should error the request and produce an orchestration recording the openhim's request and received response", async () => {
     await request(constants.HTTP_BASE_URL)
       .get('/test/channel5')
       .auth('testApp', 'password')
       .expect(500)
 
-    await testUtils.pollCondition(() => TransactionModel.countDocuments().then(c => c === 1))
+    await testUtils.pollCondition(() =>
+      TransactionModel.countDocuments().then(c => c === 1)
+    )
     const newTransaction = await TransactionModel.find()
 
     newTransaction.length.should.be.exactly(1)
     newTransaction[0].orchestrations.length.should.be.exactly(1)
-    newTransaction[0].orchestrations[0].name.should.eql('test transaction fail orchestration')
-    newTransaction[0].orchestrations[0].error.message.should.eql('connect ECONNREFUSED 127.0.0.1:32043')
+    newTransaction[0].orchestrations[0].name.should.eql(
+      'test transaction fail orchestration'
+    )
+    newTransaction[0].orchestrations[0].error.message.should.eql(
+      'connect ECONNREFUSED 127.0.0.1:32043'
+    )
   })
 
   it('should respect the channel timeout', async () => {
@@ -387,6 +422,8 @@ describe('Routes enabled/disabled tests', () => {
     timeoutSpy.callCount.should.eql(1)
     const newTransaction = await TransactionModel.find()
     newTransaction.length.should.be.exactly(1)
-    newTransaction[0].orchestrations[0].error.message.should.eql('Request took longer than 20ms')
+    newTransaction[0].orchestrations[0].error.message.should.eql(
+      'Request took longer than 20ms'
+    )
   })
 })

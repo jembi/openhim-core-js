@@ -3,7 +3,7 @@
 import Koa from 'koa'
 import compress from 'koa-compress'
 import getRawBody from 'raw-body'
-import { Z_SYNC_FLUSH } from 'zlib'
+import {Z_SYNC_FLUSH} from 'zlib'
 
 import * as authorisation from './middleware/authorisation'
 import * as basicAuthentication from './middleware/basicAuthentication'
@@ -24,7 +24,7 @@ import * as rewrite from './middleware/rewriteUrls'
 import * as router from './middleware/router'
 import * as tcpBypassAuthentication from './middleware/tcpBypassAuthentication'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
-import { config } from './config'
+import {config} from './config'
 
 config.authentication = config.get('authentication')
 

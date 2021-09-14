@@ -8,9 +8,13 @@ import * as authorisation from './authorisation'
 import * as metrics from '../metrics'
 
 // all in one getMetrics generator function for metrics API
-export async function getMetrics (ctx, groupChannels, timeSeries, channelID) {
-  logger.debug(`Called getMetrics(${groupChannels}, ${timeSeries}, ${channelID})`)
-  const channels = await authorisation.getUserViewableChannels(ctx.authenticated)
+export async function getMetrics(ctx, groupChannels, timeSeries, channelID) {
+  logger.debug(
+    `Called getMetrics(${groupChannels}, ${timeSeries}, ${channelID})`
+  )
+  const channels = await authorisation.getUserViewableChannels(
+    ctx.authenticated
+  )
   let channelIDs = channels.map(c => c._id)
   if (typeof channelID === 'string') {
     if (channelIDs.map(id => id.toString()).includes(channelID)) {
@@ -44,7 +48,7 @@ export async function getMetrics (ctx, groupChannels, timeSeries, channelID) {
  * Convert metrics to the format expected to be returned by the API to prevent
  * breakage.
  */
-function convertMetric (metric) {
+function convertMetric(metric) {
   const timestamp = moment(metric.startTime)
   return {
     total: metric.requests,
@@ -69,7 +73,7 @@ function convertMetric (metric) {
   }
 }
 
-function calculateAverage (total, count) {
+function calculateAverage(total, count) {
   if (count === 0) {
     return 0
   }

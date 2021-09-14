@@ -1,18 +1,28 @@
 'use strict'
 
-import { Schema } from 'mongoose'
+import {Schema} from 'mongoose'
 
-import { ChannelDef, RouteDef } from './channels'
-import { connectionAPI, connectionDefault } from '../config'
+import {ChannelDef, RouteDef} from './channels'
+import {connectionAPI, connectionDefault} from '../config'
 
-export const configParamTypes = ['string', 'bool', 'number', 'option', 'bigstring', 'map', 'struct', 'password']
+export const configParamTypes = [
+  'string',
+  'bool',
+  'number',
+  'option',
+  'bigstring',
+  'map',
+  'struct',
+  'password'
+]
 
 export const configDef = {
   param: String,
   displayName: String,
   description: String,
   type: {
-    type: String, enum: exports.configParamTypes
+    type: String,
+    enum: exports.configParamTypes
   },
   values: [{type: String}],
   template: {type: Array},
@@ -22,13 +32,17 @@ export const configDef = {
 // The properties prefixed with an '_' are internally used properties and shouldn't be set by the user
 const MediatorSchema = new Schema({
   urn: {
-    type: String, required: true, unique: true
+    type: String,
+    required: true,
+    unique: true
   },
   version: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   name: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   description: String,
   endpoints: [RouteDef],

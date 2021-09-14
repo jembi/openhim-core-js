@@ -5,20 +5,27 @@ import pem from 'pem'
 
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
-import { KeystoreModelAPI } from '../model/keystore'
-import { promisify } from 'util'
+import {KeystoreModelAPI} from '../model/keystore'
+import {promisify} from 'util'
 
 const readCertificateInfo = promisify(pem.readCertificateInfo)
 const getFingerprint = promisify(pem.getFingerprint)
 
-export async function generateCert (ctx) {
+export async function generateCert(ctx) {
   // Must be admin
   let result
   if (authorisation.inGroup('admin', ctx.authenticated) === false) {
-    utils.logAndSetResponse(ctx, 403, `User ${ctx.authenticated.email} is not an admin, API access to getServerKey by id denied.`, 'info')
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to getServerKey by id denied.`,
+      'info'
+    )
     return
   }
-  const {request: {body: options}} = ctx
+  const {
+    request: {body: options}
+  } = ctx
   if (options.type === 'server') {
     logger.info('Generating server cert')
     result = await generateServerCert(options, ctx)
@@ -30,7 +37,7 @@ export async function generateCert (ctx) {
   ctx.body = result
 }
 
-async function generateClientCert (options, ctx) {
+async function generateClientCert(options, ctx) {
   const keystoreDoc = await KeystoreModelAPI.findOne()
 
   // Set additional options
@@ -46,12 +53,17 @@ async function generateClientCert (options, ctx) {
     ctx.status = 201
     logger.info('Client certificate created')
   } catch (err) {
-    utils.logAndSetResponse(ctx, 'internal server error', `Could not create a client cert via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      'internal server error',
+      `Could not create a client cert via the API: ${err}`,
+      'error'
+    )
   }
   return ctx.body
 }
 
-async function generateServerCert (options, ctx) {
+async function generateServerCert(options, ctx) {
   const keystoreDoc = await KeystoreModelAPI.findOne()
   options.selfSigned = true
   try {
@@ -63,12 +75,17 @@ async function generateServerCert (options, ctx) {
     ctx.status = 201
     logger.info('Server certificate created')
   } catch (err) {
-    utils.logAndSetResponse(ctx, 'internal server error', `Could not create a client cert via the API: ${err}`, 'error')
+    utils.logAndSetResponse(
+      ctx,
+      'internal server error',
+      `Could not create a client cert via the API: ${err}`,
+      'error'
+    )
   }
   return ctx.body
 }
 
-function createCertificate (options) {
+function createCertificate(options) {
   return new Promise((resolve, reject) => {
     pem.createCertificate(options, (err, cert) => {
       if (err) {
@@ -82,7 +99,7 @@ function createCertificate (options) {
   })
 }
 
-async function extractCertMetadata (cert, ctx) {
+async function extractCertMetadata(cert, ctx) {
   const certInfo = await readCertificateInfo(cert)
   const fingerprint = await getFingerprint(cert)
   certInfo.data = ctx.body.certificate
