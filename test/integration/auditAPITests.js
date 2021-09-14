@@ -186,7 +186,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should call getAudits with incorrect participantObjectID ', async () => {
-        let filters = {"participantObjectIdentification.participantObjectID":"\"!1234\\\\^\\\\^\\\\^.*&.*&.*\""}
+        let filters = { 'participantObjectIdentification.participantObjectID': '"!1234\\\\^\\\\^\\\\^.*&.*&.*"' }
         filters = JSON.stringify(filters)
         const res = await request(BASE_URL)
           .get(`/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(filters)}`)
@@ -196,11 +196,11 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(400)
 
-          res.statusCode.should.be.exactly(400)
+        res.statusCode.should.be.exactly(400)
       })
 
       it('should call getAudits with correct participantObjectID ($and) ', async () => {
-        let filters = {"participantObjectIdentification.participantObjectID":{"type":"AND","patientID":"\"1234\\\\^\\\\^\\\\^.*&.*&.*\"","objectID":"123"}}
+        let filters = { 'participantObjectIdentification.participantObjectID': { type: 'AND', patientID: '"1234\\\\^\\\\^\\\\^.*&.*&.*"', objectID: '123' } }
         filters = JSON.stringify(filters)
         const res = await request(BASE_URL)
           .get(`/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(filters)}`)
@@ -210,11 +210,11 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
 
-          res.statusCode.should.be.exactly(200)
+        res.statusCode.should.be.exactly(200)
       })
 
       it('should call getAudits with incorrect participantObjectID ($and) ', async () => {
-        let filters = {"participantObjectIdentification.participantObjectID":{"type":"AND","patientID":"\"!1234\\\\^\\\\^\\\\^.*&.*&.*\"","objectID":"123"}}
+        let filters = { 'participantObjectIdentification.participantObjectID': { type: 'AND', patientID: '"!1234\\\\^\\\\^\\\\^.*&.*&.*"', objectID: '123' } }
         filters = JSON.stringify(filters)
         const res = await request(BASE_URL)
           .get(`/audits?filterPage=0&filterLimit=10&filters=${encodeURIComponent(filters)}`)
@@ -224,7 +224,7 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(400)
 
-          res.statusCode.should.be.exactly(400)
+        res.statusCode.should.be.exactly(400)
       })
 
       it('should generate an \'audit log used\' audit when using non-basic representation', async () => {
