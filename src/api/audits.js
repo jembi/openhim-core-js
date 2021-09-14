@@ -69,7 +69,7 @@ export async function addAudit (ctx) {
 }
 
 function checkPatientID (patientID) {
-  return /^[\d\w\-]*$/.test(patientID) // PatientID should only be alpha numerical and may contain hyphens
+  return /^[\d\w-]*$/.test(patientID) // PatientID should only be alpha numerical and may contain hyphens
 }
 
 /*
