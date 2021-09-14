@@ -5,13 +5,13 @@
 import fs from 'fs'
 import net from 'net'
 import tls from 'tls'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { AuditModel } from '../../src/model/audits'
-import { testAuditMessage } from '../fixtures'
+import {AuditModel} from '../../src/model/audits'
+import {testAuditMessage} from '../fixtures'
 
 describe('Auditing Integration Tests', () => {
   let client
@@ -42,9 +42,7 @@ describe('Auditing Integration Tests', () => {
   })
 
   afterEach(async () => {
-    await Promise.all([
-      AuditModel.deleteMany({})
-    ])
+    await Promise.all([AuditModel.deleteMany({})])
     if (client != null) {
       if (client.end) {
         client.end()
@@ -60,17 +58,24 @@ describe('Auditing Integration Tests', () => {
   describe('UDP Audit Server', () =>
     it('should receive and persist audit messages', async () => {
       client = await testUtils.createMockUdpServer()
-      await promisify(client.send.bind(client))(testAuditMessage, 0, testAuditMessage.length, constants.SERVER_PORTS.auditUDPPort, 'localhost')
+      await promisify(client.send.bind(client))(
+        testAuditMessage,
+        0,
+        testAuditMessage.length,
+        constants.SERVER_PORTS.auditUDPPort,
+        'localhost'
+      )
       // Let go of the process so the other server can do it's processing
       await testUtils.setImmediatePromise()
 
-      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
+      await testUtils.pollCondition(() =>
+        AuditModel.countDocuments().then(c => c === 1)
+      )
       const audits = await AuditModel.find()
 
       audits.length.should.be.exactly(1)
       audits[0].rawMessage.should.be.exactly(testAuditMessage)
-    })
-  )
+    }))
 
   describe('TLS Audit Server', () => {
     it('should send TLS audit messages and save (valid)', async () => {
@@ -80,18 +85,24 @@ describe('Auditing Integration Tests', () => {
         ca: [fs.readFileSync('test/resources/server-tls/cert.pem')]
       }
 
-      client = tls.connect(constants.SERVER_PORTS.auditTlsPort, 'localhost', options)
+      client = tls.connect(
+        constants.SERVER_PORTS.auditTlsPort,
+        'localhost',
+        options
+      )
       client.close = promisify(client.end.bind(client))
       client.write = promisify(client.write.bind(client))
 
-      await new Promise((resolve) => {
+      await new Promise(resolve => {
         client.once('secureConnect', () => resolve())
       })
       client.authorized.should.true()
       await client.write(messagePrependlength)
       await testUtils.setImmediatePromise()
 
-      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
+      await testUtils.pollCondition(() =>
+        AuditModel.countDocuments().then(c => c === 1)
+      )
 
       const audits = await AuditModel.find()
       // Needs to wait
@@ -106,10 +117,14 @@ describe('Auditing Integration Tests', () => {
         ca: [fs.readFileSync('test/resources/server-tls/cert.pem')]
       }
 
-      client = tls.connect(constants.SERVER_PORTS.auditTlsPort, 'localhost', options)
+      client = tls.connect(
+        constants.SERVER_PORTS.auditTlsPort,
+        'localhost',
+        options
+      )
       client.write = promisify(client.write.bind(client))
 
-      await new Promise((resolve) => {
+      await new Promise(resolve => {
         client.once('secureConnect', () => resolve())
       })
       client.authorized.should.true()
@@ -137,7 +152,9 @@ describe('Auditing Integration Tests', () => {
       await promisify(client.once.bind(client))('end')
       await testUtils.setImmediatePromise()
 
-      await testUtils.pollCondition(() => AuditModel.countDocuments().then(c => c === 1))
+      await testUtils.pollCondition(() =>
+        AuditModel.countDocuments().then(c => c === 1)
+      )
       const audits = await AuditModel.find()
 
       audits.length.should.be.exactly(1)

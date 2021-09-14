@@ -10,7 +10,7 @@ export const appRoot = path.resolve(__dirname, '../..')
 /*
  * Define the default constructor
  */
-function Config () {
+function Config() {
   // Get the argument-value to use
   nconf.argv().env('_')
 

@@ -16,7 +16,7 @@ if (args.indexOf('-v') >= 0 || args.indexOf('--version') >= 0) {
   process.exit(0)
 }
 
-const child = new (forever.Monitor)('lib/server.js', {
+const child = new forever.Monitor('lib/server.js', {
   sourceDir: root,
   command: 'node',
   args,
@@ -24,7 +24,7 @@ const child = new (forever.Monitor)('lib/server.js', {
   watchDirectory: 'lib'
 })
 
-child.on('watch:restart', (info) => {
+child.on('watch:restart', info => {
   console.error(`Restarting script because ${info.file} changed`)
 })
 
@@ -32,7 +32,7 @@ child.on('restart', () => {
   console.error(`Forever restarting script for ${child.times} time`)
 })
 
-child.on('exit:code', (code) => {
+child.on('exit:code', code => {
   console.error(`Forever detected script exited with code ${code}`)
 })
 

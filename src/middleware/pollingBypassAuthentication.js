@@ -1,8 +1,8 @@
 'use strict'
 
-import { promisify } from 'util'
+import {promisify} from 'util'
 
-import { ClientModel } from '../model/clients'
+import {ClientModel} from '../model/clients'
 
 const dummyClient = new ClientModel({
   clientID: 'DUMMY-POLLING-USER',
@@ -11,7 +11,7 @@ const dummyClient = new ClientModel({
   roles: ['polling']
 })
 
-export function authenticateUser (ctx, done) {
+export function authenticateUser(ctx, done) {
   ctx.authenticated = dummyClient
   return done(null, dummyClient)
 }
@@ -19,7 +19,7 @@ export function authenticateUser (ctx, done) {
 /*
  * Koa middleware for bypassing authentication for polling requests
  */
-export async function koaMiddleware (ctx, next) {
+export async function koaMiddleware(ctx, next) {
   const _authenticateUser = promisify(authenticateUser)
   await _authenticateUser(ctx)
 

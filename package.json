@@ -26,8 +26,8 @@
     "coverage": "nyc report --reporter=text-lcov > coverage.lcov && codecov",
     "prepare": "npm run build",
     "migrate:metrics": "node lib/migrateMetrics.js",
-    "lint": "standard --verbose | snazzy",
-    "lint:fix": "standard --verbose --fix | snazzy",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "test": "export $(cat .env.test | xargs) && cross-env nyc mocha --timeout 30000 --exit --require @babel/register test/setupTest.js test/**/*.js && npm run lint",
     "test:unit": "cross-env NODE_ENV=test mocha --require @babel/register test/setupTest.js test/unit/**/*.js --watch",
     "test:int": "export $(cat .env.test | xargs) && cross-env mocha --timeout 30000 --require @babel/register test/setupTest.js test/integration/**/*.js --watch",
@@ -98,7 +98,14 @@
     "snazzy": "^9.0.0",
     "speculate": "^2.1.1",
     "standard": "^16.0.3",
-    "supertest": "^6.1.3"
+    "supertest": "^6.1.3",
+    "eslint": "^7.0.0",
+    "eslint-config-prettier": "^6.9.0",
+    "eslint-plugin-import": "^2.20.0",
+    "eslint-plugin-node": "^11.0.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "eslint-plugin-promise": "^4.2.1",
+    "prettier": "^2.0.5"
   },
   "repository": {
     "type": "git",

@@ -1,6 +1,6 @@
 import http from 'k6/http'
-import { check } from 'k6'
-import { getTestAuthHeaders } from './auth.js'
+import {check} from 'k6'
+import {getTestAuthHeaders} from './auth.js'
 
 const BASE_URL = __ENV.BASE_URL || 'https://127.0.0.1:8080' // eslint-disable-line no-undef
 
@@ -13,7 +13,7 @@ export const options = {
   insecureSkipTLSVerify: true
 }
 
-function makeGetRequest () {
+function makeGetRequest() {
   const response = http.get(
     // Have to limit transactions to 100 as request times out for all transactions
     `${BASE_URL}/transactions?filterLimit=100`,

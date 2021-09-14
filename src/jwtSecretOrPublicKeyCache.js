@@ -23,7 +23,10 @@ export const populateCache = () => {
     )
 
     // Check file exists
-    if (fs.existsSync(publicKeyFilePath) && fs.lstatSync(publicKeyFilePath).isFile()) {
+    if (
+      fs.existsSync(publicKeyFilePath) &&
+      fs.lstatSync(publicKeyFilePath).isFile()
+    ) {
       secretOrPublicKey = fs.readFileSync(publicKeyFilePath).toString()
     } else {
       secretOrPublicKey = secretOrPublicKeyConfig

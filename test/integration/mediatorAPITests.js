@@ -6,22 +6,22 @@
 import nconf from 'nconf'
 import request from 'supertest'
 import should from 'should'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as testUtils from '../utils'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { ClientModelAPI } from '../../src/model/clients'
-import { MediatorModelAPI } from '../../src/model/mediators'
-import { TransactionModelAPI } from '../../src/model/transactions'
-import { config } from '../../src/config'
+import {ChannelModelAPI} from '../../src/model/channels'
+import {ClientModelAPI} from '../../src/model/clients'
+import {MediatorModelAPI} from '../../src/model/mediators'
+import {TransactionModelAPI} from '../../src/model/transactions'
+import {config} from '../../src/config'
 
 describe('API Integration Tests', () => {
-  const { SERVER_PORTS } = constants
+  const {SERVER_PORTS} = constants
   const httpPortPlus40 = constants.PORT_START + 40
 
-  nconf.set('router', { httpPort: SERVER_PORTS.httpPort })
+  nconf.set('router', {httpPort: SERVER_PORTS.httpPort})
 
   const server = require('../../src/server')
 
@@ -39,34 +39,35 @@ describe('API Integration Tests', () => {
           type: 'http'
         }
       ],
-      defaultChannelConfig: [{
-        name: 'Save Encounter 1',
-        urlPattern: '/encounters',
-        type: 'http',
-        allow: [],
-        routes: [
-          {
-            name: 'Save Encounter 1',
-            host: 'localhost',
-            port: '8005',
-            type: 'http'
-          }
-        ]
-      },
-      {
-        name: 'Save Encounter 2',
-        urlPattern: '/encounters2',
-        type: 'http',
-        allow: [],
-        routes: [
-          {
-            name: 'Save Encounter 2',
-            host: 'localhost',
-            port: '8005',
-            type: 'http'
-          }
-        ]
-      }
+      defaultChannelConfig: [
+        {
+          name: 'Save Encounter 1',
+          urlPattern: '/encounters',
+          type: 'http',
+          allow: [],
+          routes: [
+            {
+              name: 'Save Encounter 1',
+              host: 'localhost',
+              port: '8005',
+              type: 'http'
+            }
+          ]
+        },
+        {
+          name: 'Save Encounter 2',
+          urlPattern: '/encounters2',
+          type: 'http',
+          allow: [],
+          routes: [
+            {
+              name: 'Save Encounter 2',
+              host: 'localhost',
+              port: '8005',
+              type: 'http'
+            }
+          ]
+        }
       ]
     }
 
@@ -106,7 +107,7 @@ describe('API Integration Tests', () => {
       await testUtils.setupTestUsers()
       await ChannelModelAPI.createIndexes()
       await MediatorModelAPI.createIndexes()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
     })
 
     after(async () => {
@@ -216,7 +217,7 @@ describe('API Integration Tests', () => {
           .send(mediator1)
           .expect(201)
 
-        const res = await MediatorModelAPI.findOne({ urn: mediator1.urn })
+        const res = await MediatorModelAPI.findOne({urn: mediator1.urn})
         should.exist(res)
       })
 
@@ -258,7 +259,7 @@ describe('API Integration Tests', () => {
           .send(updatedMediator)
           .expect(201)
 
-        const res = await MediatorModelAPI.find({ urn: mediator1.urn })
+        const res = await MediatorModelAPI.find({urn: mediator1.urn})
         res.length.should.be.exactly(1)
         res[0].name.should.be.exactly(mediator1.name)
       })
@@ -280,7 +281,7 @@ describe('API Integration Tests', () => {
           .send(updatedMediator)
           .expect(201)
 
-        const res = await MediatorModelAPI.find({ urn: mediator1.urn })
+        const res = await MediatorModelAPI.find({urn: mediator1.urn})
         res.length.should.be.exactly(1)
         res[0].name.should.be.exactly(mediator1.name)
       })
@@ -302,7 +303,7 @@ describe('API Integration Tests', () => {
           .send(updatedMediator)
           .expect(201)
 
-        const res = await MediatorModelAPI.find({ urn: mediator1.urn })
+        const res = await MediatorModelAPI.find({urn: mediator1.urn})
         res.length.should.be.exactly(1)
         res[0].name.should.be.exactly(updatedMediator.name)
       })
@@ -313,21 +314,23 @@ describe('API Integration Tests', () => {
           name: 'Mediator',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            type: 'string'
-          },
-          {
-            param: 'param2',
-            type: 'number'
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              type: 'string'
+            },
+            {
+              param: 'param2',
+              type: 'number'
+            }
           ],
           config: {
             param1: 'val1',
@@ -338,18 +341,19 @@ describe('API Integration Tests', () => {
           urn: 'urn:uuid:66237a48-2e76-4318-8cd6-9c6649ad6f5f',
           version: '1.0.1',
           name: 'Updated Mediator',
-          configDefs: [{
-            param: 'param1',
-            type: 'string'
-          },
-          {
-            param: 'param2',
-            type: 'number'
-          },
-          {
-            param: 'param3',
-            type: 'bool'
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              type: 'string'
+            },
+            {
+              param: 'param2',
+              type: 'number'
+            },
+            {
+              param: 'param3',
+              type: 'bool'
+            }
           ],
           config: {
             param1: 'val1',
@@ -368,7 +372,7 @@ describe('API Integration Tests', () => {
           .send(updatedMediator)
           .expect(201)
 
-        const res = await MediatorModelAPI.find({ urn: mediator.urn })
+        const res = await MediatorModelAPI.find({urn: mediator.urn})
         res.length.should.be.exactly(1)
         res[0].name.should.be.exactly(updatedMediator.name)
         res[0].config.param2.should.be.exactly(5) // unchanged
@@ -518,21 +522,23 @@ describe('API Integration Tests', () => {
           name: 'Patient Mediator',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            type: 'string'
-          },
-          {
-            param: 'param2',
-            type: 'number'
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              type: 'string'
+            },
+            {
+              param: 'param2',
+              type: 'number'
+            }
           ],
           config: {
             param1: 'val1',
@@ -556,21 +562,23 @@ describe('API Integration Tests', () => {
           name: 'Patient Mediator',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            type: 'string'
-          },
-          {
-            param: 'param2',
-            type: 'number'
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              type: 'string'
+            },
+            {
+              param: 'param2',
+              type: 'number'
+            }
           ],
           config: {
             param1: 'val1',
@@ -586,7 +594,9 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send(validMediator)
           .expect(201)
-        const mediator = await MediatorModelAPI.findOne({ urn: validMediator.urn })
+        const mediator = await MediatorModelAPI.findOne({
+          urn: validMediator.urn
+        })
         mediator.config.should.deepEqual(validMediator.config)
         mediator.configDefs.should.have.length(2)
       })
@@ -597,19 +607,21 @@ describe('API Integration Tests', () => {
           name: 'structmediator-1',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            displayName: 'Parameter 1',
-            description: 'Test config',
-            type: 'struct'
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              displayName: 'Parameter 1',
+              description: 'Test config',
+              type: 'struct'
+            }
           ]
         }
 
@@ -629,22 +641,22 @@ describe('API Integration Tests', () => {
           name: 'structmediator-2',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            displayName: 'Parameter 1',
-            description: 'Test config',
-            type: 'struct',
-            template: [
-              { field: 'this is not a valid template' }
-            ]
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              displayName: 'Parameter 1',
+              description: 'Test config',
+              type: 'struct',
+              template: [{field: 'this is not a valid template'}]
+            }
           ]
         }
 
@@ -664,39 +676,44 @@ describe('API Integration Tests', () => {
           name: 'structmediator-3',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            displayName: 'Parameter 1',
-            description: 'Test config',
-            type: 'struct',
-            template: [
-              {
-                param: 'server',
-                displayName: 'Server',
-                description: 'Server',
-                type: 'string'
-              }, {
-                param: 'port',
-                displayName: 'Port',
-                description: 'Port',
-                type: 'number'
-              }, {
-                param: 'secure',
-                type: 'bool'
-              }, {
-                param: 'pickAorB',
-                type: 'option',
-                values: ['A', 'B']
-              }
-            ]
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              displayName: 'Parameter 1',
+              description: 'Test config',
+              type: 'struct',
+              template: [
+                {
+                  param: 'server',
+                  displayName: 'Server',
+                  description: 'Server',
+                  type: 'string'
+                },
+                {
+                  param: 'port',
+                  displayName: 'Port',
+                  description: 'Port',
+                  type: 'number'
+                },
+                {
+                  param: 'secure',
+                  type: 'bool'
+                },
+                {
+                  param: 'pickAorB',
+                  type: 'option',
+                  values: ['A', 'B']
+                }
+              ]
+            }
           ],
           config: {
             param1: {
@@ -718,25 +735,27 @@ describe('API Integration Tests', () => {
           .expect(201)
       })
 
-      it('should reject a mediator if the config definition does not contain a \'values\' array for an option', async () => {
+      it("should reject a mediator if the config definition does not contain a 'values' array for an option", async () => {
         const mediator = {
           urn: 'urn:mediator:optionmediator-1',
           name: 'optionmediator-1',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            displayName: 'Parameter 1',
-            description: 'Test config',
-            type: 'option'
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              displayName: 'Parameter 1',
+              description: 'Test config',
+              type: 'option'
+            }
           ]
         }
 
@@ -750,26 +769,28 @@ describe('API Integration Tests', () => {
           .expect(400)
       })
 
-      it('should reject a mediator if the config definition contains an empty \'values\' array for an option', async () => {
+      it("should reject a mediator if the config definition contains an empty 'values' array for an option", async () => {
         const mediator = {
           urn: 'urn:mediator:optionmediator-2',
           name: 'optionmediator-2',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            displayName: 'Parameter 1',
-            description: 'Test config',
-            type: 'option',
-            values: []
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              displayName: 'Parameter 1',
+              description: 'Test config',
+              type: 'option',
+              values: []
+            }
           ]
         }
 
@@ -783,26 +804,28 @@ describe('API Integration Tests', () => {
           .expect(400)
       })
 
-      it('should reject a mediator if the config definition contains a non-array \'values\' field for an option', async () => {
+      it("should reject a mediator if the config definition contains a non-array 'values' field for an option", async () => {
         const mediator = {
           urn: 'urn:mediator:optionmediator-3',
           name: 'optionmediator-3',
           version: '0.8.0',
           description: 'Invalid mediator for testing',
-          endpoints: [{
-            name: 'Patient',
-            host: 'localhost',
-            port: '8006',
-            type: 'http'
-          }
+          endpoints: [
+            {
+              name: 'Patient',
+              host: 'localhost',
+              port: '8006',
+              type: 'http'
+            }
           ],
-          configDefs: [{
-            param: 'param1',
-            displayName: 'Parameter 1',
-            description: 'Test config',
-            type: 'option',
-            values: 'this is not an array'
-          }
+          configDefs: [
+            {
+              param: 'param1',
+              displayName: 'Parameter 1',
+              description: 'Test config',
+              type: 'option',
+              values: 'this is not an array'
+            }
           ]
         }
 
@@ -832,20 +855,21 @@ describe('API Integration Tests', () => {
               type: 'http'
             }
           ],
-          defaultChannelConfig: [{
-            name: 'Test Mediator',
-            urlPattern: '/test',
-            type: 'http',
-            allow: [],
-            routes: [
-              {
-                name: 'Test Route',
-                host: 'localhost',
-                port: '9000',
-                type: 'http'
-              }
-            ]
-          }
+          defaultChannelConfig: [
+            {
+              name: 'Test Mediator',
+              urlPattern: '/test',
+              type: 'http',
+              allow: [],
+              routes: [
+                {
+                  name: 'Test Route',
+                  host: 'localhost',
+                  port: '9000',
+                  type: 'http'
+                }
+              ]
+            }
           ]
         }
 
@@ -859,9 +883,9 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(200)
         const countAfter = await MediatorModelAPI.countDocuments()
-        const notFoundDoc = await MediatorModelAPI.findOne({ urn: mediator.urn });
-        (notFoundDoc === null).should.be.true();
-        (countBefore - 1).should.equal(countAfter)
+        const notFoundDoc = await MediatorModelAPI.findOne({urn: mediator.urn})
+        ;(notFoundDoc === null).should.be.true()
+        ;(countBefore - 1).should.equal(countAfter)
       })
 
       it('should not allow a non admin user to remove a mediator', async () => {
@@ -880,7 +904,9 @@ describe('API Integration Tests', () => {
         await new MediatorModelAPI(mediator1).save()
 
         const res = await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -890,7 +916,7 @@ describe('API Integration Tests', () => {
           })
           .expect(200)
 
-        const mediator = await MediatorModelAPI.findOne({ urn: mediator1.urn })
+        const mediator = await MediatorModelAPI.findOne({urn: mediator1.urn})
         mediator._uptime.should.be.exactly(50.25)
         should.exist(mediator._lastHeartbeat)
         res.body.should.be.empty()
@@ -910,10 +936,12 @@ describe('API Integration Tests', () => {
           _lastHeartbeat: new Date(prev.setMinutes(now.getMinutes() - 5))
         }
 
-        await MediatorModelAPI.findOneAndUpdate({ urn: mediator1.urn }, update)
+        await MediatorModelAPI.findOneAndUpdate({urn: mediator1.urn}, update)
 
         const res = await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -940,10 +968,12 @@ describe('API Integration Tests', () => {
           _lastHeartbeat: now
         }
 
-        await MediatorModelAPI.findOneAndUpdate({ urn: mediator1.urn }, update)
+        await MediatorModelAPI.findOneAndUpdate({urn: mediator1.urn}, update)
 
         const res = await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -960,7 +990,9 @@ describe('API Integration Tests', () => {
 
       it('should deny access to a non admin user', async () => {
         await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
+          )
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -987,7 +1019,9 @@ describe('API Integration Tests', () => {
       it('should return a 400 if an invalid body is received', async () => {
         await new MediatorModelAPI(mediator1).save()
         await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1002,7 +1036,9 @@ describe('API Integration Tests', () => {
     describe('*setConfig()', () => {
       it('should deny access to a non admin user', async () => {
         await request(constants.BASE_URL)
-          .put('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config')
+          .put(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config'
+          )
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1029,20 +1065,23 @@ describe('API Integration Tests', () => {
       })
 
       it('should set the current config for a mediator and return a 200 status', async () => {
-        mediator1.configDefs =
-        [{
-          param: 'param1',
-          type: 'string'
-        },
-        {
-          param: 'param2',
-          type: 'string'
-        }]
+        mediator1.configDefs = [
+          {
+            param: 'param1',
+            type: 'string'
+          },
+          {
+            param: 'param2',
+            type: 'string'
+          }
+        ]
 
         await new MediatorModelAPI(mediator1).save()
 
         await request(constants.BASE_URL)
-          .put('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config')
+          .put(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1053,7 +1092,7 @@ describe('API Integration Tests', () => {
           })
           .expect(200)
 
-        const mediator = await MediatorModelAPI.findOne({ urn: mediator1.urn })
+        const mediator = await MediatorModelAPI.findOne({urn: mediator1.urn})
         mediator.config.param1.should.be.exactly('val1')
         mediator.config.param2.should.be.exactly('val2')
 
@@ -1061,20 +1100,22 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a 400 if the config object contains unknown keys', async () => {
-        mediator1.configDefs =
-        [{
-          param: 'param1',
-          type: 'string'
-        },
-        {
-          param: 'param2',
-          type: 'string'
-        }
+        mediator1.configDefs = [
+          {
+            param: 'param1',
+            type: 'string'
+          },
+          {
+            param: 'param2',
+            type: 'string'
+          }
         ]
         await new MediatorModelAPI(mediator1).save()
 
         await request(constants.BASE_URL)
-          .put('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config')
+          .put(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1091,7 +1132,9 @@ describe('API Integration Tests', () => {
     describe('*loadDefaultChannels()', () => {
       it('should deny access to non-admin users', async () => {
         await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
+          )
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1103,7 +1146,9 @@ describe('API Integration Tests', () => {
       it('should add all channels in the defaultChannelConfig property', async () => {
         await new MediatorModelAPI(mediator1).save()
         await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1123,7 +1168,9 @@ describe('API Integration Tests', () => {
       it('should add selected channels in the defaultChannelConfig property if the body is set (save one)', async () => {
         await new MediatorModelAPI(mediator1).save()
         await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1140,7 +1187,9 @@ describe('API Integration Tests', () => {
       it('should add selected channels in the defaultChannelConfig property if the body is set (save both)', async () => {
         await new MediatorModelAPI(mediator1).save()
         await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1157,10 +1206,12 @@ describe('API Integration Tests', () => {
         channelNames.should.containEql('Save Encounter 2')
       })
 
-      it('should return a 400 when a channel from the request body isn\'t found', async () => {
+      it("should return a 400 when a channel from the request body isn't found", async () => {
         await new MediatorModelAPI(mediator1).save()
         await request(constants.BASE_URL)
-          .post('/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels')
+          .post(
+            '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -1169,7 +1220,7 @@ describe('API Integration Tests', () => {
           .expect(400)
       })
 
-      it('should return a 404 if the mediator isn\'t found', async () => {
+      it("should return a 404 if the mediator isn't found", async () => {
         await request(constants.BASE_URL)
           .post('/mediators/urn:uuid:MISSING/channels')
           .set('auth-username', testUtils.rootUser.email)
@@ -1193,24 +1244,26 @@ describe('API Integration Tests', () => {
         body: '<transaction response>',
         timestamp: new Date()
       },
-      orchestrations: [{
-        name: 'Lab API',
-        request: {
-          path: 'api/patient/lab',
-          headers: {
-            'Content-Type': 'text/plain'
+      orchestrations: [
+        {
+          name: 'Lab API',
+          request: {
+            path: 'api/patient/lab',
+            headers: {
+              'Content-Type': 'text/plain'
+            },
+            body: '<route request>',
+            method: 'POST',
+            timestamp: new Date()
           },
-          body: '<route request>',
-          method: 'POST',
-          timestamp: new Date()
-        },
-        response: {
-          status: 200,
-          headers: {},
-          body: '<route response>',
-          timestamp: new Date()
+          response: {
+            status: 200,
+            headers: {},
+            body: '<route response>',
+            timestamp: new Date()
+          }
         }
-      }],
+      ],
       properties: {
         orderId: 'TEST00001',
         documentId: '1f49c3e0-3cec-4292-b495-5bd41433a048'
@@ -1226,12 +1279,14 @@ describe('API Integration Tests', () => {
         urlPattern: 'test/mediator',
         allow: ['PoC'],
         methods: ['GET'],
-        routes: [{
-          name: 'mediator route',
-          host: 'localhost',
-          port: httpPortPlus40,
-          primary: true
-        }],
+        routes: [
+          {
+            name: 'mediator route',
+            host: 'localhost',
+            port: httpPortPlus40,
+            primary: true
+          }
+        ],
         updatedBy: {
           id: new ObjectId(),
           name: 'Test'
@@ -1242,26 +1297,30 @@ describe('API Integration Tests', () => {
         clientID: 'mediatorTestApp',
         clientDomain: 'test-client.jembi.org',
         name: 'TEST Client',
-        roles: [
-          'OpenMRS_PoC',
-          'PoC'
-        ],
+        roles: ['OpenMRS_PoC', 'PoC'],
         passwordAlgorithm: 'sha512',
-        passwordHash: '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
+        passwordHash:
+          '28dce3506eca8bb3d9d5a9390135236e8746f15ca2d8c86b8d8e653da954e9e3632bf9d85484ee6e9b28a3ada30eec89add42012b185bd9a4a36a07ce08ce2ea',
         passwordSalt: '1234567890',
         cert: ''
       }
 
       await new ClientModelAPI(testAppDoc).save()
-      mockServer = await testUtils.createMockHttpMediator(mediatorResponse, httpPortPlus40, 200)
+      mockServer = await testUtils.createMockHttpMediator(
+        mediatorResponse,
+        httpPortPlus40,
+        200
+      )
     })
 
-    beforeEach(async () => { await TransactionModelAPI.deleteMany({}) })
+    beforeEach(async () => {
+      await TransactionModelAPI.deleteMany({})
+    })
 
     after(async () => {
       await Promise.all([
-        ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock mediator endpoint' }),
-        ClientModelAPI.deleteOne({ clientID: 'mediatorTestApp' }),
+        ChannelModelAPI.deleteOne({name: 'TEST DATA - Mock mediator endpoint'}),
+        ClientModelAPI.deleteOne({clientID: 'mediatorTestApp'}),
         mockServer.close()
       ])
     })
@@ -1275,7 +1334,7 @@ describe('API Integration Tests', () => {
 
     describe('mediator response processing', () => {
       it('should return the specified mediator response element as the actual response', async () => {
-        await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+        await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
         const res = await request(constants.HTTP_BASE_URL)
           .get('/test/mediator')
           .auth('mediatorTestApp', 'password')
@@ -1285,21 +1344,27 @@ describe('API Integration Tests', () => {
       })
 
       it('should setup the correct metadata on the transaction as specified by the mediator response', async () => {
-        await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+        await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
         await request(constants.HTTP_BASE_URL)
           .get('/test/mediator')
           .auth('mediatorTestApp', 'password')
           .expect(200)
 
-        await testUtils.pollCondition(() => TransactionModelAPI.countDocuments().then(c => c === 1))
+        await testUtils.pollCondition(() =>
+          TransactionModelAPI.countDocuments().then(c => c === 1)
+        )
         const res = await TransactionModelAPI.findOne()
 
         res.status.should.be.equal(mediatorResponse.status)
         res.orchestrations.length.should.be.exactly(2)
-        res.orchestrations[0].name.should.be.equal(mediatorResponse.orchestrations[0].name)
+        res.orchestrations[0].name.should.be.equal(
+          mediatorResponse.orchestrations[0].name
+        )
         should.exist(res.properties)
-        res.properties.orderId.should.be.equal(mediatorResponse.properties.orderId)
+        res.properties.orderId.should.be.equal(
+          mediatorResponse.properties.orderId
+        )
       })
     })
   })

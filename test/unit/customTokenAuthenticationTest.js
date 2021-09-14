@@ -46,8 +46,8 @@ describe('Custom Token Authorization Test', () => {
 
       const clientStub = sandbox
         .stub(client.ClientModel, 'findOne')
-        .withArgs({ customTokenID: 'test1' })
-        .resolves({ name: 'Test', clientID: 'test' })
+        .withArgs({customTokenID: 'test1'})
+        .resolves({name: 'Test', clientID: 'test'})
 
       await customTokenAuthentication.koaMiddleware(ctx, next)
 
@@ -92,7 +92,7 @@ describe('Custom Token Authorization Test', () => {
 
       const clientStub = sandbox
         .stub(client.ClientModel, 'findOne')
-        .withArgs({ customTokenID: 'test1' })
+        .withArgs({customTokenID: 'test1'})
         .resolves(null)
 
       await customTokenAuthentication.koaMiddleware(ctx, next)

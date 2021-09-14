@@ -5,14 +5,14 @@
 
 import request from 'supertest'
 import should from 'should'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { ClientModelAPI } from '../../src/model/clients'
+import {ClientModelAPI} from '../../src/model/clients'
 
-const { SERVER_PORTS } = constants
+const {SERVER_PORTS} = constants
 
 describe('API Integration Tests', () => {
   describe('Clients REST Api Testing', () => {
@@ -20,19 +20,18 @@ describe('API Integration Tests', () => {
       clientID: 'YUIAIIIICIIAIA',
       clientDomain: 'him.jembi.org',
       name: 'OpenMRS Ishmael instance',
-      roles: [
-        'OpenMRS_PoC',
-        'PoC'
-      ],
-      passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
-      certFingerprint: '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+      roles: ['OpenMRS_PoC', 'PoC'],
+      passwordHash:
+        '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
+      certFingerprint:
+        '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
     }
 
     let authDetails = {}
 
     before(async () => {
       await testUtils.setupTestUsers()
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
     })
 
     after(async () => {
@@ -58,14 +57,20 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send(testAppDoc)
           .expect(201)
-        const client = await ClientModelAPI.findOne({ clientID: 'YUIAIIIICIIAIA' })
+        const client = await ClientModelAPI.findOne({
+          clientID: 'YUIAIIIICIIAIA'
+        })
         client.clientID.should.equal('YUIAIIIICIIAIA')
         client.clientDomain.should.equal('him.jembi.org')
         client.name.should.equal('OpenMRS Ishmael instance')
         client.roles[0].should.equal('OpenMRS_PoC')
         client.roles[1].should.equal('PoC')
-        client.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
-        client.certFingerprint.should.equal('23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC')
+        client.passwordHash.should.equal(
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        )
+        client.certFingerprint.should.equal(
+          '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+        )
       })
 
       it('should add two clients without customTokenIDs to db - clients created', async () => {
@@ -93,9 +98,9 @@ describe('API Integration Tests', () => {
           .send(clientNoToken2)
           .expect(201)
 
-        const client1 = await ClientModelAPI.findOne({ clientID: 'test1' })
+        const client1 = await ClientModelAPI.findOne({clientID: 'test1'})
         should(client1.customTokenID).be.undefined()
-        const client2 = await ClientModelAPI.findOne({ clientID: 'test2' })
+        const client2 = await ClientModelAPI.findOne({clientID: 'test2'})
         should(client2.customTokenID).be.undefined()
       })
 
@@ -117,7 +122,7 @@ describe('API Integration Tests', () => {
           .send(clientNoToken1)
           .expect(201)
 
-        const client1 = await ClientModelAPI.findOne({ clientID: 'test1' })
+        const client1 = await ClientModelAPI.findOne({clientID: 'test1'})
         should(client1.customTokenID).equal('test')
 
         await request(constants.BASE_URL)
@@ -176,11 +181,9 @@ describe('API Integration Tests', () => {
         clientID: 'testClient',
         clientDomain: 'www.zedmusic-unique.co.zw',
         name: 'OpenHIE NodeJs',
-        roles: [
-          'test_role_PoC',
-          'monitoring'
-        ],
-        passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        roles: ['test_role_PoC', 'monitoring'],
+        passwordHash:
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
       }
 
       let clientId = null
@@ -203,7 +206,9 @@ describe('API Integration Tests', () => {
         res.body.name.should.equal('OpenHIE NodeJs')
         res.body.roles[0].should.equal('test_role_PoC')
         res.body.roles[1].should.equal('monitoring')
-        res.body.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
+        res.body.passwordHash.should.equal(
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        )
       })
 
       it('should get client by clientId excluding custom token ID', async () => {
@@ -274,11 +279,9 @@ describe('API Integration Tests', () => {
         clientID: 'Zambia_OpenHIE_Instance',
         clientDomain: 'www.zedmusic-unique.co.zw',
         name: 'OpenHIE NodeJs',
-        roles: [
-          'test_role_PoC',
-          'monitoring'
-        ],
-        passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        roles: ['test_role_PoC', 'monitoring'],
+        passwordHash:
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
       }
 
       it('should return client with specified clientDomain', async () => {
@@ -295,7 +298,9 @@ describe('API Integration Tests', () => {
         res.body.name.should.equal('OpenHIE NodeJs')
         res.body.roles[0].should.equal('test_role_PoC')
         res.body.roles[1].should.equal('monitoring')
-        res.body.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
+        res.body.passwordHash.should.equal(
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        )
       })
 
       it('should not allow a non admin user to fetch a client by domain', async () => {
@@ -314,23 +319,41 @@ describe('API Integration Tests', () => {
         clientID: 'Botswana_OpenHIE_Instance',
         clientDomain: 'www.zedmusic.co.zw',
         name: 'OpenHIE NodeJs',
-        roles: [
-          'test_role_PoC',
-          'analysis_POC'
-        ],
-        passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        roles: ['test_role_PoC', 'analysis_POC'],
+        passwordHash:
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
       }
 
       it('should return all clients ', async () => {
         should(await ClientModelAPI.countDocuments()).eql(0)
 
-        await new ClientModelAPI(Object.assign({}, testDocument, { clientID: 'test1', customTokenID: 'token1' })).save()
+        await new ClientModelAPI(
+          Object.assign({}, testDocument, {
+            clientID: 'test1',
+            customTokenID: 'token1'
+          })
+        ).save()
 
-        await new ClientModelAPI(Object.assign({}, testDocument, { clientID: 'test2', customTokenID: 'token2' })).save()
+        await new ClientModelAPI(
+          Object.assign({}, testDocument, {
+            clientID: 'test2',
+            customTokenID: 'token2'
+          })
+        ).save()
 
-        await new ClientModelAPI(Object.assign({}, testDocument, { clientID: 'test3', customTokenID: 'token3' })).save()
+        await new ClientModelAPI(
+          Object.assign({}, testDocument, {
+            clientID: 'test3',
+            customTokenID: 'token3'
+          })
+        ).save()
 
-        await new ClientModelAPI(Object.assign({}, testDocument, { clientID: 'test4', customTokenID: 'token4' })).save()
+        await new ClientModelAPI(
+          Object.assign({}, testDocument, {
+            clientID: 'test4',
+            customTokenID: 'token4'
+          })
+        ).save()
 
         const res = await request(constants.BASE_URL)
           .get('/clients')
@@ -341,7 +364,7 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         res.body.length.should.equal(4)
-        res.body.forEach((client) => {
+        res.body.forEach(client => {
           client.customTokenSet.should.be.ok()
           should.not.exist(client.customTokenID)
         })
@@ -363,11 +386,9 @@ describe('API Integration Tests', () => {
         clientID: 'Botswana_OpenHIE_Instance',
         clientDomain: 'www.zedmusic.co.zw',
         name: 'OpenHIE NodeJs',
-        roles: [
-          'test_role_PoC',
-          'analysis_POC'
-        ],
-        passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        roles: ['test_role_PoC', 'analysis_POC'],
+        passwordHash:
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
       }
 
       it('should update the specified client ', async () => {
@@ -375,10 +396,9 @@ describe('API Integration Tests', () => {
 
         const updates = {
           _id: 'thisShouldBeIgnored',
-          roles: [
-            'clientTest_update'
-          ],
-          passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
+          roles: ['clientTest_update'],
+          passwordHash:
+            '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
           name: 'Devil_may_Cry'
         }
 
@@ -393,7 +413,9 @@ describe('API Integration Tests', () => {
 
         const clientDoc = await ClientModelAPI.findById(client._id)
         clientDoc.roles[0].should.equal('clientTest_update')
-        clientDoc.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
+        clientDoc.passwordHash.should.equal(
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        )
         clientDoc.name.should.equal('Devil_may_Cry')
       })
 
@@ -465,10 +487,9 @@ describe('API Integration Tests', () => {
 
         const updates = {
           _id: 'not_a_real_id',
-          roles: [
-            'clientTest_update'
-          ],
-          passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
+          roles: ['clientTest_update'],
+          passwordHash:
+            '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
           name: 'Devil_may_Cry'
         }
 
@@ -483,7 +504,9 @@ describe('API Integration Tests', () => {
 
         const clientDoc = await ClientModelAPI.findById(client._id)
         clientDoc.roles[0].should.equal('clientTest_update')
-        clientDoc.passwordHash.should.equal('$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy')
+        clientDoc.passwordHash.should.equal(
+          '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+        )
         clientDoc.name.should.equal('Devil_may_Cry')
       })
 
@@ -501,7 +524,7 @@ describe('API Integration Tests', () => {
 
       it('should reject a client that conflicts with a role', async () => {
         const client = await new ClientModelAPI(testAppDoc).save()
-        const conflict = { clientID: 'PoC' }
+        const conflict = {clientID: 'PoC'}
         await request(constants.BASE_URL)
           .put(`/clients/${client._id}`)
           .set('auth-username', testUtils.rootUser.email)
@@ -519,11 +542,9 @@ describe('API Integration Tests', () => {
           clientID: 'Jembi_OpenHIE_Instance',
           clientDomain: 'www.jembi.org',
           name: 'OpenHIE NodeJs',
-          roles: [
-            'test_role_PoC',
-            'analysis_POC'
-          ],
-          passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
+          roles: ['test_role_PoC', 'analysis_POC'],
+          passwordHash:
+            '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy'
         }
 
         const client = await new ClientModelAPI(docTestRemove).save()
@@ -537,7 +558,9 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         const countAfter = await ClientModelAPI.countDocuments()
-        const notFoundDoc = await ClientModelAPI.findOne({ clientID: 'Jembi_OpenHIE_Instance' })
+        const notFoundDoc = await ClientModelAPI.findOne({
+          clientID: 'Jembi_OpenHIE_Instance'
+        })
         countAfter.should.equal(countBefore - 1)
         should.not.exist(notFoundDoc)
       })

@@ -2,11 +2,11 @@
 
 /* eslint-env mocha */
 
-import { ObjectId } from 'mongodb'
+import {ObjectId} from 'mongodb'
 
 import * as authorisation from '../../src/api/authorisation'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { UserModelAPI } from '../../src/model/users'
+import {ChannelModelAPI} from '../../src/model/channels'
+import {UserModelAPI} from '../../src/model/users'
 
 describe('API authorisation test', () => {
   const user = new UserModelAPI({
@@ -44,12 +44,13 @@ describe('API authorisation test', () => {
       name: 'TestChannel1 - api authorisation',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
-      routes: [{
-        name: 'test route',
-        host: 'localhost',
-        port: 9876,
-        primary: true
-      }
+      routes: [
+        {
+          name: 'test route',
+          host: 'localhost',
+          port: 9876,
+          primary: true
+        }
       ],
       txViewAcl: ['group1', 'group2'],
       txRerunAcl: ['group2'],
@@ -63,12 +64,13 @@ describe('API authorisation test', () => {
       name: 'TestChannel2 - api authorisation',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
-      routes: [{
-        name: 'test route',
-        host: 'localhost',
-        port: 9876,
-        primary: true
-      }
+      routes: [
+        {
+          name: 'test route',
+          host: 'localhost',
+          port: 9876,
+          primary: true
+        }
       ],
       txViewAcl: ['group2', 'group3'],
       txRerunAcl: ['group1', 'group3'],
@@ -82,12 +84,13 @@ describe('API authorisation test', () => {
       name: 'TestChannel3 - api authorisation',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
-      routes: [{
-        name: 'test route',
-        host: 'localhost',
-        port: 9876,
-        primary: true
-      }
+      routes: [
+        {
+          name: 'test route',
+          host: 'localhost',
+          port: 9876,
+          primary: true
+        }
       ],
       txViewAcl: ['group4'],
       txRerunAcl: ['group4'],
@@ -97,11 +100,7 @@ describe('API authorisation test', () => {
       }
     })
 
-    await Promise.all([
-      channel1.save(),
-      channel2.save(),
-      channel3.save()
-    ])
+    await Promise.all([channel1.save(), channel2.save(), channel3.save()])
   })
 
   after(async () => {

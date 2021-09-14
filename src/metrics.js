@@ -2,7 +2,12 @@
 
 import moment from 'moment'
 
-import { METRIC_TYPE_DAY, METRIC_TYPE_HOUR, METRIC_TYPE_MINUTE, MetricModel } from './model'
+import {
+  METRIC_TYPE_DAY,
+  METRIC_TYPE_HOUR,
+  METRIC_TYPE_MINUTE,
+  MetricModel
+} from './model'
 
 const TRANSACTION_STATUS_KEYS = {
   Processing: 'processing',
@@ -12,21 +17,21 @@ const TRANSACTION_STATUS_KEYS = {
   Failed: 'failed'
 }
 
-const METRIC_UPDATE_OPTIONS = { upsert: true, setDefaultsOnInsert: true }
+const METRIC_UPDATE_OPTIONS = {upsert: true, setDefaultsOnInsert: true}
 
-async function recordTransactionMetric (fields, update) {
+async function recordTransactionMetric(fields, update) {
   return MetricModel.updateOne(
     fields,
-    Object.assign({}, update, { $setOnInsert: fields }),
+    Object.assign({}, update, {$setOnInsert: fields}),
     METRIC_UPDATE_OPTIONS
   )
 }
 
-export async function recordTransactionMetrics (transaction) {
+export async function recordTransactionMetrics(transaction) {
   if (
     !transaction.response ||
-      !transaction.response.timestampEnd ||
-      !(transaction.response.timestampEnd instanceof Date)
+    !transaction.response.timestampEnd ||
+    !(transaction.response.timestampEnd instanceof Date)
   ) {
     // Don't record metrics if there is no response i.e. an error
     // or if the response does not have a timestamp
@@ -41,7 +46,9 @@ export async function recordTransactionMetrics (transaction) {
     return
   }
 
-  const responseTime = transaction.response.timestampEnd.getTime() - transaction.request.timestamp.getTime()
+  const responseTime =
+    transaction.response.timestampEnd.getTime() -
+    transaction.request.timestamp.getTime()
   const statusKey = TRANSACTION_STATUS_KEYS[transaction.status]
   const update = {
     $inc: {
@@ -58,39 +65,50 @@ export async function recordTransactionMetrics (transaction) {
   }
 
   // Update metrics for the minute bucket
-  const minuteUpdate = recordTransactionMetric({
-    type: METRIC_TYPE_MINUTE,
-    startTime: moment(transaction.request.timestamp).startOf('minute').toDate(),
-    channelID: transaction.channelID
-  }, update)
+  const minuteUpdate = recordTransactionMetric(
+    {
+      type: METRIC_TYPE_MINUTE,
+      startTime: moment(transaction.request.timestamp)
+        .startOf('minute')
+        .toDate(),
+      channelID: transaction.channelID
+    },
+    update
+  )
 
   // Update metrics for the hour bucket
-  const hourUpdate = recordTransactionMetric({
-    type: METRIC_TYPE_HOUR,
-    startTime: moment(transaction.request.timestamp).startOf('hour').toDate(),
-    channelID: transaction.channelID
-  }, update)
+  const hourUpdate = recordTransactionMetric(
+    {
+      type: METRIC_TYPE_HOUR,
+      startTime: moment(transaction.request.timestamp).startOf('hour').toDate(),
+      channelID: transaction.channelID
+    },
+    update
+  )
 
   // Update metrics for the day bucket
-  const dayUpdate = recordTransactionMetric({
-    type: METRIC_TYPE_DAY,
-    startTime: moment(transaction.request.timestamp).startOf('day').toDate(),
-    channelID: transaction.channelID
-  }, update)
+  const dayUpdate = recordTransactionMetric(
+    {
+      type: METRIC_TYPE_DAY,
+      startTime: moment(transaction.request.timestamp).startOf('day').toDate(),
+      channelID: transaction.channelID
+    },
+    update
+  )
 
   await Promise.all([minuteUpdate, hourUpdate, dayUpdate])
 }
 
 const METRICS_GROUPINGS = {
-  requests: { $sum: '$requests' },
-  responseTime: { $sum: '$responseTime' },
-  minResponseTime: { $min: '$minResponseTime' },
-  maxResponseTime: { $max: '$maxResponseTime' },
-  successful: { $sum: '$successful' },
-  failed: { $sum: '$failed' },
-  processing: { $sum: '$processing' },
-  completed: { $sum: '$completed' },
-  completedWithErrors: { $sum: '$completedWithErrors' }
+  requests: {$sum: '$requests'},
+  responseTime: {$sum: '$responseTime'},
+  minResponseTime: {$min: '$minResponseTime'},
+  maxResponseTime: {$max: '$maxResponseTime'},
+  successful: {$sum: '$successful'},
+  failed: {$sum: '$failed'},
+  processing: {$sum: '$processing'},
+  completed: {$sum: '$completed'},
+  completedWithErrors: {$sum: '$completedWithErrors'}
 }
 
 /**
@@ -103,7 +121,7 @@ const METRICS_GROUPINGS = {
  * @param {String} [filters.timeSeries] Time period
  * @param {boolean} [groupByChannel=true] Whether to group metrics by channel
  */
-export async function calculateMetrics (filters, groupByChannel = true) {
+export async function calculateMetrics(filters, groupByChannel = true) {
   const pipeline = [
     {
       $match: {
@@ -127,8 +145,8 @@ export async function calculateMetrics (filters, groupByChannel = true) {
           startTime: '$startTime',
           type: '$type'
         },
-        startTime: { $first: '$startTime' },
-        type: { $first: '$type' }
+        startTime: {$first: '$startTime'},
+        type: {$first: '$type'}
       })
     })
   }
@@ -140,19 +158,17 @@ export async function calculateMetrics (filters, groupByChannel = true) {
         _id: {
           channelID: '$channelID'
         },
-        channelID: { $first: '$channelID' }
+        channelID: {$first: '$channelID'}
       })
     })
   }
 
-  pipeline.push(
-    { $sort: { startTime: 1, channelID: 1 } }
-  )
+  pipeline.push({$sort: {startTime: 1, channelID: 1}})
 
   return MetricModel.aggregate(pipeline)
 }
 
-function mapTimeSeriesToMetricType (timeSeries) {
+function mapTimeSeriesToMetricType(timeSeries) {
   switch (timeSeries) {
     case 'minute':
       return METRIC_TYPE_MINUTE

@@ -5,35 +5,42 @@
 
 import fs from 'fs'
 import sinon from 'sinon'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as router from '../../src/middleware/router'
 import * as testUtils from '../utils'
-import { KeystoreModel, CertificateModel } from '../../src/model'
-import { Readable } from 'stream'
+import {KeystoreModel, CertificateModel} from '../../src/model'
+import {Readable} from 'stream'
 
 const DEFAULT_CHANNEL = Object.freeze({
   name: 'Mock endpoint',
   urlPattern: '.+',
   responseBody: true,
   requestBody: true,
-  routes: [{
-    name: 'test',
-    host: 'localhost',
-    port: constants.HTTP_PORT,
-    primary: true
-  }]
+  routes: [
+    {
+      name: 'test',
+      host: 'localhost',
+      port: constants.HTTP_PORT,
+      primary: true
+    }
+  ]
 })
 
 describe('HTTP Router', () => {
-  const requestTimestamp = (new Date()).toString()
+  const requestTimestamp = new Date().toString()
 
   before(() => testUtils.setupTestKeystore())
 
   after(() => testUtils.cleanupTestKeystore())
 
-  function createContext (channel, path = '/test', method = 'GET', body = undefined) {
+  function createContext(
+    channel,
+    path = '/test',
+    method = 'GET',
+    body = undefined
+  ) {
     const downstream = new Readable()
     downstream._read = () => {}
 
@@ -50,7 +57,7 @@ describe('HTTP Router', () => {
       body,
       state: {
         downstream: downstream,
-        requestPromise: new Promise((resolve) => resolve)
+        requestPromise: new Promise(resolve => resolve)
       }
     }
   }
@@ -97,7 +104,9 @@ describe('HTTP Router', () => {
         // Wait for the gridfs streaming of the response to finish
         await testUtils.awaitGridfsBodyStreaming()
 
-        const gridfsBody = await testUtils.extractGridFSPayload(ctx.response.bodyId)
+        const gridfsBody = await testUtils.extractGridFSPayload(
+          ctx.response.bodyId
+        )
         gridfsBody.should.be.eql(respBody)
       })
 
@@ -106,12 +115,13 @@ describe('HTTP Router', () => {
         const channel = {
           name: 'Static Server Endpoint',
           urlPattern: '/openhim-logo-green.png',
-          routes: [{
-            name: 'Test',
-            host: 'localhost',
-            port: constants.STATIC_PORT,
-            primary: true
-          }
+          routes: [
+            {
+              name: 'Test',
+              host: 'localhost',
+              port: constants.STATIC_PORT,
+              primary: true
+            }
           ]
         }
 
@@ -123,7 +133,9 @@ describe('HTTP Router', () => {
 
         const responseBody = await testUtils.getResponseBodyFromStream(ctx)
 
-        responseBody.should.be.equal((fs.readFileSync('test/resources/openhim-logo-green.png')).toString())
+        responseBody.should.be.equal(
+          fs.readFileSync('test/resources/openhim-logo-green.png').toString()
+        )
       })
 
       it('should route an incoming https request to the endpoints specific by the channel config', async () => {
@@ -138,14 +150,15 @@ describe('HTTP Router', () => {
         const channel = {
           name: 'Mock endpoint',
           urlPattern: '.+',
-          routes: [{
-            name: 'test',
-            secured: true,
-            host: 'localhost',
-            port: constants.HTTPS_PORT,
-            primary: true,
-            cert: cert._id
-          }
+          routes: [
+            {
+              name: 'test',
+              secured: true,
+              host: 'localhost',
+              port: constants.HTTPS_PORT,
+              primary: true,
+              cert: cert._id
+            }
           ]
         }
         const ctx = createContext(channel)
@@ -172,13 +185,14 @@ describe('HTTP Router', () => {
           name: 'Mock endpoint',
           urlPattern: '.+',
           responseBody: true,
-          routes: [{
-            secured: true,
-            host: 'localhost',
-            port: constants.HTTPS_PORT,
-            primary: true,
-            cert: cert._id
-          }
+          routes: [
+            {
+              secured: true,
+              host: 'localhost',
+              port: constants.HTTPS_PORT,
+              primary: true,
+              cert: cert._id
+            }
           ]
         }
         const ctx = createContext(channel)
@@ -193,12 +207,17 @@ describe('HTTP Router', () => {
         // Wait for body to be streamed into gridfs
         await testUtils.awaitGridfsBodyStreaming()
 
-        const gridfsBody = await testUtils.extractGridFSPayload(ctx.response.bodyId)
+        const gridfsBody = await testUtils.extractGridFSPayload(
+          ctx.response.bodyId
+        )
         gridfsBody.should.be.eql(constants.DEFAULT_HTTPS_RESP)
       })
 
-      it('should be denied access if the server doesn\'t know the client cert when using mutual TLS authentication', async () => {
-        server = await testUtils.createMockHttpsServer('This is going to break', false)
+      it("should be denied access if the server doesn't know the client cert when using mutual TLS authentication", async () => {
+        server = await testUtils.createMockHttpsServer(
+          'This is going to break',
+          false
+        )
 
         const keystore = await KeystoreModel.findOne({})
         const cert = new CertificateModel({
@@ -209,36 +228,44 @@ describe('HTTP Router', () => {
         const channel = {
           name: 'Mock endpoint',
           urlPattern: '.+',
-          routes: [{
-            name: 'test',
-            secured: true,
-            host: 'localhost',
-            port: constants.HTTPS_PORT,
-            primary: true,
-            cert: cert._id
-          }
+          routes: [
+            {
+              name: 'test',
+              secured: true,
+              host: 'localhost',
+              port: constants.HTTPS_PORT,
+              primary: true,
+              cert: cert._id
+            }
           ]
         }
         const ctx = createContext(channel)
         await promisify(router.route)(ctx)
 
         ctx.response.status.should.be.exactly(500)
-        ctx.response.body.toString().should.be.eql('An internal server error occurred')
+        ctx.response.body
+          .toString()
+          .should.be.eql('An internal server error occurred')
       })
 
       it('should forward PUT and POST requests correctly', async () => {
         const response = 'Hello Post'
         const postSpy = sinon.spy(() => response)
-        server = await testUtils.createMockHttpServer(postSpy, constants.HTTP_PORT, 200)
+        server = await testUtils.createMockHttpServer(
+          postSpy,
+          constants.HTTP_PORT,
+          200
+        )
         const channel = {
           name: 'POST channel',
           urlPattern: '.+',
-          routes: [{
-            name: 'test',
-            host: 'localhost',
-            port: constants.HTTP_PORT,
-            primary: true
-          }
+          routes: [
+            {
+              name: 'test',
+              host: 'localhost',
+              port: constants.HTTP_PORT,
+              primary: true
+            }
           ]
         }
         const ctx = createContext(channel, '/test', 'POST', 'some body')
@@ -258,16 +285,21 @@ describe('HTTP Router', () => {
       it('should handle empty put and post requests correctly', async () => {
         const response = 'Hello Empty Post'
         const postSpy = sinon.spy(() => response)
-        server = await testUtils.createMockHttpServer(postSpy, constants.HTTP_PORT, 200)
+        server = await testUtils.createMockHttpServer(
+          postSpy,
+          constants.HTTP_PORT,
+          200
+        )
         const channel = {
           name: 'POST channel',
           urlPattern: '.+',
-          routes: [{
-            name: 'test',
-            host: 'localhost',
-            port: constants.HTTP_PORT,
-            primary: true
-          }
+          routes: [
+            {
+              name: 'test',
+              host: 'localhost',
+              port: constants.HTTP_PORT,
+              primary: true
+            }
           ]
         }
         const ctx = createContext(channel, '/test', 'POST')
@@ -285,8 +317,12 @@ describe('HTTP Router', () => {
       })
 
       it('should send request params if these where received from the incoming request', async () => {
-        const requestSpy = sinon.spy(() => { })
-        server = await testUtils.createMockHttpServer(requestSpy, constants.HTTP_PORT, 200)
+        const requestSpy = sinon.spy(() => {})
+        server = await testUtils.createMockHttpServer(
+          requestSpy,
+          constants.HTTP_PORT,
+          200
+        )
         const ctx = createContext(DEFAULT_CHANNEL)
         ctx.request.querystring = 'parma1=val1&parma2=val2'
 
@@ -304,12 +340,13 @@ describe('HTTP Router', () => {
         const channel = {
           name: 'Mock endpoint',
           urlPattern: '.+',
-          routes: [{
-            name: 'test',
-            host: 'localhost',
-            port: constants.MEDIATOR_PORT,
-            primary: true
-          }
+          routes: [
+            {
+              name: 'test',
+              host: 'localhost',
+              port: constants.MEDIATOR_PORT,
+              primary: true
+            }
           ]
         }
         const ctx = createContext(channel)
@@ -322,27 +359,26 @@ describe('HTTP Router', () => {
       })
 
       it('should set mediator response data as response to client', async () => {
-        const mediatorResponse = Object.assign({},
-          constants.mediatorResponse,
-          {
-            status: 'Failed',
-            response: {
-              status: 400,
-              headers: { 'content-type': 'text/xml', 'another-header': 'xyz' },
-              body: 'Mock response body from mediator\n'
-            }
-          })
+        const mediatorResponse = Object.assign({}, constants.mediatorResponse, {
+          status: 'Failed',
+          response: {
+            status: 400,
+            headers: {'content-type': 'text/xml', 'another-header': 'xyz'},
+            body: 'Mock response body from mediator\n'
+          }
+        })
 
         server = await testUtils.createMockHttpMediator(mediatorResponse)
         const channel = {
           name: 'Mock endpoint',
           urlPattern: '.+',
-          routes: [{
-            name: 'test',
-            host: 'localhost',
-            port: constants.MEDIATOR_PORT,
-            primary: true
-          }
+          routes: [
+            {
+              name: 'test',
+              host: 'localhost',
+              port: constants.MEDIATOR_PORT,
+              primary: true
+            }
           ]
         }
         const ctx = createContext(channel)
@@ -351,33 +387,34 @@ describe('HTTP Router', () => {
         await promisify(router.route)(ctx)
 
         ctx.response.status.should.be.exactly(400)
-        ctx.response.body.should.be.exactly('Mock response body from mediator\n')
+        ctx.response.body.should.be.exactly(
+          'Mock response body from mediator\n'
+        )
         ctx.response.type.should.be.exactly('text/xml')
         ctx.response.set.calledWith('another-header', 'xyz').should.be.true()
       })
 
       it('should set mediator response location header if present and status is not 3xx', async () => {
-        const mediatorResponse = Object.assign({},
-          constants.mediatorResponse,
-          {
-            status: 'Successful',
-            response: {
-              status: 201,
-              headers: { location: 'Patient/1/_history/1' },
-              body: 'Mock response body\n'
-            }
-          })
+        const mediatorResponse = Object.assign({}, constants.mediatorResponse, {
+          status: 'Successful',
+          response: {
+            status: 201,
+            headers: {location: 'Patient/1/_history/1'},
+            body: 'Mock response body\n'
+          }
+        })
 
         server = await testUtils.createMockHttpMediator(mediatorResponse)
         const channel = {
           name: 'Mock endpoint',
           urlPattern: '.+',
-          routes: [{
-            name: 'test',
-            host: 'localhost',
-            port: constants.MEDIATOR_PORT,
-            primary: true
-          }
+          routes: [
+            {
+              name: 'test',
+              host: 'localhost',
+              port: constants.MEDIATOR_PORT,
+              primary: true
+            }
           ]
         }
         const ctx = createContext(channel)
@@ -385,7 +422,9 @@ describe('HTTP Router', () => {
 
         await promisify(router.route)(ctx)
 
-        ctx.response.set.calledWith('location', mediatorResponse.response.headers.location).should.be.true()
+        ctx.response.set
+          .calledWith('location', mediatorResponse.response.headers.location)
+          .should.be.true()
       })
     })
 
@@ -404,29 +443,38 @@ describe('HTTP Router', () => {
         name: 'Multicast 1',
         urlPattern: 'test/multicast.+',
         responseBody: true,
-        routes: [{
-          name: 'non_primary_1',
-          host: 'localhost',
-          port: NON_PRIMARY1_PORT
-        },
-        {
-          name: 'primary',
-          host: 'localhost',
-          port: PRIMARY_PORT,
-          primary: true
-        },
-        {
-          name: 'non_primary_2',
-          host: 'localhost',
-          port: NON_PRIMARY2_PORT
-        }
+        routes: [
+          {
+            name: 'non_primary_1',
+            host: 'localhost',
+            port: NON_PRIMARY1_PORT
+          },
+          {
+            name: 'primary',
+            host: 'localhost',
+            port: PRIMARY_PORT,
+            primary: true
+          },
+          {
+            name: 'non_primary_2',
+            host: 'localhost',
+            port: NON_PRIMARY2_PORT
+          }
         ]
       }
 
       it('should be able to multicast to multiple endpoints but return only the response from the primary route', async () => {
         servers = await Promise.all([
-          testUtils.createMockHttpServer('Non Primary 1', NON_PRIMARY1_PORT, 200),
-          testUtils.createMockHttpServer('Non Primary 2', NON_PRIMARY2_PORT, 400),
+          testUtils.createMockHttpServer(
+            'Non Primary 1',
+            NON_PRIMARY1_PORT,
+            200
+          ),
+          testUtils.createMockHttpServer(
+            'Non Primary 2',
+            NON_PRIMARY2_PORT,
+            400
+          ),
           testUtils.createMockHttpServer('Primary', PRIMARY_PORT, 201)
         ])
 
@@ -443,14 +491,24 @@ describe('HTTP Router', () => {
 
         await testUtils.awaitGridfsBodyStreaming()
 
-        const gridfsBody = await testUtils.extractGridFSPayload(ctx.routes[0].response.bodyId)
+        const gridfsBody = await testUtils.extractGridFSPayload(
+          ctx.routes[0].response.bodyId
+        )
         gridfsBody.should.be.eql('Non Primary 1')
       })
 
       it('should be able to multicast to multiple endpoints and set the responses for non-primary routes in ctx.routes', async () => {
         servers = await Promise.all([
-          testUtils.createMockHttpServer('Non Primary 1', NON_PRIMARY1_PORT, 200),
-          testUtils.createMockHttpServer('Non Primary 2', NON_PRIMARY2_PORT, 400),
+          testUtils.createMockHttpServer(
+            'Non Primary 1',
+            NON_PRIMARY1_PORT,
+            200
+          ),
+          testUtils.createMockHttpServer(
+            'Non Primary 2',
+            NON_PRIMARY2_PORT,
+            400
+          ),
           testUtils.createMockHttpServer('Primary', PRIMARY_PORT, 201)
         ])
 
@@ -468,7 +526,9 @@ describe('HTTP Router', () => {
 
         await testUtils.awaitGridfsBodyStreaming()
 
-        const gridfsBodyPrimary = await testUtils.extractGridFSPayload(ctx.routes[0].response.bodyId)
+        const gridfsBodyPrimary = await testUtils.extractGridFSPayload(
+          ctx.routes[0].response.bodyId
+        )
         gridfsBodyPrimary.should.be.eql('Non Primary 1')
 
         ctx.routes[0].response.headers.should.be.ok
@@ -476,7 +536,9 @@ describe('HTTP Router', () => {
         ctx.routes[0].request.timestamp.should.be.exactly(requestTimestamp)
         ctx.routes[1].response.status.should.be.exactly(400)
 
-        const gridfsBodySecondary = await testUtils.extractGridFSPayload(ctx.routes[1].response.bodyId)
+        const gridfsBodySecondary = await testUtils.extractGridFSPayload(
+          ctx.routes[1].response.bodyId
+        )
         gridfsBodySecondary.should.be.eql('Non Primary 2')
 
         ctx.routes[1].response.headers.should.be.ok
@@ -486,8 +548,16 @@ describe('HTTP Router', () => {
 
       it('should pass an error to next if there are multiple primary routes', async () => {
         servers = await Promise.all([
-          testUtils.createMockHttpServer('Non Primary 1', NON_PRIMARY1_PORT, 200),
-          testUtils.createMockHttpServer('Non Primary 2', NON_PRIMARY2_PORT, 400),
+          testUtils.createMockHttpServer(
+            'Non Primary 1',
+            NON_PRIMARY1_PORT,
+            200
+          ),
+          testUtils.createMockHttpServer(
+            'Non Primary 2',
+            NON_PRIMARY2_PORT,
+            400
+          ),
           testUtils.createMockHttpServer('Primary', PRIMARY_PORT, 201)
         ])
 
@@ -496,36 +566,37 @@ describe('HTTP Router', () => {
           r.primary = true
         })
 
-        await promisify(router.route)(ctx).should.be.rejectedWith('Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed')
+        await promisify(router.route)(ctx).should.be.rejectedWith(
+          'Cannot route transaction: Channel contains multiple primary routes and only one primary is allowed'
+        )
       })
 
       it('should set mediator response data for non-primary routes', async () => {
-        const mediatorResponse = Object.assign({},
-          constants.MEDIATOR_REPONSE,
-          {
-            status: 'Failed',
-            response: {
-              status: 400,
-              headers: {},
-              body: 'Mock response body from mediator\n'
-            }
-          })
+        const mediatorResponse = Object.assign({}, constants.MEDIATOR_REPONSE, {
+          status: 'Failed',
+          response: {
+            status: 400,
+            headers: {},
+            body: 'Mock response body from mediator\n'
+          }
+        })
 
         const channel = {
           name: 'Mock endpoint',
           urlPattern: '.+',
           responseBody: true,
-          routes: [{
-            name: 'non prim',
-            host: 'localhost',
-            port: NON_PRIMARY1_PORT
-          },
-          {
-            name: 'primary',
-            host: 'localhost',
-            port: PRIMARY_PORT,
-            primary: true
-          }
+          routes: [
+            {
+              name: 'non prim',
+              host: 'localhost',
+              port: NON_PRIMARY1_PORT
+            },
+            {
+              name: 'primary',
+              host: 'localhost',
+              port: PRIMARY_PORT,
+              primary: true
+            }
           ]
         }
 
@@ -544,7 +615,9 @@ describe('HTTP Router', () => {
 
         await testUtils.awaitGridfsBodyStreaming()
 
-        const gridfsBodyPrimary = await testUtils.extractGridFSPayload(ctx.routes[0].response.bodyId)
+        const gridfsBodyPrimary = await testUtils.extractGridFSPayload(
+          ctx.routes[0].response.bodyId
+        )
         JSON.parse(gridfsBodyPrimary).should.be.deepEqual(mediatorResponse)
 
         ctx.routes[0].properties.should.be.eql(mediatorResponse.properties)
@@ -573,17 +646,23 @@ describe('HTTP Router', () => {
       })
 
       it('will reject methods that are not allowed', async () => {
-        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), { methods: ['GET', 'PUT'] })
+        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), {
+          methods: ['GET', 'PUT']
+        })
         const ctx = createContext(channel, undefined, 'POST')
         await promisify(router.route)(ctx)
         ctx.response.status.should.eql(405)
         ctx.response.timestamp.should.Date()
-        ctx.response.body.should.eql('Request with method POST is not allowed. Only GET, PUT methods are allowed')
+        ctx.response.body.should.eql(
+          'Request with method POST is not allowed. Only GET, PUT methods are allowed'
+        )
         spy.callCount.should.eql(0)
       })
 
       it('will allow methods that are allowed', async () => {
-        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), { methods: ['GET', 'PUT'] })
+        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), {
+          methods: ['GET', 'PUT']
+        })
         const ctx = createContext(channel, undefined, 'GET')
         ctx.state.downstream.push(null)
         await promisify(router.route)(ctx)
@@ -592,7 +671,9 @@ describe('HTTP Router', () => {
       })
 
       it('will allow all methods if methods is empty', async () => {
-        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), { methods: [] })
+        const channel = Object.assign(testUtils.clone(DEFAULT_CHANNEL), {
+          methods: []
+        })
         const ctx = createContext(channel, undefined, 'GET')
         ctx.state.downstream.push(null)
         await promisify(router.route)(ctx)
@@ -613,19 +694,20 @@ describe('HTTP Router', () => {
     })
 
     it('should have valid authorization header if username and password is set in options', async () => {
-      const requestSpy = sinon.spy(() => { })
+      const requestSpy = sinon.spy(() => {})
       server = await testUtils.createMockHttpServer(requestSpy)
       const channel = {
         name: 'Mock endpoint',
         urlPattern: '.+',
-        routes: [{
-          name: 'test',
-          host: 'localhost',
-          port: constants.HTTP_PORT,
-          primary: true,
-          username: 'username',
-          password: 'password'
-        }
+        routes: [
+          {
+            name: 'test',
+            host: 'localhost',
+            port: constants.HTTP_PORT,
+            primary: true,
+            username: 'username',
+            password: 'password'
+          }
         ]
       }
 
@@ -636,11 +718,13 @@ describe('HTTP Router', () => {
       requestSpy.callCount.should.be.eql(1)
       const call = requestSpy.getCall(0)
       const req = call.args[0]
-      req.headers.authorization.should.be.exactly('Basic dXNlcm5hbWU6cGFzc3dvcmQ=')
+      req.headers.authorization.should.be.exactly(
+        'Basic dXNlcm5hbWU6cGFzc3dvcmQ='
+      )
     })
 
     it('should not have authorization header if username and password is absent from options', async () => {
-      const requestSpy = sinon.spy(() => { })
+      const requestSpy = sinon.spy(() => {})
       server = await testUtils.createMockHttpServer(requestSpy)
 
       const ctx = createContext(DEFAULT_CHANNEL)
@@ -654,12 +738,12 @@ describe('HTTP Router', () => {
     })
 
     it('should not propagate the authorization header present in the request headers', async () => {
-      const requestSpy = sinon.spy(() => { })
+      const requestSpy = sinon.spy(() => {})
       server = await testUtils.createMockHttpServer(requestSpy)
 
       const ctx = createContext(DEFAULT_CHANNEL)
       ctx.state.downstream.push(null)
-      ctx.request.header = { authorization: 'Basic bWU6bWU=' }
+      ctx.request.header = {authorization: 'Basic bWU6bWU='}
       await promisify(router.route)(ctx)
 
       requestSpy.callCount.should.be.eql(1)
@@ -669,7 +753,7 @@ describe('HTTP Router', () => {
     })
 
     it('should propagate the authorization header present in the request headers if forwardAuthHeader is set to true', async () => {
-      const requestSpy = sinon.spy(() => { })
+      const requestSpy = sinon.spy(() => {})
       server = await testUtils.createMockHttpServer(requestSpy)
 
       const channel = testUtils.clone(DEFAULT_CHANNEL)
@@ -677,7 +761,7 @@ describe('HTTP Router', () => {
 
       const ctx = createContext(channel)
       ctx.state.downstream.push(null)
-      ctx.request.header = { authorization: 'Basic bWU6bWU=' }
+      ctx.request.header = {authorization: 'Basic bWU6bWU='}
       await promisify(router.route)(ctx)
 
       requestSpy.callCount.should.be.eql(1)
@@ -688,31 +772,34 @@ describe('HTTP Router', () => {
     })
 
     it('should have valid authorization header if username and password is set in options', async () => {
-      const requestSpy = sinon.spy(() => { })
+      const requestSpy = sinon.spy(() => {})
       server = await testUtils.createMockHttpServer(requestSpy)
       const channel = {
         name: 'Mock endpoint',
         urlPattern: '.+',
-        routes: [{
-          name: 'test',
-          host: 'localhost',
-          port: constants.HTTP_PORT,
-          primary: true,
-          username: 'username',
-          password: 'password'
-        }
+        routes: [
+          {
+            name: 'test',
+            host: 'localhost',
+            port: constants.HTTP_PORT,
+            primary: true,
+            username: 'username',
+            password: 'password'
+          }
         ]
       }
 
       const ctx = createContext(channel)
-      ctx.request.header = { authorization: 'Basic bWU6bWU=' }
+      ctx.request.header = {authorization: 'Basic bWU6bWU='}
       ctx.state.downstream.push(null)
       await promisify(router.route)(ctx)
 
       requestSpy.callCount.should.be.eql(1)
       const call = requestSpy.getCall(0)
       const req = call.args[0]
-      req.headers.authorization.should.be.exactly('Basic dXNlcm5hbWU6cGFzc3dvcmQ=')
+      req.headers.authorization.should.be.exactly(
+        'Basic dXNlcm5hbWU6cGFzc3dvcmQ='
+      )
     })
   })
 
@@ -762,7 +849,8 @@ describe('HTTP Router', () => {
 
     describe('.transformPath', () =>
       it('must transform the path string correctly', () => {
-        const test = (path, expr, res) => router.transformPath(path, expr).should.be.exactly(res)
+        const test = (path, expr, res) =>
+          router.transformPath(path, expr).should.be.exactly(res)
         test('foo', 's/foo/bar', 'bar')
         test('foo', 's/foo/', '')
         test('foo', 's/o/e/g', 'fee')
@@ -773,8 +861,7 @@ describe('HTTP Router', () => {
         test('foo/bar', 's/foo\\/bar/', '')
         test('foo/foo/bar/bar', 's/\\/foo\\/bar/', 'foo/bar')
         test('prefix/foo/bar', 's/prefix\\//', 'foo/bar')
-      })
-    )
+      }))
   })
 
   describe('setKoaResponse', () => {
@@ -843,7 +930,9 @@ describe('HTTP Router', () => {
       router.setKoaResponse(ctx, response)
 
       // then
-      ctx.response.redirect.calledWith('http://some.other.place.org').should.be.true()
+      ctx.response.redirect
+        .calledWith('http://some.other.place.org')
+        .should.be.true()
     })
 
     it('should not redirect if a non-redirect status is recieved', () => {
@@ -866,7 +955,9 @@ describe('HTTP Router', () => {
       router.setKoaResponse(ctx, response)
 
       // then
-      ctx.response.redirect.calledWith('http://some.other.place.org').should.be.false()
+      ctx.response.redirect
+        .calledWith('http://some.other.place.org')
+        .should.be.false()
     })
 
     it('should set cookies on context', () => {
@@ -886,7 +977,13 @@ describe('HTTP Router', () => {
       }
 
       router.setKoaResponse(ctx, response)
-      ctx.cookies.set.calledWith('maximus', 'Thegreat', { path: false, httpOnly: false, maxage: 18 }).should.be.true()
+      ctx.cookies.set
+        .calledWith('maximus', 'Thegreat', {
+          path: false,
+          httpOnly: false,
+          maxage: 18
+        })
+        .should.be.true()
     })
   })
 })

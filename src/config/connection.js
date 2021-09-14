@@ -3,7 +3,7 @@
 import mongoose from 'mongoose'
 import uriFormat from 'mongodb-uri'
 
-import { config } from './'
+import {config} from './'
 
 config.mongo = config.get('mongo')
 
@@ -11,12 +11,21 @@ mongoose.set('useNewUrlParser', true)
 mongoose.set('useUnifiedTopology', true)
 mongoose.set('useFindAndModify', false)
 
-export const connectionAgenda = mongoose.createConnection(encodeMongoURI(config.mongo.url))
-export const connectionAPI = mongoose.createConnection(encodeMongoURI(config.mongo.url), getMongoOptions())
-export const connectionATNA = mongoose.createConnection(encodeMongoURI(config.mongo.atnaUrl))
-export const connectionDefault = mongoose.createConnection(encodeMongoURI(config.mongo.url))
+export const connectionAgenda = mongoose.createConnection(
+  encodeMongoURI(config.mongo.url)
+)
+export const connectionAPI = mongoose.createConnection(
+  encodeMongoURI(config.mongo.url),
+  getMongoOptions()
+)
+export const connectionATNA = mongoose.createConnection(
+  encodeMongoURI(config.mongo.atnaUrl)
+)
+export const connectionDefault = mongoose.createConnection(
+  encodeMongoURI(config.mongo.url)
+)
 
-function encodeMongoURI (urlString) {
+function encodeMongoURI(urlString) {
   if (urlString) {
     const parsed = uriFormat.parse(urlString)
     urlString = uriFormat.format(parsed)
@@ -24,10 +33,10 @@ function encodeMongoURI (urlString) {
   return urlString
 }
 
-function getMongoOptions () {
+function getMongoOptions() {
   return {
     readPreference: config.mongo.openHIMApiReadPreference,
-    readConcern: { level: config.mongo.openHIMApiReadConcern },
+    readConcern: {level: config.mongo.openHIMApiReadConcern},
     w: config.mongo.openHIMApiWriteConcern
   }
 }

@@ -10,7 +10,7 @@ import {
   promisesToRemoveAllTransactionBodies,
   addBodiesToTransactions
 } from '../../src/contentChunk'
-import { connectionDefault } from '../../src/config'
+import {connectionDefault} from '../../src/config'
 import * as testUtils from '../utils'
 
 const MongoClient = connectionDefault.client
@@ -78,7 +78,10 @@ describe('contentChunk: ', () => {
         await extractStringPayloadIntoChunks(jsonPayload)
       } catch (err) {
         should.equal(err instanceof Error, true)
-        should.equal(err.message, 'payload not in the correct format, expecting a string, Buffer, ArrayBuffer, Array, or Array-like Object')
+        should.equal(
+          err.message,
+          'payload not in the correct format, expecting a string, Buffer, ArrayBuffer, Array, or Array-like Object'
+        )
       }
     })
 
@@ -89,11 +92,11 @@ describe('contentChunk: ', () => {
       const docId = await extractStringPayloadIntoChunks(payload)
 
       /*
-      * The function extractStringPayloadIntoChunks has been modified. It returns the id and then continues with the streaming (into gridfs)
-      */
+       * The function extractStringPayloadIntoChunks has been modified. It returns the id and then continues with the streaming (into gridfs)
+       */
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -109,7 +112,7 @@ describe('contentChunk: ', () => {
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -118,18 +121,14 @@ describe('contentChunk: ', () => {
     })
 
     it('should create the Array payload as chucks and return a document id', async () => {
-      const payload = [
-        'one',
-        'two',
-        'three'
-      ]
+      const payload = ['one', 'two', 'three']
       const payloadLength = payload.length
 
       const docId = await extractStringPayloadIntoChunks(payload)
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -145,7 +144,7 @@ describe('contentChunk: ', () => {
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -168,7 +167,7 @@ describe('contentChunk: ', () => {
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -191,7 +190,7 @@ describe('contentChunk: ', () => {
 
       await testUtils.awaitGridfsBodyStreaming()
 
-      db.collection('fs.files').findOne({ _id: docId }, (err, result) => {
+      db.collection('fs.files').findOne({_id: docId}, (err, result) => {
         should.not.exist(err)
         should.ok(result)
         should.deepEqual(result._id, docId)
@@ -209,12 +208,12 @@ describe('contentChunk: ', () => {
     it('should return an error when the file id is null', async () => {
       const fileId = null
 
-      retrievePayload(fileId).catch((err) => {
+      retrievePayload(fileId).catch(err => {
         err.message.should.eql('Payload id not supplied')
       })
     })
 
-    it('should return the body', (done) => {
+    it('should return the body', done => {
       const bucket = new mongodb.GridFSBucket(db)
       const stream = bucket.openUploadStream()
       const fileString = `JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
@@ -223,7 +222,7 @@ describe('contentChunk: ', () => {
                           JohnWick,BeowulfJohnWick,BeowulfJohnWick,BeowulfJohnWick,Beowulf
                         `
 
-      stream.on('finish', async (doc) => {
+      stream.on('finish', async doc => {
         const fileId = doc._id
 
         retrievePayload(fileId).then(body => {
@@ -239,8 +238,7 @@ describe('contentChunk: ', () => {
       const fileId = 'NotAvalidID'
 
       retrievePayload(fileId).catch(err =>
-        err.message.should.eql(
-          `FileNotFound: file ${fileId} was not found`)
+        err.message.should.eql(`FileNotFound: file ${fileId} was not found`)
       )
     })
   })
@@ -248,7 +246,9 @@ describe('contentChunk: ', () => {
   describe('retrieveBody()', () => {
     it('should return an error when the file id is null', async () => {
       const fileId = null
-      await retrieveBody(fileId, {}).should.be.rejectedWith('bodyID not supplied')
+      await retrieveBody(fileId, {}).should.be.rejectedWith(
+        'bodyID not supplied'
+      )
     })
   })
 
@@ -308,16 +308,20 @@ describe('contentChunk: ', () => {
       channelID: '888888888888888888888888',
       request: requestDocMain,
       response: responseDocMain,
-      routes: [{
-        name: 'dummy-route',
-        request: requestDoc,
-        response: responseDoc
-      }],
-      orchestrations: [{
-        name: 'dummy-orchestration',
-        request: requestDoc,
-        response: responseDoc
-      }],
+      routes: [
+        {
+          name: 'dummy-route',
+          request: requestDoc,
+          response: responseDoc
+        }
+      ],
+      orchestrations: [
+        {
+          name: 'dummy-orchestration',
+          request: requestDoc,
+          response: responseDoc
+        }
+      ],
       properties: {
         prop1: 'prop1-value1',
         prop2: 'prop-value1'
@@ -326,14 +330,30 @@ describe('contentChunk: ', () => {
 
     it('should return an array with promise functions to remove the payloads', async () => {
       const td = testUtils.clone(transaction)
-      const orchReqBodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
-      const orchResBodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
-      const routeReqBodyId = await testUtils.createGridFSPayload('<HTTP route body request>')
-      const routeResBodyId = await testUtils.createGridFSPayload('<HTTP route body response>')
-      const routeOrchReqBodyId = await testUtils.createGridFSPayload('<HTTP route orch body request>')
-      const routeOrchResBodyId = await testUtils.createGridFSPayload('<HTTP route orch body response>')
-      const reqBodyId = await testUtils.createGridFSPayload('<HTTP body request>')
-      const resBodyId = await testUtils.createGridFSPayload('<HTTP body response>')
+      const orchReqBodyId = await testUtils.createGridFSPayload(
+        '<HTTP orchestration body request>'
+      )
+      const orchResBodyId = await testUtils.createGridFSPayload(
+        '<HTTP orchestration body response>'
+      )
+      const routeReqBodyId = await testUtils.createGridFSPayload(
+        '<HTTP route body request>'
+      )
+      const routeResBodyId = await testUtils.createGridFSPayload(
+        '<HTTP route body response>'
+      )
+      const routeOrchReqBodyId = await testUtils.createGridFSPayload(
+        '<HTTP route orch body request>'
+      )
+      const routeOrchResBodyId = await testUtils.createGridFSPayload(
+        '<HTTP route orch body response>'
+      )
+      const reqBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body request>'
+      )
+      const resBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body response>'
+      )
 
       td.orchestrations = [
         {
@@ -380,14 +400,30 @@ describe('contentChunk: ', () => {
     it('should remove the payloads once the promises are executed', async () => {
       const td = testUtils.clone(transaction)
 
-      const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
-      const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
-      const orchReqBodyId = await testUtils.createGridFSPayload('<HTTP orchestration body request>')
-      const orchResBodyId = await testUtils.createGridFSPayload('<HTTP orchestration body response>')
-      const routeReqBodyId = await testUtils.createGridFSPayload('<HTTP route body request>')
-      const routeResBodyId = await testUtils.createGridFSPayload('<HTTP route body response>')
-      const routeOrchReqBodyId = await testUtils.createGridFSPayload('<HTTP route orch body request>')
-      const routeOrchResBodyId = await testUtils.createGridFSPayload('<HTTP route orch body response>')
+      const requestBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body request>'
+      ) // request payload
+      const responseBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body response>'
+      ) // response payload
+      const orchReqBodyId = await testUtils.createGridFSPayload(
+        '<HTTP orchestration body request>'
+      )
+      const orchResBodyId = await testUtils.createGridFSPayload(
+        '<HTTP orchestration body response>'
+      )
+      const routeReqBodyId = await testUtils.createGridFSPayload(
+        '<HTTP route body request>'
+      )
+      const routeResBodyId = await testUtils.createGridFSPayload(
+        '<HTTP route body response>'
+      )
+      const routeOrchReqBodyId = await testUtils.createGridFSPayload(
+        '<HTTP route orch body request>'
+      )
+      const routeOrchResBodyId = await testUtils.createGridFSPayload(
+        '<HTTP route orch body response>'
+      )
 
       td.request = {
         bodyId: requestBodyId
@@ -428,14 +464,20 @@ describe('contentChunk: ', () => {
 
       const promiseFunctions = await promisesToRemoveAllTransactionBodies(td)
 
-      const resultBeforeRemoval = await db.collection('fs.files').find({}).toArray()
+      const resultBeforeRemoval = await db
+        .collection('fs.files')
+        .find({})
+        .toArray()
       should.ok(resultBeforeRemoval)
       resultBeforeRemoval.length.should.eql(8)
 
       // execute the promises
-      await Promise.all(promiseFunctions.map((promiseFn) => promiseFn()))
+      await Promise.all(promiseFunctions.map(promiseFn => promiseFn()))
 
-      const resultAfterRemoval = await db.collection('fs.files').find({}).toArray()
+      const resultAfterRemoval = await db
+        .collection('fs.files')
+        .find({})
+        .toArray()
       should.ok(resultAfterRemoval)
       resultAfterRemoval.length.should.eql(0)
     })
@@ -509,16 +551,20 @@ describe('contentChunk: ', () => {
       channelID: '888888888888888888888888',
       request: requestDocMain,
       response: responseDocMain,
-      routes: [{
-        name: 'dummy-route',
-        request: requestDoc,
-        response: responseDoc
-      }],
-      orchestrations: [{
-        name: 'dummy-orchestration',
-        request: requestDoc,
-        response: responseDoc
-      }],
+      routes: [
+        {
+          name: 'dummy-route',
+          request: requestDoc,
+          response: responseDoc
+        }
+      ],
+      orchestrations: [
+        {
+          name: 'dummy-orchestration',
+          request: requestDoc,
+          response: responseDoc
+        }
+      ],
       properties: {
         prop1: 'prop1-value1',
         prop2: 'prop-value1'
@@ -529,21 +575,37 @@ describe('contentChunk: ', () => {
       const tdOne = testUtils.clone(transaction)
       const tdTwo = testUtils.clone(transaction)
 
-      const requestBodyId = await testUtils.createGridFSPayload('<HTTP body request>') // request payload
-      const responseBodyId = await testUtils.createGridFSPayload('<HTTP body response>') // response payload
+      const requestBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body request>'
+      ) // request payload
+      const responseBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body response>'
+      ) // response payload
       tdOne.request.bodyId = requestBodyId
       tdOne.response.bodyId = responseBodyId
-      const routeRequestBodyId = await testUtils.createGridFSPayload('<HTTP body request route>') // request payload
-      const routeResponseBodyId = await testUtils.createGridFSPayload('<HTTP body response route>') // response payload
+      const routeRequestBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body request route>'
+      ) // request payload
+      const routeResponseBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body response route>'
+      ) // response payload
       tdOne.routes[0].request.bodyId = routeRequestBodyId
       tdOne.routes[0].response.bodyId = routeResponseBodyId
-      const orchRequestBodyId = await testUtils.createGridFSPayload('<HTTP body request orch>') // request payload
-      const orchResponseBodyId = await testUtils.createGridFSPayload('<HTTP body response orch>') // response payload
+      const orchRequestBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body request orch>'
+      ) // request payload
+      const orchResponseBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body response orch>'
+      ) // response payload
       tdOne.orchestrations[0].request.bodyId = orchRequestBodyId
       tdOne.orchestrations[0].response.bodyId = orchResponseBodyId
 
-      const requestTwoBodyId = await testUtils.createGridFSPayload('<HTTP body request two>') // request payload
-      const responseTwoBodyId = await testUtils.createGridFSPayload('<HTTP body response two>') // response payload
+      const requestTwoBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body request two>'
+      ) // request payload
+      const responseTwoBodyId = await testUtils.createGridFSPayload(
+        '<HTTP body response two>'
+      ) // response payload
       tdTwo.request.bodyId = requestTwoBodyId
       tdTwo.response.bodyId = responseTwoBodyId
 
@@ -553,12 +615,24 @@ describe('contentChunk: ', () => {
 
       transactionWithBodies[0].request.body.should.eql('<HTTP body request>')
       transactionWithBodies[0].response.body.should.eql('<HTTP body response>')
-      transactionWithBodies[0].orchestrations[0].request.body.should.eql('<HTTP body request orch>')
-      transactionWithBodies[0].orchestrations[0].response.body.should.eql('<HTTP body response orch>')
-      transactionWithBodies[0].routes[0].request.body.should.eql('<HTTP body request route>')
-      transactionWithBodies[0].routes[0].response.body.should.eql('<HTTP body response route>')
-      transactionWithBodies[1].request.body.should.eql('<HTTP body request two>')
-      transactionWithBodies[1].response.body.should.eql('<HTTP body response two>')
+      transactionWithBodies[0].orchestrations[0].request.body.should.eql(
+        '<HTTP body request orch>'
+      )
+      transactionWithBodies[0].orchestrations[0].response.body.should.eql(
+        '<HTTP body response orch>'
+      )
+      transactionWithBodies[0].routes[0].request.body.should.eql(
+        '<HTTP body request route>'
+      )
+      transactionWithBodies[0].routes[0].response.body.should.eql(
+        '<HTTP body response route>'
+      )
+      transactionWithBodies[1].request.body.should.eql(
+        '<HTTP body request two>'
+      )
+      transactionWithBodies[1].response.body.should.eql(
+        '<HTTP body response two>'
+      )
     })
   })
 })

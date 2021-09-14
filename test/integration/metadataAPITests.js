@@ -4,84 +4,109 @@
 /* eslint no-unused-expressions:0 */
 
 import request from 'supertest'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 import sinon from 'sinon'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { ClientModelAPI } from '../../src/model/clients'
-import { ContactGroupModelAPI } from '../../src/model/contactGroups'
-import { MediatorModelAPI } from '../../src/model/mediators'
-import { UserModelAPI } from '../../src/model/users'
+import {ChannelModelAPI} from '../../src/model/channels'
+import {ClientModelAPI} from '../../src/model/clients'
+import {ContactGroupModelAPI} from '../../src/model/contactGroups'
+import {MediatorModelAPI} from '../../src/model/mediators'
+import {UserModelAPI} from '../../src/model/users'
 import * as polling from '../../src/polling'
 
 const sampleMetadata = {
-  Channels: [{
-    name: 'TestChannel1',
-    urlPattern: 'test/sample',
-    allow: ['PoC', 'Test1', 'Test2'],
-    routes: [{ name: 'test route', host: 'localhost', port: 9876, primary: true }],
-    txViewAcl: 'group1',
-    updatedBy: {
-      id: new ObjectId(),
-      name: 'Test'
+  Channels: [
+    {
+      name: 'TestChannel1',
+      urlPattern: 'test/sample',
+      allow: ['PoC', 'Test1', 'Test2'],
+      routes: [
+        {name: 'test route', host: 'localhost', port: 9876, primary: true}
+      ],
+      txViewAcl: 'group1',
+      updatedBy: {
+        id: new ObjectId(),
+        name: 'Test'
+      }
     }
-  }],
-  Clients: [{
-    clientID: 'YUIAIIIICIIAIA',
-    clientDomain: 'him.jembi.org',
-    name: 'OpenMRS Ishmael instance',
-    roles: ['OpenMRS_PoC', 'PoC'],
-    passwordHash: '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
-    certFingerprint: '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
-  }],
-  Mediators: [{
-    urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED',
-    version: '1.0.0',
-    name: 'Save Encounter Mediator',
-    description: 'A mediator for testing',
-    endpoints: [{ name: 'Save Encounter', host: 'localhost', port: '8005', type: 'http' }],
-    defaultChannelConfig: [{
-      name: 'Save Encounter 1',
-      urlPattern: '/encounters',
-      type: 'http',
-      allow: [],
-      routes: [{ name: 'Save Encounter 1', host: 'localhost', port: '8005', type: 'http' }]
-    }]
-  }],
-  Users: [{
-    firstname: 'Namey',
-    surname: 'mcTestName',
-    email: 'r..@jembi.org',
-    passwordAlgorithm: 'sha512',
-    passwordHash: '796a5a8e-4e44-4d9f-9e04-c27ec6374ffa',
-    passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7',
-    groups: ['admin', 'RHIE']
-  }],
-  ContactGroups: [{
-    group: 'Group 1',
-    users: [
-      { user: 'User 1', method: 'sms', maxAlerts: 'no max' },
-      { user: 'User 2', method: 'email', maxAlerts: '1 per hour' },
-      { user: 'User 3', method: 'sms', maxAlerts: '1 per day' },
-      { user: 'User 4', method: 'email', maxAlerts: 'no max' },
-      { user: 'User 5', method: 'sms', maxAlerts: '1 per hour' },
-      { user: 'User 6', method: 'email', maxAlerts: '1 per day' }
-    ]
-  }]
+  ],
+  Clients: [
+    {
+      clientID: 'YUIAIIIICIIAIA',
+      clientDomain: 'him.jembi.org',
+      name: 'OpenMRS Ishmael instance',
+      roles: ['OpenMRS_PoC', 'PoC'],
+      passwordHash:
+        '$2a$10$w8GyqInkl72LMIQNpMM/fenF6VsVukyya.c6fh/GRtrKq05C2.Zgy',
+      certFingerprint:
+        '23:37:6A:5E:A9:13:A4:8C:66:C5:BB:9F:0E:0D:68:9B:99:80:10:FC'
+    }
+  ],
+  Mediators: [
+    {
+      urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED',
+      version: '1.0.0',
+      name: 'Save Encounter Mediator',
+      description: 'A mediator for testing',
+      endpoints: [
+        {name: 'Save Encounter', host: 'localhost', port: '8005', type: 'http'}
+      ],
+      defaultChannelConfig: [
+        {
+          name: 'Save Encounter 1',
+          urlPattern: '/encounters',
+          type: 'http',
+          allow: [],
+          routes: [
+            {
+              name: 'Save Encounter 1',
+              host: 'localhost',
+              port: '8005',
+              type: 'http'
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  Users: [
+    {
+      firstname: 'Namey',
+      surname: 'mcTestName',
+      email: 'r..@jembi.org',
+      passwordAlgorithm: 'sha512',
+      passwordHash: '796a5a8e-4e44-4d9f-9e04-c27ec6374ffa',
+      passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7',
+      groups: ['admin', 'RHIE']
+    }
+  ],
+  ContactGroups: [
+    {
+      group: 'Group 1',
+      users: [
+        {user: 'User 1', method: 'sms', maxAlerts: 'no max'},
+        {user: 'User 2', method: 'email', maxAlerts: '1 per hour'},
+        {user: 'User 3', method: 'sms', maxAlerts: '1 per day'},
+        {user: 'User 4', method: 'email', maxAlerts: 'no max'},
+        {user: 'User 5', method: 'sms', maxAlerts: '1 per hour'},
+        {user: 'User 6', method: 'email', maxAlerts: '1 per day'}
+      ]
+    }
+  ]
 }
 
 let authDetails = {}
 
 describe('API Integration Tests', () => {
-  const { SERVER_PORTS } = constants
+  const {SERVER_PORTS} = constants
 
   describe('Metadata REST Api Testing', () => {
     before(async () => {
-      await promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
       await testUtils.setupTestUsers()
     })
 
@@ -115,7 +140,10 @@ describe('API Integration Tests', () => {
             .expect(200)
 
           res.body[0].Channels.length.should.equal(1)
-          res.body[0].Channels[0].should.have.property('urlPattern', 'test/sample')
+          res.body[0].Channels[0].should.have.property(
+            'urlPattern',
+            'test/sample'
+          )
         })
       })
 
@@ -138,7 +166,10 @@ describe('API Integration Tests', () => {
             .expect(200)
 
           res.body[0].Clients.length.should.equal(1)
-          res.body[0].Clients[0].should.have.property('name', 'OpenMRS Ishmael instance')
+          res.body[0].Clients[0].should.have.property(
+            'name',
+            'OpenMRS Ishmael instance'
+          )
         })
       })
 
@@ -161,7 +192,10 @@ describe('API Integration Tests', () => {
             .expect(200)
 
           res.body[0].Mediators.length.should.equal(1)
-          res.body[0].Mediators[0].should.have.property('name', 'Save Encounter Mediator')
+          res.body[0].Mediators[0].should.have.property(
+            'name',
+            'Save Encounter Mediator'
+          )
         })
       })
 
@@ -181,7 +215,7 @@ describe('API Integration Tests', () => {
 
       describe('ContactGroups', () => {
         beforeEach(async () => {
-          await (new ContactGroupModelAPI(sampleMetadata.ContactGroups[0])).save()
+          await new ContactGroupModelAPI(sampleMetadata.ContactGroups[0]).save()
         })
 
         afterEach(async () => {
@@ -232,7 +266,9 @@ describe('API Integration Tests', () => {
         let testMetadata = {}
 
         beforeEach(async () => {
-          testMetadata = await { Channels: JSON.parse(JSON.stringify(sampleMetadata.Channels)) }
+          testMetadata = await {
+            Channels: JSON.parse(JSON.stringify(sampleMetadata.Channels))
+          }
         })
 
         afterEach(async () => {
@@ -250,7 +286,7 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Inserted')
-          const channel = await ChannelModelAPI.findOne({ name: 'TestChannel1' })
+          const channel = await ChannelModelAPI.findOne({name: 'TestChannel1'})
 
           channel.should.have.property('urlPattern', 'test/sample')
           channel.allow.should.have.length(3)
@@ -278,14 +314,14 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Updated')
-          const channel = await ChannelModelAPI.findOne({ name: 'TestChannel1' })
+          const channel = await ChannelModelAPI.findOne({name: 'TestChannel1'})
 
           channel.should.have.property('urlPattern', 'sample/test')
           channel.allow.should.have.length(3)
         })
 
         it('should fail to insert a Channel and return 201', async () => {
-          testMetadata.Channels = [{ fakeChannel: 'fakeChannel' }]
+          testMetadata.Channels = [{fakeChannel: 'fakeChannel'}]
 
           const res = await request(constants.BASE_URL)
             .post('/metadata')
@@ -367,14 +403,20 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Inserted')
-          const channel = await ChannelModelAPI.findOne({ name: 'Poll FHIR Extractor' })
+          const channel = await ChannelModelAPI.findOne({
+            name: 'Poll FHIR Extractor'
+          })
 
           channel.should.have.property('urlPattern', '^/fhir-extractor$')
 
           spy.restore()
           spy.calledOnce.should.be.true()
-          spy.getCall(0).args[0].should.have.property('name', 'Poll FHIR Extractor')
-          spy.getCall(0).args[0].should.have.property('urlPattern', '^/fhir-extractor$')
+          spy
+            .getCall(0)
+            .args[0].should.have.property('name', 'Poll FHIR Extractor')
+          spy
+            .getCall(0)
+            .args[0].should.have.property('urlPattern', '^/fhir-extractor$')
           spy.getCall(0).args[0].should.have.property('type', 'polling')
         })
       })
@@ -383,7 +425,9 @@ describe('API Integration Tests', () => {
         let testMetadata = {}
 
         beforeEach(async () => {
-          testMetadata = await { Clients: JSON.parse(JSON.stringify(sampleMetadata.Clients)) }
+          testMetadata = await {
+            Clients: JSON.parse(JSON.stringify(sampleMetadata.Clients))
+          }
         })
 
         afterEach(async () => {
@@ -401,7 +445,9 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Inserted')
-          const client = await ClientModelAPI.findOne({ clientID: 'YUIAIIIICIIAIA' })
+          const client = await ClientModelAPI.findOne({
+            clientID: 'YUIAIIIICIIAIA'
+          })
 
           client.should.have.property('name', 'OpenMRS Ishmael instance')
         })
@@ -428,13 +474,15 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Updated')
-          const client = await ClientModelAPI.findOne({ clientID: 'YUIAIIIICIIAIA' })
+          const client = await ClientModelAPI.findOne({
+            clientID: 'YUIAIIIICIIAIA'
+          })
 
           client.should.have.property('name', 'Test Update')
         })
 
         it('should fail to insert a Client and return 201', async () => {
-          testMetadata.Clients = [{ fakeClient: 'fakeClient' }]
+          testMetadata.Clients = [{fakeClient: 'fakeClient'}]
 
           const res = await request(constants.BASE_URL)
             .post('/metadata')
@@ -453,8 +501,9 @@ describe('API Integration Tests', () => {
         let testMetadata = {}
 
         beforeEach(async () => {
-          testMetadata =
-            await { Mediators: JSON.parse(JSON.stringify(sampleMetadata.Mediators)) }
+          testMetadata = await {
+            Mediators: JSON.parse(JSON.stringify(sampleMetadata.Mediators))
+          }
         })
 
         afterEach(async () => {
@@ -472,7 +521,9 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Inserted')
-          const mediator = await MediatorModelAPI.findOne({ urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED' })
+          const mediator = await MediatorModelAPI.findOne({
+            urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED'
+          })
 
           mediator.should.have.property('name', 'Save Encounter Mediator')
         })
@@ -499,13 +550,15 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Updated')
-          const mediator = await MediatorModelAPI.findOne({ urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED' })
+          const mediator = await MediatorModelAPI.findOne({
+            urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED'
+          })
 
           mediator.should.have.property('name', 'Updated Encounter Mediator')
         })
 
         it('should fail to insert a mediator and return 201', async () => {
-          testMetadata.Mediators = [{ fakeMediator: 'fakeMediator' }]
+          testMetadata.Mediators = [{fakeMediator: 'fakeMediator'}]
 
           const res = await request(constants.BASE_URL)
             .post('/metadata')
@@ -524,11 +577,13 @@ describe('API Integration Tests', () => {
         let testMetadata = {}
 
         beforeEach(async () => {
-          testMetadata = { Users: testUtils.clone(sampleMetadata.Users) }
+          testMetadata = {Users: testUtils.clone(sampleMetadata.Users)}
         })
 
         afterEach(async () => {
-          await UserModelAPI.deleteMany({ email: { $in: testMetadata.Users.map(u => u.email) } })
+          await UserModelAPI.deleteMany({
+            email: {$in: testMetadata.Users.map(u => u.email)}
+          })
         })
 
         it('should insert a user and return 201', async () => {
@@ -542,7 +597,7 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Inserted')
-          const user = await UserModelAPI.findOne({ email: 'r..@jembi.org' })
+          const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
 
           user.should.have.property('firstname', 'Namey')
         })
@@ -569,13 +624,13 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Updated')
-          const user = await UserModelAPI.findOne({ email: 'r..@jembi.org' })
+          const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
 
           user.should.have.property('firstname', 'updatedNamey')
         })
 
         it('should fail to insert a user and return 201', async () => {
-          testMetadata.Users = [{ fakeUser: 'fakeUser' }]
+          testMetadata.Users = [{fakeUser: 'fakeUser'}]
 
           const res = await request(constants.BASE_URL)
             .post('/metadata')
@@ -593,8 +648,11 @@ describe('API Integration Tests', () => {
         let testMetadata = {}
 
         beforeEach(async () => {
-          testMetadata =
-            await { ContactGroups: JSON.parse(JSON.stringify(sampleMetadata.ContactGroups)) }
+          testMetadata = await {
+            ContactGroups: JSON.parse(
+              JSON.stringify(sampleMetadata.ContactGroups)
+            )
+          }
         })
 
         afterEach(async () => {
@@ -612,7 +670,7 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Inserted')
-          const cg = await ContactGroupModelAPI.findOne({ group: 'Group 1' })
+          const cg = await ContactGroupModelAPI.findOne({group: 'Group 1'})
 
           cg.users.should.have.length(6)
         })
@@ -627,7 +685,11 @@ describe('API Integration Tests', () => {
             .send(testMetadata)
             .expect(201)
 
-          await testMetadata.ContactGroups[0].users.push({ user: 'User 6', method: 'email', maxAlerts: '1 per day' })
+          await testMetadata.ContactGroups[0].users.push({
+            user: 'User 6',
+            method: 'email',
+            maxAlerts: '1 per day'
+          })
 
           const res = await request(constants.BASE_URL)
             .post('/metadata')
@@ -639,13 +701,13 @@ describe('API Integration Tests', () => {
             .expect(201)
 
           res.body[0].should.have.property('status', 'Updated')
-          const cg = await ContactGroupModelAPI.findOne({ group: 'Group 1' })
+          const cg = await ContactGroupModelAPI.findOne({group: 'Group 1'})
 
           cg.users.should.have.length(7)
         })
 
         it('should fail to insert a ContactGroup and return 201', async () => {
-          testMetadata.ContactGroups = [{ fakeContactGroup: 'fakeContactGroup' }]
+          testMetadata.ContactGroups = [{fakeContactGroup: 'fakeContactGroup'}]
 
           const res = await request(constants.BASE_URL)
             .post('/metadata')
@@ -674,7 +736,7 @@ describe('API Integration Tests', () => {
 
         it('should ignore invalid metadata, insert valid metadata and return 201', async () => {
           const testMetadata = await JSON.parse(JSON.stringify(sampleMetadata))
-          testMetadata.Channels = [{ InvalidChannel: 'InvalidChannel' }]
+          testMetadata.Channels = [{InvalidChannel: 'InvalidChannel'}]
 
           await request(constants.BASE_URL)
             .post('/metadata')
@@ -685,20 +747,24 @@ describe('API Integration Tests', () => {
             .send(testMetadata)
             .expect(201)
 
-          const channel = await ChannelModelAPI.findOne({ name: 'TestChannel1' })
+          const channel = await ChannelModelAPI.findOne({name: 'TestChannel1'})
           const noChannel = channel ? 'false' : 'true'
           noChannel.should.equal('true')
 
-          const client = await ClientModelAPI.findOne({ clientID: 'YUIAIIIICIIAIA' })
+          const client = await ClientModelAPI.findOne({
+            clientID: 'YUIAIIIICIIAIA'
+          })
           client.should.have.property('name', 'OpenMRS Ishmael instance')
 
-          const mediator = await MediatorModelAPI.findOne({ urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED' })
+          const mediator = await MediatorModelAPI.findOne({
+            urn: 'urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED'
+          })
           mediator.should.have.property('name', 'Save Encounter Mediator')
 
-          const user = await UserModelAPI.findOne({ email: 'r..@jembi.org' })
+          const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
           user.should.have.property('firstname', 'Namey')
 
-          const cg = await ContactGroupModelAPI.findOne({ group: 'Group 1' })
+          const cg = await ContactGroupModelAPI.findOne({group: 'Group 1'})
           cg.users.should.have.length(6)
         })
       })
@@ -745,7 +811,7 @@ describe('API Integration Tests', () => {
           .send(sampleMetadata)
           .expect(201)
 
-        const statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
+        const statusCheckObj = {Valid: 0, Conflict: 0, Error: 0}
 
         for (const doc of Array.from(res.body)) {
           statusCheckObj[doc.status] += 1
@@ -758,7 +824,7 @@ describe('API Integration Tests', () => {
 
       it('should validate partially valid metadata and return status 201', async () => {
         const testMetadata = await JSON.parse(JSON.stringify(sampleMetadata))
-        testMetadata.Channels = [{ 'Invalid Channel': 'Invalid Channel' }]
+        testMetadata.Channels = [{'Invalid Channel': 'Invalid Channel'}]
 
         const res = await request(constants.BASE_URL)
           .post('/metadata/validate')
@@ -769,7 +835,7 @@ describe('API Integration Tests', () => {
           .send(testMetadata)
           .expect(201)
 
-        const statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
+        const statusCheckObj = {Valid: 0, Conflict: 0, Error: 0}
 
         for (const doc of Array.from(res.body)) {
           statusCheckObj[doc.status] += 1
@@ -797,7 +863,7 @@ describe('API Integration Tests', () => {
           .send(testMetadata)
           .expect(201)
 
-        const statusCheckObj = { Valid: 0, Conflict: 0, Error: 0 }
+        const statusCheckObj = {Valid: 0, Conflict: 0, Error: 0}
 
         for (const doc of Array.from(res.body)) {
           statusCheckObj[doc.status] += 1

@@ -3,29 +3,30 @@
 /* eslint-env mocha */
 
 import request from 'supertest'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { VisualizerModelAPI } from '../../src/model/visualizer'
+import {VisualizerModelAPI} from '../../src/model/visualizer'
 
 describe('API Integration Tests', () => {
-  const { SERVER_PORTS } = constants
+  const {SERVER_PORTS} = constants
 
   describe('Visualizers REST API testing', () => {
     const visObj = {
       name: 'TestVisualizer',
-      components: [{
-        eventType: 'primary',
-        eventName: 'OpenHIM Mediator FHIR Proxy Route',
-        display: 'FHIR Server'
-      },
-      {
-        eventType: 'primary',
-        eventName: 'echo',
-        display: 'Echo'
-      }
+      components: [
+        {
+          eventType: 'primary',
+          eventName: 'OpenHIM Mediator FHIR Proxy Route',
+          display: 'FHIR Server'
+        },
+        {
+          eventType: 'primary',
+          eventName: 'echo',
+          display: 'Echo'
+        }
       ],
       color: {
         inactive: '#c8cacf',
@@ -45,27 +46,29 @@ describe('API Integration Tests', () => {
         maxTimeout: 5000,
         minDisplayPeriod: 500
       },
-      channels: [{
-        eventType: 'channel',
-        eventName: 'FHIR Proxy',
-        display: 'FHIR Proxy'
-      },
-      {
-        eventType: 'channel',
-        eventName: 'Echo',
-        display: 'Echo'
-      }
+      channels: [
+        {
+          eventType: 'channel',
+          eventName: 'FHIR Proxy',
+          display: 'FHIR Proxy'
+        },
+        {
+          eventType: 'channel',
+          eventName: 'Echo',
+          display: 'Echo'
+        }
       ],
-      mediators: [{
-        mediator: 'urn:mediator:fhir-proxy',
-        name: 'OpenHIM Mediator FHIR Proxy',
-        display: 'OpenHIM Mediator FHIR Proxy'
-      },
-      {
-        mediator: 'urn:mediator:shell-script',
-        name: 'OpenHIM Shell Script Mediator',
-        display: 'OpenHIM Shell Script Mediator'
-      }
+      mediators: [
+        {
+          mediator: 'urn:mediator:fhir-proxy',
+          name: 'OpenHIM Mediator FHIR Proxy',
+          display: 'OpenHIM Mediator FHIR Proxy'
+        },
+        {
+          mediator: 'urn:mediator:shell-script',
+          name: 'OpenHIM Shell Script Mediator',
+          display: 'OpenHIM Shell Script Mediator'
+        }
       ]
     }
 
@@ -75,7 +78,7 @@ describe('API Integration Tests', () => {
       await Promise.all([
         VisualizerModelAPI.deleteMany({}),
         testUtils.setupTestUsers(),
-        promisify(server.start)({ apiPort: SERVER_PORTS.apiPort })
+        promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
       ])
     })
 
@@ -86,7 +89,9 @@ describe('API Integration Tests', () => {
       ])
     })
 
-    beforeEach(() => { authDetails = testUtils.getAuthDetails() })
+    beforeEach(() => {
+      authDetails = testUtils.getAuthDetails()
+    })
 
     afterEach(() => VisualizerModelAPI.deleteMany({}))
 
@@ -100,10 +105,7 @@ describe('API Integration Tests', () => {
         vis2.name = 'Visualizer2'
         vis2 = new VisualizerModelAPI(vis2)
 
-        await Promise.all([
-          vis1.save(),
-          vis2.save()
-        ])
+        await Promise.all([vis1.save(), vis2.save()])
 
         const res = await request(constants.BASE_URL)
           .get('/visualizers')
@@ -115,9 +117,9 @@ describe('API Integration Tests', () => {
 
         res.body.should.be.an.Array()
         res.body.length.should.be.exactly(2)
-        const names = res.body.map(vis => vis.name);
-        (Array.from(names).includes('Visualizer1')).should.be.true();
-        (Array.from(names).includes('Visualizer2')).should.be.true()
+        const names = res.body.map(vis => vis.name)
+        Array.from(names).includes('Visualizer1').should.be.true()
+        Array.from(names).includes('Visualizer2').should.be.true()
       })
 
       it('should return a 403 response if the user is not an admin', async () => {
@@ -154,10 +156,7 @@ describe('API Integration Tests', () => {
         vis2.name = 'Visualizer2'
         vis2 = new VisualizerModelAPI(vis2)
 
-        await Promise.all([
-          vis1.save(),
-          vis2.save()
-        ])
+        await Promise.all([vis1.save(), vis2.save()])
 
         const res = await request(constants.BASE_URL)
           .get(`/visualizers/${vis1._id}`)
@@ -190,7 +189,9 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .expect(404)
 
-        res.text.should.equal('Visualizer with _id 111111111111111111111111 could not be found.')
+        res.text.should.equal(
+          'Visualizer with _id 111111111111111111111111 could not be found.'
+        )
       })
     })
 
@@ -205,7 +206,7 @@ describe('API Integration Tests', () => {
           .send(Object.assign({}, visObj))
           .expect(201)
 
-        await VisualizerModelAPI.findOne({ name: 'Visualizer1' })
+        await VisualizerModelAPI.findOne({name: 'Visualizer1'})
       })
 
       it('should return a 403 response if the user is not an admin', async () => {
@@ -254,7 +255,9 @@ describe('API Integration Tests', () => {
           .send(visUpdate)
           .expect(200)
 
-        const vis = await VisualizerModelAPI.findOne({ name: 'VisualizerUpdate1' })
+        const vis = await VisualizerModelAPI.findOne({
+          name: 'VisualizerUpdate1'
+        })
         vis.color.should.have.property('inactive', '#11111')
       })
 
@@ -278,7 +281,9 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send()
           .expect(404)
-        res.text.should.equal('Cannot Update Visualizer with _id 111111111111111111111111, no request object')
+        res.text.should.equal(
+          'Cannot Update Visualizer with _id 111111111111111111111111, no request object'
+        )
       })
 
       it('should return 404 if no visualizers match the _id', async () => {
@@ -290,24 +295,23 @@ describe('API Integration Tests', () => {
           .set('auth-token', authDetails.authToken)
           .send(Object.assign({}, visObj))
           .expect(404)
-        res.text.should.equal('Cannot Update Visualizer with _id 111111111111111111111111, does not exist')
+        res.text.should.equal(
+          'Cannot Update Visualizer with _id 111111111111111111111111, does not exist'
+        )
       })
     })
 
     describe('*removeVisualizer(visualizerId)', () => {
       it('should sucessfully remove a visualizer', async () => {
         let vis1 = Object.assign({}, visObj)
-        vis1.name = 'Root\'s Visualizer 1'
+        vis1.name = "Root's Visualizer 1"
         vis1 = new VisualizerModelAPI(vis1)
 
         let vis2 = Object.assign({}, visObj)
-        vis2.name = 'Root\'s Visualizer 2'
+        vis2.name = "Root's Visualizer 2"
         vis2 = new VisualizerModelAPI(vis2)
 
-        await Promise.all([
-          vis1.save(),
-          vis2.save()
-        ])
+        await Promise.all([vis1.save(), vis2.save()])
 
         await request(constants.BASE_URL)
           .del(`/visualizers/${vis1._id}`)
@@ -330,7 +334,7 @@ describe('API Integration Tests', () => {
           .expect(403)
       })
 
-      return it('should return a 404 when the visualizer doesn\'t exist', async () => {
+      return it("should return a 404 when the visualizer doesn't exist", async () => {
         await request(constants.BASE_URL)
           .delete('/visualizers/111111111111111111111111')
           .set('auth-username', testUtils.rootUser.email)

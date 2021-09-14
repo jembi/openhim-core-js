@@ -4,18 +4,17 @@
 
 import request from 'supertest'
 import should from 'should'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { ChannelModel, MetricModel } from '../../src/model'
+import {ChannelModel, MetricModel} from '../../src/model'
 
-const { SERVER_PORTS } = constants
+const {SERVER_PORTS} = constants
 
 describe('API Metrics Tests', () =>
-
   describe('OpenHIM Metrics Api testing', () => {
     let authDetails
     const channel1Doc = {
@@ -23,7 +22,9 @@ describe('API Metrics Tests', () =>
       name: 'Test Channel 11111',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
-      routes: [{ name: 'test route', host: 'localhost', port: constants.HTTP_PORT }],
+      routes: [
+        {name: 'test route', host: 'localhost', port: constants.HTTP_PORT}
+      ],
       updatedBy: {
         id: new ObjectId(),
         name: 'Test'
@@ -35,7 +36,9 @@ describe('API Metrics Tests', () =>
       name: 'Test Channel 22222',
       urlPattern: 'test/sample',
       allow: ['PoC', 'Test1', 'Test2'],
-      routes: [{ name: 'test route', host: 'localhost', port: constants.HTTP_PORT }],
+      routes: [
+        {name: 'test route', host: 'localhost', port: constants.HTTP_PORT}
+      ],
       txViewAcl: ['group1'],
       updatedBy: {
         id: new ObjectId(),
@@ -58,7 +61,9 @@ describe('API Metrics Tests', () =>
       ])
     })
 
-    beforeEach(() => { authDetails = testUtils.getAuthDetails() })
+    beforeEach(() => {
+      authDetails = testUtils.getAuthDetails()
+    })
 
     after(async () => {
       await Promise.all([
@@ -71,7 +76,9 @@ describe('API Metrics Tests', () =>
     describe('*getMetrics()', () => {
       it('should fetch metrics and return a 200', async () => {
         const res = await request(constants.BASE_URL)
-          .get('/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
+          .get(
+            '/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -84,7 +91,9 @@ describe('API Metrics Tests', () =>
 
       it('should fetch metrics broken down by channels and return a 200', async () => {
         const res = await request(constants.BASE_URL)
-          .get('/metrics/channels?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
+          .get(
+            '/metrics/channels?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -98,7 +107,9 @@ describe('API Metrics Tests', () =>
 
       it('should fetch metrics for a particular channel and return a 200', async () => {
         const res = await request(constants.BASE_URL)
-          .get('/metrics/channels/222222222222222222222222?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
+          .get(
+            '/metrics/channels/222222222222222222222222?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -111,7 +122,9 @@ describe('API Metrics Tests', () =>
 
       it('should fetch metrics in timeseries and return a 200', async () => {
         const res = await request(constants.BASE_URL)
-          .get('/metrics/timeseries/day?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
+          .get(
+            '/metrics/timeseries/day?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -126,7 +139,9 @@ describe('API Metrics Tests', () =>
 
       it('should fetch metrics broken down by channels and timeseries and return a 200', async () => {
         const res = await request(constants.BASE_URL)
-          .get('/metrics/timeseries/day/channels?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
+          .get(
+            '/metrics/timeseries/day/channels?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -142,7 +157,9 @@ describe('API Metrics Tests', () =>
 
       it('should fetch metrics for a particular channel broken down by timeseries and return a 200', async () => {
         const res = await request(constants.BASE_URL)
-          .get('/metrics/timeseries/day/channels/222222222222222222222222?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
+          .get(
+            '/metrics/timeseries/day/channels/222222222222222222222222?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -159,7 +176,9 @@ describe('API Metrics Tests', () =>
 
       it('should fetch metrics for only the channels that a user can view', async () => {
         const res = await request(constants.BASE_URL)
-          .get('/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
+          .get(
+            '/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
+          )
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -170,9 +189,11 @@ describe('API Metrics Tests', () =>
         res.body[0].total.should.be.exactly(5)
       })
 
-      it('should return a 401 when a channel isn\'t found', async () => {
+      it("should return a 401 when a channel isn't found", async () => {
         await request(constants.BASE_URL)
-          .get('/metrics/channels/333333333333333333333333?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z')
+          .get(
+            '/metrics/channels/333333333333333333333333?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
+          )
           .set('auth-username', testUtils.rootUser.email)
           .set('auth-ts', authDetails.authTS)
           .set('auth-salt', authDetails.authSalt)
@@ -200,5 +221,4 @@ describe('API Metrics Tests', () =>
           .expect(400)
       })
     })
-  })
-)
+  }))

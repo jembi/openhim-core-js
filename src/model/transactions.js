@@ -1,36 +1,43 @@
-import { Schema, ObjectId } from 'mongoose'
-import { connectionAPI, connectionDefault } from '../config'
+import {Schema, ObjectId} from 'mongoose'
+import {connectionAPI, connectionDefault} from '../config'
 
 // Request Schema definition
-const RequestDef = new Schema({
-  host: String,
-  port: String,
-  path: String,
-  headers: Object,
-  querystring: String,
-  bodyId: ObjectId,
-  method: String,
-  timestamp: {
-    type: Date, required: true
+const RequestDef = new Schema(
+  {
+    host: String,
+    port: String,
+    path: String,
+    headers: Object,
+    querystring: String,
+    bodyId: ObjectId,
+    method: String,
+    timestamp: {
+      type: Date,
+      required: true
+    },
+    timestampEnd: Date
   },
-  timestampEnd: Date
-}, {
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true }
-})
+  {
+    toObject: {virtuals: true},
+    toJSON: {virtuals: true}
+  }
+)
 RequestDef.virtual('body')
 
 // Response Schema definition
-const ResponseDef = new Schema({
-  status: Number,
-  headers: Object,
-  bodyId: ObjectId,
-  timestamp: Date,
-  timestampEnd: Date
-}, {
-  toObject: { virtuals: true },
-  toJSON: { virtuals: true }
-})
+const ResponseDef = new Schema(
+  {
+    status: Number,
+    headers: Object,
+    bodyId: ObjectId,
+    timestamp: Date,
+    timestampEnd: Date
+  },
+  {
+    toObject: {virtuals: true},
+    toJSON: {virtuals: true}
+  }
+)
 ResponseDef.virtual('body')
 
 const ErrorDetailsDef = {
@@ -41,11 +48,13 @@ const ErrorDetailsDef = {
 // OrchestrationMetadata Schema
 const OrchestrationMetadataDef = {
   name: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   group: String,
   request: {
-    type: RequestDef, required: false
+    type: RequestDef,
+    required: false
   }, // this is needed to prevent Validation error, see https://github.com/jembi/openhim-console/issues/356#issuecomment-188708443
   response: ResponseDef,
   error: ErrorDetailsDef
@@ -54,7 +63,8 @@ const OrchestrationMetadataDef = {
 // Route Schema
 const RouteMetadataDef = {
   name: {
-    type: String, required: true
+    type: String,
+    required: true
   },
   request: RequestDef,
   response: ResponseDef,
@@ -68,7 +78,8 @@ const TransactionSchema = new Schema({
   clientID: Schema.Types.ObjectId,
   clientIP: String,
   parentID: {
-    type: Schema.Types.ObjectId, index: true
+    type: Schema.Types.ObjectId,
+    index: true
   },
   childIDs: [Schema.Types.ObjectId],
   channelID: {
@@ -80,32 +91,50 @@ const TransactionSchema = new Schema({
   orchestrations: [OrchestrationMetadataDef],
   properties: Object,
   canRerun: {
-    type: Boolean, default: true
+    type: Boolean,
+    default: true
   },
   autoRetry: {
-    type: Boolean, default: false
+    type: Boolean,
+    default: false
   }, // auto rerun this transaction (e.g. if error'd)
   autoRetryAttempt: Number,
   wasRerun: {
-    type: Boolean, default: false
+    type: Boolean,
+    default: false
   },
   error: ErrorDetailsDef,
   status: {
     type: String,
     required: true,
-    enum: ['Processing', 'Failed', 'Completed', 'Successful', 'Completed with error(s)']
+    enum: [
+      'Processing',
+      'Failed',
+      'Completed',
+      'Successful',
+      'Completed with error(s)'
+    ]
   }
 })
 
 export const compactTransactionCollection = async () => {
-  return (await connectionAPI).db.command({ compact: 'transactions', force: true })
+  return (await connectionAPI).db.command({
+    compact: 'transactions',
+    force: true
+  })
 }
 
 TransactionSchema.index('request.timestamp')
-TransactionSchema.index({ channelID: 1, 'request.timestamp': -1 })
-TransactionSchema.index({ status: 1, 'request.timestamp': -1 })
-TransactionSchema.index({ childIDs: 1, 'request.timestamp': -1 })
+TransactionSchema.index({channelID: 1, 'request.timestamp': -1})
+TransactionSchema.index({status: 1, 'request.timestamp': -1})
+TransactionSchema.index({childIDs: 1, 'request.timestamp': -1})
 
 // Compile schema into Model
-export const TransactionModelAPI = connectionAPI.model('Transaction', TransactionSchema)
-export const TransactionModel = connectionDefault.model('Transaction', TransactionSchema)
+export const TransactionModelAPI = connectionAPI.model(
+  'Transaction',
+  TransactionSchema
+)
+export const TransactionModel = connectionDefault.model(
+  'Transaction',
+  TransactionSchema
+)

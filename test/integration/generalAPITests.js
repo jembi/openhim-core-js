@@ -4,13 +4,13 @@
 
 import crypto from 'crypto'
 import request from 'supertest'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
-import { UserModel } from '../../src/model'
+import {UserModel} from '../../src/model'
 
-const { SERVER_PORTS } = constants
+const {SERVER_PORTS} = constants
 
 describe('API Integration Tests', () => {
   describe('General API tests', () => {
@@ -19,7 +19,8 @@ describe('API Integration Tests', () => {
       surname: 'Murray',
       email: 'bfm@crazy.net',
       passwordAlgorithm: 'sha512',
-      passwordHash: '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+      passwordHash:
+        '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
       passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
       groups: ['HISP', 'admin']
     }
@@ -35,10 +36,7 @@ describe('API Integration Tests', () => {
     })
 
     after(async () => {
-      await Promise.all([
-        UserModel.deleteMany({}),
-        promisify(server.stop)()
-      ])
+      await Promise.all([UserModel.deleteMany({}), promisify(server.stop)()])
     })
 
     it('should set the cross-origin resource sharing headers', async () => {
@@ -53,9 +51,7 @@ describe('API Integration Tests', () => {
     })
 
     it('should disallow access if no API authentication details are provided', async () => {
-      await request(constants.BASE_URL)
-        .get('/channels')
-        .expect(401)
+      await request(constants.BASE_URL).get('/channels').expect(401)
     })
 
     it('should disallow access if token does not match', async () => {

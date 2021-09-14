@@ -4,12 +4,12 @@ import logger from 'winston'
 import net from 'net'
 
 import * as rerunMiddleware from './middleware/rerunUpdateTransactionTask'
-import { ChannelModel } from './model/channels'
-import { TaskModel } from './model/tasks'
-import { TransactionModel } from './model/transactions'
-import { config } from './config'
+import {ChannelModel} from './model/channels'
+import {TaskModel} from './model/tasks'
+import {TransactionModel} from './model/transactions'
+import {config} from './config'
 
-import { makeStreamingRequest } from './middleware/streamingRouter'
+import {makeStreamingRequest} from './middleware/streamingRouter'
 
 config.rerun = config.get('rerun')
 
@@ -17,10 +17,14 @@ let live = false
 let activeTasks = 0
 
 // TODO : This needs to be converted to an event emitter or an observable
-export async function findAndProcessAQueuedTask () {
+export async function findAndProcessAQueuedTask() {
   let task
   try {
-    task = await TaskModel.findOneAndUpdate({ status: 'Queued' }, { status: 'Processing' }, { new: true })
+    task = await TaskModel.findOneAndUpdate(
+      {status: 'Queued'},
+      {status: 'Processing'},
+      {new: true}
+    )
     if (task != null) {
       activeTasks++
       await processNextTaskRound(task)
@@ -30,20 +34,25 @@ export async function findAndProcessAQueuedTask () {
     if (task == null) {
       logger.error(`An error occurred while looking for rerun tasks: ${err}`)
     } else {
-      logger.error(`An error occurred while processing rerun task ${task._id}: ${err}`)
+      logger.error(
+        `An error occurred while processing rerun task ${task._id}: ${err}`
+      )
     }
     activeTasks--
   }
 }
 
-function rerunTaskProcessor () {
+function rerunTaskProcessor() {
   if (live) {
     findAndProcessAQueuedTask()
-    return setTimeout(rerunTaskProcessor, config.rerun.processor.pollPeriodMillis)
+    return setTimeout(
+      rerunTaskProcessor,
+      config.rerun.processor.pollPeriodMillis
+    )
   }
 }
 
-export function start (callback) {
+export function start(callback) {
   live = true
   setTimeout(rerunTaskProcessor, config.rerun.processor.pollPeriodMillis)
 
@@ -51,7 +60,7 @@ export function start (callback) {
   return callback()
 }
 
-export function stop (callback) {
+export function stop(callback) {
   live = false
 
   const waitForActiveTasks = function () {
@@ -65,20 +74,26 @@ export function stop (callback) {
   return waitForActiveTasks()
 }
 
-export function isRunning () { return live }
+export function isRunning() {
+  return live
+}
 
-async function finalizeTaskRound (task) {
-  const result = await TaskModel.findOne({ _id: task._id }, { status: 1 })
+async function finalizeTaskRound(task) {
+  const result = await TaskModel.findOne({_id: task._id}, {status: 1})
   if (result.status === 'Processing' && task.remainingTransactions !== 0) {
     task.status = 'Queued'
-    logger.info(`Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remaining`)
+    logger.info(
+      `Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remaining`
+    )
   } else if (task.remainingTransactions === 0) {
     task.status = 'Completed'
     task.completedDate = new Date()
     logger.info(`Round completed for rerun task #${task._id} - Task completed`)
   } else {
     task.status = result.status
-    logger.info(`Round completed for rerun task #${task._id} - Task has been ${result.status}`)
+    logger.info(
+      `Round completed for rerun task #${task._id} - Task has been ${result.status}`
+    )
   }
 
   await task.save()
@@ -96,22 +111,32 @@ async function finalizeTaskRound (task) {
  * This model allows the instance the get updated information regarding the task in between rounds:
  * i.e. if the server has been stopped, if the task has been paused, etc.
  */
-async function processNextTaskRound (task) {
-  logger.debug(`Processing next task round: total transactions = ${task.totalTransactions}, remainingTransactions = ${task.remainingTransactions}`)
+async function processNextTaskRound(task) {
+  logger.debug(
+    `Processing next task round: total transactions = ${task.totalTransactions}, remainingTransactions = ${task.remainingTransactions}`
+  )
   const nextI = task.transactions.length - task.remainingTransactions
-  const transactions = Array.from(task.transactions.slice(nextI, nextI + task.batchSize))
+  const transactions = Array.from(
+    task.transactions.slice(nextI, nextI + task.batchSize)
+  )
 
-  const promises = transactions.map((transaction) => {
-    return new Promise((resolve) => {
+  const promises = transactions.map(transaction => {
+    return new Promise(resolve => {
       rerunTransaction(transaction.tid, task._id, (err, response) => {
         if (err) {
           transaction.tstatus = 'Failed'
           transaction.error = err
-          logger.error(`An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`)
-        } else if ((response != null ? response.status : undefined) === 'Failed') {
+          logger.error(
+            `An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`
+          )
+        } else if (
+          (response != null ? response.status : undefined) === 'Failed'
+        ) {
           transaction.tstatus = 'Failed'
           transaction.error = response.message
-          logger.error(`An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`)
+          logger.error(
+            `An error occurred while rerunning transaction ${transaction.tid} for task ${task._id}: ${err}`
+          )
         } else {
           transaction.tstatus = 'Completed'
           transaction.rerunStatus = response.transaction.status
@@ -129,38 +154,58 @@ async function processNextTaskRound (task) {
   try {
     await task.save()
   } catch (err) {
-    logger.error(`Failed to save current task while processing round: taskID=${task._id}, err=${err}`, err)
+    logger.error(
+      `Failed to save current task while processing round: taskID=${task._id}, err=${err}`,
+      err
+    )
   }
   return finalizeTaskRound(task)
 }
 
-function rerunTransaction (transactionID, taskID, callback) {
+function rerunTransaction(transactionID, taskID, callback) {
   rerunGetTransaction(transactionID, (err, transaction) => {
-    if (err) { return callback(err) }
+    if (err) {
+      return callback(err)
+    }
 
-    if (['POST', 'PUT', 'PATCH'].includes(transaction.request.method) && (!transaction.request.bodyId)) {
-      const err = new Error('No body for this request - Cannot rerun transaction')
+    if (
+      ['POST', 'PUT', 'PATCH'].includes(transaction.request.method) &&
+      !transaction.request.bodyId
+    ) {
+      const err = new Error(
+        'No body for this request - Cannot rerun transaction'
+      )
       return callback(err, null)
     }
 
     // setup the option object for the HTTP Request
     return ChannelModel.findById(transaction.channelID, (err, channel) => {
-      if (err) { return callback(err) }
+      if (err) {
+        return callback(err)
+      }
 
       logger.info(`Rerunning ${channel.type} transaction`)
 
-      if ((channel.type === 'http') || (channel.type === 'polling')) {
+      if (channel.type === 'http' || channel.type === 'polling') {
         rerunSetHTTPRequestOptions(transaction, taskID, (err, options) => {
-          if (err) { return callback(err) }
+          if (err) {
+            return callback(err)
+          }
 
           // Run the HTTP Request with details supplied in options object
-          return rerunHttpRequestSend(options, transaction, (err, HTTPResponse) => callback(err, HTTPResponse))
+          return rerunHttpRequestSend(
+            options,
+            transaction,
+            (err, HTTPResponse) => callback(err, HTTPResponse)
+          )
         })
       }
 
-      if ((channel.type === 'tcp') || (channel.type === 'tls')) {
+      if (channel.type === 'tcp' || channel.type === 'tls') {
         return rerunTcpRequestSend(channel, transaction, (err, TCPResponse) => {
-          if (err) { return callback(err) }
+          if (err) {
+            return callback(err)
+          }
 
           // Update original
           const ctx = {
@@ -170,8 +215,10 @@ function rerunTransaction (transactionID, taskID, callback) {
             taskID
           }
 
-          return rerunMiddleware.updateOriginalTransaction(ctx, (err) => {
-            if (err) { return callback(err) }
+          return rerunMiddleware.updateOriginalTransaction(ctx, err => {
+            if (err) {
+              return callback(err)
+            }
             return rerunMiddleware.updateTask(ctx, callback)
           })
         })
@@ -180,15 +227,20 @@ function rerunTransaction (transactionID, taskID, callback) {
   })
 }
 
-function rerunGetTransaction (transactionID, callback) {
+function rerunGetTransaction(transactionID, callback) {
   TransactionModel.findById(transactionID, async (err, transaction) => {
-    if ((transaction == null)) {
-      return callback((new Error(`Transaction ${transactionID} could not be found`)), null)
+    if (transaction == null) {
+      return callback(
+        new Error(`Transaction ${transactionID} could not be found`),
+        null
+      )
     }
 
     // check if 'canRerun' property is false - reject the rerun
     if (!transaction.canRerun) {
-      err = new Error(`Transaction ${transactionID} cannot be rerun as there isn't enough information about the request`)
+      err = new Error(
+        `Transaction ${transactionID} cannot be rerun as there isn't enough information about the request`
+      )
       return callback(err, null)
     }
 
@@ -201,13 +253,17 @@ function rerunGetTransaction (transactionID, callback) {
  * Construct HTTP options to be sent #
  */
 
-function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
+function rerunSetHTTPRequestOptions(transaction, taskID, callback) {
   if (transaction == null) {
-    const err = new Error('An empty Transaction object was supplied. Aborting HTTP options configuration')
+    const err = new Error(
+      'An empty Transaction object was supplied. Aborting HTTP options configuration'
+    )
     return callback(err, null)
   }
 
-  logger.info(`Rerun Transaction #${transaction._id} - HTTP Request options being configured`)
+  logger.info(
+    `Rerun Transaction #${transaction._id} - HTTP Request options being configured`
+  )
   const options = {
     hostname: config.rerun.host,
     port: config.rerun.httpPort,
@@ -227,7 +283,7 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
    *  For GET and DELETE, bodyId will be null. Still need to supply
    *     empty header, so that HIM will not expect a body in GridFS
    *  For POST and PUT, bodyId will be fileId for body stored in GridFS
-  */
+   */
 
   if (transaction.request.bodyId) {
     options.headers['x-body-id'] = transaction.request.bodyId
@@ -240,15 +296,19 @@ function rerunSetHTTPRequestOptions (transaction, taskID, callback) {
   return callback(null, options)
 }
 
-async function rerunHttpRequestSend (options, transaction, callback) {
+async function rerunHttpRequestSend(options, transaction, callback) {
   let err
   if (options == null) {
-    err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
+    err = new Error(
+      "An empty 'Options' object was supplied. Aborting HTTP Send Request"
+    )
     return callback(err, null)
   }
 
   if (transaction == null) {
-    err = new Error('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
+    err = new Error(
+      "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
+    )
     return callback(err, null)
   }
 
@@ -259,12 +319,16 @@ async function rerunHttpRequestSend (options, transaction, callback) {
 
   const statusEvents = {
     badOptions: function () {
-      err = new Error('An empty \'Options\' object was supplied. Aborting HTTP Send Request')
+      err = new Error(
+        "An empty 'Options' object was supplied. Aborting HTTP Send Request"
+      )
       logger.error(err)
       callback(err, null)
     },
     noRequest: function () {
-      err = new Error('An empty \'Transaction\' object was supplied. Aborting HTTP Send Request')
+      err = new Error(
+        "An empty 'Transaction' object was supplied. Aborting HTTP Send Request"
+      )
       logger.error(err)
       callback(err, null)
     },
@@ -280,7 +344,9 @@ async function rerunHttpRequestSend (options, transaction, callback) {
     finishRequest: function () {},
     startResponse: function () {},
     responseProgress: function (chunk, counter, size) {
-      logger.info(`Write rerun response CHUNK # ${counter} [ Total size ${size}]`)
+      logger.info(
+        `Write rerun response CHUNK # ${counter} [ Total size ${size}]`
+      )
     },
     finishResponse: function (res, size) {
       logger.info(`** END OF RERUN OUTPUT STREAM ** ${size} bytes`)
@@ -293,7 +359,9 @@ async function rerunHttpRequestSend (options, transaction, callback) {
       response.timestamp = new Date()
       response.transaction.status = 'Completed'
 
-      logger.info(`Rerun Transaction #${transaction._id} - HTTP Response has been captured`)
+      logger.info(
+        `Rerun Transaction #${transaction._id} - HTTP Response has been captured`
+      )
     },
     finishResponseAsString: function () {},
     requestError: function () {},
@@ -307,7 +375,9 @@ async function rerunHttpRequestSend (options, transaction, callback) {
   }
 
   options.secured = false
-  options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(transaction.request.method)
+  options.requestBodyRequired = ['POST', 'PUT', 'PATCH'].includes(
+    transaction.request.method
+  )
   options.responseBodyRequired = false
   options.collectResponseBody = false
 
@@ -323,7 +393,7 @@ async function rerunHttpRequestSend (options, transaction, callback) {
   }
 }
 
-function rerunTcpRequestSend (channel, transaction, callback) {
+function rerunTcpRequestSend(channel, transaction, callback) {
   const response = {
     body: '',
     transaction: {}
@@ -332,11 +402,15 @@ function rerunTcpRequestSend (channel, transaction, callback) {
   const client = new net.Socket()
 
   client.connect(channel.tcpPort, channel.tcpHost, () => {
-    logger.info(`Rerun Transaction ${transaction._id}: TCP connection established`)
+    logger.info(
+      `Rerun Transaction ${transaction._id}: TCP connection established`
+    )
     client.end(transaction.request.body)
   })
 
-  client.on('data', data => { response.body += data })
+  client.on('data', data => {
+    response.body += data
+  })
 
   client.on('end', () => {
     response.status = 200
@@ -345,13 +419,17 @@ function rerunTcpRequestSend (channel, transaction, callback) {
     response.headers = {}
     response.timestamp = new Date()
 
-    logger.info(`Rerun Transaction #${transaction._id} - TCP Response has been captured`)
+    logger.info(
+      `Rerun Transaction #${transaction._id} - TCP Response has been captured`
+    )
     callback(null, response)
   })
 
-  return client.on('error', (err) => {
+  return client.on('error', err => {
     // update the status of the transaction that was processed to indicate it failed to process
-    if (err) { response.transaction.status = 'Failed' }
+    if (err) {
+      response.transaction.status = 'Failed'
+    }
 
     response.status = 500
     response.message = 'Internal Server Error'

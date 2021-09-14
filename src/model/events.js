@@ -1,8 +1,8 @@
 'use strict'
 
-import { Schema } from 'mongoose'
+import {Schema} from 'mongoose'
 
-import { connectionAPI, connectionDefault } from '../config'
+import {connectionAPI, connectionDefault} from '../config'
 
 export const eventTypes = ['channel', 'primary', 'route', 'orchestration']
 
@@ -15,31 +15,38 @@ export const eventTypes = ['channel', 'primary', 'route', 'orchestration']
 //
 const EventsSchema = new Schema({
   created: {
-    type: Date, default: Date.now, expires: '1h'
+    type: Date,
+    default: Date.now,
+    expires: '1h'
   },
   channelID: {
-    type: Schema.Types.ObjectId, required: true
+    type: Schema.Types.ObjectId,
+    required: true
   },
   transactionID: {
-    type: Schema.Types.ObjectId, required: true
+    type: Schema.Types.ObjectId,
+    required: true
   },
   type: {
-    type: String, enum: exports.EventTypes
+    type: String,
+    enum: exports.EventTypes
   },
   event: {
-    type: String, enum: ['start', 'end']
+    type: String,
+    enum: ['start', 'end']
   },
   name: String,
   status: Number,
   statusType: {
-    type: String, enum: ['success', 'error']
+    type: String,
+    enum: ['success', 'error']
   }, // status string supported by visualizer (e.g. 'error' is red)
   normalizedTimestamp: String,
   mediator: String,
   autoRetryAttempt: Number
 })
 
-EventsSchema.index({ created: 1 }, { expireAfterSeconds: 3600 })
+EventsSchema.index({created: 1}, {expireAfterSeconds: 3600})
 
 export const EventModelAPI = connectionAPI.model('Event', EventsSchema)
 export const EventModel = connectionDefault.model('Event', EventsSchema)

@@ -4,13 +4,13 @@
 
 import moment from 'moment'
 import should from 'should'
-import { ObjectId } from 'mongodb'
+import {ObjectId} from 'mongodb'
 
-import { ChannelModel, ClientModel, TransactionModel } from '../../src/model'
-import { clone, extractGridFSPayload, createGridFSPayload } from '../utils'
+import {ChannelModel, ClientModel, TransactionModel} from '../../src/model'
+import {clone, extractGridFSPayload, createGridFSPayload} from '../utils'
 
-import { connectionDefault } from '../../src/config'
-import { cullBodies } from '../../src/bodyCull'
+import {connectionDefault} from '../../src/config'
+import {cullBodies} from '../../src/bodyCull'
 
 const MongoClient = connectionDefault.client
 const cullTime = new Date(2016, 2, 9)
@@ -19,21 +19,20 @@ const clientDoc = Object.freeze({
   clientID: 'testClient',
   name: 'testClient',
   clientDomain: 'test-client.jembi.org',
-  roles: [
-    'PoC'
-  ]
+  roles: ['PoC']
 })
 
 const channelHasNotCulledDoc = Object.freeze({
   name: 'neverCulled',
   urlPattern: 'test/sample',
   maxBodyAgeDays: 2,
-  routes: [{
-    name: 'test route',
-    host: 'localhost',
-    port: 9876,
-    primary: true
-  }
+  routes: [
+    {
+      name: 'test route',
+      host: 'localhost',
+      port: 9876,
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -46,12 +45,13 @@ const channelHasCulledDoc = Object.freeze({
   urlPattern: 'test/sample',
   maxBodyAgeDays: 2,
   lastBodyCleared: cullTime,
-  routes: [{
-    name: 'test route',
-    host: 'localhost',
-    port: 9876,
-    primary: true
-  }
+  routes: [
+    {
+      name: 'test route',
+      host: 'localhost',
+      port: 9876,
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -62,12 +62,13 @@ const channelHasCulledDoc = Object.freeze({
 const channelNeverCullDoc = Object.freeze({
   name: 'dontCull',
   urlPattern: 'test/sample',
-  routes: [{
-    name: 'test route',
-    host: 'localhost',
-    port: 9876,
-    primary: true
-  }
+  routes: [
+    {
+      name: 'test route',
+      host: 'localhost',
+      port: 9876,
+      primary: true
+    }
   ],
   updatedBy: {
     id: new ObjectId(),
@@ -79,8 +80,8 @@ const requestBodyId = new ObjectId()
 const responseBodyId = new ObjectId()
 
 const baseTransaction = Object.freeze({
-  request: { path: '/sample/api', method: 'POST', bodyId: requestBodyId },
-  response: { status: '200', bodyId: responseBodyId },
+  request: {path: '/sample/api', method: 'POST', bodyId: requestBodyId},
+  response: {status: '200', bodyId: responseBodyId},
   status: 'Completed'
 })
 
@@ -91,7 +92,7 @@ describe('cullBodies', () => {
   let channelNeverCull
   let client
 
-  function createTransaction (channel, timestamp, orchestrations, routes) {
+  function createTransaction(channel, timestamp, orchestrations, routes) {
     const transactionDoc = clone(baseTransaction)
     transactionDoc.request.timestamp = timestamp
     transactionDoc.response.timestamp = timestamp
@@ -106,7 +107,7 @@ describe('cullBodies', () => {
     return new TransactionModel(transactionDoc).save()
   }
 
-  async function createTransactionBody (fileId) {
+  async function createTransactionBody(fileId) {
     db.collection('fs.chunks').insertOne({
       files_id: new ObjectId(fileId),
       data: 'Test Data'
@@ -152,20 +153,29 @@ describe('cullBodies', () => {
     ])
   })
 
-  it('will remove transaction body\'s that are x days old', async () => {
+  it("will remove transaction body's that are x days old", async () => {
     const momentTime = moment().subtract(3, 'd')
-    const tran = await createTransaction(channelHasNotCulled, momentTime.toDate())
+    const tran = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate()
+    )
     await cullBodies()
     const transaction = await TransactionModel.findById(tran._id)
     should(transaction.request.bodyId).undefined()
     should(transaction.response.bodyId).undefined()
   })
 
-  it('will remove multiple transaction body\'s that are x days old and leave the younger transactions', async () => {
+  it("will remove multiple transaction body's that are x days old and leave the younger transactions", async () => {
     const momentTime = moment().subtract(3, 'd')
-    const tranCulled = await createTransaction(channelHasNotCulled, momentTime.toDate())
+    const tranCulled = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate()
+    )
     momentTime.add(2, 'd')
-    const tranLeftAlone = await createTransaction(channelHasNotCulled, momentTime.toDate())
+    const tranLeftAlone = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate()
+    )
     await cullBodies()
     {
       const transaction = await TransactionModel.findById(tranCulled._id)
@@ -182,9 +192,9 @@ describe('cullBodies', () => {
 
   it('will set the lastBodyCleared to the current date if they are to be culled', async () => {
     await cullBodies()
-    const neverCulled = await ChannelModel.findOne({ name: 'neverCulled' })
-    const hasCulled = await ChannelModel.findOne({ name: 'hasCulled' })
-    const dontCull = await ChannelModel.findOne({ name: 'dontCull' })
+    const neverCulled = await ChannelModel.findOne({name: 'neverCulled'})
+    const hasCulled = await ChannelModel.findOne({name: 'hasCulled'})
+    const dontCull = await ChannelModel.findOne({name: 'dontCull'})
 
     neverCulled.lastBodyCleared.getDate().should.eql(new Date().getDate())
     hasCulled.lastBodyCleared.getDate().should.eql(new Date().getDate())
@@ -193,9 +203,15 @@ describe('cullBodies', () => {
 
   it('will only cull from the lastBodyCleared to the current date', async () => {
     const momentTime = moment(channelHasCulled.lastBodyCleared).subtract(1, 'd')
-    const notCulled = await createTransaction(channelHasCulled, momentTime.toDate())
+    const notCulled = await createTransaction(
+      channelHasCulled,
+      momentTime.toDate()
+    )
     momentTime.add(2, 'd')
-    const culled = await createTransaction(channelHasCulled, momentTime.toDate())
+    const culled = await createTransaction(
+      channelHasCulled,
+      momentTime.toDate()
+    )
 
     await cullBodies()
 
@@ -251,7 +267,11 @@ describe('cullBodies', () => {
       }
     ]
 
-    const tran = await createTransaction(channelHasNotCulled, momentTime.toDate(), orchestrations)
+    const tran = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate(),
+      orchestrations
+    )
     await cullBodies()
 
     const transaction = await TransactionModel.findById(tran._id)
@@ -260,22 +280,34 @@ describe('cullBodies', () => {
     try {
       await extractGridFSPayload(orchestrationBodyIdRequest0)
     } catch (err) {
-      should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdRequest0} was not found`)
+      should.equal(
+        err.message,
+        `FileNotFound: file ${orchestrationBodyIdRequest0} was not found`
+      )
     }
     try {
       await extractGridFSPayload(orchestrationBodyIdRequest1)
     } catch (err) {
-      should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdRequest1} was not found`)
+      should.equal(
+        err.message,
+        `FileNotFound: file ${orchestrationBodyIdRequest1} was not found`
+      )
     }
     try {
       await extractGridFSPayload(orchestrationBodyIdResponse0)
     } catch (err) {
-      should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdResponse0} was not found`)
+      should.equal(
+        err.message,
+        `FileNotFound: file ${orchestrationBodyIdResponse0} was not found`
+      )
     }
     try {
       await extractGridFSPayload(orchestrationBodyIdResponse1)
     } catch (err) {
-      should.equal(err.message, `FileNotFound: file ${orchestrationBodyIdResponse1} was not found`)
+      should.equal(
+        err.message,
+        `FileNotFound: file ${orchestrationBodyIdResponse1} was not found`
+      )
     }
 
     // Check that the bodyID field was completely removed
@@ -312,7 +344,12 @@ describe('cullBodies', () => {
       }
     ]
 
-    const tran = await createTransaction(channelHasNotCulled, momentTime.toDate(), null, routes)
+    const tran = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate(),
+      null,
+      routes
+    )
     await cullBodies()
 
     const transaction = await TransactionModel.findById(tran._id)
@@ -321,12 +358,18 @@ describe('cullBodies', () => {
     try {
       await extractGridFSPayload(routeBodyIdRequest0)
     } catch (err) {
-      should.equal(err.message, `FileNotFound: file ${routeBodyIdRequest0} was not found`)
+      should.equal(
+        err.message,
+        `FileNotFound: file ${routeBodyIdRequest0} was not found`
+      )
     }
     try {
       await extractGridFSPayload(routeBodyIdResponse0)
     } catch (err) {
-      should.equal(err.message, `FileNotFound: file ${routeBodyIdResponse0} was not found`)
+      should.equal(
+        err.message,
+        `FileNotFound: file ${routeBodyIdResponse0} was not found`
+      )
     }
 
     // Check that the bodyID field was completely removed
@@ -334,7 +377,7 @@ describe('cullBodies', () => {
     should.equal(transaction.routes[0].request.bodyId, undefined)
   })
 
-  it('will cull the routes\' orchestrations\' request and response bodies', async () => {
+  it("will cull the routes' orchestrations' request and response bodies", async () => {
     const momentTime = moment().subtract(3, 'd')
 
     const routeBodyIdRequest0 = await createGridFSPayload('Test body')
@@ -377,13 +420,16 @@ describe('cullBodies', () => {
           timestamp: new Date(),
           bodyId: routeBodyIdResponse0
         },
-        orchestrations: [
-          orchestration
-        ]
+        orchestrations: [orchestration]
       }
     ]
 
-    const tran = await createTransaction(channelHasNotCulled, momentTime.toDate(), null, routes)
+    const tran = await createTransaction(
+      channelHasNotCulled,
+      momentTime.toDate(),
+      null,
+      routes
+    )
     await cullBodies()
 
     const transaction = await TransactionModel.findById(tran._id)
@@ -392,16 +438,28 @@ describe('cullBodies', () => {
     try {
       await extractGridFSPayload(routeOrchBodyIdRequest0)
     } catch (err) {
-      should.equal(err.message, `FileNotFound: file ${routeOrchBodyIdRequest0} was not found`)
+      should.equal(
+        err.message,
+        `FileNotFound: file ${routeOrchBodyIdRequest0} was not found`
+      )
     }
     try {
       await extractGridFSPayload(routeOrchBodyIdResponse0)
     } catch (err) {
-      should.equal(err.message, `FileNotFound: file ${routeOrchBodyIdResponse0} was not found`)
+      should.equal(
+        err.message,
+        `FileNotFound: file ${routeOrchBodyIdResponse0} was not found`
+      )
     }
 
     // Check that the bodyID field was completely removed
-    should.equal(transaction.routes[0].orchestrations[0].response.bodyId, undefined)
-    should.equal(transaction.routes[0].orchestrations[0].request.bodyId, undefined)
+    should.equal(
+      transaction.routes[0].orchestrations[0].response.bodyId,
+      undefined
+    )
+    should.equal(
+      transaction.routes[0].orchestrations[0].request.bodyId,
+      undefined
+    )
   })
 })

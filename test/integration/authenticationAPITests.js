@@ -5,19 +5,19 @@
 import fs from 'fs'
 import https from 'https'
 import request from 'supertest'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import { AuditModel } from '../../src/model/audits'
-import { ChannelModelAPI } from '../../src/model/channels'
-import { ClientModelAPI } from '../../src/model/clients'
-import { KeystoreModelAPI } from '../../src/model/keystore'
-import { config } from '../../src/config'
+import {AuditModel} from '../../src/model/audits'
+import {ChannelModelAPI} from '../../src/model/channels'
+import {ClientModelAPI} from '../../src/model/clients'
+import {KeystoreModelAPI} from '../../src/model/keystore'
+import {config} from '../../src/config'
 
-const { SERVER_PORTS } = constants
+const {SERVER_PORTS} = constants
 
 describe('API Integration Tests', () => {
   describe('Retrieve Enabled Authentication types', () => {
@@ -28,7 +28,7 @@ describe('API Integration Tests', () => {
       await testUtils.setupTestUsers()
       authDetails = testUtils.getAuthDetails()
       const startPromise = promisify(server.start)
-      await startPromise({ apiPort: SERVER_PORTS.apiPort })
+      await startPromise({apiPort: SERVER_PORTS.apiPort})
       await testUtils.setImmediatePromise()
       await AuditModel.deleteMany({})
     })
@@ -119,7 +119,7 @@ describe('API Integration Tests', () => {
       await testUtils.setupTestUsers()
       authDetails = testUtils.getAuthDetails()
       const startPromise = promisify(server.start)
-      await startPromise({ apiPort: SERVER_PORTS.apiPort })
+      await startPromise({apiPort: SERVER_PORTS.apiPort})
       await testUtils.setImmediatePromise()
       await AuditModel.deleteMany({})
     })
@@ -145,7 +145,7 @@ describe('API Integration Tests', () => {
         .expect(200)
 
       await testUtils.pollCondition(() =>
-        AuditModel.countDocuments().then((c) => c === 1)
+        AuditModel.countDocuments().then(c => c === 1)
       )
       const audits = await AuditModel.find()
 
@@ -172,7 +172,7 @@ describe('API Integration Tests', () => {
         .expect(200)
 
       await testUtils.pollCondition(() =>
-        AuditModel.countDocuments().then((c) => c === 1)
+        AuditModel.countDocuments().then(c => c === 1)
       )
       const audits = await AuditModel.find()
 
@@ -197,7 +197,7 @@ describe('API Integration Tests', () => {
         .expect(401)
 
       await testUtils.pollCondition(() =>
-        AuditModel.countDocuments().then((c) => c === 1)
+        AuditModel.countDocuments().then(c => c === 1)
       )
       const audits = await AuditModel.find({})
 
@@ -222,7 +222,7 @@ describe('API Integration Tests', () => {
         .expect(401)
 
       await testUtils.pollCondition(() =>
-        AuditModel.countDocuments().then((c) => c === 1)
+        AuditModel.countDocuments().then(c => c === 1)
       )
       const audits = await AuditModel.find({})
 
@@ -249,7 +249,7 @@ describe('API Integration Tests', () => {
         .expect(401)
 
       await testUtils.pollCondition(() =>
-        AuditModel.countDocuments().then((c) => c === 1)
+        AuditModel.countDocuments().then(c => c === 1)
       )
       const audits = await AuditModel.find({})
 
@@ -286,7 +286,7 @@ describe('API Integration Tests', () => {
         .expect(401)
 
       await testUtils.pollCondition(() =>
-        AuditModel.countDocuments().then((c) => c === 1)
+        AuditModel.countDocuments().then(c => c === 1)
       )
       const audits = await AuditModel.find({})
 
@@ -428,9 +428,9 @@ describe('API Integration Tests', () => {
 
       after(async () => {
         await Promise.all([
-          ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
-          ClientModelAPI.deleteOne({ clientID: 'testApp' }),
-          ClientModelAPI.deleteOne({ clientID: 'testApp2' }),
+          ChannelModelAPI.deleteOne({name: 'TEST DATA - Mock endpoint'}),
+          ClientModelAPI.deleteOne({clientID: 'testApp'}),
+          ClientModelAPI.deleteOne({clientID: 'testApp2'}),
           mockServer.close()
         ])
       })
@@ -455,7 +455,7 @@ describe('API Integration Tests', () => {
         }
 
         await new Promise((resolve, reject) => {
-          const req = https.request(options, (res) => {
+          const req = https.request(options, res => {
             res.statusCode.should.be.exactly(201)
             resolve()
           })
@@ -481,7 +481,7 @@ describe('API Integration Tests', () => {
         }
 
         await new Promise((resolve, reject) => {
-          const req = https.request(options, (res) => {
+          const req = https.request(options, res => {
             res.statusCode.should.be.exactly(401)
             resolve()
           })
@@ -511,7 +511,7 @@ describe('API Integration Tests', () => {
         }
 
         await new Promise((resolve, reject) => {
-          const req = https.request(options, (res) => {
+          const req = https.request(options, res => {
             res.statusCode.should.be.exactly(201)
             resolve()
           })
@@ -538,7 +538,7 @@ describe('API Integration Tests', () => {
         }
 
         await new Promise((resolve, reject) => {
-          const req = https.request(options, (res) => {
+          const req = https.request(options, res => {
             res.statusCode.should.be.exactly(401)
             resolve()
           })
@@ -569,7 +569,7 @@ describe('API Integration Tests', () => {
         }
 
         await new Promise((resolve, reject) => {
-          const req = https.request(options, (res) => {
+          const req = https.request(options, res => {
             res.statusCode.should.be.exactly(401)
             resolve()
           })
@@ -628,8 +628,8 @@ describe('API Integration Tests', () => {
 
       after(async () => {
         await Promise.all([
-          ChannelModelAPI.deleteOne({ name: 'TEST DATA - Mock endpoint' }),
-          ClientModelAPI.deleteOne({ clientID: 'testApp' }),
+          ChannelModelAPI.deleteOne({name: 'TEST DATA - Mock endpoint'}),
+          ClientModelAPI.deleteOne({clientID: 'testApp'}),
           mockServer.close()
         ])
       })
@@ -639,13 +639,13 @@ describe('API Integration Tests', () => {
       })
 
       it('should `throw` 401 when no credentials provided', async () => {
-        await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+        await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
         await request(constants.HTTP_BASE_URL).get('/test/mock').expect(401)
       })
 
       it('should `throw` 401 when incorrect details provided', async () => {
-        await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+        await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
         await request(constants.HTTP_BASE_URL)
           .get('/test/mock')
@@ -655,7 +655,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should return 200 OK with correct credentials', async () => {
-        await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+        await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
         await request(constants.HTTP_BASE_URL)
           .get('/test/mock')
@@ -717,28 +717,28 @@ describe('API Integration Tests', () => {
     })
 
     it('should `throw` 401 when no credentials provided', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
       await request(constants.HTTP_BASE_URL).get('/test/mock').expect(401)
     })
 
     it('should `throw` 401 when incorrect details provided', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
       await request(constants.HTTP_BASE_URL)
         .get('/test/mock')
-        .auth('invalid', { type: 'bearer' })
+        .auth('invalid', {type: 'bearer'})
         .expect(401)
     })
 
     it('should return 200 OK with correct credentials', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
       await request(constants.HTTP_BASE_URL)
         .get('/test/mock')
         .auth(
           'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ0ZXN0QXBwIiwiYXVkIjoidGVzdCIsImlzcyI6InRlc3QifQ.k1xpH4HiyL-V7lspRqK_xLYhuQ3EIQfj7CrWJWgA0YA',
-          { type: 'bearer' }
+          {type: 'bearer'}
         )
         .expect(200)
     })
@@ -797,26 +797,26 @@ describe('API Integration Tests', () => {
     })
 
     it('should `throw` 401 when no credentials provided', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
       await request(constants.HTTP_BASE_URL).get('/test/mock').expect(401)
     })
 
     it('should `throw` 401 when incorrect details provided', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
       await request(constants.HTTP_BASE_URL)
         .get('/test/mock')
-        .set({ Authorization: 'Custom Invalid' })
+        .set({Authorization: 'Custom Invalid'})
         .expect(401)
     })
 
     it('should return 200 OK with correct credentials', async () => {
-      await promisify(server.start)({ httpPort: SERVER_PORTS.httpPort })
+      await promisify(server.start)({httpPort: SERVER_PORTS.httpPort})
 
       await request(constants.HTTP_BASE_URL)
         .get('/test/mock')
-        .set({ Authorization: 'Custom test1' })
+        .set({Authorization: 'Custom test1'})
         .expect(200)
     })
   })

@@ -45,27 +45,42 @@ tcpBodyServer.listen(config.tcpBodyPort, () => {
   console.log(`TCP body server started on ${config.tcpBodyPort}`)
 })
 
-const tlsBodyServer = tls.createServer(Object.assign({}, tcpOptions, tlsOptions), tcpHandler.handleBodyRequest)
+const tlsBodyServer = tls.createServer(
+  Object.assign({}, tcpOptions, tlsOptions),
+  tcpHandler.handleBodyRequest
+)
 tlsBodyServer.listen(config.tlsBodyPort, () => {
   console.log(`TLS body server started on ${config.tlsBodyPort}`)
 })
 
-const tcpDelayServer = tcp.createServer(tcpOptions, tcpHandler.handleDelayRequest)
+const tcpDelayServer = tcp.createServer(
+  tcpOptions,
+  tcpHandler.handleDelayRequest
+)
 tcpDelayServer.listen(config.tcpDelayPort, () => {
   console.log(`TCP delay server started on ${config.tcpDelayPort}`)
 })
 
-const tlsDelayServer = tls.createServer(Object.assign({}, tcpOptions, tlsOptions), tcpHandler.handleDelayRequest)
+const tlsDelayServer = tls.createServer(
+  Object.assign({}, tcpOptions, tlsOptions),
+  tcpHandler.handleDelayRequest
+)
 tlsDelayServer.listen(config.tlsDelayPort, () => {
   console.log(`TLS delay server started on ${config.tlsDelayPort}`)
 })
 
-const tcpImmediateServer = tcp.createServer(tcpOptions, tcpHandler.handleImmediateRequest)
+const tcpImmediateServer = tcp.createServer(
+  tcpOptions,
+  tcpHandler.handleImmediateRequest
+)
 tcpImmediateServer.listen(config.tcpImmediatePort, () => {
   console.log(`TCP immediate server started on ${config.tcpImmediatePort}`)
 })
 
-const tlsImmediateServer = tls.createServer(Object.assign({}, tcpOptions, tlsOptions), tcpHandler.handleImmediateRequest)
+const tlsImmediateServer = tls.createServer(
+  Object.assign({}, tcpOptions, tlsOptions),
+  tcpHandler.handleImmediateRequest
+)
 tlsImmediateServer.listen(config.tlsImmediatePort, () => {
   console.log(`TLS immediate server started on ${config.tlsImmediatePort}`)
 })

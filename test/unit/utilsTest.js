@@ -8,7 +8,6 @@ import should from 'should'
 import * as utils from '../../src/utils'
 
 describe('Utils', () =>
-
   describe('.statusCodePatternMatch()', () => {
     it('should return true when pattern value match status code (2xx)', () => {
       const result = utils.statusCodePatternMatch('2xx')
@@ -29,5 +28,4 @@ describe('Utils', () =>
       const result = utils.serverTimezone()
       should.exist(result)
     })
-  })
-)
+  }))

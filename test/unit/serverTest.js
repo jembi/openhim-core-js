@@ -4,13 +4,13 @@
 
 import fs from 'fs'
 import moment from 'moment'
-import { promisify } from 'util'
+import {promisify} from 'util'
 
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import * as constants from '../constants'
-import { KeystoreModel } from '../../src/model/keystore'
-import { appRoot, config } from '../../src/config'
+import {KeystoreModel} from '../../src/model/keystore'
+import {appRoot, config} from '../../src/config'
 
 config.certificateManagement = config.get('certificateManagement')
 
@@ -45,7 +45,9 @@ describe('Server tests', () => {
   })
 
   describe('.ensureKeystore()', () => {
-    const certificateManagement = Object.freeze(testUtils.clone(config.certificateManagement))
+    const certificateManagement = Object.freeze(
+      testUtils.clone(config.certificateManagement)
+    )
 
     before(async () => {
       // Do it once in the beginning in case another test left this dirty
@@ -61,10 +63,16 @@ describe('Server tests', () => {
       await promisify(server.ensureKeystore)()
       const keystore = await KeystoreModel.findOne({})
       keystore.cert.commonName.should.be.exactly('localhost')
-      keystore.cert.organization.should.be.exactly('OpenHIM Default Certificate')
+      keystore.cert.organization.should.be.exactly(
+        'OpenHIM Default Certificate'
+      )
       // TODO : all of these file references should be stored in the constants
-      keystore.cert.data.should.be.exactly((fs.readFileSync('resources/certs/default/cert.pem')).toString())
-      keystore.key.should.be.exactly((fs.readFileSync('resources/certs/default/key.pem')).toString())
+      keystore.cert.data.should.be.exactly(
+        fs.readFileSync('resources/certs/default/cert.pem').toString()
+      )
+      keystore.key.should.be.exactly(
+        fs.readFileSync('resources/certs/default/key.pem').toString()
+      )
     })
 
     it('should create a default keystore when none exists using cert from file system certs', async () => {
@@ -78,8 +86,12 @@ describe('Server tests', () => {
       keystore.cert.commonName.should.be.exactly('localhost')
       keystore.cert.organization.should.be.exactly('Jembi Health Systems NPC')
       keystore.cert.emailAddress.should.be.exactly('ryan@jembi.org')
-      keystore.cert.data.should.be.exactly((fs.readFileSync('test/resources/server-tls/cert.pem')).toString())
-      keystore.key.should.be.exactly((fs.readFileSync('test/resources/server-tls/key.pem')).toString())
+      keystore.cert.data.should.be.exactly(
+        fs.readFileSync('test/resources/server-tls/cert.pem').toString()
+      )
+      keystore.key.should.be.exactly(
+        fs.readFileSync('test/resources/server-tls/key.pem').toString()
+      )
     })
 
     it('should update an existing keystore with cert from filesystem', async () => {
@@ -88,20 +100,32 @@ describe('Server tests', () => {
       config.certificateManagement.keyPath = `${appRoot}/resources/certs/default/key.pem`
 
       const originalKeystore = await testUtils.setupTestKeystore()
-      originalKeystore.cert.organization.should.be.exactly('Jembi Health Systems NPC')
+      originalKeystore.cert.organization.should.be.exactly(
+        'Jembi Health Systems NPC'
+      )
 
       await promisify(server.ensureKeystore)()
       const updatedKeystore = await KeystoreModel.findOne({})
 
-      updatedKeystore.cert.organization.should.be.exactly('OpenHIM Default Certificate')
-      updatedKeystore.cert.data.should.be.exactly((fs.readFileSync(`${appRoot}/resources/certs/default/cert.pem`)).toString())
+      updatedKeystore.cert.organization.should.be.exactly(
+        'OpenHIM Default Certificate'
+      )
+      updatedKeystore.cert.data.should.be.exactly(
+        fs
+          .readFileSync(`${appRoot}/resources/certs/default/cert.pem`)
+          .toString()
+      )
     })
 
     it('should return without doing anything when keystore exists and cert watching is disabled', async () => {
       config.certificateManagement.watchFSForCert = false
-      const { cert: { data: before } } = await testUtils.setupTestKeystore()
+      const {
+        cert: {data: before}
+      } = await testUtils.setupTestKeystore()
       await promisify(server.ensureKeystore)()
-      const { cert: { data: after } } = await KeystoreModel.findOne({})
+      const {
+        cert: {data: after}
+      } = await KeystoreModel.findOne({})
 
       before.should.be.exactly(after)
     })

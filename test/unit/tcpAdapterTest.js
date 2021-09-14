@@ -4,12 +4,12 @@
 /* eslint no-unused-expressions:0 */
 
 import sinon from 'sinon'
-import { ObjectId } from 'mongodb'
-import { promisify } from 'util'
+import {ObjectId} from 'mongodb'
+import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as tcpAdapter from '../../src/tcpAdapter'
-import { ChannelModel } from '../../src/model/channels'
+import {ChannelModel} from '../../src/model/channels'
 
 describe('TCP adapter tests', () => {
   const testChannel = new ChannelModel({
@@ -40,10 +40,7 @@ describe('TCP adapter tests', () => {
   })
 
   before(async () => {
-    await Promise.all([
-      testChannel.save(),
-      disabledChannel.save()
-    ])
+    await Promise.all([testChannel.save(), disabledChannel.save()])
   })
 
   after(async () => {
@@ -59,6 +56,5 @@ describe('TCP adapter tests', () => {
       await promisify(tcpAdapter.startupServers)()
       spy.calledOnce.should.be.true
       spy.calledWith(testChannel._id)
-    })
-  )
+    }))
 })
