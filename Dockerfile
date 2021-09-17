@@ -1,19 +1,18 @@
-FROM node:14.17-alpine
-# Create app directory
+FROM node:14.17.0 as build
+
+RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
-# Install app dependencies
-# A wildcard is used to ensure both package.json AND package-lock.json are copied
-# where available (npm@5+)
 COPY package*.json ./
-
-RUN npm install --production
-RUN npm run build
-RUN npm cache clean --force
-# If you are building your code for production
-# RUN npm ci --only=production
-
-# Bundle app source
 COPY . .
+RUN npm uninstall babel && npm install --save-dev babel-cli && npm install --global parcel-bundler
+RUN npm install
+RUN npm run build
 
-CMD [ "node", "server.js" ]
+FROM node:14.17-alpine
+RUN mkdir -p /app
+WORKDIR /app
+
+COPY --from=build /usr/src/app  /app
+
+CMD [ "node", "lib/server.js" ]

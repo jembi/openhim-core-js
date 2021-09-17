@@ -3,6 +3,7 @@
   "description": "The OpenHIM core application that provides logging and routing of http requests",
   "version": "7.0.1",
   "main": "./lib/server.js",
+  "type": "module",
   "bin": {
     "openhim-core": "./bin/openhim-core.js"
   },
@@ -36,13 +37,13 @@
     "test:seed": "node performance/seed.js",
     "test:seed:ci": "npm run test:seed -- --quiet",
     "start": "node lib/server.js",
-    "stop": "pkill -SIGINT Core",
-    "spec": "speculate"
+    "stop": "pkill -SIGINT Core"
   },
   "dependencies": {
     "agenda": "^3.1.0",
     "atna-audit": "1.0.1",
     "axios": "^0.21.0",
+    "babel": "^6.23.0",
     "babel-polyfill": "6.26.0",
     "basic-auth": "2.0.1",
     "bcryptjs": "2.4.3",
@@ -83,6 +84,7 @@
     "@babel/core": "^7.14.0",
     "@babel/preset-env": "^7.14.1",
     "@babel/register": "^7.13.16",
+    "babel-cli": "^6.26.0",
     "codecov": "^3.8.1",
     "cross-env": "^7.0.3",
     "faker": "^5.5.3",
