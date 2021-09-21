@@ -404,6 +404,12 @@ const buildNonPrimarySendRequestPromise = (ctx, route, options, path) =>
       // on failure
       const routeObj = {}
       routeObj.name = route.name
+
+      if (!ctx.routes) {
+        ctx.routes = []
+      }
+      ctx.routes.push(routeObj)
+
       handleServerError(ctx, reason, routeObj)
       return routeObj
     })
