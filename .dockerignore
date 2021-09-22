@@ -1,2 +1,5 @@
 node_modules
 lib/*
+packaging
+infrastructure
+test
