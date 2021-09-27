@@ -37,4 +37,4 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: jembi/openhim-core:${{ env.RELEASE_VERSION }}
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/openhim-core:${{ env.RELEASE_VERSION }}

@@ -35,4 +35,4 @@ jobs:
           context: ./
           file: ./Dockerfile
           push: true
-          tags: jembi/openhim-core:latest
+          tags: ${{ secrets.DOCKER_HUB_USERNAME }}/openhim-core:latest
