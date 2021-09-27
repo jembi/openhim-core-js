@@ -42,5 +42,5 @@ jobs:
         context: ./
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/simplewhale:${{ env.RELEASE_VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/simplewhale:newtest
 
