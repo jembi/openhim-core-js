@@ -2,7 +2,6 @@ name: Deploy OpenHIM Core Docker Image on Tag
 
 on:
   push:
-    branches: [ master ]
     tags: ['*']
 
   workflow_dispatch:
@@ -41,5 +40,5 @@ jobs:
         context: ./
         file: ./Dockerfile
         push: true
-        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/simplewhale:{{ env.RELEASE_VERSION }}
+        tags: ${{ secrets.DOCKER_HUB_USERNAME }}/simplewhale:${{ env.RELEASE_VERSION }}
 
