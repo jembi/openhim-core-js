@@ -1,7 +1,7 @@
-name: Push OpenHIM Core Docker Image On Pull Request To Master
+name: Push OpenHIM Core Docker Image On Commit To Master
 
 on:
-  pull_request:
+  push:
     branches:
       - master
 
