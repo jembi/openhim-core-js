@@ -1,7 +1,5 @@
 'use strict'
-
 import logger from 'winston'
-
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {ChannelModelAPI} from '../model/channels'
@@ -10,8 +8,9 @@ import {ContactGroupModelAPI} from '../model/contactGroups'
 import {KeystoreModelAPI} from '../model/keystore'
 import {MediatorModelAPI} from '../model/mediators'
 import {UserModelAPI} from '../model/users'
+import {getClients} from '../api/clients'
+import {getChannels} from '../api/channels'
 import * as polling from '../polling'
-
 // Map string parameters to collections
 const collections = {
   Channels: ChannelModelAPI,
@@ -21,12 +20,10 @@ const collections = {
   ContactGroups: ContactGroupModelAPI,
   KeystoreModelAPI
 }
-
 // Function to remove properties from export object
 function removeProperties(obj) {
   const propertyID = '_id'
   const propertyV = '__v'
-
   for (const prop in obj) {
     if (prop === propertyID || prop === propertyV) {
       delete obj[prop]
@@ -36,7 +33,6 @@ function removeProperties(obj) {
   }
   return obj
 }
-
 // Function to return unique identifier key and value for a collection
 function getUniqueIdentifierForCollection(collection, doc) {
   let uid
@@ -72,7 +68,6 @@ function getUniqueIdentifierForCollection(collection, doc) {
   returnObj[uidKey] = uid
   return returnObj
 }
-
 // Build response object
 function buildResponseObject(model, doc, status, message, uid) {
   return {
@@ -83,7 +78,6 @@ function buildResponseObject(model, doc, status, message, uid) {
     uid
   }
 }
-
 // API endpoint that returns metadata for export
 export async function getMetadata(ctx) {
   // Test if the user is authorised
@@ -95,20 +89,26 @@ export async function getMetadata(ctx) {
       'info'
     )
   }
-
   try {
     const exportObject = {}
-
     // Return all documents from all collections for export
-    for (const col in collections) {
-      exportObject[col] = await collections[col].find().lean().exec()
-      for (let doc of Array.from(exportObject[col])) {
+    for (const model in collections) {
+      switch(model) {
+        case 'Clients':
+           await getClients(ctx);
+          console.log('clientData: ' + JSON.stringify(ctx.body));
+          exportObject[model] = ctx.body;
+          break;
+        default:
+          exportObject[model] = await collections[model].find().lean().exec();
+          break;
+      }
+      for (let doc of Array.from(exportObject[model])) {
         if (doc._id) {
           doc = removeProperties(doc)
         }
       }
     }
-
     ctx.body = [exportObject]
     ctx.status = 200
   } catch (e) {
@@ -121,7 +121,6 @@ export async function getMetadata(ctx) {
     )
   }
 }
-
 async function handleMetadataPost(ctx, action) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
@@ -132,12 +131,10 @@ async function handleMetadataPost(ctx, action) {
       'info'
     )
   }
-
   try {
     let status
     const returnObject = []
     const insertObject = ctx.request.body
-
     for (const key in insertObject) {
       const insertDocuments = insertObject[key]
       for (let doc of Array.from(insertDocuments)) {
@@ -148,7 +145,6 @@ async function handleMetadataPost(ctx, action) {
           if (!(key in collections)) {
             throw new Error('Invalid Collection in Import Object')
           }
-
           // Keystore model does not have a uid other than _id and may not contain more than one entry
           if (key === 'Keystore') {
             result = await collections[key].find().exec()
@@ -158,7 +154,6 @@ async function handleMetadataPost(ctx, action) {
             uid = uidObj[Object.keys(uidObj)[0]]
             result = await collections[key].find(uidObj).exec()
           }
-
           if (action === 'import') {
             if (result && result.length > 0 && result[0]._id) {
               if (doc._id) {
@@ -178,7 +173,6 @@ async function handleMetadataPost(ctx, action) {
               result = await doc.save()
               status = 'Inserted'
             }
-
             // Ideally we should rather use our APIs to insert object rather than go directly to the DB
             // Then we would have to do this sort on thing as it's already covered there.
             // E.g. https://github.com/jembi/openhim-core-js/blob/cd7d1fbbe0e122101186ecba9cf1de37711580b8/src/api/channels.js#L241-L257
@@ -192,7 +186,6 @@ async function handleMetadataPost(ctx, action) {
               })
             }
           }
-
           if (action === 'validate') {
             if (result && result.length > 0 && result[0]._id) {
               status = 'Conflict'
@@ -206,7 +199,6 @@ async function handleMetadataPost(ctx, action) {
               status = 'Valid'
             }
           }
-
           logger.info(
             `User ${ctx.authenticated.email} performed ${action} action on ${key}, got ${status}`
           )
@@ -221,7 +213,6 @@ async function handleMetadataPost(ctx, action) {
         }
       }
     }
-
     ctx.body = returnObject
     ctx.status = 201
   } catch (error2) {
@@ -234,17 +225,14 @@ async function handleMetadataPost(ctx, action) {
     )
   }
 }
-
 // API endpoint that upserts metadata
 export async function importMetadata(ctx) {
   return handleMetadataPost(ctx, 'import')
 }
-
 // API endpoint that checks for conflicts between import object and database
 export async function validateMetadata(ctx) {
   return handleMetadataPost(ctx, 'validate')
 }
-
 if (process.env.NODE_ENV === 'test') {
   exports.buildResponseObject = buildResponseObject
   exports.getUniqueIdentifierForCollection = getUniqueIdentifierForCollection
