@@ -11,6 +11,7 @@ import {UserModelAPI} from '../model/users'
 import {getClient, getClients, addClient, updateClient} from '../api/clients'
 import {getChannels} from '../api/channels'
 import * as polling from '../polling'
+import { compareSync } from 'bcryptjs'
 
 // Map string parameters to collections
 const collections = {
@@ -99,18 +100,19 @@ export async function getMetadata(ctx) {
       switch(model) {
         case 'Clients':
           await getClients(ctx);
-          console.log('clientData: ' + JSON.stringify(ctx.body));
           exportObject[model] = ctx.body;
           break;
         case 'Channels':
           await getChannels(ctx);
-          console.log('channelData: ' + JSON.stringify(ctx.body));
           exportObject[model] = ctx.body; 
           break; 
         default:
           exportObject[model] = await collections[model].find().lean().exec();
           break;
       }
+      
+        console.log('array from : '+ JSON.stringify(Array.from(exportObject[model])));
+
       for (let doc of Array.from(exportObject[model])) {
         if (doc._id) {
           doc = removeProperties(doc)
@@ -129,9 +131,17 @@ export async function getMetadata(ctx) {
     )
   }
 }
+
 function clientExists(clientResult) {
   return clientResult && clientResult.length > 0 && clientResult[0]._id;
 }
+
+function doesExist(ctx) {
+  //we need to get the 
+  const clientResult = ctx.request.body;
+  return clientResult && clientResult.length > 0 && clientResult[0]._id;
+}
+
 function validateDocument(key, doc, ctx) {
   doc = new collections[key](doc)
   doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
@@ -140,6 +150,7 @@ function validateDocument(key, doc, ctx) {
     throw new Error(`Document Validation failed: ${error}`)
   }
 }
+
 async function handleMetadataPost(ctx, action) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
