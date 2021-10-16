@@ -8,9 +8,10 @@ import {ContactGroupModelAPI} from '../model/contactGroups'
 import {KeystoreModelAPI} from '../model/keystore'
 import {MediatorModelAPI} from '../model/mediators'
 import {UserModelAPI} from '../model/users'
-import {getClients} from '../api/clients'
+import {getClient, getClients, addClient, updateClient} from '../api/clients'
 import {getChannels} from '../api/channels'
 import * as polling from '../polling'
+
 // Map string parameters to collections
 const collections = {
   Channels: ChannelModelAPI,
@@ -20,6 +21,7 @@ const collections = {
   ContactGroups: ContactGroupModelAPI,
   KeystoreModelAPI
 }
+
 // Function to remove properties from export object
 function removeProperties(obj) {
   const propertyID = '_id'
@@ -33,6 +35,7 @@ function removeProperties(obj) {
   }
   return obj
 }
+
 // Function to return unique identifier key and value for a collection
 function getUniqueIdentifierForCollection(collection, doc) {
   let uid
@@ -95,10 +98,15 @@ export async function getMetadata(ctx) {
     for (const model in collections) {
       switch(model) {
         case 'Clients':
-           await getClients(ctx);
+          await getClients(ctx);
           console.log('clientData: ' + JSON.stringify(ctx.body));
           exportObject[model] = ctx.body;
           break;
+        case 'Channels':
+          await getChannels(ctx);
+          console.log('channelData: ' + JSON.stringify(ctx.body));
+          exportObject[model] = ctx.body; 
+          break; 
         default:
           exportObject[model] = await collections[model].find().lean().exec();
           break;
@@ -119,6 +127,17 @@ export async function getMetadata(ctx) {
       `Could not fetch specified metadata via the API ${e}`,
       'error'
     )
+  }
+}
+function clientExists(clientResult) {
+  return clientResult && clientResult.length > 0 && clientResult[0]._id;
+}
+function validateDocument(key, doc, ctx) {
+  doc = new collections[key](doc)
+  doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
+  const error = doc.validateSync()
+  if (error) {
+    throw new Error(`Document Validation failed: ${error}`)
   }
 }
 async function handleMetadataPost(ctx, action) {
@@ -154,49 +173,68 @@ async function handleMetadataPost(ctx, action) {
             uid = uidObj[Object.keys(uidObj)[0]]
             result = await collections[key].find(uidObj).exec()
           }
-          if (action === 'import') {
-            if (result && result.length > 0 && result[0]._id) {
-              if (doc._id) {
-                delete doc._id
+          if(key === 'Clients') {
+            const clientResult = getClient(ctx, doc.clientID);
+            if(action === 'import') {
+              if (clientExists(clientResult)) {
+                await updateClient(ctx, doc.clientID);
+                status = 'Updated';
               }
-              result = await collections[key].findById(result[0]._id).exec()
-              result.set(doc)
-              result.set(
-                'updatedBy',
-                utils.selectAuditFields(ctx.authenticated)
-              )
-              result = await result.save()
-              status = 'Updated'
-            } else {
-              doc = new collections[key](doc)
-              doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
-              result = await doc.save()
-              status = 'Inserted'
+              else {
+                await addClient(ctx); //must modify ctx body to only include this particular client data block
+                status = 'Inserted';
+              }
             }
-            // Ideally we should rather use our APIs to insert object rather than go directly to the DB
-            // Then we would have to do this sort on thing as it's already covered there.
-            // E.g. https://github.com/jembi/openhim-core-js/blob/cd7d1fbbe0e122101186ecba9cf1de37711580b8/src/api/channels.js#L241-L257
-            if (
-              key === 'Channels' &&
-              result.type === 'polling' &&
-              result.status === 'enabled'
-            ) {
-              polling.registerPollingChannel(result, err => {
-                logger.error(err)
-              })
+            if(action === 'validate') {
+              if (clientExists(clientResult)) {
+                status = 'Conflict';
+              }
+              else {
+                validateDocument(key, doc, ctx);
+                status = 'Valid'
+              }
             }
           }
-          if (action === 'validate') {
-            if (result && result.length > 0 && result[0]._id) {
-              status = 'Conflict'
-            } else {
-              doc = new collections[key](doc)
-              doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
-              error = doc.validateSync()
-              if (error) {
-                throw new Error(`Document Validation failed: ${error}`)
+          else {
+            if (action === 'import') {
+              if (result && result.length > 0 && result[0]._id) {
+                if (doc._id) {
+                  delete doc._id
+                }
+                result = await collections[key].findById(result[0]._id).exec()
+                result.set(doc)
+                result.set(
+                  'updatedBy',
+                  utils.selectAuditFields(ctx.authenticated)
+                )
+                result = await result.save()
+                status = 'Updated'
+              } else {
+                doc = new collections[key](doc)
+                doc.set('updatedBy', utils.selectAuditFields(ctx.authenticated))
+                result = await doc.save()
+                status = 'Inserted'
               }
-              status = 'Valid'
+              // Ideally we should rather use our APIs to insert object rather than go directly to the DB
+              // Then we would have to do this sort on thing as it's already covered there.
+              // E.g. https://github.com/jembi/openhim-core-js/blob/cd7d1fbbe0e122101186ecba9cf1de37711580b8/src/api/channels.js#L241-L257
+              if (
+                key === 'Channels' &&
+                result.type === 'polling' &&
+                result.status === 'enabled'
+              ) {
+                polling.registerPollingChannel(result, err => {
+                  logger.error(err)
+                })
+              }
+            }
+            if (action === 'validate') {
+              if (result && result.length > 0 && result[0]._id) {
+                status = 'Conflict'
+              } else {
+                validateDocument(key, doc, ctx);
+                status = 'Valid'
+              }
             }
           }
           logger.info(
