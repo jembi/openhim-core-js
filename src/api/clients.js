@@ -134,11 +134,13 @@ export async function getClientByTextClientId(ctx, clientID) {
     )
     return
   }
-  clientID = unescape(clientID);
+  //clientID = unescape(clientID);
   try {
+
     const result = await ClientModelAPI.findOne({
-      clientID: utils.caseInsensitiveRegex(clientID)
-    }).exec()
+      clientID: clientID
+    }).exec();
+
     if (result === null) {
       utils.logAndSetResponse(
         ctx,

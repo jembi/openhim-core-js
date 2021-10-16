@@ -172,8 +172,8 @@ async function handleMetadataPost(ctx, action) {
             result = await collections[key].find(uidObj).exec()
           }
           if(key === 'Clients') {
-            const clientResult = await getClientByTextClientId(ctx, doc.clientID);
-            console.log('clientResult: ' + JSON.stringify(clientResult));
+             await getClientByTextClientId(ctx, doc.clientID);
+             const clientResult = ctx.body;
             const modelCtx = ctx;
             modelCtx.request.body = doc;
             if(action === 'import') {
