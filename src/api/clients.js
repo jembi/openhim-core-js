@@ -1,12 +1,9 @@
 'use strict'
-
 import logger from 'winston'
-
 import * as authorisation from './authorisation'
 import * as utils from '../utils'
 import {ChannelModelAPI} from '../model/channels'
 import {ClientModelAPI} from '../model/clients'
-
 /*
  * Adds a client
  */
@@ -21,9 +18,7 @@ export async function addClient(ctx) {
     )
     return
   }
-
   const clientData = ctx.request.body
-
   if (clientData.clientID) {
     const chResult = await ChannelModelAPI.find(
       {allow: {$in: [clientData.clientID]}},
@@ -53,11 +48,10 @@ export async function addClient(ctx) {
       )
     }
   }
-
   try {
+    clientData.updatedBy = utils.selectAuditFields(ctx.authenticated);
     const client = new ClientModelAPI(clientData)
     await client.save()
-
     logger.info(
       `User ${ctx.authenticated.email} created client with id ${client.id}`
     )
@@ -69,13 +63,11 @@ export async function addClient(ctx) {
     ctx.status = 400
   }
 }
-
 /*
  * Retrieves the details of a specific client
  */
 export async function getClient(ctx, clientId, property) {
   let projectionRestriction = null
-
   // if property - Setup client projection and bypass authorization
   if (typeof property === 'string') {
     if (property === 'clientName') {
@@ -101,9 +93,7 @@ export async function getClient(ctx, clientId, property) {
     )
     return
   }
-
-  clientId = unescape(clientId)
-
+  clientId = unescape(clientId);
   try {
     const result = await ClientModelAPI.findById(
       clientId,
@@ -134,7 +124,44 @@ export async function getClient(ctx, clientId, property) {
     ctx.status = 500
   }
 }
-
+export async function getClientByTextClientId(ctx, clientID) {
+  if (!authorisation.inGroup('admin', ctx.authenticated)) {
+    utils.logAndSetResponse(
+      ctx,
+      403,
+      `User ${ctx.authenticated.email} is not an admin, API access to findClientById denied.`,
+      'info'
+    )
+    return
+  }
+  clientID = unescape(clientID);
+  try {
+    const result = await ClientModelAPI.findOne({
+      clientID: utils.caseInsensitiveRegex(clientID)
+    }).exec()
+    if (result === null) {
+      utils.logAndSetResponse(
+        ctx,
+        404,
+        `Client with text clientID ${clientID} could not be found.`,
+        'info'
+      )
+    } else {
+      // Remove the Custom Token ID from response
+      if (result.customTokenID) {
+        delete result.customTokenID
+        result.customTokenSet = true
+      }
+      ctx.body = result
+    }
+  } catch (e) {
+    logger.error(
+      `Could not find client by text clientID ${clientID} via the API: ${e.message}`
+    )
+    ctx.body = e.message
+    ctx.status = 500
+  }
+}
 export async function findClientByDomain(ctx, clientDomain) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
@@ -146,9 +173,7 @@ export async function findClientByDomain(ctx, clientDomain) {
     )
     return
   }
-
   clientDomain = unescape(clientDomain)
-
   try {
     const result = await ClientModelAPI.findOne({clientDomain}).exec()
     if (result === null) {
@@ -169,7 +194,6 @@ export async function findClientByDomain(ctx, clientDomain) {
     ctx.status = 500
   }
 }
-
 export async function updateClient(ctx, clientId) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
@@ -181,15 +205,12 @@ export async function updateClient(ctx, clientId) {
     )
     return
   }
-
   clientId = unescape(clientId)
   const clientData = ctx.request.body
-
   // Ignore _id if it exists, a user shouldn't be able to update the internal id
   if (clientData._id) {
     delete clientData._id
   }
-
   if (clientData.clientID) {
     const clResult = await ClientModelAPI.find(
       {roles: {$in: [clientData.clientID]}},
@@ -204,8 +225,8 @@ export async function updateClient(ctx, clientId) {
       )
     }
   }
-
   try {
+    clientData.updatedBy = utils.selectAuditFields(ctx.authenticated);
     await ClientModelAPI.findByIdAndUpdate(clientId, clientData).exec()
     logger.info(
       `User ${ctx.authenticated.email} updated client with id ${clientId}`
@@ -219,7 +240,6 @@ export async function updateClient(ctx, clientId) {
     ctx.status = 500
   }
 }
-
 export async function removeClient(ctx, clientId) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
@@ -231,9 +251,7 @@ export async function removeClient(ctx, clientId) {
     )
     return
   }
-
   clientId = unescape(clientId)
-
   try {
     await ClientModelAPI.findByIdAndRemove(clientId).exec()
     ctx.body = `Successfully removed client with ID ${clientId}`
@@ -248,7 +266,6 @@ export async function removeClient(ctx, clientId) {
     ctx.status = 500
   }
 }
-
 export async function getClients(ctx) {
   // Test if the user is authorised
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
@@ -260,7 +277,6 @@ export async function getClients(ctx) {
     )
     return
   }
-
   try {
     let clients = await ClientModelAPI.find().lean().exec()
     // Remove the Custom Token IDs from response
