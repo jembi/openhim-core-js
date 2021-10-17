@@ -96,12 +96,10 @@ export async function getMetadata(ctx) {
       switch(model) {
         case 'Clients':
           await getClients(ctx);
-          console.log('clientData: ' + JSON.stringify(ctx.body));
           exportObject[model] = ctx.body;
           break;
         case 'Channels':
           await getChannels(ctx);
-          console.log('channelData: ' + JSON.stringify(ctx.body));
           exportObject[model] = ctx.body; 
           break; 
         default:
@@ -198,8 +196,8 @@ async function handleMetadataPost(ctx, action) {
             }
           }
           else if(key === 'Channels') {
-            const channelResult = await getChannelByName(ctx, doc.name);
-            console.log('channelResult: ' + JSON.stringify(channelResult));
+            await getChannelByName(ctx, doc.name);
+            const channelResult =ctx.body;
             const modelCtx = ctx;
             modelCtx.request.body = doc;
             if(action === 'import') {

@@ -134,7 +134,7 @@ export async function getClientByTextClientId(ctx, clientID) {
     )
     return
   }
-  //clientID = unescape(clientID);
+ 
   try {
 
     const result = await ClientModelAPI.findOne({

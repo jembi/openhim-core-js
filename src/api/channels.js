@@ -272,7 +272,7 @@ export async function getChannel(ctx, channelId) {
 
 export async function getChannelByName(ctx, channelName) {
   // Get the values to use
-  const name = unescape(channelName)
+  const name = channelName
 
   try {
     // Try to get the channel
