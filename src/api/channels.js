@@ -270,6 +270,58 @@ export async function getChannel(ctx, channelId) {
   }
 }
 
+export async function getChannelByName(ctx, channelName) {
+  // Get the values to use
+  const name = channelName
+
+  try {
+    // Try to get the channel
+    let result = null
+    let accessDenied = false
+    // if admin allow acces to all channels otherwise restrict result set
+    if (authorisation.inGroup('admin', ctx.authenticated) === false) {
+      result = await ChannelModel.findOne({
+        name: name,
+        txViewAcl: {$in: ctx.authenticated.groups}
+      }).exec()
+      const adminResult = await ChannelModel.findOne({
+        name: name
+      }).exec()
+      if (adminResult != null) {
+        accessDenied = true
+      }
+    } else {
+      result = await ChannelModel.findOne({
+        name: name
+      }).exec()
+    }
+
+    // Test if the result if valid
+    if (result === null) {
+      if (accessDenied) {
+        // Channel exists but this user doesn't have access
+        ctx.body = `Access denied to channel with name: '${name}'.`
+        ctx.status = 403
+      } else {
+        // Channel not found! So inform the user
+        ctx.body = `We could not find a channel with name:'${name}'.`
+        ctx.status = 404
+      }
+    } else {
+      // All ok! So set the result
+      ctx.body = result
+    }
+  } catch (err) {
+    // Error! So inform the user
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not fetch channel by name '${name}' via the API: ${err}`,
+      'error'
+    )
+  }
+}
+
 export async function getChannelAudits(ctx, channelId) {
   if (!authorisation.inGroup('admin', ctx.authenticated)) {
     utils.logAndSetResponse(
