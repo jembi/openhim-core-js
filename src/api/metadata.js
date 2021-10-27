@@ -110,6 +110,7 @@ export async function getMetadata(ctx) {
           break;
         case 'Channels':
           await getChannels(ctx);
+          //try to find the difference between the objects
            var resultDbCall = await collections[model].find().lean().exec();
            console.log("Calling the direct database call");
            console.log("Result passed from the direct db call Method: " + JSON.stringify(resultDbCall));
@@ -125,7 +126,7 @@ export async function getMetadata(ctx) {
       }
       for (let doc of Array.from(exportObject[model])) {
         if (doc._id) {
-         // doc = removeProperties(doc)
+         doc = removeProperties(doc)
         }
       }
     }
