@@ -300,11 +300,21 @@ export async function getTransactions(ctx) {
     }
 
     // execute the query
-    ctx.body = await TransactionModelAPI.find(filters, projectionFiltersObject)
+    let transactions = await TransactionModelAPI.find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({'request.timestamp': -1})
       .exec()
+
+    if (filterRepresentation == 'bulkrerun') {
+      const count = await TransactionModelAPI.count(filters).exec()
+      ctx.body = {
+        count,
+        transactions
+      }
+    } else {
+      ctx.body = transactions
+    }
 
     if (filterRepresentation === 'fulltruncate') {
       Array.from(ctx.body).map(trx => truncateTransactionDetails(trx))
