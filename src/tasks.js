@@ -120,6 +120,8 @@ async function processNextTaskRound(task) {
   )
 
   const promises = transactions.map(transaction => {
+    task.remainingTransactions--
+
     return new Promise(resolve => {
       rerunTransaction(transaction.tid, task._id, (err, response) => {
         if (err) {
@@ -139,8 +141,6 @@ async function processNextTaskRound(task) {
         } else {
           transaction.tstatus = 'Completed'
         }
-
-        task.remainingTransactions--
         return resolve()
       })
 
@@ -149,15 +149,25 @@ async function processNextTaskRound(task) {
   })
 
   await Promise.all(promises)
-  try {
-    await task.save()
-  } catch (err) {
-    logger.error(
-      `Failed to save current task while processing round: taskID=${task._id}, err=${err}`,
-      err
-    )
+  logger.info(
+    `Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remainings `, task.batchSize
+  )
+
+  if (task.remainingTransactions) {
+    await processNextTaskRound(task)
+  } else {
+    task.status = 'Completed'
+    task.completedDate = new Date()
+    logger.info(`Round completed for rerun task #${task._id} - Task completed`)
+
+    task.save().catch(err => {
+      logger.error(
+        `Failed to save current task while processing round: taskID=${task._id}, err=${err}`,
+        err
+      )
+    })
+    return
   }
-  return finalizeTaskRound(task)
 }
 
 function rerunTransaction(transactionID, taskID, callback) {
