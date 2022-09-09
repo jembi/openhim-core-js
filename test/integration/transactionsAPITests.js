@@ -16,6 +16,7 @@ import {ChannelModel} from '../../src/model/channels'
 import {EventModelAPI} from '../../src/model/events'
 import {TransactionModel} from '../../src/model/transactions'
 import {config} from '../../src/config'
+import { TaskModel } from '../../src/model'
 
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
@@ -1131,6 +1132,56 @@ describe('API Integration Tests', () => {
           .expect(200)
 
         res.body.request.body.should.equal(`<HTTP body${TRUNCATE_APPEND}`)
+      })
+    })
+
+    describe('*rerunTransactions', () => {
+      it('should call rerunTransactions', async () => {
+        await new TransactionModel(
+          Object.assign({}, transactionData, {
+            clientID: '555555555555555555555556'
+          })
+        ).save()
+        const res = await request(constants.BASE_URL)
+          .post(`/bulkrerun`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            batchSize: 1,
+            filters: {}
+          })
+          .expect(200)
+        res.body.success.should.equal(true)
+      })
+
+      it('should create rerun task', async () => {
+        const tx = await new TransactionModel(
+          Object.assign({}, transactionData, {
+            clientID: '555555555555555555555556'
+          })
+        ).save()
+
+        await TaskModel.deleteMany({})
+        const res = await request(constants.BASE_URL)
+          .post(`/bulkrerun`)
+          .set('auth-username', testUtils.rootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            batchSize: 1,
+            filters: {}
+          })
+          .expect(200)
+
+        await new Promise(resolve => {
+          setTimeout(() => resolve(), 1000)
+        })
+        res.body.success.should.equal(true)
+        const task = await TaskModel.findOne()
+        task.transactions[0].tid.should.equal(tx._id.toString())
       })
     })
 

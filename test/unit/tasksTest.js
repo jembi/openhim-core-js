@@ -380,6 +380,9 @@ describe('Rerun Task Tests', () => {
     it('will process empty tasks', async () => {
       const originalTask = await createTask()
       await tasks.findAndProcessAQueuedTask()
+      await new Promise(resolve => {
+        setTimeout(() => resolve(), 1000)
+      })
       const updatedTask = await TaskModel.findById(originalTask._id)
       updatedTask.status.should.eql('Completed')
     })
@@ -429,14 +432,11 @@ describe('Rerun Task Tests', () => {
       )
       await tasks.findAndProcessAQueuedTask()
 
-      spy.callCount.should.eql(2)
+      spy.callCount.should.eql(3)
 
       const updatedTask = await TaskModel.findById(originalTask._id)
-      updatedTask.status.should.eql('Queued')
-      updatedTask.remainingTransactions.should.be.equal(1)
-      updatedTask.transactions[0].tstatus.should.be.equal('Completed')
-      updatedTask.transactions[1].tstatus.should.be.equal('Completed')
-      updatedTask.transactions[2].tstatus.should.be.equal('Queued')
+      updatedTask.status.should.eql('Processing')
+      updatedTask.remainingTransactions.should.be.equal(3)
     })
 
     it(`will process the transactions till they are completed`, async () => {
@@ -457,14 +457,11 @@ describe('Rerun Task Tests', () => {
       )
 
       await tasks.findAndProcessAQueuedTask()
-      spy.callCount.should.eql(2)
+      spy.callCount.should.eql(3)
 
       let updatedTask = await TaskModel.findById(originalTask._id)
-      updatedTask.status.should.eql('Queued')
-      updatedTask.remainingTransactions.should.be.equal(1)
-      updatedTask.transactions[0].tstatus.should.be.equal('Completed')
-      updatedTask.transactions[1].tstatus.should.be.equal('Completed')
-      updatedTask.transactions[2].tstatus.should.be.equal('Queued')
+      updatedTask.status.should.eql('Processing')
+      updatedTask.remainingTransactions.should.be.equal(3)
 
       await tasks.findAndProcessAQueuedTask()
       spy.callCount.should.eql(3)
