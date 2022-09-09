@@ -82,6 +82,7 @@ export function setupApp(done) {
 
   app.use(route.get('/transactions', transactions.getTransactions))
   app.use(route.post('/transactions', transactions.addTransaction))
+  app.use(route.post('/bulkrerun', transactions.rerunTransactions))
   app.use(
     route.get('/transactions/:transactionId', transactions.getTransactionById)
   )
