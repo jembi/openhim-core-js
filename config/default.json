@@ -39,7 +39,7 @@
     "maxPayloadSizeMB": 50,
     "truncateSize": 15000,
     "truncateAppend": "\n[truncated ...]",
-    "authenticationTypes": ["token"]
+    "authenticationTypes": ["basic", "token"]
   },
   "rerun": {
     "httpPort": 7786,
@@ -47,7 +47,8 @@
     "processor": {
       "enabled": true,
       "pollPeriodMillis": 2000
-    }
+    },
+    "task_transactions_length": 50
   },
   "tcpAdapter": {
     "httpReceiver": {
