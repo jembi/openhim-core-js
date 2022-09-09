@@ -19,6 +19,10 @@ let activeTasks = 0
 export async function findAndProcessAQueuedTask() {
   let task
   try {
+    if (activeTasks > 3) {
+      return
+    }
+
     task = await TaskModel.findOneAndUpdate(
       {status: 'Queued'},
       {status: 'Processing'},
@@ -118,6 +122,18 @@ async function processNextTaskRound(task) {
   const transactions = Array.from(
     task.transactions.slice(nextI, nextI + task.batchSize)
   )
+  const modifiedTask = await TaskModel.findById(task._id)
+
+  if (modifiedTask.status == 'Paused') {
+    logger.info(
+      `Processing of task ${task._id} paused. Remaining transactions = ${task.remainingTransactions}`
+    )
+    TaskModel.findByIdAndUpdate({_id: task._id}, {
+      remainingTransactions: task.remainingTransactions
+    })
+
+    return
+  }
 
   const promises = transactions.map(transaction => {
     task.remainingTransactions--
