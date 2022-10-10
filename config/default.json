@@ -48,7 +48,8 @@
       "enabled": true,
       "pollPeriodMillis": 2000
     },
-    "task_transactions_length": 50
+    "taskTransactionsLength": 50,
+    "activeConcurrentTasks": 3
   },
   "tcpAdapter": {
     "httpReceiver": {

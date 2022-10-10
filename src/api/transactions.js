@@ -13,7 +13,7 @@ import {TaskModelAPI} from '../model/tasks'
 import {config} from '../config'
 
 const apiConf = config.get('api')
-const task_transaction_length = config.get('rerun').task_transactions_length
+const taskTransactionsLength = config.get('rerun').taskTransactionsLength
 
 function hasError(updates) {
   if (updates.error != null) {
@@ -263,16 +263,15 @@ export async function rerunTransactions(ctx) {
     filters = parseTransactionFilters(filters)
 
     const count = await TransactionModelAPI.count(filters).exec()
-    const pages = Math.ceil(count/task_transaction_length)
+    const pages = Math.ceil(count/taskTransactionsLength)
 
-    createRerunTasks(filters, batchSize, ctx.authenticated.email, 0, pages, pauseQueue, task_transaction_length)
+    createRerunTasks(filters, batchSize, ctx.authenticated.email, 0, pages, pauseQueue, taskTransactionsLength)
 
     ctx.body = {
       success: true,
       message: "Tasks created for bulk rerun of transactions" 
     }
   } catch (e) {
-    console.log(e)
     utils.logAndSetResponse(
       ctx,
       500,
