@@ -282,7 +282,7 @@ export async function rerunTransactions(ctx) {
   }
 }
 
-let transactionsToRerun
+let transactionsToRerun, taskObject, task
 
 async function createRerunTasks(filters, batchSize, email, page, pages, pauseQueue, filterLimit) {
   transactionsToRerun = await TransactionModelAPI.find(filters, {_id: 1})
@@ -298,7 +298,7 @@ async function createRerunTasks(filters, batchSize, email, page, pages, pauseQue
       tid: trans._id
     }})
 
-  const taskObject = {}
+  taskObject = {}
   taskObject.remainingTransactions = transactionsToRerun.length
   taskObject.user = email
   taskObject.transactions = transactionsToRerun
@@ -309,7 +309,7 @@ async function createRerunTasks(filters, batchSize, email, page, pages, pauseQue
     taskObject.status = 'Paused'
   }
 
-  const task = await new TaskModelAPI(taskObject).save()
+  task = await new TaskModelAPI(taskObject).save()
 
   logger.info(`Rerun task with id ${task._id} created!`)
 
@@ -317,6 +317,8 @@ async function createRerunTasks(filters, batchSize, email, page, pages, pauseQue
     return createRerunTasks(filters, batchSize, email, ++page, pages, pauseQueue, filterLimit)
   } else {
     transactionsToRerun = null
+    task = null
+    taskObject = null
     return
   }
 }
