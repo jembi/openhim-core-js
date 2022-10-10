@@ -19,7 +19,7 @@ let activeTasks = 0
 export async function findAndProcessAQueuedTask() {
   let task
   try {
-    if (activeTasks > 3) {
+    if (activeTasks > config.rerun.activeConcurrentTasks) {
       return
     }
 
@@ -124,7 +124,7 @@ async function processNextTaskRound(task) {
   )
   const modifiedTask = await TaskModel.findById(task._id)
 
-  if (modifiedTask.status == 'Paused') {
+  if (modifiedTask.status === 'Paused') {
     logger.info(
       `Processing of task ${task._id} paused. Remaining transactions = ${task.remainingTransactions}`
     )
@@ -176,7 +176,7 @@ async function processNextTaskRound(task) {
     task.completedDate = new Date()
     logger.info(`Round completed for rerun task #${task._id} - Task completed`)
 
-    task.save().catch(err => {
+    await task.save().catch(err => {
       logger.error(
         `Failed to save current task while processing round: taskID=${task._id}, err=${err}`,
         err
@@ -438,4 +438,5 @@ if (process.env.NODE_ENV === 'test') {
   exports.rerunHttpRequestSend = rerunHttpRequestSend
   exports.rerunTcpRequestSend = rerunTcpRequestSend
   exports.findAndProcessAQueuedTask = findAndProcessAQueuedTask
+  exports.processNextTaskRound = processNextTaskRound
 }
