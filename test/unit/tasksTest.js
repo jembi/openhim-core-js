@@ -309,62 +309,62 @@ describe('Rerun Task Tests', () => {
     })
   })
 
-  describe('findAndProcessAQueuedTask', async () => {
-    const DEFAULT_CHANNEL = Object.freeze({
-      name: 'testChannel',
-      urlPattern: '.+',
-      type: 'http',
-      routes: [
-        {
-          name: 'asdf',
-          host: 'localhost',
-          path: '/test1',
-          port: '12345'
-        }
-      ],
-      updatedBy: {
-        id: new ObjectId(),
-        name: 'Test'
+  const DEFAULT_CHANNEL = Object.freeze({
+    name: 'testChannel',
+    urlPattern: '.+',
+    type: 'http',
+    routes: [
+      {
+        name: 'asdf',
+        host: 'localhost',
+        path: '/test1',
+        port: '12345'
       }
-    })
-
-    const DEFAULT_TASK = Object.freeze({
-      status: 'Queued',
-      user: 'user'
-    })
-
-    const DEFAULT_TRANSACTION = Object.freeze({
-      status: 'Processing',
-      request: {
-        timestamp: new Date()
-      }
-    })
-
-    function createTask(transactions = [], taskOverrides = {}) {
-      const taskDoc = Object.assign(
-        {},
-        DEFAULT_TASK,
-        {
-          remainingTransactions: transactions.length,
-          totalTransactions: transactions.length,
-          transactions: transactions.map(t => ({
-            tid: t._id,
-            tstatus: 'Queued'
-          }))
-        },
-        taskOverrides
-      )
-
-      return new TaskModel(taskDoc).save()
+    ],
+    updatedBy: {
+      id: new ObjectId(),
+      name: 'Test'
     }
+  })
 
-    const clearTasksFn = () =>
-      Promise.all([
-        TaskModel.deleteMany({}),
-        TransactionModel.deleteMany({}),
-        ChannelModel.deleteMany({})
-      ])
+  const DEFAULT_TASK = Object.freeze({
+    status: 'Queued',
+    user: 'user'
+  })
 
+  const DEFAULT_TRANSACTION = Object.freeze({
+    status: 'Processing',
+    request: {
+      timestamp: new Date()
+    }
+  })
+
+  function createTask(transactions = [], taskOverrides = {}) {
+    const taskDoc = Object.assign(
+      {},
+      DEFAULT_TASK,
+      {
+        remainingTransactions: transactions.length,
+        totalTransactions: transactions.length,
+        transactions: transactions.map(t => ({
+          tid: t._id,
+          tstatus: 'Queued'
+        }))
+      },
+      taskOverrides
+    )
+
+    return new TaskModel(taskDoc).save()
+  }
+
+  const clearTasksFn = () =>
+    Promise.all([
+      TaskModel.deleteMany({}),
+      TransactionModel.deleteMany({}),
+      ChannelModel.deleteMany({})
+    ])
+
+  describe('findAndProcessAQueuedTask', async () => {
     before(async () => {
       await clearTasksFn()
     })
@@ -380,9 +380,9 @@ describe('Rerun Task Tests', () => {
     it('will process empty tasks', async () => {
       const originalTask = await createTask()
       await tasks.findAndProcessAQueuedTask()
-      await new Promise(resolve => {
-        setTimeout(() => resolve(), 1000)
-      })
+      // await new Promise(resolve => {
+      //   setTimeout(() => resolve(), 1000)
+      // })
       const updatedTask = await TaskModel.findById(originalTask._id)
       updatedTask.status.should.eql('Completed')
     })
@@ -435,8 +435,8 @@ describe('Rerun Task Tests', () => {
       spy.callCount.should.eql(3)
 
       const updatedTask = await TaskModel.findById(originalTask._id)
-      updatedTask.status.should.eql('Processing')
-      updatedTask.remainingTransactions.should.be.equal(3)
+      updatedTask.status.should.eql('Completed')
+      updatedTask.remainingTransactions.should.be.equal(0)
     })
 
     it(`will process the transactions till they are completed`, async () => {
@@ -460,8 +460,8 @@ describe('Rerun Task Tests', () => {
       spy.callCount.should.eql(3)
 
       let updatedTask = await TaskModel.findById(originalTask._id)
-      updatedTask.status.should.eql('Processing')
-      updatedTask.remainingTransactions.should.be.equal(3)
+      updatedTask.status.should.eql('Completed')
+      updatedTask.remainingTransactions.should.be.equal(0)
 
       await tasks.findAndProcessAQueuedTask()
       spy.callCount.should.eql(3)
@@ -497,5 +497,28 @@ describe('Rerun Task Tests', () => {
     })
 
     // TODO : Have to add the failed transaction test
+  })
+
+  describe('*processNextTaskRound', () => {
+    before(async () => {
+      await clearTasksFn()
+    })
+
+    afterEach(async () => {
+      await clearTasksFn()
+    })
+
+    it('will not process task that is paused', async () => {
+      const channel = await new ChannelModel(DEFAULT_CHANNEL).save()
+      const originalTrans = await new TransactionModel(
+        Object.assign({channelID: channel._id}, DEFAULT_TRANSACTION)
+      ).save()
+      const originalTask = await createTask([originalTrans], {
+        status: 'Paused'
+      })
+      await tasks.processNextTaskRound(originalTask)
+      const updatedTask = await TaskModel.findById(originalTask._id)
+      updatedTask.status.should.eql('Paused')
+    })
   })
 })

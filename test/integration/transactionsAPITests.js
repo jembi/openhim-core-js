@@ -7,6 +7,7 @@ import request from 'supertest'
 import should from 'should'
 import {ObjectId} from 'mongodb'
 import {promisify} from 'util'
+import sinon from 'sinon'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
@@ -14,9 +15,9 @@ import * as testUtils from '../utils'
 import {AutoRetryModelAPI} from '../../src/model/autoRetry'
 import {ChannelModel} from '../../src/model/channels'
 import {EventModelAPI} from '../../src/model/events'
-import {TransactionModel} from '../../src/model/transactions'
+import {TransactionModel, TransactionModelAPI} from '../../src/model/transactions'
 import {config} from '../../src/config'
-import { TaskModel } from '../../src/model'
+import {TaskModel} from '../../src/model'
 
 const ORIGINAL_API_CONFIG = config.api
 const ORIGINAL_APPLICATION_CONFIG = config.application
@@ -1049,6 +1050,59 @@ describe('API Integration Tests', () => {
           `<HTTP resp${TRUNCATE_APPEND}`
         )
       })
+
+      it('should return total number of transactions for bulk rerun', async () => {
+        const transactionData = {
+          _id: '111111111111111111111111',
+          status: 'Processing',
+          clientID: '999999999999999999999999',
+          channelID: channel._id,
+          request: requestDoc,
+          response: responseDoc,
+          routes: [
+            {
+              name: 'dummy-route',
+              request: requestDoc,
+              response: responseDoc
+            }
+          ],
+          orchestrations: [
+            {
+              name: 'dummy-orchestration',
+              request: requestDoc,
+              response: responseDoc
+            }
+          ],
+          properties: {
+            prop1: 'prop1-value1',
+            prop2: 'prop-value1'
+          }
+        }
+        await new TransactionModel(transactionData).save()
+
+        const res = await request(constants.BASE_URL)
+          .get('/transactions?filterRepresentation=bulkrerun')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(200)
+
+        res.body.count.should.equal(1)
+      })
+
+      it('should fail to fetch transactions (intenal server error)', async () => {
+        const stub = sinon.stub(TransactionModelAPI, 'find')
+        stub.callsFake((() => Promise.reject()))
+        await request(constants.BASE_URL)
+          .get('/transactions')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .expect(500)
+        stub.restore()
+      })
     })
 
     describe('*getTransactionById (transactionId)', () => {
@@ -1182,6 +1236,69 @@ describe('API Integration Tests', () => {
         res.body.success.should.equal(true)
         const task = await TaskModel.findOne()
         task.transactions[0].tid.should.equal(tx._id.toString())
+      })
+
+      it('should do bulk rerun for non-admin user', async () => {
+        await request(constants.BASE_URL)
+          .post('/bulkrerun')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            batchSize: 1,
+            filters: {}
+          })
+          .expect(200)
+      })
+
+      it('should do bulk rerun on specific channel', async () => {
+        const res = await request(constants.BASE_URL)
+          .post('/bulkrerun')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            batchSize: 1,
+            filters: {
+              channelID: channel._id
+            }
+          })
+          .expect(200)
+      })
+
+      it('should fail to do bulk rerun on rescrticted channel', async () => {
+        const res = await request(constants.BASE_URL)
+          .post('/bulkrerun')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            batchSize: 1,
+            filters: {
+              channelID: channel2._id
+            }
+          })
+          .expect(403)
+      })
+
+      it('should fail to do bulk rerun (intenal server error)', async () => {
+        const stub = sinon.stub(TransactionModelAPI, 'count')
+        stub.callsFake((() => Promise.reject()))
+        const res = await request(constants.BASE_URL)
+          .post('/bulkrerun')
+          .set('auth-username', testUtils.nonRootUser.email)
+          .set('auth-ts', authDetails.authTS)
+          .set('auth-salt', authDetails.authSalt)
+          .set('auth-token', authDetails.authToken)
+          .send({
+            batchSize: 1,
+            filters: {}
+          })
+          .expect(500)
+        stub.restore()
       })
     })
 
