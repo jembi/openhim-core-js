@@ -177,18 +177,20 @@ export async function getTransactions(ctx) {
         filters.channelID = {$in: getChannelIDsArray(allChannels)}
       }
 
-      if (
-        getActiveRoles('txViewFullAcl', ctx.authenticated.groups, allChannels)
-          .size > 0
-      ) {
-        filterRepresentation = 'full'
-      } else if (
-        getActiveRoles('txViewAcl', ctx.authenticated.groups, allChannels)
-          .size > 0
-      ) {
-        filterRepresentation = 'simpledetails'
-      } else {
-        filterRepresentation = ''
+      if (filterRepresentation != 'bulkrerun') {
+        if (
+          getActiveRoles('txViewFullAcl', ctx.authenticated.groups, allChannels)
+            .size > 0
+        ) {
+          filterRepresentation = 'full'
+        } else if (
+          getActiveRoles('txViewAcl', ctx.authenticated.groups, allChannels)
+            .size > 0
+        ) {
+          filterRepresentation = 'simpledetails'
+        } else {
+          filterRepresentation = ''
+        }
       }
     }
 
@@ -204,11 +206,10 @@ export async function getTransactions(ctx) {
       .sort({'request.timestamp': -1})
       .exec()
 
-    if (filterRepresentation == 'bulkrerun') {
+    if (filterRepresentation === 'bulkrerun') {
       const count = await TransactionModelAPI.count(filters).exec()
       ctx.body = {
-        count,
-        transactions
+        count
       }
     } else {
       ctx.body = transactions
