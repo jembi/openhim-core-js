@@ -264,7 +264,7 @@ export async function rerunTransactions(ctx) {
     filters = parseTransactionFilters(filters)
 
     const count = await TransactionModelAPI.count(filters).exec()
-    const pages = Math.ceil(count/taskTransactionsLength)
+    const pages = Math.floor(count/taskTransactionsLength)
 
     createRerunTasks(filters, batchSize, ctx.authenticated.email, 0, pages, pauseQueue, taskTransactionsLength)
 
@@ -794,4 +794,6 @@ export async function removeTransaction(ctx, transactionId) {
 if (process.env.NODE_ENV === 'test') {
   exports.calculateTransactionBodiesByteLength =
     calculateTransactionBodiesByteLength
+  exports.createRerunTasks =
+    createRerunTasks
 }
