@@ -380,9 +380,6 @@ describe('Rerun Task Tests', () => {
     it('will process empty tasks', async () => {
       const originalTask = await createTask()
       await tasks.findAndProcessAQueuedTask()
-      // await new Promise(resolve => {
-      //   setTimeout(() => resolve(), 1000)
-      // })
       const updatedTask = await TaskModel.findById(originalTask._id)
       updatedTask.status.should.eql('Completed')
     })
