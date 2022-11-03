@@ -9,9 +9,11 @@ import * as events from '../middleware/events'
 import * as utils from '../utils'
 import {ChannelModelAPI} from '../model/channels'
 import {TransactionModelAPI} from '../model/transactions'
+import {TaskModelAPI} from '../model/tasks'
 import {config} from '../config'
 
 const apiConf = config.get('api')
+const taskTransactionsLength = config.get('rerun').taskTransactionsLength
 
 function hasError(updates) {
   if (updates.error != null) {
@@ -147,7 +149,7 @@ export async function getTransactions(ctx) {
     const filterSkip = filterPage * filterLimit
 
     // get filters object
-    const filters =
+    let filters =
       filtersObject.filters != null ? JSON.parse(filtersObject.filters) : {}
 
     // Test if the user is authorised
@@ -175,136 +177,43 @@ export async function getTransactions(ctx) {
         filters.channelID = {$in: getChannelIDsArray(allChannels)}
       }
 
-      if (
-        getActiveRoles('txViewFullAcl', ctx.authenticated.groups, allChannels)
-          .size > 0
-      ) {
-        filterRepresentation = 'full'
-      } else if (
-        getActiveRoles('txViewAcl', ctx.authenticated.groups, allChannels)
-          .size > 0
-      ) {
-        filterRepresentation = 'simpledetails'
-      } else {
-        filterRepresentation = ''
+      if (filterRepresentation != 'bulkrerun') {
+        if (
+          getActiveRoles('txViewFullAcl', ctx.authenticated.groups, allChannels)
+            .size > 0
+        ) {
+          filterRepresentation = 'full'
+        } else if (
+          getActiveRoles('txViewAcl', ctx.authenticated.groups, allChannels)
+            .size > 0
+        ) {
+          filterRepresentation = 'simpledetails'
+        } else {
+          filterRepresentation = ''
+        }
       }
     }
 
     // get projection object
     const projectionFiltersObject = getProjectionObject(filterRepresentation)
 
-    // parse date to get it into the correct format for querying
-    if (filters['request.timestamp']) {
-      filters['request.timestamp'] = JSON.parse(filters['request.timestamp'])
-    }
-
-    /* Transaction Filters */
-    // build RegExp for transaction request path filter
-    if (filters['request.path']) {
-      filters['request.path'] = new RegExp(filters['request.path'], 'i')
-    }
-
-    // build RegExp for transaction request querystring filter
-    if (filters['request.querystring']) {
-      filters['request.querystring'] = new RegExp(
-        filters['request.querystring'],
-        'i'
-      )
-    }
-
-    // response status pattern match checking
-    if (
-      filters['response.status'] &&
-      utils.statusCodePatternMatch(filters['response.status'])
-    ) {
-      filters['response.status'] = {
-        $gte: filters['response.status'][0] * 100,
-        $lt: filters['response.status'][0] * 100 + 100
-      }
-    }
-
-    // check if properties exist
-    if (filters.properties) {
-      // we need to source the property key and re-construct filter
-      const key = Object.keys(filters.properties)[0]
-      filters[`properties.${key}`] = filters.properties[key]
-
-      // if property has no value then check if property exists instead
-      if (filters.properties[key] === null) {
-        filters[`properties.${key}`] = {$exists: true}
-      }
-
-      // delete the old properties filter as its not needed
-      delete filters.properties
-    }
-
-    // parse childIDs query to get it into the correct format for querying
-    if (filters['childIDs']) {
-      filters['childIDs'] = JSON.parse(filters['childIDs'])
-    }
-
-    /* Route Filters */
-    // build RegExp for route request path filter
-    if (filters['routes.request.path']) {
-      filters['routes.request.path'] = new RegExp(
-        filters['routes.request.path'],
-        'i'
-      )
-    }
-
-    // build RegExp for transaction request querystring filter
-    if (filters['routes.request.querystring']) {
-      filters['routes.request.querystring'] = new RegExp(
-        filters['routes.request.querystring'],
-        'i'
-      )
-    }
-
-    // route response status pattern match checking
-    if (
-      filters['routes.response.status'] &&
-      utils.statusCodePatternMatch(filters['routes.response.status'])
-    ) {
-      filters['routes.response.status'] = {
-        $gte: filters['routes.response.status'][0] * 100,
-        $lt: filters['routes.response.status'][0] * 100 + 100
-      }
-    }
-
-    /* orchestration Filters */
-    // build RegExp for orchestration request path filter
-    if (filters['orchestrations.request.path']) {
-      filters['orchestrations.request.path'] = new RegExp(
-        filters['orchestrations.request.path'],
-        'i'
-      )
-    }
-
-    // build RegExp for transaction request querystring filter
-    if (filters['orchestrations.request.querystring']) {
-      filters['orchestrations.request.querystring'] = new RegExp(
-        filters['orchestrations.request.querystring'],
-        'i'
-      )
-    }
-
-    // orchestration response status pattern match checking
-    if (
-      filters['orchestrations.response.status'] &&
-      utils.statusCodePatternMatch(filters['orchestrations.response.status'])
-    ) {
-      filters['orchestrations.response.status'] = {
-        $gte: filters['orchestrations.response.status'][0] * 100,
-        $lt: filters['orchestrations.response.status'][0] * 100 + 100
-      }
-    }
+    filters = parseTransactionFilters(filters)
 
     // execute the query
-    ctx.body = await TransactionModelAPI.find(filters, projectionFiltersObject)
+    let transactions = await TransactionModelAPI.find(filters, projectionFiltersObject)
       .skip(filterSkip)
       .limit(parseInt(filterLimit, 10))
       .sort({'request.timestamp': -1})
       .exec()
+
+    if (filterRepresentation === 'bulkrerun') {
+      const count = await TransactionModelAPI.count(filters).exec()
+      ctx.body = {
+        count
+      }
+    } else {
+      ctx.body = transactions
+    }
 
     if (filterRepresentation === 'fulltruncate') {
       Array.from(ctx.body).map(trx => truncateTransactionDetails(trx))
@@ -317,6 +226,213 @@ export async function getTransactions(ctx) {
       'error'
     )
   }
+}
+
+export async function rerunTransactions(ctx) {
+  try {
+    const filtersObject = ctx.request.body
+    const {batchSize, pauseQueue} = filtersObject
+
+    let filters = filtersObject.filters
+
+    // Test if the user is authorised
+    if (!authorisation.inGroup('admin', ctx.authenticated)) {
+      // if not an admin, restrict by transactions that this user can view
+      const fullViewChannels = await authorisation.getUserViewableChannels(
+        ctx.authenticated,
+        'txViewFullAcl'
+      )
+      const partViewChannels = await authorisation.getUserViewableChannels(
+        ctx.authenticated
+      )
+      const allChannels = fullViewChannels.concat(partViewChannels)
+
+      if (filters.channelID) {
+        if (!getChannelIDsArray(allChannels).includes(filters.channelID)) {
+          return utils.logAndSetResponse(
+            ctx,
+            403,
+            `Forbidden: Unauthorized channel ${filters.channelID}`,
+            'info'
+          )
+        }
+      } else {
+        filters.channelID = {$in: getChannelIDsArray(allChannels)}
+      }
+    }
+
+    filters = parseTransactionFilters(filters)
+
+    const count = await TransactionModelAPI.count(filters).exec()
+    const pages = Math.floor(count/taskTransactionsLength)
+
+    createRerunTasks(filters, batchSize, ctx.authenticated.email, 0, pages, pauseQueue, taskTransactionsLength)
+
+    ctx.body = {
+      success: true,
+      message: "Tasks created for bulk rerun of transactions" 
+    }
+  } catch (e) {
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not create rerun tasks via the API: ${e}`,
+      'error'
+    )
+  }
+}
+
+let transactionsToRerun, taskObject, task
+
+async function createRerunTasks(filters, batchSize, email, page, pages, pauseQueue, filterLimit) {
+  transactionsToRerun = await TransactionModelAPI.find(filters, {_id: 1})
+    .skip(filterLimit*page)
+    .limit(parseInt(filterLimit, 10))
+    .sort({'request.timestamp': -1})
+    .exec()
+
+  if (!transactionsToRerun.length) return
+
+  transactionsToRerun = transactionsToRerun.map(trans => {
+    return {
+      tid: trans._id
+    }})
+
+  taskObject = {}
+  taskObject.remainingTransactions = transactionsToRerun.length
+  taskObject.user = email
+  taskObject.transactions = transactionsToRerun
+  taskObject.totalTransactions = transactionsToRerun.length
+  taskObject.batchSize = batchSize
+
+  if (pauseQueue) {
+    taskObject.status = 'Paused'
+  }
+
+  task = await new TaskModelAPI(taskObject).save()
+
+  logger.info(`Rerun task with id ${task._id} created!`)
+
+  if (page < pages) {
+    return createRerunTasks(filters, batchSize, email, ++page, pages, pauseQueue, filterLimit)
+  } else {
+    transactionsToRerun = null
+    task = null
+    taskObject = null
+    return
+  }
+}
+
+function parseTransactionFilters (filters) {
+  filters = Object.assign({}, filters)
+
+  // parse date to get it into the correct format for querying
+  if (filters['request.timestamp']) {
+    filters['request.timestamp'] = JSON.parse(filters['request.timestamp'])
+  }
+
+  /* Transaction Filters */
+  // build RegExp for transaction request path filter
+  if (filters['request.path']) {
+    filters['request.path'] = new RegExp(filters['request.path'], 'i')
+  }
+
+  // build RegExp for transaction request querystring filter
+  if (filters['request.querystring']) {
+    filters['request.querystring'] = new RegExp(
+      filters['request.querystring'],
+      'i'
+    )
+  }
+
+  // response status pattern match checking
+  if (
+    filters['response.status'] &&
+    utils.statusCodePatternMatch(filters['response.status'])
+  ) {
+    filters['response.status'] = {
+      $gte: filters['response.status'][0] * 100,
+      $lt: filters['response.status'][0] * 100 + 100
+    }
+  }
+
+  // check if properties exist
+  if (filters.properties) {
+    // we need to source the property key and re-construct filter
+    const key = Object.keys(filters.properties)[0]
+    filters[`properties.${key}`] = filters.properties[key]
+
+    // if property has no value then check if property exists instead
+    if (filters.properties[key] === null) {
+      filters[`properties.${key}`] = {$exists: true}
+    }
+
+    // delete the old properties filter as its not needed
+    delete filters.properties
+  }
+
+  // parse childIDs query to get it into the correct format for querying
+  if (filters['childIDs']) {
+    filters['childIDs'] = JSON.parse(filters['childIDs'])
+  }
+
+  /* Route Filters */
+  // build RegExp for route request path filter
+  if (filters['routes.request.path']) {
+    filters['routes.request.path'] = new RegExp(
+      filters['routes.request.path'],
+      'i'
+    )
+  }
+
+  // build RegExp for transaction request querystring filter
+  if (filters['routes.request.querystring']) {
+    filters['routes.request.querystring'] = new RegExp(
+      filters['routes.request.querystring'],
+      'i'
+    )
+  }
+
+  // route response status pattern match checking
+  if (
+    filters['routes.response.status'] &&
+    utils.statusCodePatternMatch(filters['routes.response.status'])
+  ) {
+    filters['routes.response.status'] = {
+      $gte: filters['routes.response.status'][0] * 100,
+      $lt: filters['routes.response.status'][0] * 100 + 100
+    }
+  }
+
+  /* orchestration Filters */
+  // build RegExp for orchestration request path filter
+  if (filters['orchestrations.request.path']) {
+    filters['orchestrations.request.path'] = new RegExp(
+      filters['orchestrations.request.path'],
+      'i'
+    )
+  }
+
+  // build RegExp for transaction request querystring filter
+  if (filters['orchestrations.request.querystring']) {
+    filters['orchestrations.request.querystring'] = new RegExp(
+      filters['orchestrations.request.querystring'],
+      'i'
+    )
+  }
+
+  // orchestration response status pattern match checking
+  if (
+    filters['orchestrations.response.status'] &&
+    utils.statusCodePatternMatch(filters['orchestrations.response.status'])
+  ) {
+    filters['orchestrations.response.status'] = {
+      $gte: filters['orchestrations.response.status'][0] * 100,
+      $lt: filters['orchestrations.response.status'][0] * 100 + 100
+    }
+  }
+
+  return filters
 }
 
 function recursivelySearchObject(ctx, obj, ws, repeat) {
@@ -678,4 +794,6 @@ export async function removeTransaction(ctx, transactionId) {
 if (process.env.NODE_ENV === 'test') {
   exports.calculateTransactionBodiesByteLength =
     calculateTransactionBodiesByteLength
+  exports.createRerunTasks =
+    createRerunTasks
 }
