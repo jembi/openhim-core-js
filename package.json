@@ -65,7 +65,7 @@
     "mongodb-uri": "0.9.7",
     "mongoose": "^5.13.9",
     "mongoose-patch-history": "^2.0.0",
-    "nconf": "0.10.0",
+    "nconf": "0.11.4",
     "nodemailer": "^6.6.3",
     "pem": "^1.14.4",
     "raw-body": "^2.4.1",
