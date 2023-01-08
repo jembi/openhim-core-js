@@ -46,6 +46,7 @@ export function setupApp(done) {
 
   // Expose the authenticate route before the auth middleware so that it is publicly accessible
   app.use(route.get('/authenticate/:username', users.authenticate))
+  app.use(route.post('/oauth/keycloak', users.authenticateWithKeyCloak))
   // Authenticate the API request
   app.use(authentication.authenticate)
 

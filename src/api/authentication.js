@@ -17,6 +17,8 @@ import {
   JWT_AUTH_TYPE,
   MUTUAL_TLS_AUTH_TYPE
 } from '../constants'
+import { keycloak } from '../keycloak'
+import Token from 'keycloak-connect/middleware/auth-utils/token';
 
 config.api = config.get('api')
 config.auditing = config.get('auditing')
@@ -71,27 +73,7 @@ async function authenticateBasic(ctx) {
   return user
 }
 
-async function authenticateToken(ctx) {
-  const {header} = ctx.request
-  const email = header['auth-username']
-  const authTS = header['auth-ts']
-  const authSalt = header['auth-salt']
-  const authToken = header['auth-token']
-
-  // if any of the required headers aren't present
-  if (
-    isUndefOrEmpty(email) ||
-    isUndefOrEmpty(authTS) ||
-    isUndefOrEmpty(authSalt) ||
-    isUndefOrEmpty(authToken)
-  ) {
-    ctx.throw(
-      401,
-      `API request made by ${email} from ${ctx.request.host} is missing required API authentication headers, denying access`,
-      {email}
-    )
-  }
-
+async function ensureWithinAuthWindow (authTS, ctx) {
   // check if request is recent
   const requestDate = new Date(Date.parse(authTS))
 
@@ -106,11 +88,12 @@ async function authenticateToken(ctx) {
     // request expired
     ctx.throw(
       401,
-      `API request made by ${email} from ${ctx.request.host} has expired, denying access`,
-      {email}
+      `API request from ${ctx.request.host} has expired, denying access`
     )
   }
+}
 
+async function ensureUserExists (email, ctx) {
   const user = await UserModelAPI.findOne({
     email: caseInsensitiveRegex(email)
   })
@@ -122,22 +105,89 @@ async function authenticateToken(ctx) {
       {email}
     )
   }
+  return user;
+}
 
-  const hash = crypto.createHash('sha512')
-  hash.update(user.passwordHash)
-  hash.update(authSalt)
-  hash.update(authTS)
+async function authenticateToken(ctx) {
+  const {header} = ctx.request
+  const authTS = header['auth-ts']
+  const authProvider = header['auth-provider'];
+  const authToken = header['auth-token']
 
-  if (authToken !== hash.digest('hex')) {
-    // not authenticated - token mismatch
+  // if any of the required headers aren't present
+  if (
+    isUndefOrEmpty(authTS) ||
+    isUndefOrEmpty(authProvider) ||
+    isUndefOrEmpty(authToken)
+  ) {
     ctx.throw(
       401,
-      `API token did not match expected value, denying access to API, the request was made by ${email} from ${ctx.request.host}`,
-      {email}
+      `API request made from ${ctx.request.host} is missing required API authentication headers, denying access`
     )
   }
 
-  return user
+  ensureWithinAuthWindow(authTS, ctx)
+
+  if (authProvider === 'local') {
+    // Signed-in using an OpenHIM login/pasword account
+    const email = header['auth-username']
+    const authSalt = header['auth-salt']
+
+    // if any of the required headers aren't present
+    if (
+      isUndefOrEmpty(email) ||
+      isUndefOrEmpty(authSalt)
+    ) {
+      ctx.throw(
+        401,
+        `API request made by ${email} from ${ctx.request.host} is missing required API authentication headers, denying access for local provider`,
+        {email}
+      )
+    }
+
+    const user = await ensureUserExists(email, ctx);
+
+    if (user) {
+      const hash = crypto.createHash('sha512')
+
+      hash.update(user.passwordHash)
+      hash.update(authSalt)
+      hash.update(authTS)
+    
+      if (authToken !== hash.digest('hex')) {
+        // not authenticated - token mismatch
+        ctx.throw(
+          401,
+          `API token did not match expected value, denying access to API, the request was made by ${email} from ${ctx.request.host}`,
+          {email}
+        )
+      }
+
+      return user;
+    }
+  } else if (authProvider === 'keycloak') {
+    // Signed-in using KeyCloak Access Token
+    try {
+      const token = new Token(authToken, keycloak.config.clientId);
+      const validToken = await keycloak.grantManager.validateToken(token, 'Bearer')
+      const email = validToken.content.email;
+      const user = await ensureUserExists(email, ctx);
+
+      return user;
+    } catch(err) {
+      logger.error('KeyCloak authentication failed', err)
+      ctx.throw(
+        401,
+        `KeyCloak API token did not match expected value, denying access to API, the request was made from ${ctx.request.host}`,
+      )
+    }
+  } else {
+    ctx.throw(
+      401,
+      `API was not able to recognize the authentication provider, the request was made from ${ctx.request.host}`
+    )
+  }
+  return null
 }
 
 function getEnabledAuthenticationTypesFromConfig(config) {

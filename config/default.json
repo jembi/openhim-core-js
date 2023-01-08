@@ -72,6 +72,13 @@
       "algorithms": "",
       "audience": "",
       "issuer": ""
+    },
+    "keycloak": {
+      "url": "http://localhost:9080",
+      "realm": "platform-realm",
+      "clientId": "openhim-oauth",
+      "clientSecret": "tZKfEbWf0Ka5HBNZwFrdSyQH2xT1sNMR",
+      "scope": "openid email profile offline_access roles"
     }
   },
   "email": {

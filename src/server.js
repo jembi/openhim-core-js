@@ -338,7 +338,8 @@ if (cluster.isMaster && !module.parent) {
     passwordHash:
       '943a856bba65aad6c639d5c8d4a11fc8bb7fe9de62ae307aec8cf6ae6c1faab722127964c71db4bdd2ea2cdf60c6e4094dcad54d4522ab2839b65ae98100d0fb',
     passwordSalt: 'd9bcb40e-ae65-478f-962e-5e5e5e7d0a01',
-    groups: ['admin']
+    groups: ['admin'],
+    provider: 'local'
   }
   // password = 'openhim-password'
 

@@ -54,6 +54,7 @@
     "handlebars": "^4.7.7",
     "jsonwebtoken": "^8.5.1",
     "kcors": "2.2.2",
+    "keycloak-connect": "^20.0.2",
     "koa": "^2.13.0",
     "koa-bodyparser": "^4.3.0",
     "koa-compress": "^5.1.0",

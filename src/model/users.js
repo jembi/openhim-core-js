@@ -31,6 +31,11 @@ const UserSchema = new Schema({
     type: String,
     enum: ['newUser', 'existingUser', null]
   }, // null is needed as we used nulls to clear to token and tokenType
+  provider: {
+    type: String,
+    enum: ['local', 'keycloak'],
+    default: 'local'
+  }, // null is needed as we used nulls to clear to token and tokenType
   expiry: Date,
   locked: Boolean
 })

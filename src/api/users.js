@@ -13,6 +13,7 @@ import * as contact from '../contact'
 import * as utils from '../utils'
 import {UserModelAPI} from '../model/users'
 import {config} from '../config'
+import {keycloak} from '../keycloak'
 
 config.newUserExpiry = config.get('newUserExpiry')
 config.userPasswordResetExpiry = config.get('userPasswordResetExpiry')
@@ -61,6 +62,63 @@ export async function authenticate(ctx, email) {
       ctx,
       500,
       `Error during authentication ${e}`,
+      'error'
+    )
+  }
+}
+
+/*
+ * SSO Authentication using KeyCloak
+ */
+export async function authenticateWithKeyCloak(ctx) {
+  const { code, sessionState } = ctx.request.body;
+
+  try {
+    // Get tokens by auth code from Keycloak
+    const grant = await keycloak.grantManager.obtainFromCode({
+      session: {
+        auth_redirect_uri: 'http://localhost:9000'
+      }
+    }, code, sessionState);
+  
+    const accessToken = grant.access_token;
+  
+    if (!accessToken) {
+      throw new Error('Unable to retrieve the access token');
+    }
+
+    const email = accessToken.content.email;
+    const firstname = accessToken.content.given_name;
+    const surname = accessToken.content.family_name;
+    const username = accessToken.content.preferred_username;
+
+    let user = await UserModelAPI.findOne({
+      email: utils.caseInsensitiveRegex(email)
+    })
+
+    if (!user) {
+      // User signs in for the first time
+      const user = new UserModelAPI({
+        settings: { list: {}, filter: { limit: 100 } },
+        groups: ['admin'],
+        email: email,
+        firstname: firstname || username,
+        surname: surname || username,
+        provider: 'keycloak'
+      })
+      await user.save()
+    }
+
+    ctx.body = {
+      user,
+      jwt: JSON.parse(grant.__raw),
+      ts: new Date()
+    }
+  } catch(err) {
+    return utils.logAndSetResponse(
+      ctx,
+      500,
+      `Error during Single Sign On with KeyCloak ${err}`,
       'error'
     )
   }
@@ -328,6 +386,7 @@ export async function addUser(ctx) {
   userData.tokenType = 'newUser'
   userData.locked = true
   userData.email = userData.email.toLowerCase()
+  userData.provider = 'local'
 
   const {duration, durationType} = config.newUserExpiry
   userData.expiry = moment().add(duration, durationType).utc().format()
