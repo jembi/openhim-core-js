@@ -39,7 +39,7 @@
     "maxPayloadSizeMB": 50,
     "truncateSize": 15000,
     "truncateAppend": "\n[truncated ...]",
-    "authenticationTypes": ["local"]
+    "authenticationTypes": ["basic", "local"]
   },
   "rerun": {
     "httpPort": 7786,
@@ -47,7 +47,9 @@
     "processor": {
       "enabled": true,
       "pollPeriodMillis": 2000
-    }
+    },
+    "taskTransactionsLength": 50,
+    "activeConcurrentTasks": 3
   },
   "tcpAdapter": {
     "httpReceiver": {
