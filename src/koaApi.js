@@ -38,7 +38,7 @@ export function setupApp(done) {
   // Add cors options
   app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE', credentials: true}))
 
-  // Configure Sessions Middlewarez
+  // Configure Sessions Middlewares
   app.keys = [ 'r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#' ]
   app.use(
     session({
@@ -59,7 +59,7 @@ export function setupApp(done) {
   app.use(passport.initialize());
   app.use(passport.session());  
 
-  // passport load strategies: local basic
+  // Passport load strategies: local basic
   passport.loadStrategies();
 
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
