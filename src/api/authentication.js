@@ -1,15 +1,13 @@
 'use strict'
 
 import atna from 'atna-audit'
-import basicAuth from 'basic-auth'
-import crypto from 'crypto'
 import logger from 'winston'
 import os from 'os'
 
 import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
-import {UserModelAPI} from '../model/users'
-import {caseInsensitiveRegex, logAndSetResponse} from '../utils'
+import passport from '../passport'
+import {logAndSetResponse} from '../utils'
 import {config} from '../config'
 import {
   BASIC_AUTH_TYPE,
@@ -36,108 +34,19 @@ const auditingExemptPaths = [
   /\/logs/
 ]
 
-const isUndefOrEmpty = string => string == null || string === ''
+async function authenticateBasic(ctx, next) {
+  // Basic auth using middleware
+  await passport.authenticate('basic', function(err, user) {
+    if (err) { return logger.info(err.message); }
+    else if(user) {
+      ctx.req.user = user
+      ctx.body = "User Authenticated Successfully";
+      ctx.status = 201;
+      return ctx.req.user;
+    }
+  })(ctx, next)
 
-async function authenticateBasic(ctx) {
-  const credentials = basicAuth(ctx)
-  if (credentials == null) {
-    // No basic auth details found
-    return null
-  }
-  const {name: email, pass: password} = credentials
-  const user = await UserModelAPI.findOne({
-    email: caseInsensitiveRegex(email)
-  })
-  if (user == null) {
-    // not authenticated - user not found
-    ctx.throw(
-      401,
-      `No user exists for ${email}, denying access to API, request originated from ${ctx.request.host}`,
-      {email}
-    )
-  }
-
-  const hash = crypto.createHash(user.passwordAlgorithm)
-  hash.update(user.passwordSalt)
-  hash.update(password)
-  if (user.passwordHash !== hash.digest('hex')) {
-    // not authenticated - password mismatch
-    ctx.throw(
-      401,
-      `Password did not match expected value, denying access to API, the request was made by ${email} from ${ctx.request.host}`,
-      {email}
-    )
-  }
-  return user
-}
-
-async function authenticateToken(ctx) {
-  const {header} = ctx.request
-  const email = header['auth-username']
-  const authTS = header['auth-ts']
-  const authSalt = header['auth-salt']
-  const authToken = header['auth-token']
-
-  // if any of the required headers aren't present
-  if (
-    isUndefOrEmpty(email) ||
-    isUndefOrEmpty(authTS) ||
-    isUndefOrEmpty(authSalt) ||
-    isUndefOrEmpty(authToken)
-  ) {
-    ctx.throw(
-      401,
-      `API request made by ${email} from ${ctx.request.host} is missing required API authentication headers, denying access`,
-      {email}
-    )
-  }
-
-  // check if request is recent
-  const requestDate = new Date(Date.parse(authTS))
-
-  const authWindowSeconds =
-    config.api.authWindowSeconds != null ? config.api.authWindowSeconds : 10
-  const to = new Date()
-  to.setSeconds(to.getSeconds() + authWindowSeconds)
-  const from = new Date()
-  from.setSeconds(from.getSeconds() - authWindowSeconds)
-
-  if (requestDate < from || requestDate > to) {
-    // request expired
-    ctx.throw(
-      401,
-      `API request made by ${email} from ${ctx.request.host} has expired, denying access`,
-      {email}
-    )
-  }
-
-  const user = await UserModelAPI.findOne({
-    email: caseInsensitiveRegex(email)
-  })
-  if (user == null) {
-    // not authenticated - user not found
-    ctx.throw(
-      401,
-      `No user exists for ${email}, denying access to API, request originated from ${ctx.request.host}`,
-      {email}
-    )
-  }
-
-  const hash = crypto.createHash('sha512')
-  hash.update(user.passwordHash)
-  hash.update(authSalt)
-  hash.update(authTS)
-
-  if (authToken !== hash.digest('hex')) {
-    // not authenticated - token mismatch
-    ctx.throw(
-      401,
-      `API token did not match expected value, denying access to API, the request was made by ${email} from ${ctx.request.host}`,
-      {email}
-    )
-  }
-
-  return user
+  return ctx.req.user || null
 }
 
 function getEnabledAuthenticationTypesFromConfig(config) {
@@ -164,15 +73,15 @@ function isAuthenticationTypeEnabled(type) {
   return getEnabledAuthenticationTypesFromConfig(config).includes(type)
 }
 
-async function authenticateRequest(ctx) {
-  let user
+async function authenticateRequest(ctx, next) {
+  let user = null
   // First attempt basic authentication if enabled
   if (user == null && isAuthenticationTypeEnabled('basic')) {
-    user = await authenticateBasic(ctx)
+    user = await authenticateBasic(ctx, next)
   }
   // Otherwise try token based authentication if enabled
-  if (user == null && isAuthenticationTypeEnabled('token')) {
-    user = await authenticateToken(ctx)
+  if (user == null && isAuthenticationTypeEnabled('local') && ctx.req.user) {
+    user = ctx.req.user
   }
   // User could not be authenticated
   if (user == null) {
@@ -195,9 +104,50 @@ function handleAuditResponse(err) {
 }
 
 export async function authenticate(ctx, next) {
-  let user
   try {
-    user = await authenticateRequest(ctx)
+    // Authenticate Request either by basic or local
+    const user = await authenticateRequest(ctx, next)
+
+    if (ctx.isAuthenticated()) {
+      // Set the user on the context for consumption by other middleware
+      ctx.authenticated = user
+
+      // Deal with paths exempt from audit
+      if (ctx.path === '/transactions') {
+        if (
+          !ctx.query.filterRepresentation ||
+          ctx.query.filterRepresentation !== 'full'
+        ) {
+          // exempt from auditing success
+          return next()
+        }
+      } else {
+        for (const pathTest of auditingExemptPaths) {
+          if (pathTest.test(ctx.path)) {
+            // exempt from auditing success
+            return next()
+          }
+        }
+      }
+      // Send an auth success audit event
+      let audit = atna.construct.userLoginAudit(
+        atna.constants.OUTCOME_SUCCESS,
+        himSourceID,
+        os.hostname(),
+        ctx.authenticated.email,
+        ctx.authenticated.groups.join(','),
+        ctx.authenticated.groups.join(',')
+      )
+      audit = atna.construct.wrapInSyslog(audit)
+      auditing.sendAuditEvent(audit, handleAuditResponse)
+
+      return next()
+    } else {
+      ctx.throw(
+        401,
+        `Denying access for an API request from ${ctx.request.host}`
+      )
+    }
   } catch (err) {
     // Handle authentication errors
     if (err.status === 401) {
@@ -210,7 +160,7 @@ export async function authenticate(ctx, next) {
         atna.constants.OUTCOME_SERIOUS_FAILURE,
         himSourceID,
         os.hostname(),
-        err.email
+        `Unknown with ip ${ctx.request.ip}`,
       )
       audit = atna.construct.wrapInSyslog(audit)
       auditing.sendAuditEvent(audit, handleAuditResponse)
@@ -219,41 +169,6 @@ export async function authenticate(ctx, next) {
     // Rethrow other errors
     throw err
   }
-
-  // Set the user on the context for consumption by other middleware
-  ctx.authenticated = user
-
-  // Deal with paths exempt from audit
-  if (ctx.path === '/transactions') {
-    if (
-      !ctx.query.filterRepresentation ||
-      ctx.query.filterRepresentation !== 'full'
-    ) {
-      // exempt from auditing success
-      return next()
-    }
-  } else {
-    for (const pathTest of auditingExemptPaths) {
-      if (pathTest.test(ctx.path)) {
-        // exempt from auditing success
-        return next()
-      }
-    }
-  }
-
-  // Send an auth success audit event
-  let audit = atna.construct.userLoginAudit(
-    atna.constants.OUTCOME_SUCCESS,
-    himSourceID,
-    os.hostname(),
-    user.email,
-    user.groups.join(','),
-    user.groups.join(',')
-  )
-  audit = atna.construct.wrapInSyslog(audit)
-  auditing.sendAuditEvent(audit, handleAuditResponse)
-
-  return next()
 }
 
 export async function getEnabledAuthenticationTypes(ctx, next) {

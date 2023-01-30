@@ -18,9 +18,7 @@ const UserSchema = new Schema({
     required: true,
     unique: true
   },
-  passwordAlgorithm: String,
-  passwordHash: String,
-  passwordSalt: String,
+  passports: { type: Schema.Types.ObjectId, ref: 'Passport' },
   groups: [String],
   msisdn: String,
   dailyReport: Boolean,

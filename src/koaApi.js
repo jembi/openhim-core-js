@@ -4,6 +4,8 @@ import Koa from 'koa'
 import bodyParser from 'koa-bodyparser'
 import cors from 'kcors'
 import route from 'koa-route'
+import session from 'koa-session'
+import compose from 'koa-compose'
 
 import * as about from './api/about'
 import * as audits from './api/audits'
@@ -25,14 +27,40 @@ import * as tasks from './api/tasks'
 import * as transactions from './api/transactions'
 import * as users from './api/users'
 import * as visualizers from './api/visualizers'
+import passport from './passport'
+import MongooseStore from './middleware/sessionStore'
 import {config} from './config'
 
 export function setupApp(done) {
-  // Create an instance of the koa-server and add a body-parser
+  // Create an instance of the koa-server
   const app = new Koa()
-  app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE'}))
+
+  // Add cors options
+  app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE', credentials: true}))
+
+  // Configure Sessions Middlewarez
+  app.keys = [ 'r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#' ]
+  app.use(
+    session({
+      maxAge: 2 * 60 * 60 * 1000, // 2 hours
+      resave: false,
+      secure: true,
+      httpOnly: false,
+      sameSite: "none", 
+      store: new MongooseStore()
+    },
+    app
+  ));
+
+  // Add a body-parser
   const limitMB = config.api.maxPayloadSizeMB || 16
   app.use(bodyParser({jsonLimit: limitMB * 1024 * 1024}))
+
+  app.use(passport.initialize());
+  app.use(passport.session());  
+
+  // passport load strategies: local basic
+  passport.loadStrategies();
 
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
@@ -43,9 +71,10 @@ export function setupApp(done) {
   )
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
-
-  // Expose the authenticate route before the auth middleware so that it is publicly accessible
-  app.use(route.get('/authenticate/:username', users.authenticate))
+  
+  // Expose the authenticate route before the auth middleware so that it is publicly accessible 
+  app.use(route.post('/authenticate/local', compose([passport.authenticate('local'), users.authenticate])))
+  
   // Authenticate the API request
   app.use(authentication.authenticate)
 
@@ -56,6 +85,9 @@ export function setupApp(done) {
       authentication.getEnabledAuthenticationTypes
     )
   )
+
+  // Logout route
+  app.use(route.get('/logout', users.logout));
 
   // Define the api routes
   app.use(route.get('/users', users.getUsers))

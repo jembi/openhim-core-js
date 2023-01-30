@@ -37,6 +37,7 @@ import * as upgradeDB from './upgradeDB'
 import {KeystoreModel} from './model/keystore'
 import {UserModel} from './model/users'
 import {appRoot, config, connectionAgenda} from './config'
+import {local} from './protocols'
 
 mongoose.Promise = Promise
 
@@ -334,13 +335,9 @@ if (cluster.isMaster && !module.parent) {
     firstname: 'Super',
     surname: 'User',
     email: 'root@openhim.org',
-    passwordAlgorithm: 'sha512',
-    passwordHash:
-      '943a856bba65aad6c639d5c8d4a11fc8bb7fe9de62ae307aec8cf6ae6c1faab722127964c71db4bdd2ea2cdf60c6e4094dcad54d4522ab2839b65ae98100d0fb',
-    passwordSalt: 'd9bcb40e-ae65-478f-962e-5e5e5e7d0a01',
+    password: 'openhim-password',
     groups: ['admin']
   }
-  // password = 'openhim-password'
 
   // Job scheduler
   let agenda = null
@@ -470,19 +467,17 @@ if (cluster.isMaster && !module.parent) {
   }
 
   // Ensure that a root user always exists
-  const ensureRootUser = callback =>
-    UserModel.findOne({email: 'root@openhim.org'}, (err, user) => {
+  const ensureRootUser = async callback =>
+    await UserModel.findOne({email: 'root@openhim.org'}, async (err, user) => {
       if (err) {
         return callback(err)
       }
       if (!user) {
-        user = new UserModel(rootUser)
-        return user.save(err => {
-          if (err) {
-            logger.error(`Could not save root user: ${err}`)
-            return callback(err)
-          }
-
+        return await local.createUser(rootUser).then((res) => {
+          if (res.error) {
+            logger.error(`Could not save root user: ${res.error}`)
+            return callback(res.error)
+          } 
           logger.info('Root user created.')
           return callback()
         })

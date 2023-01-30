@@ -12,6 +12,7 @@ import * as authorisation from './authorisation'
 import * as contact from '../contact'
 import * as utils from '../utils'
 import {UserModelAPI} from '../model/users'
+import {local} from '../protocols'
 import {config} from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
@@ -23,20 +24,19 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
 /*
  * Get authentication details
  */
-
-export async function authenticate(ctx, email) {
-  email = unescape(email)
-
+export async function authenticate(ctx) {
+  const body = ctx.request.body
+  
   try {
     const user = await UserModelAPI.findOne({
-      email: utils.caseInsensitiveRegex(email)
+      email: utils.caseInsensitiveRegex(body.username)
     })
 
     if (!user) {
       utils.logAndSetResponse(
         ctx,
         404,
-        `Could not find user by email ${email}`,
+        `Could not find user by email ${body.username}`,
         'info'
       )
       // Audit unknown user requested
@@ -44,17 +44,15 @@ export async function authenticate(ctx, email) {
         atna.constants.OUTCOME_SERIOUS_FAILURE,
         himSourceID,
         os.hostname(),
-        email
+        body.username
       )
       audit = atna.construct.wrapInSyslog(audit)
       return auditing.sendAuditEvent(audit, () =>
         logger.debug('Processed internal audit')
       )
     } else {
-      ctx.body = {
-        salt: user.passwordSalt,
-        ts: new Date()
-      }
+      ctx.body = "User Authenticated successfully"
+      ctx.status = 201
     }
   } catch (e) {
     return utils.logAndSetResponse(
@@ -64,6 +62,12 @@ export async function authenticate(ctx, email) {
       'error'
     )
   }
+}
+
+export const logout =  async function(ctx) {
+  ctx.session = null;
+  ctx.authenticated = null;
+  ctx.status = 201;
 }
 
 /**
@@ -256,9 +260,6 @@ export async function updateUserByToken(ctx, token) {
     token: null,
     tokenType: null,
     expiry: null,
-    passwordAlgorithm: userData.passwordAlgorithm,
-    passwordSalt: userData.passwordSalt,
-    passwordHash: userData.passwordHash
   }
 
   if (userDataExpiry.tokenType === 'newUser') {
@@ -269,9 +270,17 @@ export async function updateUserByToken(ctx, token) {
   }
 
   try {
-    await UserModelAPI.findOneAndUpdate({token}, userUpdateObj)
-    ctx.body = 'Successfully set new user password.'
-    return logger.info(`User updated by token ${token}`)
+    const userToBeUpdated = await UserModelAPI.findOne({token})
+    const {user, error} = await local.updateUser({...userToBeUpdated, userUpdateObj})
+    if(user) {
+      ctx.body = 'Successfully set new user password.'
+      return logger.info(`User updated by token ${token}`)
+    } else {
+      ctx.throw(
+        500,
+        error
+      )
+    }
   } catch (error) {
     return utils.logAndSetResponse(
       ctx,
@@ -439,11 +448,7 @@ export async function updateUser(ctx, email) {
   const userData = ctx.request.body
 
   // reset token/locked/expiry when user is updated and password supplied
-  if (
-    userData.passwordAlgorithm &&
-    userData.passwordHash &&
-    userData.passwordSalt
-  ) {
+  if (userData.password) {
     userData.token = null
     userData.tokenType = null
     userData.locked = false
@@ -458,20 +463,19 @@ export async function updateUser(ctx, email) {
     delete userData.groups
   }
 
-  // Ignore _id if it exists (update is by email)
-  if (userData._id) {
-    delete userData._id
-  }
-
   try {
-    await UserModelAPI.findOneAndUpdate(
-      {email: utils.caseInsensitiveRegex(email)},
-      userData
-    )
-    ctx.body = 'Successfully updated user.'
-    logger.info(
-      `User ${ctx.authenticated.email} updated user ${userData.email}`
-    )
+    const {user, error} = await local.updateUser(userData)
+    if(user) {
+      ctx.body = 'Successfully updated user.'
+      logger.info(
+        `User ${ctx.authenticated.email} updated user ${userData.email}`
+      )
+    } else {
+      ctx.throw(
+        500,
+        error
+      )
+    }
   } catch (e) {
     utils.logAndSetResponse(
       ctx,
