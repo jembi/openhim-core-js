@@ -48,6 +48,22 @@ class MongooseStore {
     return data;
   }
 
+  verify = async function(req, handle, cb) {
+    var state = { handle };
+    var ctx = {
+      maxAge: state.maxAge,
+      nonce: state.nonce,
+      issued: state.issued
+    };
+    if (typeof ctx.issued === 'string') {
+      // convert issued to a Date object
+      ctx.issued = new Date(ctx.issued);
+    }
+  
+    return cb(null, ctx, state);
+  };
+  
+
   static create() {
     return new MongooseStore();
   }

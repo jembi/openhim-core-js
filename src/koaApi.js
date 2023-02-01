@@ -74,7 +74,15 @@ export function setupApp(done) {
   
   // Expose the authenticate route before the auth middleware so that it is publicly accessible 
   app.use(route.post('/authenticate/local', compose([passport.authenticate('local'), users.authenticate])))
-  
+  app.use(route.post('/authenticate/openid', compose([
+    (ctx, next) => {
+      ctx.request.query = ctx.request.body
+      return next()
+    },
+    passport.authenticate('openidconnect', { failWithError: true }), 
+    users.authenticate
+  ])))
+
   // Authenticate the API request
   app.use(authentication.authenticate)
 

@@ -26,17 +26,35 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
  */
 export async function authenticate(ctx) {
   const body = ctx.request.body
-  
+  let email = ''
+
   try {
+    // Openid authentication
+    if (body.code && body.state) {
+      email = ctx.req.user ? ctx.req.user.email : ''
+      // Local authentication
+    } else {
+      email = body.username
+    }
+
+    if (!email) {
+      utils.logAndSetResponse(
+        ctx,
+        404,
+        `Could not find email while authentication`,
+        'info'
+      )
+    }
+
     const user = await UserModelAPI.findOne({
-      email: utils.caseInsensitiveRegex(body.username)
+      email: utils.caseInsensitiveRegex(email)
     })
 
     if (!user) {
       utils.logAndSetResponse(
         ctx,
         404,
-        `Could not find user by email ${body.username}`,
+        `Could not find user by email ${email}`,
         'info'
       )
       // Audit unknown user requested
@@ -44,14 +62,17 @@ export async function authenticate(ctx) {
         atna.constants.OUTCOME_SERIOUS_FAILURE,
         himSourceID,
         os.hostname(),
-        body.username
+        email
       )
       audit = atna.construct.wrapInSyslog(audit)
       return auditing.sendAuditEvent(audit, () =>
         logger.debug('Processed internal audit')
       )
     } else {
-      ctx.body = "User Authenticated successfully"
+      ctx.body = { 
+        result: "User Authenticated successfully",
+        user
+      }
       ctx.status = 201
     }
   } catch (e) {
@@ -64,10 +85,10 @@ export async function authenticate(ctx) {
   }
 }
 
-export const logout =  async function(ctx) {
-  ctx.session = null;
-  ctx.authenticated = null;
-  ctx.status = 201;
+export const logout = async function (ctx) {
+  ctx.session = null
+  ctx.authenticated = null
+  ctx.status = 201
 }
 
 /**
@@ -259,7 +280,7 @@ export async function updateUserByToken(ctx, token) {
   const userUpdateObj = {
     token: null,
     tokenType: null,
-    expiry: null,
+    expiry: null
   }
 
   if (userDataExpiry.tokenType === 'newUser') {
@@ -271,15 +292,15 @@ export async function updateUserByToken(ctx, token) {
 
   try {
     const userToBeUpdated = await UserModelAPI.findOne({token})
-    const {user, error} = await local.updateUser({...userToBeUpdated, userUpdateObj})
-    if(user) {
+    const {user, error} = await local.updateUser({
+      ...userToBeUpdated,
+      userUpdateObj
+    })
+    if (user) {
       ctx.body = 'Successfully set new user password.'
       return logger.info(`User updated by token ${token}`)
     } else {
-      ctx.throw(
-        500,
-        error
-      )
+      ctx.throw(500, error)
     }
   } catch (error) {
     return utils.logAndSetResponse(
@@ -465,16 +486,13 @@ export async function updateUser(ctx, email) {
 
   try {
     const {user, error} = await local.updateUser(userData)
-    if(user) {
+    if (user) {
       ctx.body = 'Successfully updated user.'
       logger.info(
         `User ${ctx.authenticated.email} updated user ${userData.email}`
       )
     } else {
-      ctx.throw(
-        500,
-        error
-      )
+      ctx.throw(500, error)
     }
   } catch (e) {
     utils.logAndSetResponse(
