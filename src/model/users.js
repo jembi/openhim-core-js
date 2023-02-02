@@ -43,13 +43,6 @@ export const UserModel = connectionDefault.model('User', UserSchema)
 
 
 /**
- * Generate a random token
- */
-function generateToken() {
-  return base64URL(crypto.randomBytes(48))
-}
-
-/**
  * Register a new user
  *
  * This method creates a new user from a specified email, username and password
@@ -59,13 +52,12 @@ function generateToken() {
  export const createUser = async function (_user) {
   let result = {error: null, user: null}
   try {
-    var accessToken = generateToken()
-    var password = await hashPassword(_user.password)
+    let password = await hashPassword(_user.password)
     delete _user.password
 
     return await UserModelAPI.create(_user)
       .then(async function (user) {
-        return await createPassport(user, password, accessToken)
+        return await createPassport(user, password)
       })
       .catch(err => {
         result.error = err
@@ -87,8 +79,7 @@ function generateToken() {
 export const updateUser = async function (_user) {
   let result = {user: null, error: null}
   try {
-    var accessToken = generateToken()
-    var password = await hashPassword(_user.password)
+    let password = await hashPassword(_user.password)
 
     delete _user.password
 
@@ -108,7 +99,7 @@ export const updateUser = async function (_user) {
                 passport.password = password
                 result = await updatePassport(user, passport)
               } else {
-                result = await createPassport(user, password, accessToken)
+                result = await createPassport(user, password)
               }
             })
             .catch(err => {

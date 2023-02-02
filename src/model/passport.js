@@ -76,13 +76,12 @@ export const PassportModel = connectionDefault.model('Passport', PassportSchema)
  * and assign it to a newly created user.
  *
  */
- export const createPassport = async function (user, password, accessToken) {
+ export const createPassport = async function (user, password) {
     let result = {error: null, user: null}
     return await PassportModelAPI.create({
       protocol: 'local',
       password: password,
-      user: user.id,
-      accessToken: accessToken
+      user: user.id
     })
       .then(async function (passport) {
         result.user = user

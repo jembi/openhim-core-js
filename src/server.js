@@ -347,19 +347,19 @@ if (cluster.isMaster && !module.parent) {
       mongo: connectionAgenda
     })
 
-    // agenda.on('start', job =>
-      // logger.info(
-      //   `starting job: ${job.attrs.name}, Last Ran at: ${job.attrs.lastRunAt}`
-      // )
-    // )
+    agenda.on('start', job =>
+      logger.info(
+        `starting job: ${job.attrs.name}, Last Ran at: ${job.attrs.lastRunAt}`
+      )
+    )
 
     agenda.on('fail', (err, job) =>
       logger.error(`Job ${job.attrs.name} failed with ${err.message}`)
     )
 
-    // agenda.on('complete', job =>
-      // logger.info(`Job ${job.attrs.name} has completed`)
-    // )
+    agenda.on('complete', job =>
+      logger.info(`Job ${job.attrs.name} has completed`)
+    )
 
     agenda.on('ready', () => {
       if (config.alerts.enableAlerts) {

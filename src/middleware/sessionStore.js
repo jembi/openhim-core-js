@@ -19,7 +19,6 @@ const SessionSchema = new Schema({
 
 class MongooseStore {
   constructor() {
-    this.sessionModel = connectionDefault.model('Session', SessionSchema)
     this.session = connectionAPI.model('Session', SessionSchema)
   }
 

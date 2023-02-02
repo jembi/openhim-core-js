@@ -45,7 +45,6 @@
     "atna-audit": "1.0.1",
     "axios": "^0.21.2",
     "babel-polyfill": "6.26.0",
-    "base64url": "^3.0.1",
     "basic-auth": "2.0.1",
     "bcryptjs": "2.4.3",
     "chokidar": "^3.5.2",
