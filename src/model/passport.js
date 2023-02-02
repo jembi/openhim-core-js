@@ -1,4 +1,4 @@
-
+'use strict'
 
 import {Schema} from 'mongoose'
 
@@ -52,7 +52,7 @@ const PassportSchema = new Schema({
     // and a `refreshToken` will be issued.
     provider: {
         type: String,
-        enum: ['local', 'keycloak'],
+        enum: ['local'],
         default: 'local'
     },
     identifier : String,
@@ -66,4 +66,49 @@ const PassportSchema = new Schema({
 
 // compile the Passport Schema into a Model
 export const PassportModelAPI = connectionAPI.model('Passport', PassportSchema)
-export const PassportModel = connectionDefault.model('Passport', PassportSchema)
+export const PassportModel = connectionDefault.model('Passport', PassportSchema)  
+
+
+/**
+ * Register a passport
+ *
+ * This method creates a new passport from a specified email, username and password
+ * and assign it to a newly created user.
+ *
+ */
+ export const createPassport = async function (user, password, accessToken) {
+    let result = {error: null, user: null}
+    return await PassportModelAPI.create({
+      protocol: 'local',
+      password: password,
+      user: user.id,
+      accessToken: accessToken
+    })
+      .then(async function (passport) {
+        result.user = user
+        return result
+      })
+      .catch(err => {
+        result.error = err
+        return result
+      })
+  }
+  
+  /**
+   * Update a passport
+   *
+   * This method updates a passport of a specific user
+   *
+   */
+  export const updatePassport = async function (user, passport) {
+    let result = {error: null, user: null}
+    return PassportModelAPI.updateOne(passport)
+      .then(function (passport) {
+        result.user = user
+        return result
+      })
+      .catch(err => {
+        result.error = err
+        return result
+      })
+  }

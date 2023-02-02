@@ -13,4 +13,3 @@ export const login = async function (username, password, next) {
 
     return await local.login(username, password, next)
 }
-  

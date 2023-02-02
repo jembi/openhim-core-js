@@ -11,8 +11,7 @@ import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as contact from '../contact'
 import * as utils from '../utils'
-import {UserModelAPI} from '../model/users'
-import {local} from '../protocols'
+import {UserModelAPI, updateUser as apiUpdateUser} from '../model/users'
 import {config} from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
@@ -24,6 +23,16 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
 /*
  * Get authentication details
  */
+export function me(ctx) {
+  if (ctx.req.user) {
+    ctx.body = { user: ctx.req.user }
+    ctx.status = 201
+  } else {
+    ctx.body = 'Not authenticated'
+    ctx.status = 404
+  }
+}
+
 export async function authenticate(ctx) {
   const body = ctx.request.body
   
@@ -64,10 +73,11 @@ export async function authenticate(ctx) {
   }
 }
 
-export const logout =  async function(ctx) {
-  ctx.session = null;
-  ctx.authenticated = null;
-  ctx.status = 201;
+export const logout = async function (ctx) {
+  ctx.logout()
+  ctx.session = null
+  ctx.authenticated = null
+  ctx.status = 201
 }
 
 /**
@@ -259,7 +269,7 @@ export async function updateUserByToken(ctx, token) {
   const userUpdateObj = {
     token: null,
     tokenType: null,
-    expiry: null,
+    expiry: null
   }
 
   if (userDataExpiry.tokenType === 'newUser') {
@@ -271,15 +281,15 @@ export async function updateUserByToken(ctx, token) {
 
   try {
     const userToBeUpdated = await UserModelAPI.findOne({token})
-    const {user, error} = await local.updateUser({...userToBeUpdated, userUpdateObj})
-    if(user) {
+    const {user, error} = await apiUpdateUser({
+      ...userToBeUpdated,
+      userUpdateObj
+    })
+    if (user) {
       ctx.body = 'Successfully set new user password.'
       return logger.info(`User updated by token ${token}`)
     } else {
-      ctx.throw(
-        500,
-        error
-      )
+      ctx.throw(500, error)
     }
   } catch (error) {
     return utils.logAndSetResponse(
@@ -464,17 +474,14 @@ export async function updateUser(ctx, email) {
   }
 
   try {
-    const {user, error} = await local.updateUser(userData)
-    if(user) {
+    const {user, error} = await apiUpdateUser(userData)
+    if (user) {
       ctx.body = 'Successfully updated user.'
       logger.info(
         `User ${ctx.authenticated.email} updated user ${userData.email}`
       )
     } else {
-      ctx.throw(
-        500,
-        error
-      )
+      ctx.throw(500, error)
     }
   } catch (e) {
     utils.logAndSetResponse(

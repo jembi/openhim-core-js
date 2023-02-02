@@ -1,5 +1,6 @@
 'use strict'
 
+import bcrypt from 'bcryptjs'
 import logger from 'winston'
 import momentTZ from 'moment-timezone'
 import _ from 'lodash'
@@ -10,6 +11,7 @@ import {config} from './config'
 
 config.caching = config.get('caching')
 config.api = config.get('api')
+config.authentication = config.get('authentication')
 
 /**
  * Will take in a string and return a safe regex that will match case insensitive
@@ -183,5 +185,32 @@ export function selectAuditFields(authenticated) {
   return {
     id: authenticated._id,
     name: `${authenticated.firstname} ${authenticated.surname}`
+  }
+}
+
+/**
+ * Validate password by comparing it to the password stored in the passport
+ */
+export const validatePassword = function (passport, password, next) {
+  bcrypt.compare(password, passport.password, next)
+}
+
+/**
+ * Hash password according to a salt defined in the config file
+ */
+export async function hashPassword(password) {
+  var salt = config.authentication.salt
+
+  if (password) {
+    return new Promise((resolve, reject) => {
+      bcrypt.hash(password, salt, function (err, hash) {
+        if (err) {
+          reject(err)
+        }
+        resolve(hash)
+      })
+    })
+  } else {
+    return Promise.reject(new Error("Password wasn't provided"));
   }
 }

@@ -38,14 +38,14 @@ export function setupApp(done) {
   // Add cors options
   app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE', credentials: true}))
 
-  // Configure Sessions Middlewares
-  app.keys = [ 'r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#' ]
+  // Configure Sessions Middleware
+  app.keys = [config.authentication.sessionKey]
   app.use(
     session({
-      maxAge: 2 * 60 * 60 * 1000, // 2 hours
+      maxAge: config.authentication.maxAge,
       resave: false,
       secure: true,
-      httpOnly: false,
+      httpOnly: true,
       sameSite: "none", 
       store: new MongooseStore()
     },
@@ -71,6 +71,9 @@ export function setupApp(done) {
   )
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
+  
+  // Check of logged in user
+  app.use(route.get('/me', users.me))
   
   // Expose the authenticate route before the auth middleware so that it is publicly accessible 
   app.use(route.post('/authenticate/local', compose([passport.authenticate('local'), users.authenticate])))

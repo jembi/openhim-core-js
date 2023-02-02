@@ -1,9 +1,7 @@
-import crypto from 'crypto'
-import base64URL from 'base64url'
 import logger from 'winston'
 
 import {UserModelAPI} from '../model'
-import {hashPassword, validatePassword} from '../api/passport'
+import {validatePassword} from '../utils'
 import {PassportModelAPI} from '../model/passport'
 
 /**
@@ -29,134 +27,6 @@ var EMAIL_REGEX =
  */
 function validateEmail(str) {
   return EMAIL_REGEX.test(str)
-}
-
-function generateToken() {
-  return base64URL(crypto.randomBytes(48))
-}
-
-/**
- * Register a passport
- *
- * This method creates a new passport from a specified email, username and password
- * and assign it to a newly created user.
- *
- */
-const createPassport = async function (user, password, accessToken) {
-  let result = {error: null, user: null}
-  return await PassportModelAPI.create({
-    protocol: 'local',
-    password: password,
-    user: user.id,
-    accessToken: accessToken
-  })
-    .then(async function (passport) {
-      result.user = user
-      return result
-    })
-    .catch(err => {
-      result.error = err
-      return result
-    })
-}
-
-/**
- * Update a passport
- *
- * This method updates a passport of a specific user
- *
- */
-const updatePassport = async function (user, passport) {
-  let result = {error: null, user: null}
-  return PassportModelAPI.updateOne(passport)
-    .then(function (passport) {
-      result.user = user
-      return result
-    })
-    .catch(err => {
-      result.error = err
-      return result
-    })
-}
-
-/**
- * Register a new user
- *
- * This method creates a new user from a specified email, username and password
- * and assign the newly created user a local Passport.
- *
- */
-export const createUser = async function (_user) {
-  let result = {error: null, user: null}
-  try {
-    var accessToken = generateToken()
-    var password = await hashPassword(_user.password)
-    delete _user.password
-
-    return await UserModelAPI.create(_user)
-      .then(async function (user) {
-        return await createPassport(user, password, accessToken)
-      })
-      .catch(err => {
-        result.error = err
-        return result
-      })
-  } catch (err) {
-    result.error = err
-    return result
-  }
-}
-
-/**
- * Update user
- *
- * This method updates an user based on its id or username if id is not present
- * and assign the newly created user a local Passport.
- *
- */
-export const updateUser = async function (_user) {
-  try {
-    var accessToken = generateToken()
-    var password = await hashPassword(_user.password)
-
-    delete _user.password
-
-    let result = {user: null, error: null}
-
-    await UserModelAPI.findByIdAndUpdate(_user.id, _user, {
-      new: true
-    })
-      .then(async function (user) {
-        // Check if password has a string to replace it
-        if (!!password) {
-          await PassportModelAPI.findOne({
-            protocol: 'local',
-            user: user.id
-          })
-            .then(async function (passport) {
-              if (passport) {
-                passport.password = password
-                result = await updatePassport(user, passport)
-              } else {
-                result = await createPassport(user, password, accessToken)
-              }
-            })
-            .catch(err => {
-              result.error = err
-            })
-        } else {
-          result.user = user
-        }
-      })
-      .catch(err => {
-        result.error = err
-      })
-
-    return result
-  } catch (err) {
-    result.error = err
-    return result
-  }
 }
 
 /**

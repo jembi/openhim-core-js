@@ -63,6 +63,9 @@
     "host": "localhost"
   },
   "authentication": {
+    "sessionKey": "r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#",
+    "maxAge": 7200000,
+    "salt": 10,
     "enableMutualTLSAuthentication": true,
     "enableBasicAuthentication": true,
     "enableCustomTokenAuthentication": false,

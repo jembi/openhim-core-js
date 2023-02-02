@@ -35,9 +35,8 @@ import * as tcpAdapter from './tcpAdapter'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
 import * as upgradeDB from './upgradeDB'
 import {KeystoreModel} from './model/keystore'
-import {UserModel} from './model/users'
+import {UserModel, createUser} from './model/users'
 import {appRoot, config, connectionAgenda} from './config'
-import {local} from './protocols'
 
 mongoose.Promise = Promise
 
@@ -348,19 +347,19 @@ if (cluster.isMaster && !module.parent) {
       mongo: connectionAgenda
     })
 
-    agenda.on('start', job =>
-      logger.info(
-        `starting job: ${job.attrs.name}, Last Ran at: ${job.attrs.lastRunAt}`
-      )
-    )
+    // agenda.on('start', job =>
+      // logger.info(
+      //   `starting job: ${job.attrs.name}, Last Ran at: ${job.attrs.lastRunAt}`
+      // )
+    // )
 
     agenda.on('fail', (err, job) =>
       logger.error(`Job ${job.attrs.name} failed with ${err.message}`)
     )
 
-    agenda.on('complete', job =>
-      logger.info(`Job ${job.attrs.name} has completed`)
-    )
+    // agenda.on('complete', job =>
+      // logger.info(`Job ${job.attrs.name} has completed`)
+    // )
 
     agenda.on('ready', () => {
       if (config.alerts.enableAlerts) {
@@ -473,7 +472,7 @@ if (cluster.isMaster && !module.parent) {
         return callback(err)
       }
       if (!user) {
-        return await local.createUser(rootUser).then((res) => {
+        return await createUser(rootUser).then((res) => {
           if (res.error) {
             logger.error(`Could not save root user: ${res.error}`)
             return callback(res.error)
