@@ -6,7 +6,7 @@ import {local, basic} from './protocols'
 import {UserModelAPI} from './model'
 
 /**
- * Load Strategies: Local and Basic 
+ * Load Strategies: Local and Basic
  *
  */
 passport.loadStrategies = function () {
@@ -57,7 +57,7 @@ passport.serializeUser(function (user, next) {
 
 /**
  * Deserialize User
- * 
+ *
  */
 passport.deserializeUser(async function (email, next) {
   try {

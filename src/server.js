@@ -472,11 +472,11 @@ if (cluster.isMaster && !module.parent) {
         return callback(err)
       }
       if (!user) {
-        return await createUser(rootUser).then((res) => {
+        return await createUser(rootUser).then(res => {
           if (res.error) {
             logger.error(`Could not save root user: ${res.error}`)
             return callback(res.error)
-          } 
+          }
           logger.info('Root user created.')
           return callback()
         })

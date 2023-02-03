@@ -81,6 +81,7 @@ export function isRunning() {
   return live
 }
 
+/* eslint-disable no-unused-vars */
 async function finalizeTaskRound(task) {
   const result = await TaskModel.findOne({_id: task._id}, {status: 1})
   if (result.status === 'Processing' && task.remainingTransactions !== 0) {
@@ -128,9 +129,12 @@ async function processNextTaskRound(task) {
     logger.info(
       `Processing of task ${task._id} paused. Remaining transactions = ${task.remainingTransactions}`
     )
-    TaskModel.findByIdAndUpdate({_id: task._id}, {
-      remainingTransactions: task.remainingTransactions
-    })
+    TaskModel.findByIdAndUpdate(
+      {_id: task._id},
+      {
+        remainingTransactions: task.remainingTransactions
+      }
+    )
 
     return
   }
@@ -166,7 +170,8 @@ async function processNextTaskRound(task) {
 
   await Promise.all(promises)
   logger.info(
-    `Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remainings `, task.batchSize
+    `Round completed for rerun task #${task._id} - ${task.remainingTransactions} transactions remainings `,
+    task.batchSize
   )
 
   if (task.remainingTransactions) {

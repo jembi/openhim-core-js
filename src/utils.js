@@ -211,6 +211,6 @@ export async function hashPassword(password) {
       })
     })
   } else {
-    return Promise.reject(new Error("Password wasn't provided"));
+    return Promise.reject(new Error("Password wasn't provided"))
   }
 }

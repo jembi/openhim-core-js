@@ -41,26 +41,28 @@ export function setupApp(done) {
   // Configure Sessions Middleware
   app.keys = [config.authentication.sessionKey]
   app.use(
-    session({
-      maxAge: config.authentication.maxAge,
-      resave: false,
-      secure: true,
-      httpOnly: true,
-      sameSite: "none", 
-      store: new MongooseStore()
-    },
-    app
-  ));
+    session(
+      {
+        maxAge: config.authentication.maxAge,
+        resave: false,
+        secure: true,
+        httpOnly: true,
+        sameSite: 'none',
+        store: new MongooseStore()
+      },
+      app
+    )
+  )
 
   // Add a body-parser
   const limitMB = config.api.maxPayloadSizeMB || 16
   app.use(bodyParser({jsonLimit: limitMB * 1024 * 1024}))
 
-  app.use(passport.initialize());
-  app.use(passport.session());  
+  app.use(passport.initialize())
+  app.use(passport.session())
 
   // Passport load strategies: local basic
-  passport.loadStrategies();
+  passport.loadStrategies()
 
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
@@ -71,13 +73,18 @@ export function setupApp(done) {
   )
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
-  
+
   // Check of logged in user
   app.use(route.get('/me', users.me))
-  
-  // Expose the authenticate route before the auth middleware so that it is publicly accessible 
-  app.use(route.post('/authenticate/local', compose([passport.authenticate('local'), users.authenticate])))
-  
+
+  // Expose the authenticate route before the auth middleware so that it is publicly accessible
+  app.use(
+    route.post(
+      '/authenticate/local',
+      compose([passport.authenticate('local'), users.authenticate])
+    )
+  )
+
   // Authenticate the API request
   app.use(authentication.authenticate)
 
@@ -90,7 +97,7 @@ export function setupApp(done) {
   )
 
   // Logout route
-  app.use(route.get('/logout', users.logout));
+  app.use(route.get('/logout', users.logout))
 
   // Define the api routes
   app.use(route.get('/users', users.getUsers))

@@ -20,7 +20,7 @@ const UserSchema = new Schema({
     required: true,
     unique: true
   },
-  passports: { type: Schema.Types.ObjectId, ref: 'Passport' },
+  passports: {type: Schema.Types.ObjectId, ref: 'Passport'},
   groups: [String],
   msisdn: String,
   dailyReport: Boolean,
@@ -39,7 +39,6 @@ const UserSchema = new Schema({
 export const UserModelAPI = connectionAPI.model('User', UserSchema)
 export const UserModel = connectionDefault.model('User', UserSchema)
 
-
 /**
  * Register a new user
  *
@@ -47,7 +46,7 @@ export const UserModel = connectionDefault.model('User', UserSchema)
  * and assign the newly created user a local Passport.
  *
  */
- export const createUser = async function (_user) {
+export const createUser = async function (_user) {
   let result = {error: null, user: null}
   try {
     let password = await hashPassword(_user.password)
@@ -81,13 +80,12 @@ export const updateUser = async function (_user) {
 
     delete _user.password
 
-
     await UserModelAPI.findByIdAndUpdate(_user.id, _user, {
       new: true
     })
       .then(async function (user) {
         // Check if password has a string to replace it
-        if (!!password) {
+        if (password) {
           await PassportModelAPI.findOne({
             protocol: 'local',
             user: user.id

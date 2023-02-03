@@ -25,7 +25,7 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
  */
 export function me(ctx) {
   if (ctx.req.user) {
-    ctx.body = { user: ctx.req.user }
+    ctx.body = {user: ctx.req.user}
     ctx.status = 201
   } else {
     ctx.body = 'Not authenticated'
@@ -35,7 +35,7 @@ export function me(ctx) {
 
 export async function authenticate(ctx) {
   const body = ctx.request.body
-  
+
   try {
     const user = await UserModelAPI.findOne({
       email: utils.caseInsensitiveRegex(body.username)
@@ -60,7 +60,7 @@ export async function authenticate(ctx) {
         logger.debug('Processed internal audit')
       )
     } else {
-      ctx.body = "User Authenticated successfully"
+      ctx.body = 'User Authenticated successfully'
       ctx.status = 201
     }
   } catch (e) {

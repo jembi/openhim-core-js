@@ -88,6 +88,7 @@
   "devDependencies": {
     "@babel/cli": "^7.15.4",
     "@babel/core": "^7.15.5",
+    "@babel/eslint-parser": "^7.19.1",
     "@babel/preset-env": "^7.15.6",
     "@babel/register": "^7.15.3",
     "codecov": "^3.8.3",
