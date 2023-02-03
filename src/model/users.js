@@ -1,7 +1,5 @@
 'use strict'
 
-import crypto from 'crypto'
-import base64URL from 'base64url'
 import {Schema} from 'mongoose'
 
 import {PassportModelAPI, createPassport, updatePassport} from './passport'
