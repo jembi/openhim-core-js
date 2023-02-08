@@ -25,16 +25,7 @@ import {PassportModelAPI} from '../model/passport'
  *
  */
 export const login = async function (email, password, next) {
-  let query = {}
-
-  if (email) {
-    query.email = email
-  } else {
-    logger.error(`Invalid Email ${email}, denying access to API`)
-    return next(null, false)
-  }
-
-  await UserModelAPI.findOne(query, async function (err, user) {
+  await UserModelAPI.findOne({email}, async function (err, user) {
     if (err) {
       logger.error(err)
       return next(null, false)
@@ -57,13 +48,9 @@ export const login = async function (email, password, next) {
         }
         if (passport) {
           validatePassword(passport, password, function (err, res) {
-            if (err) {
-              logger.error(err)
-              return next(null, false)
-            }
-            if (!res) {
+            if (err || !res) {
               logger.error(
-                `Wrong password entered by ${email}, denying access to API`
+                `Wrong password entered by ${email}, denying access to API ${err}`
               )
               return next(null, false)
             } else {
