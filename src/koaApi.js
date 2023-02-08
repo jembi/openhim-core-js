@@ -39,11 +39,11 @@ export function setupApp(done) {
   app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE', credentials: true}))
 
   // Configure Sessions Middleware
-  app.keys = [config.authentication.sessionKey]
+  app.keys = [config.api.sessionKey || "r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#"]
   app.use(
     session(
       {
-        maxAge: config.authentication.maxAge,
+        maxAge: config.api.maxAge || 7200000,
         resave: false,
         secure: true,
         httpOnly: true,
