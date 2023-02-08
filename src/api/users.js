@@ -466,11 +466,11 @@ export async function updateUser(ctx, email) {
       ctx.status = 404
       return
     }
-  } catch (error) {
+  } catch (e) {
     utils.logAndSetResponse(
       ctx,
       500,
-      `Could not find user with email ${email} via the API`,
+      `Could not find user with email ${email} via the API ${e}`,
       'error'
     )
     return

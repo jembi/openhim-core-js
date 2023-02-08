@@ -79,19 +79,19 @@ export const createUser = async function (_user) {
  */
 export const updateUser = async function (_user) {
   // Create a clone to _user
-  const userToBeCreated = {..._user}
+  const userToBeUpdated = {..._user}
 
   let result = {user: null, error: null}
 
   try {
     let password
-    if (userToBeCreated.password) {
-      password = await hashPassword(userToBeCreated.password)
+    if (userToBeUpdated.password) {
+      password = await hashPassword(userToBeUpdated.password)
 
-      delete userToBeCreated.password
+      delete userToBeUpdated.password
     }
 
-    await UserModelAPI.findByIdAndUpdate(userToBeCreated.id, userToBeCreated, {
+    await UserModelAPI.findByIdAndUpdate(userToBeUpdated.id, userToBeUpdated, {
       new: true
     })
       .then(async function (user) {
