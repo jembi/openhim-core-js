@@ -16,6 +16,7 @@ import {ChannelModelAPI} from '../../src/model/channels'
 import {ClientModelAPI} from '../../src/model/clients'
 import {KeystoreModelAPI} from '../../src/model/keystore'
 import {config} from '../../src/config'
+import {UserModelAPI} from '../../src/model'
 
 const {SERVER_PORTS, BASE_URL} = constants
 
@@ -117,11 +118,18 @@ describe('API Integration Tests', () => {
   })
 
   describe('Authentication API tests', () => {
+    const user = {
+      firstname: 'test',
+      surname: 'with no password',
+      email: 'test@doe.net'
+    }
+
     before(async () => {
       const startPromise = promisify(server.start)
       await startPromise({apiPort: SERVER_PORTS.apiPort})
       await testUtils.setupTestUsers()
       await testUtils.setImmediatePromise()
+      await new UserModelAPI(user).save()
       await AuditModel.deleteMany({})
     })
 
@@ -131,6 +139,7 @@ describe('API Integration Tests', () => {
 
     after(async () => {
       await Promise.all([
+        UserModelAPI.deleteMany({}),
         testUtils.cleanupTestUsers(),
         promisify(server.stop)()
       ])
@@ -192,6 +201,30 @@ describe('API Integration Tests', () => {
       }
 
       await request(BASE_URL).post('/authenticate/local').send(user).expect(401)
+
+      await request(BASE_URL).get('/channels').expect(401)
+
+      await testUtils.pollCondition(() =>
+        AuditModel.countDocuments().then(c => c === 1)
+      )
+      const audits = await AuditModel.find({})
+
+      audits.length.should.be.exactly(1)
+      audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('8') // failure
+      audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
+      audits[0].eventIdentification.eventTypeCode.displayName.should.be.equal(
+        'Login'
+      )
+      audits[0].activeParticipant.length.should.be.exactly(2)
+      audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
+      audits[0].activeParticipant[1].userID.should.match(/Unknown with ip/)
+    })
+
+    it('should audit an unsuccessful login when user with no password set yet', async () => {
+      await request(BASE_URL)
+        .post('/authenticate/local')
+        .send({username: user.email, password: 'password'})
+        .expect(401)
 
       await request(BASE_URL).get('/channels').expect(401)
 
@@ -328,6 +361,85 @@ describe('API Integration Tests', () => {
       audits[0].activeParticipant.length.should.be.exactly(2)
       audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
       audits[0].activeParticipant[1].userID.should.be.equal('root@jembi.org')
+    })
+  })
+
+  describe('Authentication API types tests', () => {
+    afterEach(async () => {
+      await Promise.all([
+        AuditModel.deleteMany({}),
+        testUtils.cleanupTestUsers(),
+        promisify(server.stop)()
+      ])
+    })
+
+    after(async () => {
+      config.api.authenticationTypes = ['local', 'basic']
+    })
+
+    it('should audit an unsuccessful login with disabled basic auth', async () => {
+      config.api.authenticationTypes = ['local']
+
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+      await testUtils.setupTestUsers()
+      await testUtils.setImmediatePromise()
+      await AuditModel.deleteMany({})
+
+      await request(BASE_URL)
+        .get('/channels')
+        .set(
+          'Authorization',
+          `Basic ${Buffer.from(`${testUtils.rootUser.email}:password`).toString(
+            'base64'
+          )}`
+        )
+        .expect(401)
+
+      await testUtils.pollCondition(() =>
+        AuditModel.countDocuments().then(c => c === 1)
+      )
+      const audits = await AuditModel.find()
+
+      audits.length.should.be.exactly(1)
+      audits.length.should.be.exactly(1)
+      audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('8') // failure
+      audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
+      audits[0].eventIdentification.eventTypeCode.displayName.should.be.equal(
+        'Login'
+      )
+      audits[0].activeParticipant.length.should.be.exactly(2)
+      audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
+      audits[0].activeParticipant[1].userID.should.match(/Unknown with ip/)
+    })
+
+    it('should audit an unsuccessful login with disabled local auth', async () => {
+      config.api.authenticationTypes = []
+
+      await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+      await testUtils.setupTestUsers()
+      await testUtils.setImmediatePromise()
+      await AuditModel.deleteMany({})
+
+      const user = testUtils.rootUser
+      const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(401)
+
+      await testUtils.pollCondition(() =>
+        AuditModel.countDocuments().then(c => c === 1)
+      )
+      const audits = await AuditModel.find()
+
+      audits.length.should.be.exactly(1)
+      audits.length.should.be.exactly(1)
+      audits[0].eventIdentification.eventOutcomeIndicator.should.be.equal('8') // failure
+      audits[0].eventIdentification.eventTypeCode.code.should.be.equal('110122')
+      audits[0].eventIdentification.eventTypeCode.displayName.should.be.equal(
+        'Login'
+      )
+      audits[0].activeParticipant.length.should.be.exactly(2)
+      audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
+      audits[0].activeParticipant[1].userID.should.match(/Unknown with ip/)
     })
   })
 

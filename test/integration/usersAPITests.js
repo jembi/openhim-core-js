@@ -14,6 +14,7 @@ import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {UserModelAPI, createUser} from '../../src/model/users'
 import {PassportModelAPI} from '../../src/model'
+import {config} from '../../src/config'
 
 describe('API Integration Tests', () => {
   const {SERVER_PORTS, BASE_URL} = constants
@@ -60,6 +61,8 @@ describe('API Integration Tests', () => {
     }
 
     before(async () => {
+      config.api.maxAge = 1000
+
       await Promise.all([
         promisify(server.start)({apiPort: SERVER_PORTS.apiPort}),
         testUtils.setupTestUsers(),
@@ -89,6 +92,59 @@ describe('API Integration Tests', () => {
         const cookie2 = await testUtils.authenticate(request, BASE_URL, _user2)
 
         cookie2.should.not.be.empty()
+      })
+
+      it('should return user when authenticated with local auth and requesting me', async () => {
+        const user = {email: user1.email, password: user1.password}
+        const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+        const res = await request(BASE_URL)
+          .get('/me')
+          .set('Cookie', cookie)
+          .expect(200)
+
+        res.body.should.have.property('user')
+        res.body.user.should.have.property('firstname', user1.firstname)
+        res.body.user.should.have.property('surname', user1.surname)
+        res.body.user.should.have.property('email', user1.email)
+        res.body.user.should.have.property('groups', user1.groups)
+        res.body.user.should.not.have.property('password')
+      })
+
+      it('should return 404 when unauthenticated and requesting me', async () => {
+        const res = await request(BASE_URL).get('/me').expect(404)
+
+        res.text.should.be.equal('Not authenticated')
+      })
+
+      it('should return 404 when cookies are expired and requesting me', async () => {
+        const user = {email: user1.email, password: user1.password}
+        const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+        await new Promise(resolve => setTimeout(resolve, 1000))
+
+        const res = await request(BASE_URL)
+          .get('/me')
+          .set('Cookie', cookie)
+          .expect(404)
+
+        res.text.should.be.equal('Not authenticated')
+      })
+    })
+
+    describe('*logout', () => {
+      it('should logout and remove the session', async () => {
+        const user = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+        await request(BASE_URL).get('/logout').set('Cookie', cookie).expect(200)
+
+        await request(BASE_URL).get('/me').set('Cookie', cookie).expect(404)
+
+        await request(BASE_URL)
+          .get('/transactions')
+          .set('Cookie', cookie)
+          .expect(401)
       })
     })
 
@@ -168,9 +224,11 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a not found error', async () => {
-        await request(BASE_URL)
-          .get('/token/hSas987asdS7y9vqqKJHDSoARXtA098g')
-          .expect(404)
+        const token = 'hSas987asdS7y9vqqKJHDSoARXtA098g'
+
+        const res = await request(BASE_URL).get(`/token/${token}`).expect(404)
+
+        res.text.should.be.equal(`User with token ${token} could not be found.`)
       })
 
       it('should return a expired token error', async () => {
@@ -220,6 +278,18 @@ describe('API Integration Tests', () => {
           .put('/token/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg')
           .send(updates)
           .expect(410)
+      })
+
+      it('should return a not found error', async () => {
+        const updates = {}
+        const token = 'hSas987asdS7y9vqqKJHDSoARXtA098g'
+
+        const res = await request(BASE_URL)
+          .put(`/token/${token}`)
+          .send(updates)
+          .expect(404)
+
+        res.text.should.be.equal(`User with token ${token} could not be found.`)
       })
     })
 
@@ -379,7 +449,8 @@ describe('API Integration Tests', () => {
           _id: 'thisShouldBeIgnored',
           surname: 'Crichton',
           email: 'rg..@jembi.org',
-          groups: ['admin', 'RHIE', 'HISP']
+          groups: ['admin', 'RHIE', 'HISP'],
+          password: 'new-password'
         }
 
         await request(BASE_URL)
@@ -391,6 +462,10 @@ describe('API Integration Tests', () => {
         const user = await UserModelAPI.findOne({email: 'rg..@jembi.org'})
         user.should.have.property('surname', 'Crichton')
         user.should.have.property('email', 'rg..@jembi.org')
+        user.should.have.property('token', null)
+        user.should.have.property('tokenType', null)
+        user.should.have.property('locked', false)
+        user.should.have.property('expiry', null)
         user.groups.should.have.length(3)
       })
 
@@ -413,6 +488,19 @@ describe('API Integration Tests', () => {
 
         const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
         user.should.have.property('email', updates.email)
+      })
+
+      it('should return a not found error', async () => {
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        const updates = {}
+
+        await request(constants.BASE_URL)
+          .put('/users/doesnt-exist@test.com')
+          .set('Cookie', cookie)
+          .send(updates)
+          .expect(404)
       })
 
       it('should not allow non admin users to update a user', async () => {
@@ -513,6 +601,16 @@ describe('API Integration Tests', () => {
           .expect(403)
 
         await request(BASE_URL).del('/users/bfm@crazy.net').expect(401)
+      })
+
+      it('should not be able to remove the root user', async () => {
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        await request(BASE_URL)
+          .del('/users/root@openhim.org')
+          .set('Cookie', cookie)
+          .expect(403)
       })
     })
   })
