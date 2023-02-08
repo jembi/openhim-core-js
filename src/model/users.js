@@ -47,12 +47,16 @@ export const UserModel = connectionDefault.model('User', UserSchema)
  *
  */
 export const createUser = async function (_user) {
-  let result = {error: null, user: null}
-  try {
-    let password = await hashPassword(_user.password)
-    delete _user.password
+  // Create a clone to _user
+  const userToBeCreated = {..._user}
 
-    return await UserModelAPI.create(_user)
+  let result = {error: null, user: null}
+
+  try {
+    let password = await hashPassword(userToBeCreated.password)
+    delete userToBeCreated.password
+
+    return await UserModelAPI.create(userToBeCreated)
       .then(async function (user) {
         return await createPassport(user, password)
       })
@@ -74,13 +78,20 @@ export const createUser = async function (_user) {
  *
  */
 export const updateUser = async function (_user) {
+  // Create a clone to _user
+  const userToBeCreated = {..._user}
+
   let result = {user: null, error: null}
+
   try {
-    let password = await hashPassword(_user.password)
+    let password
+    if (userToBeCreated.password) {
+      password = await hashPassword(userToBeCreated.password)
 
-    delete _user.password
+      delete userToBeCreated.password
+    }
 
-    await UserModelAPI.findByIdAndUpdate(_user.id, _user, {
+    await UserModelAPI.findByIdAndUpdate(userToBeCreated.id, userToBeCreated, {
       new: true
     })
       .then(async function (user) {

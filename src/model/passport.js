@@ -99,7 +99,7 @@ export const createPassport = async function (user, password) {
  */
 export const updatePassport = async function (user, passport) {
   let result = {error: null, user: null}
-  return PassportModelAPI.updateOne(passport)
+  return PassportModelAPI.findByIdAndUpdate(passport.id, passport)
     .then(function () {
       result.user = user
       return result

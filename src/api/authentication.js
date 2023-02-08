@@ -42,7 +42,7 @@ async function authenticateBasic(ctx, next) {
     } else if (user) {
       ctx.req.user = user
       ctx.body = 'User Authenticated Successfully'
-      ctx.status = 201
+      ctx.status = 200
       return ctx.req.user
     }
   })(ctx, next)
