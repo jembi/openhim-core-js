@@ -14,7 +14,7 @@ import * as testUtils from '../utils'
 import {ChannelModelAPI} from '../../src/model/channels'
 import {ContactGroupModelAPI} from '../../src/model/contactGroups'
 
-const {SERVER_PORTS} = constants
+const {SERVER_PORTS, BASE_URL} = constants
 
 describe('API Integration Tests', () => {
   describe('Contact Groups REST Api Testing', () => {
@@ -30,7 +30,21 @@ describe('API Integration Tests', () => {
       ]
     }
 
-    let authDetails = {}
+    let rootCookie = '',
+      nonRootCookie = ''
+
+    beforeEach(async () => {
+      rootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.rootUser
+      )
+      nonRootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser
+      )
+    })
 
     before(async () => {
       await testUtils.setupTestUsers()
@@ -42,22 +56,15 @@ describe('API Integration Tests', () => {
       await promisify(server.stop)()
     })
 
-    beforeEach(async () => {
-      authDetails = await testUtils.getAuthDetails()
-    })
-
     afterEach(async () => {
       await ContactGroupModelAPI.deleteMany({})
     })
 
     describe('*addContactGroup', () => {
       it('should add contact group to db and return status 201 - group created', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/groups')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(contactGroupData)
           .expect(201)
         const contactGroup = await ContactGroupModelAPI.findOne({
@@ -69,12 +76,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should only allow an admin user to add a contacGroup', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/groups')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(contactGroupData)
           .expect(403)
       })
@@ -103,12 +107,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should get contactGroup by contactGroupId and return status 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/groups/${contactGroupId}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         res.body.group.should.equal('Group 1')
         res.body.users.length.should.equal(6)
@@ -119,22 +120,16 @@ describe('API Integration Tests', () => {
       })
 
       it('should return status 404 if not found', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/groups/000000000000000000000000')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(404)
       })
 
       it('should not allow a non admin user to fetch a contactGroups', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(`/groups/${contactGroupId}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })
@@ -181,23 +176,17 @@ describe('API Integration Tests', () => {
         await new ContactGroupModelAPI(contactGroupData2).save()
         await new ContactGroupModelAPI(contactGroupData3).save()
         await new ContactGroupModelAPI(contactGroupData4).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/groups')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         res.body.length.should.equal(4)
       })
 
       it('should not allow a non admin user to fetch all contact groups', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/groups')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })
@@ -227,12 +216,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/groups/${contactGroup._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updates)
           .expect(200)
         contactGroup = await ContactGroupModelAPI.findById(contactGroup._id)
@@ -246,12 +232,9 @@ describe('API Integration Tests', () => {
 
       it('should not allow a non admin user to update a contactGroup', async () => {
         const updates = {}
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/groups/000000000000000000000000')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(updates)
           .expect(403)
       })
@@ -274,12 +257,9 @@ describe('API Integration Tests', () => {
           contactGroupData
         ).save()
         const countBefore = await ContactGroupModelAPI.countDocuments()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del(`/groups/${contactGroup._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         const countAfter = await ContactGroupModelAPI.countDocuments()
         const notFoundDoc = await ContactGroupModelAPI.findOne({
@@ -332,12 +312,9 @@ describe('API Integration Tests', () => {
         }
         await new ChannelModelAPI(channel1).save()
         const countBefore = await ContactGroupModelAPI.countDocuments()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del(`/groups/${contactGroup._id}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(409)
         const countAfter = await ContactGroupModelAPI.countDocuments()
         await ContactGroupModelAPI.findOne({group: 'Group 2'})
@@ -346,12 +323,9 @@ describe('API Integration Tests', () => {
 
       it('should not allow a non admin user to remove a contactGroup', async () => {
         contactGroupData = {}
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del('/groups/000000000000000000000000')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })

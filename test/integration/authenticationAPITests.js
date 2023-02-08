@@ -17,18 +17,19 @@ import {ClientModelAPI} from '../../src/model/clients'
 import {KeystoreModelAPI} from '../../src/model/keystore'
 import {config} from '../../src/config'
 
-const {SERVER_PORTS} = constants
+const {SERVER_PORTS, BASE_URL} = constants
 
 describe('API Integration Tests', () => {
   describe('Retrieve Enabled Authentication types', () => {
-    let authDetails = null
     const authConfig = config.authentication
 
+    let rootCookie = '',
+      nonRootCookie = ''
+
     before(async () => {
-      await testUtils.setupTestUsers()
-      authDetails = testUtils.getAuthDetails()
       const startPromise = promisify(server.start)
       await startPromise({apiPort: SERVER_PORTS.apiPort})
+      await testUtils.setupTestUsers()
       await testUtils.setImmediatePromise()
       await AuditModel.deleteMany({})
     })
@@ -37,8 +38,19 @@ describe('API Integration Tests', () => {
       await AuditModel.deleteMany({})
     })
 
-    beforeEach(() => {
+    beforeEach(async () => {
       config.authentication = authConfig
+
+      rootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.rootUser
+      )
+      nonRootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser
+      )
     })
 
     after(async () => {
@@ -48,25 +60,23 @@ describe('API Integration Tests', () => {
       ])
     })
 
+    it('should return 401 for unauthenticated user', async () => {
+      await request(BASE_URL).get('/authentication/types').expect(401)
+    })
+
     it('should only allow an admin user to retrieve authentication types', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/authentication/types')
-        .set('auth-username', testUtils.nonRootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', nonRootCookie)
         .expect(403)
     })
 
     it('should return an error when the authentication object is invalid', async () => {
       config.authentication = {}
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/authentication/types')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(500)
     })
 
@@ -76,12 +86,9 @@ describe('API Integration Tests', () => {
       config.authentication.enableJWTAuthentication = false
       config.authentication.enableCustomTokenAuthentication = true
 
-      const result = await request(constants.BASE_URL)
+      const result = await request(BASE_URL)
         .get('/authentication/types')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       result.body.length.should.be.equal(3)
@@ -96,12 +103,9 @@ describe('API Integration Tests', () => {
       config.authentication.enableJWTAuthentication = true
       config.authentication.enableCustomTokenAuthentication = true
 
-      const result = await request(constants.BASE_URL)
+      const result = await request(BASE_URL)
         .get('/authentication/types')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .expect(200)
 
       result.body.length.should.be.equal(4)
@@ -113,13 +117,10 @@ describe('API Integration Tests', () => {
   })
 
   describe('Authentication API tests', () => {
-    let authDetails = null
-
     before(async () => {
-      await testUtils.setupTestUsers()
-      authDetails = testUtils.getAuthDetails()
       const startPromise = promisify(server.start)
       await startPromise({apiPort: SERVER_PORTS.apiPort})
+      await testUtils.setupTestUsers()
       await testUtils.setImmediatePromise()
       await AuditModel.deleteMany({})
     })
@@ -136,13 +137,10 @@ describe('API Integration Tests', () => {
     })
 
     it('should audit a successful login on an API endpoint', async () => {
-      await request(constants.BASE_URL)
-        .get('/channels')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
-        .expect(200)
+      const user = testUtils.rootUser
+      const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(200)
 
       await testUtils.pollCondition(() =>
         AuditModel.countDocuments().then(c => c === 1)
@@ -161,7 +159,7 @@ describe('API Integration Tests', () => {
     })
 
     it('should audit a successful login on an API endpoint with basic auth', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/channels')
         .set(
           'Authorization',
@@ -188,13 +186,14 @@ describe('API Integration Tests', () => {
     })
 
     it('should audit an unsuccessful login on an API endpoint', async () => {
-      await request(constants.BASE_URL)
-        .get('/channels')
-        .set('auth-username', 'wrong@email.org')
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
-        .expect(401)
+      const user = {
+        username: 'wrong@email.org',
+        password: 'password'
+      }
+
+      await request(BASE_URL).post('/authenticate/local').send(user).expect(401)
+
+      await request(BASE_URL).get('/channels').expect(401)
 
       await testUtils.pollCondition(() =>
         AuditModel.countDocuments().then(c => c === 1)
@@ -209,11 +208,11 @@ describe('API Integration Tests', () => {
       )
       audits[0].activeParticipant.length.should.be.exactly(2)
       audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
-      audits[0].activeParticipant[1].userID.should.be.equal('wrong@email.org')
+      audits[0].activeParticipant[1].userID.should.match(/Unknown with ip/)
     })
 
     it('should audit an unsuccessful login on an API endpoint with basic auth and incorrect email', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/channels')
         .set(
           'Authorization',
@@ -234,11 +233,11 @@ describe('API Integration Tests', () => {
       )
       audits[0].activeParticipant.length.should.be.exactly(2)
       audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
-      audits[0].activeParticipant[1].userID.should.be.equal('wrong@email.org')
+      audits[0].activeParticipant[1].userID.should.match(/Unknown with ip/)
     })
 
     it('should audit an unsuccessful login on an API endpoint with basic auth and incorrect password', async () => {
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .get('/channels')
         .set(
           'Authorization',
@@ -261,29 +260,27 @@ describe('API Integration Tests', () => {
       )
       audits[0].activeParticipant.length.should.be.exactly(2)
       audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
-      audits[0].activeParticipant[1].userID.should.be.equal('root@jembi.org')
+      audits[0].activeParticipant[1].userID.should.match(/Unknown with ip/)
     })
 
     it('should NOT audit a successful login on an auditing exempt API endpoint', async () => {
-      await request(constants.BASE_URL)
-        .get('/audits')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
-        .expect(200)
+      const user = testUtils.rootUser
+      const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+      await request(BASE_URL).get('/audits').set('Cookie', cookie).expect(200)
       const audits = await AuditModel.find({})
       audits.length.should.be.exactly(0)
     })
 
     it('should audit an unsuccessful login on an auditing exempt API endpoint', async () => {
-      await request(constants.BASE_URL)
-        .get('/audits')
-        .set('auth-username', 'wrong@email.org')
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
-        .expect(401)
+      const user = {
+        username: 'wrong@email.org',
+        password: 'password'
+      }
+
+      await request(BASE_URL).post('/authenticate/local').send(user).expect(401)
+
+      await request(BASE_URL).get('/audits').expect(401)
 
       await testUtils.pollCondition(() =>
         AuditModel.countDocuments().then(c => c === 1)
@@ -298,28 +295,28 @@ describe('API Integration Tests', () => {
       )
       audits[0].activeParticipant.length.should.be.exactly(2)
       audits[0].activeParticipant[0].userID.should.be.equal('OpenHIM')
-      audits[0].activeParticipant[1].userID.should.be.equal('wrong@email.org')
+      audits[0].activeParticipant[1].userID.should.match(/Unknown with ip/)
     })
 
     it('should NOT audit a successful login on /transactions if the view is not full', async () => {
-      await request(constants.BASE_URL)
+      const user = testUtils.rootUser
+      const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+      await request(BASE_URL)
         .get('/transactions') // default is simple
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', cookie)
         .expect(200)
       const audits = await AuditModel.find({})
       audits.length.should.be.exactly(0)
     })
 
     it('should audit a successful login on /transactions if the view is full', async () => {
-      await request(constants.BASE_URL)
+      const user = testUtils.rootUser
+      const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+      await request(BASE_URL)
         .get('/transactions?filterRepresentation=full')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', cookie)
         .expect(200)
       const audits = await AuditModel.find()
       audits.length.should.be.exactly(1)

@@ -12,64 +12,61 @@ import * as constants from '../constants'
 import * as contact from '../../src/contact'
 import * as server from '../../src/server'
 import * as testUtils from '../utils'
-import {UserModelAPI} from '../../src/model/users'
+import {UserModelAPI, createUser} from '../../src/model/users'
+import {PassportModelAPI} from '../../src/model'
 
 describe('API Integration Tests', () => {
-  const {SERVER_PORTS} = constants
+  const {SERVER_PORTS, BASE_URL} = constants
 
   describe('Users REST Api testing', () => {
-    const user1 = new UserModelAPI({
+    const user1 = {
       firstname: 'Ryan',
       surname: 'Chrichton',
       email: 'r..@jembi.org',
-      passwordAlgorithm: 'sha512',
-      passwordHash: '796a5a8e-4e44-4d9f-9e04-c27ec6374ffa',
-      passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7',
+      password: 'password',
       groups: ['admin', 'RHIE']
-    })
+    }
 
-    const user2 = new UserModelAPI({
+    const user2 = {
       firstname: 'Bill',
       surname: 'Murray',
       email: 'bfm@crazy.net',
-      passwordAlgorithm: 'sha512',
-      passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e',
-      passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
+      password: 'password',
       groups: ['HISP']
-    })
+    }
 
-    let newUser = new UserModelAPI({
+    let newUser = {
       firstname: 'Jane',
       surname: 'Doe',
       email: 'jane@doe.net',
       token: 'l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM',
       tokenType: 'newUser',
+      password: 'password',
       locked: true,
       expiry: moment().add(2, 'days').utc().format(),
       groups: ['HISP']
-    })
+    }
 
-    const newUserExpired = new UserModelAPI({
+    const newUserExpired = {
       firstname: 'John',
       surname: 'Smith',
       email: 'john@smith.net',
       token: 'hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg',
       tokenType: 'newUser',
+      password: 'password',
       locked: true,
       expiry: moment().subtract(2, 'days').utc().format(),
       groups: ['HISP']
-    })
-
-    let authDetails = {}
+    }
 
     before(async () => {
       await Promise.all([
-        user1.save(),
-        user2.save(),
-        newUser.save(),
-        newUserExpired.save(),
+        promisify(server.start)({apiPort: SERVER_PORTS.apiPort}),
         testUtils.setupTestUsers(),
-        promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
+        createUser(user1),
+        createUser(user2),
+        createUser(newUser),
+        createUser(newUserExpired)
       ])
     })
 
@@ -81,41 +78,23 @@ describe('API Integration Tests', () => {
       ])
     })
 
-    beforeEach(() => {
-      authDetails = testUtils.getAuthDetails()
-    })
+    describe('*authenticate', () => {
+      it('should return cookies', async () => {
+        const _user1 = {email: user1.email, password: user1.password}
+        const cookie1 = await testUtils.authenticate(request, BASE_URL, _user1)
 
-    describe('*authenticate(email)', () => {
-      it('should return the requested users salt', async () => {
-        const res = await request(constants.BASE_URL)
-          .get('/authenticate/bfm@crazy.net')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .expect(200)
+        cookie1.should.not.be.empty()
 
-        res.body.salt.should.eql('22a61686-66f6-483c-a524-185aac251fb0')
-        should.exist(res.body.ts)
+        const _user2 = {email: user2.email, password: user2.password}
+        const cookie2 = await testUtils.authenticate(request, BASE_URL, _user2)
+
+        cookie2.should.not.be.empty()
       })
-    })
-
-    it('should return the requested case insensitive users salt', async () => {
-      const res = await request(constants.BASE_URL)
-        .get('/authenticate/R..@jembi.org')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
-        .expect(200)
-
-      res.body.salt.should.eql('bf93caba-6eec-4c0c-a1a3-d968a7533fd7')
-      should.exist(res.body.ts)
     })
 
     describe('*userPasswordResetRequest(email)', () => {
       it('should return 403 when requesting root@openhim.org password reset', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/password-reset-request/root@openhim.org')
           .expect(403)
       })
@@ -124,7 +103,7 @@ describe('API Integration Tests', () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
         await stubContact.yields(null)
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/password-reset-request/r..@jembi.org')
           .expect(201)
 
@@ -141,7 +120,7 @@ describe('API Integration Tests', () => {
         const stubContact = await sinon.stub(contact, 'sendEmail')
         await stubContact.yields(null)
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/password-reset-request/R..@jembi.org')
           .expect(201)
 
@@ -156,7 +135,7 @@ describe('API Integration Tests', () => {
 
         await stubContact.yields('An error occurred trying to send the email.')
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/password-reset-request/r..@jembi.org')
           .expect(500)
 
@@ -164,7 +143,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a not found error', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/password-reset-request/test@jembi.org')
           .expect(404)
       })
@@ -172,7 +151,7 @@ describe('API Integration Tests', () => {
 
     describe('*getUserByToken(token)', () => {
       it('should return a users details (basic details)', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/token/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM')
           .expect(200)
 
@@ -184,20 +163,18 @@ describe('API Integration Tests', () => {
         res.body.locked.should.eql(true)
 
         should.exist(res.body.expiry)
-        should.not.exist(res.body.passwordAlgorithm)
-        should.not.exist(res.body.passwordHash)
-        should.not.exist(res.body.passwordSalt)
+        should.not.exist(res.body.password)
         should.not.exist(res.body.groups)
       })
 
       it('should return a not found error', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/token/hSas987asdS7y9vqqKJHDSoARXtA098g')
           .expect(404)
       })
 
       it('should return a expired token error', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/token/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg')
           .expect(410)
       })
@@ -209,12 +186,10 @@ describe('API Integration Tests', () => {
           firstname: 'Jane Sally',
           surname: 'Doe',
           msisdn: '27123456789',
-          passwordAlgorithm: 'sha256',
-          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499',
-          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
+          password: 'password-updated'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/token/l9Q87x4b0OXHM9eaUBHIv59co5NZG1bM')
           .send(updates)
           .expect(200)
@@ -223,18 +198,14 @@ describe('API Integration Tests', () => {
 
         user.should.have.property('firstname', 'Jane Sally')
         user.should.have.property('surname', 'Doe')
-        user.should.have.property(
-          'passwordHash',
-          'af200ab5-4227-4840-97d1-92ba91206499'
-        )
-        user.should.have.property(
-          'passwordSalt',
-          'eca7205c-2129-4558-85da-45845d17bd5f'
-        )
         user.should.have.property('token', null)
         user.should.have.property('tokenType', null)
         user.should.have.property('locked', false)
         user.should.have.property('expiry', null)
+
+        const passport = await PassportModelAPI.findOne({user: user.id})
+
+        passport.should.have.property('password')
       })
 
       it('should prevent an update with an expired token (expired token)', async () => {
@@ -242,12 +213,10 @@ describe('API Integration Tests', () => {
           firstname: 'Peter',
           surname: 'smith',
           msisdn: '27123456789',
-          passwordAlgorithm: 'sha256',
-          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499',
-          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f'
+          password: 'password-updated'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/token/hS40KZItS7y9vqqEGhE6ARXtAA3wNhCg')
           .send(updates)
           .expect(410)
@@ -256,12 +225,12 @@ describe('API Integration Tests', () => {
 
     describe('*getUsers()', () => {
       it('should fetch all users', async () => {
-        const res = await request(constants.BASE_URL)
+        const user = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+        const res = await request(BASE_URL)
           .get('/users')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(200)
 
         // user1, user2, newUser, newUserExpired, + the 2 API test users and the root user
@@ -269,34 +238,29 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow non admin user to fetch all users', async () => {
-        await request(constants.BASE_URL)
-          .get('/users')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
-          .expect(403)
+        const user = testUtils.nonRootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+        await request(BASE_URL).get('/users').set('Cookie', cookie).expect(403)
       })
     })
 
     describe('*addUser()', () => {
       it('should add a new user', async () => {
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
         newUser = {
           firstname: 'Bill',
           surname: 'Newman',
           email: 'bill@newman.com',
-          passwordAlgorithm: 'sha256',
-          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499',
-          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f',
+          password: 'password',
           groups: ['HISP']
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/users')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .send(newUser)
           .expect(201)
 
@@ -312,23 +276,21 @@ describe('API Integration Tests', () => {
       })
 
       it('should save new users username in lowercase only', async () => {
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
         newUser = {
           firstname: 'Matome',
           surname: 'Phoshoko',
           email: 'MATOME.Phoshoko@jembi.org',
-          passwordAlgorithm: 'sha256',
-          passwordHash: 'af200ab5-4227-4840-97d1-92ba91206499',
-          passwordSalt: 'eca7205c-2129-4558-85da-45845d17bd5f',
+          password: 'password',
           groups: ['HISP']
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/users')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
           .send(newUser)
+          .set('Cookie', cookie)
           .expect(201)
 
         const user = await UserModelAPI.findOne({
@@ -338,27 +300,29 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to add a user', async () => {
+        const authUser = testUtils.nonRootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
         newUser = {}
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/users')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .send(newUser)
           .expect(403)
+
+        await request(BASE_URL).post('/users').send(newUser).expect(401)
       })
     })
 
     describe('*findUserByUsername(email)', () => {
       it('should find a user by their email address', async () => {
-        const res = await request(constants.BASE_URL)
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        const res = await request(BASE_URL)
           .get('/users/r..@jembi.org')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(200)
 
         res.body.should.have.property('surname', 'Chrichton')
@@ -367,22 +331,24 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to find a user to email', async () => {
-        await request(constants.BASE_URL)
+        const authUser = testUtils.nonRootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        await request(BASE_URL)
           .get('/users/r..@jembi.org')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(403)
+
+        await request(BASE_URL).get('/users/r..@jembi.org').expect(401)
       })
 
       it('should always allow a user to fetch their own details', async () => {
-        const res = await request(constants.BASE_URL)
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        const res = await request(BASE_URL)
           .get(`/users/${testUtils.nonRootUser.email}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(200)
 
         res.body.should.have.property('firstname', 'Non')
@@ -392,12 +358,12 @@ describe('API Integration Tests', () => {
       })
 
       it(`should find a user regardless of email case`, async () => {
-        const res = await request(constants.BASE_URL)
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        const res = await request(BASE_URL)
           .get(`/users/${user1.email.toUpperCase()}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(200)
 
         res.body.should.have.property('email', user1.email)
@@ -406,6 +372,9 @@ describe('API Integration Tests', () => {
 
     describe('*updateUser(email)', () => {
       it('should update a specific user by email', async () => {
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
         const updates = {
           _id: 'thisShouldBeIgnored',
           surname: 'Crichton',
@@ -413,12 +382,9 @@ describe('API Integration Tests', () => {
           groups: ['admin', 'RHIE', 'HISP']
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/users/r..@jembi.org')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .send(updates)
           .expect(200)
 
@@ -429,51 +395,56 @@ describe('API Integration Tests', () => {
       })
 
       it('should update a specific user regardless of email case', async () => {
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
         const updates = {
           _id: 'thisShouldBeIgnored',
           surname: 'Crichton',
-          email: 'rg..@jembi.org',
+          email: 'r..@jembi.org',
           groups: ['admin', 'RHIE', 'HISP']
         }
 
         await request(constants.BASE_URL)
-          .put('/users/R..@jembi.org')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .put('/users/RG..@jembi.org')
+          .set('Cookie', cookie)
           .send(updates)
           .expect(200)
 
-        const user = await UserModelAPI.findOne({email: 'rg..@jembi.org'})
+        const user = await UserModelAPI.findOne({email: 'r..@jembi.org'})
         user.should.have.property('email', updates.email)
       })
 
       it('should not allow non admin users to update a user', async () => {
+        const authUser = testUtils.nonRootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
         const updates = {}
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/users/r..@jembi.org')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .send(updates)
           .expect(403)
+
+        await request(BASE_URL)
+          .put('/users/r..@jembi.org')
+          .send(updates)
+          .expect(401)
       })
 
       it('should always allow a user to update their own details', async () => {
+        const authUser = testUtils.nonRootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
         const updates = {
           _id: 'thisShouldBeIgnored',
           surname: 'Root-updated'
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/users/${testUtils.nonRootUser.email}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .send(updates)
           .expect(200)
 
@@ -484,16 +455,16 @@ describe('API Integration Tests', () => {
       })
 
       it('should NOT allow a non-admin user to update their groups', async () => {
+        const authUser = testUtils.nonRootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
         const updates = {
           _id: 'thisShouldBeIgnored',
           groups: ['admin']
         }
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(`/users/${testUtils.nonRootUser.email}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .send(updates)
           .expect(200)
 
@@ -507,12 +478,12 @@ describe('API Integration Tests', () => {
 
     describe('*removeUser(email)', () => {
       it('should remove a specific user by email', async () => {
-        await request(constants.BASE_URL)
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        await request(BASE_URL)
           .del('/users/bfm@crazy.net')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(200)
 
         const users = await UserModelAPI.find({name: 'bfm@crazy.net'})
@@ -520,12 +491,12 @@ describe('API Integration Tests', () => {
       })
 
       it('should find and remove specific user by case insensitive email', async () => {
-        await request(constants.BASE_URL)
+        const authUser = testUtils.rootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        await request(BASE_URL)
           .del('/users/BMF@crazy.Net')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(200)
 
         const users = await UserModelAPI.find({name: user2.email})
@@ -533,13 +504,15 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to remove a user', async () => {
-        await request(constants.BASE_URL)
+        const authUser = testUtils.nonRootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, authUser)
+
+        await request(BASE_URL)
           .del('/users/bfm@crazy.net')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(403)
+
+        await request(BASE_URL).del('/users/bfm@crazy.net').expect(401)
       })
     })
   })

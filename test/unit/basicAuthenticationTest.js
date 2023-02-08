@@ -50,7 +50,7 @@ describe('Basic Auth', () => {
     it('ctx.authenticated should not exist', done => {
       const ctx = buildEmptyCtx()
       basicAuthentication.authenticateUser(ctx, () => {
-        ;({}.should.not.equal(ctx.authenticated))
+        ;({}).should.not.equal(ctx.authenticated)
         return done()
       })
     }))
@@ -59,7 +59,7 @@ describe('Basic Auth', () => {
     it('ctx.authenticated should not exist', done => {
       const ctx = buildCtx('incorrect_user', 'incorrect_password')
       basicAuthentication.authenticateUser(ctx, () => {
-        ;({}.should.not.equal(ctx.authenticated))
+        ;({}).should.not.equal(ctx.authenticated)
         return done()
       })
     }))

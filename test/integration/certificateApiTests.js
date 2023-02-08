@@ -13,16 +13,15 @@ import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {KeystoreModelAPI} from '../../src/model/keystore'
 
-const {SERVER_PORTS} = constants
+const {SERVER_PORTS, BASE_URL} = constants
 
 describe('API Integration Tests', () => {
   describe('Certificate API Tests', () => {
-    let authDetails = null
+    let cookie = ''
 
     before(async () => {
-      await testUtils.setupTestUsers()
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
-      authDetails = await testUtils.getAuthDetails()
+      await testUtils.setupTestUsers()
     })
 
     after(async () => {
@@ -34,6 +33,9 @@ describe('API Integration Tests', () => {
 
     beforeEach(async () => {
       await testUtils.setupTestKeystore()
+
+      const user = testUtils.rootUser
+      cookie = await testUtils.authenticate(request, BASE_URL, user)
     })
 
     afterEach(async () => {
@@ -53,12 +55,9 @@ describe('API Integration Tests', () => {
         organizationUnit: 'testOrg unit'
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/certificates')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', cookie)
         .send(postData)
         .expect(201)
 
@@ -92,12 +91,9 @@ describe('API Integration Tests', () => {
         organizationUnit: 'testOrg unit'
       }
 
-      await request(constants.BASE_URL)
+      await request(BASE_URL)
         .post('/certificates')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', cookie)
         .send(postData)
         .expect(201)
 
@@ -110,6 +106,12 @@ describe('API Integration Tests', () => {
       should.exist(result.cert.fingerprint)
       result.cert.data.should.not.equal(serverCert.toString())
       result.key.should.not.equal(serverKey.toString())
+    })
+
+    it('Should return 401 for unanthenticated create request', async () => {
+      const postData = {}
+
+      await request(BASE_URL).post('/certificates').send(postData).expect(401)
     })
   })
 })

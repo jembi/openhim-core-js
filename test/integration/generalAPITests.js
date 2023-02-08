@@ -2,15 +2,15 @@
 
 /* eslint-env mocha */
 
-import crypto from 'crypto'
 import request from 'supertest'
 import {promisify} from 'util'
 
 import * as constants from '../constants'
 import * as server from '../../src/server'
-import {UserModel} from '../../src/model'
+import {UserModel, createUser} from '../../src/model'
+import {authenticate} from '../utils'
 
-const {SERVER_PORTS} = constants
+const {SERVER_PORTS, BASE_URL} = constants
 
 describe('API Integration Tests', () => {
   describe('General API tests', () => {
@@ -18,20 +18,17 @@ describe('API Integration Tests', () => {
       firstname: 'Bill',
       surname: 'Murray',
       email: 'bfm@crazy.net',
-      passwordAlgorithm: 'sha512',
-      passwordHash:
-        '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
-      passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
+      password: 'password',
       groups: ['HISP', 'admin']
     }
-    // password is 'password'
+
     before(async () => {
       await Promise.all([
         promisify(server.start)({
           apiPort: SERVER_PORTS.apiPort,
           httpsPort: SERVER_PORTS.httpsPort
         }),
-        new UserModel(userDoc).save()
+        createUser(userDoc)
       ])
     })
 
@@ -41,104 +38,54 @@ describe('API Integration Tests', () => {
 
     it('should set the cross-origin resource sharing headers', async () => {
       const origin = 'https://example.com'
-      await request(constants.BASE_URL)
-        .options('/authenticate/bfm@crazy.net')
+      await request(BASE_URL)
+        .post('/authenticate/local')
+        .send({username: userDoc.email, password: userDoc.password})
         .set('Origin', origin)
-        .set('Access-Control-Request-Method', 'GET')
-        .expect(204)
-        .expect('Access-Control-Allow-Origin', origin)
-        .expect('Access-Control-Allow-Methods', 'GET,HEAD,PUT,POST,DELETE')
-    })
-
-    it('should disallow access if no API authentication details are provided', async () => {
-      await request(constants.BASE_URL).get('/channels').expect(401)
-    })
-
-    it('should disallow access if token does not match', async () => {
-      const res = await request(constants.BASE_URL)
-        .get('/authenticate/bfm@crazy.net')
+        .set('Access-Control-Request-Method', 'POST')
         .expect(200)
-      const passwordsalt = res.body.salt
+        .expect('Access-Control-Allow-Origin', origin)
+        .expect('Access-Control-Allow-Credentials', 'true')
+    })
 
-      // create passwordhash
-      const passwordhash = await crypto.createHash('sha512')
-      await passwordhash.update(passwordsalt)
-      await passwordhash.update('password')
+    it('should disallow access for unauthenticated requests', async () => {
+      await request(BASE_URL).get('/channels').expect(401)
+    })
 
-      // create tokenhash
-      const authTS = await new Date().toISOString()
-      const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
-      const tokenhash = await crypto.createHash('sha512')
-      await tokenhash.update(passwordhash.digest('hex'))
-      await tokenhash.update(requestsalt)
-      await tokenhash.update(authTS)
-
-      await request(constants.BASE_URL)
-        .get('/channels')
-        .set('auth-username', 'bfm@crazy.net')
-        .set('auth-ts', authTS)
-        .set('auth-salt', `${requestsalt}incorrect`)
-        .set('auth-token', tokenhash.digest('hex'))
+    it('should disallow access if password does not match', async () => {
+      await request(BASE_URL)
+        .post('/authenticate/local')
+        .send({
+          username: userDoc.email,
+          password: `${userDoc.password}incorrect`
+        })
         .expect(401)
+    })
+
+    it('should disallow access if cookies does not exist', async () => {
+      await request(BASE_URL)
+        .post('/authenticate/local')
+        .send({username: userDoc.email, password: userDoc.password})
+        .expect(200)
+
+      await request(BASE_URL).get('/channels').expect(401)
+    })
+
+    it('should disallow if cookies are expired', async () => {
+      const user = {email: userDoc.email, password: userDoc.password}
+      const cookie = await authenticate(request, BASE_URL, user)
+
+      // Expire the cookies after 1s
+      await new Promise(resolve => setTimeout(resolve, 1000))
+
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(401)
     })
 
     it('should allow access if correct API authentication details are provided', async () => {
-      const res = await request(constants.BASE_URL)
-        .get('/authenticate/bfm@crazy.net')
-        .expect(200)
-      const passwordsalt = res.body.salt
+      const user = {email: userDoc.email, password: userDoc.password}
+      const cookie = await authenticate(request, BASE_URL, user)
 
-      // create passwordhash
-      const passwordhash = await crypto.createHash('sha512')
-      await passwordhash.update(passwordsalt)
-      await passwordhash.update('password')
-
-      // create tokenhash
-      const authTS = await new Date().toISOString()
-      const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
-      const tokenhash = await crypto.createHash('sha512')
-      const hashStr = await passwordhash.digest('hex')
-      await tokenhash.update(hashStr)
-      await tokenhash.update(requestsalt)
-      await tokenhash.update(authTS)
-
-      await request(constants.BASE_URL)
-        .get('/channels')
-        .set('auth-username', 'bfm@crazy.net')
-        .set('auth-ts', authTS)
-        .set('auth-salt', requestsalt)
-        .set('auth-token', tokenhash.digest('hex'))
-        .expect(200)
-    })
-
-    it('should disallow access if the request is too old', async () => {
-      const res = await request(constants.BASE_URL)
-        .get('/authenticate/bfm@crazy.net')
-        .expect(200)
-      const passwordsalt = res.body.salt
-
-      // create passwordhash
-      const passwordhash = await crypto.createHash('sha512')
-      await passwordhash.update(passwordsalt)
-      await passwordhash.update('password')
-
-      // create tokenhash
-      let authTS = await new Date()
-      await authTS.setSeconds(authTS.getSeconds() - 53)
-      authTS = await authTS.toISOString()
-      const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
-      const tokenhash = await crypto.createHash('sha512')
-      await tokenhash.update(passwordhash.digest('hex'))
-      await tokenhash.update(requestsalt)
-      await tokenhash.update(authTS)
-
-      await request(constants.BASE_URL)
-        .get('/channels')
-        .set('auth-username', 'bfm@crazy.net')
-        .set('auth-ts', authTS)
-        .set('auth-salt', requestsalt)
-        .set('auth-token', tokenhash.digest('hex'))
-        .expect(401)
+      await request(BASE_URL).get('/channels').set('Cookie', cookie).expect(200)
     })
   })
 })
