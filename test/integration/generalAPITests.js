@@ -9,6 +9,7 @@ import * as constants from '../constants'
 import * as server from '../../src/server'
 import {UserModel, createUser} from '../../src/model'
 import {authenticate} from '../utils'
+import {config} from '../../src/config'
 
 const {SERVER_PORTS, BASE_URL} = constants
 
@@ -23,6 +24,8 @@ describe('API Integration Tests', () => {
     }
 
     before(async () => {
+      // Set the authentication maxAge to 1s for the tests
+      config.api.maxAge = 1000
       await Promise.all([
         promisify(server.start)({
           apiPort: SERVER_PORTS.apiPort,

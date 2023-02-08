@@ -199,7 +199,7 @@ export const validatePassword = function (passport, password, next) {
  * Hash password according to a salt defined in the config file
  */
 export async function hashPassword(password) {
-  var salt = config.authentication.salt
+  var salt = config.api.salt || 10
 
   if (password) {
     return new Promise((resolve, reject) => {
