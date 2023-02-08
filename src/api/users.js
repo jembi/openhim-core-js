@@ -26,7 +26,7 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
 export function me(ctx) {
   if (ctx.req.user) {
     ctx.body = {user: ctx.req.user}
-    ctx.status = 201
+    ctx.status = 200
   } else {
     ctx.body = 'Not authenticated'
     ctx.status = 404
@@ -61,7 +61,7 @@ export async function authenticate(ctx) {
       )
     } else {
       ctx.body = 'User Authenticated successfully'
-      ctx.status = 201
+      ctx.status = 200
     }
   } catch (e) {
     return utils.logAndSetResponse(
@@ -77,7 +77,7 @@ export const logout = async function (ctx) {
   ctx.logout()
   ctx.session = null
   ctx.authenticated = null
-  ctx.status = 201
+  ctx.status = 200
 }
 
 /**
@@ -267,9 +267,11 @@ export async function updateUserByToken(ctx, token) {
 
   // construct user object to prevent other properties from being updated
   const userUpdateObj = {
+    id: userDataExpiry._id,
     token: null,
     tokenType: null,
-    expiry: null
+    expiry: null,
+    password: userData.password
   }
 
   if (userDataExpiry.tokenType === 'newUser') {
@@ -280,11 +282,7 @@ export async function updateUserByToken(ctx, token) {
   }
 
   try {
-    const userToBeUpdated = await UserModelAPI.findOne({token})
-    const {user, error} = await apiUpdateUser({
-      ...userToBeUpdated,
-      userUpdateObj
-    })
+    const {user, error} = await apiUpdateUser(userUpdateObj)
     if (user) {
       ctx.body = 'Successfully set new user password.'
       return logger.info(`User updated by token ${token}`)
@@ -455,6 +453,29 @@ export async function updateUser(ctx, email) {
     return
   }
 
+  let userDetails
+
+  try {
+    // first try get new user details
+    userDetails = await UserModelAPI.findOne({
+      email: utils.caseInsensitiveRegex(email)
+    })
+
+    if (!userDetails) {
+      ctx.body = `User with email ${email} could not be found.`
+      ctx.status = 404
+      return
+    }
+  } catch (error) {
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not find user with email ${email} via the API`,
+      'error'
+    )
+    return
+  }
+
   const userData = ctx.request.body
 
   // reset token/locked/expiry when user is updated and password supplied
@@ -473,8 +494,16 @@ export async function updateUser(ctx, email) {
     delete userData.groups
   }
 
+  // Ignore _id if it exists (update is by email)
+  if (userData._id) {
+    delete userData._id
+  }
+
   try {
-    const {user, error} = await apiUpdateUser(userData)
+    const {user, error} = await apiUpdateUser({
+      id: userDetails._id,
+      ...userData
+    })
     if (user) {
       ctx.body = 'Successfully updated user.'
       logger.info(
