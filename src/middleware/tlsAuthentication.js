@@ -2,7 +2,7 @@
 
 import logger from 'winston'
 import pem from 'pem'
-import {rootCas as rootCAs} from 'ssl-root-cas'
+import {rootCas as rootCAs} from 'ssl-root-cas/latest'
 
 import * as utils from '../utils'
 import {ClientModel} from '../model/clients'
