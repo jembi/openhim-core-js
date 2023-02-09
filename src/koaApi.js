@@ -38,29 +38,31 @@ export function setupApp(done) {
   // Add cors options
   app.use(cors({allowMethods: 'GET,HEAD,PUT,POST,DELETE', credentials: true}))
 
-  // Configure Sessions Middlewares
-  app.keys = [ 'r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#' ]
+  // Configure Sessions Middleware
+  app.keys = [config.api.sessionKey || "r8q,+&1LM3)CD*zAGpx1xm{NeQhc;#"]
   app.use(
-    session({
-      maxAge: 2 * 60 * 60 * 1000, // 2 hours
-      resave: false,
-      secure: true,
-      httpOnly: false,
-      sameSite: "none", 
-      store: new MongooseStore()
-    },
-    app
-  ));
+    session(
+      {
+        maxAge: config.api.maxAge || 7200000,
+        resave: false,
+        secure: true,
+        httpOnly: true,
+        sameSite: 'none',
+        store: new MongooseStore()
+      },
+      app
+    )
+  )
 
   // Add a body-parser
   const limitMB = config.api.maxPayloadSizeMB || 16
   app.use(bodyParser({jsonLimit: limitMB * 1024 * 1024}))
 
-  app.use(passport.initialize());
-  app.use(passport.session());  
+  app.use(passport.initialize())
+  app.use(passport.session())
 
   // Passport load strategies: local basic
-  passport.loadStrategies();
+  passport.loadStrategies()
 
   // Expose uptime server stats route before the auth middleware so that it is publicly accessible
   app.use(route.get('/heartbeat', heartbeat.getHeartbeat))
@@ -71,9 +73,17 @@ export function setupApp(done) {
   )
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
-  
-  // Expose the authenticate route before the auth middleware so that it is publicly accessible 
-  app.use(route.post('/authenticate/local', compose([passport.authenticate('local'), users.authenticate])))
+
+  // Check of logged in user
+  app.use(route.get('/me', users.me))
+
+  // Expose the authenticate route before the auth middleware so that it is publicly accessible
+  app.use(
+    route.post(
+      '/authenticate/local',
+      compose([passport.authenticate('local'), users.authenticate])
+    )
+  )
   app.use(route.post('/authenticate/openid', compose([
     (ctx, next) => {
       ctx.request.query = ctx.request.body
@@ -95,7 +105,7 @@ export function setupApp(done) {
   )
 
   // Logout route
-  app.use(route.get('/logout', users.logout));
+  app.use(route.get('/logout', users.logout))
 
   // Define the api routes
   app.use(route.get('/users', users.getUsers))

@@ -36,13 +36,14 @@ const auditingExemptPaths = [
 
 async function authenticateBasic(ctx, next) {
   // Basic auth using middleware
-  await passport.authenticate('basic', function(err, user) {
-    if (err) { return logger.info(err.message); }
-    else if(user) {
+  await passport.authenticate('basic', function (err, user) {
+    if (err) {
+      return logger.info(err.message)
+    } else if (user) {
       ctx.req.user = user
-      ctx.body = "User Authenticated Successfully";
-      ctx.status = 201;
-      return ctx.req.user;
+      ctx.body = 'User Authenticated Successfully'
+      ctx.status = 200
+      return ctx.req.user
     }
   })(ctx, next)
 
@@ -160,7 +161,7 @@ export async function authenticate(ctx, next) {
         atna.constants.OUTCOME_SERIOUS_FAILURE,
         himSourceID,
         os.hostname(),
-        `Unknown with ip ${ctx.request.ip}`,
+        `Unknown with ip ${ctx.request.ip}`
       )
       audit = atna.construct.wrapInSyslog(audit)
       auditing.sendAuditEvent(audit, handleAuditResponse)

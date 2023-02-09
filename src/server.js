@@ -35,9 +35,8 @@ import * as tcpAdapter from './tcpAdapter'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
 import * as upgradeDB from './upgradeDB'
 import {KeystoreModel} from './model/keystore'
-import {UserModel} from './model/users'
+import {UserModel, createUser} from './model/users'
 import {appRoot, config, connectionAgenda} from './config'
-import {local} from './protocols'
 
 mongoose.Promise = Promise
 
@@ -473,11 +472,11 @@ if (cluster.isMaster && !module.parent) {
         return callback(err)
       }
       if (!user) {
-        return await local.createUser(rootUser).then((res) => {
+        return await createUser(rootUser).then(res => {
           if (res.error) {
             logger.error(`Could not save root user: ${res.error}`)
             return callback(res.error)
-          } 
+          }
           logger.info('Root user created.')
           return callback()
         })

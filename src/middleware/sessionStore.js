@@ -1,11 +1,11 @@
-import {connectionAPI, connectionDefault} from '../config'
+import {connectionAPI} from '../config'
 import {Schema} from 'mongoose'
 
 /**
  * Session Store
  *
  * To be able to store the session in a Mongo collection instead of just saving it in memory
- * 
+ *
  */
 
 const SessionSchema = new Schema({
@@ -15,37 +15,36 @@ const SessionSchema = new Schema({
     default: new Date(),
     type: Date
   }
-});
+})
 
 class MongooseStore {
   constructor() {
-    this.sessionModel = connectionDefault.model('Session', SessionSchema)
     this.session = connectionAPI.model('Session', SessionSchema)
   }
 
   /**
    *  Override of the destroy, get and set functions used in session
-   * 
+   *
    */
 
   async destroy(id) {
-    const { session } = this;
-    return session.deleteOne({ _id: id });
+    const {session} = this
+    return session.deleteOne({_id: id})
   }
 
   async get(id) {
-    const { session } = this;
-    const { data } = (await session.findById(id)) || {};
-    return data;
+    const {session} = this
+    const {data} = (await session.findById(id)) || {}
+    return data
   }
 
-  async set(id, data, maxAge, { changed, rolling }) {
+  async set(id, data, maxAge, {changed, rolling}) {
     if (changed || rolling) {
-      const { session } = this;
-      const record = { _id: id, data, updatedAt: new Date() };
-      await session.findByIdAndUpdate(id, record, { upsert: true, safe: true });
+      const {session} = this
+      const record = {_id: id, data, updatedAt: new Date()}
+      await session.findByIdAndUpdate(id, record, {upsert: true, safe: true})
     }
-    return data;
+    return data
   }
 
   verify = async function(req, handle, cb) {
@@ -65,8 +64,8 @@ class MongooseStore {
   
 
   static create() {
-    return new MongooseStore();
+    return new MongooseStore()
   }
 }
 
-export default MongooseStore;
+export default MongooseStore

@@ -11,8 +11,7 @@ import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as contact from '../contact'
 import * as utils from '../utils'
-import {UserModelAPI} from '../model/users'
-import {local} from '../protocols'
+import {UserModelAPI, updateUser as apiUpdateUser} from '../model/users'
 import {config} from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
@@ -24,6 +23,16 @@ const himSourceID = config.get('auditing').auditEvents.auditSourceID
 /*
  * Get authentication details
  */
+export function me(ctx) {
+  if (ctx.req.user) {
+    ctx.body = {user: ctx.req.user}
+    ctx.status = 200
+  } else {
+    ctx.body = 'Not authenticated'
+    ctx.status = 404
+  }
+}
+
 export async function authenticate(ctx) {
   const body = ctx.request.body
   let email = ''
@@ -73,7 +82,7 @@ export async function authenticate(ctx) {
         result: "User Authenticated successfully",
         user
       }
-      ctx.status = 201
+      ctx.status = 200
     }
   } catch (e) {
     return utils.logAndSetResponse(
@@ -86,9 +95,10 @@ export async function authenticate(ctx) {
 }
 
 export const logout = async function (ctx) {
+  ctx.logout()
   ctx.session = null
   ctx.authenticated = null
-  ctx.status = 201
+  ctx.status = 200
 }
 
 /**
@@ -278,9 +288,11 @@ export async function updateUserByToken(ctx, token) {
 
   // construct user object to prevent other properties from being updated
   const userUpdateObj = {
+    id: userDataExpiry._id,
     token: null,
     tokenType: null,
-    expiry: null
+    expiry: null,
+    password: userData.password
   }
 
   if (userDataExpiry.tokenType === 'newUser') {
@@ -291,11 +303,7 @@ export async function updateUserByToken(ctx, token) {
   }
 
   try {
-    const userToBeUpdated = await UserModelAPI.findOne({token})
-    const {user, error} = await local.updateUser({
-      ...userToBeUpdated,
-      userUpdateObj
-    })
+    const {user, error} = await apiUpdateUser(userUpdateObj)
     if (user) {
       ctx.body = 'Successfully set new user password.'
       return logger.info(`User updated by token ${token}`)
@@ -466,6 +474,29 @@ export async function updateUser(ctx, email) {
     return
   }
 
+  let userDetails
+
+  try {
+    // first try get new user details
+    userDetails = await UserModelAPI.findOne({
+      email: utils.caseInsensitiveRegex(email)
+    })
+
+    if (!userDetails) {
+      ctx.body = `User with email ${email} could not be found.`
+      ctx.status = 404
+      return
+    }
+  } catch (e) {
+    utils.logAndSetResponse(
+      ctx,
+      500,
+      `Could not find user with email ${email} via the API ${e}`,
+      'error'
+    )
+    return
+  }
+
   const userData = ctx.request.body
 
   // reset token/locked/expiry when user is updated and password supplied
@@ -484,8 +515,16 @@ export async function updateUser(ctx, email) {
     delete userData.groups
   }
 
+  // Ignore _id if it exists (update is by email)
+  if (userData._id) {
+    delete userData._id
+  }
+
   try {
-    const {user, error} = await local.updateUser(userData)
+    const {user, error} = await apiUpdateUser({
+      id: userDetails._id,
+      ...userData
+    })
     if (user) {
       ctx.body = 'Successfully updated user.'
       logger.info(
