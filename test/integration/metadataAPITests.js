@@ -104,19 +104,29 @@ const sampleMetadata = {
   ]
 }
 
-let authDetails = {}
-
 describe('API Integration Tests', () => {
-  const {SERVER_PORTS} = constants
+  const {SERVER_PORTS, BASE_URL} = constants
 
   describe('Metadata REST Api Testing', () => {
+    let rootCookie = '',
+      nonRootCookie = ''
+
     before(async () => {
       await promisify(server.start)({apiPort: SERVER_PORTS.apiPort})
       await testUtils.setupTestUsers()
     })
 
-    beforeEach(() => {
-      authDetails = testUtils.getAuthDetails()
+    beforeEach(async () => {
+      rootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.rootUser
+      )
+      nonRootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser
+      )
     })
 
     after(async () => {
@@ -136,12 +146,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should fetch channels and return status 200', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .get('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .expect(200)
 
           res.body[0].Channels.length.should.equal(1)
@@ -162,12 +169,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should fetch clients and return status 200', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .get('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .expect(200)
 
           res.body[0].Clients.length.should.equal(1)
@@ -188,12 +192,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should fetch mediators and return status 200', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .get('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .expect(200)
 
           res.body[0].Mediators.length.should.equal(1)
@@ -206,12 +207,9 @@ describe('API Integration Tests', () => {
 
       describe('Users', () => {
         it('should fetch users and return status 200', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .get('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .expect(200)
 
           res.body[0].Users.length.should.equal(3) // Due to 3 auth test users
@@ -228,12 +226,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should fetch contact groups and return status 200', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .get('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .expect(200)
 
           res.body[0].ContactGroups.length.should.equal(1)
@@ -243,22 +238,16 @@ describe('API Integration Tests', () => {
 
       describe('Other Get Metadata', () => {
         it('should not allow a non admin user to get metadata', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .get('/metadata')
-            .set('auth-username', testUtils.nonRootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', nonRootCookie)
             .expect(403)
         })
 
         it('should return 404 if not found', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .get('/metadata/bleh')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(sampleMetadata)
             .expect(404)
         })
@@ -281,12 +270,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should insert a channel and return 201', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -300,23 +286,17 @@ describe('API Integration Tests', () => {
         })
 
         it('should update a channel and return 201', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
           testMetadata.Channels[0].urlPattern = 'sample/test'
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -332,12 +312,9 @@ describe('API Integration Tests', () => {
         it('should fail to insert a Channel and return 201', async () => {
           testMetadata.Channels = [{fakeChannel: 'fakeChannel'}]
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -402,12 +379,9 @@ describe('API Integration Tests', () => {
 
           const spy = sinon.spy(polling, 'registerPollingChannel')
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testPollingChannelImport)
             .expect(201)
 
@@ -444,12 +418,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should insert a client and return 201', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -462,23 +433,17 @@ describe('API Integration Tests', () => {
         })
 
         it('should update a client and return 201', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
           testMetadata.Clients[0].name = 'Test Update'
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -493,12 +458,9 @@ describe('API Integration Tests', () => {
         it('should fail to insert a Client and return 201', async () => {
           testMetadata.Clients = [{fakeClient: 'fakeClient'}]
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -520,12 +482,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should insert a mediator and return 201', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -538,23 +497,17 @@ describe('API Integration Tests', () => {
         })
 
         it('should update a mediator and return 201', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
           testMetadata.Mediators[0].name = 'Updated Encounter Mediator'
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -569,12 +522,9 @@ describe('API Integration Tests', () => {
         it('should fail to insert a mediator and return 201', async () => {
           testMetadata.Mediators = [{fakeMediator: 'fakeMediator'}]
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -596,12 +546,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should insert a user and return 201', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -612,23 +559,17 @@ describe('API Integration Tests', () => {
         })
 
         it('should update a user and return 201', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
           testMetadata.Users[0].firstname = 'updatedNamey'
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -641,12 +582,9 @@ describe('API Integration Tests', () => {
         it('should fail to insert a user and return 201', async () => {
           testMetadata.Users = [{fakeUser: 'fakeUser'}]
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
           res.body[0].should.have.property('status', 'Error')
@@ -669,12 +607,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should insert a contactGroup and return 201', async () => {
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -685,12 +620,9 @@ describe('API Integration Tests', () => {
         })
 
         it('should update a contactGroup and return 201', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -700,12 +632,9 @@ describe('API Integration Tests', () => {
             maxAlerts: '1 per day'
           })
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -718,12 +647,9 @@ describe('API Integration Tests', () => {
         it('should fail to insert a ContactGroup and return 201', async () => {
           testMetadata.ContactGroups = [{fakeContactGroup: 'fakeContactGroup'}]
 
-          const res = await request(constants.BASE_URL)
+          const res = await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -740,19 +666,15 @@ describe('API Integration Tests', () => {
             ContactGroupModelAPI.deleteMany({})
             // User?
           ])
-          authDetails = await testUtils.getAuthDetails()
         })
 
         it('should ignore invalid metadata, insert valid metadata and return 201', async () => {
           let testMetadata = await JSON.parse(JSON.stringify(sampleMetadata))
           testMetadata.Channels = [{InvalidChannel: 'InvalidChannel'}]
 
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(testMetadata)
             .expect(201)
 
@@ -782,23 +704,17 @@ describe('API Integration Tests', () => {
 
       describe('Bad metadata import requests', () => {
         it('should not allow a non admin user to insert metadata', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .post('/metadata')
-            .set('auth-username', testUtils.nonRootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', nonRootCookie)
             .send(sampleMetadata)
             .expect(403)
         })
 
         it('should return 404 if not found', async () => {
-          await request(constants.BASE_URL)
+          await request(BASE_URL)
             .post('/metadata/bleh')
-            .set('auth-username', testUtils.rootUser.email)
-            .set('auth-ts', authDetails.authTS)
-            .set('auth-salt', authDetails.authSalt)
-            .set('auth-token', authDetails.authToken)
+            .set('Cookie', rootCookie)
             .send(sampleMetadata)
             .expect(404)
         })
@@ -813,12 +729,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should validate metadata and return status 201', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post('/metadata/validate')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(sampleMetadata)
           .expect(201)
 
@@ -837,12 +750,9 @@ describe('API Integration Tests', () => {
         let testMetadata = await JSON.parse(JSON.stringify(sampleMetadata))
         testMetadata.Channels = [{'Invalid Channel': 'Invalid Channel'}]
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post('/metadata/validate')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(testMetadata)
           .expect(201)
 
@@ -865,12 +775,9 @@ describe('API Integration Tests', () => {
         await new UserModelAPI(sampleMetadata.Users[0]).save()
         await new ChannelModelAPI(sampleMetadata.Channels[0])
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post('/metadata/validate')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(testMetadata)
           .expect(201)
 
@@ -887,23 +794,17 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to validate metadata', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/metadata/validate')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(sampleMetadata)
           .expect(403)
       })
 
       it('should return 404 if not found', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/metadata/validate/bleh')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(sampleMetadata)
           .expect(404)
       })

@@ -18,7 +18,7 @@ import {TransactionModelAPI} from '../../src/model/transactions'
 import {config} from '../../src/config'
 
 describe('API Integration Tests', () => {
-  const {SERVER_PORTS} = constants
+  const {SERVER_PORTS, BASE_URL} = constants
   const httpPortPlus40 = constants.PORT_START + 40
 
   nconf.set('router', {httpPort: SERVER_PORTS.httpPort})
@@ -101,7 +101,8 @@ describe('API Integration Tests', () => {
       ]
     }
 
-    let authDetails = {}
+    let rootCookie = '',
+      nonRootCookie = ''
 
     before(async () => {
       await testUtils.setupTestUsers()
@@ -116,7 +117,16 @@ describe('API Integration Tests', () => {
     })
 
     beforeEach(async () => {
-      authDetails = await testUtils.getAuthDetails()
+      rootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.rootUser
+      )
+      nonRootCookie = await testUtils.authenticate(
+        request,
+        BASE_URL,
+        testUtils.nonRootUser
+      )
     })
 
     afterEach(async () => {
@@ -128,24 +138,18 @@ describe('API Integration Tests', () => {
       it('should fetch all mediators', async () => {
         await new MediatorModelAPI(mediator1).save()
         await new MediatorModelAPI(mediator2).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.eql(2)
       })
 
       it('should not allow non root user to fetch mediators', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/mediators')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })
@@ -153,67 +157,49 @@ describe('API Integration Tests', () => {
     describe('*getMediator()', () => {
       it('should fetch mediator', async () => {
         await new MediatorModelAPI(mediator1).save()
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(`/mediators/${mediator1.urn}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         res.body.urn.should.be.exactly(mediator1.urn)
       })
 
       it('should return status 404 if not found', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(`/mediators/${mediator1.urn}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(404)
       })
 
       it('should not allow non root user to fetch mediator', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(`/mediators/${mediator1.urn}`)
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })
 
     describe('*addMediator()', () => {
       it('should return 201', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator1)
           .expect(201)
       })
 
       it('should not allow non root user to add mediator', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send(mediator1)
           .expect(403)
       })
 
       it('should add the mediator to the mediators collection', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator1)
           .expect(201)
 
@@ -222,21 +208,15 @@ describe('API Integration Tests', () => {
       })
 
       it('should add multiple mediators without default channel config', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator2)
           .expect(201)
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator3)
           .expect(201)
       })
@@ -250,12 +230,9 @@ describe('API Integration Tests', () => {
 
         await new MediatorModelAPI(mediator1).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updatedMediator)
           .expect(201)
 
@@ -272,12 +249,9 @@ describe('API Integration Tests', () => {
         }
         await new MediatorModelAPI(mediator1).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updatedMediator)
           .expect(201)
 
@@ -294,12 +268,9 @@ describe('API Integration Tests', () => {
         }
         await new MediatorModelAPI(mediator1).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updatedMediator)
           .expect(201)
 
@@ -363,12 +334,9 @@ describe('API Integration Tests', () => {
         }
         await new MediatorModelAPI(mediator).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(updatedMediator)
           .expect(201)
 
@@ -394,12 +362,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(invalidMediator)
           .expect(400)
       })
@@ -419,12 +384,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(invalidMediator)
           .expect(400)
       })
@@ -444,12 +406,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(invalidMediator)
           .expect(400)
       })
@@ -470,12 +429,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(invalidMediator)
           .expect(400)
       })
@@ -487,12 +443,9 @@ describe('API Integration Tests', () => {
           version: '0.8.2',
           description: 'Invalid mediator for testing'
         }
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(invalidMediator)
           .expect(400)
       })
@@ -506,12 +459,9 @@ describe('API Integration Tests', () => {
           endpoints: []
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(invalidMediator)
           .expect(400)
       })
@@ -546,12 +496,9 @@ describe('API Integration Tests', () => {
           }
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(invalidMediator)
           .expect(400)
       })
@@ -586,12 +533,9 @@ describe('API Integration Tests', () => {
           }
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(validMediator)
           .expect(201)
         const mediator = await MediatorModelAPI.findOne({
@@ -625,12 +569,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator)
           .expect(400)
       })
@@ -660,12 +601,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator)
           .expect(400)
       })
@@ -725,12 +663,9 @@ describe('API Integration Tests', () => {
           }
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator)
           .expect(201)
       })
@@ -759,12 +694,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator)
           .expect(400)
       })
@@ -794,12 +726,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator)
           .expect(400)
       })
@@ -829,12 +758,9 @@ describe('API Integration Tests', () => {
           ]
         }
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(mediator)
           .expect(400)
       })
@@ -875,12 +801,9 @@ describe('API Integration Tests', () => {
 
         const mediator = await new MediatorModelAPI(mediatorDelete).save()
         const countBefore = await MediatorModelAPI.countDocuments()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del(`/mediators/${mediator.urn}`)
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
         const countAfter = await MediatorModelAPI.countDocuments()
         const notFoundDoc = await MediatorModelAPI.findOne({
@@ -891,12 +814,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should not allow a non admin user to remove a mediator', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .del('/mediators/urn:uuid:EEA84E13-2M74-467C-UD7F-7C480462D1DF')
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .expect(403)
       })
     })
@@ -905,14 +825,11 @@ describe('API Integration Tests', () => {
       it('should store uptime and lastHeartbeat then return a 200 status', async () => {
         await new MediatorModelAPI(mediator1).save()
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             uptime: 50.25
           })
@@ -940,14 +857,11 @@ describe('API Integration Tests', () => {
 
         await MediatorModelAPI.findOneAndUpdate({urn: mediator1.urn}, update)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             uptime: 50.25
           })
@@ -972,14 +886,11 @@ describe('API Integration Tests', () => {
 
         await MediatorModelAPI.findOneAndUpdate({urn: mediator1.urn}, update)
 
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             uptime: 50.25,
             config: true
@@ -991,14 +902,11 @@ describe('API Integration Tests', () => {
       })
 
       it('should deny access to a non admin user', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
           )
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send({
             uptime: 50.25
           })
@@ -1006,12 +914,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a 404 if the mediator specified by urn cannot be found', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators/urn:uuid:this-doesnt-exist/heartbeat')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             uptime: 50.25
           })
@@ -1020,14 +925,11 @@ describe('API Integration Tests', () => {
 
       it('should return a 400 if an invalid body is received', async () => {
         await new MediatorModelAPI(mediator1).save()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/heartbeat'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             downtime: 0.5
           })
@@ -1037,14 +939,11 @@ describe('API Integration Tests', () => {
 
     describe('*setConfig()', () => {
       it('should deny access to a non admin user', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config'
           )
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send({
             param1: 'val1',
             param2: 'val2'
@@ -1053,12 +952,9 @@ describe('API Integration Tests', () => {
       })
 
       it('should return a 404 if the mediator specified by urn cannot be found', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put('/mediators/urn:uuid:this-doesnt-exist/config')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             param1: 'val1',
             param2: 'val2'
@@ -1080,14 +976,11 @@ describe('API Integration Tests', () => {
 
         await new MediatorModelAPI(mediator1).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             param1: 'val1',
             param2: 'val2'
@@ -1114,14 +1007,11 @@ describe('API Integration Tests', () => {
         ]
         await new MediatorModelAPI(mediator1).save()
 
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .put(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/config'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send({
             param1: 'val1',
             param2: 'val2',
@@ -1133,28 +1023,22 @@ describe('API Integration Tests', () => {
 
     describe('*loadDefaultChannels()', () => {
       it('should deny access to non-admin users', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
           )
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', nonRootCookie)
           .send([])
           .expect(403)
       })
 
       it('should add all channels in the defaultChannelConfig property', async () => {
         await new MediatorModelAPI(mediator1).save()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send([])
           .expect(201)
 
@@ -1169,14 +1053,11 @@ describe('API Integration Tests', () => {
 
       it('should add selected channels in the defaultChannelConfig property if the body is set (save one)', async () => {
         await new MediatorModelAPI(mediator1).save()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(['Save Encounter 2'])
           .expect(201)
 
@@ -1188,14 +1069,11 @@ describe('API Integration Tests', () => {
 
       it('should add selected channels in the defaultChannelConfig property if the body is set (save both)', async () => {
         await new MediatorModelAPI(mediator1).save()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(['Save Encounter 1', 'Save Encounter 2'])
           .expect(201)
 
@@ -1210,25 +1088,19 @@ describe('API Integration Tests', () => {
 
       it("should return a 400 when a channel from the request body isn't found", async () => {
         await new MediatorModelAPI(mediator1).save()
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post(
             '/mediators/urn:uuid:EEA84E13-1C92-467C-B0BD-7C480462D1ED/channels'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send(['Something Wrong'])
           .expect(400)
       })
 
       it("should return a 404 if the mediator isn't found", async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .post('/mediators/urn:uuid:MISSING/channels')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .send([])
           .expect(404)
       })

@@ -11,6 +11,8 @@ import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {MediatorModel} from '../../src/model/mediators'
 
+const {BASE_URL} = constants
+
 describe('API Integration Tests', () =>
   describe('Heartbeat REST API testing', () => {
     const mediatorDoc = {
@@ -28,12 +30,12 @@ describe('API Integration Tests', () =>
       ]
     }
 
-    let authDetails
+    let rootCookie = ''
 
     before(async () => {
       await Promise.all([
-        testUtils.setupTestUsers(),
-        promisify(server.start)({apiPort: constants.SERVER_PORTS.apiPort})
+        promisify(server.start)({apiPort: constants.SERVER_PORTS.apiPort}),
+        testUtils.setupTestUsers()
       ])
     })
 
@@ -44,31 +46,26 @@ describe('API Integration Tests', () =>
       ])
     })
 
-    beforeEach(async () => {
-      authDetails = testUtils.getAuthDetails()
-    })
-
     afterEach(async () => {
       await MediatorModel.deleteMany({})
     })
 
+    beforeEach(async () => {
+      const user = testUtils.rootUser
+      rootCookie = await testUtils.authenticate(request, BASE_URL, user)
+    })
+
     const registerMediator = () =>
-      request(constants.BASE_URL)
+      request(BASE_URL)
         .post('/mediators')
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send(mediatorDoc)
         .expect(201)
 
     const sendUptime = () =>
-      request(constants.BASE_URL)
+      request(BASE_URL)
         .post(`/mediators/${mediatorDoc.urn}/heartbeat`)
-        .set('auth-username', testUtils.rootUser.email)
-        .set('auth-ts', authDetails.authTS)
-        .set('auth-salt', authDetails.authSalt)
-        .set('auth-token', authDetails.authToken)
+        .set('Cookie', rootCookie)
         .send({
           uptime: 200
         })
@@ -76,13 +73,11 @@ describe('API Integration Tests', () =>
 
     describe('*getHeartbeat()', () => {
       it('should fetch the heartbeat without requiring authentication', async () => {
-        await request(constants.BASE_URL).get('/heartbeat').expect(200)
+        await request(BASE_URL).get('/heartbeat').expect(200)
       })
 
       it('should return core uptime', async () => {
-        const res = await request(constants.BASE_URL)
-          .get('/heartbeat')
-          .expect(200)
+        const res = await request(BASE_URL).get('/heartbeat').expect(200)
 
         res.body.should.have.property('master').and.be.a.Number()
       })
@@ -90,9 +85,7 @@ describe('API Integration Tests', () =>
       it('should include known mediators in response', async () => {
         await registerMediator()
 
-        const res = await request(constants.BASE_URL)
-          .get('/heartbeat')
-          .expect(200)
+        const res = await request(BASE_URL).get('/heartbeat').expect(200)
 
         res.body.should.have.property('mediators')
         res.body.mediators.should.have.property(mediatorDoc.urn)
@@ -100,9 +93,7 @@ describe('API Integration Tests', () =>
 
       it('should set the uptime to null if no heartbeats received from mediator', async () => {
         await registerMediator()
-        const res = await request(constants.BASE_URL)
-          .get('/heartbeat')
-          .expect(200)
+        const res = await request(BASE_URL).get('/heartbeat').expect(200)
 
         res.body.should.have.property('mediators')
         should(res.body.mediators[mediatorDoc.urn]).be.null()
@@ -111,9 +102,7 @@ describe('API Integration Tests', () =>
       it('should include the mediator uptime', async () => {
         await registerMediator()
         await sendUptime()
-        const res = await request(constants.BASE_URL)
-          .get('/heartbeat')
-          .expect(200)
+        const res = await request(BASE_URL).get('/heartbeat').expect(200)
 
         res.body.should.have.property('mediators')
         res.body.mediators[mediatorDoc.urn].should.be.exactly(200)
@@ -130,9 +119,7 @@ describe('API Integration Tests', () =>
         }
 
         await MediatorModel.findOneAndUpdate({urn: mediatorDoc.urn}, update)
-        const res = await request(constants.BASE_URL)
-          .get('/heartbeat')
-          .expect(200)
+        const res = await request(BASE_URL).get('/heartbeat').expect(200)
 
         res.body.should.have.property('mediators')
         should(res.body.mediators[mediatorDoc.urn]).be.null()

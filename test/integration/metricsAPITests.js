@@ -12,11 +12,11 @@ import * as server from '../../src/server'
 import * as testUtils from '../utils'
 import {ChannelModel, MetricModel} from '../../src/model'
 
-const {SERVER_PORTS} = constants
+const {SERVER_PORTS, BASE_URL} = constants
 
 describe('API Metrics Tests', () =>
   describe('OpenHIM Metrics Api testing', () => {
-    let authDetails
+    let rootCookie = ''
     const channel1Doc = {
       _id: new ObjectId('111111111111111111111111'),
       name: 'Test Channel 11111',
@@ -53,16 +53,17 @@ describe('API Metrics Tests', () =>
         new ChannelModel(channel1Doc).save(),
         new ChannelModel(channel2Doc).save(),
         testUtils.setupMetricsTransactions(),
-        testUtils.setupTestUsers(),
         promisify(server.start)({
           apiPort: SERVER_PORTS.apiPort,
           tcpHttpReceiverPort: SERVER_PORTS.tcpHttpReceiverPort
-        })
+        }),
+        testUtils.setupTestUsers()
       ])
     })
 
-    beforeEach(() => {
-      authDetails = testUtils.getAuthDetails()
+    beforeEach(async () => {
+      const user = testUtils.rootUser
+      rootCookie = await testUtils.authenticate(request, BASE_URL, user)
     })
 
     after(async () => {
@@ -75,14 +76,11 @@ describe('API Metrics Tests', () =>
 
     describe('*getMetrics()', () => {
       it('should fetch metrics and return a 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(
             '/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.exactly(1)
@@ -90,14 +88,11 @@ describe('API Metrics Tests', () =>
       })
 
       it('should fetch metrics broken down by channels and return a 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(
             '/metrics/channels?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.exactly(2)
@@ -106,14 +101,11 @@ describe('API Metrics Tests', () =>
       })
 
       it('should fetch metrics for a particular channel and return a 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(
             '/metrics/channels/222222222222222222222222?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.exactly(1)
@@ -121,14 +113,11 @@ describe('API Metrics Tests', () =>
       })
 
       it('should fetch metrics in timeseries and return a 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(
             '/metrics/timeseries/day?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.exactly(4)
@@ -138,14 +127,11 @@ describe('API Metrics Tests', () =>
       })
 
       it('should fetch metrics broken down by channels and timeseries and return a 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(
             '/metrics/timeseries/day/channels?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.exactly(8)
@@ -156,14 +142,11 @@ describe('API Metrics Tests', () =>
       })
 
       it('should fetch metrics for a particular channel broken down by timeseries and return a 200', async () => {
-        const res = await request(constants.BASE_URL)
+        const res = await request(BASE_URL)
           .get(
             '/metrics/timeseries/day/channels/222222222222222222222222?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(200)
 
         res.body.length.should.be.exactly(4)
@@ -175,14 +158,14 @@ describe('API Metrics Tests', () =>
       })
 
       it('should fetch metrics for only the channels that a user can view', async () => {
-        const res = await request(constants.BASE_URL)
+        const user = testUtils.nonRootUser
+        const cookie = await testUtils.authenticate(request, BASE_URL, user)
+
+        const res = await request(BASE_URL)
           .get(
             '/metrics?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
           )
-          .set('auth-username', testUtils.nonRootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', cookie)
           .expect(200)
 
         res.body.length.should.be.exactly(1)
@@ -190,34 +173,25 @@ describe('API Metrics Tests', () =>
       })
 
       it("should return a 401 when a channel isn't found", async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get(
             '/metrics/channels/333333333333333333333333?startDate=2014-07-15T00:00:00.000Z&endDate=2014-07-19T00:00:00.000Z'
           )
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(401)
       })
 
       it('should return a 400 when startDate is not provided', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/metrics?endDate=2014-07-19T00:00:00.000Z')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(400)
       })
 
       it('should return a 400 when endDate is not provided', async () => {
-        await request(constants.BASE_URL)
+        await request(BASE_URL)
           .get('/metrics?startDate=2014-07-15T00:00:00.000Z')
-          .set('auth-username', testUtils.rootUser.email)
-          .set('auth-ts', authDetails.authTS)
-          .set('auth-salt', authDetails.authSalt)
-          .set('auth-token', authDetails.authToken)
+          .set('Cookie', rootCookie)
           .expect(400)
       })
     })

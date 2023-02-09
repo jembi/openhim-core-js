@@ -8,7 +8,6 @@ import net from 'net'
 import serveStatic from 'serve-static'
 import sinon from 'sinon'
 import tls from 'tls'
-import * as crypto from 'crypto'
 import * as fs from 'fs'
 import * as pem from 'pem'
 import {MongoClient, ObjectId} from 'mongodb'
@@ -20,7 +19,8 @@ import {
   MetricModel,
   UserModel,
   METRIC_TYPE_HOUR,
-  METRIC_TYPE_DAY
+  METRIC_TYPE_DAY,
+  createUser
 } from '../src/model'
 import {config, encodeMongoURI} from '../src/config'
 
@@ -36,25 +36,17 @@ export const rootUser = {
   firstname: 'Admin',
   surname: 'User',
   email: 'root@jembi.org',
-  passwordAlgorithm: 'sha512',
-  passwordHash:
-    '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
-  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
+  password: 'password',
   groups: ['HISP', 'admin']
 }
-// password is 'password'
 
 export const nonRootUser = {
   firstname: 'Non',
   surname: 'Root',
   email: 'nonroot@jembi.org',
-  passwordAlgorithm: 'sha512',
-  passwordHash:
-    '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
-  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
+  password: 'password',
   groups: ['group1', 'group2']
 }
-// password is 'password'
 
 export function secureSocketTest(portOrOptions, data, waitForResponse = true) {
   const options = {}
@@ -123,28 +115,43 @@ export async function pollCondition(pollPredicate, pollBreak = 20) {
   }
 }
 
-export function setupTestUsers() {
-  return Promise.all([
-    new UserModel(rootUser).save(),
-    new UserModel(nonRootUser).save()
-  ])
-}
+export async function setupTestUsers() {
+  const res = await Promise.all([createUser(rootUser), createUser(nonRootUser)])
 
-export function getAuthDetails() {
-  const authTS = new Date().toISOString()
-  const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
-  const tokenhash = crypto.createHash('sha512')
-  tokenhash.update(rootUser.passwordHash)
-  tokenhash.update(requestsalt)
-  tokenhash.update(authTS)
+  const errors = res
+    .filter(r => r.error)
+    .map(r => (r.error.message ? r.error.message : r.error))
 
-  const auth = {
-    authTS,
-    authSalt: requestsalt,
-    authToken: tokenhash.digest('hex')
+  if (errors.length > 0) {
+    throw new Error('Error creating test users:\n' + errors.join('\n'))
   }
 
-  return auth
+  return res
+}
+
+export function getCookie(encodedCookies) {
+  let decodedCookies = ''
+
+  if (Array.isArray(encodedCookies) && encodedCookies.length > 0) {
+    for (let cookie of encodedCookies) {
+      let ca = cookie.split(';')
+      if (ca.length > 0) {
+        decodedCookies += ca[0] + ';'
+      }
+    }
+  }
+  return decodedCookies
+}
+
+export const authenticate = async (request, BASE_URL, user) => {
+  const {email, password} = user
+
+  const authResult = await request(BASE_URL)
+    .post('/authenticate/local')
+    .send({username: email, password: password})
+    .expect(200)
+
+  return getCookie(authResult.headers['set-cookie'])
 }
 
 export function cleanupTestUsers() {
