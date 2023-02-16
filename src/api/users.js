@@ -78,8 +78,8 @@ export async function authenticate(ctx) {
         logger.debug('Processed internal audit')
       )
     } else {
-      ctx.body = { 
-        result: "User Authenticated successfully",
+      ctx.body = {
+        result: 'User Authenticated successfully',
         user
       }
       ctx.status = 200
@@ -150,10 +150,9 @@ export async function userPasswordResetRequest(ctx, email) {
   }
 
   try {
-    const user = await UserModelAPI.findOneAndUpdate(
-      {email: utils.caseInsensitiveRegex(email)},
-      updateUserTokenExpiry
-    )
+    const user = await UserModelAPI.findOne({
+      email: utils.caseInsensitiveRegex(email)
+    })
     if (!user) {
       ctx.body = `Tried to request password reset for invalid email address: ${email}`
       ctx.status = 404
@@ -162,6 +161,17 @@ export async function userPasswordResetRequest(ctx, email) {
       )
       return
     }
+
+    if (user.provider === 'keycloak') {
+      ctx.body = `User was provided by Keycloak. Could not be updated.`
+      ctx.status = 403
+      logger.info(
+        `Tried to request password reset for a user provided by Keycloak: ${email}`
+      )
+      return
+    }
+
+    await UserModelAPI.findByIdAndUpdate(user.id, updateUserTokenExpiry)
 
     const {consoleURL} = config.alerts
     const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
@@ -268,6 +278,15 @@ export async function updateUserByToken(ctx, token) {
       // new user- set password - expired
       ctx.body = `User with token ${token} has expired to set their password.`
       ctx.status = 410
+      return
+    }
+
+    if (userDataExpiry.provider === 'keycloak') {
+      ctx.body = `User was provided by Keycloak. Could not be updated.`
+      ctx.status = 403
+      logger.info(
+        `Tried to request update by token for a user provided by Keycloak: ${token}`
+      )
       return
     }
   } catch (error) {
@@ -485,6 +504,15 @@ export async function updateUser(ctx, email) {
     if (!userDetails) {
       ctx.body = `User with email ${email} could not be found.`
       ctx.status = 404
+      return
+    }
+
+    if (userDetails.provider === 'keycloak') {
+      ctx.body = `User was provided by Keycloak. Could not be updated.`
+      ctx.status = 403
+      logger.info(
+        `Tried to request update for a user provided by Keycloak via API: ${email}`
+      )
       return
     }
   } catch (e) {

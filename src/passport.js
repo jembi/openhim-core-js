@@ -1,13 +1,29 @@
 import _ from 'lodash'
+import logger from 'winston'
 import passport from 'koa-passport'
 import * as passportLocal from 'passport-local'
 import * as passportHttp from 'passport-http'
-import * as passportOpenid from 'passport-openidconnect';
+import * as passportOpenid from 'passport-openidconnect'
 
 import MongooseStore from './middleware/sessionStore'
 import {local, basic, openid} from './protocols'
-import {UserModelAPI, PassportModelAPI} from './model'
+import {UserModelAPI} from './model'
 import {config} from './config'
+
+/**
+ * Handle passport errors with logger
+ *
+ */
+const handlePassportError = function (err, user, next) {
+  if (err) {
+    logger.error(err.message)
+    next(null, false)
+  } else if (!user) {
+    return next(null, false)
+  } else {
+    return next(null, user)
+  }
+}
 
 /**
  * Load Strategies: Local, Basic and Openid
@@ -37,7 +53,7 @@ passport.loadStrategies = function () {
         clientSecret: keycloak.clientSecret,
         callbackURL: keycloak.callbackUrl,
         scope: keycloak.scope,
-        sessionKey: "openid_session_key",
+        sessionKey: 'openid_session_key',
         passReqToCallback: true,
         profile: true,
         store: new MongooseStore()
@@ -54,21 +70,47 @@ passport.loadStrategies = function () {
         Strategy = strat.strategy
         passport.use(
           new Strategy(
-            async (username, password, done) =>
-              await local.login(username, password, done)
+            async (username, password, next) =>
+              await local.login(username, password, (err, user) =>
+                handlePassportError(err, user, next)
+              )
           )
         )
       } else if (key === 'basic') {
         Strategy = strat.strategy
         passport.use(
           new Strategy(
-            async (username, password, done) =>
-              await basic.login(username, password, done)
+            async (username, password, next) =>
+              await basic.login(username, password, (err, user) =>
+                handlePassportError(err, user, next)
+              )
           )
         )
       } else if (key === 'openid') {
         Strategy = strat.strategy
-        passport.use(new Strategy(strat.options, openid.login))
+        passport.use(
+          new Strategy(
+            strat.options,
+            async (
+              req,
+              issuer,
+              profile,
+              context,
+              idToken,
+              accessToken,
+              refreshToken,
+              tokens,
+              next
+            ) =>
+              await openid.login(
+                req,
+                profile,
+                accessToken,
+                tokens,
+                (err, user) => handlePassportError(err, user, next)
+              )
+          )
+        )
       }
     }, passport)
   )

@@ -74,6 +74,7 @@ export function setupApp(done) {
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
 
+
   // Check of logged in user
   app.use(route.get('/me', users.me))
 
@@ -84,15 +85,20 @@ export function setupApp(done) {
       compose([passport.authenticate('local'), users.authenticate])
     )
   )
-  app.use(route.post('/authenticate/openid', compose([
-    (ctx, next) => {
-      ctx.request.query = ctx.request.body
-      return next()
-    },
-    passport.authenticate('openidconnect', { failWithError: true }), 
-    users.authenticate
-  ])))
-
+  app.use(
+    route.post(
+      '/authenticate/openid',
+      compose([
+        (ctx, next) => {
+          ctx.request.query = ctx.request.body
+          return next()
+        },
+        passport.authenticate('openidconnect', {failWithError: true}),
+        users.authenticate
+      ])
+    )
+  )
+  
   // Authenticate the API request
   app.use(authentication.authenticate)
 

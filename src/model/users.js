@@ -20,6 +20,11 @@ const UserSchema = new Schema({
     required: true,
     unique: true
   },
+  provider: {
+    type: String,
+    enum: ['keycloak', 'local'],
+    default: 'local'
+  },
   passports: {type: Schema.Types.ObjectId, ref: 'Passport'},
   groups: [String],
   msisdn: String,

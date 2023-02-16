@@ -1,4 +1,4 @@
-import {connectionAPI} from '../config'
+import {config, connectionAPI} from '../config'
 import {Schema} from 'mongoose'
 
 /**
@@ -47,21 +47,16 @@ class MongooseStore {
     return data
   }
 
-  verify = async function(req, handle, cb) {
-    var state = { handle };
+  // This function is required by 'passport-openidconnect'
+  verify = async function (req, handle, next) {
+    var state = {handle}
     var ctx = {
-      maxAge: state.maxAge,
-      nonce: state.nonce,
-      issued: state.issued
-    };
-    if (typeof ctx.issued === 'string') {
-      // convert issued to a Date object
-      ctx.issued = new Date(ctx.issued);
+      maxAge: config.api.maxAge,
+      issued: ''
     }
-  
-    return cb(null, ctx, state);
-  };
-  
+
+    return next(null, ctx, state)
+  }
 
   static create() {
     return new MongooseStore()
