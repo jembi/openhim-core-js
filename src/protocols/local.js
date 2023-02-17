@@ -41,7 +41,7 @@ export const login = async function (email, password, next) {
               if (err || !res) {
                 return next(
                   new Error(
-                    `Wrong password entered by ${email}, denying access to API ${err}`
+                    `Wrong password entered by ${email}, denying access to API ${err ? err : ""}`
                   ),
                   false
                 )

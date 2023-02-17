@@ -93,7 +93,7 @@ export function setupApp(done) {
           ctx.request.query = ctx.request.body
           return next()
         },
-        passport.authenticate('openidconnect', {failWithError: true}),
+        passport.authenticate('openidconnect'),
         users.authenticate
       ])
     )
