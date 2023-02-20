@@ -34,6 +34,19 @@ const auditingExemptPaths = [
   /\/logs/
 ]
 
+async function authenticateBasic(ctx) {
+  // Basic auth using middleware
+  await passport.authenticate('basic', function (err, user) {
+    if (user) {
+      ctx.req.user = user
+      ctx.body = 'User Authenticated Successfully'
+      ctx.status = 200
+    }
+  })(ctx, () => {})
+
+  return ctx.req.user || null
+}
+
 function getEnabledAuthenticationTypesFromConfig(config) {
   if (Array.isArray(config.api.authenticationTypes)) {
     return config.api.authenticationTypes
@@ -63,8 +76,7 @@ async function authenticateRequest(ctx) {
   // First attempt basic authentication if enabled
   if (user == null && isAuthenticationTypeEnabled('basic')) {
     // Basic auth using middleware
-    await passport.authenticate('basic')(ctx, () => {})
-    user = ctx.req.user || null
+    user = await authenticateBasic(ctx)
   }
   // Otherwise try token based authentication if enabled
   if (user == null && isAuthenticationTypeEnabled('local') && ctx.req.user) {
