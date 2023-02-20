@@ -1,9 +1,26 @@
+import _ from 'lodash'
+import logger from 'winston'
+
 import passport from 'koa-passport'
 import * as passportLocal from 'passport-local'
 import * as passportHttp from 'passport-http'
-import _ from 'lodash'
 import {local, basic} from './protocols'
 import {UserModelAPI} from './model'
+
+/**
+ * Handle passport errors with logger
+ *
+ */
+const handlePassportError = function (err, user, next) {
+  if (err) {
+    logger.error(err.message)
+    next(null, false)
+  } else if (!user) {
+    return next(null, false)
+  } else {
+    return next(null, user)
+  }
+}
 
 /**
  * Load Strategies: Local and Basic
@@ -23,23 +40,27 @@ passport.loadStrategies = function () {
 
   _.each(
     strategies,
-    _.bind(async function (strategy, key) {
-      var Strategy
+    _.bind(async function (strat, key) {
+      let Strategy
 
-      if (key === 'local' && strategies.local) {
-        Strategy = strategies[key].strategy
+      if (key === 'local') {
+        Strategy = strat.strategy
         passport.use(
           new Strategy(
-            async (username, password, done) =>
-              await local.login(username, password, done)
+            async (username, password, next) =>
+              await local.login(username, password, (err, user) =>
+                handlePassportError(err, user, next)
+              )
           )
         )
-      } else if (key === 'basic' && strategies.basic) {
-        Strategy = strategies[key].strategy
+      } else if (key === 'basic') {
+        Strategy = strat.strategy
         passport.use(
           new Strategy(
-            async (username, password, done) =>
-              await basic.login(username, password, done)
+            async (username, password, next) =>
+              await basic.login(username, password, (err, user) =>
+                handlePassportError(err, user, next)
+              )
           )
         )
       }

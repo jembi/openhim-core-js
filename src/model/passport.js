@@ -50,11 +50,7 @@ const PassportSchema = new Schema({
   // dards. When using OAuth 1.0, a `token` as well as a `tokenSecret` will
   // be issued by the provider. In the case of OAuth 2.0, an `accessToken`
   // and a `refreshToken` will be issued.
-  provider: {
-    type: String,
-    enum: ['local'],
-    default: 'local'
-  },
+  provider: String,
   identifier: String,
   tokens: Object,
   // Associations
