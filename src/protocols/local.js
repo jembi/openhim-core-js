@@ -1,5 +1,3 @@
-import logger from 'winston'
-
 import {UserModelAPI} from '../model'
 import {validatePassword} from '../utils'
 import {PassportModelAPI} from '../model/passport'
@@ -25,43 +23,40 @@ import {PassportModelAPI} from '../model/passport'
  *
  */
 export const login = async function (email, password, next) {
-  await UserModelAPI.findOne({email}, async function (err, user) {
-    if (err) {
-      logger.error(err)
-      return next(null, false)
-    }
-
-    if (!user) {
-      logger.error(`No user exists for ${email}, denying access to API`)
-      return next(null, false)
-    }
-
-    await PassportModelAPI.findOne(
-      {
+  return await UserModelAPI.findOne({email})
+    .then(function (user) {
+      if (!user) {
+        return next(
+          new Error(`No user exists for ${email}, denying access to API`),
+          false
+        )
+      }
+      return PassportModelAPI.findOne({
         protocol: 'local',
         user: user.id
-      },
-      function (err, passport) {
-        if (err) {
-          logger.error(err)
-          return next(null, false)
-        }
-        if (passport) {
-          validatePassword(passport, password, function (err, res) {
-            if (err || !res) {
-              logger.error(
-                `Wrong password entered by ${email}, denying access to API ${err}`
-              )
-              return next(null, false)
-            } else {
-              return next(null, user)
-            }
-          })
-        } else {
-          logger.error(`Password not set for ${email}, denying access to API`)
-          return next(null, false)
-        }
-      }
-    )
-  })
+      })
+        .then(function (passport) {
+          if (passport) {
+            return validatePassword(passport, password, function (err, res) {
+              if (err || !res) {
+                return next(
+                  new Error(
+                    `Wrong password entered by ${email}, denying access to API ${err ? err : ""}`
+                  ),
+                  false
+                )
+              } else {
+                return next(null, user)
+              }
+            })
+          } else {
+            return next(
+              new Error(`Password not set for ${email}, denying access to API`),
+              false
+            )
+          }
+        })
+        .catch(next)
+    })
+    .catch(next)
 }

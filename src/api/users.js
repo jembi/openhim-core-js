@@ -476,10 +476,11 @@ export async function updateUser(ctx, email) {
     return
   }
 
-  const userData = ctx.request.body
+  const {_doc: userData} = new UserModelAPI(ctx.request.body)
+  const {password} = ctx.request.body
 
   // reset token/locked/expiry when user is updated and password supplied
-  if (userData.password) {
+  if (password) {
     userData.token = null
     userData.tokenType = null
     userData.locked = false
@@ -494,7 +495,6 @@ export async function updateUser(ctx, email) {
     delete userData.groups
   }
 
-  // Ignore _id if it exists (update is by email)
   if (userData._id) {
     delete userData._id
   }
