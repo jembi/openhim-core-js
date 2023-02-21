@@ -42,7 +42,7 @@
     "maxPayloadSizeMB": 50,
     "truncateSize": 15000,
     "truncateAppend": "\n[truncated ...]",
-    "authenticationTypes": ["basic", "local"]
+    "authenticationTypes": ["basic", "local", "token"]
   },
   "rerun": {
     "httpPort": 7786,

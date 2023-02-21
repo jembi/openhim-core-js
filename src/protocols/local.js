@@ -32,7 +32,7 @@ export const login = async function (email, password, next) {
         )
       }
       return PassportModelAPI.findOne({
-        protocol: 'local',
+        protocol: user.provider === 'token' ? 'token' : 'local',
         user: user.id
       })
         .then(function (passport) {
@@ -41,7 +41,9 @@ export const login = async function (email, password, next) {
               if (err || !res) {
                 return next(
                   new Error(
-                    `Wrong password entered by ${email}, denying access to API ${err ? err : ""}`
+                    `Wrong password entered by ${email}, denying access to API ${
+                      err ? err : ''
+                    }`
                   ),
                   false
                 )

@@ -15,7 +15,10 @@ import * as testUtils from '../utils'
 import {AutoRetryModelAPI} from '../../src/model/autoRetry'
 import {ChannelModel} from '../../src/model/channels'
 import {EventModelAPI} from '../../src/model/events'
-import {TransactionModel, TransactionModelAPI} from '../../src/model/transactions'
+import {
+  TransactionModel,
+  TransactionModelAPI
+} from '../../src/model/transactions'
 import {config} from '../../src/config'
 import {TaskModel} from '../../src/model'
 
@@ -1093,7 +1096,7 @@ describe('API Integration Tests', () => {
 
       it('should fail to fetch transactions (intenal server error)', async () => {
         const stub = sinon.stub(TransactionModelAPI, 'find')
-        stub.callsFake((() => Promise.reject()))
+        stub.callsFake(() => Promise.reject())
         await request(constants.BASE_URL)
           .get('/transactions')
           .set('auth-username', testUtils.nonRootUser.email)
@@ -1253,7 +1256,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should do bulk rerun on specific channel', async () => {
-        const res = await request(constants.BASE_URL)
+        await request(constants.BASE_URL)
           .post('/bulkrerun')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -1269,7 +1272,7 @@ describe('API Integration Tests', () => {
       })
 
       it('should fail to do bulk rerun on rescrticted channel', async () => {
-        const res = await request(constants.BASE_URL)
+        await request(constants.BASE_URL)
           .post('/bulkrerun')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)
@@ -1286,8 +1289,8 @@ describe('API Integration Tests', () => {
 
       it('should fail to do bulk rerun (intenal server error)', async () => {
         const stub = sinon.stub(TransactionModelAPI, 'count')
-        stub.callsFake((() => Promise.reject()))
-        const res = await request(constants.BASE_URL)
+        stub.callsFake(() => Promise.reject())
+        await request(constants.BASE_URL)
           .post('/bulkrerun')
           .set('auth-username', testUtils.nonRootUser.email)
           .set('auth-ts', authDetails.authTS)

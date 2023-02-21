@@ -11,7 +11,12 @@ import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as contact from '../contact'
 import * as utils from '../utils'
-import {UserModelAPI, updateUser as apiUpdateUser} from '../model/users'
+import {
+  UserModelAPI,
+  updateUser as apiUpdateUser,
+  updateTokenUser
+} from '../model/users'
+import {PassportModelAPI} from '../model/passport'
 import {config} from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
@@ -33,19 +38,36 @@ export function me(ctx) {
   }
 }
 
-export async function authenticate(ctx) {
+export async function authenticate(ctx, email) {
   const body = ctx.request.body
 
   try {
+    // Token authentication @deprecated
+    if (email) {
+      email = unescape(email)
+      // Local authentication
+    } else {
+      email = body.username
+    }
+
+    if (!email) {
+      utils.logAndSetResponse(
+        ctx,
+        404,
+        `Could not find email while authentication`,
+        'info'
+      )
+    }
+
     const user = await UserModelAPI.findOne({
-      email: utils.caseInsensitiveRegex(body.username)
+      email: utils.caseInsensitiveRegex(email)
     })
 
     if (!user) {
       utils.logAndSetResponse(
         ctx,
         404,
-        `Could not find user by email ${body.username}`,
+        `Could not find user by email ${email}`,
         'info'
       )
       // Audit unknown user requested
@@ -53,14 +75,41 @@ export async function authenticate(ctx) {
         atna.constants.OUTCOME_SERIOUS_FAILURE,
         himSourceID,
         os.hostname(),
-        body.username
+        email
       )
       audit = atna.construct.wrapInSyslog(audit)
       return auditing.sendAuditEvent(audit, () =>
         logger.debug('Processed internal audit')
       )
     } else {
-      ctx.body = 'User Authenticated successfully'
+      ctx.body = {
+        result: 'User Authenticated successfully',
+        user
+      }
+
+      // @deprecated
+      if (user.provider === 'token') {
+        logger.warn(
+          'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+        )
+
+        const passport = await PassportModelAPI.findOne({
+          protocol: 'token',
+          user: user.id
+        })
+
+        if (!passport) {
+          utils.logAndSetResponse(
+            ctx,
+            404,
+            `Could not find token passport for user ${email}`,
+            'info'
+          )
+        } else {
+          ctx.body.salt = passport.passwordSalt
+          ctx.body.ts = new Date()
+        }
+      }
       ctx.status = 200
     }
   } catch (e) {
@@ -271,7 +320,12 @@ export async function updateUserByToken(ctx, token) {
     token: null,
     tokenType: null,
     expiry: null,
-    password: userData.password
+    password: userData.password,
+
+    // deprecated [token]
+    passwordAlgorithm: userData.passwordAlgorithm,
+    passwordHash: userData.passwordHash,
+    passwordSalt: userData.passwordSalt
   }
 
   if (userDataExpiry.tokenType === 'newUser') {
@@ -282,7 +336,22 @@ export async function updateUserByToken(ctx, token) {
   }
 
   try {
-    const {user, error} = await apiUpdateUser(userUpdateObj)
+    let user, error
+    // @deprecated Token user update
+    if (
+      userUpdateObj.passwordAlgorithm &&
+      userUpdateObj.passwordHash &&
+      userUpdateObj.passwordSalt
+    ) {
+      logger.warn(
+        'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+      )
+      ;({user, error} = await updateTokenUser(userUpdateObj))
+      // Other providers
+    } else {
+      ;({user, error} = await apiUpdateUser(userUpdateObj))
+    }
+
     if (user) {
       ctx.body = 'Successfully set new user password.'
       return logger.info(`User updated by token ${token}`)
@@ -479,8 +548,11 @@ export async function updateUser(ctx, email) {
   const {_doc: userData} = new UserModelAPI(ctx.request.body)
   const {password} = ctx.request.body
 
+  // @deprecated
+  const {passwordAlgorithm, passwordHash, passwordSalt} = ctx.request.body
+
   // reset token/locked/expiry when user is updated and password supplied
-  if (password) {
+  if (password || (passwordAlgorithm && passwordHash && passwordSalt)) {
     userData.token = null
     userData.tokenType = null
     userData.locked = false
@@ -500,10 +572,24 @@ export async function updateUser(ctx, email) {
   }
 
   try {
-    const {user, error} = await apiUpdateUser({
-      id: userDetails._id,
-      ...userData
-    })
+    let user, error
+    // @deprecated Token user update
+    if (passwordAlgorithm && passwordHash && passwordSalt) {
+      logger.warn(
+        'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+      )
+      ;({user, error} = await updateTokenUser({
+        id: userDetails._id,
+        ...userData
+      }))
+      // Other providers
+    } else {
+      ;({user, error} = await apiUpdateUser({
+        id: userDetails._id,
+        ...userData
+      }))
+    }
+
     if (user) {
       ctx.body = 'Successfully updated user.'
       logger.info(

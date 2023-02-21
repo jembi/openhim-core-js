@@ -4,7 +4,8 @@ import logger from 'winston'
 import passport from 'koa-passport'
 import * as passportLocal from 'passport-local'
 import * as passportHttp from 'passport-http'
-import {local, basic} from './protocols'
+import * as passportCustom from 'passport-custom'
+import {local, basic, token} from './protocols'
 import {UserModelAPI} from './model'
 
 /**
@@ -32,8 +33,10 @@ passport.loadStrategies = function () {
       strategy: passportLocal.Strategy
     },
     basic: {
-      strategy: passportHttp.BasicStrategy,
-      protocol: 'basic'
+      strategy: passportHttp.BasicStrategy
+    },
+    token: {
+      strategy: passportCustom.Strategy
     }
     // TODO: Add openid
   }
@@ -59,6 +62,17 @@ passport.loadStrategies = function () {
           new Strategy(
             async (username, password, next) =>
               await basic.login(username, password, (err, user) =>
+                handlePassportError(err, user, next)
+              )
+          )
+        )
+      } else if (key === 'token') {
+        Strategy = strat.strategy
+        passport.use(
+          'token',
+          new Strategy(
+            async (req, next) =>
+              await token.login(req, (err, user) =>
                 handlePassportError(err, user, next)
               )
           )

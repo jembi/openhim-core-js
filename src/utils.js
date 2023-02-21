@@ -1,6 +1,7 @@
 'use strict'
 
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import logger from 'winston'
 import momentTZ from 'moment-timezone'
 import _ from 'lodash'
@@ -192,7 +193,20 @@ export function selectAuditFields(authenticated) {
  * Validate password by comparing it to the password stored in the passport
  */
 export const validatePassword = function (passport, password, next) {
-  bcrypt.compare(password, passport.password, next)
+  // @deprecated Token strategy
+  if (passport.protocol === 'token') {
+    const hash = crypto.createHash(passport.passwordAlgorithm)
+    hash.update(passport.passwordSalt)
+    hash.update(password)
+    if (passport.passwordHash !== hash.digest('hex')) {
+      // not authenticated - password mismatch
+      return next(new Error('Password did not match expected value'), false)
+    }
+    return next(null, true)
+    // Local strategy
+  } else {
+    bcrypt.compare(password, passport.password, next)
+  }
 }
 
 /**

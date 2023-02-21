@@ -21,6 +21,16 @@ const UserSchema = new Schema({
     unique: true
   },
   passports: {type: Schema.Types.ObjectId, ref: 'Passport'},
+  /* --- @deprecated --- */
+  passwordAlgorithm: String,
+  passwordHash: String,
+  passwordSalt: String,
+  /* --- ----------- --- */
+  provider: {
+    type: String,
+    enum: ['keycloak', 'local', 'token'], // token is deprecated
+    default: 'local'
+  },
   groups: [String],
   msisdn: String,
   dailyReport: Boolean,
@@ -56,9 +66,17 @@ export const createUser = async function (_user) {
     let password = await hashPassword(userToBeCreated.password)
     delete userToBeCreated.password
 
+    const {passwordHash, passwordAlgorithm, passwordSalt} = userToBeCreated
+
+    if (passwordHash || passwordAlgorithm || passwordSalt) {
+      delete userToBeCreated.passwordHash
+      delete userToBeCreated.passwordSalt
+      delete userToBeCreated.passwordAlgorithm
+    }
+
     return await UserModelAPI.create(userToBeCreated)
       .then(async function (user) {
-        return await createPassport(user, password)
+        return await createPassport(user, {password})
       })
       .catch(err => {
         result.error = err
@@ -106,7 +124,74 @@ export const updateUser = async function (_user) {
                 passport.password = password
                 result = await updatePassport(user, passport)
               } else {
-                result = await createPassport(user, password)
+                result = await createPassport(user, {password})
+              }
+            })
+            .catch(err => {
+              result.error = err
+            })
+        } else {
+          result.user = user
+        }
+      })
+      .catch(err => {
+        result.error = err
+      })
+
+    return result
+  } catch (err) {
+    result.error = err
+    return result
+  }
+}
+
+/**
+ * @deprecated
+ * Update user (token provider)
+ *
+ * Please consider upgrading and use updateUser instead.
+ *
+ * This method updates an user based on its id or username if id is not present
+ * and assign the newly created user a token Passport.
+ *
+ */
+export const updateTokenUser = async function (_user) {
+  // Create a clone to _user
+  const userToBeUpdated = {..._user, provider: 'token'}
+
+  let result = {user: null, error: null}
+
+  try {
+    const {passwordHash, passwordAlgorithm, passwordSalt} = userToBeUpdated
+
+    if (passwordHash || passwordAlgorithm || passwordSalt) {
+      delete userToBeUpdated.passwordHash
+      delete userToBeUpdated.passwordSalt
+      delete userToBeUpdated.passwordAlgorithm
+    }
+
+    await UserModelAPI.findByIdAndUpdate(userToBeUpdated.id, userToBeUpdated, {
+      new: true
+    })
+      .then(async function (user) {
+        // Check if password has a string to replace it
+        if (passwordHash && passwordAlgorithm && passwordSalt) {
+          await PassportModelAPI.findOne({
+            protocol: 'token',
+            user: user.id
+          })
+            .then(async function (passport) {
+              if (passport) {
+                passport.passwordHash = passwordHash
+                passport.passwordAlgorithm = passwordAlgorithm
+                passport.passwordSalt = passwordSalt
+                result = await updatePassport(user, passport)
+              } else {
+                result = await createPassport(user, {
+                  passwordHash,
+                  passwordAlgorithm,
+                  passwordSalt
+                })
               }
             })
             .catch(err => {
