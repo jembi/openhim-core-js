@@ -16,7 +16,7 @@ import {
   updateUser as apiUpdateUser,
   updateTokenUser
 } from '../model/users'
-import {PassportModelAPI} from '../model/passport'
+import {PassportModelAPI, createPassport} from '../model/passport'
 import {config} from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
@@ -38,18 +38,46 @@ export function me(ctx) {
   }
 }
 
-export async function authenticate(ctx, email) {
-  const body = ctx.request.body
+export async function authenticate(ctx) {
+  try {
+    if (!ctx.req.user) {
+      utils.logAndSetResponse(
+        ctx,
+        404,
+        `Could not be authenticaticated`,
+        'info'
+      )
+    } else {
+      ctx.body = {
+        result: 'User Authenticated successfully',
+        user: ctx.req.user
+      }
+      ctx.status = 200
+    }
+  } catch (e) {
+    return utils.logAndSetResponse(
+      ctx,
+      500,
+      `Error during authentication ${e}`,
+      'error'
+    )
+  }
+}
+
+/**
+ * @deprecated
+ *
+ * Using token auth type, the user is authenticated in the next middeleware, here we just return the salt and timestamp
+ * so the client can generate the password hash
+ */
+export async function authenticateToken(ctx, email) {
+  logger.warn(
+    'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+  )
+
+  email = unescape(email)
 
   try {
-    // Token authentication @deprecated
-    if (email) {
-      email = unescape(email)
-      // Local authentication
-    } else {
-      email = body.username
-    }
-
     if (!email) {
       utils.logAndSetResponse(
         ctx,
@@ -82,35 +110,27 @@ export async function authenticate(ctx, email) {
         logger.debug('Processed internal audit')
       )
     } else {
-      ctx.body = {
-        result: 'User Authenticated successfully',
-        user
-      }
+      const passport = await PassportModelAPI.findOne({
+        protocol: 'token',
+        user: user.id
+      })
 
-      // @deprecated
-      if (user.provider === 'token') {
-        logger.warn(
-          'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+      if (!passport) {
+        utils.logAndSetResponse(
+          ctx,
+          404,
+          `Could not find token passport for user ${email}`,
+          'info'
         )
-
-        const passport = await PassportModelAPI.findOne({
-          protocol: 'token',
-          user: user.id
-        })
-
-        if (!passport) {
-          utils.logAndSetResponse(
-            ctx,
-            404,
-            `Could not find token passport for user ${email}`,
-            'info'
-          )
-        } else {
-          ctx.body.salt = passport.passwordSalt
-          ctx.body.ts = new Date()
+      } else {
+        ctx.body = {
+          result: 'User Authenticated successfully',
+          salt: passport.passwordSalt,
+          ts: new Date(),
+          user
         }
+        ctx.status = 200
       }
-      ctx.status = 200
     }
   } catch (e) {
     return utils.logAndSetResponse(
@@ -422,8 +442,40 @@ export async function addUser(ctx) {
   const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
 
   try {
+    const {passwordHash, passwordAlgorithm, passwordSalt, password} = userData
+
+    // Remove password fields from user object
+    if (passwordHash || passwordAlgorithm || passwordSalt || password) {
+      delete userData.passwordHash
+      delete userData.passwordSalt
+      delete userData.passwordAlgorithm
+      delete userData.password
+    }
+
     const user = new UserModelAPI(userData)
     await user.save()
+
+    let result
+    // Create passport if password field is provided (to support clients who uses this functionality)
+    // @deprecated token passport
+    if (passwordHash || passwordAlgorithm || passwordSalt) {
+      logger.warn(
+        'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+      )
+      result = await createPassport(user, {
+        passwordHash,
+        passwordAlgorithm,
+        passwordSalt
+      })
+    } else {
+      result = await createPassport(user, {
+        password
+      })
+    }
+
+    if (!result.user || result.error) {
+      logger.error(`Error while trying to create a passport for ${user.email}.`)
+    }
 
     // Send email to new user to set password
 
@@ -559,10 +611,11 @@ export async function updateUser(ctx, email) {
     userData.expiry = null
   }
 
-  // Don't allow a non-admin user to change their groups
+  // Don't allow a non-admin user to change their groups & Update only if groups exist
   if (
-    ctx.authenticated.email === email &&
-    !authorisation.inGroup('admin', ctx.authenticated)
+    (ctx.authenticated.email === email &&
+      !authorisation.inGroup('admin', ctx.authenticated)) ||
+    ctx.request.body.groups === undefined
   ) {
     delete userData.groups
   }
@@ -580,12 +633,16 @@ export async function updateUser(ctx, email) {
       )
       ;({user, error} = await updateTokenUser({
         id: userDetails._id,
+        passwordAlgorithm,
+        passwordHash,
+        passwordSalt,
         ...userData
       }))
       // Other providers
     } else {
       ;({user, error} = await apiUpdateUser({
         id: userDetails._id,
+        password,
         ...userData
       }))
     }

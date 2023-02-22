@@ -465,6 +465,10 @@ describe('Upgrade DB Tests', () => {
       await testUtils.setImmediatePromise()
     })
 
+    before(async () => {
+      await Promise.all([UserModel.deleteMany(), PassportModel.deleteMany()])
+    })
+
     beforeEach(async () => {
       const res1 = await new UserModel(userObj1).save()
       userId1 = res1._id

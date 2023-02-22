@@ -86,7 +86,7 @@ export function setupApp(done) {
     )
   )
   // @deprecated: Token authentication
-  app.use(route.get('/authenticate/:username', users.authenticate))
+  app.use(route.get('/authenticate/:username', users.authenticateToken))
 
   // Authenticate the API request
   app.use(authentication.authenticate)
