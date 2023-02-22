@@ -47,6 +47,15 @@ async function authenticateBasic(ctx) {
   return ctx.req.user || null
 }
 
+/**
+ * @deprecated
+ */
+async function authenticateToken(ctx) {
+  await passport.authenticate('token')(ctx, () => {})
+
+  return ctx.req.user || null
+}
+
 function getEnabledAuthenticationTypesFromConfig(config) {
   if (Array.isArray(config.api.authenticationTypes)) {
     return config.api.authenticationTypes
@@ -78,9 +87,13 @@ async function authenticateRequest(ctx) {
     // Basic auth using middleware
     user = await authenticateBasic(ctx)
   }
-  // Otherwise try token based authentication if enabled
+  // Otherwise try local based authentication if enabled
   if (user == null && isAuthenticationTypeEnabled('local') && ctx.req.user) {
     user = ctx.req.user
+  }
+  // Otherwise try token based authentication if enabled (@deprecated)
+  if (user == null && isAuthenticationTypeEnabled('token')) {
+    user = await authenticateToken(ctx)
   }
   // User could not be authenticated
   if (user == null) {

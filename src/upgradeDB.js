@@ -8,6 +8,7 @@ import {DbVersionModel} from './model/dbVersion'
 import {KeystoreModel} from './model/keystore'
 import {UserModel} from './model/users'
 import {VisualizerModel} from './model/visualizer'
+import {PassportModel} from './model/passport'
 
 function dedupName(name, names, num) {
   let newName
@@ -219,6 +220,70 @@ upgradeFuncs.push({
               })
               promises.push(promise)
             }
+          }
+        })
+
+        Promise.all(promises)
+          .then(() => resolve())
+          .catch(err => reject(err))
+      })
+    })
+  }
+})
+
+upgradeFuncs.push({
+  description:
+    'Migrate password properties of token auth strategy from User collection to Passport collection',
+  func() {
+    return new Promise((resolve, reject) => {
+      UserModel.find((err, users) => {
+        if (err) {
+          return reject(err)
+        }
+
+        const promises = []
+        users.forEach(user => {
+          if (
+            user.passwordHash != null &&
+            user.passwordAlgorithm != null &&
+            user.passwordSalt != null
+          ) {
+            let pass = {
+              passwordHash: user.passwordHash,
+              passwordAlgorithm: user.passwordAlgorithm,
+              passwordSalt: user.passwordSalt,
+              user: user.id,
+              protocol: 'token'
+            }
+
+            const promise = new Promise((resolve, reject) => {
+              pass = new PassportModel(pass)
+              logger.debug(
+                `Migrating passwords fields from user ${user.email} to passport collection`
+              )
+              pass.save(err => {
+                if (err) {
+                  logger.error(
+                    `Error migrating password fields from user ${user.email}: ${err.stack}`
+                  )
+                  return reject(err)
+                }
+
+                // delete the password fields from this user
+                user.set('passwordHash', null)
+                user.set('passwordAlgorithm', null)
+                user.set('passwordSalt', null)
+                // add the field provider to know that these users are from old version
+                user.set('provider', 'token')
+                user.save(err => {
+                  if (err) {
+                    return reject(err)
+                  }
+                  return resolve()
+                })
+              })
+            })
+            promises.push(promise)
           }
         })
 
