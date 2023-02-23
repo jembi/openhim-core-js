@@ -40,12 +40,7 @@ export function me(ctx) {
 
 export async function authenticate(ctx) {
   if (!ctx.req.user) {
-    utils.logAndSetResponse(
-      ctx,
-      404,
-      `Could not be authenticaticated`,
-      'info'
-    )
+    utils.logAndSetResponse(ctx, 404, `Could not be authenticaticated`, 'info')
   } else {
     ctx.body = {
       result: 'User authenticated successfully',
@@ -66,7 +61,6 @@ export async function authenticateToken(ctx, email) {
     'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
   )
 
-  
   try {
     email = unescape(email)
 
