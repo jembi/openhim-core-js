@@ -74,19 +74,19 @@ describe('API Integration Tests', () => {
         .expect(401)
     })
 
-    it('should disallow access if the user\'s password is not set yet', async () => {
+    it("should disallow access if the user's password is not set yet", async () => {
       await request(BASE_URL)
         .post('/authenticate/local')
-        .send({username: userWithoutPass.email, password: "password"})
+        .send({username: userWithoutPass.email, password: 'password'})
         .expect(401)
     })
 
     it('should disallow access if the user is not found', async () => {
       // User not found when getting auth info
       await request(BASE_URL)
-      .post('/authenticate/local')
-      .send({username: "unexistent-user@test.com", password: "password"})
-      .expect(401)
+        .post('/authenticate/local')
+        .send({username: 'unexistent-user@test.com', password: 'password'})
+        .expect(401)
     })
 
     it('should disallow access if cookies does not exist', async () => {
@@ -133,9 +133,9 @@ describe('API Integration Tests', () => {
     // password is 'password'
     before(async () => {
       await promisify(server.start)({
-          apiPort: SERVER_PORTS.apiPort,
-          httpsPort: SERVER_PORTS.httpsPort
-        })
+        apiPort: SERVER_PORTS.apiPort,
+        httpsPort: SERVER_PORTS.httpsPort
+      })
       const res = await new UserModel(userDoc).save()
       await updateTokenUser({id: res.id, ...userDoc})
       userWithoutPassRes = await new UserModel(userWithoutPass).save()
@@ -218,31 +218,35 @@ describe('API Integration Tests', () => {
         .expect(401)
     })
 
-    it('should disallow access if the user\'s password is not set yet', async () => {
+    it("should disallow access if the user's password is not set yet", async () => {
       await request(BASE_URL)
         .get('/channels')
         .set('auth-username', userWithoutPass.email)
         .set('auth-ts', new Date())
-        .set('auth-salt', "salt")
-        .set('auth-token', "token")
+        .set('auth-salt', 'salt')
+        .set('auth-token', 'token')
         .expect(401)
     })
 
-    it('should disallow access if the user\'s password algorithm is not defined correctly', async () => {
+    it("should disallow access if the user's password algorithm is not defined correctly", async () => {
       const passwordfields = {
         passwordAlgorithm: 'test',
         passwordHash:
           '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
         passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
       }
-      await updateTokenUser({id: userWithoutPassRes.id, ...userWithoutPass, ...passwordfields})
+      await updateTokenUser({
+        id: userWithoutPassRes.id,
+        ...userWithoutPass,
+        ...passwordfields
+      })
 
       await request(BASE_URL)
         .get('/channels')
         .set('auth-username', 'test@test.net')
         .set('auth-ts', new Date())
-        .set('auth-salt', "salt")
-        .set('auth-token', "token")
+        .set('auth-salt', 'salt')
+        .set('auth-token', 'token')
         .expect(401)
     })
 
@@ -310,6 +314,5 @@ describe('API Integration Tests', () => {
         .set('auth-token', tokenhash.digest('hex'))
         .expect(200)
     })
-
   })
 })

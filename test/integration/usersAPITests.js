@@ -447,8 +447,10 @@ describe('API Integration Tests', () => {
           .get(`/users/unexistent@user.org`)
           .set('Cookie', cookie)
           .expect(404)
-        
-        res.text.should.be.equal('User with email unexistent@user.org could not be found.')
+
+        res.text.should.be.equal(
+          'User with email unexistent@user.org could not be found.'
+        )
       })
     })
 
@@ -715,7 +717,7 @@ describe('API Integration Tests', () => {
         const res = await request(BASE_URL)
           .get('/authenticate/R..@jembi.org')
           .expect(200)
-  
+
         res.body.salt.should.eql('bf93caba-6eec-4c0c-a1a3-d968a7533fd7')
         should.exist(res.body.ts)
       })
@@ -724,8 +726,10 @@ describe('API Integration Tests', () => {
         const res = await request(BASE_URL)
           .get('/authenticate/unexisten-user@test.org')
           .expect(404)
-        
-        res.text.should.eql(`Could not find user by email unexisten-user@test.org`)
+
+        res.text.should.eql(
+          `Could not find user by email unexisten-user@test.org`
+        )
       })
 
       it('should return 404 if passport not found', async () => {
@@ -733,7 +737,9 @@ describe('API Integration Tests', () => {
           .get(`/authenticate/${newUser.email}`)
           .expect(404)
 
-        res.text.should.eql(`Could not find token passport for user ${newUser.email}`)
+        res.text.should.eql(
+          `Could not find token passport for user ${newUser.email}`
+        )
       })
     })
 
@@ -856,16 +862,13 @@ describe('API Integration Tests', () => {
         user.should.have.property('locked', false)
         user.should.have.property('expiry', null)
 
-        const passport = await PassportModelAPI.findOne({user: user._id, protocol: 'token'})
+        const passport = await PassportModelAPI.findOne({
+          user: user._id,
+          protocol: 'token'
+        })
 
-        passport.should.have.property(
-          'protocol',
-          'token'
-        )
-        passport.should.have.property(
-          'passwordAlgorithm',
-          'sha256'
-        )
+        passport.should.have.property('protocol', 'token')
+        passport.should.have.property('passwordAlgorithm', 'sha256')
         passport.should.have.property(
           'passwordHash',
           'af200ab5-4227-4840-97d1-92ba91206499'
@@ -1050,8 +1053,10 @@ describe('API Integration Tests', () => {
           .set('auth-salt', authDetails.authSalt)
           .set('auth-token', authDetails.authToken)
           .expect(404)
-        
-        res.text.should.be.equal('User with email unexistent@user.org could not be found.')
+
+        res.text.should.be.equal(
+          'User with email unexistent@user.org could not be found.'
+        )
       })
     })
 
@@ -1064,7 +1069,7 @@ describe('API Integration Tests', () => {
           groups: ['admin', 'RHIE', 'HISP'],
           passwordAlgorithm: 'md5',
           passwordHash: '3cc90918-7044-4e55-b61d-92ae73cb261e',
-          passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0',
+          passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
         }
 
         await request(BASE_URL)
@@ -1081,9 +1086,15 @@ describe('API Integration Tests', () => {
         user.should.have.property('email', 'rg..@jembi.org')
         user.groups.should.have.length(3)
 
-        const passport = await PassportModelAPI.findOne({user: user.id, protocol: 'token'})
+        const passport = await PassportModelAPI.findOne({
+          user: user.id,
+          protocol: 'token'
+        })
 
-        passport.should.have.property('passwordAlgorithm', updates.passwordAlgorithm)
+        passport.should.have.property(
+          'passwordAlgorithm',
+          updates.passwordAlgorithm
+        )
         passport.should.have.property('passwordHash', updates.passwordHash)
         passport.should.have.property('passwordSalt', updates.passwordSalt)
       })

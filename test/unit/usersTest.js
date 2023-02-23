@@ -93,8 +93,8 @@ describe('UserModel tests', () => {
 
     before(async () => {
       const {user, error} = await model.createUser(userToBeCreated)
-      
-      if(error) {
+
+      if (error) {
         throw new Error(error)
       }
       userId = user.id
@@ -308,7 +308,9 @@ describe('UserModel tests', () => {
       let passportResult = res[0]._doc
       passportResult.should.not.have.property('password')
       passportResult.should.have.property('passwordAlgorithm')
-      passportResult.passwordAlgorithm.should.not.equal(oldPassport.passwordAlgorithm)
+      passportResult.passwordAlgorithm.should.not.equal(
+        oldPassport.passwordAlgorithm
+      )
       passportResult.should.have.property('passwordHash')
       passportResult.passwordHash.should.not.equal(oldPassport.passwordHash)
       passportResult.should.have.property('passwordSalt')
@@ -320,7 +322,7 @@ describe('UserModel tests', () => {
         id: userIdWithoutPassword,
         passwordAlgorithm: 'sha512',
         passwordHash: '796a5a8e-4e44-4d9f-9e04-c27ec6374ffa',
-        passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7',
+        passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7'
       }
 
       const {error, user} = await model.updateTokenUser(userToBeUpdated)
@@ -331,15 +333,24 @@ describe('UserModel tests', () => {
       user.should.have.property('firstname', userWithoutPassword.firstname)
       user.should.have.property('surname', userWithoutPassword.surname)
       user.should.have.property('email', userWithoutPassword.email)
-      user.should.have.property('provider', "token")
+      user.should.have.property('provider', 'token')
 
       const passportResult = await model.PassportModelAPI.findOne({
         user: user.id,
         protocol: 'token'
       })
-      passportResult.should.have.property('passwordAlgorithm', userToBeUpdated.passwordAlgorithm)
-      passportResult.should.have.property('passwordHash', userToBeUpdated.passwordHash)
-      passportResult.should.have.property('passwordSalt', userToBeUpdated.passwordSalt)
+      passportResult.should.have.property(
+        'passwordAlgorithm',
+        userToBeUpdated.passwordAlgorithm
+      )
+      passportResult.should.have.property(
+        'passwordHash',
+        userToBeUpdated.passwordHash
+      )
+      passportResult.should.have.property(
+        'passwordSalt',
+        userToBeUpdated.passwordSalt
+      )
     })
 
     it('should return error when non existent user ID', async () => {
