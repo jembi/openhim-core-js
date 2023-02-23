@@ -127,9 +127,6 @@ export const updateUser = async function (_user) {
                 result = await createPassport(user, {password})
               }
             })
-            .catch(err => {
-              result.error = err
-            })
         } else {
           result.user = user
         }
@@ -161,53 +158,45 @@ export const updateTokenUser = async function (_user) {
 
   let result = {user: null, error: null}
 
-  try {
     const {passwordHash, passwordAlgorithm, passwordSalt} = userToBeUpdated
 
     if (passwordHash || passwordAlgorithm || passwordSalt) {
-      delete userToBeUpdated.passwordHash
-      delete userToBeUpdated.passwordSalt
-      delete userToBeUpdated.passwordAlgorithm
+      userToBeUpdated.passwordHash = null
+      userToBeUpdated.passwordSalt = null
+      userToBeUpdated.passwordAlgorithm = null
     }
 
-    await UserModelAPI.findByIdAndUpdate(userToBeUpdated.id, userToBeUpdated, {
-      new: true
-    })
-      .then(async function (user) {
-        // Check if password has a string to replace it
-        if (passwordHash && passwordAlgorithm && passwordSalt) {
-          await PassportModelAPI.findOne({
-            protocol: 'token',
-            user: user.id
+  await UserModelAPI.findByIdAndUpdate(userToBeUpdated.id, userToBeUpdated, {
+    new: true
+  })
+    .then(async function (user) {
+      // Check if password has a string to replace it
+      if (passwordHash && passwordAlgorithm && passwordSalt) {
+        await PassportModelAPI.findOne({
+          protocol: 'token',
+          user: user.id
+        })
+          .then(async function (passport) {
+            if (passport) {
+              passport.passwordHash = passwordHash
+              passport.passwordAlgorithm = passwordAlgorithm
+              passport.passwordSalt = passwordSalt
+              result = await updatePassport(user, passport)
+            } else {
+              result = await createPassport(user, {
+                passwordHash,
+                passwordAlgorithm,
+                passwordSalt
+              })
+            }
           })
-            .then(async function (passport) {
-              if (passport) {
-                passport.passwordHash = passwordHash
-                passport.passwordAlgorithm = passwordAlgorithm
-                passport.passwordSalt = passwordSalt
-                result = await updatePassport(user, passport)
-              } else {
-                result = await createPassport(user, {
-                  passwordHash,
-                  passwordAlgorithm,
-                  passwordSalt
-                })
-              }
-            })
-            .catch(err => {
-              result.error = err
-            })
-        } else {
-          result.user = user
-        }
-      })
-      .catch(err => {
-        result.error = err
-      })
+      } else {
+        result.user = user
+      }
+    })
+    .catch(err => {
+      result.error = err
+    })
 
-    return result
-  } catch (err) {
-    result.error = err
-    return result
-  }
+  return result
 }

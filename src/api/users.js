@@ -39,28 +39,19 @@ export function me(ctx) {
 }
 
 export async function authenticate(ctx) {
-  try {
-    if (!ctx.req.user) {
-      utils.logAndSetResponse(
-        ctx,
-        404,
-        `Could not be authenticaticated`,
-        'info'
-      )
-    } else {
-      ctx.body = {
-        result: 'User Authenticated successfully',
-        user: ctx.req.user
-      }
-      ctx.status = 200
-    }
-  } catch (e) {
-    return utils.logAndSetResponse(
+  if (!ctx.req.user) {
+    utils.logAndSetResponse(
       ctx,
-      500,
-      `Error during authentication ${e}`,
-      'error'
+      404,
+      `Could not be authenticaticated`,
+      'info'
     )
+  } else {
+    ctx.body = {
+      result: 'User authenticated successfully',
+      user: ctx.req.user
+    }
+    ctx.status = 200
   }
 }
 
@@ -75,17 +66,9 @@ export async function authenticateToken(ctx, email) {
     'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
   )
 
-  email = unescape(email)
-
+  
   try {
-    if (!email) {
-      utils.logAndSetResponse(
-        ctx,
-        404,
-        `Could not find email while authentication`,
-        'info'
-      )
-    }
+    email = unescape(email)
 
     const user = await UserModelAPI.findOne({
       email: utils.caseInsensitiveRegex(email)
@@ -124,10 +107,8 @@ export async function authenticateToken(ctx, email) {
         )
       } else {
         ctx.body = {
-          result: 'User Authenticated successfully',
           salt: passport.passwordSalt,
-          ts: new Date(),
-          user
+          ts: new Date()
         }
         ctx.status = 200
       }
@@ -325,7 +306,6 @@ export async function updateUserByToken(ctx, token) {
       `Could not find user with token ${token} via the API ${error}`,
       'error'
     )
-    return
   }
 
   // check to make sure 'msisdn' isnt 'undefined' when saving
@@ -594,7 +574,6 @@ export async function updateUser(ctx, email) {
       `Could not find user with email ${email} via the API ${e}`,
       'error'
     )
-    return
   }
 
   const {_doc: userData} = new UserModelAPI(ctx.request.body)
