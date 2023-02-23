@@ -76,24 +76,25 @@ function getEnabledAuthenticationTypesFromConfig(config) {
   return []
 }
 
-function isAuthenticationTypeEnabled(type) {
+export function isAuthenticationTypeEnabled(type) {
   return getEnabledAuthenticationTypesFromConfig(config).includes(type)
 }
 
 async function authenticateRequest(ctx) {
   let user = null
-  // First attempt basic authentication if enabled
-  if (user == null && isAuthenticationTypeEnabled('basic')) {
-    // Basic auth using middleware
-    user = await authenticateBasic(ctx)
-  }
-  // Otherwise try local based authentication if enabled
-  if (user == null && isAuthenticationTypeEnabled('local') && ctx.req.user) {
+
+  // First attempt local authentication if enabled
+  if (user == null && ctx.req.user) {
     user = ctx.req.user
   }
   // Otherwise try token based authentication if enabled (@deprecated)
-  if (user == null && isAuthenticationTypeEnabled('token')) {
+  if (user == null) {
     user = await authenticateToken(ctx)
+  }
+  // Otherwise try basic based authentication if enabled
+  if (user == null) {
+    // Basic auth using middleware
+    user = await authenticateBasic(ctx)
   }
   // User could not be authenticated
   if (user == null) {

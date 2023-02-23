@@ -5,8 +5,14 @@ import passport from 'koa-passport'
 import * as passportLocal from 'passport-local'
 import * as passportHttp from 'passport-http'
 import * as passportCustom from 'passport-custom'
+import {isAuthenticationTypeEnabled} from './api/authentication'
 import {local, basic, token} from './protocols'
 import {UserModelAPI} from './model'
+
+const disabledAuthTypeError = strat =>
+  new Error(
+    `Could not be authenticaticated, ${strat} authentication type is disabled`
+  )
 
 /**
  * Handle passport errors with logger
@@ -49,33 +55,54 @@ passport.loadStrategies = function () {
       if (key === 'local') {
         Strategy = strat.strategy
         passport.use(
-          new Strategy(
-            async (username, password, next) =>
-              await local.login(username, password, (err, user) =>
+          new Strategy(async (username, password, next) => {
+            if (isAuthenticationTypeEnabled(key)) {
+              return await local.login(username, password, (err, user) =>
                 handlePassportError(err, user, next)
               )
-          )
+            } else {
+              return handlePassportError(
+                disabledAuthTypeError(key),
+                false,
+                next
+              )
+            }
+          })
         )
       } else if (key === 'basic') {
         Strategy = strat.strategy
         passport.use(
-          new Strategy(
-            async (username, password, next) =>
-              await basic.login(username, password, (err, user) =>
+          new Strategy(async (username, password, next) => {
+            if (isAuthenticationTypeEnabled(key)) {
+              return await basic.login(username, password, (err, user) =>
                 handlePassportError(err, user, next)
               )
-          )
+            } else {
+              return handlePassportError(
+                disabledAuthTypeError(key),
+                false,
+                next
+              )
+            }
+          })
         )
       } else if (key === 'token') {
         Strategy = strat.strategy
         passport.use(
           'token',
-          new Strategy(
-            async (req, next) =>
-              await token.login(req, (err, user) =>
+          new Strategy(async (req, next) => {
+            if (isAuthenticationTypeEnabled(key)) {
+              return await token.login(req, (err, user) =>
                 handlePassportError(err, user, next)
               )
-          )
+            } else {
+              return handlePassportError(
+                disabledAuthTypeError(key),
+                false,
+                next
+              )
+            }
+          })
         )
       }
     }, passport)
