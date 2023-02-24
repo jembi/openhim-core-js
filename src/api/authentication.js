@@ -34,18 +34,24 @@ const auditingExemptPaths = [
   /\/logs/
 ]
 
-async function authenticateBasic(ctx, next) {
+async function authenticateBasic(ctx) {
   // Basic auth using middleware
   await passport.authenticate('basic', function (err, user) {
-    if (err) {
-      return logger.info(err.message)
-    } else if (user) {
+    if (user) {
       ctx.req.user = user
       ctx.body = 'User Authenticated Successfully'
       ctx.status = 200
-      return ctx.req.user
     }
-  })(ctx, next)
+  })(ctx, () => {})
+
+  return ctx.req.user || null
+}
+
+/**
+ * @deprecated
+ */
+async function authenticateToken(ctx) {
+  await passport.authenticate('token')(ctx, () => {})
 
   return ctx.req.user || null
 }
@@ -70,19 +76,25 @@ function getEnabledAuthenticationTypesFromConfig(config) {
   return []
 }
 
-function isAuthenticationTypeEnabled(type) {
+export function isAuthenticationTypeEnabled(type) {
   return getEnabledAuthenticationTypesFromConfig(config).includes(type)
 }
 
-async function authenticateRequest(ctx, next) {
+async function authenticateRequest(ctx) {
   let user = null
-  // First attempt basic authentication if enabled
-  if (user == null && isAuthenticationTypeEnabled('basic')) {
-    user = await authenticateBasic(ctx, next)
-  }
-  // Otherwise try token based authentication if enabled
-  if (user == null && isAuthenticationTypeEnabled('local') && ctx.req.user) {
+
+  // First attempt local authentication if enabled
+  if (user == null && ctx.req.user) {
     user = ctx.req.user
+  }
+  // Otherwise try token based authentication if enabled (@deprecated)
+  if (user == null) {
+    user = await authenticateToken(ctx)
+  }
+  // Otherwise try basic based authentication if enabled
+  if (user == null) {
+    // Basic auth using middleware
+    user = await authenticateBasic(ctx)
   }
   // User could not be authenticated
   if (user == null) {
@@ -107,7 +119,7 @@ function handleAuditResponse(err) {
 export async function authenticate(ctx, next) {
   try {
     // Authenticate Request either by basic or local
-    const user = await authenticateRequest(ctx, next)
+    const user = await authenticateRequest(ctx)
 
     if (ctx.isAuthenticated()) {
       // Set the user on the context for consumption by other middleware

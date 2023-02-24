@@ -68,6 +68,10 @@ The following config option are provided by the OpenHIM. All of these options ha
     "truncateAppend": "\n[truncated ...]",
     // The types of authentication to use for the API
     // Supported types are "token" and "basic" and "local"
+    // * "local" means through the UI with hitting "/authentication/local" endpoint with username and password, 
+    // this will create a session for the user and set cookies in the browser.
+    // * "basic" means with basic auth either through browser or postman by giving also username and password.
+    // * [Deprecated] "token" means that a request should provide in the header an 'auth-token', 'auth-salt' and 'auth-ts' to be authenticated.
     "authenicationTypes": ["token"]
   },
   "rerun": {

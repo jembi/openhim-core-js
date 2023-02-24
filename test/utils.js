@@ -8,6 +8,7 @@ import net from 'net'
 import serveStatic from 'serve-static'
 import sinon from 'sinon'
 import tls from 'tls'
+import * as crypto from 'crypto'
 import * as fs from 'fs'
 import * as pem from 'pem'
 import {MongoClient, ObjectId} from 'mongodb'
@@ -20,7 +21,8 @@ import {
   UserModel,
   METRIC_TYPE_HOUR,
   METRIC_TYPE_DAY,
-  createUser
+  createUser,
+  updateTokenUser
 } from '../src/model'
 import {config, encodeMongoURI} from '../src/config'
 
@@ -37,7 +39,13 @@ export const rootUser = {
   surname: 'User',
   email: 'root@jembi.org',
   password: 'password',
-  groups: ['HISP', 'admin']
+  groups: ['HISP', 'admin'],
+
+  // @deprecated
+  passwordAlgorithm: 'sha512',
+  passwordHash:
+    '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 }
 
 export const nonRootUser = {
@@ -45,7 +53,13 @@ export const nonRootUser = {
   surname: 'Root',
   email: 'nonroot@jembi.org',
   password: 'password',
-  groups: ['group1', 'group2']
+  groups: ['group1', 'group2'],
+
+  // @deprecated
+  passwordAlgorithm: 'sha512',
+  passwordHash:
+    '669c981d4edccb5ed61f4d77f9fcc4bf594443e2740feb1a23f133bdaf80aae41804d10aa2ce254cfb6aca7c497d1a717f2dd9a794134217219d8755a84b6b4e',
+  passwordSalt: '22a61686-66f6-483c-a524-185aac251fb0'
 }
 
 export function secureSocketTest(portOrOptions, data, waitForResponse = true) {
@@ -129,6 +143,31 @@ export async function setupTestUsers() {
   return res
 }
 
+export async function setupTestUsersWithToken() {
+  try {
+    const root = await new UserModel(rootUser).save()
+    const nonRoot = await new UserModel(nonRootUser).save()
+
+    // Add token passports @deprecated
+    const res = await Promise.all([
+      updateTokenUser({...rootUser, id: root.id}),
+      updateTokenUser({...nonRootUser, id: nonRoot.id})
+    ])
+
+    const errors = res
+      .filter(r => r.error)
+      .map(r => (r.error.message ? r.error.message : r.error))
+
+    if (errors.length > 0) {
+      throw new Error('Error creating test users:\n' + errors.join('\n'))
+    }
+
+    return res
+  } catch (err) {
+    throw new Error('Error creating test users:\n' + err)
+  }
+}
+
 export function getCookie(encodedCookies) {
   let decodedCookies = ''
 
@@ -152,6 +191,23 @@ export const authenticate = async (request, BASE_URL, user) => {
     .expect(200)
 
   return getCookie(authResult.headers['set-cookie'])
+}
+
+export function getAuthDetails() {
+  const authTS = new Date().toISOString()
+  const requestsalt = '842cd4a0-1a91-45a7-bf76-c292cb36b2e8'
+  const tokenhash = crypto.createHash('sha512')
+  tokenhash.update(rootUser.passwordHash)
+  tokenhash.update(requestsalt)
+  tokenhash.update(authTS)
+
+  const auth = {
+    authTS,
+    authSalt: requestsalt,
+    authToken: tokenhash.digest('hex')
+  }
+
+  return auth
 }
 
 export function cleanupTestUsers() {

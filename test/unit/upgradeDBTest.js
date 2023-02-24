@@ -11,6 +11,7 @@ import {
   ClientModel,
   DbVersionModel,
   KeystoreModel,
+  PassportModel,
   UserModel,
   VisualizerModel
 } from '../../src/model'
@@ -418,6 +419,135 @@ describe('Upgrade DB Tests', () => {
 
       const visualizers = await VisualizerModel.find()
       visualizers.length.should.eql(2)
+    })
+  })
+
+  describe(`updateFunction3 - Migrate password properties of token auth strategy from User collection to Passport collection`, () => {
+    const upgradeFunc = originalUpgradeFuncs[3].func
+    let userId1 = '',
+      userId2 = ''
+
+    const userObj1 = {
+      // password: "password"
+      firstname: 'Test',
+      surname: 'User1',
+      email: 'test1@user.org',
+      passwordAlgorithm: 'sha256',
+      passwordHash:
+        '2e4aeb43a1adcfc8fb26699c44f2088ac694eee6bc18cd91211e317b099806b1',
+      passwordSalt: '25ahdud42'
+    }
+    const userObj2 = {
+      // password: "password"
+      firstname: 'Test',
+      surname: 'User2',
+      email: 'test2@user.org',
+      passwordAlgorithm: 'MD5',
+      passwordHash: '5f4dcc3b5aa765d61d8327deb882cf99',
+      passwordSalt: '1hj7g9eeF&rs'
+    }
+    const userObj3 = {
+      firstname: 'Test',
+      surname: 'User3',
+      email: 'test3@user.org',
+      passwordAlgorithm: 'SHA-1'
+    }
+    const userObj4 = {
+      email: 'test4@user.org',
+      firstname: 'Test',
+      surname: 'User4',
+      groups: ['admin'],
+      passwordHash: '5f4dcc3b5aa765d61d8327deb882cf99'
+    }
+
+    afterEach(async () => {
+      await Promise.all([UserModel.deleteMany(), PassportModel.deleteMany()])
+      await testUtils.setImmediatePromise()
+    })
+
+    before(async () => {
+      await Promise.all([UserModel.deleteMany(), PassportModel.deleteMany()])
+    })
+
+    beforeEach(async () => {
+      const res1 = await new UserModel(userObj1).save()
+      userId1 = res1._id
+      const res2 = await new UserModel(userObj2).save()
+      userId2 = res2._id
+    })
+
+    it('should migrate password properties of token auth strategy from User to Passport collection', async () => {
+      await upgradeFunc()
+
+      await testUtils.pollCondition(() =>
+        PassportModel.countDocuments().then(c => c === 2)
+      )
+      const passports = await PassportModel.find()
+
+      passports.length.should.be.exactly(2)
+      const passwordAlgos = passports.map(p => p.passwordAlgorithm)
+      const idx1 = passwordAlgos.indexOf(userObj1.passwordAlgorithm)
+      const idx2 = passwordAlgos.indexOf(userObj2.passwordAlgorithm)
+
+      idx1.should.be.above(-1)
+      passports[idx1].passwordHash.should.be.equal(userObj1.passwordHash)
+      passports[idx1].passwordSalt.should.be.equal(userObj1.passwordSalt)
+      passports[idx1].user.should.be.deepEqual(userId1)
+      passports[idx1].protocol.should.be.equal('token')
+      idx2.should.be.above(-1)
+      passports[idx2].passwordHash.should.be.equal(userObj2.passwordHash)
+      passports[idx2].passwordSalt.should.be.equal(userObj2.passwordSalt)
+      passports[idx2].user.should.be.deepEqual(userId2)
+      passports[idx2].protocol.should.be.equal('token')
+    })
+
+    it('should remove the users password fields from User collection', async () => {
+      await upgradeFunc()
+      const user1 = await UserModel.findOne({email: userObj1.email})
+      const user2 = await UserModel.findOne({email: userObj2.email})
+
+      should.not.exist(user1.passwordHash)
+      should.not.exist(user2.passwordHash)
+      should.not.exist(user1.passwordSalt)
+      should.not.exist(user2.passwordSalt)
+      should.not.exist(user1.passwordAlgorithm)
+      should.not.exist(user2.passwordAlgorithm)
+    })
+
+    it('should add a new property provider "token" to both users', async () => {
+      await upgradeFunc()
+      const user1 = await UserModel.findOne({email: userObj1.email})
+      const user2 = await UserModel.findOne({email: userObj2.email})
+
+      user1.provider.should.be.equal('token')
+      user2.provider.should.be.equal('token')
+    })
+
+    it("should ignore users that don't have a password fields set", async () => {
+      const users = await UserModel.find()
+
+      users[0].set('passwordHash', undefined)
+      users[0].set('passwordSalt', undefined)
+      users[0].set('passwordAlgorithm', undefined)
+
+      users[1].set('passwordHash', undefined)
+      users[1].set('passwordSalt', undefined)
+      users[1].set('passwordAlgorithm', undefined)
+
+      await Promise.all(users.map(u => u.save()))
+      await upgradeFunc()
+
+      const passports = await PassportModel.find()
+      passports.length.should.eql(0)
+    })
+
+    it(`should ignore users that does not have all the 3 password fields set`, async () => {
+      await new UserModel(userObj3).save()
+      await new UserModel(userObj4).save()
+      await upgradeFunc()
+
+      const passports = await PassportModel.find()
+      passports.length.should.eql(2)
     })
   })
 })

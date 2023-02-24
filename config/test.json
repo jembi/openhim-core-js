@@ -26,7 +26,7 @@
     "maxPayloadSizeMB": 50,
     "truncateSize": 10,
     "truncateAppend": "\n[truncated ...]",
-    "authenticationTypes": ["token", "basic"]
+    "authenticationTypes": ["token", "basic", "local"]
   },
   "caching": {
     "enabled": false

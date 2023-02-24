@@ -25,7 +25,8 @@ const PassportSchema = new Schema({
   // Defines the protocol to use for the passport. When employing the local
   // strategy, the protocol will be set to 'local'. When using a third-party
   // strategy, the protocol will be set to the standard used by the third-
-  // party service (e.g. 'basic', 'openid').
+  // party service.
+  // e.g. 'basic', 'openid', 'local', 'token' [token is deprecated]
   protocol: {
     type: String,
     required: true
@@ -53,6 +54,18 @@ const PassportSchema = new Schema({
   provider: String,
   identifier: String,
   tokens: Object,
+
+  /*  ----  @deprecated  ---- */
+  // Password fields: passwordAlgorithm, passwordHash and passwordSalt
+  //
+  // Used for the token strategy
+  // The "passwordAlgorithm" is used to identify which algorithm was used when hashing the password
+  // (e.g 'sha256') "passwordSalt" the random string used for hashing as well and "passwordHash" is the result.
+  passwordAlgorithm: String,
+  passwordHash: String,
+  passwordSalt: String,
+  /*  ---- ------------- ---- */
+
   // Associations
   //
   // Associate every passport with one, and only one, user.
@@ -69,13 +82,16 @@ export const PassportModel = connectionDefault.model('Passport', PassportSchema)
  * This method creates a new passport from a specified email, username and password
  * and assign it to a newly created user.
  *
+ * @param {*} user user that will be linked to the new passport
+ * @param {*} passwordInfo either password or password fields (deprecated) which are
+ * passwordHash, passwordSalt and passwordAlgorithm
  */
-export const createPassport = async function (user, password) {
+export const createPassport = async function (user, passwordInfo) {
   let result = {error: null, user: null}
   return await PassportModelAPI.create({
-    protocol: 'local',
-    password: password,
-    user: user.id
+    protocol: passwordInfo.password ? 'local' : 'token',
+    user: user.id,
+    ...passwordInfo
   })
     .then(async function () {
       result.user = user

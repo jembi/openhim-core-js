@@ -11,7 +11,12 @@ import * as auditing from '../auditing'
 import * as authorisation from './authorisation'
 import * as contact from '../contact'
 import * as utils from '../utils'
-import {UserModelAPI, updateUser as apiUpdateUser} from '../model/users'
+import {
+  UserModelAPI,
+  updateUser as apiUpdateUser,
+  updateTokenUser
+} from '../model/users'
+import {PassportModelAPI, createPassport} from '../model/passport'
 import {config} from '../config'
 
 config.newUserExpiry = config.get('newUserExpiry')
@@ -34,26 +39,35 @@ export function me(ctx) {
 }
 
 export async function authenticate(ctx) {
-  const body = ctx.request.body
-  let email = ''
+  if (!ctx.req.user) {
+    utils.logAndSetResponse(
+      ctx,
+      404,
+      `Could not be authenticaticated`,
+      'info'
+    )
+  } else {
+    ctx.body = {
+      result: 'User authenticated successfully',
+      user: ctx.req.user
+    }
+    ctx.status = 200
+  }
+}
+
+/**
+ * @deprecated
+ *
+ * Using token auth type, the user is authenticated in the next middeleware, here we just return the salt and timestamp
+ * so the client can generate the password hash
+ */
+export async function authenticateToken(ctx, email) {
+  logger.warn(
+    'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+  )
 
   try {
-    // Openid authentication
-    if (body.code && body.state) {
-      email = ctx.req.user ? ctx.req.user.email : ''
-      // Local authentication
-    } else {
-      email = body.username
-    }
-
-    if (!email) {
-      utils.logAndSetResponse(
-        ctx,
-        404,
-        `Could not find email while authentication`,
-        'info'
-      )
-    }
+    email = unescape(email)
 
     const user = await UserModelAPI.findOne({
       email: utils.caseInsensitiveRegex(email)
@@ -78,11 +92,25 @@ export async function authenticate(ctx) {
         logger.debug('Processed internal audit')
       )
     } else {
-      ctx.body = {
-        result: 'User Authenticated successfully',
-        user
+      const passport = await PassportModelAPI.findOne({
+        protocol: 'token',
+        user: user.id
+      })
+
+      if (!passport) {
+        utils.logAndSetResponse(
+          ctx,
+          404,
+          `Could not find token passport for user ${email}`,
+          'info'
+        )
+      } else {
+        ctx.body = {
+          salt: passport.passwordSalt,
+          ts: new Date()
+        }
+        ctx.status = 200
       }
-      ctx.status = 200
     }
   } catch (e) {
     return utils.logAndSetResponse(
@@ -296,7 +324,6 @@ export async function updateUserByToken(ctx, token) {
       `Could not find user with token ${token} via the API ${error}`,
       'error'
     )
-    return
   }
 
   // check to make sure 'msisdn' isnt 'undefined' when saving
@@ -311,7 +338,12 @@ export async function updateUserByToken(ctx, token) {
     token: null,
     tokenType: null,
     expiry: null,
-    password: userData.password
+    password: userData.password,
+
+    // deprecated [token]
+    passwordAlgorithm: userData.passwordAlgorithm,
+    passwordHash: userData.passwordHash,
+    passwordSalt: userData.passwordSalt
   }
 
   if (userDataExpiry.tokenType === 'newUser') {
@@ -322,7 +354,22 @@ export async function updateUserByToken(ctx, token) {
   }
 
   try {
-    const {user, error} = await apiUpdateUser(userUpdateObj)
+    let user, error
+    // @deprecated Token user update
+    if (
+      userUpdateObj.passwordAlgorithm &&
+      userUpdateObj.passwordHash &&
+      userUpdateObj.passwordSalt
+    ) {
+      logger.warn(
+        'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+      )
+      ;({user, error} = await updateTokenUser(userUpdateObj))
+      // Other providers
+    } else {
+      ;({user, error} = await apiUpdateUser(userUpdateObj))
+    }
+
     if (user) {
       ctx.body = 'Successfully set new user password.'
       return logger.info(`User updated by token ${token}`)
@@ -393,8 +440,40 @@ export async function addUser(ctx) {
   const setPasswordLink = `${consoleURL}/#!/set-password/${token}`
 
   try {
+    const {passwordHash, passwordAlgorithm, passwordSalt, password} = userData
+
+    // Remove password fields from user object
+    if (passwordHash || passwordAlgorithm || passwordSalt || password) {
+      delete userData.passwordHash
+      delete userData.passwordSalt
+      delete userData.passwordAlgorithm
+      delete userData.password
+    }
+
     const user = new UserModelAPI(userData)
     await user.save()
+
+    let result
+    // Create passport if password field is provided (to support clients who uses this functionality)
+    // @deprecated token passport
+    if (passwordHash || passwordAlgorithm || passwordSalt) {
+      logger.warn(
+        'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+      )
+      result = await createPassport(user, {
+        passwordHash,
+        passwordAlgorithm,
+        passwordSalt
+      })
+    } else {
+      result = await createPassport(user, {
+        password
+      })
+    }
+
+    if (!result.user || result.error) {
+      logger.error(`Error while trying to create a passport for ${user.email}.`)
+    }
 
     // Send email to new user to set password
 
@@ -522,37 +601,58 @@ export async function updateUser(ctx, email) {
       `Could not find user with email ${email} via the API ${e}`,
       'error'
     )
-    return
   }
 
-  const userData = ctx.request.body
+  const {_doc: userData} = new UserModelAPI(ctx.request.body)
+  const {password} = ctx.request.body
+
+  // @deprecated
+  const {passwordAlgorithm, passwordHash, passwordSalt} = ctx.request.body
 
   // reset token/locked/expiry when user is updated and password supplied
-  if (userData.password) {
+  if (password || (passwordAlgorithm && passwordHash && passwordSalt)) {
     userData.token = null
     userData.tokenType = null
     userData.locked = false
     userData.expiry = null
   }
 
-  // Don't allow a non-admin user to change their groups
+  // Don't allow a non-admin user to change their groups & Update only if groups exist
   if (
-    ctx.authenticated.email === email &&
-    !authorisation.inGroup('admin', ctx.authenticated)
+    (ctx.authenticated.email === email &&
+      !authorisation.inGroup('admin', ctx.authenticated)) ||
+    ctx.request.body.groups === undefined
   ) {
     delete userData.groups
   }
 
-  // Ignore _id if it exists (update is by email)
   if (userData._id) {
     delete userData._id
   }
 
   try {
-    const {user, error} = await apiUpdateUser({
-      id: userDetails._id,
-      ...userData
-    })
+    let user, error
+    // @deprecated Token user update
+    if (passwordAlgorithm && passwordHash && passwordSalt) {
+      logger.warn(
+        'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
+      )
+      ;({user, error} = await updateTokenUser({
+        id: userDetails._id,
+        passwordAlgorithm,
+        passwordHash,
+        passwordSalt,
+        ...userData
+      }))
+      // Other providers
+    } else {
+      ;({user, error} = await apiUpdateUser({
+        id: userDetails._id,
+        password,
+        ...userData
+      }))
+    }
+
     if (user) {
       ctx.body = 'Successfully updated user.'
       logger.info(

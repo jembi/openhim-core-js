@@ -35,7 +35,7 @@ import * as tcpAdapter from './tcpAdapter'
 import * as tlsAuthentication from './middleware/tlsAuthentication'
 import * as upgradeDB from './upgradeDB'
 import {KeystoreModel} from './model/keystore'
-import {UserModel, createUser} from './model/users'
+import {UserModel, createUser, updateTokenUser} from './model/users'
 import {appRoot, config, connectionAgenda} from './config'
 
 mongoose.Promise = Promise
@@ -335,7 +335,13 @@ if (cluster.isMaster && !module.parent) {
     surname: 'User',
     email: 'root@openhim.org',
     password: 'openhim-password',
-    groups: ['admin']
+    groups: ['admin'],
+    // -- @deprecated --
+    passwordAlgorithm: 'sha512',
+    passwordHash:
+      '943a856bba65aad6c639d5c8d4a11fc8bb7fe9de62ae307aec8cf6ae6c1faab722127964c71db4bdd2ea2cdf60c6e4094dcad54d4522ab2839b65ae98100d0fb',
+    passwordSalt: 'd9bcb40e-ae65-478f-962e-5e5e5e7d0a01'
+    // -- ----------- --
   }
 
   // Job scheduler
@@ -472,13 +478,22 @@ if (cluster.isMaster && !module.parent) {
         return callback(err)
       }
       if (!user) {
-        return await createUser(rootUser).then(res => {
+        return await createUser(rootUser).then(async res => {
           if (res.error) {
             logger.error(`Could not save root user: ${res.error}`)
             return callback(res.error)
           }
-          logger.info('Root user created.')
-          return callback()
+          // deprecated
+          return await updateTokenUser({...rootUser, id: res.user.id}).then(
+            async res => {
+              if (res.error) {
+                logger.error(`Could not save root user: ${res.error}`)
+                return callback(res.error)
+              }
+              logger.info('Root user created.')
+              return callback()
+            }
+          )
         })
       }
       return callback()

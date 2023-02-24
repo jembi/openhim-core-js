@@ -42,7 +42,7 @@
     "maxPayloadSizeMB": 50,
     "truncateSize": 15000,
     "truncateAppend": "\n[truncated ...]",
-    "authenticationTypes": ["basic", "local"],
+    "authenticationTypes": ["basic", "local", "token"],
     "keycloak": {
       "url": "http://localhost:9088/realms/platform-realm",
       "callbackUrl": "http://localhost:9000",

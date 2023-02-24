@@ -79,12 +79,14 @@ export function setupApp(done) {
   app.use(route.get('/me', users.me))
 
   // Expose the authenticate route before the auth middleware so that it is publicly accessible
+  // Local authentication
   app.use(
     route.post(
       '/authenticate/local',
       compose([passport.authenticate('local'), users.authenticate])
     )
   )
+  // Openid authentication
   app.use(
     route.post(
       '/authenticate/openid',
@@ -98,7 +100,9 @@ export function setupApp(done) {
       ])
     )
   )
-  
+  // @deprecated: Token authentication
+  app.use(route.get('/authenticate/:username', users.authenticateToken))
+
   // Authenticate the API request
   app.use(authentication.authenticate)
 
