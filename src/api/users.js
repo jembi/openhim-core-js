@@ -40,12 +40,7 @@ export function me(ctx) {
 
 export async function authenticate(ctx) {
   if (!ctx.req.user) {
-    utils.logAndSetResponse(
-      ctx,
-      404,
-      `Could not be authenticaticated`,
-      'info'
-    )
+    utils.logAndSetResponse(ctx, 404, `Could not be authenticaticated`, 'info')
   } else {
     ctx.body = {
       result: 'User authenticated successfully',
