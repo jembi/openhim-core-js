@@ -80,19 +80,35 @@ export function isAuthenticationTypeEnabled(type) {
   return getEnabledAuthenticationTypesFromConfig(config).includes(type)
 }
 
+function requestType(ctx, type) {
+  const {headers} = ctx.request
+
+  if (
+    headers['auth-username'] ||
+    headers['auth-ts'] ||
+    headers['auth-salt'] ||
+    headers['auth-token']
+  ) {
+    return type === 'token'
+  } else if (headers.authorization && headers.authorization.includes('Basic')) {
+    return type === 'basic'
+  }
+  return false
+}
+
 async function authenticateRequest(ctx) {
   let user = null
 
-  // First attempt local authentication if enabled
+  // First attempt local or openid authentication if enabled
   if (user == null && ctx.req.user) {
     user = ctx.req.user
   }
   // Otherwise try token based authentication if enabled (@deprecated)
-  if (user == null) {
+  if (user == null && requestType(ctx, 'token')) {
     user = await authenticateToken(ctx)
   }
   // Otherwise try basic based authentication if enabled
-  if (user == null) {
+  if (user == null && requestType(ctx, 'basic')) {
     // Basic auth using middleware
     user = await authenticateBasic(ctx)
   }

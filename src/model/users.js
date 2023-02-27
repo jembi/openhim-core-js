@@ -20,11 +20,6 @@ const UserSchema = new Schema({
     required: true,
     unique: true
   },
-  provider: {
-    type: String,
-    enum: ['keycloak', 'local'],
-    default: 'local'
-  },
   passports: {type: Schema.Types.ObjectId, ref: 'Passport'},
   /* --- @deprecated --- */
   passwordAlgorithm: String,
@@ -157,8 +152,9 @@ export const updateUser = async function (_user) {
  *
  */
 export const updateTokenUser = async function (_user) {
+  const provider = _user.provider ? _user.provider : 'token'
   // Create a clone to _user
-  const userToBeUpdated = {..._user, provider: 'token'}
+  const userToBeUpdated = {..._user, provider}
 
   let result = {user: null, error: null}
 

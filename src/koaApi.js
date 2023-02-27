@@ -74,7 +74,6 @@ export function setupApp(done) {
   app.use(route.get('/token/:token', users.getUserByToken))
   app.use(route.put('/token/:token', users.updateUserByToken))
 
-
   // Check of logged in user
   app.use(route.get('/me', users.me))
 

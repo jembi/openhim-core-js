@@ -54,7 +54,9 @@ function constructUserInfo(profile, accessToken) {
 function createOrUpdateUser(user) {
   return UserModelAPI.findOne({email: user.email}).then(function (_user) {
     if (_user) {
-      return UserModelAPI.findByIdAndUpdate(_user.id, user)
+      return UserModelAPI.findByIdAndUpdate(_user.id, user, {
+        new: true
+      })
     } else {
       return UserModelAPI.create(user)
     }
@@ -114,8 +116,11 @@ export const login = async (req, profile, accessToken, tokens, next) => {
         // Action:   Get the user associated with the passport and update its info.
         else {
           // If the tokens have changed since the last session, update them
-          if (tokens != passport.tokens) {
+          if (!_.isEqual(tokens, passport.tokens)) {
             passport.tokens = tokens
+          }
+          if (accessToken != passport.accessToken) {
+            passport.accessToken = accessToken
           }
 
           // Save any updates to the Passport before moving on

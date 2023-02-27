@@ -359,7 +359,10 @@ export async function updateUserByToken(ctx, token) {
       logger.warn(
         'Token authentication strategy is deprecated. Please consider using Local or Basic authentication.'
       )
-      ;({user, error} = await updateTokenUser(userUpdateObj))
+      ;({user, error} = await updateTokenUser({
+        ...userUpdateObj,
+        provider: 'token'
+      }))
       // Other providers
     } else {
       ;({user, error} = await apiUpdateUser(userUpdateObj))
@@ -443,6 +446,8 @@ export async function addUser(ctx) {
       delete userData.passwordSalt
       delete userData.passwordAlgorithm
       delete userData.password
+
+      userData.provider = password ? 'local' : 'token'
     }
 
     const user = new UserModelAPI(userData)
@@ -637,6 +642,7 @@ export async function updateUser(ctx, email) {
         passwordAlgorithm,
         passwordHash,
         passwordSalt,
+        provider: 'token',
         ...userData
       }))
       // Other providers

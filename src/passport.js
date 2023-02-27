@@ -44,7 +44,7 @@ passport.loadStrategies = function () {
       strategy: passportLocal.Strategy
     },
     basic: {
-      strategy: passportHttp.BasicStrategy,
+      strategy: passportHttp.BasicStrategy
     },
     token: {
       strategy: passportCustom.Strategy
@@ -130,6 +130,7 @@ passport.loadStrategies = function () {
       } else if (key === 'openid') {
         Strategy = strat.strategy
         passport.use(
+          'openidconnect',
           new Strategy(
             strat.options,
             async (
@@ -142,14 +143,23 @@ passport.loadStrategies = function () {
               refreshToken,
               tokens,
               next
-            ) =>
-              await openid.login(
-                req,
-                profile,
-                accessToken,
-                tokens,
-                (err, user) => handlePassportError(err, user, next)
-              )
+            ) => {
+              if (isAuthenticationTypeEnabled(key)) {
+                return await openid.login(
+                  req,
+                  profile,
+                  accessToken,
+                  tokens,
+                  (err, user) => handlePassportError(err, user, next)
+                )
+              } else {
+                return handlePassportError(
+                  disabledAuthTypeError(key),
+                  false,
+                  next
+                )
+              }
+            }
           )
         )
       }

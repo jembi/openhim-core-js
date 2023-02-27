@@ -336,6 +336,7 @@ if (cluster.isMaster && !module.parent) {
     email: 'root@openhim.org',
     password: 'openhim-password',
     groups: ['admin'],
+    provider: 'local',
     // -- @deprecated --
     passwordAlgorithm: 'sha512',
     passwordHash:

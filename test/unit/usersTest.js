@@ -322,7 +322,8 @@ describe('UserModel tests', () => {
         id: userIdWithoutPassword,
         passwordAlgorithm: 'sha512',
         passwordHash: '796a5a8e-4e44-4d9f-9e04-c27ec6374ffa',
-        passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7'
+        passwordSalt: 'bf93caba-6eec-4c0c-a1a3-d968a7533fd7',
+        provider: 'token'
       }
 
       const {error, user} = await model.updateTokenUser(userToBeUpdated)
