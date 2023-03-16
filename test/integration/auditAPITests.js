@@ -434,7 +434,7 @@ describe('API Integration Tests', () => {
           .expect(403)
       })
 
-      it('should return 401 is user is not authenticated', async () => {
+      it('should return 401 when user is not authenticated', async () => {
         await new AuditModel(auditData).save()
         await request(BASE_URL).get('/audits-filter-options').expect(401)
       })
