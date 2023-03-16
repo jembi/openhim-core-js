@@ -42,7 +42,7 @@ describe('PassportModel tests', () => {
 
     it('should return error for non existent user', async () => {
       const {error, user} = await model.createPassport(
-        {id: 'non_existant_id'},
+        {id: 'non_existent_id'},
         'password'
       )
 
