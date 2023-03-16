@@ -25,6 +25,8 @@ function constructUserInfo(profile, accessToken) {
 
   if (resource_access && resource_access[`${clientId}`]) {
     user.groups = resource_access[`${clientId}`].roles
+  } else {
+    user.groups = []
   }
 
   if (profile.emails && profile.emails[0]) {
