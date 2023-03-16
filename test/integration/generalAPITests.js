@@ -279,7 +279,7 @@ describe('API Integration Tests', () => {
 
       await request(BASE_URL)
         .get('/channels')
-        .set('auth-username', 'unexistent-user@test.org')
+        .set('auth-username', 'non-existent-user@test.org')
         .set('auth-ts', authTS)
         .set('auth-salt', requestsalt)
         .set('auth-token', tokenhash.digest('hex'))
