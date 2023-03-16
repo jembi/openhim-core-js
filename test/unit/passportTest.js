@@ -73,7 +73,7 @@ describe('PassportModel tests', () => {
       newPassportResult.password.should.not.equal(passportResult.password)
     })
 
-    it('should return error when non existant passport ID', async () => {
+    it('should return error for non existent passport', async () => {
       const {error, user} = await model.updatePassport(
         {id: userId},
         {id: 'non_existant_id'}
