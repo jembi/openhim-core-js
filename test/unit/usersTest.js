@@ -55,7 +55,7 @@ describe('UserModel tests', () => {
       error.should.have.property('message')
     })
 
-    it('should return error when no firstname provided', async () => {
+    it('should return error when firstname is not provided', async () => {
       const userToBeCreated = {
         surname: 'Murray',
         email: 'bfm@crazy.net',
