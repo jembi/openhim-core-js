@@ -40,7 +40,7 @@ describe('PassportModel tests', () => {
       passportResult.should.have.property('password')
     })
 
-    it('should return error when non existant user ID', async () => {
+    it('should return error for non existent user', async () => {
       const {error, user} = await model.createPassport(
         {id: 'non_existant_id'},
         'password'
