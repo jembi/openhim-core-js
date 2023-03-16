@@ -41,7 +41,7 @@ describe('Utils', () => {
       result.should.not.be.empty()
     })
 
-    it('should return an error if no password provided', async () => {
+    it('should return an error when password is not provided', async () => {
       try {
         await utils.hashPassword()
       } catch (err) {
