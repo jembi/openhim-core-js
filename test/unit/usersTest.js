@@ -41,7 +41,7 @@ describe('UserModel tests', () => {
       passportResult.should.have.property('password')
     })
 
-    it('should return error when no password provided', async () => {
+    it('should return error when no password is provided', async () => {
       const userToBeCreated = {
         firstname: 'Bill',
         surname: 'Murray',
