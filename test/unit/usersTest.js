@@ -187,7 +187,7 @@ describe('UserModel tests', () => {
       passportResult.should.have.property('password')
     })
 
-    it('should return error when non existent user ID', async () => {
+    it('should return error for non existent user ID', async () => {
       const userToBeUpdated = {
         id: 'non_existent_id'
       }
