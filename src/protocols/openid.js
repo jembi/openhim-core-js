@@ -52,9 +52,11 @@ function constructUserInfo(profile, accessToken) {
 }
 
 function createOrUpdateUser(user) {
-  return UserModelAPI.findOne({email: user.email}).then(function (_user) {
-    if (_user) {
-      return UserModelAPI.findByIdAndUpdate(_user.id, user, {
+  return UserModelAPI.findOne({email: user.email}).then(function (
+    retrievedUser
+  ) {
+    if (retrievedUser) {
+      return UserModelAPI.findByIdAndUpdate(retrievedUser.id, user, {
         new: true
       })
     } else {
@@ -98,14 +100,14 @@ export const login = async (req, profile, accessToken, tokens, next) => {
         // Action:   Create/update the user and assign them a passport.
         if (!passport) {
           return createOrUpdateUser(user)
-            .then(function (_user) {
+            .then(function (retrievedUser) {
               return PassportModelAPI.create(
                 {
-                  user: _user.id,
+                  user: retrievedUser.id,
                   ...newPassport
                 },
                 function () {
-                  next(null, _user)
+                  next(null, retrievedUser)
                 }
               )
             })
@@ -129,8 +131,8 @@ export const login = async (req, profile, accessToken, tokens, next) => {
               // Fetch the user associated with the Passport and update it
               return createOrUpdateUser(user)
             })
-            .then(function (_user) {
-              next(null, _user)
+            .then(function (retrievedUser) {
+              next(null, retrievedUser)
             })
             .catch(next)
         }
