@@ -84,7 +84,7 @@ async function authenticateRequest(ctx) {
   let user = null
 
   // First attempt local authentication if enabled
-  if (user == null && ctx.req.user) {
+  if (ctx.req.user) {
     user = ctx.req.user
   }
   // Otherwise try token based authentication if enabled (@deprecated)
